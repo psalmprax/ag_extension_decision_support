@@ -202,6 +202,7 @@ jobs:
           AZURE_OPENAI_DEPLOYMENT_NAME: ${{ secrets.AZURE_OPENAI_DEPLOYMENT_NAME || vars.AZURE_OPENAI_DEPLOYMENT_NAME || 'gpt-4' }}
           OLLAMA_HOST: ${{ secrets.OLLAMA_HOST || vars.OLLAMA_HOST || 'http://ettametta-ollama:11434' }}
           OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL || vars.OLLAMA_MODEL || 'llama3.2:3b' }}
+          MCP_API_TOKEN: ${{ secrets.MCP_API_TOKEN || vars.MCP_API_TOKEN }}
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           port: ${{ secrets.TEST_SERVER_PORT || 22 }}
@@ -209,7 +210,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           timeout: 60s
           command_timeout: 15m
-          envs: COMPOSE_PROFILES,JWT_SECRET,CREDENTIAL_ENCRYPTION_KEY,DEMO_ENABLED,DEMO_PASSWORD,OPENAI_API_KEY,GROQ_API_KEY,ANTHROPIC_API_KEY,AZURE_OPENAI_API_KEY,GOOGLE_VERTEX_PROJECT_ID,AIHUBMIX_API_KEY,AIHUBMIX_ACCESS_KEY,OPENROUTER_API_KEY,HUGGINGFACE_API_KEY,NVIDIA_API_KEY,FREEBUFF_AUTH_TOKEN,WEATHER_API_KEY,WEATHER_API_URL,TAVILY_API_KEY,AI_PRIMARY_PROVIDER,AI_PRIMARY_MODEL,AI_FALLBACK_PROVIDER,AI_FALLBACK_MODEL,AI_EMBEDDINGS_PROVIDER,AI_EMBEDDINGS_MODEL,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_DEPLOYMENT_NAME,OLLAMA_HOST,OLLAMA_MODEL
+          envs: COMPOSE_PROFILES,JWT_SECRET,CREDENTIAL_ENCRYPTION_KEY,DEMO_ENABLED,DEMO_PASSWORD,OPENAI_API_KEY,GROQ_API_KEY,ANTHROPIC_API_KEY,AZURE_OPENAI_API_KEY,GOOGLE_VERTEX_PROJECT_ID,AIHUBMIX_API_KEY,AIHUBMIX_ACCESS_KEY,OPENROUTER_API_KEY,HUGGINGFACE_API_KEY,NVIDIA_API_KEY,FREEBUFF_AUTH_TOKEN,WEATHER_API_KEY,WEATHER_API_URL,TAVILY_API_KEY,AI_PRIMARY_PROVIDER,AI_PRIMARY_MODEL,AI_FALLBACK_PROVIDER,AI_FALLBACK_MODEL,AI_EMBEDDINGS_PROVIDER,AI_EMBEDDINGS_MODEL,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_DEPLOYMENT_NAME,OLLAMA_HOST,OLLAMA_MODEL,MCP_API_TOKEN
           script: |
             set -euo pipefail
             cd /root/ag_extension_decision_support
@@ -230,7 +231,7 @@ jobs:
             if [ ! -f "ag-extension-dashboard/.env" ]; then
               cp ag-extension-dashboard/.env.example ag-extension-dashboard/.env 2>/dev/null || true
             fi
-            for var in JWT_SECRET CREDENTIAL_ENCRYPTION_KEY DEMO_ENABLED DEMO_PASSWORD OPENAI_API_KEY GROQ_API_KEY ANTHROPIC_API_KEY AZURE_OPENAI_API_KEY GOOGLE_VERTEX_PROJECT_ID AIHUBMIX_API_KEY AIHUBMIX_ACCESS_KEY OPENROUTER_API_KEY HUGGINGFACE_API_KEY NVIDIA_API_KEY FREEBUFF_AUTH_TOKEN WEATHER_API_KEY WEATHER_API_URL TAVILY_API_KEY AI_PRIMARY_PROVIDER AI_PRIMARY_MODEL AI_FALLBACK_PROVIDER AI_FALLBACK_MODEL AI_EMBEDDINGS_PROVIDER AI_EMBEDDINGS_MODEL AZURE_OPENAI_ENDPOINT AZURE_OPENAI_DEPLOYMENT_NAME OLLAMA_HOST OLLAMA_MODEL; do
+            for var in JWT_SECRET CREDENTIAL_ENCRYPTION_KEY DEMO_ENABLED DEMO_PASSWORD OPENAI_API_KEY GROQ_API_KEY ANTHROPIC_API_KEY AZURE_OPENAI_API_KEY GOOGLE_VERTEX_PROJECT_ID AIHUBMIX_API_KEY AIHUBMIX_ACCESS_KEY OPENROUTER_API_KEY HUGGINGFACE_API_KEY NVIDIA_API_KEY FREEBUFF_AUTH_TOKEN WEATHER_API_KEY WEATHER_API_URL TAVILY_API_KEY AI_PRIMARY_PROVIDER AI_PRIMARY_MODEL AI_FALLBACK_PROVIDER AI_FALLBACK_MODEL AI_EMBEDDINGS_PROVIDER AI_EMBEDDINGS_MODEL AZURE_OPENAI_ENDPOINT AZURE_OPENAI_DEPLOYMENT_NAME OLLAMA_HOST OLLAMA_MODEL MCP_API_TOKEN; do
               val="${!var}"
               if [ -n "$val" ]; then
                 sed -i "/^$var=/d" ag-extension-dashboard/.env
@@ -263,6 +264,24 @@ jobs:
                 echo "VAPID_EMAIL=mailto:admin@gpexts.com" >> ag-extension-dashboard/.env
                 echo "✅ Added VAPID keys to ag-extension-dashboard/.env"
               fi
+            fi
+
+            # Ensure JWT_SECRET is configured in ag-extension-dashboard/.env
+            if ! grep -q "^JWT_SECRET=[^[:space:]]\{16,\}" ag-extension-dashboard/.env 2>/dev/null; then
+              echo "🔑 Generating JWT_SECRET..."
+              JWT_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" 2>/dev/null || echo "jwt_secret_$(date +%s)")
+              sed -i '/^JWT_SECRET=/d' ag-extension-dashboard/.env 2>/dev/null || true
+              echo "JWT_SECRET=$JWT_RAND" >> ag-extension-dashboard/.env
+              echo "✅ Added JWT_SECRET to ag-extension-dashboard/.env"
+            fi
+
+            # Ensure MCP_API_TOKEN is configured in ag-extension-dashboard/.env
+            if ! grep -q "^MCP_API_TOKEN=[^[:space:]]\{16,\}" ag-extension-dashboard/.env 2>/dev/null; then
+              echo "🔑 Generating MCP_API_TOKEN..."
+              MCP_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" 2>/dev/null || echo "mcp_token_$(date +%s)")
+              sed -i '/^MCP_API_TOKEN=/d' ag-extension-dashboard/.env 2>/dev/null || true
+              echo "MCP_API_TOKEN=$MCP_RAND" >> ag-extension-dashboard/.env
+              echo "✅ Added MCP_API_TOKEN to ag-extension-dashboard/.env"
             fi
 
             # Pre-create external networks referenced by compose (ettametta_ettametta is external: true)
