@@ -239,7 +239,7 @@ export function AgentOS({
                       <span className="text-emerald-400">DISPATCHED (45/45)</span>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-slate-900/80 border border-white/[0.06] text-xs text-white/90 whitespace-pre-line leading-relaxed font-sans break-words">
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-white/[0.06] text-xs text-white/90 whitespace-pre-line leading-relaxed font-sans break-words min-h-[140px] flex flex-col justify-start">
                       {activePreset.channelPreview[activeChannelTab]}
                     </div>
 
