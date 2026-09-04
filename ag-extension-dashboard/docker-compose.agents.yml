@@ -52,7 +52,7 @@ services:
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
       # CrewAI tools call backend MCP tools with this shared service token.
       - BACKEND_URL=http://ag-dashboard-backend:3001
-      - MCP_API_TOKEN=${MCP_API_TOKEN:?MCP_API_TOKEN must be set}
+      - MCP_API_TOKEN=${MCP_API_TOKEN:-}
     depends_on:
       - app-db
       - redis
