@@ -867,22 +867,91 @@ Agronomic Decision Support Protocol (Phase 2):
         return response;
     }
 
+    private static sanitizeContextText(text: string): string {
+        if (!text || typeof text !== 'string') return '';
+
+        return text
+            // Strip HTML comments, scripts, styles, and tags
+            .replace(/<!--[\s\S]*?-->/g, '')
+            .replace(/<script[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[\s\S]*?<\/style>/gi, '')
+            .replace(/<[^>]+>/g, ' ')
+            // Common web navigation & social junk
+            .replace(/\b(Facebook|Twitter|X|LinkedIn|Pinterest|WhatsApp|Instagram|Telegram)\b(\s+(Facebook|Twitter|X|LinkedIn|Pinterest|WhatsApp|Instagram|Telegram)\b)*/gi, '')
+            .replace(/\b(Share on|Follow us on|Pin on|Tweet this|Share this)\b[^\n.]*/gi, '')
+            .replace(/\bWhat are You Looking for\?\s+[A-Za-z\s&]+/gi, '')
+            .replace(/\b(Administration\s+Agriculture\s+Arts & Humanities\s+Education\s+Engineering[^\n.]*)/gi, '')
+            .replace(/\b(Read also|Read more|Related posts?|Leave a Reply|Cancel reply|Save my name|Sign up for our newsletter|Subscribe to):?[^\n.]*/gi, '')
+            // Common boilerplate branding repetitions (e.g. "Disciplines In Nigeria Disciplines In Nigeria")
+            .replace(/(\b[A-Za-z]{4,20}\s+In\s+[A-Za-z]{4,20}\b)(?:\s+\1)+/gi, '$1')
+            // Whitespace normalization
+            .replace(/[ \t]+/g, ' ')
+            .replace(/\n\s*\n+/g, '\n\n')
+            .trim();
+    }
+
     private static buildExtractiveAnswer(queryText: string, contextResults: SearchResult[]): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
         const primary = contextResults[0];
         const sourceTitle = primary.metadata?.title || `${primary.metadata?.crop || 'Agricultural'} ${primary.metadata?.category || 'Knowledge'}`;
         const sourceUrl = primary.metadata?.sourceUrl ? ` (${primary.metadata.sourceUrl})` : '';
-        const contextSummary = contextResults
-            .slice(0, 3)
-            .map((result, index) => {
-                const title = result.metadata?.title || `Source ${index + 1}`;
-                const content = this.formatMarkdownContent(result.content);
-                return `### ${index + 1}. ${title}\n${content}`;
-            })
-            .join('\n\n');
+
+        // Extract and deduplicate key paragraphs across all chunks
+        const seenParagraphs = new Set<string>();
+        const keyBulletPoints: string[] = [];
+        const structuredExcerpts: string[] = [];
+
+        for (const [idx, result] of contextResults.slice(0, 4).entries()) {
+            const sanitized = this.sanitizeContextText(result.content);
+            const title = result.metadata?.title || `Source ${idx + 1}`;
+            const paragraphs = sanitized.split(/\n\n+/);
+            const cleanSourceParagraphs: string[] = [];
+
+            for (const p of paragraphs) {
+                const trimmed = p.trim();
+                if (trimmed.length < 30) continue;
+
+                // Normalize for deduplication
+                const norm = trimmed.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 100);
+                if (seenParagraphs.has(norm)) continue;
+                seenParagraphs.add(norm);
+
+                cleanSourceParagraphs.push(trimmed);
+
+                // Detect potential key insight points (e.g., "Heading: Explanation" or bullet items)
+                const headingMatch = trimmed.match(/^([A-Z][A-Za-z0-9\s–—/-]{3,50}):\s*(.+)/);
+                if (headingMatch && keyBulletPoints.length < 8) {
+                    const heading = headingMatch[1].trim();
+                    const body = headingMatch[2].trim();
+                    keyBulletPoints.push(`- **${heading}**: ${body}`);
+                }
+            }
+
+            if (cleanSourceParagraphs.length > 0) {
+                const formatted = cleanSourceParagraphs.slice(0, 3).join('\n\n');
+                structuredExcerpts.push(`#### ${idx + 1}. ${title}\n${formatted}`);
+            }
+        }
+
+        // Build clean synthesized markdown sections
+        const sections: string[] = [
+            `I found source-backed guidance for: **"${queryText}"**.\n\n*Primary Source Reference: ${sourceTitle}${sourceUrl}*`,
+        ];
+
+        if (keyBulletPoints.length > 0) {
+            sections.push(`### Key Identified Insights & Takeaways\n\n${keyBulletPoints.join('\n\n')}`);
+        }
+
+        if (structuredExcerpts.length > 0) {
+            sections.push(`### Verified Context & Field Reference\n\n${structuredExcerpts.join('\n\n')}`);
+        }
+
+        sections.push(`*Note: The recommendations above are extracted directly from the local verified agricultural knowledge base.*`);
+
+        const answer = sections.join('\n\n---\n\n');
 
         return {
             reasoning: 'Generated from retrieved knowledge-base context because the configured AI provider did not complete in time.',
-            answer: `I found source-backed guidance for: **"${queryText}"**.\n\n*Primary Source Reference: ${sourceTitle}${sourceUrl}*\n\n---\n\n${contextSummary}\n\n---\n\n*Note: The recommendations above are extracted directly from the local verified agricultural knowledge base.*`,
+            answer,
             confidence: Math.max(0.5, Math.min(primary.score || 0.7, 0.95)),
             visuals: {
                 kpis: [

@@ -17,9 +17,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { playStageChime } from '@/lib/audioHaptics';
 
-export type AudiencePersona = 'officers' | 'agribusiness' | 'donors';
+type AudiencePersona = 'officers' | 'agribusiness' | 'donors';
 
-export interface StageStoryItem {
+interface StageStoryItem {
   num: string;
   title: string;
   category: string;

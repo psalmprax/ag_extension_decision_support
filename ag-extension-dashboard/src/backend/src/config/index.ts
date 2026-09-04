@@ -23,6 +23,7 @@ export interface AppConfig {
     openAI: { apiKey: string };
     anthropic: { apiKey: string };
     groq: { apiKey: string };
+    aihubmix?: { apiKey: string; accessKey: string };
     freebuff: { authToken: string; apiBaseUrl: string; defaultModel: string };
     externalApis: {
         weather: { apiKey: string; url: string };
@@ -113,6 +114,11 @@ export const config: AppConfig = {
 
     groq: {
         apiKey: getEnv('GROQ_API_KEY'),
+    },
+
+    aihubmix: {
+        apiKey: getEnv('AIHUBMIX_API_KEY'),
+        accessKey: getEnv('AIHUBMIX_ACCESS_KEY'),
     },
 
     freebuff: {
