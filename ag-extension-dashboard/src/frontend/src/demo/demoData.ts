@@ -360,6 +360,7 @@ export interface DemoUser {
   role: string;
   region: string;
   phone: string;
+  country?: string;
 }
 
 export const DEMO_USERS: DemoUser[] = [
@@ -371,6 +372,7 @@ export const DEMO_USERS: DemoUser[] = [
     role: 'extension_officer',
     region: 'Nakuru',
     phone: '+254712000001',
+    country: 'Kenya',
   },
   {
     id: 'demo-user-2',
@@ -380,6 +382,7 @@ export const DEMO_USERS: DemoUser[] = [
     role: 'admin',
     region: 'Nairobi HQ',
     phone: '+254712000002',
+    country: 'Kenya',
   },
   {
     id: 'demo-user-3',
@@ -389,6 +392,7 @@ export const DEMO_USERS: DemoUser[] = [
     role: 'regional_manager',
     region: 'Eastern Zone',
     phone: '+254712000003',
+    country: 'Kenya',
   },
   {
     id: 'demo-user-4',
@@ -398,6 +402,7 @@ export const DEMO_USERS: DemoUser[] = [
     role: 'farmer',
     region: 'Machakos',
     phone: '+254712345601',
+    country: 'Kenya',
   },
 ];
 
