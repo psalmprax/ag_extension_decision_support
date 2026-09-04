@@ -652,16 +652,11 @@ jobs:
           script: |
             set -euo pipefail
             cd /root/ag_extension_decision_support/ag-extension-dashboard
-            # Absolute script path because cwd here is `ag-extension-dashboard/`
-            # and the script lives one directory up.
-            # Strict mode (no `--if-running`): catches both missing AND broken
-            # services — first-ever deploys to a fresh prod host fail closed
-            # until an operator manually launches ettametta-ollama with
-            # `docker compose --profile ai up -d ettametta-ollama`.
-            # Budget: 18 retries × 10s = ~350s worst case per script's
-            # MAX_WALL_SECONDS formula; applies via the 10m step budget.
-            if ! bash /root/ag_extension_decision_support/scripts/smoke-ollama.sh --retries 18 --interval 10; then
-              echo "FATAL: ettametta-ollama smoke gate failed (service missing or unreachable)." >&2
+            # Pre-build smoke gate with `--if-running`: probes existing containers if
+            # running, but permits recovery deploys to proceed to Step 3/5 where
+            # backend and ettametta-ollama are launched.
+            if ! bash /root/ag_extension_decision_support/scripts/smoke-ollama.sh --if-running --retries 18 --interval 10; then
+              echo "FATAL: ettametta-ollama smoke gate failed (service broken or unreachable)." >&2
               echo "----- ettametta-ollama container logs (last 50 lines, if present) -----"
               docker compose logs --tail 50 ettametta-ollama 2>&1 || echo "(no logs: container not present in this compose project)"
               echo "------------------------------------------------------------"
