@@ -41,7 +41,6 @@ const PreCallView = ({
   t,
   participants,
   localStream,
-  localVideoRef,
   isHost,
   isJoining,
   handleStartCall,
@@ -50,108 +49,146 @@ const PreCallView = ({
   t: (k: string) => string;
   participants: Record<string, unknown>[];
   localStream: MediaStream | null;
-  localVideoRef: React.RefObject<HTMLVideoElement>;
   isHost: boolean;
   isJoining: boolean;
   handleStartCall: () => void;
   handleJoinCall: () => void;
-}) => (
-  <div className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
-    <h2 className="text-xl font-semibold text-gray-900 mb-4">
-      {t('video_consultation_title') || 'Video Consultation'}
-    </h2>
+}) => {
+  const previewRef = useRef<HTMLVideoElement | null>(null);
 
-    <div className="space-y-4">
-      <div className="flex items-center gap-3 text-gray-600">
-        <Users className="w-5 h-5" />
-        <span>
-          {t('video_participants_count')?.replace(
-            '{count}',
-            (participants.length + 1).toString()
-          ) || `${participants.length + 1} participant(s)`}
-        </span>
-      </div>
+  useEffect(() => {
+    if (previewRef.current && localStream) {
+      if (previewRef.current.srcObject !== localStream) {
+        previewRef.current.srcObject = localStream;
+      }
+      previewRef.current.play().catch(() => {});
+    }
+  }, [localStream]);
 
-      {!localStream ? (
-        <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-          <div className="text-center text-gray-500">
-            <Video className="w-12 h-12 mx-auto mb-2" />
-            <p>{t('video_camera_preview_hint') || 'Camera will be enabled when you join'}</p>
-          </div>
+  return (
+    <div className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
+      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        {t('video_consultation_title') || 'Video Consultation'}
+      </h2>
+
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 text-gray-600">
+          <Users className="w-5 h-5" />
+          <span>
+            {t('video_participants_count')?.replace(
+              '{count}',
+              (participants.length + 1).toString()
+            ) || `${participants.length + 1} participant(s)`}
+          </span>
         </div>
-      ) : (
-        <video
-          ref={localVideoRef}
-          autoPlay
-          muted
-          playsInline
-          className="aspect-video bg-gray-100 rounded-lg object-cover"
-        />
-      )}
 
-      <div className="flex gap-3">
-        {isHost ? (
-          <button
-            onClick={handleStartCall}
-            disabled={isJoining}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
-          >
-            <Phone className="w-5 h-5" />
-            {isJoining
-              ? t('video_starting') || 'Starting...'
-              : t('video_start_call') || 'Start Call'}
-          </button>
+        {!localStream ? (
+          <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
+            <div className="text-center text-gray-500">
+              <Video className="w-12 h-12 mx-auto mb-2" />
+              <p>{t('video_camera_preview_hint') || 'Camera will be enabled when you join'}</p>
+            </div>
+          </div>
         ) : (
-          <button
-            onClick={handleJoinCall}
-            disabled={isJoining}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
-          >
-            <Video className="w-5 h-5" />
-            {isJoining ? t('video_joining') || 'Joining...' : t('video_join_call') || 'Join Call'}
-          </button>
+          <video
+            ref={el => {
+              previewRef.current = el;
+              if (el && localStream && el.srcObject !== localStream) {
+                el.srcObject = localStream;
+                el.play().catch(() => {});
+              }
+            }}
+            autoPlay
+            muted
+            playsInline
+            className="aspect-video bg-gray-100 rounded-lg object-cover w-full"
+          />
         )}
+
+        <div className="flex gap-3">
+          {isHost ? (
+            <button
+              onClick={handleStartCall}
+              disabled={isJoining}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+            >
+              <Phone className="w-5 h-5" />
+              {isJoining
+                ? t('video_starting') || 'Starting...'
+                : t('video_start_call') || 'Start Call'}
+            </button>
+          ) : (
+            <button
+              onClick={handleJoinCall}
+              disabled={isJoining}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+            >
+              <Video className="w-5 h-5" />
+              {isJoining ? t('video_joining') || 'Joining...' : t('video_join_call') || 'Join Call'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const LocalVideo = ({
   localStream,
   isVideoEnabled,
-  localVideoRef,
   userName,
   t,
   isHost,
 }: {
   localStream: MediaStream | null;
   isVideoEnabled: boolean;
-  localVideoRef: React.RefObject<HTMLVideoElement>;
   userName: string;
   t: (k: string) => string;
   isHost: boolean;
-}) => (
-  <div className="relative bg-gray-800 rounded-lg overflow-hidden">
-    {localStream && isVideoEnabled ? (
-      <video
-        ref={localVideoRef}
-        autoPlay
-        muted
-        playsInline
-        className="w-full h-full object-cover"
-      />
-    ) : (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="w-20 h-20 bg-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-          {userName.charAt(0).toUpperCase()}
+}) => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (videoRef.current && localStream) {
+      if (videoRef.current.srcObject !== localStream) {
+        videoRef.current.srcObject = localStream;
+      }
+      videoRef.current.play().catch(() => {});
+    }
+  }, [localStream, isVideoEnabled]);
+
+  return (
+    <div className="relative bg-gray-800 rounded-lg overflow-hidden aspect-video w-full flex items-center justify-center border border-gray-700/50 shadow-md">
+      {localStream && isVideoEnabled ? (
+        <video
+          ref={el => {
+            videoRef.current = el;
+            if (el && localStream && el.srcObject !== localStream) {
+              el.srcObject = localStream;
+              el.play().catch(() => {});
+            }
+          }}
+          autoPlay
+          muted
+          playsInline
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-gray-800">
+          <div className="w-20 h-20 bg-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md mb-2">
+            {userName.charAt(0).toUpperCase()}
+          </div>
+          <span className="text-xs text-gray-400">Camera is off</span>
         </div>
+      )}
+      <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 shadow">
+        <span className={`w-2 h-2 rounded-full ${isVideoEnabled ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+        <span>{t('video_you') || 'You'}</span>
+        {isHost && <span className="text-emerald-400 font-semibold">({t('video_host') || 'Host'})</span>}
       </div>
-    )}
-    <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
-      {t('video_you') || 'You'} {isHost && `(${t('video_host') || 'Host'})`}
     </div>
-  </div>
-);
+  );
+};
 
 const CallControlButton: React.FC<{
   onClick: () => void;
@@ -215,14 +252,7 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
   } = useWebRTC();
   const { t } = useLanguage();
 
-  const localVideoRef = useRef<HTMLVideoElement>(null);
   const [isJoining, setIsJoining] = useState(false);
-
-  useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      localVideoRef.current.srcObject = localStream;
-    }
-  }, [localStream]);
 
   const handleStartCall = async () => {
     setIsJoining(true);
@@ -264,7 +294,6 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
         t={t}
         participants={participants as unknown as Record<string, unknown>[]}
         localStream={localStream}
-        localVideoRef={localVideoRef}
         isHost={isHost}
         isJoining={isJoining}
         handleStartCall={handleStartCall}
@@ -274,12 +303,11 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
   }
 
   return (
-    <div className="bg-gray-900 rounded-lg overflow-hidden">
-      <div className="grid grid-cols-2 gap-2 p-4" style={{ minHeight: '400px' }}>
+    <div className="bg-gray-900 rounded-lg overflow-hidden border border-gray-800 shadow-2xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 min-h-[400px] items-center">
         <LocalVideo
           localStream={localStream}
           isVideoEnabled={isVideoEnabled}
-          localVideoRef={localVideoRef}
           userName={userName}
           t={t}
           isHost={isHost}
@@ -288,8 +316,22 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
           <RemoteVideo key={peerId} stream={stream} peerId={peerId} />
         ))}
         {remoteStreams.size === 0 && (
-          <div className="col-span-2 flex items-center justify-center text-gray-400">
-            {t('video_waiting_others') || 'Waiting for others to join...'}
+          <div className="relative bg-gray-800/80 border border-dashed border-gray-700/80 rounded-lg overflow-hidden aspect-video w-full flex flex-col items-center justify-center p-6 text-center shadow-inner">
+            <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-3 animate-pulse">
+              <Users className="w-7 h-7" />
+            </div>
+            <p className="text-white font-semibold text-sm sm:text-base">
+              {t('video_waiting_others') || 'Waiting for others to join...'}
+            </p>
+            <p className="text-xs text-gray-400 mt-1.5 max-w-xs leading-relaxed">
+              {isHost
+                ? 'Your video feed is live. The participant will appear here as soon as they connect.'
+                : 'Waiting for the host or other participants to join...'}
+            </p>
+            <div className="mt-3.5 inline-flex items-center gap-1.5 px-3 py-1 bg-gray-900/80 rounded-md text-xxs font-mono text-gray-300 border border-gray-700/80 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              Room: {roomId}
+            </div>
           </div>
         )}
       </div>
@@ -348,19 +390,34 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
 
 // Remote Video Component
 function RemoteVideo({ stream, peerId }: { stream: MediaStream; peerId: string }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
+    if (videoRef.current && stream) {
+      if (videoRef.current.srcObject !== stream) {
+        videoRef.current.srcObject = stream;
+      }
+      videoRef.current.play().catch(() => {});
     }
   }, [stream]);
 
   return (
-    <div className="relative bg-gray-800 rounded-lg overflow-hidden">
-      <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-      <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
-        {peerId.slice(0, 8)}
+    <div className="relative bg-gray-800 rounded-lg overflow-hidden aspect-video w-full flex items-center justify-center border border-gray-700/50 shadow-md">
+      <video
+        ref={el => {
+          videoRef.current = el;
+          if (el && stream && el.srcObject !== stream) {
+            el.srcObject = stream;
+            el.play().catch(() => {});
+          }
+        }}
+        autoPlay
+        playsInline
+        className="w-full h-full object-cover"
+      />
+      <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 shadow">
+        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+        <span>{peerId.slice(0, 8)}</span>
       </div>
     </div>
   );
