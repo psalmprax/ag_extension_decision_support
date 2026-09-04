@@ -1,4 +1,4 @@
-import { objectStorage } from '@/services/objectStorageService';
+import { objectStorage, resolveBackendType } from '@/services/objectStorageService';
 import {
   saveUpload,
   readStoredUpload,
@@ -28,6 +28,25 @@ describe('Object Storage & Media Pipeline', () => {
   });
 
   describe('Unified Object Storage Service', () => {
+    it('correctly resolves cheapest storage providers (Backblaze B2, Hetzner, Wasabi, R2)', () => {
+      // Backblaze B2 (Cheapest raw storage: $0.006/GB)
+      expect(resolveBackendType('my-bucket', 'keyId', 'https://s3.us-west-004.backblazeb2.com', 'b2')).toBe('backblaze-b2');
+      expect(resolveBackendType('my-bucket', 'keyId', undefined, 'backblaze-b2')).toBe('backblaze-b2');
+      expect(resolveBackendType('my-bucket', 'keyId', 'https://s3.us-west-004.backblazeb2.com', '')).toBe('backblaze-b2');
+
+      // Cloudflare R2 ($0.015/GB with zero egress)
+      expect(resolveBackendType('my-bucket', 'keyId', 'https://acc.r2.cloudflarestorage.com', 'r2')).toBe('cloudflare-r2');
+      expect(resolveBackendType('my-bucket', 'keyId', undefined, 'cloudflare-r2')).toBe('cloudflare-r2');
+
+      // Wasabi & Hetzner
+      expect(resolveBackendType('my-bucket', 'keyId', 'https://s3.us-east-1.wasabisys.com', 'wasabi')).toBe('wasabi');
+      expect(resolveBackendType('my-bucket', 'keyId', 'https://fsn1.your-objectstorage.com', 'hetzner')).toBe('hetzner');
+
+      // Local disk fallback
+      expect(resolveBackendType('', undefined, undefined, 'local')).toBe('local-disk');
+      expect(resolveBackendType('', undefined, undefined, '')).toBe('local-disk');
+    });
+
     it('initializes with default local-disk backend when no S3/R2 credentials exist', () => {
       expect(objectStorage.getBackendType()).toBeDefined();
       const config = objectStorage.getConfig();

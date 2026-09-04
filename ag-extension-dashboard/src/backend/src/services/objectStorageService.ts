@@ -12,7 +12,14 @@ import crypto from 'crypto';
 import { Readable } from 'stream';
 import { logger } from '@/utils/logger';
 
-export type StorageBackendType = 'cloudflare-r2' | 'backblaze-b2' | 'aws-s3' | 'minio' | 'local-disk';
+export type StorageBackendType =
+  | 'cloudflare-r2'
+  | 'backblaze-b2'
+  | 'wasabi'
+  | 'hetzner'
+  | 'aws-s3'
+  | 'minio'
+  | 'local-disk';
 
 interface StorageConfig {
   backend: StorageBackendType;
@@ -54,24 +61,58 @@ interface PresignedUrlOptions {
   filename?: string;
 }
 
-function resolveBackendType(
+const BACKEND_RULES: Array<{
+  type: StorageBackendType;
+  matches: (norm: string, endpoint?: string) => boolean;
+}> = [
+  {
+    type: 'local-disk',
+    matches: (norm) => ['local', 'local-disk', 'disk'].includes(norm),
+  },
+  {
+    type: 'backblaze-b2',
+    matches: (norm, ep) => ['b2', 'backblaze', 'backblaze-b2'].includes(norm) || Boolean(ep?.includes('backblazeb2.com')),
+  },
+  {
+    type: 'cloudflare-r2',
+    matches: (norm, ep) => ['r2', 'cloudflare', 'cloudflare-r2'].includes(norm) || Boolean(ep?.includes('r2.cloudflarestorage.com')),
+  },
+  {
+    type: 'wasabi',
+    matches: (norm, ep) => norm === 'wasabi' || Boolean(ep?.includes('wasabisys.com')),
+  },
+  {
+    type: 'hetzner',
+    matches: (norm, ep) => norm === 'hetzner' || Boolean(ep?.includes('hetzner.com') || ep?.includes('your-objectstorage.com')),
+  },
+  {
+    type: 'minio',
+    matches: (norm, ep) => norm === 'minio' || Boolean(ep?.includes('localhost') || ep?.includes('127.0.0.1')),
+  },
+  {
+    type: 'aws-s3',
+    matches: (norm) => ['s3', 'aws-s3', 'aws'].includes(norm),
+  },
+];
+
+export function resolveBackendType(
   bucket: string,
   accessKeyId?: string,
   endpoint?: string,
   rawBackend?: string
 ): StorageBackendType {
+  const norm = (rawBackend || '').toLowerCase().trim();
+
+  for (const rule of BACKEND_RULES) {
+    if (rule.matches(norm, endpoint)) {
+      return rule.type;
+    }
+  }
+
   if (!bucket || (!accessKeyId && !endpoint)) {
-    return rawBackend === 's3' || rawBackend === 'r2' ? 'aws-s3' : 'local-disk';
+    return 'local-disk';
   }
-  if (endpoint?.includes('r2.cloudflarestorage.com') || rawBackend === 'r2') {
-    return 'cloudflare-r2';
-  }
-  if (endpoint?.includes('backblazeb2.com') || rawBackend === 'b2') {
-    return 'backblaze-b2';
-  }
-  if (endpoint?.includes('localhost') || endpoint?.includes('127.0.0.1') || rawBackend === 'minio') {
-    return 'minio';
-  }
+
   return 'aws-s3';
 }
 

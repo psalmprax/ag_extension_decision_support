@@ -13,7 +13,7 @@ export interface UploadedFile {
 
 // fallow-ignore-next-line unused-type
 export interface StorageInfo {
-  backend: 'cloudflare-r2' | 'backblaze-b2' | 'aws-s3' | 'minio' | 'local-disk';
+  backend: 'cloudflare-r2' | 'backblaze-b2' | 'wasabi' | 'hetzner' | 'aws-s3' | 'minio' | 'local-disk';
   isCloud: boolean;
   maxUploadBytes: number;
   maxUploadMb: number;
