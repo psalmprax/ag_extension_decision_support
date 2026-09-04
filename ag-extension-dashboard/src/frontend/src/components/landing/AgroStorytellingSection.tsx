@@ -296,7 +296,7 @@ export function AgroStorytellingSection() {
         {/* Main 2-Column Showcase */}
         <div className="grid lg:grid-cols-12 gap-8 items-stretch">
           {/* Left Canvas Scrubber Column (7 cols) */}
-          <div className="lg:col-span-7 flex flex-col min-h-[440px] sm:min-h-[500px] w-full rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-slate-900/60 backdrop-blur-md">
+          <div className="lg:col-span-7 flex flex-col h-[480px] sm:h-[520px] min-h-[480px] sm:min-h-[520px] w-full rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-slate-900/60 backdrop-blur-md">
             <AgroEcosystemCanvasScrubber
               progress={activeStage * 0.28 + 0.05}
               onStageChange={(stage) => {
@@ -310,7 +310,7 @@ export function AgroStorytellingSection() {
           </div>
 
           {/* Right Milestone HUD Card Column (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col justify-between self-stretch space-y-6 min-h-[440px] sm:min-h-[500px]">
+          <div className="lg:col-span-5 flex flex-col justify-between self-stretch space-y-6 h-[480px] sm:h-[520px] min-h-[480px] sm:min-h-[520px]">
             {/* Dynamic Card Container with fixed min-height to eliminate layout shifts */}
             <div className="relative flex-1 min-h-[360px] sm:min-h-[400px] flex flex-col">
               <AnimatePresence mode="wait">
