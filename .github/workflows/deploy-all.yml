@@ -297,6 +297,11 @@ jobs:
             iptables -C OUTPUT  -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || iptables -I OUTPUT  1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
             echo "  iptables UDP/53 from 172.17.0.0/16: ensured"
 
+            # Proactively prune dangling images and old builder cache to preserve disk space
+            echo "Pruning dangling images and builder cache..."
+            docker image prune -f 2>/dev/null || true
+            docker builder prune -f --filter "until=24h" 2>/dev/null || true
+
             # Always ensure remote-builder is created and active
             docker buildx rm remote-builder 2>/dev/null || true
             docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
@@ -313,28 +318,32 @@ jobs:
             CLEAN_REBUILD="${{ github.event.inputs.force_clean_rebuild == 'true' && '--no-cache' || '' }}"
 
             if [ -n "$CLEAN_REBUILD" ]; then
-              echo "Clean rebuild forced — building without cache..."
-              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai discovery-scraper
+              echo "Clean rebuild forced — building without cache in batches..."
+              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend
+              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl agent-zero crew-ai discovery-scraper
             else
               echo "Authenticating to GHCR for remote Docker layer cache..."
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
 
-              # The `type=local` cache exporter can fail mid-export if an
-              # interrupted build left a stale ingest/ tree (rename startedat.tmp
-              # -> startedat: no such file). Retry once after clearing it — the
-              # build itself already succeeded, so this only re-runs the export.
+              # Batched bake: build web apps (backend + frontend) first, then background agents & scraper.
+              # This cuts peak memory and concurrent layer extraction in half, preventing buildkitd OOM / transport drops.
               run_bake() {
-                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai discovery-scraper
+                echo "==> [Bake 1/2] Building web services (backend, frontend)..."
+                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend
+                echo "==> [Bake 2/2] Building agent & scraper services (agent-zero, crew-ai, discovery-scraper)..."
+                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl agent-zero crew-ai discovery-scraper
               }
 
               echo "Building with remote cache (GHCR)..."
               if ! BAKE_OUTPUT=$(run_bake 2>&1); then
-                echo "Bake failed — checking for stale cache export state..."
+                echo "Bake failed — checking failure reason..."
                 echo "$BAKE_OUTPUT" | tail -40
-                if echo "$BAKE_OUTPUT" | grep -qE "startedat\.tmp|error writing layer blob|ingest/"; then
-                  echo "Cache-export failure detected. Clearing stale ingest state and retrying..."
+                if echo "$BAKE_OUTPUT" | grep -qE "startedat\.tmp|error writing layer blob|ingest/|connection error|graceful_stop|EOF|Unavailable|transport is closing|failed to receive status"; then
+                  echo "Recoverable builder transport or cache-export issue detected. Resetting builder, clearing stale ingest state, and retrying..."
                   find /root/docker-cache -type d -name ingest -prune -exec rm -rf {} + 2>/dev/null || true
-                  BAKE_OUTPUT=$(run_bake 2>&1) || { echo "$BAKE_OUTPUT" | tail -40; echo "FATAL: Bake failed after cache cleanup retry." >&2; exit 1; }
+                  docker buildx rm remote-builder 2>/dev/null || true
+                  docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
+                  BAKE_OUTPUT=$(run_bake 2>&1) || { echo "$BAKE_OUTPUT" | tail -40; echo "FATAL: Bake failed after builder reset & cache cleanup retry." >&2; exit 1; }
                 else
                   echo "$BAKE_OUTPUT" >&2
                   echo "FATAL: Bake failed for a non-cache reason." >&2
@@ -739,6 +748,11 @@ jobs:
             iptables -C OUTPUT  -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || iptables -I OUTPUT  1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
             echo "  iptables UDP/53 from 172.17.0.0/16: ensured"
 
+            # Proactively prune dangling images and old builder cache to preserve disk space
+            echo "Pruning dangling images and builder cache..."
+            docker image prune -f 2>/dev/null || true
+            docker builder prune -f --filter "until=24h" 2>/dev/null || true
+
             # Always ensure remote-builder is created and active
             docker buildx rm remote-builder 2>/dev/null || true
             docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
@@ -755,28 +769,32 @@ jobs:
             CLEAN_REBUILD="${{ github.event.inputs.force_clean_rebuild == 'true' && '--no-cache' || '' }}"
 
             if [ -n "$CLEAN_REBUILD" ]; then
-              echo "Clean rebuild forced — building without cache..."
-              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai discovery-scraper
+              echo "Clean rebuild forced — building without cache in batches..."
+              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend
+              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl agent-zero crew-ai discovery-scraper
             else
               echo "Authenticating to GHCR for remote Docker layer cache..."
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
 
-              # The `type=local` cache exporter can fail mid-export if an
-              # interrupted build left a stale ingest/ tree (rename startedat.tmp
-              # -> startedat: no such file). Retry once after clearing it — the
-              # build itself already succeeded, so this only re-runs the export.
+              # Batched bake: build web apps (backend + frontend) first, then background agents & scraper.
+              # This cuts peak memory and concurrent layer extraction in half, preventing buildkitd OOM / transport drops.
               run_bake() {
-                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai discovery-scraper
+                echo "==> [Bake 1/2] Building web services (backend, frontend)..."
+                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend
+                echo "==> [Bake 2/2] Building agent & scraper services (agent-zero, crew-ai, discovery-scraper)..."
+                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl agent-zero crew-ai discovery-scraper
               }
 
               echo "Building with remote cache (GHCR)..."
               if ! BAKE_OUTPUT=$(run_bake 2>&1); then
-                echo "Bake failed — checking for stale cache export state..."
+                echo "Bake failed — checking failure reason..."
                 echo "$BAKE_OUTPUT" | tail -40
-                if echo "$BAKE_OUTPUT" | grep -qE "startedat\.tmp|error writing layer blob|ingest/"; then
-                  echo "Cache-export failure detected. Clearing stale ingest state and retrying..."
+                if echo "$BAKE_OUTPUT" | grep -qE "startedat\.tmp|error writing layer blob|ingest/|connection error|graceful_stop|EOF|Unavailable|transport is closing|failed to receive status"; then
+                  echo "Recoverable builder transport or cache-export issue detected. Resetting builder, clearing stale ingest state, and retrying..."
                   find /root/docker-cache -type d -name ingest -prune -exec rm -rf {} + 2>/dev/null || true
-                  BAKE_OUTPUT=$(run_bake 2>&1) || { echo "$BAKE_OUTPUT" | tail -40; echo "FATAL: Bake failed after cache cleanup retry." >&2; exit 1; }
+                  docker buildx rm remote-builder 2>/dev/null || true
+                  docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
+                  BAKE_OUTPUT=$(run_bake 2>&1) || { echo "$BAKE_OUTPUT" | tail -40; echo "FATAL: Bake failed after builder reset & cache cleanup retry." >&2; exit 1; }
                 else
                   echo "$BAKE_OUTPUT" >&2
                   echo "FATAL: Bake failed for a non-cache reason." >&2

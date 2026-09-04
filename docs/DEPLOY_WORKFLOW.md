@@ -79,11 +79,11 @@ All 4 services are built in parallel via `docker buildx bake`:
 
 ```bash
 docker buildx create --use --driver docker-container --name remote-builder
-docker buildx bake \
-  -f docker-bake.hcl \
-  --set "*.cache-from=type=registry,ref=ghcr.io/REPO/buildcache:SERVICE" \
-  --set "*.cache-to=type=registry,ref=ghcr.io/REPO/buildcache:SERVICE,mode=max" \
-  backend frontend agent-zero crew-ai discovery-scraper
+# Batched execution prevents resource starvation on memory/IO constrained hosts:
+# 1. Web targets: backend & frontend
+docker buildx bake -f docker-bake.hcl backend frontend
+# 2. Agent & Scraper targets: agent-zero, crew-ai & discovery-scraper
+docker buildx bake -f docker-bake.hcl agent-zero crew-ai discovery-scraper
 ```
 
 - Pulls cached layers from GHCR (`type=registry`)
@@ -93,7 +93,8 @@ docker buildx bake \
 ### Clean rebuild (`force_clean_rebuild=true`)
 
 ```bash
-docker buildx bake -f docker-bake.hcl backend frontend agent-zero crew-ai discovery-scraper
+docker buildx bake -f docker-bake.hcl backend frontend
+docker buildx bake -f docker-bake.hcl agent-zero crew-ai discovery-scraper
 ```
 
 - No cache pulled, no cache exported

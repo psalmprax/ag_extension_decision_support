@@ -6,6 +6,14 @@ group "default" {
   targets = ["backend", "frontend", "agent-zero", "crew-ai", "discovery-scraper"]
 }
 
+group "web" {
+  targets = ["backend", "frontend"]
+}
+
+group "agents" {
+  targets = ["agent-zero", "crew-ai", "discovery-scraper"]
+}
+
 target "backend" {
   context     = "../"
   dockerfile  = "ag-extension-dashboard/src/backend/Dockerfile"
