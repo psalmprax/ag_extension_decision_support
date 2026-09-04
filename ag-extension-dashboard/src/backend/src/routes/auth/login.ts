@@ -181,18 +181,31 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
         });
 
         let planName = 'Free';
-        try {
-            const subResult = await query(`
-                SELECT COALESCE(sp.name, 'Free') as plan_name
-                FROM subscriptions s
-                JOIN subscription_plans sp ON sp.id = s.plan_id
-                WHERE s.user_id = $1
-            `, [user.id]);
-            if (subResult.rows.length > 0) {
-                planName = subResult.rows[0].plan_name;
+        let isFree = true;
+
+        if (user.role === 'admin') {
+            planName = 'Admin';
+            isFree = false;
+        } else if (user.is_demo || user.email === 'demo@agridemo.com') {
+            planName = 'Free';
+            isFree = true;
+        } else {
+            try {
+                const subResult = await query(`
+                    SELECT sp.name as plan_name, sp.price
+                    FROM subscriptions s
+                    JOIN subscription_plans sp ON sp.id = s.plan_id
+                    WHERE s.user_id = $1 AND (s.status = 'active' OR s.status = 'trialing')
+                `, [user.id]);
+                if (subResult.rows.length > 0) {
+                    const row = subResult.rows[0];
+                    const price = row.price != null ? Number(row.price) : 0;
+                    planName = row.plan_name || 'Free';
+                    isFree = price === 0 || planName.toLowerCase().includes('free');
+                }
+            } catch {
+                // fallback to Free
             }
-        } catch {
-            // fallback
         }
 
         res.json({
@@ -208,7 +221,7 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
                     region: user.region,
                     mfaEnabled: !!user.mfa_enabled,
                     planName,
-                    isFree: planName.toLowerCase() === 'free',
+                    isFree,
                 },
             },
         });

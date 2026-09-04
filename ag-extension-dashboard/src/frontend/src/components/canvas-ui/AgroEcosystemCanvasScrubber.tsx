@@ -516,19 +516,17 @@ function syncCanvasDimensions(
   container: HTMLDivElement | null
 ): { cssWidth: number; cssHeight: number; dpr: number } | null {
   const rect = container ? container.getBoundingClientRect() : canvas.getBoundingClientRect();
-  const cssWidth = Math.floor(rect.width || 600);
-  const cssHeight = Math.floor(rect.height || 400);
+  const cssWidth = Math.round(rect.width || 600);
+  const cssHeight = Math.round(rect.height || 400);
   if (!cssWidth || !cssHeight) return null;
 
   const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-  const targetW = cssWidth * dpr;
-  const targetH = cssHeight * dpr;
+  const targetW = Math.round(cssWidth * dpr);
+  const targetH = Math.round(cssHeight * dpr);
 
   if (canvas.width !== targetW || canvas.height !== targetH) {
     canvas.width = targetW;
     canvas.height = targetH;
-    canvas.style.width = `${cssWidth}px`;
-    canvas.style.height = `${cssHeight}px`;
   }
 
   return { cssWidth, cssHeight, dpr };
@@ -605,11 +603,11 @@ export function AgroEcosystemCanvasScrubber({
 
   useEffect(() => {
     onStageChange?.(currentStage);
-    if (prevStageRef.current !== -1 && prevStageRef.current !== currentStage) {
+    if (prevStageRef.current !== -1 && prevStageRef.current !== currentStage && !isPlaying) {
       playStageChime(currentStage);
     }
     prevStageRef.current = currentStage;
-  }, [currentStage, onStageChange]);
+  }, [currentStage, onStageChange, isPlaying]);
 
   // Smooth 60fps requestAnimationFrame continuous simulation loop
   useEffect(() => {
@@ -740,7 +738,7 @@ export function AgroEcosystemCanvasScrubber({
       onMouseLeave={handleMouseLeave}
       className={`relative w-full h-full min-h-[360px] rounded-xl overflow-hidden border border-white/[0.08] shadow-2xl bg-slate-950 select-none ${className}`}
     >
-      <canvas ref={canvasRef} className="w-full h-full block" />
+      <canvas ref={canvasRef} width={600} height={400} className="w-full h-full block" />
 
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
         <div className="flex items-center gap-3 bg-slate-900/80 backdrop-blur-md border border-white/10 px-3.5 py-2 rounded-xl">

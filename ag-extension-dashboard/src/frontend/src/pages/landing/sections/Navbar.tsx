@@ -16,7 +16,7 @@ export function Navbar() {
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="flex items-center gap-3 cursor-pointer group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-lg"
           >
-            <img src="/logo.png" alt="GPExts Logo" className="w-9 h-9 object-contain rounded-lg group-hover:scale-105 transition-transform" />
+            <img src="/logo.png" alt="GPExts Logo" width={36} height={36} className="w-9 h-9 object-contain rounded-lg group-hover:scale-105 transition-transform" />
             <span className="text-lg font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">GPExts</span>
           </button>
 

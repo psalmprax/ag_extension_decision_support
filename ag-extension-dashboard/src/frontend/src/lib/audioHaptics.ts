@@ -2,9 +2,32 @@ import { triggerHaptic } from './haptics';
 
 let audioCtx: AudioContext | null = null;
 let isAudioMuted = false;
+let userHasInteracted = false;
+
+if (typeof window !== 'undefined') {
+  const markInteracted = () => {
+    userHasInteracted = true;
+    window.removeEventListener('pointerdown', markInteracted);
+    window.removeEventListener('keydown', markInteracted);
+    window.removeEventListener('touchstart', markInteracted);
+  };
+  window.addEventListener('pointerdown', markInteracted, { passive: true });
+  window.addEventListener('keydown', markInteracted, { passive: true });
+  window.addEventListener('touchstart', markInteracted, { passive: true });
+}
+
+function hasUserGesture(): boolean {
+  if (typeof navigator !== 'undefined' && 'userActivation' in navigator) {
+    return (navigator as { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive ?? userHasInteracted;
+  }
+  return userHasInteracted;
+}
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
+  // Autoplay Policy Guard: never create or resume AudioContext before an explicit user gesture
+  if (!hasUserGesture()) return null;
+
   if (!audioCtx) {
     const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (AudioContextClass) {
@@ -12,8 +35,8 @@ function getAudioContext(): AudioContext | null {
     }
   }
   if (audioCtx && audioCtx.state === 'suspended') {
-    audioCtx.resume().catch(err => {
-      console.warn('AudioContext resume failed:', err);
+    audioCtx.resume().catch(() => {
+      // Ignore autoplay/suspension errors silently if still blocked
     });
   }
   return audioCtx;

@@ -20,6 +20,8 @@ export function Footer() {
                 <img
                   src="/logo.png"
                   alt="GPExts Logo"
+                  width={36}
+                  height={36}
                   className="w-9 h-9 object-contain rounded-lg group-hover:scale-105 transition-transform"
                 />
                 <span className="text-lg font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">GPExts</span>

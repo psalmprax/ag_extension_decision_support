@@ -89,6 +89,7 @@ export async function createTables(pool: Pool): Promise<void> {
     await pool.query(`
       ALTER TABLE users ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT false;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS manager_id UUID;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS country VARCHAR(100) DEFAULT 'Kenya';
       ALTER TABLE farmers ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT false;
       UPDATE users SET is_demo = true WHERE id = '00000000-0000-0000-0000-000000000001';
       UPDATE users SET is_demo = true WHERE lower(COALESCE(email,'')) = 'demo@agridemo.com';

@@ -17,9 +17,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { playStageChime } from '@/lib/audioHaptics';
 
-export type AudiencePersona = 'officers' | 'agribusiness' | 'donors';
+type AudiencePersona = 'officers' | 'agribusiness' | 'donors';
 
-export interface StageStoryItem {
+interface StageStoryItem {
   num: string;
   title: string;
   category: string;
@@ -248,7 +248,7 @@ export function AgroStorytellingSection() {
   return (
     <section
       id="interactive-story"
-      className="relative py-16 sm:py-24 bg-slate-950 border-t border-white/[0.04] scroll-mt-20 overflow-hidden"
+      className="relative py-16 sm:py-24 bg-slate-950 border-t border-white/[0.04] scroll-mt-20 overflow-hidden [overflow-anchor:none]"
     >
       {/* Background ambient lighting */}
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900/40 to-slate-950 pointer-events-none" />
@@ -310,66 +310,68 @@ export function AgroStorytellingSection() {
           </div>
 
           {/* Right Milestone HUD Card Column (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col justify-between self-stretch space-y-6">
-            {/* Dynamic Card */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`${persona}-${activeStage}`}
-                initial={{ opacity: 0, y: 15, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -15, scale: 0.98 }}
-                transition={{ duration: 0.3, ease: 'easeOut' }}
-                className={`p-7 sm:p-8 rounded-xl bg-gradient-to-br ${activeStoryItem.bgGlow} bg-slate-900/95 backdrop-blur-xl border ${activeStoryItem.border} shadow-2xl flex flex-col justify-between flex-1 relative overflow-hidden`}
-              >
-                <div>
-                  {/* Category & Badge */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`p-2.5 rounded-xl bg-white/5 ${activeStoryItem.color}`}>
-                        <IconComp className="w-5 h-5" />
+          <div className="lg:col-span-5 flex flex-col justify-between self-stretch space-y-6 min-h-[440px] sm:min-h-[500px]">
+            {/* Dynamic Card Container with fixed min-height to eliminate layout shifts */}
+            <div className="relative flex-1 min-h-[360px] sm:min-h-[400px] flex flex-col">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${persona}-${activeStage}`}
+                  initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -15, scale: 0.98 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  className={`p-7 sm:p-8 rounded-xl bg-gradient-to-br ${activeStoryItem.bgGlow} bg-slate-900/95 backdrop-blur-xl border ${activeStoryItem.border} shadow-2xl flex flex-col justify-between flex-1 min-h-[360px] sm:min-h-[400px] relative overflow-hidden`}
+                >
+                  <div>
+                    {/* Category & Badge */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`p-2.5 rounded-xl bg-white/5 ${activeStoryItem.color}`}>
+                          <IconComp className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-mono font-bold tracking-wider text-white/60">
+                          {activeStoryItem.category}
+                        </span>
                       </div>
-                      <span className="text-xs font-mono font-bold tracking-wider text-white/60">
-                        {activeStoryItem.category}
+                      <span className="px-3 py-1 rounded-md text-xs font-mono font-bold bg-white/10 text-white/90 border border-white/10">
+                        STEP {activeStoryItem.num} // 04
                       </span>
                     </div>
-                    <span className="px-3 py-1 rounded-md text-xs font-mono font-bold bg-white/10 text-white/90 border border-white/10">
-                      STEP {activeStoryItem.num} // 04
-                    </span>
+
+                    {/* Title */}
+                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 leading-snug">
+                      {activeStoryItem.title}
+                    </h3>
+
+                    {/* Bullet Points */}
+                    <ul className="space-y-3 mb-6">
+                      {activeStoryItem.bullets.map((bullet: string, bIdx: number) => (
+                        <li key={bIdx} className="flex items-start gap-3 text-sm text-slate-300">
+                          <CheckCircle2 className={`w-4 h-4 mt-0.5 shrink-0 ${activeStoryItem.color}`} />
+                          <span className="leading-relaxed">{bullet}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
 
-                  {/* Title */}
-                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 leading-snug">
-                    {activeStoryItem.title}
-                  </h3>
-
-                  {/* Bullet Points */}
-                  <ul className="space-y-3 mb-6">
-                    {activeStoryItem.bullets.map((bullet: string, bIdx: number) => (
-                      <li key={bIdx} className="flex items-start gap-3 text-sm text-slate-300">
-                        <CheckCircle2 className={`w-4 h-4 mt-0.5 shrink-0 ${activeStoryItem.color}`} />
-                        <span className="leading-relaxed">{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Tag & Action */}
-                <div className="pt-4 border-t border-white/10 flex items-center justify-between mt-auto">
-                  <span className="text-xs font-mono text-emerald-400 font-semibold">
-                    ✓ {activeStoryItem.tag}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="Open Interactive Demo Sandbox"
-                    onClick={() => navigate('/demo')}
-                    className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20"
-                  >
-                    <span>Try Demo</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </motion.div>
-            </AnimatePresence>
+                  {/* Tag & Action */}
+                  <div className="pt-4 border-t border-white/10 flex items-center justify-between mt-auto">
+                    <span className="text-xs font-mono text-emerald-400 font-semibold">
+                      ✓ {activeStoryItem.tag}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Open Interactive Demo Sandbox"
+                      onClick={() => navigate('/demo')}
+                      className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20"
+                    >
+                      <span>Try Demo</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
             {/* Stage Quick Switcher Pills */}
             <div className="bg-slate-900/70 border border-white/10 p-2.5 rounded-xl flex items-center justify-between gap-2 shadow-lg">

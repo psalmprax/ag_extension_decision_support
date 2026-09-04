@@ -6,6 +6,10 @@ import { authorize, AuthRequest } from '../../middleware/authorize';
 import { usageService, FREE_TIER_LIMITS } from '../../services/usageService';
 import { safeError } from '@/utils/safeResponse';
 
+// Route-level subscription writes are local mirrors / complementary writes only.
+// Stripe-driven subscription state is authoritative from the Stripe webhook handler
+// in services/paymentService.ts (handleWebhook). See that file for the ownership contract.
+
 const router = Router();
 
 const prisma = getPrisma();

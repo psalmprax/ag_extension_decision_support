@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "country" VARCHAR(100) DEFAULT 'Kenya';

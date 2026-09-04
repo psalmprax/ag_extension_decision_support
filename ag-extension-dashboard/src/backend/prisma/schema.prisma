@@ -15,6 +15,7 @@ model User {
   lastName      String             @map("last_name") @db.VarChar(100)
   role          String             @default("extension_officer") @db.VarChar(50)
   region        String?            @db.VarChar(100)
+  country       String?            @default("Kenya") @db.VarChar(100)
   phone         String?            @db.VarChar(20)
   isDemo        Boolean            @default(false) @map("is_demo")
   managerId     String?            @map("manager_id") @db.Uuid

@@ -274,6 +274,7 @@ export interface UserRow {
   last_name: string | null;
   role: string | null;
   region: string | null;
+  country: string | null;
   phone: string | null;
   is_active: boolean | null;
   last_login: Date | string | null;
@@ -290,6 +291,7 @@ export interface UserPublicRow {
   last_name: string | null;
   role: string | null;
   region: string | null;
+  country: string | null;
   phone: string | null;
   is_active: boolean | null;
   preferred_language: string | null;

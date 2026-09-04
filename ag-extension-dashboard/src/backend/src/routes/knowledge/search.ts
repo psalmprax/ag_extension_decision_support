@@ -88,9 +88,17 @@ async function fetchKnowledgeArticles(q: unknown, limit: unknown, offset: unknow
     const pool = getPool();
 
     if (pool && q) {
-        if (v2 === 'true') {
+        if (v2 === 'true' || v2 === true) {
             const ragRes = await executeRagV2Search(q as string, limit as string, category as string | undefined, crop as string | undefined, cacheKey, res);
             if (ragRes) return ragRes; // Response already sent
+        } else if (v2 === 'false' || v2 === false) {
+            // Fast-path: keyword search via Postgres FTS / ILIKE without embedding or LLM overhead (<10ms)
+            const { VectorService } = await import('@/services/vectorService');
+            articles = await VectorService.keywordSearch(q as string, parseInt(limit as string, 10), {
+                category: category as string | undefined,
+                crop: crop as string | undefined
+            });
+            if (articles.length > 0) return articles;
         }
         articles = await KnowledgeService.searchKnowledge(q as string, parseInt(limit as string, 10), {
             category: category as string | undefined,
@@ -291,7 +299,7 @@ router.get('/live-context', async (req: Request, res: Response) => {
 // Ask AI a question (RAG-based)
 router.post('/ask', async (req: Request, res: Response) => {
     try {
-        const { question } = req.body;
+        const { question, bypassCache, attachments } = req.body;
         const user = (req as Request & { user?: Record<string, unknown> }).user;
         const userId = (user?.userId || user?.id) as string;
         const userRole = (user?.role) as string | undefined;
@@ -326,25 +334,41 @@ router.post('/ask', async (req: Request, res: Response) => {
         const askUser = user as Record<string, unknown> | undefined;
         const isFreeTier = askUser?.role === 'farmer';
         const preferredProvider = isFreeTier ? 'freebuff' : undefined;
-        const result = await KnowledgeService.askQuestion(userId, question, undefined, { preferredProvider });
+        const result = await KnowledgeService.askQuestion(
+            userId,
+            question,
+            attachments,
+            { preferredProvider, bypassCache: Boolean(bypassCache) }
+        );
 
         // Record search for daily quota tracking
         await usageService.recordKnowledgeSearch(userId, question, result.answer);
 
         let citations: Citation[] = [];
-        try {
-            const { RAGV2Service } = await import('@/services/ragV2Service');
-            const enhanced = await RAGV2Service.enhancedSearch(question, {
-                limit: 3,
-                useChunks: true,
-                useGraph: false,
-                useReranking: false
-            });
-            citations = enhanced.citations;
-        } catch (ragErr) {
-            // Non-fatal for the answer, but never silent: an empty citation list is
-            // otherwise indistinguishable from "retrieval found nothing".
-            logger.warn('RAG v2 citation retrieval failed for /knowledge/ask; evidenceStatus will reflect zero citations:', ragErr);
+        if (result.contextUsed && result.contextUsed.length > 0) {
+            // Map contextUsed directly to citations: 0ms latency, exact match to retrieved ground truth
+            citations = result.contextUsed.slice(0, 3).map((item, idx) => ({
+                sourceId: item.id || `src-${idx + 1}`,
+                title: (item.metadata?.title as string) || `${item.metadata?.crop || 'Agro'} ${item.metadata?.category || 'Knowledge'}`,
+                category: (item.metadata?.category as string) || 'Knowledge Base',
+                excerpt: (item.content || '').replace(/[\n\r]+/g, ' ').slice(0, 250),
+                score: typeof item.score === 'number' ? item.score : 0.85
+            }));
+        } else {
+            try {
+                const { RAGV2Service } = await import('@/services/ragV2Service');
+                const enhanced = await RAGV2Service.enhancedSearch(question, {
+                    limit: 3,
+                    useChunks: true,
+                    useGraph: false,
+                    useReranking: false
+                });
+                citations = enhanced.citations;
+            } catch (ragErr) {
+                // Non-fatal for the answer, but never silent: an empty citation list is
+                // otherwise indistinguishable from "retrieval found nothing".
+                logger.warn('RAG v2 citation retrieval failed for /knowledge/ask; evidenceStatus will reflect zero citations:', ragErr);
+            }
         }
 
         const remainingAfter = userRole === 'admin' ? 999999 : Math.max(0, dailyQuota.remaining - 1);

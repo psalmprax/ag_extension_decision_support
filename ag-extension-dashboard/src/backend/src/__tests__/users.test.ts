@@ -159,6 +159,44 @@ describe('Users Route — Mapper-before-response: mapUserPublicRows + mapUserPub
         expect(response.body.data.is_active).toBeUndefined();
     });
 
+    it('POST / accepts camelCase firstName, lastName, and country', async () => {
+        const insertedRow = {
+            id: 'user-camel',
+            email: 'camel@example.com',
+            first_name: 'Kiprono',
+            last_name: 'Rotich',
+            role: 'extension_officer',
+            region: 'Rift Valley',
+            country: 'Kenya',
+            phone: '+254712345678',
+            is_active: true,
+            preferred_language: null,
+            avatar_url: null,
+            last_login: null,
+        };
+        mockQuery.mockResolvedValueOnce({ rows: [insertedRow], rowCount: 1 });
+
+        const response = await request(app)
+            .post('/api/v1/users')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({
+                email: 'camel@example.com',
+                password: 'password123',
+                firstName: 'Kiprono',
+                lastName: 'Rotich',
+                country: 'Kenya',
+                region: 'Rift Valley',
+                phone: '+254712345678',
+            });
+
+        expect(response.status).toBe(201);
+        expect(response.body.data.id).toBe('user-camel');
+        expect(response.body.data.firstName).toBe('Kiprono');
+        expect(response.body.data.lastName).toBe('Rotich');
+        expect(response.body.data.country).toBe('Kenya');
+        expect(response.body.data.first_name).toBeUndefined();
+    });
+
     it('GET /role/:role invokes mapUserRows (full DTO with timestamps)', async () => {
         const userRow = {
             id: 'user-1',

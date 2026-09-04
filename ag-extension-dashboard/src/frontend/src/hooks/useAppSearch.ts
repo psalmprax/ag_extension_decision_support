@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { searchKnowledge, KnowledgeArticle } from '@/api/knowledgeService';
 import { Farmer, Visit, Report } from '../types/dashboard';
 import { useDemoMode, DEMO_FARMERS, DEMO_VISITS, DEMO_REPORTS } from '@/demo';
@@ -33,6 +33,14 @@ export const useAppSearch = (
   const [isGlobalSearching, setIsGlobalSearching] = useState(false);
   const [globalSearchResults, setGlobalSearchResults] = useState<SearchResult[]>([]);
   const { isDemo } = useDemoMode();
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeQuerySeqRef = useRef<number>(0);
+
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, []);
 
   // transactions intentionally not used in demo; suppress unused-arg lint
   void transactions;
@@ -73,8 +81,8 @@ export const useAppSearch = (
       return {
         type: 'Visits',
         items: matchedVisits.map((v: VisitShape) => {
-          const farmerName = v.farmer_name ?? v.farmerName ?? '';
-          const scheduledAt = v.scheduled_at ?? v.scheduledDate ?? '';
+          const farmerName = v.farmer_name || v.farmerName || 'Farmer Visit';
+          const scheduledAt = v.scheduled_at || v.scheduledDate;
           return {
             id: v.id,
             label: `${farmerName} — Visit`,
@@ -133,8 +141,8 @@ export const useAppSearch = (
 
   // Returns a Knowledge SearchResult for the given query, or null.
   // In demo mode we seed a synthetic placeholder so the UI still has
-  // something to render; otherwise we hit the live knowledge API and
-  // swallow errors (knowledge search is optional).
+  // something to render; otherwise we hit the live knowledge API with v2: false
+  // (fast PostgreSQL text match without blocking on LLM reranking).
   const getKnowledgeResults = async (
     query: string,
     isDemoMode: boolean
@@ -152,7 +160,7 @@ export const useAppSearch = (
       };
     }
     try {
-      const knowledgeResults = await searchKnowledge(query);
+      const knowledgeResults = await searchKnowledge(query, undefined, undefined, false);
       if (knowledgeResults.success && knowledgeResults.data?.articles?.length > 0) {
         return {
           type: 'Knowledge',
@@ -171,43 +179,80 @@ export const useAppSearch = (
     return null;
   };
 
-  const handleGlobalSearch = async (query: string) => {
-    if (!query.trim()) {
-      setGlobalSearchResults([]);
-      setShowGlobalSearch(false);
-      return;
+  const mergeKnowledgeResults = (prev: SearchResult[], knowledgeResults: SearchResult): SearchResult[] => {
+    const filtered = prev.filter(g => g.type !== 'Knowledge');
+    const farmerIdx = filtered.findIndex(g => g.type === 'Farmers');
+    if (farmerIdx >= 0) {
+      const copy = [...filtered];
+      copy.splice(farmerIdx + 1, 0, knowledgeResults);
+      return copy;
     }
+    return [knowledgeResults, ...filtered];
+  };
 
-    setIsGlobalSearching(true);
-    setShowGlobalSearch(true);
-    const results: SearchResult[] = [];
-
-    // For demo: use local fallback datasets so search works without live API
+  const computeLocalSearchResults = (query: string): SearchResult[] => {
     const sourceFarmers = isDemo ? DEMO_FARMERS : farmers;
     const sourceVisits = isDemo ? DEMO_VISITS : visits;
     const sourceReports = isDemo ? DEMO_REPORTS : reports;
 
-    try {
-      const farmerResults = getFarmerResultsLocal(query, sourceFarmers);
-      if (farmerResults) results.push(farmerResults);
+    const baseResults: SearchResult[] = [];
+    const farmerResults = getFarmerResultsLocal(query, sourceFarmers);
+    if (farmerResults) baseResults.push(farmerResults);
 
-      const knowledgeResults = await getKnowledgeResults(query, isDemo);
-      if (knowledgeResults) results.push(knowledgeResults);
+    const visitResults = getVisitResultsLocal(query, sourceVisits);
+    if (visitResults) baseResults.push(visitResults);
 
-      const visitResults = getVisitResultsLocal(query, sourceVisits);
-      if (visitResults) results.push(visitResults);
+    const reportResults = getReportResultsLocal(query, sourceReports);
+    if (reportResults) baseResults.push(reportResults);
 
-      const reportResults = getReportResultsLocal(query, sourceReports);
-      if (reportResults) results.push(reportResults);
-
-      if (!isDemo) {
-        const txResults = getTransactionResults(query);
-        if (txResults) results.push(txResults);
-      }
-    } finally {
-      setGlobalSearchResults(results);
-      setIsGlobalSearching(false);
+    if (!isDemo) {
+      const txResults = getTransactionResults(query);
+      if (txResults) baseResults.push(txResults);
     }
+
+    return baseResults;
+  };
+
+  const handleGlobalSearch = (query: string) => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = null;
+    }
+
+    if (!query.trim()) {
+      activeQuerySeqRef.current++;
+      setGlobalSearchResults([]);
+      setShowGlobalSearch(false);
+      setIsGlobalSearching(false);
+      return;
+    }
+
+    setShowGlobalSearch(true);
+    setGlobalSearchResults(computeLocalSearchResults(query));
+
+    if (query.trim().length < 2) {
+      setIsGlobalSearching(false);
+      return;
+    }
+
+    // 2. Debounce the remote Knowledge Base API lookup by 250ms
+    setIsGlobalSearching(true);
+    const seq = ++activeQuerySeqRef.current;
+
+    searchDebounceRef.current = setTimeout(async () => {
+      try {
+        const knowledgeResults = await getKnowledgeResults(query, isDemo);
+        if (seq !== activeQuerySeqRef.current) return; // Discard superseded query response
+
+        if (knowledgeResults) {
+          setGlobalSearchResults(prev => mergeKnowledgeResults(prev, knowledgeResults));
+        }
+      } finally {
+        if (seq === activeQuerySeqRef.current) {
+          setIsGlobalSearching(false);
+        }
+      }
+    }, 250);
   };
 
   return {

@@ -18,6 +18,7 @@ import {
   History,
   Laptop,
   KeyRound,
+  Globe,
 } from 'lucide-react';
 import apiClient from '@/api/client';
 import { useDemoMode, DEMO_USERS } from '@/demo';
@@ -30,6 +31,7 @@ interface User {
   email: string;
   role: string;
   region: string;
+  country?: string;
   phone: string;
   lastLoginAt?: string | null;
 }
@@ -74,6 +76,7 @@ export function UserManagementPage() {
     password: '',
     role: 'extension_officer',
     region: '',
+    country: 'Kenya',
     phone: '',
   });
   const [formError, setFormError] = useState('');
@@ -100,7 +103,8 @@ export function UserManagementPage() {
       }
       const params = roleFilter ? `?role=${roleFilter}` : '';
       const res = await apiClient.get(`/users${params}`);
-      return res.data.data.users as User[];
+      const raw = res.data?.data;
+      return (Array.isArray(raw) ? raw : raw?.users || []) as User[];
     },
   });
 
@@ -125,6 +129,7 @@ export function UserManagementPage() {
         password: '',
         role: 'extension_officer',
         region: '',
+        country: 'Kenya',
         phone: '',
       });
     },
@@ -152,12 +157,14 @@ export function UserManagementPage() {
       u.firstName?.toLowerCase().includes(term) ||
       u.lastName?.toLowerCase().includes(term) ||
       u.email?.toLowerCase().includes(term) ||
-      u.region?.toLowerCase().includes(term)
+      u.region?.toLowerCase().includes(term) ||
+      u.country?.toLowerCase().includes(term)
     );
   });
 
   const officersCount = usersList.filter(u => u.role === 'extension_officer').length;
   const uniqueRegions = new Set(usersList.map(u => u.region).filter(Boolean)).size;
+  const uniqueCountries = new Set(usersList.map(u => u.country).filter(Boolean)).size || (usersList.length > 0 ? 1 : 0);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-24">
@@ -184,7 +191,7 @@ export function UserManagementPage() {
 
           <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
             {/* KPI Telemetry Chips */}
-            <div className="grid grid-cols-3 sm:flex items-center gap-2 w-full sm:w-auto">
+            <div className="grid grid-cols-4 sm:flex items-center gap-2 w-full sm:w-auto">
               <div className="px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-center sm:text-left">
                 <span className="text-xxs font-semibold text-white/40 uppercase block">Total Staff</span>
                 <strong className="text-sm font-bold text-white font-mono">{usersList.length}</strong>
@@ -192,6 +199,10 @@ export function UserManagementPage() {
               <div className="px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-center sm:text-left">
                 <span className="text-xxs font-semibold text-white/40 uppercase block">Officers</span>
                 <strong className="text-sm font-bold text-emerald-400 font-mono">{officersCount}</strong>
+              </div>
+              <div className="px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-center sm:text-left">
+                <span className="text-xxs font-semibold text-white/40 uppercase block">Countries</span>
+                <strong className="text-sm font-bold text-sky-400 font-mono">{uniqueCountries}</strong>
               </div>
               <div className="px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-center sm:text-left">
                 <span className="text-xxs font-semibold text-white/40 uppercase block">Regions</span>
@@ -215,7 +226,7 @@ export function UserManagementPage() {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
             <input
               type="text"
-              placeholder="Search by name, email, or region..."
+              placeholder="Search by name, email, country, or region..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-white/10 bg-white/[0.02] text-white placeholder-white/30 focus:ring-1 focus:ring-emerald-400 outline-none"
@@ -305,7 +316,9 @@ export function UserManagementPage() {
                     <span className="truncate">{user.email}</span>
                   </div>
                   <div className="flex items-center gap-2 text-white/70">
-                    <MapPin className="w-3.5 h-3.5 text-emerald-400/70 shrink-0" />
+                    <Globe className="w-3.5 h-3.5 text-sky-400/80 shrink-0" />
+                    <span className="font-medium text-white/80">{user.country || 'Kenya'}</span>
+                    <span className="text-white/30">•</span>
                     <span>{user.region || 'Unassigned Region'}</span>
                   </div>
                   {user.phone && (
@@ -449,6 +462,30 @@ export function UserManagementPage() {
                     </select>
                   </div>
                   <div className="space-y-1">
+                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">Phone Number</label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="+254 712 345 678"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">Country *</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.country}
+                      onChange={e => setFormData({ ...formData, country: e.target.value })}
+                      placeholder="e.g. Kenya"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                    />
+                  </div>
+                  <div className="space-y-1">
                     <label className="text-xxs font-bold uppercase tracking-wider text-white/60">Assigned Region</label>
                     <input
                       type="text"
@@ -458,17 +495,6 @@ export function UserManagementPage() {
                       className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                     />
                   </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xxs font-bold uppercase tracking-wider text-white/60">Phone Number</label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+254 712 345 678"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
-                  />
                 </div>
 
                 <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">

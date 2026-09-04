@@ -62,4 +62,29 @@ describe('OmniRoute Hugging Face + NVIDIA providers', () => {
       new NVIDIAProvider().chat({ messages: [{ role: 'user', content: 'hi' }] })
     ).rejects.toThrow('NVIDIA_API_KEY missing');
   });
+
+  it('AIRouter.routeRequest reason normalizes OmniRoute fallback to ReasoningResult', async () => {
+    const { AIRouter, AIProviderFactory } = await import('../services/aiProvider/aiProvider');
+    const spy = jest.spyOn(AIProviderFactory, 'getWithFallback').mockResolvedValueOnce({
+      text: 'Maize requires 500mm water.<visuals>{"kpis":[{"label":"Water","value":"500mm","status":"good"}]}</visuals>',
+      providerUsed: 'openrouter',
+      modelUsed: 'meta-llama/llama-3.3-70b-instruct:free',
+      isFreeModel: true,
+    });
+
+    const result = await AIRouter.routeRequest('reason', {
+      context: 'Maize context',
+      query: 'What is water requirement?',
+    });
+
+    expect(result).toHaveProperty('reasoning');
+    expect(result).toHaveProperty('answer');
+    expect(result.answer).toContain('Maize requires 500mm water.');
+    expect(result.visuals?.kpis).toHaveLength(1);
+    expect(result.providerUsed).toBe('openrouter');
+    expect(result.modelUsed).toBe('meta-llama/llama-3.3-70b-instruct:free');
+    expect(result.isFreeModel).toBe(true);
+
+    spy.mockRestore();
+  });
 });

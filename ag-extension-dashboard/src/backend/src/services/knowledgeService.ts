@@ -226,7 +226,7 @@ export class KnowledgeService {
             const stealthResults = await Promise.race([
                 StealthScraperService.scrapeKnowledge(queryText, platform, 'Global Tropics'),
                 new Promise<null>((_, reject) =>
-                    setTimeout(() => reject(new Error('StealthScraperService.scrapeKnowledge timed out after 30s')), 30000)
+                    setTimeout(() => reject(new Error('StealthScraperService.scrapeKnowledge timed out after 5s')), 5000)
                 )
             ]) as any[] | null;
             
@@ -280,7 +280,7 @@ export class KnowledgeService {
         try {
             const jinaUrl = `https://r.jina.ai/${url}`;
             const { default: axios } = await import('axios');
-            const resp = await axios.get(jinaUrl, { timeout: 8000, headers: { 'Accept': 'text/markdown' } });
+            const resp = await axios.get(jinaUrl, { timeout: 2500, headers: { 'Accept': 'text/markdown' } });
             const text = typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data);
             return text.slice(0, 4000);
         } catch { return null; }
@@ -295,8 +295,8 @@ export class KnowledgeService {
         const fetchedAt = new Date().toISOString();
         const isRealTimeIntent = queryCategories.some(c => ['market_and_commodity_prices', 'climate_and_weather'].includes(c));
 
-        // Always attempt fresh web retrieval for real-time intents or when local score is weak
-        const needsFreshWeb = isRealTimeIntent || contextResults.length === 0 || (contextResults[0].score !== undefined && contextResults[0].score < 0.85);
+        // Always attempt fresh web retrieval for real-time intents or when local score is weak (< 0.78)
+        const needsFreshWeb = isRealTimeIntent || contextResults.length === 0 || (contextResults[0].score !== undefined && contextResults[0].score < 0.78);
         if (!needsFreshWeb && !isRealTimeIntent) {
             // Attach fetchedAt to existing results for citation freshness
             return contextResults.map(r => ({
@@ -305,7 +305,7 @@ export class KnowledgeService {
             }));
         }
 
-        logger.info(`Enriching context with always-fresh Tavily (5, advanced, week) + Jina for: "${queryText}" (realTime=${isRealTimeIntent})`);
+        logger.info(`Enriching context with Tavily (4, basic, week) for: "${queryText}" (realTime=${isRealTimeIntent})`);
         let webResults = await this.fetchTavilyWebResults(queryText, fetchedAt);
 
         // Fallback to agri-specific scraper only if Tavily yielded nothing and is agri query
@@ -316,17 +316,20 @@ export class KnowledgeService {
         return this.dedupeAndRerank(queryText, [...webResults, ...contextResults], fetchedAt);
     }
 
-    /** Fetch up to 5 fresh Tavily results, enriching each with Jina-extracted content when available. */
+    /** Fetch up to 4 fresh Tavily results, enriching with Jina only if snippet is sparse. */
     private static async fetchTavilyWebResults(queryText: string, fetchedAt: string): Promise<SearchResult[]> {
         try {
-            const tavilyRes = await tavilyService.search(queryText, 5, { searchDepth: 'advanced', timeRange: 'week', includeAnswer: false });
+            const tavilyRes = await tavilyService.search(queryText, 4, { searchDepth: 'basic', timeRange: 'week', includeAnswer: false });
             if (!tavilyRes?.results?.length) return [];
-            return await Promise.all(tavilyRes.results.slice(0, 5).map(async (r, idx) => {
-                const jinaContent = await this.fetchViaJina(r.url);
-                const content = jinaContent || r.content;
+            return await Promise.all(tavilyRes.results.slice(0, 4).map(async (r, idx) => {
+                let content = r.content;
+                if (!content || content.length < 120) {
+                    const jinaContent = await this.fetchViaJina(r.url);
+                    if (jinaContent) content = jinaContent;
+                }
                 return {
                     id: `web-${idx}-${Date.now()}`,
-                    content,
+                    content: content || r.title,
                     metadata: {
                         title: r.title,
                         category: 'External Reference',
@@ -743,7 +746,7 @@ Agronomic Decision Support Protocol (Phase 2):
         ).catch(logError => logger.error('Background logging failed:', logError));
     }
 
-    private static handleAskQuestionFallback(userId: string, queryText: string, contextResults: SearchResult[], error: unknown) {
+    private static handleAskQuestionFallback(userId: string, queryText: string, contextResults: SearchResult[], error: unknown): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
         logger.error('RAG analysis failed:', error);
 
         if (contextResults.length > 0) {
@@ -785,22 +788,44 @@ Agronomic Decision Support Protocol (Phase 2):
         userId: string,
         queryText: string,
         attachments?: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }>,
-        options?: { preferredProvider?: string }
+        options?: { preferredProvider?: string; bypassCache?: boolean }
     ): Promise<ReasoningResult & { cached: boolean; contextUsed: SearchResult[] }> {
-        logger.info(`Getting RAG-based answer for query: "${queryText}" (User: ${userId}, Attachments: ${attachments?.length || 0}, PreferredProvider: ${options?.preferredProvider || 'default'})`);
+        logger.info(`Getting RAG-based answer for query: "${queryText}" (User: ${userId}, Attachments: ${attachments?.length || 0}, PreferredProvider: ${options?.preferredProvider || 'default'}, BypassCache: ${Boolean(options?.bypassCache)})`);
 
-        const queryCategories = await this.categorizeQuery(queryText, options);
+        const normalized = queryText.toLowerCase().trim();
+        const baseRedisKey = `rag:exact:${normalized}`;
+
+        // Fast-path: check exact match caches first (<2ms) before making AI classification or vector calls
+        if (!options?.bypassCache && (!attachments || attachments.length === 0)) {
+            const exactHit = await this.checkExactCachesOnly(queryText, baseRedisKey);
+            if (exactHit) {
+                logger.info(`Exact cache HIT (pre-categorization) for query: "${queryText}"`);
+                return exactHit;
+            }
+        }
+
+        // Parallelize query categorization, local vector search, and user/farmer context resolution
+        const [queryCategories, initialContextResults, userContext] = await Promise.all([
+            this.categorizeQuery(queryText, options),
+            this.searchKnowledge(queryText),
+            this.resolveUserContext(userId, queryText),
+        ]);
+
         const isRealTimeIntent = queryCategories.some(c => ['market_and_commodity_prices', 'climate_and_weather', 'market_prices'].includes(c));
         const freshSuffix = isRealTimeIntent ? `:fresh:${new Date().toISOString().slice(0, 10)}` : '';
-        const redisKey = `rag:exact:${queryText.toLowerCase().trim()}${freshSuffix}`;
+        const redisKey = `rag:exact:${normalized}${freshSuffix}`;
 
-        const cachedHit = await this.checkAnswerCaches(queryText, redisKey, attachments, isRealTimeIntent);
-        if (cachedHit) return cachedHit;
+        if (!options?.bypassCache) {
+            const cachedHit = await this.checkAnswerCaches(queryText, redisKey, attachments, isRealTimeIntent);
+            if (cachedHit) return cachedHit;
+        }
 
-        const contextResults = await this.assembleQuestionContext(userId, queryText, queryCategories);
-        const contextText = contextResults
-            .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType || 'text'}, Score: ${res.score !== undefined ? res.score.toFixed(2) : '1.0'}, URL: ${res.metadata.sourceUrl || ''})\n${res.content}`)
-            .join('\n\n---\n\n');
+        const { contextResults, contextText } = await this.resolveAggregatedContext(
+            queryText,
+            queryCategories,
+            initialContextResults,
+            userContext
+        );
 
         try {
             const reasoningResult = process.env.KNOWLEDGE_AGENTIC_LOOP === 'false'
@@ -810,6 +835,30 @@ Agronomic Decision Support Protocol (Phase 2):
         } catch (error) {
             return this.handleAskQuestionFallback(userId, queryText, contextResults, error);
         }
+    }
+
+    private static async resolveAggregatedContext(
+        queryText: string,
+        queryCategories: string[],
+        initialContextResults: SearchResult[],
+        userContext: Awaited<ReturnType<typeof KnowledgeService.resolveUserContext>>
+    ): Promise<{ contextResults: SearchResult[]; contextText: string }> {
+        const isAgriQuery = queryCategories.length === 0 || queryCategories.some(c =>
+            ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather', 'market_prices'].includes(c)
+        );
+
+        let contextResults = await this.enrichContextWithWebFallbacks(queryText, queryCategories, isAgriQuery, initialContextResults);
+
+        if (isAgriQuery) {
+            const liveResults = await this.fetchLiveAgriContext(queryCategories, userContext);
+            contextResults = [...liveResults, ...contextResults];
+        }
+
+        const contextText = contextResults
+            .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType || 'text'}, Score: ${res.score !== undefined ? res.score.toFixed(2) : '1.0'}, URL: ${res.metadata.sourceUrl || ''})\n${res.content}`)
+            .join('\n\n---\n\n');
+
+        return { contextResults, contextText };
     }
 
     /** Cache lookup honoring real-time bypass: realtime intents only trust exact/fresh caches and skip the semantic cache. */
@@ -823,24 +872,6 @@ Agronomic Decision Support Protocol (Phase 2):
         // Bypass semantic cache for real-time intents (market/weather) to avoid stale 24h answers
         const hit = isRealTimeIntent ? await this.checkExactCachesOnly(queryText, redisKey) : await this.checkCaches(queryText, redisKey);
         return hit ?? null;
-    }
-
-    /** Local search → web fallbacks → user context → live agri data. */
-    private static async assembleQuestionContext(userId: string, queryText: string, queryCategories: string[]): Promise<SearchResult[]> {
-        let contextResults = await this.searchKnowledge(queryText);
-        const isAgriQuery = queryCategories.length === 0 || queryCategories.some(c =>
-            ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather', 'market_prices'].includes(c)
-        );
-
-        contextResults = await this.enrichContextWithWebFallbacks(queryText, queryCategories, isAgriQuery, contextResults);
-
-        const userContext = await this.resolveUserContext(userId, queryText);
-
-        if (isAgriQuery) {
-            const liveResults = await this.fetchLiveAgriContext(queryCategories, userContext);
-            contextResults = [...liveResults, ...contextResults];
-        }
-        return contextResults;
     }
 
     /** Post-process, attach context, cache-and-log, and return the final answer payload. */
@@ -867,22 +898,97 @@ Agronomic Decision Support Protocol (Phase 2):
         return response;
     }
 
+    private static sanitizeContextText(text: string): string {
+        if (!text || typeof text !== 'string') return '';
+
+        return text
+            // Strip HTML comments, scripts, styles, and tags
+            .replace(/<!--[\s\S]*?-->/g, '')
+            .replace(/<script[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[\s\S]*?<\/style>/gi, '')
+            .replace(/<[^>]+>/g, ' ')
+            // Common web navigation & social junk
+            .replace(/\b(Facebook|Twitter|X|LinkedIn|Pinterest|WhatsApp|Instagram|Telegram)\b(\s+(Facebook|Twitter|X|LinkedIn|Pinterest|WhatsApp|Instagram|Telegram)\b)*/gi, '')
+            .replace(/\b(Share on|Follow us on|Pin on|Tweet this|Share this)\b[^\n.]*/gi, '')
+            .replace(/\bWhat are You Looking for\?\s+[A-Za-z\s&]+/gi, '')
+            .replace(/\b(Administration\s+Agriculture\s+Arts & Humanities\s+Education\s+Engineering[^\n.]*)/gi, '')
+            .replace(/\b(Read also|Read more|Related posts?|Leave a Reply|Cancel reply|Save my name|Sign up for our newsletter|Subscribe to):?[^\n.]*/gi, '')
+            // Common boilerplate branding repetitions (e.g. "Disciplines In Nigeria Disciplines In Nigeria")
+            .replace(/(\b[A-Za-z]{4,20}\s+In\s+[A-Za-z]{4,20}\b)(?:\s+\1)+/gi, '$1')
+            // Whitespace normalization
+            .replace(/[ \t]+/g, ' ')
+            .replace(/\n\s*\n+/g, '\n\n')
+            .trim();
+    }
+
+    private static extractInsightsFromChunk(
+        result: SearchResult,
+        idx: number,
+        seenParagraphs: Set<string>,
+        keyBulletPoints: string[],
+        structuredExcerpts: string[]
+    ) {
+        const sanitized = this.sanitizeContextText(result.content);
+        const title = result.metadata?.title || `Source ${idx + 1}`;
+        const paragraphs = sanitized.split(/\n\n+/);
+        const cleanSourceParagraphs: string[] = [];
+
+        for (const p of paragraphs) {
+            const trimmed = p.trim();
+            if (trimmed.length < 30) continue;
+
+            const norm = trimmed.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 100);
+            if (seenParagraphs.has(norm)) continue;
+            seenParagraphs.add(norm);
+
+            cleanSourceParagraphs.push(trimmed);
+
+            const headingMatch = trimmed.match(/^([A-Z][A-Za-z0-9\s–—/-]{3,50}):\s*(.+)/);
+            if (headingMatch && keyBulletPoints.length < 8) {
+                keyBulletPoints.push(`- **${headingMatch[1].trim()}**: ${headingMatch[2].trim()}`);
+            }
+        }
+
+        if (cleanSourceParagraphs.length > 0) {
+            const formatted = cleanSourceParagraphs.slice(0, 3).join('\n\n');
+            structuredExcerpts.push(`#### ${idx + 1}. ${title}\n${formatted}`);
+        }
+    }
+
     private static buildExtractiveAnswer(queryText: string, contextResults: SearchResult[]): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
         const primary = contextResults[0];
         const sourceTitle = primary.metadata?.title || `${primary.metadata?.crop || 'Agricultural'} ${primary.metadata?.category || 'Knowledge'}`;
         const sourceUrl = primary.metadata?.sourceUrl ? ` (${primary.metadata.sourceUrl})` : '';
-        const contextSummary = contextResults
-            .slice(0, 3)
-            .map((result, index) => {
-                const title = result.metadata?.title || `Source ${index + 1}`;
-                const content = this.formatMarkdownContent(result.content);
-                return `### ${index + 1}. ${title}\n${content}`;
-            })
-            .join('\n\n');
+
+        // Extract and deduplicate key paragraphs across all chunks
+        const seenParagraphs = new Set<string>();
+        const keyBulletPoints: string[] = [];
+        const structuredExcerpts: string[] = [];
+
+        for (const [idx, result] of contextResults.slice(0, 4).entries()) {
+            this.extractInsightsFromChunk(result, idx, seenParagraphs, keyBulletPoints, structuredExcerpts);
+        }
+
+        // Build clean synthesized markdown sections
+        const sections: string[] = [
+            `I found source-backed guidance for: **"${queryText}"**.\n\n*Primary Source Reference: ${sourceTitle}${sourceUrl}*`,
+        ];
+
+        if (keyBulletPoints.length > 0) {
+            sections.push(`### Key Identified Insights & Takeaways\n\n${keyBulletPoints.join('\n\n')}`);
+        }
+
+        if (structuredExcerpts.length > 0) {
+            sections.push(`### Verified Context & Field Reference\n\n${structuredExcerpts.join('\n\n')}`);
+        }
+
+        sections.push(`*Note: The recommendations above are extracted directly from the local verified agricultural knowledge base.*`);
+
+        const answer = sections.join('\n\n---\n\n');
 
         return {
             reasoning: 'Generated from retrieved knowledge-base context because the configured AI provider did not complete in time.',
-            answer: `I found source-backed guidance for: **"${queryText}"**.\n\n*Primary Source Reference: ${sourceTitle}${sourceUrl}*\n\n---\n\n${contextSummary}\n\n---\n\n*Note: The recommendations above are extracted directly from the local verified agricultural knowledge base.*`,
+            answer,
             confidence: Math.max(0.5, Math.min(primary.score || 0.7, 0.95)),
             visuals: {
                 kpis: [

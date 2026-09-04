@@ -41,7 +41,7 @@ export function Features() {
             </motion.div>
 
             {/* 3-Persona Visual Card Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
               {/* Persona 1: The Smallholder Farmer */}
               <motion.div
                 initial="hidden"
@@ -54,6 +54,8 @@ export function Features() {
                   <img
                     src="/images/landing/persona-farmer.webp"
                     alt="Smallholder farmer in maize field receiving mobile SMS advisory"
+                    width={600}
+                    height={450}
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
                     loading="lazy"
                   />
@@ -108,6 +110,8 @@ export function Features() {
                   <img
                     src="/images/landing/persona-officer.webp"
                     alt="Field extension officer diagnosing crop leaf health in the field with mobile AI app"
+                    width={600}
+                    height={450}
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
                     loading="lazy"
                   />
@@ -156,12 +160,14 @@ export function Features() {
                 whileInView="visible"
                 viewport={{ once: true, margin: '-60px' }}
                 variants={fadeUp}
-                className="group relative rounded-xl backdrop-blur-xl bg-slate-900/80 border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl hover:shadow-emerald-950/40 md:col-span-2 lg:col-span-1"
+                className="group relative rounded-xl backdrop-blur-xl bg-slate-900/80 border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl hover:shadow-emerald-950/40"
               >
                 <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
                   <img
                     src="/images/landing/persona-manager.webp"
                     alt="Regional agribusiness manager analyzing yield analytics and field operations on dashboard"
+                    width={600}
+                    height={450}
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
                     loading="lazy"
                   />

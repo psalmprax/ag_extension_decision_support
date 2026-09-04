@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { logger } from '../../../utils/logger';
+import { config } from '@/config';
 import { normalizeToolDefinitions, normalizeMessages, normalizeToolCalls } from '../toolCalling';
 import {
   BaseAIProvider,
@@ -83,7 +84,7 @@ export class AIHubMixAccountService {
   private apiBaseUrl: string;
 
   constructor(accessKey?: string, apiBaseUrl = 'https://aihubmix.com/api') {
-    this.accessKey = accessKey || process.env.AIHUBMIX_ACCESS_KEY || '';
+    this.accessKey = accessKey || process.env.AIHUBMIX_ACCESS_KEY || config.aihubmix?.accessKey || '';
     this.apiBaseUrl = apiBaseUrl;
   }
 
@@ -270,7 +271,7 @@ export class AIHubMixProvider extends BaseAIProvider {
 
   constructor(apiKey?: string, baseUrl = 'https://aihubmix.com/v1') {
     super();
-    this.apiKey = apiKey || process.env.AIHUBMIX_API_KEY || '';
+    this.apiKey = apiKey || process.env.AIHUBMIX_API_KEY || config.aihubmix?.apiKey || '';
     this.baseUrl = baseUrl;
     this.accountService = new AIHubMixAccountService();
   }
@@ -278,9 +279,11 @@ export class AIHubMixProvider extends BaseAIProvider {
   private async resolveApiKey(): Promise<string> {
     if (this.apiKey) return this.apiKey;
     if (process.env.AIHUBMIX_API_KEY) return process.env.AIHUBMIX_API_KEY;
+    if (config.aihubmix?.apiKey) return config.aihubmix.apiKey;
 
     // If only AIHUBMIX_ACCESS_KEY is present, auto-discover or issue an sk- key
-    if (process.env.AIHUBMIX_ACCESS_KEY) {
+    const accessKey = process.env.AIHUBMIX_ACCESS_KEY || config.aihubmix?.accessKey;
+    if (accessKey) {
       try {
         const tokens = await this.accountService.listTokens(0, 10);
         const active = tokens.find(t => t.status === 1 && t.key);
@@ -307,18 +310,44 @@ export class AIHubMixProvider extends BaseAIProvider {
   }
 
   public override isConfigured(): boolean {
-    return Boolean(this.apiKey || process.env.AIHUBMIX_API_KEY || process.env.AIHUBMIX_ACCESS_KEY);
+    return Boolean(
+      this.apiKey ||
+      process.env.AIHUBMIX_API_KEY ||
+      config.aihubmix?.apiKey ||
+      process.env.AIHUBMIX_ACCESS_KEY ||
+      config.aihubmix?.accessKey
+    );
   }
 
   public override async healthCheck(): Promise<boolean> {
     if (!this.isConfigured()) return false;
     try {
-      // Lightweight probe — 3s timeout so health check never blocks startup
-      await axios.post(
-        `${this.baseUrl}/chat/completions`,
-        { model: 'gpt-4o-mini', messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 },
-        { headers: { Authorization: `Bearer ${this.apiKey || process.env.AIHUBMIX_API_KEY}` }, timeout: 3000 }
-      );
+      const key = await this.resolveApiKey();
+      if (!key) return false;
+
+      const authHeader = key.startsWith('Bearer ') ? key : `Bearer ${key}`;
+      const probeModel = process.env.AI_PRIMARY_MODEL || 'claude-3-5-sonnet-20241022';
+
+      // 10s timeout to tolerate remote proxy and multi-model routing latency
+      try {
+        await axios.post(
+          `${this.baseUrl}/chat/completions`,
+          { model: probeModel, messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 },
+          { headers: { Authorization: authHeader, 'Content-Type': 'application/json' }, timeout: 10000 }
+        );
+      } catch (postErr) {
+        const status = (postErr as { response?: { status?: number } }).response?.status;
+        // If specific model rejected (400/404), probe credentials via standard /models
+        if (status === 400 || status === 404) {
+          await axios.get(`${this.baseUrl}/models`, {
+            headers: { Authorization: authHeader },
+            timeout: 10000,
+          });
+        } else {
+          throw postErr;
+        }
+      }
+
       this.recordHealthError();
       return true;
     } catch (err) {

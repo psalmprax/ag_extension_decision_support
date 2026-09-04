@@ -153,6 +153,7 @@ export interface UserDTO {
   lastName: string | null;
   role: string | null;
   region: string | null;
+  country: string | null;
   phone: string | null;
   isActive: boolean | null;
   lastLogin: string | null;
@@ -169,6 +170,7 @@ function mapUserRow(row: UserRow): UserDTO {
     lastName: row.last_name,
     role: row.role,
     region: row.region,
+    country: row.country ?? null,
     phone: row.phone,
     isActive: row.is_active,
     lastLogin: toIso(row.last_login) ?? null,
@@ -189,6 +191,7 @@ export interface UserPublicDTO {
   lastName: string | null;
   role: string | null;
   region: string | null;
+  country: string | null;
   phone: string | null;
   isActive: boolean | null;
   preferredLanguage: string | null;
@@ -203,6 +206,7 @@ export function mapUserPublicRow(row: UserPublicRow): UserPublicDTO {
     lastName: row.last_name,
     role: row.role,
     region: row.region,
+    country: row.country ?? null,
     phone: row.phone,
     isActive: row.is_active,
     preferredLanguage: row.preferred_language,

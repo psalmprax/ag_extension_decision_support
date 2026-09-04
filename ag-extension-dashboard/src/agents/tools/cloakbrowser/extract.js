@@ -14,16 +14,34 @@ export function extractCandidatesFromDocument(doc, { containerSelector, maxResul
   const out = [];
   const seen = new Set();
 
+  const isBoilerplate = (el) => {
+    if (!el || typeof el.closest !== 'function') return false;
+    return Boolean(
+      el.closest('nav, header, footer, aside, noscript, [role="navigation"], [role="banner"], [role="contentinfo"], .nav, .navbar, .menu, .sidebar, .social, .share, .breadcrumbs, .comments')
+    );
+  };
+
+  const sanitizeDesc = (desc, title) => {
+    let d = clean(desc);
+    if (title) d = d.replace(clean(title), '');
+    // Strip social sharing and navigation noise
+    d = d.replace(/\b(Facebook|Twitter|X|LinkedIn|Pinterest|WhatsApp|Instagram)\b(\s+(Facebook|Twitter|X|LinkedIn|Pinterest|WhatsApp|Instagram)\b)*/gi, '');
+    d = d.replace(/\b(Share on|Follow us|Leave a Reply|Cancel reply):?[^\n.]*/gi, '');
+    d = d.replace(/\bWhat are You Looking for\?[^\n.]*/gi, '');
+    return clean(d);
+  };
+
   const pushItem = (title, url, description, thumbnail) => {
     title = clean(title);
     url = abs(url);
     if (!title || title.length < 8 || !url || seen.has(url)) return;
     seen.add(url);
+    const cleanedDesc = sanitizeDesc(description, title);
     out.push({
       id: String(out.length + 1) + '-' + url.replace(/[^a-z0-9]/gi, '').slice(-24),
       url,
       title: title.slice(0, 200),
-      description: clean(description).slice(0, 1200),
+      description: cleanedDesc.slice(0, 1200),
       author: '',
       thumbnail: thumbnail ? abs(thumbnail) : '',
       views: 0,
@@ -33,6 +51,7 @@ export function extractCandidatesFromDocument(doc, { containerSelector, maxResul
   if (containerSelector) {
     for (const el of doc.querySelectorAll(containerSelector)) {
       if (out.length >= maxResults) break;
+      if (isBoilerplate(el)) continue;
       const a = el.querySelector('a[href]');
       const h = el.querySelector('h1,h2,h3,h4') || a;
       const img = el.querySelector('img');
@@ -46,8 +65,10 @@ export function extractCandidatesFromDocument(doc, { containerSelector, maxResul
   if (out.length === 0) {
     const roots = doc.querySelectorAll('main, article, [role="main"], #content, .results, .search-results, body');
     for (const root of roots) {
+      if (isBoilerplate(root)) continue;
       for (const a of root.querySelectorAll('a[href]')) {
         if (out.length >= maxResults) break;
+        if (isBoilerplate(a)) continue;
         const href = a.getAttribute('href') || '';
         if (!href || href.startsWith('#') || href.startsWith('javascript:')) continue;
         const title = a.textContent;

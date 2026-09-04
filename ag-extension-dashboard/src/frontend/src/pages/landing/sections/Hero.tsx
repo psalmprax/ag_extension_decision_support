@@ -23,6 +23,8 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             <img
               src="/images/landing/hero-aerial.webp"
               alt="Lush green agricultural farmland and smallholder plots from above"
+              width={1920}
+              height={1080}
               className="w-full h-full object-cover object-center opacity-20 mix-blend-luminosity scale-105 filter saturate-125"
               loading="eager"
             />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,
@@ -103,7 +103,7 @@ const matchesArticle = (art: DocumentArticle, category: string, query: string): 
 };
 
 export const KnowledgeBase: React.FC = () => {
-  const { addNotification, setActiveTab } = useAppStore();
+  const { user, addNotification, setActiveTab } = useAppStore();
   const { isDemo } = useDemoMode();
   const [activeTabMode, setActiveTabMode] = useState<KnowledgeTabMode>('search');
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,7 +111,12 @@ export const KnowledgeBase: React.FC = () => {
   const [isAsking, setIsAsking] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [lastResult, setLastResult] = useState<Result | null>(null);
-  const [quota, setQuota] = useState<KnowledgeQuotaData | null>(null);
+  const [quota, setQuota] = useState<KnowledgeQuotaData | null>(() => {
+    if (user?.role === 'admin') {
+      return { allowed: true, current: 0, limit: -1, remaining: 999999, isFree: false };
+    }
+    return { allowed: true, current: 0, limit: 3, remaining: 3, isFree: true };
+  });
   const [activeCanvasMode, setActiveCanvasMode] = useState<SpatialCanvasMode>('phenology');
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [retrievalStep, setRetrievalStep] = useState<number>(0);
@@ -129,14 +134,46 @@ export const KnowledgeBase: React.FC = () => {
     cachedQueries?: number;
   } | null>(null);
 
-  const fetchQuotaData = async () => {
+  const applyQuotaUpdate = useCallback((dailyRemaining?: number, dailyLimit?: number) => {
+    if (typeof dailyRemaining === 'number' && typeof dailyLimit === 'number') {
+      setQuota(prev => ({
+        allowed: dailyRemaining > 0,
+        current: dailyLimit - dailyRemaining,
+        limit: dailyLimit,
+        remaining: dailyRemaining,
+        isFree: prev?.isFree ?? (user?.role !== 'admin'),
+      }));
+    }
+  }, [user?.role]);
+
+  const handleSearchError = useCallback((error: unknown) => {
+    const err = error as { response?: { data?: { error?: string; limitReached?: boolean } } };
+    if (err.response?.data?.limitReached) {
+      setQuota(prev => ({
+        allowed: false,
+        current: prev?.limit ?? 3,
+        limit: prev?.limit ?? 3,
+        remaining: 0,
+        isFree: true,
+      }));
+    }
+    addNotification({
+      type: 'error',
+      message: err.response?.data?.error || 'Knowledge search failed',
+    });
+  }, [addNotification]);
+
+  const fetchQuotaData = useCallback(async () => {
     try {
       const res = await fetchKnowledgeQuota();
       if (res.success) setQuota(res.data);
     } catch {
-      // ignore
+      // In demo or guest mode, keep standard 3/day free tier quota
+      if (user?.role !== 'admin') {
+        setQuota(prev => prev ?? { allowed: true, current: 0, limit: 3, remaining: 3, isFree: true });
+      }
     }
-  };
+  }, [user?.role]);
 
   const fetchStats = async () => {
     try {
@@ -150,9 +187,9 @@ export const KnowledgeBase: React.FC = () => {
   useEffect(() => {
     fetchStats();
     fetchQuotaData();
-  }, []);
+  }, [fetchQuotaData]);
 
-  const performAISearch = async (queryText: string) => {
+  const performAISearch = async (queryText: string, bypassCache: boolean = false) => {
     setIsAsking(true);
     setRetrievalStep(1);
 
@@ -161,7 +198,7 @@ export const KnowledgeBase: React.FC = () => {
     }, 450);
 
     try {
-      const res = await askAI(queryText, attachments);
+      const res = await askAI(queryText, attachments, { bypassCache });
       clearInterval(stepInterval);
       setRetrievalStep(4);
 
@@ -173,6 +210,7 @@ export const KnowledgeBase: React.FC = () => {
         timestamp: new Date().toISOString(),
       });
       setAttachments([]);
+      applyQuotaUpdate(res.data.dailyRemaining, res.data.dailyLimit);
       fetchQuotaData();
 
       if (res.data.cached) {
@@ -180,17 +218,15 @@ export const KnowledgeBase: React.FC = () => {
           type: 'info',
           message: 'Result retrieved from semantic cache (Cost optimized)',
         });
+      } else if (bypassCache) {
+        addNotification({
+          type: 'success',
+          message: 'Fresh real-time LLM synthesis generated',
+        });
       }
     } catch (error: unknown) {
       clearInterval(stepInterval);
-      const err = error as { response?: { data?: { error?: string; limitReached?: boolean } } };
-      if (err.response?.data?.limitReached) {
-        setQuota(prev => (prev ? { ...prev, remaining: 0, allowed: false } : null));
-      }
-      addNotification({
-        type: 'error',
-        message: err.response?.data?.error || 'Knowledge search failed',
-      });
+      handleSearchError(error);
     } finally {
       setIsAsking(false);
     }
@@ -464,6 +500,16 @@ export const KnowledgeBase: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => performAISearch(lastResult.query || searchQuery, true)}
+                      disabled={isAsking}
+                      title="Bypass cache and generate fresh real-time LLM synthesis"
+                      className="px-3.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Regenerate Live</span>
+                    </button>
+
                     <button
                       onClick={() => setActiveTabMode('graph')}
                       className="px-3.5 py-2 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-300 text-xs font-bold transition-all flex items-center gap-1.5"

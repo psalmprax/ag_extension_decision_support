@@ -41,7 +41,10 @@ jest.mock('../middleware/authorize', () => ({
         req.user = { userId: 'off-1', role: 'extension_officer', email: 'officer@example.com' };
         next();
     },
-    optionalAuth: (_req: unknown, _res: unknown, next: () => void) => {
+    optionalAuth: (req: { user?: unknown; headers?: { authorization?: string } }, _res: unknown, next: () => void) => {
+        if (req?.headers?.authorization) {
+            req.user = { userId: 'off-1', role: 'extension_officer', email: 'officer@example.com' };
+        }
         next();
     },
     AuthRequest: jest.fn(),
@@ -276,5 +279,24 @@ describe('Knowledge Route — Negative paths', () => {
         expect(response.status).toBe(404);
         expect(response.body.success).toBe(false);
         expect(response.body.errorCode).toBe('ARTICLE_NOT_FOUND');
+    });
+
+    it('GET /quota returns 200 with default free quota when unauthenticated', async () => {
+        const response = await request(app).get('/api/v1/knowledge/quota');
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.limit).toBe(3);
+        expect(response.body.data.remaining).toBe(3);
+        expect(response.body.data.isFree).toBe(true);
+    });
+
+    it('GET /quota returns 200 with quota data when authenticated', async () => {
+        const response = await request(app)
+            .get('/api/v1/knowledge/quota')
+            .set('Authorization', `Bearer ${officerToken}`);
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.limit).toBeDefined();
+        expect(response.body.data.remaining).toBeDefined();
     });
 });

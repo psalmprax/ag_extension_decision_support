@@ -14,10 +14,10 @@ import { incrWindow } from '@/services/sharedState';
 
 const router = Router();
 
-/** Shared helper — create a Free subscription + usage row for a newly created user. */
+/** Shared helper — create or reset a Free subscription + usage row for a user. */
 async function createFreeSubscription(userId: string): Promise<void> {
     try {
-        const freePlan = await query("SELECT id FROM subscription_plans WHERE name = 'Free'");
+        const freePlan = await query("SELECT id FROM subscription_plans WHERE name = 'Free' OR LOWER(name) = 'free' ORDER BY price ASC LIMIT 1");
         if (freePlan.rows.length > 0) {
             const planId = freePlan.rows[0].id;
             const now = new Date();
@@ -27,13 +27,17 @@ async function createFreeSubscription(userId: string): Promise<void> {
             const subResult = await query(`
                 INSERT INTO subscriptions (user_id, plan_id, status, current_period_start, current_period_end, created_at, updated_at)
                 VALUES ($1, $2, 'active', $3, $4, NOW(), NOW())
+                ON CONFLICT (user_id) DO UPDATE SET plan_id = $2, updated_at = NOW()
                 RETURNING id
             `, [userId, planId, now, nextMonth]);
 
-            await query(`
-                INSERT INTO usage (subscription_id, sms_count, ai_chat_count, report_count, last_reset_at, created_at, updated_at)
-                VALUES ($1, 0, 0, 0, NOW(), NOW(), NOW())
-            `, [subResult.rows[0].id]);
+            if (subResult.rows.length > 0) {
+                await query(`
+                    INSERT INTO usage (subscription_id, sms_count, ai_chat_count, report_count, last_reset_at, created_at, updated_at)
+                    VALUES ($1, 0, 0, 0, NOW(), NOW(), NOW())
+                    ON CONFLICT (subscription_id) DO NOTHING
+                `, [subResult.rows[0].id]);
+            }
         }
     } catch (subError) {
         logger.error('Failed to auto-subscribe user:', subError);
@@ -211,6 +215,8 @@ router.post('/demo', async (req: Request, res: Response) => {
                     lastName: user.last_name,
                     role: user.role,
                     region: user.region,
+                    planName: 'Free',
+                    isFree: true,
                 },
             },
         });
