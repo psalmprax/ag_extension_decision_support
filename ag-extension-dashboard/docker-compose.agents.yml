@@ -4,6 +4,7 @@
 services:
   # Agent Zero Service
   agent-zero:
+    image: ag-extension-dashboard-agent-zero:latest
     build:
       context: ./src/agents
       dockerfile: Dockerfile.agent-zero
@@ -37,6 +38,7 @@ services:
 
   # Crew AI Service
   crew-ai:
+    image: ag-extension-dashboard-crew-ai:latest
     build:
       context: ./src/agents
       dockerfile: Dockerfile.crew-ai
@@ -70,6 +72,7 @@ services:
 
   # Discovery Scraper Service — used by CloakBrowser for stealth scraping
   discovery-scraper:
+    image: ag-extension-dashboard-discovery-scraper:latest
     build:
       context: ./src/agents/tools/cloakbrowser
       dockerfile: Dockerfile.discovery-scraper
@@ -83,7 +86,7 @@ services:
       - ag-network
     restart: always
     healthcheck:
-      test: [ "CMD-SHELL", "wget -qO- http://127.0.0.1:8010/health >/dev/null 2>&1 || exit 1" ]
+      test: [ "CMD-SHELL", "wget -qO- http://127.0.0.1:8010/health >/dev/null 2>&1 || curl -f http://127.0.0.1:8010/health >/dev/null 2>&1 || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
