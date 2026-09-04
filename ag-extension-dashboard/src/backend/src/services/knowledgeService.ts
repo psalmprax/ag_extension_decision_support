@@ -226,7 +226,7 @@ export class KnowledgeService {
             const stealthResults = await Promise.race([
                 StealthScraperService.scrapeKnowledge(queryText, platform, 'Global Tropics'),
                 new Promise<null>((_, reject) =>
-                    setTimeout(() => reject(new Error('StealthScraperService.scrapeKnowledge timed out after 30s')), 30000)
+                    setTimeout(() => reject(new Error('StealthScraperService.scrapeKnowledge timed out after 5s')), 5000)
                 )
             ]) as any[] | null;
             
@@ -280,7 +280,7 @@ export class KnowledgeService {
         try {
             const jinaUrl = `https://r.jina.ai/${url}`;
             const { default: axios } = await import('axios');
-            const resp = await axios.get(jinaUrl, { timeout: 8000, headers: { 'Accept': 'text/markdown' } });
+            const resp = await axios.get(jinaUrl, { timeout: 2500, headers: { 'Accept': 'text/markdown' } });
             const text = typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data);
             return text.slice(0, 4000);
         } catch { return null; }
@@ -295,8 +295,8 @@ export class KnowledgeService {
         const fetchedAt = new Date().toISOString();
         const isRealTimeIntent = queryCategories.some(c => ['market_and_commodity_prices', 'climate_and_weather'].includes(c));
 
-        // Always attempt fresh web retrieval for real-time intents or when local score is weak
-        const needsFreshWeb = isRealTimeIntent || contextResults.length === 0 || (contextResults[0].score !== undefined && contextResults[0].score < 0.85);
+        // Always attempt fresh web retrieval for real-time intents or when local score is weak (< 0.78)
+        const needsFreshWeb = isRealTimeIntent || contextResults.length === 0 || (contextResults[0].score !== undefined && contextResults[0].score < 0.78);
         if (!needsFreshWeb && !isRealTimeIntent) {
             // Attach fetchedAt to existing results for citation freshness
             return contextResults.map(r => ({
@@ -305,7 +305,7 @@ export class KnowledgeService {
             }));
         }
 
-        logger.info(`Enriching context with always-fresh Tavily (5, advanced, week) + Jina for: "${queryText}" (realTime=${isRealTimeIntent})`);
+        logger.info(`Enriching context with Tavily (4, basic, week) for: "${queryText}" (realTime=${isRealTimeIntent})`);
         let webResults = await this.fetchTavilyWebResults(queryText, fetchedAt);
 
         // Fallback to agri-specific scraper only if Tavily yielded nothing and is agri query
@@ -316,17 +316,20 @@ export class KnowledgeService {
         return this.dedupeAndRerank(queryText, [...webResults, ...contextResults], fetchedAt);
     }
 
-    /** Fetch up to 5 fresh Tavily results, enriching each with Jina-extracted content when available. */
+    /** Fetch up to 4 fresh Tavily results, enriching with Jina only if snippet is sparse. */
     private static async fetchTavilyWebResults(queryText: string, fetchedAt: string): Promise<SearchResult[]> {
         try {
-            const tavilyRes = await tavilyService.search(queryText, 5, { searchDepth: 'advanced', timeRange: 'week', includeAnswer: false });
+            const tavilyRes = await tavilyService.search(queryText, 4, { searchDepth: 'basic', timeRange: 'week', includeAnswer: false });
             if (!tavilyRes?.results?.length) return [];
-            return await Promise.all(tavilyRes.results.slice(0, 5).map(async (r, idx) => {
-                const jinaContent = await this.fetchViaJina(r.url);
-                const content = jinaContent || r.content;
+            return await Promise.all(tavilyRes.results.slice(0, 4).map(async (r, idx) => {
+                let content = r.content;
+                if (!content || content.length < 120) {
+                    const jinaContent = await this.fetchViaJina(r.url);
+                    if (jinaContent) content = jinaContent;
+                }
                 return {
                     id: `web-${idx}-${Date.now()}`,
-                    content,
+                    content: content || r.title,
                     metadata: {
                         title: r.title,
                         category: 'External Reference',
@@ -789,15 +792,43 @@ Agronomic Decision Support Protocol (Phase 2):
     ): Promise<ReasoningResult & { cached: boolean; contextUsed: SearchResult[] }> {
         logger.info(`Getting RAG-based answer for query: "${queryText}" (User: ${userId}, Attachments: ${attachments?.length || 0}, PreferredProvider: ${options?.preferredProvider || 'default'})`);
 
-        const queryCategories = await this.categorizeQuery(queryText, options);
+        const normalized = queryText.toLowerCase().trim();
+        const baseRedisKey = `rag:exact:${normalized}`;
+
+        // Fast-path: check exact match caches first (<2ms) before making AI classification or vector calls
+        if (!attachments || attachments.length === 0) {
+            const exactHit = await this.checkExactCachesOnly(queryText, baseRedisKey);
+            if (exactHit) {
+                logger.info(`Exact cache HIT (pre-categorization) for query: "${queryText}"`);
+                return exactHit;
+            }
+        }
+
+        // Parallelize query categorization, local vector search, and user/farmer context resolution
+        const [queryCategories, initialContextResults, userContext] = await Promise.all([
+            this.categorizeQuery(queryText, options),
+            this.searchKnowledge(queryText),
+            this.resolveUserContext(userId, queryText),
+        ]);
+
         const isRealTimeIntent = queryCategories.some(c => ['market_and_commodity_prices', 'climate_and_weather', 'market_prices'].includes(c));
         const freshSuffix = isRealTimeIntent ? `:fresh:${new Date().toISOString().slice(0, 10)}` : '';
-        const redisKey = `rag:exact:${queryText.toLowerCase().trim()}${freshSuffix}`;
+        const redisKey = `rag:exact:${normalized}${freshSuffix}`;
 
         const cachedHit = await this.checkAnswerCaches(queryText, redisKey, attachments, isRealTimeIntent);
         if (cachedHit) return cachedHit;
 
-        const contextResults = await this.assembleQuestionContext(userId, queryText, queryCategories);
+        const isAgriQuery = queryCategories.length === 0 || queryCategories.some(c =>
+            ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather', 'market_prices'].includes(c)
+        );
+
+        let contextResults = await this.enrichContextWithWebFallbacks(queryText, queryCategories, isAgriQuery, initialContextResults);
+
+        if (isAgriQuery) {
+            const liveResults = await this.fetchLiveAgriContext(queryCategories, userContext);
+            contextResults = [...liveResults, ...contextResults];
+        }
+
         const contextText = contextResults
             .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType || 'text'}, Score: ${res.score !== undefined ? res.score.toFixed(2) : '1.0'}, URL: ${res.metadata.sourceUrl || ''})\n${res.content}`)
             .join('\n\n---\n\n');
@@ -823,24 +854,6 @@ Agronomic Decision Support Protocol (Phase 2):
         // Bypass semantic cache for real-time intents (market/weather) to avoid stale 24h answers
         const hit = isRealTimeIntent ? await this.checkExactCachesOnly(queryText, redisKey) : await this.checkCaches(queryText, redisKey);
         return hit ?? null;
-    }
-
-    /** Local search → web fallbacks → user context → live agri data. */
-    private static async assembleQuestionContext(userId: string, queryText: string, queryCategories: string[]): Promise<SearchResult[]> {
-        let contextResults = await this.searchKnowledge(queryText);
-        const isAgriQuery = queryCategories.length === 0 || queryCategories.some(c =>
-            ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather', 'market_prices'].includes(c)
-        );
-
-        contextResults = await this.enrichContextWithWebFallbacks(queryText, queryCategories, isAgriQuery, contextResults);
-
-        const userContext = await this.resolveUserContext(userId, queryText);
-
-        if (isAgriQuery) {
-            const liveResults = await this.fetchLiveAgriContext(queryCategories, userContext);
-            contextResults = [...liveResults, ...contextResults];
-        }
-        return contextResults;
     }
 
     /** Post-process, attach context, cache-and-log, and return the final answer payload. */
