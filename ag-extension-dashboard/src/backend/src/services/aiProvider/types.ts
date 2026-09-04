@@ -28,6 +28,8 @@ export interface TextGenerationOptions {
     presencePenalty?: number;
     stop?: string[];
     tools?: any[];
+    webSearch?: boolean;
+    webSearchOptions?: Record<string, unknown>;
 }
 
 export interface TextGenerationResult {
@@ -96,6 +98,8 @@ export interface ReasoningOptions {
     temperature?: number;
     attachments?: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }>;
     preferredProvider?: AIProviderType | string;
+    webSearch?: boolean;
+    webSearchOptions?: Record<string, unknown>;
 }
 
 export interface ReasoningResult {
