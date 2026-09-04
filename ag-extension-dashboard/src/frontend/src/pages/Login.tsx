@@ -142,8 +142,8 @@ export function Login({ onDemo }: LoginProps) {
           </div>
 
           {/* Interactive Procedural Canvas in Center */}
-          <div className="flex-1 min-h-[300px] w-full my-3 rounded-xl overflow-hidden border border-white/5 relative z-10 bg-slate-950">
-            <AgroEcosystemCanvasScrubber interactive={true} showControls={false} autoPlay={true} />
+          <div className="w-full h-[360px] min-h-[360px] my-3 relative z-10">
+            <AgroEcosystemCanvasScrubber interactive={true} showControls={false} autoPlay={true} className="w-full h-full" />
           </div>
 
           {/* Bottom Live Feature Badges */}

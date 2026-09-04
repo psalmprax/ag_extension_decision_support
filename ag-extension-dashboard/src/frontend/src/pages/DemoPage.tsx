@@ -453,7 +453,7 @@ export function DemoPage({
               </div>
 
               <div className="h-[480px] w-full">
-                <AgroEcosystemCanvasScrubber interactive={true} showControls={true} />
+                <AgroEcosystemCanvasScrubber interactive={true} showControls={true} className="w-full h-full" />
               </div>
 
               <div className="grid md:grid-cols-3 gap-4 pt-2">
