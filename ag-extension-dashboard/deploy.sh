@@ -108,6 +108,7 @@ cmd_prod() {
 cmd_down() {
   info "Stopping all services..."
   run_compose $DEV_OVERLAY $PROD_OVERLAY down 2>/dev/null || true
+  docker rm -f ag-discovery-scraper ag-agent-zero ag-crew-ai 2>/dev/null || true
   success "All services stopped."
 }
 
