@@ -5,6 +5,10 @@ import { logger } from '../../utils/logger';
 import { authorize, AuthRequest } from '../../middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 
+// PayPal subscription state is created/updated only here. There is no PayPal webhook
+// equivalent in this codebase, so this success handler is the single PayPal subscription
+// writer. See services/paymentService.ts for the ownership contract.
+
 const router = Router();
 
 const prisma = getPrisma();

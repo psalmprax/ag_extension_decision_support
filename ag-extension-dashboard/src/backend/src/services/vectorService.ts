@@ -127,6 +127,51 @@ export class VectorService {
         }
     }
 
+    private static async executeIlikeFallback(
+        queryText: string,
+        limit: number,
+        filters: { category?: string; crop?: string }
+    ): Promise<SearchResult[]> {
+        const trimmed = queryText.trim();
+        if (!trimmed) return [];
+
+        type KeywordRow = { id: string; content: string; title: unknown; category: unknown; crops: unknown[] | null; source_url: unknown; content_type: unknown; score: unknown };
+
+        const ilikeParam = `%${trimmed}%`;
+        const ilikeParams: Array<string | number> = [ilikeParam];
+        const ilikeWhere: string[] = ["(title ILIKE $1 OR content ILIKE $1)"];
+        if (filters.category) {
+            ilikeParams.push(filters.category);
+            ilikeWhere.push(`category = $${ilikeParams.length}`);
+        }
+        if (filters.crop) {
+            ilikeParams.push(filters.crop);
+            ilikeWhere.push(`$${ilikeParams.length} = ANY(crops)`);
+        }
+        ilikeParams.push(limit);
+
+        const ilikeResult = await query(`
+            SELECT id, title, content, category, crops, source_url, content_type, 1.0 as score
+            FROM knowledge_articles
+            WHERE ${ilikeWhere.join(' AND ')}
+            ORDER BY created_at DESC
+            LIMIT $${ilikeParams.length}
+        `, ilikeParams as unknown as unknown[]);
+
+        return (ilikeResult.rows as unknown as KeywordRow[]).map((row) => ({
+            id: row.id,
+            content: row.content,
+            metadata: {
+                title: row.title,
+                category: row.category,
+                crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
+                sourceUrl: row.source_url,
+                contentType: (row.content_type as string) || 'text'
+            },
+            score: 0.8
+        }));
+    }
+
     /**
      * Search for knowledge articles using PostgreSQL full-text search (keyword-based)
      */
@@ -188,43 +233,7 @@ export class VectorService {
                 }
             }
 
-            // Fallback to ILIKE substring matching if tsquery had no match or word was short
-            const trimmed = queryText.trim();
-            if (!trimmed) return [];
-
-            const ilikeParam = `%${trimmed}%`;
-            const ilikeParams: Array<string | number> = [ilikeParam];
-            const ilikeWhere: string[] = ["(title ILIKE $1 OR content ILIKE $1)"];
-            if (filters.category) {
-                ilikeParams.push(filters.category);
-                ilikeWhere.push(`category = $${ilikeParams.length}`);
-            }
-            if (filters.crop) {
-                ilikeParams.push(filters.crop);
-                ilikeWhere.push(`$${ilikeParams.length} = ANY(crops)`);
-            }
-            ilikeParams.push(limit);
-
-            const ilikeResult = await query(`
-                SELECT id, title, content, category, crops, source_url, content_type, 1.0 as score
-                FROM knowledge_articles
-                WHERE ${ilikeWhere.join(' AND ')}
-                ORDER BY created_at DESC
-                LIMIT $${ilikeParams.length}
-            `, ilikeParams as unknown as unknown[]);
-
-            return (ilikeResult.rows as unknown as KeywordRow[]).map((row) => ({
-                id: row.id,
-                content: row.content,
-                metadata: {
-                    title: row.title,
-                    category: row.category,
-                    crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
-                    sourceUrl: row.source_url,
-                    contentType: (row.content_type as string) || 'text'
-                },
-                score: 0.8
-            }));
+            return await this.executeIlikeFallback(queryText, limit, filters);
         } catch (error) {
             logger.error('Database keyword search failed:', error);
             return [];

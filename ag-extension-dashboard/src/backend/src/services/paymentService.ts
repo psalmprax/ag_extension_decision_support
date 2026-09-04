@@ -11,6 +11,30 @@ import type {
     StripeSubscription,
 } from './payment/types';
 
+// Subscription state ownership
+// ---------------------------
+// 1. Stripe-driven subscription state is authoritative from the Stripe webhook handler
+//    below (handleWebhook). That handler owns:
+//      - status
+//      - currentPeriodStart / currentPeriodEnd
+//      - cancelAtPeriodEnd
+//      - linkage to stripeSubscriptionId
+//
+//    Route-level subscription writes in routes/billing/subscription.ts are mirrors or
+//    complementary local writes only. They must not contradict the webhook's understanding
+//    of the same subscription row.
+//
+// 2. PayPal subscription state is created/updated only in routes/billing/paypal.ts
+//    success handler. There is no PayPal webhook equivalent in this codebase, so that
+//    handler is the single PayPal subscription writer.
+//
+// 3. Payment records must be created by the same path that finalizes the subscription
+//    for that provider, so there is no orphan payment and no duplicate subscription claim.
+//
+// 4. Local subscription lookups commonly use userId, but Stripe-side truth is identified
+//    by stripeSubscriptionId. When both are present, webhook reconciliation by
+//    stripeSubscriptionId is preferred for Stripe-driven fields.
+
 class PaymentService {
     private stripe: Stripe | null = null;
     private paypalConfigured: boolean = false;
@@ -39,7 +63,8 @@ class PaymentService {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     apiVersion: '2024-12-18.acacia' as unknown as Stripe.LatestApiVersion,
                 });
-                logger.info('Stripe payment service initialized (Real Mode)');            } catch (error) {
+                logger.info('Stripe payment service initialized (Real Mode)');
+            } catch (error) {
                 logger.warn('Failed to initialize Stripe with provided key - card payments unavailable (PAYMENT_GATEWAY_NOT_CONFIGURED):', error);
                 this.stripe = null;
             }
@@ -65,7 +90,8 @@ class PaymentService {
                     client_secret: paypalClientSecret
                 });
                 this.paypalConfigured = true;
-                logger.info('PayPal payment service initialized');                } catch (error) {
+                logger.info('PayPal payment service initialized');
+            } catch (error) {
                 logger.warn('Failed to initialize PayPal:', error);
                 this.paypalConfigured = false;
             }
@@ -617,44 +643,18 @@ class PaymentService {
         features: string[];
     }>> {
         if (!this.stripe) {
+            // Unconfigured-Stripe behavior change (stage):
+            // Previously this returned hardcoded mock plans when Stripe was absent.
+            // Now it returns an empty list and logs a warning. Any local/dev/demo/test
+            // dependency on mock plans must be verified and, if still required, re-added
+            // explicitly with an env-gated fallback.
             logger.warn('Pricing plans unavailable because Stripe is not configured.');
-            return []; /*
-                {
-                    id: 'price_free',
-                    name: 'Free',
-                    price: 0,
-                    interval: 'month',
-                    features: [
-                        'plan_feature_up_to_10_farmers',
-                        'plan_feature_basic_analytics',
-                        'plan_feature_email_support'
-                    ],
-                },
-                {
-                    id: 'price_pro_monthly',
-                    name: 'Pro',
-                    price: 2900,
-                    interval: 'month',
-                    features: [
-                        'plan_feature_unlimited_farmers',
-                        'plan_feature_advanced_analytics',
-                        'plan_feature_priority_support',
-                        'plan_feature_ai_assistant'
-                    ],
-                },
-                {
-                    id: 'price_enterprise',
-                    name: 'Enterprise',
-                    price: 9900,
-                    interval: 'month',
-                    features: [
-                        'plan_feature_everything_in_pro',
-                        'plan_feature_custom_integrations',
-                        'plan_feature_dedicated_support',
-                        'plan_feature_sla'
-                    ],
-                },
-            ]; */
+            // Unconfigured-Stripe behavior change (stage):
+            // Previously this returned hardcoded mock plans when Stripe was absent.
+            // Now it returns an empty list. Any local/dev/demo/test dependency on mock
+            // plans must be verified and, if still required, re-added explicitly with an
+            // env-gated fallback.
+            return [];
         }
 
         try {

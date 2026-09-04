@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,
@@ -134,7 +134,36 @@ export const KnowledgeBase: React.FC = () => {
     cachedQueries?: number;
   } | null>(null);
 
-  const fetchQuotaData = async () => {
+  const applyQuotaUpdate = useCallback((dailyRemaining?: number, dailyLimit?: number) => {
+    if (typeof dailyRemaining === 'number' && typeof dailyLimit === 'number') {
+      setQuota(prev => ({
+        allowed: dailyRemaining > 0,
+        current: dailyLimit - dailyRemaining,
+        limit: dailyLimit,
+        remaining: dailyRemaining,
+        isFree: prev?.isFree ?? (user?.role !== 'admin'),
+      }));
+    }
+  }, [user?.role]);
+
+  const handleSearchError = useCallback((error: unknown) => {
+    const err = error as { response?: { data?: { error?: string; limitReached?: boolean } } };
+    if (err.response?.data?.limitReached) {
+      setQuota(prev => ({
+        allowed: false,
+        current: prev?.limit ?? 3,
+        limit: prev?.limit ?? 3,
+        remaining: 0,
+        isFree: true,
+      }));
+    }
+    addNotification({
+      type: 'error',
+      message: err.response?.data?.error || 'Knowledge search failed',
+    });
+  }, [addNotification]);
+
+  const fetchQuotaData = useCallback(async () => {
     try {
       const res = await fetchKnowledgeQuota();
       if (res.success) setQuota(res.data);
@@ -144,7 +173,7 @@ export const KnowledgeBase: React.FC = () => {
         setQuota(prev => prev ?? { allowed: true, current: 0, limit: 3, remaining: 3, isFree: true });
       }
     }
-  };
+  }, [user?.role]);
 
   const fetchStats = async () => {
     try {
@@ -158,7 +187,7 @@ export const KnowledgeBase: React.FC = () => {
   useEffect(() => {
     fetchStats();
     fetchQuotaData();
-  }, []);
+  }, [fetchQuotaData]);
 
   const performAISearch = async (queryText: string, bypassCache: boolean = false) => {
     setIsAsking(true);
@@ -181,15 +210,7 @@ export const KnowledgeBase: React.FC = () => {
         timestamp: new Date().toISOString(),
       });
       setAttachments([]);
-      if (typeof res.data.dailyRemaining === 'number' && typeof res.data.dailyLimit === 'number') {
-        setQuota(prev => ({
-          allowed: res.data.dailyRemaining! > 0,
-          current: res.data.dailyLimit! - res.data.dailyRemaining!,
-          limit: res.data.dailyLimit!,
-          remaining: res.data.dailyRemaining!,
-          isFree: prev?.isFree ?? (user?.role !== 'admin'),
-        }));
-      }
+      applyQuotaUpdate(res.data.dailyRemaining, res.data.dailyLimit);
       fetchQuotaData();
 
       if (res.data.cached) {
@@ -205,20 +226,7 @@ export const KnowledgeBase: React.FC = () => {
       }
     } catch (error: unknown) {
       clearInterval(stepInterval);
-      const err = error as { response?: { data?: { error?: string; limitReached?: boolean } } };
-      if (err.response?.data?.limitReached) {
-        setQuota(prev => ({
-          allowed: false,
-          current: prev?.limit ?? 3,
-          limit: prev?.limit ?? 3,
-          remaining: 0,
-          isFree: true,
-        }));
-      }
-      addNotification({
-        type: 'error',
-        message: err.response?.data?.error || 'Knowledge search failed',
-      });
+      handleSearchError(error);
     } finally {
       setIsAsking(false);
     }

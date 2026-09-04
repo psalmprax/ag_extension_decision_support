@@ -179,23 +179,18 @@ export const useAppSearch = (
     return null;
   };
 
-  const handleGlobalSearch = (query: string) => {
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-      searchDebounceRef.current = null;
+  const mergeKnowledgeResults = (prev: SearchResult[], knowledgeResults: SearchResult): SearchResult[] => {
+    const filtered = prev.filter(g => g.type !== 'Knowledge');
+    const farmerIdx = filtered.findIndex(g => g.type === 'Farmers');
+    if (farmerIdx >= 0) {
+      const copy = [...filtered];
+      copy.splice(farmerIdx + 1, 0, knowledgeResults);
+      return copy;
     }
+    return [knowledgeResults, ...filtered];
+  };
 
-    if (!query.trim()) {
-      activeQuerySeqRef.current++;
-      setGlobalSearchResults([]);
-      setShowGlobalSearch(false);
-      setIsGlobalSearching(false);
-      return;
-    }
-
-    setShowGlobalSearch(true);
-
-    // 1. Immediately compute & display local in-memory matches with zero latency
+  const computeLocalSearchResults = (query: string): SearchResult[] => {
     const sourceFarmers = isDemo ? DEMO_FARMERS : farmers;
     const sourceVisits = isDemo ? DEMO_VISITS : visits;
     const sourceReports = isDemo ? DEMO_REPORTS : reports;
@@ -215,7 +210,25 @@ export const useAppSearch = (
       if (txResults) baseResults.push(txResults);
     }
 
-    setGlobalSearchResults(baseResults);
+    return baseResults;
+  };
+
+  const handleGlobalSearch = (query: string) => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = null;
+    }
+
+    if (!query.trim()) {
+      activeQuerySeqRef.current++;
+      setGlobalSearchResults([]);
+      setShowGlobalSearch(false);
+      setIsGlobalSearching(false);
+      return;
+    }
+
+    setShowGlobalSearch(true);
+    setGlobalSearchResults(computeLocalSearchResults(query));
 
     if (query.trim().length < 2) {
       setIsGlobalSearching(false);
@@ -232,16 +245,7 @@ export const useAppSearch = (
         if (seq !== activeQuerySeqRef.current) return; // Discard superseded query response
 
         if (knowledgeResults) {
-          setGlobalSearchResults(prev => {
-            const filtered = prev.filter(g => g.type !== 'Knowledge');
-            const farmerIdx = filtered.findIndex(g => g.type === 'Farmers');
-            if (farmerIdx >= 0) {
-              const copy = [...filtered];
-              copy.splice(farmerIdx + 1, 0, knowledgeResults);
-              return copy;
-            }
-            return [knowledgeResults, ...filtered];
-          });
+          setGlobalSearchResults(prev => mergeKnowledgeResults(prev, knowledgeResults));
         }
       } finally {
         if (seq === activeQuerySeqRef.current) {

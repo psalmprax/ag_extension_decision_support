@@ -230,6 +230,20 @@ class UsageService {
         }
     }
 
+    private isFreeTierUsage(
+        plan: { price?: unknown; name?: string | null } | undefined,
+        status: string | undefined,
+        isDemo: boolean
+    ): boolean {
+        if (isDemo) return true;
+        const isActive = status === 'active' || status === 'trialing';
+        if (!isActive || !plan) return true;
+
+        const price = plan.price != null ? Number(plan.price) : 0;
+        const planName = (plan.name?.toLowerCase() || '').trim();
+        return price === 0 || planName === 'free' || planName.startsWith('free ') || planName.includes(' free');
+    }
+
     async checkDailyKnowledgeLimit(userId: string, role?: string): Promise<{ allowed: boolean; current: number; limit: number; remaining: number }> {
         try {
             if (role === 'admin') {
@@ -248,13 +262,7 @@ class UsageService {
             const isDemo = Boolean(user?.isDemo || user?.email === 'demo@agridemo.com');
             const data = await this.getUsage(userId);
             const plan = data?.plan;
-            const price = plan?.price != null ? Number(plan.price) : 0;
-            const planName = (plan?.name?.toLowerCase() || '').trim();
-            const isFreePlan = !plan || price === 0 || planName === 'free' || planName.startsWith('free ') || planName.includes(' free');
-            const isActive = data?.status === 'active' || data?.status === 'trialing';
-
-            // Free tier users and demo users are strictly limited to 3 searches a day
-            const isFree = isDemo || isFreePlan || !isActive;
+            const isFree = this.isFreeTierUsage(plan, data?.status, isDemo);
 
             if (!isFree) {
                 // Paid subscribers: access governed by plan features

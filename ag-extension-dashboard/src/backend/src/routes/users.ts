@@ -7,12 +7,28 @@ import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 
-// Fields that users may be updated with – no role, no password_hash, no resetToken.
-const ALLOWED_USER_FIELDS = ['first_name', 'last_name', 'region', 'country', 'phone', 'is_active', 'preferred_language'];
-
 const router = Router();
 
 router.use(authorize(['admin', 'regional_manager']));
+
+function extractCreateUserData(body: Record<string, unknown>) {
+    const email = typeof body.email === 'string' ? body.email.trim() : '';
+    const password = typeof body.password === 'string' ? body.password : '';
+    const rawFirst = body.firstName ?? body.first_name;
+    const firstName = typeof rawFirst === 'string' ? rawFirst.trim() : '';
+    const rawLast = body.lastName ?? body.last_name;
+    const lastName = typeof rawLast === 'string' ? rawLast.trim() : '';
+    const role = typeof body.role === 'string' ? body.role.trim() : 'extension_officer';
+    const region = typeof body.region === 'string' && body.region.trim() ? body.region.trim() : null;
+    const country = typeof body.country === 'string' && body.country.trim() ? body.country.trim() : 'Kenya';
+    const phone = typeof body.phone === 'string' && body.phone.trim() ? body.phone.trim() : null;
+
+    const allowedRoles = ['farmer', 'extension_officer', 'regional_manager', 'admin'];
+    const safeRole = role.toLowerCase();
+    const normalizedRole = allowedRoles.includes(safeRole) ? safeRole : 'extension_officer';
+
+    return { email, password, firstName, lastName, normalizedRole, region, country, phone };
+}
 
 /**
  * GET /api/users — list users (admin-only).
@@ -26,20 +42,19 @@ router.get('/', async (req: Request, res: Response) => {
 
         const { rows } = await query<UserPublicRow>(
             `SELECT id, email, first_name, last_name, role, region, country, phone, is_active,
-                    preferred_language, avatar_url, last_login
-               FROM users
-              ORDER BY created_at DESC`
+                    preferred_language, avatar_url, last_login, created_at
+             FROM users
+             ORDER BY created_at DESC`
         );
-
-        return res.json({ success: true, data: mapUserPublicRows(rows) });
+        return res.json({ success: true, data: mapUserPublicRows(rows || []) });
     } catch (error) {
-        logger.error('Failed to list users:', error);
-        return safeError(res, 500, 'Failed to list users');
+        logger.error('Failed to fetch users:', error);
+        return safeError(res, 500, 'Failed to fetch users');
     }
 });
 
 /**
- * GET /api/users/:id — fetch a single user.
+ * GET /api/users/:id — fetch a single user (admin-only).
  */
 router.get('/:id', async (req: Request, res: Response) => {
     try {
@@ -50,8 +65,8 @@ router.get('/:id', async (req: Request, res: Response) => {
 
         const { rows } = await query<UserPublicRow>(
             `SELECT id, email, first_name, last_name, role, region, country, phone, is_active,
-                    preferred_language, avatar_url, last_login
-               FROM users WHERE id = $1`,
+                    preferred_language, avatar_url, last_login, created_at
+             FROM users WHERE id = $1`,
             [id]
         );
 
@@ -59,8 +74,8 @@ router.get('/:id', async (req: Request, res: Response) => {
             return res.status(404).json({ success: false, error: 'User not found' });
         }
 
-        const found = rows[0];
-        return res.json({ success: true, data: found ? mapUserPublicRow(found) : null });
+        const user = rows[0];
+        return res.json({ success: true, data: user ? mapUserPublicRow(user) : null });
     } catch (error) {
         logger.error('Failed to fetch user:', error);
         return safeError(res, 500, 'Failed to fetch user');
@@ -72,31 +87,16 @@ router.get('/:id', async (req: Request, res: Response) => {
  */
 router.post('/', async (req: Request, res: Response) => {
     try {
-        const body = (req.body || {}) as Record<string, unknown>;
-        const email = typeof body.email === 'string' ? body.email.trim() : '';
-        const password = typeof body.password === 'string' ? body.password : '';
-        const rawFirst = body.firstName ?? body.first_name;
-        const firstName = typeof rawFirst === 'string' ? rawFirst.trim() : '';
-        const rawLast = body.lastName ?? body.last_name;
-        const lastName = typeof rawLast === 'string' ? rawLast.trim() : '';
-        const role = typeof body.role === 'string' ? body.role.trim() : 'extension_officer';
-        const region = typeof body.region === 'string' && body.region.trim() ? body.region.trim() : null;
-        const country = typeof body.country === 'string' && body.country.trim() ? body.country.trim() : 'Kenya';
-        const phone = typeof body.phone === 'string' && body.phone.trim() ? body.phone.trim() : null;
+        const data = extractCreateUserData((req.body || {}) as Record<string, unknown>);
 
-        if (!email || !password || !firstName || !lastName) {
+        if (!data.email || !data.password || !data.firstName || !data.lastName) {
             return res.status(400).json({
                 success: false,
                 error: 'email, password, first name and last name are required',
             });
         }
 
-        // Only allow explicitly permitted role values
-        const allowedRoles = ['farmer', 'extension_officer', 'regional_manager', 'admin'];
-        const safeRole = role.toLowerCase();
-        const normalizedRole = allowedRoles.includes(safeRole) ? safeRole : 'extension_officer';
-
-        const password_hash = await bcrypt.hash(password, 10);
+        const password_hash = await bcrypt.hash(data.password, 10);
 
         const { rows } = await query<UserPublicRow>(
             `INSERT INTO users (email, password_hash, first_name, last_name, role, region, country, phone, is_active)
@@ -104,7 +104,7 @@ router.post('/', async (req: Request, res: Response) => {
              ON CONFLICT (email) DO NOTHING
              RETURNING id, email, first_name, last_name, role, region, country, phone, is_active,
                        preferred_language, avatar_url, last_login`,
-            [email, password_hash, firstName, lastName, normalizedRole, region, country, phone]
+            [data.email, password_hash, data.firstName, data.lastName, data.normalizedRole, data.region, data.country, data.phone]
         );
 
         if (!rows || rows.length === 0) {

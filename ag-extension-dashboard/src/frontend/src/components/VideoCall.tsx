@@ -230,6 +230,7 @@ const RecordingBar: React.FC<{ recordedUrl: string; roomId: string; t: (k: strin
   </div>
 );
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: VideoCallProps) {
   const {
     localStream,

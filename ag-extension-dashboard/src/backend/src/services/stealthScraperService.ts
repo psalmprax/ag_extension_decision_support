@@ -107,28 +107,33 @@ export class StealthScraperService {
         );
     }
 
+    private static normalizeCandidate(raw: ContentCandidate, platform: string): ScrapedDocument | null {
+        const rawTitle = (raw?.title || '').trim();
+        const rawSummary = (raw?.description || '').trim();
+        if (!rawTitle && !rawSummary) return null;
+
+        const title = sanitizeScrapedText(rawTitle);
+        const summary = sanitizeScrapedText(rawSummary);
+        if (!title && !summary) return null;
+
+        return {
+            id: String(raw.id || raw.source_uri || title),
+            title: title || summary.slice(0, 80),
+            summary,
+            url: raw.source_uri || null,
+            keywords: Array.isArray(raw.tags) ? raw.tags.map(String).slice(0, 12) : [],
+            platform: raw.platform || platform,
+            publishedAt: raw.published_at || null,
+            dataStatus: 'unverified_scrape',
+        };
+    }
+
     private static normalize(candidates: unknown, platform: string): ScrapedDocument[] {
         if (!Array.isArray(candidates)) return [];
         const out: ScrapedDocument[] = [];
         for (const raw of candidates as ContentCandidate[]) {
-            const rawTitle = (raw?.title || '').trim();
-            const rawSummary = (raw?.description || '').trim();
-            if (!rawTitle && !rawSummary) continue;
-
-            const title = sanitizeScrapedText(rawTitle);
-            const summary = sanitizeScrapedText(rawSummary);
-            if (!title && !summary) continue;
-
-            out.push({
-                id: String(raw.id || raw.source_uri || title),
-                title: title || summary.slice(0, 80),
-                summary,
-                url: raw.source_uri || null,
-                keywords: Array.isArray(raw.tags) ? raw.tags.map(String).slice(0, 12) : [],
-                platform: raw.platform || platform,
-                publishedAt: raw.published_at || null,
-                dataStatus: 'unverified_scrape',
-            });
+            const doc = this.normalizeCandidate(raw, platform);
+            if (doc) out.push(doc);
         }
         return out;
     }

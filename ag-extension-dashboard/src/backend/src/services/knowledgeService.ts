@@ -820,6 +820,29 @@ Agronomic Decision Support Protocol (Phase 2):
             if (cachedHit) return cachedHit;
         }
 
+        const { contextResults, contextText } = await this.resolveAggregatedContext(
+            queryText,
+            queryCategories,
+            initialContextResults,
+            userContext
+        );
+
+        try {
+            const reasoningResult = process.env.KNOWLEDGE_AGENTIC_LOOP === 'false'
+                ? await this.callReasoningWithTimeout(contextText, queryText, attachments, options)
+                : await this.callReasoningAgentic(contextText, queryText, attachments, options, queryCategories);
+            return await this.finalizeAnswer(userId, queryText, redisKey, queryCategories, contextResults, reasoningResult, attachments);
+        } catch (error) {
+            return this.handleAskQuestionFallback(userId, queryText, contextResults, error);
+        }
+    }
+
+    private static async resolveAggregatedContext(
+        queryText: string,
+        queryCategories: string[],
+        initialContextResults: SearchResult[],
+        userContext: Awaited<ReturnType<typeof KnowledgeService.resolveUserContext>>
+    ): Promise<{ contextResults: SearchResult[]; contextText: string }> {
         const isAgriQuery = queryCategories.length === 0 || queryCategories.some(c =>
             ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather', 'market_prices'].includes(c)
         );
@@ -835,14 +858,7 @@ Agronomic Decision Support Protocol (Phase 2):
             .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType || 'text'}, Score: ${res.score !== undefined ? res.score.toFixed(2) : '1.0'}, URL: ${res.metadata.sourceUrl || ''})\n${res.content}`)
             .join('\n\n---\n\n');
 
-        try {
-            const reasoningResult = process.env.KNOWLEDGE_AGENTIC_LOOP === 'false'
-                ? await this.callReasoningWithTimeout(contextText, queryText, attachments, options)
-                : await this.callReasoningAgentic(contextText, queryText, attachments, options, queryCategories);
-            return await this.finalizeAnswer(userId, queryText, redisKey, queryCategories, contextResults, reasoningResult, attachments);
-        } catch (error) {
-            return this.handleAskQuestionFallback(userId, queryText, contextResults, error);
-        }
+        return { contextResults, contextText };
     }
 
     /** Cache lookup honoring real-time bypass: realtime intents only trust exact/fresh caches and skip the semantic cache. */
@@ -905,6 +921,40 @@ Agronomic Decision Support Protocol (Phase 2):
             .trim();
     }
 
+    private static extractInsightsFromChunk(
+        result: SearchResult,
+        idx: number,
+        seenParagraphs: Set<string>,
+        keyBulletPoints: string[],
+        structuredExcerpts: string[]
+    ) {
+        const sanitized = this.sanitizeContextText(result.content);
+        const title = result.metadata?.title || `Source ${idx + 1}`;
+        const paragraphs = sanitized.split(/\n\n+/);
+        const cleanSourceParagraphs: string[] = [];
+
+        for (const p of paragraphs) {
+            const trimmed = p.trim();
+            if (trimmed.length < 30) continue;
+
+            const norm = trimmed.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 100);
+            if (seenParagraphs.has(norm)) continue;
+            seenParagraphs.add(norm);
+
+            cleanSourceParagraphs.push(trimmed);
+
+            const headingMatch = trimmed.match(/^([A-Z][A-Za-z0-9\s–—/-]{3,50}):\s*(.+)/);
+            if (headingMatch && keyBulletPoints.length < 8) {
+                keyBulletPoints.push(`- **${headingMatch[1].trim()}**: ${headingMatch[2].trim()}`);
+            }
+        }
+
+        if (cleanSourceParagraphs.length > 0) {
+            const formatted = cleanSourceParagraphs.slice(0, 3).join('\n\n');
+            structuredExcerpts.push(`#### ${idx + 1}. ${title}\n${formatted}`);
+        }
+    }
+
     private static buildExtractiveAnswer(queryText: string, contextResults: SearchResult[]): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
         const primary = contextResults[0];
         const sourceTitle = primary.metadata?.title || `${primary.metadata?.crop || 'Agricultural'} ${primary.metadata?.category || 'Knowledge'}`;
@@ -916,35 +966,7 @@ Agronomic Decision Support Protocol (Phase 2):
         const structuredExcerpts: string[] = [];
 
         for (const [idx, result] of contextResults.slice(0, 4).entries()) {
-            const sanitized = this.sanitizeContextText(result.content);
-            const title = result.metadata?.title || `Source ${idx + 1}`;
-            const paragraphs = sanitized.split(/\n\n+/);
-            const cleanSourceParagraphs: string[] = [];
-
-            for (const p of paragraphs) {
-                const trimmed = p.trim();
-                if (trimmed.length < 30) continue;
-
-                // Normalize for deduplication
-                const norm = trimmed.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 100);
-                if (seenParagraphs.has(norm)) continue;
-                seenParagraphs.add(norm);
-
-                cleanSourceParagraphs.push(trimmed);
-
-                // Detect potential key insight points (e.g., "Heading: Explanation" or bullet items)
-                const headingMatch = trimmed.match(/^([A-Z][A-Za-z0-9\s–—/-]{3,50}):\s*(.+)/);
-                if (headingMatch && keyBulletPoints.length < 8) {
-                    const heading = headingMatch[1].trim();
-                    const body = headingMatch[2].trim();
-                    keyBulletPoints.push(`- **${heading}**: ${body}`);
-                }
-            }
-
-            if (cleanSourceParagraphs.length > 0) {
-                const formatted = cleanSourceParagraphs.slice(0, 3).join('\n\n');
-                structuredExcerpts.push(`#### ${idx + 1}. ${title}\n${formatted}`);
-            }
+            this.extractInsightsFromChunk(result, idx, seenParagraphs, keyBulletPoints, structuredExcerpts);
         }
 
         // Build clean synthesized markdown sections

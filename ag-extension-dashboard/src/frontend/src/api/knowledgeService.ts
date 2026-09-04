@@ -67,6 +67,9 @@ export interface AskResponse {
       images?: Array<{ url: string; caption?: string }>;
       videos?: Array<{ url: string; caption?: string }>;
     };
+    dailyLimit?: number;
+    dailyRemaining?: number;
+    limitReached?: boolean;
   };
 }
 
