@@ -101,7 +101,7 @@ const PreCallView = ({
             autoPlay
             muted
             playsInline
-            className="aspect-video bg-gray-100 rounded-lg object-cover w-full"
+            className="aspect-video bg-gray-100 rounded-lg object-cover w-full -scale-x-100"
           />
         )}
 
@@ -171,7 +171,7 @@ const LocalVideo = ({
           autoPlay
           muted
           playsInline
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover -scale-x-100"
         />
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center bg-gray-800">
