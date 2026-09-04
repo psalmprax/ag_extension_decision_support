@@ -7,8 +7,9 @@ group "default" {
 }
 
 target "backend" {
-  context     = "./src/backend"
-  dockerfile  = "Dockerfile"
+  context     = "../"
+  dockerfile  = "ag-extension-dashboard/src/backend/Dockerfile"
+  target      = "production"
   # Tag matches docker-compose's internal naming: <project>-<service>
   # COMPOSE_PROJECT_NAME is "ag-extension-dashboard" (from directory name)
   tags        = ["ag-extension-dashboard-backend:latest"]
