@@ -77,3 +77,7 @@ ag-extension-dashboard/src/frontend/400
 
 # Large ONNX model binaries — only the documented 4.2MB frontend surrogate ships
 ag-extension-dashboard/src/backend/models/*.onnx
+
+# Uploaded local media and report files
+uploads/
+**/uploads/
