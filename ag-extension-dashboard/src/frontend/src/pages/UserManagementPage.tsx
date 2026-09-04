@@ -22,6 +22,12 @@ import {
 import apiClient from '@/api/client';
 import { useDemoMode, DEMO_USERS } from '@/demo';
 import { fetchLoginHistory, fetchLoginStats } from '@/api/authService';
+import {
+  SUPPORTED_COUNTRIES,
+  CONTINENT_ORDER,
+  getCountryFlag,
+  getCountryConfig,
+} from '@/lib/countries';
 
 interface User {
   id: string;
@@ -60,90 +66,6 @@ const ROLES = [
 
 const getRoleBadge = (role: string) => ROLES.find(r => r.value === role) || ROLES[2];
 
-interface CountryConfig {
-  name: string;
-  flag: string;
-  regions: string[];
-}
-
-const SUPPORTED_COUNTRIES: CountryConfig[] = [
-  {
-    name: 'Kenya',
-    flag: '🇰🇪',
-    regions: ['Rift Valley', 'Central', 'Eastern', 'Western', 'Nyanza', 'Coast', 'North Eastern', 'Nairobi'],
-  },
-  {
-    name: 'Uganda',
-    flag: '🇺🇬',
-    regions: ['Central Region', 'Eastern Region', 'Northern Region', 'Western Region', 'Karamoja'],
-  },
-  {
-    name: 'Tanzania',
-    flag: '🇹🇿',
-    regions: ['Arusha', 'Kilimanjaro', 'Mwanza', 'Morogoro', 'Dodoma', 'Dar es Salaam', 'Mbeya', 'Tanga', 'Tabora'],
-  },
-  {
-    name: 'Rwanda',
-    flag: '🇷🇼',
-    regions: ['Kigali City', 'Eastern Province', 'Northern Province', 'Southern Province', 'Western Province'],
-  },
-  {
-    name: 'Nigeria',
-    flag: '🇳🇬',
-    regions: ['North Central', 'North East', 'North West', 'South East', 'South South', 'South West', 'Abuja FCT'],
-  },
-  {
-    name: 'Ghana',
-    flag: '🇬🇭',
-    regions: ['Ashanti', 'Eastern', 'Greater Accra', 'Northern', 'Volta', 'Western', 'Central', 'Upper East', 'Upper West'],
-  },
-  {
-    name: 'Malawi',
-    flag: '🇲🇼',
-    regions: ['Central Region (Lilongwe)', 'Southern Region (Blantyre)', 'Northern Region (Mzuzu)'],
-  },
-  {
-    name: 'Ethiopia',
-    flag: '🇪🇹',
-    regions: ['Oromia', 'Amhara', 'SNNPR', 'Sidama', 'Somali', 'Tigray', 'Addis Ababa'],
-  },
-  {
-    name: 'Zambia',
-    flag: '🇿🇲',
-    regions: ['Central', 'Copperbelt', 'Eastern', 'Luapula', 'Lusaka', 'Muchinga', 'Northern', 'Southern', 'Western'],
-  },
-  {
-    name: 'Zimbabwe',
-    flag: '🇿🇼',
-    regions: ['Mashonaland Central', 'Mashonaland East', 'Mashonaland West', 'Manicaland', 'Masvingo', 'Matabeleland North', 'Matabeleland South', 'Midlands'],
-  },
-  {
-    name: 'South Africa',
-    flag: '🇿🇦',
-    regions: ['Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'Northern Cape', 'North West', 'Western Cape'],
-  },
-  {
-    name: 'United States',
-    flag: '🇺🇸',
-    regions: ['Midwest', 'Northeast', 'South', 'West', 'Pacific Northwest'],
-  },
-  {
-    name: 'United Kingdom',
-    flag: '🇬🇧',
-    regions: ['England', 'Scotland', 'Wales', 'Northern Ireland'],
-  },
-  {
-    name: 'Other',
-    flag: '🌐',
-    regions: [],
-  },
-];
-
-const getCountryFlag = (countryName?: string) => {
-  if (!countryName) return '🇰🇪';
-  return SUPPORTED_COUNTRIES.find(c => c.name.toLowerCase() === countryName.toLowerCase())?.flag || '🌐';
-};
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function UserManagementPage() {
   const { isDemo } = useDemoMode();
@@ -166,7 +88,7 @@ export function UserManagementPage() {
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
 
-  const activeCountryConfig = SUPPORTED_COUNTRIES.find(c => c.name === formData.country) || null;
+  const activeCountryConfig = getCountryConfig(formData.country);
   const availableRegions = activeCountryConfig?.regions || [];
 
   const handleCountryChange = (countryName: string) => {
@@ -577,11 +499,19 @@ export function UserManagementPage() {
                       onChange={e => handleCountryChange(e.target.value)}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-slate-900 text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer"
                     >
-                      {SUPPORTED_COUNTRIES.map(c => (
-                        <option key={c.name} value={c.name} className="bg-slate-900 text-white">
-                          {c.flag} {c.name}
-                        </option>
-                      ))}
+                      {CONTINENT_ORDER.map(continent => {
+                        const countries = SUPPORTED_COUNTRIES.filter(c => c.continent === continent);
+                        if (countries.length === 0) return null;
+                        return (
+                          <optgroup key={continent} label={continent} className="bg-slate-900 text-emerald-400 font-bold">
+                            {countries.map(c => (
+                              <option key={c.name} value={c.name} className="bg-slate-900 text-white font-normal">
+                                {c.flag} {c.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        );
+                      })}
                     </select>
                   </div>
                   <div className="space-y-1">
