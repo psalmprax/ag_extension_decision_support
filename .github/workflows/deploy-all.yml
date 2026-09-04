@@ -359,6 +359,7 @@ jobs:
 
             # Remove any orphaned containers from previous runs
             docker compose -f docker-compose.yml -f docker-compose.agents.yml down --remove-orphans 2>/dev/null || true
+            docker rm -f ag-discovery-scraper ag-agent-zero ag-crew-ai 2>/dev/null || true
 
             # Ensure MCP_API_TOKEN is present in .env before compose up
             if ! grep -q "^MCP_API_TOKEN=[^[:space:]]\{16,\}" .env 2>/dev/null; then
@@ -810,6 +811,7 @@ jobs:
 
             # Remove any orphaned containers from previous runs
             docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml down --remove-orphans 2>/dev/null || true
+            docker rm -f ag-discovery-scraper ag-agent-zero ag-crew-ai 2>/dev/null || true
 
             # Ensure MCP_API_TOKEN is present in .env before compose up
             if ! grep -q "^MCP_API_TOKEN=[^[:space:]]\{16,\}" .env 2>/dev/null; then

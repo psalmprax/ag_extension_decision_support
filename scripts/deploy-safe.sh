@@ -59,6 +59,7 @@ docker compose -p ${COMPOSE_PROJECT_NAME} \
     -f ${PROJECT_DIR}/docker-compose.${COMPOSE_SUFFIX}.yml \
     -f ${PROJECT_DIR}/docker-compose.agents.yml \
     rm -f backend frontend 2>/dev/null || true
+docker rm -f ag-discovery-scraper ag-agent-zero ag-crew-ai 2>/dev/null || true
 
 # 5. Build new images
 echo "🏗️ Building new images..."

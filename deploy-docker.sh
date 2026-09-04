@@ -68,6 +68,7 @@ docker compose -p ${COMPOSE_PROJECT_NAME} \
     -f ${PROJECT_DIR}/docker-compose.prod.yml \
     -f ${PROJECT_DIR}/docker-compose.agents.yml \
     down --remove-orphans || true
+docker rm -f ag-discovery-scraper ag-agent-zero ag-crew-ai 2>/dev/null || true
 
 # 4. Deploy with build
 echo "🏗️ Building and Starting Containers..."
