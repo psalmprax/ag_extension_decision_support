@@ -3,8 +3,10 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Chromium + fonts for headless rendering. `wget` (busybox) is used for the healthcheck.
+# Chromium + fonts for headless rendering. `curl` and `wget` are available for healthchecks.
 RUN apk add --no-cache \
+    curl \
+    wget \
     chromium \
     nss \
     freetype \

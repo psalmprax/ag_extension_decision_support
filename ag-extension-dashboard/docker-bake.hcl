@@ -3,7 +3,7 @@ variable "GITHUB_REPOSITORY" {
 }
 
 group "default" {
-  targets = ["backend", "frontend", "agent-zero", "crew-ai"]
+  targets = ["backend", "frontend", "agent-zero", "crew-ai", "discovery-scraper"]
 }
 
 target "backend" {
@@ -40,3 +40,12 @@ target "crew-ai" {
   cache-from  = ["type=local,src=/root/docker-cache/crew-ai", "type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:crew-ai"]
   cache-to    = ["type=local,dest=/root/docker-cache/crew-ai,mode=max"]
 }
+
+target "discovery-scraper" {
+  context     = "./src/agents/tools/cloakbrowser"
+  dockerfile  = "Dockerfile.discovery-scraper"
+  tags        = ["ag-extension-dashboard-discovery-scraper:latest"]
+  cache-from  = ["type=local,src=/root/docker-cache/discovery-scraper", "type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:discovery-scraper"]
+  cache-to    = ["type=local,dest=/root/docker-cache/discovery-scraper,mode=max"]
+}
+

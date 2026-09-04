@@ -83,7 +83,7 @@ docker buildx bake \
   -f docker-bake.hcl \
   --set "*.cache-from=type=registry,ref=ghcr.io/REPO/buildcache:SERVICE" \
   --set "*.cache-to=type=registry,ref=ghcr.io/REPO/buildcache:SERVICE,mode=max" \
-  backend frontend agent-zero crew-ai
+  backend frontend agent-zero crew-ai discovery-scraper
 ```
 
 - Pulls cached layers from GHCR (`type=registry`)
@@ -93,7 +93,7 @@ docker buildx bake \
 ### Clean rebuild (`force_clean_rebuild=true`)
 
 ```bash
-docker buildx bake -f docker-bake.hcl backend frontend agent-zero crew-ai
+docker buildx bake -f docker-bake.hcl backend frontend agent-zero crew-ai discovery-scraper
 ```
 
 - No cache pulled, no cache exported

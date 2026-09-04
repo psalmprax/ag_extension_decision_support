@@ -314,7 +314,7 @@ jobs:
 
             if [ -n "$CLEAN_REBUILD" ]; then
               echo "Clean rebuild forced — building without cache..."
-              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai
+              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai discovery-scraper
             else
               echo "Authenticating to GHCR for remote Docker layer cache..."
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
@@ -324,7 +324,7 @@ jobs:
               # -> startedat: no such file). Retry once after clearing it — the
               # build itself already succeeded, so this only re-runs the export.
               run_bake() {
-                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai
+                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai discovery-scraper
               }
 
               echo "Building with remote cache (GHCR)..."
@@ -359,7 +359,7 @@ jobs:
             fi
 
             echo "Starting all services..."
-            docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --force-recreate --no-build backend frontend agent-zero crew-ai ettametta-ollama
+            docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --force-recreate --no-build backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama
 
       # ── Step 4/5: Migrations against the FRESHLY BUILT backend image ──
       # Two reliability fixes vs. the prior 2/4 step:
@@ -756,7 +756,7 @@ jobs:
 
             if [ -n "$CLEAN_REBUILD" ]; then
               echo "Clean rebuild forced — building without cache..."
-              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai
+              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai discovery-scraper
             else
               echo "Authenticating to GHCR for remote Docker layer cache..."
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
@@ -766,7 +766,7 @@ jobs:
               # -> startedat: no such file). Retry once after clearing it — the
               # build itself already succeeded, so this only re-runs the export.
               run_bake() {
-                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai
+                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai discovery-scraper
               }
 
               echo "Building with remote cache (GHCR)..."
@@ -801,7 +801,7 @@ jobs:
             fi
 
             echo "Starting all services..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --no-build traefik backend frontend agent-zero crew-ai ettametta-ollama
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --no-build traefik backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama
 
       # ── Step 4/5: Migrations against the FRESHLY BUILT backend image ──
       - name: 4/5 Migrate — prisma migrate deploy (extension pre-create + visible retry)
