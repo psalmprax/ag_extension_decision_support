@@ -22,6 +22,8 @@ export interface AIHubMixRequest {
   temperature?: number;
   max_tokens?: number;
   tools?: unknown[];
+  web_search?: boolean;
+  web_search_options?: Record<string, unknown>;
 }
 
 export interface AIHubMixResponse {
@@ -326,7 +328,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       if (!key) return false;
 
       const authHeader = key.startsWith('Bearer ') ? key : `Bearer ${key}`;
-      const probeModel = process.env.AI_PRIMARY_MODEL || 'claude-3-5-sonnet-20241022';
+      const probeModel = process.env.AI_PRIMARY_MODEL || 'nemotron-3-ultra-550b-a55b-free';
 
       // 10s timeout to tolerate remote proxy and multi-model routing latency
       try {
@@ -368,35 +370,43 @@ export class AIHubMixProvider extends BaseAIProvider {
     return content || '';
   }
 
-  /** Full chat completion including tool_calls (OpenAI-compatible). */
+  /** Full chat completion including tool_calls and optional web search (OpenAI-compatible). */
   public async chatRaw(req: AIHubMixRequest): Promise<AIHubMixResponse> {
     const key = await this.resolveApiKey();
     if (!key) {
       throw new Error('AIHubMix API key not configured (AIHUBMIX_API_KEY or AIHUBMIX_ACCESS_KEY missing).');
     }
 
-    const model = req.model || process.env.AI_PRIMARY_MODEL || 'claude-3-5-sonnet-20241022';
+    const model = req.model || process.env.AI_PRIMARY_MODEL || 'nemotron-3-ultra-550b-a55b-free';
+    const enableWebSearch = req.web_search ?? (process.env.AIHUBMIX_WEB_SEARCH !== 'false');
 
-    try {
-      logger.info(`Routing request to AIHubMix provider (model: ${model})`);
-
-      const response = await axios.post<AIHubMixResponse>(
+    const makeRequest = (withWebSearch: boolean) => {
+      const payload: Record<string, unknown> = {
+        model,
+        messages: req.messages,
+        temperature: req.temperature ?? 0.7,
+        max_tokens: req.max_tokens ?? 1024,
+        ...(req.tools && req.tools.length > 0 ? { tools: req.tools, tool_choice: 'auto' } : {}),
+      };
+      if (withWebSearch) {
+        payload.web_search_options = req.web_search_options || {};
+      }
+      return axios.post<AIHubMixResponse>(
         `${this.baseUrl}/chat/completions`,
-        {
-          model,
-          messages: req.messages,
-          temperature: req.temperature ?? 0.7,
-          max_tokens: req.max_tokens ?? 1024,
-          ...(req.tools && req.tools.length > 0 ? { tools: req.tools, tool_choice: 'auto' } : {}),
-        },
+        payload,
         {
           headers: {
             Authorization: key.startsWith('Bearer ') ? key : `Bearer ${key}`,
             'Content-Type': 'application/json',
           },
-          timeout: 30000,
+          timeout: 45000,
         }
       );
+    };
+
+    try {
+      logger.info(`Routing request to AIHubMix provider (model: ${model}, web_search: ${enableWebSearch})`);
+      const response = await makeRequest(enableWebSearch);
 
       if (!response.data?.choices?.length) {
         throw new Error('Empty completion returned from AIHubMix.');
@@ -406,8 +416,21 @@ export class AIHubMixProvider extends BaseAIProvider {
     } catch (err: unknown) {
       const axiosError = err as { response?: { status?: number; data?: unknown }; message?: string };
       const status = axiosError.response?.status;
-
       const responseBodyStr = JSON.stringify(axiosError.response?.data || '');
+
+      // If the model rejects web_search_options (e.g. 400 unknown parameter), retry once without it
+      if (enableWebSearch && (status === 400 || status === 422) && (responseBodyStr.includes('web_search') || responseBodyStr.includes('unknown') || responseBodyStr.includes('parameter'))) {
+        logger.warn(`AIHubMix model ${model} does not accept web_search_options, retrying without parameter...`);
+        try {
+          const retryResponse = await makeRequest(false);
+          if (retryResponse.data?.choices?.length) {
+            return retryResponse.data;
+          }
+        } catch (retryErr) {
+          logger.error(`AIHubMix retry without web_search failed:`, retryErr);
+        }
+      }
+
       if (status === 429 || responseBodyStr.includes('insufficient_user_quota') || responseBodyStr.includes('quota')) {
         logger.warn(`AIHubMix quota/rate limit exceeded (HTTP ${status}) for model ${model}. Triggering OmniRoute failover.`);
         throw new Error(`AIHUBMIX_QUOTA_EXCEEDED: Quota limit reached for ${model}`);
@@ -423,7 +446,7 @@ export class AIHubMixProvider extends BaseAIProvider {
     options?: TextGenerationOptions
   ): Promise<TextGenerationResult> {
     const messages = normalizeMessages(prompt) as AIHubMixRequest['messages'];
-    const model = options?.model || process.env.AI_PRIMARY_MODEL || 'claude-3-5-sonnet-20241022';
+    const model = options?.model || process.env.AI_PRIMARY_MODEL || 'nemotron-3-ultra-550b-a55b-free';
     const tools = normalizeToolDefinitions(options?.tools);
     const raw = await this.chatRaw({
       model,
@@ -431,6 +454,8 @@ export class AIHubMixProvider extends BaseAIProvider {
       temperature: options?.temperature,
       max_tokens: options?.maxTokens,
       tools,
+      web_search: options?.webSearch,
+      web_search_options: options?.webSearchOptions,
     });
     const choice = raw.choices[0];
 
@@ -479,8 +504,11 @@ export class AIHubMixProvider extends BaseAIProvider {
     ];
 
     const result = await this.generateText(messages, {
+      model: options?.model || process.env.AI_PRIMARY_MODEL || 'nemotron-3-ultra-550b-a55b-free',
       temperature: options?.temperature ?? 0.2,
       maxTokens: options?.maxTokens ?? 2000,
+      webSearch: options?.webSearch ?? true,
+      webSearchOptions: options?.webSearchOptions,
     });
 
     const text = result.text ?? '';
@@ -492,7 +520,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       .trim();
 
     return {
-      reasoning: 'Detailed Intelligence Analysis completed via AIHubMix.',
+      reasoning: `Detailed Intelligence Analysis completed via AIHubMix (${result.model || 'nemotron-3-ultra-550b-a55b-free'}).`,
       answer: cleanAnswer,
       confidence: 0.95,
       visuals,

@@ -74,8 +74,8 @@ export const config: AppConfig = {
 
     ai: {
         primary: {
-            provider: getEnv('AI_PRIMARY_PROVIDER', 'azure_openai'),
-            model: getEnv('AI_PRIMARY_MODEL', 'gpt-4'),
+            provider: getEnv('AI_PRIMARY_PROVIDER', 'aihubmix'),
+            model: getEnv('AI_PRIMARY_MODEL', 'nemotron-3-ultra-550b-a55b-free'),
             region: getEnv('AI_PRIMARY_REGION', 'eastus'),
         },
         fallback: {

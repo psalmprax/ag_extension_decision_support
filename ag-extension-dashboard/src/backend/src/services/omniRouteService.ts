@@ -117,12 +117,12 @@ export class OmniRouteService {
     // ═════════════════════════════════════════════════════════════════════
     // --- AIHubMix Free Tier (Tier 1 Frontier & Reasoning Models) ---
     // ═════════════════════════════════════════════════════════════════════
-    { providerName: 'aihubmix', model: 'gpt-5.5-free', score: 100, isFree: true },
-    { providerName: 'aihubmix', model: 'gpt-4o-free', score: 99, isFree: true },
-    { providerName: 'aihubmix', model: 'gpt-4.1-free', score: 98, isFree: true },
+    { providerName: 'aihubmix', model: 'nemotron-3-ultra-550b-a55b-free', score: 100, isFree: true },
+    { providerName: 'aihubmix', model: 'gpt-5.5-free', score: 99, isFree: true },
+    { providerName: 'aihubmix', model: 'gpt-4o-free', score: 98, isFree: true },
     { providerName: 'aihubmix', model: 'gemini-3.7-flash-free', score: 98, isFree: true },
+    { providerName: 'aihubmix', model: 'gpt-4.1-free', score: 97, isFree: true },
     { providerName: 'aihubmix', model: 'gemini-3.6-flash-free', score: 97, isFree: true },
-    { providerName: 'aihubmix', model: 'nemotron-3-ultra-550b-a55b-free', score: 97, isFree: true },
     { providerName: 'aihubmix', model: 'coding-glm-5.3-free', score: 96, isFree: true },
     { providerName: 'aihubmix', model: 'mimo-v2-flash-free', score: 96, isFree: true },
     { providerName: 'aihubmix', model: 'gemini-3.5-flash-lite-free', score: 95, isFree: true },

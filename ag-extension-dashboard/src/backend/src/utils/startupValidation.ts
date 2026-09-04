@@ -38,6 +38,11 @@ function validateJwtConfig(warnings: ValidationWarning[], isProduction: boolean)
 // credential, so startup validation can warn when the PRIMARY provider is unconfigured.
 function getPrimaryAiCredentialStatus(provider: string): { key: string; isConfigured: boolean } {
     switch (provider) {
+        case 'aihubmix':
+            return {
+                key: 'AIHUBMIX_API_KEY',
+                isConfigured: !!(config.aihubmix?.apiKey || config.aihubmix?.accessKey || process.env.AIHUBMIX_API_KEY || process.env.AIHUBMIX_ACCESS_KEY),
+            };
         case 'openai':
             return { key: 'OPENAI_API_KEY', isConfigured: !!config.openAI.apiKey };
         case 'azure_openai':

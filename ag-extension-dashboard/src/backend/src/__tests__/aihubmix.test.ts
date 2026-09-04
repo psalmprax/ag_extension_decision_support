@@ -162,5 +162,78 @@ describe('AIHubMix Integration (REST Account API, MCP Tool & Model Provider)', (
 
       expect(reply).toBe('Recommended fertilizer: NPK 17:17:17 at 50kg/acre.');
     });
+
+    it('defaults to nemotron-3-ultra-550b-a55b-free with web_search_options', async () => {
+      mockedAxios.post.mockResolvedValueOnce({
+        data: {
+          id: 'chat-2',
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: 'Current rainfall anomalies from live search indicate adequate moisture.',
+              },
+            },
+          ],
+        },
+      });
+
+      const provider = new AIHubMixProvider('sk-test-key');
+      const result = await provider.generateText('What is current rainfall anomaly in Eastern Kenya?', {
+        webSearch: true,
+      });
+
+      expect(result.text).toBe('Current rainfall anomalies from live search indicate adequate moisture.');
+      expect(result.model).toBe('nemotron-3-ultra-550b-a55b-free');
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        'https://aihubmix.com/v1/chat/completions',
+        expect.objectContaining({
+          model: 'nemotron-3-ultra-550b-a55b-free',
+          web_search_options: {},
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('gracefully retries without web_search_options if model rejects the parameter', async () => {
+      // First attempt fails with 400 unknown parameter
+      mockedAxios.post.mockRejectedValueOnce({
+        response: {
+          status: 400,
+          data: { error: 'unknown parameter: web_search_options' },
+        },
+        message: 'Request failed with status code 400',
+      });
+
+      // Second attempt succeeds without web_search_options
+      mockedAxios.post.mockResolvedValueOnce({
+        data: {
+          id: 'chat-3',
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: 'Response generated without search parameter.',
+              },
+            },
+          ],
+        },
+      });
+
+      const provider = new AIHubMixProvider('sk-test-key');
+      const result = await provider.generateText('Explain soil pH dynamics.', {
+        webSearch: true,
+      });
+
+      expect(result.text).toBe('Response generated without search parameter.');
+      expect(mockedAxios.post).toHaveBeenCalledTimes(2);
+      expect(mockedAxios.post).toHaveBeenLastCalledWith(
+        'https://aihubmix.com/v1/chat/completions',
+        expect.not.objectContaining({
+          web_search_options: expect.anything(),
+        }),
+        expect.any(Object)
+      );
+    });
   });
 });
