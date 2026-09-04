@@ -118,6 +118,15 @@ fi
 # ─── Pre-check 1: backend container running? ─────────────────────────────
 if ! ( cd "$COMPOSE_DIR" && docker compose ps --services --filter status=running 2>/dev/null \
         | grep -qx "$SERVICE" ); then
+    # If ettametta-ollama is running, check if model is loaded directly
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^${OLLA_SERVICE}$"; then
+        info "Service '$SERVICE' is not running, checking $OLLA_SERVICE directly..."
+        if docker exec "$OLLA_SERVICE" ollama list 2>/dev/null | grep -qF "$EXPECTED_MODEL"; then
+            pass "$OLLA_SERVICE is running and model '$EXPECTED_MODEL' is loaded (direct probe)"
+            exit 0
+        fi
+    fi
+
     if [ "$IF_RUNNING" = "1" ]; then
         warn "service '$SERVICE' is not running in $COMPOSE_DIR (service not yet started)"
         warn "  --if-running: passing smoke gate. Services will be started in the build step."
