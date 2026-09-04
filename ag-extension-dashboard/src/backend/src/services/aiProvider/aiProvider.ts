@@ -3,6 +3,7 @@ import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import { agentTelemetry } from '@/services/agentTelemetry';
 import { getRequestContext } from '@/services/requestContext';
+import { buildGroundedReasoningPrompt, extractVisuals } from './assetLibrary';
 
 // Re-export types from the isolated types module (no circular deps)
 export type {
@@ -87,6 +88,23 @@ export class AIProviderFactory {
         if (preferredProvider) {
             allProviders = Array.from(new Set([preferredProvider, ...allProviders]));
         }
+
+        // Prioritize configured providers before unconfigured ones so requests are serviced promptly
+        const configuredProviders: AIProviderType[] = [];
+        const unconfiguredProviders: AIProviderType[] = [];
+        for (const pType of allProviders) {
+            try {
+                const p = await this.getProvider(pType);
+                if (p.isConfigured()) {
+                    configuredProviders.push(pType);
+                } else {
+                    unconfiguredProviders.push(pType);
+                }
+            } catch {
+                unconfiguredProviders.push(pType);
+            }
+        }
+        allProviders = [...configuredProviders, ...unconfiguredProviders];
 
         let lastError: Error | null = null;
         const requestContext = getRequestContext();
@@ -272,12 +290,32 @@ export class AIRouter {
                     throw new Error(`Unknown request type: ${requestType}`);
             }
         }, params.options?.preferredProvider, {
-            promptText: requestType === 'generate' ? params.prompt : undefined,
+            promptText: requestType === 'generate'
+                ? params.prompt
+                : requestType === 'reason'
+                    ? buildGroundedReasoningPrompt(params.context || '', params.query || '')
+                    : undefined,
         });
 
-        // Normalize OmniRoute free-model fallback result into the standard
-        // { text } shape that callers expect.
+        // Normalize OmniRoute free-model fallback result into the standard shape callers expect.
         if (result?.providerUsed && result?.text !== undefined) {
+            if (requestType === 'reason') {
+                const text = result.text ?? '';
+                const visuals = extractVisuals(text);
+                const cleanAnswer = text
+                    .replace(/<visuals>[\s\S]*?<\/visuals>/gi, '')
+                    .replace(/```json[\s\S]*?```/gi, '')
+                    .trim();
+                return {
+                    reasoning: `Synthesized via live AI reasoning (${result.providerUsed}/${result.modelUsed}).`,
+                    answer: cleanAnswer,
+                    confidence: 0.88,
+                    visuals: visuals || { kpis: [], charts: [], images: [], videos: [] },
+                    providerUsed: result.providerUsed,
+                    modelUsed: result.modelUsed,
+                    isFreeModel: result.isFreeModel,
+                };
+            }
             return { text: result.text, providerUsed: result.providerUsed, modelUsed: result.modelUsed, isFreeModel: result.isFreeModel };
         }
         return result;

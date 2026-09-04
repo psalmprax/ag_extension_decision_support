@@ -299,7 +299,7 @@ router.get('/live-context', async (req: Request, res: Response) => {
 // Ask AI a question (RAG-based)
 router.post('/ask', async (req: Request, res: Response) => {
     try {
-        const { question } = req.body;
+        const { question, bypassCache, attachments } = req.body;
         const user = (req as Request & { user?: Record<string, unknown> }).user;
         const userId = (user?.userId || user?.id) as string;
         const userRole = (user?.role) as string | undefined;
@@ -334,7 +334,12 @@ router.post('/ask', async (req: Request, res: Response) => {
         const askUser = user as Record<string, unknown> | undefined;
         const isFreeTier = askUser?.role === 'farmer';
         const preferredProvider = isFreeTier ? 'freebuff' : undefined;
-        const result = await KnowledgeService.askQuestion(userId, question, undefined, { preferredProvider });
+        const result = await KnowledgeService.askQuestion(
+            userId,
+            question,
+            attachments,
+            { preferredProvider, bypassCache: Boolean(bypassCache) }
+        );
 
         // Record search for daily quota tracking
         await usageService.recordKnowledgeSearch(userId, question, result.answer);

@@ -746,7 +746,7 @@ Agronomic Decision Support Protocol (Phase 2):
         ).catch(logError => logger.error('Background logging failed:', logError));
     }
 
-    private static handleAskQuestionFallback(userId: string, queryText: string, contextResults: SearchResult[], error: unknown) {
+    private static handleAskQuestionFallback(userId: string, queryText: string, contextResults: SearchResult[], error: unknown): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
         logger.error('RAG analysis failed:', error);
 
         if (contextResults.length > 0) {
@@ -788,15 +788,15 @@ Agronomic Decision Support Protocol (Phase 2):
         userId: string,
         queryText: string,
         attachments?: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }>,
-        options?: { preferredProvider?: string }
+        options?: { preferredProvider?: string; bypassCache?: boolean }
     ): Promise<ReasoningResult & { cached: boolean; contextUsed: SearchResult[] }> {
-        logger.info(`Getting RAG-based answer for query: "${queryText}" (User: ${userId}, Attachments: ${attachments?.length || 0}, PreferredProvider: ${options?.preferredProvider || 'default'})`);
+        logger.info(`Getting RAG-based answer for query: "${queryText}" (User: ${userId}, Attachments: ${attachments?.length || 0}, PreferredProvider: ${options?.preferredProvider || 'default'}, BypassCache: ${Boolean(options?.bypassCache)})`);
 
         const normalized = queryText.toLowerCase().trim();
         const baseRedisKey = `rag:exact:${normalized}`;
 
         // Fast-path: check exact match caches first (<2ms) before making AI classification or vector calls
-        if (!attachments || attachments.length === 0) {
+        if (!options?.bypassCache && (!attachments || attachments.length === 0)) {
             const exactHit = await this.checkExactCachesOnly(queryText, baseRedisKey);
             if (exactHit) {
                 logger.info(`Exact cache HIT (pre-categorization) for query: "${queryText}"`);
@@ -815,8 +815,10 @@ Agronomic Decision Support Protocol (Phase 2):
         const freshSuffix = isRealTimeIntent ? `:fresh:${new Date().toISOString().slice(0, 10)}` : '';
         const redisKey = `rag:exact:${normalized}${freshSuffix}`;
 
-        const cachedHit = await this.checkAnswerCaches(queryText, redisKey, attachments, isRealTimeIntent);
-        if (cachedHit) return cachedHit;
+        if (!options?.bypassCache) {
+            const cachedHit = await this.checkAnswerCaches(queryText, redisKey, attachments, isRealTimeIntent);
+            if (cachedHit) return cachedHit;
+        }
 
         const isAgriQuery = queryCategories.length === 0 || queryCategories.some(c =>
             ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather', 'market_prices'].includes(c)

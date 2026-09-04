@@ -160,7 +160,7 @@ export const KnowledgeBase: React.FC = () => {
     fetchQuotaData();
   }, []);
 
-  const performAISearch = async (queryText: string) => {
+  const performAISearch = async (queryText: string, bypassCache: boolean = false) => {
     setIsAsking(true);
     setRetrievalStep(1);
 
@@ -169,7 +169,7 @@ export const KnowledgeBase: React.FC = () => {
     }, 450);
 
     try {
-      const res = await askAI(queryText, attachments);
+      const res = await askAI(queryText, attachments, { bypassCache });
       clearInterval(stepInterval);
       setRetrievalStep(4);
 
@@ -196,6 +196,11 @@ export const KnowledgeBase: React.FC = () => {
         addNotification({
           type: 'info',
           message: 'Result retrieved from semantic cache (Cost optimized)',
+        });
+      } else if (bypassCache) {
+        addNotification({
+          type: 'success',
+          message: 'Fresh real-time LLM synthesis generated',
         });
       }
     } catch (error: unknown) {
@@ -487,6 +492,16 @@ export const KnowledgeBase: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => performAISearch(lastResult.query || searchQuery, true)}
+                      disabled={isAsking}
+                      title="Bypass cache and generate fresh real-time LLM synthesis"
+                      className="px-3.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Regenerate Live</span>
+                    </button>
+
                     <button
                       onClick={() => setActiveTabMode('graph')}
                       className="px-3.5 py-2 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-300 text-xs font-bold transition-all flex items-center gap-1.5"

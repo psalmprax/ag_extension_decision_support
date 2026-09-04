@@ -93,10 +93,15 @@ export interface Attachment {
   mimeType?: string;
 }
 
-export const askAI = async (question: string, attachments?: Attachment[]): Promise<AskResponse> => {
+export const askAI = async (
+  question: string,
+  attachments?: Attachment[],
+  options?: { bypassCache?: boolean }
+): Promise<AskResponse> => {
   const response = await apiClient.post<AskResponse>('/knowledge/ask', {
     question,
     attachments,
+    bypassCache: options?.bypassCache,
   });
   return response.data;
 };

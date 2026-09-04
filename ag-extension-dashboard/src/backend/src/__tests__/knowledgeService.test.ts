@@ -284,4 +284,34 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
         const reasonCall = reasoningSpy.mock.calls[0];
         expect(reasonCall[1].attachments).toEqual([attachment]);
     });
+
+    it('bypasses exact cache when bypassCache option is true', async () => {
+        (cacheGet as jest.Mock).mockResolvedValue(JSON.stringify({
+            reasoning: 'Cached analysis',
+            answer: 'Cached answer',
+            confidence: 0.9,
+            visuals: null,
+            contextUsed: [],
+            cached: true,
+        }));
+
+        mockRouteRequest.mockImplementation(async (type: string) => {
+            if (type === 'classify') {
+                return { labels: [{ label: 'agronomy_and_yield', score: 0.92 }] };
+            }
+            if (type === 'reason') {
+                return {
+                    reasoning: 'Fresh live reasoning.',
+                    answer: 'Fresh live answer.',
+                    confidence: 0.95,
+                    visuals: null,
+                };
+            }
+            return {};
+        });
+
+        const result = await KnowledgeService.askQuestion('user-1', 'What grows well in Central?', undefined, { bypassCache: true });
+        expect(result.answer).toBe('Fresh live answer.');
+        expect(result.cached).toBe(false);
+    });
 });
