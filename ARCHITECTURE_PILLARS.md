@@ -339,10 +339,24 @@ Monitors regional wholesale grain and produce markets across East Africa (Kenya,
 
 ---
 
-## 18. Test Suites & Verification Matrix
+## 18. Unified Multi-Cloud Object Storage Architecture
+
+### Purpose
+Provides a cost-optimized, vendor-agnostic object storage infrastructure for high-bandwidth multimedia (diagnostic crop imagery, video consultations, farmer voice recordings) and analytical export reports (PDF, CSV, Excel), natively supporting the cheapest raw storage (Backblaze B2 at $0.006/GB) and zero-egress streaming (Cloudflare R2).
+
+### Key Components
+- **Universal S3 Driver** ([`objectStorageService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/objectStorageService.ts)): Supports `backblaze-b2`, `cloudflare-r2`, `wasabi`, `hetzner`, `aws-s3`, `minio`, and `local-disk`. Implements binary CRUD, HTTP range streaming, and dual-mode local caching.
+- **Report Archival Engine** ([`reportStorageService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/reportStorageService.ts)): Automatically packages generated reports, computes SHA-256 integrity digests, and saves to cloud buckets with presigned download links.
+- **Direct Presigned Browser Uploads** ([`uploadService.ts` (Frontend)](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/api/uploadService.ts)): Allows large videos (up to 100 MB+) to stream directly from browser to bucket via presigned PUT URLs, bypassing backend RAM.
+- **Binary Content Validation** ([`uploadService.ts` (Backend)](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/uploadService.ts)): Magic byte inspection against spoofed MIME extensions, ClamAV hook, and per-user storage quotas.
+
+---
+
+## 19. Test Suites & Verification Matrix
 
 | Test Suite | File | Tests | Coverage Scope |
 |---|---|---|---|
+| **Object Storage** | [`objectStorage.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/objectStorage.test.ts) | 14 / 14 | Provider resolution (B2, R2, Wasabi, Hetzner, Local), binary CRUD, streaming, magic bytes, presigned URLs, report archival |
 | **Security Hardening** | [`securityHardening.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/securityHardening.test.ts) | 16 / 16 | Base32, TOTP validation, backup codes, token hashing, session revocation, account lockout |
 | **Login History** | [`loginHistory.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/loginHistory.test.ts) | 12 / 12 | Audit logs, GeoIP headers, user-agent parsing, 24h failure rates, timeline queries |
 | **Strategic Pillars** | [`advancedPillars.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/advancedPillars.test.ts) | 16 / 16 | Voice audio, IVR XML, DTMF, agro-dealers, batch verification, offtake, ROI, Soil Carbon, Hazard scans |
@@ -350,7 +364,7 @@ Monitors regional wholesale grain and produce markets across East Africa (Kenya,
 | **Frontier Capabilities** | [`frontierCapabilities.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/frontierCapabilities.test.ts) | 9 / 9 | IoT soil telemetry, VPD irrigation, EUDR compliance, GS1 passports, drone missions, swarm radar, arbitrage |
 | **Edge Field Services** | [`edgeFieldServices.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/__tests__/edgeFieldServices.test.ts) | 3 / 3 | Haversine distance, WGS-84 metric Shoelace polygon acreage, RFC 7946 GeoJSON export |
 | **CRDT Offline Sync** | [`crdtSync.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/__tests__/crdtSync.test.ts) | 3 / 3 | Vector clocks, Last-Write-Wins conflict resolution, bidirectional delta sync between officers |
-| **Backend Full Suite** | 60 test files | 543 / 543 | 100% passing across all backend routes, services, queues, and security gates |
-| **Frontend Full Suite** | 33 test files | 150 / 150 | 100% passing across UI components, state stores, and services |
+| **Backend Full Suite** | 70 test files | 656 / 656 | 100% passing across all backend routes, services, queues, and security gates |
+| **Frontend Full Suite** | 35 test files | 162 / 162 | 100% passing across UI components, state stores, and services |
 | **Linter & Dead-Code** | `fallow:check` | 0 regressions | Clean ESLint, strict TypeScript, and Fallow dead-code gate passing |
 

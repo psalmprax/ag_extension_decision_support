@@ -17,6 +17,7 @@ import { AuthRequest } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { usageService } from '../../services/usageService';
 import { safeError } from '@/utils/safeResponse';
+import { archiveReportToObjectStorage } from '@/services/reportStorageService';
 
 const router = Router();
 
@@ -153,6 +154,13 @@ async function generateReportData(type: string, effectiveStartDate: string, effe
     await usageService.incrementUsage(req.user!.userId, 'report');
 
     const created = result.rows[0] ? mapReportListRow(result.rows[0]) : null;
+
+    if (created?.id && process.env.NODE_ENV !== 'test') {
+        archiveReportToObjectStorage(created.id).catch(err => {
+            logger.warn(`[ReportStorage] Background object storage archival failed for ${created.id}:`, err);
+        });
+    }
+
     // Flatten the response: fullReportContent fields (visits, conversations,
     // metadata, plus disease/soil diagnostics) live at `data.*` alongside
     // the DTO metadata, rather than nested under `data.data.*`.

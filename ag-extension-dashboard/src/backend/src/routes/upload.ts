@@ -5,96 +5,41 @@ import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 import { query } from '@/services/databaseService';
 import { getFarmerForPrincipal } from '@/services/dataGovernanceService';
-import { saveUpload, readStoredUpload, MAX_UPLOAD_BYTES } from '@/services/uploadService';
-
-/**
- * Verify file magic bytes against allowed MIME types.
- *
- * MIME alone is client-controlled — a file named .jpg could contain an executable.
- * This checks the leading bytes of the buffer to confirm the real type before
- * the file reaches storage or AI pipelines.
- */
-function verifyMagicBytes(buffer: Buffer, declaredMime: string): boolean {
-    if (buffer.length < 4) return false;
-    const head = buffer.slice(0, 12);
-    return !isBinaryExecutable(head) && matchesDeclaredType(head, buffer, declaredMime);
-}
-
-const EXECUTABLE_SIGNATURES: readonly number[][] = [
-    [0x7f, 0x45, 0x4c, 0x46], // ELF
-    [0x4d, 0x5a],             // MZ (PE / DOS)
-    [0x23, 0x21],             // #! shebang
-    [0xfe, 0xed, 0xfa],       // Mach-O 32-bit
-    [0xce, 0xfa, 0xed],       // Mach-O 64-bit
-    [0xcf, 0xfa, 0xed],       // Mach-O 64-bit (reverse)
-];
-
-function isBinaryExecutable(head: Buffer): boolean {
-    for (const sig of EXECUTABLE_SIGNATURES) {
-        if (sig.every((b, i) => head[i] === b)) return true;
-    }
-    return false;
-}
-
-function matchesDeclaredType(head: Buffer, fullBuf: Buffer, mime: string): boolean {
-    if (mime === 'image/jpeg') return head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
-    if (mime === 'image/png')  return head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47;
-    if (mime === 'image/gif')  return head[0] === 0x47 && head[1] === 0x49 && head[2] === 0x46 && head[3] === 0x38;
-    if (mime === 'image/webp') {
-        return head[0] === 0x52 && head[1] === 0x49 && head[2] === 0x46 && head[3] === 0x46
-            && fullBuf[8] === 0x57 && fullBuf[9] === 0x45 && fullBuf[10] === 0x42 && fullBuf[11] === 0x50;
-    }
-    if (mime === 'application/pdf') return head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46;
-    return false;
-}
+import {
+  saveUpload,
+  readStoredUpload,
+  MAX_UPLOAD_BYTES,
+  UPLOAD_TYPES,
+  signatureMatches,
+  normalizeMimeType,
+  createDirectUploadPresign,
+  confirmDirectUpload,
+  type SupportedMimeType,
+} from '@/services/uploadService';
+import { objectStorage } from '@/services/objectStorageService';
 
 const router = Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_UPLOAD_BYTES, files: 5 },
   fileFilter: (_req, file, callback) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
-    if (!allowed.includes(file.mimetype)) {
+    let normalized: SupportedMimeType;
+    try {
+      normalized = normalizeMimeType(file.mimetype);
+    } catch {
       return callback(new Error('Unsupported file type'));
     }
-    // Verify magic bytes match the declared MIME
-    if (!verifyMagicBytes(file.buffer, file.mimetype)) {
-      return callback(new Error('File content does not match declared type'));
+
+    if (file.buffer && file.buffer.length > 0) {
+      if (!signatureMatches(file.buffer, normalized)) {
+        return callback(new Error('File content does not match declared type'));
+      }
     }
     callback(null, true);
   },
 });
 
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
-
-router.get('/file/:storageKey', async (req: Request, res: Response) => {
-  try {
-    const user = principal(req);
-    const storageKey = req.params.storageKey;
-    if (!user) return res.status(401).json({ success: false, error: 'Authentication required' });
-
-    const result = await query<{ owner_user_id: string; farmer_id: string | null; mime_type: string; status: string }>(
-      `SELECT owner_user_id, farmer_id, mime_type, status
-       FROM upload_records WHERE storage_key = $1`,
-      [storageKey]
-    );
-    const record = result.rows[0];
-    if (!record || record.status !== 'active') return res.status(404).json({ success: false, error: 'File not found' });
-
-    const allowed = user.role === 'admin' || record.owner_user_id === user.userId;
-    const farmerAllowed = record.farmer_id ? Boolean(await getFarmerForPrincipal(record.farmer_id, user)) : false;
-    if (!allowed && !farmerAllowed) return res.status(403).json({ success: false, error: 'Access denied' });
-
-    const buffer = await readStoredUpload(storageKey);
-    res.setHeader('Content-Type', record.mime_type);
-    res.setHeader('Content-Disposition', 'inline');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    return res.send(buffer);
-  } catch (error) {
-    logger.error('Read upload error:', error);
-    return safeError(res, 404, 'File not found');
-  }
-});
 
 function principal(req: Request): { userId: string; role: string } | null {
   return req.user?.userId && req.user.role ? { userId: req.user.userId, role: req.user.role } : null;
@@ -116,11 +61,127 @@ function uploadResponse(file: Express.Multer.File, saved: Awaited<ReturnType<typ
     sha256: saved.sha256,
     url: saved.url,
     contentDisposition: 'inline-safe',
-    source: 'local-storage-adapter',
+    source: objectStorage.getBackendType(),
     fieldName: file.fieldname,
   };
 }
 
+// ── GET Storage Backend Info ──
+router.get('/info', (_req: Request, res: Response) => {
+  return res.json({
+    success: true,
+    data: {
+      backend: objectStorage.getBackendType(),
+      isCloud: objectStorage.isCloudConfigured(),
+      maxUploadBytes: MAX_UPLOAD_BYTES,
+      maxUploadMb: Math.round(MAX_UPLOAD_BYTES / 1024 / 1024),
+      supportedMimeTypes: Object.keys(UPLOAD_TYPES),
+    },
+  });
+});
+
+// ── GET Stored File (with Range Requests for Audio/Video Streaming) ──
+router.get('/file/:storageKey', async (req: Request, res: Response) => {
+  try {
+    const user = principal(req);
+    const storageKey = req.params.storageKey;
+    if (!user) return res.status(401).json({ success: false, error: 'Authentication required' });
+
+    const result = await query<{ owner_user_id: string; farmer_id: string | null; mime_type: string; status: string }>(
+      `SELECT owner_user_id, farmer_id, mime_type, status
+       FROM upload_records WHERE storage_key = $1`,
+      [storageKey]
+    );
+    const record = result.rows[0];
+    if (!record || record.status !== 'active') return res.status(404).json({ success: false, error: 'File not found' });
+
+    const allowed = user.role === 'admin' || record.owner_user_id === user.userId;
+    const farmerAllowed = record.farmer_id ? Boolean(await getFarmerForPrincipal(record.farmer_id, user)) : false;
+    if (!allowed && !farmerAllowed) return res.status(403).json({ success: false, error: 'Access denied' });
+
+    const buffer = await readStoredUpload(storageKey);
+    const range = req.headers.range;
+
+    res.setHeader('Content-Type', record.mime_type);
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+
+    if (range) {
+      const parts = range.replace(/bytes=/, '').split('-');
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : buffer.length - 1;
+
+      if (start >= buffer.length || end >= buffer.length || start > end) {
+        res.setHeader('Content-Range', `bytes */${buffer.length}`);
+        return res.status(416).send('Requested range not satisfiable');
+      }
+
+      const chunk = buffer.subarray(start, end + 1);
+      res.status(206);
+      res.setHeader('Content-Range', `bytes ${start}-${end}/${buffer.length}`);
+      res.setHeader('Content-Length', chunk.length);
+      return res.send(chunk);
+    }
+
+    res.setHeader('Content-Length', buffer.length);
+    res.setHeader('Content-Disposition', 'inline');
+    return res.send(buffer);
+  } catch (error) {
+    logger.error('Read upload error:', error);
+    return safeError(res, 404, 'File not found');
+  }
+});
+
+// ── Presigned Direct Upload URL (for high-volume Video / Audio / Large Docs) ──
+router.post('/presign', async (req: Request, res: Response) => {
+  try {
+    const user = principal(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Authentication required' });
+
+    const { filename, mimeType, sizeBytes, farmerId } = req.body;
+    if (!filename || !mimeType || !sizeBytes) {
+      return res.status(400).json({ success: false, error: 'filename, mimeType, and sizeBytes are required' });
+    }
+
+    if (farmerId && !(await assertFarmerAccess(req, farmerId))) {
+      return res.status(403).json({ success: false, error: 'Access denied to farmer' });
+    }
+
+    const presigned = await createDirectUploadPresign({
+      originalName: String(filename),
+      mimeType: String(mimeType),
+      sizeBytes: Number(sizeBytes),
+      ownerUserId: user.userId,
+      farmerId: typeof farmerId === 'string' ? farmerId : undefined,
+    });
+
+    return res.status(200).json({ success: true, data: presigned });
+  } catch (error) {
+    logger.error('Presign upload error:', error);
+    return safeError(res, 400, error instanceof Error ? error.message : 'Presign failed');
+  }
+});
+
+// ── Confirm Direct Upload ──
+router.post('/confirm', async (req: Request, res: Response) => {
+  try {
+    const user = principal(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Authentication required' });
+
+    const { storageKey } = req.body;
+    if (!storageKey) {
+      return res.status(400).json({ success: false, error: 'storageKey is required' });
+    }
+
+    const confirmed = await confirmDirectUpload(String(storageKey), user.userId);
+    return res.status(200).json({ success: true, data: confirmed });
+  } catch (error) {
+    logger.error('Confirm upload error:', error);
+    return safeError(res, 400, error instanceof Error ? error.message : 'Confirmation failed');
+  }
+});
+
+// ── Standard Multipart Upload ──
 router.post('/upload', upload.single('file'), async (req: Request, res: Response) => {
   try {
     const user = principal(req);
@@ -147,6 +208,7 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
   }
 });
 
+// ── Multiple Files Upload ──
 router.post('/upload/multiple', upload.array('files', 5), async (req: Request, res: Response) => {
   try {
     const user = principal(req);
@@ -177,6 +239,7 @@ router.post('/upload/multiple', upload.array('files', 5), async (req: Request, r
   }
 });
 
+// ── Farmer Image Upload ──
 router.post('/farmer/image', upload.single('image'), async (req: Request, res: Response) => {
   try {
     const user = principal(req);
@@ -198,6 +261,7 @@ router.post('/farmer/image', upload.single('image'), async (req: Request, res: R
   }
 });
 
+// ── Farm Document Upload ──
 router.post('/farm/document', upload.single('document'), async (req: Request, res: Response) => {
   try {
     const user = principal(req);
@@ -224,7 +288,8 @@ router.post('/farm/document', upload.single('document'), async (req: Request, re
 
 router.use((error: unknown, _req: Request, res: Response, next: NextFunction) => {
   if (error instanceof multer.MulterError) {
-    const message = error.code === 'LIMIT_FILE_SIZE' ? 'File too large. Maximum size is 10MB' : error.message;
+    const maxMb = Math.round(MAX_UPLOAD_BYTES / 1024 / 1024);
+    const message = error.code === 'LIMIT_FILE_SIZE' ? `File too large. Maximum size is ${maxMb}MB` : error.message;
     return res.status(400).json({ success: false, error: message });
   }
   if (error) return res.status(400).json({ success: false, error: 'Unsupported upload' });

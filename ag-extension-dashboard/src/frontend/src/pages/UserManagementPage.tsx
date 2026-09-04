@@ -18,11 +18,16 @@ import {
   History,
   Laptop,
   KeyRound,
-  Globe,
 } from 'lucide-react';
 import apiClient from '@/api/client';
 import { useDemoMode, DEMO_USERS } from '@/demo';
 import { fetchLoginHistory, fetchLoginStats } from '@/api/authService';
+import {
+  SUPPORTED_COUNTRIES,
+  CONTINENT_ORDER,
+  getCountryFlag,
+  getCountryConfig,
+} from '@/lib/countries';
 
 interface User {
   id: string;
@@ -61,6 +66,7 @@ const ROLES = [
 
 const getRoleBadge = (role: string) => ROLES.find(r => r.value === role) || ROLES[2];
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function UserManagementPage() {
   const { isDemo } = useDemoMode();
   const queryClient = useQueryClient();
@@ -81,6 +87,17 @@ export function UserManagementPage() {
   });
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+
+  const activeCountryConfig = getCountryConfig(formData.country);
+  const availableRegions = activeCountryConfig?.regions || [];
+
+  const handleCountryChange = (countryName: string) => {
+    setFormData(prev => ({
+      ...prev,
+      country: countryName,
+      region: '',
+    }));
+  };
 
   const { data: loginHistoryData, isLoading: isLoadingHistory } = useQuery({
     queryKey: ['login-history', selectedUserForHistory?.id],
@@ -316,7 +333,7 @@ export function UserManagementPage() {
                     <span className="truncate">{user.email}</span>
                   </div>
                   <div className="flex items-center gap-2 text-white/70">
-                    <Globe className="w-3.5 h-3.5 text-sky-400/80 shrink-0" />
+                    <span className="text-xs shrink-0">{getCountryFlag(user.country)}</span>
                     <span className="font-medium text-white/80">{user.country || 'Kenya'}</span>
                     <span className="text-white/30">•</span>
                     <span>{user.region || 'Unassigned Region'}</span>
@@ -476,24 +493,46 @@ export function UserManagementPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-xxs font-bold uppercase tracking-wider text-white/60">Country *</label>
-                    <input
-                      type="text"
+                    <select
                       required
                       value={formData.country}
-                      onChange={e => setFormData({ ...formData, country: e.target.value })}
-                      placeholder="e.g. Kenya"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
-                    />
+                      onChange={e => handleCountryChange(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-slate-900 text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer"
+                    >
+                      {CONTINENT_ORDER.map(continent => {
+                        const countries = SUPPORTED_COUNTRIES.filter(c => c.continent === continent);
+                        if (countries.length === 0) return null;
+                        return (
+                          <optgroup key={continent} label={continent} className="bg-slate-900 text-emerald-400 font-bold">
+                            {countries.map(c => (
+                              <option key={c.name} value={c.name} className="bg-slate-900 text-white font-normal">
+                                {c.flag} {c.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        );
+                      })}
+                    </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">Assigned Region</label>
-                    <input
-                      type="text"
-                      value={formData.region}
-                      onChange={e => setFormData({ ...formData, region: e.target.value })}
-                      placeholder="e.g. Rift Valley"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
-                    />
+                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">
+                      Assigned Region / Territory
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        list="user-region-suggestions"
+                        value={formData.region}
+                        onChange={e => setFormData({ ...formData, region: e.target.value })}
+                        placeholder={availableRegions.length > 0 ? `e.g. ${availableRegions[0]}` : 'e.g. District / Province'}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                      />
+                      <datalist id="user-region-suggestions">
+                        {availableRegions.map(reg => (
+                          <option key={reg} value={reg} />
+                        ))}
+                      </datalist>
+                    </div>
                   </div>
                 </div>
 

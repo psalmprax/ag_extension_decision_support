@@ -223,7 +223,9 @@
     "pdf-parse",
     "react",
     "react-hot-toast",
-    "@napi-rs/whisper"
+    "@napi-rs/whisper",
+    "@aws-sdk/client-s3",
+    "@aws-sdk/s3-request-presigner"
   ],
   "ignoreExports": [
     {

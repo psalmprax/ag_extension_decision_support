@@ -10,6 +10,7 @@ import {
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
+import { archiveReportToObjectStorage } from '@/services/reportStorageService';
 import PDFDocument from 'pdfkit';
 import type PDFKit from 'pdfkit';
 import * as XLSX from 'xlsx';
@@ -85,6 +86,27 @@ async function getReportScope(req: Request, parameterIndex: number): Promise<{ c
         params: [req.user.userId],
     };
 }
+
+// Archive report bundle (PDF, CSV, Excel) to Object Storage
+router.post('/:id/archive', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const scope = await getReportScope(req, 2);
+        if (!scope) return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        const result = await query<ReportListRow>(`SELECT * FROM reports WHERE id = $1${scope.clause}`, [id, ...scope.params]);
+        const report: ReportListRow | undefined = result.rows[0];
+
+        if (!report) {
+            return res.status(404).json({ success: false, error: 'Report not found' });
+        }
+
+        const archived = await archiveReportToObjectStorage(id);
+        return res.status(200).json({ success: true, data: archived });
+    } catch (error) {
+        logger.error('Archive report error:', error);
+        return safeError(res, 500, 'Failed to archive report to object storage');
+    }
+});
 
 // Download report as CSV
 router.get('/:id/download', async (req: Request, res: Response) => {

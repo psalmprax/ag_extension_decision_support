@@ -696,12 +696,14 @@ export const KnowledgeBase: React.FC = () => {
                     <span>AGRO-ECOSYSTEM 4-STAGE PHENOLOGY SCRUBBER</span>
                     <span className="text-cyan-400">NASA POWER Synchronized</span>
                   </div>
-                  <AgroEcosystemCanvasScrubber
-                    interactive={true}
-                    showControls={true}
-                    autoPlay={true}
-                    className="w-full h-[460px] rounded-xl border border-white/10"
-                  />
+                  <div className="w-full h-[460px] min-h-[460px] relative">
+                    <AgroEcosystemCanvasScrubber
+                      interactive={true}
+                      showControls={true}
+                      autoPlay={true}
+                      className="w-full h-full rounded-xl border border-white/10"
+                    />
+                  </div>
                 </div>
               )}
 
@@ -712,14 +714,16 @@ export const KnowledgeBase: React.FC = () => {
                     <span className="text-amber-400">{isDemo ? 'Demo preview — click cells' : 'Select farmer in Soil Diagnostics for live tile'}</span>
                   </div>
                   {isDemo ? (
-                    <SoilNutrientHeatmapCanvas
-                      onProbeSelect={(probe: SoilProbeResult) => {
-                        toast(`Soil ${probe.label}: ${probe.value.toFixed(1)} ${probe.unit} (${probe.status})`);
-                      }}
-                      className="w-full h-[460px] rounded-xl border border-white/10"
-                    />
+                    <div className="w-full h-[460px] min-h-[460px] relative">
+                      <SoilNutrientHeatmapCanvas
+                        onProbeSelect={(probe: SoilProbeResult) => {
+                          toast(`Soil ${probe.label}: ${probe.value.toFixed(1)} ${probe.unit} (${probe.status})`);
+                        }}
+                        className="w-full h-full rounded-xl border border-white/10"
+                      />
+                    </div>
                   ) : (
-                    <div className="w-full h-[460px] rounded-xl border border-white/10 bg-slate-950/40 flex flex-col items-center justify-center p-8 text-center">
+                    <div className="w-full h-[460px] min-h-[460px] rounded-xl border border-white/10 bg-slate-950/40 flex flex-col items-center justify-center p-8 text-center">
                       <Layers className="w-10 h-10 text-white/20 mb-2" />
                       <p className="text-sm font-bold text-white">Live Soil Tile — Per-Farmer</p>
                       <p className="text-xs text-white/50 mt-1 max-w-md">This demo mesh is visible only in the demo account. For your farmers, open <span className="text-emerald-300">Disease Diagnosis → Soil Diagnostics</span>, select a farmer, and the heatmap will render live ISRIC 250m + lab-anchored interpolation.</p>
@@ -734,12 +738,14 @@ export const KnowledgeBase: React.FC = () => {
                     <span>NEURAL FOLIAR SALIENCY & PATHOLOGY SCANNER</span>
                     <span className="text-rose-400">Edge AI Detection Active</span>
                   </div>
-                  <DiseaseSaliencyCanvas
-                    onSelectZone={(zone: LesionDetectionZone) => {
-                      toast(`Detected: ${zone.label} (${(zone.confidence * 100).toFixed(0)}% Confidence)`);
-                    }}
-                    className="w-full h-[460px] rounded-xl border border-white/10"
-                  />
+                  <div className="w-full h-[460px] min-h-[460px] relative">
+                    <DiseaseSaliencyCanvas
+                      onSelectZone={(zone: LesionDetectionZone) => {
+                        toast(`Detected: ${zone.label} (${(zone.confidence * 100).toFixed(0)}% Confidence)`);
+                      }}
+                      className="w-full h-full rounded-xl border border-white/10"
+                    />
+                  </div>
                 </div>
               )}
             </div>

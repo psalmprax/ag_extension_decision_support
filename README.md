@@ -50,6 +50,7 @@ ag-extension-shared/           # Shared zod schemas — frontend/backend API con
 - **Shared Mechanization & Drone Fleet Dispatcher** — Tractor sharing marketplace and ULV drone spray mission planning with wind speed safety buffers
 - **Crowd-Sourced Pest Swarm Radar (DBSCAN)** — Spatial sighting clustering and wind-vector epidemiological trajectory forecasting
 - **Cross-Border Regional Commodity Trade & Arbitrage** — East African multi-currency price monitoring (KES, UGX, TZS, RWF, ETB) and net trade spread calculation
+- **Unified Multi-Cloud Object Storage** — S3-compatible architecture supporting the cheapest raw storage (Backblaze B2 @ $0.006/GB) and zero-egress streaming (Cloudflare R2), with direct presigned uploads, dual local caching, and report archival (see [`docs/MEDIA_OBJECT_STORAGE_GUIDE.md`](./docs/MEDIA_OBJECT_STORAGE_GUIDE.md))
 
 > 📖 **Complete Architecture Documentation**: See [`ARCHITECTURE_PILLARS.md`](./ARCHITECTURE_PILLARS.md) for full data models, algorithmic formulas, and API contracts.
 
@@ -57,6 +58,7 @@ ag-extension-shared/           # Shared zod schemas — frontend/backend API con
 
 - **Backend**: Node.js 18+, Express, TypeScript
 - **Database**: PostgreSQL 16 with Prisma ORM (+ pgvector)
+- **Object Storage**: S3-Compatible (Backblaze B2, Cloudflare R2, Wasabi, Hetzner, MinIO, Local Disk)
 - **Cache / queue**: Redis (cache, Socket.IO adapter, BullMQ)
 - **AI providers**: OpenAI, Groq, Azure OpenAI, Google Vertex, Anthropic, Ollama
 - **Frontend**: React 18, Tailwind CSS, Vite, Zustand, TanStack Query

@@ -196,6 +196,8 @@ export interface ReportListRow {
   content: ReportContent;
   created_at: Date | string;
   updated_at: Date | string | null;
+  generated_by?: string | null;
+  tenant_id?: string | null;
 }
 
 // --- Visits routes (visits.ts) ---------------------------------------------

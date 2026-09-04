@@ -12,6 +12,7 @@ RUN npm install
 # ============================================================
 FROM node:20-slim AS build
 WORKDIR /app
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 COPY ag-extension-shared /ag-extension-shared
 COPY ag-extension-dashboard/src/frontend/package.json ./
 RUN npm install
