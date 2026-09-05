@@ -179,8 +179,10 @@ export class OpenRouterProvider extends BaseAIProvider {
     ];
 
     const result = await this.generateText(messages, {
+      model: options?.model || process.env.OPENROUTER_PRIMARY_MODEL || 'meta-llama/llama-3.3-70b-instruct:free',
       temperature: options?.temperature ?? 0.2,
-      maxTokens: options?.maxTokens ?? 2000,
+      maxTokens: options?.maxTokens ?? 4096,
+      tools: options?.tools,
     });
 
     const text = result.text ?? '';
@@ -192,10 +194,11 @@ export class OpenRouterProvider extends BaseAIProvider {
       .trim();
 
     return {
-      reasoning: 'Detailed Intelligence Analysis completed via OpenRouter.',
+      reasoning: `Detailed Intelligence Analysis completed via OpenRouter (${result.model || 'meta-llama/llama-3.3-70b-instruct'}).`,
       answer: cleanAnswer,
-      confidence: 0.9,
+      confidence: 0.95,
       visuals,
+      toolCalls: result.toolCalls as any,
     };
   }
 
