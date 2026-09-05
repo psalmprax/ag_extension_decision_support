@@ -211,6 +211,7 @@ jobs:
           script: |
             set -euo pipefail
             cd /root/ag_extension_decision_support
+            rm -f .git/*.lock .git/refs/heads/*.lock 2>/dev/null || true
             # Ensure remote uses HTTPS with token authentication
             git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
             echo "=== before: current commit ==="

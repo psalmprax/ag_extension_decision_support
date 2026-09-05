@@ -119,7 +119,8 @@ jobs:
               echo "Cloning repository..."
               cd /root && git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
             fi
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd /root/ag_extension_decision_support
+            rm -f .git/*.lock .git/refs/heads/*.lock 2>/dev/null || true
             # Ensure the remote uses HTTPS with token authentication
             git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
             git fetch origin
@@ -129,6 +130,7 @@ jobs:
               git checkout -b ${{ github.ref_name }} origin/${{ github.ref_name }}
             fi
             git reset --hard origin/${{ github.ref_name }}
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
             if [ ! -f .env ]; then
               cp .env.example .env
               echo ".env created from .env.example"
@@ -538,6 +540,7 @@ jobs:
               cd /root && git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git ag_extension_decision_support
             fi
             cd /root/ag_extension_decision_support
+            rm -f .git/*.lock .git/refs/heads/*.lock 2>/dev/null || true
             git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
             git fetch origin master
             git checkout master
