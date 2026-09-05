@@ -100,6 +100,7 @@ export interface ReasoningOptions {
     preferredProvider?: AIProviderType | string;
     webSearch?: boolean;
     webSearchOptions?: Record<string, unknown>;
+    tools?: unknown[];
 }
 
 export interface ReasoningResult {
@@ -117,6 +118,7 @@ export interface ReasoningResult {
         images?: Array<{ url: string; caption?: string }>;
         videos?: Array<{ url: string; caption?: string }>;
     };
+    toolCalls?: Array<{ function: { name: string; arguments: unknown } }>;
 }
 
 export interface ImageAnalysisOptions {

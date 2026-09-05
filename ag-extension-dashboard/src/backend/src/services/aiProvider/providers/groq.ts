@@ -147,8 +147,10 @@ export class GroqProvider extends BaseAIProvider {
         ];
 
         const result = await this.generateText(messages, {
+            model: options?.model || 'llama-3.3-70b-versatile',
             temperature: options?.temperature ?? 0.2,
-            maxTokens: options?.maxTokens ?? 2000,
+            maxTokens: options?.maxTokens ?? 4096,
+            tools: options?.tools,
         });
 
         const text = result.text ?? '';
@@ -160,10 +162,11 @@ export class GroqProvider extends BaseAIProvider {
             .trim();
 
         return {
-            reasoning: 'Detailed Intelligence Analysis completed.',
+            reasoning: 'Detailed Intelligence Analysis completed via Groq (llama-3.3-70b-versatile).',
             answer: cleanAnswer,
             confidence: 0.9,
             visuals,
+            toolCalls: result.toolCalls as any,
         };
     }
 

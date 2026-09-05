@@ -73,14 +73,14 @@ export class AIProviderFactory {
             this.primaryProvider,
             this.fallbackProvider,
             'aihubmix',
-            'openrouter',
             'groq',
+            'nvidia',
+            'openrouter',
+            'huggingface',
+            'ollama',
             'openai',
             'anthropic',
             'freebuff',
-            'ollama',
-            'nvidia',
-            'huggingface'
         ]));
 
         // If a caller (e.g. free-tier routing) prefers a specific provider,

@@ -511,6 +511,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       model: options?.model || process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash',
       temperature: options?.temperature ?? 0.2,
       maxTokens: Math.max(options?.maxTokens ?? 4096, 4096),
+      tools: options?.tools,
       webSearch: options?.webSearch ?? true,
       webSearchOptions: options?.webSearchOptions,
     });
@@ -528,6 +529,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       answer: cleanAnswer,
       confidence: 0.95,
       visuals,
+      toolCalls: result.toolCalls as any,
     };
   }
 

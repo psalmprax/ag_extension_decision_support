@@ -685,26 +685,38 @@ Agronomic Decision Support Protocol (Phase 2):
         ]) as unknown as Promise<ReasoningResult>;
     }
 
-    /** Execute requested tools with an 8s per-tool timeout, stopping once the overall budget is spent. */
+    /** Execute requested tools concurrently with an 8s per-tool timeout. */
     private static async executeAgenticTools(
         toolCalls: Array<{ function: { name: string; arguments: unknown } }>,
         start: number,
         budgetMs: number
     ): Promise<string[]> {
-        const toolResults: string[] = [];
-        for (const tc of toolCalls) {
-            try {
+        if (Date.now() - start > budgetMs) return [];
+
+        const settledResults = await Promise.allSettled(
+            toolCalls.map(async (tc) => {
+                let parsedArgs: Record<string, unknown> = {};
+                try {
+                    parsedArgs = typeof tc.function.arguments === 'string'
+                        ? JSON.parse(tc.function.arguments)
+                        : (tc.function.arguments as Record<string, unknown>) || {};
+                } catch {
+                    parsedArgs = (tc.function.arguments as Record<string, unknown>) || {};
+                }
+
                 const result = await Promise.race([
-                    mcpAdapter.callTool(tc.function.name, tc.function.arguments as Record<string, unknown>),
+                    mcpAdapter.callTool(tc.function.name, parsedArgs),
                     new Promise<never>((_, rej) => setTimeout(() => rej(new Error(`tool ${tc.function.name} timeout 8s`)), 8000))
                 ]) as { content?: Array<{ text?: string }> };
-                toolResults.push(`Tool ${tc.function.name} result: ${result.content?.[0]?.text?.slice(0, 2000) || 'No output'}`);
-            } catch (e) {
-                toolResults.push(`Tool ${tc.function.name} error: ${e instanceof Error ? e.message : String(e)}`);
-            }
-            if (Date.now() - start > budgetMs) break;
-        }
-        return toolResults;
+
+                return `Tool ${tc.function.name} result: ${result.content?.[0]?.text?.slice(0, 3000) || 'No output'}`;
+            })
+        );
+
+        return settledResults.map((r, i) => {
+            if (r.status === 'fulfilled') return r.value;
+            return `Tool ${toolCalls[i]?.function?.name || 'unknown'} error: ${r.reason instanceof Error ? r.reason.message : String(r.reason)}`;
+        });
     }
 
     private static async postProcessResponse(

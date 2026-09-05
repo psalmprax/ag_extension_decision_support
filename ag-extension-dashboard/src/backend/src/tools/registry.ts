@@ -19,6 +19,7 @@ import { translationTool } from './translationTool';
 import { diagnoseFromSymptomsTool, analyzePlantImageTool, getDiseaseInfoTool } from './plantDiseaseTools';
 import { nasaPowerTool } from './nasaPowerTool';
 import { aihubmixAccountTool } from './aihubmixTool';
+import { limeCalculatorTool } from './agronomyCalculatorTool';
 
 /**
  * A registry of all available tools for the AI agent.
@@ -48,6 +49,7 @@ export const toolRegistry: AnyTool[] = [
   analyzePlantImageTool,
   getDiseaseInfoTool,
   aihubmixAccountTool,
+  limeCalculatorTool,
 ];
 
 /**
