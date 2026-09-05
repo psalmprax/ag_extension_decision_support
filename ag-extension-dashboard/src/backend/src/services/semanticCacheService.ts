@@ -28,6 +28,8 @@ export class SemanticCacheService {
                        (1 - (embedding <=> $1::vector)) as similarity
                 FROM search_cache
                 WHERE embedding IS NOT NULL
+                  AND length(answer) >= 200
+                  AND answer NOT LIKE '%AI assistant is currently unavailable%'
                 ORDER BY similarity DESC
                 LIMIT 1
             `, [vector]);
@@ -49,6 +51,10 @@ export class SemanticCacheService {
      * Save a new result into the semantic cache
      */
     static async save(queryText: string, answer: string, contextUsed: any, visuals?: any): Promise<void> {
+        if (!answer || typeof answer !== 'string' || answer.length < 200 || answer.includes('AI assistant is currently unavailable')) {
+            logger.warn(`Skipping semantic cache save for low-quality or short answer (${answer?.length || 0} chars)`);
+            return;
+        }
         try {
             const embedding = await getEmbedding(queryText);
             const vector = `[${embedding.join(',')}]`;

@@ -385,7 +385,7 @@ export class AIHubMixProvider extends BaseAIProvider {
         model,
         messages: req.messages,
         temperature: req.temperature ?? 0.7,
-        max_tokens: req.max_tokens ?? 1024,
+        max_tokens: req.max_tokens ?? 4096,
         ...(req.tools && req.tools.length > 0 ? { tools: req.tools, tool_choice: 'auto' } : {}),
       };
       if (withWebSearch) {
@@ -453,12 +453,15 @@ export class AIHubMixProvider extends BaseAIProvider {
       model,
       messages,
       temperature: options?.temperature,
-      max_tokens: options?.maxTokens,
+      max_tokens: options?.maxTokens ?? 4096,
       tools,
       web_search: options?.webSearch,
       web_search_options: options?.webSearchOptions,
     });
     const choice = raw.choices[0];
+    if (choice?.finish_reason === 'length') {
+      logger.warn(`AIHubMix completion for model ${model} reached finish_reason='length' (truncated). Prompt tokens: ${raw.usage?.prompt_tokens}, completion tokens: ${raw.usage?.completion_tokens}`);
+    }
 
     return {
       text: choice?.message?.content || (choice?.message as { reasoning_content?: string })?.reasoning_content || '',
@@ -507,7 +510,7 @@ export class AIHubMixProvider extends BaseAIProvider {
     const result = await this.generateText(messages, {
       model: options?.model || process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash',
       temperature: options?.temperature ?? 0.2,
-      maxTokens: options?.maxTokens ?? 2000,
+      maxTokens: Math.max(options?.maxTokens ?? 4096, 4096),
       webSearch: options?.webSearch ?? true,
       webSearchOptions: options?.webSearchOptions,
     });

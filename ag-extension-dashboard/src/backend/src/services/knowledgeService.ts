@@ -3,7 +3,7 @@ import { AIRouter, ReasoningResult } from '@/services/aiProvider/aiProvider';
 import { VectorService, SearchResult } from '@/services/vectorService';
 import { SemanticCacheService } from '@/services/semanticCacheService';
 import { AssetValidationService } from '@/services/assetValidationService';
-import { cacheGet, cacheSet } from '@/services/cacheService';
+import { cacheGet, cacheSet, cacheDelete } from '@/services/cacheService';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { tavilyService } from '@/services/tavilyService';
@@ -122,8 +122,13 @@ export class KnowledgeService {
         if (cachedResponse) {
             try {
                 const parsed = JSON.parse(cachedResponse);
-                logger.info(`Redis exact match HIT for query: "${queryText}"`);
-                return { ...parsed, cached: true };
+                if (parsed.answer && typeof parsed.answer === 'string' && parsed.answer.length >= 200 && !parsed.answer.includes('AI assistant is currently unavailable')) {
+                    logger.info(`Redis exact match HIT for query: "${queryText}"`);
+                    return { ...parsed, cached: true };
+                } else {
+                    logger.warn(`Evicting short or poisoned Redis cache entry for query: "${queryText}"`);
+                    await cacheDelete(redisKey);
+                }
             } catch (e) {
                 logger.error('Failed to parse cached Redis response:', e);
             }
@@ -136,6 +141,8 @@ export class KnowledgeService {
                 SELECT query_text as "queryText", answer, context_used as "contextUsed", visuals
                 FROM search_cache
                 WHERE normalized_query = $1
+                  AND length(answer) >= 200
+                  AND answer NOT LIKE '%AI assistant is currently unavailable%'
                 LIMIT 1
             `, [normalized]);
 
@@ -179,8 +186,13 @@ export class KnowledgeService {
         if (cachedResponse) {
             try {
                 const parsed = JSON.parse(cachedResponse);
-                logger.info(`Redis exact match HIT (fresh) for query: "${queryText}"`);
-                return { ...parsed, cached: true };
+                if (parsed.answer && typeof parsed.answer === 'string' && parsed.answer.length >= 200 && !parsed.answer.includes('AI assistant is currently unavailable')) {
+                    logger.info(`Redis exact match HIT (fresh) for query: "${queryText}"`);
+                    return { ...parsed, cached: true };
+                } else {
+                    logger.warn(`Evicting short or poisoned Redis cache entry for query: "${queryText}"`);
+                    await cacheDelete(redisKey);
+                }
             } catch (e) { logger.error('Failed to parse cached Redis response:', e); }
         }
         try {
@@ -189,6 +201,8 @@ export class KnowledgeService {
                 SELECT query_text as "queryText", answer, context_used as "contextUsed", visuals
                 FROM search_cache
                 WHERE normalized_query = $1
+                  AND length(answer) >= 200
+                  AND answer NOT LIKE '%AI assistant is currently unavailable%'
                 LIMIT 1
             `, [normalized]);
             if (dbExact.rows.length > 0) {
@@ -597,7 +611,7 @@ Agronomic Decision Support Protocol (Phase 2):
                 context: `${contextText || 'No specific context found in knowledge base.'}\n\n${groundingDirective}`,
                 query: queryText,
                 attachments,
-                options: { temperature: 0.2, maxTokens: 1200, preferredProvider: options?.preferredProvider }
+                options: { temperature: 0.2, maxTokens: 4096, preferredProvider: options?.preferredProvider }
             }),
             new Promise<ReasoningResult>((_, reject) => {
                 reasoningTimeoutId = setTimeout(
@@ -647,7 +661,7 @@ Agronomic Decision Support Protocol (Phase 2):
             context: systemPrompt,
             query: messages.map(m => `${m.role}: ${m.content}`).join('\n'),
             attachments,
-            options: { temperature: 0.2, maxTokens: 1200, preferredProvider: options?.preferredProvider }
+            options: { temperature: 0.2, maxTokens: 4096, preferredProvider: options?.preferredProvider }
         }) as Promise<ReasoningResult>;
     }
 
@@ -665,7 +679,7 @@ Agronomic Decision Support Protocol (Phase 2):
                 context: systemPrompt,
                 query: messages.map(m => `${m.role}: ${m.content}`).join('\n'),
                 attachments,
-                options: { temperature: 0.2, maxTokens: 1200, preferredProvider: options?.preferredProvider, tools: toolDefs } as unknown as Record<string, unknown>
+                options: { temperature: 0.2, maxTokens: 4096, preferredProvider: options?.preferredProvider, tools: toolDefs } as unknown as Record<string, unknown>
             }),
             new Promise<never>((_, rej) => setTimeout(() => rej(new Error('agentic turn timeout')), Math.min(12000, remainingMs)))
         ]) as unknown as Promise<ReasoningResult>;
@@ -735,9 +749,19 @@ Agronomic Decision Support Protocol (Phase 2):
      * Ask a question and get a RAG-based answer (with semantic caching and multimodal support)
      */
     private static cacheAndLogResponse(userId: string, queryText: string, attachments: Record<string, any>[] | undefined, redisKey: string, queryCategories: string[], response: Record<string, any>) {
+        const isAnswerValid = response.answer &&
+            typeof response.answer === 'string' &&
+            response.answer.length >= 200 &&
+            !response.answer.includes('AI assistant is currently unavailable') &&
+            !response.answer.includes('No context found in knowledge base');
+
         if (!attachments || attachments.length === 0) {
-            cacheSet(redisKey, JSON.stringify(response), 3600 * 24).catch(e => logger.error('Failed to set Redis exact cache:', e));
-            SemanticCacheService.save(queryText, response.answer, response.contextUsed, response.visuals).catch(e => logger.error('Failed to save semantic cache:', e));
+            if (isAnswerValid) {
+                cacheSet(redisKey, JSON.stringify(response), 3600 * 24).catch(e => logger.error('Failed to set Redis exact cache:', e));
+                SemanticCacheService.save(queryText, response.answer, response.contextUsed, response.visuals).catch(e => logger.error('Failed to save semantic cache:', e));
+            } else {
+                logger.warn(`Skipping caching for low-quality or short answer (${response.answer?.length || 0} chars)`);
+            }
         }
 
         this.logSearch(

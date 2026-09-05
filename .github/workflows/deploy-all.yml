@@ -468,7 +468,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           command_timeout: 3m
           script: |
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            COMPOSE_FILES="-f docker-compose.yml -f docker-compose.agents.yml"
             docker exec ag-dashboard-backend npx prisma db seed
+            echo "Purging truncated or poisoned search_cache entries..."
+            docker compose $COMPOSE_FILES exec -T app-db psql -U "${DATABASE_USER:-postgres}" -d "${DATABASE_NAME:-ag_extension}" -c "DELETE FROM search_cache WHERE length(answer) < 200 OR answer LIKE '%AI assistant is currently unavailable%';" || true
+            docker compose $COMPOSE_FILES exec -T redis redis-cli --scan --pattern "rag:exact:*" | xargs -r docker compose $COMPOSE_FILES exec -T redis redis-cli del || true
 
       # ── Step 5/5: Health Check — verify services are up ─────────────────────
       - name: 5/5 Health Check — verify services
@@ -944,6 +949,9 @@ jobs:
             else
               docker compose $COMPOSE_FILES exec -T backend npx prisma db seed
             fi
+            echo "Purging truncated or poisoned search_cache entries..."
+            docker compose $COMPOSE_FILES exec -T app-db psql -U "${DATABASE_USER:-postgres}" -d "${DATABASE_NAME:-ag_extension}" -c "DELETE FROM search_cache WHERE length(answer) < 200 OR answer LIKE '%AI assistant is currently unavailable%';" || true
+            docker compose $COMPOSE_FILES exec -T redis redis-cli --scan --pattern "rag:exact:*" | xargs -r docker compose $COMPOSE_FILES exec -T redis redis-cli del || true
 
       # ── Step 5/5: SSL + Health Check ──────────────────────────
       - name: 5/5 SSL & Health Check — verify certificate and services
