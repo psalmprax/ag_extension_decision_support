@@ -136,4 +136,139 @@ router.get('/templates', authorize(['admin', 'regional_manager', 'extension_offi
     }
 });
 
+/**
+ * GET /api/context-menus/bulk/:entityType — bulk context menu options.
+ */
+router.get('/bulk/:entityType', async (req: Request, res: Response) => {
+    const { entityType } = req.params;
+    return res.json({
+        success: true,
+        data: {
+            entityType,
+            sections: [
+                {
+                    id: 'bulk_actions',
+                    title: 'Bulk Operations',
+                    items: [
+                        { id: 'export_bulk', label: 'Export Selected (CSV)', icon: 'download', action: 'export_bulk' },
+                        { id: 'delete_bulk', label: 'Delete Selected', icon: 'trash', action: 'delete_bulk', separator: true },
+                    ],
+                },
+            ],
+        },
+    });
+});
+
+/**
+ * GET /api/context-menus/:entityType/:entityId — dynamic entity context menu options.
+ */
+router.get('/:entityType/:entityId', async (req: Request, res: Response) => {
+    const { entityType, entityId } = req.params;
+
+    const buildFarmerMenu = () => ({
+        entityType,
+        entityId,
+        sections: [
+            {
+                id: 'quick_actions',
+                title: 'Quick Actions',
+                items: [
+                    { id: 'view_farmer', label: 'View Profile', icon: 'eye', action: 'view_farmer' },
+                    { id: 'schedule_visit', label: 'Schedule Visit', icon: 'calendar', action: 'schedule_visit' },
+                ],
+            },
+            {
+                id: 'sharing',
+                title: 'Share & Export',
+                items: [
+                    { id: 'share_farmer', label: 'Share Profile', icon: 'share', action: 'share_farmer' },
+                    { id: 'export_farmer', label: 'Export Data (CSV)', icon: 'download', action: 'export_farmer' },
+                ],
+            },
+            {
+                id: 'danger',
+                title: 'Danger Zone',
+                items: [
+                    { id: 'delete_farmer', label: 'Delete Farmer', icon: 'trash', action: 'delete_farmer', separator: true },
+                ],
+            },
+        ],
+    });
+
+    const buildVisitMenu = () => ({
+        entityType,
+        entityId,
+        sections: [
+            {
+                id: 'visit_actions',
+                title: 'Visit Actions',
+                items: [
+                    { id: 'view_visit', label: 'View Visit Details', icon: 'eye', action: 'view_visit' },
+                    { id: 'share_visit', label: 'Share Visit', icon: 'share', action: 'share_visit' },
+                    { id: 'delete_visit', label: 'Delete Record', icon: 'trash', action: 'delete_visit', separator: true },
+                ],
+            },
+        ],
+    });
+
+    const buildReportMenu = () => ({
+        entityType,
+        entityId,
+        sections: [
+            {
+                id: 'report_actions',
+                title: 'Report Actions',
+                items: [
+                    { id: 'view_report', label: 'View Report', icon: 'eye', action: 'view_report' },
+                    { id: 'export_report', label: 'Download Report', icon: 'download', action: 'export_report' },
+                    { id: 'share_report', label: 'Share Report', icon: 'share', action: 'share_report' },
+                ],
+            },
+        ],
+    });
+
+    const buildKnowledgeMenu = () => ({
+        entityType,
+        entityId,
+        sections: [
+            {
+                id: 'knowledge_actions',
+                title: 'Article Actions',
+                items: [
+                    { id: 'view_knowledge', label: 'Read Article', icon: 'note', action: 'view_knowledge' },
+                    { id: 'share_knowledge', label: 'Share Article', icon: 'share', action: 'share_knowledge' },
+                ],
+            },
+        ],
+    });
+
+    switch (entityType) {
+        case 'farmer':
+            return res.json({ success: true, data: buildFarmerMenu() });
+        case 'visit':
+            return res.json({ success: true, data: buildVisitMenu() });
+        case 'report':
+            return res.json({ success: true, data: buildReportMenu() });
+        case 'knowledge':
+            return res.json({ success: true, data: buildKnowledgeMenu() });
+        default:
+            return res.json({
+                success: true,
+                data: {
+                    entityType,
+                    entityId,
+                    sections: [
+                        {
+                            id: 'default_actions',
+                            items: [
+                                { id: `view_${entityType}`, label: 'View Details', icon: 'eye', action: `view_${entityType}` },
+                                { id: `share_${entityType}`, label: 'Share', icon: 'share', action: `share_${entityType}` },
+                            ],
+                        },
+                    ],
+                },
+            });
+    }
+});
+
 export default router;

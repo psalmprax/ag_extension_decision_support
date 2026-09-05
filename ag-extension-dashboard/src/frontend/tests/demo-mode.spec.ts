@@ -116,4 +116,29 @@ test.describe('Demo mode network isolation', () => {
     const demoIdRequests = requests.filter(url => containsDemoId(url));
     expect(demoIdRequests, `demo-id requests hit the network: ${JSON.stringify(demoIdRequests)}`).toEqual([]);
   });
+
+  test('demo mode allows querying Knowledge Base benchmark scenarios without error', async ({
+    page,
+  }) => {
+    const requests: string[] = [];
+    await mockDemoBackend(page, url => requests.push(url));
+    await loginAsDemo(page);
+
+    // Navigate to Knowledge Base
+    await page.goto('/knowledge');
+    await expect(page.getByText('Agro-Spatial Knowledge Mesh').first()).toBeVisible({ timeout: 15000 });
+
+    // Verify benchmark research scenario is clickable and executes
+    const scenarioCard = page.getByText('Severe Soil Acidity (pH 4.8) & Liming Protocol').first();
+    await expect(scenarioCard).toBeVisible({ timeout: 10000 });
+    await scenarioCard.click();
+
+    // Verify grounded synthesis renders
+    await expect(page.getByText('Grounded Synthesis Completed').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('ALFA Spatial Reasoning').first()).toBeVisible({ timeout: 15000 });
+
+    // Verify no demo id requests leaked to the network
+    const demoIdRequests = requests.filter(url => containsDemoId(url));
+    expect(demoIdRequests).toEqual([]);
+  });
 });

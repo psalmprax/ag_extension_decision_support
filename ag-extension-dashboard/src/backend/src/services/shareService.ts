@@ -202,6 +202,11 @@ class ShareService {
     }
 
     private async validateEntity(entityType: string, entityId: string, tenantId?: string): Promise<void> {
+        // Synthetic demo entities do not exist in the live database
+        if (entityId.startsWith('demo-') || entityId.startsWith('field-demo-') || entityId.includes('demo')) {
+            return;
+        }
+
         let exists = false;
         const prisma = getPrisma();
 

@@ -311,8 +311,10 @@ router.post('/ask', async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'User not authenticated' });
         }
 
-        // Daily knowledge quota check (3 per day for Free tier; admin is completely exempt)
-        const dailyQuota = userRole === 'admin'
+        // Daily knowledge quota check (3 per day for Free tier; admin and demo accounts are exempt)
+        const isDemoUser = (user as Record<string, unknown> | undefined)?.email === 'demo@agridemo.com'
+            || Boolean((user as Record<string, unknown> | undefined)?.isDemo);
+        const dailyQuota = (userRole === 'admin' || isDemoUser)
             ? { allowed: true, current: 0, limit: -1, remaining: 999999 }
             : await usageService.checkDailyKnowledgeLimit(userId, userRole);
 
