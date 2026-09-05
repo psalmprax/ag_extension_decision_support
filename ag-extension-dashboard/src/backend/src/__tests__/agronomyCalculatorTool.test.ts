@@ -43,6 +43,8 @@ describe('agronomyCalculatorTool (Deterministic Lime Titration)', () => {
       soil_ph: 6.5,
       target_ph: 6.2,
       soil_texture: 'loam',
+      crop: 'maize',
+      cce_percentage: 85,
     });
 
     const result = JSON.parse(resultJson);
