@@ -771,11 +771,19 @@ jobs:
 
             # Proactively prune dangling images and old builder cache to preserve disk space
             echo "Pruning dangling images and builder cache..."
-            docker image prune -f 2>/dev/null || true
-            docker builder prune -f --filter "until=24h" 2>/dev/null || true
+            ROOT_USAGE=$(df / | awk 'NR==2 {print $5}' | tr -d '%')
+            if [ "$ROOT_USAGE" -gt 70 ]; then
+              echo "Disk usage high (${ROOT_USAGE}%) — clearing /root/docker-cache and builder caches..."
+              rm -rf /root/docker-cache/* 2>/dev/null || true
+              docker builder prune -af 2>/dev/null || true
+              docker image prune -af 2>/dev/null || true
+            else
+              docker image prune -f 2>/dev/null || true
+              docker builder prune -f 2>/dev/null || true
+            fi
 
             # Always ensure remote-builder is created and active
-            docker buildx rm remote-builder 2>/dev/null || true
+            docker buildx rm -f remote-builder 2>/dev/null || true
             docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
 
             # The `type=local` cache exporter writes a transient `ingest/` tree
@@ -810,12 +818,17 @@ jobs:
               if ! BAKE_OUTPUT=$(run_bake 2>&1); then
                 echo "Bake failed — checking failure reason..."
                 echo "$BAKE_OUTPUT" | tail -40
-                if echo "$BAKE_OUTPUT" | grep -qE "startedat\.tmp|error writing layer blob|ingest/|connection error|graceful_stop|EOF|Unavailable|transport is closing|failed to receive status"; then
-                  echo "Recoverable builder transport or cache-export issue detected. Resetting builder, clearing stale ingest state, and retrying..."
-                  find /root/docker-cache -type d -name ingest -prune -exec rm -rf {} + 2>/dev/null || true
-                  docker buildx rm remote-builder 2>/dev/null || true
+                if echo "$BAKE_OUTPUT" | grep -qE "startedat\.tmp|error writing layer blob|ingest/|connection error|graceful_stop|EOF|Unavailable|transport is closing|failed to receive status|no space left on device|ResourceExhausted"; then
+                  echo "Recoverable builder transport, disk-space, or cache issue detected. Purging local cache and retrying..."
+                  rm -rf /root/docker-cache/* 2>/dev/null || true
+                  docker builder prune -af 2>/dev/null || true
+                  docker buildx rm -f remote-builder 2>/dev/null || true
                   docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
-                  BAKE_OUTPUT=$(run_bake 2>&1) || { echo "$BAKE_OUTPUT" | tail -40; echo "FATAL: Bake failed after builder reset & cache cleanup retry." >&2; exit 1; }
+                  if ! BAKE_OUTPUT=$(run_bake 2>&1); then
+                    echo "$BAKE_OUTPUT" | tail -40
+                    echo "Bake retry failed. Falling back to standard docker compose build..."
+                    docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml build backend frontend agent-zero crew-ai discovery-scraper
+                  fi
                 else
                   echo "$BAKE_OUTPUT" >&2
                   echo "FATAL: Bake failed for a non-cache reason." >&2
