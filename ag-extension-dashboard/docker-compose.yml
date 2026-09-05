@@ -120,7 +120,7 @@ services:
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_EMAIL: ${VAPID_EMAIL:-mailto:admin@gpexts.com}
       AI_PRIMARY_PROVIDER: ${AI_PRIMARY_PROVIDER:-aihubmix}
-      AI_PRIMARY_MODEL: ${AI_PRIMARY_MODEL:-nemotron-3-ultra-550b-a55b-free}
+      AI_PRIMARY_MODEL: ${AI_PRIMARY_MODEL:-gemini-2.5-flash}
       AIHUBMIX_WEB_SEARCH: ${AIHUBMIX_WEB_SEARCH:-true}
       AI_EMBEDDINGS_PROVIDER: ${AI_EMBEDDINGS_PROVIDER:-openai}
       AI_EMBEDDINGS_MODEL: ${AI_EMBEDDINGS_MODEL:-text-embedding-3-large}

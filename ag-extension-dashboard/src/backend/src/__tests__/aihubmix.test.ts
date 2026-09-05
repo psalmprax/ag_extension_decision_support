@@ -18,6 +18,7 @@ describe('AIHubMix Integration (REST Account API, MCP Tool & Model Provider)', (
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.AIHUBMIX_ACCESS_KEY = 'test-access-key';
+    process.env.AI_PRIMARY_MODEL = 'gemini-2.5-flash';
   });
 
   describe('AIHubMixAccountService', () => {
@@ -163,7 +164,7 @@ describe('AIHubMix Integration (REST Account API, MCP Tool & Model Provider)', (
       expect(reply).toBe('Recommended fertilizer: NPK 17:17:17 at 50kg/acre.');
     });
 
-    it('defaults to nemotron-3-ultra-550b-a55b-free with web_search_options', async () => {
+    it('defaults to gemini-2.5-flash with web_search and web_search_options', async () => {
       mockedAxios.post.mockResolvedValueOnce({
         data: {
           id: 'chat-2',
@@ -184,11 +185,12 @@ describe('AIHubMix Integration (REST Account API, MCP Tool & Model Provider)', (
       });
 
       expect(result.text).toBe('Current rainfall anomalies from live search indicate adequate moisture.');
-      expect(result.model).toBe('nemotron-3-ultra-550b-a55b-free');
+      expect(result.model).toBe('gemini-2.5-flash');
       expect(mockedAxios.post).toHaveBeenCalledWith(
         'https://aihubmix.com/v1/chat/completions',
         expect.objectContaining({
-          model: 'nemotron-3-ultra-550b-a55b-free',
+          model: 'gemini-2.5-flash',
+          web_search: true,
           web_search_options: {},
         }),
         expect.any(Object)

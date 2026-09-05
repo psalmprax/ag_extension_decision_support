@@ -189,7 +189,7 @@ jobs:
           WEATHER_API_URL: ${{ secrets.WEATHER_API_URL || vars.WEATHER_API_URL || 'https://api.weatherapi.com/v1' }}
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
           AI_PRIMARY_PROVIDER: ${{ secrets.AI_PRIMARY_PROVIDER || vars.AI_PRIMARY_PROVIDER || 'aihubmix' }}
-          AI_PRIMARY_MODEL: ${{ secrets.AI_PRIMARY_MODEL || vars.AI_PRIMARY_MODEL || 'nemotron-3-ultra-550b-a55b-free' }}
+          AI_PRIMARY_MODEL: ${{ secrets.AI_PRIMARY_MODEL || vars.AI_PRIMARY_MODEL || 'gemini-2.5-flash' }}
           AIHUBMIX_WEB_SEARCH: ${{ secrets.AIHUBMIX_WEB_SEARCH || vars.AIHUBMIX_WEB_SEARCH || 'true' }}
           AI_FALLBACK_PROVIDER: ${{ secrets.AI_FALLBACK_PROVIDER || vars.AI_FALLBACK_PROVIDER || 'openrouter' }}
           AI_FALLBACK_MODEL: ${{ secrets.AI_FALLBACK_MODEL || vars.AI_FALLBACK_MODEL || 'meta-llama/llama-3.3-70b-instruct:free' }}

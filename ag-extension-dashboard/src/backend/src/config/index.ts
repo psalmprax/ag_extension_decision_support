@@ -75,7 +75,7 @@ export const config: AppConfig = {
     ai: {
         primary: {
             provider: getEnv('AI_PRIMARY_PROVIDER', 'aihubmix'),
-            model: getEnv('AI_PRIMARY_MODEL', 'nemotron-3-ultra-550b-a55b-free'),
+            model: getEnv('AI_PRIMARY_MODEL', 'gemini-2.5-flash'),
             region: getEnv('AI_PRIMARY_REGION', 'eastus'),
         },
         fallback: {

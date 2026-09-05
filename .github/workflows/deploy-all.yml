@@ -514,7 +514,7 @@ jobs:
           DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
           # LLM selection & endpoint config (repo variables or secrets)
           AI_PRIMARY_PROVIDER: ${{ secrets.AI_PRIMARY_PROVIDER || vars.AI_PRIMARY_PROVIDER || 'aihubmix' }}
-          AI_PRIMARY_MODEL: ${{ secrets.AI_PRIMARY_MODEL || vars.AI_PRIMARY_MODEL || 'nemotron-3-ultra-550b-a55b-free' }}
+          AI_PRIMARY_MODEL: ${{ secrets.AI_PRIMARY_MODEL || vars.AI_PRIMARY_MODEL || 'gemini-2.5-flash' }}
           AIHUBMIX_WEB_SEARCH: ${{ secrets.AIHUBMIX_WEB_SEARCH || vars.AIHUBMIX_WEB_SEARCH || 'true' }}
           AI_FALLBACK_PROVIDER: ${{ secrets.AI_FALLBACK_PROVIDER || vars.AI_FALLBACK_PROVIDER || 'ollama' }}
           AI_FALLBACK_MODEL: ${{ secrets.AI_FALLBACK_MODEL || vars.AI_FALLBACK_MODEL || 'llama3.2:3b' }}
