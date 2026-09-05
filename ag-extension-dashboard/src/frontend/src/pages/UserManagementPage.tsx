@@ -128,6 +128,24 @@ export function UserManagementPage() {
   // Create user mutation
   const createUser = useMutation({
     mutationFn: async (data: typeof formData) => {
+      if (isDemo) {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        return {
+          success: true,
+          data: {
+            id: `demo-user-${Date.now()}`,
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            role: data.role,
+            region: data.region || 'Eastern',
+            country: data.country || 'Kenya',
+            phone: data.phone || '+254 700 000000',
+            isActive: true,
+            createdAt: new Date().toISOString(),
+          },
+        };
+      }
       const res = await apiClient.post('/users', data);
       return res.data;
     },

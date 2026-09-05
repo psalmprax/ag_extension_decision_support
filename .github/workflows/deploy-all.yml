@@ -366,9 +366,13 @@ jobs:
             docker network create --driver bridge ettametta_ettametta >/dev/null 2>&1 || true
             docker network create --driver bridge ag-network >/dev/null 2>&1 || true
 
-            # Remove any orphaned containers from previous runs
-            docker compose -f docker-compose.yml -f docker-compose.agents.yml down --remove-orphans 2>/dev/null || true
+            # Remove any stopped or orphaned container shells to prevent daemon name conflicts
             docker rm -f ag-discovery-scraper ag-agent-zero ag-crew-ai 2>/dev/null || true
+            for c in ag-dashboard-db ag-dashboard-redis ag-dashboard-backend ag-dashboard-frontend; do
+              if [ "$(docker inspect -f '{{.State.Status}}' "$c" 2>/dev/null)" != "running" ]; then
+                docker rm -f "$c" 2>/dev/null || true
+              fi
+            done
 
             # Ensure MCP_API_TOKEN is present in .env before compose up
             if ! grep -q "^MCP_API_TOKEN=[^[:space:]]\{16,\}" .env 2>/dev/null; then
@@ -378,7 +382,7 @@ jobs:
             fi
 
             echo "Starting all services..."
-            docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --force-recreate --no-build backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama
+            docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --force-recreate --remove-orphans --no-build backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama
 
       # ── Step 4/5: Migrations against the FRESHLY BUILT backend image ──
       # Two reliability fixes vs. the prior 2/4 step:
@@ -641,6 +645,14 @@ jobs:
             cd /root/ag_extension_decision_support/ag-extension-dashboard
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml"
 
+            # Clean up dead or stopped container shells if present to prevent daemon name conflict
+            if [ "$(docker inspect -f '{{.State.Status}}' ag-dashboard-db 2>/dev/null)" != "running" ]; then
+              docker rm -f ag-dashboard-db 2>/dev/null || true
+            fi
+            if [ "$(docker inspect -f '{{.State.Status}}' ag-dashboard-redis 2>/dev/null)" != "running" ]; then
+              docker rm -f ag-dashboard-redis 2>/dev/null || true
+            fi
+
             DB_UP=$(docker ps --filter "name=ag-dashboard-db" --filter "status=running" -q)
             REDIS_UP=$(docker ps --filter "name=ag-dashboard-redis" --filter "status=running" -q)
 
@@ -847,9 +859,13 @@ jobs:
             docker network create --driver bridge ettametta_ettametta >/dev/null 2>&1 || true
             docker network create --driver bridge ag-network >/dev/null 2>&1 || true
 
-            # Remove any orphaned containers from previous runs
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml down --remove-orphans 2>/dev/null || true
+            # Remove any stopped or orphaned container shells to prevent daemon name conflicts
             docker rm -f ag-discovery-scraper ag-agent-zero ag-crew-ai 2>/dev/null || true
+            for c in ag-dashboard-db ag-dashboard-redis ag-traefik ag-dashboard-backend ag-dashboard-frontend; do
+              if [ "$(docker inspect -f '{{.State.Status}}' "$c" 2>/dev/null)" != "running" ]; then
+                docker rm -f "$c" 2>/dev/null || true
+              fi
+            done
 
             # Ensure MCP_API_TOKEN is present in .env before compose up
             if ! grep -q "^MCP_API_TOKEN=[^[:space:]]\{16,\}" .env 2>/dev/null; then
@@ -859,7 +875,12 @@ jobs:
             fi
 
             echo "Starting all services..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --no-build traefik backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama
+            if ! docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --remove-orphans --no-build traefik backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama; then
+              echo "Compose up failed with container conflict. Cleaning up conflicting shells and retrying..."
+              docker rm -f ag-dashboard-db ag-dashboard-redis ag-traefik 2>/dev/null || true
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build app-db redis
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --remove-orphans --no-build traefik backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama
+            fi
 
       # ── Step 4/5: Migrations against the FRESHLY BUILT backend image ──
       - name: 4/5 Migrate — prisma migrate deploy (extension pre-create + visible retry)

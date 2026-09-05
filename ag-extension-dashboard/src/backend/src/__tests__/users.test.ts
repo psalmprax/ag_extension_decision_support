@@ -197,6 +197,78 @@ describe('Users Route — Mapper-before-response: mapUserPublicRows + mapUserPub
         expect(response.body.data.first_name).toBeUndefined();
     });
 
+    it('POST / gracefully falls back if country column does not exist (e.g. pending migration)', async () => {
+        // First query fails with missing column error (42703)
+        const missingColumnErr: any = new Error('column "country" of relation "users" does not exist');
+        missingColumnErr.code = '42703';
+        const fallbackRow = {
+            id: 'user-fallback',
+            email: 'fallback@example.com',
+            first_name: 'Grace',
+            last_name: 'Hopper',
+            role: 'extension_officer',
+            region: 'Eastern',
+            phone: '+254700000000',
+            is_active: true,
+            preferred_language: null,
+            avatar_url: null,
+            last_login: null,
+        };
+
+        mockQuery
+            .mockRejectedValueOnce(missingColumnErr)
+            .mockResolvedValueOnce({ rows: [fallbackRow], rowCount: 1 });
+
+        const response = await request(app)
+            .post('/api/v1/users')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({
+                email: 'fallback@example.com',
+                password: 'password123',
+                firstName: 'Grace',
+                lastName: 'Hopper',
+                country: 'Kenya',
+                region: 'Eastern',
+                phone: '+254700000000',
+            });
+
+        expect(response.status).toBe(201);
+        expect(response.body.data.id).toBe('user-fallback');
+        expect(response.body.data.firstName).toBe('Grace');
+        expect(response.body.data.lastName).toBe('Hopper');
+        expect(mockQuery).toHaveBeenCalledTimes(2);
+    });
+
+    it('GET / gracefully falls back if country column does not exist (code 42703)', async () => {
+        const missingColumnErr: any = new Error('column "country" does not exist');
+        missingColumnErr.code = '42703';
+        const fallbackRow = {
+            id: 'user-1',
+            email: 'jane@example.com',
+            first_name: 'Jane',
+            last_name: 'Banda',
+            role: 'extension_officer',
+            region: 'Central',
+            phone: '+265999000111',
+            is_active: true,
+            preferred_language: 'en',
+            avatar_url: null,
+            last_login: null,
+        };
+
+        mockQuery
+            .mockRejectedValueOnce(missingColumnErr)
+            .mockResolvedValueOnce({ rows: [fallbackRow], rowCount: 1 });
+
+        const response = await request(app)
+            .get('/api/v1/users')
+            .set('Authorization', `Bearer ${adminToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data[0].firstName).toBe('Jane');
+        expect(mockQuery).toHaveBeenCalledTimes(2);
+    });
+
     it('GET /role/:role invokes mapUserRows (full DTO with timestamps)', async () => {
         const userRow = {
             id: 'user-1',

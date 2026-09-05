@@ -40,12 +40,29 @@ router.get('/', async (req: Request, res: Response) => {
             return res.status(503).json({ success: false, error: 'Database unavailable' });
         }
 
-        const { rows } = await query<UserPublicRow>(
-            `SELECT id, email, first_name, last_name, role, region, country, phone, is_active,
-                    preferred_language, avatar_url, last_login, created_at
-             FROM users
-             ORDER BY created_at DESC`
-        );
+        let rows: UserPublicRow[] = [];
+        try {
+            const queryRes = await query<UserPublicRow>(
+                `SELECT id, email, first_name, last_name, role, region, country, phone, is_active,
+                        preferred_language, avatar_url, last_login, created_at
+                 FROM users
+                 ORDER BY created_at DESC`
+            );
+            rows = queryRes.rows || [];
+        } catch (dbErr: any) {
+            if (dbErr?.message?.includes('country') || dbErr?.code === '42703') {
+                logger.warn('users table lacks country column; selecting without country');
+                const fallbackRes = await query<UserPublicRow>(
+                    `SELECT id, email, first_name, last_name, role, region, phone, is_active,
+                            preferred_language, avatar_url, last_login, created_at
+                     FROM users
+                     ORDER BY created_at DESC`
+                );
+                rows = fallbackRes.rows || [];
+            } else {
+                throw dbErr;
+            }
+        }
         return res.json({ success: true, data: mapUserPublicRows(rows || []) });
     } catch (error) {
         logger.error('Failed to fetch users:', error);
@@ -63,12 +80,29 @@ router.get('/:id', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'User id is required' });
         }
 
-        const { rows } = await query<UserPublicRow>(
-            `SELECT id, email, first_name, last_name, role, region, country, phone, is_active,
-                    preferred_language, avatar_url, last_login, created_at
-             FROM users WHERE id = $1`,
-            [id]
-        );
+        let rows: UserPublicRow[] = [];
+        try {
+            const queryRes = await query<UserPublicRow>(
+                `SELECT id, email, first_name, last_name, role, region, country, phone, is_active,
+                        preferred_language, avatar_url, last_login, created_at
+                 FROM users WHERE id = $1`,
+                [id]
+            );
+            rows = queryRes.rows || [];
+        } catch (dbErr: any) {
+            if (dbErr?.message?.includes('country') || dbErr?.code === '42703') {
+                logger.warn('users table lacks country column; selecting without country');
+                const fallbackRes = await query<UserPublicRow>(
+                    `SELECT id, email, first_name, last_name, role, region, phone, is_active,
+                            preferred_language, avatar_url, last_login, created_at
+                     FROM users WHERE id = $1`,
+                    [id]
+                );
+                rows = fallbackRes.rows || [];
+            } else {
+                throw dbErr;
+            }
+        }
 
         if (rows.length === 0) {
             return res.status(404).json({ success: false, error: 'User not found' });
@@ -98,14 +132,33 @@ router.post('/', async (req: Request, res: Response) => {
 
         const password_hash = await bcrypt.hash(data.password, 10);
 
-        const { rows } = await query<UserPublicRow>(
-            `INSERT INTO users (email, password_hash, first_name, last_name, role, region, country, phone, is_active)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
-             ON CONFLICT (email) DO NOTHING
-             RETURNING id, email, first_name, last_name, role, region, country, phone, is_active,
-                       preferred_language, avatar_url, last_login`,
-            [data.email, password_hash, data.firstName, data.lastName, data.normalizedRole, data.region, data.country, data.phone]
-        );
+        let rows: UserPublicRow[] = [];
+        try {
+            const insertResult = await query<UserPublicRow>(
+                `INSERT INTO users (email, password_hash, first_name, last_name, role, region, country, phone, is_active)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
+                 ON CONFLICT (email) DO NOTHING
+                 RETURNING id, email, first_name, last_name, role, region, country, phone, is_active,
+                           preferred_language, avatar_url, last_login`,
+                [data.email, password_hash, data.firstName, data.lastName, data.normalizedRole, data.region, data.country, data.phone]
+            );
+            rows = insertResult.rows || [];
+        } catch (dbErr: any) {
+            if (dbErr?.message?.includes('country') || dbErr?.code === '42703') {
+                logger.warn('users table lacks country column; inserting without country');
+                const fallbackResult = await query<UserPublicRow>(
+                    `INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, is_active)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, true)
+                     ON CONFLICT (email) DO NOTHING
+                     RETURNING id, email, first_name, last_name, role, region, phone, is_active,
+                               preferred_language, avatar_url, last_login`,
+                    [data.email, password_hash, data.firstName, data.lastName, data.normalizedRole, data.region, data.phone]
+                );
+                rows = fallbackResult.rows || [];
+            } else {
+                throw dbErr;
+            }
+        }
 
         if (!rows || rows.length === 0) {
             return res.status(409).json({ success: false, error: 'Email already registered' });
