@@ -29,6 +29,7 @@ import {
   Citation,
   KnowledgeEvidenceStatus,
   downloadKnowledgePack,
+  type AskResponse,
 } from '@/api/knowledgeService';
 import { useAppStore } from '@/store/useAppStore';
 import { KnowledgeStats } from './KnowledgeStats';
@@ -129,6 +130,41 @@ const findMatchingScenario = (queryText: string): ResearchScenario | undefined =
          q.includes(s.query.toLowerCase().slice(0, 30)) ||
          q.includes(s.crop.toLowerCase())
   );
+};
+
+const resolveSearchResult = (
+  res: AskResponse,
+  queryText: string,
+  isDemo: boolean,
+  matchingScenario?: ResearchScenario
+): Result => {
+  const isUnavailable = res.data.answer?.includes('and the AI assistant is currently unavailable');
+  if (isUnavailable && (isDemo || matchingScenario)) {
+    return buildBenchmarkResult(matchingScenario || RESEARCH_SCENARIOS[0], queryText);
+  }
+  return {
+    ...res.data,
+    query: queryText || 'Multimodal Search',
+    timestamp: new Date().toISOString(),
+  };
+};
+
+const notifySearchResult = (
+  res: AskResponse,
+  bypassCache: boolean,
+  notify: (opts: { type: 'info' | 'success'; message: string }) => void
+): void => {
+  if (res.data.cached) {
+    notify({
+      type: 'info',
+      message: 'Result retrieved from semantic cache (Cost optimized)',
+    });
+  } else if (bypassCache) {
+    notify({
+      type: 'success',
+      message: 'Fresh real-time LLM synthesis generated',
+    });
+  }
 };
 
 export const KnowledgeBase: React.FC = () => {
@@ -235,39 +271,16 @@ export const KnowledgeBase: React.FC = () => {
 
       if (!res.success) return;
 
-      const isUnavailable = res.data.answer?.includes('and the AI assistant is currently unavailable');
-      if (isUnavailable && (isDemo || matchingScenario)) {
-        const scenario = matchingScenario || RESEARCH_SCENARIOS[0];
-        setLastResult(buildBenchmarkResult(scenario, queryText));
-      } else {
-        setLastResult({
-          ...res.data,
-          query: queryText || 'Multimodal Search',
-          timestamp: new Date().toISOString(),
-        });
-      }
-
+      setLastResult(resolveSearchResult(res, queryText, isDemo, matchingScenario));
       setAttachments([]);
       applyQuotaUpdate(res.data.dailyRemaining, res.data.dailyLimit);
       fetchQuotaData();
-
-      if (res.data.cached) {
-        addNotification({
-          type: 'info',
-          message: 'Result retrieved from semantic cache (Cost optimized)',
-        });
-      } else if (bypassCache) {
-        addNotification({
-          type: 'success',
-          message: 'Fresh real-time LLM synthesis generated',
-        });
-      }
+      notifySearchResult(res, bypassCache, addNotification);
     } catch (error: unknown) {
       clearInterval(stepInterval);
       if (isDemo || matchingScenario) {
         setRetrievalStep(4);
-        const scenario = matchingScenario || RESEARCH_SCENARIOS[0];
-        setLastResult(buildBenchmarkResult(scenario, queryText));
+        setLastResult(buildBenchmarkResult(matchingScenario || RESEARCH_SCENARIOS[0], queryText));
         setAttachments([]);
         return;
       }

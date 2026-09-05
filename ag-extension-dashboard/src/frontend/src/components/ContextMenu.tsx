@@ -19,7 +19,7 @@ import {
   XCircle,
   MoreVertical,
 } from 'lucide-react';
-import { fetchContextMenu, getUnavailableMenu, getDefaultContextMenu } from '@/api/contextMenuService';
+import { fetchContextMenu, getDefaultContextMenu } from '@/api/contextMenuService';
 
 interface ContextMenuItem {
   id: string;
