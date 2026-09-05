@@ -638,37 +638,54 @@ Agronomic Decision Support Protocol (Phase 2):
         }));
         if (toolDefs.length === 0) return this.callReasoningWithTimeout(contextText, queryText, attachments, options);
 
-        const systemPrompt = `You are an agricultural research assistant with tools. Use them to gather fresh evidence before answering. Cite sourceUrl for every claim. Current categories: ${queryCategories.join(', ') || 'general'}. Context:\n${contextText || 'No specific context found.'}`;
+        const systemPrompt = `You are a Senior Agronomist and Agricultural Extension Research Specialist. You have access to deterministic micro-tools for precise agricultural calculations and live data retrieval. Use tools whenever calculations or live data are required. Cite sourceUrl and state exact numerical results.\nCurrent categories: ${queryCategories.join(', ') || 'general'}.\nContext:\n${contextText || 'No specific context found.'}`;
         const start = Date.now();
-        const BUDGET_MS = 40000;
-        const messages: Array<{ role: string; content: string; tool_calls?: unknown; tool_call_id?: string }> = [{ role: 'user', content: queryText }];
+        const BUDGET_MS = 60000;
 
-        for (let turn = 0; turn < 4; turn++) {
-            if (Date.now() - start > BUDGET_MS) break;
+        try {
+            // Turn 0: Probe LLM with tool definitions to see if tools are invoked
             const remaining = BUDGET_MS - (Date.now() - start);
-            const res = await this.routeAgenticTurn(systemPrompt, messages, attachments, options, toolDefs, remaining);
-            const toolCalls = (res as unknown as { toolCalls?: Array<{ function: { name: string; arguments: unknown } }> }).toolCalls;
-            if (!toolCalls || toolCalls.length === 0) return res;
-            // Execute tools with 8s per-tool timeout
-            const toolResults = await this.executeAgenticTools(toolCalls, start, BUDGET_MS);
-            messages.push({ role: 'assistant', content: (res as ReasoningResult).answer || '', tool_calls: toolCalls as unknown[] });
-            messages.push({ role: 'tool', content: toolResults.join('\n') });
-            // Check evidence: if last tool results yielded citations, we can break early on next loop
-            if (toolResults.join('').length > 500) continue;
+            const firstTurnRes = await this.routeAgenticTurn(systemPrompt, queryText, attachments, options, toolDefs, remaining);
+            const toolCalls = (firstTurnRes as unknown as { toolCalls?: Array<{ function: { name: string; arguments: unknown } }> }).toolCalls;
+
+            if (!toolCalls || toolCalls.length === 0) {
+                // If model synthesized directly without needing tools, return its result immediately
+                if ((firstTurnRes as ReasoningResult).answer && (firstTurnRes as ReasoningResult).answer.length > 50) {
+                    return firstTurnRes;
+                }
+            } else {
+                // Execute tools concurrently with per-tool timeout
+                logger.info(`Agentic reasoning turn 0 invoked ${toolCalls.length} tool(s): ${toolCalls.map(t => t.function.name).join(', ')}`);
+                const toolResults = await this.executeAgenticTools(toolCalls, start, BUDGET_MS);
+
+                // Perform grounded synthesis incorporating deterministic micro-tool execution evidence
+                const enrichedContext = `${contextText || ''}\n\n### DETERMINISTIC MICRO-TOOL EXECUTION EVIDENCE:\n${toolResults.join('\n\n')}`;
+                logger.info(`Synthesizing final grounded prescription with tool evidence (${toolResults.length} tool result(s))...`);
+
+                const synthesisRes = await AIRouter.routeRequest('reason', {
+                    context: enrichedContext,
+                    query: queryText,
+                    attachments,
+                    options: { temperature: 0.2, maxTokens: 4096, preferredProvider: options?.preferredProvider }
+                }) as ReasoningResult;
+
+                if (synthesisRes && synthesisRes.answer && synthesisRes.answer.length > 100) {
+                    return synthesisRes;
+                }
+            }
+
+            // Fallback to direct synthesis with full grounding directive if answer was short or empty
+            return await this.callReasoningWithTimeout(contextText, queryText, attachments, options);
+        } catch (agenticError) {
+            logger.warn('Agentic reasoning turn failed or timed out; smoothly falling back to direct full grounding synthesis:', agenticError);
+            return this.callReasoningWithTimeout(contextText, queryText, attachments, options);
         }
-        // Final synthesis without tools if loop exhausted
-        return AIRouter.routeRequest('reason', {
-            context: systemPrompt,
-            query: messages.map(m => `${m.role}: ${m.content}`).join('\n'),
-            attachments,
-            options: { temperature: 0.2, maxTokens: 4096, preferredProvider: options?.preferredProvider }
-        }) as Promise<ReasoningResult>;
     }
 
     /** One agentic turn: route with tools attached under a per-turn timeout. */
     private static async routeAgenticTurn(
         systemPrompt: string,
-        messages: Array<{ role: string; content: string; tool_calls?: unknown; tool_call_id?: string }>,
+        queryText: string,
         attachments: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }> | undefined,
         options: { preferredProvider?: string } | undefined,
         toolDefs: Array<{ type: 'function'; function: { name: string; description: string; parameters: unknown } }>,
@@ -677,11 +694,11 @@ Agronomic Decision Support Protocol (Phase 2):
         return Promise.race([
             AIRouter.routeRequest('reason', {
                 context: systemPrompt,
-                query: messages.map(m => `${m.role}: ${m.content}`).join('\n'),
+                query: queryText,
                 attachments,
                 options: { temperature: 0.2, maxTokens: 4096, preferredProvider: options?.preferredProvider, tools: toolDefs } as unknown as Record<string, unknown>
             }),
-            new Promise<never>((_, rej) => setTimeout(() => rej(new Error('agentic turn timeout')), Math.min(12000, remainingMs)))
+            new Promise<never>((_, rej) => setTimeout(() => rej(new Error('agentic turn timeout')), Math.min(25000, remainingMs)))
         ]) as unknown as Promise<ReasoningResult>;
     }
 
