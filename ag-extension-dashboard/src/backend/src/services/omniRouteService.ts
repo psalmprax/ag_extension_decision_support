@@ -117,8 +117,11 @@ export class OmniRouteService {
     // ═════════════════════════════════════════════════════════════════════
     // --- AIHubMix Free Tier (Tier 1 Frontier & Reasoning Models) ---
     // ═════════════════════════════════════════════════════════════════════
-    { providerName: 'aihubmix', model: 'nemotron-3-ultra-550b-a55b-free', score: 100, isFree: true },
-    { providerName: 'aihubmix', model: 'gpt-5.5-free', score: 99, isFree: true },
+    { providerName: 'aihubmix', model: 'gemini-2.5-flash', score: 100, isFree: true },
+    { providerName: 'aihubmix', model: 'gpt-4o-mini', score: 99, isFree: true },
+    { providerName: 'aihubmix', model: 'qwen-turbo', score: 99, isFree: true },
+    { providerName: 'aihubmix', model: 'nemotron-3-ultra-550b-a55b-free', score: 98, isFree: true },
+    { providerName: 'aihubmix', model: 'gpt-5.5-free', score: 98, isFree: true },
     { providerName: 'aihubmix', model: 'gpt-4o-free', score: 98, isFree: true },
     { providerName: 'aihubmix', model: 'gemini-3.7-flash-free', score: 98, isFree: true },
     { providerName: 'aihubmix', model: 'gpt-4.1-free', score: 97, isFree: true },

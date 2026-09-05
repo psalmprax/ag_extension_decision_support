@@ -328,7 +328,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       if (!key) return false;
 
       const authHeader = key.startsWith('Bearer ') ? key : `Bearer ${key}`;
-      const probeModel = process.env.AI_PRIMARY_MODEL || 'nemotron-3-ultra-550b-a55b-free';
+      const probeModel = process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash';
 
       // 10s timeout to tolerate remote proxy and multi-model routing latency
       try {
@@ -377,7 +377,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       throw new Error('AIHubMix API key not configured (AIHUBMIX_API_KEY or AIHUBMIX_ACCESS_KEY missing).');
     }
 
-    const model = req.model || process.env.AI_PRIMARY_MODEL || 'nemotron-3-ultra-550b-a55b-free';
+    const model = req.model || process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash';
     const enableWebSearch = req.web_search ?? (process.env.AIHUBMIX_WEB_SEARCH !== 'false');
 
     const makeRequest = (withWebSearch: boolean) => {
@@ -389,6 +389,7 @@ export class AIHubMixProvider extends BaseAIProvider {
         ...(req.tools && req.tools.length > 0 ? { tools: req.tools, tool_choice: 'auto' } : {}),
       };
       if (withWebSearch) {
+        payload.web_search = true;
         payload.web_search_options = req.web_search_options || {};
       }
       return axios.post<AIHubMixResponse>(
@@ -446,7 +447,7 @@ export class AIHubMixProvider extends BaseAIProvider {
     options?: TextGenerationOptions
   ): Promise<TextGenerationResult> {
     const messages = normalizeMessages(prompt) as AIHubMixRequest['messages'];
-    const model = options?.model || process.env.AI_PRIMARY_MODEL || 'nemotron-3-ultra-550b-a55b-free';
+    const model = options?.model || process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash';
     const tools = normalizeToolDefinitions(options?.tools);
     const raw = await this.chatRaw({
       model,
@@ -460,7 +461,7 @@ export class AIHubMixProvider extends BaseAIProvider {
     const choice = raw.choices[0];
 
     return {
-      text: choice?.message?.content ?? '',
+      text: choice?.message?.content || (choice?.message as { reasoning_content?: string })?.reasoning_content || '',
       toolCalls: normalizeToolCalls(choice?.message?.tool_calls as unknown[]),
       model,
       usage: raw.usage ? {
@@ -504,7 +505,7 @@ export class AIHubMixProvider extends BaseAIProvider {
     ];
 
     const result = await this.generateText(messages, {
-      model: options?.model || process.env.AI_PRIMARY_MODEL || 'nemotron-3-ultra-550b-a55b-free',
+      model: options?.model || process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash',
       temperature: options?.temperature ?? 0.2,
       maxTokens: options?.maxTokens ?? 2000,
       webSearch: options?.webSearch ?? true,
@@ -520,7 +521,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       .trim();
 
     return {
-      reasoning: `Detailed Intelligence Analysis completed via AIHubMix (${result.model || 'nemotron-3-ultra-550b-a55b-free'}).`,
+      reasoning: `Detailed Intelligence Analysis completed via AIHubMix (${result.model || 'gemini-2.5-flash'}).`,
       answer: cleanAnswer,
       confidence: 0.95,
       visuals,
