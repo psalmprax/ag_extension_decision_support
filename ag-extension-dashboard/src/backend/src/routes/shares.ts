@@ -79,7 +79,11 @@ router.post('/', async (req: Request, res: Response) => {
             success: true,
             data: shareLink,
         });
-    } catch (error) {
+    } catch (error: unknown) {
+        const msg = (error as Error)?.message || '';
+        if (msg.includes('not found') || msg.includes('not exist')) {
+            return res.status(404).json({ success: false, error: msg });
+        }
         logger.error('Error creating share:', error);
         safeError(res, 500, 'Failed to create share link');
     }

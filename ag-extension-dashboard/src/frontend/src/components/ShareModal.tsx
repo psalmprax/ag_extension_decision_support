@@ -33,6 +33,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [shareData, setShareData] = useState<ShareResponse['data'] | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [settings, setSettings] = useState({
     accessType: 'restricted', // public, restricted, organization
@@ -43,12 +44,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setShareData(null);
+      setErrorMessage(null);
       setCopied(false);
     }
   }, [isOpen]);
 
   const handleCreateShare = async () => {
     setLoading(true);
+    setErrorMessage(null);
     try {
       const result = await createShare({
         entityType,
@@ -63,10 +66,15 @@ export const ShareModal: React.FC<ShareModalProps> = ({
       if (result.success && result.data) {
         setShareData(result.data);
       } else {
-        console.error('Failed to create share:', result.error);
+        const msg = result.error || 'Failed to create share link';
+        setErrorMessage(msg);
+        console.warn('Failed to create share:', msg);
       }
-    } catch (error) {
-      console.error('Share error:', error);
+    } catch (error: unknown) {
+      const axiosErr = error as { response?: { data?: { error?: string } }; message?: string };
+      const msg = axiosErr.response?.data?.error || axiosErr.message || 'Share request failed';
+      setErrorMessage(msg);
+      console.warn('Share error:', msg);
     } finally {
       setLoading(false);
     }
@@ -213,6 +221,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   </button>
                 </div>
               </div>
+
+              {errorMessage && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs font-medium text-red-400 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
 
               <button
                 onClick={handleCreateShare}

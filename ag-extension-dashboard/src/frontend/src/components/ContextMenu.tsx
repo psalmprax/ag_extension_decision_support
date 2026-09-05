@@ -19,7 +19,7 @@ import {
   XCircle,
   MoreVertical,
 } from 'lucide-react';
-import { fetchContextMenu, getUnavailableMenu } from '@/api/contextMenuService';
+import { fetchContextMenu, getUnavailableMenu, getDefaultContextMenu } from '@/api/contextMenuService';
 
 interface ContextMenuItem {
   id: string;
@@ -87,14 +87,17 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
     const loadMenu = async () => {
       try {
         const result = await fetchContextMenu(entityType, entityId, isBulk);
-        if (result.success) {
+        if (result.success && result.data) {
           setMenuData(result.data);
         } else {
-          setMenuData(getUnavailableMenu(entityType));
+          setMenuData(getDefaultContextMenu(entityType, entityId, isBulk));
         }
-      } catch (error) {
-        console.error('Failed to fetch context menu:', error);
-        setMenuData(getUnavailableMenu(entityType));
+      } catch (error: unknown) {
+        const err = error as { code?: string };
+        if (err?.code !== 'ERR_DEMO_BLOCKED') {
+          console.warn('Failed to fetch context menu, falling back to default:', error);
+        }
+        setMenuData(getDefaultContextMenu(entityType, entityId, isBulk));
       } finally {
         setIsLoading(false);
       }

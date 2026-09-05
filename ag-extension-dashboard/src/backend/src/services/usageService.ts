@@ -125,12 +125,9 @@ class UsageService {
                 where: { id: userId },
                 select: { role: true, isDemo: true, email: true }
             });
-            // Only admin is exempted; all other roles use their subscription or the 3 queries/day free limit
-            if (user?.role === 'admin') {
+            // Admin and demo users are exempted; all other roles use their subscription or the 3 queries/day free limit
+            if (user?.role === 'admin' || user?.isDemo || user?.email === 'demo@agridemo.com') {
                 return false;
-            }
-            if (user?.isDemo || user?.email === 'demo@agridemo.com') {
-                return true;
             }
             const data = await this.getUsage(userId);
             if (!data || !data.plan) {
@@ -260,6 +257,9 @@ class UsageService {
             }
 
             const isDemo = Boolean(user?.isDemo || user?.email === 'demo@agridemo.com');
+            if (isDemo) {
+                return { allowed: true, current: 0, limit: 1000, remaining: 1000 };
+            }
             const data = await this.getUsage(userId);
             const plan = data?.plan;
             const isFree = this.isFreeTierUsage(plan, data?.status, isDemo);
