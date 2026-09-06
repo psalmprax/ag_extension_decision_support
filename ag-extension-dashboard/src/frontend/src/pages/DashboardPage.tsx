@@ -53,7 +53,7 @@ interface DashboardPageProps {
 
 const DashboardHeader: React.FC<{
   userName?: string;
-  t: (key: string, options?: { defaultValue?: string } & Record<string, any>) => string;
+  t: (key: string, options?: { defaultValue?: string } & Record<string, unknown>) => string;
   headingClass: string;
 }> = ({ userName, t, headingClass }) => (
   <div className="mb-6 sm:mb-8">
@@ -70,7 +70,7 @@ const DashboardStats: React.FC<{
   isLoading: boolean;
   dashboardData?: DashboardData;
   isOfficer: boolean;
-  t: (key: string, options?: { defaultValue?: string } & Record<string, any>) => string;
+  t: (key: string, options?: { defaultValue?: string } & Record<string, unknown>) => string;
   classes: Record<string, string | boolean>;
 }> = ({ isLoading, dashboardData, isOfficer, t, classes }) => {
   if (isLoading) {

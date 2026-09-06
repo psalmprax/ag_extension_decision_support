@@ -6,11 +6,10 @@ import { Language } from './i18n';
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   t: (
     key: string,
-    options?: string | ({ defaultValue?: string } & Record<string, any>),
-    params?: Record<string, any>
+    options?: string | ({ defaultValue?: string } & Record<string, unknown>),
+    params?: Record<string, unknown>
   ) => string;
   isRTL: boolean;
 }
@@ -19,6 +18,24 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 // Languages that use Right-to-Left direction
 const RTL_LANGUAGES: Language[] = ['ar'];
+
+function interpolate(template: string, params: Record<string, unknown>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(params)) {
+    if (key !== 'defaultValue' && value !== undefined && value !== null) {
+      result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), String(value));
+    }
+  }
+  return result;
+}
+
+function resolveTranslation(
+  key: string,
+  language: Language,
+  cache: Record<string, Record<string, string>>
+): string | undefined {
+  return cache[language]?.[key] ?? cache['en']?.[key];
+}
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState<Language>('en');
@@ -72,51 +89,24 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     setIsLoaded(true);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const t = (
     key: string,
-    options?: string | ({ defaultValue?: string } & Record<string, any>),
-    params?: Record<string, any>
+    options?: string | ({ defaultValue?: string } & Record<string, unknown>),
+    params?: Record<string, unknown>
   ): string => {
     const defaultVal = typeof options === 'string' ? options : options?.defaultValue;
-    const interpolationParams = typeof options === 'object' && options !== null ? options : params;
-
     if (!isLoaded) return defaultVal || key;
 
-    const langTranslations = translationsCache[language];
-    const englishTranslations = translationsCache['en'];
-
-    // Get translation for current language
-    const translation = langTranslations?.[key];
-
-    let result = translation;
-
-    if (!translation) {
-      // Log missing key in development mode
+    const raw = resolveTranslation(key, language, translationsCache);
+    if (!raw) {
       if (import.meta.env.DEV) {
         console.warn(`[i18n] Missing translation: key="${key}" lang="${language}"`);
       }
-
-      // Fallback to English
-      const englishFallback = englishTranslations?.[key];
-      if (englishFallback) {
-        result = englishFallback;
-      } else {
-        // Fallback to provided default value or key
-        return defaultVal || key;
-      }
+      return defaultVal || key;
     }
 
-    // Handle string interpolation
-    if (interpolationParams) {
-      Object.keys(interpolationParams).forEach(optKey => {
-        if (optKey !== 'defaultValue') {
-          result = result.replace(new RegExp(`\\{${optKey}\\}`, 'g'), String(interpolationParams[optKey]));
-        }
-      });
-    }
-
-    return result;
+    const interpolationParams = typeof options === 'object' && options !== null ? options : params;
+    return interpolationParams ? interpolate(raw, interpolationParams) : raw;
   };
 
   const isRTL = RTL_LANGUAGES.includes(language);

@@ -1,5 +1,4 @@
 import React from 'react';
-import { useFeatureFlags } from '@/store/useFeatureFlags';
 import { ABTestToggle } from './ABTestToggle';
 
 export { ABTestToggle };

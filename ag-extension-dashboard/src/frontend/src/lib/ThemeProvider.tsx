@@ -14,7 +14,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const isBase = designVariant === 'base' || designVariant === 'new';
-    let activeTheme = themeName;
+    const activeTheme = themeName;
 
     applyTheme(activeTheme);
 
