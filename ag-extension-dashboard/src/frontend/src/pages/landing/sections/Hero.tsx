@@ -18,17 +18,17 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
         <section
           className="relative min-h-screen flex items-start sm:items-center pt-20 sm:pt-24 pb-10 sm:pb-16 overflow-hidden"
         >
-          {/* Subtle Aerial Agricultural Landscape Backdrop */}
+          {/* Authentic Agricultural Extension Officer & Smallholder Partnership Backdrop */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
             <img
-              src="/images/landing/hero-aerial.webp"
-              alt="Lush green agricultural farmland and smallholder plots from above"
+              src="/images/landing/officer-farmer-hero.webp"
+              alt="Agricultural extension officer consulting with a smallholder farmer in a maize field using a digital tablet"
               width={1920}
               height={1080}
-              className="w-full h-full object-cover object-center opacity-20 mix-blend-luminosity scale-105 filter saturate-125"
+              className="w-full h-full object-cover object-center opacity-25 mix-blend-luminosity scale-105 filter saturate-125 transition-opacity duration-700"
               loading="eager"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-950/92 to-slate-950" />
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/90 to-slate-950" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-slate-950/60 to-slate-950" />
           </div>
 
