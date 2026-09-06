@@ -54,7 +54,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSidebarOpen?.(false)}
-            className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            className="md:hidden fixed top-16 inset-x-0 bottom-0 bg-black/60 backdrop-blur-sm z-30"
           />
 
           <motion.aside
@@ -63,11 +63,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             animate="animate"
             exit="exit"
             className={cn(
-              'fixed left-0 top-0 h-full flex flex-col pt-20 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8 px-4 border-r border-gray-200 dark:border-white/10 w-72 z-50',
+              'fixed left-0 top-16 bottom-0 flex flex-col pt-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8 px-4 border-r border-gray-200 dark:border-white/10 w-72 z-40',
               'bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl'
             )}
           >
-            <div className="px-4 mb-4"></div>
 
             <nav className="flex flex-col gap-2 grow overflow-y-auto custom-scrollbar pr-2">
               {navItems.map(item => (
