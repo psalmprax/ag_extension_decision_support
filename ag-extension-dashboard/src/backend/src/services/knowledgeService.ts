@@ -951,6 +951,12 @@ Agronomic Decision Support Protocol (Phase 2):
         return response;
     }
 
+    private static readonly METADATA_LABELS = new Set([
+        'title', 'author', 'source', 'url', 'category', 'categories', 'tag', 'tags',
+        'date', 'published', 'image', 'photo', 'figure', 'note', 'credit', 'copyright',
+        'by', 'reference', 'references', 'link', 'primary source reference'
+    ]);
+
     private static sanitizeContextText(text: string): string {
         if (!text || typeof text !== 'string') return '';
 
@@ -966,12 +972,91 @@ Agronomic Decision Support Protocol (Phase 2):
             .replace(/\bWhat are You Looking for\?\s+[A-Za-z\s&]+/gi, '')
             .replace(/\b(Administration\s+Agriculture\s+Arts & Humanities\s+Education\s+Engineering[^\n.]*)/gi, '')
             .replace(/\b(Read also|Read more|Related posts?|Leave a Reply|Cancel reply|Save my name|Sign up for our newsletter|Subscribe to):?[^\n.]*/gi, '')
-            // Common boilerplate branding repetitions (e.g. "Disciplines In Nigeria Disciplines In Nigeria")
+            // Common boilerplate branding repetitions
             .replace(/(\b[A-Za-z]{4,20}\s+In\s+[A-Za-z]{4,20}\b)(?:\s+\1)+/gi, '$1')
+            // Vendor promo footers and corporate sponsorship blurbs
+            .replace(/\bAt\s+[A-Z][A-Za-z0-9\s.,]+(?:PVT|LTD|LLC|Inc|Corp|Limited)?,\s*(?:we are|we remain)\s+committed to[^\n.]*\.?/gi, '')
+            .replace(/\b[A-Z][A-Za-z0-9\s.,]+ (?:recognizes|reaffirms|commits to) the essential role farmers play[^\n.]*\.?/gi, '')
+            // Raw ellipsis and scraper truncation artifacts
+            .replace(/\[\s*\.\.\.\s*\]/g, '')
+            .replace(/…\s*\[\s*\.\.\.\s*\]/g, '')
+            // Isolate inline markdown headers squashed against running text
+            .replace(/([.!?])\s*(#{1,6}\s+)/g, '$1\n\n$2')
+            // Isolate inline bullet points & list markers squashed against sentences
+            .replace(/([.!?])\s+([*•-]\s+)/g, '$1\n\n$2')
+            .replace(/([.!?])\s+(\d+\.\s+[A-Z])/g, '$1\n\n$2')
+            // Strip metadata-only lines (e.g., "Title: Foo", "Author: Bar")
+            .replace(/^\s*(?:Title|Author|Published|Date|Source|Image credit|Photo credit|Category|Categories|Tags)\s*:\s*[^\n]*$/gmi, '')
             // Whitespace normalization
             .replace(/[ \t]+/g, ' ')
             .replace(/\n\s*\n+/g, '\n\n')
             .trim();
+    }
+
+    private static parseInsightFromLine(line: string): string | null {
+        const trimmed = line.trim();
+        if (trimmed.length < 25 || trimmed.length > 400) return null;
+
+        // Check if it is an existing bullet/list item
+        const bulletMatch = trimmed.match(/^([*•-]|(?:\d+\.))\s+(.+)/s);
+        const textContent = (bulletMatch ? bulletMatch[2].trim() : trimmed)
+            .replace(/^#{1,6}\s+/, '')
+            .trim();
+
+        // Check for Label: Detail pattern
+        const headingMatch = textContent.match(/^([A-Z][A-Za-z0-9\s–—/-]{2,40}):\s*(.+)/s);
+        if (headingMatch) {
+            const label = headingMatch[1].trim();
+            if (this.METADATA_LABELS.has(label.toLowerCase())) return null;
+
+            const detail = headingMatch[2].trim().replace(/\s+/g, ' ');
+            if (detail.length < 20) return null;
+            return `- **${label}**: ${detail}`;
+        }
+
+        // If it was an explicit bullet item from the source with good advisory signal
+        if (bulletMatch && textContent.length >= 35) {
+            if (/^(read\s+more|share\s+on|click\s+here|http)/i.test(textContent)) return null;
+            return `- ${textContent.replace(/\s+/g, ' ')}`;
+        }
+
+        return null;
+    }
+
+    private static getProceduralGuidanceNote(queryText: string): string | null {
+        const q = queryText.toLowerCase();
+        const asksForSteps = /\b(steps?|how to|procedure|guide|process)\b/i.test(q);
+        if (!asksForSteps) return null;
+
+        if (/\b(cooperative|co-op|collective|group farm|association)\b/i.test(q)) {
+            return `> **Field Advisory Implementation Roadmap (Standard Cooperative Formation):**\n` +
+                `> 1. **Mobilization**: Bring together 10–20 core producers facing shared market or input challenges.\n` +
+                `> 2. **Steering Committee**: Elect an interim committee to record decisions and draft rules.\n` +
+                `> 3. **Feasibility Assessment**: Survey member crop acreage, expected harvest volumes, and shared storage/transport needs.\n` +
+                `> 4. **Constitution & Bylaws**: Define membership qualifications, one-member-one-vote rules, share capital, and side-selling penalties.\n` +
+                `> 5. **Capital & Legal Registration**: Mobilize initial member equity and file formal registration with the cooperative authority/ministry.\n` +
+                `> 6. **Operational Launch**: Inaugurate the elected Board and commence collective purchasing or aggregated sales.`;
+        }
+
+        if (/\b(soil\s*test|soil\s*sampl)/i.test(q)) {
+            return `> **Field Advisory Protocol (Standard Soil Sampling Procedure):**\n` +
+                `> 1. **Field Zoning**: Divide land into uniform sampling units based on topography and cropping history.\n` +
+                `> 2. **Zig-Zag Core Collection**: Take 10–20 core subsamples at 15–20 cm depth using a clean auger or spade.\n` +
+                `> 3. **Composite Mixing**: Combine cores in a clean plastic bucket and mix thoroughly.\n` +
+                `> 4. **Shade Drying & Labeling**: Air-dry ~500g of composite sample away from direct sun and chemical contamination.\n` +
+                `> 5. **Laboratory Submission**: Submit sample with crop history and GPS coordinates for nutrient analysis.`;
+        }
+
+        if (/\b(spray|pesticide|insecticide|fungicide|chemical application)\b/i.test(q)) {
+            return `> **Field Advisory Protocol (Safe Chemical Application & IPM):**\n` +
+                `> 1. **Scouting & Threshold Verification**: Confirm pest density exceeds the Economic Injury Level (EIL) before spraying.\n` +
+                `> 2. **PPE Inspection**: Wear complete personal protective equipment (gloves, mask, goggles, boots, overalls).\n` +
+                `> 3. **Equipment Calibration**: Calibrate nozzle flow rate and pressure with clean water to ensure uniform coverage.\n` +
+                `> 4. **Environmental Conditions**: Spray during cool morning/evening hours; never spray into headwind or before rainfall.\n` +
+                `> 5. **Pre-Harvest Interval (PHI) & Disposal**: Strictly observe the PHI before harvest and triple-rinse empty containers.`;
+        }
+
+        return null;
     }
 
     private static extractInsightsFromChunk(
@@ -994,11 +1079,14 @@ Agronomic Decision Support Protocol (Phase 2):
             if (seenParagraphs.has(norm)) continue;
             seenParagraphs.add(norm);
 
-            cleanSourceParagraphs.push(trimmed);
+            const cleanBodyParagraph = trimmed.replace(/^#{1,6}\s+/, '').trim();
+            cleanSourceParagraphs.push(cleanBodyParagraph);
 
-            const headingMatch = trimmed.match(/^([A-Z][A-Za-z0-9\s–—/-]{3,50}):\s*(.+)/);
-            if (headingMatch && keyBulletPoints.length < 8) {
-                keyBulletPoints.push(`- **${headingMatch[1].trim()}**: ${headingMatch[2].trim()}`);
+            if (keyBulletPoints.length < 8) {
+                const insight = this.parseInsightFromLine(trimmed);
+                if (insight && !keyBulletPoints.includes(insight)) {
+                    keyBulletPoints.push(insight);
+                }
             }
         }
 
@@ -1026,6 +1114,11 @@ Agronomic Decision Support Protocol (Phase 2):
         const sections: string[] = [
             `I found source-backed guidance for: **"${queryText}"**.\n\n*Primary Source Reference: ${sourceTitle}${sourceUrl}*`,
         ];
+
+        const proceduralNote = this.getProceduralGuidanceNote(queryText);
+        if (proceduralNote) {
+            sections.push(proceduralNote);
+        }
 
         if (keyBulletPoints.length > 0) {
             sections.push(`### Key Identified Insights & Takeaways\n\n${keyBulletPoints.join('\n\n')}`);
