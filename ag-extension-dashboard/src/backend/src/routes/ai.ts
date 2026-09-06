@@ -156,7 +156,7 @@ router.post('/synthesize-visit', [checkUsageLimit('ai_chat', { meter: false }), 
  *     security:
  *       - bearerAuth: []
  */
-router.post('/transcribe-audio', [checkUsageLimit('ai_chat', { meter: false })], async (req: AuthRequest, res: Response) => {
+router.post('/transcribe-audio', [checkUsageLimit('speech', { meter: false })], async (req: AuthRequest, res: Response) => {
     try {
         const { audio, language } = req.body;
         const userId = req.user!.userId;
@@ -177,7 +177,7 @@ router.post('/transcribe-audio', [checkUsageLimit('ai_chat', { meter: false })],
             options: { language: language || 'en' }
         });
 
-        await usageService.incrementUsage(userId, 'ai_chat');
+        await usageService.incrementUsage(userId, 'speech');
 
         return res.json({
             success: true,

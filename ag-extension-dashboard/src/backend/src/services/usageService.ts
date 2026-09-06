@@ -29,13 +29,13 @@ export interface PlanLimits {
     knowledgeDailyLimit?: number;
 }
 
-// Strict Free Tier Limits: 0 for cost-incurring services, 3/day for Knowledge Base
+// Strict Free Tier Limits: 0 for cost-incurring services, 15/cycle for speech/voice memos, 3/day for Knowledge Base
 export const FREE_TIER_LIMITS: PlanLimits = {
     smsLimit: 0,           // SMS disabled for Free tier
     aiChatLimit: 0,        // AI Chat / Farmer Chat disabled for Free tier
     reportLimit: 0,        // Automated AI reports disabled for Free tier
     aiVisionLimit: 0,      // Disease / Soil photo diagnostics disabled for Free tier
-    speechLimit: 0,        // Speech synthesis / TTS disabled for Free tier
+    speechLimit: 15,       // 15 free field voice memo transcriptions / cycle for Free tier
     whatsappLimit: 0,      // WhatsApp / Telegram broadcasting disabled for Free tier
     knowledgeDailyLimit: 3 // Max 3 Knowledge Base searches/queries per day
 };
@@ -189,6 +189,28 @@ class UsageService {
         }
     }
 
+    private resolveCurrentUsage(
+        data: Awaited<ReturnType<UsageService['getUsage']>>,
+        type: UsageType
+    ): number {
+        switch (type) {
+            case 'sms':
+                return data?.usage?.smsCount || 0;
+            case 'ai_chat':
+                return data?.usage?.aiChatCount || 0;
+            case 'report':
+                return data?.usage?.reportCount || 0;
+            case 'ai_vision':
+                return data?.usage?.aiVisionCount || 0;
+            case 'speech':
+                return data?.usage?.speechCount || 0;
+            case 'whatsapp':
+                return data?.usage?.whatsappCount || 0;
+            default:
+                return 0;
+        }
+    }
+
     async checkLimit(userId: string, type: UsageType): Promise<{ allowed: boolean; current: number; limit: number; message?: string }> {
         try {
             if (type === 'knowledge') {
@@ -205,6 +227,21 @@ class UsageService {
 
             const isFree = await this.isFreeUser(userId);
             if (isFree) {
+                const freeLimitKey = `${type}Limit` as keyof PlanLimits;
+                const freeLimit = FREE_TIER_LIMITS[freeLimitKey];
+                if (typeof freeLimit === 'number' && freeLimit > 0) {
+                    const data = await this.getUsage(userId);
+                    const current = this.resolveCurrentUsage(data, type);
+                    const allowed = current < freeLimit;
+                    return {
+                        allowed,
+                        current,
+                        limit: freeLimit,
+                        message: allowed
+                            ? undefined
+                            : `Free tier ${type} limit reached (${current}/${freeLimit} used). Please upgrade to Pro for unlimited access.`
+                    };
+                }
                 return this.getFreeTierRejection(type);
             }
 
