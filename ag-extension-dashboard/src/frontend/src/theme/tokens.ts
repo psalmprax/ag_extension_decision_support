@@ -17,7 +17,8 @@ export type ThemeName =
   | 'oceanic'
   | 'sunset'
   | 'sage'
-  | 'cyber';
+  | 'cyber'
+  | 'base';
 
 export interface ColorScale {
   50: string;
@@ -358,6 +359,51 @@ export const themes: Record<ThemeName, ThemeColors> = {
     background: {
       primary: '#0c1324',
       secondary: '#151b2d',
+      card: 'rgba(255, 255, 255, 0.05)',
+    },
+  },
+
+  /** Base Onchain - Electric Cobalt Blue (#0052FF), Deep Obsidian, and stark modern contrast. */
+  base: {
+    primary: {
+      50: '#edf5ff',
+      100: '#d0e2ff',
+      200: '#a6c8ff',
+      300: '#78a9ff',
+      400: '#4589ff',
+      500: '#0052ff', // Canonical Base / Coinbase Blue
+      600: '#0043d9',
+      700: '#0033b3',
+      800: '#00258c',
+      900: '#001866',
+    },
+    secondary: {
+      50: '#f0fdf4',
+      100: '#dcfce7',
+      200: '#bbf7d0',
+      300: '#86efac',
+      400: '#4ade80',
+      500: '#10b981',
+      600: '#059669',
+      700: '#047857',
+      800: '#065f46',
+      900: '#064e3b',
+    },
+    accent: {
+      50: '#faf5ff',
+      100: '#f3e8ff',
+      200: '#e9d5ff',
+      300: '#d8b4fe',
+      400: '#c084fc',
+      500: '#a855f7',
+      600: '#9333ea',
+      700: '#7e22ce',
+      800: '#6b21a8',
+      900: '#581c87',
+    },
+    background: {
+      primary: '#080b11',
+      secondary: '#0f1420',
       card: 'rgba(255, 255, 255, 0.05)',
     },
   },

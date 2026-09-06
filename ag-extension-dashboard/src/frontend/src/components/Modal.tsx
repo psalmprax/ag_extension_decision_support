@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useFeatureFlags } from '@/store/useFeatureFlags';
+import { triggerHaptic } from '@/lib/haptics';
 
 interface ModalProps {
   title: string;
@@ -16,18 +18,51 @@ const SIZE_CLASS: Record<'sm' | 'md' | 'lg', string> = {
 };
 
 export function Modal({ title, onClose, size = 'md', children }: ModalProps) {
+  const { designVariant } = useFeatureFlags();
+  const isBase = designVariant === 'base' || designVariant === 'new';
+
+  const handleClose = () => {
+    triggerHaptic('light');
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 z-50">
+    <div
+      className={`fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 ${
+        isBase
+          ? 'flex items-end sm:items-center justify-center p-0 sm:p-4'
+          : 'flex items-center justify-center p-3 sm:p-4'
+      }`}
+    >
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className={`bg-slate-900 border border-white/10 text-white rounded-xl w-full ${SIZE_CLASS[size]} max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-y-auto shadow-2xl`}
+        initial={
+          isBase
+            ? { opacity: 0, y: 50, scale: 0.98 }
+            : { opacity: 0, scale: 0.95 }
+        }
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={
+          isBase
+            ? { opacity: 0, y: 50, scale: 0.98 }
+            : { opacity: 0, scale: 0.95 }
+        }
+        transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+        className={`w-full ${SIZE_CLASS[size]} max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto shadow-2xl ${
+          isBase
+            ? 'bg-[#0a0d14]/95 border-t sm:border border-white/15 ring-1 ring-blue-500/20 text-white rounded-t-[28px] sm:rounded-2xl rounded-b-none sm:rounded-b-2xl pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-0'
+            : 'bg-slate-900 border border-white/10 text-white rounded-xl'
+        }`}
       >
+        {isBase && (
+          <div className="pt-2.5 pb-1 flex justify-center sm:hidden">
+            <div className="w-12 h-1.5 bg-white/20 rounded-full hover:bg-white/40 transition-colors" />
+          </div>
+        )}
         <div className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
             <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">{title}</h3>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="text-white/40 hover:text-white text-xl p-1 rounded-lg hover:bg-white/5 transition-colors"
               aria-label="Close modal"
             >

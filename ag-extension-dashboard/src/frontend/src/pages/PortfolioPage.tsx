@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Farmer } from '../types/dashboard';
 import { useDemoMode } from '@/demo';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface PortfolioPageProps {
   effectiveFarmers: Farmer[];
@@ -43,6 +44,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
   handleBulkDelete,
   setSelectedFarmers,
 }) => {
+  const { t } = useLanguage();
   const { isDemo } = useDemoMode();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -320,44 +322,44 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 30 }}
-            className="fixed bottom-20 md:bottom-8 left-1/2 -translate-x-1/2 z-50 backdrop-blur-2xl bg-slate-900/95 border border-emerald-500/40 shadow-2xl shadow-emerald-950/60 rounded-xl px-4 sm:px-6 py-3 flex items-center justify-between sm:justify-start gap-3 sm:gap-4 flex-wrap w-[calc(100%-1.5rem)] max-w-xl md:w-auto"
+            className="fixed bottom-[calc(8.25rem+env(safe-area-inset-bottom))] md:bottom-8 left-1/2 -translate-x-1/2 z-[1050] backdrop-blur-2xl bg-slate-900/95 border border-emerald-500/40 shadow-2xl shadow-emerald-950/60 rounded-xl px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between sm:justify-start gap-2 sm:gap-4 flex-wrap w-[calc(100%-1.5rem)] max-w-xl md:w-auto"
           >
             <div className="flex items-center gap-2 pr-2 border-r border-white/10 text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <strong className="text-white font-mono">{selectedFarmers.size}</strong>
-              <span className="text-white/70">selected</span>
+              <span className="text-white/70">{t('common_selected', { defaultValue: 'selected' })}</span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
               <button
                 onClick={() => setShowBulkSmsComposer(!showBulkSmsComposer)}
-                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5"
+                className="px-3 sm:px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Broadcast Alert</span>
+                <span>{t('portfolio_broadcast_alert', { defaultValue: 'Broadcast Alert' })}</span>
               </button>
 
               <button
                 onClick={handleBulkExport}
-                className="px-4 py-2 bg-white/[0.08] hover:bg-white/[0.12] text-white text-xs font-bold rounded-xl border border-white/10 transition-colors flex items-center gap-1.5"
+                className="px-3 sm:px-4 py-2 bg-white/[0.08] hover:bg-white/[0.12] text-white text-xs font-bold rounded-xl border border-white/10 transition-colors flex items-center gap-1.5"
               >
                 <FileText className="w-3.5 h-3.5" />
-                <span>Export CSV</span>
+                <span>{t('portfolio_export_csv', { defaultValue: 'Export CSV' })}</span>
               </button>
 
               <button
                 onClick={handleBulkDelete}
-                className="px-4 py-2 bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5"
+                className="px-3 sm:px-4 py-2 bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete</span>
+                <span>{t('common_delete', { defaultValue: 'Delete' })}</span>
               </button>
 
               <button
                 onClick={() => setSelectedFarmers(new Set())}
-                className="px-3 py-2 text-white/50 hover:text-white text-xs font-semibold transition-colors"
+                className="px-2.5 sm:px-3 py-2 text-white/50 hover:text-white text-xs font-semibold transition-colors"
               >
-                Clear
+                {t('common_clear', { defaultValue: 'Clear' })}
               </button>
             </div>
           </motion.div>

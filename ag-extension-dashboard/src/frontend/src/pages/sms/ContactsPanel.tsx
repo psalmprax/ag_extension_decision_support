@@ -64,7 +64,7 @@ export function SMSContactsPanel({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+      <div className="flex-1 max-h-60 lg:max-h-none overflow-y-auto p-2 space-y-1 custom-scrollbar">
         {isLoadingContacts ? (
           <div className="flex flex-col items-center justify-center py-10">
             <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />

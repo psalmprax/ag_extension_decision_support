@@ -34,7 +34,7 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
       className={`transition-all duration-300 ease-in-out flex flex-col border-r shrink-0 z-20 ${
         isFarmlistCollapsed
           ? 'w-0 opacity-0 overflow-hidden border-r-0 pointer-events-none'
-          : 'w-full sm:w-80 opacity-100'
+          : 'absolute inset-y-0 left-0 w-4/5 max-w-xs sm:relative sm:w-80 sm:inset-auto opacity-100 shadow-2xl sm:shadow-none'
       } ${
         themeName === 'cyber'
           ? 'border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30'

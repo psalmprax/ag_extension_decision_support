@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Send, AlertTriangle, Loader2, RefreshCw, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { OutreachDeliveryStats, retryOutreachMessages } from '@/api/campaignService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface OutreachDeliveryStatusCardProps {
   stats: OutreachDeliveryStats | null;
@@ -17,18 +18,19 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
   error = false,
 }) => {
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   const handleRetry = async (id: string) => {
     setRetryingId(id);
     try {
       const res = await retryOutreachMessages([id]);
       if (res.success && res.data.requeued > 0) {
-        toast.success('Message requeued for delivery');
+        toast.success(t('outreach_requeued_success', { defaultValue: 'Message requeued for delivery' }));
       } else {
-        toast.error('Could not requeue message — it may no longer be in a failed state');
+        toast.error(t('outreach_requeued_failed', { defaultValue: 'Could not requeue message — it may no longer be in a failed state' }));
       }
     } catch {
-      toast.error('Failed to requeue message');
+      toast.error(t('outreach_requeued_error', { defaultValue: 'Failed to requeue message' }));
     } finally {
       setRetryingId(null);
       onRefresh();
@@ -40,14 +42,16 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
         <Send className="w-4 h-4 text-emerald-400" />
-        <span className="font-bold text-xs text-white">Outreach Delivery Status</span>
+        <span className="font-bold text-xs text-white">
+          {t('outreach_delivery_status', { defaultValue: 'Outreach Delivery Status' })}
+        </span>
       </div>
       <button
         type="button"
         onClick={onRefresh}
         disabled={isLoading}
         className="p-1.5 rounded-lg bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/[0.08] border border-white/10 transition-all"
-        title="Refresh delivery status"
+        title={t('outreach_refresh_tooltip', { defaultValue: 'Refresh delivery status' })}
       >
         <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
       </button>
@@ -55,41 +59,41 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
 
     {error ? (
       <div className="text-center py-4 text-slate-400 text-xs">
-        Outreach delivery status is currently unavailable. Refresh to retry.
+        {t('outreach_delivery_unavailable', { defaultValue: 'Outreach delivery status is currently unavailable. Refresh to retry.' })}
       </div>
     ) : isLoading || !stats ? (
       <div className="flex items-center justify-center py-6 gap-2 text-slate-400 text-xs">
         <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
-        <span>Loading delivery status...</span>
+        <span>{t('outreach_loading_status', { defaultValue: 'Loading delivery status...' })}</span>
       </div>
     ) : stats.totals.total === 0 ? (
       <div className="text-center py-4 text-slate-400 text-xs">
-        No outreach deliveries recorded yet. Messages dispatched by Agent Zero or campaigns will appear here once processed.
+        {t('outreach_no_deliveries', { defaultValue: 'No outreach deliveries recorded yet. Messages dispatched by Agent Zero or campaigns will appear here once processed.' })}
       </div>
     ) : (
       <>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center text-xs">
           <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
             <div className="text-emerald-400 font-bold text-sm">{stats.totals.sent}</div>
-            <div className="text-xxs text-slate-400">Delivered</div>
+            <div className="text-xxs text-slate-400">{t('outreach_delivered', { defaultValue: 'Delivered' })}</div>
           </div>
           <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
             <div className="text-rose-400 font-bold text-sm">{stats.totals.failed}</div>
-            <div className="text-xxs text-slate-400">Failed</div>
+            <div className="text-xxs text-slate-400">{t('outreach_failed', { defaultValue: 'Failed' })}</div>
           </div>
           <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
             <div className="text-amber-400 font-bold text-sm">{stats.totals.queued}</div>
-            <div className="text-xxs text-slate-400">Queued</div>
+            <div className="text-xxs text-slate-400">{t('outreach_queued', { defaultValue: 'Queued' })}</div>
           </div>
           <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
             <div className="text-sky-400 font-bold text-sm">{stats.totals.processing}</div>
-            <div className="text-xxs text-slate-400">In Flight</div>
+            <div className="text-xxs text-slate-400">{t('outreach_in_flight', { defaultValue: 'In Flight' })}</div>
           </div>
         </div>
 
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xxs text-slate-400">
-            <span>Delivery Rate</span>
+            <span>{t('outreach_delivery_rate', { defaultValue: 'Delivery Rate' })}</span>
             <span className="font-mono font-bold text-emerald-400">{stats.totals.sentRate}%</span>
           </div>
           <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">

@@ -4,6 +4,7 @@ import { Sun as SunIcon, Moon as MoonIcon, Menu, Bell, Settings, Leaf, Activity,
 import { WeatherWidget } from '@/components/WeatherWidget';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { ABTestToggle } from '@/components/ABTestToggle';
 import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 import { Farmer } from '../../types/dashboard';
 import { useAppStore } from '@/store/useAppStore';
@@ -40,6 +41,8 @@ interface AppHeaderProps {
   setShowSettingsPanel: (show: boolean) => void;
 }
 
+import { useLanguage } from '@/lib/LanguageContext';
+
 export const AppHeader: React.FC<AppHeaderProps> = ({
   sidebarOpen,
   setSidebarOpen,
@@ -66,6 +69,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   setShowSettingsPanel,
 }) => {
   const { darkMode, setDarkMode, themeName, setThemeName } = useAppStore();
+  const { t } = useLanguage();
 
   const headerClass = cn(
     'fixed top-0 w-full z-50 flex justify-between items-center px-3 sm:px-6 h-16 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-[0_4px_30px_var(--color-outline)] dark:shadow-[0_4px_30px_var(--color-outline)]',
@@ -97,28 +101,28 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <button
             onClick={() => React.startTransition(() => setActiveTab('disease_diagnosis'))}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/25 hover:border-emerald-500/40 text-xs font-bold transition-all shadow-sm shadow-emerald-950/20 active:scale-95"
-            title="Instant Edge AI Plant Disease Scanner"
+            title={t('header_edge_ai_tooltip', { defaultValue: 'Instant Edge AI Plant Disease Scanner' })}
           >
             <Leaf className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Instant AI Scan</span>
+            <span>{t('header_instant_ai_scan', { defaultValue: 'Instant AI Scan' })}</span>
           </button>
 
           <button
             onClick={() => React.startTransition(() => setActiveTab('telemetry'))}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/25 hover:border-sky-500/40 text-xs font-bold transition-all shadow-sm shadow-sky-950/20 active:scale-95"
-            title="Live Geospatial Weather & Soil Telemetry"
+            title={t('header_radar_tooltip', { defaultValue: 'Live Geospatial Weather & Soil Telemetry' })}
           >
             <Activity className="w-3.5 h-3.5 text-sky-400" />
-            <span>Live Field Radar</span>
+            <span>{t('header_live_field_radar', { defaultValue: 'Live Field Radar' })}</span>
           </button>
 
           <button
             onClick={() => React.startTransition(() => setActiveTab('sms'))}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/25 hover:border-purple-500/40 text-xs font-bold transition-all shadow-sm shadow-purple-950/20 active:scale-95"
-            title="Interactive SMS & USSD Bot Sandbox"
+            title={t('header_bot_tooltip', { defaultValue: 'Interactive SMS & USSD Bot Sandbox' })}
           >
             <Send className="w-3.5 h-3.5 text-purple-400" />
-            <span>Test SMS Bot</span>
+            <span>{t('header_test_sms_bot', { defaultValue: 'Test SMS Bot' })}</span>
           </button>
         </div>
       </div>
@@ -145,6 +149,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         <div className="flex items-center gap-1.5 sm:gap-3 border-r border-gray-200 dark:border-white/10 pr-2 sm:pr-4">
           <div className="hidden lg:flex items-center gap-2 scale-90 origin-right">
+            <ABTestToggle compact />
             <LanguageSwitcher compact />
             <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
           </div>
@@ -154,8 +159,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <button
             onClick={() => setDarkMode(!darkMode)}
             className="h-9 w-9 sm:h-12 sm:w-12 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:border-primary-400/50 hover:bg-white/10 transition-all text-slate-400 hover:text-primary-400 backdrop-blur-sm"
-            title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            aria-label={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            title={darkMode ? t('theme_switch_light', { defaultValue: 'Switch to Light Mode' }) : t('theme_switch_dark', { defaultValue: 'Switch to Dark Mode' })}
+            aria-label={darkMode ? t('theme_switch_light', { defaultValue: 'Switch to Light Mode' }) : t('theme_switch_dark', { defaultValue: 'Switch to Dark Mode' })}
           >
             {darkMode ? <SunIcon className="w-4 h-4 sm:w-6 sm:h-6" /> : <MoonIcon className="w-4 h-4 sm:w-6 sm:h-6" />}
           </button>
@@ -165,7 +170,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <button
             onClick={() => setIsNotificationPanelOpen(true)}
             className="text-slate-400 hover:text-primary-400 transition-colors h-9 w-9 sm:h-12 sm:w-12 flex items-center justify-center rounded-full hover:bg-white/5 relative"
-            aria-label="Open notifications"
+            aria-label={t('header_open_notifications', { defaultValue: 'Open notifications' })}
           >
             <Bell className="w-4 h-4 sm:w-6 sm:h-6" />
             {apiUnreadCount > 0 && (
@@ -175,7 +180,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <button
             onClick={() => setShowSettingsPanel(true)}
             className="text-slate-400 hover:text-primary-400 transition-colors h-9 w-9 sm:h-12 sm:w-12 flex items-center justify-center rounded-full hover:bg-white/5"
-            aria-label="Open settings"
+            aria-label={t('header_open_settings', { defaultValue: 'Open settings' })}
           >
             <Settings className="w-4 h-4 sm:w-6 sm:h-6" />
           </button>

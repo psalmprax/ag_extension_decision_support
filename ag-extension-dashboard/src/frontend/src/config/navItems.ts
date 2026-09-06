@@ -24,6 +24,7 @@ import {
 export interface NavItem {
   id: string;
   label: string;
+  labelKey?: string;
   icon: React.ComponentType<{ className?: string }>;
   roles: string[];
   /** When true, this nav item is hidden for demo users */
@@ -36,18 +37,21 @@ export const getNavItems = (): NavItem[] => [
   {
     id: 'dashboard',
     label: 'Dashboard',
+    labelKey: 'nav_dashboard',
     icon: LayoutDashboard,
     roles: ['extension_officer', 'admin'],
   },
   {
     id: 'farmer_dashboard',
     label: 'Dashboard',
+    labelKey: 'nav_dashboard',
     icon: LayoutDashboard,
     roles: ['farmer'],
   },
   {
     id: 'aiassistant',
     label: 'AI Assistant',
+    labelKey: 'nav_aiassistant',
     icon: MessageSquare,
     roles: ['extension_officer', 'admin', 'farmer'],
     hiddenInDemo: true,
@@ -56,6 +60,7 @@ export const getNavItems = (): NavItem[] => [
   {
     id: 'farmerchat',
     label: 'Farmer Chat',
+    labelKey: 'nav_farmerchat',
     icon: Users,
     roles: ['extension_officer', 'admin'],
     requiresPro: true,
@@ -63,24 +68,28 @@ export const getNavItems = (): NavItem[] => [
   {
     id: 'knowledge',
     label: 'Knowledge Base',
+    labelKey: 'nav_knowledge',
     icon: Search,
     roles: ['extension_officer', 'admin', 'farmer'],
   },
   {
     id: 'portfolio',
     label: 'Farmers',
+    labelKey: 'nav_farmers',
     icon: Users,
     roles: ['extension_officer', 'admin'],
   },
   {
     id: 'register_farmer',
     label: 'Register Client',
+    labelKey: 'nav_register_farmer',
     icon: UserPlus,
     roles: ['extension_officer', 'admin'],
   },
   {
     id: 'visit_synthesis',
     label: 'Visit Synthesis',
+    labelKey: 'nav_visit_synthesis',
     icon: Sparkles,
     roles: ['extension_officer', 'admin'],
     requiresPro: true,
@@ -88,6 +97,7 @@ export const getNavItems = (): NavItem[] => [
   {
     id: 'visits',
     label: 'Visits',
+    labelKey: 'nav_visits',
     icon: MapPin,
     roles: ['extension_officer', 'admin', 'farmer'],
     requiresPro: true,
@@ -95,12 +105,14 @@ export const getNavItems = (): NavItem[] => [
   {
     id: 'reports',
     label: 'Reports',
+    labelKey: 'nav_reports',
     icon: FileText,
     roles: ['extension_officer', 'admin'],
   },
   {
     id: 'sms',
     label: 'SMS',
+    labelKey: 'nav_sms',
     icon: Send,
     roles: ['extension_officer', 'admin'],
     requiresPro: true,
@@ -108,6 +120,7 @@ export const getNavItems = (): NavItem[] => [
   {
     id: 'analytics',
     label: 'Analytics',
+    labelKey: 'nav_analytics',
     icon: BarChart3,
     roles: ['extension_officer', 'admin'],
     requiresPro: true,
@@ -115,36 +128,42 @@ export const getNavItems = (): NavItem[] => [
   {
     id: 'billing',
     label: 'Billing',
+    labelKey: 'nav_billing',
     icon: CreditCard,
     roles: ['extension_officer', 'admin', 'farmer'],
   },
   {
     id: 'telemetry',
     label: 'Telemetry',
+    labelKey: 'nav_telemetry',
     icon: Activity,
     roles: ['admin'],
   },
   {
     id: 'agents',
     label: 'Agents',
+    labelKey: 'nav_agents',
     icon: Settings,
     roles: ['admin'],
   },
   {
     id: 'system_health',
     label: 'System Health',
+    labelKey: 'nav_system_health',
     icon: Shield,
     roles: ['admin'],
   },
   {
     id: 'fields',
     label: 'Fields',
+    labelKey: 'nav_fields',
     icon: Leaf,
     roles: ['extension_officer', 'admin', 'farmer'],
   },
   {
     id: 'disease_diagnosis',
     label: 'Disease Diagnosis',
+    labelKey: 'nav_disease_diagnosis',
     icon: Leaf,
     roles: ['extension_officer', 'admin'],
     requiresPro: true,
@@ -152,12 +171,14 @@ export const getNavItems = (): NavItem[] => [
   {
     id: 'memory',
     label: 'Memory',
+    labelKey: 'nav_memory',
     icon: Brain,
     roles: ['admin'],
   },
   {
     id: 'email_workflows',
     label: 'Email Workflows',
+    labelKey: 'nav_email_workflows',
     icon: Mail,
     roles: ['admin'],
     requiresPro: true,
@@ -165,18 +186,21 @@ export const getNavItems = (): NavItem[] => [
   {
     id: 'mcp_tools',
     label: 'MCP Tools',
+    labelKey: 'nav_mcp_tools',
     icon: Wrench,
     roles: ['admin'],
   },
   {
     id: 'user_management',
     label: 'User Management',
+    labelKey: 'nav_user_management',
     icon: UserCog,
     roles: ['admin'],
   },
   {
     id: 'worldmonitor',
     label: 'WorldMonitor',
+    labelKey: 'nav_worldmonitor',
     icon: Globe,
     roles: ['extension_officer', 'admin', 'regional_manager'],
     requiresPro: true,

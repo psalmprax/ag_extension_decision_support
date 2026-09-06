@@ -70,7 +70,9 @@ export function FarmerMap({
   const [mapBounds, setMapBounds] = useState<L.LatLngBoundsExpression | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [showMiniSearch, setShowMiniSearch] = useState(false);
-  const [isFarmlistCollapsed, setIsFarmlistCollapsed] = useState(false);
+  const [isFarmlistCollapsed, setIsFarmlistCollapsed] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
 
   // Get theme from store
   const darkMode = useAppStore(state => state.darkMode);
@@ -175,6 +177,9 @@ export function FarmerMap({
       zoom={mapZoom}
       style={{ height: '100%', width: '100%' }}
       zoomControl={false}
+      scrollWheelZoom={false}
+      dragging={typeof window === 'undefined' || !L.Browser.mobile || isExpanded}
+      touchZoom={true}
     >
       <style>{MAP_STYLES}</style>
       <MapController center={mapCenter} zoom={mapZoom} bounds={mapBounds} />

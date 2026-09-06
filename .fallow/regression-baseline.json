@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "fallow_version": "3.17.0",
-  "timestamp": "2026-09-03T20:16:00Z",
-  "git_sha": "c8d93ca8b3c4ff9961d76a9da766b07e01b7204b",
+  "timestamp": "2026-09-06T18:22:52Z",
+  "git_sha": "1528d7d64d3b64b2292e903ef9d2cca310c0e384",
   "analysis_identity": {
     "mode": "syntactic",
     "semantic_schema_version": 1,
@@ -12,10 +12,10 @@
     "completeness": "complete"
   },
   "check": {
-    "total_issues": 256,
+    "total_issues": 257,
     "unused_files": 0,
-    "unused_exports": 56,
-    "unused_types": 142,
+    "unused_exports": 58,
+    "unused_types": 141,
     "unused_dependencies": 1,
     "unused_dev_dependencies": 0,
     "unused_optional_dependencies": 0,

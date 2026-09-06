@@ -320,7 +320,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
             </div>
 
             {/* Footer */}
-            <div className="p-3 border-t border-slate-800 bg-slate-900/60">
+            <div className="p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t border-slate-800 bg-slate-900/60">
               <button
                 onClick={() => {
                   onClose();
