@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useDragControls } from 'framer-motion';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
 import { triggerHaptic } from '@/lib/haptics';
 
@@ -20,10 +20,21 @@ const SIZE_CLASS: Record<'sm' | 'md' | 'lg', string> = {
 export function Modal({ title, onClose, size = 'md', children }: ModalProps) {
   const { designVariant } = useFeatureFlags();
   const isBase = designVariant === 'base' || designVariant === 'new';
+  const dragControls = useDragControls();
 
   const handleClose = () => {
     triggerHaptic('light');
     onClose();
+  };
+
+  const handleDragEnd = (
+    _e: MouseEvent | TouchEvent | PointerEvent,
+    info: { offset: { y: number }; velocity: { y: number } }
+  ) => {
+    if (info.offset.y > 100 || info.velocity.y > 500) {
+      triggerHaptic('medium');
+      onClose();
+    }
   };
 
   return (
@@ -35,6 +46,12 @@ export function Modal({ title, onClose, size = 'md', children }: ModalProps) {
       }`}
     >
       <motion.div
+        drag={isBase ? 'y' : false}
+        dragControls={dragControls}
+        dragListener={false}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0.05, bottom: 0.6 }}
+        onDragEnd={isBase ? handleDragEnd : undefined}
         initial={
           isBase
             ? { opacity: 0, y: 50, scale: 0.98 }
@@ -54,12 +71,22 @@ export function Modal({ title, onClose, size = 'md', children }: ModalProps) {
         }`}
       >
         {isBase && (
-          <div className="pt-2.5 pb-1 flex justify-center sm:hidden">
-            <div className="w-12 h-1.5 bg-white/20 rounded-full hover:bg-white/40 transition-colors" />
+          <div
+            onPointerDown={e => dragControls.start(e)}
+            className="pt-2.5 pb-1 flex justify-center sm:hidden cursor-grab active:cursor-grabbing touch-none select-none"
+            aria-label="Drag down to close"
+          >
+            <div className="w-12 h-1.5 bg-white/20 rounded-full hover:bg-white/40 active:bg-blue-400 transition-colors" />
           </div>
         )}
         <div className="p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+          <div
+            onPointerDown={e => {
+              if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return;
+              dragControls.start(e);
+            }}
+            className="flex items-center justify-between mb-4 border-b border-white/10 pb-3 select-none cursor-default"
+          >
             <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">{title}</h3>
             <button
               onClick={handleClose}

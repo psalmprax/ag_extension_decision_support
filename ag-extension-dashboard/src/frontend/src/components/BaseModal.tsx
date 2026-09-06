@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { triggerHaptic } from '@/lib/haptics';
@@ -33,6 +33,17 @@ export const BaseModal: React.FC<BaseModalProps> = ({
   const { btnClass } = useThemeClasses();
   const { designVariant } = useFeatureFlags();
   const isBase = designVariant === 'base' || designVariant === 'new';
+  const dragControls = useDragControls();
+
+  const handleDragEnd = (
+    _e: MouseEvent | TouchEvent | PointerEvent,
+    info: { offset: { y: number }; velocity: { y: number } }
+  ) => {
+    if (info.offset.y > 100 || info.velocity.y > 500) {
+      triggerHaptic('medium');
+      onClose();
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -55,6 +66,12 @@ export const BaseModal: React.FC<BaseModalProps> = ({
             className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
           />
           <motion.div
+            drag={isBase ? 'y' : false}
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0.05, bottom: 0.6 }}
+            onDragEnd={isBase ? handleDragEnd : undefined}
             initial={
               isBase
                 ? { opacity: 0, y: 60 }
@@ -88,13 +105,23 @@ export const BaseModal: React.FC<BaseModalProps> = ({
 
             {/* Drag Handle on Mobile for Variant B */}
             {isBase && (
-              <div className="pt-3 pb-1 flex justify-center sm:hidden relative z-20">
-                <div className="w-12 h-1.5 bg-white/25 rounded-full hover:bg-white/40 transition-colors" />
+              <div
+                onPointerDown={e => dragControls.start(e)}
+                className="pt-3 pb-1 flex justify-center sm:hidden relative z-20 cursor-grab active:cursor-grabbing touch-none select-none"
+                aria-label="Drag down to close"
+              >
+                <div className="w-12 h-1.5 bg-white/25 rounded-full hover:bg-white/40 active:bg-blue-400 transition-colors" />
               </div>
             )}
 
             {/* Header */}
-            <div className="p-4 sm:p-6 border-b border-slate-800/80 relative z-10">
+            <div
+              onPointerDown={e => {
+                if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return;
+                dragControls.start(e);
+              }}
+              className="p-4 sm:p-6 border-b border-slate-800/80 relative z-10 select-none cursor-default"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 sm:gap-3.5">
                   {icon && (

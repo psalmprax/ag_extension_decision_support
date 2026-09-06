@@ -8,8 +8,11 @@ import {
   Loader2,
   ShieldCheck,
   RefreshCw,
+  Copy,
 } from 'lucide-react';
 import { BaseModal } from './BaseModal';
+import { triggerHaptic } from '@/lib/haptics';
+import { useFeatureFlags } from '@/store/useFeatureFlags';
 import {
   diagnosePlantOffline,
   diagnoseSoilOffline,
@@ -23,6 +26,103 @@ import {
   type SoilAnalysisResult,
 } from '@/api/diseaseService';
 import toast from 'react-hot-toast';
+
+export const CROP_PRESETS = [
+  { id: 'Maize', label: 'Maize', emoji: '🌽', alt: 'Corn' },
+  { id: 'Cassava', label: 'Cassava', emoji: '🌿', alt: 'Manioc' },
+  { id: 'Tomato', label: 'Tomato', emoji: '🍅', alt: 'Solanum' },
+  { id: 'Coffee', label: 'Coffee', emoji: '☕', alt: 'Arabica' },
+  { id: 'Banana', label: 'Banana', emoji: '🍌', alt: 'Musa' },
+  { id: 'Legumes', label: 'Legumes', emoji: '🫘', alt: 'Beans' },
+] as const;
+
+interface CropPillScrubberProps {
+  selectedCrop: string;
+  onSelectCrop: (crop: string) => void;
+  disabled?: boolean;
+}
+
+const CropPillScrubber: React.FC<CropPillScrubberProps> = ({
+  selectedCrop,
+  onSelectCrop,
+  disabled = false,
+}) => {
+  const { designVariant } = useFeatureFlags();
+  const isBase = designVariant === 'base' || designVariant === 'new';
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label
+          htmlFor="edge-target-crop-select"
+          className="block text-xs font-bold font-mono uppercase text-slate-300"
+        >
+          Target Crop Specimen
+        </label>
+        <span className="text-[10px] font-mono text-slate-400">
+          Thumb Scrubber
+        </span>
+      </div>
+
+      {/* Horizontal Thumb Pill Scrubber */}
+      <div
+        role="radiogroup"
+        aria-label="Target Crop Selection"
+        className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 px-0.5 touch-pan-x scroll-smooth"
+      >
+        {CROP_PRESETS.map(c => {
+          const isSelected = selectedCrop.toLowerCase() === c.id.toLowerCase();
+          return (
+            <button
+              key={c.id}
+              type="button"
+              role="radio"
+              aria-checked={isSelected}
+              disabled={disabled}
+              onClick={() => {
+                triggerHaptic('light');
+                onSelectCrop(c.id);
+              }}
+              className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-150 active:scale-95 disabled:opacity-50 select-none cursor-pointer ${
+                isSelected
+                  ? isBase
+                    ? 'bg-blue-600 text-white shadow-[0_0_12px_rgba(0,82,255,0.45)] border border-blue-400 ring-2 ring-blue-500/30'
+                    : 'bg-emerald-600 text-white shadow-[0_0_12px_rgba(16,185,129,0.45)] border border-emerald-400 ring-2 ring-emerald-500/30'
+                  : 'bg-slate-900/90 text-slate-400 border border-white/10 hover:border-white/20 hover:text-white'
+              }`}
+            >
+              <span className="text-sm leading-none" aria-hidden="true">
+                {c.emoji}
+              </span>
+              <span>{c.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Accessible synchronized select dropdown */}
+      <div className="pt-0.5">
+        <select
+          id="edge-target-crop-select"
+          value={selectedCrop}
+          disabled={disabled}
+          onChange={e => {
+            triggerHaptic('light');
+            onSelectCrop(e.target.value);
+          }}
+          className="w-full px-3 py-1.5 border rounded-xl text-xs bg-slate-900/80 border-white/10 text-slate-300 outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer"
+          aria-label="Target Crop Dropdown"
+        >
+          {CROP_PRESETS.map(c => (
+            <option key={c.id} value={c.id}>
+              {c.label} ({c.alt})
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+};
 
 export type ScanTargetMode = 'crop' | 'soil';
 
@@ -390,6 +490,25 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
     }
   };
 
+  const handleShareReport = async () => {
+    try {
+      const summary =
+        scanMode === 'crop' && cropResult
+          ? `[Agri-Vision Offline Scan]\nCrop: ${crop}\nDiagnosis: ${cropResult.primaryDiagnosis.condition} (${Math.round(cropResult.primaryDiagnosis.confidence * 100)}% confidence)\nSeverity: ${cropResult.primaryDiagnosis.severity}\nAction: ${cropResult.primaryDiagnosis.culturalControl[0] || 'See full report'}`
+          : soilResult
+          ? `[Agri-Soil Offline Scan]\nTexture: ${soilResult.textureClass} (${Math.round(soilResult.confidence * 100)}% confidence)\nDrainage: ${soilResult.drainageClass}\nOrganic Matter: ${soilResult.organicMatterIndex}\nMoisture: ${soilResult.estimatedMoisture}`
+          : 'Diagnostic specimen report';
+
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(summary);
+        triggerHaptic('light');
+        toast.success('Diagnostic report copied to clipboard');
+      }
+    } catch {
+      toast.error('Could not copy report');
+    }
+  };
+
   const handleReset = () => {
     setImageSrc(null);
     setCropResult(null);
@@ -433,26 +552,14 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
 
         {/* Crop Selector Context */}
         {scanMode === 'crop' && (
-          <div>
-            <label className="block text-xs font-bold font-mono uppercase text-slate-300 mb-1">
-              Target Crop
-            </label>
-            <select
-              value={crop}
-              onChange={e => {
-                setCrop(e.target.value);
-                if (imageSrc) executeDiagnosis(imageSrc, 'crop');
-              }}
-              className="w-full px-3 py-2 border rounded-xl text-xs bg-slate-900 border-white/10 text-white outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer"
-            >
-              <option value="Maize">Maize (Corn)</option>
-              <option value="Cassava">Cassava</option>
-              <option value="Tomato">Tomato</option>
-              <option value="Coffee">Coffee</option>
-              <option value="Banana">Banana</option>
-              <option value="Legumes">Legumes / Beans</option>
-            </select>
-          </div>
+          <CropPillScrubber
+            selectedCrop={crop}
+            disabled={analyzing}
+            onSelectCrop={newCrop => {
+              setCrop(newCrop);
+              if (imageSrc) executeDiagnosis(imageSrc, 'crop');
+            }}
+          />
         )}
 
         {/* Upload / Capture Box */}
@@ -551,6 +658,15 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                     <span>Plot to WorldMonitor Outbreak Map</span>
                   </>
                 )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleShareReport}
+                className="w-full py-2.5 border border-white/10 hover:bg-white/5 text-xs font-bold uppercase tracking-wider text-slate-300 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+              >
+                <Copy className="w-3.5 h-3.5 text-blue-400" />
+                <span>Copy Finding Summary</span>
               </button>
 
               <button

@@ -115,6 +115,9 @@ vi.mock('framer-motion', () => {
       span: mockComponent,
     },
     AnimatePresence: ({ children }: MotionMockProps) => <>{children}</>,
+    useDragControls: () => ({
+      start: vi.fn(),
+    }),
   };
 });
 
