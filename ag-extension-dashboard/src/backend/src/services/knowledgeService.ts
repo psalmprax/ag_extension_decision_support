@@ -1133,7 +1133,9 @@ Agronomic Decision Support Protocol (Phase 2):
         structuredExcerpts: string[]
     ) {
         const sanitized = this.sanitizeContextText(result.content);
-        const rawTitle = result.metadata?.title || `Source ${idx + 1}`;
+        const rawTitle = (typeof result.metadata?.title === 'string' && result.metadata.title)
+            ? result.metadata.title
+            : `Source ${idx + 1}`;
         const title = this.convertAllCapsLine(rawTitle);
         const paragraphs = sanitized.split(/\n\n+/);
         const cleanSourceParagraphs: string[] = [];
@@ -1165,7 +1167,9 @@ Agronomic Decision Support Protocol (Phase 2):
 
     private static buildExtractiveAnswer(queryText: string, contextResults: SearchResult[]): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
         const primary = contextResults[0];
-        const rawSourceTitle = primary.metadata?.title || `${primary.metadata?.crop || 'Agricultural'} ${primary.metadata?.category || 'Knowledge'}`;
+        const rawSourceTitle = (typeof primary.metadata?.title === 'string' && primary.metadata.title)
+            ? primary.metadata.title
+            : `${(primary.metadata?.crop as string) || 'Agricultural'} ${(primary.metadata?.category as string) || 'Knowledge'}`;
         const sourceTitle = this.convertAllCapsLine(rawSourceTitle);
         const sourceUrl = primary.metadata?.sourceUrl ? ` (${primary.metadata.sourceUrl})` : '';
 
