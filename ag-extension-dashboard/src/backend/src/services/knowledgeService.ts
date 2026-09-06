@@ -604,6 +604,10 @@ Agronomic Decision Support Protocol (Phase 2):
    - Prioritize high-similarity context sources (score 0.70+). Cite recognized extension bulletins (Land-Grant universities, FAO, USDA NRCS) and encourage verifying with local extension officers.
 6. Multilingual Fluency:
    - Always respond fluently in the exact same language used in the question (e.g. Kiswahili, Français, Español, Português, Hausa, Yoruba, Arabic, etc.) with accurate localized agronomic terminology.
+7. Formatting & Case Style:
+   - Never write entire sentences, section headers, or bullet points in ALL CAPS (block capitals).
+   - Use natural sentence case for section headings and list items (e.g., "Key agronomic recommendations", "Field preparation steps").
+   - Capitalize only the first letter of sentences and proper nouns/standard abbreviations (e.g. FAO, USDA, pH).
 `;
 
         return Promise.race([
@@ -659,7 +663,7 @@ Agronomic Decision Support Protocol (Phase 2):
                 const toolResults = await this.executeAgenticTools(toolCalls, start, BUDGET_MS);
 
                 // Perform grounded synthesis incorporating deterministic micro-tool execution evidence
-                const enrichedContext = `${contextText || ''}\n\n### DETERMINISTIC MICRO-TOOL EXECUTION EVIDENCE:\n${toolResults.join('\n\n')}`;
+                const enrichedContext = `${contextText || ''}\n\n### Deterministic micro-tool execution evidence:\n${toolResults.join('\n\n')}`;
                 logger.info(`Synthesizing final grounded prescription with tool evidence (${toolResults.length} tool result(s))...`);
 
                 const synthesisRes = await AIRouter.routeRequest('reason', {
@@ -740,6 +744,10 @@ Agronomic Decision Support Protocol (Phase 2):
         reasoningResult: ReasoningResult,
         queryText: string
     ): Promise<{ visuals: any; audio?: string }> {
+        if (reasoningResult.answer && typeof reasoningResult.answer === 'string') {
+            reasoningResult.answer = this.normalizeAllCapsText(reasoningResult.answer);
+        }
+
         let audioBase64: string | undefined = undefined;
         let enhancedVisuals = reasoningResult.visuals;
 
@@ -957,10 +965,62 @@ Agronomic Decision Support Protocol (Phase 2):
         'by', 'reference', 'references', 'link', 'primary source reference'
     ]);
 
+    private static readonly PRESERVED_ACRONYMS = new Set([
+        'FAO', 'USDA', 'NRCS', 'GPS', 'IPM', 'NGO', 'EU', 'US', 'USA', 'USAID',
+        'CGIAR', 'IITA', 'EIL', 'PPE', 'PHI', 'DTM', 'NPK', 'AI', 'RAG', 'PWA',
+        'SMS', 'IVR', 'URI', 'URL', 'ID', 'KPI', 'CO2', 'PH', 'IT', 'GIS'
+    ]);
+
+    private static isMostlyUppercase(text: string): boolean {
+        const letters = text.replace(/[^A-Za-z]/g, '');
+        if (letters.length < 6) return false;
+        const uppers = text.replace(/[^A-Z]/g, '');
+        return (uppers.length / letters.length) >= 0.7;
+    }
+
+    private static toSentenceCase(text: string): string {
+        const trimmed = text.trim();
+        if (trimmed.length === 0) return '';
+        return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+    }
+
+    private static convertAllCapsWord(word: string, isFirstWord: boolean): string {
+        const clean = word.replace(/[^A-Za-z0-9]/g, '');
+        if (this.PRESERVED_ACRONYMS.has(clean.toUpperCase())) {
+            return word;
+        }
+        const lower = word.toLowerCase();
+        if (isFirstWord && lower.length > 0) {
+            return lower.charAt(0).toUpperCase() + lower.slice(1);
+        }
+        return lower;
+    }
+
+    private static convertAllCapsLine(line: string): string {
+        const headerMatch = line.match(/^(\s*#{1,6}\s+|[-*•]\s+|\d+\.\s+)?(.*)/s);
+        const prefix = headerMatch?.[1] || '';
+        const content = headerMatch?.[2] || line;
+
+        if (!this.isMostlyUppercase(content)) {
+            return line;
+        }
+
+        const words = content.split(' ');
+        const convertedWords = words.map((w, idx) => this.convertAllCapsWord(w, idx === 0));
+        return `${prefix}${convertedWords.join(' ')}`;
+    }
+
+    private static normalizeAllCapsText(text: string): string {
+        if (!text || typeof text !== 'string') return '';
+        const lines = text.split('\n');
+        const normalized = lines.map(line => this.convertAllCapsLine(line));
+        return normalized.join('\n');
+    }
+
     private static sanitizeContextText(text: string): string {
         if (!text || typeof text !== 'string') return '';
 
-        return text
+        const cleaned = text
             // Strip HTML comments, scripts, styles, and tags
             .replace(/<!--[\s\S]*?-->/g, '')
             .replace(/<script[\s\S]*?<\/script>/gi, '')
@@ -991,6 +1051,8 @@ Agronomic Decision Support Protocol (Phase 2):
             .replace(/[ \t]+/g, ' ')
             .replace(/\n\s*\n+/g, '\n\n')
             .trim();
+
+        return this.normalizeAllCapsText(cleaned);
     }
 
     private static parseInsightFromLine(line: string): string | null {
@@ -1006,8 +1068,12 @@ Agronomic Decision Support Protocol (Phase 2):
         // Check for Label: Detail pattern
         const headingMatch = textContent.match(/^([A-Z][A-Za-z0-9\s–—/-]{2,40}):\s*(.+)/s);
         if (headingMatch) {
-            const label = headingMatch[1].trim();
+            let label = headingMatch[1].trim();
             if (this.METADATA_LABELS.has(label.toLowerCase())) return null;
+
+            if (this.isMostlyUppercase(label)) {
+                label = this.toSentenceCase(label);
+            }
 
             const detail = headingMatch[2].trim().replace(/\s+/g, ' ');
             if (detail.length < 20) return null;
@@ -1029,31 +1095,31 @@ Agronomic Decision Support Protocol (Phase 2):
         if (!asksForSteps) return null;
 
         if (/\b(cooperative|co-op|collective|group farm|association)\b/i.test(q)) {
-            return `> **Field Advisory Implementation Roadmap (Standard Cooperative Formation):**\n` +
+            return `> **Field advisory implementation roadmap (standard cooperative formation):**\n` +
                 `> 1. **Mobilization**: Bring together 10–20 core producers facing shared market or input challenges.\n` +
-                `> 2. **Steering Committee**: Elect an interim committee to record decisions and draft rules.\n` +
-                `> 3. **Feasibility Assessment**: Survey member crop acreage, expected harvest volumes, and shared storage/transport needs.\n` +
-                `> 4. **Constitution & Bylaws**: Define membership qualifications, one-member-one-vote rules, share capital, and side-selling penalties.\n` +
-                `> 5. **Capital & Legal Registration**: Mobilize initial member equity and file formal registration with the cooperative authority/ministry.\n` +
-                `> 6. **Operational Launch**: Inaugurate the elected Board and commence collective purchasing or aggregated sales.`;
+                `> 2. **Steering committee**: Elect an interim committee to record decisions and draft rules.\n` +
+                `> 3. **Feasibility assessment**: Survey member crop acreage, expected harvest volumes, and shared storage/transport needs.\n` +
+                `> 4. **Constitution and bylaws**: Define membership qualifications, one-member-one-vote rules, share capital, and side-selling penalties.\n` +
+                `> 5. **Capital and legal registration**: Mobilize initial member equity and file formal registration with the cooperative authority/ministry.\n` +
+                `> 6. **Operational launch**: Inaugurate the elected board and commence collective purchasing or aggregated sales.`;
         }
 
         if (/\b(soil\s*test|soil\s*sampl)/i.test(q)) {
-            return `> **Field Advisory Protocol (Standard Soil Sampling Procedure):**\n` +
-                `> 1. **Field Zoning**: Divide land into uniform sampling units based on topography and cropping history.\n` +
-                `> 2. **Zig-Zag Core Collection**: Take 10–20 core subsamples at 15–20 cm depth using a clean auger or spade.\n` +
-                `> 3. **Composite Mixing**: Combine cores in a clean plastic bucket and mix thoroughly.\n` +
-                `> 4. **Shade Drying & Labeling**: Air-dry ~500g of composite sample away from direct sun and chemical contamination.\n` +
-                `> 5. **Laboratory Submission**: Submit sample with crop history and GPS coordinates for nutrient analysis.`;
+            return `> **Field advisory protocol (standard soil sampling procedure):**\n` +
+                `> 1. **Field zoning**: Divide land into uniform sampling units based on topography and cropping history.\n` +
+                `> 2. **Zig-zag core collection**: Take 10–20 core subsamples at 15–20 cm depth using a clean auger or spade.\n` +
+                `> 3. **Composite mixing**: Combine cores in a clean plastic bucket and mix thoroughly.\n` +
+                `> 4. **Shade drying and labeling**: Air-dry ~500g of composite sample away from direct sun and chemical contamination.\n` +
+                `> 5. **Laboratory submission**: Submit sample with crop history and GPS coordinates for nutrient analysis.`;
         }
 
         if (/\b(spray|pesticide|insecticide|fungicide|chemical application)\b/i.test(q)) {
-            return `> **Field Advisory Protocol (Safe Chemical Application & IPM):**\n` +
-                `> 1. **Scouting & Threshold Verification**: Confirm pest density exceeds the Economic Injury Level (EIL) before spraying.\n` +
-                `> 2. **PPE Inspection**: Wear complete personal protective equipment (gloves, mask, goggles, boots, overalls).\n` +
-                `> 3. **Equipment Calibration**: Calibrate nozzle flow rate and pressure with clean water to ensure uniform coverage.\n` +
-                `> 4. **Environmental Conditions**: Spray during cool morning/evening hours; never spray into headwind or before rainfall.\n` +
-                `> 5. **Pre-Harvest Interval (PHI) & Disposal**: Strictly observe the PHI before harvest and triple-rinse empty containers.`;
+            return `> **Field advisory protocol (safe chemical application and IPM):**\n` +
+                `> 1. **Scouting and threshold verification**: Confirm pest density exceeds the economic injury level (EIL) before spraying.\n` +
+                `> 2. **PPE inspection**: Wear complete personal protective equipment (gloves, mask, goggles, boots, overalls).\n` +
+                `> 3. **Equipment calibration**: Calibrate nozzle flow rate and pressure with clean water to ensure uniform coverage.\n` +
+                `> 4. **Environmental conditions**: Spray during cool morning/evening hours; never spray into headwind or before rainfall.\n` +
+                `> 5. **Pre-harvest interval (PHI) and disposal**: Strictly observe the PHI before harvest and triple-rinse empty containers.`;
         }
 
         return null;
@@ -1067,7 +1133,8 @@ Agronomic Decision Support Protocol (Phase 2):
         structuredExcerpts: string[]
     ) {
         const sanitized = this.sanitizeContextText(result.content);
-        const title = result.metadata?.title || `Source ${idx + 1}`;
+        const rawTitle = result.metadata?.title || `Source ${idx + 1}`;
+        const title = this.convertAllCapsLine(rawTitle);
         const paragraphs = sanitized.split(/\n\n+/);
         const cleanSourceParagraphs: string[] = [];
 
@@ -1098,7 +1165,8 @@ Agronomic Decision Support Protocol (Phase 2):
 
     private static buildExtractiveAnswer(queryText: string, contextResults: SearchResult[]): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
         const primary = contextResults[0];
-        const sourceTitle = primary.metadata?.title || `${primary.metadata?.crop || 'Agricultural'} ${primary.metadata?.category || 'Knowledge'}`;
+        const rawSourceTitle = primary.metadata?.title || `${primary.metadata?.crop || 'Agricultural'} ${primary.metadata?.category || 'Knowledge'}`;
+        const sourceTitle = this.convertAllCapsLine(rawSourceTitle);
         const sourceUrl = primary.metadata?.sourceUrl ? ` (${primary.metadata.sourceUrl})` : '';
 
         // Extract and deduplicate key paragraphs across all chunks
@@ -1112,7 +1180,7 @@ Agronomic Decision Support Protocol (Phase 2):
 
         // Build clean synthesized markdown sections
         const sections: string[] = [
-            `I found source-backed guidance for: **"${queryText}"**.\n\n*Primary Source Reference: ${sourceTitle}${sourceUrl}*`,
+            `I found source-backed guidance for: **"${queryText}"**.\n\n*Primary source reference: ${sourceTitle}${sourceUrl}*`,
         ];
 
         const proceduralNote = this.getProceduralGuidanceNote(queryText);
@@ -1121,16 +1189,16 @@ Agronomic Decision Support Protocol (Phase 2):
         }
 
         if (keyBulletPoints.length > 0) {
-            sections.push(`### Key Identified Insights & Takeaways\n\n${keyBulletPoints.join('\n\n')}`);
+            sections.push(`### Key identified insights and takeaways\n\n${keyBulletPoints.join('\n\n')}`);
         }
 
         if (structuredExcerpts.length > 0) {
-            sections.push(`### Verified Context & Field Reference\n\n${structuredExcerpts.join('\n\n')}`);
+            sections.push(`### Verified context and field reference\n\n${structuredExcerpts.join('\n\n')}`);
         }
 
         sections.push(`*Note: The recommendations above are extracted directly from the local verified agricultural knowledge base.*`);
 
-        const answer = sections.join('\n\n---\n\n');
+        const answer = this.normalizeAllCapsText(sections.join('\n\n---\n\n'));
 
         return {
             reasoning: 'Generated from retrieved knowledge-base context because the configured AI provider did not complete in time.',

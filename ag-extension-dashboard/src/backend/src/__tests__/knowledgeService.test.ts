@@ -300,10 +300,52 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
         expect(result.answer).toContain('Farmer cooperatives enhance bargaining power and access to larger');
         expect(result.answer).toContain('Cooperatives reduce individual costs by negotiating bulk transportation');
 
-        // 4. Must inject procedural implementation roadmap for cooperative formation
-        expect(result.answer).toContain('Field Advisory Implementation Roadmap (Standard Cooperative Formation)');
+        // 4. Must inject procedural implementation roadmap in sentence case (not all capital letters or title case)
+        expect(result.answer).toContain('Field advisory implementation roadmap (standard cooperative formation)');
         expect(result.answer).toContain('Mobilization');
-        expect(result.answer).toContain('Constitution & Bylaws');
+        expect(result.answer).toContain('Constitution and bylaws');
+
+        // 5. Must use sentence case for section headings instead of title-casing every word
+        expect(result.answer).toContain('### Key identified insights and takeaways');
+        expect(result.answer).toContain('### Verified context and field reference');
+        expect(result.answer).toContain('*Primary source reference:');
+    });
+
+    it('normalizes all-caps headings and uppercase blocks into clean sentence case', async () => {
+        (VectorService.hybridSearch as jest.Mock).mockResolvedValue([
+            {
+                id: 'allcaps-1',
+                content: `### HOW DO COOPERATIVES ADAPT TO MARKET CHANGES?\n\nJOINING A FARMER COOPERATIVE BOOSTS BARGAINING POWER AND INCOME STABILITY FOR ALL PRODUCERS.`,
+                metadata: {
+                    title: 'FARMER COOPERATIVES AND COLLECTIVE MARKETING',
+                    category: 'cooperatives',
+                    crop: 'all',
+                    sourceUrl: 'https://example.org/coops'
+                },
+                score: 0.88,
+            }
+        ]);
+
+        mockRouteRequest.mockImplementation(async (type: string) => {
+            if (type === 'classify') return { labels: [{ label: 'agronomy_and_yield', score: 0.90 }] };
+            if (type === 'reason') throw new Error('Timeout');
+            return {};
+        });
+
+        const result = await KnowledgeService.askQuestion('user-1', 'How do cooperatives adapt?');
+
+        // Scraped all-caps heading in body must not remain in ALL CAPS
+        expect(result.answer).not.toContain('### HOW DO COOPERATIVES ADAPT TO MARKET CHANGES?');
+        expect(result.answer).not.toContain('HOW DO COOPERATIVES ADAPT TO MARKET CHANGES?');
+        expect(result.answer).toContain('How do cooperatives adapt to market changes?');
+
+        // Body text must not remain in ALL CAPS
+        expect(result.answer).not.toContain('JOINING A FARMER COOPERATIVE BOOSTS BARGAINING POWER');
+        expect(result.answer).toContain('Joining a farmer cooperative boosts bargaining power');
+
+        // Metadata title must not remain in ALL CAPS
+        expect(result.answer).not.toContain('FARMER COOPERATIVES AND COLLECTIVE MARKETING');
+        expect(result.answer).toContain('Farmer cooperatives and collective marketing');
     });
 
     it('passes attachments through to the reasoning call', async () => {
