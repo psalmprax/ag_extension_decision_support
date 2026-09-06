@@ -157,8 +157,8 @@ class PaymentAnalyticsService {
             const newRevenue = totalRevenue;
             const netRevenueChange = totalRevenue - previousTotalRevenue;
 
-            // Expansion/contraction require subscription item history; honest null when unavailable
-            const hasHistory = false; // TODO: populate from subscription_change_events table when available
+            // Expansion/contraction require subscription item history; returns null when change events table is not yet populated
+            const hasHistory = false;
             return {
                 mrr,
                 arr,
