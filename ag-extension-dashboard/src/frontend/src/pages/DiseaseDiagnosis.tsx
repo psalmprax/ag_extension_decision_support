@@ -18,6 +18,7 @@ import { ImageAnalysisTab } from './diagnostics/ImageAnalysisTab';
 import { SoilDiagnosticsTab } from './diagnostics/SoilDiagnosticsTab';
 import { DiseaseLibraryTab } from './diagnostics/DiseaseLibraryTab';
 import { DiseaseInfoModal } from './diagnostics/DiseaseInfoModal';
+import { EdgeVisionScannerModal } from '@/components/EdgeVisionScannerModal';
 
 import { PlanUpgradeGuard } from '@/components/PlanUpgradeGuard';
 
@@ -37,6 +38,7 @@ export function DiseaseDiagnosis() {
   const [selectedDisease, setSelectedDisease] = useState<string | null>(null);
   const [diseaseInfo, setDiseaseInfo] = useState<DiseaseInfo | null>(null);
   const [isLoadingInfo, setIsLoadingInfo] = useState(false);
+  const [showScannerModal, setShowScannerModal] = useState(false);
 
   // Load available diseases
   useEffect(() => {
@@ -106,6 +108,13 @@ export function DiseaseDiagnosis() {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowScannerModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-mono font-bold shadow-md shadow-emerald-950/40 transition-all cursor-pointer"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span>OFFLINE CAMERA SCANNER</span>
+            </button>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-slate-900 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold shadow-md shadow-emerald-950/40">
               <Sparkles className="w-3.5 h-3.5" />
               <span>OFFLINE READY</span>
@@ -202,6 +211,13 @@ export function DiseaseDiagnosis() {
           isLoadingInfo={isLoadingInfo}
           diseaseInfo={diseaseInfo}
           radiusClass={radiusClass}
+        />
+
+        {/* Offline Edge Camera Scanner Modal */}
+        <EdgeVisionScannerModal
+          isOpen={showScannerModal}
+          onClose={() => setShowScannerModal(false)}
+          defaultCrop={cropType || 'Maize'}
         />
       </div>
     </PlanUpgradeGuard>
