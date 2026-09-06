@@ -30,17 +30,28 @@ router.get('/layers', validate({ query: layersQuery }), async (req: AuthRequest,
     const { region, crop, county, limit } = req.query as unknown as { region?: string; crop?: string; county?: string; limit: number };
     const userRegion = (req.user as unknown as { region?: string })?.region || region;
 
-    const { whereSql, params, nextIdx } = buildFarmerFilters(userRegion, crop, county);
+    const { clauses, params, nextIdx } = buildFarmerFilters(userRegion, crop, county);
 
     // 1. Farmer points (for NDVI/soil anchors) — live from farmers table with lat/lon
-    const { rows: farmerPoints } = await query<{
+    const farmerConditions = ['f.location_lat IS NOT NULL', 'f.location_lng IS NOT NULL', ...clauses];
+    let farmerPoints: Array<{
       id: string; lat: string | null; lng: string | null; region: string | null; district: string | null; crops: string[] | null;
-    }>(`SELECT f.id, f.location_lat as lat, f.location_lng as lng, f.region, f.district, f.crops
-        FROM farmers f ${whereSql} AND f.location_lat IS NOT NULL AND f.location_lng IS NOT NULL
-        LIMIT $${nextIdx}`, [...params, limit]);
+    }> = [];
+
+    try {
+      const { rows } = await query<{
+        id: string; lat: string | null; lng: string | null; region: string | null; district: string | null; crops: string[] | null;
+      }>(`SELECT f.id, f.location_lat as lat, f.location_lng as lng, f.region, f.district, f.crops
+          FROM farmers f
+          WHERE ${farmerConditions.join(' AND ')}
+          LIMIT $${nextIdx}`, [...params, limit]);
+      farmerPoints = rows || [];
+    } catch (dbError) {
+      logger.warn('WorldMonitor farmer points query failed:', dbError);
+    }
 
     const soilHorizon = await fetchSoilHorizon(farmerPoints);
-    const ndviPoints = await fetchNdviPoints(whereSql, params, nextIdx, limit);
+    const ndviPoints = await fetchNdviPoints(clauses, params, nextIdx, limit);
     const pestSwarm = await fetchPestSwarm();
 
     // 5. Satellite orbit — DETERMINISTIC PREVIEW, not live telemetry.
@@ -58,7 +69,9 @@ router.get('/layers', validate({ query: layersQuery }), async (req: AuthRequest,
     return res.json({
       success: true,
       data: {
-        farmers: farmerPoints.map(r => ({ id: r.id, lat: Number(r.lat), lon: Number(r.lng), region: r.region, district: r.district, crops: r.crops })),
+        farmers: farmerPoints
+          .filter(r => r.lat != null && r.lng != null && Number.isFinite(Number(r.lat)) && Number.isFinite(Number(r.lng)))
+          .map(r => ({ id: r.id, lat: Number(r.lat), lon: Number(r.lng), region: r.region, district: r.district, crops: r.crops })),
         soilHorizon,
         ndviPoints,
         pestSwarm,
@@ -74,22 +87,38 @@ router.get('/layers', validate({ query: layersQuery }), async (req: AuthRequest,
 
 export default router;
 
-/** Build the shared WHERE clause + params for farmer-cohort filtering. */
-function buildFarmerFilters(userRegion: string | undefined, crop: string | undefined, county: string | undefined): { whereSql: string; params: unknown[]; nextIdx: number } {
-  const where: string[] = [];
+/** Build the shared WHERE clauses + params for farmer-cohort filtering. */
+function buildFarmerFilters(userRegion: string | undefined, crop: string | undefined, county: string | undefined): {
+  clauses: string[];
+  params: unknown[];
+  nextIdx: number;
+} {
+  const clauses: string[] = [];
   const params: unknown[] = [];
   let idx = 1;
-  if (userRegion) { where.push(`f.region = $${idx++}`); params.push(userRegion); }
-  if (county) { where.push(`f.district = $${idx++}`); params.push(county); }
-  if (crop) { where.push(`$${idx++} = ANY(f.crops)`); params.push(crop); }
-  return { whereSql: where.length ? `WHERE ${where.join(' AND ')}` : '', params, nextIdx: idx };
+  if (userRegion) {
+    clauses.push(`f.region = $${idx++}`);
+    params.push(userRegion);
+  }
+  if (county) {
+    clauses.push(`f.district = $${idx++}`);
+    params.push(county);
+  }
+  if (crop) {
+    clauses.push(`$${idx++} = ANY(f.crops)`);
+    params.push(crop);
+  }
+  return { clauses, params, nextIdx: idx };
 }
 
 /** 2. SoilGrids horizon — sample the centroid of the filtered cohort (1 live call, not per-farmer). */
 async function fetchSoilHorizon(farmerPoints: Array<{ lat: string | null; lng: string | null }>): Promise<unknown> {
-  if (farmerPoints.length === 0) return null;
-  const avgLat = farmerPoints.reduce((s, r) => s + Number(r.lat), 0) / farmerPoints.length;
-  const avgLon = farmerPoints.reduce((s, r) => s + Number(r.lng), 0) / farmerPoints.length;
+  const validPoints = farmerPoints.filter(
+    r => r.lat != null && r.lng != null && Number.isFinite(Number(r.lat)) && Number.isFinite(Number(r.lng))
+  );
+  if (validPoints.length === 0) return null;
+  const avgLat = validPoints.reduce((s, r) => s + Number(r.lat), 0) / validPoints.length;
+  const avgLon = validPoints.reduce((s, r) => s + Number(r.lng), 0) / validPoints.length;
   try {
     const [baseline, moisture] = await Promise.all([
       SoilGridsService.fetchBaseline(avgLat, avgLon).catch(() => null),
@@ -103,14 +132,13 @@ async function fetchSoilHorizon(farmerPoints: Array<{ lat: string | null; lng: s
 }
 
 /** 3. NDVI crop stress — live from diagnosis_events (last 30d) joined to farmer location when available. */
-async function fetchNdviPoints(whereSql: string, params: unknown[], nextIdx: number, limit: number): Promise<unknown[]> {
-  // whereSql already built; add the time filter
+async function fetchNdviPoints(clauses: string[], params: unknown[], nextIdx: number, limit: number): Promise<unknown[]> {
+  const ndviConditions = [`d.created_at > NOW() - INTERVAL '30 days'`, ...clauses];
   const ndviSql = `
       SELECT d.crop, d.disease_label, d.confidence, d.district, d.created_at, f.location_lat as lat, f.location_lng as lng
         FROM diagnosis_events d
         LEFT JOIN farmers f ON f.id = d.farmer_id
-       ${whereSql}
-       ${whereSql ? 'AND' : 'WHERE'} d.created_at > NOW() - INTERVAL '30 days'
+       WHERE ${ndviConditions.join(' AND ')}
        ORDER BY d.created_at DESC LIMIT $${nextIdx}
     `;
   try {
