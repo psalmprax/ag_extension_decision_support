@@ -63,11 +63,23 @@ type OrtModule = {
   env: { wasm: Record<string, unknown> };
 };
 
+async function getOrtModule(): Promise<OrtModule | null> {
+  try {
+    if (typeof window !== 'undefined' && (window as unknown as { ort?: OrtModule }).ort) {
+      return (window as unknown as { ort: OrtModule }).ort;
+    }
+    const moduleName = 'onnxruntime-web';
+    return (await import(/* @vite-ignore */ moduleName).catch(() => null)) as unknown as OrtModule | null;
+  } catch {
+    return null;
+  }
+}
+
 async function tryLoadOnnxModel(): Promise<OrtModule['InferenceSession'] extends { create: (...a: unknown[]) => Promise<infer T> } ? T : unknown | null> {
   if (onnxLoadAttempted) return onnxSession as never;
   onnxLoadAttempted = true;
   try {
-    const ort = (await import('onnxruntime-web').catch(() => null)) as unknown as OrtModule | null;
+    const ort = await getOrtModule();
     if (!ort) return null;
     if (ort.env?.wasm) {
       (ort.env.wasm as Record<string, unknown>).numThreads = 1;
@@ -167,7 +179,7 @@ async function tryOnnxInference(canvas: HTMLCanvasElement): Promise<EdgeDiagnosi
   const session = (await tryLoadOnnxModel()) as unknown as { run: (feeds: Record<string, unknown>) => Promise<Record<string, { data: Float32Array }>> } | null;
   if (!session) return null;
   try {
-    const ort = (await import('onnxruntime-web').catch(() => null)) as unknown as OrtModule | null;
+    const ort = await getOrtModule();
     if (!ort) return null;
     const tensor = canvasToNchwTensor(canvas, ort);
     const results = await session.run({ input: tensor });
