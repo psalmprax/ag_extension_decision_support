@@ -97,7 +97,7 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function translateWithRetry(text, targetLang, retries = 3) {
+async function translateWithRetry(text, targetLang, retries = 4) {
   const targetCode = LANGUAGE_MAP[targetLang] || targetLang;
 
   for (let attempt = 1; attempt <= retries; attempt += 1) {
@@ -113,11 +113,13 @@ async function translateWithRetry(text, targetLang, retries = 3) {
 
       return restored;
     } catch (error) {
+      const isRateLimit = error.message.includes('Unexpected token') || error.message.includes('429');
+      const waitTime = isRateLimit ? 1200 * attempt : DELAY_MS * attempt * 2;
       if (attempt === retries) {
         console.error(`  [warn] translate failed for "${text.slice(0, 40)}": ${error.message}`);
         return text;
       }
-      await delay(DELAY_MS * attempt * 2);
+      await delay(waitTime);
     }
   }
 

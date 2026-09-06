@@ -32,6 +32,7 @@ export const themeDescriptions: Record<ThemeName, string> = {
   sunset: '🌅 Sunset Orange - Warm harvest twilight',
   sage: '🌿 Sage Green - Vegetables and organic',
   cyber: '🌑 Cyber Dark - High-tech night mode',
+  base: '🔵 Base Onchain - Electric cobalt & obsidian',
 };
 
 function pushScaleVars(

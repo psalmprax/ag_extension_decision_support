@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 
 export interface ThemeContextType {
-  variant: 'current' | 'new';
+  variant: 'current' | 'new' | 'classic' | 'base';
 }
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);

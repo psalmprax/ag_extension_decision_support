@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Calculator, FlaskConical, Sprout, Droplets } from 'lucide-react';
 import { tankMix, fertilizerBlend, plantingDensity, herbicideTankDose } from '@/lib/agCalculators';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { useLanguage } from '@/lib/LanguageContext';
 
 type Tab = 'tank' | 'blend' | 'density';
 
@@ -29,6 +30,7 @@ function NumField({ label, value, onChange, step = 'any', suffix }: { label: str
 
 export function FieldToolsCard() {
     const { cardClass } = useThemeClasses();
+    const { t } = useLanguage();
     const [tab, setTab] = useState<Tab>('tank');
 
     // tank mix state
@@ -73,17 +75,21 @@ export function FieldToolsCard() {
     }, [row, inRow, densArea]);
 
     const tabs: { key: Tab; label: string; Icon: typeof Calculator }[] = [
-        { key: 'tank', label: 'Tank mix', Icon: Droplets },
-        { key: 'blend', label: 'Fertilizer', Icon: FlaskConical },
-        { key: 'density', label: 'Plant density', Icon: Sprout },
+        { key: 'tank', label: t('fieldtools_tab_tank', { defaultValue: 'Tank mix' }), Icon: Droplets },
+        { key: 'blend', label: t('fieldtools_tab_blend', { defaultValue: 'Fertilizer' }), Icon: FlaskConical },
+        { key: 'density', label: t('fieldtools_tab_density', { defaultValue: 'Plant density' }), Icon: Sprout },
     ];
 
     return (
         <div className={`${cardClass} p-4 sm:p-5`}>
             <div className="flex items-center gap-2 mb-3">
                 <Calculator className="w-4 h-4 text-primary-500" />
-                <h3 className="text-sm font-black uppercase tracking-widest">Field Calculators</h3>
-                <span className="text-xxs text-gray-400 ml-auto">works offline</span>
+                <h3 className="text-sm font-black uppercase tracking-widest">
+                    {t('fieldtools_title', { defaultValue: 'Field Calculators' })}
+                </h3>
+                <span className="text-xxs text-gray-400 ml-auto">
+                    {t('fieldtools_works_offline', { defaultValue: 'works offline' })}
+                </span>
             </div>
 
             <div className="flex gap-1.5 mb-3">

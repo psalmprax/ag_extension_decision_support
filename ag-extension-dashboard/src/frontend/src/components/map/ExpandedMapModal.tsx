@@ -71,7 +71,7 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
       />
 
       <div
-        className={`relative w-full max-w-7xl h-full max-h-[92vh] sm:max-h-[90vh] rounded-xl overflow-hidden flex flex-col shadow-2xl border ${
+        className={`relative w-full max-w-7xl h-[96dvh] sm:h-full max-h-[96dvh] sm:max-h-[90vh] rounded-xl overflow-hidden flex flex-col shadow-2xl border ${
           themeName === 'cyber'
             ? 'bg-gray-900 border-gray-800'
             : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800'
@@ -142,7 +142,7 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
           <div className="flex-1 h-full relative">{mapContent}</div>
         </div>
 
-        <div className="px-4 sm:px-8 py-3 sm:py-4 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 backdrop-blur-sm bg-gray-50/80 dark:bg-gray-800/80 border-gray-100 dark:border-gray-800">
+        <div className="px-4 sm:px-8 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 backdrop-blur-sm bg-gray-50/80 dark:bg-gray-800/80 border-gray-100 dark:border-gray-800">
           <div className="flex flex-wrap items-center gap-4 sm:gap-8">
             <div className="flex flex-col">
               <span className="text-xxs uppercase font-black tracking-widest text-gray-400">

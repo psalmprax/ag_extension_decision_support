@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, ChevronRight, Loader2, X } from 'lucide-react';
 import { Farmer } from '../../types/dashboard';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface GlobalSearchProps {
   searchQuery: string;
@@ -35,6 +36,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
   setActiveTab,
 }) => {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const { t } = useLanguage();
 
   const handleItemClick = (groupType: string, item: { id: string; label: string }) => {
     if (groupType === 'Farmers') {
@@ -61,12 +63,12 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
   };
 
   return (
-    <>
+    <div className="relative">
       {/* Mobile Search Icon Trigger */}
       <button
         onClick={() => setMobileSearchOpen(true)}
         className="sm:hidden p-2 rounded-lg text-slate-400 hover:text-white transition-colors"
-        aria-label="Search"
+        aria-label={t('common_search', { defaultValue: 'Search' })}
       >
         <Search className="w-4 h-4" />
       </button>
@@ -78,8 +80,8 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
           <input
             type="text"
             autoFocus
-            aria-label="Search system or location"
-            placeholder="Search farmers, visits, knowledge..."
+            aria-label={t('common_search_placeholder', { defaultValue: 'Search system or location' })}
+            placeholder={t('common_mobile_search_placeholder', { defaultValue: 'Search farmers, visits, knowledge...' })}
             className="flex-1 bg-transparent border-0 text-xs text-white placeholder-white/40 focus:outline-none"
             value={searchQuery}
             onChange={e => {
@@ -107,7 +109,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
             }}
             className="px-2.5 py-1 rounded-lg bg-white/[0.05] text-xs text-white/80 font-bold"
           >
-            Cancel
+            {t('common_cancel', { defaultValue: 'Cancel' })}
           </button>
 
           {/* Mobile Results Dropdown */}
@@ -116,7 +118,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
               {isGlobalSearching ? (
                 <div className="p-4 text-center text-xs text-slate-400">
                   <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
-                  Searching...
+                  {t('common_searching', { defaultValue: 'Searching...' })}
                 </div>
               ) : (
                 globalSearchResults.map(group => (
@@ -152,8 +154,8 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
         <input
           type="text"
-          aria-label="Search system or location"
-          placeholder="Search system or location..."
+          aria-label={t('common_search_placeholder', { defaultValue: 'Search system or location' })}
+          placeholder={t('common_search_placeholder', { defaultValue: 'Search system or location...' })}
           className="bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-primary-400 outline-none w-48 md:w-64 transition-all text-gray-900 dark:text-white"
           value={searchQuery}
           onChange={e => {
@@ -204,6 +206,6 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 };

@@ -32,6 +32,10 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
   fields,
   handleDeleteCycle,
 }) => {
+  const allCycles = fields.flatMap(field =>
+    (field.cropCycles || []).map(cycle => ({ field, cycle }))
+  );
+
   return (
     <motion.div
       key="cycles-tab"
@@ -40,52 +44,117 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
       exit={{ opacity: 0, y: -15 }}
       className="bg-slate-900/60 border border-white/5 rounded-xl overflow-hidden shadow-2xl backdrop-blur-xl"
     >
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-white/5 bg-slate-950/40 text-xxs uppercase tracking-wider font-black text-slate-500">
-              <th className="p-4 pl-6">Sector Name</th>
-              <th className="p-4">Crop Name</th>
-              <th className="p-4">Variety</th>
-              <th className="p-4">Growth Phase</th>
-              <th className="p-4">Planting Date</th>
-              <th className="p-4">Projected Harvest</th>
-              <th className="p-4">Yield Output</th>
-              <th className="p-4 pr-6 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {fields.flatMap(field =>
-              (field.cropCycles || []).map(cycle => (
-                <tr key={cycle.id} className="hover:bg-white/5 transition-colors group">
-                  <td className="p-4 pl-6 font-bold text-slate-200">{field.name}</td>
-                  <td className="p-4 font-semibold text-slate-100">{cycle.cropName}</td>
-                  <td className="p-4 text-slate-400 font-mono text-xs">{cycle.variety || 'N/A'}</td>
-                  <td className="p-4">
-                    <span className={`px-2.5 py-1 rounded-md text-xxs font-black uppercase tracking-widest ${getStatusClass(cycle.status)}`}>
+      {allCycles.length === 0 ? (
+        <div className="p-8 text-center text-xs text-slate-500">
+          No crop cycles registered for these fields yet.
+        </div>
+      ) : (
+        <>
+          {/* Mobile Card Layout */}
+          <div className="block md:hidden divide-y divide-white/5">
+            {allCycles.map(({ field, cycle }) => (
+              <div key={cycle.id} className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-100">{cycle.cropName}</h4>
+                    <p className="text-xs text-slate-400">
+                      Sector: <span className="text-slate-200 font-semibold">{field.name}</span>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${getStatusClass(
+                        cycle.status
+                      )}`}
+                    >
                       {cycle.status}
                     </span>
-                  </td>
-                  <td className="p-4 text-slate-400">
-                    {cycle.plantingDate ? new Date(cycle.plantingDate).toLocaleDateString() : 'N/A'}
-                  </td>
-                  <td className="p-4 text-slate-400">{formatHarvestDate(cycle)}</td>
-                  <td className="p-4 font-mono font-bold text-emerald-400">{formatYield(cycle.yieldKg)}</td>
-                  <td className="p-4 pr-6 text-right">
                     <button
                       onClick={() => handleDeleteCycle(field.id, cycle.id)}
                       className="p-1.5 hover:bg-white/5 text-slate-500 hover:text-red-400 rounded-lg transition-colors"
                       title="Delete Cycle Record"
+                      aria-label="Delete Cycle Record"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
-                  </td>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs bg-slate-950/40 p-2.5 rounded-lg border border-white/5">
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-mono block">Variety</span>
+                    <span className="text-slate-300 font-medium">{cycle.variety || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-mono block">Yield Output</span>
+                    <span className="text-emerald-400 font-bold font-mono">{formatYield(cycle.yieldKg)}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-mono block">Planting Date</span>
+                    <span className="text-slate-400">
+                      {cycle.plantingDate ? new Date(cycle.plantingDate).toLocaleDateString() : 'N/A'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-mono block">Projected Harvest</span>
+                    <span className="text-slate-400">{formatHarvestDate(cycle)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-white/5 bg-slate-950/40 text-xxs uppercase tracking-wider font-black text-slate-500">
+                  <th className="p-4 pl-6">Sector Name</th>
+                  <th className="p-4">Crop Name</th>
+                  <th className="p-4">Variety</th>
+                  <th className="p-4">Growth Phase</th>
+                  <th className="p-4">Planting Date</th>
+                  <th className="p-4">Projected Harvest</th>
+                  <th className="p-4">Yield Output</th>
+                  <th className="p-4 pr-6 text-right">Actions</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {allCycles.map(({ field, cycle }) => (
+                  <tr key={cycle.id} className="hover:bg-white/5 transition-colors group">
+                    <td className="p-4 pl-6 font-bold text-slate-200">{field.name}</td>
+                    <td className="p-4 font-semibold text-slate-100">{cycle.cropName}</td>
+                    <td className="p-4 text-slate-400 font-mono text-xs">{cycle.variety || 'N/A'}</td>
+                    <td className="p-4">
+                      <span
+                        className={`px-2.5 py-1 rounded-md text-xxs font-black uppercase tracking-widest ${getStatusClass(
+                          cycle.status
+                        )}`}
+                      >
+                        {cycle.status}
+                      </span>
+                    </td>
+                    <td className="p-4 text-slate-400">
+                      {cycle.plantingDate ? new Date(cycle.plantingDate).toLocaleDateString() : 'N/A'}
+                    </td>
+                    <td className="p-4 text-slate-400">{formatHarvestDate(cycle)}</td>
+                    <td className="p-4 font-mono font-bold text-emerald-400">{formatYield(cycle.yieldKg)}</td>
+                    <td className="p-4 pr-6 text-right">
+                      <button
+                        onClick={() => handleDeleteCycle(field.id, cycle.id)}
+                        className="p-1.5 hover:bg-white/5 text-slate-500 hover:text-red-400 rounded-lg transition-colors"
+                        title="Delete Cycle Record"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </motion.div>
   );
 };

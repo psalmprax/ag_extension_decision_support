@@ -4,13 +4,14 @@ import { motion } from 'framer-motion';
 import { Sprout, Loader2, CloudOff } from 'lucide-react';
 import { fetchNDVITimeSeries, NDVIPoint } from '@/api/agriDataService';
 import { useAppStore } from '@/store/useAppStore';
+import { useLanguage } from '@/lib/LanguageContext';
 
-function vegInterpret(ndvi: number): { label: string; color: string; barColor: string } {
-  if (ndvi >= 0.7) return { label: 'Lush', color: 'text-emerald-400', barColor: 'bg-emerald-500' };
-  if (ndvi >= 0.5) return { label: 'Healthy', color: 'text-emerald-400', barColor: 'bg-emerald-500' };
-  if (ndvi >= 0.35) return { label: 'Moderate', color: 'text-amber-400', barColor: 'bg-amber-500' };
-  if (ndvi >= 0.2) return { label: 'Stressed', color: 'text-rose-400', barColor: 'bg-rose-500' };
-  return { label: 'Bare', color: 'text-slate-400', barColor: 'bg-slate-500' };
+function vegInterpret(ndvi: number, t: (k: string, opt?: { defaultValue?: string }) => string): { label: string; color: string; barColor: string } {
+  if (ndvi >= 0.7) return { label: t('veg_health_lush', { defaultValue: 'Lush' }), color: 'text-emerald-400', barColor: 'bg-emerald-500' };
+  if (ndvi >= 0.5) return { label: t('veg_health_healthy', { defaultValue: 'Healthy' }), color: 'text-emerald-400', barColor: 'bg-emerald-500' };
+  if (ndvi >= 0.35) return { label: t('veg_health_moderate', { defaultValue: 'Moderate' }), color: 'text-amber-400', barColor: 'bg-amber-500' };
+  if (ndvi >= 0.2) return { label: t('veg_health_stressed', { defaultValue: 'Stressed' }), color: 'text-rose-400', barColor: 'bg-rose-500' };
+  return { label: t('veg_health_bare', { defaultValue: 'Bare' }), color: 'text-slate-400', barColor: 'bg-slate-500' };
 }
 
 interface VegetationHealthCardProps {
@@ -36,6 +37,7 @@ function getCoordinates(user: unknown): { lat: number; lng: number } {
 
 export const VegetationHealthCard: React.FC<VegetationHealthCardProps> = ({ cardClass }) => {
   const user = useAppStore(s => s.user);
+  const { t } = useLanguage();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['vegetation-health'],
@@ -50,7 +52,7 @@ export const VegetationHealthCard: React.FC<VegetationHealthCardProps> = ({ card
   const points: NDVIPoint[] = data?.data || [];
   const latest = points[points.length - 1];
   const latestNdvi = latest?.ndvi;
-  const veg = latestNdvi !== undefined ? vegInterpret(latestNdvi) : null;
+  const veg = latestNdvi !== undefined ? vegInterpret(latestNdvi, t) : null;
   const maxBar = Math.max(0.05, ...points.map(p => p.ndvi), 1);
 
   return (
@@ -61,9 +63,11 @@ export const VegetationHealthCard: React.FC<VegetationHealthCardProps> = ({ card
         </div>
         <div>
           <h3 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
-            Vegetation Health
+            {t('veg_health_title', { defaultValue: 'Vegetation Health' })}
           </h3>
-          <p className="text-xxs text-slate-400">14-day agroclimatology proxy</p>
+          <p className="text-xxs text-slate-400">
+            {t('veg_health_subtitle', { defaultValue: '14-day agroclimatology proxy' })}
+          </p>
         </div>
       </div>
 
@@ -74,7 +78,9 @@ export const VegetationHealthCard: React.FC<VegetationHealthCardProps> = ({ card
       ) : isError || !veg ? (
         <div className="flex flex-col items-center justify-center py-6 text-center">
           <CloudOff className="w-6 h-6 text-slate-400 mb-2" />
-          <p className="text-xxs text-slate-400 font-bold uppercase">Vegetation data unavailable</p>
+          <p className="text-xxs text-slate-400 font-bold uppercase">
+            {t('veg_health_unavailable', { defaultValue: 'Vegetation data unavailable' })}
+          </p>
         </div>
       ) : (
         <>
@@ -110,7 +116,9 @@ export const VegetationHealthCard: React.FC<VegetationHealthCardProps> = ({ card
               animate={{ opacity: [0.6, 1, 0.6] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              {data?.dataStatus === 'estimated' ? 'ESTIMATED PROXY' : data?.dataStatus?.toUpperCase()}
+              {data?.dataStatus === 'estimated'
+                ? t('veg_health_estimated_proxy', { defaultValue: 'ESTIMATED PROXY' })
+                : data?.dataStatus?.toUpperCase()}
             </motion.span>
           </div>
         </>

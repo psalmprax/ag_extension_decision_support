@@ -53,15 +53,15 @@ interface DashboardPageProps {
 
 const DashboardHeader: React.FC<{
   userName?: string;
-  t: (key: string) => string;
+  t: (key: string, options?: { defaultValue?: string } & Record<string, any>) => string;
   headingClass: string;
 }> = ({ userName, t, headingClass }) => (
   <div className="mb-6 sm:mb-8">
     <h1 className={`text-2xl sm:text-4xl font-black tracking-tight font-headline mb-1 sm:mb-2 ${headingClass}`}>
-      Operations Dashboard
+      {t('dashboard_operations_title', { defaultValue: 'Operations Dashboard' })}
     </h1>
     <p className="text-slate-400 font-headline font-medium text-xs sm:text-base">
-      {t('dashboard_welcome').replace('{name}', userName || 'Extension Officer')}
+      {t('dashboard_welcome', { defaultValue: 'Welcome back, {name}! Here is your overview.' }).replace('{name}', userName || 'Extension Officer')}
     </p>
   </div>
 );
@@ -70,7 +70,7 @@ const DashboardStats: React.FC<{
   isLoading: boolean;
   dashboardData?: DashboardData;
   isOfficer: boolean;
-  t: (key: string) => string;
+  t: (key: string, options?: { defaultValue?: string } & Record<string, any>) => string;
   classes: Record<string, string | boolean>;
 }> = ({ isLoading, dashboardData, isOfficer, t, classes }) => {
   if (isLoading) {
@@ -87,7 +87,7 @@ const DashboardStats: React.FC<{
   return (
     <>
       <StatCard
-        title={isOfficer ? 'My Farmers' : t('stat_total_farmers')}
+        title={isOfficer ? t('stat_my_farmers', { defaultValue: 'My Farmers' }) : t('stat_total_farmers')}
         value={dashboardData.overview.totalFarmers}
         change={dashboardData.trends.farmersGrowth}
         icon={Users}
@@ -95,7 +95,7 @@ const DashboardStats: React.FC<{
         {...classes}
       />
       <StatCard
-        title={isOfficer ? 'My Active Chats' : t('stat_active_conversations')}
+        title={isOfficer ? t('stat_my_active_chats', { defaultValue: 'My Active Chats' }) : t('stat_active_conversations')}
         value={dashboardData.overview.activeConversations}
         change={dashboardData.trends.conversationsGrowth}
         icon={MessageSquare}
@@ -103,7 +103,7 @@ const DashboardStats: React.FC<{
         {...classes}
       />
       <StatCard
-        title={isOfficer ? 'My Visits (30d)' : t('stat_visits_this_month')}
+        title={isOfficer ? t('stat_my_visits_30d', { defaultValue: 'My Visits (30d)' }) : t('stat_visits_this_month')}
         value={dashboardData.overview.visitsThisMonth}
         change={dashboardData.trends.visitsGrowth}
         icon={MapPin}
@@ -111,7 +111,7 @@ const DashboardStats: React.FC<{
         {...classes}
       />
       <StatCard
-        title={isOfficer ? 'Avg. Conversations' : t('stat_avg_satisfaction')}
+        title={isOfficer ? t('stat_avg_conversations', { defaultValue: 'Avg. Conversations' }) : t('stat_avg_satisfaction')}
         value={
           isOfficer
             ? dashboardData.overview.avgConversationsPerFarmer
@@ -128,6 +128,7 @@ const DashboardStats: React.FC<{
 
 const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ cardClass, isLoading }) => {
   const { isDemo } = useDemoMode();
+  const { t } = useLanguage();
   const { data: health, isLoading: hl } = useQuery({
     queryKey: ['active-pulse-health', isDemo],
     queryFn: async () => {
@@ -160,7 +161,7 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
       <div className="flex items-center gap-3 mb-4 sm:mb-6">
         <div className={`w-2 h-2 rounded-full animate-ping ${health?.status === 'healthy' ? 'bg-emerald-400' : 'bg-amber-400'}`}></div>
         <h3 className="text-xs sm:text-sm font-headline font-bold text-gray-900 dark:text-white uppercase tracking-widest">
-          Active Pulse
+          {t('dashboard_active_pulse', { defaultValue: 'Active Pulse' })}
         </h3>
       </div>
       <div className="space-y-3 sm:space-y-4">
@@ -171,9 +172,21 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
         ) : (
           <>
             {[
-              { label: 'Database', status: dbConnected ? 'Connected' : 'Disconnected', ok: dbConnected },
-              { label: 'Redis Cache', status: cacheConnected ? 'Connected' : 'Disconnected', ok: cacheConnected },
-              { label: 'Uptime', status: uptime || 'Unknown', ok: !!uptime },
+              {
+                label: t('dashboard_database', { defaultValue: 'Database' }),
+                status: dbConnected ? t('dashboard_connected', { defaultValue: 'Connected' }) : t('dashboard_disconnected', { defaultValue: 'Disconnected' }),
+                ok: dbConnected,
+              },
+              {
+                label: t('dashboard_redis_cache', { defaultValue: 'Redis Cache' }),
+                status: cacheConnected ? t('dashboard_connected', { defaultValue: 'Connected' }) : t('dashboard_disconnected', { defaultValue: 'Disconnected' }),
+                ok: cacheConnected,
+              },
+              {
+                label: t('dashboard_uptime', { defaultValue: 'Uptime' }),
+                status: uptime || t('dashboard_unknown', { defaultValue: 'Unknown' }),
+                ok: !!uptime,
+              },
             ].map((item, i) => (
               <div
                 key={i}

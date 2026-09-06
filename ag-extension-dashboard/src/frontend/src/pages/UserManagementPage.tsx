@@ -28,6 +28,7 @@ import {
   getCountryFlag,
   getCountryConfig,
 } from '@/lib/countries';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface User {
   id: string;
@@ -45,21 +46,25 @@ const ROLES = [
   {
     value: 'admin',
     label: 'Admin',
+    labelKey: 'users_role_admin',
     color: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
   },
   {
     value: 'regional_manager',
     label: 'Regional Manager',
+    labelKey: 'users_role_regional_manager',
     color: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
   },
   {
     value: 'extension_officer',
     label: 'Extension Officer',
+    labelKey: 'users_role_extension_officer',
     color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
   },
   {
     value: 'farmer',
     label: 'Farmer',
+    labelKey: 'users_role_farmer',
     color: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
   },
 ];
@@ -68,6 +73,7 @@ const getRoleBadge = (role: string) => ROLES.find(r => r.value === role) || ROLE
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function UserManagementPage() {
+  const { t } = useLanguage();
   const { isDemo } = useDemoMode();
   const queryClient = useQueryClient();
 
@@ -151,7 +157,7 @@ export function UserManagementPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      setFormSuccess('User created successfully');
+      setFormSuccess(t('users_create_success', 'User created successfully'));
       setFormError('');
       setTimeout(() => {
         setShowCreateModal(false);
@@ -170,7 +176,7 @@ export function UserManagementPage() {
     },
     onError: (err: unknown) => {
       const e = err as { response?: { data?: { error?: string } } };
-      setFormError(e?.response?.data?.error || 'Failed to create user');
+      setFormError(e?.response?.data?.error || t('users_create_error_failed', 'Failed to create user'));
     },
   });
 
@@ -178,7 +184,7 @@ export function UserManagementPage() {
     e.preventDefault();
     setFormError('');
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
-      setFormError('All required fields must be filled');
+      setFormError(t('users_create_error_required', 'All required fields must be filled'));
       return;
     }
     createUser.mutate(formData);
@@ -212,45 +218,45 @@ export function UserManagementPage() {
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold tracking-tight text-white">Staff & Officer Directory</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-white">{t('users_directory_title', 'Staff & Officer Directory')}</h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
-                  RBAC Active
+                  {t('users_rbac_active', 'RBAC Active')}
                 </span>
               </div>
               <p className="text-xs text-white/60 mt-0.5">
-                Manage extension officers, regional supervisors, and administrative credentials.
+                {t('users_directory_desc', 'Manage extension officers, regional supervisors, and administrative credentials.')}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
             {/* KPI Telemetry Chips */}
-            <div className="grid grid-cols-4 sm:flex items-center gap-2 w-full sm:w-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:flex items-center gap-2 w-full sm:w-auto">
               <div className="px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xxs font-semibold text-white/40 uppercase block">Total Staff</span>
+                <span className="text-xxs font-semibold text-white/40 uppercase block">{t('users_stat_total_staff', 'Total Staff')}</span>
                 <strong className="text-sm font-bold text-white font-mono">{usersList.length}</strong>
               </div>
               <div className="px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xxs font-semibold text-white/40 uppercase block">Officers</span>
+                <span className="text-xxs font-semibold text-white/40 uppercase block">{t('users_stat_officers', 'Officers')}</span>
                 <strong className="text-sm font-bold text-emerald-400 font-mono">{officersCount}</strong>
               </div>
               <div className="px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xxs font-semibold text-white/40 uppercase block">Countries</span>
+                <span className="text-xxs font-semibold text-white/40 uppercase block">{t('users_stat_countries', 'Countries')}</span>
                 <strong className="text-sm font-bold text-sky-400 font-mono">{uniqueCountries}</strong>
               </div>
               <div className="px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xxs font-semibold text-white/40 uppercase block">Regions</span>
+                <span className="text-xxs font-semibold text-white/40 uppercase block">{t('users_stat_regions', 'Regions')}</span>
                 <strong className="text-sm font-bold text-purple-400 font-mono">{uniqueRegions}</strong>
               </div>
             </div>
 
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all flex items-center gap-2"
+              className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2"
             >
               <UserPlus className="w-4 h-4" />
-              <span>Create User</span>
+              <span>{t('users_btn_create_user', 'Create User')}</span>
             </button>
           </div>
         </div>
@@ -261,7 +267,7 @@ export function UserManagementPage() {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
             <input
               type="text"
-              placeholder="Search by name, email, country, or region..."
+              placeholder={t('users_search_placeholder', 'Search by name, email, country, or region...')}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-white/10 bg-white/[0.02] text-white placeholder-white/30 focus:ring-1 focus:ring-emerald-400 outline-none"
@@ -274,10 +280,10 @@ export function UserManagementPage() {
               onChange={e => setRoleFilter(e.target.value)}
               className="w-full appearance-none pl-3.5 pr-9 py-2 text-xs rounded-xl border border-white/10 bg-slate-900 text-white focus:ring-1 focus:ring-emerald-400 outline-none"
             >
-              <option value="">All Roles ({usersList.length})</option>
+              <option value="">{t('users_all_roles', 'All Roles ({count})', { count: usersList.length })}</option>
               {ROLES.map(r => (
                 <option key={r.value} value={r.value}>
-                  {r.label}
+                  {t(r.labelKey, r.label)}
                 </option>
               ))}
             </select>
@@ -298,11 +304,11 @@ export function UserManagementPage() {
             <Users className="w-8 h-8 opacity-70" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-white">No Users Found</h3>
+            <h3 className="text-base font-bold text-white">{t('users_empty_title', 'No Users Found')}</h3>
             <p className="text-xs text-white/50 max-w-sm mx-auto">
               {searchTerm || roleFilter
-                ? 'No staff members match the active search or role filters.'
-                : 'No users registered yet. Add your first field officer or admin.'}
+                ? t('users_empty_desc_filtered', 'No staff members match the active search or role filters.')
+                : t('users_empty_desc_all', 'No users registered yet. Add your first field officer or admin.')}
             </p>
           </div>
           <button
@@ -310,7 +316,7 @@ export function UserManagementPage() {
             className="px-5 py-2.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-2"
           >
             <UserPlus className="w-4 h-4" />
-            <span>Add Extension Officer</span>
+            <span>{t('users_btn_add_first', 'Add Extension Officer')}</span>
           </button>
         </div>
       ) : (
@@ -338,7 +344,7 @@ export function UserManagementPage() {
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xxs font-bold uppercase tracking-wider border mt-1 ${roleBadge.color}`}
                       >
                         <Shield className="w-2.5 h-2.5" />
-                        {roleBadge.label}
+                        {t(roleBadge.labelKey, roleBadge.label)}
                       </span>
                     </div>
                   </div>
@@ -354,7 +360,7 @@ export function UserManagementPage() {
                     <span className="text-xs shrink-0">{getCountryFlag(user.country)}</span>
                     <span className="font-medium text-white/80">{user.country || 'Kenya'}</span>
                     <span className="text-white/30">•</span>
-                    <span>{user.region || 'Unassigned Region'}</span>
+                    <span>{user.region || t('users_unassigned_region', 'Unassigned Region')}</span>
                   </div>
                   {user.phone && (
                     <div className="flex items-center gap-2 text-white/70">
@@ -365,14 +371,16 @@ export function UserManagementPage() {
 
                   <div className="pt-2 mt-2 border-t border-white/5 flex items-center justify-between">
                     <span className="text-[10px] text-white/40 font-mono truncate max-w-[150px]">
-                      {user.lastLoginAt ? `Last: ${new Date(user.lastLoginAt).toLocaleDateString()}` : 'No recent login'}
+                      {user.lastLoginAt
+                        ? t('users_last_login', 'Last: {date}', { date: new Date(user.lastLoginAt).toLocaleDateString() })
+                        : t('users_no_recent_login', 'No recent login')}
                     </span>
                     <button
                       onClick={() => setSelectedUserForHistory(user)}
                       className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1 shrink-0"
                     >
                       <History className="w-3 h-3" />
-                      <span>History</span>
+                      <span>{t('users_btn_history', 'History')}</span>
                     </button>
                   </div>
                 </div>
@@ -396,7 +404,7 @@ export function UserManagementPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="backdrop-blur-2xl bg-slate-900/95 border border-white/10 rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8 space-y-6 text-white"
+              className="backdrop-blur-2xl bg-slate-900/95 border border-white/10 rounded-xl shadow-2xl w-full max-w-lg max-h-[90dvh] overflow-y-auto custom-scrollbar p-6 sm:p-8 space-y-6 text-white"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
@@ -405,8 +413,8 @@ export function UserManagementPage() {
                     <UserPlus className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold">Register New User</h2>
-                    <p className="text-xs text-white/50">Add extension officer or admin account</p>
+                    <h2 className="text-lg font-bold">{t('users_modal_register_title', 'Register New User')}</h2>
+                    <p className="text-xs text-white/50">{t('users_modal_register_desc', 'Add extension officer or admin account')}</p>
                   </div>
                 </div>
                 <button
@@ -434,7 +442,7 @@ export function UserManagementPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">First Name *</label>
+                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">{t('users_form_first_name', 'First Name *')}</label>
                     <input
                       type="text"
                       required
@@ -445,7 +453,7 @@ export function UserManagementPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">Last Name *</label>
+                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">{t('users_form_last_name', 'Last Name *')}</label>
                     <input
                       type="text"
                       required
@@ -458,7 +466,7 @@ export function UserManagementPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xxs font-bold uppercase tracking-wider text-white/60">Work Email *</label>
+                  <label className="text-xxs font-bold uppercase tracking-wider text-white/60">{t('users_form_work_email', 'Work Email *')}</label>
                   <input
                     type="email"
                     required
@@ -470,7 +478,7 @@ export function UserManagementPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xxs font-bold uppercase tracking-wider text-white/60">Password *</label>
+                  <label className="text-xxs font-bold uppercase tracking-wider text-white/60">{t('users_form_password', 'Password *')}</label>
                   <input
                     type="password"
                     required
@@ -483,7 +491,7 @@ export function UserManagementPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">System Role</label>
+                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">{t('users_form_role', 'System Role')}</label>
                     <select
                       value={formData.role}
                       onChange={e => setFormData({ ...formData, role: e.target.value })}
@@ -491,13 +499,13 @@ export function UserManagementPage() {
                     >
                       {ROLES.map(r => (
                         <option key={r.value} value={r.value}>
-                          {r.label}
+                          {t(r.labelKey, r.label)}
                         </option>
                       ))}
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">Phone Number</label>
+                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">{t('users_form_phone', 'Phone Number')}</label>
                     <input
                       type="tel"
                       value={formData.phone}
@@ -510,7 +518,7 @@ export function UserManagementPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">Country *</label>
+                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">{t('users_form_country', 'Country *')}</label>
                     <select
                       required
                       value={formData.country}
@@ -534,7 +542,7 @@ export function UserManagementPage() {
                   </div>
                   <div className="space-y-1">
                     <label className="text-xxs font-bold uppercase tracking-wider text-white/60">
-                      Assigned Region / Territory
+                      {t('users_form_region', 'Assigned Region / Territory')}
                     </label>
                     <div className="relative">
                       <input
@@ -542,7 +550,7 @@ export function UserManagementPage() {
                         list="user-region-suggestions"
                         value={formData.region}
                         onChange={e => setFormData({ ...formData, region: e.target.value })}
-                        placeholder={availableRegions.length > 0 ? `e.g. ${availableRegions[0]}` : 'e.g. District / Province'}
+                        placeholder={availableRegions.length > 0 ? `e.g. ${availableRegions[0]}` : t('users_form_region_placeholder', 'e.g. District / Province')}
                         className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                       />
                       <datalist id="user-region-suggestions">
@@ -560,7 +568,7 @@ export function UserManagementPage() {
                     onClick={() => setShowCreateModal(false)}
                     className="px-4 py-2 text-xs font-semibold text-white/60 hover:text-white transition-colors"
                   >
-                    Cancel
+                    {t('common_cancel', 'Cancel')}
                   </button>
                   <button
                     type="submit"
@@ -568,7 +576,7 @@ export function UserManagementPage() {
                     className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-emerald-950/40 disabled:opacity-50"
                   >
                     {createUser.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                    <span>{createUser.isPending ? 'Registering...' : 'Create Account'}</span>
+                    <span>{createUser.isPending ? t('users_btn_registering', 'Registering...') : t('users_btn_create_account', 'Create Account')}</span>
                   </button>
                 </div>
               </form>
@@ -591,7 +599,7 @@ export function UserManagementPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="backdrop-blur-2xl bg-slate-900/95 border border-white/10 rounded-xl shadow-2xl w-full max-w-2xl p-6 sm:p-8 space-y-6 text-white"
+              className="backdrop-blur-2xl bg-slate-900/95 border border-white/10 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90dvh] overflow-y-auto custom-scrollbar p-6 sm:p-8 space-y-6 text-white"
               onClick={e => e.stopPropagation()}
             >
               {/* Header */}
@@ -601,7 +609,7 @@ export function UserManagementPage() {
                     <History className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold">Login & Access History</h2>
+                    <h2 className="text-lg font-bold">{t('users_history_title', 'Login & Access History')}</h2>
                     <p className="text-xs text-white/50">
                       {selectedUserForHistory.firstName} {selectedUserForHistory.lastName} ({selectedUserForHistory.email})
                     </p>
@@ -616,17 +624,17 @@ export function UserManagementPage() {
               </div>
 
               {/* Telemetry Stats */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-xxs font-bold text-white/40 uppercase tracking-wider block">Total Logins</span>
+                  <span className="text-xxs font-bold text-white/40 uppercase tracking-wider block">{t('users_history_total_logins', 'Total Logins')}</span>
                   <strong className="text-base font-bold text-white font-mono">{loginStatsData?.totalLogins ?? 0}</strong>
                 </div>
                 <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-xxs font-bold text-white/40 uppercase tracking-wider block">Failed (24h)</span>
+                  <span className="text-xxs font-bold text-white/40 uppercase tracking-wider block">{t('users_history_failed_24h', 'Failed (24h)')}</span>
                   <strong className="text-base font-bold text-rose-400 font-mono">{loginStatsData?.failedAttempts24h ?? 0}</strong>
                 </div>
                 <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-xxs font-bold text-white/40 uppercase tracking-wider block">Last IP</span>
+                  <span className="text-xxs font-bold text-white/40 uppercase tracking-wider block">{t('users_history_last_ip', 'Last IP')}</span>
                   <strong className="text-xs font-bold text-emerald-400 font-mono truncate block">{loginStatsData?.lastLoginIp || '—'}</strong>
                 </div>
               </div>
@@ -636,12 +644,12 @@ export function UserManagementPage() {
                 {isLoadingHistory ? (
                   <div className="p-12 text-center text-white/50 text-xs flex items-center justify-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
-                    <span>Loading access history...</span>
+                    <span>{t('users_history_loading', 'Loading access history...')}</span>
                   </div>
                 ) : !loginHistoryData?.items || loginHistoryData.items.length === 0 ? (
                   <div className="p-12 text-center text-white/50 text-xs space-y-2">
                     <KeyRound className="w-6 h-6 text-white/20 mx-auto" />
-                    <p>No login audit records found for this account.</p>
+                    <p>{t('users_history_empty', 'No login audit records found for this account.')}</p>
                   </div>
                 ) : (
                   loginHistoryData.items.map(entry => (
@@ -659,10 +667,10 @@ export function UserManagementPage() {
                         <div>
                           <div className="font-medium text-white flex items-center gap-2">
                             <Laptop className="w-3 h-3 text-white/40" />
-                            <span>{entry.device || 'Unknown Device'}</span>
+                            <span>{entry.device || t('users_history_unknown_device', 'Unknown Device')}</span>
                           </div>
                           {entry.failureReason && (
-                            <p className="text-xxs text-rose-400 font-mono mt-0.5">Reason: {entry.failureReason}</p>
+                            <p className="text-xxs text-rose-400 font-mono mt-0.5">{t('users_history_reason', 'Reason: {reason}', { reason: entry.failureReason })}</p>
                           )}
                         </div>
                       </div>
@@ -687,7 +695,7 @@ export function UserManagementPage() {
                   onClick={() => setSelectedUserForHistory(null)}
                   className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold transition-all text-white"
                 >
-                  Close
+                  {t('common_close', 'Close')}
                 </button>
               </div>
             </motion.div>

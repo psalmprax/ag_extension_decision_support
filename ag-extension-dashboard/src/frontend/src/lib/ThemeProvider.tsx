@@ -13,26 +13,21 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const { themeName, darkMode } = useAppStore();
 
   useEffect(() => {
+    const isBase = designVariant === 'base' || designVariant === 'new';
     let activeTheme = themeName;
-
-    if (designVariant === 'new') {
-      if (themeName === 'forest') {
-        activeTheme = 'oceanic';
-      }
-    }
 
     applyTheme(activeTheme);
 
     const root = document.documentElement;
-    if (designVariant === 'new') {
-      root.classList.add('design-new');
-      root.classList.remove('design-current');
+    if (isBase) {
+      root.classList.add('design-base', 'design-new');
+      root.classList.remove('design-classic', 'design-current');
     } else {
-      root.classList.add('design-current');
-      root.classList.remove('design-new');
+      root.classList.add('design-classic', 'design-current');
+      root.classList.remove('design-base', 'design-new');
     }
 
-    root.setAttribute('data-design-variant', designVariant);
+    root.setAttribute('data-design-variant', isBase ? 'base' : 'classic');
   }, [designVariant, themeName, darkMode]);
 
   return (

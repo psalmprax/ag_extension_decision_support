@@ -43,7 +43,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-slate-900 border border-white/10 rounded-xl max-w-lg w-full overflow-hidden shadow-2xl"
+        className="bg-slate-900 border border-white/10 rounded-xl max-w-lg w-full max-h-[90dvh] overflow-y-auto custom-scrollbar shadow-2xl"
       >
         <div className="p-6 space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-white/5">

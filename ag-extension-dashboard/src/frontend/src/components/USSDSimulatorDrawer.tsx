@@ -394,7 +394,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
             </div>
 
             {/* Session Debug Log Footer */}
-            <div className="p-3 bg-slate-950 border-t border-slate-800 text-[10px] font-mono text-slate-500 flex justify-between items-center">
+            <div className="p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-slate-950 border-t border-slate-800 text-[10px] font-mono text-slate-500 flex justify-between items-center">
               <span>Gateway: Africa's Talking / Twilio Sandbox</span>
               <span className="text-emerald-400 flex items-center gap-1">
                 <CheckCircle className="w-3 h-3" /> Ready

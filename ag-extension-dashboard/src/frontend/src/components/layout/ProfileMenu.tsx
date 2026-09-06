@@ -4,6 +4,7 @@ import { User, LogOut } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { cn } from '@/lib/cn';
 import { dropdownVariants } from '@/lib/animations';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface ProfileMenuProps {
   isProfileMenuOpen: boolean;
@@ -21,6 +22,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
   handleLogout,
 }) => {
   const { subtextClass } = useThemeClasses();
+  const { t } = useLanguage();
 
   return (
     <div className="relative">
@@ -57,7 +59,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
                 <p
                   className={cn('text-xxs font-bold uppercase tracking-widest mb-1', subtextClass)}
                 >
-                  Account Info
+                  {t('header_account_info', { defaultValue: 'Account Info' })}
                 </p>
                 <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
                   {storeUser?.email}
@@ -72,14 +74,18 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300"
               >
                 <User className="w-4 h-4 text-primary-400" />
-                <span className="text-xs font-bold uppercase tracking-widest">Profile</span>
+                <span className="text-xs font-bold uppercase tracking-widest">
+                  {t('header_profile', { defaultValue: 'Profile' })}
+                </span>
               </button>
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-rose-500/10 text-rose-400"
               >
                 <LogOut className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase tracking-widest">Sign Out</span>
+                <span className="text-xs font-bold uppercase tracking-widest">
+                  {t('header_sign_out', { defaultValue: 'Sign Out' })}
+                </span>
               </button>
             </motion.div>
           </>

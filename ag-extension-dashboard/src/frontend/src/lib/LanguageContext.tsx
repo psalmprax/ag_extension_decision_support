@@ -7,7 +7,11 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  t: (key: string, options?: { defaultValue?: string } & Record<string, any>) => string;
+  t: (
+    key: string,
+    options?: string | ({ defaultValue?: string } & Record<string, any>),
+    params?: Record<string, any>
+  ) => string;
   isRTL: boolean;
 }
 
@@ -69,8 +73,15 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const t = (key: string, options?: { defaultValue?: string } & Record<string, any>): string => {
-    if (!isLoaded) return options?.defaultValue || key;
+  const t = (
+    key: string,
+    options?: string | ({ defaultValue?: string } & Record<string, any>),
+    params?: Record<string, any>
+  ): string => {
+    const defaultVal = typeof options === 'string' ? options : options?.defaultValue;
+    const interpolationParams = typeof options === 'object' && options !== null ? options : params;
+
+    if (!isLoaded) return defaultVal || key;
 
     const langTranslations = translationsCache[language];
     const englishTranslations = translationsCache['en'];
@@ -92,15 +103,15 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
         result = englishFallback;
       } else {
         // Fallback to provided default value or key
-        return options?.defaultValue || key;
+        return defaultVal || key;
       }
     }
 
     // Handle string interpolation
-    if (options) {
-      Object.keys(options).forEach(optKey => {
+    if (interpolationParams) {
+      Object.keys(interpolationParams).forEach(optKey => {
         if (optKey !== 'defaultValue') {
-          result = result.replace(`{${optKey}}`, String(options[optKey]));
+          result = result.replace(new RegExp(`\\{${optKey}\\}`, 'g'), String(interpolationParams[optKey]));
         }
       });
     }

@@ -699,7 +699,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             </div>
 
             {/* Footer Quick Action */}
-            <div className="p-4 border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900/80 border-slate-800">
+            <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900/80 border-slate-800">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-9 h-9 rounded-[4px] flex items-center justify-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shrink-0">
                   <Clock className="w-4 h-4" />
