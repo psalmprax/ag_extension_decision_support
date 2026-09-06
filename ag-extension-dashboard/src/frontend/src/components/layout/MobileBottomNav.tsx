@@ -188,7 +188,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           className={`flex-1 flex flex-col items-center py-1 px-2 min-h-[48px] rounded-xl transition-all cursor-pointer text-slate-400 hover:text-slate-200 ${
             isBase ? 'active:scale-90 transition-transform duration-150' : 'active:scale-95'
           }`}
-          aria-label={t('nav_menu', { defaultValue: 'Toggle Full Menu' })}
+          aria-label="Toggle Full Menu"
         >
           <Menu className="w-5 h-5" />
           <span className="text-xs mt-1 font-medium tracking-tight truncate max-w-[64px]">
