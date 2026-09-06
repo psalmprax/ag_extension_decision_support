@@ -97,6 +97,11 @@ export default defineConfig({
           },
         ],
       },
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
+        globIgnores: ['**/*.wasm', '**/node_modules/**'],
+        maximumFileSizeToCacheInBytes: 30 * 1024 * 1024,
+      },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
         // The multi-MB ONNX model is fetched on demand by the classifier (served by

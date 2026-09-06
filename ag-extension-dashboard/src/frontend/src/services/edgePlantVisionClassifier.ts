@@ -63,11 +63,23 @@ type OrtModule = {
   env: { wasm: Record<string, unknown> };
 };
 
+async function getOrtModule(): Promise<OrtModule | null> {
+  try {
+    if (typeof window !== 'undefined' && (window as unknown as { ort?: OrtModule }).ort) {
+      return (window as unknown as { ort: OrtModule }).ort;
+    }
+    const moduleName = 'onnxruntime-web';
+    return (await import(/* @vite-ignore */ moduleName).catch(() => null)) as unknown as OrtModule | null;
+  } catch {
+    return null;
+  }
+}
+
 async function tryLoadOnnxModel(): Promise<OrtModule['InferenceSession'] extends { create: (...a: unknown[]) => Promise<infer T> } ? T : unknown | null> {
   if (onnxLoadAttempted) return onnxSession as never;
   onnxLoadAttempted = true;
   try {
-    const ort = (await import('onnxruntime-web').catch(() => null)) as unknown as OrtModule | null;
+    const ort = await getOrtModule();
     if (!ort) return null;
     if (ort.env?.wasm) {
       (ort.env.wasm as Record<string, unknown>).numThreads = 1;
@@ -167,7 +179,7 @@ async function tryOnnxInference(canvas: HTMLCanvasElement): Promise<EdgeDiagnosi
   const session = (await tryLoadOnnxModel()) as unknown as { run: (feeds: Record<string, unknown>) => Promise<Record<string, { data: Float32Array }>> } | null;
   if (!session) return null;
   try {
-    const ort = (await import('onnxruntime-web').catch(() => null)) as unknown as OrtModule | null;
+    const ort = await getOrtModule();
     if (!ort) return null;
     const tensor = canvasToNchwTensor(canvas, ort);
     const results = await session.run({ input: tensor });
@@ -676,3 +688,176 @@ export async function diagnosePlantOffline(
     analyzedAt: new Date().toISOString(),
   };
 }
+
+// ── Offline Edge Soil Texture & Physical Analysis ──────────────────────────
+
+export interface SoilEdgeMetrics {
+  textureVariance: number;
+  luminanceIndex: number;
+  moistureReflectance: number;
+  reddishHueRatio: number;
+  fineParticleRatio: number;
+}
+
+export interface OfflineSoilDiagnosisResult {
+  isOfflineInference: true;
+  textureClass: string;
+  estimatedMoisture: string;
+  drainageClass: string;
+  organicMatterIndex: 'High' | 'Moderate' | 'Low';
+  confidence: number;
+  metrics: SoilEdgeMetrics;
+  recommendations: string[];
+  analyzedAt: string;
+}
+
+function computeSoilMetricsFromPixels(pixels: Uint8ClampedArray, w: number, h: number): SoilEdgeMetrics {
+  let totalLum = 0;
+  let reddishCount = 0;
+  let totalPixels = 0;
+
+  for (let i = 0; i < pixels.length; i += 16) {
+    const r = pixels[i];
+    const g = pixels[i + 1];
+    const b = pixels[i + 2];
+    const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    totalLum += lum;
+    if (r > g * 1.15 && r > b * 1.25) reddishCount++;
+    totalPixels++;
+  }
+
+  const luminanceIndex = totalPixels > 0 ? totalLum / totalPixels : 0.5;
+  const reddishHueRatio = totalPixels > 0 ? reddishCount / totalPixels : 0.1;
+
+  // Sobel-based aggregate surface texture variance
+  let edgeSum = 0;
+  let edgeCount = 0;
+  const stride = 4;
+  for (let y = 1; y < h - 1; y += stride) {
+    for (let x = 1; x < w - 1; x += stride) {
+      const idx = (y * w + x) * 4;
+      const lumCenter = (pixels[idx] + pixels[idx + 1] + pixels[idx + 2]) / 3;
+      const lumRight = (pixels[idx + 4] + pixels[idx + 5] + pixels[idx + 6]) / 3;
+      const lumDown = (pixels[idx + w * 4] + pixels[idx + w * 4 + 1] + pixels[idx + w * 4 + 2]) / 3;
+      const grad = Math.abs(lumRight - lumCenter) + Math.abs(lumDown - lumCenter);
+      edgeSum += grad;
+      edgeCount++;
+    }
+  }
+
+  const avgGrad = edgeCount > 0 ? edgeSum / edgeCount : 15;
+  const textureVariance = Math.min(1.0, Math.max(0.05, avgGrad / 45));
+  const moistureReflectance = Math.min(1.0, Math.max(0.05, (1.0 - luminanceIndex * 0.7) * (1.0 - textureVariance * 0.3)));
+  const fineParticleRatio = Math.min(1.0, Math.max(0.05, 1.0 - textureVariance * 0.8));
+
+  return {
+    textureVariance,
+    luminanceIndex,
+    moistureReflectance,
+    reddishHueRatio,
+    fineParticleRatio,
+  };
+}
+
+function evaluateSoilProfile(metrics: SoilEdgeMetrics): {
+  textureClass: string;
+  drainageClass: string;
+  organicMatterIndex: 'High' | 'Moderate' | 'Low';
+  confidence: number;
+  recommendations: string[];
+} {
+  const { textureVariance, luminanceIndex, reddishHueRatio, moistureReflectance } = metrics;
+  const organicMatterIndex: 'High' | 'Moderate' | 'Low' =
+    luminanceIndex < 0.32 ? 'High' : luminanceIndex < 0.55 ? 'Moderate' : 'Low';
+
+  let textureClass = 'Loam (Balanced Agronomic Blend)';
+  let drainageClass = 'Moderately Well Drained';
+  let confidence = 0.84;
+  const recommendations: string[] = [];
+
+  if (textureVariance > 0.65 && luminanceIndex > 0.5) {
+    textureClass = 'Coarse Sand / Loamy Sand';
+    drainageClass = 'Excessively Drained (High Leaching Risk)';
+    confidence = 0.88;
+    recommendations.push(
+      'Incorporate decomposed organic manure or biochar to enhance moisture retention capacity.',
+      'Split fertilizer applications into multiple micro-doses to avoid nutrient leaching losses.'
+    );
+  } else if (reddishHueRatio > 0.28 || (textureVariance < 0.35 && luminanceIndex < 0.45)) {
+    textureClass = 'Clay Loam / Tropical Oxisol';
+    drainageClass = 'Slow / Prone to Surface Compaction';
+    confidence = 0.86;
+    recommendations.push(
+      'Avoid tillage when saturated to prevent hardpan formation and clod smearing.',
+      'Apply agricultural gypsum or agricultural lime if pH scouting indicates acid-soil aluminum toxicity.'
+    );
+  } else if (luminanceIndex < 0.35 && textureVariance < 0.45) {
+    textureClass = 'Silt Loam (High Organic Matter)';
+    drainageClass = 'Well Drained (High Cation Exchange)';
+    confidence = 0.89;
+    recommendations.push(
+      'Excellent fertility profile for cereals and horticulture; maintain soil cover to avoid surface crusting.',
+      'Practice minimum tillage to preserve mycorrhizal fungal networks and soil aggregate structure.'
+    );
+  } else {
+    recommendations.push(
+      'Balanced soil texture suitable for diversified rotation (maize, legumes, vegetables).',
+      'Maintain mulch cover to preserve topsoil moisture during dry intervals.'
+    );
+  }
+
+  if (moistureReflectance > 0.72) {
+    recommendations.push('High moisture content detected: monitor for root rot and anaerobic conditions.');
+  }
+
+  return { textureClass, drainageClass, organicMatterIndex, confidence, recommendations };
+}
+
+export function diagnoseSoilOffline(
+  imageSource: HTMLImageElement | HTMLCanvasElement,
+  _targetCrop?: string
+): OfflineSoilDiagnosisResult {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+  if (!ctx) {
+    return {
+      isOfflineInference: true,
+      textureClass: 'Loam (Default Inference)',
+      estimatedMoisture: 'Moderate (20-30%)',
+      drainageClass: 'Well Drained',
+      organicMatterIndex: 'Moderate',
+      confidence: 0.6,
+      metrics: { textureVariance: 0.4, luminanceIndex: 0.4, moistureReflectance: 0.4, reddishHueRatio: 0.1, fineParticleRatio: 0.6 },
+      recommendations: ['Incorporate organic matter to sustain fertility.'],
+      analyzedAt: new Date().toISOString(),
+    };
+  }
+
+  ctx.drawImage(imageSource, 0, 0, 256, 256);
+  const imgData = ctx.getImageData(0, 0, 256, 256);
+  const metrics = computeSoilMetricsFromPixels(imgData.data, 256, 256);
+  const evaluation = evaluateSoilProfile(metrics);
+
+  const estimatedMoisture =
+    metrics.moistureReflectance > 0.7
+      ? 'High Moisture / Near Saturation (>35%)'
+      : metrics.moistureReflectance > 0.4
+      ? 'Optimal Field Moisture (18–32%)'
+      : 'Dry / Low Moisture (<15%)';
+
+  return {
+    isOfflineInference: true,
+    textureClass: evaluation.textureClass,
+    estimatedMoisture,
+    drainageClass: evaluation.drainageClass,
+    organicMatterIndex: evaluation.organicMatterIndex,
+    confidence: evaluation.confidence,
+    metrics,
+    recommendations: evaluation.recommendations,
+    analyzedAt: new Date().toISOString(),
+  };
+}
+

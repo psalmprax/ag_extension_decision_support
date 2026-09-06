@@ -259,6 +259,95 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
         expect(result.contextUsed).toEqual([]);
     });
 
+    it('sanitizes noisy crawler context, excludes title metadata from takeaways, and injects cooperative formation roadmap', async () => {
+        (VectorService.hybridSearch as jest.Mock).mockResolvedValue([
+            {
+                id: 'coop-1',
+                content: `Title: Farmer Cooperatives and Collective Marketing - Farming Tips\n\nJoining a farmer cooperative boosts your bargaining power. * Farmer cooperatives enhance bargaining power and access to larger, more profitable markets through collective marketing. * Cooperatives reduce individual costs by negotiating bulk transportation, storage, and processing services. #### farm cooperative marketing tools. At Agrosahas International PVT LTD, we are committed to promoting cooperatives. Kukuchku Animal Feeds and Concentrates recognizes the essential role farmers play [...]`,
+                metadata: {
+                    title: 'Farmer Cooperatives and Collective Marketing - Farming Tips',
+                    category: 'cooperatives',
+                    crop: 'all',
+                    sourceUrl: 'https://farmingtips.org/farming/farmer-cooperatives-marketing'
+                },
+                score: 0.88,
+            }
+        ]);
+
+        mockRouteRequest.mockImplementation(async (type: string) => {
+            if (type === 'classify') {
+                return { labels: [{ label: 'agronomy_and_yield', score: 0.90 }] };
+            }
+            if (type === 'reason') {
+                throw new Error('Provider timeout');
+            }
+            return {};
+        });
+
+        const query = 'What are the steps for starting a farmer cooperative, and how can it help us access better markets?';
+        const result = await KnowledgeService.askQuestion('user-1', query);
+
+        // 1. Must NOT have raw "Title: Farmer Cooperatives" as an extracted takeaway
+        expect(result.answer).not.toMatch(/- \*\*Title\*\*:/);
+        expect(result.answer).not.toContain('Title: Farmer Cooperatives and Collective Marketing');
+
+        // 2. Must clean vendor boilerplate and crawler ellipsis
+        expect(result.answer).not.toContain('At Agrosahas International PVT LTD');
+        expect(result.answer).not.toContain('Kukuchku Animal Feeds');
+        expect(result.answer).not.toContain('[...]');
+
+        // 3. Must extract substantive takeaways
+        expect(result.answer).toContain('Farmer cooperatives enhance bargaining power and access to larger');
+        expect(result.answer).toContain('Cooperatives reduce individual costs by negotiating bulk transportation');
+
+        // 4. Must inject procedural implementation roadmap in sentence case (not all capital letters or title case)
+        expect(result.answer).toContain('Field advisory implementation roadmap (standard cooperative formation)');
+        expect(result.answer).toContain('Mobilization');
+        expect(result.answer).toContain('Constitution and bylaws');
+
+        // 5. Must use sentence case for section headings instead of title-casing every word
+        expect(result.answer).toContain('### Key identified insights and takeaways');
+        expect(result.answer).toContain('### Verified context and field reference');
+        expect(result.answer).toContain('*Primary source reference:');
+    });
+
+    it('normalizes all-caps headings and uppercase blocks into clean sentence case', async () => {
+        (VectorService.hybridSearch as jest.Mock).mockResolvedValue([
+            {
+                id: 'allcaps-1',
+                content: `### HOW DO COOPERATIVES ADAPT TO MARKET CHANGES?\n\nJOINING A FARMER COOPERATIVE BOOSTS BARGAINING POWER AND INCOME STABILITY FOR ALL PRODUCERS.`,
+                metadata: {
+                    title: 'FARMER COOPERATIVES AND COLLECTIVE MARKETING',
+                    category: 'cooperatives',
+                    crop: 'all',
+                    sourceUrl: 'https://example.org/coops'
+                },
+                score: 0.88,
+            }
+        ]);
+
+        mockRouteRequest.mockImplementation(async (type: string) => {
+            if (type === 'classify') return { labels: [{ label: 'agronomy_and_yield', score: 0.90 }] };
+            if (type === 'reason') throw new Error('Timeout');
+            return {};
+        });
+
+        const result = await KnowledgeService.askQuestion('user-1', 'How do cooperatives adapt?');
+
+        // Scraped all-caps heading in body must not remain in ALL CAPS
+        expect(result.answer).not.toContain('### HOW DO COOPERATIVES ADAPT TO MARKET CHANGES?');
+        expect(result.answer).not.toContain('HOW DO COOPERATIVES ADAPT TO MARKET CHANGES?');
+        expect(result.answer).toContain('How do cooperatives adapt to market changes?');
+
+        // Body text must not remain in ALL CAPS
+        expect(result.answer).not.toContain('JOINING A FARMER COOPERATIVE BOOSTS BARGAINING POWER');
+        expect(result.answer).toContain('Joining a farmer cooperative boosts bargaining power');
+
+        // Metadata title must not remain in ALL CAPS
+        expect(result.answer).not.toContain('FARMER COOPERATIVES AND COLLECTIVE MARKETING');
+        expect(result.answer).toContain('Farmer cooperatives and collective marketing');
+    });
+
     it('passes attachments through to the reasoning call', async () => {
         const reasoningSpy = jest.fn().mockResolvedValue({
             reasoning: 'Analysis from image.',
