@@ -60,6 +60,16 @@ async function mockDemoBackend(page: Page) {
       }),
     });
   });
+  await page.route(url => url.pathname === '/api/external/weather', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: { temp: 22, temperature: 22, condition: 'sunny', humidity: 40, windSpeed: 5 },
+      }),
+    });
+  });
 }
 
 test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
@@ -134,8 +144,9 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
 
     // Verify Grounded Synthesis result renders
     await expect(page.getByText('Grounded Synthesis Completed')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Action threshold for Fall Armyworm')).toBeVisible();
-    await expect(page.getByText('FAO Fall Armyworm IPM Manual')).toBeVisible();
+    await expect(page.getByText('Verified Agro-RAG Synthesis', { exact: false })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Action Thresholds', { exact: false })).toBeVisible();
+    await expect(page.getByText('Biological & Cultural Controls', { exact: false })).toBeVisible();
   });
 
   test('gracefully renders fallback benchmark result when backend returns 502/error', async ({
@@ -173,8 +184,7 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
 
     // Verify that instead of a blank page, the fallback synthesis is rendered
     await expect(page.getByText('Grounded Synthesis Completed')).toBeVisible({ timeout: 15000 });
-    // Verify an answer is present
-    const hasAnswer = await page.locator('text=Fall Armyworm, text=Maize, text=IPM, text=Synthesis').count();
-    expect(hasAnswer).toBeGreaterThan(0);
+    await expect(page.getByText('Verified Agro-RAG Synthesis', { exact: false })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Action Thresholds', { exact: false })).toBeVisible();
   });
 });
