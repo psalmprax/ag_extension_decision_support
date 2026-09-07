@@ -2,12 +2,9 @@ import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { getEmbedding } from '@/services/embeddingCache';
 import { normalizeAgronomicQuery } from '@/utils/agronomicQueryNormalizer';
-
-const STOP_WORDS = new Set([
-    'what', 'are', 'the', 'is', 'for', 'and', 'face', 'can', 'how', 'why', 'who',
-    'does', 'did', 'with', 'from', 'into', 'about', 'tell', 'give', 'some', 'any',
-    'this', 'that', 'these', 'those', 'which', 'when', 'where'
-]);
+import { executeIlikeFallback, keywordSearch as runKeywordSearch } from '@/services/vector/keywordSearch';
+import { addToRrfMap, mergeAndSortRrfResults } from '@/services/vector/rrfFusion';
+import { backfillAllMissingEmbeddings as drainEmbeddings, backfillMissingEmbeddings as fillEmbeddingsBatch } from '@/services/vector/embeddingBackfill';
 
 export interface VectorDocument {
     id: string;
@@ -20,6 +17,13 @@ export interface SearchResult extends VectorDocument {
     score: number;
 }
 
+export type VectorFilters = { category?: string; crop?: string };
+
+/**
+ * Public facade for the persistent vector store (PostgreSQL + pgvector).
+ * Keyword search and RRF fusion live in `services/vector/*`; this class
+ * keeps the historical static API used by routes and workers.
+ */
 export class VectorService {
     /**
      * Upsert a document into the vector store (PostgreSQL)
@@ -71,9 +75,9 @@ export class VectorService {
      * Search for similar documents using pgvector or fallback function
      */
     static async search(
-        queryText: string, 
-        limit: number = 5, 
-        filters: { category?: string; crop?: string } = {},
+        queryText: string,
+        limit: number = 5,
+        filters: VectorFilters = {},
         minScore: number = 0.4
     ): Promise<SearchResult[]> {
         const normalizedQuery = normalizeAgronomicQuery(queryText);
@@ -135,160 +139,24 @@ export class VectorService {
         }
     }
 
-    private static async executeIlikeFallback(
-        queryText: string,
-        limit: number,
-        filters: { category?: string; crop?: string }
-    ): Promise<SearchResult[]> {
-        const trimmed = queryText.trim();
-        if (!trimmed) return [];
-
-        type KeywordRow = { id: string; content: string; title: unknown; category: unknown; crops: unknown[] | null; source_url: unknown; content_type: unknown; score: unknown };
-
-        // Extract key terms (skip stop words and short tokens)
-        const meaningfulWords = trimmed
-            .replace(/[^a-zA-Z0-9\s]/g, ' ')
-            .trim()
-            .split(/\s+/)
-            .filter(w => w.length >= 3 && !STOP_WORDS.has(w.toLowerCase()));
-
-        const params: Array<string | number> = [];
-        const conditions: string[] = [];
-
-        if (meaningfulWords.length > 0) {
-            const wordClauses = meaningfulWords.map(w => {
-                params.push(`%${w}%`);
-                const idx = params.length;
-                return `(title ILIKE $${idx} OR content ILIKE $${idx})`;
-            });
-            conditions.push(`(${wordClauses.join(' OR ')})`);
-        } else {
-            params.push(`%${trimmed}%`);
-            conditions.push(`(title ILIKE $1 OR content ILIKE $1)`);
-        }
-
-        if (filters.category) {
-            params.push(filters.category);
-            conditions.push(`category = $${params.length}`);
-        }
-        if (filters.crop) {
-            params.push(filters.crop);
-            conditions.push(`$${params.length} = ANY(crops)`);
-        }
-        params.push(limit);
-
-        const ilikeResult = await query(`
-            SELECT id, title, content, category, crops, source_url, content_type, 0.6 as score
-            FROM knowledge_articles
-            WHERE ${conditions.join(' AND ')}
-            ORDER BY created_at DESC
-            LIMIT $${params.length}
-        `, params as unknown as unknown[]);
-
-        return (ilikeResult.rows as unknown as KeywordRow[]).map((row) => ({
-            id: row.id,
-            content: row.content,
-            metadata: {
-                title: row.title,
-                category: row.category,
-                crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
-                sourceUrl: row.source_url,
-                contentType: (row.content_type as string) || 'text'
-            },
-            score: 0.6
-        }));
-    }
-
-    private static extractKeywordTerms(normalizedQuery: string): string[] {
-        return normalizedQuery
-            .replace(/[^a-zA-Z0-9\s]/g, ' ')
-            .trim()
-            .split(/\s+/)
-            .filter(word => word.length > 2 && !STOP_WORDS.has(word.toLowerCase()));
-    }
-
-    private static applyKeywordFilters(
-        params: Array<string | number>,
-        where: string[],
-        filters: { category?: string; crop?: string }
-    ): void {
-        if (filters.category) {
-            params.push(filters.category);
-            where.push(`category = $${params.length}`);
-        }
-        if (filters.crop) {
-            params.push(filters.crop);
-            where.push(`$${params.length} = ANY(crops)`);
-        }
-    }
-
-    private static mapKeywordRows(rows: unknown[]): SearchResult[] {
-        type KeywordRow = { id: string; content: string; title: unknown; category: unknown; crops: unknown[] | null; source_url: unknown; content_type: unknown; score: unknown };
-        return (rows as KeywordRow[]).map((row) => ({
-            id: row.id,
-            content: row.content,
-            metadata: {
-                title: row.title,
-                category: row.category,
-                crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
-                sourceUrl: row.source_url,
-                contentType: (row.content_type as string) || 'text'
-            },
-            score: Number.parseFloat(String(row.score ?? 0))
-        }));
-    }
-
-    private static async searchByTsQuery(
-        tsQuery: string,
-        limit: number,
-        filters: { category?: string; crop?: string }
-    ): Promise<SearchResult[]> {
-        const params: Array<string | number> = [tsQuery];
-        const where: string[] = ["to_tsvector('english', title || ' ' || content) @@ to_tsquery('english', $1)"];
-        this.applyKeywordFilters(params, where, filters);
-        params.push(limit);
-        const result = await query(`
-            SELECT id, title, content, category, crops, source_url, content_type,
-                   ts_rank_cd(to_tsvector('english', title || ' ' || content), to_tsquery('english', $1)) as score
-            FROM knowledge_articles
-            WHERE ${where.join(' AND ')}
-            ORDER BY score DESC
-            LIMIT $${params.length}
-        `, params as unknown as unknown[]);
-        return this.mapKeywordRows(result.rows as unknown[]);
-    }
-
     /**
      * Search for knowledge articles using PostgreSQL full-text search (keyword-based)
      */
     static async keywordSearch(
         queryText: string,
         limit: number = 5,
-        filters: { category?: string; crop?: string } = {}
+        filters: VectorFilters = {}
     ): Promise<SearchResult[]> {
-        const normalizedQuery = normalizeAgronomicQuery(queryText);
-        logger.info(`Searching database via keyword search for: "${queryText}" (normalized: "${normalizedQuery}")`);
-        try {
-            const words = this.extractKeywordTerms(normalizedQuery);
-            if (words.length === 0) {
-                return await this.executeIlikeFallback(normalizedQuery, limit, filters);
-            }
+        return runKeywordSearch(queryText, limit, filters);
+    }
 
-            const andResults = await this.searchByTsQuery(words.join(' & '), limit, filters);
-            if (andResults.length > 0) return andResults;
-
-            if (words.length === 1) {
-                return await this.executeIlikeFallback(normalizedQuery, limit, filters);
-            }
-
-            const orResults = await this.searchByTsQuery(words.join(' | '), limit, filters);
-            if (orResults.length > 0) return orResults;
-
-            return await this.executeIlikeFallback(normalizedQuery, limit, filters);
-        } catch (error) {
-            logger.error('Database keyword search failed:', error);
-            return [];
-        }
+    /** ILIKE fallback for queries with no usable full-text terms. */
+    static async ilikeFallback(
+        queryText: string,
+        limit: number,
+        filters: VectorFilters = {}
+    ): Promise<SearchResult[]> {
+        return executeIlikeFallback(queryText, limit, filters);
     }
 
     /**
@@ -297,7 +165,7 @@ export class VectorService {
     static async hybridSearch(
         queryText: string,
         limit: number = 5,
-        filters: { category?: string; crop?: string } = {},
+        filters: VectorFilters = {},
         minScore: number = 0.4
     ): Promise<SearchResult[]> {
         logger.info(`Performing hybrid search (Vector + Keyword) for: "${queryText}"`);
@@ -314,7 +182,7 @@ export class VectorService {
     private static async performHybridSearch(
         queryText: string,
         limit: number,
-        filters: { category?: string; crop?: string }
+        filters: VectorFilters
     ): Promise<SearchResult[]> {
         const [vectorResults, keywordResults] = await Promise.all([
             this.search(queryText, limit * 2, filters, 0.0),
@@ -328,44 +196,10 @@ export class VectorService {
         const rrfMap = new Map<string, { doc: SearchResult; score: number }>();
         const k = 60;
 
-        this.addToRrfMap(rrfMap, vectorResults, k);
-        this.addToRrfMap(rrfMap, keywordResults, k, 0.5);
+        addToRrfMap(rrfMap, vectorResults, k);
+        addToRrfMap(rrfMap, keywordResults, k, 0.5);
 
-        return this.mergeAndSortRrfResults(rrfMap, limit);
-    }
-
-    private static addToRrfMap(
-        rrfMap: Map<string, { doc: SearchResult; score: number }>,
-        results: SearchResult[],
-        k: number,
-        defaultScore: number = 0
-    ): void {
-        results.forEach((doc, idx) => {
-            const rank = idx + 1;
-            const rrfWeight = 1 / (k + rank);
-            const existing = rrfMap.get(doc.id);
-            if (existing) {
-                existing.score += rrfWeight;
-            } else {
-                rrfMap.set(doc.id, {
-                    doc,
-                    score: rrfWeight + defaultScore
-                });
-            }
-        });
-    }
-
-    private static mergeAndSortRrfResults(
-        rrfMap: Map<string, { doc: SearchResult; score: number }>,
-        limit: number
-    ): SearchResult[] {
-        return Array.from(rrfMap.values())
-            .sort((a, b) => b.score - a.score)
-            .slice(0, limit)
-            .map(item => {
-                item.doc.score = item.score;
-                return item.doc;
-            });
+        return mergeAndSortRrfResults(rrfMap, limit);
     }
 
     /**
@@ -393,8 +227,11 @@ export class VectorService {
         }
 
         logger.info(`Seeding persistent vector store: embedding ${pending.length}/${articles.length} articles`);
-        let failures = 0;
-        for (const article of pending) {
+        await this.embedPendingArticles(pending);
+    }
+
+    private static async embedPendingArticles(articles: Array<{ id: string; title: string; content: string; category: string; tags?: string[]; crop: string; regions?: string[]; source?: string; sourceUrl?: string | null }>): Promise<void> {        let failures = 0;
+        for (const article of articles) {
             try {
                 await this.upsertDocument(
                     article.id,
@@ -424,87 +261,19 @@ export class VectorService {
     }
 
     /**
-     * Backfill embeddings for any knowledge_articles rows that lack one (e.g. rows
-     * inserted by plain SQL seeders or ingestion paths that bypassed upsertDocument).
-     */
-    /**
      * Drain every NULL-embedding row in batches until none remain (or the provider
      * is misconfigured). Used by the boot sequence and the backfill CLI so large
      * existing corpora are indexed in one run rather than one batch per restart.
      */
     static async backfillAllMissingEmbeddings(batchSize = 100, maxBatches = 10_000): Promise<{ processed: number; failed: number; remaining: number; aborted?: string }> {
-        let processed = 0;
-        let failed = 0;
-        let aborted: string | undefined;
-        for (let i = 0; i < maxBatches; i++) {
-            const r = await this.backfillMissingEmbeddings(batchSize);
-            processed += r.processed;
-            failed += r.failed;
-            if (r.aborted) { aborted = r.aborted; break; }
-            if (r.processed === 0 && r.failed === 0) break; // nothing left
-            if (r.processed === 0 && r.failed > 0) break;   // every row in the batch failed — stop looping
-        }
-        let remaining = 0;
-        try {
-            const c = await query(`SELECT COUNT(*)::int AS n FROM knowledge_articles WHERE embedding IS NULL`);
-            remaining = Number(c.rows[0]?.n ?? 0);
-        } catch { /* table may not exist */ }
-        return { processed, failed, remaining, aborted };
+        return drainEmbeddings(batchSize, maxBatches, (id, content, metadata) => this.upsertDocument(id, content, metadata));
     }
 
+    /**
+     * Backfill embeddings for any knowledge_articles rows that lack one (e.g. rows
+     * inserted by plain SQL seeders or ingestion paths that bypassed upsertDocument).
+     */
     static async backfillMissingEmbeddings(batchSize = 50): Promise<{ processed: number; failed: number; aborted?: string }> {
-        const result = await this.processEmbeddingBatch(batchSize);
-        if (result.processed || result.failed) {
-            logger.info(`Embedding backfill: ${result.processed} embedded, ${result.failed} failed`);
-        }
-        return result;
-    }
-
-    private static async processEmbeddingBatch(batchSize: number): Promise<{ processed: number; failed: number; aborted?: string }> {
-        let processed = 0;
-        const failed: number[] = [];
-        let aborted: string | undefined;
-        try {
-            const rows = await this.fetchRowsMissingEmbeddings(batchSize);
-            for (const row of rows) {
-                try {
-                    await this.processSingleEmbedding(row);
-                    processed++;
-                } catch {
-                    failed.push(1);
-                }
-            }
-        } catch (err) {
-            logger.warn('Embedding backfill query failed:', err);
-        }
-        return { processed, failed: failed.length, aborted };
-    }
-
-    private static async fetchRowsMissingEmbeddings(batchSize: number): Promise<Array<Record<string, unknown>>> {
-        const res = await query(
-            `SELECT id, title, content, category, tags, crops, regions, source, source_url, content_type
-               FROM knowledge_articles WHERE embedding IS NULL ORDER BY created_at ASC LIMIT $1`,
-            [batchSize]
-        );
-        return res.rows as Array<Record<string, unknown>>;
-    }
-
-    private static async processSingleEmbedding(row: Record<string, unknown>): Promise<void> {
-        try {
-            await this.upsertDocument(String(row.id), String(row.content || ''), {
-                title: row.title,
-                category: row.category,
-                tags: row.tags || [],
-                crops: row.crops || [],
-                regions: row.regions || [],
-                source: row.source || null,
-                sourceUrl: row.source_url || null,
-                contentType: row.content_type || 'text',
-            });
-        } catch (err) {
-            if ((err as Error)?.name === 'EmbeddingDimensionError') {
-                throw err;
-            }
-        }
+        return fillEmbeddingsBatch(batchSize, (id, content, metadata) => this.upsertDocument(id, content, metadata));
     }
 }

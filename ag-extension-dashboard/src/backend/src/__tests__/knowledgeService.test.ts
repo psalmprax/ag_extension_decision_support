@@ -301,7 +301,8 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
         expect(result.answer).toContain('Cooperatives reduce individual costs by negotiating bulk transportation');
 
         // 4. Must inject procedural implementation roadmap in sentence case (not all capital letters or title case)
-        expect(result.answer).toContain('Field advisory implementation roadmap (standard cooperative formation)');
+        // Labeled as general reference so answers never imply it was extracted from sources
+        expect(result.answer).toContain('Standard cooperative formation protocol (general reference');
         expect(result.answer).toContain('Mobilization');
         expect(result.answer).toContain('Constitution and bylaws');
 

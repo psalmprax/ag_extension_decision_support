@@ -131,6 +131,23 @@ const AGRONOMIC_KEYWORD_REGEX = new RegExp(
 );
 
 /**
+ * Retail-venture framings that mention farmers only incidentally and must not
+ * enter RAG context. Example: "how to start a farmers market business" guides
+ * describe a retail-stall venture, not a farmer cooperative or agronomic
+ * practice — yet they pass the keyword test via "farmers". Kept deliberately
+ * narrow: legitimate market-access content (prices, buyers, cooperatives,
+ * aggregation) never uses this phrasing.
+ */
+const RETAIL_VENTURE_CONFUSION_PATTERNS = [
+    /\bfarmers?\s+market\s+business\b/i,
+    /\bhow\s+to\s+start\s+a\s+farmers?\s+market\b/i,
+];
+
+function isRetailVentureConfusion(text: string): boolean {
+    return RETAIL_VENTURE_CONFUSION_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+/**
  * Normalizes query string by fixing known agricultural typos and standardizing whitespace.
  */
 export function normalizeAgronomicQuery(rawQuery: string): string {
@@ -153,6 +170,7 @@ export function normalizeAgronomicQuery(rawQuery: string): string {
  */
 export function isAgronomicContent(text: string): boolean {
     if (!text || typeof text !== 'string') return false;
+    if (isRetailVentureConfusion(text)) return false;
     return AGRONOMIC_KEYWORD_REGEX.test(text);
 }
 

@@ -34,4 +34,30 @@ test.describe('@release multi-viewport layout & visual stability gates', () => {
       expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1);
     });
   }
+
+  test('reduced motion disables ambient animation on mobile landing', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+    // Hero copy must still render (parallax off, content static)
+    await expect(page.locator('main')).toBeVisible();
+
+    // Mesh orbs must have no running animation under reduced motion
+    const orbCount = await page.locator('.mesh-orb-1, .mesh-orb-2, .mesh-orb-3').count();
+    expect(orbCount).toBeGreaterThan(0);
+    const animations = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('.mesh-orb-1, .mesh-orb-2, .mesh-orb-3')).map(
+        el => getComputedStyle(el).animationName
+      )
+    );
+    for (const name of animations) {
+      expect(name === 'none' || name === '').toBe(true);
+    }
+
+    // Responsive hero backdrop must resolve to the 640px variant
+    const heroImg = page.locator('img[alt*="extension officer consulting"]').first();
+    await expect(heroImg).toBeAttached();
+    await expect(heroImg).toHaveAttribute('srcset', /officer-farmer-hero-640\.webp 640w/);
+  });
 });

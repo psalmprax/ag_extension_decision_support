@@ -18,6 +18,9 @@ module.exports = {
   },
   testMatch: ['**/__tests__/**/*.test.ts'],
   setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
+  // v8 provider: babel-plugin-istanbul crashes on this tree
+  // (`test-exclude` calls ESM-only minimatch v9 as a function).
+  coverageProvider: 'v8',
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.test.ts',

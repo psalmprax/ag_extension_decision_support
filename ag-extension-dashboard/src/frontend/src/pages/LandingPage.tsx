@@ -75,7 +75,8 @@ export function LandingPage() {
         <div className="mesh-orb-2 absolute top-[85%] right-[5%] w-[500px] h-[500px] rounded-full bg-teal-500/[0.035] blur-[110px]" />
       </div>
 
-      {/* Global Cursor spotlight */}
+      {/* Global Cursor spotlight (mouse-only; off under reduced motion) */}
+      {!reducedMotion && (
       <motion.div
         className="fixed w-[600px] h-[600px] rounded-full pointer-events-none z-0 opacity-25"
         style={{
@@ -86,6 +87,7 @@ export function LandingPage() {
           background: 'radial-gradient(circle, var(--color-outline) 0%, transparent 70%)',
         }}
       />
+      )}
 
       {/* ── CSS for mesh animation ── */}
       <style>{`

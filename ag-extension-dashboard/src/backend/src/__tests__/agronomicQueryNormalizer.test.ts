@@ -39,7 +39,16 @@ describe('agronomicQueryNormalizer', () => {
         it('rejects non-agricultural content (tailoring, boutique retail, military identity)', () => {
             expect(isAgronomicContent('Top Challenges Tailors Face in Nigeria + Solution: Record customer measurements for repeat business. Fashion trends evolve quickly, and tailors who do not upgrade skills risk becoming irrelevant.')).toBe(false);
             expect(isAgronomicContent('5 Challenges Women Entrepreneurs Face In Starting And Growing Their Businesses In Nigeria - salon and boutique owners')).toBe(false);
-            expect(isAgronomicContent('Security Challenges Nigeria Must Face: Identity - Hussein Solomon, Governance Reforms May Be More Effective Than Military in Countering Boko Haram')).toBe(false);
+            expect(isAgronomicContent('Security Challenges Nigeria Must Face: Identity - Hussein Solomon, Governance Reforms May Be Effective Than Military in Countering Boko Haram')).toBe(false);
+        });
+
+        it('rejects farmers-market retail-venture content even though it mentions farmers', () => {
+            expect(isAgronomicContent('[pdf] how to start a farmers market business - sdg.azte.co Starting a farmers market business requires careful planning, a clear understanding of local regulations, and effective marketing strategies for farmers.')).toBe(false);
+        });
+
+        it('keeps legitimate market-access content mentioning farmers and retailers', () => {
+            expect(isAgronomicContent('Smallholder market linkage requires collective marketing through farmer cooperatives to achieve volume for bulk buyers. Digital platforms connect farmers directly to urban retailers, increasing farm-gate price.')).toBe(true);
+            expect(isAgronomicContent('What are the steps for starting a farmer cooperative, and how can it help us access better markets?')).toBe(true);
         });
     });
 

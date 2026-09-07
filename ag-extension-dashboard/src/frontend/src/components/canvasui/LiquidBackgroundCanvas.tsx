@@ -1,11 +1,15 @@
 import React from 'react';
 import { useAppStore } from '@/store/useAppStore';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Liquid } from './Liquid';
 
 export const LiquidBackgroundCanvas: React.FC = () => {
   const { liquidEffect } = useAppStore();
+  const reduceMotion = useReducedMotion();
 
-  if (!liquidEffect) return null;
+  // Opt-in WebGL fluid canvas; never mount it under reduced motion
+  // (vestibular safety + battery/GPU cost on low-end field devices).
+  if (!liquidEffect || reduceMotion) return null;
 
   return (
     <div
