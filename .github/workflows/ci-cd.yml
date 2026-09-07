@@ -57,10 +57,10 @@ jobs:
           cd ag-extension-dashboard/src/frontend
           npm run test -- --run
 
-      - name: Install Playwright browser
+      - name: Install Playwright browsers (chromium, firefox)
         run: |
           cd ag-extension-dashboard/src/frontend
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium firefox
 
       - name: Run Playwright e2e tests
         run: |
