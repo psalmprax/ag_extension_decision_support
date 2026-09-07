@@ -15,7 +15,7 @@ import {
  * when the AI provider does not complete in time.
  */
 
-export function parseInsightFromLine(line: string): string | null {
+function parseInsightFromLine(line: string): string | null {
     const trimmed = line.trim();
     if (trimmed.length < 25 || trimmed.length > 400) return null;
 
@@ -49,7 +49,7 @@ export function parseInsightFromLine(line: string): string | null {
     return null;
 }
 
-export function getProceduralGuidanceNote(queryText: string): string | null {
+function getProceduralGuidanceNote(queryText: string): string | null {
     const q = queryText.toLowerCase();
     const asksForSteps = /\b(steps?|how to|procedure|guide|process)\b/i.test(q);
     if (!asksForSteps) return null;
@@ -85,14 +85,14 @@ export function getProceduralGuidanceNote(queryText: string): string | null {
     return null;
 }
 
-export function resolveChunkTitle(result: SearchResult, idx: number): string {
+function resolveChunkTitle(result: SearchResult, idx: number): string {
     const rawTitle = typeof result.metadata?.title === 'string' && result.metadata.title
         ? result.metadata.title
         : `Source ${idx + 1}`;
     return convertAllCapsLine(rawTitle);
 }
 
-export function collectInsightForParagraph(trimmed: string, resultId: string | undefined, keyBulletPoints: string[]): void {
+function collectInsightForParagraph(trimmed: string, resultId: string | undefined, keyBulletPoints: string[]): void {
     if (keyBulletPoints.length >= 8) return;
     const insight = parseInsightFromLine(trimmed);
     if (!insight) return;
@@ -101,7 +101,7 @@ export function collectInsightForParagraph(trimmed: string, resultId: string | u
     keyBulletPoints.push(insight);
 }
 
-export function processChunkParagraph(
+function processChunkParagraph(
     paragraph: string,
     resultId: string | undefined,
     seenParagraphs: Set<string>,
@@ -117,7 +117,7 @@ export function processChunkParagraph(
     collectInsightForParagraph(trimmed, resultId, keyBulletPoints);
 }
 
-export function extractInsightsFromChunk(
+function extractInsightsFromChunk(
     result: SearchResult,
     idx: number,
     seenParagraphs: Set<string>,
@@ -138,14 +138,14 @@ export function extractInsightsFromChunk(
     }
 }
 
-export function filterAgronomicResults(contextResults: SearchResult[]): SearchResult[] {
+function filterAgronomicResults(contextResults: SearchResult[]): SearchResult[] {
     return contextResults.filter(r => {
         if (!r.id?.startsWith('web-')) return true;
         return isAgronomicContent(`${r.metadata?.title || ''} ${r.content}`);
     });
 }
 
-export function buildEmptyExtractiveAnswer(queryText: string): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
+function buildEmptyExtractiveAnswer(queryText: string): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
     return {
         reasoning: 'No verified agricultural context found in knowledge base and AI provider did not complete in time.',
         answer: `I wasn't able to find verified agronomic information about **"${queryText}"** in the knowledge base. Please try rephrasing your question with specific crop, soil, pest, or farm management terms.`,
@@ -164,7 +164,7 @@ export function buildEmptyExtractiveAnswer(queryText: string): ReasoningResult &
     };
 }
 
-export function resolvePrimarySource(primary: SearchResult): { sourceTitle: string; sourceUrl: string } {
+function resolvePrimarySource(primary: SearchResult): { sourceTitle: string; sourceUrl: string } {
     const rawTitle = typeof primary.metadata?.title === 'string' && primary.metadata.title
         ? primary.metadata.title
         : `${(primary.metadata?.crop as string) || 'Agricultural'} ${(primary.metadata?.category as string) || 'Knowledge'}`;
@@ -174,7 +174,7 @@ export function resolvePrimarySource(primary: SearchResult): { sourceTitle: stri
     };
 }
 
-export function collectChunkInsights(validResults: SearchResult[]): { keyBulletPoints: string[]; structuredExcerpts: string[] } {
+function collectChunkInsights(validResults: SearchResult[]): { keyBulletPoints: string[]; structuredExcerpts: string[] } {
     const seenParagraphs = new Set<string>();
     const keyBulletPoints: string[] = [];
     const structuredExcerpts: string[] = [];
@@ -184,7 +184,7 @@ export function collectChunkInsights(validResults: SearchResult[]): { keyBulletP
     return { keyBulletPoints, structuredExcerpts };
 }
 
-export function appendInsightSections(sections: string[], keyBulletPoints: string[], structuredExcerpts: string[]): void {
+function appendInsightSections(sections: string[], keyBulletPoints: string[], structuredExcerpts: string[]): void {
     if (keyBulletPoints.length > 0) {
         sections.push(`### Key identified insights and takeaways\n\n${keyBulletPoints.join('\n\n')}`);
     }
@@ -193,14 +193,14 @@ export function appendInsightSections(sections: string[], keyBulletPoints: strin
     }
 }
 
-export function appendSourceNote(sections: string[], validResults: SearchResult[]): void {
+function appendSourceNote(sections: string[], validResults: SearchResult[]): void {
     const hasWebSources = validResults.some(r => r.id?.startsWith('web-'));
     sections.push(hasWebSources
         ? `*Note: The recommendations above are compiled from external agricultural research sources and should be verified with a local extension officer.*`
         : `*Note: The recommendations above are extracted directly from the local verified agricultural knowledge base.*`);
 }
 
-export function buildExtractiveSections(
+function buildExtractiveSections(
     queryText: string,
     sourceTitle: string,
     sourceUrl: string,

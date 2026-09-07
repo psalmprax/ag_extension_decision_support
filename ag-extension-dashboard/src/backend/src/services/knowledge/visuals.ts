@@ -19,7 +19,7 @@ function videoList(visuals: AnswerVisuals): VisualVideo[] {
     return visuals.videos ?? [];
 }
 
-export async function enhanceImages(enhancedVisuals: AnswerVisuals, searchQuery: string): Promise<void> {
+async function enhanceImages(enhancedVisuals: AnswerVisuals, searchQuery: string): Promise<void> {
     const images = imageList(enhancedVisuals);
     if (images.length === 0) return;
 
@@ -51,7 +51,7 @@ export async function enhanceImages(enhancedVisuals: AnswerVisuals, searchQuery:
     }
 }
 
-export async function enhanceVideos(enhancedVisuals: AnswerVisuals): Promise<void> {
+async function enhanceVideos(enhancedVisuals: AnswerVisuals): Promise<void> {
     const videos = videoList(enhancedVisuals);
     if (videos.length === 0) return;
 
@@ -64,7 +64,7 @@ export async function enhanceVideos(enhancedVisuals: AnswerVisuals): Promise<voi
     );
 }
 
-export async function addFallbackVisuals(enhancedVisuals: AnswerVisuals, searchQuery: string): Promise<void> {
+async function addFallbackVisuals(enhancedVisuals: AnswerVisuals, searchQuery: string): Promise<void> {
     if ((!enhancedVisuals.images || enhancedVisuals.images.length === 0) &&
         (!enhancedVisuals.charts || enhancedVisuals.charts.length === 0)) {
         try {
@@ -84,7 +84,7 @@ export async function addFallbackVisuals(enhancedVisuals: AnswerVisuals, searchQ
 }
 
 /** Validates and enhances visual assets with runtime checks. */
-export async function validateAndEnhanceVisuals(visuals: AnswerVisuals, searchQuery: string): Promise<AnswerVisuals> {
+async function validateAndEnhanceVisuals(visuals: AnswerVisuals, searchQuery: string): Promise<AnswerVisuals> {
     const enhancedVisuals = { ...visuals };
 
     await enhanceImages(enhancedVisuals, searchQuery);

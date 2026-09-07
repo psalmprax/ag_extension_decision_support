@@ -4,8 +4,11 @@ FROM postgis/postgis:15-3.4
 
 # Install pre-built pgvector package — avoids 7+ minute from-source compile.
 # Retry transient Debian/PGDG mirror resets without hiding permanent failures.
+# Check-Valid-Until=false: postgis:15-3.4 is bullseye-based (EOL) and its
+# security Release metadata has expired; the pinned pgvector package still
+# resolves from pgdg. Revisit when the base image moves to bookworm+.
 RUN set -eux; \
-    printf 'Acquire::Retries "5";\nAcquire::http::Pipeline-Depth "0";\n' > /etc/apt/apt.conf.d/80-retries; \
+    printf 'Acquire::Retries "5";\nAcquire::http::Pipeline-Depth "0";\nAcquire::Check-Valid-Until "false";\n' > /etc/apt/apt.conf.d/80-retries; \
     for attempt in 1 2 3; do \
       apt-get update && \
       apt-get install -y --no-install-recommends postgresql-15-pgvector && \

@@ -10,7 +10,7 @@ import { isAgronomicContent, prepareWebSearchQuery } from '@/utils/agronomicQuer
  * are discarded before entering RAG context.
  */
 
-export async function fallbackAgriQuery(queryText: string, queryCategories: string[], currentResults: SearchResult[]): Promise<SearchResult[]> {
+async function fallbackAgriQuery(queryText: string, queryCategories: string[], currentResults: SearchResult[]): Promise<SearchResult[]> {
     logger.info(`Query intent classified as agricultural [${queryCategories.join(', ')}]. Triggering StealthScraperService for: "${queryText}"`);
     try {
         let platform = 'fao_crop_guides';
@@ -54,7 +54,7 @@ export async function fallbackAgriQuery(queryText: string, queryCategories: stri
     return currentResults;
 }
 
-export async function fetchViaJina(url: string): Promise<string | null> {
+async function fetchViaJina(url: string): Promise<string | null> {
     try {
         const jinaUrl = `https://r.jina.ai/${url}`;
         const { default: axios } = await import('axios');
@@ -95,7 +95,7 @@ export async function enrichContextWithWebFallbacks(
 }
 
 /** Fetch up to 4 fresh Tavily results, enriching with Jina only if snippet is sparse. Discards non-agronomic web results. */
-export async function fetchTavilyWebResults(queryText: string, fetchedAt: string): Promise<SearchResult[]> {
+async function fetchTavilyWebResults(queryText: string, fetchedAt: string): Promise<SearchResult[]> {
     try {
         const webSearchQuery = prepareWebSearchQuery(queryText);
         const tavilyRes = await tavilyService.search(webSearchQuery, 4, { searchDepth: 'basic', timeRange: 'week', includeAnswer: false });
@@ -137,7 +137,7 @@ export async function fetchTavilyWebResults(queryText: string, fetchedAt: string
 }
 
 /** Deduplicate by sourceUrl/content prefix keeping the highest score, then rerank to the top 4 via RAGv2 when available. */
-export async function dedupeAndRerank(queryText: string, combined: SearchResult[], fetchedAt: string): Promise<SearchResult[]> {
+async function dedupeAndRerank(queryText: string, combined: SearchResult[], fetchedAt: string): Promise<SearchResult[]> {
     const seen = new Map<string, SearchResult>();
     for (const r of combined) {
         const key = (r.metadata?.sourceUrl as string) || r.content.slice(0, 200);
@@ -154,7 +154,7 @@ export async function dedupeAndRerank(queryText: string, combined: SearchResult[
 }
 
 /** RAGv2 rerank attempt; null signals the reranker is unavailable so callers fall back to score ordering. */
-export async function rerankWithRagV2(queryText: string, merged: SearchResult[], fetchedAt: string): Promise<SearchResult[] | null> {
+async function rerankWithRagV2(queryText: string, merged: SearchResult[], fetchedAt: string): Promise<SearchResult[] | null> {
     try {
         const { RAGV2Service } = await import('@/services/ragV2Service');
         const ranked = await RAGV2Service.rerank(queryText, merged.map(m => ({

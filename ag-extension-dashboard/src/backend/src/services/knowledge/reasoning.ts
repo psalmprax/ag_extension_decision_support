@@ -9,11 +9,11 @@ import type { KnowledgeAttachment, ReasonOptions } from '@/services/knowledge/ty
  * synthesis when tools are unavailable or unhelpful.
  */
 
-export interface AgenticToolCall {
+interface AgenticToolCall {
     function: { name: string; arguments: unknown };
 }
 
-export interface AgenticToolDef {
+interface AgenticToolDef {
     type: 'function';
     function: { name: string; description: string; parameters: unknown };
 }
@@ -119,7 +119,7 @@ export async function callReasoningAgentic(
 }
 
 /** One agentic turn: route with tools attached under a per-turn timeout. */
-export async function routeAgenticTurn(
+async function routeAgenticTurn(
     systemPrompt: string,
     queryText: string,
     attachments: KnowledgeAttachment[] | undefined,
@@ -139,7 +139,7 @@ export async function routeAgenticTurn(
 }
 
 /** Synthesize final grounded prescription with deterministic micro-tool execution evidence. */
-export async function synthesizeWithToolEvidence(
+async function synthesizeWithToolEvidence(
     toolCalls: AgenticToolCall[],
     contextText: string,
     queryText: string,
@@ -167,7 +167,7 @@ export async function synthesizeWithToolEvidence(
 }
 
 /** Execute requested tools concurrently with an 8s per-tool timeout. */
-export async function executeAgenticTools(
+async function executeAgenticTools(
     toolCalls: AgenticToolCall[],
     start: number,
     budgetMs: number

@@ -6,8 +6,7 @@ import {
     logSearch as persistSearch,
 } from '@/services/knowledge/searchLog';
 import { categorizeQuery as runCategorizeQuery, runAskQuestion } from '@/services/knowledge/askPipeline';
-import { validateAndEnhanceVisuals as enhanceVisuals } from '@/services/knowledge/visuals';
-import type { AnswerVisuals, AskOptions, FinalAnswer, KnowledgeAttachment, ReasonOptions, SearchHistoryEntry, SearchStats } from '@/services/knowledge/types';
+import type { AskOptions, FinalAnswer, KnowledgeAttachment, ReasonOptions, SearchHistoryEntry, SearchStats } from '@/services/knowledge/types';
 
 export { getKnowledgeEvidenceStatus } from './knowledge/evidence';
 export type { KnowledgeEvidenceStatus, KnowledgeArticle } from './knowledge/evidence';
@@ -68,15 +67,10 @@ export class KnowledgeService {
     /**
      * Categorize a query to optimize retrieval
      * Wrapped in a 10-second timeout so a slow AI provider doesn't block the RAG pipeline.
+     * Covered by knowledgeService.test.ts (test files are not fallow entry points).
      */
+    // fallow-ignore-next-line unused-class-member
     static async categorizeQuery(queryText: string, options?: ReasonOptions): Promise<string[]> {
         return runCategorizeQuery(queryText, options);
-    }
-
-    /**
-     * Validates and enhances visual assets with runtime checks
-     */
-    static async validateAndEnhanceVisuals(visuals: AnswerVisuals, searchQuery: string): Promise<AnswerVisuals> {
-        return enhanceVisuals(visuals, searchQuery);
     }
 }

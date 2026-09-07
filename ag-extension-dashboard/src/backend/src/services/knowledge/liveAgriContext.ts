@@ -10,7 +10,7 @@ import type { MarketPrice } from '@/services/marketPriceService';
  * so unrelated queries pay no latency cost.
  */
 
-export async function fetchWeatherContext(queryCategories: string[], location?: string, crop?: string): Promise<SearchResult | null> {
+async function fetchWeatherContext(queryCategories: string[], location?: string, crop?: string): Promise<SearchResult | null> {
     if (!location) return null;
     if (queryCategories.length > 0 && !queryCategories.includes('climate_and_weather')) return null;
     try {
@@ -37,7 +37,7 @@ export async function fetchWeatherContext(queryCategories: string[], location?: 
     return null;
 }
 
-export async function fetchFAOAlertsContext(queryCategories: string[], region?: string, crop?: string): Promise<SearchResult | null> {
+async function fetchFAOAlertsContext(queryCategories: string[], region?: string, crop?: string): Promise<SearchResult | null> {
     if (!region) return null;
     if (queryCategories.length > 0 && !queryCategories.includes('pest_and_disease')) return null;
     try {
@@ -55,7 +55,7 @@ export async function fetchFAOAlertsContext(queryCategories: string[], region?: 
     return null;
 }
 
-export async function fetchNasaAgroclimateContext(queryCategories: string[], lat: number | undefined, lng: number | undefined, crop: string | undefined): Promise<SearchResult | null> {
+async function fetchNasaAgroclimateContext(queryCategories: string[], lat: number | undefined, lng: number | undefined, crop: string | undefined): Promise<SearchResult | null> {
     if (!lat || !lng) return null;
     if (queryCategories.length > 0 && !queryCategories.includes('agronomy_and_yield') && !queryCategories.includes('climate_and_weather')) return null;
     try {
@@ -79,7 +79,7 @@ export async function fetchNasaAgroclimateContext(queryCategories: string[], lat
     return null;
 }
 
-export async function fetchSoilPropertiesContext(queryCategories: string[], lat: number | undefined, lng: number | undefined, crop: string | undefined): Promise<SearchResult | null> {
+async function fetchSoilPropertiesContext(queryCategories: string[], lat: number | undefined, lng: number | undefined, crop: string | undefined): Promise<SearchResult | null> {
     if (!lat || !lng) return null;
     if (queryCategories.length > 0 && !queryCategories.includes('agronomy_and_yield') && !queryCategories.includes('climate_and_weather')) return null;
     try {
@@ -100,7 +100,7 @@ export async function fetchSoilPropertiesContext(queryCategories: string[], lat:
     return null;
 }
 
-export async function fetchMarketPricesContext(queryCategories: string[], crop: string | undefined): Promise<SearchResult | null> {
+async function fetchMarketPricesContext(queryCategories: string[], crop: string | undefined): Promise<SearchResult | null> {
     if (queryCategories.length > 0 && !queryCategories.includes('market_prices')) return null;
     try {
         const { marketPriceService } = await import('@/services/marketPriceService');

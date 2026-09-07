@@ -65,7 +65,7 @@ async function lookupDbExact(queryText: string): Promise<ExactCacheRow | null> {
     }
 }
 
-export async function checkCaches(
+async function checkCaches(
     queryText: string,
     redisKey: string
 ): Promise<FinalAnswer | null> {

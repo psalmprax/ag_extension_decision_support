@@ -9,13 +9,13 @@ import type { SearchResult } from '@/services/vectorService';
  * then a stop-word-tolerant ILIKE scan.
  */
 
-export const STOP_WORDS = new Set([
+const STOP_WORDS = new Set([
     'what', 'are', 'the', 'is', 'for', 'and', 'face', 'can', 'how', 'why', 'who',
     'does', 'did', 'with', 'from', 'into', 'about', 'tell', 'give', 'some', 'any',
     'this', 'that', 'these', 'those', 'which', 'when', 'where'
 ]);
 
-export type KeywordRow = {
+type KeywordRow = {
     id: string;
     content: string;
     title: unknown;
@@ -28,6 +28,8 @@ export type KeywordRow = {
 
 export type KeywordFilters = { category?: string; crop?: string };
 
+// Directly unit-tested in vectorHelpers.test.ts (test files are not entry points).
+// fallow-ignore-next-line unused-export
 export function extractKeywordTerms(normalizedQuery: string): string[] {
     return normalizedQuery
         .replace(/[^a-zA-Z0-9\s]/g, ' ')
@@ -36,6 +38,8 @@ export function extractKeywordTerms(normalizedQuery: string): string[] {
         .filter(word => word.length > 2 && !STOP_WORDS.has(word.toLowerCase()));
 }
 
+// Directly unit-tested in vectorHelpers.test.ts (test files are not entry points).
+// fallow-ignore-next-line unused-export
 export function applyKeywordFilters(
     params: Array<string | number>,
     where: string[],
@@ -51,6 +55,8 @@ export function applyKeywordFilters(
     }
 }
 
+// Directly unit-tested in vectorHelpers.test.ts (test files are not entry points).
+// fallow-ignore-next-line unused-export
 export function mapKeywordRows(rows: unknown[]): SearchResult[] {
     return (rows as KeywordRow[]).map((row) => ({
         id: row.id,
@@ -66,6 +72,8 @@ export function mapKeywordRows(rows: unknown[]): SearchResult[] {
     }));
 }
 
+// Directly unit-tested in vectorHelpers.test.ts (test files are not entry points).
+// fallow-ignore-next-line unused-export
 export async function searchByTsQuery(
     tsQuery: string,
     limit: number,

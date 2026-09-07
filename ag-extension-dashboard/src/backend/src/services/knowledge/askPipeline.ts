@@ -21,7 +21,7 @@ import type { AskOptions, FinalAnswer, KnowledgeAttachment, ReasonOptions } from
  * extractive fallback. Pure orchestration; domain logic lives in siblings.
  */
 
-export async function resolveAggregatedContext(
+async function resolveAggregatedContext(
     queryText: string,
     queryCategories: string[],
     initialContextResults: SearchResult[],
@@ -45,7 +45,7 @@ export async function resolveAggregatedContext(
     return { contextResults, contextText };
 }
 
-export function cacheAndLogResponse(userId: string, queryText: string, attachments: KnowledgeAttachment[] | undefined, redisKey: string, queryCategories: string[], response: FinalAnswer): void {
+function cacheAndLogResponse(userId: string, queryText: string, attachments: KnowledgeAttachment[] | undefined, redisKey: string, queryCategories: string[], response: FinalAnswer): void {
     const isAnswerValid = response.answer &&
         typeof response.answer === 'string' &&
         response.answer.length >= 200 &&
@@ -67,7 +67,7 @@ export function cacheAndLogResponse(userId: string, queryText: string, attachmen
     ).catch(logError => logger.error('Background logging failed:', logError));
 }
 
-export function handleAskQuestionFallback(userId: string, queryText: string, contextResults: SearchResult[], error: unknown): FinalAnswer {
+function handleAskQuestionFallback(userId: string, queryText: string, contextResults: SearchResult[], error: unknown): FinalAnswer {
     logger.error('RAG analysis failed:', error);
 
     if (contextResults.length > 0) {
@@ -106,7 +106,7 @@ export function handleAskQuestionFallback(userId: string, queryText: string, con
 }
 
 /** Post-process, attach context, cache-and-log, and return the final answer payload. */
-export async function finalizeAnswer(
+async function finalizeAnswer(
     userId: string,
     queryText: string,
     redisKey: string,

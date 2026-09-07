@@ -32,14 +32,14 @@ interface MutableContextData {
 
 const CROP_KEYWORDS = ['maize', 'cassava', 'beans', 'rice', 'banana', 'plantain', 'cocoa', 'coffee', 'yam', 'cowpea', 'soybean', 'groundnut', 'sorghum', 'millet', 'vegetables', 'tomato', 'potato', 'wheat', 'barley', 'oats', 'apples', 'cherries', 'blueberries'];
 
-export function assignUserRegion(userResult: { rows: UserRegionRow[] }, finalData: MutableContextData): void {
+function assignUserRegion(userResult: { rows: UserRegionRow[] }, finalData: MutableContextData): void {
     if (userResult.rows.length > 0 && userResult.rows[0].region) {
         finalData.finalRegion = userResult.rows[0].region;
         finalData.finalLocation = userResult.rows[0].region;
     }
 }
 
-export function assignFarmerData(farmersResult: { rows: FarmerContextRow[] }, finalData: MutableContextData): void {
+function assignFarmerData(farmersResult: { rows: FarmerContextRow[] }, finalData: MutableContextData): void {
     if (farmersResult.rows.length === 0) return;
 
     const firstFarmer = farmersResult.rows[0];
@@ -57,7 +57,7 @@ export function assignFarmerData(farmersResult: { rows: FarmerContextRow[] }, fi
     }
 }
 
-export async function fetchUserAndFarmerContext(userId: string, finalData: MutableContextData): Promise<void> {
+async function fetchUserAndFarmerContext(userId: string, finalData: MutableContextData): Promise<void> {
     try {
         const [userResult, farmersResult] = await Promise.all([
             query<UserRegionRow>('SELECT region FROM users WHERE id = $1', [userId]),

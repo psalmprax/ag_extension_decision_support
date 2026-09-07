@@ -9,7 +9,7 @@ export const METADATA_LABELS = new Set([
     'by', 'reference', 'references', 'link', 'primary source reference'
 ]);
 
-export const PRESERVED_ACRONYMS = new Set([
+const PRESERVED_ACRONYMS = new Set([
     'FAO', 'USDA', 'NRCS', 'GPS', 'IPM', 'NGO', 'EU', 'US', 'USA', 'USAID',
     'CGIAR', 'IITA', 'EIL', 'PPE', 'PHI', 'DTM', 'NPK', 'AI', 'RAG', 'PWA',
     'SMS', 'IVR', 'URI', 'URL', 'ID', 'KPI', 'CO2', 'PH', 'IT', 'GIS'
@@ -28,7 +28,7 @@ export function toSentenceCase(text: string): string {
     return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
 }
 
-export function convertAllCapsWord(word: string, isFirstWord: boolean): string {
+function convertAllCapsWord(word: string, isFirstWord: boolean): string {
     const clean = word.replace(/[^A-Za-z0-9]/g, '');
     if (PRESERVED_ACRONYMS.has(clean.toUpperCase())) {
         return word;
