@@ -65,7 +65,7 @@ export class OpenRouterProvider extends BaseAIProvider {
     try {
       await axios.post(
         `${this.baseUrl}/chat/completions`,
-        { model: 'meta-llama/llama-3.3-70b-instruct:free', messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 },
+        { model: 'minimax/minimax-m3:free', messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 },
         { headers: { Authorization: `Bearer ${this.getApiKey()}` }, timeout: 3000 }
       );
       this.recordHealthError();
@@ -93,7 +93,7 @@ export class OpenRouterProvider extends BaseAIProvider {
       throw new Error('OpenRouter API key not configured (OPENROUTER_API_KEY missing).');
     }
 
-    const model = req.model || process.env.AI_FALLBACK_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
+    const model = req.model || process.env.AI_FALLBACK_MODEL || 'minimax/minimax-m3:free';
 
     try {
       logger.info(`Routing request to OpenRouter provider (model: ${model})`);
@@ -143,7 +143,7 @@ export class OpenRouterProvider extends BaseAIProvider {
     options?: TextGenerationOptions
   ): Promise<TextGenerationResult> {
     const messages = normalizeMessages(prompt) as OpenRouterRequest['messages'];
-    const model = options?.model || process.env.AI_FALLBACK_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
+    const model = options?.model || process.env.AI_FALLBACK_MODEL || 'minimax/minimax-m3:free';
     const tools = normalizeToolDefinitions(options?.tools);
     const raw = await this.chatRaw({
       model,

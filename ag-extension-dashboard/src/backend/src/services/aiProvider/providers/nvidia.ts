@@ -66,7 +66,7 @@ export class NVIDIAProvider extends BaseAIProvider {
     try {
       await axios.post(
         `${this.baseUrl}/chat/completions`,
-        { model: 'meta/llama-3.1-8b-instruct', messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 },
+        { model: 'meta/llama-3.2-11b-vision-instruct', messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 },
         { headers: { Authorization: `Bearer ${this.getApiKey()}` }, timeout: 3000 }
       );
       this.recordHealthError();

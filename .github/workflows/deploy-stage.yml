@@ -192,7 +192,7 @@ jobs:
           AI_PRIMARY_MODEL: ${{ secrets.AI_PRIMARY_MODEL || vars.AI_PRIMARY_MODEL || 'gemini-2.5-flash' }}
           AIHUBMIX_WEB_SEARCH: ${{ secrets.AIHUBMIX_WEB_SEARCH || vars.AIHUBMIX_WEB_SEARCH || 'true' }}
           AI_FALLBACK_PROVIDER: ${{ secrets.AI_FALLBACK_PROVIDER || vars.AI_FALLBACK_PROVIDER || 'openrouter' }}
-          AI_FALLBACK_MODEL: ${{ secrets.AI_FALLBACK_MODEL || vars.AI_FALLBACK_MODEL || 'meta-llama/llama-3.3-70b-instruct:free' }}
+          AI_FALLBACK_MODEL: ${{ secrets.AI_FALLBACK_MODEL || vars.AI_FALLBACK_MODEL || 'minimax/minimax-m3:free' }}
           AI_EMBEDDINGS_PROVIDER: ${{ secrets.AI_EMBEDDINGS_PROVIDER || vars.AI_EMBEDDINGS_PROVIDER || 'aihubmix' }}
           AI_EMBEDDINGS_MODEL: ${{ secrets.AI_EMBEDDINGS_MODEL || vars.AI_EMBEDDINGS_MODEL || 'text-embedding-3-large' }}
           AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT || vars.AZURE_OPENAI_ENDPOINT }}
