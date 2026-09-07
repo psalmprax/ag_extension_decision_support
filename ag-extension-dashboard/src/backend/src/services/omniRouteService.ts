@@ -173,12 +173,12 @@ export class OmniRouteService {
     // ═════════════════════════════════════════════════════════════════════
     // --- OpenRouter Free LLM Tier ---
     // ═════════════════════════════════════════════════════════════════════
-    { providerName: 'openrouter', model: 'meta-llama/llama-3.3-70b-instruct:free', score: 92, isFree: true },
-    { providerName: 'openrouter', model: 'google/gemini-2.0-flash-exp:free', score: 91, isFree: true },
-    { providerName: 'openrouter', model: 'deepseek/deepseek-r1:free', score: 90, isFree: true },
-    { providerName: 'openrouter', model: 'google/gemini-2.0-flash-lite-preview-02-05:free', score: 89, isFree: true },
-    { providerName: 'openrouter', model: 'mistralai/mistral-7b-instruct:free', score: 85, isFree: true },
-    { providerName: 'openrouter', model: 'qwen/qwen-2-7b-instruct:free', score: 82, isFree: true },
+    { providerName: 'openrouter', model: 'nvidia/nemotron-3.5-lightning:free', score: 95, isFree: true },
+    { providerName: 'openrouter', model: 'nvidia/nemotron-3-super-120b-a12b:free', score: 94, isFree: true },
+    { providerName: 'openrouter', model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', score: 93, isFree: true },
+    { providerName: 'openrouter', model: 'minimax/minimax-m3:free', score: 92, isFree: true },
+    { providerName: 'openrouter', model: 'google/gemma-4-26b-a4b-it:free', score: 91, isFree: true },
+    { providerName: 'openrouter', model: 'poolside/laguna-s-2.1:free', score: 88, isFree: true },
 
     // ═════════════════════════════════════════════════════════════════════
     // --- Groq High-Speed Tier ---
@@ -189,8 +189,11 @@ export class OmniRouteService {
     // ═════════════════════════════════════════════════════════════════════
     // --- NVIDIA NIM Free Credits & Hugging Face ---
     // ═════════════════════════════════════════════════════════════════════
-    { providerName: 'nvidia', model: 'nvidia/llama-3.1-nemotron-70b-instruct', score: 85, isFree: true },
-    { providerName: 'nvidia', model: 'meta/llama-3.1-8b-instruct', score: 82, isFree: true },
+    { providerName: 'nvidia', model: 'nvidia/nemotron-3.5-lightning-30b-a3b', score: 96, isFree: true },
+    { providerName: 'nvidia', model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning', score: 95, isFree: true },
+    { providerName: 'nvidia', model: 'nvidia/nemotron-3-super-120b-a12b', score: 94, isFree: true },
+    { providerName: 'nvidia', model: 'minimaxai/minimax-m3', score: 93, isFree: true },
+    { providerName: 'nvidia', model: 'meta/llama-3.2-11b-vision-instruct', score: 90, isFree: true },
     { providerName: 'huggingface', model: 'mistralai/Mistral-7B-Instruct-v0.3', score: 83, isFree: true },
     { providerName: 'huggingface', model: 'google/gemma-2-9b-it', score: 80, isFree: true },
 

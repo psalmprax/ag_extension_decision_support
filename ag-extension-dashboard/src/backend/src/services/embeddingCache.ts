@@ -69,14 +69,19 @@ export async function getEmbedding(text: string): Promise<number[]> {
         return cached.embedding;
     }
 
-    const result = await AIRouter.routeRequest('embed', {
-        text,
-        options: {
-            preferredProvider: config.ai.embeddings.provider,
-            model: config.ai.embeddings.model,
-            dimensions: EMBEDDING_DIMENSIONS,
-        },
-    });
+    const result = await Promise.race([
+        AIRouter.routeRequest('embed', {
+            text,
+            options: {
+                preferredProvider: config.ai.embeddings.provider,
+                model: config.ai.embeddings.model,
+                dimensions: EMBEDDING_DIMENSIONS,
+            },
+        }),
+        new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Embedding generation timed out after 3500ms')), 3500)
+        )
+    ]);
     const embedding: number[] = result?.embedding ?? [];
     assertEmbeddingDimensions(embedding);
 

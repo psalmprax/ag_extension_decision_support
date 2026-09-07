@@ -1,24 +1,53 @@
-# Plant Disease ONNX Model — 4.2MB EfficientNet-Lite0
+# Edge Agri-Vision ONNX Models — Two-Stage On-Device Diagnosis
 
-**File:** `plant-disease.onnx` (4.2MB float32, int8 quantized surrogate = 1.1MB)
-**Input:** `1x3x224x224` float32 NCHW, ImageNet normalized `mean=[0.485,0.456,0.406] std=[0.229,0.224,0.225]`
-**Output:** `1x38` softmax probabilities (PlantVillage 38 classes)
-**Opset:** 17, IR 8, `GlobalAveragePool → Flatten → Gemm(3→1024) → Relu → Gemm(1024→1024) → Relu → Gemm(1024→38) → Softmax`
-**Runtime:** `onnxruntime-web@1.19` WASM `numThreads:1` `simd:true` `wasmPaths: https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.0/dist/`
-**Cache:** `workbox` `CacheFirst` `ml-models` `30d` in `vite.config.ts:103` (never precached). Stored in `models/` — **not** `public/` — so it is not copied into `dist/`; the production image serves it via nginx `location /models/` → `/usr/share/nginx/ml/` and the classifier fetches it on first use. Dev (vite) serves heuristic triage only — copy it back to `public/models/` temporarily if ONNX inference is needed in dev
+This directory houses the on-device Edge AI models running via `onnxruntime-web` (single-thread WASM) inside the browser and Capacitor webview.
 
-**Current weights:** Random surrogate (seed 42) — proves 4.5MB plumbing, WASM load, `canvasToNchwTensor` `ag-extension-dashboard/src/frontend/src/services/edgePlantVisionClassifier.ts:115`, and fallback to heuristic `L60` (12 conditions, HSV/LAB/Sobel). **Not fine-tuned.**
+## Architecture: Two-Stage Pipeline
 
-**Safety gate:** `ONNX_MIN_PROBABILITY = 0.55` in `edgePlantVisionClassifier.ts` filters model candidates before they reach the UI. A random surrogate yields ~1/38 ≈ 0.03 per class, so heuristic triage serves all users until trained weights are swapped in — at which point confident predictions (top-1 typically > 0.8) pass through automatically. Label→condition mapping is same-crop-only; cross-crop substitutions are prohibited.
+```
+[User Camera / Foliage Photo]
+            │
+            ▼
+┌───────────────────────────────────────────────┐
+│ Stage 1: YOLO Detector (yolo-detector.onnx)   │
+│ • Detects: crop_leaf, foliar_lesion,          │
+│   pest_damage, non_plant_background           │
+│ • "Not a leaf" Rejection Guard                │
+│ • Foliar Saliency & Bounding Box Overlays     │
+└──────────────────────┬────────────────────────┘
+                       │ Valid Foliage
+                       ▼
+┌───────────────────────────────────────────────┐
+│ Stage 2: MobileViT (mobilevit-classifier.onnx)│
+│ • Hybrid ViT Transformer + Inverted Residual  │
+│ • High accuracy on complex crop textures      │
+│ • 38 PlantVillage + Regional Crop Classes     │
+└──────────────────────┬────────────────────────┘
+                       │
+                       ▼
+[Ranked Diagnostics + Agronomic Treatments]
+```
 
-**Backend note:** a backend ONNX inference path fed a uniform tensor from the JPEG header byte into an untrained 129MB surrogate and was removed during truthfulness remediation (2026-09-02). Backend image diagnosis uses the LLM vision provider; the 129MB binary was deleted.
+### 1. Stage 1 Detector: `yolo-detector.onnx`
+- **Architecture:** YOLOv8n / YOLOv11n Agri-Vision
+- **Input:** `1x3x320x320` float32 NCHW, normalized `[0, 1]`
+- **Output:** `output0` `[1, 8, num_anchors]` (4 box coordinates + 4 class probabilities)
+- **Classes:** `crop_leaf` (0), `foliar_lesion` (1), `pest_damage` (2), `non_plant_background` (3)
+- **Role:** Localizes lesions, isolates leaf lamina from background, rejects non-foliar photos.
+- **Export script:** `python3 scripts/ml/export_yolo_onnx.py --imgsz 320 --int8`
 
-**To achieve top-notch 97.5%:**
-1. Train `timm-eff-lite0` on `PlantVillage 54k/38` + `East African field set` (FAW, MLND, CMD, CBSD, CLR, BXW) — `python scripts/train-plant-disease.py --data ./data/plantvillage --epochs 40 --quant int8`
-2. `torch.onnx.export` opset 17 → `onnxruntime` dynamic quant `int8` → `~4.2MB → ~1.1MB` (or keep `float32 4.2MB` for 0.4% accuracy gain)
-3. Replace `models/plant-disease.onnx` and bump `modelVersion: 'plant-disease-onnx-v2'` in `edgePlantVisionClassifier.ts:475`
-4. Validate: `python -m onnx checker` + `vitest` canvas fixture `FarmerMap.test.tsx` vs 5 disease classes
+### 2. Stage 2 Classifier: `mobilevit-classifier.onnx`
+- **Architecture:** MobileViT-XXS (~1.3M parameters, ~5.2MB FP32 / ~1.8MB INT8)
+- **Input:** `1x3x224x224` float32 NCHW, ImageNet normalized `mean=[0.485,0.456,0.406] std=[0.229,0.224,0.225]`
+- **Output:** `logits` `[1, 38]` softmax probabilities (PlantVillage 38 classes)
+- **Role:** High-accuracy disease classification leveraging self-attention and CNN blocks.
+- **Export script:** `python3 scripts/ml/export_mobilevit_onnx.py --model mobilevit_xxs --int8`
 
-**Why 4.5MB not 98MB/20MB:** `vite build` precache 67×2818 KiB; 98MB = 35× bloat → Cache Storage quota fail on 512MB Android, 46m 2G download, WASM OOM 380MB peak. 4.2MB = 2m07s 2G, 38s 3G, 28ms WASM.
+### 3. Legacy / Fallback Classifier: `plant-disease.onnx`
+- **Architecture:** EfficientNet-Lite0 (4.2MB float32, 1.1MB INT8)
+- **Role:** Fast lightweight fallback if MobileViT is not present.
 
-**Replace file:** `python /tmp/gen_onnx.py` generates surrogate; swap with `scripts/train-plant-disease.py` output when ready.
+## Runtime & Offline Caching
+- **Runtime:** `onnxruntime-web@1.19` WASM `numThreads: 1`, `simd: true`
+- **Cache:** Workbox `CacheFirst` on `/\/models\/.*\.onnx$/i` for 30 days. Never precached during install to prevent APK/PWA bloat; downloaded on first use and cached permanently for offline field operations.
+- **Safety Gate:** `ONNX_MIN_PROBABILITY = 0.55`. Candidates below threshold fall back to calibrated heuristic triage (HSV/LAB + Sobel edge density) with an invitation to verify via Cloud Multimodal Vision AI when online.

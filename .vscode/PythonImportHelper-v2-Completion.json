@@ -3081,6 +3081,15 @@
         "documentation": {}
     },
     {
+        "label": "numpy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "numpy",
+        "description": "numpy",
+        "detail": "numpy",
+        "documentation": {}
+    },
+    {
         "label": "urllib.error",
         "kind": 6,
         "isExtraImport": true,
@@ -7725,6 +7734,42 @@
         "description": "node_modules.node-pty.deps.winpty.ship.ship",
         "peekOfCode": "BUILD_TARGETS = [\n    # {\n    #     \"name\": \"msys\",\n    #     \"path\": \"C:\\\\MinGW\\\\bin;C:\\\\MinGW\\\\msys\\\\1.0\\\\bin\",\n    #     # The parallel make.exe in the original MSYS/MinGW project hangs.\n    #     \"make_binary\": \"mingw32-make.exe\",\n    # },\n    {\n        \"name\": \"msys2-\" + dllVersion(\"C:\\\\msys32\\\\usr\\\\bin\\\\msys-2.0.dll\") + \"-ia32\",\n        \"path\": \"C:\\\\msys32\\\\mingw32\\\\bin;C:\\\\msys32\\\\usr\\\\bin\",",
         "detail": "node_modules.node-pty.deps.winpty.ship.ship",
+        "documentation": {}
+    },
+    {
+        "label": "generate_scaffold_mobilevit_onnx",
+        "kind": 2,
+        "importPath": "scripts.ml.export_mobilevit_onnx",
+        "description": "scripts.ml.export_mobilevit_onnx",
+        "peekOfCode": "def generate_scaffold_mobilevit_onnx(output_path: str):\n    \"\"\"\n    Generates a valid lightweight ONNX model scaffold matching MobileViT-XXS output format.\n    Input: [1, 3, 224, 224] float32\n    Output: [1, 38] float32 (Softmax)\n    \"\"\"\n    import onnx\n    from onnx import helper, TensorProto\n    print(f\"Generating MobileViT ONNX scaffold -> {output_path} (input: 1x3x224x224, output: 1x38)...\")\n    num_classes = 38",
+        "detail": "scripts.ml.export_mobilevit_onnx",
+        "documentation": {}
+    },
+    {
+        "label": "export_timm_mobilevit",
+        "kind": 2,
+        "importPath": "scripts.ml.export_mobilevit_onnx",
+        "description": "scripts.ml.export_mobilevit_onnx",
+        "peekOfCode": "def export_timm_mobilevit(model_name: str, checkpoint_path: str, output_path: str, int8: bool = False):\n    try:\n        import torch\n        import timm\n    except ImportError:\n        print(\"PyTorch / timm not installed. Falling back to ONNX scaffold generator.\")\n        generate_scaffold_mobilevit_onnx(output_path)\n        return\n    print(f\"Instantiating {model_name} with 38 PlantVillage disease classes...\")\n    model = timm.create_model(model_name, pretrained=checkpoint_path is None, num_classes=38)",
+        "detail": "scripts.ml.export_mobilevit_onnx",
+        "documentation": {}
+    },
+    {
+        "label": "generate_scaffold_yolo_onnx",
+        "kind": 2,
+        "importPath": "scripts.ml.export_yolo_onnx",
+        "description": "scripts.ml.export_yolo_onnx",
+        "peekOfCode": "def generate_scaffold_yolo_onnx(output_path: str, img_size: int = 320):\n    \"\"\"\n    Generates a valid lightweight ONNX model scaffold matching YOLOv8 output format.\n    Input: [1, 3, img_size, img_size] float32\n    Output: [1, 8, num_anchors] float32 (4 box coords + 4 class probabilities)\n    \"\"\"\n    import onnx\n    from onnx import helper, TensorProto\n    print(f\"Generating YOLO ONNX scaffold -> {output_path} (input: 1x3x{img_size}x{img_size})...\")\n    num_classes = 4",
+        "detail": "scripts.ml.export_yolo_onnx",
+        "documentation": {}
+    },
+    {
+        "label": "export_ultralytics",
+        "kind": 2,
+        "importPath": "scripts.ml.export_yolo_onnx",
+        "description": "scripts.ml.export_yolo_onnx",
+        "peekOfCode": "def export_ultralytics(weights_path: str, output_path: str, img_size: int = 320, int8: bool = False):\n    try:\n        from ultralytics import YOLO\n    except ImportError:\n        print(\"Ultralytics not installed. Falling back to ONNX scaffold generator.\")\n        generate_scaffold_yolo_onnx(output_path, img_size)\n        return\n    print(f\"Loading YOLO model from {weights_path}...\")\n    model = YOLO(weights_path)\n    exported = model.export(",
+        "detail": "scripts.ml.export_yolo_onnx",
         "documentation": {}
     },
     {

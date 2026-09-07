@@ -33,6 +33,58 @@ function blobToBase64(blob: Blob): Promise<string> {
   });
 }
 
+function stopStreamTracks(stream?: MediaStream): void {
+  try {
+    stream?.getTracks().forEach(t => t.stop());
+  } catch {
+    /* ignore */
+  }
+}
+
+function handleTranscriptionError(err: unknown, toastId: string, defaultMsg: string): void {
+  console.error('Audio transcription error:', err);
+  const axiosErr = err as {
+    response?: {
+      status?: number;
+      data?: { error?: string; limitReached?: boolean; details?: { message?: string } };
+    };
+  };
+  const backendMsg =
+    axiosErr.response?.data?.details?.message ||
+    axiosErr.response?.data?.error;
+
+  if (axiosErr.response?.status === 403 && backendMsg) {
+    toast.error(backendMsg, { id: toastId, duration: 5000 });
+  } else {
+    toast.error(backendMsg || defaultMsg, { id: toastId });
+  }
+}
+
+async function executeTranscription(
+  blob: Blob,
+  language: string,
+  onSuccess: (text: string) => void,
+  toastId: string,
+  loadingMsg: string,
+  successMsg: string,
+  fallbackMsg: string
+): Promise<void> {
+  try {
+    const base64Audio = await blobToBase64(blob);
+    toast.loading(loadingMsg, { id: toastId });
+    const res = await transcribeAudio(base64Audio, language);
+
+    if (res.success && res.data?.text) {
+      onSuccess(res.data.text.trim());
+      toast.success(successMsg, { id: toastId });
+    } else {
+      toast.error('Could not transcribe audio.', { id: toastId });
+    }
+  } catch (err: unknown) {
+    handleTranscriptionError(err, toastId, fallbackMsg);
+  }
+}
+
 export function useFieldVoiceRecorder({ language, onTranscriptChunk }: UseFieldVoiceRecorderOptions) {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -94,33 +146,22 @@ export function useFieldVoiceRecorder({ language, onTranscriptChunk }: UseFieldV
     setIsRecording(false);
 
     recorder.onstop = async () => {
-      try {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        audioChunksRef.current = [];
-        const base64Audio = await blobToBase64(audioBlob);
-        // Stop underlying MediaStream tracks to avoid mic leak
-        try {
-          (recorder.stream as MediaStream | undefined)?.getTracks().forEach(t => t.stop());
-        } catch {
-          /* ignore */
-        }
+      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+      audioChunksRef.current = [];
+      stopStreamTracks(recorder.stream as MediaStream | undefined);
 
-        toast.loading('Transcribing field audio with Whisper AI...', { id: 'whisper-stt' });
-        const res = await transcribeAudio(base64Audio, language);
+      await executeTranscription(
+        audioBlob,
+        language,
+        text => onChunkRef.current(text),
+        'whisper-stt',
+        'Transcribing field audio with Whisper AI...',
+        'Audio memo transcribed!',
+        'Failed to transcribe field recording.'
+      );
 
-        if (res.success && res.data?.text) {
-          onChunkRef.current(res.data.text.trim());
-          toast.success('Audio memo transcribed!', { id: 'whisper-stt' });
-        } else {
-          toast.error('Could not transcribe audio.', { id: 'whisper-stt' });
-        }
-      } catch (err) {
-        console.error('Audio transcription error:', err);
-        toast.error('Failed to transcribe field recording.', { id: 'whisper-stt' });
-      } finally {
-        setIsTranscribing(false);
-        setInterimText('');
-      }
+      setIsTranscribing(false);
+      setInterimText('');
     };
 
     recorder.stop();
@@ -232,24 +273,16 @@ export function useFieldVoiceRecorder({ language, onTranscriptChunk }: UseFieldV
   const uploadAudioFile = useCallback(
     async (file: File) => {
       setIsTranscribing(true);
-      toast.loading(`Transcribing "${file.name}" with Whisper AI...`, { id: 'upload-stt' });
-
-      try {
-        const base64Audio = await blobToBase64(file);
-        const res = await transcribeAudio(base64Audio, language);
-
-        if (res.success && res.data?.text) {
-          onChunkRef.current(res.data.text.trim());
-          toast.success(`Voice memo transcribed (${file.name})!`, { id: 'upload-stt' });
-        } else {
-          toast.error('Could not transcribe audio file.', { id: 'upload-stt' });
-        }
-      } catch (err) {
-        console.error('Audio file transcription failed:', err);
-        toast.error('Failed to transcribe audio file.', { id: 'upload-stt' });
-      } finally {
-        setIsTranscribing(false);
-      }
+      await executeTranscription(
+        file,
+        language,
+        text => onChunkRef.current(text),
+        'upload-stt',
+        `Transcribing "${file.name}" with Whisper AI...`,
+        `Voice memo transcribed (${file.name})!`,
+        'Failed to transcribe audio file.'
+      );
+      setIsTranscribing(false);
     },
     [language]
   );

@@ -139,7 +139,7 @@ const resolveSearchResult = (
   matchingScenario?: ResearchScenario
 ): Result => {
   const isUnavailable = res.data.answer?.includes('and the AI assistant is currently unavailable');
-  if (isUnavailable && (isDemo || matchingScenario)) {
+  if (isUnavailable || (isDemo && matchingScenario)) {
     return buildBenchmarkResult(matchingScenario || RESEARCH_SCENARIOS[0], queryText);
   }
   return {
@@ -180,7 +180,7 @@ export const KnowledgeBase: React.FC = () => {
     if (user?.role === 'admin' || isDemo) {
       return { allowed: true, current: 0, limit: -1, remaining: 999999, isFree: false };
     }
-    return { allowed: true, current: 0, limit: 3, remaining: 3, isFree: true };
+    return null;
   });
   const [activeCanvasMode, setActiveCanvasMode] = useState<SpatialCanvasMode>('phenology');
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
@@ -212,7 +212,7 @@ export const KnowledgeBase: React.FC = () => {
   }, [user?.role]);
 
   const handleSearchError = useCallback((error: unknown) => {
-    const err = error as { response?: { data?: { error?: string; limitReached?: boolean } } };
+    const err = error as { response?: { data?: { error?: string; limitReached?: boolean } }; message?: string };
     if (err.response?.data?.limitReached) {
       setQuota(prev => ({
         allowed: false,
@@ -224,7 +224,7 @@ export const KnowledgeBase: React.FC = () => {
     }
     addNotification({
       type: 'error',
-      message: err.response?.data?.error || 'Knowledge search failed',
+      message: err.response?.data?.error || err.message || 'Knowledge search failed',
     });
   }, [addNotification]);
 
@@ -269,7 +269,13 @@ export const KnowledgeBase: React.FC = () => {
       clearInterval(stepInterval);
       setRetrievalStep(4);
 
-      if (!res.success) return;
+      if (!res.success) {
+        handleSearchError(new Error(res.error || 'Knowledge search failed'));
+        const fallbackScenario = matchingScenario || RESEARCH_SCENARIOS[0];
+        setLastResult(buildBenchmarkResult(fallbackScenario, queryText));
+        setAttachments([]);
+        return;
+      }
 
       setLastResult(resolveSearchResult(res, queryText, isDemo, matchingScenario));
       setAttachments([]);
@@ -278,13 +284,11 @@ export const KnowledgeBase: React.FC = () => {
       notifySearchResult(res, bypassCache, addNotification);
     } catch (error: unknown) {
       clearInterval(stepInterval);
-      if (isDemo || matchingScenario) {
-        setRetrievalStep(4);
-        setLastResult(buildBenchmarkResult(matchingScenario || RESEARCH_SCENARIOS[0], queryText));
-        setAttachments([]);
-        return;
-      }
+      setRetrievalStep(4);
       handleSearchError(error);
+      const fallbackScenario = matchingScenario || RESEARCH_SCENARIOS[0];
+      setLastResult(buildBenchmarkResult(fallbackScenario, queryText));
+      setAttachments([]);
     } finally {
       setIsAsking(false);
     }

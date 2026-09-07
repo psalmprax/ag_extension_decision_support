@@ -70,10 +70,10 @@ jobs:
           npm run build
           npm run test:coverage
 
-      - name: Install Playwright chromium
+      - name: Install Playwright browsers (chromium, firefox)
         run: |
           cd ag-extension-dashboard/src/frontend
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium firefox
 
       - name: Run Playwright e2e tests
         run: |

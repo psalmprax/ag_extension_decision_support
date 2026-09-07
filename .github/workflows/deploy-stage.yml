@@ -77,10 +77,10 @@ jobs:
           npm run build
           npm run test -- --run
 
-      - name: Install Playwright chromium
+      - name: Install Playwright browsers (chromium, firefox)
         run: |
           cd ag-extension-dashboard/src/frontend
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium firefox
 
       - name: Run Playwright e2e tests
         run: |
@@ -192,7 +192,7 @@ jobs:
           AI_PRIMARY_MODEL: ${{ secrets.AI_PRIMARY_MODEL || vars.AI_PRIMARY_MODEL || 'gemini-2.5-flash' }}
           AIHUBMIX_WEB_SEARCH: ${{ secrets.AIHUBMIX_WEB_SEARCH || vars.AIHUBMIX_WEB_SEARCH || 'true' }}
           AI_FALLBACK_PROVIDER: ${{ secrets.AI_FALLBACK_PROVIDER || vars.AI_FALLBACK_PROVIDER || 'openrouter' }}
-          AI_FALLBACK_MODEL: ${{ secrets.AI_FALLBACK_MODEL || vars.AI_FALLBACK_MODEL || 'meta-llama/llama-3.3-70b-instruct:free' }}
+          AI_FALLBACK_MODEL: ${{ secrets.AI_FALLBACK_MODEL || vars.AI_FALLBACK_MODEL || 'nvidia/nemotron-3.5-lightning:free' }}
           AI_EMBEDDINGS_PROVIDER: ${{ secrets.AI_EMBEDDINGS_PROVIDER || vars.AI_EMBEDDINGS_PROVIDER || 'aihubmix' }}
           AI_EMBEDDINGS_MODEL: ${{ secrets.AI_EMBEDDINGS_MODEL || vars.AI_EMBEDDINGS_MODEL || 'text-embedding-3-large' }}
           AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT || vars.AZURE_OPENAI_ENDPOINT }}
@@ -288,6 +288,9 @@ jobs:
               echo "MCP_API_TOKEN=$MCP_RAND" >> ag-extension-dashboard/.env
               echo "✅ Added MCP_API_TOKEN to ag-extension-dashboard/.env"
             fi
+
+            # Restrict secrets permissions on disk (owner-only read/write)
+            chmod 600 ag-extension-dashboard/.env
 
             # Pre-create external networks referenced by compose (ettametta_ettametta is external: true)
             echo "=== ensure external networks exist ==="

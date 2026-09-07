@@ -66,8 +66,8 @@ export class NVIDIAProvider extends BaseAIProvider {
     try {
       await axios.post(
         `${this.baseUrl}/chat/completions`,
-        { model: 'meta/llama-3.1-8b-instruct', messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 },
-        { headers: { Authorization: `Bearer ${this.getApiKey()}` }, timeout: 3000 }
+        { model: 'nvidia/nemotron-3.5-lightning-30b-a3b', messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 },
+        { headers: { Authorization: `Bearer ${this.getApiKey()}` }, timeout: 4000 }
       );
       this.recordHealthError();
       return true;
@@ -83,7 +83,7 @@ export class NVIDIAProvider extends BaseAIProvider {
     options?: TextGenerationOptions
   ): Promise<TextGenerationResult> {
     const messages = normalizeMessages(prompt) as any[];
-    const model = options?.model || process.env.NVIDIA_PRIMARY_MODEL || 'meta/llama-3.3-70b-instruct';
+    const model = options?.model || process.env.NVIDIA_PRIMARY_MODEL || 'nvidia/nemotron-3.5-lightning-30b-a3b';
     const tools = normalizeToolDefinitions(options?.tools);
 
     const raw = await this.chatRaw({
@@ -123,7 +123,7 @@ export class NVIDIAProvider extends BaseAIProvider {
       throw new Error('NVIDIA API key not configured (NVIDIA_API_KEY missing).');
     }
 
-    const model = req.model || process.env.NVIDIA_PRIMARY_MODEL || 'meta/llama-3.3-70b-instruct';
+    const model = req.model || process.env.NVIDIA_PRIMARY_MODEL || 'nvidia/nemotron-3.5-lightning-30b-a3b';
 
     try {
       logger.info(`Routing request to NVIDIA NIM provider (model: ${model})`);

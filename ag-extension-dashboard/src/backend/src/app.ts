@@ -131,7 +131,7 @@ app.use(idempotencyMiddleware);
 
 // Request timeout middleware — AI-heavy routes (knowledge/ask, chatbot) get 120s, rest get 30s
 app.use((req, res, next) => {
-    const isAiHeavy = ['/api/knowledge', '/api/chatbot', '/api/v1/knowledge', '/api/v1/chatbot']
+    const isAiHeavy = ['/api/knowledge', '/api/chatbot', '/api/v1/knowledge', '/api/v1/chatbot', '/api/ai', '/api/v1/ai']
         .some(p => req.path.startsWith(p));
     const timeout = isAiHeavy ? 300000 : 30000;
     res.setTimeout(timeout, () => {

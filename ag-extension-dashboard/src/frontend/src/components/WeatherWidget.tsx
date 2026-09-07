@@ -33,9 +33,9 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location = 'Kenya'
   }
 
   const weather = weatherResponse?.data;
-  if (!weather) return null;
+  if (!weather || !weather.condition) return null;
 
-  const cond = weather.condition.toLowerCase();
+  const cond = String(weather.condition).toLowerCase();
 
   let WeatherIconComponent;
   if (cond.includes('sun') || cond.includes('clear')) {
