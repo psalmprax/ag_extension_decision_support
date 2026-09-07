@@ -1,6 +1,13 @@
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { getEmbedding } from '@/services/embeddingCache';
+import { normalizeAgronomicQuery } from '@/utils/agronomicQueryNormalizer';
+
+const STOP_WORDS = new Set([
+    'what', 'are', 'the', 'is', 'for', 'and', 'face', 'can', 'how', 'why', 'who',
+    'does', 'did', 'with', 'from', 'into', 'about', 'tell', 'give', 'some', 'any',
+    'this', 'that', 'these', 'those', 'which', 'when', 'where'
+]);
 
 export interface VectorDocument {
     id: string;
@@ -69,11 +76,12 @@ export class VectorService {
         filters: { category?: string; crop?: string } = {},
         minScore: number = 0.4
     ): Promise<SearchResult[]> {
-        logger.info(`Searching persistent vector store for: "${queryText}" (minScore: ${minScore})`);
+        const normalizedQuery = normalizeAgronomicQuery(queryText);
+        logger.info(`Searching persistent vector store for: "${queryText}" (normalized: "${normalizedQuery}", minScore: ${minScore})`);
 
         try {
             // Generate query embedding (uses cache for repeated queries)
-            const embedding = await getEmbedding(queryText);
+            const embedding = await getEmbedding(normalizedQuery);
 
             // Convert to pgvector format: [val1,val2,val3]
             const vector = `[${embedding.join(',')}]`;
@@ -137,26 +145,45 @@ export class VectorService {
 
         type KeywordRow = { id: string; content: string; title: unknown; category: unknown; crops: unknown[] | null; source_url: unknown; content_type: unknown; score: unknown };
 
-        const ilikeParam = `%${trimmed}%`;
-        const ilikeParams: Array<string | number> = [ilikeParam];
-        const ilikeWhere: string[] = ["(title ILIKE $1 OR content ILIKE $1)"];
+        // Extract key terms (skip stop words and short tokens)
+        const meaningfulWords = trimmed
+            .replace(/[^a-zA-Z0-9\s]/g, ' ')
+            .trim()
+            .split(/\s+/)
+            .filter(w => w.length >= 3 && !STOP_WORDS.has(w.toLowerCase()));
+
+        const params: Array<string | number> = [];
+        const conditions: string[] = [];
+
+        if (meaningfulWords.length > 0) {
+            const wordClauses = meaningfulWords.map(w => {
+                params.push(`%${w}%`);
+                const idx = params.length;
+                return `(title ILIKE $${idx} OR content ILIKE $${idx})`;
+            });
+            conditions.push(`(${wordClauses.join(' OR ')})`);
+        } else {
+            params.push(`%${trimmed}%`);
+            conditions.push(`(title ILIKE $1 OR content ILIKE $1)`);
+        }
+
         if (filters.category) {
-            ilikeParams.push(filters.category);
-            ilikeWhere.push(`category = $${ilikeParams.length}`);
+            params.push(filters.category);
+            conditions.push(`category = $${params.length}`);
         }
         if (filters.crop) {
-            ilikeParams.push(filters.crop);
-            ilikeWhere.push(`$${ilikeParams.length} = ANY(crops)`);
+            params.push(filters.crop);
+            conditions.push(`$${params.length} = ANY(crops)`);
         }
-        ilikeParams.push(limit);
+        params.push(limit);
 
         const ilikeResult = await query(`
-            SELECT id, title, content, category, crops, source_url, content_type, 1.0 as score
+            SELECT id, title, content, category, crops, source_url, content_type, 0.6 as score
             FROM knowledge_articles
-            WHERE ${ilikeWhere.join(' AND ')}
+            WHERE ${conditions.join(' AND ')}
             ORDER BY created_at DESC
-            LIMIT $${ilikeParams.length}
-        `, ilikeParams as unknown as unknown[]);
+            LIMIT $${params.length}
+        `, params as unknown as unknown[]);
 
         return (ilikeResult.rows as unknown as KeywordRow[]).map((row) => ({
             id: row.id,
@@ -168,7 +195,7 @@ export class VectorService {
                 sourceUrl: row.source_url,
                 contentType: (row.content_type as string) || 'text'
             },
-            score: 0.8
+            score: 0.6
         }));
     }
 
@@ -180,20 +207,22 @@ export class VectorService {
         limit: number = 5,
         filters: { category?: string; crop?: string } = {}
     ): Promise<SearchResult[]> {
-        logger.info(`Searching database via keyword search for: "${queryText}"`);
+        const normalizedQuery = normalizeAgronomicQuery(queryText);
+        logger.info(`Searching database via keyword search for: "${queryText}" (normalized: "${normalizedQuery}")`);
         try {
-            // Sanitize query text for tsquery - simple words split by &
-            const cleanQuery = queryText
+            // Filter stop words and punctuation for tsquery
+            const words = normalizedQuery
                 .replace(/[^a-zA-Z0-9\s]/g, ' ')
                 .trim()
                 .split(/\s+/)
-                .filter(word => word.length > 2)
-                .join(' & ');
+                .filter(word => word.length > 2 && !STOP_WORDS.has(word.toLowerCase()));
 
             type KeywordRow = { id: string; content: string; title: unknown; category: unknown; crops: unknown[] | null; source_url: unknown; content_type: unknown; score: unknown };
 
-            if (cleanQuery) {
-                const params: Array<string | number> = [cleanQuery];
+            if (words.length > 0) {
+                // Try AND first for high precision
+                const andQuery = words.join(' & ');
+                const params: Array<string | number> = [andQuery];
                 const where: string[] = ["to_tsvector('english', title || ' ' || content) @@ to_tsquery('english', $1)"];
 
                 if (filters.category) {
@@ -231,9 +260,49 @@ export class VectorService {
                         score: Number.parseFloat(String(row.score ?? 0))
                     }));
                 }
+
+                // If AND returned nothing and we have multiple words, fall back to OR for recall
+                if (words.length > 1) {
+                    const orQuery = words.join(' | ');
+                    const orParams: Array<string | number> = [orQuery];
+                    const orWhere: string[] = ["to_tsvector('english', title || ' ' || content) @@ to_tsquery('english', $1)"];
+                    if (filters.category) {
+                        orParams.push(filters.category);
+                        orWhere.push(`category = $${orParams.length}`);
+                    }
+                    if (filters.crop) {
+                        orParams.push(filters.crop);
+                        orWhere.push(`$${orParams.length} = ANY(crops)`);
+                    }
+                    orParams.push(limit);
+
+                    const orResult = await query(`
+                        SELECT id, title, content, category, crops, source_url, content_type,
+                               ts_rank_cd(to_tsvector('english', title || ' ' || content), to_tsquery('english', $1)) as score
+                        FROM knowledge_articles
+                        WHERE ${orWhere.join(' AND ')}
+                        ORDER BY score DESC
+                        LIMIT $${orParams.length}
+                    `, orParams as unknown as unknown[]);
+
+                    if (orResult.rows.length > 0) {
+                        return (orResult.rows as unknown as KeywordRow[]).map((row) => ({
+                            id: row.id,
+                            content: row.content,
+                            metadata: {
+                                title: row.title,
+                                category: row.category,
+                                crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
+                                sourceUrl: row.source_url,
+                                contentType: (row.content_type as string) || 'text'
+                            },
+                            score: Number.parseFloat(String(orResult.rows[0]?.score ?? 0.5))
+                        }));
+                    }
+                }
             }
 
-            return await this.executeIlikeFallback(queryText, limit, filters);
+            return await this.executeIlikeFallback(normalizedQuery, limit, filters);
         } catch (error) {
             logger.error('Database keyword search failed:', error);
             return [];

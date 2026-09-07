@@ -175,8 +175,8 @@ export function UserManagementPage() {
       });
     },
     onError: (err: unknown) => {
-      const e = err as { response?: { data?: { error?: string } } };
-      setFormError(e?.response?.data?.error || t('users_create_error_failed', 'Failed to create user'));
+      const e = err as { response?: { data?: { error?: string } }; message?: string };
+      setFormError(e?.response?.data?.error || e?.message || t('users_create_error_failed', 'Failed to create user'));
     },
   });
 

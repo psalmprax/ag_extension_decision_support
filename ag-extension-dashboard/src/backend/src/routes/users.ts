@@ -30,6 +30,65 @@ function extractCreateUserData(body: Record<string, unknown>) {
     return { email, password, firstName, lastName, normalizedRole, region, country, phone };
 }
 
+function isMissingColumnError(err: unknown): boolean {
+    if (!err || typeof err !== 'object') return false;
+    const e = err as { message?: string; code?: string };
+    return Boolean(e.message?.includes('country') || e.message?.includes('last_login_at') || e.code === '42703');
+}
+
+const USER_UPDATE_FIELD_MAP: Record<string, string> = {
+    first_name: 'first_name',
+    firstName: 'first_name',
+    last_name: 'last_name',
+    lastName: 'last_name',
+    region: 'region',
+    country: 'country',
+    phone: 'phone',
+    is_active: 'is_active',
+    isActive: 'is_active',
+};
+
+function extractSafeUserUpdates(body: Record<string, unknown>): Record<string, unknown> {
+    const safeUpdates: Record<string, unknown> = {};
+    for (const [key, col] of Object.entries(USER_UPDATE_FIELD_MAP)) {
+        if (body[key] !== undefined && safeUpdates[col] === undefined) {
+            safeUpdates[col] = body[key];
+        }
+    }
+    return safeUpdates;
+}
+
+async function executeUserUpdate(
+    id: string,
+    safeUpdates: Record<string, unknown>
+): Promise<UserPublicRow[]> {
+    try {
+        const updateResult = await query<UserPublicRow>(
+            `UPDATE users SET ${Object.keys(safeUpdates).map((k, i) => `${k} = $${i + 1}`).join(', ')}
+              WHERE id = $${Object.keys(safeUpdates).length + 1}
+          RETURNING id, email, first_name, last_name, role, region, country, phone, is_active,
+                    avatar_url, created_at,
+                    NULL::text AS preferred_language,
+                    last_login_at AS last_login`,
+            Object.values(safeUpdates).concat(id)
+        );
+        return updateResult.rows || [];
+    } catch (dbErr: unknown) {
+        if (!isMissingColumnError(dbErr)) throw dbErr;
+        const filteredKeys = Object.keys(safeUpdates).filter(k => k !== 'country');
+        const fallbackResult = await query<UserPublicRow>(
+            `UPDATE users SET ${filteredKeys.map((k, i) => `${k} = $${i + 1}`).join(', ')}
+              WHERE id = $${filteredKeys.length + 1}
+          RETURNING id, email, first_name, last_name, role, region, NULL::text AS country, phone, is_active,
+                    avatar_url, created_at,
+                    NULL::text AS preferred_language,
+                    NULL::timestamp AS last_login`,
+            filteredKeys.map(k => safeUpdates[k]).concat(id)
+        );
+        return fallbackResult.rows || [];
+    }
+}
+
 /**
  * GET /api/users — list users (admin-only).
  */
@@ -44,17 +103,21 @@ router.get('/', async (req: Request, res: Response) => {
         try {
             const queryRes = await query<UserPublicRow>(
                 `SELECT id, email, first_name, last_name, role, region, country, phone, is_active,
-                        preferred_language, avatar_url, last_login, created_at
+                        avatar_url, created_at,
+                        NULL::text AS preferred_language,
+                        last_login_at AS last_login
                  FROM users
                  ORDER BY created_at DESC`
             );
             rows = queryRes.rows || [];
-        } catch (dbErr: any) {
-            if (dbErr?.message?.includes('country') || dbErr?.code === '42703') {
-                logger.warn('users table lacks country column; selecting without country');
+        } catch (dbErr: unknown) {
+            if (isMissingColumnError(dbErr)) {
+                logger.warn('users table lacks country or last_login_at column; selecting fallback');
                 const fallbackRes = await query<UserPublicRow>(
-                    `SELECT id, email, first_name, last_name, role, region, phone, is_active,
-                            preferred_language, avatar_url, last_login, created_at
+                    `SELECT id, email, first_name, last_name, role, region, NULL::text AS country, phone, is_active,
+                            avatar_url, created_at,
+                            NULL::text AS preferred_language,
+                            NULL::timestamp AS last_login
                      FROM users
                      ORDER BY created_at DESC`
                 );
@@ -80,21 +143,30 @@ router.get('/:id', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'User id is required' });
         }
 
+        const pool = getPool();
+        if (!pool) {
+            return res.status(503).json({ success: false, error: 'Database unavailable' });
+        }
+
         let rows: UserPublicRow[] = [];
         try {
             const queryRes = await query<UserPublicRow>(
                 `SELECT id, email, first_name, last_name, role, region, country, phone, is_active,
-                        preferred_language, avatar_url, last_login, created_at
+                        avatar_url, created_at,
+                        NULL::text AS preferred_language,
+                        last_login_at AS last_login
                  FROM users WHERE id = $1`,
                 [id]
             );
             rows = queryRes.rows || [];
-        } catch (dbErr: any) {
-            if (dbErr?.message?.includes('country') || dbErr?.code === '42703') {
-                logger.warn('users table lacks country column; selecting without country');
+        } catch (dbErr: unknown) {
+            if (isMissingColumnError(dbErr)) {
+                logger.warn('users table lacks country or last_login_at column; selecting fallback');
                 const fallbackRes = await query<UserPublicRow>(
-                    `SELECT id, email, first_name, last_name, role, region, phone, is_active,
-                            preferred_language, avatar_url, last_login, created_at
+                    `SELECT id, email, first_name, last_name, role, region, NULL::text AS country, phone, is_active,
+                            avatar_url, created_at,
+                            NULL::text AS preferred_language,
+                            NULL::timestamp AS last_login
                      FROM users WHERE id = $1`,
                     [id]
                 );
@@ -121,6 +193,11 @@ router.get('/:id', async (req: Request, res: Response) => {
  */
 router.post('/', async (req: Request, res: Response) => {
     try {
+        const pool = getPool();
+        if (!pool) {
+            return res.status(503).json({ success: false, error: 'Database unavailable' });
+        }
+
         const data = extractCreateUserData((req.body || {}) as Record<string, unknown>);
 
         if (!data.email || !data.password || !data.firstName || !data.lastName) {
@@ -139,19 +216,23 @@ router.post('/', async (req: Request, res: Response) => {
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
                  ON CONFLICT (email) DO NOTHING
                  RETURNING id, email, first_name, last_name, role, region, country, phone, is_active,
-                           preferred_language, avatar_url, last_login`,
+                           avatar_url, created_at,
+                           NULL::text AS preferred_language,
+                           NULL::timestamp AS last_login`,
                 [data.email, password_hash, data.firstName, data.lastName, data.normalizedRole, data.region, data.country, data.phone]
             );
             rows = insertResult.rows || [];
-        } catch (dbErr: any) {
-            if (dbErr?.message?.includes('country') || dbErr?.code === '42703') {
+        } catch (dbErr: unknown) {
+            if (isMissingColumnError(dbErr)) {
                 logger.warn('users table lacks country column; inserting without country');
                 const fallbackResult = await query<UserPublicRow>(
                     `INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, is_active)
                      VALUES ($1, $2, $3, $4, $5, $6, $7, true)
                      ON CONFLICT (email) DO NOTHING
-                     RETURNING id, email, first_name, last_name, role, region, phone, is_active,
-                               preferred_language, avatar_url, last_login`,
+                     RETURNING id, email, first_name, last_name, role, region, NULL::text AS country, phone, is_active,
+                               avatar_url, created_at,
+                               NULL::text AS preferred_language,
+                               NULL::timestamp AS last_login`,
                     [data.email, password_hash, data.firstName, data.lastName, data.normalizedRole, data.region, data.phone]
                 );
                 rows = fallbackResult.rows || [];
@@ -182,41 +263,20 @@ router.put('/:id', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'User id is required' });
         }
 
-        const updates = (req.body || {}) as Record<string, unknown>;
-
-        const fieldMap: Record<string, string> = {
-            first_name: 'first_name',
-            firstName: 'first_name',
-            last_name: 'last_name',
-            lastName: 'last_name',
-            region: 'region',
-            country: 'country',
-            phone: 'phone',
-            is_active: 'is_active',
-            isActive: 'is_active',
-            preferred_language: 'preferred_language',
-            preferredLanguage: 'preferred_language',
-        };
-
-        const safeUpdates: Record<string, unknown> = {};
-        for (const [key, col] of Object.entries(fieldMap)) {
-            if (updates[key] !== undefined && safeUpdates[col] === undefined) {
-                safeUpdates[col] = updates[key];
-            }
+        const pool = getPool();
+        if (!pool) {
+            return res.status(503).json({ success: false, error: 'Database unavailable' });
         }
+
+        const updates = (req.body || {}) as Record<string, unknown>;
+        const safeUpdates = extractSafeUserUpdates(updates);
         if (Object.keys(safeUpdates).length === 0) {
             return res.status(400).json({ success: false, error: 'No valid updates supplied' });
         }
 
         safeUpdates.updated_at = new Date();
 
-        const { rows } = await query<UserPublicRow>(
-            `UPDATE users SET ${Object.keys(safeUpdates).map((k, i) => `${k} = $${i + 1}`).join(', ')}
-              WHERE id = $${Object.keys(safeUpdates).length + 1}
-          RETURNING id, email, first_name, last_name, role, region, country, phone, is_active,
-                    preferred_language, avatar_url, last_login`,
-            Object.values(safeUpdates).concat(id)
-        );
+        const rows = await executeUserUpdate(id, safeUpdates);
 
         if (rows.length === 0) {
             return res.status(404).json({ success: false, error: 'User not found' });
@@ -238,6 +298,11 @@ router.delete('/:id', async (req: Request, res: Response) => {
         const id = req.params.id;
         if (!id) {
             return res.status(400).json({ success: false, error: 'User id is required' });
+        }
+
+        const pool = getPool();
+        if (!pool) {
+            return res.status(503).json({ success: false, error: 'Database unavailable' });
         }
 
         const { rows } = await query<CountRow>(
@@ -264,6 +329,11 @@ router.get('/role/:role', async (req: Request, res: Response) => {
         const role = req.params.role;
         if (!role) {
             return res.status(400).json({ success: false, error: 'role is required' });
+        }
+
+        const pool = getPool();
+        if (!pool) {
+            return res.status(503).json({ success: false, error: 'Database unavailable' });
         }
 
         const { rows } = await query<UserRow>(
