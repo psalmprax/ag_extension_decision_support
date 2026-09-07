@@ -1157,6 +1157,38 @@ Agronomic Decision Support Protocol (Phase 2):
         return null;
     }
 
+    private static resolveChunkTitle(result: SearchResult, idx: number): string {
+        const rawTitle = typeof result.metadata?.title === 'string' && result.metadata.title
+            ? result.metadata.title
+            : `Source ${idx + 1}`;
+        return this.convertAllCapsLine(rawTitle);
+    }
+
+    private static collectInsightForParagraph(trimmed: string, resultId: string | undefined, keyBulletPoints: string[]): void {
+        if (keyBulletPoints.length >= 8) return;
+        const insight = this.parseInsightFromLine(trimmed);
+        if (!insight) return;
+        if (keyBulletPoints.includes(insight)) return;
+        if (resultId?.startsWith('web-') && !isAgronomicContent(insight)) return;
+        keyBulletPoints.push(insight);
+    }
+
+    private static processChunkParagraph(
+        paragraph: string,
+        resultId: string | undefined,
+        seenParagraphs: Set<string>,
+        cleanSourceParagraphs: string[],
+        keyBulletPoints: string[]
+    ): void {
+        const trimmed = paragraph.trim();
+        if (trimmed.length < 30) return;
+        const norm = trimmed.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 100);
+        if (seenParagraphs.has(norm)) return;
+        seenParagraphs.add(norm);
+        cleanSourceParagraphs.push(trimmed.replace(/^#{1,6}\s+/, '').trim());
+        this.collectInsightForParagraph(trimmed, resultId, keyBulletPoints);
+    }
+
     private static extractInsightsFromChunk(
         result: SearchResult,
         idx: number,
@@ -1165,33 +1197,11 @@ Agronomic Decision Support Protocol (Phase 2):
         structuredExcerpts: string[]
     ) {
         const sanitized = this.sanitizeContextText(result.content);
-        const rawTitle = (typeof result.metadata?.title === 'string' && result.metadata.title)
-            ? result.metadata.title
-            : `Source ${idx + 1}`;
-        const title = this.convertAllCapsLine(rawTitle);
-        const paragraphs = sanitized.split(/\n\n+/);
+        const title = this.resolveChunkTitle(result, idx);
         const cleanSourceParagraphs: string[] = [];
 
-        for (const p of paragraphs) {
-            const trimmed = p.trim();
-            if (trimmed.length < 30) continue;
-
-            const norm = trimmed.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 100);
-            if (seenParagraphs.has(norm)) continue;
-            seenParagraphs.add(norm);
-
-            const cleanBodyParagraph = trimmed.replace(/^#{1,6}\s+/, '').trim();
-            cleanSourceParagraphs.push(cleanBodyParagraph);
-
-            if (keyBulletPoints.length < 8) {
-                const insight = this.parseInsightFromLine(trimmed);
-                if (insight && !keyBulletPoints.includes(insight)) {
-                    const isLocal = !result.id?.startsWith('web-');
-                    if (isLocal || isAgronomicContent(insight)) {
-                        keyBulletPoints.push(insight);
-                    }
-                }
-            }
+        for (const p of sanitized.split(/\n\n+/)) {
+            this.processChunkParagraph(p, result.id, seenParagraphs, cleanSourceParagraphs, keyBulletPoints);
         }
 
         if (cleanSourceParagraphs.length > 0) {
@@ -1200,72 +1210,97 @@ Agronomic Decision Support Protocol (Phase 2):
         }
     }
 
-    private static buildExtractiveAnswer(queryText: string, contextResults: SearchResult[]): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
-        const validResults = contextResults.filter(r => {
-            const isLocal = !r.id?.startsWith('web-');
-            return isLocal || isAgronomicContent(`${r.metadata?.title || ''} ${r.content}`);
+    private static filterAgronomicResults(contextResults: SearchResult[]): SearchResult[] {
+        return contextResults.filter(r => {
+            if (!r.id?.startsWith('web-')) return true;
+            return isAgronomicContent(`${r.metadata?.title || ''} ${r.content}`);
         });
+    }
 
-        if (validResults.length === 0) {
-            return {
-                reasoning: 'No verified agricultural context found in knowledge base and AI provider did not complete in time.',
-                answer: `I wasn't able to find verified agronomic information about **"${queryText}"** in the knowledge base. Please try rephrasing your question with specific crop, soil, pest, or farm management terms.`,
-                confidence: 0.1,
-                visuals: {
-                    kpis: [
-                        { label: 'Source Matches', value: '0', status: 'warning' as const },
-                        { label: 'Status', value: 'No Agricultural Match', status: 'warning' as const }
-                    ],
-                    charts: [],
-                    images: [],
-                    videos: []
-                },
-                contextUsed: [],
-                cached: false
-            };
-        }
+    private static buildEmptyExtractiveAnswer(queryText: string): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
+        return {
+            reasoning: 'No verified agricultural context found in knowledge base and AI provider did not complete in time.',
+            answer: `I wasn't able to find verified agronomic information about **"${queryText}"** in the knowledge base. Please try rephrasing your question with specific crop, soil, pest, or farm management terms.`,
+            confidence: 0.1,
+            visuals: {
+                kpis: [
+                    { label: 'Source Matches', value: '0', status: 'warning' as const },
+                    { label: 'Status', value: 'No Agricultural Match', status: 'warning' as const }
+                ],
+                charts: [],
+                images: [],
+                videos: []
+            },
+            contextUsed: [],
+            cached: false
+        };
+    }
 
-        const primary = validResults[0];
-        const rawSourceTitle = (typeof primary.metadata?.title === 'string' && primary.metadata.title)
+    private static resolvePrimarySource(primary: SearchResult): { sourceTitle: string; sourceUrl: string } {
+        const rawTitle = typeof primary.metadata?.title === 'string' && primary.metadata.title
             ? primary.metadata.title
             : `${(primary.metadata?.crop as string) || 'Agricultural'} ${(primary.metadata?.category as string) || 'Knowledge'}`;
-        const sourceTitle = this.convertAllCapsLine(rawSourceTitle);
-        const sourceUrl = primary.metadata?.sourceUrl ? ` (${primary.metadata.sourceUrl})` : '';
+        return {
+            sourceTitle: this.convertAllCapsLine(rawTitle),
+            sourceUrl: primary.metadata?.sourceUrl ? ` (${primary.metadata.sourceUrl})` : ''
+        };
+    }
 
-        // Extract and deduplicate key paragraphs across all chunks
+    private static collectChunkInsights(validResults: SearchResult[]): { keyBulletPoints: string[]; structuredExcerpts: string[] } {
         const seenParagraphs = new Set<string>();
         const keyBulletPoints: string[] = [];
         const structuredExcerpts: string[] = [];
-
         for (const [idx, result] of validResults.slice(0, 4).entries()) {
             this.extractInsightsFromChunk(result, idx, seenParagraphs, keyBulletPoints, structuredExcerpts);
         }
+        return { keyBulletPoints, structuredExcerpts };
+    }
 
-        // Build clean synthesized markdown sections
-        const sections: string[] = [
-            `I found source-backed guidance for: **"${queryText}"**.\n\n*Primary source reference: ${sourceTitle}${sourceUrl}*`,
-        ];
-
-        const proceduralNote = this.getProceduralGuidanceNote(queryText);
-        if (proceduralNote) {
-            sections.push(proceduralNote);
-        }
-
+    private static appendInsightSections(sections: string[], keyBulletPoints: string[], structuredExcerpts: string[]): void {
         if (keyBulletPoints.length > 0) {
             sections.push(`### Key identified insights and takeaways\n\n${keyBulletPoints.join('\n\n')}`);
         }
-
         if (structuredExcerpts.length > 0) {
             sections.push(`### Verified context and field reference\n\n${structuredExcerpts.join('\n\n')}`);
         }
+    }
 
+    private static appendSourceNote(sections: string[], validResults: SearchResult[]): void {
         const hasWebSources = validResults.some(r => r.id?.startsWith('web-'));
-        if (hasWebSources) {
-            sections.push(`*Note: The recommendations above are compiled from external agricultural research sources and should be verified with a local extension officer.*`);
-        } else {
-            sections.push(`*Note: The recommendations above are extracted directly from the local verified agricultural knowledge base.*`);
+        sections.push(hasWebSources
+            ? `*Note: The recommendations above are compiled from external agricultural research sources and should be verified with a local extension officer.*`
+            : `*Note: The recommendations above are extracted directly from the local verified agricultural knowledge base.*`);
+    }
+
+    private static buildExtractiveSections(
+        queryText: string,
+        sourceTitle: string,
+        sourceUrl: string,
+        keyBulletPoints: string[],
+        structuredExcerpts: string[],
+        validResults: SearchResult[]
+    ): string[] {
+        const sections: string[] = [
+            `I found source-backed guidance for: **"${queryText}"**.\n\n*Primary source reference: ${sourceTitle}${sourceUrl}*`,
+        ];
+        const proceduralNote = this.getProceduralGuidanceNote(queryText);
+        if (proceduralNote) sections.push(proceduralNote);
+        this.appendInsightSections(sections, keyBulletPoints, structuredExcerpts);
+        this.appendSourceNote(sections, validResults);
+        return sections;
+    }
+
+    private static buildExtractiveAnswer(queryText: string, contextResults: SearchResult[]): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
+        const validResults = this.filterAgronomicResults(contextResults);
+
+        if (validResults.length === 0) {
+            return this.buildEmptyExtractiveAnswer(queryText);
         }
 
+        const primary = validResults[0];
+        const { sourceTitle, sourceUrl } = this.resolvePrimarySource(primary);
+        const { keyBulletPoints, structuredExcerpts } = this.collectChunkInsights(validResults);
+        const sections = this.buildExtractiveSections(queryText, sourceTitle, sourceUrl, keyBulletPoints, structuredExcerpts, validResults);
         const answer = this.normalizeAllCapsText(sections.join('\n\n---\n\n'));
 
         return {

@@ -199,6 +199,65 @@ export class VectorService {
         }));
     }
 
+    private static extractKeywordTerms(normalizedQuery: string): string[] {
+        return normalizedQuery
+            .replace(/[^a-zA-Z0-9\s]/g, ' ')
+            .trim()
+            .split(/\s+/)
+            .filter(word => word.length > 2 && !STOP_WORDS.has(word.toLowerCase()));
+    }
+
+    private static applyKeywordFilters(
+        params: Array<string | number>,
+        where: string[],
+        filters: { category?: string; crop?: string }
+    ): void {
+        if (filters.category) {
+            params.push(filters.category);
+            where.push(`category = $${params.length}`);
+        }
+        if (filters.crop) {
+            params.push(filters.crop);
+            where.push(`$${params.length} = ANY(crops)`);
+        }
+    }
+
+    private static mapKeywordRows(rows: unknown[]): SearchResult[] {
+        type KeywordRow = { id: string; content: string; title: unknown; category: unknown; crops: unknown[] | null; source_url: unknown; content_type: unknown; score: unknown };
+        return (rows as KeywordRow[]).map((row) => ({
+            id: row.id,
+            content: row.content,
+            metadata: {
+                title: row.title,
+                category: row.category,
+                crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
+                sourceUrl: row.source_url,
+                contentType: (row.content_type as string) || 'text'
+            },
+            score: Number.parseFloat(String(row.score ?? 0))
+        }));
+    }
+
+    private static async searchByTsQuery(
+        tsQuery: string,
+        limit: number,
+        filters: { category?: string; crop?: string }
+    ): Promise<SearchResult[]> {
+        const params: Array<string | number> = [tsQuery];
+        const where: string[] = ["to_tsvector('english', title || ' ' || content) @@ to_tsquery('english', $1)"];
+        this.applyKeywordFilters(params, where, filters);
+        params.push(limit);
+        const result = await query(`
+            SELECT id, title, content, category, crops, source_url, content_type,
+                   ts_rank_cd(to_tsvector('english', title || ' ' || content), to_tsquery('english', $1)) as score
+            FROM knowledge_articles
+            WHERE ${where.join(' AND ')}
+            ORDER BY score DESC
+            LIMIT $${params.length}
+        `, params as unknown as unknown[]);
+        return this.mapKeywordRows(result.rows as unknown[]);
+    }
+
     /**
      * Search for knowledge articles using PostgreSQL full-text search (keyword-based)
      */
@@ -210,97 +269,20 @@ export class VectorService {
         const normalizedQuery = normalizeAgronomicQuery(queryText);
         logger.info(`Searching database via keyword search for: "${queryText}" (normalized: "${normalizedQuery}")`);
         try {
-            // Filter stop words and punctuation for tsquery
-            const words = normalizedQuery
-                .replace(/[^a-zA-Z0-9\s]/g, ' ')
-                .trim()
-                .split(/\s+/)
-                .filter(word => word.length > 2 && !STOP_WORDS.has(word.toLowerCase()));
-
-            type KeywordRow = { id: string; content: string; title: unknown; category: unknown; crops: unknown[] | null; source_url: unknown; content_type: unknown; score: unknown };
-
-            if (words.length > 0) {
-                // Try AND first for high precision
-                const andQuery = words.join(' & ');
-                const params: Array<string | number> = [andQuery];
-                const where: string[] = ["to_tsvector('english', title || ' ' || content) @@ to_tsquery('english', $1)"];
-
-                if (filters.category) {
-                    params.push(filters.category);
-                    where.push(`category = $${params.length}`);
-                }
-
-                if (filters.crop) {
-                    params.push(filters.crop);
-                    where.push(`$${params.length} = ANY(crops)`);
-                }
-
-                params.push(limit);
-
-                const result = await query(`
-                    SELECT id, title, content, category, crops, source_url, content_type,
-                           ts_rank_cd(to_tsvector('english', title || ' ' || content), to_tsquery('english', $1)) as score
-                    FROM knowledge_articles
-                    WHERE ${where.join(' AND ')}
-                    ORDER BY score DESC
-                    LIMIT $${params.length}
-                `, params as unknown as unknown[]);
-
-                if (result.rows.length > 0) {
-                    return (result.rows as unknown as KeywordRow[]).map((row) => ({
-                        id: row.id,
-                        content: row.content,
-                        metadata: {
-                            title: row.title,
-                            category: row.category,
-                            crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
-                            sourceUrl: row.source_url,
-                            contentType: (row.content_type as string) || 'text'
-                        },
-                        score: Number.parseFloat(String(row.score ?? 0))
-                    }));
-                }
-
-                // If AND returned nothing and we have multiple words, fall back to OR for recall
-                if (words.length > 1) {
-                    const orQuery = words.join(' | ');
-                    const orParams: Array<string | number> = [orQuery];
-                    const orWhere: string[] = ["to_tsvector('english', title || ' ' || content) @@ to_tsquery('english', $1)"];
-                    if (filters.category) {
-                        orParams.push(filters.category);
-                        orWhere.push(`category = $${orParams.length}`);
-                    }
-                    if (filters.crop) {
-                        orParams.push(filters.crop);
-                        orWhere.push(`$${orParams.length} = ANY(crops)`);
-                    }
-                    orParams.push(limit);
-
-                    const orResult = await query(`
-                        SELECT id, title, content, category, crops, source_url, content_type,
-                               ts_rank_cd(to_tsvector('english', title || ' ' || content), to_tsquery('english', $1)) as score
-                        FROM knowledge_articles
-                        WHERE ${orWhere.join(' AND ')}
-                        ORDER BY score DESC
-                        LIMIT $${orParams.length}
-                    `, orParams as unknown as unknown[]);
-
-                    if (orResult.rows.length > 0) {
-                        return (orResult.rows as unknown as KeywordRow[]).map((row) => ({
-                            id: row.id,
-                            content: row.content,
-                            metadata: {
-                                title: row.title,
-                                category: row.category,
-                                crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
-                                sourceUrl: row.source_url,
-                                contentType: (row.content_type as string) || 'text'
-                            },
-                            score: Number.parseFloat(String(orResult.rows[0]?.score ?? 0.5))
-                        }));
-                    }
-                }
+            const words = this.extractKeywordTerms(normalizedQuery);
+            if (words.length === 0) {
+                return await this.executeIlikeFallback(normalizedQuery, limit, filters);
             }
+
+            const andResults = await this.searchByTsQuery(words.join(' & '), limit, filters);
+            if (andResults.length > 0) return andResults;
+
+            if (words.length === 1) {
+                return await this.executeIlikeFallback(normalizedQuery, limit, filters);
+            }
+
+            const orResults = await this.searchByTsQuery(words.join(' | '), limit, filters);
+            if (orResults.length > 0) return orResults;
 
             return await this.executeIlikeFallback(normalizedQuery, limit, filters);
         } catch (error) {
