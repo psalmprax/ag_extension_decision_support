@@ -63,6 +63,8 @@ export class AIProviderFactory {
         return this.getProvider(this.fallbackProvider);
     }
 
+    private static healthCache: Map<AIProviderType, { isHealthy: boolean; expiresAt: number }> = new Map();
+
     static async getWithFallback(
         operation: (provider: AICapability) => Promise<any>,
         preferredProvider?: AIProviderType,
@@ -81,12 +83,12 @@ export class AIProviderFactory {
             'openai',
             'anthropic',
             'freebuff',
-        ]));
+        ])).filter((p): p is AIProviderType => Boolean(p));
 
         // If a caller (e.g. free-tier routing) prefers a specific provider,
         // put it at the front of the chain so it's tried first.
         if (preferredProvider) {
-            allProviders = Array.from(new Set([preferredProvider, ...allProviders]));
+            allProviders = Array.from(new Set([preferredProvider, ...allProviders])).filter((p): p is AIProviderType => Boolean(p));
         }
 
         // Prioritize configured providers before unconfigured ones so requests are serviced promptly
@@ -124,7 +126,29 @@ export class AIProviderFactory {
                     continue;
                 }
 
-                const isHealthy = await provider.healthCheck();
+                const now = Date.now();
+                const cachedHealth = this.healthCache.get(providerType);
+                let isHealthy: boolean;
+
+                if (cachedHealth && now < cachedHealth.expiresAt) {
+                    isHealthy = cachedHealth.isHealthy;
+                } else {
+                    try {
+                        isHealthy = await Promise.race([
+                            provider.healthCheck(),
+                            new Promise<boolean>((_, rej) =>
+                                setTimeout(() => rej(new Error('health check timeout')), 4000)
+                            ),
+                        ]);
+                    } catch {
+                        isHealthy = false;
+                    }
+                    this.healthCache.set(providerType, {
+                        isHealthy,
+                        expiresAt: now + (isHealthy ? 120_000 : 45_000),
+                    });
+                }
+
                 if (!isHealthy) {
                     await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'error', 'provider_unhealthy');
                     logger.warn(`AI provider ${providerType} unhealthy, trying next...`);
@@ -133,9 +157,11 @@ export class AIProviderFactory {
 
                 logger.info(`Using AI provider: ${providerType}`);
                 const result = await operation(provider);
+                this.healthCache.set(providerType, { isHealthy: true, expiresAt: Date.now() + 120_000 });
                 await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'success', undefined, result);
                 return result;
             } catch (error) {
+                this.healthCache.set(providerType, { isHealthy: false, expiresAt: Date.now() + 45_000 });
                 lastError = error instanceof Error ? error : new Error(String(error));
                 await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'error', lastError.message);
                 logger.warn(`AI provider ${providerType} failed:`, error);

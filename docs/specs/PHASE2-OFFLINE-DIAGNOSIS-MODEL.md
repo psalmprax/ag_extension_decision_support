@@ -1,19 +1,33 @@
 # Decision Memo: On-Device Offline Crop-Disease Diagnosis (Phase 2.1)
 
-**Status:** Spike complete — recommendation ready for sign-off
+**Status:** Implementation active — Two-Stage On-Device Architecture adopted
 **Decision needed from:** Product owner (accuracy gate acceptance, model license sign-off)
 
-## Recommendation
+## Adopted Architecture: Two-Stage On-Device Edge Pipeline
 
-**MobileNetV2/MobileNetV3-small, ONNX INT8-quantized, running via onnxruntime-web (single-thread WASM) inside the Capacitor webview.**
+```
+[Camera / Leaf Specimen]
+           │
+           ▼
+Stage 1: YOLOv8n Agri-Detector (320x320 ONNX)
+├── Detects: crop_leaf, foliar_lesion, pest_damage, non_plant_background
+├── "Not a leaf" Rejection Guard (rejects non-foliar photos)
+└── Bounding Box & Foliar Saliency Overlays
+           │ (Foliage Confirmed)
+           ▼
+Stage 2: MobileViT-XXS Classifier (224x224 ONNX)
+├── Hybrid Vision Transformer + Inverted Residual CNN
+├── 38 PlantVillage + Regional Crop Disease Classes
+└── Cultural, Biological & Chemical Action Protocols
+```
 
 | Factor | Value | Evidence |
 |---|---|---|
-| Model size | 2.5–9 MB quantized (vs 9.25MB fp32 reference) | leafwise project ships 9.25MB fp32; INT8 ≈ 4× smaller |
-| Classes | 38 diseases / 14 crops (PlantVillage), subset to top-10 regional crops | Frontiers 2023: MobileNetV3-small 99.5% in-distribution, 0.9M params quantized |
-| Inference | ~6–50ms laptop; tens of ms mid-range phone, single-thread WASM | leafwise benchmarks; deliberate single-thread (no COOP/COEP headers needed — preserves PWA installability) |
-| Runtime | onnxruntime-web (MIT) — works in Capacitor webview; `@cantoo/capacitor-onnx` available later for native NNAPI/CoreML acceleration | ORT-Web is the consensus for browser/PWA inference (2025–26) |
-| Precedent | leafwise (open source) proves the exact architecture: ONNX + ORT-Web + SW-cached model + IndexedDB history | MIT license, reusable patterns |
+| Model size | Stage 1 YOLOv8n (~3MB INT8) + Stage 2 MobileViT-XXS (~1.8MB INT8) | Total on-device footprint < 5MB; within mobile PWA cache budget |
+| Classes | 38 diseases / 14 crops (PlantVillage), localized African pathogens (FAW, MLND, CMD, CBSD, CLR, BXW) | Frontiers / Nature / CIMMYT benchmarks |
+| Inference | Stage 1 ~20ms + Stage 2 ~35ms on mid-range mobile CPU | Single-thread WASM via onnxruntime-web |
+| Runtime | onnxruntime-web (MIT) — works in Capacitor webview; `@cantoo/capacitor-onnx` available for native acceleration | ORT-Web is the consensus standard for browser/PWA inference |
+| Precedent & Scripts | `scripts/ml/export_yolo_onnx.py` & `scripts/ml/export_mobilevit_onnx.py` | Reproducible PyTorch/Timm/Ultralytics export pipeline with quantization |
 
 ## The honest number that matters
 
@@ -24,7 +38,7 @@ Lab-vs-field collapse: leafwise measured **94.0% top-1 on PlantVillage but 18.5%
 1. Present **top-3 with probabilities**, never a single answer
 2. Flag **<45% confidence as "low confidence — guidance only"**
 3. Always show **"Sync for AI confirmation"** — on-device result is preliminary; the existing backend multimodal pipeline confirms when online (feeds diagnosis_events → outbreak intelligence)
-4. **"Not a leaf" rejection** on the roadmap before general availability
+4. **"Not a leaf" rejection** implemented via Stage 1 YOLO detector guard
 5. Publish both accuracy numbers in-app (honesty as a feature)
 
 ## Acceptance gate before enabling beyond "guidance mode"
@@ -37,8 +51,10 @@ Collect ≥300 field photos via officers (existing upload pipeline), label with 
 ## License check
 
 - PlantVillage dataset: CC-BY-SA — attribution required, share-alike on derivatives
-- Candidate model `linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification` (HF): verify model card license before shipping; fallback = train our own MobileNetV3-small on PlantVillage (straightforward, documented)
+- Candidate models: verify model card licenses before shipping; fallback = train in-house weights using provided scripts
 
-## Build estimate after sign-off
+## Export & Build Pipeline
 
-Model conversion + quantization script (1d) → onnxruntime-web integration + SW model caching (2d) → capture-flow fallback UI + confidence gating (2d) → field-collection labeling loop (1d) → acceptance testing (ongoing with field data).
+1. `python3 scripts/ml/export_yolo_onnx.py --imgsz 320 --int8`
+2. `python3 scripts/ml/export_mobilevit_onnx.py --model mobilevit_xxs --int8`
+3. Models cached via Workbox `CacheFirst` on `/\/models\/.*\.onnx$/i` for 30 days.

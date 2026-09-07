@@ -166,6 +166,7 @@ services:
       - "traefik.http.routers.backend-dev.entrypoints=web"
       - "traefik.http.routers.backend-dev.middlewares=https-redirect"
       - "traefik.http.services.backend.loadbalancer.server.port=3001"
+      - "traefik.http.services.backend.loadbalancer.responsetimeout=300s"
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
       - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
       - "traefik.http.routers.backend-dev-secure.entrypoints=websecure"

@@ -66,6 +66,7 @@ services:
       - "traefik.enable=true"
       # Load-balancer port (Nginx/Traefik forwards to this)
       - "traefik.http.services.backend.loadbalancer.server.port=3001"
+      - "traefik.http.services.backend.loadbalancer.responsetimeout=300s"
       # Router 1 — HTTP → HTTPS redirect (primary domain)
       - "traefik.http.routers.backend-redirect.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`gpexts.com`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
       - "traefik.http.routers.backend-redirect.entrypoints=web"

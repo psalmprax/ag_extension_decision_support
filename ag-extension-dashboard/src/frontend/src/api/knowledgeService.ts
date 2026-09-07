@@ -55,6 +55,7 @@ export type KnowledgeEvidenceStatus = 'verified_sources' | 'context_only' | 'no_
 
 export interface AskResponse {
   success: boolean;
+  error?: string;
   data: {
     answer: string;
     contextUsed: ContextItem[];

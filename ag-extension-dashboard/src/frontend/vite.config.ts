@@ -138,9 +138,9 @@ export default defineConfig({
           },
           {
             // Plant disease ONNX model — cache-first after first download, 30d
-            // Plant disease ONNX model — fetched on first use (served on demand by
-            // nginx), then cache-first for 30d so field diagnosis works offline.
-            urlPattern: /\/models\/plant-disease\.onnx$/i,
+            // On-device edge ONNX models (YOLO detector, MobileViT/EfficientNet classifier) —
+            // fetched on first use (served on demand by nginx), then cache-first for 30d so field diagnosis works offline.
+            urlPattern: /\/models\/.*\.onnx$/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'ml-models',

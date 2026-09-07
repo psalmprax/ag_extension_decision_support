@@ -584,7 +584,7 @@ export class KnowledgeService {
         attachments?: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }>,
         options?: { preferredProvider?: string }
     ): Promise<ReasoningResult> {
-        const REASONING_TIMEOUT_MS = 240000;
+        const REASONING_TIMEOUT_MS = 35000;
         let reasoningTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
         const groundingDirective = `
@@ -644,7 +644,7 @@ Agronomic Decision Support Protocol (Phase 2):
 
         const systemPrompt = `You are a Senior Agronomist and Agricultural Extension Research Specialist. You have access to deterministic micro-tools for precise agricultural calculations and live data retrieval. Use tools whenever calculations or live data are required. Cite sourceUrl and state exact numerical results.\nCurrent categories: ${queryCategories.join(', ') || 'general'}.\nContext:\n${contextText || 'No specific context found.'}`;
         const start = Date.now();
-        const BUDGET_MS = 60000;
+        const BUDGET_MS = 35000;
 
         try {
             // Turn 0: Probe LLM with tool definitions to see if tools are invoked
@@ -652,36 +652,24 @@ Agronomic Decision Support Protocol (Phase 2):
             const firstTurnRes = await this.routeAgenticTurn(systemPrompt, queryText, attachments, options, toolDefs, remaining);
             const toolCalls = (firstTurnRes as unknown as { toolCalls?: Array<{ function: { name: string; arguments: unknown } }> }).toolCalls;
 
-            if (!toolCalls || toolCalls.length === 0) {
-                // If model synthesized directly without needing tools, return its result immediately
-                if ((firstTurnRes as ReasoningResult).answer && (firstTurnRes as ReasoningResult).answer.length > 50) {
-                    return firstTurnRes;
-                }
-            } else {
-                // Execute tools concurrently with per-tool timeout
-                logger.info(`Agentic reasoning turn 0 invoked ${toolCalls.length} tool(s): ${toolCalls.map(t => t.function.name).join(', ')}`);
-                const toolResults = await this.executeAgenticTools(toolCalls, start, BUDGET_MS);
-
-                // Perform grounded synthesis incorporating deterministic micro-tool execution evidence
-                const enrichedContext = `${contextText || ''}\n\n### Deterministic micro-tool execution evidence:\n${toolResults.join('\n\n')}`;
-                logger.info(`Synthesizing final grounded prescription with tool evidence (${toolResults.length} tool result(s))...`);
-
-                const synthesisRes = await AIRouter.routeRequest('reason', {
-                    context: enrichedContext,
-                    query: queryText,
-                    attachments,
-                    options: { temperature: 0.2, maxTokens: 4096, preferredProvider: options?.preferredProvider }
-                }) as ReasoningResult;
-
-                if (synthesisRes && synthesisRes.answer && synthesisRes.answer.length > 100) {
-                    return synthesisRes;
-                }
+            if (toolCalls && toolCalls.length > 0) {
+                const toolSynthesis = await this.synthesizeWithToolEvidence(
+                    toolCalls, contextText, queryText, attachments, options, start, BUDGET_MS
+                );
+                if (toolSynthesis) return toolSynthesis;
+            } else if ((firstTurnRes as ReasoningResult).answer && (firstTurnRes as ReasoningResult).answer.length > 50) {
+                return firstTurnRes;
             }
 
             // Fallback to direct synthesis with full grounding directive if answer was short or empty
             return await this.callReasoningWithTimeout(contextText, queryText, attachments, options);
         } catch (agenticError) {
-            logger.warn('Agentic reasoning turn failed or timed out; smoothly falling back to direct full grounding synthesis:', agenticError);
+            const isTimeout = (agenticError as Error)?.message?.includes('agentic turn timeout');
+            if (isTimeout) {
+                logger.warn('Agentic turn timed out; falling back directly to grounded context fallback without repeating request:', agenticError);
+                throw agenticError;
+            }
+            logger.warn('Agentic reasoning turn failed or rejected tools; smoothly falling back to direct full grounding synthesis:', agenticError);
             return this.callReasoningWithTimeout(contextText, queryText, attachments, options);
         }
     }
@@ -702,8 +690,36 @@ Agronomic Decision Support Protocol (Phase 2):
                 attachments,
                 options: { temperature: 0.2, maxTokens: 4096, preferredProvider: options?.preferredProvider, tools: toolDefs } as unknown as Record<string, unknown>
             }),
-            new Promise<never>((_, rej) => setTimeout(() => rej(new Error('agentic turn timeout')), Math.min(25000, remainingMs)))
+            new Promise<never>((_, rej) => setTimeout(() => rej(new Error('agentic turn timeout')), Math.min(30000, remainingMs)))
         ]) as unknown as Promise<ReasoningResult>;
+    }
+
+    /** Synthesize final grounded prescription with deterministic micro-tool execution evidence. */
+    private static async synthesizeWithToolEvidence(
+        toolCalls: Array<{ function: { name: string; arguments: unknown } }>,
+        contextText: string,
+        queryText: string,
+        attachments: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }> | undefined,
+        options: { preferredProvider?: string } | undefined,
+        start: number,
+        budgetMs: number
+    ): Promise<ReasoningResult | null> {
+        logger.info(`Agentic reasoning turn 0 invoked ${toolCalls.length} tool(s): ${toolCalls.map(t => t.function.name).join(', ')}`);
+        const toolResults = await this.executeAgenticTools(toolCalls, start, budgetMs);
+        const enrichedContext = `${contextText || ''}\n\n### Deterministic micro-tool execution evidence:\n${toolResults.join('\n\n')}`;
+        logger.info(`Synthesizing final grounded prescription with tool evidence (${toolResults.length} tool result(s))...`);
+
+        const synthesisRes = await AIRouter.routeRequest('reason', {
+            context: enrichedContext,
+            query: queryText,
+            attachments,
+            options: { temperature: 0.2, maxTokens: 4096, preferredProvider: options?.preferredProvider }
+        }) as ReasoningResult;
+
+        if (synthesisRes?.answer && synthesisRes.answer.length > 100) {
+            return synthesisRes;
+        }
+        return null;
     }
 
     /** Execute requested tools concurrently with an 8s per-tool timeout. */

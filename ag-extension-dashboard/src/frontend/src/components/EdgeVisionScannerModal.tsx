@@ -186,6 +186,28 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
       </span>
     </div>
 
+    {/* Two-Stage Edge AI Pipeline Telemetry */}
+    {result.twoStage && (
+      <div className="p-2.5 bg-slate-950/80 border border-white/10 rounded-xl space-y-1.5">
+        <div className="flex justify-between items-center text-[10px] font-mono">
+          <span className="text-slate-400">Two-Stage Edge AI Pipeline:</span>
+          <span className="text-emerald-400 font-bold">
+            {result.twoStage.stage1Detector.detectedLeaf ? 'Foliage Verified' : 'Foliage Rejected'}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+          <div className="p-1.5 rounded bg-slate-900/80 border border-emerald-500/20 text-emerald-300">
+            <span className="text-slate-400 block text-[9px]">STAGE 1 DETECTOR</span>
+            <strong>{result.twoStage.stage1Detector.model.toUpperCase()}</strong> ({result.twoStage.stage1Detector.boxes.filter(b => b.label !== 'crop_leaf').length} lesions)
+          </div>
+          <div className="p-1.5 rounded bg-slate-900/80 border border-sky-500/20 text-sky-300">
+            <span className="text-slate-400 block text-[9px]">STAGE 2 CLASSIFIER</span>
+            <strong>{result.twoStage.stage2Classifier.model.toUpperCase()}</strong> ({Math.round(result.twoStage.stage2Classifier.confidence * 100)}%)
+          </div>
+        </div>
+      </div>
+    )}
+
     {/* Visual Metrics */}
     <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10 text-center">
       <div className="p-2 bg-slate-950/80 rounded-lg border border-white/5">
@@ -382,6 +404,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
   const [verifiedCrop, setVerifiedCrop] = useState<{ overallHealth: string; diseases: DiseaseDiagnosis[]; recommendations: string[] } | null>(null);
   const [verifiedSoil, setVerifiedSoil] = useState<SoilAnalysisResult | null>(null);
   const [loggedToMap, setLoggedToMap] = useState(false);
+  const [showBoxes, setShowBoxes] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -535,15 +558,19 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
             <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_#34d399]" />
             <span className="text-xs font-bold text-white font-mono">
               {scanMode === 'crop'
-                ? cropResult?.origin === 'onnx'
-                  ? 'On-Device ONNX Model'
-                  : 'Heuristic Triage (HSV/LAB + Sobel Texture)'
+                ? cropResult?.origin === 'mobilevit-onnx'
+                  ? 'Two-Stage: YOLOv8n + MobileViT-XXS'
+                  : cropResult?.origin === 'onnx'
+                  ? 'Two-Stage: YOLOv8n + EfficientNet-Lite0'
+                  : 'Two-Stage: YOLO Saliency + Heuristic Triage'
                 : 'Edge Soil Aggregate & Reflectance Analyzer'}
             </span>
           </div>
           <span className="text-[11px] text-slate-400 font-mono">
             {scanMode === 'crop'
-              ? cropResult?.origin === 'onnx'
+              ? cropResult?.origin === 'mobilevit-onnx'
+                ? 'MobileViT WASM'
+                : cropResult?.origin === 'onnx'
                 ? 'ONNX Runtime Web'
                 : 'Heuristic v2'
               : 'Sobel Physics v1'}
@@ -593,21 +620,94 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
         {/* Image Preview & Analysis Output */}
         {imageSrc && (
           <div className="space-y-4">
-            <div className="relative rounded-xl overflow-hidden border border-white/10 max-h-56 bg-black/40 flex items-center justify-center">
+            <div className="relative rounded-xl overflow-hidden border border-white/10 max-h-64 bg-black/40 flex items-center justify-center">
               <img
                 src={imageSrc}
                 alt="Diagnostic Target Specimen"
-                className="object-contain max-h-56 w-full"
+                className="object-contain max-h-64 w-full select-none"
               />
+
+              {/* Stage 1: YOLO Bounding Boxes & Foliar Saliency Overlay */}
+              {showBoxes && scanMode === 'crop' && cropResult?.twoStage?.stage1Detector.boxes && !analyzing && (
+                <div className="absolute inset-0 pointer-events-none">
+                  {cropResult.twoStage.stage1Detector.boxes.map(b => {
+                    const [ymin, xmin, ymax, xmax] = b.box;
+                    const top = `${ymin * 100}%`;
+                    const left = `${xmin * 100}%`;
+                    const width = `${(xmax - xmin) * 100}%`;
+                    const height = `${(ymax - ymin) * 100}%`;
+                    const labelText =
+                      b.label === 'crop_leaf'
+                        ? 'Leaf Blade'
+                        : b.label === 'pest_damage'
+                        ? 'Pest Damage'
+                        : b.label === 'non_plant_background'
+                        ? 'Non-Foliage'
+                        : 'Foliar Lesion';
+
+                    return (
+                      <div
+                        key={b.id}
+                        className="absolute border-2 rounded-sm transition-all duration-300"
+                        style={{
+                          top,
+                          left,
+                          width,
+                          height,
+                          borderColor: b.color,
+                          backgroundColor: `${b.color}15`,
+                        }}
+                      >
+                        <span
+                          className="absolute -top-5 left-0 px-1.5 py-0.5 text-[9px] font-mono font-bold text-white rounded shadow-sm whitespace-nowrap"
+                          style={{ backgroundColor: b.color }}
+                        >
+                          {labelText} {Math.round(b.confidence * 100)}%
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               {analyzing && (
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white">
                   <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mb-2" />
                   <span className="text-xs font-mono font-bold tracking-wider uppercase">
-                    Analyzing Texture & Chromaticity...
+                    Stage 1 YOLO Detection & Stage 2 MobileViT Analysis...
                   </span>
                 </div>
               )}
             </div>
+
+            {/* YOLO Bounding Box & Saliency Toggle */}
+            {scanMode === 'crop' && cropResult?.twoStage?.stage1Detector.boxes && (
+              <div className="flex justify-between items-center text-xs px-1">
+                <span className="text-slate-400 font-mono text-[11px]">
+                  YOLO Detections: {cropResult.twoStage.stage1Detector.boxes.filter(b => b.label !== 'crop_leaf').length} lesion/damage sites
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowBoxes(!showBoxes)}
+                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-lg text-[11px] font-mono text-emerald-300 transition"
+                >
+                  {showBoxes ? 'Hide YOLO Boxes' : 'Show YOLO Boxes'}
+                </button>
+              </div>
+            )}
+
+            {/* Specimen Rejection Alert if Not a Leaf */}
+            {cropResult?.isRejectedNonFoliage && (
+              <div className="p-3.5 bg-rose-950/60 border border-rose-500/40 rounded-xl space-y-1 text-rose-200">
+                <div className="flex items-center gap-2 font-bold text-xs">
+                  <span className="text-rose-400 text-sm">⚠️</span>
+                  <span>Specimen Rejected by YOLOv8 Leaf Guard</span>
+                </div>
+                <p className="text-[11px] text-rose-300/90 leading-relaxed">
+                  {cropResult.rejectionMessage || 'No identifiable leaf blade or foliage was detected. Please photograph crop foliage against a neutral backdrop.'}
+                </p>
+              </div>
+            )}
 
             {/* Render Crop or Soil Diagnostic HUD */}
             {scanMode === 'crop' && cropResult && <CropDiagnosticHUD result={cropResult} />}
