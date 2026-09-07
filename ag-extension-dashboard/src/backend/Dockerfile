@@ -13,7 +13,7 @@ ARG BACKEND_DIR=ag-extension-dashboard/src/backend
 COPY ${BACKEND_DIR}/package*.json ./
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
 
-RUN npm install --omit=dev --no-audit --no-fund && npx prisma generate
+RUN npm install --omit=dev --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && npx prisma generate
 
 # ============================================================
 # Stage 2: Build — install devDeps + compile TypeScript
@@ -27,7 +27,7 @@ COPY ${BACKEND_DIR}/package*.json ./
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
 
 # Install ALL dependencies including devDeps
-RUN npm install --no-audit --no-fund
+RUN npm install --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
 
 # Generate Prisma client
 RUN npx prisma generate
@@ -52,7 +52,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
 ARG BACKEND_DIR=ag-extension-dashboard/src/backend
 COPY ${BACKEND_DIR}/package*.json ./
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
-RUN npm install --no-audit --no-fund
+RUN npm install --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
 RUN npx prisma generate
 
 # Copy all source for hot-reload

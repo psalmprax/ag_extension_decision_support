@@ -81,6 +81,7 @@ services:
       - "traefik.enable=true"
       # Load-balancer port
       - "traefik.http.services.backend.loadbalancer.server.port=3001"
+      - "traefik.http.services.backend.loadbalancer.responsetimeout=300s"
       # Router 1 — HTTP → HTTPS redirect (staging domain)
       - "traefik.http.routers.backend-redirect.rule=(Host(`${STAGING_DOMAIN:-staging.gpexts.com}`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
       - "traefik.http.routers.backend-redirect.entrypoints=web"

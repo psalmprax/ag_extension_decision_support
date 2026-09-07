@@ -4,8 +4,8 @@
 FROM node:20-slim AS deps
 WORKDIR /app
 COPY ag-extension-shared /ag-extension-shared
-COPY ag-extension-dashboard/src/frontend/package.json ./
-RUN npm install
+COPY ag-extension-dashboard/src/frontend/package*.json ./
+RUN npm ci --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
 
 # ============================================================
 # Stage 2: Build
@@ -13,9 +13,9 @@ RUN npm install
 FROM node:20-slim AS build
 WORKDIR /app
 ENV NODE_OPTIONS="--max-old-space-size=2048"
+COPY --from=deps /app/node_modules ./node_modules
 COPY ag-extension-shared /ag-extension-shared
-COPY ag-extension-dashboard/src/frontend/package.json ./
-RUN npm install
+COPY ag-extension-dashboard/src/frontend/package*.json ./
 COPY ag-extension-dashboard/src/frontend/ .
 RUN npm run build:docker
 
@@ -24,9 +24,9 @@ RUN npm run build:docker
 # ============================================================
 FROM node:20-slim AS development
 WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY ag-extension-shared /ag-extension-shared
-COPY ag-extension-dashboard/src/frontend/package.json ./
-RUN npm install
+COPY ag-extension-dashboard/src/frontend/package*.json ./
 COPY ag-extension-dashboard/src/frontend/ .
 EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host"]
