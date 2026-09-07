@@ -10,9 +10,13 @@ import {
 } from 'lucide-react';
 import { stagger, fadeUp, scaleIn } from '../variants';
 import { globalTelemetryNodes } from '../data';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroOpacity: MotionValue<number> }) {
   const navigate = useNavigate();
+  // Static hero under reduced motion: skip scroll-linked parallax (WCAG 2.3.3,
+  // vestibular safety + zero scroll-handler cost on low-end field devices).
+  const reduceMotion = useReducedMotion();
 
   return (
         <section
@@ -22,11 +26,14 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
           <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
             <img
               src="/images/landing/officer-farmer-hero.webp"
+              srcSet="/images/landing/officer-farmer-hero-640.webp 640w, /images/landing/officer-farmer-hero-1024.webp 1024w, /images/landing/officer-farmer-hero.webp 1920w"
+              sizes="(max-width: 640px) 640px, (max-width: 1100px) 1024px, 1920px"
               alt="Agricultural extension officer consulting with a smallholder farmer in a maize field using a digital tablet"
               width={1920}
               height={1080}
               className="w-full h-full object-cover object-center opacity-25 mix-blend-luminosity scale-105 filter saturate-125 transition-opacity duration-700"
               loading="eager"
+              decoding="async"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/90 to-slate-950" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-slate-950/60 to-slate-950" />
@@ -46,7 +53,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
           <GlobalConstellationVisualization nodes={globalTelemetryNodes} />
 
           <motion.div
-            style={{ y: heroY, opacity: heroOpacity }}
+            style={reduceMotion ? undefined : { y: heroY, opacity: heroOpacity }}
             className="max-w-7xl w-full min-w-0 mx-auto px-4 sm:px-6 grid lg:grid-cols-[1fr_1.1fr] gap-8 lg:gap-12 items-center relative z-10"
           >
             {/* Left copy */}
