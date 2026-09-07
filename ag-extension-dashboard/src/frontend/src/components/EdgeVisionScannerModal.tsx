@@ -16,6 +16,7 @@ import { useFeatureFlags } from '@/store/useFeatureFlags';
 import {
   diagnosePlantOffline,
   diagnoseSoilOffline,
+  type DetectedBoundingBox,
   type OfflineDiagnosisResult,
   type OfflineSoilDiagnosisResult,
 } from '../services/edgePlantVisionClassifier';
@@ -389,6 +390,177 @@ const VerifiedCloudCard: React.FC<{
   );
 };
 
+function getBoundingBoxLabel(label: string): string {
+  if (label === 'crop_leaf') return 'Leaf Blade';
+  if (label === 'pest_damage') return 'Pest Damage';
+  if (label === 'non_plant_background') return 'Non-Foliage';
+  return 'Foliar Lesion';
+}
+
+interface YoloBoundingBoxesOverlayProps {
+  boxes: DetectedBoundingBox[];
+}
+
+const YoloBoundingBoxesOverlay: React.FC<YoloBoundingBoxesOverlayProps> = ({ boxes }) => {
+  return (
+    <div className="absolute inset-0 pointer-events-none">
+      {boxes.map(b => {
+        const [ymin, xmin, ymax, xmax] = b.box;
+        const top = `${ymin * 100}%`;
+        const left = `${xmin * 100}%`;
+        const width = `${(xmax - xmin) * 100}%`;
+        const height = `${(ymax - ymin) * 100}%`;
+        const labelText = getBoundingBoxLabel(b.label);
+
+        return (
+          <div
+            key={b.id}
+            className="absolute border-2 rounded-sm transition-all duration-300"
+            style={{
+              top,
+              left,
+              width,
+              height,
+              borderColor: b.color,
+              backgroundColor: `${b.color}15`,
+            }}
+          >
+            <span
+              className="absolute -top-5 left-0 px-1.5 py-0.5 text-[9px] font-mono font-bold text-white rounded shadow-sm whitespace-nowrap"
+              style={{ backgroundColor: b.color }}
+            >
+              {labelText} {Math.round(b.confidence * 100)}%
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const getEngineTelemetryLabels = (
+  scanMode: ScanTargetMode,
+  origin?: string
+): { title: string; subtitle: string } => {
+  if (scanMode !== 'crop') {
+    return {
+      title: 'Edge Soil Aggregate & Reflectance Analyzer',
+      subtitle: 'Sobel Physics v1',
+    };
+  }
+  if (origin === 'mobilevit-onnx') {
+    return {
+      title: 'Two-Stage: YOLOv8n + MobileViT-XXS',
+      subtitle: 'MobileViT WASM',
+    };
+  }
+  if (origin === 'onnx') {
+    return {
+      title: 'Two-Stage: YOLOv8n + EfficientNet-Lite0',
+      subtitle: 'ONNX Runtime Web',
+    };
+  }
+  return {
+    title: 'Two-Stage: YOLO Saliency + Heuristic Triage',
+    subtitle: 'Heuristic v2',
+  };
+};
+
+const EngineTelemetry: React.FC<{
+  scanMode: ScanTargetMode;
+  cropResult: OfflineDiagnosisResult | null;
+}> = ({ scanMode, cropResult }) => {
+  const { title, subtitle } = getEngineTelemetryLabels(scanMode, cropResult?.origin);
+  return (
+    <div className="flex justify-between items-center bg-slate-900/90 p-3 rounded-xl border border-white/10">
+      <div className="flex items-center gap-2">
+        <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_#34d399]" />
+        <span className="text-xs font-bold text-white font-mono">{title}</span>
+      </div>
+      <span className="text-[11px] text-slate-400 font-mono">{subtitle}</span>
+    </div>
+  );
+};
+
+function buildDiagnosticReportSummary(
+  scanMode: ScanTargetMode,
+  crop: string,
+  cropResult: OfflineDiagnosisResult | null,
+  soilResult: OfflineSoilDiagnosisResult | null
+): string {
+  if (scanMode === 'crop' && cropResult) {
+    const diag = cropResult.primaryDiagnosis;
+    const action = diag.culturalControl[0] || 'See full report';
+    return `[Agri-Vision Offline Scan]\nCrop: ${crop}\nDiagnosis: ${diag.condition} (${Math.round(diag.confidence * 100)}% confidence)\nSeverity: ${diag.severity}\nAction: ${action}`;
+  }
+  if (soilResult) {
+    return `[Agri-Soil Offline Scan]\nTexture: ${soilResult.textureClass} (${Math.round(soilResult.confidence * 100)}% confidence)\nDrainage: ${soilResult.drainageClass}\nOrganic Matter: ${soilResult.organicMatterIndex}\nMoisture: ${soilResult.estimatedMoisture}`;
+  }
+  return 'Diagnostic specimen report';
+}
+
+function createPlotEntry(
+  scanMode: ScanTargetMode,
+  crop: string,
+  cropResult: OfflineDiagnosisResult | null,
+  soilResult: OfflineSoilDiagnosisResult | null
+) {
+  const isCrop = scanMode === 'crop';
+  const condition = isCrop
+    ? cropResult?.primaryDiagnosis.condition || 'Crop Observation'
+    : soilResult?.textureClass || 'Soil Sample';
+  const confidence = isCrop
+    ? cropResult?.primaryDiagnosis.confidence ?? 0.85
+    : soilResult?.confidence ?? 0.85;
+
+  return {
+    id: `scan-${Date.now()}`,
+    crop,
+    condition,
+    mode: scanMode,
+    timestamp: new Date().toISOString(),
+    confidence,
+  };
+}
+
+async function requestCloudVerification(
+  scanMode: ScanTargetMode,
+  imageSrc: string,
+  crop: string
+): Promise<{
+  cropData?: { overallHealth: string; diseases: DiseaseDiagnosis[]; recommendations: string[] };
+  soilData?: SoilAnalysisResult;
+}> {
+  if (scanMode === 'crop') {
+    const res = await analyzePlantImage(imageSrc, crop);
+    if (res.success && res.data) {
+      return { cropData: res.data };
+    }
+  } else {
+    const res = await analyzeSoilImage(imageSrc, crop);
+    if (res.success && res.data) {
+      return { soilData: res.data };
+    }
+  }
+  return {};
+}
+
+async function runOfflineDiagnosis(
+  img: HTMLImageElement,
+  crop: string,
+  mode: ScanTargetMode
+): Promise<{
+  cropResult?: OfflineDiagnosisResult;
+  soilResult?: OfflineSoilDiagnosisResult;
+}> {
+  if (mode === 'crop') {
+    const cropResult = await diagnosePlantOffline(img, crop);
+    return { cropResult };
+  }
+  const soilResult = diagnoseSoilOffline(img, crop);
+  return { soilResult };
+}
+
 export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
   isOpen,
   onClose,
@@ -432,13 +604,9 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
     img.crossOrigin = 'anonymous';
     img.onload = async () => {
       try {
-        if (mode === 'crop') {
-          const diag = await diagnosePlantOffline(img, crop);
-          setCropResult(diag);
-        } else {
-          const soilDiag = diagnoseSoilOffline(img, crop);
-          setSoilResult(soilDiag);
-        }
+        const res = await runOfflineDiagnosis(img, crop, mode);
+        if (res.cropResult) setCropResult(res.cropResult);
+        if (res.soilResult) setSoilResult(res.soilResult);
       } catch (err) {
         console.error('Offline edge diagnosis error:', err);
       } finally {
@@ -464,18 +632,13 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
 
     setIsVerifying(true);
     try {
-      if (scanMode === 'crop') {
-        const res = await analyzePlantImage(imageSrc, crop);
-        if (res.success && res.data) {
-          setVerifiedCrop(res.data);
-          toast.success('Crop pathology verified via cloud vision AI');
-        }
-      } else {
-        const res = await analyzeSoilImage(imageSrc, crop);
-        if (res.success && res.data) {
-          setVerifiedSoil(res.data);
-          toast.success('Soil chemistry & texture verified via cloud AI');
-        }
+      const verified = await requestCloudVerification(scanMode, imageSrc, crop);
+      if (verified.cropData) {
+        setVerifiedCrop(verified.cropData);
+        toast.success('Crop pathology verified via cloud vision AI');
+      } else if (verified.soilData) {
+        setVerifiedSoil(verified.soilData);
+        toast.success('Soil chemistry & texture verified via cloud AI');
       }
     } catch {
       toast.error('Cloud verification currently unavailable. Offline findings preserved.');
@@ -486,28 +649,12 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
 
   const handlePlotOnWorldMonitor = () => {
     try {
-      const condition =
-        scanMode === 'crop'
-          ? cropResult?.primaryDiagnosis.condition || 'Crop Observation'
-          : soilResult?.textureClass || 'Soil Sample';
-
-      const entry = {
-        id: `scan-${Date.now()}`,
-        crop,
-        condition,
-        mode: scanMode,
-        timestamp: new Date().toISOString(),
-        confidence:
-          scanMode === 'crop'
-            ? cropResult?.primaryDiagnosis.confidence ?? 0.85
-            : soilResult?.confidence ?? 0.85,
-      };
-
+      const entry = createPlotEntry(scanMode, crop, cropResult, soilResult);
       const existing = JSON.parse(localStorage.getItem('outbreak_scans') || '[]');
       existing.push(entry);
       localStorage.setItem('outbreak_scans', JSON.stringify(existing));
       setLoggedToMap(true);
-      toast.success(`Pinned ${condition} to WorldMonitor outbreak layers!`);
+      toast.success(`Pinned ${entry.condition} to WorldMonitor outbreak layers!`);
     } catch {
       toast.error('Failed to log point to map.');
     }
@@ -515,13 +662,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
 
   const handleShareReport = async () => {
     try {
-      const summary =
-        scanMode === 'crop' && cropResult
-          ? `[Agri-Vision Offline Scan]\nCrop: ${crop}\nDiagnosis: ${cropResult.primaryDiagnosis.condition} (${Math.round(cropResult.primaryDiagnosis.confidence * 100)}% confidence)\nSeverity: ${cropResult.primaryDiagnosis.severity}\nAction: ${cropResult.primaryDiagnosis.culturalControl[0] || 'See full report'}`
-          : soilResult
-          ? `[Agri-Soil Offline Scan]\nTexture: ${soilResult.textureClass} (${Math.round(soilResult.confidence * 100)}% confidence)\nDrainage: ${soilResult.drainageClass}\nOrganic Matter: ${soilResult.organicMatterIndex}\nMoisture: ${soilResult.estimatedMoisture}`
-          : 'Diagnostic specimen report';
-
+      const summary = buildDiagnosticReportSummary(scanMode, crop, cropResult, soilResult);
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(summary);
         triggerHaptic('light');
@@ -553,29 +694,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
         <ModeSwitcher mode={scanMode} onSelect={handleModeChange} disabled={analyzing} />
 
         {/* Engine Telemetry Status */}
-        <div className="flex justify-between items-center bg-slate-900/90 p-3 rounded-xl border border-white/10">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_#34d399]" />
-            <span className="text-xs font-bold text-white font-mono">
-              {scanMode === 'crop'
-                ? cropResult?.origin === 'mobilevit-onnx'
-                  ? 'Two-Stage: YOLOv8n + MobileViT-XXS'
-                  : cropResult?.origin === 'onnx'
-                  ? 'Two-Stage: YOLOv8n + EfficientNet-Lite0'
-                  : 'Two-Stage: YOLO Saliency + Heuristic Triage'
-                : 'Edge Soil Aggregate & Reflectance Analyzer'}
-            </span>
-          </div>
-          <span className="text-[11px] text-slate-400 font-mono">
-            {scanMode === 'crop'
-              ? cropResult?.origin === 'mobilevit-onnx'
-                ? 'MobileViT WASM'
-                : cropResult?.origin === 'onnx'
-                ? 'ONNX Runtime Web'
-                : 'Heuristic v2'
-              : 'Sobel Physics v1'}
-          </span>
-        </div>
+        <EngineTelemetry scanMode={scanMode} cropResult={cropResult} />
 
         {/* Crop Selector Context */}
         {scanMode === 'crop' && (
@@ -629,45 +748,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
 
               {/* Stage 1: YOLO Bounding Boxes & Foliar Saliency Overlay */}
               {showBoxes && scanMode === 'crop' && cropResult?.twoStage?.stage1Detector.boxes && !analyzing && (
-                <div className="absolute inset-0 pointer-events-none">
-                  {cropResult.twoStage.stage1Detector.boxes.map(b => {
-                    const [ymin, xmin, ymax, xmax] = b.box;
-                    const top = `${ymin * 100}%`;
-                    const left = `${xmin * 100}%`;
-                    const width = `${(xmax - xmin) * 100}%`;
-                    const height = `${(ymax - ymin) * 100}%`;
-                    const labelText =
-                      b.label === 'crop_leaf'
-                        ? 'Leaf Blade'
-                        : b.label === 'pest_damage'
-                        ? 'Pest Damage'
-                        : b.label === 'non_plant_background'
-                        ? 'Non-Foliage'
-                        : 'Foliar Lesion';
-
-                    return (
-                      <div
-                        key={b.id}
-                        className="absolute border-2 rounded-sm transition-all duration-300"
-                        style={{
-                          top,
-                          left,
-                          width,
-                          height,
-                          borderColor: b.color,
-                          backgroundColor: `${b.color}15`,
-                        }}
-                      >
-                        <span
-                          className="absolute -top-5 left-0 px-1.5 py-0.5 text-[9px] font-mono font-bold text-white rounded shadow-sm whitespace-nowrap"
-                          style={{ backgroundColor: b.color }}
-                        >
-                          {labelText} {Math.round(b.confidence * 100)}%
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                <YoloBoundingBoxesOverlay boxes={cropResult.twoStage.stage1Detector.boxes} />
               )}
 
               {analyzing && (

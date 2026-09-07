@@ -262,52 +262,39 @@ function mapLabelToCondition(label: string, _cropHint: string | undefined, prob?
   return found ? buildCandidateFromRule(found, prob) : null;
 }
 
+async function runClassifierSession(
+  sessionPromise: Promise<unknown>,
+  canvas: HTMLCanvasElement,
+  ort: OrtModule,
+  inputNames: string[]
+): Promise<EdgeDiagnosisCandidate[] | null> {
+  const session = (await sessionPromise) as { run: (feeds: Record<string, unknown>) => Promise<Record<string, { data: Float32Array }>> } | null;
+  if (!session) return null;
+  try {
+    const tensor = canvasToNchwTensor(canvas, ort, 224, 224, 'imagenet');
+    const feeds: Record<string, unknown> = {};
+    for (const name of inputNames) feeds[name] = tensor;
+    const results = await session.run(feeds);
+    const output = (results.logits || results.output || results.output0 || Object.values(results)[0]);
+    if (!output?.data) return null;
+    const candidates = mapOnnxOutputToCandidates(output.data);
+    return candidates && candidates.length > 0 ? candidates : null;
+  } catch {
+    return null;
+  }
+}
+
 async function tryMobileVitInference(canvas: HTMLCanvasElement): Promise<{ candidates: EdgeDiagnosisCandidate[]; model: 'mobilevit-xxs' | 'efficientnet-lite0' } | null> {
   const ort = await getOrtModule();
   if (!ort) return null;
 
-  // 1. Try MobileViT model first
-  const mvSession = (await tryLoadMobileVitModel()) as unknown as { run: (feeds: Record<string, unknown>) => Promise<Record<string, { data: Float32Array }>> } | null;
-  if (mvSession) {
-    try {
-      const tensor = canvasToNchwTensor(canvas, ort, 224, 224, 'imagenet');
-      const results = await mvSession.run({ image: tensor, images: tensor, input: tensor });
-      const output = (results.logits || results.output || Object.values(results)[0]) as { data: Float32Array } | undefined;
-      if (output?.data) {
-        const candidates = mapOnnxOutputToCandidates(output.data);
-        if (candidates && candidates.length > 0) {
-          return { candidates, model: 'mobilevit-xxs' };
-        }
-      }
-    } catch {
-      // Fall through to EfficientNet
-    }
-  }
+  const mvCandidates = await runClassifierSession(tryLoadMobileVitModel(), canvas, ort, ['image', 'images', 'input']);
+  if (mvCandidates) return { candidates: mvCandidates, model: 'mobilevit-xxs' };
 
-  // 2. Fallback to EfficientNet model
-  const effSession = (await tryLoadOnnxModel()) as unknown as { run: (feeds: Record<string, unknown>) => Promise<Record<string, { data: Float32Array }>> } | null;
-  if (effSession) {
-    try {
-      const tensor = canvasToNchwTensor(canvas, ort, 224, 224, 'imagenet');
-      const results = await effSession.run({ input: tensor });
-      const output = (results.output || results.logits || Object.values(results)[0]) as { data: Float32Array } | undefined;
-      if (output?.data) {
-        const candidates = mapOnnxOutputToCandidates(output.data);
-        if (candidates && candidates.length > 0) {
-          return { candidates, model: 'efficientnet-lite0' };
-        }
-      }
-    } catch {
-      // Fall through
-    }
-  }
+  const effCandidates = await runClassifierSession(tryLoadOnnxModel(), canvas, ort, ['input']);
+  if (effCandidates) return { candidates: effCandidates, model: 'efficientnet-lite0' };
 
   return null;
-}
-
-async function tryOnnxInference(canvas: HTMLCanvasElement): Promise<EdgeDiagnosisCandidate[] | null> {
-  const res = await tryMobileVitInference(canvas);
-  return res ? res.candidates : null;
 }
 
 /** Rank softmax outputs and map top labels to known conditions (null when nothing mappable). */
@@ -712,15 +699,57 @@ export async function extractVisualMetricsFromCanvas(
   };
 }
 
+function isFoliageRejected(m: EdgeVisualMetrics): boolean {
+  return m.greenCanopyIndex < 0.04 && m.excessGreen < -0.15 && m.necrosisRatio < 0.03 && (m.textureVariance < 0.08 || m.edgeDensity < 0.02);
+}
+
+function generateLesionBoundingBoxes(m: EdgeVisualMetrics): DetectedBoundingBox[] {
+  const hasLesions = m.lesionCoveragePct > 4 || m.necrosisRatio > 0.04 || m.rustPustuleRatio > 0.03 || m.chlorosisRatio > 0.12;
+  if (!hasLesions) return [];
+
+  const lesionCount = Math.min(4, Math.max(1, Math.round(m.lesionCoveragePct / 9) || 1));
+  const offsets: Array<[number, number, number, number]> = [
+    [0.22, 0.26, 0.48, 0.58],
+    [0.46, 0.40, 0.74, 0.76],
+    [0.28, 0.58, 0.54, 0.86],
+    [0.54, 0.16, 0.80, 0.42],
+  ];
+
+  const boxes: DetectedBoundingBox[] = [];
+  for (let i = 0; i < lesionCount; i++) {
+    const conf = Math.min(0.96, Math.max(0.68, 0.52 + (m.necrosisRatio + m.rustPustuleRatio) * 1.5 + (i * 0.03)));
+    const isPest = m.edgeDensity > 0.14 && m.textureVariance > 0.28;
+    boxes.push({
+      id: `lesion-${i + 1}`,
+      box: offsets[i],
+      label: isPest ? 'pest_damage' : 'foliar_lesion',
+      confidence: Number(conf.toFixed(2)),
+      color: isPest ? '#a855f7' : '#f43f5e',
+    });
+  }
+  return boxes;
+}
+
+async function probeYoloModelGraph(canvas: HTMLCanvasElement): Promise<void> {
+  try {
+    const yolo = await tryLoadYoloModel();
+    if (!yolo) return;
+    const ort = await getOrtModule();
+    if (!ort) return;
+    const tensor = canvasToNchwTensor(canvas, ort, 320, 320, 'zero_one');
+    await (yolo as { run: (f: Record<string, unknown>) => Promise<unknown> }).run({ images: tensor });
+  } catch {
+    // Non-blocking probe
+  }
+}
+
 export async function runYoloStage1Detection(
   canvas: HTMLCanvasElement,
   metrics?: EdgeVisualMetrics
 ): Promise<TwoStagePipelineResult['stage1Detector']> {
   const m = metrics || await extractVisualMetricsFromCanvas(canvas);
 
-  // Early Non-Plant Foliage Rejection Guard (Phase 2 spec: "Not a leaf" rejection)
-  const isNonFoliage = m.greenCanopyIndex < 0.04 && m.excessGreen < -0.15 && m.necrosisRatio < 0.03 && (m.textureVariance < 0.08 || m.edgeDensity < 0.02);
-  if (isNonFoliage) {
+  if (isFoliageRejected(m)) {
     return {
       model: 'yolo-v8n-agri',
       detectedLeaf: false,
@@ -737,53 +766,18 @@ export async function runYoloStage1Detection(
     };
   }
 
-  const boxes: DetectedBoundingBox[] = [];
+  const boxes: DetectedBoundingBox[] = [
+    {
+      id: 'leaf-blade-1',
+      box: [0.06, 0.06, 0.94, 0.94],
+      label: 'crop_leaf',
+      confidence: Number(Math.min(0.98, Math.max(0.78, m.greenCanopyIndex + 0.35)).toFixed(2)),
+      color: '#10b981',
+    },
+    ...generateLesionBoundingBoxes(m),
+  ];
 
-  // Primary detected leaf blade bounding box
-  boxes.push({
-    id: 'leaf-blade-1',
-    box: [0.06, 0.06, 0.94, 0.94],
-    label: 'crop_leaf',
-    confidence: Number(Math.min(0.98, Math.max(0.78, m.greenCanopyIndex + 0.35)).toFixed(2)),
-    color: '#10b981',
-  });
-
-  // Localized foliar lesion and pest damage bounding detections
-  if (m.lesionCoveragePct > 4 || m.necrosisRatio > 0.04 || m.rustPustuleRatio > 0.03 || m.chlorosisRatio > 0.12) {
-    const lesionCount = Math.min(4, Math.max(1, Math.round(m.lesionCoveragePct / 9) || 1));
-    const offsets = [
-      [0.22, 0.26, 0.48, 0.58],
-      [0.46, 0.40, 0.74, 0.76],
-      [0.28, 0.58, 0.54, 0.86],
-      [0.54, 0.16, 0.80, 0.42],
-    ];
-
-    for (let i = 0; i < lesionCount; i++) {
-      const conf = Math.min(0.96, Math.max(0.68, 0.52 + (m.necrosisRatio + m.rustPustuleRatio) * 1.5 + (i * 0.03)));
-      const isPest = m.edgeDensity > 0.14 && m.textureVariance > 0.28;
-      boxes.push({
-        id: `lesion-${i + 1}`,
-        box: offsets[i] as [number, number, number, number],
-        label: isPest ? 'pest_damage' : 'foliar_lesion',
-        confidence: Number(conf.toFixed(2)),
-        color: isPest ? '#a855f7' : '#f43f5e',
-      });
-    }
-  }
-
-  // Attempt ONNX YOLO session run to exercise execution graph if loaded
-  try {
-    const yolo = await tryLoadYoloModel();
-    if (yolo) {
-      const ort = await getOrtModule();
-      if (ort) {
-        const tensor = canvasToNchwTensor(canvas, ort, 320, 320, 'zero_one');
-        await (yolo as { run: (f: Record<string, unknown>) => Promise<unknown> }).run({ images: tensor });
-      }
-    }
-  } catch {
-    // Non-blocking fallback to morphological YOLO anchors
-  }
+  await probeYoloModelGraph(canvas);
 
   return {
     model: 'yolo-v8n-agri',
@@ -792,98 +786,68 @@ export async function runYoloStage1Detection(
   };
 }
 
-export async function diagnosePlantOffline(
-  imageSource: HTMLImageElement | HTMLCanvasElement,
-  cropHint?: string
-): Promise<OfflineDiagnosisResult> {
-  let canvas: HTMLCanvasElement;
+function createAnalysisCanvas(imageSource: HTMLImageElement | HTMLCanvasElement): HTMLCanvasElement {
   if (imageSource instanceof HTMLCanvasElement) {
-    canvas = imageSource;
-  } else {
-    canvas = document.createElement('canvas');
-    canvas.width = 224;
-    canvas.height = 224;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Failed to initialize analysis canvas');
-    ctx.drawImage(imageSource, 0, 0, 224, 224);
+    return imageSource;
   }
+  const canvas = document.createElement('canvas');
+  canvas.width = 224;
+  canvas.height = 224;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Failed to initialize analysis canvas');
+  ctx.drawImage(imageSource, 0, 0, 224, 224);
+  return canvas;
+}
 
-  // 1. Extract visual chromaticity & texture metrics
-  const metrics = await extractVisualMetricsFromCanvas(canvas);
-
-  // 2. Stage 1: YOLO Foliar Saliency & Bounding Detector
-  const stage1 = await runYoloStage1Detection(canvas, metrics);
-
-  // Early Non-Plant Rejection check
-  if (!stage1.detectedLeaf) {
-    return {
-      isOfflineInference: true,
-      origin: 'heuristic',
-      modelVersion: 'yolo-v8n-agri',
-      heuristicDisclaimer: 'Specimen rejected by Stage 1 YOLO detector: Non-foliage background.',
-      isRejectedNonFoliage: true,
-      rejectionMessage: stage1.rejectionReason,
-      primaryDiagnosis: {
-        condition: 'Non-Foliage Detected (Specimen Rejected)',
-        scientificName: 'Non-Botanical Background',
-        crop: cropHint || 'Field Crop',
+function createRejectionDiagnosis(
+  stage1: TwoStagePipelineResult['stage1Detector'],
+  cropHint: string | undefined,
+  metrics: EdgeVisualMetrics
+): OfflineDiagnosisResult {
+  return {
+    isOfflineInference: true,
+    origin: 'heuristic',
+    modelVersion: 'yolo-v8n-agri',
+    heuristicDisclaimer: 'Specimen rejected by Stage 1 YOLO detector: Non-foliage background.',
+    isRejectedNonFoliage: true,
+    rejectionMessage: stage1.rejectionReason,
+    primaryDiagnosis: {
+      condition: 'Non-Foliage Detected (Specimen Rejected)',
+      scientificName: 'Non-Botanical Background',
+      crop: cropHint || 'Field Crop',
+      confidence: 0.1,
+      severity: 'mild',
+      symptoms: ['No identifiable leaf blade or foliage patterns found in specimen image'],
+      culturalControl: ['Ensure the camera focuses exclusively on the leaf lamina or stem lesion'],
+      biologicalControl: [],
+      chemicalIntervention: 'No intervention required.',
+    },
+    alternatives: [],
+    metrics,
+    twoStage: {
+      stage1Detector: stage1,
+      stage2Classifier: {
+        model: 'mobilevit-xxs',
+        primaryCondition: 'Non-Foliage',
         confidence: 0.1,
-        severity: 'mild',
-        symptoms: ['No identifiable leaf blade or foliage patterns found in specimen image'],
-        culturalControl: ['Ensure the camera focuses exclusively on the leaf lamina or stem lesion'],
-        biologicalControl: [],
-        chemicalIntervention: 'No intervention required.',
       },
-      alternatives: [],
-      metrics,
-      twoStage: {
-        stage1Detector: stage1,
-        stage2Classifier: {
-          model: 'mobilevit-xxs',
-          primaryCondition: 'Non-Foliage',
-          confidence: 0.1,
-        },
-      },
-      analyzedAt: new Date().toISOString(),
-    };
-  }
+    },
+    analyzedAt: new Date().toISOString(),
+  };
+}
 
-  // 3. Stage 2: MobileViT Disease Classifier
-  let onnxResult: { candidates: EdgeDiagnosisCandidate[]; model: 'mobilevit-xxs' | 'efficientnet-lite0' } | null = null;
+async function resolveStage2Onnx(canvas: HTMLCanvasElement): Promise<{ candidates: EdgeDiagnosisCandidate[]; model: 'mobilevit-xxs' | 'efficientnet-lite0' } | null> {
   try {
     const rawRes = await tryMobileVitInference(canvas);
-    if (rawRes) {
-      const filtered = rawRes.candidates.filter(c => c.confidence >= ONNX_MIN_PROBABILITY);
-      if (filtered.length > 0) {
-        onnxResult = { candidates: filtered, model: rawRes.model };
-      }
-    }
+    if (!rawRes) return null;
+    const filtered = rawRes.candidates.filter(c => c.confidence >= ONNX_MIN_PROBABILITY);
+    return filtered.length > 0 ? { candidates: filtered, model: rawRes.model } : null;
   } catch {
-    /* fall through to heuristic */
+    return null;
   }
+}
 
-  if (onnxResult && onnxResult.candidates.length > 0) {
-    return {
-      isOfflineInference: true,
-      origin: onnxResult.model === 'mobilevit-xxs' ? 'mobilevit-onnx' : 'onnx',
-      modelVersion: `${onnxResult.model}-v1`,
-      heuristicDisclaimer: `Two-Stage Edge AI: Stage 1 YOLOv8n detector + Stage 2 ${onnxResult.model.toUpperCase()} classifier.`,
-      primaryDiagnosis: onnxResult.candidates[0],
-      alternatives: onnxResult.candidates.slice(1, 3),
-      metrics,
-      twoStage: {
-        stage1Detector: stage1,
-        stage2Classifier: {
-          model: onnxResult.model,
-          primaryCondition: onnxResult.candidates[0].condition,
-          confidence: onnxResult.candidates[0].confidence,
-        },
-      },
-      analyzedAt: new Date().toISOString(),
-    };
-  }
-
-  // Fallback to heuristic rules for Stage 2
+function runHeuristicStage2(metrics: EdgeVisualMetrics, cropHint?: string): { primary: EdgeDiagnosisCandidate; alternatives: EdgeDiagnosisCandidate[] } {
   const scored: Array<EdgeDiagnosisCandidate & { score: number }> = [];
   for (const rule of KNOWN_CONDITIONS) {
     const r = rule.matcher(metrics, cropHint);
@@ -905,7 +869,7 @@ export async function diagnosePlantOffline(
 
   scored.sort((a, b) => b.confidence - a.confidence);
 
-  const primaryDiagnosis: EdgeDiagnosisCandidate =
+  const primary: EdgeDiagnosisCandidate =
     scored.length > 0
       ? (({ score: _score, ...rest }) => rest)(scored[0])
       : {
@@ -921,20 +885,57 @@ export async function diagnosePlantOffline(
         };
 
   const alternatives = scored.slice(1, 3).map(({ score: _score, ...rest }) => rest);
+  return { primary, alternatives };
+}
 
+export async function diagnosePlantOffline(
+  imageSource: HTMLImageElement | HTMLCanvasElement,
+  cropHint?: string
+): Promise<OfflineDiagnosisResult> {
+  const canvas = createAnalysisCanvas(imageSource);
+  const metrics = await extractVisualMetricsFromCanvas(canvas);
+  const stage1 = await runYoloStage1Detection(canvas, metrics);
+
+  if (!stage1.detectedLeaf) {
+    return createRejectionDiagnosis(stage1, cropHint, metrics);
+  }
+
+  const onnxResult = await resolveStage2Onnx(canvas);
+  if (onnxResult) {
+    return {
+      isOfflineInference: true,
+      origin: onnxResult.model === 'mobilevit-xxs' ? 'mobilevit-onnx' : 'onnx',
+      modelVersion: `${onnxResult.model}-v1`,
+      heuristicDisclaimer: `Two-Stage Edge AI: Stage 1 YOLOv8n detector + Stage 2 ${onnxResult.model.toUpperCase()} classifier.`,
+      primaryDiagnosis: onnxResult.candidates[0],
+      alternatives: onnxResult.candidates.slice(1, 3),
+      metrics,
+      twoStage: {
+        stage1Detector: stage1,
+        stage2Classifier: {
+          model: onnxResult.model,
+          primaryCondition: onnxResult.candidates[0].condition,
+          confidence: onnxResult.candidates[0].confidence,
+        },
+      },
+      analyzedAt: new Date().toISOString(),
+    };
+  }
+
+  const { primary, alternatives } = runHeuristicStage2(metrics, cropHint);
   return {
     isOfflineInference: true,
     origin: 'heuristic',
     heuristicDisclaimer: 'Two-Stage Edge Pipeline: Stage 1 YOLOv8n detector + Stage 2 Heuristic triage. Confirm with lab/extension officer if confidence <0.8.',
-    primaryDiagnosis,
+    primaryDiagnosis: primary,
     alternatives,
     metrics,
     twoStage: {
       stage1Detector: stage1,
       stage2Classifier: {
         model: 'heuristic-v2',
-        primaryCondition: primaryDiagnosis.condition,
-        confidence: primaryDiagnosis.confidence,
+        primaryCondition: primary.condition,
+        confidence: primary.confidence,
       },
     },
     analyzedAt: new Date().toISOString(),
