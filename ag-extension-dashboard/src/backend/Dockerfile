@@ -13,7 +13,8 @@ ARG BACKEND_DIR=ag-extension-dashboard/src/backend
 COPY ${BACKEND_DIR}/package*.json ./
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
 
-RUN npm install --omit=dev --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && npx prisma generate
+ENV npm_config_fetch_retries=5 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
+RUN npm install --omit=dev --no-audit --no-fund && npx prisma generate
 
 # ============================================================
 # Stage 2: Build — install devDeps + compile TypeScript
@@ -22,12 +23,13 @@ FROM node:20-slim AS build
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates curl ffmpeg && rm -rf /var/lib/apt/lists/*
 
+ENV npm_config_fetch_retries=5 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
 ARG BACKEND_DIR=ag-extension-dashboard/src/backend
 COPY ${BACKEND_DIR}/package*.json ./
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
 
 # Install ALL dependencies including devDeps
-RUN npm install --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
+RUN npm install --no-audit --no-fund
 
 # Generate Prisma client
 RUN npx prisma generate
@@ -49,10 +51,11 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates curl ffmpeg && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies with devDeps for ts-node-dev
+ENV npm_config_fetch_retries=5 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
 ARG BACKEND_DIR=ag-extension-dashboard/src/backend
 COPY ${BACKEND_DIR}/package*.json ./
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
-RUN npm install --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
+RUN npm install --no-audit --no-fund
 RUN npx prisma generate
 
 # Copy all source for hot-reload

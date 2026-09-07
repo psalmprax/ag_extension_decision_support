@@ -4,8 +4,9 @@
 FROM node:20-slim AS deps
 WORKDIR /app
 COPY ag-extension-shared /ag-extension-shared
+ENV npm_config_fetch_retries=5 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
 COPY ag-extension-dashboard/src/frontend/package*.json ./
-RUN npm ci --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
+RUN npm ci --no-audit --no-fund
 
 # ============================================================
 # Stage 2: Build
