@@ -5,7 +5,7 @@ FROM node:20-slim AS deps
 WORKDIR /app
 COPY ag-extension-shared /ag-extension-shared
 ENV npm_config_fetch_retries=5 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
-COPY ag-extension-dashboard/src/frontend/package.json ag-extension-dashboard/src/frontend/package-lock.json* ./
+COPY ag-extension-dashboard/src/frontend/package.json ./
 RUN npm install --no-audit --no-fund
 
 # ============================================================
@@ -16,7 +16,7 @@ WORKDIR /app
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 COPY --from=deps /app/node_modules ./node_modules
 COPY ag-extension-shared /ag-extension-shared
-COPY ag-extension-dashboard/src/frontend/package*.json ./
+COPY ag-extension-dashboard/src/frontend/package.json ./
 COPY ag-extension-dashboard/src/frontend/ .
 RUN npm run build:docker
 
@@ -27,7 +27,7 @@ FROM node:20-slim AS development
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY ag-extension-shared /ag-extension-shared
-COPY ag-extension-dashboard/src/frontend/package*.json ./
+COPY ag-extension-dashboard/src/frontend/package.json ./
 COPY ag-extension-dashboard/src/frontend/ .
 EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host"]
