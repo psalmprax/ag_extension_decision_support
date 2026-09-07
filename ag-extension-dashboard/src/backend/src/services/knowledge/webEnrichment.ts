@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { SearchResult } from '@/services/vectorService';
 import { logger } from '@/utils/logger';
-import { tavilyService } from '@/services/tavilyService';
-import { StealthScraperService } from '@/services/stealthScraperService';
+import { tavilyService, TavilySearchResult } from '@/services/tavilyService';
+import { StealthScraperService, ScrapedDocument } from '@/services/stealthScraperService';
 import { isAgronomicContent, prepareWebSearchQuery } from '@/utils/agronomicQueryNormalizer';
 
 /**
@@ -32,14 +31,14 @@ export async function fallbackAgriQuery(queryText: string, queryCategories: stri
             new Promise<null>((_, reject) =>
                 setTimeout(() => reject(new Error('StealthScraperService.scrapeKnowledge timed out after 5s')), 5000)
             )
-        ]) as any[] | null;
+        ]) as ScrapedDocument[] | null;
 
         if (stealthResults && stealthResults.length > 0) {
             const mappedStealthResults: SearchResult[] = stealthResults.map((r, index) => ({
                 id: `stealth-${index}-${Date.now()}`,
-                content: `Stealth Scrape (${platform}): Topic: ${r.topic}. Summary: ${r.summary || 'N/A'}. Keywords: ${r.keywords.join(', ')}`,
+                content: `Stealth Scrape (${platform}): Topic: ${r.title}. Summary: ${r.summary || 'N/A'}. Keywords: ${r.keywords.join(', ')}`,
                 metadata: {
-                    title: `Tropical DB: ${r.topic}`,
+                    title: `Tropical DB: ${r.title}`,
                     category: 'Validated Scientific Guidance',
                     crop: 'Dynamic',
                     sourceUrl: r.url || 'https://www.fao.org/pest-and-pesticide-management/en/',

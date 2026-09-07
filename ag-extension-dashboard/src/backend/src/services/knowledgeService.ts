@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { ReasoningResult } from '@/services/aiProvider/aiProvider';
 import { VectorService, SearchResult } from '@/services/vectorService';
 import { normalizeAgronomicQuery } from '@/utils/agronomicQueryNormalizer';
 import {
@@ -9,7 +7,7 @@ import {
 } from '@/services/knowledge/searchLog';
 import { categorizeQuery as runCategorizeQuery, runAskQuestion } from '@/services/knowledge/askPipeline';
 import { validateAndEnhanceVisuals as enhanceVisuals } from '@/services/knowledge/visuals';
-import type { AskOptions, KnowledgeAttachment, ReasonOptions } from '@/services/knowledge/types';
+import type { AnswerVisuals, AskOptions, FinalAnswer, KnowledgeAttachment, ReasonOptions, SearchHistoryEntry, SearchStats } from '@/services/knowledge/types';
 
 export { getKnowledgeEvidenceStatus } from './knowledge/evidence';
 export type { KnowledgeEvidenceStatus, KnowledgeArticle } from './knowledge/evidence';
@@ -38,7 +36,7 @@ export class KnowledgeService {
         crop?: string,
         answer?: string,
         reasoning?: string,
-        visuals?: Record<string, any>
+        visuals?: unknown
     ): Promise<void> {
         return persistSearch(userId, queryText, category, crop, answer, reasoning, visuals);
     }
@@ -46,7 +44,7 @@ export class KnowledgeService {
     /**
      * Get recent search history for a user (de-duplicated)
      */
-    static async getSearchHistory(userId: string, limit: number = 10): Promise<Record<string, any>[]> {
+    static async getSearchHistory(userId: string, limit: number = 10): Promise<SearchHistoryEntry[]> {
         return fetchSearchHistory(userId, limit);
     }
 
@@ -54,7 +52,7 @@ export class KnowledgeService {
      * Get knowledge search statistics for visuals
      * Cached in Redis for 5 minutes to avoid repeated expensive queries
      */
-    static async getSearchStats(): Promise<Record<string, any>> {
+    static async getSearchStats(): Promise<SearchStats> {
         return fetchSearchStats();
     }
 
@@ -63,7 +61,7 @@ export class KnowledgeService {
         queryText: string,
         attachments?: KnowledgeAttachment[],
         options?: AskOptions
-    ): Promise<ReasoningResult & { cached: boolean; contextUsed: SearchResult[] }> {
+    ): Promise<FinalAnswer> {
         return runAskQuestion(userId, queryText, attachments, options);
     }
 
@@ -78,7 +76,7 @@ export class KnowledgeService {
     /**
      * Validates and enhances visual assets with runtime checks
      */
-    static async validateAndEnhanceVisuals(visuals: Record<string, any>, searchQuery: string): Promise<Record<string, any>> {
+    static async validateAndEnhanceVisuals(visuals: AnswerVisuals, searchQuery: string): Promise<AnswerVisuals> {
         return enhanceVisuals(visuals, searchQuery);
     }
 }

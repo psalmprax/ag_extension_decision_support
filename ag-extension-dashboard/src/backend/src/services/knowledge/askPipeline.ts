@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { AIRouter, ReasoningResult } from '@/services/aiProvider/aiProvider';
+import { AIRouter } from '@/services/aiProvider/aiProvider';
+import type { ReasoningResult } from '@/services/aiProvider/aiProvider';
 import { VectorService, SearchResult } from '@/services/vectorService';
 import { SemanticCacheService } from '@/services/semanticCacheService';
 import { cacheSet } from '@/services/cacheService';
@@ -13,7 +13,7 @@ import { callReasoningAgentic, callReasoningWithTimeout } from '@/services/knowl
 import { buildExtractiveAnswer } from '@/services/knowledge/insightExtract';
 import { postProcessResponse } from '@/services/knowledge/visuals';
 import { logSearch } from '@/services/knowledge/searchLog';
-import type { AskOptions, KnowledgeAttachment, ReasonOptions } from '@/services/knowledge/types';
+import type { AskOptions, FinalAnswer, KnowledgeAttachment, ReasonOptions } from '@/services/knowledge/types';
 
 /**
  * askQuestion pipeline: cache fast-path → parallel retrieval (categorize,
@@ -45,7 +45,7 @@ export async function resolveAggregatedContext(
     return { contextResults, contextText };
 }
 
-export function cacheAndLogResponse(userId: string, queryText: string, attachments: Record<string, any>[] | undefined, redisKey: string, queryCategories: string[], response: Record<string, any>): void {
+export function cacheAndLogResponse(userId: string, queryText: string, attachments: KnowledgeAttachment[] | undefined, redisKey: string, queryCategories: string[], response: FinalAnswer): void {
     const isAnswerValid = response.answer &&
         typeof response.answer === 'string' &&
         response.answer.length >= 200 &&
@@ -67,7 +67,7 @@ export function cacheAndLogResponse(userId: string, queryText: string, attachmen
     ).catch(logError => logger.error('Background logging failed:', logError));
 }
 
-export function handleAskQuestionFallback(userId: string, queryText: string, contextResults: SearchResult[], error: unknown): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
+export function handleAskQuestionFallback(userId: string, queryText: string, contextResults: SearchResult[], error: unknown): FinalAnswer {
     logger.error('RAG analysis failed:', error);
 
     if (contextResults.length > 0) {
@@ -80,7 +80,7 @@ export function handleAskQuestionFallback(userId: string, queryText: string, con
         return fallback;
     }
 
-    const noResultAnswer: ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } = {
+    const noResultAnswer: FinalAnswer = {
         reasoning: 'No context found in knowledge base and AI provider did not complete in time.',
         answer: `I wasn't able to find information about **"${queryText}"** in the knowledge base, and the AI assistant is currently unavailable. Please try rephrasing your question or check back later.`,
         confidence: 0.1,
@@ -114,7 +114,7 @@ export async function finalizeAnswer(
     contextResults: SearchResult[],
     reasoningResult: ReasoningResult,
     attachments: KnowledgeAttachment[] | undefined
-): Promise<ReasoningResult & { cached: boolean; contextUsed: SearchResult[] }> {
+): Promise<FinalAnswer> {
     const { visuals, audio } = await postProcessResponse(reasoningResult, queryText);
 
     const response = {
@@ -133,11 +133,22 @@ export async function finalizeAnswer(
  * Categorize a query to optimize retrieval.
  * Wrapped in a 10-second timeout so a slow AI provider doesn't block the RAG pipeline.
  */
+interface ClassificationLabel {
+    score: number;
+    label: string;
+}
+
+function isClassificationResult(value: unknown): value is { labels: ClassificationLabel[] } {
+    if (typeof value !== 'object' || value === null) return false;
+    const labels = (value as { labels?: unknown }).labels;
+    return Array.isArray(labels);
+}
+
 export async function categorizeQuery(queryText: string, options?: ReasonOptions): Promise<string[]> {
     const TIMEOUT_MS = 10000;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     try {
-        const classification = await Promise.race([
+        const classification: unknown = await Promise.race([
             AIRouter.routeRequest('classify', {
                 input: queryText,
                 options: {
@@ -146,7 +157,7 @@ export async function categorizeQuery(queryText: string, options?: ReasonOptions
                     preferredProvider: options?.preferredProvider
                 }
             }),
-            new Promise<Record<string, any>>((_, reject) => {
+            new Promise<never>((_, reject) => {
                 timeoutId = setTimeout(
                     () => reject(new Error(`categorizeQuery timed out after ${TIMEOUT_MS}ms`)),
                     TIMEOUT_MS
@@ -154,9 +165,10 @@ export async function categorizeQuery(queryText: string, options?: ReasonOptions
             }),
         ]).finally(() => clearTimeout(timeoutId));
 
+        if (!isClassificationResult(classification)) return ['general_inquiry'];
         return classification.labels
-            .filter((l: Record<string, any>) => l.score > 0.4)
-            .map((l: Record<string, any>) => l.label);
+            .filter((l) => typeof l.score === 'number' && typeof l.label === 'string' && l.score > 0.4)
+            .map((l) => l.label);
     } catch (error) {
         const isTimeout = (error as Error).message?.includes('categorizeQuery timed out');
         if (isTimeout) {
@@ -173,7 +185,7 @@ export async function runAskQuestion(
     queryText: string,
     attachments?: KnowledgeAttachment[],
     options?: AskOptions
-): Promise<ReasoningResult & { cached: boolean; contextUsed: SearchResult[] }> {
+): Promise<FinalAnswer> {
     const cleanQueryText = normalizeAgronomicQuery(queryText);
     logger.info(`Getting RAG-based answer for query: "${queryText}" (normalized: "${cleanQueryText}", User: ${userId}, Attachments: ${attachments?.length || 0}, PreferredProvider: ${options?.preferredProvider || 'default'}, BypassCache: ${Boolean(options?.bypassCache)})`);
 

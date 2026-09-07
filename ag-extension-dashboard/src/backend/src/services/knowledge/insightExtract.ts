@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ReasoningResult } from '@/services/aiProvider/aiProvider';
 import type { SearchResult } from '@/services/vectorService';
 import { isAgronomicContent } from '@/utils/agronomicQueryNormalizer';

@@ -1,7 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { SearchResult } from '@/services/vectorService';
 import { logger } from '@/utils/logger';
 import type { UserLocation } from '@/services/knowledge/userContext';
+import type { DiseaseAlert } from '@/services/faoService';
+import type { MarketPrice } from '@/services/marketPriceService';
 
 /**
  * Live agricultural context: weather, FAO alerts, NASA agroclimate,
@@ -45,7 +46,7 @@ export async function fetchFAOAlertsContext(queryCategories: string[], region?: 
         if (alerts && alerts.length > 0) {
             return {
                 id: `live-fao-alerts-${Date.now()}`,
-                content: `FAO Disease Alerts for ${region} (Crop: ${crop || 'All'}):\n${alerts.map((a: Record<string, any>) => `- [${a.severity.toUpperCase()}] ${a.title}: ${a.description}`).join('\n')}`,
+                content: `FAO Disease Alerts for ${region} (Crop: ${crop || 'All'}):\n${alerts.map((a: DiseaseAlert) => `- [${a.severity.toUpperCase()}] ${a.title}: ${a.description}`).join('\n')}`,
                 metadata: { title: `FAO Pest & Disease Alerts (${region})`, category: 'Disease Alerts', crop: crop || 'All', sourceUrl: 'https://www.fao.org', contentType: 'text' },
                 score: 1.0
             };
@@ -83,11 +84,11 @@ export async function fetchSoilPropertiesContext(queryCategories: string[], lat:
     if (queryCategories.length > 0 && !queryCategories.includes('agronomy_and_yield') && !queryCategories.includes('climate_and_weather')) return null;
     try {
         const { soilGridsService } = await import('@/services/data/soilGridsService');
-        const soil = (await soilGridsService.fetchSoilProperties(lat, lng)) as Record<string, any>;
+        const soil = await soilGridsService.fetchSoilProperties(lat, lng);
         if (soil) {
-            const ph = soil.ph_h2o ?? 'N/A';
+            const ph = soil.ph ?? 'N/A';
             const clay = soil.clay ?? 'N/A';
-            const soc = soil.soc ?? 'N/A';
+            const soc = soil.organic_carbon_g_kg ?? 'N/A';
             return {
                 id: `live-soil-properties-${Date.now()}`,
                 content: `SoilGrids ISRIC Soil Properties for lat: ${lat}, lng: ${lng}:\n- pH at 0-5cm: ${ph}\n- Clay content: ${clay}%\n- Organic Carbon: ${soc} dg/kg`,
@@ -105,11 +106,11 @@ export async function fetchMarketPricesContext(queryCategories: string[], crop: 
         const { marketPriceService } = await import('@/services/marketPriceService');
         const prices = await marketPriceService.getLatestPrices();
         if (prices && prices.length > 0) {
-            const relevantPrices = crop ? prices.filter((p: Record<string, any>) => p.crop.toLowerCase().includes(crop.toLowerCase())) : prices;
+            const relevantPrices = crop ? prices.filter((p: MarketPrice) => p.crop.toLowerCase().includes(crop.toLowerCase())) : prices;
             const priceList = relevantPrices.length > 0 ? relevantPrices : prices;
             return {
                 id: `live-market-prices-${Date.now()}`,
-                content: `Latest Market Prices:\n${priceList.map((p: Record<string, any>) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`,
+                content: `Latest Market Prices:\n${priceList.map((p: MarketPrice) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`,
                 metadata: { title: 'Latest Market Prices Context', category: 'Market Prices', crop: crop || 'All', sourceUrl: 'https://www.ratin.net', contentType: 'text' },
                 score: 1.0
             };

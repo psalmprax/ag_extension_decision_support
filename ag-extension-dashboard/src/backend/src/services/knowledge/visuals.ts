@@ -1,36 +1,48 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AIRouter, ReasoningResult } from '@/services/aiProvider/aiProvider';
 import { AssetValidationService } from '@/services/assetValidationService';
 import { logger } from '@/utils/logger';
 import { normalizeAllCapsText } from '@/services/knowledge/textNormalize';
+import type { AnswerVisuals } from '@/services/knowledge/types';
 
 /**
  * Visual assets + TTS post-processing for knowledge answers.
  */
 
-export async function enhanceImages(enhancedVisuals: Record<string, any>, searchQuery: string): Promise<void> {
-    if (!enhancedVisuals.images || enhancedVisuals.images.length === 0) return;
+type VisualImage = { url: string; caption?: string };
+type VisualVideo = { url: string; caption?: string };
+
+function imageList(visuals: AnswerVisuals): VisualImage[] {
+    return visuals.images ?? [];
+}
+
+function videoList(visuals: AnswerVisuals): VisualVideo[] {
+    return visuals.videos ?? [];
+}
+
+export async function enhanceImages(enhancedVisuals: AnswerVisuals, searchQuery: string): Promise<void> {
+    const images = imageList(enhancedVisuals);
+    if (images.length === 0) return;
 
     const validImageUrls = await AssetValidationService.validateAssetUrls(
-        enhancedVisuals.images.map((img: Record<string, any>) => img.url)
+        images.map((img) => img.url)
     );
 
-    enhancedVisuals.images = enhancedVisuals.images.filter((img: Record<string, any>) =>
+    enhancedVisuals.images = images.filter((img) =>
         validImageUrls.includes(img.url)
     );
 
-    if (enhancedVisuals.images.length < 2) {
+    if ((enhancedVisuals.images?.length ?? 0) < 2) {
         try {
             const additionalImages = await AssetValidationService.getRelevantImages(searchQuery, 3);
-            const existingUrls = new Set(enhancedVisuals.images.map((img: Record<string, any>) => img.url));
+            const existingUrls = new Set((enhancedVisuals.images ?? []).map((img) => img.url));
 
             for (const additional of additionalImages) {
                 if (!existingUrls.has(additional.url)) {
-                    enhancedVisuals.images.push({
+                    (enhancedVisuals.images ?? []).push({
                         url: additional.url,
                         caption: `Verified agricultural image (${additional.category})`
                     });
-                    if (enhancedVisuals.images.length >= 3) break;
+                    if ((enhancedVisuals.images?.length ?? 0) >= 3) break;
                 }
             }
         } catch (error) {
@@ -39,19 +51,20 @@ export async function enhanceImages(enhancedVisuals: Record<string, any>, search
     }
 }
 
-export async function enhanceVideos(enhancedVisuals: Record<string, any>): Promise<void> {
-    if (!enhancedVisuals.videos || enhancedVisuals.videos.length === 0) return;
+export async function enhanceVideos(enhancedVisuals: AnswerVisuals): Promise<void> {
+    const videos = videoList(enhancedVisuals);
+    if (videos.length === 0) return;
 
     const validVideoUrls = await AssetValidationService.validateAssetUrls(
-        enhancedVisuals.videos.map((vid: Record<string, any>) => vid.url)
+        videos.map((vid) => vid.url)
     );
 
-    enhancedVisuals.videos = enhancedVisuals.videos.filter((vid: Record<string, any>) =>
+    enhancedVisuals.videos = videos.filter((vid) =>
         validVideoUrls.includes(vid.url)
     );
 }
 
-export async function addFallbackVisuals(enhancedVisuals: Record<string, any>, searchQuery: string): Promise<void> {
+export async function addFallbackVisuals(enhancedVisuals: AnswerVisuals, searchQuery: string): Promise<void> {
     if ((!enhancedVisuals.images || enhancedVisuals.images.length === 0) &&
         (!enhancedVisuals.charts || enhancedVisuals.charts.length === 0)) {
         try {
@@ -71,7 +84,7 @@ export async function addFallbackVisuals(enhancedVisuals: Record<string, any>, s
 }
 
 /** Validates and enhances visual assets with runtime checks. */
-export async function validateAndEnhanceVisuals(visuals: Record<string, any>, searchQuery: string): Promise<Record<string, any>> {
+export async function validateAndEnhanceVisuals(visuals: AnswerVisuals, searchQuery: string): Promise<AnswerVisuals> {
     const enhancedVisuals = { ...visuals };
 
     await enhanceImages(enhancedVisuals, searchQuery);
@@ -84,18 +97,19 @@ export async function validateAndEnhanceVisuals(visuals: Record<string, any>, se
 export async function postProcessResponse(
     reasoningResult: ReasoningResult,
     queryText: string
-): Promise<{ visuals: any; audio?: string }> {
+): Promise<{ visuals: AnswerVisuals | undefined; audio?: string }> {
     if (reasoningResult.answer && typeof reasoningResult.answer === 'string') {
         reasoningResult.answer = normalizeAllCapsText(reasoningResult.answer);
     }
 
     let audioBase64: string | undefined = undefined;
     let enhancedVisuals = reasoningResult.visuals;
+    const sourceVisuals = reasoningResult.visuals;
 
     await Promise.all([
         (async () => {
-            if (reasoningResult.visuals) {
-                enhancedVisuals = await validateAndEnhanceVisuals(reasoningResult.visuals, queryText);
+            if (sourceVisuals) {
+                enhancedVisuals = await validateAndEnhanceVisuals(sourceVisuals, queryText);
             }
         })(),
         (async () => {
