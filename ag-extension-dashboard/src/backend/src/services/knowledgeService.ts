@@ -9,6 +9,7 @@ import { logger } from '@/utils/logger';
 import { tavilyService } from '@/services/tavilyService';
 import { StealthScraperService } from '@/services/stealthScraperService';
 import { mcpAdapter } from '@/services/mcpAdapter';
+import { normalizeAgronomicQuery, isAgronomicContent, prepareWebSearchQuery } from '@/utils/agronomicQueryNormalizer';
 
 const STATS_CACHE_KEY = 'knowledge:search:stats';
 const STATS_CACHE_TTL = 300; // 5 minutes
@@ -21,7 +22,8 @@ export class KnowledgeService {
      * Search for knowledge articles using RAG (Vector Search)
      */
     static async searchKnowledge(queryText: string, limit: number = 3, filters: { category?: string; crop?: string } = {}): Promise<SearchResult[]> {
-        return VectorService.hybridSearch(queryText, limit, filters);
+        const cleanQuery = normalizeAgronomicQuery(queryText);
+        return VectorService.hybridSearch(cleanQuery, limit, filters);
     }
 
     /**
@@ -266,22 +268,25 @@ export class KnowledgeService {
     }
 
     private static async fallbackGeneralQuery(queryText: string, currentResults: SearchResult[]): Promise<SearchResult[]> {
-        logger.info(`Query intent is general. Querying Tavily for: "${queryText}"`);
+        const webSearchQuery = prepareWebSearchQuery(queryText);
+        logger.info(`Query intent is general. Querying Tavily for: "${webSearchQuery}"`);
         try {
-            const webResults = await tavilyService.search(queryText, 3);
+            const webResults = await tavilyService.search(webSearchQuery, 3);
             if (webResults && webResults.results && webResults.results.length > 0) {
-                const mappedWebResults: SearchResult[] = webResults.results.map((r, index) => ({
-                    id: `web-${index}-${Date.now()}`,
-                    content: r.content,
-                    metadata: {
-                        title: r.title,
-                        category: 'External Reference',
-                        crop: 'All',
-                        sourceUrl: r.url,
-                        contentType: 'text'
-                    },
-                    score: r.score
-                }));
+                const mappedWebResults: SearchResult[] = webResults.results
+                    .filter(r => isAgronomicContent(`${r.title || ''} ${r.content || ''}`))
+                    .map((r, index) => ({
+                        id: `web-${index}-${Date.now()}`,
+                        content: r.content,
+                        metadata: {
+                            title: r.title,
+                            category: 'External Reference',
+                            crop: 'All',
+                            sourceUrl: r.url,
+                            contentType: 'text'
+                        },
+                        score: r.score
+                    }));
                 return [...mappedWebResults, ...currentResults].slice(0, 4);
             }
         } catch (webError) {
@@ -330,16 +335,24 @@ export class KnowledgeService {
         return this.dedupeAndRerank(queryText, [...webResults, ...contextResults], fetchedAt);
     }
 
-    /** Fetch up to 4 fresh Tavily results, enriching with Jina only if snippet is sparse. */
+    /** Fetch up to 4 fresh Tavily results, enriching with Jina only if snippet is sparse. Discards non-agronomic web results. */
     private static async fetchTavilyWebResults(queryText: string, fetchedAt: string): Promise<SearchResult[]> {
         try {
-            const tavilyRes = await tavilyService.search(queryText, 4, { searchDepth: 'basic', timeRange: 'week', includeAnswer: false });
+            const webSearchQuery = prepareWebSearchQuery(queryText);
+            const tavilyRes = await tavilyService.search(webSearchQuery, 4, { searchDepth: 'basic', timeRange: 'week', includeAnswer: false });
             if (!tavilyRes?.results?.length) return [];
-            return await Promise.all(tavilyRes.results.slice(0, 4).map(async (r, idx) => {
+            
+            const rawWebResults = await Promise.all(tavilyRes.results.slice(0, 4).map(async (r, idx) => {
                 let content = r.content;
                 if (!content || content.length < 120) {
                     const jinaContent = await this.fetchViaJina(r.url);
                     if (jinaContent) content = jinaContent;
+                }
+                const combinedText = `${r.title || ''} ${content || ''}`;
+                // Guardrail: verify agricultural relevance before ingesting into RAG context
+                if (!isAgronomicContent(combinedText)) {
+                    logger.warn(`Dropping non-agronomic web result from Tavily: "${r.title}" (${r.url})`);
+                    return null;
                 }
                 return {
                     id: `web-${idx}-${Date.now()}`,
@@ -356,6 +369,8 @@ export class KnowledgeService {
                     score: r.score
                 } as SearchResult;
             }));
+
+            return rawWebResults.filter((r): r is SearchResult => r !== null);
         } catch (e) {
             logger.warn('Tavily/Jina enrichment failed, continuing with local:', e);
             return [];
@@ -867,25 +882,26 @@ Agronomic Decision Support Protocol (Phase 2):
         attachments?: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }>,
         options?: { preferredProvider?: string; bypassCache?: boolean }
     ): Promise<ReasoningResult & { cached: boolean; contextUsed: SearchResult[] }> {
-        logger.info(`Getting RAG-based answer for query: "${queryText}" (User: ${userId}, Attachments: ${attachments?.length || 0}, PreferredProvider: ${options?.preferredProvider || 'default'}, BypassCache: ${Boolean(options?.bypassCache)})`);
+        const cleanQueryText = normalizeAgronomicQuery(queryText);
+        logger.info(`Getting RAG-based answer for query: "${queryText}" (normalized: "${cleanQueryText}", User: ${userId}, Attachments: ${attachments?.length || 0}, PreferredProvider: ${options?.preferredProvider || 'default'}, BypassCache: ${Boolean(options?.bypassCache)})`);
 
-        const normalized = queryText.toLowerCase().trim();
+        const normalized = cleanQueryText.toLowerCase().trim();
         const baseRedisKey = `rag:exact:${normalized}`;
 
         // Fast-path: check exact match caches first (<2ms) before making AI classification or vector calls
         if (!options?.bypassCache && (!attachments || attachments.length === 0)) {
-            const exactHit = await this.checkExactCachesOnly(queryText, baseRedisKey);
+            const exactHit = await this.checkExactCachesOnly(cleanQueryText, baseRedisKey);
             if (exactHit) {
-                logger.info(`Exact cache HIT (pre-categorization) for query: "${queryText}"`);
+                logger.info(`Exact cache HIT (pre-categorization) for query: "${cleanQueryText}"`);
                 return exactHit;
             }
         }
 
         // Parallelize query categorization, local vector search, and user/farmer context resolution
         const [queryCategories, initialContextResults, userContext] = await Promise.all([
-            this.categorizeQuery(queryText, options),
-            this.searchKnowledge(queryText),
-            this.resolveUserContext(userId, queryText),
+            this.categorizeQuery(cleanQueryText, options),
+            this.searchKnowledge(cleanQueryText),
+            this.resolveUserContext(userId, cleanQueryText),
         ]);
 
         const isRealTimeIntent = queryCategories.some(c => ['market_and_commodity_prices', 'climate_and_weather', 'market_prices'].includes(c));
@@ -893,12 +909,12 @@ Agronomic Decision Support Protocol (Phase 2):
         const redisKey = `rag:exact:${normalized}${freshSuffix}`;
 
         if (!options?.bypassCache) {
-            const cachedHit = await this.checkAnswerCaches(queryText, redisKey, attachments, isRealTimeIntent);
+            const cachedHit = await this.checkAnswerCaches(cleanQueryText, redisKey, attachments, isRealTimeIntent);
             if (cachedHit) return cachedHit;
         }
 
         const { contextResults, contextText } = await this.resolveAggregatedContext(
-            queryText,
+            cleanQueryText,
             queryCategories,
             initialContextResults,
             userContext
@@ -906,11 +922,11 @@ Agronomic Decision Support Protocol (Phase 2):
 
         try {
             const reasoningResult = process.env.KNOWLEDGE_AGENTIC_LOOP === 'false'
-                ? await this.callReasoningWithTimeout(contextText, queryText, attachments, options)
-                : await this.callReasoningAgentic(contextText, queryText, attachments, options, queryCategories);
-            return await this.finalizeAnswer(userId, queryText, redisKey, queryCategories, contextResults, reasoningResult, attachments);
+                ? await this.callReasoningWithTimeout(contextText, cleanQueryText, attachments, options)
+                : await this.callReasoningAgentic(contextText, cleanQueryText, attachments, options, queryCategories);
+            return await this.finalizeAnswer(userId, cleanQueryText, redisKey, queryCategories, contextResults, reasoningResult, attachments);
         } catch (error) {
-            return this.handleAskQuestionFallback(userId, queryText, contextResults, error);
+            return this.handleAskQuestionFallback(userId, cleanQueryText, contextResults, error);
         }
     }
 
@@ -920,7 +936,7 @@ Agronomic Decision Support Protocol (Phase 2):
         initialContextResults: SearchResult[],
         userContext: Awaited<ReturnType<typeof KnowledgeService.resolveUserContext>>
     ): Promise<{ contextResults: SearchResult[]; contextText: string }> {
-        const isAgriQuery = queryCategories.length === 0 || queryCategories.some(c =>
+        const isAgriQuery = queryCategories.length === 0 || isAgronomicContent(queryText) || queryCategories.some(c =>
             ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather', 'market_prices'].includes(c)
         );
 
@@ -1141,6 +1157,38 @@ Agronomic Decision Support Protocol (Phase 2):
         return null;
     }
 
+    private static resolveChunkTitle(result: SearchResult, idx: number): string {
+        const rawTitle = typeof result.metadata?.title === 'string' && result.metadata.title
+            ? result.metadata.title
+            : `Source ${idx + 1}`;
+        return this.convertAllCapsLine(rawTitle);
+    }
+
+    private static collectInsightForParagraph(trimmed: string, resultId: string | undefined, keyBulletPoints: string[]): void {
+        if (keyBulletPoints.length >= 8) return;
+        const insight = this.parseInsightFromLine(trimmed);
+        if (!insight) return;
+        if (keyBulletPoints.includes(insight)) return;
+        if (resultId?.startsWith('web-') && !isAgronomicContent(insight)) return;
+        keyBulletPoints.push(insight);
+    }
+
+    private static processChunkParagraph(
+        paragraph: string,
+        resultId: string | undefined,
+        seenParagraphs: Set<string>,
+        cleanSourceParagraphs: string[],
+        keyBulletPoints: string[]
+    ): void {
+        const trimmed = paragraph.trim();
+        if (trimmed.length < 30) return;
+        const norm = trimmed.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 100);
+        if (seenParagraphs.has(norm)) return;
+        seenParagraphs.add(norm);
+        cleanSourceParagraphs.push(trimmed.replace(/^#{1,6}\s+/, '').trim());
+        this.collectInsightForParagraph(trimmed, resultId, keyBulletPoints);
+    }
+
     private static extractInsightsFromChunk(
         result: SearchResult,
         idx: number,
@@ -1149,30 +1197,11 @@ Agronomic Decision Support Protocol (Phase 2):
         structuredExcerpts: string[]
     ) {
         const sanitized = this.sanitizeContextText(result.content);
-        const rawTitle = (typeof result.metadata?.title === 'string' && result.metadata.title)
-            ? result.metadata.title
-            : `Source ${idx + 1}`;
-        const title = this.convertAllCapsLine(rawTitle);
-        const paragraphs = sanitized.split(/\n\n+/);
+        const title = this.resolveChunkTitle(result, idx);
         const cleanSourceParagraphs: string[] = [];
 
-        for (const p of paragraphs) {
-            const trimmed = p.trim();
-            if (trimmed.length < 30) continue;
-
-            const norm = trimmed.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 100);
-            if (seenParagraphs.has(norm)) continue;
-            seenParagraphs.add(norm);
-
-            const cleanBodyParagraph = trimmed.replace(/^#{1,6}\s+/, '').trim();
-            cleanSourceParagraphs.push(cleanBodyParagraph);
-
-            if (keyBulletPoints.length < 8) {
-                const insight = this.parseInsightFromLine(trimmed);
-                if (insight && !keyBulletPoints.includes(insight)) {
-                    keyBulletPoints.push(insight);
-                }
-            }
+        for (const p of sanitized.split(/\n\n+/)) {
+            this.processChunkParagraph(p, result.id, seenParagraphs, cleanSourceParagraphs, keyBulletPoints);
         }
 
         if (cleanSourceParagraphs.length > 0) {
@@ -1181,43 +1210,97 @@ Agronomic Decision Support Protocol (Phase 2):
         }
     }
 
-    private static buildExtractiveAnswer(queryText: string, contextResults: SearchResult[]): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
-        const primary = contextResults[0];
-        const rawSourceTitle = (typeof primary.metadata?.title === 'string' && primary.metadata.title)
+    private static filterAgronomicResults(contextResults: SearchResult[]): SearchResult[] {
+        return contextResults.filter(r => {
+            if (!r.id?.startsWith('web-')) return true;
+            return isAgronomicContent(`${r.metadata?.title || ''} ${r.content}`);
+        });
+    }
+
+    private static buildEmptyExtractiveAnswer(queryText: string): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
+        return {
+            reasoning: 'No verified agricultural context found in knowledge base and AI provider did not complete in time.',
+            answer: `I wasn't able to find verified agronomic information about **"${queryText}"** in the knowledge base. Please try rephrasing your question with specific crop, soil, pest, or farm management terms.`,
+            confidence: 0.1,
+            visuals: {
+                kpis: [
+                    { label: 'Source Matches', value: '0', status: 'warning' as const },
+                    { label: 'Status', value: 'No Agricultural Match', status: 'warning' as const }
+                ],
+                charts: [],
+                images: [],
+                videos: []
+            },
+            contextUsed: [],
+            cached: false
+        };
+    }
+
+    private static resolvePrimarySource(primary: SearchResult): { sourceTitle: string; sourceUrl: string } {
+        const rawTitle = typeof primary.metadata?.title === 'string' && primary.metadata.title
             ? primary.metadata.title
             : `${(primary.metadata?.crop as string) || 'Agricultural'} ${(primary.metadata?.category as string) || 'Knowledge'}`;
-        const sourceTitle = this.convertAllCapsLine(rawSourceTitle);
-        const sourceUrl = primary.metadata?.sourceUrl ? ` (${primary.metadata.sourceUrl})` : '';
+        return {
+            sourceTitle: this.convertAllCapsLine(rawTitle),
+            sourceUrl: primary.metadata?.sourceUrl ? ` (${primary.metadata.sourceUrl})` : ''
+        };
+    }
 
-        // Extract and deduplicate key paragraphs across all chunks
+    private static collectChunkInsights(validResults: SearchResult[]): { keyBulletPoints: string[]; structuredExcerpts: string[] } {
         const seenParagraphs = new Set<string>();
         const keyBulletPoints: string[] = [];
         const structuredExcerpts: string[] = [];
-
-        for (const [idx, result] of contextResults.slice(0, 4).entries()) {
+        for (const [idx, result] of validResults.slice(0, 4).entries()) {
             this.extractInsightsFromChunk(result, idx, seenParagraphs, keyBulletPoints, structuredExcerpts);
         }
+        return { keyBulletPoints, structuredExcerpts };
+    }
 
-        // Build clean synthesized markdown sections
-        const sections: string[] = [
-            `I found source-backed guidance for: **"${queryText}"**.\n\n*Primary source reference: ${sourceTitle}${sourceUrl}*`,
-        ];
-
-        const proceduralNote = this.getProceduralGuidanceNote(queryText);
-        if (proceduralNote) {
-            sections.push(proceduralNote);
-        }
-
+    private static appendInsightSections(sections: string[], keyBulletPoints: string[], structuredExcerpts: string[]): void {
         if (keyBulletPoints.length > 0) {
             sections.push(`### Key identified insights and takeaways\n\n${keyBulletPoints.join('\n\n')}`);
         }
-
         if (structuredExcerpts.length > 0) {
             sections.push(`### Verified context and field reference\n\n${structuredExcerpts.join('\n\n')}`);
         }
+    }
 
-        sections.push(`*Note: The recommendations above are extracted directly from the local verified agricultural knowledge base.*`);
+    private static appendSourceNote(sections: string[], validResults: SearchResult[]): void {
+        const hasWebSources = validResults.some(r => r.id?.startsWith('web-'));
+        sections.push(hasWebSources
+            ? `*Note: The recommendations above are compiled from external agricultural research sources and should be verified with a local extension officer.*`
+            : `*Note: The recommendations above are extracted directly from the local verified agricultural knowledge base.*`);
+    }
 
+    private static buildExtractiveSections(
+        queryText: string,
+        sourceTitle: string,
+        sourceUrl: string,
+        keyBulletPoints: string[],
+        structuredExcerpts: string[],
+        validResults: SearchResult[]
+    ): string[] {
+        const sections: string[] = [
+            `I found source-backed guidance for: **"${queryText}"**.\n\n*Primary source reference: ${sourceTitle}${sourceUrl}*`,
+        ];
+        const proceduralNote = this.getProceduralGuidanceNote(queryText);
+        if (proceduralNote) sections.push(proceduralNote);
+        this.appendInsightSections(sections, keyBulletPoints, structuredExcerpts);
+        this.appendSourceNote(sections, validResults);
+        return sections;
+    }
+
+    private static buildExtractiveAnswer(queryText: string, contextResults: SearchResult[]): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
+        const validResults = this.filterAgronomicResults(contextResults);
+
+        if (validResults.length === 0) {
+            return this.buildEmptyExtractiveAnswer(queryText);
+        }
+
+        const primary = validResults[0];
+        const { sourceTitle, sourceUrl } = this.resolvePrimarySource(primary);
+        const { keyBulletPoints, structuredExcerpts } = this.collectChunkInsights(validResults);
+        const sections = this.buildExtractiveSections(queryText, sourceTitle, sourceUrl, keyBulletPoints, structuredExcerpts, validResults);
         const answer = this.normalizeAllCapsText(sections.join('\n\n---\n\n'));
 
         return {
@@ -1226,14 +1309,14 @@ Agronomic Decision Support Protocol (Phase 2):
             confidence: Math.max(0.5, Math.min(primary.score || 0.7, 0.95)),
             visuals: {
                 kpis: [
-                    { label: 'Source Matches', value: String(contextResults.length), status: 'good' },
+                    { label: 'Source Matches', value: String(validResults.length), status: 'good' },
                     { label: 'Top Match Score', value: (primary.score ?? 0).toFixed(2), status: (primary.score ?? 0) >= 0.65 ? 'good' : 'warning' }
                 ],
                 charts: [],
                 images: [],
                 videos: []
             },
-            contextUsed: contextResults,
+            contextUsed: validResults,
             cached: false
         };
     }

@@ -199,8 +199,7 @@ describe('Users Route — Mapper-before-response: mapUserPublicRows + mapUserPub
 
     it('POST / gracefully falls back if country column does not exist (e.g. pending migration)', async () => {
         // First query fails with missing column error (42703)
-        const missingColumnErr: any = new Error('column "country" of relation "users" does not exist');
-        missingColumnErr.code = '42703';
+        const missingColumnErr = Object.assign(new Error('column "country" of relation "users" does not exist'), { code: '42703' });
         const fallbackRow = {
             id: 'user-fallback',
             email: 'fallback@example.com',
@@ -240,8 +239,7 @@ describe('Users Route — Mapper-before-response: mapUserPublicRows + mapUserPub
     });
 
     it('GET / gracefully falls back if country column does not exist (code 42703)', async () => {
-        const missingColumnErr: any = new Error('column "country" does not exist');
-        missingColumnErr.code = '42703';
+        const missingColumnErr = Object.assign(new Error('column "country" does not exist'), { code: '42703' });
         const fallbackRow = {
             id: 'user-1',
             email: 'jane@example.com',
@@ -299,5 +297,39 @@ describe('Users Route — Mapper-before-response: mapUserPublicRows + mapUserPub
         expect(first.updatedAt).toBe('2024-12-15T10:00:00Z');
         expect(first.first_name).toBeUndefined();
         expect(first.created_at).toBeUndefined();
+    });
+
+    it('POST / returns 503 if database pool is unavailable', async () => {
+        mockGetPool.mockReturnValueOnce(null);
+
+        const response = await request(app)
+            .post('/api/v1/users')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({
+                email: 'test@example.com',
+                password: 'password123',
+                firstName: 'Test',
+                lastName: 'User',
+            });
+
+        expect(response.status).toBe(503);
+        expect(response.body.error).toBe('Database unavailable');
+    });
+
+    it('POST / returns 409 if email already registered (insert conflict returns 0 rows)', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+        const response = await request(app)
+            .post('/api/v1/users')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({
+                email: 'existing@example.com',
+                password: 'password123',
+                firstName: 'Existing',
+                lastName: 'User',
+            });
+
+        expect(response.status).toBe(409);
+        expect(response.body.error).toBe('Email already registered');
     });
 });

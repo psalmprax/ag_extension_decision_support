@@ -403,4 +403,53 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
         expect(result.answer).toBe('Fresh live answer.');
         expect(result.cached).toBe(false);
     });
+
+    it('corrects typo "farners" to "farmers" when querying knowledge base', async () => {
+        const hybridSearchSpy = jest.spyOn(VectorService, 'hybridSearch').mockResolvedValue([]);
+        mockRouteRequest.mockImplementation(async (type: string) => {
+            if (type === 'classify') return { labels: [{ label: 'agronomy_and_yield', score: 0.85 }] };
+            if (type === 'reason') return { answer: 'Valid agricultural guidance for Nigerian farmers.', reasoning: 'Tested', confidence: 0.9 };
+            return {};
+        });
+
+        await KnowledgeService.askQuestion('user-1', 'what are challenges Nigeria farners face?', undefined, { bypassCache: true });
+
+        expect(hybridSearchSpy).toHaveBeenCalledWith('what are challenges Nigeria farmers face?', 3, {});
+    });
+
+    it('filters out non-agronomic web search results like tailor measurements', async () => {
+        const { tavilyService } = await import('../services/tavilyService');
+        (tavilyService.search as jest.Mock).mockResolvedValue({
+            results: [
+                {
+                    title: 'Top Challenges Tailors Face in Nigeria + Solution',
+                    url: 'https://example.com/tailors',
+                    content: 'Record customer measurements for repeat business. Fashion trends evolve quickly, and tailors who do not upgrade skills risk becoming irrelevant.',
+                    score: 0.9,
+                },
+                {
+                    title: 'Challenges of Smallholder Grain Farmers in Nigeria',
+                    url: 'https://example.com/agri',
+                    content: 'Smallholder crop farmers face severe post-harvest storage losses and high fertilizer costs during planting season across multiple agricultural belts in Nigeria.',
+                    score: 0.85,
+                }
+            ]
+        });
+
+        (VectorService.hybridSearch as jest.Mock).mockResolvedValue([]);
+        mockRouteRequest.mockImplementation(async (type: string) => {
+            if (type === 'classify') return { labels: [{ label: 'general_inquiry', score: 0.9 }] };
+            if (type === 'reason') throw new Error('AI provider timeout');
+            return {};
+        });
+
+        const result = await KnowledgeService.askQuestion('user-1', 'what are challenges Nigeria farners face?', undefined, { bypassCache: true });
+
+        // Tailor content MUST be rejected and excluded
+        expect(result.answer).not.toContain('tailors');
+        expect(result.answer).not.toContain('Record customer measurements');
+        // Agricultural content must be preserved
+        expect(result.answer).toContain('post-harvest storage losses and high fertilizer costs');
+        expect(result.answer).toContain('external agricultural research sources');
+    });
 });
