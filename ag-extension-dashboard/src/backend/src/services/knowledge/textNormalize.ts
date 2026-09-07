@@ -81,9 +81,15 @@ export function sanitizeContextText(text: string): string {
         // Vendor promo footers and corporate sponsorship blurbs
         .replace(/\bAt\s+[A-Z][A-Za-z0-9\s.,]+(?:PVT|LTD|LLC|Inc|Corp|Limited)?,\s*(?:we are|we remain)\s+committed to[^\n.]*\.?/gi, '')
         .replace(/\b[A-Z][A-Za-z0-9\s.,]+ (?:recognizes|reaffirms|commits to) the essential role farmers play[^\n.]*\.?/gi, '')
-        // Raw ellipsis and scraper truncation artifacts
-        .replace(/\[\s*\.\.\.\s*\]/g, '')
-        .replace(/…\s*\[\s*\.\.\.\s*\]/g, '')
+            // Raw ellipsis and scraper truncation artifacts
+            .replace(/\[\s*\.\.\.\s*\]/g, '')
+            .replace(/…\s*\[\s*\.\.\.\s*\]/g, '')
+            // Truncated parentheticals ("(SMS/)" from a cut-off "(SMS/WhatsApp)") → keep the readable abbreviation
+            .replace(/\(([A-Za-z]{2,})\/\)/g, '($1)')
+            // Interview-transcript speaker labels ("AFN: What about ...?") — drop the
+            // label but keep the content. Scoped to Q&A lines so attestations like
+            // "USDA: ..." in declarative sentences are left untouched.
+            .replace(/^[A-Z]{2,4}\s*:\s*(?=[^\n]*\?)/gm, '')
         // Isolate inline markdown headers squashed against running text
         .replace(/([.!?])\s*(#{1,6}\s+)/g, '$1\n\n$2')
         // Isolate inline bullet points & list markers squashed against sentences

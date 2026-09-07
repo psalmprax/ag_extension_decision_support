@@ -55,17 +55,17 @@ function getProceduralGuidanceNote(queryText: string): string | null {
     if (!asksForSteps) return null;
 
     if (/\b(cooperative|co-op|collective|group farm|association)\b/i.test(q)) {
-        return `> **Field advisory implementation roadmap (standard cooperative formation):**\n` +
+        return `> **Standard cooperative formation protocol (general reference — confirm requirements with your local registrar):**\n` +
             `> 1. **Mobilization**: Bring together 10–20 core producers facing shared market or input challenges.\n` +
             `> 2. **Steering committee**: Elect an interim committee to record decisions and draft rules.\n` +
             `> 3. **Feasibility assessment**: Survey member crop acreage, expected harvest volumes, and shared storage/transport needs.\n` +
             `> 4. **Constitution and bylaws**: Define membership qualifications, one-member-one-vote rules, share capital, and side-selling penalties.\n` +
-            `> 5. **Capital and legal registration**: Mobilize initial member equity and file formal registration with the cooperative authority/ministry.\n` +
+            `> 5. **Capital and legal registration**: Mobilize initial member equity and file formal registration. Registration sits at country level — e.g. Kenya (State Department for Cooperatives), Nigeria (state Directors of Cooperatives), Ghana (Department of Cooperatives).\n` +
             `> 6. **Operational launch**: Inaugurate the elected board and commence collective purchasing or aggregated sales.`;
     }
 
     if (/\b(soil\s*test|soil\s*sampl)/i.test(q)) {
-        return `> **Field advisory protocol (standard soil sampling procedure):**\n` +
+        return `> **Standard soil sampling protocol (general reference):**\n` +
             `> 1. **Field zoning**: Divide land into uniform sampling units based on topography and cropping history.\n` +
             `> 2. **Zig-zag core collection**: Take 10–20 core subsamples at 15–20 cm depth using a clean auger or spade.\n` +
             `> 3. **Composite mixing**: Combine cores in a clean plastic bucket and mix thoroughly.\n` +
@@ -74,7 +74,7 @@ function getProceduralGuidanceNote(queryText: string): string | null {
     }
 
     if (/\b(spray|pesticide|insecticide|fungicide|chemical application)\b/i.test(q)) {
-        return `> **Field advisory protocol (safe chemical application and IPM):**\n` +
+        return `> **Standard safe-spraying protocol (general reference — always follow the product label):**\n` +
             `> 1. **Scouting and threshold verification**: Confirm pest density exceeds the economic injury level (EIL) before spraying.\n` +
             `> 2. **PPE inspection**: Wear complete personal protective equipment (gloves, mask, goggles, boots, overalls).\n` +
             `> 3. **Equipment calibration**: Calibrate nozzle flow rate and pressure with clean water to ensure uniform coverage.\n` +
