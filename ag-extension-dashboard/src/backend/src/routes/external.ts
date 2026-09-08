@@ -13,6 +13,7 @@ import { soilDataQuerySchema } from '@/utils/schemas';
 import { SatelliteService } from '@/services/satelliteService';
 import { UsdaMarketService } from '@/services/usdaMarketService';
 import { FEWS_COUNTRIES, getRetailSnapshot } from '@/services/fewsnetService';
+import { WFP_COUNTRIES, getWfpSnapshot } from '@/services/wfpService';
 import type { MarketPrice } from '@/services/marketPriceService';
 import { safeError } from '@/utils/safeResponse';
 
@@ -173,64 +174,79 @@ router.get('/prices', async (req: AuthRequest, res: Response) => {    try {
 });
 
 /**
- * Per-kg retail medians (FEWS NET, monthly). Rendered in their own card
- * section — never mixed onto the per-bag bar-chart axis. Country resolves
- * from ?country= (KE/NG) or the caller's profile; unsupported countries
- * (e.g. Ghana, whose FEWS NET series end in 2014) honestly return empty.
+ * Per-kg retail medians (FEWS NET or WFP VAM, monthly). Rendered in their
+ * own card section — never mixed onto the per-bag bar-chart axis.
+ * Source: ?source=fewsnet|wfp (default: FEWS where live, else WFP).
+ * Country from ?country= or the caller's profile. Countries with no live
+ * series on either source honestly return empty — never another market's
+ * prices and never stale years posed as current.
  */
 router.get('/prices/retail', async (req: AuthRequest, res: Response) => {
     try {
         const fetchedAt = new Date().toISOString();
-        const country = await resolveRetailCountry(req);
-        if (!country) {
-            return res.json({
-                success: true,
-                data: [],
-                metadata: { dataStatus: 'unavailable', source: 'fewsnet', fetchedAt, exchangeRateSource: 'native', country: null },
-            });
-        }
+        const empty = (country: string | null) => res.json({
+            success: true,
+            data: [],
+            metadata: { dataStatus: 'unavailable', source: null, fetchedAt, exchangeRateSource: 'native', country },
+        });
 
-        const snapshot = await getRetailSnapshot(country);
-        if (!snapshot) {
-            return res.json({
-                success: true,
-                data: [],
-                metadata: { dataStatus: 'unavailable', source: 'fewsnet', fetchedAt, exchangeRateSource: 'native', country },
-            });
-        }
-        res.json(buildRetailResponse(country, snapshot, fetchedAt));
+        const requested = typeof req.query.country === 'string' ? req.query.country.toUpperCase() : null;
+        const wantedSource = typeof req.query.source === 'string' ? req.query.source.toLowerCase() : null;
+        const country = requested ?? await resolveRetailCountry(req);
+        if (!country) return empty(requested);
+
+        const preferFews = wantedSource === 'fewsnet'
+            || (!wantedSource && FEWS_COUNTRIES.includes(country));
+        const loaded = await loadRetailSnapshot(country, preferFews);
+        if (!loaded) return empty(country);
+        res.json(buildRetailResponse(country, loaded.source, loaded.snapshot, fetchedAt));
     } catch (error) {
         logger.error('Retail prices route error:', error);
         safeError(res, 500, 'Failed to fetch retail prices');
     }
 });
 
-/** Resolve KE/NG from ?country= or the caller's profile; null when unsupported. */
+/** Primary source first, then cross-source fallback; null when both miss. */
+async function loadRetailSnapshot(
+    country: string,
+    preferFews: boolean
+): Promise<{ snapshot: NonNullable<Awaited<ReturnType<typeof getRetailSnapshot>>>; source: 'fewsnet' | 'wfp' } | null> {
+    const primary = preferFews ? await getRetailSnapshot(country) : await getWfpSnapshot(country);
+    if (primary) return { snapshot: primary, source: preferFews ? 'fewsnet' : 'wfp' };
+    const fallback = preferFews ? await getWfpSnapshot(country) : await getRetailSnapshot(country);
+    if (fallback) return { snapshot: fallback, source: preferFews ? 'wfp' : 'fewsnet' };
+    return null;
+}
+
+/** Resolve KE/NG/UG from ?country= or the caller's profile; null when unsupported. */
 async function resolveRetailCountry(req: AuthRequest): Promise<string | null> {
     const requested = typeof req.query.country === 'string' ? req.query.country.toUpperCase() : null;
-    if (requested && FEWS_COUNTRIES.includes(requested)) return requested;
-    // Only countries with verified-live FEWS NET series. Anything else
-    // (e.g. Ghana, whose series end in 2014) honestly returns empty —
-    // never another country's prices.
+    if (requested && (FEWS_COUNTRIES.includes(requested) || WFP_COUNTRIES.includes(requested))) return requested;
+    // Only countries with verified-live series. Anything else (e.g. Ghana,
+    // stale on both sources) honestly returns empty — never another
+    // country's prices.
     const userCountry = (await getUserCountry(req.user?.userId)).toLowerCase();
     if (userCountry.includes('nigeria')) return 'NG';
     if (userCountry.includes('kenya')) return 'KE';
+    if (userCountry.includes('uganda')) return 'UG';
+    if (userCountry.includes('ghana')) return 'GH';
     return null;
 }
 
 function buildRetailResponse(
     country: string,
+    source: 'fewsnet' | 'wfp',
     snapshot: { snapshots: Array<{ crop: string; medianPrice: number; unit: string; currency: string; trendPct: number | null; periodDate: string; marketCount: number }>; periodDate: string },
     fetchedAt: string
 ) {
     const prices: MarketPrice[] = snapshot.snapshots.map((s, index) => ({
-        id: `fewsnet-${country.toLowerCase()}-retail-${index + 1}`,
+        id: `${source}-${country.toLowerCase()}-retail-${index + 1}`,
         crop: s.crop,
         price: `${s.currency} ${s.medianPrice.toLocaleString()}/${s.unit}`,
         priceValue: s.medianPrice,
         trend: s.trendPct === null ? 'Stable' : `${s.trendPct >= 0 ? '+' : ''}${s.trendPct}%`,
         updatedAt: new Date(`${s.periodDate}T00:00:00Z`),
-        source: 'fewsnet' as const,
+        source,
         dataStatus: 'live' as const,
         fetchedAt,
         exchangeRateSource: 'native' as const,
@@ -241,7 +257,7 @@ function buildRetailResponse(
         data: prices,
         metadata: {
             dataStatus: 'live',
-            source: 'fewsnet',
+            source,
             fetchedAt,
             exchangeRateSource: 'native',
             country,

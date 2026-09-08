@@ -9,7 +9,7 @@ export interface MarketPrice {
   priceValue?: number;
   trend: string;
   updatedAt: string;
-  source: 'faostat_producer_prices' | 'giews_fpma' | 'usda_fas_psd' | 'baseline_estimate' | 'fewsnet';
+  source: 'faostat_producer_prices' | 'giews_fpma' | 'usda_fas_psd' | 'baseline_estimate' | 'fewsnet' | 'wfp';
   dataStatus: MarketDataStatus;
   fetchedAt: string;
   exchangeRateSource: 'live' | 'fallback' | 'native';

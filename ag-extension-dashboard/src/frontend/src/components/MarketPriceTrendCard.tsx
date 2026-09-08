@@ -35,6 +35,7 @@ const SOURCE_LABELS: Record<string, string> = {
   usda_fas_psd: 'USDA FAS PSD',
   baseline_estimate: 'Baseline Estimate',
   fewsnet: 'FEWS NET Retail',
+  wfp: 'WFP Retail',
 };
 
 const SOURCE_ICONS: Record<string, React.ElementType> = {
@@ -43,6 +44,7 @@ const SOURCE_ICONS: Record<string, React.ElementType> = {
   usda_fas_psd: Globe,
   baseline_estimate: Database,
   fewsnet: Globe,
+  wfp: Globe,
 };
 
 const DATA_STATUS_STYLE: Record<MarketDataStatus, string> = {
@@ -99,20 +101,22 @@ function mergeHistorySeries(historyData?: PriceHistorySeries[]): HistoryChartMod
 }
 
 /**
- * FEWS NET per-kg retail medians — own table, never the per-bag axis.
+ * Per-kg retail medians (FEWS NET / WFP) — own table, never the per-bag axis.
  * Renders nothing when the viewer's country has no supported series.
  */
-const RetailSnapshotSection: React.FC<{ rows: PriceChartRow[]; country?: string | null; periodDate?: string | null }> = ({
+const RetailSnapshotSection: React.FC<{ rows: PriceChartRow[]; country?: string | null; periodDate?: string | null; source?: string | null }> = ({
   rows,
   country,
   periodDate,
+  source,
 }) => {
   if (rows.length === 0) return null;
+  const sourceTag = source === 'wfp' ? 'WFP' : 'FEWS NET';
   return (
     <div className="pt-2 space-y-2">
       <div>
         <p className="text-xs font-bold text-white uppercase tracking-wider">
-          Retail Snapshot{country ? ` — ${country}` : ''} (FEWS NET)
+          Retail Snapshot{country ? ` — ${country}` : ''} ({sourceTag})
         </p>
         <p className="text-xxs text-white/40 mt-0.5">
           Per-kg retail medians across markets
@@ -390,6 +394,7 @@ export const MarketPriceTrendCard: React.FC = () => {
             rows={retailRows}
             country={retailData?.metadata?.country}
             periodDate={retailData?.metadata?.periodDate}
+            source={retailData?.metadata?.source}
           />
 
           {/* ── Footer: fetched timestamp ── */}
