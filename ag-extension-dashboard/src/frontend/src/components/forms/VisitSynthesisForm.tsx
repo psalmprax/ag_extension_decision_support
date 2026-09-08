@@ -458,11 +458,17 @@ export const VisitSynthesisForm: React.FC = () => {
       if (res.success && res.data) {
         setResult(res.data);
         toast.success(t('visit_synthesis_success') || 'Visit observations synthesized successfully!');
+      } else if (res.error?.includes('security filter')) {
+        toast.error('Request blocked by security filter — your dictation included a phrase flagged as a potential prompt injection. Please rephrase and try again.');
       } else {
         toast.error(t('visit_synthesis_error') || 'Synthesis failed');
       }
-    } catch (error) {
-      toast.error(t('visit_synthesis_error') || 'Synthesis failed');
+    } catch (error: any) {
+      if (error.response?.data?.error?.includes('security filter')) {
+        toast.error('Request blocked by security filter — your dictation included a phrase flagged as a potential prompt injection. Please rephrase and try again.');
+      } else {
+        toast.error(t('visit_synthesis_error') || 'Synthesis failed');
+      }
       console.error('Synthesis error:', error);
     } finally {
       setIsProcessing(false);
