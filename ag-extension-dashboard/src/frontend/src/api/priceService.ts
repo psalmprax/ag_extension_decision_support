@@ -37,6 +37,9 @@ export interface MarketPricesResponse {
     source: string | null;
     fetchedAt: string | null;
     exchangeRateSource: string | null;
+    country?: string | null;
+    periodDate?: string | null;
+    marketCount?: number | null;
   };
 }
 
@@ -59,10 +62,13 @@ export const fetchPriceHistory = async (days = 30): Promise<PriceHistorySeries[]
 };
 
 /**
- * Kenya per-kg retail medians (FEWS NET, monthly). Different unit from the
- * per-bag producer rows — render in a separate section, never the same axis.
+ * Per-kg retail medians (FEWS NET, monthly) for a supported country (KE/NG).
+ * Different unit from the per-bag producer rows — render in a separate
+ * section, never the same axis. Unsupported countries return empty data.
  */
-export const fetchRetailPrices = async (): Promise<MarketPricesResponse> => {
-  const response = await apiClient.get<MarketPricesResponse>('/external/prices/retail');
+export const fetchRetailPrices = async (country?: string): Promise<MarketPricesResponse> => {
+  const response = await apiClient.get<MarketPricesResponse>('/external/prices/retail', {
+    params: country ? { country } : {},
+  });
   return response.data;
 };

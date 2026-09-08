@@ -22,6 +22,28 @@ const KE_PRODUCTS = [
     { product: 'Beans (mixed)', crop: 'Dry Beans' },
 ] as const;
 
+const NG_PRODUCTS = [
+    { product: 'Maize Grain (White)', crop: 'White Maize' },
+    { product: 'Millet (Pearl)', crop: 'Pearl Millet' },
+    { product: 'Sorghum (White)', crop: 'White Sorghum' },
+    { product: 'Cowpeas (White)', crop: 'White Cowpeas' },
+    { product: 'Rice (Milled)', crop: 'Milled Rice' },
+    { product: 'Yams', crop: 'Yams' },
+] as const;
+
+/**
+ * Verified-live retail series per country (product names probed against the
+ * FDW API 2026-09-08). Ghana omitted deliberately — its latest FEWS NET
+ * retail observations are from 2014 and must not pose as live prices.
+ * Uganda omitted — series end 2015.
+ */
+const COUNTRY_PRODUCTS: Record<string, { readonly product: string; readonly crop: string }[]> = {
+    KE: [...KE_PRODUCTS],
+    NG: [...NG_PRODUCTS],
+};
+
+export const FEWS_COUNTRIES = Object.keys(COUNTRY_PRODUCTS);
+
 interface FewsPriceRow {
     period_date: string | null;
     market: string | null;
@@ -88,16 +110,16 @@ function round1(n: number): number {
     return Math.round(n * 10) / 10;
 }
 
-async function fetchMonth(product: string, periodDate: string): Promise<FewsPriceRow[]> {
-    const url = `${FEWS_BASE}?country_code=KE&product=${encodeURIComponent(product)}&price_type=Retail&format=json&period_date=${periodDate}`;
+async function fetchMonth(country: string, product: string, periodDate: string): Promise<FewsPriceRow[]> {
+    const url = `${FEWS_BASE}?country_code=${country}&product=${encodeURIComponent(product)}&price_type=Retail&format=json&period_date=${periodDate}`;
     return asRows(await fetchJson(url));
 }
 
 /** First month-end (newest first) with at least one numeric observation. */
-async function fetchLatestMonth(product: string): Promise<{ rows: FewsPriceRow[]; periodDate: string } | null> {
+async function fetchLatestMonth(country: string, product: string): Promise<{ rows: FewsPriceRow[]; periodDate: string } | null> {
     for (const periodDate of recentMonthEnds(MONTHS_TO_PROBE)) {
         try {
-            const rows = (await fetchMonth(product, periodDate))
+            const rows = (await fetchMonth(country, product, periodDate))
                 .filter(r => typeof r.value === 'number' && Number.isFinite(r.value));
             if (rows.length > 0) return { rows, periodDate };
         } catch (err) {
@@ -126,14 +148,18 @@ function summarize(product: string, crop: string, periodDate: string, rows: Fews
 }
 
 /**
- * Kenya per-kg retail medians (maize, beans) for the latest available month.
- * Returns null when FEWS NET is unreachable or has no recent observations —
- * callers fall through to their next source, never to invented numbers.
+ * Per-kg retail medians for a supported country (see COUNTRY_PRODUCTS) for
+ * the latest available month. Returns null when the country is unsupported
+ * or FEWS NET has no recent observations — callers fall through to their
+ * next source, never to invented numbers.
  */
-export async function getKenyaRetailSnapshot(): Promise<{ snapshots: FewsRetailSnapshot[]; periodDate: string } | null> {
+export async function getRetailSnapshot(country: string): Promise<{ country: string; snapshots: FewsRetailSnapshot[]; periodDate: string } | null> {
+    const products = COUNTRY_PRODUCTS[country];
+    if (!products) return null;
+
     const settled = await Promise.allSettled(
-        KE_PRODUCTS.map(async ({ product, crop }) => {
-            const latest = await fetchLatestMonth(product);
+        products.map(async ({ product, crop }) => {
+            const latest = await fetchLatestMonth(country, product);
             if (!latest) return null;
             return summarize(product, crop, latest.periodDate, latest.rows);
         })
@@ -147,5 +173,5 @@ export async function getKenyaRetailSnapshot(): Promise<{ snapshots: FewsRetailS
 
     // Snapshots may land on different months; report the newest.
     const periodDate = snapshots.map(s => s.periodDate).sort().reverse()[0];
-    return { snapshots, periodDate };
+    return { country, snapshots, periodDate };
 }

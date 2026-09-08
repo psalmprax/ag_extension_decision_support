@@ -5,14 +5,14 @@ import { priorityService } from '@/services/priorityService';
 import { getPrisma } from '@/services/prismaService';
 import { logger } from '@/utils/logger';
 import { getMapData } from '@/services/mapService';
-import { marketPriceService, resolveUserAreaCode } from '@/services/marketPriceService';
+import { marketPriceService, resolveUserAreaCode, getUserCountry } from '@/services/marketPriceService';
 import { getPriceHistory } from '@/services/priceHistoryService';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { validate } from '@/middleware/validate';
 import { soilDataQuerySchema } from '@/utils/schemas';
 import { SatelliteService } from '@/services/satelliteService';
 import { UsdaMarketService } from '@/services/usdaMarketService';
-import { getKenyaRetailSnapshot } from '@/services/fewsnetService';
+import { FEWS_COUNTRIES, getRetailSnapshot } from '@/services/fewsnetService';
 import type { MarketPrice } from '@/services/marketPriceService';
 import { safeError } from '@/utils/safeResponse';
 
@@ -173,49 +173,82 @@ router.get('/prices', async (req: AuthRequest, res: Response) => {    try {
 });
 
 /**
- * Kenya per-kg retail medians (FEWS NET, monthly). Rendered in their own
- * card section — never mixed onto the per-bag bar-chart axis.
+ * Per-kg retail medians (FEWS NET, monthly). Rendered in their own card
+ * section — never mixed onto the per-bag bar-chart axis. Country resolves
+ * from ?country= (KE/NG) or the caller's profile; unsupported countries
+ * (e.g. Ghana, whose FEWS NET series end in 2014) honestly return empty.
  */
-router.get('/prices/retail', async (_req: AuthRequest, res: Response) => {
+router.get('/prices/retail', async (req: AuthRequest, res: Response) => {
     try {
         const fetchedAt = new Date().toISOString();
-        const snapshot = await getKenyaRetailSnapshot();
+        const country = await resolveRetailCountry(req);
+        if (!country) {
+            return res.json({
+                success: true,
+                data: [],
+                metadata: { dataStatus: 'unavailable', source: 'fewsnet', fetchedAt, exchangeRateSource: 'native', country: null },
+            });
+        }
+
+        const snapshot = await getRetailSnapshot(country);
         if (!snapshot) {
             return res.json({
                 success: true,
                 data: [],
-                metadata: { dataStatus: 'unavailable', source: 'fewsnet', fetchedAt, exchangeRateSource: 'native' },
+                metadata: { dataStatus: 'unavailable', source: 'fewsnet', fetchedAt, exchangeRateSource: 'native', country },
             });
         }
-        const prices: MarketPrice[] = snapshot.snapshots.map((s, index) => ({
-            id: `fewsnet-ke-retail-${index + 1}`,
-            crop: s.crop,
-            price: `${s.currency} ${s.medianPrice.toLocaleString()}/${s.unit}`,
-            priceValue: s.medianPrice,
-            trend: s.trendPct === null ? 'Stable' : `${s.trendPct >= 0 ? '+' : ''}${s.trendPct}%`,
-            updatedAt: new Date(`${s.periodDate}T00:00:00Z`),
-            source: 'fewsnet' as const,
-            dataStatus: 'live' as const,
-            fetchedAt,
-            exchangeRateSource: 'native' as const,
-            currency: s.currency,
-        }));
-        res.json({
-            success: true,
-            data: prices,
-            metadata: {
-                dataStatus: 'live',
-                source: 'fewsnet',
-                fetchedAt,
-                exchangeRateSource: 'native',
-                periodDate: snapshot.periodDate,
-                marketCount: Math.max(...snapshot.snapshots.map(s => s.marketCount)),
-            },
-        });
+        res.json(buildRetailResponse(country, snapshot, fetchedAt));
     } catch (error) {
         logger.error('Retail prices route error:', error);
         safeError(res, 500, 'Failed to fetch retail prices');
     }
 });
+
+/** Resolve KE/NG from ?country= or the caller's profile; null when unsupported. */
+async function resolveRetailCountry(req: AuthRequest): Promise<string | null> {
+    const requested = typeof req.query.country === 'string' ? req.query.country.toUpperCase() : null;
+    if (requested && FEWS_COUNTRIES.includes(requested)) return requested;
+    // Only countries with verified-live FEWS NET series. Anything else
+    // (e.g. Ghana, whose series end in 2014) honestly returns empty —
+    // never another country's prices.
+    const userCountry = (await getUserCountry(req.user?.userId)).toLowerCase();
+    if (userCountry.includes('nigeria')) return 'NG';
+    if (userCountry.includes('kenya')) return 'KE';
+    return null;
+}
+
+function buildRetailResponse(
+    country: string,
+    snapshot: { snapshots: Array<{ crop: string; medianPrice: number; unit: string; currency: string; trendPct: number | null; periodDate: string; marketCount: number }>; periodDate: string },
+    fetchedAt: string
+) {
+    const prices: MarketPrice[] = snapshot.snapshots.map((s, index) => ({
+        id: `fewsnet-${country.toLowerCase()}-retail-${index + 1}`,
+        crop: s.crop,
+        price: `${s.currency} ${s.medianPrice.toLocaleString()}/${s.unit}`,
+        priceValue: s.medianPrice,
+        trend: s.trendPct === null ? 'Stable' : `${s.trendPct >= 0 ? '+' : ''}${s.trendPct}%`,
+        updatedAt: new Date(`${s.periodDate}T00:00:00Z`),
+        source: 'fewsnet' as const,
+        dataStatus: 'live' as const,
+        fetchedAt,
+        exchangeRateSource: 'native' as const,
+        currency: s.currency,
+    }));
+    return {
+        success: true,
+        data: prices,
+        metadata: {
+            dataStatus: 'live',
+            source: 'fewsnet',
+            fetchedAt,
+            exchangeRateSource: 'native',
+            country,
+            periodDate: snapshot.periodDate,
+            marketCount: Math.max(...snapshot.snapshots.map(s => s.marketCount)),
+        },
+    };
+}
 
 export default router;

@@ -98,6 +98,32 @@ function mergeHistorySeries(historyData?: PriceHistorySeries[]): HistoryChartMod
   return { series, merged };
 }
 
+/**
+ * FEWS NET per-kg retail medians — own table, never the per-bag axis.
+ * Renders nothing when the viewer's country has no supported series.
+ */
+const RetailSnapshotSection: React.FC<{ rows: PriceChartRow[]; country?: string | null; periodDate?: string | null }> = ({
+  rows,
+  country,
+  periodDate,
+}) => {
+  if (rows.length === 0) return null;
+  return (
+    <div className="pt-2 space-y-2">
+      <div>
+        <p className="text-xs font-bold text-white uppercase tracking-wider">
+          Retail Snapshot{country ? ` — ${country}` : ''} (FEWS NET)
+        </p>
+        <p className="text-xxs text-white/40 mt-0.5">
+          Per-kg retail medians across markets
+          {periodDate ? ` — ${periodDate.slice(0, 7)}` : ''} — monthly, not comparable with per-bag bars above.
+        </p>
+      </div>
+      <PriceSummaryGrid rows={rows} />
+    </div>
+  );
+};
+
 // ── Sub-components ──────────────────────────────────────────────────
 
 const PriceSummaryGrid: React.FC<{ rows: PriceChartRow[] }> = ({ rows }) => (
@@ -238,11 +264,11 @@ export const MarketPriceTrendCard: React.FC = () => {
     }));
   }, [data]);
 
-  // Kenya per-kg retail medians (FEWS NET, monthly). Separate unit from the
-  // per-bag bars above, so they render in their own table, never the axis.
+  // Per-kg retail medians (FEWS NET, monthly) for the viewer's country.
+  // Separate unit from the per-bag bars above — own table, never the axis.
   const { data: retailData } = useQuery<MarketPricesResponse>({
     queryKey: ['analytics-retail-prices'],
-    queryFn: fetchRetailPrices,
+    queryFn: () => fetchRetailPrices(),
     enabled: !!localStorage.getItem('token'),
     staleTime: 60 * 60 * 1000,
     retry: 1,
@@ -360,20 +386,11 @@ export const MarketPriceTrendCard: React.FC = () => {
           {/* ── Price summary table ── */}
           <PriceSummaryGrid rows={chartData} />
 
-          {/* ── Kenya retail snapshot (FEWS NET, per-kg medians) ── */}
-          {retailRows.length > 0 && (
-            <div className="pt-2 space-y-2">
-              <div>
-                <p className="text-xs font-bold text-white uppercase tracking-wider">
-                  Retail Snapshot — Kenya (FEWS NET)
-                </p>
-                <p className="text-xxs text-white/40 mt-0.5">
-                  Per-kg retail medians across markets — monthly, not comparable with per-bag bars above.
-                </p>
-              </div>
-              <PriceSummaryGrid rows={retailRows} />
-            </div>
-          )}
+          <RetailSnapshotSection
+            rows={retailRows}
+            country={retailData?.metadata?.country}
+            periodDate={retailData?.metadata?.periodDate}
+          />
 
           {/* ── Footer: fetched timestamp ── */}
           {metadata?.fetchedAt && (
