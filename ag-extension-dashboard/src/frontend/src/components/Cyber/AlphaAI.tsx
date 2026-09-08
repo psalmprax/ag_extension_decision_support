@@ -482,7 +482,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                   <button
                     onClick={() => handleSendMessage()}
                     disabled={!inputPrompt.trim() || isProcessing}
-                    className="p-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-white rounded-lg shadow-md transition-all active:scale-95 shrink-0"
+                    className="p-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-lg shadow-md transition-all active:scale-95 shrink-0"
                   >
                     <Send className="w-3.5 h-3.5" />
                   </button>

@@ -265,7 +265,7 @@ export function Footer() {
                   <button
                     type="button"
                     onClick={() => setLegalModal(null)}
-                    className="w-full sm:w-auto px-5 py-2.5 text-xs font-semibold bg-emerald-500 text-white rounded-xl hover:bg-emerald-400 active:scale-[0.98] transition-colors"
+                    className="w-full sm:w-auto px-5 py-2.5 text-xs font-semibold bg-emerald-700 text-white rounded-xl hover:bg-emerald-600 active:scale-[0.98] transition-colors"
                   >
                     Close
                   </button>
