@@ -113,7 +113,7 @@ export const CanvasWorkbench: React.FC<{
         <CanvasPanelHeader
           icon={<Droplets className="w-4 h-4 text-emerald-400" />}
           title="Spatial Soil Chemistry & pH Heatmap (0–15cm)"
-          hint="Click cells to probe micro-nutrients"
+          hint="Tap a cell to check its nutrients"
           hintClass="text-emerald-400"
         />
         <SoilNutrientHeatmapCanvas interactive onProbeSelect={onProbeSelect} />

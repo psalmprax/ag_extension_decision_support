@@ -15,7 +15,8 @@ import {
 import { analyzeSoilImage, type SoilAnalysisResult } from '../../api/diseaseService';
 import { downloadReportPdf } from '../../api/reportService';
 import { fetchFarmerSoilProfile, type FarmerSoilProfile } from '../../api/soilService';
-import { fetchFarmers } from '../../api/farmerService';
+import { fetchFarmers, updateFarmer } from '../../api/farmerService';
+import { requestGpsFix } from '@/lib/geo';
 import { SoilNutrientHeatmapCanvas, type SoilHeatmapRealPoints } from '../../components/canvas-ui/SoilNutrientHeatmapCanvas';
 import { useDemoMode } from '@/demo';
 import toast from 'react-hot-toast';
@@ -362,6 +363,9 @@ export function SoilDiagnosticsTab({
   const [soilProfile, setSoilProfile] = useState<FarmerSoilProfile | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [isSavingLocation, setIsSavingLocation] = useState(false);
+  const [locationNotice, setLocationNotice] = useState<string | null>(null);
+  const [profileReloadKey, setProfileReloadKey] = useState(0);
 
   useEffect(() => {
     fetchFarmers()
@@ -390,7 +394,33 @@ export function SoilDiagnosticsTab({
       })
       .catch(err => setProfileError(err instanceof Error ? err.message : 'Failed to load soil profile'))
       .finally(() => setIsLoadingProfile(false));
-  }, [selectedFarmerId]);
+  }, [selectedFarmerId, profileReloadKey]);
+
+  /** Capture the device GPS fix and save it as the farmer's field location. */
+  const handleCaptureLocation = () => {
+    if (!selectedFarmerId || isSavingLocation) return;
+    setIsSavingLocation(true);
+    setLocationNotice(null);
+    requestGpsFix()
+      .then(async fix => {
+        try {
+          await updateFarmer(selectedFarmerId, {
+            locationLat: fix.latitude,
+            locationLng: fix.longitude,
+          });
+          setLocationNotice('Field location saved — loading the soil estimate…');
+          setProfileReloadKey(k => k + 1);
+        } catch {
+          setLocationNotice('Could not save the location. Check connectivity and try again.');
+        } finally {
+          setIsSavingLocation(false);
+        }
+      })
+      .catch((err: unknown) => {
+        setIsSavingLocation(false);
+        setLocationNotice(err instanceof Error ? err.message : 'Could not read GPS. Try again.');
+      });
+  };
 
   const handleSoilImageSelect = (file: File) => {
     setSelectedSoilImage(file);
@@ -509,24 +539,46 @@ export function SoilDiagnosticsTab({
             Field Soil Context
             <span className="px-1.5 py-0.5 rounded-[2px] text-[9px] font-mono bg-sky-500/10 text-sky-300 border border-sky-500/20">LIVE</span>
           </h3>
-          <select
-            value={selectedFarmerId}
-            onChange={e => setSelectedFarmerId(e.target.value)}
-            className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white focus:border-sky-500 outline-none"
-          >
-            <option value="">Select farmer to load real soil baselines…</option>
-            {farmersList.map(f => (
-              <option key={f.id} value={f.id}>
-                {f.firstName} {f.lastName}
-              </option>
-            ))}
-          </select>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={selectedFarmerId}
+              onChange={e => setSelectedFarmerId(e.target.value)}
+              className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white focus:border-sky-500 outline-none"
+            >
+              <option value="">Select farmer to load real soil baselines…</option>
+              {farmersList.map(f => (
+                <option key={f.id} value={f.id}>
+                  {f.firstName} {f.lastName}
+                </option>
+              ))}
+            </select>
+            {selectedFarmerId && (
+              <button
+                type="button"
+                onClick={handleCaptureLocation}
+                disabled={isSavingLocation}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-semibold bg-sky-600 text-white hover:bg-sky-500 disabled:opacity-50 disabled:cursor-wait transition-colors"
+              >
+                {isSavingLocation ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <MapPin className="w-3.5 h-3.5" />
+                )}
+                {isSavingLocation ? 'Saving location…' : 'Use my location'}
+              </button>
+            )}
+          </div>
         </div>
+        {locationNotice && (
+          <p className="text-[11px] text-sky-300 mb-3" role="status">
+            {locationNotice}
+          </p>
+        )}
 
         {!selectedFarmerId ? (
           <p className="text-[11px] font-mono text-slate-500">
-            Choose a farmer to pull <span className="text-sky-300">ISRIC SoilGrids 250m</span> regional baseline,{' '}
-            <span className="text-emerald-300">Open-Meteo</span> modeled top-soil moisture, and the farmer&apos;s real{' '}
+            Choose a farmer to load their soil starting point (satellite estimate),{' '}
+            recent topsoil moisture, and the farmer&apos;s real{' '}
             <span className="text-amber-300">Soil Lab History</span>. Without a farmer, soil photo inference still works as a labeled estimate.
           </p>
         ) : isLoadingProfile ? (
@@ -561,13 +613,13 @@ export function SoilDiagnosticsTab({
                     <span className="text-white">{(soilProfile.baseline as { cecCmolPerKg: number | null }).cecCmolPerKg ?? '—'} cmol/kg</span>
                   </div>
                   <p className="text-[9px] text-amber-400/80 leading-tight pt-1 border-t border-slate-800">
-                    ⚠️ Regional baseline (250m pixel) — not a lab test.
+                    ⚠️ Satellite estimate for this area — not a lab test.
                   </p>
                 </div>
               ) : soilProfile.location ? (
                 <p className="text-xs text-amber-400">Baseline fetch failed — check connectivity.</p>
               ) : (
-                <p className="text-xs text-slate-500">No geolocation for this farmer — add lat/lng to enable baseline.</p>
+                <p className="text-xs text-slate-500">No field location saved yet — tap “Use my location” above to enable the soil estimate.</p>
               )}
             </div>
 
@@ -597,7 +649,7 @@ export function SoilDiagnosticsTab({
               ) : soilProfile.location ? (
                 <p className="text-xs text-amber-400">Moisture fetch failed.</p>
               ) : (
-                <p className="text-xs text-slate-500">No geolocation.</p>
+                <p className="text-xs text-slate-500">No field location yet.</p>
               )}
             </div>
 
@@ -634,8 +686,8 @@ export function SoilDiagnosticsTab({
         if (!hasLive && !isDemo) {
           return (
             <div className="p-4 rounded-[4px] bg-slate-900/80 border border-slate-800 text-center">
-              <p className="text-xs font-bold text-white">Live Soil Tile — Per-Farmer</p>
-              <p className="text-xs text-white/50 mt-1 max-w-md mx-auto">No live baseline available — add lat/lng to this farmer or import lab results, then return for a 250m SoilGrids tile. Demo mesh is visible only in the demo account.</p>
+              <p className="text-xs font-bold text-white">Live Soil Map — Per Farmer</p>
+              <p className="text-xs text-white/50 mt-1 max-w-md mx-auto">No live soil map yet — tap “Use my location” above or import lab results, then return. The demo account shows a sample map.</p>
             </div>
           );
         }
@@ -643,9 +695,9 @@ export function SoilDiagnosticsTab({
           <div className="p-4 rounded-[4px] bg-slate-900/80 border border-slate-800">
             <h4 className="text-xs font-black text-white uppercase tracking-wider mb-3 flex items-center gap-2">
               <Layers className="w-3.5 h-3.5 text-emerald-400" />
-              Field Interpolation — {hasLive ? 'Live SoilGrids Anchors' : 'Demo Preview'}
+              Field Map — {hasLive ? 'Live Estimate' : 'Sample Map'}
               <span className={`ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded border ${hasLive ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-300 bg-amber-500/10 border-amber-500/20'}`}>
-                {hasLive ? 'SoilGrids 250m' : 'Demo'}
+                {hasLive ? 'Live' : 'Sample'}
               </span>
             </h4>
             <SoilNutrientHeatmapCanvas
