@@ -31,7 +31,9 @@ export interface DiseaseInfo {
   symptoms: string[];
   treatment: string[];
   prevention: string[];
-  severity: string;
+  // The disease database carries no severity datum; backends that synthesize
+  // one (e.g. the agent tool's 'varies by stage' note) are not contractual.
+  severity?: string;
 }
 
 export const diagnoseFromSymptoms = async (

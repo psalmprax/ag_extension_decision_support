@@ -442,13 +442,24 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
     return diagnoses.slice(0, 3);
   }
 
-  getDiseaseInfo(diseaseId: string): typeof PlantDiseaseService.DISEASE_DATABASE[string] | null {
-    return PlantDiseaseService.DISEASE_DATABASE[diseaseId] || null;
+  getDiseaseInfo(diseaseId: string): (typeof PlantDiseaseService.DISEASE_DATABASE[string] & { disease: string }) | null {
+    // Accept raw ids ('late_blight') and the prettified names getAllDiseases()
+    // emits ('Late Blight') — the HTTP route forwards user-facing names verbatim.
+    const key = PlantDiseaseService.DISEASE_DATABASE[diseaseId]
+      ? diseaseId
+      : diseaseId.toLowerCase().replace(/\s+/g, '_');
+    const entry = PlantDiseaseService.DISEASE_DATABASE[key];
+    if (!entry) return null;
+    return { disease: PlantDiseaseService.prettifyDiseaseId(key), ...entry };
+  }
+
+  private static prettifyDiseaseId(id: string): string {
+    return id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
   getAllDiseases(): string[] {
     return Object.keys(PlantDiseaseService.DISEASE_DATABASE).map(id =>
-      id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+      PlantDiseaseService.prettifyDiseaseId(id)
     );
   }
 

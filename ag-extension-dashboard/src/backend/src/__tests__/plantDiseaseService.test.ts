@@ -122,6 +122,14 @@ describe('PlantDiseaseService - getDiseaseInfo', () => {
     const result = service.getDiseaseInfo('unknown_disease');
     expect(result).toBeNull();
   });
+
+  it('should resolve prettified names emitted by getAllDiseases (HTTP route round-trip)', () => {
+    for (const name of service.getAllDiseases()) {
+      const result = service.getDiseaseInfo(name);
+      expect(result).not.toBeNull();
+      expect(result).toMatchObject({ disease: name });
+    }
+  });
 });
 
 describe('PlantDiseaseService - getAllDiseases', () => {

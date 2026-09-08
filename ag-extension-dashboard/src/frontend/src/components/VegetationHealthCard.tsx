@@ -22,17 +22,15 @@ function isCoordinate(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-function requireCoordinate(value: unknown, label: string): number {
-  if (isCoordinate(value)) return value;
-  throw new Error(`${label} coordinates are unavailable`);
-}
-
 function getCoordinates(user: unknown): { lat: number; lng: number } {
   const coordinates = user as { latitude?: unknown; longitude?: unknown } | null;
-  return {
-    lat: requireCoordinate(coordinates?.latitude, 'Farmer'),
-    lng: requireCoordinate(coordinates?.longitude, 'Farmer'),
-  };
+  if (isCoordinate(coordinates?.latitude) && isCoordinate(coordinates?.longitude)) {
+    return { lat: coordinates.latitude, lng: coordinates.longitude };
+  }
+  // Fallback to the Nairobi region default (same default NormalDashboard uses)
+  // so signed-in users without profile coordinates still get an estimate
+  // instead of a permanent "unavailable" state.
+  return { lat: -1.2863, lng: 36.8172 };
 }
 
 export const VegetationHealthCard: React.FC<VegetationHealthCardProps> = ({ cardClass }) => {
@@ -63,10 +61,10 @@ export const VegetationHealthCard: React.FC<VegetationHealthCardProps> = ({ card
         </div>
         <div>
           <h3 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
-            {t('veg_health_title', { defaultValue: 'Vegetation Health' })}
+            {t('veg_health_title', { defaultValue: 'Regional Vegetation Health (estimated)' })}
           </h3>
           <p className="text-xxs text-slate-400">
-            {t('veg_health_subtitle', { defaultValue: '14-day agroclimatology proxy' })}
+            {t('veg_health_subtitle', { defaultValue: 'Climate-based vigor proxy — not satellite NDVI' })}
           </p>
         </div>
       </div>
