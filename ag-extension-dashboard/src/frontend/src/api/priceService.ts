@@ -9,10 +9,10 @@ export interface MarketPrice {
   priceValue?: number;
   trend: string;
   updatedAt: string;
-  source: 'faostat_producer_prices' | 'giews_fpma' | 'usda_fas_psd' | 'baseline_estimate';
+  source: 'faostat_producer_prices' | 'giews_fpma' | 'usda_fas_psd' | 'baseline_estimate' | 'fewsnet';
   dataStatus: MarketDataStatus;
   fetchedAt: string;
-  exchangeRateSource: 'live' | 'fallback';
+  exchangeRateSource: 'live' | 'fallback' | 'native';
   currency: string;
 }
 
@@ -56,4 +56,13 @@ export const fetchPriceHistory = async (days = 30): Promise<PriceHistorySeries[]
     { params: { days } }
   );
   return response.data.data;
+};
+
+/**
+ * Kenya per-kg retail medians (FEWS NET, monthly). Different unit from the
+ * per-bag producer rows — render in a separate section, never the same axis.
+ */
+export const fetchRetailPrices = async (): Promise<MarketPricesResponse> => {
+  const response = await apiClient.get<MarketPricesResponse>('/external/prices/retail');
+  return response.data;
 };

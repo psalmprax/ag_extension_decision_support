@@ -13,10 +13,10 @@ export interface MarketPrice {
   priceValue?: number;
   trend: string;
   updatedAt: Date;
-  source: 'faostat_producer_prices' | 'giews_fpma' | 'usda_fas_psd' | 'baseline_estimate';
+  source: 'faostat_producer_prices' | 'giews_fpma' | 'usda_fas_psd' | 'baseline_estimate' | 'fewsnet';
   dataStatus: MarketDataStatus;
   fetchedAt: string;
-  exchangeRateSource: 'live' | 'fallback';
+  exchangeRateSource: 'live' | 'fallback' | 'native';
   currency: string;
 }
 

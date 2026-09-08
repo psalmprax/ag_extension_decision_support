@@ -12,6 +12,8 @@ import { validate } from '@/middleware/validate';
 import { soilDataQuerySchema } from '@/utils/schemas';
 import { SatelliteService } from '@/services/satelliteService';
 import { UsdaMarketService } from '@/services/usdaMarketService';
+import { getKenyaRetailSnapshot } from '@/services/fewsnetService';
+import type { MarketPrice } from '@/services/marketPriceService';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
@@ -150,8 +152,7 @@ router.get('/prices/history', async (req: AuthRequest, res: Response) => {
     }
 });
 
-router.get('/prices', async (req: AuthRequest, res: Response) => {
-    try {
+router.get('/prices', async (req: AuthRequest, res: Response) => {    try {
         const userId = req.user?.userId;
         const prices = await marketPriceService.getLatestPrices(userId);
         const firstPrice = prices[0];
@@ -168,6 +169,52 @@ router.get('/prices', async (req: AuthRequest, res: Response) => {
     } catch (error) {
         logger.error('Prices route error:', error);
         safeError(res, 500, 'Failed to fetch market prices');
+    }
+});
+
+/**
+ * Kenya per-kg retail medians (FEWS NET, monthly). Rendered in their own
+ * card section — never mixed onto the per-bag bar-chart axis.
+ */
+router.get('/prices/retail', async (_req: AuthRequest, res: Response) => {
+    try {
+        const fetchedAt = new Date().toISOString();
+        const snapshot = await getKenyaRetailSnapshot();
+        if (!snapshot) {
+            return res.json({
+                success: true,
+                data: [],
+                metadata: { dataStatus: 'unavailable', source: 'fewsnet', fetchedAt, exchangeRateSource: 'native' },
+            });
+        }
+        const prices: MarketPrice[] = snapshot.snapshots.map((s, index) => ({
+            id: `fewsnet-ke-retail-${index + 1}`,
+            crop: s.crop,
+            price: `${s.currency} ${s.medianPrice.toLocaleString()}/${s.unit}`,
+            priceValue: s.medianPrice,
+            trend: s.trendPct === null ? 'Stable' : `${s.trendPct >= 0 ? '+' : ''}${s.trendPct}%`,
+            updatedAt: new Date(`${s.periodDate}T00:00:00Z`),
+            source: 'fewsnet' as const,
+            dataStatus: 'live' as const,
+            fetchedAt,
+            exchangeRateSource: 'native' as const,
+            currency: s.currency,
+        }));
+        res.json({
+            success: true,
+            data: prices,
+            metadata: {
+                dataStatus: 'live',
+                source: 'fewsnet',
+                fetchedAt,
+                exchangeRateSource: 'native',
+                periodDate: snapshot.periodDate,
+                marketCount: Math.max(...snapshot.snapshots.map(s => s.marketCount)),
+            },
+        });
+    } catch (error) {
+        logger.error('Retail prices route error:', error);
+        safeError(res, 500, 'Failed to fetch retail prices');
     }
 });
 
