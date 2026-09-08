@@ -82,7 +82,7 @@ interface TabContentProps {
   effectiveFarmers: Farmer[];
   isMapExpanded: boolean;
   setIsMapExpanded: (v: boolean) => void;
-  handleStartConversation: (...args: unknown[]) => void;
+  handleStartConversation: (farmer: Farmer, type: 'ai' | 'farmer') => Promise<boolean>;
   handleOpenFarmerDetail: (f: Farmer) => void;
   // Portfolio
   selectedFarmers: Set<string>;

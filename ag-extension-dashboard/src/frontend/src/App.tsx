@@ -546,7 +546,7 @@ function App() {
                     isMapExpanded={isMapExpanded}
                     setIsMapExpanded={setIsMapExpanded}
                     handleStartConversation={
-                      handleStartConversation as (...args: unknown[]) => void
+                      handleStartConversation as (farmer: Farmer, type: 'ai' | 'farmer') => Promise<boolean>
                     }
                     handleOpenFarmerDetail={handleOpenFarmerDetail}
                     selectedFarmers={selectedFarmers}
