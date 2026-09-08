@@ -368,4 +368,42 @@ router.post('/conversations/:id/read', authorize(['admin', 'regional_manager', '
   } catch (e) { logger.error('Read receipt failed:', e); return safeError(res, 500, 'Read failed'); }
 });
 
+/**
+ * PUT /api/chatbot/conversations/:id — Rename a conversation the caller
+ * participates in. Serves the chat sidebar rename action.
+ */
+router.put('/conversations/:id', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    const conversationId = req.params.id;
+    if (!conversationId) {
+      return res.status(400).json({ success: false, error: 'Conversation id is required' });
+    }
+
+    const body = req.body as { title?: unknown };
+    const title = typeof body.title === 'string' ? body.title.trim() : '';
+    if (!title || title.length > 120) {
+      return res.status(400).json({ success: false, error: 'title must be 1-120 characters' });
+    }
+
+    const { rows } = await query<ChatConversationRow>(
+      `UPDATE chat_conversations
+          SET title = $1
+        WHERE id = $2 AND (farmer_id = $3 OR officer_id = $3)
+        RETURNING *`,
+      [title, conversationId, user.userId]
+    );
+    if (!rows[0]) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    }
+    return res.json({ success: true, data: mapChatConversationRow(rows[0]) });
+  } catch (error) {
+    logger.error('Failed to rename conversation:', error);
+    return safeError(res, 500, 'Failed to rename conversation');
+  }
+});
+
 export default router;

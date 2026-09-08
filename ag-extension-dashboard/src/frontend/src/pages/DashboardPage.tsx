@@ -20,6 +20,7 @@ import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '@/store/useAppStore';
 import { useRetryWithBackoff } from '@/hooks/useRetryWithBackoff';
 import { fetchFarmers } from '@/api/farmerService';
+import { isMapChatAllowed, resolveMapFarmerAction } from '@/lib/mapChatPolicy';
 import apiClient from '@/api/client';
 import { LiveActivityStream } from '@/components/LiveActivityStream';
 import { VegetationHealthCard } from '@/components/VegetationHealthCard';
@@ -44,7 +45,7 @@ interface DashboardPageProps {
   effectiveFarmers: Farmer[];
   isMapExpanded: boolean;
   setIsMapExpanded: (expanded: boolean) => void;
-  handleStartConversation: (farmer: Farmer, type: 'ai' | 'farmer') => void;
+  handleStartConversation: (farmer: Farmer, type: 'ai' | 'farmer') => Promise<boolean>;
   handleOpenFarmerDetail: (farmer: Farmer) => void;
   user: { role?: string; firstName?: string } | undefined;
   addNotification: (n: { type: 'info' | 'warning' | 'error' | 'success'; message: string }) => void;
@@ -276,7 +277,7 @@ const DashboardMapSection: React.FC<{
   effectiveFarmers: Farmer[];
   isMapExpanded: boolean;
   setIsMapExpanded: (expanded: boolean) => void;
-  handleStartConversation: (farmer: Farmer, type: 'ai' | 'farmer') => void;
+  handleStartConversation: (farmer: Farmer, type: 'ai' | 'farmer') => Promise<boolean>;
   handleOpenFarmerDetail: (farmer: Farmer) => void;
   user?: { role?: string; firstName?: string; region?: string } | null;
   t: (key: string) => string;
@@ -294,7 +295,14 @@ const DashboardMapSection: React.FC<{
   radiusClass,
 }) => {
   const userFromStore = useAppStore(s => s.user);
+  const setGlobalTab = useAppStore(s => s.setActiveTab);
+  const addNotification = useAppStore(s => s.addNotification);
   const { isDemo } = useDemoMode();
+
+  // Map-popup chat is an officer/admin action; everyone else gets the farmer
+  // detail view instead — either way a tap must visibly do something.
+  // Falls back to the store user like the overview heading below does.
+  const canMapChat = isMapChatAllowed(user?.role ?? userFromStore?.role);
 
   // Share state with useAppQueries via the same query key; react-query dedupes.
   // We set retry:false so our own retry hook controls the retry behavior.
@@ -393,14 +401,23 @@ const DashboardMapSection: React.FC<{
               phone: f.phone,
               yield: f.yield || 0,
             }))}
-            onFarmerClick={farmerData => {
-              if (user?.role === 'extension_officer' || user?.role === 'admin') {
-                React.startTransition(() => {});
-                const farmer = effectiveFarmers.find(f => f.id === farmerData.id) as Farmer;
-                if (farmer) handleStartConversation(farmer, 'farmer');
+            onFarmerClick={async farmerData => {
+              const farmer = effectiveFarmers.find(f => f.id === farmerData.id);
+              const action = resolveMapFarmerAction(canMapChat, farmer !== undefined);
+              if (action === 'missing' || farmer === undefined) {
+                addNotification({ type: 'warning', message: 'Farmer record not found.' });
+                return;
+              }
+              if (action === 'detail') {
+                handleOpenFarmerDetail(farmer);
+                return;
+              }
+              React.startTransition(() => {});
+              const started = await handleStartConversation(farmer, 'farmer');
+              if (started) {
+                setGlobalTab('farmerchat');
               } else {
-                const farmer = effectiveFarmers.find(f => f.id === farmerData.id) as Farmer;
-                if (farmer) handleOpenFarmerDetail(farmer);
+                addNotification({ type: 'error', message: 'Could not start chat. Please try again.' });
               }
             }}
           />

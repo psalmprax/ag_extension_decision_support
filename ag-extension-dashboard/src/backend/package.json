@@ -129,7 +129,7 @@
     "deepmerge-ts": "^8.0.0",
     "fast-uri": "^3.1.6",
     "ip-address": "^10.3.1",
-    "js-yaml": "^4.3.1",
+    "js-yaml": "^4.3.2",
     "minimatch": "^9.0.7",
     "protobufjs": "^8.6.6",
     "qs": "^6.16.0",

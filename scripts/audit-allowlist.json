@@ -3,8 +3,8 @@
     {
       "package": "extract-zip",
       "scope": ["ag_extension_decision_support"],
-      "advisories": ["GHSA-jmr9-qjv8-65gv"],
-      "reason": "Development-only transitive dependency of @opengsd/gsd-pi; npm reports no patched version. Re-evaluate when upstream releases a fix or before this expiry.",
+      "advisories": ["GHSA-jmr9-qjv8-65gv", "GHSA-7pqw-9j4j-h8q3"],
+      "reason": "Development-only transitive dependency of @opengsd/gsd-pi (devDependency, never shipped or deployed); extract-zip 2.0.1 is the latest upstream release with no patched version for either symlink-traversal advisory. Re-evaluate when upstream releases a fix or before this expiry.",
       "expires": "2026-12-31"
     }
   ]

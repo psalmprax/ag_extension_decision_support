@@ -14,6 +14,28 @@ export interface NDVITimeSeriesResult {
   reason: string;
 }
 
+/** Raw point shape as returned by /external/ndvi-timeseries. */
+interface RawNDVIPoint {
+  date: string;
+  ndvi?: number;
+  vigor?: number;
+}
+
+/**
+ * Normalize backend vigor-proxy points to the NDVIPoint contract.
+ * The endpoint returns `{ date, vigor }`; older/alternate payloads may carry
+ * `ndvi` directly. Points with neither (or non-finite values) are dropped so
+ * charts never render NaN bars.
+ */
+function normalizeNdviPoints(raw: RawNDVIPoint[]): NDVIPoint[] {
+  return raw
+    .map(p => {
+      const value = typeof p.ndvi === 'number' ? p.ndvi : p.vigor;
+      return { date: p.date, ndvi: typeof value === 'number' ? value : Number.NaN };
+    })
+    .filter(p => typeof p.date === 'string' && Number.isFinite(p.ndvi));
+}
+
 export interface CommodityMetrics {
   production: number | null;
   yield: number | null;
@@ -38,7 +60,8 @@ export const fetchNDVITimeSeries = async (
     '/external/ndvi-timeseries',
     { params: { lat, lng, days } }
   );
-  return response.data.data;
+  const payload = response.data.data;
+  return { ...payload, data: normalizeNdviPoints((payload.data ?? []) as RawNDVIPoint[]) };
 };
 
 export const fetchUsdaBenchmark = async (

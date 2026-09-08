@@ -13,10 +13,10 @@ export interface MarketPrice {
   priceValue?: number;
   trend: string;
   updatedAt: Date;
-  source: 'faostat_producer_prices' | 'giews_fpma' | 'usda_fas_psd' | 'baseline_estimate';
+  source: 'faostat_producer_prices' | 'giews_fpma' | 'usda_fas_psd' | 'baseline_estimate' | 'fewsnet' | 'wfp';
   dataStatus: MarketDataStatus;
   fetchedAt: string;
-  exchangeRateSource: 'live' | 'fallback';
+  exchangeRateSource: 'live' | 'fallback' | 'native';
   currency: string;
 }
 
@@ -68,7 +68,7 @@ function faostatAreaCode(country: string): string {
   return lower.includes('kenya') ? '114' : '158'; // default to Nigeria
 }
 
-async function getUserCountry(userId?: string): Promise<string> {
+export async function getUserCountry(userId?: string): Promise<string> {
   if (!userId) return 'Kenya';
   try {
     const prisma = getPrisma();

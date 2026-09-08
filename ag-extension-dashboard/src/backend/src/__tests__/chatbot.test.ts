@@ -222,3 +222,66 @@ describe('Chatbot Route — Mapper-before-response: mapChatMessageRow + mapChatC
         expect(typeof response.body.data.totalRatings).toBe('number');
     });
 });
+
+describe('Chatbot Route — PUT /conversations/:id rename', () => {
+    let officerToken: string;
+
+    beforeAll(() => {
+        officerToken = makeOfficerToken();
+    });
+
+    beforeEach(() => {
+        mockQuery.mockReset();
+    });
+
+    it('renames a participating conversation and returns the mapped row', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{ id: 'conv-1', farmer_id: 'f-1', officer_id: 'off-1', title: 'Maize visit', status: 'active' }],
+            rowCount: 1,
+        });
+
+        const response = await request(app)
+            .put('/api/v1/chatbot/conversations/conv-1')
+            .set('Authorization', `Bearer ${officerToken}`)
+            .send({ title: 'Maize visit' });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.title).toBe('Maize visit');
+        expect(mockQuery).toHaveBeenCalledTimes(1);
+        expect(String(mockQuery.mock.calls[0][0])).toContain('UPDATE chat_conversations');
+    });
+
+    it('returns 404 when the conversation is not visible to the caller', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+        const response = await request(app)
+            .put('/api/v1/chatbot/conversations/conv-9')
+            .set('Authorization', `Bearer ${officerToken}`)
+            .send({ title: 'Maize visit' });
+
+        expect(response.status).toBe(404);
+    });
+
+    it('returns 400 for blank or oversized titles', async () => {
+        const blank = await request(app)
+            .put('/api/v1/chatbot/conversations/conv-1')
+            .set('Authorization', `Bearer ${officerToken}`)
+            .send({ title: '   ' });
+        expect(blank.status).toBe(400);
+
+        const long = await request(app)
+            .put('/api/v1/chatbot/conversations/conv-1')
+            .set('Authorization', `Bearer ${officerToken}`)
+            .send({ title: 'x'.repeat(121) });
+        expect(long.status).toBe(400);
+        expect(mockQuery).not.toHaveBeenCalled();
+    });
+
+    it('returns 401 without credentials', async () => {
+        const response = await request(app)
+            .put('/api/v1/chatbot/conversations/conv-1')
+            .send({ title: 'Maize visit' });
+        expect(response.status).toBe(401);
+    });
+});

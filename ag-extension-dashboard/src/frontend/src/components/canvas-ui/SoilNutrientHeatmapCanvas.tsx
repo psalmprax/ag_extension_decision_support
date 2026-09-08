@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { Layers, Droplets, Activity, Gauge, Flame } from 'lucide-react';
 import { useDemoMode } from '@/demo';
+import { normalizeProbePoint } from '@/lib/canvasProbe';
 
 export type SoilLayerType = 'ph' | 'nitrogen' | 'phosphorus' | 'potassium' | 'moisture' | 'carbon';
 
@@ -429,17 +430,13 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
     });
   }, [activeLayer, config, interpolate, activeSamplePoints, hoverPos]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const probeAt = (clientX: number, clientY: number) => {
     if (!interactive) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const xNorm = Math.max(0, Math.min(1, x / rect.width));
-    const yNorm = Math.max(0, Math.min(1, y / rect.height));
+    const { x, y, xNorm, yNorm } = normalizeProbePoint(clientX, clientY, rect);
 
     const val = interpolate(xNorm, yNorm);
     const probeData = buildProbeResult(x, y, val, config, getAdvisory(val));
@@ -447,6 +444,16 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
     setHoverPos({ x, y });
     setProbe(probeData);
     if (onProbeSelect) onProbeSelect(probeData);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    probeAt(e.clientX, e.clientY);
+  };
+
+  const handleTouchProbe = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    probeAt(touch.clientX, touch.clientY);
   };
 
   const handleMouseLeave = () => {
@@ -490,8 +497,8 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
 
       {/* Data provenance for the active layer — surfaces preview/estimated status to the user */}
       <p className={`text-[10px] leading-relaxed rounded-lg px-2.5 py-1.5 border ${isLiveLayer ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800' : hasNoData ? 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700' : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'}`}>
-        {isLiveLayer ? '✅ ' : hasNoData ? 'ℹ️ ' : '⚠️ '}{hasNoData ? 'No live data for this layer — add field polygon or lab test, or switch to demo account for preview mesh.' : provenanceOverride ?? config.description}{' '}
-        {isLiveLayer ? 'Regional 250m baseline (single SoilGrids pixel) + lab anchors — uniform field until multiple field polygons are registered.' : hasNoData ? '' : 'Values are IDW interpolation over sample points — not a substitute for a laboratory soil test.'}
+        {isLiveLayer ? '✅ ' : hasNoData ? 'ℹ️ ' : '⚠️ '}{hasNoData ? 'No live data for this nutrient yet — save the field location or add a lab test, or preview a sample map in the demo account.' : provenanceOverride ?? config.description}{' '}
+        {isLiveLayer ? 'Live starting estimate from satellite soil data plus your lab results — one even colour until more field points are added.' : hasNoData ? '' : 'Blended from nearby sample points — not a substitute for a lab soil test.'}
       </p>
 
       {/* Main Canvas Frame */}
@@ -499,15 +506,18 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
         {hasNoData ? (
           <div className="w-full h-[280px] flex flex-col items-center justify-center p-6 text-center bg-slate-900">
             <Layers className="w-10 h-10 text-white/20 mb-2" />
-            <p className="text-sm font-bold text-white">No live soil mesh</p>
-            <p className="text-xs text-white/50 mt-1 max-w-sm">This layer requires a field polygon or lab result. Demo mesh is visible only in the demo account.</p>
+            <p className="text-sm font-bold text-white">No live soil map yet</p>
+            <p className="text-xs text-white/50 mt-1 max-w-sm">Save this field&apos;s location or add a lab result to grow a live map here. The demo account shows a sample map.</p>
           </div>
         ) : (
           <canvas
             ref={canvasRef}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className="w-full h-[280px] block cursor-crosshair"
+            onTouchStart={handleTouchProbe}
+            onTouchMove={handleTouchProbe}
+            className="w-full h-[280px] block cursor-crosshair touch-pan-y"
+            aria-label="Soil nutrient map. Tap a cell to check its nutrient value."
           />
         )}
 
