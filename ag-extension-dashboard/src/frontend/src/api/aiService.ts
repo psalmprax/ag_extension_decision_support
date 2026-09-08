@@ -13,6 +13,7 @@ export interface BoxUpdateData {
 export interface SynthesisResponse {
   success: boolean;
   data: BoxUpdateData;
+  error?: string;
 }
 
 export interface TranscribeAudioResponse {

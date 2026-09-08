@@ -51,12 +51,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     duration: 3000,
                     style: {
                       background: CH_COLORS.green,
+                      color: '#ffffff',
                     },
                   },
                   error: {
                     duration: 4000,
                     style: {
                       background: CH_COLORS.error,
+                      color: '#ffffff',
                     },
                   },
                 }}
