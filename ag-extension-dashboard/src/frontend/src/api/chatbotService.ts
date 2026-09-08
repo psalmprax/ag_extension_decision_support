@@ -35,7 +35,12 @@ export const generateSynthesis = async (params: {
   notes: string;
   visitDate?: string;
 }) => {
-  const { data } = await apiClient.post('/chatbot/synthesis', params);
+  // Served by the safety-guarded visit-synthesis pipeline (no dedicated
+  // /chatbot/synthesis route exists); farmerId is accepted by its schema.
+  const { data } = await apiClient.post('/ai/synthesize-visit', {
+    notes: params.notes,
+    farmerId: params.farmerId,
+  });
   return data;
 };
 
