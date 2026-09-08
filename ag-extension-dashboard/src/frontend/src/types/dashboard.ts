@@ -22,7 +22,10 @@ export interface Conversation {
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'officer';
   content: string;
-  timestamp: string;
+  // Backend ChatMessageDTO carries `createdAt`; some producers send
+  // `timestamp`. Either may be absent — renderers must tolerate both.
+  timestamp?: string;
+  createdAt?: string | null;
 }
 
 export interface Farmer {

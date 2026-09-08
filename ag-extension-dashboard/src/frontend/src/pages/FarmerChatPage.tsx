@@ -14,6 +14,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { Conversation, ChatMessage } from '../types/dashboard';
+import { formatChatTime } from '@/lib/chatTime';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useDeviceThermalMemoryBudget } from '@/hooks/useDeviceThermalMemoryBudget';
@@ -448,6 +449,9 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 )}
                 {farmerChatMessages.map((msg, i) => {
                   const isOfficer = msg.role === 'officer';
+                  // Backend sends `createdAt`; tolerate either field and never
+                  // render "Invalid Date" for missing/unparseable values.
+                  const timeLabel = formatChatTime(msg);
                   return (
                     <div
                       key={i}
@@ -463,12 +467,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                         <p className="text-xs sm:text-sm leading-relaxed">{msg.content}</p>
                         <div className="flex items-center justify-between gap-3 text-[9px] font-mono text-white/50 pt-1 border-t border-white/[0.08]">
                           <span>{isOfficer ? 'OFFICER DISPATCH' : 'FARMER INCOMING'}</span>
-                          <span>
-                            {new Date(msg.timestamp).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
+                          {timeLabel && <span>{timeLabel}</span>}
                         </div>
                       </div>
                     </div>
