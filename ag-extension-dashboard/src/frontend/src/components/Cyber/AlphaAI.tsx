@@ -75,6 +75,18 @@ async function fetchPillarTranscription(base64: string, mimeType: string): Promi
   }
 }
 
+async function fetchLocalTranscription(base64: string, mimeType: string): Promise<string | null> {
+  try {
+    const { data } = await apiClient.post('/pillars/voice/transcribe-local', { audio: base64, mimeType });
+    const raw = (data?.data?.transcription || data?.transcription || '').toString().trim();
+    if (!raw) return null;
+    return raw.replace(/^\[STUB[^\]]*\]\s*/i, '');
+  } catch (err) {
+    console.warn('[AlphaAI] /pillars/voice/transcribe-local failed, attempting fallback:', err);
+    return null;
+  }
+}
+
 async function fetchAiSpeechTranscription(base64: string): Promise<string | null> {
   try {
     const { data } = await apiClient.post<{ success: boolean; data?: { text?: string } }>('/ai/transcribe-audio', {
@@ -89,7 +101,7 @@ async function fetchAiSpeechTranscription(base64: string): Promise<string | null
   }
 }
 
-/** Transcribe a recorded voice blob via Whisper endpoints with resilient fallback; null when unusable. */
+/** Transcribe a recorded voice blob via Whisper endpoints with resilient 3-tier fallback; null when unusable. */
 async function transcribeVoiceBlob(blob: Blob, mimeType: string): Promise<string | null> {
   const base64 = await new Promise<string | null>(resolve => {
     const reader = new FileReader();
@@ -101,11 +113,15 @@ async function transcribeVoiceBlob(blob: Blob, mimeType: string): Promise<string
     return null;
   }
 
-  // Primary: /pillars/voice/transcribe
+  // Tier 1: /pillars/voice/transcribe
   const pillarText = await fetchPillarTranscription(base64, mimeType);
   if (pillarText) return pillarText;
 
-  // Secondary fallback: /ai/transcribe-audio
+  // Tier 2: /pillars/voice/transcribe-local
+  const localText = await fetchLocalTranscription(base64, mimeType);
+  if (localText) return localText;
+
+  // Tier 3: /ai/transcribe-audio
   const aiText = await fetchAiSpeechTranscription(base64);
   if (aiText) return aiText;
 
