@@ -302,7 +302,7 @@ const DashboardMapSection: React.FC<{
   // Map-popup chat is an officer/admin action; everyone else gets the farmer
   // detail view instead — either way a tap must visibly do something.
   // Falls back to the store user like the overview heading below does.
-  const canMapChat = isMapChatAllowed(user?.role ?? userFromStore?.role);
+  const canMapChat = isMapChatAllowed(user?.role ?? userFromStore?.role, isDemo);
 
   // Share state with useAppQueries via the same query key; react-query dedupes.
   // We set retry:false so our own retry hook controls the retry behavior.

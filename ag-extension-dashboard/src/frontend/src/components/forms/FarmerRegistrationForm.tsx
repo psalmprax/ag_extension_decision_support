@@ -23,6 +23,7 @@ import {
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
 import { createFarmer } from '@/api/farmerService';
+import { InlinePrompt, InfoPromptIcon } from '@/components/ui/InfoPrompt';
 
 const COMMON_CROPS = [
   'Maize',
@@ -194,6 +195,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           farmSize: response.data.farmSize,
           latitude: response.data.locationLat,
           longitude: response.data.locationLng,
+          assignedOfficerId: response.data.assignedOfficerId,
         });
         toast.success(t('farmer_register_success') || 'Farmer client registered successfully!');
         reset();
@@ -277,6 +279,16 @@ export const FarmerRegistrationForm: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Field Onboarding Contextual Prompt */}
+      <InlinePrompt
+        title="Field Onboarding Guidance"
+        variant="tip"
+        dismissible
+        enableAudio
+      >
+        Farmers registered in your assigned district are automatically attached to your portfolio with immediate access to chats, field visits, and GPS parcel mapping.
+      </InlinePrompt>
 
       {/* ── Main Bento Grid Form ── */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -499,7 +511,15 @@ export const FarmerRegistrationForm: React.FC = () => {
             <div className="flex items-center justify-between pb-2 border-b border-white/5">
               <div className="flex items-center gap-2.5">
                 <Compass className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-sm font-bold uppercase tracking-wider text-white">Geospatial Telemetry</h2>
+                <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+                  Geospatial Telemetry
+                  <InfoPromptIcon
+                    title="GPS & Earth Observation"
+                    content="GPS coordinates connect the farm to Sentinel NDVI satellite vegetation monitoring and localized rainfall forecasting."
+                    variant="info"
+                    ariaLabel="About geospatial telemetry"
+                  />
+                </h2>
               </div>
               <button
                 type="button"
@@ -577,7 +597,15 @@ export const FarmerRegistrationForm: React.FC = () => {
             <div className="flex items-center justify-between pb-2 border-b border-white/5">
               <div className="flex items-center gap-2.5">
                 <Activity className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-sm font-bold uppercase tracking-wider text-white">Vital Score Baseline</h2>
+                <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+                  Vital Score Baseline
+                  <InfoPromptIcon
+                    title="Vital Score Health Index"
+                    content="Composite score (0–100) reflecting crop vigor, soil moisture level, and pest/disease vulnerability tier."
+                    variant="tip"
+                    ariaLabel="About vital score baseline"
+                  />
+                </h2>
               </div>
               <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold border ${getVitalScoreColor(currentVitalScore)}`}>
                 {currentVitalScore}/100 • {getVitalScoreLabel(currentVitalScore)}

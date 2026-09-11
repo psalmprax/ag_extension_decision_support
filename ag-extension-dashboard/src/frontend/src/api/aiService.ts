@@ -84,3 +84,27 @@ export const getChatCompletion = async (
   });
   return response.data;
 };
+
+export interface TextToSpeechResponse {
+  success: boolean;
+  data?: {
+    audioUrl?: string;
+    audioBase64?: string;
+    format?: string;
+  };
+  error?: string;
+}
+
+export const synthesizeSpeech = async (
+  text: string,
+  language = 'en',
+  voice = 'default'
+): Promise<TextToSpeechResponse> => {
+  const response = await apiClient.post<TextToSpeechResponse>('/chatbot/speech/text-to-speech', {
+    text,
+    language,
+    voice,
+  });
+  return response.data;
+};
+

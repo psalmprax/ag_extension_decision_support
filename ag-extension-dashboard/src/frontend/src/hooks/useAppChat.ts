@@ -8,6 +8,7 @@ import {
   deleteConversation,
   createConversation,
 } from '@/api/chatbotService';
+import { isDemoFarmerId } from '@/demo/demoIds';
 import { Conversation, ChatMessage, Farmer } from '../types/dashboard';
 
 interface QueuedChatItem {
@@ -130,6 +131,9 @@ export const useAppChat = (language: string) => {
   }, [activeFarmerConvId]);
 
   const loadFarmerMessages = useCallback(async (id: string) => {
+    if (id.startsWith('conv-demo-farmer-')) {
+      return;
+    }
     try {
       const res = await fetchMessages(id);
       setFarmerChatMessages(res.data || []);
@@ -144,6 +148,26 @@ export const useAppChat = (language: string) => {
 
     const currentInput = farmerChatInput;
     setFarmerChatInput('');
+
+    if (activeFarmerConvId?.startsWith('conv-demo-farmer-')) {
+      const sentMsg: ChatMessage = {
+        role: 'officer',
+        content: currentInput,
+        timestamp: new Date().toISOString(),
+      };
+      setFarmerChatMessages(prev => [...prev, sentMsg]);
+      setTimeout(() => {
+        setFarmerChatMessages(prev => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: 'Asante sana! I have received your advisory and will update you on the crop progress.',
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+      }, 700);
+      return;
+    }
 
     // Offline queue: if offline or network fails, stash and retry on online
     const queueKey = `chatOfflineQueue:${activeFarmerConvId || 'new'}`;
@@ -207,6 +231,36 @@ export const useAppChat = (language: string) => {
         } else {
           setActiveConvId(existingConv.id);
           loadMessages(existingConv.id);
+        }
+        return true;
+      }
+
+      if (isDemoFarmerId(farmer.id)) {
+        const mockConvId = `conv-${farmer.id}`;
+        const newConv: Conversation = {
+          id: mockConvId,
+          title: `Chat with ${farmer.firstName} ${farmer.lastName}`,
+          farmerId: farmer.id,
+          farmerName: `${farmer.firstName} ${farmer.lastName}`,
+          lastMessage: `Hello ${farmer.firstName}, how can I help you today?`,
+          updatedAt: new Date().toISOString(),
+          startedAt: new Date().toISOString(),
+        };
+
+        if (chatType === 'farmer') {
+          setFarmerConversations(prev => [newConv, ...prev]);
+          setActiveFarmerConvId(mockConvId);
+          setFarmerChatMessages([
+            {
+              role: 'user',
+              content: `Jambo! I would like some advice on my ${farmer.crops?.[0] || 'farm'}.`,
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+        } else {
+          setConversations(prev => [newConv, ...prev]);
+          setActiveConvId(mockConvId);
+          setChatMessages([]);
         }
         return true;
       }

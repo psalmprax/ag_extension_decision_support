@@ -13,6 +13,9 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { themes, ThemeName } from '@/theme';
 import { useLanguage } from '@/lib/LanguageContext';
+import { isMapChatAllowed, isMapCallAllowed } from '@/lib/mapChatPolicy';
+import { InfoPrompt, InfoPromptIcon } from '@/components/ui/InfoPrompt';
+import { AudioReaderButton } from '@/components/audio/AudioReaderButton';
 import toast from 'react-hot-toast';
 import {
   FarmerData,
@@ -77,9 +80,13 @@ export function FarmerMap({
   // Get theme from store
   const darkMode = useAppStore(state => state.darkMode);
   const isDemo = useAppStore(state => state.isDemo);
+  const user = useAppStore(state => state.user);
   const themeName = useAppStore(state => state.themeName) as ThemeName;
   const theme = themes[themeName] || themes.forest;
   const { t } = useLanguage();
+
+  const canCall = isMapCallAllowed(user?.role, isDemo);
+  const canChat = isMapChatAllowed(user?.role, isDemo);
 
   const farmers = useMemo(
     () => {
@@ -153,16 +160,36 @@ export function FarmerMap({
     );
   };
 
-  const handleFarmerClick = useCallback(
-    (farmer: FarmerData) => {
-      setSelectedFarmer(farmer);
-      onFarmerClick?.(farmer);
-    },
-    [onFarmerClick]
-  );
+  const handleFarmerMarkerSelect = useCallback((farmer: FarmerData) => {
+    setSelectedFarmer(farmer);
+  }, []);
 
-  const handleCall = (phone: string) => {
+  const handleCall = (phone?: string, farmerName?: string) => {
+    if (!canCall) {
+      toast.error('Calling farmers is restricted to Extension Officers and Administrators.');
+      return;
+    }
+    if (!phone) {
+      toast.error('No phone number registered for this farmer.');
+      return;
+    }
+    if (isDemo) {
+      toast.success(`[Demo Mode] Connecting simulated call to ${farmerName || 'farmer'} (${phone})`, {
+        icon: '📞',
+      });
+    } else {
+      toast.success(`Calling ${farmerName || 'farmer'}...`, { icon: '📞' });
+    }
     window.location.href = `tel:${phone}`;
+  };
+
+  const handleChatClick = (farmer: FarmerData) => {
+    if (!canChat) {
+      toast.error('Direct chat is restricted to Extension Officers and Administrators.');
+      onFarmerClick?.(farmer);
+      return;
+    }
+    onFarmerClick?.(farmer);
   };
 
   const handleLayerChange = useCallback((layer: MapLayer) => {
@@ -222,7 +249,14 @@ export function FarmerMap({
             position={[farmer.lat, farmer.lng]}
             icon={createMarkerIcon(farmer.crop, isSelected)}
             eventHandlers={{
-              click: () => handleFarmerClick(farmer),
+              click: e => {
+                handleFarmerMarkerSelect(farmer);
+                e?.target?.openPopup?.();
+              },
+              mouseover: e => {
+                handleFarmerMarkerSelect(farmer);
+                e?.target?.openPopup?.();
+              },
             }}
           >
             <Popup
@@ -237,7 +271,15 @@ export function FarmerMap({
                     </span>
                     <span className="text-xxs font-mono opacity-80">ID: {farmer.id}</span>
                   </div>
-                  <h3 className="text-base font-black mt-1 tracking-tight">{farmer.name}</h3>
+                  <div className="flex items-center justify-between mt-1">
+                    <h3 className="text-base font-black tracking-tight">{farmer.name}</h3>
+                    <AudioReaderButton
+                      text={`Mkulima ${farmer.name}, eneo la ${farmer.region}. Zao kuu: ${farmer.crop}. Ukubwa wa shamba: hekta ${farmer.size}. Mavuno yanayokadiriwa: kilo ${farmer.yield || 0}.`}
+                      size="xs"
+                      variant="ghost"
+                      className="text-white hover:text-emerald-100 hover:bg-white/20"
+                    />
+                  </div>
                   <p className="text-xs opacity-90">{farmer.region}</p>
                 </div>
 
@@ -248,28 +290,81 @@ export function FarmerMap({
                       <div className="text-sm font-black text-slate-800 dark:text-white mt-0.5">{farmer.size} ha</div>
                     </div>
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                      <div className="text-slate-400 font-bold uppercase tracking-wider">Est. Yield</div>
+                      <div className="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                        Est. Yield
+                        <InfoPromptIcon
+                          title="Estimated Yield"
+                          content="Projected seasonal harvest calculated from farm area, crop variety, and historical yield data."
+                          variant="info"
+                          ariaLabel="About estimated yield"
+                        />
+                      </div>
                       <div className="text-sm font-black text-slate-800 dark:text-white mt-0.5">{farmer.yield || 0} kg</div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 pt-1">
                     {farmer.phone && (
-                      <button
-                        onClick={() => handleCall(farmer.phone!)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-500/20"
-                      >
-                        <Phone className="w-3.5 h-3.5" />
-                        Call
-                      </button>
+                      canCall ? (
+                        <button
+                          onClick={() => handleCall(farmer.phone, farmer.name)}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-white rounded-xl text-xs font-bold transition-all shadow-md bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20 active:scale-95"
+                          title={`Call ${farmer.name}`}
+                          aria-label={`Call ${farmer.name}`}
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                          Call
+                        </button>
+                      ) : (
+                        <InfoPrompt
+                          title="Voice Calling"
+                          content="Voice calls are available for extension officers, administrators, and active advisory sessions."
+                          variant="guidance"
+                          placement="top"
+                          className="flex-1"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleCall(farmer.phone, farmer.name)}
+                            className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-white rounded-xl text-xs font-bold transition-all bg-slate-400 dark:bg-slate-700 opacity-60 cursor-not-allowed"
+                            aria-label={`Call ${farmer.name}`}
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                            Call
+                          </button>
+                        </InfoPrompt>
+                      )
                     )}
-                    <button
-                      onClick={() => onFarmerClick?.(farmer)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5" />
-                      Chat
-                    </button>
+
+                    {canChat ? (
+                      <button
+                        onClick={() => handleChatClick(farmer)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-95"
+                        title={`Chat with ${farmer.name}`}
+                        aria-label={`Chat with ${farmer.name}`}
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        Chat
+                      </button>
+                    ) : (
+                      <InfoPrompt
+                        title="Direct Chat"
+                        content="Direct messaging is available for extension officers and administrators to protect farmer contact privacy."
+                        variant="guidance"
+                        placement="top"
+                        className="flex-1"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => handleChatClick(farmer)}
+                          className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-400 opacity-60 cursor-not-allowed"
+                          aria-label={`Chat with ${farmer.name}`}
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          Chat
+                        </button>
+                      </InfoPrompt>
+                    )}
                   </div>
                 </div>
               </div>

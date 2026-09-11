@@ -30,6 +30,7 @@ export interface Farmer {
   latitude?: number;
   longitude?: number;
   region?: string;
+  assignedOfficerId?: string;
 }
 
 export interface Visit {
@@ -143,6 +144,10 @@ export interface AppState {
   shareModal: { entityType: string; entityId: string; entityName?: string } | null;
   showShareModal: (data: AppState['shareModal']) => void;
   hideShareModal: () => void;
+
+  // Audio Accessibility
+  preferredAudioLanguage: string;
+  setPreferredAudioLanguage: (lang: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -156,6 +161,7 @@ export const useAppStore = create<AppState>()(
       darkMode: localStorage.getItem('theme') === 'dark',
       liquidEffect: localStorage.getItem('ag-liquid-effect') === 'true',
       activeTab: 'dashboard',
+      preferredAudioLanguage: 'sw',
       farmers: [],
       visits: [],
       notifications: [],
@@ -167,6 +173,7 @@ export const useAppStore = create<AppState>()(
 
       // Actions
       setUser: user => set({ user }),
+      setPreferredAudioLanguage: preferredAudioLanguage => set({ preferredAudioLanguage }),
       setIsDemo: isDemo => set(_state => {
         // When exiting demo mode, clear all demo data from the store
         if (!isDemo) {

@@ -28,6 +28,8 @@ import { RagKnowledgeGraphCanvas, GraphNode } from '../canvas-ui/RagKnowledgeGra
 import { RefractiveGlassCard } from '../canvas-ui/RefractiveGlassCard';
 import type { VisualsData } from './types';
 import { MULTILINGUAL_LANGUAGES } from './languages';
+import { synthesizeSpeech } from '@/api/aiService';
+import { cleanTextForSpeech, stopAllAudioPlayback } from '@/components/audio/AudioReaderButton';
 
 interface ContextItem {
   content: string;
@@ -680,30 +682,69 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handleToggleSpeech = () => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      toast.error('Voice playback not supported on this browser.');
+  const playBackendSpeech = async (plainText: string, lang: string, nativeName: string) => {
+    try {
+      toast.loading(`Generating voice advisory in ${nativeName}...`, { id: 'kb-tts' });
+      const res = await synthesizeSpeech(plainText.slice(0, 1000), lang);
+      const audioPayload = res?.data?.audioUrl || res?.data?.audioBase64;
+      if (!audioPayload) throw new Error('No audio payload returned');
+
+      const mime = res?.data?.format === 'ogg' ? 'audio/ogg' : 'audio/mp3';
+      const audio = new Audio(`data:${mime};base64,${audioPayload}`);
+      audio.onended = () => setIsSpeaking(false);
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        toast.error('Voice playback failed', { id: 'kb-tts' });
+      };
+      await audio.play();
+      setIsSpeaking(true);
+      toast.success(`Playing voice briefing (${nativeName})...`, { id: 'kb-tts' });
+    } catch {
+      setIsSpeaking(false);
+      toast.error(`Voice playback not supported for ${nativeName} on this device.`, { id: 'kb-tts' });
+    }
+  };
+
+  const handleToggleSpeech = async () => {
+    if (isSpeaking) {
+      stopAllAudioPlayback();
+      setIsSpeaking(false);
       return;
     }
 
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-    } else {
-      window.speechSynthesis.cancel();
-      const currentText = translations[activeLang] || result.answer;
-      const plainText = currentText.replace(/[*#`_()[\]]/g, '');
-      const utterance = new SpeechSynthesisUtterance(plainText);
-      const currentLangObj = MULTILINGUAL_LANGUAGES.find(l => l.code === activeLang) || MULTILINGUAL_LANGUAGES[0];
-      utterance.lang = currentLangObj.bcp47 || 'en-US';
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      window.speechSynthesis.speak(utterance);
-      setIsSpeaking(true);
-      toast.success(`Playing voice briefing (${currentLangObj.native})...`);
+    const currentText = translations[activeLang] || result.answer;
+    const plainText = cleanTextForSpeech(currentText);
+    const currentLangObj = MULTILINGUAL_LANGUAGES.find(l => l.code === activeLang) || MULTILINGUAL_LANGUAGES[0];
+
+    stopAllAudioPlayback();
+
+    // Strategy 1: Browser SpeechSynthesis (instant, offline)
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(plainText);
+        utterance.lang = currentLangObj.bcp47 || 'en-US';
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = (err) => {
+          if (err.error === 'canceled' || err.error === 'interrupted') {
+            setIsSpeaking(false);
+            return;
+          }
+          playBackendSpeech(plainText, activeLang, currentLangObj.native);
+        };
+        window.speechSynthesis.speak(utterance);
+        setIsSpeaking(true);
+        toast.success(`Playing voice briefing (${currentLangObj.native})...`);
+        return;
+      } catch (err) {
+        console.warn('SpeechSynthesis error, falling back to backend:', err);
+      }
     }
+
+    // Strategy 2: Backend neural TTS
+    await playBackendSpeech(plainText, activeLang, currentLangObj.native);
   };
 
   const handleBookmark = () => {

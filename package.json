@@ -22,7 +22,10 @@
     "security:test": "npm run security:test:backend && npm run security:test:frontend && npm run security:test:agents && npm run security:test:extension",
     "fallow:check": "node scripts/fallow-regression-check.cjs",
     "fallow:baseline": "fallow dead-code --save-regression-baseline .fallow/regression-baseline.json",
-    "fallow:audit": "fallow audit --base HEAD"
+    "fallow:audit": "fallow audit --base HEAD",
+    "verify:anti-flop": "python3 scripts/verify_anti_flop.py",
+    "verify:anti-hallucination": "python3 scripts/verify_anti_hallucination.py",
+    "verify:anti": "npm run verify:anti-flop && npm run verify:anti-hallucination"
   },
   "dependencies": {
     "playwright": "^1.59.1"

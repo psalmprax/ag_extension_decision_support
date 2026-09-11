@@ -134,6 +134,7 @@ const role = String(_role);
                     region: f.region,
                     village: f.village,
                     vitalScore: f.vitalScore,
+                    assignedOfficerId: f.assignedOfficerId || undefined,
                 };
             } else {
                 // Full data for desktop
@@ -151,6 +152,7 @@ const role = String(_role);
                     locationLat: f.locationLat,
                     locationLng: f.locationLng,
                     languagePreference: f.languagePreference,
+                    assignedOfficerId: f.assignedOfficerId || undefined,
                 };
             }
         });
@@ -248,6 +250,7 @@ const role = String(_role);
                 languagePreference: farmer.languagePreference || 'en',
                 createdAt: farmer.createdAt,
                 lastVisit: null,
+                assignedOfficerId: farmer.assignedOfficerId || null,
             },
         });
     } catch (error) {
@@ -292,12 +295,26 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
         const {
             firstName, lastName, phone, region, village,
             farmSize, crops, languagePreference,
-            vitalScore, yieldHistory, locationLat, locationLng
+            vitalScore, yieldHistory, locationLat, locationLng,
+            assignedOfficerId: requestedOfficerId,
         } = req.body;
         const prisma = getPrisma();
         const tenantScope: Record<string, unknown> = {};
         if (!(await applyTenantScope(req, tenantScope, true))) {
             return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        }
+
+        const user = req.user as { userId?: string; role?: string } | undefined;
+        const userRole = user?.role ? String(user.role) : undefined;
+        const userId = user?.userId ? String(user.userId) : undefined;
+
+        // Auto-assign: if creator is an extension officer, assign to themselves by default.
+        // If creator is admin or regional manager, allow requestedOfficerId if provided.
+        let assignedOfficerId: string | null = null;
+        if (userRole === 'extension_officer' && userId) {
+            assignedOfficerId = userId;
+        } else if ((userRole === 'admin' || userRole === 'regional_manager') && requestedOfficerId) {
+            assignedOfficerId = requestedOfficerId;
         }
 
         const farmer = await prisma.farmer.create({
@@ -315,8 +332,28 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
                 locationLat,
                 locationLng,
                 tenantId: tenantScope.tenantId as string,
+                assignedOfficerId,
+                assignmentNotificationSent: Boolean(assignedOfficerId && userRole === 'extension_officer'),
             },
         });
+
+        // Audit assignment in FarmerAssignmentHistory
+        if (assignedOfficerId && userId && typeof (prisma as any).farmerAssignmentHistory?.create === 'function') {
+            try {
+                await (prisma as any).farmerAssignmentHistory.create({
+                    data: {
+                        farmerId: farmer.id,
+                        officerId: assignedOfficerId,
+                        reassignedBy: userId,
+                        reason: userRole === 'extension_officer'
+                            ? 'Auto-assigned upon registration by extension officer'
+                            : 'Assigned upon creation',
+                    },
+                });
+            } catch (historyErr) {
+                logger.warn('Failed to record farmer assignment history on creation:', historyErr);
+            }
+        }
 
         res.status(201).json({
             success: true,
@@ -334,6 +371,7 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
                 locationLat: farmer.locationLat,
                 locationLng: farmer.locationLng,
                 languagePreference: farmer.languagePreference,
+                assignedOfficerId: farmer.assignedOfficerId,
             }
         });
     } catch (error) {
@@ -441,6 +479,7 @@ router.patch('/:id', validate(updateFarmerSchema), async (req: Request, res: Res
                 locationLat: farmer.locationLat,
                 locationLng: farmer.locationLng,
                 languagePreference: farmer.languagePreference,
+                assignedOfficerId: farmer.assignedOfficerId,
             }
         });
     } catch (error) {
