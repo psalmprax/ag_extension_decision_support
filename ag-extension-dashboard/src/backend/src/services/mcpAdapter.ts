@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import { toolRegistry, toolMap } from '@/tools/registry';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 import { logger } from '@/utils/logger';
+import { aegisShield } from '@/services/security/aegisShield';
 
 export interface MCPTool {
   name: string;
@@ -114,8 +115,12 @@ class MCPAdapter {
     try {
       const validatedArgs = tool.schema.parse(args || {});
       const result = await tool.execute(validatedArgs);
+      const sanitized = aegisShield.sanitizeToolResult(typeof result === 'string' ? result : JSON.stringify(result));
+      if (!sanitized.clean) {
+        logger.warn(`[MCP] Tool "${name}" output contained potential prompt injection or threat; sanitized before return. Threats: ${sanitized.threats.join(', ')}`);
+      }
       return {
-        content: [{ type: 'text', text: result }],
+        content: [{ type: 'text', text: sanitized.sanitizedInput }],
       };
     } catch (error) {
       return {

@@ -10,6 +10,8 @@ import { generateIvrXml, processDtmfResponse, dispatchVoiceBroadcast } from '@/s
 
 const router = Router();
 
+const MAX_AUDIO_BASE64_LENGTH = 16 * 1024 * 1024; // ~12MB binary limit for DoS mitigation
+
 router.post('/voice/transcribe', checkUsageLimit('speech'), validate({ body: z.object({ audio: z.string().optional(), audioUrl: z.string().optional(), mimeType: z.string().optional(), languageHint: z.string().optional() }) }), async (req: AuthRequest, res: Response) => {
     try {
         const { audio, audioUrl, mimeType, languageHint } = req.body as { audio?: string; audioUrl?: string; mimeType?: string; languageHint?: string };
@@ -18,6 +20,9 @@ router.post('/voice/transcribe', checkUsageLimit('speech'), validate({ body: z.o
             // only return its offline CI stub transcript, which must never be
             // served over HTTP as if it were a real transcription.
             return res.status(400).json({ success: false, error: 'Audio data or audioUrl is required' });
+        }
+        if (audio && audio.length > MAX_AUDIO_BASE64_LENGTH) {
+            return res.status(413).json({ success: false, error: 'Audio payload exceeds maximum size limit (12MB).' });
         }
         const audioBuffer = audio ? Buffer.from(audio.includes('base64,') ? audio.split('base64,')[1] : audio, 'base64') : undefined;
         const result = await transcribeVoiceNote({ audioBuffer, audioUrl, mimeType, languageHint });
