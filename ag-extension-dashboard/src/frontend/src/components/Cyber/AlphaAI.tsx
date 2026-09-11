@@ -63,7 +63,33 @@ async function startVoiceCapture(
   return recorder;
 }
 
-/** Transcribe a recorded voice blob via the backend Whisper endpoint; null when unusable. */
+async function fetchPillarTranscription(base64: string, mimeType: string): Promise<string | null> {
+  try {
+    const { data } = await apiClient.post('/pillars/voice/transcribe', { audio: base64, mimeType });
+    const raw = (data?.data?.transcription || data?.transcription || '').toString().trim();
+    if (!raw) return null;
+    return raw.replace(/^\[STUB[^\]]*\]\s*/i, '');
+  } catch (err) {
+    console.warn('[AlphaAI] /pillars/voice/transcribe failed, attempting fallback:', err);
+    return null;
+  }
+}
+
+async function fetchAiSpeechTranscription(base64: string): Promise<string | null> {
+  try {
+    const { data } = await apiClient.post<{ success: boolean; data?: { text?: string } }>('/ai/transcribe-audio', {
+      audio: base64,
+      language: 'sw',
+    });
+    const text = (data?.data?.text || '').trim();
+    return text || null;
+  } catch (err) {
+    console.warn('[AlphaAI] /ai/transcribe-audio fallback failed:', err);
+    return null;
+  }
+}
+
+/** Transcribe a recorded voice blob via Whisper endpoints with resilient fallback; null when unusable. */
 async function transcribeVoiceBlob(blob: Blob, mimeType: string): Promise<string | null> {
   const base64 = await new Promise<string | null>(resolve => {
     const reader = new FileReader();
@@ -74,20 +100,17 @@ async function transcribeVoiceBlob(blob: Blob, mimeType: string): Promise<string
     toast.error('Could not read audio');
     return null;
   }
-  try {
-    const { data } = await apiClient.post('/pillars/voice/transcribe', { audio: base64, mimeType });
-    const text = (data?.data?.transcription || data?.transcription || '').toString().trim();
-    if (text && !text.startsWith('[STUB')) return text;
-    if (text) toast(`Transcribed (demo): ${text.slice(0, 80)}…`);
-    else toast.error('Transcription returned no text');
-    return null;
-  } catch (e) {
-    toast.error(
-      (e as { response?: { data?: { error?: string } } })?.response?.data?.error ||
-        'Transcription failed — check OPENAI_API_KEY'
-    );
-    return null;
-  }
+
+  // Primary: /pillars/voice/transcribe
+  const pillarText = await fetchPillarTranscription(base64, mimeType);
+  if (pillarText) return pillarText;
+
+  // Secondary fallback: /ai/transcribe-audio
+  const aiText = await fetchAiSpeechTranscription(base64);
+  if (aiText) return aiText;
+
+  toast.error('Voice transcription unavailable — please type your message');
+  return null;
 }
 
 export const AlphaAI: React.FC = () => {

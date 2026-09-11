@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   ArrowLeft,
   Trash2,
+  Mic,
 } from 'lucide-react';
 import { Conversation, ChatMessage } from '../types/dashboard';
 import { formatChatTime } from '@/lib/chatTime';
@@ -22,6 +23,7 @@ import { VirtualizedList } from '@/components/common/VirtualizedList';
 import { ProvenanceBadge } from '@/components/ProvenanceBadge';
 import { useDemoMode } from '@/demo';
 import { AudioReaderButton } from '@/components/audio/AudioReaderButton';
+import { VoiceNoteTaker } from '@/components/audio/VoiceNoteTaker';
 
 interface FarmerChatPageProps {
   farmerConversations: Conversation[];
@@ -95,6 +97,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   const [plotTelemetry, setPlotTelemetry] = useState<{ ph: number | null; soc: number | null; moisture: number | null; temp: number | null; loading: boolean }>({ ph: null, soc: null, moisture: null, temp: null, loading: false });
   const [liveOutbreakRisk, setLiveOutbreakRisk] = useState<number | null>(null);
   const [outbreakProvenance, setOutbreakProvenance] = useState<HazardProvenance | null>(null);
+  const [showVoiceComposer, setShowVoiceComposer] = useState(false);
 
   useEffect(() => {
     if (!activeFarmerConvId || !activeConv) return;
@@ -504,12 +507,52 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 </div>
               </div>
 
+              {/* Voice Note Composer for Extension Officer / Hands-free */}
+              {showVoiceComposer && (
+                <div className="p-3 bg-slate-900/95 border-t border-emerald-500/20 backdrop-blur-md">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xxs font-mono uppercase tracking-wider text-emerald-400 flex items-center gap-1.5 font-bold">
+                      <Mic className="w-3 h-3 animate-pulse" />
+                      Multilingual Voice Dictation
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowVoiceComposer(false)}
+                      className="text-white/40 hover:text-white text-xxs px-2 py-0.5 rounded hover:bg-white/10"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <VoiceNoteTaker
+                    compact
+                    placeholder="Dictate field advice in Kiswahili, English, Hausa, or Chichewa..."
+                    onSaveNote={transcript => {
+                      setFarmerChatInput(farmerChatInput ? `${farmerChatInput} ${transcript}` : transcript);
+                      setShowVoiceComposer(false);
+                    }}
+                  />
+                </div>
+              )}
+
               {/* Chat Input Form */}
               <form
                 onSubmit={handleFarmerChatSend}
                 className="p-4 bg-slate-950/80 border-t border-white/[0.08]"
               >
                 <div className="relative flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowVoiceComposer(prev => !prev)}
+                    className={`p-3 rounded-xl border transition-all ${
+                      showVoiceComposer
+                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                        : 'bg-slate-900 text-white/70 hover:text-white border-white/[0.1] hover:border-white/20'
+                    }`}
+                    title="Dictate voice note (multilingual STT)"
+                    aria-label="Dictate voice note"
+                  >
+                    <Mic className="w-4 h-4" />
+                  </button>
                   <input
                     type="text"
                     value={farmerChatInput}

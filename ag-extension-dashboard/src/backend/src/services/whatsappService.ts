@@ -10,6 +10,8 @@ export interface WhatsAppOptions {
     senderId?: string;
     templateName?: string;
     templateParams?: string[];
+    mediaUrl?: string;
+    isVoiceNote?: boolean;
 }
 
 export type WhatsAppDeliveryStatus = 'not_configured' | 'queued' | 'sent' | 'logged' | 'failed';
@@ -79,6 +81,10 @@ class WhatsAppService {
 
         if (options.templateName) {
             params.ProvideFeedback = 'true';
+        }
+
+        if (options.mediaUrl) {
+            params.MediaUrl = options.mediaUrl;
         }
 
         try {
