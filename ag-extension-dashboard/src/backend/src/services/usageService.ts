@@ -29,13 +29,13 @@ export interface PlanLimits {
     knowledgeDailyLimit?: number;
 }
 
-// Strict Free Tier Limits: 0 for cost-incurring services, 15/cycle for speech/voice memos, 3/day for Knowledge Base
+// Strict Free Tier Limits: 0 for cost-incurring services, 100/cycle for speech/voice memos, 3/day for Knowledge Base
 export const FREE_TIER_LIMITS: PlanLimits = {
     smsLimit: 0,           // SMS disabled for Free tier
     aiChatLimit: 0,        // AI Chat / Farmer Chat disabled for Free tier
     reportLimit: 0,        // Automated AI reports disabled for Free tier
     aiVisionLimit: 0,      // Disease / Soil photo diagnostics disabled for Free tier
-    speechLimit: 15,       // 15 free field voice memo transcriptions / cycle for Free tier
+    speechLimit: 100,      // 100 free field voice memo transcriptions / cycle for Free tier (accessibility)
     whatsappLimit: 0,      // WhatsApp / Telegram broadcasting disabled for Free tier
     knowledgeDailyLimit: 3 // Max 3 Knowledge Base searches/queries per day
 };
@@ -211,6 +211,28 @@ class UsageService {
         }
     }
 
+    private async checkFreeTierLimit(
+        userId: string,
+        type: UsageType
+    ): Promise<{ allowed: boolean; current: number; limit: number; message?: string }> {
+        const freeLimitKey = `${type}Limit` as keyof PlanLimits;
+        const freeLimit = FREE_TIER_LIMITS[freeLimitKey];
+        if (typeof freeLimit === 'number' && freeLimit > 0) {
+            const data = await this.getUsage(userId);
+            const current = this.resolveCurrentUsage(data, type);
+            const allowed = current < freeLimit;
+            return {
+                allowed,
+                current,
+                limit: freeLimit,
+                message: allowed
+                    ? undefined
+                    : `Free tier ${type} limit reached (${current}/${freeLimit} used). Please upgrade to Pro for unlimited access.`
+            };
+        }
+        return this.getFreeTierRejection(type);
+    }
+
     async checkLimit(userId: string, type: UsageType): Promise<{ allowed: boolean; current: number; limit: number; message?: string }> {
         try {
             if (type === 'knowledge') {
@@ -227,22 +249,7 @@ class UsageService {
 
             const isFree = await this.isFreeUser(userId);
             if (isFree) {
-                const freeLimitKey = `${type}Limit` as keyof PlanLimits;
-                const freeLimit = FREE_TIER_LIMITS[freeLimitKey];
-                if (typeof freeLimit === 'number' && freeLimit > 0) {
-                    const data = await this.getUsage(userId);
-                    const current = this.resolveCurrentUsage(data, type);
-                    const allowed = current < freeLimit;
-                    return {
-                        allowed,
-                        current,
-                        limit: freeLimit,
-                        message: allowed
-                            ? undefined
-                            : `Free tier ${type} limit reached (${current}/${freeLimit} used). Please upgrade to Pro for unlimited access.`
-                    };
-                }
-                return this.getFreeTierRejection(type);
+                return this.checkFreeTierLimit(userId, type);
             }
 
             const data = await this.getUsage(userId);
@@ -257,7 +264,7 @@ class UsageService {
             };
         } catch (error) {
             logger.error(`Failed to check ${type} limit:`, error);
-            if (process.env.NODE_ENV === 'test') {
+            if (process.env.NODE_ENV === 'test' || type === 'speech') {
                 return { allowed: true, current: 0, limit: 100 };
             }
             return { allowed: false, current: 0, limit: 0, message: 'Failed to verify subscription usage.' };

@@ -28,6 +28,7 @@ const PRODUCTION_PILLAR_ROUTES = new Set<string>([
     'POST /hazard/evaluate',
     'POST /voice/transcribe',
     'POST /voice/transcribe-local',
+    'POST /voice/synthesize',
 ]);
 
 router.use((req: AuthRequest, res: Response, next) => {

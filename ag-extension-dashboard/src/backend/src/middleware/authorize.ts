@@ -45,15 +45,16 @@ export const authorize = (allowedRoles: UserRole[]) => {
                 return;
             }
 
-            // Attach user to request
+            // Attach user to request (normalize legacy 'agent' role to 'extension_officer')
+            const normalizedRole = decoded.role === ('agent' as unknown as UserRole) ? 'extension_officer' : decoded.role;
             req.user = {
                 userId: decoded.userId,
                 email: decoded.email,
-                role: decoded.role,
+                role: normalizedRole,
             };
 
             // Check if user role is allowed
-            if (!allowedRoles.includes(decoded.role)) {
+            if (!allowedRoles.includes(normalizedRole) && !allowedRoles.includes(decoded.role)) {
                 logger.warn(`User ${decoded.userId} with role ${decoded.role} tried to access forbidden resource`);
                 res.status(403).json({
                     success: false,

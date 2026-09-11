@@ -24,8 +24,9 @@ export const checkUsageLimit = (type: UsageType, options: { meter?: boolean } = 
             return;
         }
 
-        // Admins have no limits
-        if (req.user.role === 'admin') {
+        // Admins and demo users have no limits
+        const isDemo = Boolean((req.user as unknown as { isDemo?: boolean }).isDemo || req.user.email === 'demo@agridemo.com');
+        if (req.user.role === 'admin' || isDemo) {
             return next();
         }
 
