@@ -25,6 +25,7 @@ export const farmerSchema = z.object({
   locationLat: z.number().optional(),
   locationLng: z.number().optional(),
   languagePreference: z.string().optional(),
+  assignedOfficerId: z.string().optional(),
 });
 
 export const farmerDetailSchema = farmerSchema.extend({

@@ -30,6 +30,9 @@ jest.mock('../services/prismaService', () => ({
             findUnique: jest.fn().mockResolvedValue(null),
             upsert: jest.fn().mockResolvedValue({})
         },
+        farmerAssignmentHistory: {
+            create: jest.fn().mockResolvedValue({ id: 'hist-1' })
+        },
         farmer: {
             create: jest.fn((params) => Promise.resolve({
                 id: 'new-id',
@@ -101,6 +104,35 @@ describe('Extended Farmers API Tests', () => {
         expect(response.body.success).toBe(true);
         expect(response.body.data.vitalScore).toBe(92);
         expect(response.body.data.locationLat).toBe(-1.3);
+        // Extension officer is automatically assigned upon registration
+        expect(response.body.data.assignedOfficerId).toBe('off-1');
+    });
+
+    it('should allow admin to explicitly assign officer on creation', async () => {
+        const adminToken = jwt.sign(
+            { userId: 'admin-1', role: 'admin', email: 'admin@example.com' },
+            config.jwt.secret,
+            { expiresIn: '1h' }
+        );
+
+        const farmerData = {
+            firstName: 'Samuel',
+            lastName: 'Kamau',
+            region: 'Central',
+            village: 'Village C',
+            farmSize: 4.0,
+            crops: ['coffee'],
+            assignedOfficerId: '11111111-1111-1111-1111-111111111111'
+        };
+
+        const response = await request(app)
+            .post('/api/v1/farmers')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send(farmerData);
+
+        expect(response.status).toBe(201);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.assignedOfficerId).toBe('11111111-1111-1111-1111-111111111111');
     });
 
     it('should return the new fields in farmer details', async () => {
@@ -112,5 +144,6 @@ describe('Extended Farmers API Tests', () => {
         expect(response.body.data.vitalScore).toBe(85);
         expect(response.body.data.yieldHistory).toBeDefined();
         expect(response.body.data.locationLat).toBe(-1.2833);
+        expect(response.body.data.assignedOfficerId).toBe('off-1');
     });
 });

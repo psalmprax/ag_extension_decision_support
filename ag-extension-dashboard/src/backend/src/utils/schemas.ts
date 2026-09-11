@@ -155,6 +155,8 @@ export const createFarmerSchema = z.object({
     yieldHistory: z.any().optional(),
     locationLat: z.number().optional(),
     locationLng: z.number().optional(),
+    languagePreference: z.string().optional(),
+    assignedOfficerId: z.string().uuid().optional(),
   }),
 });
 

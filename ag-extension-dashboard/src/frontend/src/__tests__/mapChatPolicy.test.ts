@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { isMapChatAllowed, resolveMapFarmerAction } from '@/lib/mapChatPolicy';
+import { isMapChatAllowed, isMapCallAllowed, resolveMapFarmerAction } from '@/lib/mapChatPolicy';
 
 describe('isMapChatAllowed', () => {
-  it.each(['extension_officer', 'admin'])('grants map chat to %s', role => {
+  it.each(['extension_officer', 'admin', 'superadmin'])('grants map chat to %s', role => {
     expect(isMapChatAllowed(role)).toBe(true);
   });
 
@@ -12,6 +12,30 @@ describe('isMapChatAllowed', () => {
       expect(isMapChatAllowed(role)).toBe(false);
     }
   );
+
+  it('handles demo mode correctly', () => {
+    expect(isMapChatAllowed('admin', true)).toBe(true);
+    expect(isMapChatAllowed('extension_officer', true)).toBe(true);
+    expect(isMapChatAllowed(undefined, true)).toBe(true);
+    // Demo farmer role is denied to simulate farmer restriction
+    expect(isMapChatAllowed('farmer', true)).toBe(false);
+  });
+});
+
+describe('isMapCallAllowed', () => {
+  it.each(['extension_officer', 'admin', 'superadmin', 'regional_manager'])('grants map call to %s', role => {
+    expect(isMapCallAllowed(role)).toBe(true);
+  });
+
+  it.each([['farmer'], [undefined], [null], ['']])('denies map call to %s', role => {
+    expect(isMapCallAllowed(role)).toBe(false);
+  });
+
+  it('handles demo mode correctly', () => {
+    expect(isMapCallAllowed('admin', true)).toBe(true);
+    expect(isMapCallAllowed(undefined, true)).toBe(true);
+    expect(isMapCallAllowed('farmer', true)).toBe(false);
+  });
 });
 
 describe('resolveMapFarmerAction', () => {

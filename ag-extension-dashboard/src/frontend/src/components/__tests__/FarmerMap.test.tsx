@@ -14,8 +14,13 @@ vi.mock('react-leaflet', () => ({
   TileLayer: ({ url, attribution }: { url?: string; attribution?: string }) => (
     <div data-testid="tile-layer" data-url={url} data-attribution={attribution} />
   ),
-  Marker: ({ position, children }: { position?: [number, number]; children?: React.ReactNode }) => (
-    <div data-testid="map-marker" data-position={JSON.stringify(position)}>
+  Marker: ({ position, children, eventHandlers }: { position?: [number, number]; children?: React.ReactNode; eventHandlers?: Record<string, (e?: unknown) => void> }) => (
+    <div
+      data-testid="map-marker"
+      data-position={JSON.stringify(position)}
+      onClick={eventHandlers?.click ? () => eventHandlers.click?.({ target: { openPopup: vi.fn() } }) : undefined}
+      onMouseOver={eventHandlers?.mouseover ? () => eventHandlers.mouseover?.({ target: { openPopup: vi.fn() } }) : undefined}
+    >
       {children}
     </div>
   ),
@@ -100,5 +105,32 @@ describe('FarmerMap Component - Unexpanded State', () => {
     expect(markers.length).toBe(2);
     expect(markers[0].getAttribute('data-position')).toBe('[-0.5,37]');
     expect(markers[1].getAttribute('data-position')).toBe('[-1.2,36.8]');
+  });
+
+  it('does not trigger onFarmerClick when marker is clicked or hovered, but does when popup chat button is clicked', async () => {
+    const onFarmerClick = vi.fn();
+    const customFarmers = [
+      {
+        id: 'f-1',
+        name: 'John Doe',
+        lat: -0.5,
+        lng: 37.0,
+        crop: 'Maize',
+        region: 'Nyeri',
+        size: 5,
+      },
+    ];
+
+    await renderWithProviders(<FarmerMap farmers={customFarmers} onFarmerClick={onFarmerClick} />);
+
+    const marker = screen.getByTestId('map-marker');
+    marker.click();
+    expect(onFarmerClick).not.toHaveBeenCalled();
+
+    // Clicking the chat button inside the popup triggers onFarmerClick
+    const chatButton = screen.getByRole('button', { name: /Chat/i });
+    chatButton.click();
+    expect(onFarmerClick).toHaveBeenCalledTimes(1);
+    expect(onFarmerClick).toHaveBeenCalledWith(customFarmers[0]);
   });
 });

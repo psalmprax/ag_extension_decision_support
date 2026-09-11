@@ -25,6 +25,8 @@ import { ProgressiveProfileChips, ProfileParameter } from './ProgressiveProfileC
 import { useAppStore } from '@/store/useAppStore';
 import toast from 'react-hot-toast';
 import { AgronomicIntakeCard, isAgronomicQueryAmbiguous } from './AgronomicIntakeCard';
+import { AudioReaderButton } from './audio/AudioReaderButton';
+import { VoiceNoteTaker } from './audio/VoiceNoteTaker';
 
 // Lazy: WebRTC stack (~200KB with deps) must not sit in the entry chunk for a
 // call modal that only mounts on explicit user action.
@@ -93,7 +95,17 @@ const AIAgronomistChatTab: React.FC<ChatTabProps> = ({
           >
             {msg.text}
           </div>
-          <span className="text-[10px] text-slate-500 px-1 mt-1">{msg.time}</span>
+          <div className="flex items-center gap-1.5 px-1 mt-1">
+            <span className="text-[10px] text-slate-500">{msg.time}</span>
+            {msg.sender === 'ai' && (
+              <AudioReaderButton
+                text={msg.text}
+                size="xs"
+                variant="ghost"
+                className="text-slate-400 hover:text-emerald-400"
+              />
+            )}
+          </div>
         </motion.div>
       ))}
 
@@ -186,9 +198,17 @@ const AIAgronomistScanTab: React.FC<ScanTabProps> = ({
         animate={{ opacity: 1, scale: 1 }}
         className="p-4 rounded bg-slate-900 border border-emerald-500/40 shadow-lg space-y-3"
       >
-        <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
-          <Leaf className="w-3.5 h-3.5" />
-          Pathology Diagnosis & Prescriptions
+        <div className="flex items-center justify-between text-xs font-bold text-emerald-400">
+          <div className="flex items-center gap-1.5">
+            <Leaf className="w-3.5 h-3.5" />
+            Pathology Diagnosis & Prescriptions
+          </div>
+          <AudioReaderButton
+            text={scanAnalysis}
+            size="xs"
+            variant="ghost"
+            className="text-emerald-400 hover:bg-emerald-500/20"
+          />
         </div>
         <div className="text-xs text-slate-200 bg-slate-950 p-3 rounded border border-slate-800 leading-relaxed whitespace-pre-wrap">
           {scanAnalysis}
@@ -616,15 +636,61 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
               )}
 
               {activeTab === 'voice' && (
-                <AIAgronomistVoiceTab
-                  isRecording={isRecording}
-                  isTranscribing={isTranscribing}
-                  recordingDuration={recordingDuration}
-                  interimText={interimText}
-                  capturedVoiceNote={capturedVoiceNote}
-                  onToggleRecording={handleToggleVoice}
-                  onInsertVoiceToChat={handleInsertVoiceToChat}
-                />
+                <div className="space-y-4">
+                  <AIAgronomistVoiceTab
+                    isRecording={isRecording}
+                    isTranscribing={isTranscribing}
+                    recordingDuration={recordingDuration}
+                    interimText={interimText}
+                    capturedVoiceNote={capturedVoiceNote}
+                    onToggleRecording={handleToggleVoice}
+                    onInsertVoiceToChat={handleInsertVoiceToChat}
+                  />
+
+                  <div className="pt-3 border-t border-slate-800">
+                    <VoiceNoteTaker
+                      onSaveNote={note => {
+                        setCapturedVoiceNote(note);
+                        setMessages(prev => [
+                          ...prev,
+                          {
+                            sender: 'user',
+                            text: note,
+                            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                          },
+                        ]);
+                        setActiveTab('chat');
+                        setIsLoadingAi(true);
+                        getChatCompletion(note, undefined, language)
+                          .then(res => {
+                            const reply =
+                              res.data?.messages?.find(m => m.role === 'assistant')?.content ||
+                              'I evaluated your field observation against current agricultural agronomy standards.';
+                            setMessages(prev => [
+                              ...prev,
+                              {
+                                sender: 'ai',
+                                text: reply,
+                                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                              },
+                            ]);
+                          })
+                          .catch(err => {
+                            console.error('AI chat query failed:', err);
+                            setMessages(prev => [
+                              ...prev,
+                              {
+                                sender: 'ai',
+                                text: 'Notice: Could not connect to remote AI inference model.',
+                                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                              },
+                            ]);
+                          })
+                          .finally(() => setIsLoadingAi(false));
+                      }}
+                    />
+                  </div>
+                </div>
               )}
 
               {activeTab === 'telecall' && (

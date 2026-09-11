@@ -22,6 +22,7 @@ function mapApiFarmerToStoreFarmer(farmer: ApiFarmer): Farmer {
     latitude: farmer.locationLat,
     longitude: farmer.locationLng,
     region: farmer.region,
+    assignedOfficerId: farmer.assignedOfficerId,
   };
 }
 

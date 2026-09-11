@@ -8,12 +8,14 @@ import {
   deleteConversation,
   createConversation,
 } from '@/api/chatbotService';
+import { isDemoFarmerId } from '@/demo/demoIds';
 import { Conversation, ChatMessage, Farmer } from '../types/dashboard';
 
 interface QueuedChatItem {
   conversationId: string | null;
   message: string;
   language: string;
+  at?: number;
 }
 
 /** Send one queued item; true when it drained (caller may drop it from the queue). */
@@ -40,6 +42,49 @@ async function drainChatOfflineQueue(key: string): Promise<void> {
     localStorage.setItem(key, JSON.stringify(items));
   }
   if (items.length === 0) localStorage.removeItem(key);
+}
+
+function enqueueOfflineMessage(
+  queueKey: string,
+  item: QueuedChatItem
+): void {
+  const q = JSON.parse(localStorage.getItem(queueKey) || '[]') as QueuedChatItem[];
+  q.push(item);
+  localStorage.setItem(queueKey, JSON.stringify(q));
+}
+
+function sendDemoFarmerResponse(
+  currentInput: string,
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>
+): void {
+  const sentMsg: ChatMessage = {
+    role: 'officer',
+    content: currentInput,
+    timestamp: new Date().toISOString(),
+  };
+  setMessages(prev => [...prev, sentMsg]);
+  setTimeout(() => {
+    setMessages(prev => [
+      ...prev,
+      {
+        role: 'assistant',
+        content: 'Asante sana! I have received your advisory and will update you on the crop progress.',
+        timestamp: new Date().toISOString(),
+      },
+    ]);
+  }, 700);
+}
+
+function buildDemoConversation(farmer: Farmer): Conversation {
+  return {
+    id: `conv-${farmer.id}`,
+    title: `Chat with ${farmer.firstName} ${farmer.lastName}`,
+    farmerId: farmer.id,
+    farmerName: `${farmer.firstName} ${farmer.lastName}`,
+    lastMessage: `Hello ${farmer.firstName}, how can I help you today?`,
+    updatedAt: new Date().toISOString(),
+    startedAt: new Date().toISOString(),
+  };
 }
 
 export const useAppChat = (language: string) => {
@@ -130,6 +175,9 @@ export const useAppChat = (language: string) => {
   }, [activeFarmerConvId]);
 
   const loadFarmerMessages = useCallback(async (id: string) => {
+    if (id.startsWith('conv-demo-farmer-')) {
+      return;
+    }
     try {
       const res = await fetchMessages(id);
       setFarmerChatMessages(res.data || []);
@@ -145,13 +193,16 @@ export const useAppChat = (language: string) => {
     const currentInput = farmerChatInput;
     setFarmerChatInput('');
 
+    if (activeFarmerConvId?.startsWith('conv-demo-farmer-')) {
+      sendDemoFarmerResponse(currentInput, setFarmerChatMessages);
+      return;
+    }
+
     // Offline queue: if offline or network fails, stash and retry on online
     const queueKey = `chatOfflineQueue:${activeFarmerConvId || 'new'}`;
     const offline = typeof navigator !== 'undefined' && !navigator.onLine;
     if (offline) {
-      const q = JSON.parse(localStorage.getItem(queueKey) || '[]') as unknown[];
-      q.push({ conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now() });
-      localStorage.setItem(queueKey, JSON.stringify(q));
+      enqueueOfflineMessage(queueKey, { conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now() });
       console.warn('Chat offline queued:', currentInput.slice(0, 40));
       return;
     }
@@ -170,11 +221,11 @@ export const useAppChat = (language: string) => {
     } catch (error) {
       const isNetwork = (error as Error)?.message?.toLowerCase().includes('network') || !navigator.onLine;
       if (isNetwork) {
-        const q = JSON.parse(localStorage.getItem(queueKey) || '[]') as unknown[];
-        q.push({ conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now() });
-        localStorage.setItem(queueKey, JSON.stringify(q));
+        enqueueOfflineMessage(queueKey, { conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now() });
         console.warn('Chat queued after failure:', currentInput.slice(0, 40));
-      } else console.error('Failed to send farmer message:', error);
+      } else {
+        console.error('Failed to send farmer message:', error);
+      }
     }
   };
 
@@ -193,21 +244,47 @@ export const useAppChat = (language: string) => {
     return () => window.removeEventListener('online', drain);
   }, [activeFarmerConvId, language, loadFarmerMessages]);
 
+  const selectActiveConversation = (convId: string, chatType: 'ai' | 'farmer') => {
+    if (chatType === 'farmer') {
+      setActiveFarmerConvId(convId);
+      loadFarmerMessages(convId);
+    } else {
+      setActiveConvId(convId);
+      loadMessages(convId);
+    }
+  };
+
+  const initDemoConversation = (farmer: Farmer, chatType: 'ai' | 'farmer') => {
+    const newConv = buildDemoConversation(farmer);
+    if (chatType === 'farmer') {
+      setFarmerConversations(prev => [newConv, ...prev]);
+      setActiveFarmerConvId(newConv.id);
+      setFarmerChatMessages([
+        {
+          role: 'user',
+          content: `Jambo! I would like some advice on my ${farmer.crops?.[0] || 'farm'}.`,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    } else {
+      setConversations(prev => [newConv, ...prev]);
+      setActiveConvId(newConv.id);
+      setChatMessages([]);
+    }
+  };
+
   const handleStartConversation = async (farmer: Farmer, chatType: 'ai' | 'farmer' = 'farmer') => {
     try {
       const existingConversations = chatType === 'farmer' ? farmerConversations : conversations;
-      const existingConv = existingConversations.find(
-        (c: Conversation) => c.farmerId === farmer.id
-      );
+      const existingConv = existingConversations.find(c => c.farmerId === farmer.id);
 
       if (existingConv) {
-        if (chatType === 'farmer') {
-          setActiveFarmerConvId(existingConv.id);
-          loadFarmerMessages(existingConv.id);
-        } else {
-          setActiveConvId(existingConv.id);
-          loadMessages(existingConv.id);
-        }
+        selectActiveConversation(existingConv.id, chatType);
+        return true;
+      }
+
+      if (isDemoFarmerId(farmer.id)) {
+        initDemoConversation(farmer, chatType);
         return true;
       }
 
@@ -220,18 +297,12 @@ export const useAppChat = (language: string) => {
       if (res.success && res.data) {
         const newConv = res.data;
         if (chatType === 'farmer') {
-          setFarmerConversations(prev => {
-            const exists = prev.some(c => c.id === newConv.id);
-            if (exists) return prev;
-            return [newConv, ...prev];
-          });
-          setActiveFarmerConvId(newConv.id);
-          loadFarmerMessages(newConv.id);
+          setFarmerConversations(prev => (prev.some(c => c.id === newConv.id) ? prev : [newConv, ...prev]));
         } else {
           setConversations(prev => [newConv, ...prev]);
-          setActiveConvId(newConv.id);
-          setChatMessages([]);
         }
+        selectActiveConversation(newConv.id, chatType);
+        if (chatType !== 'farmer') setChatMessages([]);
         return true;
       }
     } catch (error) {

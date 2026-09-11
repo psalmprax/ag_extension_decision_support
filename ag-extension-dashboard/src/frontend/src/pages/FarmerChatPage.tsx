@@ -21,6 +21,7 @@ import { useDeviceThermalMemoryBudget } from '@/hooks/useDeviceThermalMemoryBudg
 import { VirtualizedList } from '@/components/common/VirtualizedList';
 import { ProvenanceBadge } from '@/components/ProvenanceBadge';
 import { useDemoMode } from '@/demo';
+import { AudioReaderButton } from '@/components/audio/AudioReaderButton';
 
 interface FarmerChatPageProps {
   farmerConversations: Conversation[];
@@ -466,7 +467,15 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                       >
                         <p className="text-xs sm:text-sm leading-relaxed">{msg.content}</p>
                         <div className="flex items-center justify-between gap-3 text-[9px] font-mono text-white/50 pt-1 border-t border-white/[0.08]">
-                          <span>{isOfficer ? 'OFFICER DISPATCH' : 'FARMER INCOMING'}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span>{isOfficer ? 'OFFICER DISPATCH' : 'FARMER INCOMING'}</span>
+                            <AudioReaderButton
+                              text={msg.content}
+                              size="xs"
+                              variant="ghost"
+                              className="text-white/60 hover:text-white"
+                            />
+                          </div>
                           {timeLabel && <span>{timeLabel}</span>}
                         </div>
                       </div>

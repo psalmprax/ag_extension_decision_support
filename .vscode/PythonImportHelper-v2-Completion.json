@@ -3156,6 +3156,15 @@
         "documentation": {}
     },
     {
+        "label": "ast",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "ast",
+        "description": "ast",
+        "detail": "ast",
+        "documentation": {}
+    },
+    {
         "label": "CloakFacebookScanner",
         "kind": 6,
         "importPath": ".kilo.worktrees.pine-dirt.ag-extension-dashboard.src.agents.tools.cloakbrowser.cloak_facebook_scanner",
@@ -7869,6 +7878,96 @@
         "description": "scripts.generate_investor_deck",
         "peekOfCode": "def create_irap_percentage_deck():\n    prs = Presentation()\n    prs.slide_width = Inches(13.333)\n    prs.slide_height = Inches(7.5)\n    # Palette\n    BG_DARK = RGBColor(11, 25, 18)       # #0B1912\n    CARD_BG = RGBColor(19, 46, 35)       # #132E23\n    TEXT_WHITE = RGBColor(255, 255, 255)\n    TEXT_MUTED = RGBColor(167, 243, 208) # #A7F3D0\n    ACCENT_GREEN = RGBColor(16, 185, 129)# #10B981",
         "detail": "scripts.generate_investor_deck",
+        "documentation": {}
+    },
+    {
+        "label": "check_no_dead_stubs",
+        "kind": 2,
+        "importPath": "scripts.verify_anti_flop",
+        "description": "scripts.verify_anti_flop",
+        "peekOfCode": "def check_no_dead_stubs():\n    \"\"\"Scan backend and agent source files for dead stubs or unhandled placeholders.\"\"\"\n    errors = []\n    stub_patterns = [\n        re.compile(r\"throw new Error\\([\\\"']Not implemented[\\\"']\\)\"),\n        re.compile(r\"raise NotImplementedError\"),\n    ]\n    target_dirs = [\n        os.path.join(REPO_ROOT, \"ag-extension-dashboard\", \"src\", \"backend\", \"src\"),\n        os.path.join(REPO_ROOT, \"ag-extension-dashboard\", \"src\", \"agents\", \"tools\"),",
+        "detail": "scripts.verify_anti_flop",
+        "documentation": {}
+    },
+    {
+        "label": "check_empty_catch_blocks",
+        "kind": 2,
+        "importPath": "scripts.verify_anti_flop",
+        "description": "scripts.verify_anti_flop",
+        "peekOfCode": "def check_empty_catch_blocks():\n    \"\"\"Verify backend code does not contain silent empty catch blocks.\"\"\"\n    errors = []\n    empty_catch_pattern = re.compile(r\"catch\\s*\\([^)]*\\)\\s*\\{\\s*\\}\")\n    backend_src = os.path.join(REPO_ROOT, \"ag-extension-dashboard\", \"src\", \"backend\", \"src\")\n    if not os.path.exists(backend_src):\n        return errors\n    for root, _, files in os.walk(backend_src):\n        if \"__tests__\" in root:\n            continue",
+        "detail": "scripts.verify_anti_flop",
+        "documentation": {}
+    },
+    {
+        "label": "check_shared_contract_sync",
+        "kind": 2,
+        "importPath": "scripts.verify_anti_flop",
+        "description": "scripts.verify_anti_flop",
+        "peekOfCode": "def check_shared_contract_sync():\n    \"\"\"Run shared contract check script.\"\"\"\n    errors = []\n    sync_script = os.path.join(REPO_ROOT, \"ag-extension-dashboard\", \"src\", \"backend\", \"scripts\", \"sync-shared-api.js\")\n    if os.path.exists(sync_script):\n        res = subprocess.run(\n            [\"node\", sync_script, \"--check\"],\n            cwd=os.path.join(REPO_ROOT, \"ag-extension-dashboard\", \"src\", \"backend\"),\n            capture_output=True,\n            text=True",
+        "detail": "scripts.verify_anti_flop",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "scripts.verify_anti_flop",
+        "description": "scripts.verify_anti_flop",
+        "peekOfCode": "def main():\n    print(\"🌾 Running Agri-Extension Anti-Flop Verification Suite...\")\n    errors = []\n    print(\"  [1/3] Checking for dead stubs and NotImplementedError placeholders...\")\n    stub_errs = check_no_dead_stubs()\n    if stub_errs:\n        errors.extend(stub_errs)\n    else:\n        print(\"        PASS: Zero dead stubs found.\")\n    print(\"  [2/3] Checking for silent empty catch blocks...\")",
+        "detail": "scripts.verify_anti_flop",
+        "documentation": {}
+    },
+    {
+        "label": "REPO_ROOT",
+        "kind": 5,
+        "importPath": "scripts.verify_anti_flop",
+        "description": "scripts.verify_anti_flop",
+        "peekOfCode": "REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), \"..\"))\ndef check_no_dead_stubs():\n    \"\"\"Scan backend and agent source files for dead stubs or unhandled placeholders.\"\"\"\n    errors = []\n    stub_patterns = [\n        re.compile(r\"throw new Error\\([\\\"']Not implemented[\\\"']\\)\"),\n        re.compile(r\"raise NotImplementedError\"),\n    ]\n    target_dirs = [\n        os.path.join(REPO_ROOT, \"ag-extension-dashboard\", \"src\", \"backend\", \"src\"),",
+        "detail": "scripts.verify_anti_flop",
+        "documentation": {}
+    },
+    {
+        "label": "check_docs_link_grounding",
+        "kind": 2,
+        "importPath": "scripts.verify_anti_hallucination",
+        "description": "scripts.verify_anti_hallucination",
+        "peekOfCode": "def check_docs_link_grounding():\n    \"\"\"Verify that file:/// links in markdown protocols point to real existing files.\"\"\"\n    errors = []\n    file_link_pattern = re.compile(r\"\\[([^\\]]+)\\]\\(file://(/[^#\\)]+)(?:#[^\\)]*)?\\)\")\n    target_docs = [\n        os.path.join(REPO_ROOT, \"anti_flop.md\"),\n        os.path.join(REPO_ROOT, \"anti_hullicination.md\"),\n        os.path.join(REPO_ROOT, \"CLAUDE.md\"),\n        os.path.join(REPO_ROOT, \"KARPATHY_RULES.md\"),\n    ]",
+        "detail": "scripts.verify_anti_hallucination",
+        "documentation": {}
+    },
+    {
+        "label": "check_prisma_schema_grounding",
+        "kind": 2,
+        "importPath": "scripts.verify_anti_hallucination",
+        "description": "scripts.verify_anti_hallucination",
+        "peekOfCode": "def check_prisma_schema_grounding():\n    \"\"\"Verify critical models and tables exist in prisma schema.\"\"\"\n    errors = []\n    schema_path = os.path.join(REPO_ROOT, \"ag-extension-dashboard\", \"src\", \"backend\", \"prisma\", \"schema.prisma\")\n    if not os.path.exists(schema_path):\n        return [f\"Missing canonical Prisma schema at {schema_path}\"]\n    with open(schema_path, \"r\", encoding=\"utf-8\") as f:\n        schema_content = f.read()\n    expected_models = [\"User\", \"LoginHistory\"]\n    for model in expected_models:",
+        "detail": "scripts.verify_anti_hallucination",
+        "documentation": {}
+    },
+    {
+        "label": "check_agent_imports_grounding",
+        "kind": 2,
+        "importPath": "scripts.verify_anti_hallucination",
+        "description": "scripts.verify_anti_hallucination",
+        "peekOfCode": "def check_agent_imports_grounding():\n    \"\"\"Verify Python agent tools do not import uninstalled/hallucinated third-party libraries.\"\"\"\n    errors = []\n    req_file = os.path.join(REPO_ROOT, \"ag-extension-dashboard\", \"src\", \"agents\", \"requirements.txt\")\n    if not os.path.exists(req_file):\n        return [f\"Missing requirements.txt at {req_file}\"]\n    declared_deps = set()\n    with open(req_file, \"r\", encoding=\"utf-8\") as f:\n        for line in f:\n            line = line.strip()",
+        "detail": "scripts.verify_anti_hallucination",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "scripts.verify_anti_hallucination",
+        "description": "scripts.verify_anti_hallucination",
+        "peekOfCode": "def main():\n    print(\"🔍 Running Agri-Extension Anti-Hallucination Verification Suite...\")\n    errors = []\n    print(\"  [1/3] Validating documentation link grounding...\")\n    link_errs = check_docs_link_grounding()\n    if link_errs:\n        errors.extend(link_errs)\n    else:\n        print(\"        PASS: All referenced file links exist on disk.\")\n    print(\"  [2/3] Checking Prisma canonical schema grounding...\")",
+        "detail": "scripts.verify_anti_hallucination",
+        "documentation": {}
+    },
+    {
+        "label": "REPO_ROOT",
+        "kind": 5,
+        "importPath": "scripts.verify_anti_hallucination",
+        "description": "scripts.verify_anti_hallucination",
+        "peekOfCode": "REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), \"..\"))\ndef check_docs_link_grounding():\n    \"\"\"Verify that file:/// links in markdown protocols point to real existing files.\"\"\"\n    errors = []\n    file_link_pattern = re.compile(r\"\\[([^\\]]+)\\]\\(file://(/[^#\\)]+)(?:#[^\\)]*)?\\)\")\n    target_docs = [\n        os.path.join(REPO_ROOT, \"anti_flop.md\"),\n        os.path.join(REPO_ROOT, \"anti_hullicination.md\"),\n        os.path.join(REPO_ROOT, \"CLAUDE.md\"),\n        os.path.join(REPO_ROOT, \"KARPATHY_RULES.md\"),",
+        "detail": "scripts.verify_anti_hallucination",
         "documentation": {}
     }
 ]
