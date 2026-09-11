@@ -29,6 +29,9 @@ This **Cybersecurity Playbook** documents the platform's threat assessment, oper
   - `MAX_AUDIO_BASE64_LENGTH` ($16 \text{ MB} \approx 12 \text{ MB binary}$) ceiling enforced in [`routes/pillars/voice.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/pillars/voice.ts) and [`routes/ai/speech.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/ai/speech.ts).
   - Payloads exceeding bounds return HTTP `413 (Payload Too Large)` immediately before allocating buffers.
   - Zero-byte, empty, or unparseable base64 inputs are rejected with HTTP `400 (Bad Request)` before hitting transcription services, preventing fallthrough to offline test stubs.
+  - Synthesis input text is capped at `4,000` characters (`routes/pillars/voice.ts`) matching OpenAI TTS engine limits to prevent buffer bloat and API rejections.
+  - Telephony IVR XML generation in [`ivrBroadcastService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/ivrBroadcastService.ts) automatically escapes XML control characters (`<>&"'`), neutralizing TwiML injection attacks (e.g. injected `<Dial>` tags to premium numbers) and syntax crashes caused by ampersands in agronomic alert titles.
+  - IVR voice broadcast batches are bounded to 500 recipients with E.164 phone validation, preventing thread starvation and HTTP gateway timeouts.
   - Per-user and per-IP adaptive rate limiting (`checkUsageLimit('speech')`) prevents continuous looping.
 
 ### 2. Indirect Prompt Injection via Tool Outputs & External Sources

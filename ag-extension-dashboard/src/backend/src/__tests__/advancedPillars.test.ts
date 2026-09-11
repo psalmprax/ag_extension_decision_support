@@ -42,12 +42,17 @@ describe('Strategic Architecture Pillars (Voice, Economics, Carbon, Hazards)', (
 
     it('generates valid TwiML / Africa’s Talking XML prompt for IVR broadcasts', () => {
       const xml = generateIvrXml({
-        alertTitle: 'Tahadhari ya Viwavi wa Jeshi',
-        advisorySwahili: 'Kagua mahindi yako mara moja.',
+        alertTitle: 'Tahadhari ya Viwavi wa Jeshi & Wadudu <Hatari>',
+        advisorySwahili: 'Kagua mahindi yako mara moja "haraka".',
       });
       expect(xml).toContain('<Response>');
       expect(xml).toContain('<Say voice="alice" language="sw-KE">');
       expect(xml).toContain('<Gather numDigits="1"');
+      // Neutralizes XML injection
+      expect(xml).toContain('&amp;');
+      expect(xml).toContain('&lt;Hatari&gt;');
+      expect(xml).toContain('&quot;haraka&quot;');
+      expect(xml).not.toContain('<Hatari>');
     });
 
     it('processes DTMF response digits into structured workflows', () => {

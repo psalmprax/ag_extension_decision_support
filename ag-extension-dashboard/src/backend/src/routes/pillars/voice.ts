@@ -63,11 +63,11 @@ router.post('/voice/transcribe-local', checkUsageLimit('speech'), validate({ bod
     }
 });
 
-router.post('/voice/synthesize', checkUsageLimit('speech'), validate({ body: z.object({ text: z.string().min(1), language: z.enum(['sw','en']).optional() }) }), async (req: AuthRequest, res: Response) => {
+router.post('/voice/synthesize', checkUsageLimit('speech'), validate({ body: z.object({ text: z.string().min(1).max(4000), language: z.enum(['sw','en']).optional() }) }), async (req: AuthRequest, res: Response) => {
     try { return res.json({ success: true, data: await synthesizeVoiceAdvisory(req.body as never) }); } catch (e) { logger.error('Pillar synthesize failed:', e); return safeError(res, 500, (e as Error).message); }
 });
 
-router.post('/voice/ivr-xml', checkUsageLimit('ai_chat'), validate({ body: z.object({ alertTitle: z.string().min(1), advisorySwahili: z.string().min(1), advisoryEnglish: z.string().optional(), repeatAllowed: z.boolean().optional() }) }), async (req: AuthRequest, res: Response) => {
+router.post('/voice/ivr-xml', checkUsageLimit('ai_chat'), validate({ body: z.object({ alertTitle: z.string().min(1).max(200), advisorySwahili: z.string().min(1).max(4000), advisoryEnglish: z.string().max(4000).optional(), repeatAllowed: z.boolean().optional() }) }), async (req: AuthRequest, res: Response) => {
     try {
         const xml = generateIvrXml(req.body as never);
         res.setHeader('Content-Type', 'application/xml');
@@ -75,11 +75,11 @@ router.post('/voice/ivr-xml', checkUsageLimit('ai_chat'), validate({ body: z.obj
     } catch (e) { return safeError(res, 500, (e as Error).message); }
 });
 
-router.post('/voice/ivr-dtmf', checkUsageLimit('ai_chat'), validate({ body: z.object({ digit: z.string().min(1).max(2) }) }), async (req: AuthRequest, res: Response) => {
+router.post('/voice/ivr-dtmf', checkUsageLimit('ai_chat'), validate({ body: z.object({ digit: z.string().min(1).max(2).regex(/^[0-9*#]+$/) }) }), async (req: AuthRequest, res: Response) => {
     try { return res.json({ success: true, data: processDtmfResponse(req.body.digit) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
 });
 
-router.post('/voice/broadcast', checkUsageLimit('ai_chat'), validate({ body: z.object({ farmerPhones: z.array(z.string()).min(1), alertTitle: z.string().min(1), advisorySwahili: z.string().min(1), advisoryEnglish: z.string().min(1) }) }), async (req: AuthRequest, res: Response) => {
+router.post('/voice/broadcast', checkUsageLimit('ai_chat'), validate({ body: z.object({ farmerPhones: z.array(z.string().min(5).max(25)).min(1).max(500), alertTitle: z.string().min(1).max(200), advisorySwahili: z.string().min(1).max(4000), advisoryEnglish: z.string().min(1).max(4000) }) }), async (req: AuthRequest, res: Response) => {
     try { return res.json({ success: true, data: await dispatchVoiceBroadcast(req.body as never) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
 });
 
