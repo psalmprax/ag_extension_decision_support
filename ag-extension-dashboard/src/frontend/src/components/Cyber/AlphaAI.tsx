@@ -110,9 +110,14 @@ async function fetchAiSpeechTranscription(base64: string): Promise<string | null
 
 /** Transcribe a recorded voice blob via Whisper endpoints with resilient 3-tier fallback; null when unusable. */
 async function transcribeVoiceBlob(blob: Blob, mimeType: string): Promise<string | null> {
+  if (!blob || blob.size === 0) {
+    toast.error('No audio recorded. Please try speaking again.');
+    return null;
+  }
   const base64 = await new Promise<string | null>(resolve => {
     const reader = new FileReader();
     reader.onload = () => resolve((reader.result as string).split(',')[1] || null);
+    reader.onerror = () => resolve(null);
     reader.readAsDataURL(blob);
   });
   if (!base64) {

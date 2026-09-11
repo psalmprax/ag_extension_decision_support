@@ -25,6 +25,9 @@ router.post('/voice/transcribe', checkUsageLimit('speech'), validate({ body: z.o
             return res.status(413).json({ success: false, error: 'Audio payload exceeds maximum size limit (12MB).' });
         }
         const audioBuffer = audio ? Buffer.from(audio.includes('base64,') ? audio.split('base64,')[1] : audio, 'base64') : undefined;
+        if (audio && (!audioBuffer || audioBuffer.length === 0)) {
+            return res.status(400).json({ success: false, error: 'Invalid audio payload: empty or unparseable base64' });
+        }
         const result = await transcribeVoiceNote({ audioBuffer, audioUrl, mimeType, languageHint });
         return res.json({ success: true, data: result });
     } catch (e) { logger.error('Pillar transcribe failed:', e); return safeError(res, 500, (e as Error).message); }
@@ -32,8 +35,17 @@ router.post('/voice/transcribe', checkUsageLimit('speech'), validate({ body: z.o
 
 router.post('/voice/transcribe-local', checkUsageLimit('speech'), validate({ body: z.object({ audio: z.string().optional(), audioUrl: z.string().optional(), mimeType: z.string().optional(), languageHint: z.string().optional() }) }), async (req: AuthRequest, res: Response) => {
     try {
-        const { audio, languageHint } = req.body as { audio?: string; audioUrl?: string; mimeType?: string; languageHint?: string };
+        const { audio, audioUrl, mimeType, languageHint } = req.body as { audio?: string; audioUrl?: string; mimeType?: string; languageHint?: string };
+        if (!audio && !audioUrl) {
+            return res.status(400).json({ success: false, error: 'Audio data or audioUrl is required' });
+        }
+        if (audio && audio.length > MAX_AUDIO_BASE64_LENGTH) {
+            return res.status(413).json({ success: false, error: 'Audio payload exceeds maximum size limit (12MB).' });
+        }
         const audioBuffer = audio ? Buffer.from(audio.includes('base64,') ? audio.split('base64,')[1] : audio, 'base64') : undefined;
+        if (audio && (!audioBuffer || audioBuffer.length === 0)) {
+            return res.status(400).json({ success: false, error: 'Invalid audio payload: empty or unparseable base64' });
+        }
         // Use local Whisper transcription service (free, offline-capable)
         const { whisperTranscriptionService } = await import('@/services/whisperTranscriptionService');
         if (!audioBuffer) {

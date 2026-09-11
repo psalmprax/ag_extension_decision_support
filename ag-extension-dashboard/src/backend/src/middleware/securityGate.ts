@@ -50,18 +50,19 @@ function isMediaValue(key: string, val: unknown): boolean {
 }
 
 /** Redact media/binary payloads before perimeter inspection to prevent false-positive base64 payload blocks. */
-function redactMediaPayloads(payload: unknown, key = ''): unknown {
+function redactMediaPayloads(payload: unknown, key = '', depth = 0): unknown {
+  if (depth > 20) return '[NESTING_LIMIT_EXCEEDED]';
   if (payload === null || payload === undefined) return payload;
   if (typeof payload === 'string') {
     return isMediaValue(key, payload) ? '[SANITIZED_MEDIA_PAYLOAD]' : payload;
   }
   if (Array.isArray(payload)) {
-    return payload.map(item => redactMediaPayloads(item, key));
+    return payload.map(item => redactMediaPayloads(item, key, depth + 1));
   }
   if (typeof payload === 'object') {
     const cleaned: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(payload as Record<string, unknown>)) {
-      cleaned[k] = redactMediaPayloads(v, k);
+      cleaned[k] = redactMediaPayloads(v, k, depth + 1);
     }
     return cleaned;
   }
@@ -69,20 +70,30 @@ function redactMediaPayloads(payload: unknown, key = ''): unknown {
 }
 
 function checkQuerySecurity(req: Request): { blocked: boolean; threats: string[] } {
-  const queryStr = JSON.stringify(req.query || {});
-  const paramsStr = JSON.stringify(req.params || {});
-  const combined = queryStr + paramsStr;
-  if (combined.length <= 2) return { blocked: false, threats: [] };
-  const check = aegisShield.sanitizeInput(combined);
-  return { blocked: !check.clean, threats: check.threats };
+  try {
+    const queryStr = JSON.stringify(req.query || {});
+    const paramsStr = JSON.stringify(req.params || {});
+    const combined = queryStr + paramsStr;
+    if (combined.length <= 2) return { blocked: false, threats: [] };
+    const check = aegisShield.sanitizeInput(combined);
+    return { blocked: !check.clean, threats: check.threats };
+  } catch (err) {
+    logger.warn('Security gate error checking query parameters:', err);
+    return { blocked: true, threats: ['Malformed query parameters'] };
+  }
 }
 
 function checkBodySecurity(req: Request): { blocked: boolean; threats: string[] } {
-  const sanitizedBody = redactMediaPayloads(req.body || {});
-  const bodyStr = JSON.stringify(sanitizedBody);
-  if (bodyStr.length <= 2) return { blocked: false, threats: [] };
-  const check = aegisShield.sanitizeInput(bodyStr);
-  return { blocked: !check.clean, threats: check.threats };
+  try {
+    const sanitizedBody = redactMediaPayloads(req.body || {});
+    const bodyStr = JSON.stringify(sanitizedBody);
+    if (bodyStr.length <= 2) return { blocked: false, threats: [] };
+    const check = aegisShield.sanitizeInput(bodyStr);
+    return { blocked: !check.clean, threats: check.threats };
+  } catch (err) {
+    logger.warn('Security gate error checking body parameters:', err);
+    return { blocked: true, threats: ['Malformed request body structure'] };
+  }
 }
 
 export function securityGate(req: Request, res: Response, next: NextFunction) {

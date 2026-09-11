@@ -24,10 +24,11 @@ This **Cybersecurity Playbook** documents the platform's threat assessment, oper
 ## 🛡️ Technical Mitigations & Controls Implemented
 
 ### 1. Compute & Media Denial of Service (DoS) Hardening
-- **Threat**: Attackers or runaway clients transmitting oversized base64 audio/video payloads that choke memory buffers or lock CPU threads during Whisper transcription.
+- **Threat**: Attackers or runaway clients transmitting oversized base64 audio/video payloads that choke memory buffers or lock CPU threads during Whisper transcription, or supplying zero-byte/malformed payloads that fall through to stub advice.
 - **Controls Implemented**:
   - `MAX_AUDIO_BASE64_LENGTH` ($16 \text{ MB} \approx 12 \text{ MB binary}$) ceiling enforced in [`routes/pillars/voice.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/pillars/voice.ts) and [`routes/ai/speech.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/ai/speech.ts).
   - Payloads exceeding bounds return HTTP `413 (Payload Too Large)` immediately before allocating buffers.
+  - Zero-byte, empty, or unparseable base64 inputs are rejected with HTTP `400 (Bad Request)` before hitting transcription services, preventing fallthrough to offline test stubs.
   - Per-user and per-IP adaptive rate limiting (`checkUsageLimit('speech')`) prevents continuous looping.
 
 ### 2. Indirect Prompt Injection via Tool Outputs & External Sources
@@ -35,8 +36,8 @@ This **Cybersecurity Playbook** documents the platform's threat assessment, oper
 - **Controls Implemented**:
   - **Tool Execution Sanitization**: In [`mcpAdapter.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/mcpAdapter.ts#L115-L125), all tool results are passed through `aegisShield.sanitizeToolResult()` before returning to LLMs.
   - **RAG Knowledge Sanitization**: In [`askPipeline.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/knowledge/askPipeline.ts#L43-L46), retrieved context chunks from vector search and web fallbacks are sanitized with `aegisShield.sanitizeToolResult()` prior to inclusion in the generation prompt.
-  - **Perimeter Gate Media Neutralization**: In [`securityGate.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/middleware/securityGate.ts), legitimate media payloads (`audio`, `audio_base64`, `imageData`, `photo`, `recording`, `voice_note`) are safely neutralized to `[SANITIZED_MEDIA_PAYLOAD]` for threat scanning. This recognizes quoted MIME codec parameters (`codecs="opus"`) and RFC 4648 URL-safe base64 strings (`-`, `_`), preventing false-positive 403 blocks while aggressively catching malicious text injections in headers, queries, and parameters.
-  - **Cross-Platform Audio Handling**: In [`AlphaAI.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx), dynamic codec negotiation probes `MediaRecorder.isTypeSupported` across WebM, MP4, OGG, and WAV to support iOS Safari and Android without client-side recording crashes.
+  - **Perimeter Gate Media Neutralization & Recursion Bounds**: In [`securityGate.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/middleware/securityGate.ts), legitimate media payloads (`audio`, `audio_base64`, `imageData`, `photo`, `recording`, `voice_note`) are safely neutralized to `[SANITIZED_MEDIA_PAYLOAD]` for threat scanning. This recognizes quoted MIME codec parameters (`codecs="opus"`) and RFC 4648 URL-safe base64 strings (`-`, `_`), while recursion depth is capped at 20 levels with `try/catch` wrappers to prevent cyclic structure DoS crashes.
+  - **Cross-Platform Audio Handling**: In [`AlphaAI.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx) and [`voiceAudioService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/voiceAudioService.ts), dynamic codec negotiation probes `MediaRecorder.isTypeSupported` across WebM, MP4, OGG, and WAV with proper container file extension mappings (`.webm`, `.m4a`) to support iOS Safari and Android without client-side recording crashes or OpenAI API rejects.
   - **Protected System Directives**: System prompts are prefixed with immutable security anchors (`buildProtectedSystemPrompt`) that instruct the model never to reveal secrets or alter roles.
 
 ### 3. Distributed State Synchronization & Token Invalidation
@@ -46,10 +47,11 @@ This **Cybersecurity Playbook** documents the platform's threat assessment, oper
   - Authorize middleware [`authorize.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/middleware/authorize.ts#L38-L46) performs database/cache-backed session validation (`isSessionValid(token)`) on sensitive routes.
   - When Redis is unreachable, fallback warnings are recorded in logs (`logger.warn`) to alert operators to reconcile cluster cache configuration.
 
-### 4. Webhook Integrity & Replay Mitigation
-- **Threat**: Forging incoming WhatsApp webhook reports or replaying previously captured requests.
+### 4. Webhook Integrity, Replay Mitigation & SSRF Protection
+- **Threat**: Forging incoming WhatsApp webhook reports, replaying captured requests, or abusing media URLs to probe internal network infrastructure (Server-Side Request Forgery).
 - **Controls Implemented**:
   - [`webhookSignature.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/middleware/webhookSignature.ts) computes HMAC-SHA256 (Meta) and HMAC-SHA1 (Twilio) using `crypto.timingSafeEqual` against the raw unparsed request buffer.
+  - In [`routes/whatsapp.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/whatsapp.ts), `isSafeWebhookMediaUrl` rejects cloud metadata (`169.254.169.254`), loopback (`127.0.0.1`), and RFC 1918 private IP ranges (`10.*`, `172.16-31.*`, `192.168.*`), accompanied by a 12MB download size ceiling.
   - In production (`NODE_ENV === 'production'`), requests missing cryptographic signature headers or missing provider secrets are immediately rejected with HTTP 503 / 403.
 
 ---

@@ -64,6 +64,53 @@ interface InboundMessagePayload {
     mediaContentType?: string;
 }
 
+const SSRF_BLOCKED_HOSTS = new Set([
+    '169.254.169.254',
+    'metadata.google.internal',
+    'metadata',
+    'localhost',
+    '127.0.0.1',
+    '::1',
+    '0.0.0.0',
+    '[::]',
+]);
+
+const SSRF_BLOCKED_PREFIXES = [
+    '10.',
+    '172.16.',
+    '172.17.',
+    '172.18.',
+    '172.19.',
+    '172.20.',
+    '172.21.',
+    '172.22.',
+    '172.23.',
+    '172.24.',
+    '172.25.',
+    '172.26.',
+    '172.27.',
+    '172.28.',
+    '172.29.',
+    '172.30.',
+    '172.31.',
+    '192.168.',
+];
+
+function isSafeWebhookMediaUrl(rawUrl: string): boolean {
+    try {
+        const parsed = new URL(rawUrl);
+        if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+        const lowerHost = parsed.hostname.toLowerCase();
+        if (SSRF_BLOCKED_HOSTS.has(lowerHost)) return false;
+        for (const prefix of SSRF_BLOCKED_PREFIXES) {
+            if (lowerHost.startsWith(prefix)) return false;
+        }
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 async function resolveAudioPayload(payload: InboundMessagePayload): Promise<{ buffer?: Buffer; url?: string; mimeType: string } | null> {
     const url = payload.MediaUrl0 || payload.audioUrl;
     const mimeType = payload.MediaContentType0 || payload.mimeType || payload.mediaContentType || 'audio/ogg';
@@ -73,16 +120,21 @@ async function resolveAudioPayload(payload: InboundMessagePayload): Promise<{ bu
     }
 
     if (url) {
-        if (url.startsWith('http://') || url.startsWith('https://')) {
-            try {
-                const resp = await axios.get(url, { responseType: 'arraybuffer', timeout: 8000 });
-                return { buffer: Buffer.from(resp.data), url, mimeType };
-            } catch (err) {
-                logger.warn('Could not download audio from remote URL for transcription:', err);
-                return { url, mimeType };
-            }
+        if (!isSafeWebhookMediaUrl(url)) {
+            logger.warn(`Rejected potential SSRF or unsupported audio URL in WhatsApp inbound: ${url}`);
+            return null;
         }
-        return { url, mimeType };
+        try {
+            const resp = await axios.get(url, {
+                responseType: 'arraybuffer',
+                timeout: 8000,
+                maxContentLength: 12 * 1024 * 1024,
+            });
+            return { buffer: Buffer.from(resp.data), url, mimeType };
+        } catch (err) {
+            logger.warn('Could not download audio from remote URL for transcription:', err);
+            return { url, mimeType };
+        }
     }
 
     return null;
