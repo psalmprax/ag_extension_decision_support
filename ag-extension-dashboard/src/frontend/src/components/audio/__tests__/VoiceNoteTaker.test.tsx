@@ -4,11 +4,22 @@ import React from 'react';
 import { VoiceNoteTaker } from '../VoiceNoteTaker';
 import { useAppStore } from '@/store/useAppStore';
 
-let mockToggleRecording = vi.fn();
-let mockUseFieldVoiceRecorder: any;
+interface RecorderOptions {
+  onTranscriptChunk: (chunk: string) => void;
+  language?: string;
+}
+
+const mockToggleRecording = vi.fn();
+let mockUseFieldVoiceRecorder: (opts: RecorderOptions) => {
+  isRecording: boolean;
+  isTranscribing: boolean;
+  recordingDuration: number;
+  interimText: string;
+  toggleRecording: () => void;
+};
 
 vi.mock('@/hooks/useFieldVoiceRecorder', () => ({
-  useFieldVoiceRecorder: (opts: any) => mockUseFieldVoiceRecorder(opts),
+  useFieldVoiceRecorder: (opts: RecorderOptions) => mockUseFieldVoiceRecorder(opts),
 }));
 
 describe('VoiceNoteTaker', () => {
@@ -17,8 +28,8 @@ describe('VoiceNoteTaker', () => {
       preferredAudioLanguage: 'sw',
     });
 
-    mockToggleRecording = vi.fn();
-    mockUseFieldVoiceRecorder = vi.fn().mockImplementation((opts: any) => ({
+    mockToggleRecording.mockClear();
+    mockUseFieldVoiceRecorder = vi.fn().mockImplementation((opts: RecorderOptions) => ({
       isRecording: false,
       isTranscribing: false,
       recordingDuration: 0,

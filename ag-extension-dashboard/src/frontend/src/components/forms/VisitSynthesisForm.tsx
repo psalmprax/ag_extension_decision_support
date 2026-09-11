@@ -463,8 +463,9 @@ export const VisitSynthesisForm: React.FC = () => {
       } else {
         toast.error(t('visit_synthesis_error') || 'Synthesis failed');
       }
-    } catch (error: any) {
-      if (error.response?.data?.error?.includes('security filter')) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      if (err.response?.data?.error?.includes('security filter')) {
         toast.error('Request blocked by security filter — your dictation included a phrase flagged as a potential prompt injection. Please rephrase and try again.');
       } else {
         toast.error(t('visit_synthesis_error') || 'Synthesis failed');

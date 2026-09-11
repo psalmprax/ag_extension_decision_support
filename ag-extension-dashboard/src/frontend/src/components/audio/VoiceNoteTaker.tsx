@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Volume2, RotateCcw, Check, Sparkles, Languages } from 'lucide-react';
+import { Mic, Square, RotateCcw, Check, Sparkles, Languages } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useFieldVoiceRecorder } from '@/hooks/useFieldVoiceRecorder';

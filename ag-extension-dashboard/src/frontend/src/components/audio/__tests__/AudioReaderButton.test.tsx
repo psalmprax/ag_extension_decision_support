@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
-import { AudioReaderButton, cleanTextForSpeech, stopAllAudioPlayback } from '../AudioReaderButton';
+import { AudioReaderButton } from '../AudioReaderButton';
+import { cleanTextForSpeech, stopAllAudioPlayback } from '../audioHelpers';
 import { useAppStore } from '@/store/useAppStore';
 import * as aiService from '@/api/aiService';
 
 describe('AudioReaderButton', () => {
-  let mockSpeak: any;
-  let mockCancel: any;
+  let mockSpeak: (utterance: unknown) => void;
+  let mockCancel: () => void;
 
   beforeEach(() => {
     useAppStore.setState({
@@ -36,14 +37,14 @@ describe('AudioReaderButton', () => {
       text: string;
       lang = '';
       rate = 1;
-      voice: any = null;
-      onend: any = null;
-      onerror: any = null;
+      voice: unknown = null;
+      onend: ((ev: unknown) => void) | null = null;
+      onerror: ((ev: unknown) => void) | null = null;
       constructor(text: string) {
         this.text = text;
       }
     }
-    (window as any).SpeechSynthesisUtterance = MockUtterance;
+    (window as unknown as { SpeechSynthesisUtterance: unknown }).SpeechSynthesisUtterance = MockUtterance;
   });
 
   afterEach(() => {
@@ -127,7 +128,7 @@ describe('AudioReaderButton', () => {
       addEventListener = vi.fn();
       removeEventListener = vi.fn();
     }
-    (window as any).Audio = MockAudio;
+    (window as unknown as { Audio: unknown }).Audio = MockAudio;
 
     render(
       <AudioReaderButton

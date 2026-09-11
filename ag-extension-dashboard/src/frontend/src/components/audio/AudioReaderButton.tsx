@@ -3,6 +3,7 @@ import { Volume2, VolumeX, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAppStore } from '@/store/useAppStore';
 import { synthesizeSpeech } from '@/api/aiService';
+import { cleanTextForSpeech, stopAllAudioPlayback, setActiveAudioPlayback } from './audioHelpers';
 
 export interface AudioReaderButtonProps {
   /** The text content to read aloud */
@@ -68,57 +69,6 @@ const LANGUAGE_NAMES: Record<string, string> = {
   ar: 'العربية',
 };
 
-/** Track currently active utterance/audio globally so two audio readers never speak at once */
-let activeAudioElement: HTMLAudioElement | null = null;
-let activeStopCallback: (() => void) | null = null;
-
-export function stopAllAudioPlayback(): void {
-  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-    try {
-      window.speechSynthesis.cancel();
-    } catch {
-      /* ignore */
-    }
-  }
-  if (activeAudioElement) {
-    try {
-      activeAudioElement.pause();
-      activeAudioElement.currentTime = 0;
-    } catch {
-      /* ignore */
-    }
-    activeAudioElement = null;
-  }
-  if (activeStopCallback) {
-    activeStopCallback();
-    activeStopCallback = null;
-  }
-}
-
-/**
- * Strips markdown formatting, links, and code markup so text sounds natural when read aloud.
- */
-export function cleanTextForSpeech(raw: string): string {
-  if (!raw) return '';
-  return raw
-    // Strip code blocks and inline code
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/`([^`]+)`/g, '$1')
-    // Convert markdown links [text](url) to just text
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    // Remove bold/italics
-    .replace(/[*_~]{1,3}(.*?)[*_~]{1,3}/g, '$1')
-    // Strip markdown headings #, ##, etc.
-    .replace(/^#+\s+/gm, '')
-    // Strip blockquotes
-    .replace(/^>\s+/gm, '')
-    // Strip bullet points
-    .replace(/^[-*+]\s+/gm, '')
-    // Replace multiple newlines or spaces with single space
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 /**
  * AudioReaderButton — Accessible Text-to-Speech button allowing low-literacy farmers
  * and extension workers to listen to any reading information in their local language.
@@ -181,7 +131,7 @@ export const AudioReaderButton: React.FC<AudioReaderButtonProps> = ({
     // Stop any other currently playing reader
     stopAllAudioPlayback();
 
-    activeStopCallback = handleStop;
+    setActiveAudioPlayback(null, handleStop);
     setIsPlaying(true);
     onPlayStart?.();
 
@@ -202,7 +152,7 @@ export const AudioReaderButton: React.FC<AudioReaderButtonProps> = ({
 
         utterance.onend = () => {
           setIsPlaying(false);
-          activeStopCallback = null;
+          setActiveAudioPlayback(null, null);
           onPlayEnd?.();
         };
 
@@ -241,21 +191,19 @@ export const AudioReaderButton: React.FC<AudioReaderButtonProps> = ({
       const audioMime = res?.data?.format === 'ogg' ? 'audio/ogg' : 'audio/mp3';
       const audio = new Audio(`data:${audioMime};base64,${audioPayload}`);
       audioElementRef.current = audio;
-      activeAudioElement = audio;
+      setActiveAudioPlayback(audio, handleStop);
 
       audio.onended = () => {
         setIsPlaying(false);
         setIsLoading(false);
-        activeAudioElement = null;
-        activeStopCallback = null;
+        setActiveAudioPlayback(null, null);
         onPlayEnd?.();
       };
 
       audio.onerror = () => {
         setIsPlaying(false);
         setIsLoading(false);
-        activeAudioElement = null;
-        activeStopCallback = null;
+        setActiveAudioPlayback(null, null);
         toast.error('Could not play audio readout.');
         onPlayEnd?.();
       };
@@ -266,7 +214,7 @@ export const AudioReaderButton: React.FC<AudioReaderButtonProps> = ({
       console.error('Audio synthesis playback error:', err);
       setIsPlaying(false);
       setIsLoading(false);
-      activeStopCallback = null;
+      setActiveAudioPlayback(null, null);
       toast.error(`Audio narration unavailable in ${langName}`);
       onPlayEnd?.();
     }

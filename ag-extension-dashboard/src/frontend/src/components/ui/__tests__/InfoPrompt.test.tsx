@@ -1,19 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
-import { InfoPrompt, InfoPromptIcon, InlinePrompt, resolveSubscriptionState } from '../InfoPrompt';
+import { InfoPrompt, InfoPromptIcon, InlinePrompt } from '../InfoPrompt';
+import { resolveSubscriptionState } from '../subscriptionPromptState';
 import { useAppStore } from '@/store/useAppStore';
 
 // Mock framer-motion for smooth test execution
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, className, id, role, onClick }: any) => (
+    div: ({ children, className, id, role, onClick }: React.HTMLAttributes<HTMLDivElement>) => (
       <div className={className} id={id} role={role} onClick={onClick}>
         {children}
       </div>
     ),
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
 describe('InfoPrompt Components', () => {

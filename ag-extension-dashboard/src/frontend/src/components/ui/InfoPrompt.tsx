@@ -1,58 +1,19 @@
 import React, { useState, useRef, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Info, Lightbulb, Compass, HelpCircle, X, Zap, Crown, ArrowRight, Check } from 'lucide-react';
-import { useAppStore, User } from '@/store/useAppStore';
+import { useAppStore } from '@/store/useAppStore';
 import { AudioReaderButton } from '@/components/audio/AudioReaderButton';
+import {
+  PromptVariant,
+  PromptPlacement,
+  PromptTrigger,
+  SubscriptionTier,
+  SubscriptionState,
+  resolveSubscriptionState,
+  checkTierMet,
+} from './subscriptionPromptState';
 
-export type PromptVariant = 'info' | 'tip' | 'guidance' | 'neutral';
-export type PromptPlacement = 'top' | 'bottom' | 'left' | 'right';
-export type PromptTrigger = 'hover' | 'click' | 'both';
-export type SubscriptionTier = 'free' | 'pro' | 'enterprise';
-
-export interface SubscriptionState {
-  tier: SubscriptionTier;
-  planName: string;
-  isProOrHigher: boolean;
-  isEnterprise: boolean;
-  isActive: boolean;
-}
-
-/**
- * Resolves current user subscription tier and entitlement.
- */
-export function resolveSubscriptionState(
-  user: User | null,
-  subscription: { plan?: { name?: string; status?: string } } | null,
-  isDemo: boolean
-): SubscriptionState {
-  if (isDemo || user?.role === 'admin') {
-    return {
-      tier: 'enterprise',
-      planName: user?.role === 'admin' ? 'Admin Access' : 'Demo Mode (Pro)',
-      isProOrHigher: true,
-      isEnterprise: true,
-      isActive: true,
-    };
-  }
-
-  const planStr = (subscription?.plan?.name || user?.planName || '').toLowerCase();
-  const isFree = user?.isFree || planStr === 'free' || !planStr;
-
-  let tier: SubscriptionTier = 'free';
-  if (planStr.includes('enterprise') || planStr.includes('coop')) {
-    tier = 'enterprise';
-  } else if (planStr.includes('pro') || (!isFree && planStr)) {
-    tier = 'pro';
-  }
-
-  return {
-    tier,
-    planName: subscription?.plan?.name || user?.planName || (tier === 'free' ? 'Free Starter' : 'Pro Plan'),
-    isProOrHigher: tier === 'pro' || tier === 'enterprise',
-    isEnterprise: tier === 'enterprise',
-    isActive: subscription?.plan?.status === 'active' || subscription?.plan?.status === 'trialing' || !isFree,
-  };
-}
+export type { PromptVariant, PromptPlacement, PromptTrigger, SubscriptionTier, SubscriptionState };
 
 export interface InfoPromptProps {
   /** Text or rich content displayed inside the prompt */
@@ -143,6 +104,74 @@ const PLACEMENT_CLASSES: Record<PromptPlacement, string> = {
  * InfoPrompt — A calm, contextual prompt popover that takes subscription tier
  * into account and provides actionable guidance rather than aggressive warnings or toasts.
  */
+interface PromptHeaderProps {
+  title?: string;
+  requiredPlan?: SubscriptionTier;
+  isTierMet: boolean;
+  showSubscriptionBadge?: boolean;
+  planName: string;
+}
+
+const PromptHeader: React.FC<PromptHeaderProps> = ({
+  title,
+  requiredPlan,
+  isTierMet,
+  showSubscriptionBadge,
+  planName,
+}) => {
+  const showActiveBadge = showSubscriptionBadge || (requiredPlan && isTierMet);
+  return (
+    <div className="flex items-center justify-between gap-2 mb-1">
+      {title && (
+        <h5 className="font-semibold text-slate-900 dark:text-white text-xs tracking-tight">
+          {title}
+        </h5>
+      )}
+      {requiredPlan && !isTierMet && (
+        <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-3xs font-bold uppercase tracking-wider bg-amber-500/15 text-amber-500 border border-amber-500/30">
+          <Zap className="w-2.5 h-2.5" />
+          {requiredPlan.toUpperCase()} Tier
+        </span>
+      )}
+      {showActiveBadge && (
+        <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-3xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <Check className="w-2.5 h-2.5" />
+          {planName}
+        </span>
+      )}
+    </div>
+  );
+};
+
+interface PromptUpgradeFooterProps {
+  planName: string;
+  requiredPlan: SubscriptionTier;
+  upgradeLabel?: string;
+  onUpgradeClick: (e: React.MouseEvent) => void;
+}
+
+const PromptUpgradeFooter: React.FC<PromptUpgradeFooterProps> = ({
+  planName,
+  requiredPlan,
+  upgradeLabel,
+  onUpgradeClick,
+}) => (
+  <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between gap-2">
+    <span className="text-xxs text-slate-400">
+      Current: <strong className="text-slate-600 dark:text-slate-300">{planName}</strong>
+    </span>
+    <button
+      type="button"
+      onClick={onUpgradeClick}
+      className="inline-flex items-center gap-1 px-2.5 py-1 text-xxs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-all active:scale-95"
+    >
+      <Zap className="w-2.5 h-2.5" />
+      {upgradeLabel || `Upgrade to ${requiredPlan.toUpperCase()}`}
+      <ArrowRight className="w-2.5 h-2.5" />
+    </button>
+  </div>
+);
+
 export const InfoPrompt: React.FC<InfoPromptProps> = ({
   content,
   title,
@@ -174,13 +203,7 @@ export const InfoPrompt: React.FC<InfoPromptProps> = ({
   const setActiveTab = useAppStore(s => s.setActiveTab);
 
   const subState = resolveSubscriptionState(user, subscription, isDemo);
-
-  // Check if requiredPlan is satisfied
-  const isTierMet = !requiredPlan
-    ? true
-    : requiredPlan === 'pro'
-    ? subState.isProOrHigher
-    : subState.isEnterprise;
+  const isTierMet = checkTierMet(requiredPlan, subState);
 
   const resolvedVariant: PromptVariant = !isTierMet ? 'guidance' : variant;
   const config = VARIANT_CONFIG[resolvedVariant];
@@ -276,47 +299,24 @@ export const InfoPrompt: React.FC<InfoPromptProps> = ({
                 </div>
 
                 <div className="flex-1 min-w-0 pr-1">
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    {title && (
-                      <h5 className="font-semibold text-slate-900 dark:text-white text-xs tracking-tight">
-                        {title}
-                      </h5>
-                    )}
-
-                    {/* Subscription tier indicator */}
-                    {requiredPlan && !isTierMet && (
-                      <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-3xs font-bold uppercase tracking-wider bg-amber-500/15 text-amber-500 border border-amber-500/30">
-                        <Zap className="w-2.5 h-2.5" />
-                        {requiredPlan.toUpperCase()} Tier
-                      </span>
-                    )}
-
-                    {(showSubscriptionBadge || (requiredPlan && isTierMet)) && (
-                      <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-3xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        <Check className="w-2.5 h-2.5" />
-                        {subState.planName}
-                      </span>
-                    )}
-                  </div>
+                  <PromptHeader
+                    title={title}
+                    requiredPlan={requiredPlan}
+                    isTierMet={isTierMet}
+                    showSubscriptionBadge={showSubscriptionBadge}
+                    planName={subState.planName}
+                  />
 
                   <div className="text-slate-600 dark:text-slate-300 font-normal">{content}</div>
 
                   {/* Subscription upgrade prompt if plan not met */}
                   {!isTierMet && requiredPlan && (
-                    <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between gap-2">
-                      <span className="text-xxs text-slate-400">
-                        Current: <strong className="text-slate-600 dark:text-slate-300">{subState.planName}</strong>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleUpgradeClick}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xxs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-all active:scale-95"
-                      >
-                        <Zap className="w-2.5 h-2.5" />
-                        {upgradeLabel || `Upgrade to ${requiredPlan.toUpperCase()}`}
-                        <ArrowRight className="w-2.5 h-2.5" />
-                      </button>
-                    </div>
+                    <PromptUpgradeFooter
+                      planName={subState.planName}
+                      requiredPlan={requiredPlan}
+                      upgradeLabel={upgradeLabel}
+                      onUpgradeClick={handleUpgradeClick}
+                    />
                   )}
 
                   {showDismiss && isTierMet && (

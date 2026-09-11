@@ -29,7 +29,7 @@ import { RefractiveGlassCard } from '../canvas-ui/RefractiveGlassCard';
 import type { VisualsData } from './types';
 import { MULTILINGUAL_LANGUAGES } from './languages';
 import { synthesizeSpeech } from '@/api/aiService';
-import { cleanTextForSpeech, stopAllAudioPlayback } from '@/components/audio/AudioReaderButton';
+import { cleanTextForSpeech, stopAllAudioPlayback } from '@/components/audio/audioHelpers';
 
 interface ContextItem {
   content: string;
