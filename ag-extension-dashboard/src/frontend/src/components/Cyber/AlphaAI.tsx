@@ -39,17 +39,23 @@ import { NasaPowerBadge, RagMeshBadge } from './alpha/badges';
 import { analyzeLeafImage } from './alpha/utils/leafAnalysis';
 
 /** Begin voice capture and hand the recorded blob to onReady; null when unsupported. */
-async function startVoiceCapture(
-  onReady: (blob: Blob, mimeType: string) => Promise<void>
-): Promise<MediaRecorder | null> {
+function getSupportedMimeType(): string {
+  if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
+  const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus', 'audio/ogg', 'audio/wav'];
+  for (const c of candidates) {
+    if (MediaRecorder.isTypeSupported(c)) return c;
+  }
+  return '';
+}
+
+async function startVoiceCapture(onReady: (blob: Blob, mimeType: string) => Promise<void>): Promise<MediaRecorder | null> {
   if (!navigator.mediaDevices?.getUserMedia) {
     toast.error('Voice input unavailable in this browser');
     return null;
   }
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  const recorder = new MediaRecorder(stream, {
-    mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg',
-  });
+  const mimeType = getSupportedMimeType();
+  const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
   const chunks: BlobPart[] = [];
   recorder.ondataavailable = e => {
     if (e.data.size > 0) chunks.push(e.data);
@@ -57,7 +63,8 @@ async function startVoiceCapture(
 
   recorder.onstop = async () => {
     stream.getTracks().forEach(t => t.stop());
-    await onReady(new Blob(chunks, { type: recorder.mimeType }), recorder.mimeType);
+    const effectiveType = recorder.mimeType || mimeType || 'audio/webm';
+    await onReady(new Blob(chunks, { type: effectiveType }), effectiveType);
   };
   recorder.start();
   return recorder;

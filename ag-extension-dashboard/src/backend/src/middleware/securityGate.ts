@@ -6,21 +6,36 @@ const MEDIA_KEYS = new Set([
   'audio',
   'audiourl',
   'audiobase64',
+  'audio_base64',
   'image',
   'images',
   'imagedata',
+  'image_data',
+  'photo',
+  'photos',
+  'recording',
+  'recordings',
   'video',
   'videodata',
+  'video_data',
   'avatar',
   'file',
   'files',
+  'filedata',
+  'file_data',
   'document',
+  'documents',
   'media',
   'dataurl',
+  'data_url',
+  'attachment',
+  'attachments',
+  'voicenote',
+  'voice_note',
 ]);
 
-const DATA_URL_REGEX = /^data:(audio|image|video|application)\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+=_-]+)*;base64,[A-Za-z0-9+/=\r\n]+$/i;
-const BASE64_CHAR_REGEX = /^[A-Za-z0-9+/=\r\n]+$/;
+const DATA_URL_REGEX = /^data:(audio|image|video|application)\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+=" \-_]+)*;base64,[A-Za-z0-9+/=\-_ \r\n]+$/i;
+const BASE64_CHAR_REGEX = /^[A-Za-z0-9+/=\-_ \r\n]+$/;
 
 /** Check if a string property represents a legitimate binary media payload rather than injection text. */
 function isMediaValue(key: string, val: unknown): boolean {
