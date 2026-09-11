@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { Router, Request, Response } from 'express';
 import { query } from '@/services/databaseService';
 import type { AuthenticatedRequestUser, CountRow, WhatsAppMessageRow } from '@/types/rowTypes';
@@ -9,6 +10,8 @@ import { verifyInboundWebhookSignature } from '@/middleware/webhookSignature';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { whatsappService } from '@/services/whatsappService';
 import { onboardingEngine } from '@/services/onboardingEngine';
+import { symptomTriageService } from '@/services/symptomTriageService';
+import { transcribeVoiceNote, synthesizeVoiceAdvisory } from '@/services/voiceAudioService';
 import { checkMessageAccess, MessageAccessError, resolvePrincipalRegion } from '@/services/messageAccessService';
 
 const router = Router();
@@ -45,21 +48,174 @@ router.get('/inbound', (req: Request, res: Response) => {
  * POST /api/whatsapp/inbound — webhook endpoint for inbound messages from Meta Cloud API or Twilio WhatsApp.
  * Requests must carry a valid provider signature (see middleware/webhookSignature).
  */
+interface InboundMessagePayload {
+    from?: string;
+    body?: string;
+    messageId?: string;
+    timestamp?: string;
+    From?: string; // Twilio format fallback
+    Body?: string; // Twilio format fallback
+    ProfileName?: string;
+    MediaUrl0?: string;
+    MediaContentType0?: string;
+    audioUrl?: string;
+    audioBase64?: string;
+    mimeType?: string;
+    mediaContentType?: string;
+}
+
+async function resolveAudioPayload(payload: InboundMessagePayload): Promise<{ buffer?: Buffer; url?: string; mimeType: string } | null> {
+    const url = payload.MediaUrl0 || payload.audioUrl;
+    const mimeType = payload.MediaContentType0 || payload.mimeType || payload.mediaContentType || 'audio/ogg';
+
+    if (payload.audioBase64) {
+        return { buffer: Buffer.from(payload.audioBase64, 'base64'), mimeType };
+    }
+
+    if (url) {
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            try {
+                const resp = await axios.get(url, { responseType: 'arraybuffer', timeout: 8000 });
+                return { buffer: Buffer.from(resp.data), url, mimeType };
+            } catch (err) {
+                logger.warn('Could not download audio from remote URL for transcription:', err);
+                return { url, mimeType };
+            }
+        }
+        return { url, mimeType };
+    }
+
+    return null;
+}
+
+async function transcribeInboundAudio(audioInfo: { buffer?: Buffer; url?: string; mimeType: string }): Promise<{ transcription: string; detectedLanguage: 'sw' | 'en' | string } | null> {
+    try {
+        const tr = await transcribeVoiceNote({
+            audioBuffer: audioInfo.buffer,
+            audioUrl: audioInfo.url,
+            mimeType: audioInfo.mimeType,
+            languageHint: 'sw',
+        });
+        return {
+            transcription: tr.transcription,
+            detectedLanguage: tr.detectedLanguage || 'sw',
+        };
+    } catch (err) {
+        logger.error('Failed to transcribe inbound voice note:', err);
+        return null;
+    }
+}
+
+async function synthesizeOutboundAudio(text: string, language: string): Promise<string | undefined> {
+    try {
+        const langCode = (language === 'sw' || language === 'en') ? language : 'sw';
+        const syn = await synthesizeVoiceAdvisory({ text, language: langCode });
+        if (syn?.audioBase64) {
+            return `data:${syn.format};base64,${syn.audioBase64}`;
+        }
+    } catch (err) {
+        logger.warn('Failed to synthesize outbound voice advisory:', err);
+    }
+    return undefined;
+}
+
+async function handleInboundAdvisoryOrOnboarding(
+    from: string,
+    body: string,
+    senderName?: string
+): Promise<{ responseText?: string; farmerId?: string; handled: boolean }> {
+    const onboardingResult = await onboardingEngine.processIncomingMessage({
+        channel: 'whatsapp',
+        identifier: from,
+        message: body,
+        senderName,
+    });
+
+    if (onboardingResult.isHandled && onboardingResult.responseMessage) {
+        return {
+            responseText: onboardingResult.responseMessage,
+            farmerId: onboardingResult.farmerId,
+            handled: true,
+        };
+    }
+
+    if (!onboardingResult.isHandled && onboardingResult.isRegistered) {
+        const triageReply = await symptomTriageService.handleDiagnoseMessage(
+            body,
+            onboardingResult.farmerId ?? null,
+            from
+        );
+        return {
+            responseText: triageReply,
+            farmerId: onboardingResult.farmerId,
+            handled: Boolean(triageReply),
+        };
+    }
+
+    return { handled: false };
+}
+
+async function extractInboundMessageContent(payload: InboundMessagePayload): Promise<{
+    from: string;
+    body: string;
+    senderName?: string;
+    isVoice: boolean;
+    detectedLang: string;
+}> {
+    const from = (payload.from || payload.From?.replace('whatsapp:', '') || '').trim();
+    let body = payload.body || payload.Body || '';
+    const senderName = payload.ProfileName;
+
+    let isVoice = false;
+    let detectedLang = 'sw';
+
+    const audioInfo = await resolveAudioPayload(payload);
+    if (audioInfo) {
+        const tr = await transcribeInboundAudio(audioInfo);
+        if (tr) {
+            isVoice = true;
+            detectedLang = tr.detectedLanguage;
+            body = body.trim().length === 0
+                ? tr.transcription
+                : `${body}\n[Audio transcript]: ${tr.transcription}`;
+        }
+    }
+
+    return { from, body, senderName, isVoice, detectedLang };
+}
+
+async function dispatchOutboundResponse(
+    from: string,
+    dispatch: { responseText?: string; farmerId?: string; handled: boolean },
+    isVoice: boolean,
+    detectedLang: string
+): Promise<void> {
+    if (!dispatch.responseText) return;
+
+    let mediaUrl: string | undefined;
+    if (isVoice) {
+        mediaUrl = await synthesizeOutboundAudio(dispatch.responseText, detectedLang);
+    }
+
+    await whatsappService.sendMessage({
+        to: from,
+        message: dispatch.responseText,
+        farmerId: dispatch.farmerId,
+        mediaUrl,
+        isVoiceNote: isVoice,
+    });
+}
+
+/**
+ * POST /api/whatsapp/inbound — webhook endpoint for inbound messages from Meta Cloud API or Twilio WhatsApp.
+ * Supports text messages and inbound voice notes with automatic speech transcription,
+ * disease symptom triage, and synthesized vernacular voice advisory replies.
+ * Requests must carry a valid provider signature (see middleware/webhookSignature).
+ */
 router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res: Response) => {
     try {
-        const payload = req.body as {
-            from?: string;
-            body?: string;
-            messageId?: string;
-            timestamp?: string;
-            From?: string; // Twilio format fallback
-            Body?: string; // Twilio format fallback
-            ProfileName?: string;
-        };
-
-        const from = payload.from || payload.From?.replace('whatsapp:', '');
-        const body = payload.body || payload.Body;
-        const senderName = payload.ProfileName;
+        const payload = req.body as InboundMessagePayload;
+        const { from, body, senderName, isVoice, detectedLang } = await extractInboundMessageContent(payload);
 
         if (!from || !body) {
             return res.status(400).json({ success: false, error: 'from and body are required' });
@@ -72,25 +228,17 @@ router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res:
             [from, body]
         );
 
-        logger.info(`WhatsApp inbound ${payload.messageId ?? '-'}: ${rows.length} row(s) inserted`);
+        logger.info(`WhatsApp inbound ${payload.messageId ?? '-'}: ${rows.length} row(s) inserted (isVoice=${isVoice})`);
 
-        // Run through auto-onboarding engine
-        const onboardingResult = await onboardingEngine.processIncomingMessage({
-            channel: 'whatsapp',
-            identifier: from,
-            message: body,
-            senderName,
+        const dispatch = await handleInboundAdvisoryOrOnboarding(from, body, senderName);
+        await dispatchOutboundResponse(from, dispatch, isVoice, detectedLang);
+
+        return res.status(202).json({
+            success: true,
+            handled: dispatch.handled,
+            isVoice,
+            transcription: isVoice ? body : undefined,
         });
-
-        if (onboardingResult.isHandled && onboardingResult.responseMessage) {
-            await whatsappService.sendMessage({
-                to: from,
-                message: onboardingResult.responseMessage,
-                farmerId: onboardingResult.farmerId,
-            });
-        }
-
-        return res.status(202).json({ success: true, handled: onboardingResult.isHandled });
     } catch (error) {
         logger.error('Failed to persist WhatsApp inbound message:', error);
         return safeError(res, 500, 'Failed to persist WhatsApp inbound message');

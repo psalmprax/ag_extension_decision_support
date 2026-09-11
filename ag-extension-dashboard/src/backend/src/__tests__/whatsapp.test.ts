@@ -261,6 +261,8 @@ jest.mock('../services/whatsappService', () => ({
 }));
 
 import crypto from 'crypto';
+import { onboardingEngine } from '../services/onboardingEngine';
+import { whatsappService } from '../services/whatsappService';
 import { verifyInboundWebhookSignature } from '../middleware/webhookSignature';
 
 describe('POST /inbound — provider signature verification', () => {
@@ -392,5 +394,90 @@ describe('verifyInboundWebhookSignature — Twilio provider path', () => {
 
         expect(res.status).toHaveBeenCalledWith(403);
         expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Webhook signature verification failed' });
+    });
+});
+
+describe('POST /inbound — voice note transcription and synthesized advisory dispatch', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('transcribes inbound voice note when body is omitted and delivers synthesized voice advisory', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [{ id: 'wa-v1' }], rowCount: 1 });
+        (onboardingEngine.processIncomingMessage as jest.Mock).mockResolvedValueOnce({
+            isHandled: true,
+            isRegistered: false,
+            responseMessage: 'Karibu mkulima!',
+            farmerId: 'farm-voice-1',
+        });
+
+        const response = await request(app)
+            .post('/api/v1/whatsapp/inbound')
+            .set('Content-Type', 'application/json')
+            .send({
+                From: 'whatsapp:+265999111222',
+                MediaUrl0: 'https://example.com/audio-voice-note.ogg',
+                MediaContentType0: 'audio/ogg',
+            });
+
+        expect(response.status).toBe(202);
+        expect(response.body.success).toBe(true);
+        expect(response.body.isVoice).toBe(true);
+        expect(response.body.transcription).toBeTruthy();
+
+        expect(whatsappService.sendMessage).toHaveBeenCalledTimes(1);
+        expect(whatsappService.sendMessage).toHaveBeenCalledWith(
+            expect.objectContaining({
+                to: '+265999111222',
+                message: 'Karibu mkulima!',
+                farmerId: 'farm-voice-1',
+                isVoiceNote: true,
+                mediaUrl: expect.stringMatching(/^data:audio\//),
+            })
+        );
+    });
+
+    it('routes voice notes from registered farmers to symptom triage and returns synthesized advisory', async () => {
+        mockQuery.mockResolvedValue({ rows: [{ id: 'wa-v2' }], rowCount: 1 });
+        (onboardingEngine.processIncomingMessage as jest.Mock).mockResolvedValueOnce({
+            isHandled: false,
+            isRegistered: true,
+            farmerId: 'farm-reg-42',
+        });
+
+        const response = await request(app)
+            .post('/api/v1/whatsapp/inbound')
+            .set('Content-Type', 'application/json')
+            .send({
+                from: '+265999111333',
+                MediaUrl0: 'https://example.com/symptom-note.ogg',
+                MediaContentType0: 'audio/ogg',
+            });
+
+        expect(response.status).toBe(202);
+        expect(response.body.success).toBe(true);
+        expect(response.body.handled).toBe(true);
+        expect(response.body.isVoice).toBe(true);
+
+        expect(whatsappService.sendMessage).toHaveBeenCalledTimes(1);
+        expect(whatsappService.sendMessage).toHaveBeenCalledWith(
+            expect.objectContaining({
+                to: '+265999111333',
+                farmerId: 'farm-reg-42',
+                isVoiceNote: true,
+                mediaUrl: expect.stringMatching(/^data:audio\//),
+            })
+        );
+    });
+
+    it('returns 400 when neither text nor audio is supplied', async () => {
+        const response = await request(app)
+            .post('/api/v1/whatsapp/inbound')
+            .set('Content-Type', 'application/json')
+            .send({ from: '+265999111444' });
+
+        expect(response.status).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error).toBe('from and body are required');
     });
 });
