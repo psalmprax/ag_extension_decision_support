@@ -310,7 +310,11 @@ class BulkOperationsService {
         ]);
 
         return [headers, ...rows].map(row =>
-            row.map(field => `"${field.toString().replace(/"/g, '""')}"`).join(',')
+            row.map(field => {
+                const str = field.toString();
+                const sanitized = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+                return `"${sanitized.replace(/"/g, '""')}"`;
+            }).join(',')
         ).join('\n');
     }
 

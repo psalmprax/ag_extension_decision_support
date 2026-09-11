@@ -16,7 +16,8 @@ const toCsv = (rows: Record<string, unknown>[], columns: string[]): string => {
     const escape = (v: unknown): string => {
         if (v === null || v === undefined) return '';
         const s = String(v);
-        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+        const sanitized = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+        return /[",\n']/.test(sanitized) ? `"${sanitized.replace(/"/g, '""')}"` : sanitized;
     };
     const header = columns.join(',');
     const body = rows.map(r => columns.map(c => escape(r[c])).join(',')).join('\n');

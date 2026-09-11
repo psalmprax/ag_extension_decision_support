@@ -88,18 +88,31 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
             </span>
           ),
 
-          // Links
-          a: ({ href, children }) => (
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-500/10 hover:bg-primary-500/20 text-primary-600 dark:text-primary-400 rounded-lg no-underline font-black transition-all group/link"
-            >
-              <span>{children}</span>
-              <ExternalLink className="w-3 h-3 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
-            </a>
-          ),
+          // Links - sanitized against javascript:, data:, and vbscript: XSS
+          a: ({ href, children }) => {
+            const isSafe = href && !/^(?:javascript|data|vbscript):/i.test(href.trim()) && /^(?:https?:\/\/|mailto:|tel:|\/|#)/i.test(href.trim());
+            if (!isSafe) {
+              return <span className="text-gray-400 font-mono text-xs italic">[Blocked Link]</span>;
+            }
+            return (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-500/10 hover:bg-primary-500/20 text-primary-600 dark:text-primary-400 rounded-lg no-underline font-black transition-all group/link"
+              >
+                <span>{children}</span>
+                <ExternalLink className="w-3 h-3 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
+              </a>
+            );
+          },
+
+          // Images - sanitize src
+          img: ({ src, alt }) => {
+            const isSafe = src && !/^(?:javascript|data|vbscript):/i.test(src.trim()) && /^(?:https?:\/\/|\/)/i.test(src.trim());
+            if (!isSafe) return null;
+            return <img src={src} alt={alt || ''} className="max-w-full rounded-lg my-3 shadow-md" loading="lazy" />;
+          },
 
           // Code blocks
           code: props => {

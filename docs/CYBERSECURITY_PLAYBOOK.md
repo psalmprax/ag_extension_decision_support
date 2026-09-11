@@ -57,6 +57,16 @@ This **Cybersecurity Playbook** documents the platform's threat assessment, oper
   - In [`routes/whatsapp.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/whatsapp.ts), `isSafeWebhookMediaUrl` rejects cloud metadata (`169.254.169.254`), loopback (`127.0.0.1`), and RFC 1918 private IP ranges (`10.*`, `172.16-31.*`, `192.168.*`), accompanied by a 12MB download size ceiling.
   - In production (`NODE_ENV === 'production'`), requests missing cryptographic signature headers or missing provider secrets are immediately rejected with HTTP 503 / 403.
 
+### 5. Client-Side Markdown XSS & CSV Formula Injection (CWE-1236)
+- **Threat**:
+  - Malicious Markdown links (`[Click](javascript:...)`) rendered in AI chat copilot executing script in an officer's session.
+  - Farmer names or agronomic notes starting with spreadsheet operators (`=`, `+`, `-`, `@`) executing arbitrary system commands or exfiltrating data when exported to CSV.
+  - Unchecked base64 image strings sent to `/diagnose/image` forcing large buffer allocations in Node.js heap memory before size validation.
+- **Controls Implemented**:
+  - In [`MarkdownRenderer.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/MarkdownRenderer.tsx), link protocols are filtered against `javascript:`, `data:`, and `vbscript:` schemes, rendering blocked links safely, while images enforce safe origin checks and lazy loading.
+  - In [`bulkOperationsService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/bulkOperationsService.ts) and [`misExportService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/misExportService.ts), cells starting with `=+\-@\t\r` are prepended with `'` to neutralize formula execution in Excel and LibreOffice Calc.
+  - In [`routes/diseases.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/diseases.ts), string length is checked prior to allocating `Buffer.from`, returning HTTP 413 immediately, alongside zero-byte payload rejection (HTTP 400).
+
 ---
 
 ## 🚨 Incident Response Runbooks (Standard Operating Procedures)
