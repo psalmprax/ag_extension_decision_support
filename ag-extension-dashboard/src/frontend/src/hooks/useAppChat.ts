@@ -15,6 +15,7 @@ interface QueuedChatItem {
   conversationId: string | null;
   message: string;
   language: string;
+  at?: number;
 }
 
 /** Send one queued item; true when it drained (caller may drop it from the queue). */
