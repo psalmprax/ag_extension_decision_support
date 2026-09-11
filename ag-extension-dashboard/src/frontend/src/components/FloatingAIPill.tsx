@@ -636,33 +636,60 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
               )}
 
               {activeTab === 'voice' && (
-                <div className="space-y-3">
-                  <VoiceNoteTaker
-                    onSaveNote={note => {
-                      setCapturedVoiceNote(note);
-                      setMessages(prev => [
-                        ...prev,
-                        {
-                          sender: 'user',
-                          text: note,
-                          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        },
-                      ]);
-                      setActiveTab('chat');
-                      setIsLoadingAi(true);
-                      getChatCompletion(note, undefined, language)
-                        .then(res => {
-                          const reply = res.data?.messages?.find(m => m.role === 'assistant')?.content ||
-                            'I evaluated your field observation against current agricultural agronomy standards.';
-                          setMessages(prev => [...prev, { sender: 'ai', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
-                        })
-                        .catch(err => {
-                          console.error('AI chat query failed:', err);
-                          setMessages(prev => [...prev, { sender: 'ai', text: 'Notice: Could not connect to remote AI inference model.', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
-                        })
-                        .finally(() => setIsLoadingAi(false));
-                    }}
+                <div className="space-y-4">
+                  <AIAgronomistVoiceTab
+                    isRecording={isRecording}
+                    isTranscribing={isTranscribing}
+                    recordingDuration={recordingDuration}
+                    interimText={interimText}
+                    capturedVoiceNote={capturedVoiceNote}
+                    onToggleRecording={handleToggleVoice}
+                    onInsertVoiceToChat={handleInsertVoiceToChat}
                   />
+
+                  <div className="pt-3 border-t border-slate-800">
+                    <VoiceNoteTaker
+                      onSaveNote={note => {
+                        setCapturedVoiceNote(note);
+                        setMessages(prev => [
+                          ...prev,
+                          {
+                            sender: 'user',
+                            text: note,
+                            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                          },
+                        ]);
+                        setActiveTab('chat');
+                        setIsLoadingAi(true);
+                        getChatCompletion(note, undefined, language)
+                          .then(res => {
+                            const reply =
+                              res.data?.messages?.find(m => m.role === 'assistant')?.content ||
+                              'I evaluated your field observation against current agricultural agronomy standards.';
+                            setMessages(prev => [
+                              ...prev,
+                              {
+                                sender: 'ai',
+                                text: reply,
+                                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                              },
+                            ]);
+                          })
+                          .catch(err => {
+                            console.error('AI chat query failed:', err);
+                            setMessages(prev => [
+                              ...prev,
+                              {
+                                sender: 'ai',
+                                text: 'Notice: Could not connect to remote AI inference model.',
+                                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                              },
+                            ]);
+                          })
+                          .finally(() => setIsLoadingAi(false));
+                      }}
+                    />
+                  </div>
                 </div>
               )}
 
