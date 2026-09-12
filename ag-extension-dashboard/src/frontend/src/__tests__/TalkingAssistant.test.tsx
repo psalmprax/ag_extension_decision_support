@@ -174,4 +174,114 @@ describe('TalkingAssistant Component', () => {
       expect(screen.queryByText(/Active Context:/i)).not.toBeInTheDocument();
     });
   });
+
+  it('falls back to MediaRecorder and server-side STT when native SpeechRecognition is unavailable', async () => {
+    const mockTrack = { stop: vi.fn() };
+    const mockStream = {
+      getTracks: vi.fn().mockReturnValue([mockTrack]),
+    };
+
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue(mockStream),
+      },
+      writable: true,
+      configurable: true,
+    });
+
+    const mockAnalyser = {
+      fftSize: 64,
+      smoothingTimeConstant: 0.8,
+      frequencyBinCount: 32,
+      getByteFrequencyData: vi.fn(),
+    };
+
+    const mockSource = {
+      connect: vi.fn(),
+    };
+
+    class MockAudioContext {
+      state = 'running';
+      createMediaStreamSource = vi.fn().mockReturnValue(mockSource);
+      createAnalyser = vi.fn().mockReturnValue(mockAnalyser);
+      close = vi.fn().mockResolvedValue(undefined);
+      resume = vi.fn().mockResolvedValue(undefined);
+    }
+
+    Object.defineProperty(window, 'AudioContext', {
+      value: MockAudioContext,
+      writable: true,
+      configurable: true,
+    });
+
+    class MockMediaRecorder {
+      state = 'inactive';
+      mimeType = 'audio/webm';
+      ondataavailable: ((e: { data: Blob }) => void) | null = null;
+      onstop: (() => void) | null = null;
+
+      start() {
+        this.state = 'recording';
+      }
+
+      stop() {
+        this.state = 'inactive';
+        if (this.ondataavailable) {
+          this.ondataavailable({ data: new Blob(['mock-audio'], { type: 'audio/webm' }) });
+        }
+        if (this.onstop) {
+          this.onstop();
+        }
+      }
+
+      static isTypeSupported() {
+        return true;
+      }
+    }
+
+    Object.defineProperty(window, 'MediaRecorder', {
+      value: MockMediaRecorder,
+      writable: true,
+      configurable: true,
+    });
+
+    mockedPost.mockImplementation(async (url: string) => {
+      if (url === '/chatbot/public-demo/stt') {
+        return {
+          data: {
+            success: true,
+            data: { text: 'What is the bio-control for Fall Armyworm?' },
+          },
+        };
+      }
+      return {
+        data: {
+          success: true,
+          data: {
+            text: 'Apply cold-pressed Neem oil at 3ml/L.',
+            source: 'FAO Fall Armyworm Guide',
+          },
+        },
+      };
+    });
+
+    render(<TalkingAssistant />);
+
+    const orb = screen.getByLabelText(/Start speaking voice inquiry/i);
+    fireEvent.click(orb);
+
+    await waitFor(() => {
+      expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ audio: true });
+    });
+
+    const stopOrbs = screen.getAllByLabelText(/Stop recording voice/i);
+    fireEvent.click(stopOrbs[0]!);
+
+    await waitFor(() => {
+      expect(mockedPost).toHaveBeenCalledWith(
+        '/chatbot/public-demo/stt',
+        expect.objectContaining({ language: 'en' })
+      );
+    });
+  });
 });

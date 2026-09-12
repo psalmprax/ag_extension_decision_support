@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { validate } from '@/middleware/validate';
-import { AIRouter } from '@/services/aiProvider/aiProvider';
+import { AIRouter, AIProviderFactory } from '@/services/aiProvider/aiProvider';
 import { RAGV2Service } from '@/services/ragV2Service';
 import { VectorService } from '@/services/vectorService';
 import { logger } from '@/utils/logger';
@@ -54,6 +54,11 @@ const publicDemoRequestSchema = z
   );
 
 type PublicDemoRequestBody = z.infer<typeof publicDemoRequestSchema>;
+
+const publicDemoSttSchema = z.object({
+  audio: z.string().min(1, 'audio base64 payload is required'),
+  language: z.enum(['en', 'sw']).optional().default('en'),
+});
 
 function extractCrop(text: string): string | null {
   const lower = text.toLowerCase();
@@ -403,6 +408,58 @@ router.post(
     } catch (error) {
       logger.error('Public demo chat failed:', error);
       return safeError(res, 500, 'Public demo chat failed');
+    }
+  }
+);
+
+router.post(
+  '/public-demo/stt',
+  publicDemoRateLimiter,
+  validate({ body: publicDemoSttSchema }),
+  async (req: Request, res: Response) => {
+    try {
+      const { audio, language = 'en' } = req.body;
+
+      if (!audio || typeof audio !== 'string') {
+        return res.status(400).json({
+          success: false,
+          error: 'audio base64 payload is required',
+        });
+      }
+
+      const buffer = Buffer.from(audio, 'base64');
+
+      if (buffer.length > 4 * 1024 * 1024) {
+        return res.status(413).json({
+          success: false,
+          error: 'Audio payload exceeds maximum 4MB limit',
+        });
+      }
+
+      const provider = await AIProviderFactory.getProvider();
+      const transcript = await provider.speechToText(buffer, {
+        language: language === 'sw' ? 'sw' : 'en',
+      });
+
+      const text = (transcript?.text ?? '').trim();
+      if (!text) {
+        return res.status(422).json({
+          success: false,
+          error: 'Could not transcribe speech. Please speak clearly or type your question.',
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          text,
+          language: transcript?.language || language,
+          confidence: transcript?.confidence,
+        },
+      });
+    } catch (error) {
+      logger.error('Public demo speech transcription failed:', error);
+      return safeError(res, 500, 'Speech transcription failed');
     }
   }
 );

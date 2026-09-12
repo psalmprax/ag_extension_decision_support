@@ -52,6 +52,9 @@ const KnowledgeBase = lazy(() =>
   // webpackChunkName guides Rollup's async-chunk naming (was generic "index")
   import(/* webpackChunkName: "knowledge-base" */ './components/KnowledgeBase').then(m => ({ default: m.KnowledgeBase }))
 );
+const AdvisoryStudioPage = lazy(() =>
+  import('./pages/AdvisoryStudioPage').then(m => ({ default: m.AdvisoryStudioPage }))
+);
 
 const TAB_TO_PATH: Record<string, string> = {
   dashboard: '/dashboard',
@@ -74,6 +77,7 @@ const TAB_TO_PATH: Record<string, string> = {
   email_workflows: '/email-workflows',
   mcp_tools: '/mcp-tools',
   user_management: '/user-management',
+  advisory_studio: '/advisory-studio',
 };
 
 const PATH_TO_TAB: Record<string, string> = Object.entries(TAB_TO_PATH).reduce(
@@ -428,6 +432,7 @@ function App() {
                 </div>
               }
             />
+            <Route path="/advisory-studio" element={<AdvisoryStudioPage />} />
             <Route path="*" element={<LandingPage />} />
           </Routes>
         </Suspense>

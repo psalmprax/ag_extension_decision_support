@@ -445,6 +445,145 @@ async function persistSessionState(
   }
 }
 
+interface AudioAnalyserResult {
+  audioCtx: AudioContext;
+  analyser: AnalyserNode;
+  stream: MediaStream;
+}
+
+function getSpeechRecognitionConstructor(): SpeechRecognitionConstructor | null {
+  if (typeof window === 'undefined') return null;
+  const win = window as unknown as WindowWithSpeech;
+  return win.SpeechRecognition || win.webkitSpeechRecognition || null;
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result;
+      if (typeof result === 'string') {
+        const base64 = result.split(',')[1] ?? '';
+        resolve(base64);
+      } else {
+        reject(new Error('Failed to convert audio blob to base64'));
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function requestTranscribeAudioBlob(
+  blob: Blob,
+  language: 'en' | 'sw'
+): Promise<string | null> {
+  try {
+    const base64 = await blobToBase64(blob);
+    if (!base64) return null;
+    const res = await apiClient.post('/chatbot/public-demo/stt', {
+      audio: base64,
+      language,
+    });
+    return res.data?.data?.text ?? null;
+  } catch (err) {
+    console.warn('Server fallback STT error:', err);
+    return null;
+  }
+}
+
+async function createAudioAnalyser(): Promise<AudioAnalyserResult | null> {
+  if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+    return null;
+  }
+  const AudioCtx =
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AudioCtx) return null;
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const audioCtx = new AudioCtx();
+    if (audioCtx.state === 'suspended') {
+      await audioCtx.resume();
+    }
+    const source = audioCtx.createMediaStreamSource(stream);
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 64;
+    analyser.smoothingTimeConstant = 0.8;
+    source.connect(analyser);
+    return { audioCtx, analyser, stream };
+  } catch (err) {
+    console.warn('Microphone access for audio visualizer failed:', err);
+    return null;
+  }
+}
+
+function startNativeSpeechRecognition(
+  selectedLanguage: 'en' | 'sw',
+  onTranscript: (t: string) => void,
+  onStart: () => void,
+  onError: () => void,
+  onEnd: () => void
+): SpeechRecognitionInstance | null {
+  const SpeechRecognition = getSpeechRecognitionConstructor();
+  if (!SpeechRecognition) return null;
+
+  try {
+    const recognition = new SpeechRecognition();
+    recognition.lang = selectedLanguage === 'sw' ? 'sw-KE' : 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = onStart;
+    recognition.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript;
+      if (transcript) onTranscript(transcript);
+    };
+    recognition.onerror = onError;
+    recognition.onend = onEnd;
+
+    recognition.start();
+    return recognition;
+  } catch (err) {
+    console.warn('Native speech recognition start failed:', err);
+    return null;
+  }
+}
+
+function getSupportedMediaRecorderMimeType(): string {
+  if (typeof MediaRecorder === 'undefined') return '';
+  if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+    return 'audio/webm;codecs=opus';
+  }
+  if (MediaRecorder.isTypeSupported('audio/mp4')) {
+    return 'audio/mp4';
+  }
+  return '';
+}
+
+function startMediaRecorderCapture(
+  stream: MediaStream,
+  onAudioData: (chunk: Blob) => void,
+  onStop: () => void
+): MediaRecorder | null {
+  if (typeof MediaRecorder === 'undefined') return null;
+
+  try {
+    const mimeType = getSupportedMediaRecorderMimeType();
+    const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    recorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) onAudioData(e.data);
+    };
+    recorder.onstop = onStop;
+    recorder.start();
+    return recorder;
+  } catch (err) {
+    console.warn('MediaRecorder start failed:', err);
+    return null;
+  }
+}
+
 interface UseSpeechControllerProps {
   selectedLanguage: 'en' | 'sw';
   onTranscript: (transcript: string) => void;
@@ -453,9 +592,14 @@ interface UseSpeechControllerProps {
 function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechControllerProps) {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [ttsSupported, setTtsSupported] = useState(true);
 
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioAnalyserRef = useRef<AudioAnalyserResult | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
 
   useEffect(() => {
@@ -472,6 +616,19 @@ function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechContro
         }
       }
     };
+  }, []);
+
+  const cleanupAudioAnalyser = useCallback(() => {
+    if (audioAnalyserRef.current) {
+      try {
+        audioAnalyserRef.current.stream.getTracks().forEach((track) => track.stop());
+        void audioAnalyserRef.current.audioCtx.close();
+      } catch {
+        // ignore
+      }
+      audioAnalyserRef.current = null;
+      setAnalyser(null);
+    }
   }, []);
 
   const speakText = useCallback(
@@ -517,62 +674,102 @@ function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechContro
       } catch {
         // ignore
       }
+      recognitionRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {
+        // ignore
+      }
     }
     setIsListening(false);
-  }, []);
+    if (!mediaRecorderRef.current) {
+      cleanupAudioAnalyser();
+    }
+  }, [cleanupAudioAnalyser]);
 
-  const startListening = useCallback(() => {
+  const handleRecorderStop = useCallback(async () => {
+    setIsListening(false);
+    cleanupAudioAnalyser();
+    const audioBlob = new Blob(audioChunksRef.current, {
+      type: mediaRecorderRef.current?.mimeType || 'audio/webm',
+    });
+    audioChunksRef.current = [];
+    mediaRecorderRef.current = null;
+
+    if (audioBlob.size > 0) {
+      setIsTranscribing(true);
+      const transcript = await requestTranscribeAudioBlob(audioBlob, selectedLanguage);
+      setIsTranscribing(false);
+      if (transcript) {
+        onTranscript(transcript);
+      }
+    }
+  }, [cleanupAudioAnalyser, onTranscript, selectedLanguage]);
+
+  const startListening = useCallback(async () => {
     if (typeof window === 'undefined') return;
-    const win = window as unknown as WindowWithSpeech;
-    const SpeechRecognition = win.SpeechRecognition || win.webkitSpeechRecognition;
+    if (isSpeaking) {
+      stopSpeaking();
+    }
 
-    if (!SpeechRecognition) {
-      alert('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
+    const analyserResult = await createAudioAnalyser();
+    if (analyserResult) {
+      audioAnalyserRef.current = analyserResult;
+      setAnalyser(analyserResult.analyser);
+    }
+
+    const onNativeEnd = () => {
+      setIsListening(false);
+      cleanupAudioAnalyser();
+    };
+
+    const nativeInstance = startNativeSpeechRecognition(
+      selectedLanguage,
+      onTranscript,
+      () => setIsListening(true),
+      onNativeEnd,
+      onNativeEnd
+    );
+
+    if (nativeInstance) {
+      recognitionRef.current = nativeInstance;
       return;
     }
 
-    try {
-      if (isSpeaking) {
-        stopSpeaking();
+    if (analyserResult?.stream) {
+      audioChunksRef.current = [];
+      const recorder = startMediaRecorderCapture(
+        analyserResult.stream,
+        (chunk) => audioChunksRef.current.push(chunk),
+        handleRecorderStop
+      );
+      if (recorder) {
+        mediaRecorderRef.current = recorder;
+        setIsListening(true);
+        return;
       }
-
-      const recognition = new SpeechRecognition();
-      recognition.lang = selectedLanguage === 'sw' ? 'sw-KE' : 'en-US';
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-
-      recognition.onstart = () => setIsListening(true);
-      recognition.onresult = (event: { results: Array<Array<{ transcript: string }>> }) => {
-        const transcript = event.results[0]?.[0]?.transcript;
-        if (transcript) {
-          onTranscript(transcript);
-        }
-      };
-      recognition.onerror = (event: { error: string }) => {
-        console.warn('Speech recognition error:', event.error);
-        setIsListening(false);
-      };
-      recognition.onend = () => setIsListening(false);
-
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch (err) {
-      console.warn('Failed to start speech recognition:', err);
-      setIsListening(false);
     }
-  }, [isSpeaking, onTranscript, selectedLanguage, stopSpeaking]);
+
+    alert('Microphone recording is not supported in this browser. Please use Chrome, Edge, or Safari.');
+    setIsListening(false);
+    cleanupAudioAnalyser();
+  }, [cleanupAudioAnalyser, handleRecorderStop, isSpeaking, onTranscript, selectedLanguage, stopSpeaking]);
 
   const toggleListening = useCallback(() => {
     if (isListening) {
       stopListening();
     } else {
-      startListening();
+      void startListening();
     }
   }, [isListening, startListening, stopListening]);
 
   return {
     isListening,
     isSpeaking,
+    isTranscribing,
+    analyser,
     speakText,
     stopSpeaking,
     toggleListening,
@@ -622,43 +819,108 @@ function LanguageSelector({ selectedLanguage, onSelectLanguage }: LanguageSelect
 interface VoiceOrbProps {
   isListening: boolean;
   isSpeaking: boolean;
+  isTranscribing?: boolean;
   onToggle: () => void;
 }
 
-function VoiceOrb({ isListening, isSpeaking, onToggle }: VoiceOrbProps) {
-  const getOrbStyle = () => {
-    if (isListening) {
-      return 'bg-amber-500 text-slate-950 ring-amber-400/40 shadow-amber-500/50 scale-105';
-    }
-    if (isSpeaking) {
-      return 'bg-emerald-500 text-slate-950 ring-emerald-400/40 shadow-emerald-500/50';
-    }
-    return 'bg-gradient-to-tr from-emerald-600 to-teal-500 text-white hover:scale-105 hover:shadow-emerald-500/30';
-  };
+function getVoiceOrbStyle(
+  isTranscribing?: boolean,
+  isListening?: boolean,
+  isSpeaking?: boolean
+): string {
+  if (isTranscribing) {
+    return 'bg-teal-600 text-white ring-teal-400/40 shadow-teal-500/50';
+  }
+  if (isListening) {
+    return 'bg-amber-500 text-slate-950 ring-amber-400/40 shadow-amber-500/50 scale-105';
+  }
+  if (isSpeaking) {
+    return 'bg-emerald-500 text-slate-950 ring-emerald-400/40 shadow-emerald-500/50';
+  }
+  return 'bg-gradient-to-tr from-emerald-600 to-teal-500 text-white hover:scale-105 hover:shadow-emerald-500/30';
+}
 
-  const getAriaLabel = () => {
-    if (isListening) return 'Stop recording voice';
-    if (isSpeaking) return 'Speaking response';
-    return 'Start speaking voice inquiry';
-  };
+function getVoiceOrbAriaLabel(
+  isTranscribing?: boolean,
+  isListening?: boolean,
+  isSpeaking?: boolean
+): string {
+  if (isTranscribing) return 'Transcribing speech audio';
+  if (isListening) return 'Stop recording voice';
+  if (isSpeaking) return 'Speaking response';
+  return 'Start speaking voice inquiry';
+}
+
+function getVoiceOrbTitle(isTranscribing?: boolean, isListening?: boolean): string {
+  if (isTranscribing) return 'Transcribing audio...';
+  if (isListening) return 'Stop listening';
+  return 'Tap to speak';
+}
+
+function getOrbRingBorderClass(isTranscribing?: boolean, isListening?: boolean): string {
+  if (isTranscribing) return 'border-teal-400';
+  if (isListening) return 'border-amber-400';
+  return 'border-emerald-400';
+}
+
+function VoiceOrbIcon({
+  isTranscribing,
+  isListening,
+  isSpeaking,
+}: {
+  isTranscribing?: boolean;
+  isListening?: boolean;
+  isSpeaking?: boolean;
+}) {
+  if (isTranscribing) {
+    return (
+      <>
+        <Loader2 className="w-9 h-9 animate-spin" />
+        <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Transcribing</span>
+      </>
+    );
+  }
+  if (isListening) {
+    return (
+      <>
+        <Mic className="w-9 h-9 animate-pulse" />
+        <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Listening</span>
+      </>
+    );
+  }
+  if (isSpeaking) {
+    return (
+      <>
+        <Volume2 className="w-9 h-9 animate-bounce" />
+        <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Speaking</span>
+      </>
+    );
+  }
+  return (
+    <>
+      <Mic className="w-9 h-9" />
+      <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Tap to Speak</span>
+    </>
+  );
+}
+
+function VoiceOrb({ isListening, isSpeaking, isTranscribing, onToggle }: VoiceOrbProps) {
+  const active = isListening || isSpeaking || isTranscribing;
+  const ringBorder = getOrbRingBorderClass(isTranscribing, isListening);
 
   return (
     <div className="my-6 relative flex items-center justify-center">
-      {(isListening || isSpeaking) && (
+      {active && (
         <>
           <motion.div
             animate={{ scale: [1, 1.45, 1], opacity: [0.6, 0.1, 0.6] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            className={`absolute w-44 h-44 rounded-full border-2 ${
-              isListening ? 'border-amber-400' : 'border-emerald-400'
-            }`}
+            className={`absolute w-44 h-44 rounded-full border-2 ${ringBorder}`}
           />
           <motion.div
             animate={{ scale: [1, 1.8, 1], opacity: [0.4, 0, 0.4] }}
             transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
-            className={`absolute w-44 h-44 rounded-full border ${
-              isListening ? 'border-amber-400' : 'border-emerald-400'
-            }`}
+            className={`absolute w-44 h-44 rounded-full border ${ringBorder}`}
           />
         </>
       )}
@@ -666,26 +928,20 @@ function VoiceOrb({ isListening, isSpeaking, onToggle }: VoiceOrbProps) {
       <button
         type="button"
         onClick={onToggle}
-        aria-label={getAriaLabel()}
-        className={`relative w-28 h-28 rounded-full flex flex-col items-center justify-center transition-all duration-300 shadow-2xl focus:outline-none focus:ring-4 ${getOrbStyle()}`}
-        title={isListening ? 'Stop listening' : 'Tap to speak'}
+        disabled={isTranscribing}
+        aria-label={getVoiceOrbAriaLabel(isTranscribing, isListening, isSpeaking)}
+        className={`relative w-28 h-28 rounded-full flex flex-col items-center justify-center transition-all duration-300 shadow-2xl focus:outline-none focus:ring-4 ${getVoiceOrbStyle(
+          isTranscribing,
+          isListening,
+          isSpeaking
+        )}`}
+        title={getVoiceOrbTitle(isTranscribing, isListening)}
       >
-        {isListening ? (
-          <>
-            <Mic className="w-9 h-9 animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Listening</span>
-          </>
-        ) : isSpeaking ? (
-          <>
-            <Volume2 className="w-9 h-9 animate-bounce" />
-            <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Speaking</span>
-          </>
-        ) : (
-          <>
-            <Mic className="w-9 h-9" />
-            <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Tap to Speak</span>
-          </>
-        )}
+        <VoiceOrbIcon
+          isTranscribing={isTranscribing}
+          isListening={isListening}
+          isSpeaking={isSpeaking}
+        />
       </button>
     </div>
   );
@@ -694,11 +950,70 @@ function VoiceOrb({ isListening, isSpeaking, onToggle }: VoiceOrbProps) {
 interface WaveformProps {
   isListening: boolean;
   isSpeaking: boolean;
+  analyser?: AnalyserNode | null;
 }
 
 const BAR_HEIGHTS = [40, 70, 100, 60, 85, 45, 95, 60, 80, 50, 90, 65];
 
-function Waveform({ isListening, isSpeaking }: WaveformProps) {
+function drawWaveformBars(
+  ctx: CanvasRenderingContext2D,
+  dataArray: Uint8Array,
+  bufferLength: number,
+  width: number,
+  height: number
+) {
+  ctx.clearRect(0, 0, width, height);
+  const barCount = 16;
+  const barWidth = 3;
+  const gap = (width - barCount * barWidth) / (barCount - 1);
+
+  for (let i = 0; i < barCount; i++) {
+    const dataIndex = Math.floor((i / barCount) * bufferLength);
+    const value = dataArray[dataIndex] ?? 0;
+    const barHeight = Math.max(4, (value / 255) * height);
+    const x = i * (barWidth + gap);
+    const y = (height - barHeight) / 2;
+
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(x, y, barWidth, barHeight);
+  }
+}
+
+function WaveformCanvas({ analyser }: { analyser: AnalyserNode }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animId: number;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const render = () => {
+      animId = requestAnimationFrame(render);
+      analyser.getByteFrequencyData(dataArray);
+      drawWaveformBars(ctx, dataArray, bufferLength, canvas.width, canvas.height);
+    };
+
+    render();
+    return () => cancelAnimationFrame(animId);
+  }, [analyser]);
+
+  return <canvas ref={canvasRef} width={180} height={32} className="mx-auto" />;
+}
+
+function Waveform({ isListening, isSpeaking, analyser }: WaveformProps) {
+  if (isListening && analyser) {
+    return (
+      <div className="h-8 flex items-center justify-center my-2">
+        <WaveformCanvas analyser={analyser} />
+      </div>
+    );
+  }
+
   const active = isListening || isSpeaking;
   const barColor = isListening ? 'bg-amber-400' : isSpeaking ? 'bg-emerald-400' : 'bg-white/15';
 
@@ -935,6 +1250,7 @@ interface ChatInputFormProps {
   inputText: string;
   isListening: boolean;
   isLoading: boolean;
+  isTranscribing?: boolean;
   selectedLanguage: 'en' | 'sw';
   onChangeInput: (val: string) => void;
   onSubmit: () => void;
@@ -945,6 +1261,7 @@ function ChatInputForm({
   inputText,
   isListening,
   isLoading,
+  isTranscribing,
   selectedLanguage,
   onChangeInput,
   onSubmit,
@@ -966,7 +1283,7 @@ function ChatInputForm({
       <input
         type="text"
         value={inputText}
-        disabled={isLoading}
+        disabled={isLoading || isTranscribing}
         onChange={(e) => onChangeInput(e.target.value)}
         placeholder={placeholder}
         className="w-full px-4 py-3 rounded-xl bg-slate-950/90 border border-white/[0.12] text-sm text-white placeholder-white/40 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all pr-24 disabled:opacity-50"
@@ -976,20 +1293,29 @@ function ChatInputForm({
         <button
           type="button"
           onClick={onToggleListening}
+          disabled={isTranscribing}
           aria-label={isListening ? 'Stop recording voice' : 'Speak inquiry with microphone'}
           className={`p-2 rounded-lg transition-all ${
             isListening
               ? 'bg-amber-500 text-slate-950 animate-pulse'
+              : isTranscribing
+              ? 'bg-teal-500/20 text-teal-300'
               : 'hover:bg-white/10 text-white/60 hover:text-white'
           }`}
-          title={isListening ? 'Stop recording' : 'Speak inquiry'}
+          title={isTranscribing ? 'Transcribing speech...' : isListening ? 'Stop recording' : 'Speak inquiry'}
         >
-          {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          {isTranscribing ? (
+            <Loader2 className="w-4 h-4 animate-spin text-teal-400" />
+          ) : isListening ? (
+            <MicOff className="w-4 h-4" />
+          ) : (
+            <Mic className="w-4 h-4" />
+          )}
         </button>
 
         <button
           type="submit"
-          disabled={!inputText.trim() || isLoading}
+          disabled={!inputText.trim() || isLoading || isTranscribing}
           aria-label="Send message"
           className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white transition-all"
           title="Send message"
@@ -1092,11 +1418,18 @@ export function TalkingAssistant() {
 
   const handleSendMessageRef = useRef<(textToSend?: string) => void>(() => {});
 
-  const { isListening, isSpeaking, speakText, stopSpeaking, toggleListening } =
-    useSpeechController({
-      selectedLanguage,
-      onTranscript: (transcript: string) => handleSendMessageRef.current(transcript),
-    });
+  const {
+    isListening,
+    isSpeaking,
+    isTranscribing,
+    analyser,
+    speakText,
+    stopSpeaking,
+    toggleListening,
+  } = useSpeechController({
+    selectedLanguage,
+    onTranscript: (transcript: string) => handleSendMessageRef.current(transcript),
+  });
 
   const handleSendMessage = useCallback(
     (textToSend?: string) => {
@@ -1209,10 +1542,11 @@ export function TalkingAssistant() {
             <VoiceOrb
               isListening={isListening}
               isSpeaking={isSpeaking}
+              isTranscribing={isTranscribing}
               onToggle={toggleListening}
             />
 
-            <Waveform isListening={isListening} isSpeaking={isSpeaking} />
+            <Waveform isListening={isListening} isSpeaking={isSpeaking} analyser={analyser} />
 
             <AudioControls
               autoSpeak={autoSpeak}
@@ -1253,6 +1587,7 @@ export function TalkingAssistant() {
                 inputText={inputText}
                 isListening={isListening}
                 isLoading={isLoading}
+                isTranscribing={isTranscribing}
                 selectedLanguage={selectedLanguage}
                 onChangeInput={setInputText}
                 onSubmit={handleSendMessage}

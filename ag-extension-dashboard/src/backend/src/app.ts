@@ -79,6 +79,7 @@ import worldmonitorRoutes from './routes/worldmonitor';
 import offlineRoutes from './routes/offline';
 import auditLogsRoutes from './routes/auditLogs';
 import accountRoutes from './routes/account';
+import workflowsRoutes from './routes/workflows';
 
 const app: Application = express();
 // Trust exactly the number of reverse-proxy hops in front of the app (default 1 = Traefik).
@@ -438,6 +439,7 @@ const routeMounts: RouteMount[] = [
   { path: '/offline', router: offlineRoutes },
   { path: '/audit-logs', router: auditLogsRoutes },
   { path: '/account', router: accountRoutes },
+  { path: '/workflows', router: workflowsRoutes },
 ];
 
 // Mount with i18n support (v1)

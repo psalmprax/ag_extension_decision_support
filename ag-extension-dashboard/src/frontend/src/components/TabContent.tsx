@@ -68,6 +68,9 @@ const CropsFields = React.lazy(() =>
   import('@/pages/CropsFields').then(m => ({ default: m.CropsFields }))
 );
 const WorldMonitor = React.lazy(() => import('@/pages/WorldMonitor'));
+const AdvisoryStudioPage = React.lazy(() =>
+  import('@/pages/AdvisoryStudioPage').then(m => ({ default: m.AdvisoryStudioPage }))
+);
 
 interface TabContentProps {
   activeTab: string;
@@ -304,6 +307,8 @@ export function TabContent(props: TabContentProps) {
       return <UserManagementPage />;
     case 'worldmonitor':
       return <WorldMonitor />;
+    case 'advisory_studio':
+      return <AdvisoryStudioPage />;
     default:
       return null;
   }

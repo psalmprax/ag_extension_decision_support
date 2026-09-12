@@ -27,6 +27,15 @@ jest.mock('../services/aiProvider/aiProvider', () => ({
       text: 'For early instar Fall Armyworm in maize, apply cold-pressed Neem oil.',
     }),
   },
+  AIProviderFactory: {
+    getProvider: jest.fn().mockResolvedValue({
+      speechToText: jest.fn().mockResolvedValue({
+        text: 'How do I control Fall Armyworm in my maize crop?',
+        language: 'en',
+        confidence: 0.96,
+      }),
+    }),
+  },
 }));
 
 jest.mock('../services/ragV2Service', () => ({
@@ -210,5 +219,32 @@ describe('POST /api/v1/chatbot/public-demo', () => {
       .send({});
 
     expect(res.status).toBe(400);
+  });
+
+  it('transcribes audio base64 payload on /api/v1/chatbot/public-demo/stt', async () => {
+    const res = await request(app)
+      .post('/api/v1/chatbot/public-demo/stt')
+      .set('X-Forwarded-For', '198.51.100.88')
+      .send({
+        audio: Buffer.from('mock-audio-pcm-bytes').toString('base64'),
+        language: 'en',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.text).toContain('Fall Armyworm');
+    expect(res.body.data.language).toBe('en');
+  });
+
+  it('rejects /api/v1/chatbot/public-demo/stt when audio payload is missing', async () => {
+    const res = await request(app)
+      .post('/api/v1/chatbot/public-demo/stt')
+      .set('X-Forwarded-For', '198.51.100.89')
+      .send({
+        language: 'en',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
   });
 });

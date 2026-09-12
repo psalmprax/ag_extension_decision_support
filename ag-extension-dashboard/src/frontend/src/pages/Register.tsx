@@ -9,6 +9,66 @@ import { LiquidBackgroundCanvas } from '@/components/canvasui/LiquidBackgroundCa
 import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 import { AgroEcosystemCanvasScrubber } from '@/components/canvas-ui/AgroEcosystemCanvasScrubber';
 import { register } from '@/api/authService';
+import apiClient from '@/api/client';
+import { EncryptedStorageService } from '@/services/encryptedStorageService';
+
+interface PublicConsultationSession {
+  messages: Array<{ sender: 'user' | 'assistant'; text: string; language?: string; sourceBadge?: string }>;
+  entitySlots?: Record<string, string | null>;
+}
+
+async function retrievePendingConsultationSession(): Promise<PublicConsultationSession | null> {
+  if (typeof window === 'undefined' || !window.sessionStorage) return null;
+
+  try {
+    const raw = window.sessionStorage.getItem('ag_ext_talking_session_raw');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed?.messages) && parsed.messages.length > 1) {
+        return parsed as PublicConsultationSession;
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  try {
+    const encrypted = window.sessionStorage.getItem('ag_ext_talking_session');
+    if (encrypted) {
+      const key = await EncryptedStorageService.deriveKeyFromSecret('talking_assistant_public_2026');
+      const decrypted = await EncryptedStorageService.decrypt(encrypted, key);
+      const parsed = JSON.parse(decrypted);
+      if (Array.isArray(parsed?.messages) && parsed.messages.length > 1) {
+        return parsed as PublicConsultationSession;
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  return null;
+}
+
+async function handleHandoffPendingSession(): Promise<boolean> {
+  try {
+    const pendingSession = await retrievePendingConsultationSession();
+    if (!pendingSession || !pendingSession.messages || pendingSession.messages.length <= 1) {
+      return false;
+    }
+
+    await apiClient.post('/chatbot/import-session', {
+      messages: pendingSession.messages,
+      entitySlots: pendingSession.entitySlots ?? {},
+    });
+
+    window.sessionStorage.removeItem('ag_ext_talking_session');
+    window.sessionStorage.removeItem('ag_ext_talking_session_raw');
+    return true;
+  } catch (err) {
+    console.warn('Failed to import pending consultation session:', err);
+    return false;
+  }
+}
 
 export function Register() {
   const navigate = useNavigate();
@@ -68,7 +128,12 @@ export function Register() {
         throw new Error(t('register_failed_no_token'));
       }
 
-      navigate('/dashboard');
+      const hasImportedSession = await handleHandoffPendingSession();
+      if (hasImportedSession) {
+        navigate('/farmer-chat?imported=1');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } }; message?: string };
       const errorMsg =
