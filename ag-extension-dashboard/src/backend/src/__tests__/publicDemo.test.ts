@@ -144,6 +144,20 @@ describe('POST /api/v1/chatbot/public-demo', () => {
     expect(res.body.data.text).toContain('lita 1.2');
   });
 
+  it('supports multilingual agronomic inquiries in other project languages (e.g. French)', async () => {
+    const res = await request(app)
+      .post('/api/v1/chatbot/public-demo')
+      .set('X-Forwarded-For', '198.51.100.15')
+      .send({
+        query: 'Quel est le traitement pour la chenille légionnaire dans le maïs?',
+        language: 'fr',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.text).toBeDefined();
+  });
+
   it('rejects prompt injection attempts with canonical domain guard message or security perimeter block', async () => {
     const res = await request(app)
       .post('/api/v1/chatbot/public-demo')

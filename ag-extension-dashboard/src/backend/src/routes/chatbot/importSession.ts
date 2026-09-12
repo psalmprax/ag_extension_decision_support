@@ -17,7 +17,7 @@ const importSessionMessageSchema = z.object({
   role: z.enum(['user', 'assistant']).optional(),
   text: z.string().optional(),
   content: z.string().optional(),
-  language: z.enum(['en', 'sw']).optional().default('en'),
+  language: z.string().min(2).max(10).optional().default('en'),
   sourceBadge: z.string().optional(),
   timestamp: z.string().optional(),
 });

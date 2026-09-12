@@ -30,6 +30,7 @@ describe('TalkingAssistant Component', () => {
         getVoices: vi.fn().mockReturnValue([
           { name: 'Google US English (Natural)', lang: 'en-US' },
           { name: 'Google Swahili', lang: 'sw-KE' },
+          { name: 'Google Français (Naturel)', lang: 'fr-FR' },
           { name: 'Microsoft Jenny Online (Natural)', lang: 'en-US' },
           { name: 'Microsoft Guy Online (Natural)', lang: 'en-US' },
         ]),
@@ -412,5 +413,50 @@ describe('TalkingAssistant Component', () => {
     await waitFor(() => {
       expect(mockPlay).toHaveBeenCalled();
     });
+  });
+
+  it('renders 24 Languages badge and allows switching voice language via quick pills and dropdown', async () => {
+    render(<TalkingAssistant />);
+
+    expect(screen.getByText(/24 Languages/i)).toBeInTheDocument();
+
+    const frPill = screen.getByRole('button', { name: /^🇫🇷\s*Français$/i });
+    expect(frPill).toBeInTheDocument();
+    fireEvent.click(frPill);
+
+    const input = screen.getByPlaceholderText(/Posez une question sur le diagnostic/i);
+    expect(input).toBeInTheDocument();
+
+    const selectDropdown = screen.getByLabelText(/Select voice language/i);
+    fireEvent.change(selectDropdown, { target: { value: 'es' } });
+
+    expect(screen.getByPlaceholderText(/Haga una pregunta sobre diagnóstico/i)).toBeInTheDocument();
+  });
+
+  it('dispatches multilingual query with correct language code to public-demo and sets BCP-47 speech locale', async () => {
+    mockedPost.mockRejectedValue(new Error('Server neural TTS unavailable'));
+
+    render(<TalkingAssistant />);
+
+    const frPrompt = screen.getByText(/Chenille Légionnaire \(Français\)/i);
+    fireEvent.click(frPrompt);
+
+    await waitFor(() => {
+      expect(mockedPost).toHaveBeenCalledWith(
+        '/chatbot/public-demo',
+        expect.objectContaining({
+          language: 'fr',
+          query: "Quel est le traitement biologique recommandé contre la légionnaire d'automne?",
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(mockSpeak).toHaveBeenCalled();
+    });
+
+    const speakCalls = mockSpeak.mock.calls;
+    const spokenUtterance = speakCalls[speakCalls.length - 1][0];
+    expect(spokenUtterance.lang).toBe('fr-FR');
   });
 });
