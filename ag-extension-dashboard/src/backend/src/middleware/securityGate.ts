@@ -60,8 +60,9 @@ function redactMediaPayloads(payload: unknown, key = '', depth = 0): unknown {
     return payload.map(item => redactMediaPayloads(item, key, depth + 1));
   }
   if (typeof payload === 'object') {
-    const cleaned: Record<string, unknown> = {};
+    const cleaned: Record<string, unknown> = Object.create(null);
     for (const [k, v] of Object.entries(payload as Record<string, unknown>)) {
+      if (k === '__proto__' || k === 'constructor' || k === 'prototype') continue;
       cleaned[k] = redactMediaPayloads(v, k, depth + 1);
     }
     return cleaned;

@@ -80,6 +80,40 @@ router.get('/info', (_req: Request, res: Response) => {
   });
 });
 
+// ── Helper: send a stored buffer with range-request support ──
+function sendFileBuffer(res: Response, buffer: Buffer, mimeType: string, range?: string): Response {
+  res.setHeader('Content-Type', mimeType);
+  res.setHeader('Accept-Ranges', 'bytes');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
+  if (mimeType === 'image/svg+xml') {
+    res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox");
+    res.setHeader('Content-Disposition', 'attachment; filename="file.svg"');
+  } else {
+    res.setHeader('Content-Disposition', 'inline');
+  }
+
+  if (range) {
+    const parts = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : buffer.length - 1;
+
+    if (start >= buffer.length || end >= buffer.length || start > end) {
+      res.setHeader('Content-Range', `bytes */${buffer.length}`);
+      return res.status(416).send('Requested range not satisfiable');
+    }
+
+    const chunk = buffer.subarray(start, end + 1);
+    res.status(206);
+    res.setHeader('Content-Range', `bytes ${start}-${end}/${buffer.length}`);
+    res.setHeader('Content-Length', chunk.length);
+    return res.send(chunk);
+  }
+
+  res.setHeader('Content-Length', buffer.length);
+  return res.send(buffer);
+}
+
 // ── GET Stored File (with Range Requests for Audio/Video Streaming) ──
 router.get('/file/:storageKey', async (req: Request, res: Response) => {
   try {
@@ -100,32 +134,7 @@ router.get('/file/:storageKey', async (req: Request, res: Response) => {
     if (!allowed && !farmerAllowed) return res.status(403).json({ success: false, error: 'Access denied' });
 
     const buffer = await readStoredUpload(storageKey);
-    const range = req.headers.range;
-
-    res.setHeader('Content-Type', record.mime_type);
-    res.setHeader('Accept-Ranges', 'bytes');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-
-    if (range) {
-      const parts = range.replace(/bytes=/, '').split('-');
-      const start = parseInt(parts[0], 10);
-      const end = parts[1] ? parseInt(parts[1], 10) : buffer.length - 1;
-
-      if (start >= buffer.length || end >= buffer.length || start > end) {
-        res.setHeader('Content-Range', `bytes */${buffer.length}`);
-        return res.status(416).send('Requested range not satisfiable');
-      }
-
-      const chunk = buffer.subarray(start, end + 1);
-      res.status(206);
-      res.setHeader('Content-Range', `bytes ${start}-${end}/${buffer.length}`);
-      res.setHeader('Content-Length', chunk.length);
-      return res.send(chunk);
-    }
-
-    res.setHeader('Content-Length', buffer.length);
-    res.setHeader('Content-Disposition', 'inline');
-    return res.send(buffer);
+    return sendFileBuffer(res, buffer, record.mime_type, req.headers.range);
   } catch (error) {
     logger.error('Read upload error:', error);
     return safeError(res, 404, 'File not found');

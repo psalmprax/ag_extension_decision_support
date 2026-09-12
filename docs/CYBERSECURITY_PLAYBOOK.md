@@ -83,6 +83,20 @@ This **Cybersecurity Playbook** documents the platform's threat assessment, oper
   - In [`routes/auth/register.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/auth/register.ts), newly registered tokens are automatically bound to tracked database sessions via `createSession`, enabling multi-device tracking and immediate revocation.
   - In [`app.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/app.ts), Express body parsers (`json` and `urlencoded`) are aligned to `16mb` with raw buffer preservation, while AI/voice pillar timeouts are extended to 300s to support heavy local Whisper STT operations.
 
+
+### 7. SVG Stored XSS, SSRF via AI Enrichment, WebRTC Socket Injection & Prototype Pollution
+- **Threat**:
+  - **Stored XSS via SVG uploads**: Malicious SVG files containing embedded `<script>`, `<foreignObject>`, `javascript:` URIs, inline event handlers (`onload=`, `onerror=`), XXE entity declarations (`<!ENTITY`), or `<use>` / `<animate>` / `<set>` elements that execute JavaScript when rendered inline by a browser.
+  - **SSRF via Jina web enrichment**: The AI knowledge pipeline proxies user-supplied URLs through `r.jina.ai` for web content extraction. Without validation, internal hostnames or cloud metadata endpoints (`169.254.169.254`) could be fetched.
+  - **WebRTC socket injection**: Socket.IO event handlers for video consultations (`join-room`, `leave-room`, `toggle-audio`, `toggle-video`, `end-call`) accepting arbitrary unvalidated `roomId` payloads, enabling room enumeration, NoSQL injection, or denial of service via oversized keys.
+  - **Prototype pollution**: Deep object traversal in `redactMediaPayloads` could be exploited via `__proto__`, `constructor`, or `prototype` keys to poison `Object.prototype` and escalate privileges or bypass security checks.
+- **Controls Implemented**:
+  - In [`uploadService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/uploadService.ts), SVG content is scanned against a comprehensive `DANGEROUS_SVG_PATTERNS` blocklist covering `<script`, `javascript:`, `vbscript:`, `data:text/html`, `<!entity`, `<!doctype`, `<foreignObject`, `<use`, `<animate`, `<set`, plus inline event handler regex (`/on[a-z]+\s*=/i`). The full file buffer is scanned (not just the first 1024 bytes) to detect deeply embedded payloads.
+  - In [`upload.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/upload.ts), SVG files are served with `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox` and `Content-Disposition: attachment` headers, preventing script execution even if a scanner bypass occurs.
+  - In [`webEnrichment.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/knowledge/webEnrichment.ts), `fetchViaJina()` validates URL protocol (`http:`/`https:` only) and hostname against private/internal IP ranges (`127.*`, `10.*`, `172.16-31.*`, `192.168.*`, `169.254.*`, `0.*`) and reserved domains (`.internal`, `.local`, `.lan`, `.localhost`, `.corp`) before proxying.
+  - In [`webrtcService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/webrtcService.ts), all socket event handlers validate `roomId` type (`typeof === 'string'`) and format (`/^[a-zA-Z0-9_-]{3,64}$/`), with null checks on `leave-room`, `toggle-audio`, `toggle-video`, and `end-call` handlers to prevent crashes from malformed payloads.
+  - In [`securityGate.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/middleware/securityGate.ts), `redactMediaPayloads` constructs output objects via `Object.create(null)` and explicitly skips `__proto__`, `constructor`, and `prototype` keys during deep traversal, preventing prototype pollution attacks.
+
 ---
 
 ## 🚨 Incident Response Runbooks (Standard Operating Procedures)

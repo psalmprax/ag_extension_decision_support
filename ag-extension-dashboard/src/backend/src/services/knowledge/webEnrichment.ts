@@ -56,9 +56,24 @@ async function fallbackAgriQuery(queryText: string, queryCategories: string[], c
 
 async function fetchViaJina(url: string): Promise<string | null> {
     try {
+        const parsed = new URL(url);
+        if (!['http:', 'https:'].includes(parsed.protocol)) return null;
+        const lowerHost = parsed.hostname.toLowerCase();
+        if (
+            lowerHost === 'localhost' ||
+            lowerHost === '127.0.0.1' ||
+            lowerHost === '169.254.169.254' ||
+            lowerHost.startsWith('10.') ||
+            lowerHost.startsWith('192.168.') ||
+            lowerHost.startsWith('172.') ||
+            lowerHost.endsWith('.internal') ||
+            lowerHost.endsWith('.local')
+        ) {
+            return null;
+        }
         const jinaUrl = `https://r.jina.ai/${url}`;
         const { default: axios } = await import('axios');
-        const resp = await axios.get(jinaUrl, { timeout: 2500, headers: { 'Accept': 'text/markdown' } });
+        const resp = await axios.get(jinaUrl, { timeout: 2500, headers: { 'Accept': 'text/markdown' }, maxRedirects: 3 });
         const text = typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data);
         return text.slice(0, 4000);
     } catch { return null; }

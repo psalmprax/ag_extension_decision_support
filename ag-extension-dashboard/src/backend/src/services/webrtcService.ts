@@ -197,7 +197,15 @@ class WebRTCService {
         });
 
         socket.on('join-room', async (data: { roomId: string; userId: string; userName: string }, callback: (response: Record<string, unknown>) => void) => {
-            const roomId = data.roomId;
+            if (!data || typeof data.roomId !== 'string') {
+                this.respond(callback, { success: false, error: 'Invalid room ID' });
+                return;
+            }
+            const roomId = data.roomId.trim();
+            if (!/^[a-zA-Z0-9_-]{3,64}$/.test(roomId)) {
+                this.respond(callback, { success: false, error: 'Invalid room ID format' });
+                return;
+            }
             const participantId = data.userId || uuidv4();
             const participantName = data.userName || 'Farmer / Guest';
             const participant = { id: participantId, socketId: socket.id, name: participantName };
@@ -242,7 +250,8 @@ class WebRTCService {
         });
 
         socket.on('leave-room', async (data: { roomId: string; userId: string }) => {
-            await this.handleLeaveRoom(data.roomId, data.userId, socket);
+            if (!data || typeof data.roomId !== 'string') return;
+            await this.handleLeaveRoom(data.roomId.trim(), data.userId, socket);
         });
     }
 
@@ -385,39 +394,43 @@ class WebRTCService {
 
     private setupCallControlHandlers(socket: Socket) {
         socket.on('toggle-audio', (data: { roomId: string; userId: string; enabled: boolean }) => {
+            if (!data?.roomId || typeof data.roomId !== 'string') return;
             socket.to(data.roomId).emit('audio-toggled', { userId: data.userId, enabled: data.enabled });
         });
 
         socket.on('toggle-video', (data: { roomId: string; userId: string; enabled: boolean }) => {
+            if (!data?.roomId || typeof data.roomId !== 'string') return;
             socket.to(data.roomId).emit('video-toggled', { userId: data.userId, enabled: data.enabled });
         });
 
         socket.on('end-call', async (data: { roomId: string; userId: string }) => {
-            const room = this.activeRooms.get(data.roomId);
+            if (!data?.roomId || typeof data.roomId !== 'string') return;
+            const roomId = data.roomId.trim();
+            const room = this.activeRooms.get(roomId);
             if (room) {
                 room.isActive = false;
                 room.participants.clear();
                 void this.cacheRoom(room);
-                void this.delRoomCache(data.roomId);
+                void this.delRoomCache(roomId);
             } else {
-                void this.delRoomCache(data.roomId);
+                void this.delRoomCache(roomId);
             }
 
-            if (isValidUuid(data.roomId)) {
+            if (isValidUuid(roomId)) {
                 try {
                     const prisma = getPrisma();
                     await prisma.webRTCRoom.update({
-                        where: { id: data.roomId },
+                        where: { id: roomId },
                         data: { isActive: false }
                     });
                 } catch (err) {
                     // ignore
                 }
             }
-            void this.syncConsultationStatus(data.roomId, 'completed');
+            void this.syncConsultationStatus(roomId, 'completed');
 
-            this.io?.to(data.roomId).emit('call-ended', { userId: data.userId });
-            logger.info(`Call ended in room ${data.roomId} by ${data.userId}`);
+            this.io?.to(roomId).emit('call-ended', { userId: data.userId });
+            logger.info(`Call ended in room ${roomId} by ${data.userId}`);
         });
     }
 
