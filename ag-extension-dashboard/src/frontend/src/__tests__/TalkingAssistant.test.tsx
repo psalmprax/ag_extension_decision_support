@@ -10,22 +10,69 @@ vi.mock('@/api/client', () => ({
 
 const mockedPost = apiClient.post as unknown as ReturnType<typeof vi.fn>;
 
+let mockSpeak: ReturnType<typeof vi.fn>;
+let mockCancel: ReturnType<typeof vi.fn>;
+let mockPlay: ReturnType<typeof vi.fn>;
+
 describe('TalkingAssistant Component', () => {
   beforeEach(() => {
     mockedPost.mockReset();
     sessionStorage.clear();
 
+    mockSpeak = vi.fn();
+    mockCancel = vi.fn();
+    mockPlay = vi.fn().mockResolvedValue(undefined);
+
     Object.defineProperty(window, 'speechSynthesis', {
       value: {
-        speak: vi.fn(),
-        cancel: vi.fn(),
+        speak: mockSpeak,
+        cancel: mockCancel,
+        getVoices: vi.fn().mockReturnValue([
+          { name: 'Google US English (Natural)', lang: 'en-US' },
+          { name: 'Google Swahili', lang: 'sw-KE' },
+          { name: 'Google Français (Naturel)', lang: 'fr-FR' },
+          { name: 'Microsoft Jenny Online (Natural)', lang: 'en-US' },
+          { name: 'Microsoft Guy Online (Natural)', lang: 'en-US' },
+        ]),
+        onvoiceschanged: null,
       },
       writable: true,
       configurable: true,
     });
 
+    class MockSpeechSynthesisUtterance {
+      text: string;
+      lang = 'en-US';
+      rate = 1.0;
+      pitch = 1.0;
+      voice: unknown = null;
+      onend: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      constructor(text: string) {
+        this.text = text;
+      }
+    }
+
     Object.defineProperty(window, 'SpeechSynthesisUtterance', {
-      value: vi.fn(),
+      value: MockSpeechSynthesisUtterance,
+      writable: true,
+      configurable: true,
+    });
+
+    class MockAudio {
+      src = '';
+      onended: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      play = mockPlay;
+      pause = vi.fn();
+      currentTime = 0;
+      constructor(src?: string) {
+        if (src) this.src = src;
+      }
+    }
+
+    Object.defineProperty(window, 'Audio', {
+      value: MockAudio,
       writable: true,
       configurable: true,
     });
@@ -283,5 +330,133 @@ describe('TalkingAssistant Component', () => {
         expect.objectContaining({ language: 'en' })
       );
     });
+  });
+
+  it('renders voice persona selector with HD Neural badge and allows persona switching', async () => {
+    render(<TalkingAssistant />);
+
+    expect(screen.getByText(/Voice Persona/i)).toBeInTheDocument();
+    expect(screen.getByText(/HD Neural/i)).toBeInTheDocument();
+
+    const amaniBtn = screen.getByRole('button', { name: /Amani/i });
+    const barakaBtn = screen.getByRole('button', { name: /Baraka/i });
+    const zawadiBtn = screen.getByRole('button', { name: /Zawadi/i });
+
+    expect(amaniBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(barakaBtn).toHaveAttribute('aria-pressed', 'false');
+    expect(zawadiBtn).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(barakaBtn);
+
+    await waitFor(() => {
+      expect(barakaBtn).toHaveAttribute('aria-pressed', 'true');
+      expect(amaniBtn).toHaveAttribute('aria-pressed', 'false');
+    });
+  });
+
+  it('synthesizes humanized speech with expanded units and calibrated prosody on fallback', async () => {
+    mockedPost.mockRejectedValue(new Error('Server neural TTS unavailable'));
+
+    render(<TalkingAssistant />);
+
+    const promptBtn = screen.getByText(/Fall Armyworm bio-control/i);
+    fireEvent.click(promptBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText(/scout leaf whorls at dawn or dusk/i)).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(mockSpeak).toHaveBeenCalled();
+    });
+
+    const speakCalls = mockSpeak.mock.calls;
+    const spokenUtterance = speakCalls[speakCalls.length - 1][0];
+    expect(spokenUtterance.text).toContain('milliliters per liter');
+    expect(spokenUtterance.rate).toBeCloseTo(0.94);
+    expect(spokenUtterance.pitch).toBeCloseTo(1.04);
+  });
+
+  it('streams server-side studio neural audio when public demo TTS succeeds', async () => {
+    mockedPost.mockImplementation(async (url: string) => {
+      if (url === '/chatbot/public-demo/tts') {
+        return {
+          data: {
+            success: true,
+            data: {
+              audioBase64: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+              format: 'mp3',
+              voice: 'nova',
+            },
+          },
+        };
+      }
+      return { data: { success: true, data: {} } };
+    });
+
+    render(<TalkingAssistant />);
+
+    const promptBtn = screen.getByText(/Fall Armyworm bio-control/i);
+    fireEvent.click(promptBtn);
+
+    await waitFor(() => {
+      expect(mockedPost).toHaveBeenCalledWith(
+        '/chatbot/public-demo/tts',
+        expect.objectContaining({
+          voice: 'nova',
+          language: 'en',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    await waitFor(() => {
+      expect(mockPlay).toHaveBeenCalled();
+    });
+  });
+
+  it('renders 24 Languages badge and allows switching voice language via quick pills and dropdown', async () => {
+    render(<TalkingAssistant />);
+
+    expect(screen.getByText(/24 Languages/i)).toBeInTheDocument();
+
+    const frPill = screen.getByRole('button', { name: /^🇫🇷\s*Français$/i });
+    expect(frPill).toBeInTheDocument();
+    fireEvent.click(frPill);
+
+    const input = screen.getByPlaceholderText(/Posez une question sur le diagnostic/i);
+    expect(input).toBeInTheDocument();
+
+    const selectDropdown = screen.getByLabelText(/Select voice language/i);
+    fireEvent.change(selectDropdown, { target: { value: 'es' } });
+
+    expect(screen.getByPlaceholderText(/Haga una pregunta sobre diagnóstico/i)).toBeInTheDocument();
+  });
+
+  it('dispatches multilingual query with correct language code to public-demo and sets BCP-47 speech locale', async () => {
+    mockedPost.mockRejectedValue(new Error('Server neural TTS unavailable'));
+
+    render(<TalkingAssistant />);
+
+    const frPrompt = screen.getByText(/Chenille Légionnaire \(Français\)/i);
+    fireEvent.click(frPrompt);
+
+    await waitFor(() => {
+      expect(mockedPost).toHaveBeenCalledWith(
+        '/chatbot/public-demo',
+        expect.objectContaining({
+          language: 'fr',
+          query: "Quel est le traitement biologique recommandé contre la légionnaire d'automne?",
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(mockSpeak).toHaveBeenCalled();
+    });
+
+    const speakCalls = mockSpeak.mock.calls;
+    const spokenUtterance = speakCalls[speakCalls.length - 1][0];
+    expect(spokenUtterance.lang).toBe('fr-FR');
   });
 });

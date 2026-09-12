@@ -45,7 +45,7 @@ const publicDemoRequestSchema = z
     query: z.string().min(1).max(2000).optional(),
     message: z.string().min(1).max(2000).optional(),
     history: z.array(historyItemSchema).optional(),
-    language: z.enum(['en', 'sw']).optional(),
+    language: z.string().min(2).max(10).optional().default('en'),
     entitySlots: entitySlotsSchema.optional(),
   })
   .refine(
@@ -57,7 +57,7 @@ type PublicDemoRequestBody = z.infer<typeof publicDemoRequestSchema>;
 
 const publicDemoSttSchema = z.object({
   audio: z.string().min(1, 'audio base64 payload is required'),
-  language: z.enum(['en', 'sw']).optional().default('en'),
+  language: z.string().min(2).max(10).optional().default('en'),
 });
 
 function extractCrop(text: string): string | null {
@@ -138,7 +138,7 @@ interface EdgeFollowUpResult {
 function resolveEdgeFollowUp(
   query: string,
   slots: AgronomicEntitySlots,
-  language: 'en' | 'sw'
+  language: string
 ): EdgeFollowUpResult | null {
   const q = query.toLowerCase();
   const isDosageQuery =
@@ -295,15 +295,39 @@ async function loadDemoRagContext(queryText: string): Promise<{
   }
 }
 
+const LANGUAGE_DIRECTIVES: Record<string, string> = {
+  sw: 'Jibu kwa lugha fasaha ya Kiswahili inayoeleweka kwa wakulima wa Afrika Mashariki.',
+  fr: 'Répondez en français clair et accessible adapté aux agriculteurs et vulgarisateurs.',
+  pt: 'Responda em português claro e profissional adaptado a agricultores e extensionistas.',
+  es: 'Responda en español claro y profesional adaptado a agricultores y extensionistas.',
+  zu: 'Phendula ngesiZulu esicacile nesiqondakalayo kubalimi.',
+  ar: 'أجب باللغة العربية الواضحة والمهنية المناسبة للمزارعين والمرشدين الزراعيين.',
+  hi: 'किसानों और विस्तार कार्यकर्ताओं के लिए स्पष्ट और सरल हिंदी में उत्तर दें।',
+  de: 'Antworten Sie auf Deutsch, klar und verständlich für Landwirte.',
+  it: 'Rispondi in italiano chiaro e professionale per agricoltori.',
+  nl: 'Antwoord in helder en professioneel Nederlands voor landbouwers.',
+  zh: '请用通俗易懂且专业的中文为农民和农业推广员解答。',
+  ru: 'Отвечайте на ясном и профессиональном русском языке для фермеров.',
+  uk: 'Відповідайте зрозумілою та професійною українською мовою для фермерів.',
+  tr: 'Çiftçiler için açık ve profesyonel Türkçe ile yanıt verin.',
+};
+
+function getLanguageDirective(language: string): string {
+  if (LANGUAGE_DIRECTIVES[language]) {
+    return LANGUAGE_DIRECTIVES[language];
+  }
+  if (language && language !== 'en') {
+    return `Respond in clear, professional ${language.toUpperCase()} language tailored to farmers and extension workers.`;
+  }
+  return 'Respond in clear, professional English tailored to farmers and extension workers.';
+}
+
 function buildDemoSystemPrompt(
   slots: AgronomicEntitySlots,
-  language: 'en' | 'sw',
+  language: string,
   ragContext: string
 ): string {
-  const langDirective =
-    language === 'sw'
-      ? 'Jibu kwa lugha fasaha ya Kiswahili inayoeleweka kwa wakulima wa Afrika Mashariki.'
-      : 'Respond in clear, professional English tailored to farmers and extension workers.';
+  const langDirective = getLanguageDirective(language);
 
   const slotSummary = Object.entries(slots)
     .filter(([_, v]) => Boolean(v))
@@ -438,7 +462,7 @@ router.post(
 
       const provider = await AIProviderFactory.getProvider();
       const transcript = await provider.speechToText(buffer, {
-        language: language === 'sw' ? 'sw' : 'en',
+        language: language || 'en',
       });
 
       const text = (transcript?.text ?? '').trim();
@@ -460,6 +484,49 @@ router.post(
     } catch (error) {
       logger.error('Public demo speech transcription failed:', error);
       return safeError(res, 500, 'Speech transcription failed');
+    }
+  }
+);
+
+const publicDemoTtsSchema = z.object({
+  text: z.string().min(1, 'Text is required').max(1000, 'Text exceeds 1000 characters limit'),
+  voice: z.enum(['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer', 'default']).optional().default('nova'),
+  language: z.string().min(2).max(10).optional().default('en'),
+});
+
+router.post(
+  '/public-demo/tts',
+  publicDemoRateLimiter,
+  validate({ body: publicDemoTtsSchema }),
+  async (req: Request, res: Response) => {
+    try {
+      const { text, voice = 'nova', language = 'en' } = req.body;
+      const provider = await AIProviderFactory.getProvider();
+
+      if (typeof provider.textToSpeech !== 'function' || !provider.isConfigured()) {
+        return res.status(503).json({
+          success: false,
+          fallback: 'client_tts',
+          error: 'Server neural TTS unavailable. Please use browser natural speech synthesis.',
+        });
+      }
+
+      const ttsResult = await provider.textToSpeech(text, { voice, language });
+      return res.json({
+        success: true,
+        data: {
+          audioBase64: ttsResult.audio.toString('base64'),
+          format: ttsResult.format,
+          voice,
+        },
+      });
+    } catch (error) {
+      logger.warn('Public demo TTS synthesis failed:', error instanceof Error ? error.message : String(error));
+      return res.status(503).json({
+        success: false,
+        fallback: 'client_tts',
+        error: 'Neural TTS synthesis failed. Falling back to client speech synthesis.',
+      });
     }
   }
 );

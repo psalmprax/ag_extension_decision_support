@@ -34,6 +34,11 @@ jest.mock('../services/aiProvider/aiProvider', () => ({
         language: 'en',
         confidence: 0.96,
       }),
+      textToSpeech: jest.fn().mockResolvedValue({
+        audio: Buffer.from('mock-mp3-audio-bytes'),
+        format: 'mp3',
+      }),
+      isConfigured: jest.fn().mockReturnValue(true),
     }),
   },
 }));
@@ -137,6 +142,20 @@ describe('POST /api/v1/chatbot/public-demo', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data.text).toContain('ekari 3 za mahindi');
     expect(res.body.data.text).toContain('lita 1.2');
+  });
+
+  it('supports multilingual agronomic inquiries in other project languages (e.g. French)', async () => {
+    const res = await request(app)
+      .post('/api/v1/chatbot/public-demo')
+      .set('X-Forwarded-For', '198.51.100.15')
+      .send({
+        query: 'Quel est le traitement pour la chenille légionnaire dans le maïs?',
+        language: 'fr',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.text).toBeDefined();
   });
 
   it('rejects prompt injection attempts with canonical domain guard message or security perimeter block', async () => {
@@ -243,6 +262,33 @@ describe('POST /api/v1/chatbot/public-demo', () => {
       .send({
         language: 'en',
       });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+  });
+
+  it('synthesizes neural audio on /api/v1/chatbot/public-demo/tts', async () => {
+    const res = await request(app)
+      .post('/api/v1/chatbot/public-demo/tts')
+      .set('X-Forwarded-For', '198.51.100.90')
+      .send({
+        text: 'Apply cold-pressed Neem oil across your field at dusk.',
+        voice: 'nova',
+        language: 'en',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.audioBase64).toBeDefined();
+    expect(res.body.data.format).toBe('mp3');
+    expect(res.body.data.voice).toBe('nova');
+  });
+
+  it('rejects /api/v1/chatbot/public-demo/tts when text is missing', async () => {
+    const res = await request(app)
+      .post('/api/v1/chatbot/public-demo/tts')
+      .set('X-Forwarded-For', '198.51.100.91')
+      .send({});
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);

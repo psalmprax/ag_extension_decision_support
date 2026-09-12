@@ -14,11 +14,40 @@ import {
   RotateCcw,
   ShieldCheck,
   ChevronRight,
+  ChevronDown,
   Loader2,
 } from 'lucide-react';
 import apiClient from '@/api/client';
 import { EncryptedStorageService } from '@/services/encryptedStorageService';
+import { Language, languages } from '@/lib/i18n';
 import { fadeUp, stagger } from '../variants';
+
+const LANGUAGE_LOCALE_MAP: Record<Language, string> = {
+  en: 'en-US',
+  sw: 'sw-KE',
+  fr: 'fr-FR',
+  pt: 'pt-PT',
+  es: 'es-ES',
+  zu: 'zu-ZA',
+  it: 'it-IT',
+  de: 'de-DE',
+  nl: 'nl-NL',
+  da: 'da-DK',
+  pl: 'pl-PL',
+  hu: 'hu-HU',
+  tr: 'tr-TR',
+  ar: 'ar-SA',
+  zh: 'zh-CN',
+  hi: 'hi-IN',
+  ru: 'ru-RU',
+  uk: 'uk-UA',
+  ro: 'ro-RO',
+  cs: 'cs-CZ',
+  sk: 'sk-SK',
+  bg: 'bg-BG',
+  el: 'el-GR',
+  ug: 'ug-CN',
+};
 
 interface AgronomicEntitySlots {
   crop?: string | null;
@@ -32,7 +61,7 @@ interface Message {
   id: string;
   sender: 'user' | 'assistant';
   text: string;
-  language?: 'en' | 'sw';
+  language?: Language;
   sourceBadge?: string;
   timestamp: string;
   citations?: Array<{ sourceId: string; title: string; category: string; excerpt: string; score: number }>;
@@ -42,7 +71,7 @@ interface SampleQuestion {
   icon: string;
   label: string;
   text: string;
-  lang: 'en' | 'sw';
+  lang: Language;
 }
 
 interface SpeechRecognitionInstance {
@@ -79,22 +108,40 @@ const SAMPLE_QUESTIONS: SampleQuestion[] = [
     lang: 'en',
   },
   {
+    icon: '🌾',
+    label: 'Ugonjwa wa Nyanya (Swahili)',
+    text: 'Nini tiba bora ya ugonjwa wa ukungu kwenye mimea ya nyanya?',
+    lang: 'sw',
+  },
+  {
+    icon: '🐛',
+    label: 'Chenille Légionnaire (Français)',
+    text: "Quel est le traitement biologique recommandé contre la légionnaire d'automne?",
+    lang: 'fr',
+  },
+  {
+    icon: '🌱',
+    label: 'Manejo de Suelos (Español)',
+    text: '¿Cómo debo corregir un suelo ácido con pH 4.8 para maíz?',
+    lang: 'es',
+  },
+  {
+    icon: '☕',
+    label: 'Ferrugem do Café (Português)',
+    text: 'Quais são as melhores práticas para controlar a ferrugem das folhas do café?',
+    lang: 'pt',
+  },
+  {
+    icon: '🌿',
+    label: 'Ukuvikelwa Kwezitshalo (isiZulu)',
+    text: 'Yiziphi izindlela zokulawula izilokazane emmbileni?',
+    lang: 'zu',
+  },
+  {
     icon: '🌦️',
     label: 'Satellite Weather',
     text: 'How does the NASA POWER satellite stream predict drought anomalies?',
     lang: 'en',
-  },
-  {
-    icon: '📱',
-    label: 'Offline Sync & Security',
-    text: 'How does offline sync and remote device wipe protect farmer data?',
-    lang: 'en',
-  },
-  {
-    icon: '🌾',
-    label: 'Ugonjwa wa Nyanya (Swahili)',
-    text: 'Nini tiba bora ya ugonjwa wa ukungu (blight) kwenye mimea ya nyanya?',
-    lang: 'sw',
   },
 ];
 
@@ -243,7 +290,7 @@ interface LocalTurnResult {
 
 function resolveArmywormDosage(
   slots: AgronomicEntitySlots,
-  language: 'en' | 'sw'
+  language: Language
 ): LocalTurnResult {
   const acresMatch = slots.field_size?.match(/(\d+(?:\.\d+)?)\s*acre/i);
   const acres = acresMatch ? parseFloat(acresMatch[1] ?? '3') : 3;
@@ -269,7 +316,7 @@ function resolveArmywormDosage(
 
 function resolveLimeDosage(
   slots: AgronomicEntitySlots,
-  language: 'en' | 'sw'
+  language: Language
 ): LocalTurnResult {
   const haMatch = slots.field_size?.match(/(\d+(?:\.\d+)?)\s*hectare/i);
   const ha = haMatch ? parseFloat(haMatch[1] ?? '1') : 1;
@@ -321,8 +368,13 @@ function isArmywormFollowUp(q: string, slots: AgronomicEntitySlots): boolean {
 function resolveLocalAgronomicTurn(
   query: string,
   slots: AgronomicEntitySlots,
-  language: 'en' | 'sw'
+  language: Language
 ): LocalTurnResult {
+  // For languages outside en/sw, dispatch directly to public demo API endpoint with full LLM citations
+  if (language !== 'en' && language !== 'sw') {
+    return { isMatch: false, text: '', source: '', updatedSlots: slots };
+  }
+
   // 1. Check Lime/Soil Remediation follow-up first
   if (isLimeFollowUp(query, slots)) {
     return resolveLimeDosage(slots, language);
@@ -374,12 +426,23 @@ interface ApiAssistantResult {
   entitySlots?: AgronomicEntitySlots;
 }
 
+const RATE_LIMIT_MESSAGES: Partial<Record<Language, string>> = {
+  sw: 'Umetumia kikomo cha maswali ya majaribio (maswali 10 kwa saa). Tafadhali fungua akaunti ya bure ili uendelee bila kikomo.',
+  fr: 'Limite de démonstration atteinte (10 requêtes/heure). Veuillez créer un compte gratuit pour continuer sans limite.',
+  es: 'Límite de demostración alcanzado (10 consultas/hora). Regístrese para obtener una cuenta gratuita y continuar sin límites.',
+  pt: 'Limite de demonstração atingido (10 consultas/hora). Crie uma conta gratuita para consultas agronômicas ilimitadas.',
+  zu: 'Umkhawulo wedemo ufinyelelwe (imibuzo eyi-10 ngehora). Sicela ubhalisele i-akhawunti yamahhala ukuze uqhubeke ngaphandle kwemingcele.',
+  de: 'Demo-Anfragelimit erreicht (10 Anfragen/Stunde). Bitte registrieren Sie sich für ein kostenloses Konto.',
+  ar: 'تم الوصول إلى الحد الأقصى للاستفسارات التجريبية (10 استفسارات/ساعة). يرجى إنشاء حساب مجاني للمتابعة بدون قيود.',
+};
+
 async function fetchPublicDemoAdvisory(
   query: string,
   history: Message[],
-  language: 'en' | 'sw',
+  language: Language,
   slots: AgronomicEntitySlots
 ): Promise<ApiAssistantResult> {
+  const defaultAnswer = PRESET_ANSWERS.default[language === 'sw' ? 'sw' : 'en'];
   try {
     const response = await apiClient.post('/chatbot/public-demo', {
       query,
@@ -393,8 +456,8 @@ async function fetchPublicDemoAdvisory(
 
     const data = response.data?.data;
     return {
-      text: data?.text || PRESET_ANSWERS.default[language].text,
-      source: data?.source || PRESET_ANSWERS.default[language].source,
+      text: data?.text || defaultAnswer.text,
+      source: data?.source || defaultAnswer.source,
       citations: data?.citations,
       entitySlots: data?.entitySlots,
     };
@@ -403,15 +466,14 @@ async function fetchPublicDemoAdvisory(
     if (error.response?.status === 429) {
       return {
         text:
-          language === 'sw'
-            ? 'Umetumia kikomo cha maswali ya majaribio (maswali 10 kwa saa). Tafadhali fungua akaunti ya bure ili uendelee bila kikomo.'
-            : 'Demo rate limit reached (10 queries/hour). Please sign up for a free account to unlock unlimited agronomic consultations.',
+          RATE_LIMIT_MESSAGES[language] ??
+          'Demo rate limit reached (10 queries/hour). Please sign up for a free account to unlock unlimited agronomic consultations.',
         source: 'Rate Limit (10 queries/hour)',
       };
     }
     return {
-      text: PRESET_ANSWERS.default[language].text,
-      source: PRESET_ANSWERS.default[language].source,
+      text: defaultAnswer.text,
+      source: defaultAnswer.source,
     };
   }
 }
@@ -476,7 +538,7 @@ function blobToBase64(blob: Blob): Promise<string> {
 
 async function requestTranscribeAudioBlob(
   blob: Blob,
-  language: 'en' | 'sw'
+  language: Language
 ): Promise<string | null> {
   try {
     const base64 = await blobToBase64(blob);
@@ -520,7 +582,7 @@ async function createAudioAnalyser(): Promise<AudioAnalyserResult | null> {
 }
 
 function startNativeSpeechRecognition(
-  selectedLanguage: 'en' | 'sw',
+  selectedLanguage: Language,
   onTranscript: (t: string) => void,
   onStart: () => void,
   onError: () => void,
@@ -531,7 +593,7 @@ function startNativeSpeechRecognition(
 
   try {
     const recognition = new SpeechRecognition();
-    recognition.lang = selectedLanguage === 'sw' ? 'sw-KE' : 'en-US';
+    recognition.lang = LANGUAGE_LOCALE_MAP[selectedLanguage] || 'en-US';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
@@ -584,12 +646,383 @@ function startMediaRecorderCapture(
   }
 }
 
+export type VoicePersona = 'amani' | 'baraka' | 'zawadi';
+
+interface PersonaProsody {
+  rate: number;
+  pitch: number;
+}
+
+interface PersonaConfig {
+  id: VoicePersona;
+  label: string;
+  avatar: string;
+  role: string;
+  desc: string;
+  prosody: PersonaProsody;
+  serverVoice: 'nova' | 'alloy' | 'shimmer';
+  voiceKeywords: Record<string, string[]>;
+}
+
+const PERSONA_CONFIGS: Record<VoicePersona, PersonaConfig> = {
+  amani: {
+    id: 'amani',
+    label: 'Amani',
+    avatar: '🌿',
+    role: 'Warm Field Agronomist',
+    desc: 'Empathetic, warm, encouraging cadence',
+    prosody: { rate: 0.94, pitch: 1.04 },
+    serverVoice: 'nova',
+    voiceKeywords: {
+      en: ['natural', 'online', 'jenny', 'samantha', 'serena', 'katherine', 'victoria', 'google', 'female', 'neural'],
+      sw: ['natural', 'online', 'swahili', 'google', 'female'],
+      fr: ['natural', 'online', 'denise', 'celeste', 'brigitte', 'google', 'female', 'neural'],
+      es: ['natural', 'online', 'elena', 'monica', 'laura', 'google', 'female', 'neural'],
+      pt: ['natural', 'online', 'raquel', 'inês', 'fernanda', 'google', 'female', 'neural'],
+    },
+  },
+  baraka: {
+    id: 'baraka',
+    label: 'Baraka',
+    avatar: '⚡',
+    role: 'Dynamic Extension Lead',
+    desc: 'Resonant, confident, clear cadence',
+    prosody: { rate: 0.98, pitch: 0.98 },
+    serverVoice: 'alloy',
+    voiceKeywords: {
+      en: ['natural', 'online', 'guy', 'david', 'daniel', 'oliver', 'rishi', 'google', 'male', 'neural'],
+      sw: ['natural', 'online', 'swahili', 'google', 'male'],
+      fr: ['natural', 'online', 'henri', 'paul', 'claude', 'google', 'male', 'neural'],
+      es: ['natural', 'online', 'jorge', 'alvaro', 'manuel', 'google', 'male', 'neural'],
+      pt: ['natural', 'online', 'duarte', 'cristiano', 'google', 'male', 'neural'],
+    },
+  },
+  zawadi: {
+    id: 'zawadi',
+    label: 'Zawadi',
+    avatar: '🔬',
+    role: 'Diagnostic Specialist',
+    desc: 'Methodical, diagnostic, articulate cadence',
+    prosody: { rate: 0.92, pitch: 1.00 },
+    serverVoice: 'shimmer',
+    voiceKeywords: {
+      en: ['natural', 'online', 'aria', 'sonia', 'clara', 'enhanced', 'premium', 'google', 'neural'],
+      sw: ['natural', 'online', 'swahili', 'google'],
+      fr: ['natural', 'online', 'hortense', 'julie', 'google', 'neural'],
+      es: ['natural', 'online', 'lucia', 'conchita', 'google', 'neural'],
+      pt: ['natural', 'online', 'heloisa', 'catarina', 'google', 'neural'],
+    },
+  },
+};
+
+function cleanMarkdownFormatting(text: string): string {
+  return text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/\[\d+\]/g, '')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/[*_~`]/g, '')
+    .replace(/^\s*[-*+]\s+/gm, '')
+    .replace(/^\s*\d+\.\s+/gm, '')
+    .replace(/\s*\(([^)]+)\)/g, ', $1,');
+}
+
+function expandAgronomicUnitsEn(text: string): string {
+  return text
+    .replace(/(\d+(?:\.\d+)?)\s*ml\/L\b/gi, '$1 milliliters per liter')
+    .replace(/(\d+(?:\.\d+)?)\s*L\/acre\b/gi, '$1 liters per acre')
+    .replace(/(\d+(?:\.\d+)?)\s*t\/ha\b/gi, '$1 tonnes per hectare')
+    .replace(/(\d+(?:\.\d+)?)\s*kg\/ha\b/gi, '$1 kilograms per hectare')
+    .replace(/(\d+(?:\.\d+)?)\s*cm\b/gi, '$1 centimeters')
+    .replace(/(\d+(?:\.\d+)?)\s*mm\b/gi, '$1 millimeters')
+    .replace(/(\d+(?:\.\d+)?)\s*L\b/g, '$1 liters')
+    .replace(/(\d+(?:\.\d+)?)\s*ha\b/gi, '$1 hectares')
+    .replace(/pH\s*(\d+(?:\.\d+)?)/gi, 'p H, $1')
+    .replace(/(\d+(?:\.\d+)?)\s*%/g, '$1 percent')
+    .replace(/Bt subsp\. kurstaki/gi, 'Bacillus thuringiensis kurstaki')
+    .replace(/\bCEC\b/g, 'cation exchange capacity')
+    .replace(/\bEC\b/g, 'concentrate')
+    .replace(/\bSPEI\b/g, 'drought index');
+}
+
+function expandAgronomicUnitsSw(text: string): string {
+  return text
+    .replace(/(\d+(?:\.\d+)?)\s*ml\/L\b/gi, 'mililita $1 kwa lita ya maji')
+    .replace(/(\d+(?:\.\d+)?)\s*t\/ha\b/gi, 'tani $1 kwa hekta')
+    .replace(/(\d+(?:\.\d+)?)\s*L\b/g, 'lita $1')
+    .replace(/(\d+(?:\.\d+)?)\s*ha\b/gi, 'hekta $1')
+    .replace(/pH\s*(\d+(?:\.\d+)?)/gi, 'p H $1')
+    .replace(/(\d+(?:\.\d+)?)\s*%/g, 'asilimia $1');
+}
+
+function expandAgronomicUnitsFr(text: string): string {
+  return text
+    .replace(/(\d+(?:\.\d+)?)\s*ml\/L\b/gi, '$1 millilitres par litre')
+    .replace(/(\d+(?:\.\d+)?)\s*t\/ha\b/gi, '$1 tonnes par hectare')
+    .replace(/(\d+(?:\.\d+)?)\s*kg\/ha\b/gi, '$1 kilogrammes par hectare')
+    .replace(/(\d+(?:\.\d+)?)\s*L\b/g, '$1 litres')
+    .replace(/(\d+(?:\.\d+)?)\s*ha\b/gi, '$1 hectares')
+    .replace(/pH\s*(\d+(?:\.\d+)?)/gi, 'p H $1')
+    .replace(/(\d+(?:\.\d+)?)\s*%/g, '$1 pour cent');
+}
+
+function expandAgronomicUnitsEs(text: string): string {
+  return text
+    .replace(/(\d+(?:\.\d+)?)\s*ml\/L\b/gi, '$1 mililitros por litro')
+    .replace(/(\d+(?:\.\d+)?)\s*t\/ha\b/gi, '$1 toneladas por hectárea')
+    .replace(/(\d+(?:\.\d+)?)\s*kg\/ha\b/gi, '$1 kilogramos por hectárea')
+    .replace(/(\d+(?:\.\d+)?)\s*L\b/g, '$1 litros')
+    .replace(/(\d+(?:\.\d+)?)\s*ha\b/gi, '$1 hectáreas')
+    .replace(/pH\s*(\d+(?:\.\d+)?)/gi, 'p H $1')
+    .replace(/(\d+(?:\.\d+)?)\s*%/g, '$1 por ciento');
+}
+
+function expandAgronomicUnitsPt(text: string): string {
+  return text
+    .replace(/(\d+(?:\.\d+)?)\s*ml\/L\b/gi, '$1 mililitros por litro')
+    .replace(/(\d+(?:\.\d+)?)\s*t\/ha\b/gi, '$1 toneladas por hectare')
+    .replace(/(\d+(?:\.\d+)?)\s*kg\/ha\b/gi, '$1 quilogramas por hectare')
+    .replace(/(\d+(?:\.\d+)?)\s*L\b/g, '$1 litros')
+    .replace(/(\d+(?:\.\d+)?)\s*ha\b/gi, '$1 hectares')
+    .replace(/pH\s*(\d+(?:\.\d+)?)/gi, 'p H $1')
+    .replace(/(\d+(?:\.\d+)?)\s*%/g, '$1 por cento');
+}
+
+const UNIT_EXPANDERS: Record<string, (t: string) => string> = {
+  sw: expandAgronomicUnitsSw,
+  fr: expandAgronomicUnitsFr,
+  es: expandAgronomicUnitsEs,
+  pt: expandAgronomicUnitsPt,
+};
+
+function smoothProsodyPunctuation(text: string): string {
+  return text
+    .replace(/,+/g, ',')
+    .replace(/\s+,/g, ',')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function humanizeSpeechText(raw: string, language: Language = 'en'): string {
+  if (!raw) return '';
+  const noMd = cleanMarkdownFormatting(raw);
+  const expander = UNIT_EXPANDERS[language] ?? expandAgronomicUnitsEn;
+  const withUnits = expander(noMd);
+  return smoothProsodyPunctuation(withUnits);
+}
+
+const NEURAL_VOICE_BONUSES: Array<{ token: string; bonus: number }> = [
+  { token: 'natural', bonus: 50 },
+  { token: 'online', bonus: 40 },
+  { token: 'neural', bonus: 50 },
+  { token: 'premium', bonus: 35 },
+  { token: 'enhanced', bonus: 35 },
+  { token: 'google', bonus: 30 },
+  { token: 'espeak', bonus: -80 },
+  { token: 'festival', bonus: -60 },
+];
+
+function getLanguageScore(langLower: string, targetLang: Language): number {
+  const prefix = targetLang.toLowerCase();
+  if (!langLower.startsWith(prefix)) {
+    return 0;
+  }
+  const isPreferredAccent =
+    langLower.includes('us') ||
+    langLower.includes('gb') ||
+    langLower.includes('ke') ||
+    langLower.includes('fr') ||
+    langLower.includes('es') ||
+    langLower.includes('br') ||
+    langLower.includes('za') ||
+    langLower.includes('de');
+  return isPreferredAccent ? 120 : 100;
+}
+
+function getVoiceQualityBonus(nameLower: string): number {
+  let bonus = 0;
+  for (const item of NEURAL_VOICE_BONUSES) {
+    if (nameLower.includes(item.token)) {
+      bonus += item.bonus;
+    }
+  }
+  return bonus;
+}
+
+function getPersonaMatchBonus(nameLower: string, persona: VoicePersona, targetLang: Language): number {
+  const cfg = PERSONA_CONFIGS[persona];
+  const list = cfg.voiceKeywords[targetLang] ?? cfg.voiceKeywords.en ?? [];
+  let bonus = 0;
+  for (const kw of list) {
+    if (nameLower.includes(kw)) {
+      bonus += 15;
+    }
+  }
+  return bonus;
+}
+
+function scoreVoiceCandidate(
+  voice: SpeechSynthesisVoice,
+  targetLang: Language,
+  persona: VoicePersona
+): number {
+  const langLower = voice.lang.toLowerCase();
+  const nameLower = voice.name.toLowerCase();
+
+  const langScore = getLanguageScore(langLower, targetLang);
+  if (langScore === 0) return 0;
+
+  const qualityScore = getVoiceQualityBonus(nameLower);
+  const personaScore = getPersonaMatchBonus(nameLower, persona, targetLang);
+
+  return langScore + qualityScore + personaScore;
+}
+
+function findBestNaturalVoice(
+  voices: SpeechSynthesisVoice[],
+  lang: Language,
+  persona: VoicePersona
+): SpeechSynthesisVoice | null {
+  if (!voices || voices.length === 0) return null;
+  let bestVoice: SpeechSynthesisVoice | null = null;
+  let highestScore = -Infinity;
+
+  for (const voice of voices) {
+    const score = scoreVoiceCandidate(voice, lang, persona);
+    if (score > highestScore) {
+      highestScore = score;
+      bestVoice = voice;
+    }
+  }
+
+  return highestScore > 0 ? bestVoice : (voices[0] ?? null);
+}
+
+async function requestServerTts(
+  text: string,
+  voice: 'nova' | 'alloy' | 'shimmer',
+  language: Language,
+  signal?: AbortSignal
+): Promise<string | null> {
+  try {
+    const res = await apiClient.post(
+      '/chatbot/public-demo/tts',
+      { text: text.slice(0, 950), voice, language },
+      { signal }
+    );
+    return res.data?.data?.audioBase64 ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function stopSpeechAndAudio(
+  ttsAbortRef: React.MutableRefObject<AbortController | null>,
+  audioRef: React.MutableRefObject<HTMLAudioElement | null>,
+  synthRef: React.MutableRefObject<SpeechSynthesis | null>
+): void {
+  if (ttsAbortRef.current) {
+    ttsAbortRef.current.abort();
+    ttsAbortRef.current = null;
+  }
+  if (audioRef.current) {
+    try {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    } catch {
+      // ignore
+    }
+    audioRef.current = null;
+  }
+  if (synthRef.current) {
+    try {
+      synthRef.current.cancel();
+    } catch {
+      // ignore
+    }
+  }
+}
+
+function stopActiveRecording(
+  recognitionRef: React.MutableRefObject<SpeechRecognitionInstance | null>,
+  mediaRecorderRef: React.MutableRefObject<MediaRecorder | null>
+): void {
+  if (recognitionRef.current) {
+    try {
+      recognitionRef.current.stop();
+    } catch {
+      // ignore
+    }
+    recognitionRef.current = null;
+  }
+  if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+    try {
+      mediaRecorderRef.current.stop();
+    } catch {
+      // ignore
+    }
+  }
+}
+
+function playServerAudio(
+  base64Audio: string,
+  onEnd: () => void,
+  onError: () => void
+): HTMLAudioElement | null {
+  if (typeof window === 'undefined' || typeof window.Audio === 'undefined') {
+    return null;
+  }
+  try {
+    const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+    audio.onended = onEnd;
+    audio.onerror = onError;
+    void audio.play().catch(onError);
+    return audio;
+  } catch {
+    return null;
+  }
+}
+
+function startListeningCapture(
+  selectedLanguage: Language,
+  onTranscript: (t: string) => void,
+  onNativeEnd: () => void,
+  analyserResult: AudioAnalyserResult | null,
+  audioChunksRef: React.MutableRefObject<Blob[]>,
+  handleRecorderStop: () => void
+): { recognition: SpeechRecognitionInstance | null; recorder: MediaRecorder | null } {
+  const nativeInstance = startNativeSpeechRecognition(
+    selectedLanguage,
+    onTranscript,
+    () => {},
+    onNativeEnd,
+    onNativeEnd
+  );
+  if (nativeInstance) {
+    return { recognition: nativeInstance, recorder: null };
+  }
+  if (analyserResult?.stream) {
+    audioChunksRef.current = [];
+    const recorder = startMediaRecorderCapture(
+      analyserResult.stream,
+      (chunk) => audioChunksRef.current.push(chunk),
+      handleRecorderStop
+    );
+    return { recognition: null, recorder };
+  }
+  return { recognition: null, recorder: null };
+}
+
 interface UseSpeechControllerProps {
-  selectedLanguage: 'en' | 'sw';
+  selectedLanguage: Language;
+  selectedPersona: VoicePersona;
   onTranscript: (transcript: string) => void;
 }
 
-function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechControllerProps) {
+function useSpeechController({
+  selectedLanguage,
+  selectedPersona,
+  onTranscript,
+}: UseSpeechControllerProps) {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -601,20 +1034,27 @@ function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechContro
   const audioChunksRef = useRef<Blob[]>([]);
   const audioAnalyserRef = useRef<AudioAnalyserResult | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const ttsAbortControllerRef = useRef<AbortController | null>(null);
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setTtsSupported('speechSynthesis' in window);
-      synthRef.current = window.speechSynthesis || null;
-    }
-    return () => {
-      if (synthRef.current) {
-        try {
-          synthRef.current.cancel();
-        } catch {
-          // ignore
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      synthRef.current = window.speechSynthesis;
+      setTtsSupported(true);
+
+      const updateVoices = () => {
+        if (synthRef.current && typeof synthRef.current.getVoices === 'function') {
+          voicesRef.current = synthRef.current.getVoices();
         }
-      }
+      };
+
+      updateVoices();
+      synthRef.current.onvoiceschanged = updateVoices;
+    }
+
+    return () => {
+      stopSpeechAndAudio(ttsAbortControllerRef, audioElementRef, synthRef);
     };
   }, []);
 
@@ -631,18 +1071,30 @@ function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechContro
     }
   }, []);
 
-  const speakText = useCallback(
-    (text: string, lang: 'en' | 'sw' = selectedLanguage) => {
-      if (!synthRef.current || !ttsSupported) return;
+  const stopSpeaking = useCallback(() => {
+    stopSpeechAndAudio(ttsAbortControllerRef, audioElementRef, synthRef);
+    setIsSpeaking(false);
+  }, []);
+
+  const speakClientFallback = useCallback(
+    (cleanText: string, lang: Language, persona: VoicePersona) => {
+      if (!synthRef.current || !ttsSupported) {
+        setIsSpeaking(false);
+        return;
+      }
 
       try {
         synthRef.current.cancel();
-        setIsSpeaking(true);
+        const cfg = PERSONA_CONFIGS[persona];
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = LANGUAGE_LOCALE_MAP[lang] || 'en-US';
+        utterance.rate = cfg.prosody.rate;
+        utterance.pitch = cfg.prosody.pitch;
 
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang === 'sw' ? 'sw-KE' : 'en-US';
-        utterance.rate = 0.95;
-        utterance.pitch = 1.0;
+        const bestVoice = findBestNaturalVoice(voicesRef.current, lang, persona);
+        if (bestVoice) {
+          utterance.voice = bestVoice;
+        }
 
         utterance.onend = () => setIsSpeaking(false);
         utterance.onerror = () => setIsSpeaking(false);
@@ -653,36 +1105,56 @@ function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechContro
         setIsSpeaking(false);
       }
     },
-    [selectedLanguage, ttsSupported]
+    [ttsSupported]
   );
 
-  const stopSpeaking = useCallback(() => {
-    if (synthRef.current) {
-      try {
-        synthRef.current.cancel();
-      } catch {
-        // ignore
+  const speakText = useCallback(
+    async (text: string, lang: Language = selectedLanguage) => {
+      stopSpeaking();
+      const cleanText = humanizeSpeechText(text, lang);
+      if (!cleanText) return;
+
+      const persona = selectedPersona;
+      const cfg = PERSONA_CONFIGS[persona];
+      setIsSpeaking(true);
+
+      const abortController = new AbortController();
+      ttsAbortControllerRef.current = abortController;
+
+      const base64Audio = await requestServerTts(
+        cleanText,
+        cfg.serverVoice,
+        lang,
+        abortController.signal
+      );
+
+      if (abortController.signal.aborted) return;
+
+      if (base64Audio) {
+        const audio = playServerAudio(
+          base64Audio,
+          () => {
+            setIsSpeaking(false);
+            audioElementRef.current = null;
+          },
+          () => {
+            audioElementRef.current = null;
+            speakClientFallback(cleanText, lang, persona);
+          }
+        );
+        if (audio) {
+          audioElementRef.current = audio;
+          return;
+        }
       }
-    }
-    setIsSpeaking(false);
-  }, []);
+
+      speakClientFallback(cleanText, lang, persona);
+    },
+    [selectedLanguage, selectedPersona, stopSpeaking, speakClientFallback]
+  );
 
   const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
-      recognitionRef.current = null;
-    }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      try {
-        mediaRecorderRef.current.stop();
-      } catch {
-        // ignore
-      }
-    }
+    stopActiveRecording(recognitionRef, mediaRecorderRef);
     setIsListening(false);
     if (!mediaRecorderRef.current) {
       cleanupAudioAnalyser();
@@ -725,31 +1197,24 @@ function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechContro
       cleanupAudioAnalyser();
     };
 
-    const nativeInstance = startNativeSpeechRecognition(
+    const { recognition, recorder } = startListeningCapture(
       selectedLanguage,
       onTranscript,
-      () => setIsListening(true),
       onNativeEnd,
-      onNativeEnd
+      analyserResult,
+      audioChunksRef,
+      handleRecorderStop
     );
 
-    if (nativeInstance) {
-      recognitionRef.current = nativeInstance;
+    if (recognition) {
+      recognitionRef.current = recognition;
+      setIsListening(true);
       return;
     }
-
-    if (analyserResult?.stream) {
-      audioChunksRef.current = [];
-      const recorder = startMediaRecorderCapture(
-        analyserResult.stream,
-        (chunk) => audioChunksRef.current.push(chunk),
-        handleRecorderStop
-      );
-      if (recorder) {
-        mediaRecorderRef.current = recorder;
-        setIsListening(true);
-        return;
-      }
+    if (recorder) {
+      mediaRecorderRef.current = recorder;
+      setIsListening(true);
+      return;
     }
 
     alert('Microphone recording is not supported in this browser. Please use Chrome, Edge, or Safari.');
@@ -777,40 +1242,59 @@ function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechContro
 }
 
 interface LanguageSelectorProps {
-  selectedLanguage: 'en' | 'sw';
-  onSelectLanguage: (lang: 'en' | 'sw') => void;
+  selectedLanguage: Language;
+  onSelectLanguage: (lang: Language) => void;
 }
+
+const PILOT_LANGUAGES: Language[] = ['en', 'sw', 'fr', 'es', 'pt'];
 
 function LanguageSelector({ selectedLanguage, onSelectLanguage }: LanguageSelectorProps) {
   return (
-    <div className="w-full flex items-center justify-between gap-2 mb-6">
-      <div className="flex items-center gap-2 text-xs font-medium text-white/70">
-        <Globe className="w-3.5 h-3.5 text-emerald-400" />
-        <span className="font-mono uppercase tracking-wider">Voice Language</span>
+    <div className="w-full mb-6">
+      <div className="flex items-center justify-between mb-2 px-0.5">
+        <div className="flex items-center gap-2 text-xs font-medium text-white/70">
+          <Globe className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="font-mono uppercase tracking-wider">Voice Language</span>
+        </div>
+        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+          24 Languages
+        </span>
       </div>
-      <div className="flex items-center gap-1.5 p-1 rounded-lg bg-slate-950/70 border border-white/[0.08]">
-        <button
-          type="button"
-          onClick={() => onSelectLanguage('en')}
-          className={`px-2.5 py-1 text-xs font-semibold rounded transition-all ${
-            selectedLanguage === 'en'
-              ? 'bg-emerald-500 text-slate-950 shadow-md'
-              : 'text-white/60 hover:text-white'
-          }`}
-        >
-          English
-        </button>
-        <button
-          type="button"
-          onClick={() => onSelectLanguage('sw')}
-          className={`px-2.5 py-1 text-xs font-semibold rounded transition-all ${
-            selectedLanguage === 'sw'
-              ? 'bg-emerald-500 text-slate-950 shadow-md'
-              : 'text-white/60 hover:text-white'
-          }`}
-        >
-          Kiswahili
-        </button>
+      <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-950/70 border border-white/[0.08]">
+        {PILOT_LANGUAGES.map((code) => {
+          const langObj = languages.find((l) => l.code === code);
+          const isSelected = selectedLanguage === code;
+          return (
+            <button
+              key={code}
+              type="button"
+              onClick={() => onSelectLanguage(code)}
+              className={`px-2 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1 ${
+                isSelected
+                  ? 'bg-emerald-500 text-slate-950 shadow-md'
+                  : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
+              }`}
+            >
+              <span>{langObj?.flag}</span>
+              <span>{langObj?.name}</span>
+            </button>
+          );
+        })}
+        <div className="relative ml-auto">
+          <select
+            aria-label="Select voice language"
+            value={selectedLanguage}
+            onChange={(e) => onSelectLanguage(e.target.value as Language)}
+            className="appearance-none bg-slate-900 text-white text-xs font-medium pl-2.5 pr-7 py-1 rounded-lg border border-white/10 hover:border-emerald-500/40 focus:outline-none focus:border-emerald-500 cursor-pointer"
+          >
+            {languages.map((l) => (
+              <option key={l.code} value={l.code} className="bg-slate-900 text-white">
+                {l.flag} {l.name} ({l.code.toUpperCase()})
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="w-3.5 h-3.5 text-white/40 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </div>
       </div>
     </div>
   );
@@ -1035,6 +1519,55 @@ function Waveform({ isListening, isSpeaking, analyser }: WaveformProps) {
   );
 }
 
+interface PersonaSelectorProps {
+  selectedPersona: VoicePersona;
+  onSelectPersona: (p: VoicePersona) => void;
+}
+
+function PersonaSelector({ selectedPersona, onSelectPersona }: PersonaSelectorProps) {
+  const personas: Array<{ id: VoicePersona; label: string; icon: string; desc: string }> = [
+    { id: 'amani', label: 'Amani', icon: '🌿', desc: 'Warm Field Agronomist' },
+    { id: 'baraka', label: 'Baraka', icon: '⚡', desc: 'Dynamic Extension Lead' },
+    { id: 'zawadi', label: 'Zawadi', icon: '🔬', desc: 'Diagnostic Specialist' },
+  ];
+
+  return (
+    <div className="w-full my-3">
+      <div className="flex items-center justify-between mb-1.5 px-0.5">
+        <span className="text-[11px] font-semibold tracking-wider uppercase text-white/50">
+          Voice Persona
+        </span>
+        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+          <Sparkles className="w-2.5 h-2.5" />
+          HD Neural
+        </span>
+      </div>
+      <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+        {personas.map((p) => {
+          const isSelected = selectedPersona === p.id;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => onSelectPersona(p.id)}
+              className={`flex flex-col items-center py-2 px-1.5 rounded-lg text-xs font-medium transition-all ${
+                isSelected
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
+                  : 'text-white/60 hover:text-white/90 hover:bg-white/[0.04] border border-transparent'
+              }`}
+              title={p.desc}
+              aria-pressed={isSelected}
+            >
+              <span className="text-sm leading-none mb-1">{p.icon}</span>
+              <span className="text-[11px] font-semibold leading-tight">{p.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 interface AudioControlsProps {
   autoSpeak: boolean;
   isSpeaking: boolean;
@@ -1168,7 +1701,7 @@ function HandoffCard({ onHandoff }: HandoffCardProps) {
 
 interface ChatMessageProps {
   msg: Message;
-  onSpeak: (text: string, lang: 'en' | 'sw') => void;
+  onSpeak: (text: string, lang: Language) => void;
 }
 
 function ChatMessage({ msg, onSpeak }: ChatMessageProps) {
@@ -1246,12 +1779,22 @@ function QuestionChips({ onSelect }: QuestionChipsProps) {
   );
 }
 
+const PLACEHOLDERS: Partial<Record<Language, string>> = {
+  sw: 'Uliza swali kuhusu kilimo, udongo, au hali ya hewa...',
+  fr: 'Posez une question sur le diagnostic des cultures, le sol ou la météo...',
+  es: 'Haga una pregunta sobre diagnóstico de cultivos, suelo o clima...',
+  pt: 'Faça uma pergunta sobre diagnóstico de culturas, solo ou clima...',
+  zu: 'Buza umbuzo mayelana nezitshalo, umhlabathi noma isimo sezulu...',
+  ar: 'اطرح سؤالاً حول تشخيص المحاصيل أو التربة أو الطقس...',
+  hi: 'फसल निदान, मिट्टी या मौसम के बारे में प्रश्न पूछें...',
+};
+
 interface ChatInputFormProps {
   inputText: string;
   isListening: boolean;
   isLoading: boolean;
   isTranscribing?: boolean;
-  selectedLanguage: 'en' | 'sw';
+  selectedLanguage: Language;
   onChangeInput: (val: string) => void;
   onSubmit: () => void;
   onToggleListening: () => void;
@@ -1268,9 +1811,8 @@ function ChatInputForm({
   onToggleListening,
 }: ChatInputFormProps) {
   const placeholder =
-    selectedLanguage === 'sw'
-      ? 'Uliza swali kuhusu kilimo, udongo, au hali ya hewa...'
-      : 'Ask about crop diagnosis, weather anomalies, or soil health...';
+    PLACEHOLDERS[selectedLanguage] ??
+    'Ask about crop diagnosis, weather anomalies, or soil health...';
 
   return (
     <form
@@ -1339,7 +1881,8 @@ export function TalkingAssistant() {
     },
   ]);
   const [inputText, setInputText] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'sw'>('en');
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>('en');
+  const [selectedPersona, setSelectedPersona] = useState<VoicePersona>('amani');
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [entitySlots, setEntitySlots] = useState<AgronomicEntitySlots>({
@@ -1355,9 +1898,9 @@ export function TalkingAssistant() {
   const handleDispatchAssistantTurn = useCallback(
     async (
       query: string,
-      lang: 'en' | 'sw',
+      lang: Language,
       activeSlots: AgronomicEntitySlots,
-      speakFn: (t: string, l: 'en' | 'sw') => void
+      speakFn: (t: string, l: Language) => void
     ) => {
       // 1. Check local edge preset / follow-up rules (0ms latency)
       const local = resolveLocalAgronomicTurn(query, activeSlots, lang);
@@ -1428,19 +1971,21 @@ export function TalkingAssistant() {
     toggleListening,
   } = useSpeechController({
     selectedLanguage,
+    selectedPersona,
     onTranscript: (transcript: string) => handleSendMessageRef.current(transcript),
   });
 
   const handleSendMessage = useCallback(
-    (textToSend?: string) => {
+    (textToSend?: string, overrideLang?: Language) => {
       const query = (textToSend || inputText).trim();
       if (!query || isLoading) return;
+      const lang = overrideLang ?? selectedLanguage;
 
       const userMsg: Message = {
         id: `user-${Date.now()}`,
         sender: 'user',
         text: query,
-        language: selectedLanguage,
+        language: lang,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
@@ -1454,7 +1999,7 @@ export function TalkingAssistant() {
       });
 
       setInputText('');
-      void handleDispatchAssistantTurn(query, selectedLanguage, updatedSlots, speakText);
+      void handleDispatchAssistantTurn(query, lang, updatedSlots, speakText);
     },
     [entitySlots, handleDispatchAssistantTurn, inputText, isLoading, selectedLanguage, speakText]
   );
@@ -1470,7 +2015,7 @@ export function TalkingAssistant() {
   const handleSelectPrompt = useCallback(
     (item: SampleQuestion) => {
       setSelectedLanguage(item.lang);
-      handleSendMessage(item.text);
+      handleSendMessage(item.text, item.lang);
     },
     [handleSendMessage]
   );
@@ -1547,6 +2092,11 @@ export function TalkingAssistant() {
             />
 
             <Waveform isListening={isListening} isSpeaking={isSpeaking} analyser={analyser} />
+
+            <PersonaSelector
+              selectedPersona={selectedPersona}
+              onSelectPersona={setSelectedPersona}
+            />
 
             <AudioControls
               autoSpeak={autoSpeak}
