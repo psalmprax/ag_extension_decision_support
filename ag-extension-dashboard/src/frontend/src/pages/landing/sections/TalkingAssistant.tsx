@@ -18,12 +18,39 @@ interface Message {
   id: string;
   sender: 'user' | 'assistant';
   text: string;
-  language?: string;
+  language?: 'en' | 'sw';
   sourceBadge?: string;
   timestamp: string;
 }
 
-const SAMPLE_QUESTIONS = [
+interface SampleQuestion {
+  icon: string;
+  label: string;
+  text: string;
+  lang: 'en' | 'sw';
+}
+
+interface SpeechRecognitionInstance {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onstart: (() => void) | null;
+  onresult: ((event: { results: Array<Array<{ transcript: string }>> }) => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+}
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
+
+interface WindowWithSpeech extends Window {
+  SpeechRecognition?: SpeechRecognitionConstructor;
+  webkitSpeechRecognition?: SpeechRecognitionConstructor;
+}
+
+const SAMPLE_QUESTIONS: SampleQuestion[] = [
   {
     icon: '🌽',
     label: 'Fall Armyworm bio-control',
@@ -126,29 +153,19 @@ function resolveResponse(query: string, language: 'en' | 'sw'): { text: string; 
   return PRESET_ANSWERS.default[language];
 }
 
-export function TalkingAssistant() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'welcome',
-      sender: 'assistant',
-      text: 'Hello! I am your AI Agronomic Extension Assistant. You can speak to me using your microphone or type a question about crop pathology, soil health, satellite weather, or platform security.',
-      language: 'en',
-      sourceBadge: 'GP-Ext Voice Core',
-      timestamp: 'Just now',
-    },
-  ]);
-  const [inputText, setInputText] = useState('');
+interface UseSpeechControllerProps {
+  selectedLanguage: 'en' | 'sw';
+  onTranscript: (transcript: string) => void;
+}
+
+function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechControllerProps) {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [ttsSupported, setTtsSupported] = useState(true);
-  const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'sw'>('en');
-  const [autoSpeak, setAutoSpeak] = useState(true);
 
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Initialize Web Speech APIs
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setTtsSupported('speechSynthesis' in window);
@@ -165,17 +182,6 @@ export function TalkingAssistant() {
     };
   }, []);
 
-  const scrollToBottom = useCallback(() => {
-    if (typeof messagesEndRef.current?.scrollIntoView === 'function') {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
-
-  // Handle Speech Synthesis
   const speakText = useCallback(
     (text: string, lang: 'en' | 'sw' = selectedLanguage) => {
       if (!synthRef.current || !ttsSupported) return;
@@ -216,49 +222,21 @@ export function TalkingAssistant() {
     setIsSpeaking(false);
   }, []);
 
-  // Send Message Logic
-  const handleSendMessage = useCallback(
-    (textToSend?: string) => {
-      const query = (textToSend || inputText).trim();
-      if (!query) return;
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // ignore
+      }
+    }
+    setIsListening(false);
+  }, []);
 
-      const userMsg: Message = {
-        id: `user-${Date.now()}`,
-        sender: 'user',
-        text: query,
-        language: selectedLanguage,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-
-      setMessages(prev => [...prev, userMsg]);
-      setInputText('');
-
-      // Formulate response
-      setTimeout(() => {
-        const res = resolveResponse(query, selectedLanguage);
-        const assistantMsg: Message = {
-          id: `assistant-${Date.now()}`,
-          sender: 'assistant',
-          text: res.text,
-          language: selectedLanguage,
-          sourceBadge: res.source,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-
-        setMessages(prev => [...prev, assistantMsg]);
-
-        if (autoSpeak) {
-          speakText(res.text, selectedLanguage);
-        }
-      }, 350);
-    },
-    [autoSpeak, inputText, selectedLanguage, speakText]
-  );
-
-  // Handle Voice Input via Web Speech API
   const startListening = useCallback(() => {
     if (typeof window === 'undefined') return;
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const win = window as unknown as WindowWithSpeech;
+    const SpeechRecognition = win.SpeechRecognition || win.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       alert('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
@@ -279,14 +257,14 @@ export function TalkingAssistant() {
         setIsListening(true);
       };
 
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
+      recognition.onresult = (event: { results: Array<Array<{ transcript: string }>> }) => {
+        const transcript = event.results[0]?.[0]?.transcript;
         if (transcript) {
-          handleSendMessage(transcript);
+          onTranscript(transcript);
         }
       };
 
-      recognition.onerror = (event: any) => {
+      recognition.onerror = (event: { error: string }) => {
         console.warn('Speech recognition error:', event.error);
         setIsListening(false);
       };
@@ -301,18 +279,438 @@ export function TalkingAssistant() {
       console.warn('Failed to start speech recognition:', err);
       setIsListening(false);
     }
-  }, [handleSendMessage, isSpeaking, selectedLanguage, stopSpeaking]);
+  }, [isSpeaking, onTranscript, selectedLanguage, stopSpeaking]);
 
-  const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
+  const toggleListening = useCallback(() => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
     }
-    setIsListening(false);
-  }, []);
+  }, [isListening, startListening, stopListening]);
+
+  return {
+    isListening,
+    isSpeaking,
+    speakText,
+    stopSpeaking,
+    toggleListening,
+  };
+}
+
+interface LanguageSelectorProps {
+  selectedLanguage: 'en' | 'sw';
+  onSelectLanguage: (lang: 'en' | 'sw') => void;
+}
+
+function LanguageSelector({ selectedLanguage, onSelectLanguage }: LanguageSelectorProps) {
+  return (
+    <div className="w-full flex items-center justify-between gap-2 mb-6">
+      <div className="flex items-center gap-2 text-xs font-medium text-white/70">
+        <Globe className="w-3.5 h-3.5 text-emerald-400" />
+        <span className="font-mono uppercase tracking-wider">Voice Language</span>
+      </div>
+      <div className="flex items-center gap-1.5 p-1 rounded-lg bg-slate-950/70 border border-white/[0.08]">
+        <button
+          type="button"
+          onClick={() => onSelectLanguage('en')}
+          className={`px-2.5 py-1 text-xs font-semibold rounded transition-all ${
+            selectedLanguage === 'en'
+              ? 'bg-emerald-500 text-slate-950 shadow-md'
+              : 'text-white/60 hover:text-white'
+          }`}
+        >
+          English
+        </button>
+        <button
+          type="button"
+          onClick={() => onSelectLanguage('sw')}
+          className={`px-2.5 py-1 text-xs font-semibold rounded transition-all ${
+            selectedLanguage === 'sw'
+              ? 'bg-emerald-500 text-slate-950 shadow-md'
+              : 'text-white/60 hover:text-white'
+          }`}
+        >
+          Kiswahili
+        </button>
+      </div>
+    </div>
+  );
+}
+
+interface VoiceOrbProps {
+  isListening: boolean;
+  isSpeaking: boolean;
+  onToggle: () => void;
+}
+
+function VoiceOrb({ isListening, isSpeaking, onToggle }: VoiceOrbProps) {
+  const getOrbStyle = () => {
+    if (isListening) {
+      return 'bg-amber-500 text-slate-950 ring-amber-400/40 shadow-amber-500/50 scale-105';
+    }
+    if (isSpeaking) {
+      return 'bg-emerald-500 text-slate-950 ring-emerald-400/40 shadow-emerald-500/50';
+    }
+    return 'bg-gradient-to-tr from-emerald-600 to-teal-500 text-white hover:scale-105 hover:shadow-emerald-500/30';
+  };
+
+  const getAriaLabel = () => {
+    if (isListening) return 'Stop recording voice';
+    if (isSpeaking) return 'Speaking response';
+    return 'Start speaking voice inquiry';
+  };
+
+  return (
+    <div className="my-6 relative flex items-center justify-center">
+      {(isListening || isSpeaking) && (
+        <>
+          <motion.div
+            animate={{ scale: [1, 1.45, 1], opacity: [0.6, 0.1, 0.6] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            className={`absolute w-44 h-44 rounded-full border-2 ${
+              isListening ? 'border-amber-400' : 'border-emerald-400'
+            }`}
+          />
+          <motion.div
+            animate={{ scale: [1, 1.8, 1], opacity: [0.4, 0, 0.4] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+            className={`absolute w-44 h-44 rounded-full border ${
+              isListening ? 'border-amber-400' : 'border-emerald-400'
+            }`}
+          />
+        </>
+      )}
+
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={getAriaLabel()}
+        className={`relative w-28 h-28 rounded-full flex flex-col items-center justify-center transition-all duration-300 shadow-2xl focus:outline-none focus:ring-4 ${getOrbStyle()}`}
+        title={isListening ? 'Stop listening' : 'Tap to speak'}
+      >
+        {isListening ? (
+          <>
+            <Mic className="w-9 h-9 animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Listening</span>
+          </>
+        ) : isSpeaking ? (
+          <>
+            <Volume2 className="w-9 h-9 animate-bounce" />
+            <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Speaking</span>
+          </>
+        ) : (
+          <>
+            <Mic className="w-9 h-9" />
+            <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Tap to Speak</span>
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+
+interface WaveformProps {
+  isListening: boolean;
+  isSpeaking: boolean;
+}
+
+const BAR_HEIGHTS = [40, 70, 100, 60, 85, 45, 95, 60, 80, 50, 90, 65];
+
+function Waveform({ isListening, isSpeaking }: WaveformProps) {
+  const active = isListening || isSpeaking;
+  const barColor = isListening ? 'bg-amber-400' : isSpeaking ? 'bg-emerald-400' : 'bg-white/15';
+
+  return (
+    <div className="h-8 flex items-center justify-center gap-1 my-2">
+      {BAR_HEIGHTS.map((h, i) => (
+        <motion.div
+          key={i}
+          animate={active ? { height: [8, (h * 32) / 100, 8] } : { height: 4 }}
+          transition={
+            active
+              ? { duration: 0.8 + (i % 4) * 0.15, repeat: Infinity, ease: 'easeInOut' }
+              : { duration: 0.3 }
+          }
+          className={`w-1 rounded-full transition-colors ${barColor}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+interface AudioControlsProps {
+  autoSpeak: boolean;
+  isSpeaking: boolean;
+  onToggleAutoSpeak: () => void;
+  onStopSpeaking: () => void;
+}
+
+function AudioControls({
+  autoSpeak,
+  isSpeaking,
+  onToggleAutoSpeak,
+  onStopSpeaking,
+}: AudioControlsProps) {
+  return (
+    <div className="w-full mt-4 pt-4 border-t border-white/[0.08] flex items-center justify-between text-xs text-white/70">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onToggleAutoSpeak}
+          className="flex items-center gap-1.5 hover:text-white transition-colors"
+        >
+          {autoSpeak ? (
+            <Volume2 className="w-4 h-4 text-emerald-400" />
+          ) : (
+            <VolumeX className="w-4 h-4 text-white/40" />
+          )}
+          <span>Auto-Voice Playback: {autoSpeak ? 'ON' : 'OFF'}</span>
+        </button>
+      </div>
+
+      {isSpeaking && (
+        <button
+          type="button"
+          onClick={onStopSpeaking}
+          className="px-2 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 text-[11px] font-semibold"
+        >
+          Stop Audio
+        </button>
+      )}
+    </div>
+  );
+}
+
+interface ChatMessageProps {
+  msg: Message;
+  onSpeak: (text: string, lang: 'en' | 'sw') => void;
+}
+
+function ChatMessage({ msg, onSpeak }: ChatMessageProps) {
+  const isUser = msg.sender === 'user';
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}`}
+    >
+      <div
+        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+          isUser
+            ? 'bg-emerald-600/30 border border-emerald-500/40 text-emerald-300'
+            : 'bg-teal-500/20 border border-teal-500/30 text-teal-300'
+        }`}
+      >
+        {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+      </div>
+
+      <div
+        className={`max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
+          isUser
+            ? 'bg-emerald-600 text-white rounded-tr-none'
+            : 'bg-slate-950/80 border border-white/[0.08] text-white/90 rounded-tl-none'
+        }`}
+      >
+        <p>{msg.text}</p>
+
+        {msg.sourceBadge && (
+          <div className="mt-2 pt-2 border-t border-white/[0.08] flex items-center justify-between text-[11px] text-emerald-400/90 font-mono">
+            <span className="truncate">Source: {msg.sourceBadge}</span>
+            <button
+              type="button"
+              onClick={() => onSpeak(msg.text, msg.language ?? 'en')}
+              className="ml-2 hover:text-emerald-300 inline-flex items-center gap-1 font-sans text-xs"
+              title="Listen to this advisory again"
+            >
+              <Volume2 className="w-3.5 h-3.5" />
+              <span>Listen</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+interface QuestionChipsProps {
+  onSelect: (item: SampleQuestion) => void;
+}
+
+function QuestionChips({ onSelect }: QuestionChipsProps) {
+  return (
+    <div className="mb-4">
+      <div className="text-[11px] font-semibold tracking-wider text-white/50 uppercase mb-2 flex items-center gap-1.5">
+        <Sparkles className="w-3 h-3 text-emerald-400" />
+        <span>Quick Agronomic Inquiries (Tap to Ask)</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {SAMPLE_QUESTIONS.map((item, idx) => (
+          <button
+            type="button"
+            key={idx}
+            onClick={() => onSelect(item)}
+            className="px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-emerald-500/10 border border-white/[0.08] hover:border-emerald-500/30 text-xs text-white/75 hover:text-white transition-all text-left flex items-center gap-1.5 group"
+          >
+            <span>{item.icon}</span>
+            <span className="group-hover:text-emerald-300">{item.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface ChatInputFormProps {
+  inputText: string;
+  isListening: boolean;
+  selectedLanguage: 'en' | 'sw';
+  onChangeInput: (val: string) => void;
+  onSubmit: () => void;
+  onToggleListening: () => void;
+}
+
+function ChatInputForm({
+  inputText,
+  isListening,
+  selectedLanguage,
+  onChangeInput,
+  onSubmit,
+  onToggleListening,
+}: ChatInputFormProps) {
+  const placeholder =
+    selectedLanguage === 'sw'
+      ? 'Uliza swali kuhusu kilimo, udongo, au hali ya hewa...'
+      : 'Ask about crop diagnosis, weather anomalies, or soil health...';
+
+  return (
+    <form
+      onSubmit={e => {
+        e.preventDefault();
+        onSubmit();
+      }}
+      className="relative flex items-center gap-2"
+    >
+      <input
+        type="text"
+        value={inputText}
+        onChange={e => onChangeInput(e.target.value)}
+        placeholder={placeholder}
+        className="w-full px-4 py-3 rounded-xl bg-slate-950/90 border border-white/[0.12] text-sm text-white placeholder-white/40 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all pr-24"
+      />
+
+      <div className="absolute right-2 flex items-center gap-1">
+        <button
+          type="button"
+          onClick={onToggleListening}
+          aria-label={isListening ? 'Stop recording voice' : 'Speak inquiry with microphone'}
+          className={`p-2 rounded-lg transition-all ${
+            isListening
+              ? 'bg-amber-500 text-slate-950 animate-pulse'
+              : 'hover:bg-white/10 text-white/60 hover:text-white'
+          }`}
+          title={isListening ? 'Stop recording' : 'Speak inquiry'}
+        >
+          {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+        </button>
+
+        <button
+          type="submit"
+          disabled={!inputText.trim()}
+          aria-label="Send message"
+          className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white transition-all"
+          title="Send message"
+        >
+          <Send className="w-4 h-4" />
+        </button>
+      </div>
+    </form>
+  );
+}
+
+export function TalkingAssistant() {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 'welcome',
+      sender: 'assistant',
+      text: 'Hello! I am your AI Agronomic Extension Assistant. You can speak to me using your microphone or type a question about crop pathology, soil health, satellite weather, or platform security.',
+      language: 'en',
+      sourceBadge: 'GP-Ext Voice Core',
+      timestamp: 'Just now',
+    },
+  ]);
+  const [inputText, setInputText] = useState('');
+  const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'sw'>('en');
+  const [autoSpeak, setAutoSpeak] = useState(true);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleDispatchAssistantResponse = useCallback(
+    (query: string, lang: 'en' | 'sw', speakFn: (text: string, l: 'en' | 'sw') => void) => {
+      setTimeout(() => {
+        const res = resolveResponse(query, lang);
+        const assistantMsg: Message = {
+          id: `assistant-${Date.now()}`,
+          sender: 'assistant',
+          text: res.text,
+          language: lang,
+          sourceBadge: res.source,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+
+        setMessages(prev => [...prev, assistantMsg]);
+
+        if (autoSpeak) {
+          speakFn(res.text, lang);
+        }
+      }, 350);
+    },
+    [autoSpeak]
+  );
+
+  const handleSendMessage = useCallback(
+    (textToSend?: string) => {
+      const query = (textToSend || inputText).trim();
+      if (!query) return;
+
+      const userMsg: Message = {
+        id: `user-${Date.now()}`,
+        sender: 'user',
+        text: query,
+        language: selectedLanguage,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+
+      setMessages(prev => [...prev, userMsg]);
+      setInputText('');
+
+      handleDispatchAssistantResponse(query, selectedLanguage, speakText);
+    },
+    // speakText is captured after initialization
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [handleDispatchAssistantResponse, inputText, selectedLanguage]
+  );
+
+  const { isListening, isSpeaking, speakText, stopSpeaking, toggleListening } =
+    useSpeechController({
+      selectedLanguage,
+      onTranscript: handleSendMessage,
+    });
+
+  useEffect(() => {
+    if (typeof messagesEndRef.current?.scrollIntoView === 'function') {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  const handleSelectPrompt = useCallback(
+    (item: SampleQuestion) => {
+      setSelectedLanguage(item.lang);
+      handleSendMessage(item.text);
+    },
+    [handleSendMessage]
+  );
 
   return (
     <section
@@ -356,275 +754,48 @@ export function TalkingAssistant() {
         <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1.9fr] gap-6 sm:gap-8 items-stretch">
           {/* Left Column: Voice Orb, Controls, and Settings */}
           <div className="p-6 sm:p-8 rounded-2xl bg-slate-900/80 border border-white/[0.08] backdrop-blur-xl flex flex-col justify-between items-center text-center relative overflow-hidden shadow-2xl shadow-black/60">
-            <div className="w-full flex items-center justify-between gap-2 mb-6">
-              <div className="flex items-center gap-2 text-xs font-medium text-white/70">
-                <Globe className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="font-mono uppercase tracking-wider">Voice Language</span>
-              </div>
-              <div className="flex items-center gap-1.5 p-1 rounded-lg bg-slate-950/70 border border-white/[0.08]">
-                <button
-                  type="button"
-                  onClick={() => setSelectedLanguage('en')}
-                  className={`px-2.5 py-1 text-xs font-semibold rounded transition-all ${
-                    selectedLanguage === 'en'
-                      ? 'bg-emerald-500 text-slate-950 shadow-md'
-                      : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  English
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedLanguage('sw')}
-                  className={`px-2.5 py-1 text-xs font-semibold rounded transition-all ${
-                    selectedLanguage === 'sw'
-                      ? 'bg-emerald-500 text-slate-950 shadow-md'
-                      : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  Kiswahili
-                </button>
-              </div>
-            </div>
+            <LanguageSelector
+              selectedLanguage={selectedLanguage}
+              onSelectLanguage={setSelectedLanguage}
+            />
 
-            {/* Audio-Reactive Voice Orb Visualizer */}
-            <div className="my-6 relative flex items-center justify-center">
-              {(isListening || isSpeaking) && (
-                <>
-                  <motion.div
-                    animate={{ scale: [1, 1.45, 1], opacity: [0.6, 0.1, 0.6] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                    className={`absolute w-44 h-44 rounded-full border-2 ${
-                      isListening ? 'border-amber-400' : 'border-emerald-400'
-                    }`}
-                  />
-                  <motion.div
-                    animate={{ scale: [1, 1.8, 1], opacity: [0.4, 0, 0.4] }}
-                    transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
-                    className={`absolute w-44 h-44 rounded-full border ${
-                      isListening ? 'border-amber-400' : 'border-emerald-400'
-                    }`}
-                  />
-                </>
-              )}
+            <VoiceOrb
+              isListening={isListening}
+              isSpeaking={isSpeaking}
+              onToggle={toggleListening}
+            />
 
-              <button
-                type="button"
-                onClick={isListening ? stopListening : startListening}
-                aria-label={isListening ? 'Stop recording voice' : isSpeaking ? 'Speaking response' : 'Start speaking voice inquiry'}
-                className={`relative w-28 h-28 rounded-full flex flex-col items-center justify-center transition-all duration-300 shadow-2xl focus:outline-none focus:ring-4 ${
-                  isListening
-                    ? 'bg-amber-500 text-slate-950 ring-amber-400/40 shadow-amber-500/50 scale-105'
-                    : isSpeaking
-                    ? 'bg-emerald-500 text-slate-950 ring-emerald-400/40 shadow-emerald-500/50'
-                    : 'bg-gradient-to-tr from-emerald-600 to-teal-500 text-white hover:scale-105 hover:shadow-emerald-500/30'
-                }`}
-                title={isListening ? 'Stop listening' : 'Tap to speak'}
-              >
-                {isListening ? (
-                  <>
-                    <Mic className="w-9 h-9 animate-pulse" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Listening</span>
-                  </>
-                ) : isSpeaking ? (
-                  <>
-                    <Volume2 className="w-9 h-9 animate-bounce" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Speaking</span>
-                  </>
-                ) : (
-                  <>
-                    <Mic className="w-9 h-9" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Tap to Speak</span>
-                  </>
-                )}
-              </button>
-            </div>
+            <Waveform isListening={isListening} isSpeaking={isSpeaking} />
 
-            {/* Live Audio Equalizer Waveform */}
-            <div className="h-8 flex items-center justify-center gap-1 my-2">
-              {[40, 70, 100, 60, 85, 45, 95, 60, 80, 50, 90, 65].map((h, i) => (
-                <motion.div
-                  key={i}
-                  animate={
-                    isListening || isSpeaking
-                      ? {
-                          height: [8, (h * 32) / 100, 8],
-                        }
-                      : { height: 4 }
-                  }
-                  transition={
-                    isListening || isSpeaking
-                      ? {
-                          duration: 0.8 + (i % 4) * 0.15,
-                          repeat: Infinity,
-                          ease: 'easeInOut',
-                        }
-                      : { duration: 0.3 }
-                  }
-                  className={`w-1 rounded-full transition-colors ${
-                    isListening
-                      ? 'bg-amber-400'
-                      : isSpeaking
-                      ? 'bg-emerald-400'
-                      : 'bg-white/15'
-                  }`}
-                />
-              ))}
-            </div>
-
-            <div className="w-full mt-4 pt-4 border-t border-white/[0.08] flex items-center justify-between text-xs text-white/70">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setAutoSpeak(!autoSpeak)}
-                  className="flex items-center gap-1.5 hover:text-white transition-colors"
-                >
-                  {autoSpeak ? (
-                    <Volume2 className="w-4 h-4 text-emerald-400" />
-                  ) : (
-                    <VolumeX className="w-4 h-4 text-white/40" />
-                  )}
-                  <span>Auto-Voice Playback: {autoSpeak ? 'ON' : 'OFF'}</span>
-                </button>
-              </div>
-
-              {isSpeaking && (
-                <button
-                  type="button"
-                  onClick={stopSpeaking}
-                  className="px-2 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 text-[11px] font-semibold"
-                >
-                  Stop Audio
-                </button>
-              )}
-            </div>
+            <AudioControls
+              autoSpeak={autoSpeak}
+              isSpeaking={isSpeaking}
+              onToggleAutoSpeak={() => setAutoSpeak(prev => !prev)}
+              onStopSpeaking={stopSpeaking}
+            />
           </div>
 
           {/* Right Column: Interactive Chat & Spoken Transcript */}
           <div className="p-6 sm:p-8 rounded-2xl bg-slate-900/80 border border-white/[0.08] backdrop-blur-xl flex flex-col justify-between shadow-2xl shadow-black/60">
-            {/* Message Stream */}
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-2 mb-4 scrollbar-thin scrollbar-thumb-white/10">
               <AnimatePresence initial={false}>
                 {messages.map(msg => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className={`flex items-start gap-3 ${
-                      msg.sender === 'user' ? 'flex-row-reverse' : ''
-                    }`}
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        msg.sender === 'user'
-                          ? 'bg-emerald-600/30 border border-emerald-500/40 text-emerald-300'
-                          : 'bg-teal-500/20 border border-teal-500/30 text-teal-300'
-                      }`}
-                    >
-                      {msg.sender === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                    </div>
-
-                    <div
-                      className={`max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
-                        msg.sender === 'user'
-                          ? 'bg-emerald-600 text-white rounded-tr-none'
-                          : 'bg-slate-950/80 border border-white/[0.08] text-white/90 rounded-tl-none'
-                      }`}
-                    >
-                      <p>{msg.text}</p>
-
-                      {msg.sourceBadge && (
-                        <div className="mt-2 pt-2 border-t border-white/[0.08] flex items-center justify-between text-[11px] text-emerald-400/90 font-mono">
-                          <span className="truncate">Source: {msg.sourceBadge}</span>
-                          <button
-                            type="button"
-                            onClick={() => speakText(msg.text, msg.language as any)}
-                            className="ml-2 hover:text-emerald-300 inline-flex items-center gap-1 font-sans text-xs"
-                            title="Listen to this advisory again"
-                          >
-                            <Volume2 className="w-3.5 h-3.5" />
-                            <span>Listen</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
+                  <ChatMessage key={msg.id} msg={msg} onSpeak={speakText} />
                 ))}
               </AnimatePresence>
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Quick-Prompt Agronomic Chips */}
-            <div className="mb-4">
-              <div className="text-[11px] font-semibold tracking-wider text-white/50 uppercase mb-2 flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-emerald-400" />
-                <span>Quick Agronomic Inquiries (Tap to Ask)</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {SAMPLE_QUESTIONS.map((item, idx) => (
-                  <button
-                    type="button"
-                    key={idx}
-                    onClick={() => {
-                      setSelectedLanguage(item.lang as any);
-                      handleSendMessage(item.text);
-                    }}
-                    className="px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-emerald-500/10 border border-white/[0.08] hover:border-emerald-500/30 text-xs text-white/75 hover:text-white transition-all text-left flex items-center gap-1.5 group"
-                  >
-                    <span>{item.icon}</span>
-                    <span className="group-hover:text-emerald-300">{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            <QuestionChips onSelect={handleSelectPrompt} />
 
-            {/* Message Input Box */}
-            <form
-              onSubmit={e => {
-                e.preventDefault();
-                handleSendMessage();
-              }}
-              className="relative flex items-center gap-2"
-            >
-              <input
-                type="text"
-                value={inputText}
-                onChange={e => setInputText(e.target.value)}
-                placeholder={
-                  selectedLanguage === 'sw'
-                    ? 'Uliza swali kuhusu kilimo, udongo, au hali ya hewa...'
-                    : 'Ask about crop diagnosis, weather anomalies, or soil health...'
-                }
-                className="w-full px-4 py-3 rounded-xl bg-slate-950/90 border border-white/[0.12] text-sm text-white placeholder-white/40 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all pr-24"
-              />
-
-              <div className="absolute right-2 flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={isListening ? stopListening : startListening}
-                  aria-label={isListening ? 'Stop recording voice' : 'Speak inquiry with microphone'}
-                  className={`p-2 rounded-lg transition-all ${
-                    isListening
-                      ? 'bg-amber-500 text-slate-950 animate-pulse'
-                      : 'hover:bg-white/10 text-white/60 hover:text-white'
-                  }`}
-                  title={isListening ? 'Stop recording' : 'Speak inquiry'}
-                >
-                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={!inputText.trim()}
-                  aria-label="Send message"
-                  className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white transition-all"
-                  title="Send message"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-              </div>
-            </form>
+            <ChatInputForm
+              inputText={inputText}
+              isListening={isListening}
+              selectedLanguage={selectedLanguage}
+              onChangeInput={setInputText}
+              onSubmit={handleSendMessage}
+              onToggleListening={toggleListening}
+            />
           </div>
         </div>
       </div>

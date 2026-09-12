@@ -1,10 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import {
-  AuditReasonModal,
-  getAuditHeaders,
-  STANDARD_REASON_CODES,
-} from '../AuditReasonModal';
+import { AuditReasonModal } from '../AuditReasonModal';
+import { getAuditHeaders, STANDARD_REASON_CODES } from '../auditReasonTypes';
 
 describe('AuditReasonModal component', () => {
   it('formats audit headers correctly', () => {
@@ -25,80 +22,78 @@ describe('AuditReasonModal component', () => {
       />
     );
 
-    expect(screen.getByText('Audit Reason & Justification Required')).toBeInTheDocument();
-    expect(screen.getByText(/Target Action: Erase User Data/i)).toBeInTheDocument();
-    STANDARD_REASON_CODES.forEach(reason => {
-      expect(screen.getByText(reason.label)).toBeInTheDocument();
-    });
+    expect(screen.getByText('Non-Repudiation Security Authorization')).toBeInTheDocument();
+    expect(screen.getByText(/Erase User Data/)).toBeInTheDocument();
+    const select = screen.getByLabelText(/Audit Reason Code/i) as HTMLSelectElement;
+    expect(select).toBeInTheDocument();
+    expect(select.children.length).toBe(STANDARD_REASON_CODES.length);
   });
 
-  it('requires policy certification and valid justification before confirmation', () => {
-    const onConfirm = vi.fn();
+  it('validates minimum justification length before allowing submission', () => {
+    const onConfirmMock = vi.fn();
     render(
       <AuditReasonModal
         isOpen={true}
         onClose={vi.fn()}
-        onConfirm={onConfirm}
-        actionTitle="Purge Farmer Record"
+        onConfirm={onConfirmMock}
+        actionTitle="Revoke Farmer Access"
       />
     );
 
-    const confirmBtn = screen.getByRole('button', { name: /Authorize & Execute Action/i });
-    expect(confirmBtn).toBeDisabled();
+    const submitBtn = screen.getByRole('button', { name: /Authorize & Execute Action/i });
+    expect(submitBtn).toBeDisabled();
 
-    // Type short justification
-    const textarea = screen.getByPlaceholderText(/Explain the business, agronomic/i);
+    // Type less than 10 characters
+    const textarea = screen.getByLabelText(/Technical Justification & Context/i);
     fireEvent.change(textarea, { target: { value: 'Too short' } });
-    expect(confirmBtn).toBeDisabled();
+    expect(submitBtn).toBeDisabled();
 
-    // Type sufficient justification
-    fireEvent.change(textarea, { target: { value: 'Valid justification with more than 10 characters' } });
-    expect(confirmBtn).toBeDisabled(); // Still need checkbox
+    // Type 10+ characters
+    fireEvent.change(textarea, { target: { value: 'This is a valid justification note' } });
+    expect(submitBtn).toBeDisabled(); // Policy checkbox not checked yet
 
-    // Check certification box
+    // Check policy certification
     const checkbox = screen.getByRole('checkbox');
     fireEvent.click(checkbox);
 
-    expect(confirmBtn).not.toBeDisabled();
-    fireEvent.click(confirmBtn);
+    expect(submitBtn).toBeEnabled();
+    fireEvent.click(submitBtn);
 
-    expect(onConfirm).toHaveBeenCalledWith({
+    expect(onConfirmMock).toHaveBeenCalledWith({
       reasonCode: 'SUSPECTED_ACCOUNT_COMPROMISE',
-      justification: 'Valid justification with more than 10 characters',
+      justification: 'This is a valid justification note',
     });
   });
 
-  it('allows custom reason code entry when CUSTOM is selected', () => {
-    const onConfirm = vi.fn();
+  it('allows specifying custom reason code when CUSTOM selected', () => {
+    const onConfirmMock = vi.fn();
     render(
       <AuditReasonModal
         isOpen={true}
         onClose={vi.fn()}
-        onConfirm={onConfirm}
-        actionTitle="Revoke Admin Access"
+        onConfirm={onConfirmMock}
+        actionTitle="Purge Satellite Logs"
       />
     );
 
-    const select = screen.getByRole('combobox');
+    const select = screen.getByLabelText(/Audit Reason Code/i);
     fireEvent.change(select, { target: { value: 'CUSTOM' } });
 
-    // Custom code input should appear
-    const customInput = screen.getByPlaceholderText(/e\.g\. TICKET-9402/i);
-    fireEvent.change(customInput, { target: { value: 'ticket-7744-security' } });
+    const customInput = screen.getByPlaceholderText(/SEC-INCIDENT-2026-0812/i);
+    expect(customInput).toBeInTheDocument();
 
-    const textarea = screen.getByPlaceholderText(/Explain the business, agronomic/i);
-    fireEvent.change(textarea, { target: { value: 'Mandatory deprovisioning of departed contractor' } });
+    fireEvent.change(customInput, { target: { value: 'INCIDENT-9912' } });
+    const textarea = screen.getByLabelText(/Technical Justification & Context/i);
+    fireEvent.change(textarea, { target: { value: 'Emergency purge per incident team' } });
+    fireEvent.click(screen.getByRole('checkbox'));
 
-    const checkbox = screen.getByRole('checkbox');
-    fireEvent.click(checkbox);
+    const submitBtn = screen.getByRole('button', { name: /Authorize & Execute Action/i });
+    expect(submitBtn).toBeEnabled();
+    fireEvent.click(submitBtn);
 
-    const confirmBtn = screen.getByRole('button', { name: /Authorize & Execute Action/i });
-    expect(confirmBtn).not.toBeDisabled();
-    fireEvent.click(confirmBtn);
-
-    expect(onConfirm).toHaveBeenCalledWith({
-      reasonCode: 'TICKET-7744-SECURITY',
-      justification: 'Mandatory deprovisioning of departed contractor',
+    expect(onConfirmMock).toHaveBeenCalledWith({
+      reasonCode: 'INCIDENT-9912',
+      justification: 'Emergency purge per incident team',
     });
   });
 });

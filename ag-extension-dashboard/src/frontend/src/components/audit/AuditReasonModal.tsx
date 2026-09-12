@@ -1,79 +1,12 @@
 import React, { useState } from 'react';
-import { ShieldAlert, FileText, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ShieldAlert, AlertTriangle } from 'lucide-react';
 import { BaseModal } from '../BaseModal';
-import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { triggerHaptic } from '@/lib/haptics';
-
-// fallow-ignore-next-line unused-type
-export interface AuditContext {
-  reasonCode: string;
-  justification: string;
-}
-
-// fallow-ignore-next-line unused-export
-export const STANDARD_REASON_CODES = [
-  {
-    code: 'SUSPECTED_ACCOUNT_COMPROMISE',
-    label: '🚨 Suspected Account Compromise / Intrusion',
-    description: 'Emergency lockdown or credential revocation due to anomalous activity.',
-  },
-  {
-    code: 'COMPLIANCE_GDPR_ERASURE',
-    label: '⚖️ GDPR / Data Subject Erasure Request',
-    description: 'Verified Right to Erasure or privacy compliance obligation.',
-  },
-  {
-    code: 'FARMER_RECORD_DISPUTE',
-    label: '🌾 Farmer Record Dispute / Boundary Correction',
-    description: 'Rectifying contested land parcels, crops, or contact information.',
-  },
-  {
-    code: 'DATA_INTEGRITY_CORRECTION',
-    label: '🔧 Data Integrity / Telemetry Calibration',
-    description: 'Fixing corrupted telemetry, sensor anomalies, or duplicate profiles.',
-  },
-  {
-    code: 'OFFICER_OFFBOARDING',
-    label: '👤 Officer Offboarding / Access Deprovisioning',
-    description: 'Deprovisioning accounts or reassigning portfolio farmers.',
-  },
-  {
-    code: 'EMERGENCY_FIELD_TRIAGE',
-    label: '⚡ Emergency Agronomic Intervention',
-    description: 'Critical pest outbreak containment or weather crisis override.',
-  },
-  {
-    code: 'ROUTINE_SYSTEM_MAINTENANCE',
-    label: '🛠️ Scheduled System Maintenance',
-    description: 'Routine verified administrative housekeeping or database hygiene.',
-  },
-  {
-    code: 'CUSTOM',
-    label: '✏️ Custom Reason Code (Specify below)...',
-    description: 'Enter a custom tracking ticket or specific governance code.',
-  },
-] as const;
-
-// fallow-ignore-next-line unused-type
-export type StandardReasonCode = (typeof STANDARD_REASON_CODES)[number]['code'];
-
-// fallow-ignore-next-line unused-type
-export interface AuditReasonModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: (audit: AuditContext) => void;
-  actionTitle: string;
-  actionDescription?: string;
-  resourceName?: string;
-  confirmText?: string;
-  isLoading?: boolean;
-}
-
-// fallow-ignore-next-line unused-export
-export const getAuditHeaders = (reasonCode: string, justification: string): Record<string, string> => ({
-  'X-Audit-Reason-Code': reasonCode,
-  'X-Audit-Justification': justification,
-});
+import {
+  STANDARD_REASON_CODES,
+  StandardReasonCode,
+  AuditReasonModalProps,
+} from './auditReasonTypes';
 
 export const AuditReasonModal: React.FC<AuditReasonModalProps> = ({
   isOpen,
@@ -85,184 +18,198 @@ export const AuditReasonModal: React.FC<AuditReasonModalProps> = ({
   confirmText = 'Authorize & Execute Action',
   isLoading = false,
 }) => {
-  const { radiusClass } = useThemeClasses();
-  const [selectedCode, setSelectedCode] = useState<string>(STANDARD_REASON_CODES[0].code);
+  const [selectedCode, setSelectedCode] = useState<StandardReasonCode>('SUSPECTED_ACCOUNT_COMPROMISE');
   const [customCode, setCustomCode] = useState('');
   const [justification, setJustification] = useState('');
-  const [certified, setCertified] = useState(false);
+  const [hasConfirmedPolicy, setHasConfirmedPolicy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const effectiveReasonCode = selectedCode === 'CUSTOM' ? customCode.trim().toUpperCase() : selectedCode;
+  const isCustom = selectedCode === 'CUSTOM';
+  const effectiveCode = isCustom ? customCode.trim() : selectedCode;
   const isJustificationValid = justification.trim().length >= 10;
-  const isReasonCodeValid = selectedCode !== 'CUSTOM' || effectiveReasonCode.length >= 3;
-  const canSubmit = isJustificationValid && isReasonCodeValid && certified && !isLoading;
+  const isCodeValid = effectiveCode.length > 0;
+  const canSubmit = isCodeValid && isJustificationValid && hasConfirmedPolicy && !isLoading;
 
-  const handleConfirm = () => {
-    if (!isReasonCodeValid) {
-      setError('Please provide a valid custom reason code (e.g. TICKET-1049).');
-      return;
-    }
-    if (!isJustificationValid) {
-      setError('Justification must be at least 10 characters explaining why this action is required.');
-      return;
-    }
-    if (!certified) {
-      setError('You must certify policy compliance before continuing.');
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit) {
+      if (!isCodeValid) {
+        setError('Please specify a valid audit reason code.');
+      } else if (!isJustificationValid) {
+        setError('Please provide an operational justification of at least 10 characters.');
+      } else if (!hasConfirmedPolicy) {
+        setError('You must acknowledge that this high-privilege action is logged and auditable.');
+      }
       return;
     }
 
-    triggerHaptic('medium');
+    triggerHaptic('impactHeavy');
     setError(null);
     onConfirm({
-      reasonCode: effectiveReasonCode,
+      reasonCode: effectiveCode,
       justification: justification.trim(),
     });
   };
 
-  const footer = (
-    <div className="flex gap-3">
-      <button
-        type="button"
-        onClick={() => {
-          triggerHaptic('light');
-          onClose();
-        }}
-        disabled={isLoading}
-        className={`flex-1 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 ${radiusClass} font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50`}
-      >
-        Cancel
-      </button>
-
-      <button
-        type="button"
-        onClick={handleConfirm}
-        disabled={!canSubmit}
-        className={`flex-[1.5] px-4 py-3 bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:hover:bg-rose-600 text-white font-bold text-xs uppercase tracking-wider ${radiusClass} transition-all shadow-lg shadow-rose-950/50 flex items-center justify-center gap-2`}
-      >
-        {isLoading ? (
-          <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-        ) : (
-          <ShieldAlert className="w-4 h-4" />
-        )}
-        <span>{confirmText}</span>
-      </button>
-    </div>
-  );
+  const handleClose = () => {
+    if (isLoading) return;
+    setError(null);
+    setJustification('');
+    setCustomCode('');
+    setHasConfirmedPolicy(false);
+    onClose();
+  };
 
   return (
     <BaseModal
       isOpen={isOpen}
-      onClose={onClose}
-      title="Audit Reason & Justification Required"
-      subtitle="Privileged operation governance check (Non-Repudiation)"
-      icon={<ShieldAlert className="w-6 h-6 text-rose-400" />}
-      iconBg="bg-rose-500/15 border border-rose-500/30 text-rose-400"
+      onClose={handleClose}
+      title="Non-Repudiation Security Authorization"
+      subtitle="Privileged operations require an immutable audit trail entry"
       maxWidth="max-w-xl"
-      footer={footer}
     >
-      <div className="space-y-4 py-2 text-slate-200">
-        {/* Action Callout */}
-        <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.08] text-xs">
-          <div className="flex items-center gap-2 font-bold text-white mb-1">
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
-            <span>Target Action: {actionTitle}</span>
+      <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+        {/* Banner */}
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3">
+          <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="text-xs space-y-1">
+            <p className="font-semibold text-amber-200">
+              High-Impact Administrative Action: <span className="text-white font-mono">{actionTitle}</span>
+            </p>
+            {resourceName && (
+              <p className="text-amber-300/80 font-mono text-[11px]">Target: {resourceName}</p>
+            )}
+            {actionDescription && <p className="text-amber-200/70">{actionDescription}</p>}
           </div>
-          {resourceName && (
-            <p className="text-slate-400 font-mono text-[11px] mb-1">Resource: {resourceName}</p>
-          )}
-          {actionDescription && <p className="text-slate-300">{actionDescription}</p>}
         </div>
 
+        {error && (
+          <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/25 flex items-center gap-2 text-rose-300 text-xs">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
         {/* Reason Code Dropdown */}
-        <div>
-          <label htmlFor="audit-reason-dropdown" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+        <div className="space-y-1.5">
+          <label htmlFor="audit-reason-code" className="block text-xs font-semibold text-white/90">
             Audit Reason Code <span className="text-rose-400">*</span>
           </label>
           <select
-            id="audit-reason-dropdown"
+            id="audit-reason-code"
             value={selectedCode}
             onChange={e => {
-              setSelectedCode(e.target.value);
+              setSelectedCode(e.target.value as StandardReasonCode);
               setError(null);
             }}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/[0.12] text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+            disabled={isLoading}
+            className="w-full px-3 py-2.5 rounded-lg bg-slate-950 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-sans"
           >
-            {STANDARD_REASON_CODES.map(item => (
-              <option key={item.code} value={item.code} className="bg-slate-900 text-white">
-                {item.label}
+            {STANDARD_REASON_CODES.map(rc => (
+              <option key={rc.code} value={rc.code} className="bg-slate-900 text-white py-1">
+                {rc.label}
               </option>
             ))}
           </select>
-          <p className="text-[11px] text-slate-400 mt-1">
-            {STANDARD_REASON_CODES.find(r => r.code === selectedCode)?.description}
+          <p className="text-[11px] text-white/50">
+            {STANDARD_REASON_CODES.find(rc => rc.code === selectedCode)?.description}
           </p>
         </div>
 
-        {/* Custom Reason Code Input (Conditional) */}
-        {selectedCode === 'CUSTOM' && (
-          <div>
-            <label htmlFor="custom-reason-code-input" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-              Specify Custom Reason Code <span className="text-rose-400">*</span>
+        {/* Custom Reason Code Input (conditional) */}
+        {isCustom && (
+          <div className="space-y-1.5 animate-fadeIn">
+            <label htmlFor="audit-custom-code" className="block text-xs font-semibold text-white/90">
+              Custom Reason Code / Ticket # <span className="text-rose-400">*</span>
             </label>
             <input
-              id="custom-reason-code-input"
+              id="audit-custom-code"
               type="text"
+              placeholder="e.g. SEC-INCIDENT-2026-0812 or JIRA-AG-4912"
               value={customCode}
               onChange={e => {
                 setCustomCode(e.target.value);
                 setError(null);
               }}
-              placeholder="e.g. TICKET-9402-LEGAL-ERASURE"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/[0.12] text-sm text-white font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all uppercase"
+              disabled={isLoading}
+              maxLength={64}
+              className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-amber-500/40 text-white text-sm font-mono placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
             />
           </div>
         )}
 
         {/* Justification Textarea */}
-        <div>
-          <label htmlFor="audit-justification-input" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex justify-between">
-            <span>Mandatory Justification Note <span className="text-rose-400">*</span></span>
-            <span className={`text-[11px] ${justification.trim().length >= 10 ? 'text-emerald-400' : 'text-slate-500'}`}>
-              {justification.trim().length}/10 min characters
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label htmlFor="audit-justification" className="block text-xs font-semibold text-white/90">
+              Technical Justification & Context <span className="text-rose-400">*</span>
+            </label>
+            <span
+              className={`text-[11px] ${
+                isJustificationValid ? 'text-emerald-400' : 'text-white/40'
+              }`}
+            >
+              {justification.trim().length}/10 min chars
             </span>
-          </label>
+          </div>
           <textarea
-            id="audit-justification-input"
+            id="audit-justification"
             rows={3}
+            placeholder="Explain the specific root cause, legal obligation, or operational context requiring this action..."
             value={justification}
             onChange={e => {
               setJustification(e.target.value);
               setError(null);
             }}
-            placeholder="Explain the business, agronomic, or compliance rationale for this mutation..."
-            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/[0.12] text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all resize-none"
+            disabled={isLoading}
+            className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all resize-none"
           />
         </div>
 
         {/* Policy Certification Checkbox */}
-        <label className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-950/60 border border-white/[0.08] cursor-pointer hover:bg-slate-950 transition-colors">
+        <label className="flex items-start gap-2.5 p-3 rounded-lg bg-white/[0.02] border border-white/5 cursor-pointer hover:bg-white/[0.04] transition-colors">
           <input
             type="checkbox"
-            checked={certified}
+            checked={hasConfirmedPolicy}
             onChange={e => {
-              setCertified(e.target.checked);
+              setHasConfirmedPolicy(e.target.checked);
               setError(null);
             }}
-            className="mt-0.5 rounded border-slate-700 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-slate-950"
+            disabled={isLoading}
+            className="mt-0.5 rounded border-white/20 text-amber-500 focus:ring-amber-400/40 bg-slate-900"
           />
-          <span className="text-xs text-slate-300 leading-relaxed">
-            I certify that this mutation is authorized under organization data governance policies and will be recorded immutably in the security audit trail.
+          <span className="text-xs text-white/80 select-none">
+            I certify under the Agronomic Security Governance Policy that this privileged operation is
+            duly authorized and directly tied to the specified audit justification.
           </span>
         </label>
 
-        {/* Error Callout */}
-        {error && (
-          <div className="p-3 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-      </div>
+        {/* Modal Actions */}
+        <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/10">
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={isLoading}
+            className="px-4 py-2 text-xs font-medium text-white/70 hover:text-white transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={!canSubmit}
+            className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-slate-950 font-semibold text-xs transition-all disabled:opacity-40 disabled:hover:bg-amber-600 shadow-lg shadow-amber-600/20 flex items-center gap-1.5"
+          >
+            {isLoading ? (
+              <>
+                <span className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                <span>Executing...</span>
+              </>
+            ) : (
+              <span>{confirmText}</span>
+            )}
+          </button>
+        </div>
+      </form>
     </BaseModal>
   );
 };
