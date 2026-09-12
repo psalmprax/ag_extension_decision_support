@@ -43,7 +43,7 @@ export const AuditReasonModal: React.FC<AuditReasonModalProps> = ({
       return;
     }
 
-    triggerHaptic('impactHeavy');
+    triggerHaptic('heavy');
     setError(null);
     onConfirm({
       reasonCode: effectiveCode,

@@ -11,8 +11,22 @@ import {
   Radio,
   Bot,
   User,
+  RotateCcw,
+  ShieldCheck,
+  ChevronRight,
+  Loader2,
 } from 'lucide-react';
+import apiClient from '@/api/client';
+import { EncryptedStorageService } from '@/services/encryptedStorageService';
 import { fadeUp, stagger } from '../variants';
+
+interface AgronomicEntitySlots {
+  crop?: string | null;
+  pest_disease?: string | null;
+  field_size?: string | null;
+  location_climate?: string | null;
+  soil_profile?: string | null;
+}
 
 interface Message {
   id: string;
@@ -21,6 +35,7 @@ interface Message {
   language?: 'en' | 'sw';
   sourceBadge?: string;
   timestamp: string;
+  citations?: Array<{ sourceId: string; title: string; category: string; excerpt: string; score: number }>;
 }
 
 interface SampleQuestion {
@@ -83,7 +98,10 @@ const SAMPLE_QUESTIONS: SampleQuestion[] = [
   },
 ];
 
-const PRESET_ANSWERS: Record<string, { en: { text: string; source: string }; sw: { text: string; source: string } }> = {
+const PRESET_ANSWERS: Record<
+  string,
+  { en: { text: string; source: string }; sw: { text: string; source: string } }
+> = {
   armyworm: {
     en: {
       text: 'For early instar Fall Armyworm in maize, scout leaf whorls at dawn or dusk. Apply botanical bio-control using cold-pressed Neem oil (Azadirachtin 0.03% EC at 3ml/L) or alternate with Bacillus thuringiensis (Bt subsp. kurstaki). Apply spray nozzles directly into the central funnel during low wind conditions to maximize larval contact and protect beneficial parasitoids.',
@@ -136,21 +154,295 @@ const PRESET_ANSWERS: Record<string, { en: { text: string; source: string }; sw:
   },
 };
 
-function resolveResponse(query: string, language: 'en' | 'sw'): { text: string; source: string } {
-  const q = query.toLowerCase();
-  if (q.includes('armyworm') || q.includes('funza') || q.includes('caterpillar') || q.includes('pest') || q.includes('wadudu')) {
-    return PRESET_ANSWERS.armyworm[language];
+const CROP_MATCHERS: Array<{ name: string; regex: RegExp }> = [
+  { name: 'Maize', regex: /\b(maize|mahindi|corn)\b/i },
+  { name: 'Cassava', regex: /\b(cassava|mhogo|mihogo)\b/i },
+  { name: 'Tomato', regex: /\b(tomato|nyanya)\b/i },
+  { name: 'Sorghum', regex: /\b(sorghum|mtama)\b/i },
+  { name: 'Coffee', regex: /\b(coffee|kahawa)\b/i },
+  { name: 'Wheat', regex: /\b(wheat|ngano)\b/i },
+  { name: 'Rice', regex: /\b(rice|mchele|mpunga)\b/i },
+  { name: 'Beans', regex: /\b(bean|beans|maharage)\b/i },
+  { name: 'Potato', regex: /\b(potato|potatoes|viazi)\b/i },
+];
+
+const PEST_MATCHERS: Array<{ name: string; regex: RegExp }> = [
+  { name: 'Fall Armyworm', regex: /\b(armyworm|funza|caterpillar)\b/i },
+  { name: 'Tomato Blight', regex: /\b(blight|ukungu)\b/i },
+  { name: 'Aphids', regex: /\b(aphid|aphids|vidukari)\b/i },
+  { name: 'Stem Borer', regex: /\b(stem\s*borer|mabua)\b/i },
+  { name: 'Leaf Rust', regex: /\b(rust|kutu)\b/i },
+];
+
+function extractCropSlot(text: string): string | null {
+  for (const item of CROP_MATCHERS) {
+    if (item.regex.test(text)) {
+      return item.name;
+    }
   }
-  if (q.includes('soil') || q.includes('ph') || q.includes('acid') || q.includes('lime') || q.includes('udongo') || q.includes('chokaa')) {
-    return PRESET_ANSWERS.soil[language];
+  return null;
+}
+
+function extractPestSlot(text: string): string | null {
+  for (const item of PEST_MATCHERS) {
+    if (item.regex.test(text)) {
+      return item.name;
+    }
   }
-  if (q.includes('weather') || q.includes('satellite') || q.includes('nasa') || q.includes('rain') || q.includes('ukame') || q.includes('hewa')) {
-    return PRESET_ANSWERS.weather[language];
+  return null;
+}
+
+function extractFieldSizeSlot(text: string): string | null {
+  const match = text.match(/(\d+(?:\.\d+)?)\s*(acres?|acre|hectares?|hectare|ha|ekari|hekta)/i);
+  if (!match) return null;
+  const num = match[1];
+  const unit = match[2]?.toLowerCase() ?? 'acres';
+  if (unit.startsWith('he') || unit === 'ha') {
+    return `${num} hectares`;
   }
-  if (q.includes('offline') || q.includes('wipe') || q.includes('security') || q.includes('hack') || q.includes('salama') || q.includes('siri')) {
-    return PRESET_ANSWERS.security[language];
+  return `${num} acres`;
+}
+
+function extractLocationSlot(text: string): string | null {
+  const lower = text.toLowerCase();
+  if (lower.includes('rift valley')) return 'Rift Valley';
+  if (lower.includes('nakuru')) return 'Nakuru';
+  if (lower.includes('machakos')) return 'Machakos';
+  if (lower.includes('uasin gishu')) return 'Uasin Gishu';
+  if (lower.includes('semi-arid') || lower.includes('arid')) return 'Semi-Arid';
+  if (lower.includes('high rainfall') || lower.includes('mvua nyingi')) return 'High Rainfall';
+  return null;
+}
+
+function extractSoilSlot(text: string): string | null {
+  const phMatch = text.match(/pH\s*(\d+(?:\.\d+)?)/i);
+  if (phMatch) return `Acidic pH ${phMatch[1]}`;
+  const lower = text.toLowerCase();
+  if (lower.includes('sandy loam') || lower.includes('kichanga')) return 'Sandy Loam';
+  if (lower.includes('clay') || lower.includes('mfinyanzi')) return 'Clay';
+  if (lower.includes('acidic') || lower.includes('tindikali') || lower.includes('acid')) return 'Acidic Soil';
+  return null;
+}
+
+function extractSlots(text: string, current: AgronomicEntitySlots): AgronomicEntitySlots {
+  return {
+    crop: extractCropSlot(text) ?? current.crop ?? null,
+    pest_disease: extractPestSlot(text) ?? current.pest_disease ?? null,
+    field_size: extractFieldSizeSlot(text) ?? current.field_size ?? null,
+    location_climate: extractLocationSlot(text) ?? current.location_climate ?? null,
+    soil_profile: extractSoilSlot(text) ?? current.soil_profile ?? null,
+  };
+}
+
+interface LocalTurnResult {
+  isMatch: boolean;
+  text: string;
+  source: string;
+  updatedSlots: AgronomicEntitySlots;
+}
+
+function resolveArmywormDosage(
+  slots: AgronomicEntitySlots,
+  language: 'en' | 'sw'
+): LocalTurnResult {
+  const acresMatch = slots.field_size?.match(/(\d+(?:\.\d+)?)\s*acre/i);
+  const acres = acresMatch ? parseFloat(acresMatch[1] ?? '3') : 3;
+  const liters = (acres * 0.4).toFixed(1);
+  const waterLiters = Math.round(acres * 133.3);
+
+  if (language === 'sw') {
+    return {
+      isMatch: true,
+      text: `Kwa ekari ${acres} za mahindi, changanya lita ${liters} za mafuta ya mwarobaini (Neem oil mililita 3 kwa lita ya maji katika lita ${waterLiters} za maji) na unyunyize moja kwa moja kwenye funeli za mahindi.`,
+      source: 'FAO Fall Armyworm Management Guide & Dosage Calculations',
+      updatedSlots: slots,
+    };
   }
-  return PRESET_ANSWERS.default[language];
+
+  return {
+    isMatch: true,
+    text: `For ${acres} acres of maize, mix ${liters} liters of Neem oil (at 3ml/L water rate across ${waterLiters}L total spray volume) applied directly into the central leaf whorls.`,
+    source: 'FAO Fall Armyworm Management Guide & Dosage Calculations',
+    updatedSlots: slots,
+  };
+}
+
+function resolveLimeDosage(
+  slots: AgronomicEntitySlots,
+  language: 'en' | 'sw'
+): LocalTurnResult {
+  const haMatch = slots.field_size?.match(/(\d+(?:\.\d+)?)\s*hectare/i);
+  const ha = haMatch ? parseFloat(haMatch[1] ?? '1') : 1;
+  const minTonnes = (ha * 2.0).toFixed(1);
+  const maxTonnes = (ha * 2.5).toFixed(1);
+
+  if (language === 'sw') {
+    return {
+      isMatch: true,
+      text: `Kwa hekta ${ha} za udongo wenye tindikali, weka tani ${minTonnes} hadi ${maxTonnes} za chokaa ya kilimo ikichanganywa na udongo wa juu siku 30 kabla ya kupanda.`,
+      source: 'ISRIC SoilGrids & Lime Requirement Advisory',
+      updatedSlots: slots,
+    };
+  }
+
+  return {
+    isMatch: true,
+    text: `For ${ha} hectare(s) of acidic soil, apply ${minTonnes} to ${maxTonnes} tonnes of agricultural calcitic or dolomitic lime incorporated into the top 15cm of soil 30 days prior to planting.`,
+    source: 'ISRIC SoilGrids & Lime Requirement Advisory',
+    updatedSlots: slots,
+  };
+}
+
+const DOSAGE_REGEX = /\b(dosage|rate|how much|kipimo|lita|dose)\b/i;
+const ARMYWORM_REGEX = /\b(armyworm|funza|caterpillar|wadudu)\b/i;
+const LIME_REGEX = /\b(lime|chokaa|acidic|acid|tindikali)\b/i;
+const SOIL_REGEX = /\b(soil|udongo|ph)\b/i;
+const WEATHER_REGEX = /\b(weather|satellite|nasa|rain|ukame|hewa)\b/i;
+const SECURITY_REGEX = /\b(offline|wipe|security|hack|salama|siri)\b/i;
+const LIME_AREA_REGEX = /\b(hectare|hectares|ha|hekta|acre|acres|ekari)\b/i;
+const ARMYWORM_AREA_REGEX = /\b(acre|acres|ekari)\b/i;
+
+function isLimeFollowUp(q: string, slots: AgronomicEntitySlots): boolean {
+  const hasLimeContext = LIME_REGEX.test(q) || Boolean(slots.soil_profile?.toLowerCase().includes('acid'));
+  const hasDosageOrArea = DOSAGE_REGEX.test(q) || LIME_AREA_REGEX.test(q);
+  return hasLimeContext && hasDosageOrArea;
+}
+
+function isArmywormFollowUp(q: string, slots: AgronomicEntitySlots): boolean {
+  // If query is specifically about lime or soil remediation, do not hijack with maize context
+  if (LIME_REGEX.test(q) || SOIL_REGEX.test(q)) {
+    return false;
+  }
+  const hasPestContext = slots.pest_disease === 'Fall Armyworm' || slots.crop === 'Maize';
+  const hasDosageOrArea = DOSAGE_REGEX.test(q) || ARMYWORM_AREA_REGEX.test(q);
+  return hasPestContext && hasDosageOrArea;
+}
+
+function resolveLocalAgronomicTurn(
+  query: string,
+  slots: AgronomicEntitySlots,
+  language: 'en' | 'sw'
+): LocalTurnResult {
+  // 1. Check Lime/Soil Remediation follow-up first
+  if (isLimeFollowUp(query, slots)) {
+    return resolveLimeDosage(slots, language);
+  }
+
+  // 2. Check Fall Armyworm bio-control follow-up second
+  if (isArmywormFollowUp(query, slots)) {
+    return resolveArmywormDosage(slots, language);
+  }
+
+  // 3. Preset topics
+  if (ARMYWORM_REGEX.test(query)) {
+    const res = PRESET_ANSWERS.armyworm[language];
+    return {
+      isMatch: true,
+      text: res.text,
+      source: res.source,
+      updatedSlots: { ...slots, crop: 'Maize', pest_disease: 'Fall Armyworm' },
+    };
+  }
+
+  if (LIME_REGEX.test(query) || SOIL_REGEX.test(query)) {
+    const res = PRESET_ANSWERS.soil[language];
+    return {
+      isMatch: true,
+      text: res.text,
+      source: res.source,
+      updatedSlots: { ...slots, soil_profile: slots.soil_profile ?? 'Acidic pH 4.8' },
+    };
+  }
+
+  if (WEATHER_REGEX.test(query)) {
+    const res = PRESET_ANSWERS.weather[language];
+    return { isMatch: true, text: res.text, source: res.source, updatedSlots: slots };
+  }
+
+  if (SECURITY_REGEX.test(query)) {
+    const res = PRESET_ANSWERS.security[language];
+    return { isMatch: true, text: res.text, source: res.source, updatedSlots: slots };
+  }
+
+  return { isMatch: false, text: '', source: '', updatedSlots: slots };
+}
+
+interface ApiAssistantResult {
+  text: string;
+  source: string;
+  citations?: Array<{ sourceId: string; title: string; category: string; excerpt: string; score: number }>;
+  entitySlots?: AgronomicEntitySlots;
+}
+
+async function fetchPublicDemoAdvisory(
+  query: string,
+  history: Message[],
+  language: 'en' | 'sw',
+  slots: AgronomicEntitySlots
+): Promise<ApiAssistantResult> {
+  try {
+    const response = await apiClient.post('/chatbot/public-demo', {
+      query,
+      language,
+      history: history.slice(-6).map((m) => ({
+        role: m.sender === 'user' ? 'user' : 'assistant',
+        content: m.text,
+      })),
+      entitySlots: slots,
+    });
+
+    const data = response.data?.data;
+    return {
+      text: data?.text || PRESET_ANSWERS.default[language].text,
+      source: data?.source || PRESET_ANSWERS.default[language].source,
+      citations: data?.citations,
+      entitySlots: data?.entitySlots,
+    };
+  } catch (err: unknown) {
+    const error = err as { response?: { status?: number } };
+    if (error.response?.status === 429) {
+      return {
+        text:
+          language === 'sw'
+            ? 'Umetumia kikomo cha maswali ya majaribio (maswali 10 kwa saa). Tafadhali fungua akaunti ya bure ili uendelee bila kikomo.'
+            : 'Demo rate limit reached (10 queries/hour). Please sign up for a free account to unlock unlimited agronomic consultations.',
+        source: 'Rate Limit (10 queries/hour)',
+      };
+    }
+    return {
+      text: PRESET_ANSWERS.default[language].text,
+      source: PRESET_ANSWERS.default[language].source,
+    };
+  }
+}
+
+const SESSION_STORAGE_KEY = 'ag_ext_talking_session';
+let sessionKey: CryptoKey | null = null;
+
+async function persistSessionState(
+  messages: Message[],
+  entitySlots: AgronomicEntitySlots
+): Promise<void> {
+  if (typeof window === 'undefined' || !window.sessionStorage) return;
+
+  try {
+    if (!sessionKey) {
+      sessionKey = await EncryptedStorageService.deriveKeyFromSecret('talking_assistant_public_2026');
+    }
+    const payload = JSON.stringify({ messages, entitySlots });
+    const encrypted = await EncryptedStorageService.encrypt(payload, sessionKey);
+    window.sessionStorage.setItem(SESSION_STORAGE_KEY, encrypted);
+  } catch {
+    // Non-fatal session storage fallback
+    try {
+      window.sessionStorage.setItem(
+        `${SESSION_STORAGE_KEY}_raw`,
+        JSON.stringify({ messages, entitySlots })
+      );
+    } catch {
+      // ignore
+    }
+  }
 }
 
 interface UseSpeechControllerProps {
@@ -195,12 +487,8 @@ function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechContro
         utterance.rate = 0.95;
         utterance.pitch = 1.0;
 
-        utterance.onend = () => {
-          setIsSpeaking(false);
-        };
-        utterance.onerror = () => {
-          setIsSpeaking(false);
-        };
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => setIsSpeaking(false);
 
         synthRef.current.speak(utterance);
       } catch (err) {
@@ -253,25 +541,18 @@ function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechContro
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
 
-      recognition.onstart = () => {
-        setIsListening(true);
-      };
-
+      recognition.onstart = () => setIsListening(true);
       recognition.onresult = (event: { results: Array<Array<{ transcript: string }>> }) => {
         const transcript = event.results[0]?.[0]?.transcript;
         if (transcript) {
           onTranscript(transcript);
         }
       };
-
       recognition.onerror = (event: { error: string }) => {
         console.warn('Speech recognition error:', event.error);
         setIsListening(false);
       };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
+      recognition.onend = () => setIsListening(false);
 
       recognitionRef.current = recognition;
       recognition.start();
@@ -482,6 +763,94 @@ function AudioControls({
   );
 }
 
+interface ActiveContextBannerProps {
+  slots: AgronomicEntitySlots;
+  onClear: () => void;
+}
+
+function ActiveContextBanner({ slots, onClear }: ActiveContextBannerProps) {
+  const activeEntries = Object.entries(slots).filter(([_, v]) => Boolean(v));
+  if (activeEntries.length === 0) return null;
+
+  return (
+    <div className="mb-3 px-3 py-2 rounded-lg bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between gap-2 text-xs">
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span className="text-emerald-400 font-semibold uppercase tracking-wider text-[10px]">
+          Active Context:
+        </span>
+        {slots.crop && (
+          <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+            🌱 {slots.crop}
+          </span>
+        )}
+        {slots.pest_disease && (
+          <span className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/25">
+            🐛 {slots.pest_disease}
+          </span>
+        )}
+        {slots.field_size && (
+          <span className="px-2 py-0.5 rounded bg-teal-500/15 text-teal-300 border border-teal-500/25">
+            📐 {slots.field_size}
+          </span>
+        )}
+        {slots.soil_profile && (
+          <span className="px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/25">
+            🧪 {slots.soil_profile}
+          </span>
+        )}
+        {slots.location_climate && (
+          <span className="px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/25">
+            📍 {slots.location_climate}
+          </span>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={onClear}
+        className="text-white/50 hover:text-white inline-flex items-center gap-1 text-[11px] shrink-0"
+        title="Reset conversation context"
+      >
+        <RotateCcw className="w-3 h-3" />
+        <span>Reset</span>
+      </button>
+    </div>
+  );
+}
+
+interface HandoffCardProps {
+  onHandoff: () => void;
+}
+
+function HandoffCard({ onHandoff }: HandoffCardProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mb-4 p-3 rounded-xl bg-gradient-to-r from-emerald-900/40 via-slate-900/80 to-teal-900/40 border border-emerald-500/30 flex items-center justify-between gap-3 shadow-lg"
+    >
+      <div className="flex items-center gap-2.5">
+        <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+          <ShieldCheck className="w-4 h-4" />
+        </div>
+        <div className="text-xs">
+          <p className="font-semibold text-white">Save this Diagnostic Advisory</p>
+          <p className="text-white/60 text-[11px]">
+            Generate an official Field Visit Report and persist your consultation history.
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onHandoff}
+        className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-all flex items-center gap-1 shrink-0 shadow-md"
+      >
+        <span>Sign up free</span>
+        <ChevronRight className="w-3.5 h-3.5" />
+      </button>
+    </motion.div>
+  );
+}
+
 interface ChatMessageProps {
   msg: Message;
   onSpeak: (text: string, lang: 'en' | 'sw') => void;
@@ -565,6 +934,7 @@ function QuestionChips({ onSelect }: QuestionChipsProps) {
 interface ChatInputFormProps {
   inputText: string;
   isListening: boolean;
+  isLoading: boolean;
   selectedLanguage: 'en' | 'sw';
   onChangeInput: (val: string) => void;
   onSubmit: () => void;
@@ -574,6 +944,7 @@ interface ChatInputFormProps {
 function ChatInputForm({
   inputText,
   isListening,
+  isLoading,
   selectedLanguage,
   onChangeInput,
   onSubmit,
@@ -586,7 +957,7 @@ function ChatInputForm({
 
   return (
     <form
-      onSubmit={e => {
+      onSubmit={(e) => {
         e.preventDefault();
         onSubmit();
       }}
@@ -595,9 +966,10 @@ function ChatInputForm({
       <input
         type="text"
         value={inputText}
-        onChange={e => onChangeInput(e.target.value)}
+        disabled={isLoading}
+        onChange={(e) => onChangeInput(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-xl bg-slate-950/90 border border-white/[0.12] text-sm text-white placeholder-white/40 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all pr-24"
+        className="w-full px-4 py-3 rounded-xl bg-slate-950/90 border border-white/[0.12] text-sm text-white placeholder-white/40 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all pr-24 disabled:opacity-50"
       />
 
       <div className="absolute right-2 flex items-center gap-1">
@@ -617,12 +989,12 @@ function ChatInputForm({
 
         <button
           type="submit"
-          disabled={!inputText.trim()}
+          disabled={!inputText.trim() || isLoading}
           aria-label="Send message"
           className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white transition-all"
           title="Send message"
         >
-          <Send className="w-4 h-4" />
+          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </button>
       </div>
     </form>
@@ -643,36 +1015,93 @@ export function TalkingAssistant() {
   const [inputText, setInputText] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'sw'>('en');
   const [autoSpeak, setAutoSpeak] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [entitySlots, setEntitySlots] = useState<AgronomicEntitySlots>({
+    crop: null,
+    pest_disease: null,
+    field_size: null,
+    location_climate: null,
+    soil_profile: null,
+  });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleDispatchAssistantResponse = useCallback(
-    (query: string, lang: 'en' | 'sw', speakFn: (text: string, l: 'en' | 'sw') => void) => {
-      setTimeout(() => {
-        const res = resolveResponse(query, lang);
-        const assistantMsg: Message = {
-          id: `assistant-${Date.now()}`,
-          sender: 'assistant',
-          text: res.text,
-          language: lang,
-          sourceBadge: res.source,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
+  const handleDispatchAssistantTurn = useCallback(
+    async (
+      query: string,
+      lang: 'en' | 'sw',
+      activeSlots: AgronomicEntitySlots,
+      speakFn: (t: string, l: 'en' | 'sw') => void
+    ) => {
+      // 1. Check local edge preset / follow-up rules (0ms latency)
+      const local = resolveLocalAgronomicTurn(query, activeSlots, lang);
+      if (local.isMatch) {
+        setTimeout(() => {
+          const assistantMsg: Message = {
+            id: `assistant-${Date.now()}`,
+            sender: 'assistant',
+            text: local.text,
+            language: lang,
+            sourceBadge: local.source,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          };
 
-        setMessages(prev => [...prev, assistantMsg]);
+          setEntitySlots(local.updatedSlots);
+          setMessages((prev) => {
+            const next = [...prev, assistantMsg];
+            void persistSessionState(next, local.updatedSlots);
+            return next;
+          });
 
-        if (autoSpeak) {
-          speakFn(res.text, lang);
-        }
-      }, 350);
+          if (autoSpeak) {
+            speakFn(local.text, lang);
+          }
+        }, 300);
+        return;
+      }
+
+      // 2. Call dynamic public demo API
+      setIsLoading(true);
+      const apiResult = await fetchPublicDemoAdvisory(query, messages, lang, activeSlots);
+      setIsLoading(false);
+
+      const assistantMsg: Message = {
+        id: `assistant-${Date.now()}`,
+        sender: 'assistant',
+        text: apiResult.text,
+        language: lang,
+        sourceBadge: apiResult.source,
+        citations: apiResult.citations,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+
+      const updated = apiResult.entitySlots ?? activeSlots;
+      setEntitySlots(updated);
+      setMessages((prev) => {
+        const next = [...prev, assistantMsg];
+        void persistSessionState(next, updated);
+        return next;
+      });
+
+      if (autoSpeak) {
+        speakFn(apiResult.text, lang);
+      }
     },
-    [autoSpeak]
+    [autoSpeak, messages]
   );
+
+  const handleSendMessageRef = useRef<(textToSend?: string) => void>(() => {});
+
+  const { isListening, isSpeaking, speakText, stopSpeaking, toggleListening } =
+    useSpeechController({
+      selectedLanguage,
+      onTranscript: (transcript: string) => handleSendMessageRef.current(transcript),
+    });
 
   const handleSendMessage = useCallback(
     (textToSend?: string) => {
       const query = (textToSend || inputText).trim();
-      if (!query) return;
+      if (!query || isLoading) return;
 
       const userMsg: Message = {
         id: `user-${Date.now()}`,
@@ -682,27 +1111,28 @@ export function TalkingAssistant() {
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
-      setMessages(prev => [...prev, userMsg]);
-      setInputText('');
+      const updatedSlots = extractSlots(query, entitySlots);
+      setEntitySlots(updatedSlots);
 
-      handleDispatchAssistantResponse(query, selectedLanguage, speakText);
+      setMessages((prev) => {
+        const next = [...prev, userMsg];
+        void persistSessionState(next, updatedSlots);
+        return next;
+      });
+
+      setInputText('');
+      void handleDispatchAssistantTurn(query, selectedLanguage, updatedSlots, speakText);
     },
-    // speakText is captured after initialization
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [handleDispatchAssistantResponse, inputText, selectedLanguage]
+    [entitySlots, handleDispatchAssistantTurn, inputText, isLoading, selectedLanguage, speakText]
   );
 
-  const { isListening, isSpeaking, speakText, stopSpeaking, toggleListening } =
-    useSpeechController({
-      selectedLanguage,
-      onTranscript: handleSendMessage,
-    });
+  handleSendMessageRef.current = handleSendMessage;
 
   useEffect(() => {
     if (typeof messagesEndRef.current?.scrollIntoView === 'function') {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const handleSelectPrompt = useCallback(
     (item: SampleQuestion) => {
@@ -711,6 +1141,23 @@ export function TalkingAssistant() {
     },
     [handleSendMessage]
   );
+
+  const handleClearContext = useCallback(() => {
+    setEntitySlots({
+      crop: null,
+      pest_disease: null,
+      field_size: null,
+      location_climate: null,
+      soil_profile: null,
+    });
+  }, []);
+
+  const handleHandoff = useCallback(() => {
+    window.location.href = '/register';
+  }, []);
+
+  const userTurnCount = messages.filter((m) => m.sender === 'user').length;
+  const showHandoff = userTurnCount >= 2;
 
   return (
     <section
@@ -770,32 +1217,48 @@ export function TalkingAssistant() {
             <AudioControls
               autoSpeak={autoSpeak}
               isSpeaking={isSpeaking}
-              onToggleAutoSpeak={() => setAutoSpeak(prev => !prev)}
+              onToggleAutoSpeak={() => setAutoSpeak((prev) => !prev)}
               onStopSpeaking={stopSpeaking}
             />
           </div>
 
-          {/* Right Column: Interactive Chat & Spoken Transcript */}
+          {/* Right Column: Interactive Chat & Context Tracking */}
           <div className="p-6 sm:p-8 rounded-2xl bg-slate-900/80 border border-white/[0.08] backdrop-blur-xl flex flex-col justify-between shadow-2xl shadow-black/60">
-            <div className="space-y-4 max-h-[380px] overflow-y-auto pr-2 mb-4 scrollbar-thin scrollbar-thumb-white/10">
-              <AnimatePresence initial={false}>
-                {messages.map(msg => (
-                  <ChatMessage key={msg.id} msg={msg} onSpeak={speakText} />
-                ))}
-              </AnimatePresence>
-              <div ref={messagesEndRef} />
+            <div>
+              <ActiveContextBanner slots={entitySlots} onClear={handleClearContext} />
+
+              <div className="space-y-4 max-h-[340px] overflow-y-auto pr-2 mb-4 scrollbar-thin scrollbar-thumb-white/10">
+                <AnimatePresence initial={false}>
+                  {messages.map((msg) => (
+                    <ChatMessage key={msg.id} msg={msg} onSpeak={speakText} />
+                  ))}
+                </AnimatePresence>
+
+                {isLoading && (
+                  <div className="flex items-center gap-2 text-xs text-emerald-400 py-1 font-mono">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Agronomic Engine consulting knowledge base...</span>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {showHandoff && <HandoffCard onHandoff={handleHandoff} />}
             </div>
 
-            <QuestionChips onSelect={handleSelectPrompt} />
+            <div>
+              <QuestionChips onSelect={handleSelectPrompt} />
 
-            <ChatInputForm
-              inputText={inputText}
-              isListening={isListening}
-              selectedLanguage={selectedLanguage}
-              onChangeInput={setInputText}
-              onSubmit={handleSendMessage}
-              onToggleListening={toggleListening}
-            />
+              <ChatInputForm
+                inputText={inputText}
+                isListening={isListening}
+                isLoading={isLoading}
+                selectedLanguage={selectedLanguage}
+                onChangeInput={setInputText}
+                onSubmit={handleSendMessage}
+                onToggleListening={toggleListening}
+              />
+            </div>
           </div>
         </div>
       </div>
