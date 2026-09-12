@@ -106,6 +106,13 @@ describe('Object Storage & Media Pipeline', () => {
 
       await objectStorage.deleteObject(testKey);
     });
+
+    it('rejects directory traversal attempts in storage keys', async () => {
+      await expect(objectStorage.getObject('../../../etc/passwd')).rejects.toThrow('directory traversal prohibited');
+      await expect(objectStorage.getObject('folder/../../secret.txt')).rejects.toThrow('directory traversal prohibited');
+      await expect(objectStorage.hasObject('../config.json')).rejects.toThrow('directory traversal prohibited');
+      await expect(objectStorage.deleteObject('nested/../../../file')).rejects.toThrow('directory traversal prohibited');
+    });
   });
 
   describe('Signature Matching & Media Type Normalization', () => {

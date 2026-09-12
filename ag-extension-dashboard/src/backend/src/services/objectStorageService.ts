@@ -197,12 +197,21 @@ class ObjectStorageService {
   }
 
   private sanitizeKey(key: string): string {
-    return key.replace(/\\/g, '/').replace(/^\/+/, '');
+    const normalized = key.replace(/\\/g, '/').replace(/^\/+/, '');
+    if (normalized.includes('..') || normalized.includes('\0')) {
+      throw new Error('Invalid storage key: directory traversal prohibited');
+    }
+    return normalized;
   }
 
   private getLocalPath(key: string): string {
     const cleanKey = this.sanitizeKey(key);
-    return path.join(this.config.localUploadDir, cleanKey);
+    const resolvedBase = path.resolve(this.config.localUploadDir);
+    const resolvedPath = path.resolve(resolvedBase, cleanKey);
+    if (!resolvedPath.startsWith(resolvedBase + path.sep) && resolvedPath !== resolvedBase) {
+      throw new Error(`Invalid storage key: path traversal detected (${key})`);
+    }
+    return resolvedPath;
   }
 
   private async ensureParentDir(filePath: string): Promise<void> {
