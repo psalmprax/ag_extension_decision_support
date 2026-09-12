@@ -20,6 +20,9 @@ interface JWTPayload {
     role: string;
 }
 
+// Fixed pre-computed bcrypt hash to neutralize authentication timing side-channels (user enumeration)
+const DUMMY_BCRYPT_HASH = '$2a$10$NVqK3ijujMkE3ZwVVOLruutAEJwLmNCDXAGVKvTqLGxhBpNeLz.BO';
+
 /**
  * @swagger
  * /api/v1/auth/login:
@@ -67,6 +70,7 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
         const user = result.rows[0];
 
         if (!user) {
+            await bcrypt.compare(password, DUMMY_BCRYPT_HASH);
             await recordLoginAttempt({
                 email,
                 status: 'failed',

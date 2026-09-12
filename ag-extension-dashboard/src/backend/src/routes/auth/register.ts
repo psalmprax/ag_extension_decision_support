@@ -11,6 +11,8 @@ import { safeError } from '@/utils/safeResponse';
 import { passwordProblems } from '@/utils/passwordPolicy';
 import { issueEmailVerification } from './passwordReset';
 import { incrWindow } from '@/services/sharedState';
+import { createSession } from '@/services/sessionService';
+import { resolveLocationFromHeaders } from '@/services/loginHistoryService';
 
 const router = Router();
 
@@ -121,6 +123,16 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
             { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
 
+        // Record initial user session for active session visibility and revocation support
+        const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.ip || null;
+        createSession({
+            userId: newUser.id,
+            token,
+            ipAddress: clientIp,
+            userAgent: req.get('user-agent') || null,
+            location: resolveLocationFromHeaders(req.headers, clientIp, newUser.region),
+        }).catch(err => logger.warn(`Session for new user ${newUser.id} could not be persisted:`, err));
+
         res.status(201).json({
             success: true,
             data: {
@@ -203,6 +215,14 @@ router.post('/demo', async (req: Request, res: Response) => {
             config.jwt.secret as jwt.Secret,
             { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
+
+        createSession({
+            userId: user.id,
+            token,
+            ipAddress: ip,
+            userAgent: req.get('user-agent') || null,
+            location: resolveLocationFromHeaders(req.headers, ip, user.region),
+        }).catch(err => logger.warn(`Session for demo user ${user.id} could not be persisted:`, err));
 
         res.json({
             success: true,

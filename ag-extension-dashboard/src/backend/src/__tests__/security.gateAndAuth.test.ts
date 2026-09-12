@@ -46,6 +46,22 @@ describe('Cybersecurity Suite — Perimeter Security Gate & RBAC Authorization',
       expect(nextFunction).not.toHaveBeenCalled();
     });
 
+    it('should block POST/DELETE requests containing SQL injection in query parameters', () => {
+      mockRequest.method = 'DELETE';
+      mockRequest.query = { id: "1'; DROP TABLE users; --" };
+
+      securityGate(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: 'Request blocked by security filter',
+        })
+      );
+      expect(nextFunction).not.toHaveBeenCalled();
+    });
+
     it('should block POST requests containing XSS or prompt injection in JSON body', () => {
       mockRequest.method = 'POST';
       mockRequest.path = '/api/ai/ask';

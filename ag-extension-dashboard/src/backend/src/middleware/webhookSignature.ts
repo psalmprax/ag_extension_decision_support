@@ -20,15 +20,34 @@ const verifyMetaSignature = (rawBody: Buffer, signatureHeader: string, appSecret
 
 const verifyTwilioSignature = (req: Request, authToken: string): boolean => {
     // Twilio spec: HMAC-SHA1 over (full request URL + sorted "keyvalue" concatenation of POST params)
-    const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+    const rawProto = (req.headers['x-forwarded-proto'] as string) || req.protocol;
+    const proto = rawProto.split(',')[0].trim();
+    const rawHost = (req.headers['x-forwarded-host'] as string) || req.get('host') || '';
+    const host = rawHost.split(',')[0].trim();
     const params = Object.keys(req.body ?? {})
         .sort()
-        .reduce((acc, key) => acc + key + String((req.body as Record<string, unknown>)[key]), '');
-    const expected = crypto
+        .reduce((acc, key) => {
+            const val = (req.body as Record<string, unknown>)[key];
+            return acc + key + (val == null ? '' : String(val));
+        }, '');
+
+    const computeExpected = (p: string, h: string) => crypto
         .createHmac('sha1', authToken)
-        .update(Buffer.from(url + params, 'utf8'))
+        .update(Buffer.from(`${p}://${h}${req.originalUrl}` + params, 'utf8'))
         .digest('base64');
-    return safeHexEqual(String(req.headers[TWILIO_SIGNATURE_HEADER]), expected);
+
+    const received = String(req.headers[TWILIO_SIGNATURE_HEADER]);
+    const hosts = [host];
+    const stripped = host.replace(/:(443|80)$/, '');
+    if (stripped !== host) hosts.push(stripped);
+
+    const protos = [proto, proto === 'https' ? 'http' : 'https'];
+    for (const p of protos) {
+        for (const h of hosts) {
+            if (safeHexEqual(received, computeExpected(p, h))) return true;
+        }
+    }
+    return false;
 };
 
 /**
@@ -53,28 +72,37 @@ export const verifyInboundWebhookSignature = (req: Request, res: Response, next:
         return;
     }
 
-    const rawBody = req.rawBody;
-    if (!Buffer.isBuffer(rawBody)) {
-        logger.warn('Inbound webhook rejected — raw body unavailable for signature verification');
-        res.status(400).json({ success: false, error: 'Invalid request body' });
-        return;
-    }
-
     const metaHeader = req.headers[META_SIGNATURE_HEADER];
-    if (metaSecret && typeof metaHeader === 'string' && verifyMetaSignature(rawBody, metaHeader, metaSecret)) {
-        next();
+    const twilioHeader = req.headers[TWILIO_SIGNATURE_HEADER];
+
+    // Meta Cloud API path: requires raw body buffer
+    if (metaSecret && typeof metaHeader === 'string') {
+        const rawBody = req.rawBody;
+        if (!Buffer.isBuffer(rawBody)) {
+            logger.warn('Inbound webhook rejected — raw body unavailable for Meta signature verification');
+            res.status(400).json({ success: false, error: 'Invalid request body' });
+            return;
+        }
+        if (verifyMetaSignature(rawBody, metaHeader, metaSecret)) {
+            next();
+            return;
+        }
+        logger.warn(`Inbound webhook rejected — invalid ${META_SIGNATURE_HEADER}`);
+        res.status(403).json({ success: false, error: 'Webhook signature verification failed' });
         return;
     }
 
-    if (twilioToken && typeof req.headers[TWILIO_SIGNATURE_HEADER] === 'string') {
+    // Twilio WhatsApp path: signs URL + sorted body params
+    if (twilioToken && typeof twilioHeader === 'string') {
         if (verifyTwilioSignature(req, twilioToken)) {
             next();
             return;
         }
         logger.warn('Inbound webhook rejected — invalid X-Twilio-Signature');
-    } else {
-        logger.warn(`Inbound webhook rejected — missing or invalid ${META_SIGNATURE_HEADER}`);
+        res.status(403).json({ success: false, error: 'Webhook signature verification failed' });
+        return;
     }
 
+    logger.warn('Inbound webhook rejected — missing provider signature header');
     res.status(403).json({ success: false, error: 'Webhook signature verification failed' });
 };

@@ -71,10 +71,13 @@ function redactMediaPayloads(payload: unknown, key = '', depth = 0): unknown {
 
 function checkQuerySecurity(req: Request): { blocked: boolean; threats: string[] } {
   try {
+    const hasQuery = req.query && Object.keys(req.query).length > 0;
+    const hasParams = req.params && Object.keys(req.params).length > 0;
+    if (!hasQuery && !hasParams) return { blocked: false, threats: [] };
+
     const queryStr = JSON.stringify(req.query || {});
     const paramsStr = JSON.stringify(req.params || {});
     const combined = queryStr + paramsStr;
-    if (combined.length <= 2) return { blocked: false, threats: [] };
     const check = aegisShield.sanitizeInput(combined);
     return { blocked: !check.clean, threats: check.threats };
   } catch (err) {
@@ -99,24 +102,22 @@ function checkBodySecurity(req: Request): { blocked: boolean; threats: string[] 
 export function securityGate(req: Request, res: Response, next: NextFunction) {
   const method = req.method;
 
-  // Scan GET query params and URL params for threats
-  if (method === 'GET') {
-    const { blocked, threats } = checkQuerySecurity(req);
-    if (blocked) {
-      logger.warn(`Security gate blocked GET request to ${req.path}: ${threats.join('; ')}`);
-      return res.status(403).json({
-        success: false,
-        error: 'Request blocked by security filter',
-        details: 'Potential security threat detected in query parameters',
-      });
-    }
+  // Scan query params and URL params for threats across all HTTP methods
+  const { blocked: queryBlocked, threats: queryThreats } = checkQuerySecurity(req);
+  if (queryBlocked) {
+    logger.warn(`Security gate blocked ${method} request to ${req.path} (query/params): ${queryThreats.join('; ')}`);
+    return res.status(403).json({
+      success: false,
+      error: 'Request blocked by security filter',
+      details: 'Potential security threat detected in query parameters',
+    });
   }
 
   // Scan POST/PUT/PATCH/DELETE bodies for threats (with media payloads safely neutralized)
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
-    const { blocked, threats } = checkBodySecurity(req);
-    if (blocked) {
-      logger.warn(`Security gate blocked request to ${req.path}: ${threats.join('; ')}`);
+    const { blocked: bodyBlocked, threats: bodyThreats } = checkBodySecurity(req);
+    if (bodyBlocked) {
+      logger.warn(`Security gate blocked ${method} request to ${req.path} (body): ${bodyThreats.join('; ')}`);
       return res.status(403).json({
         success: false,
         error: 'Request blocked by security filter',

@@ -94,6 +94,22 @@ const SSRF_BLOCKED_PREFIXES = [
     '172.30.',
     '172.31.',
     '192.168.',
+    '127.',
+    '169.254.',
+    '0.',
+    '[fe8',
+    '[fc',
+    '[fd',
+    '[::',
+];
+
+const SSRF_BLOCKED_DOMAINS = [
+    '.internal',
+    '.local',
+    '.lan',
+    '.localhost',
+    '.localdomain',
+    '.corp',
 ];
 
 function isSafeWebhookMediaUrl(rawUrl: string): boolean {
@@ -105,36 +121,64 @@ function isSafeWebhookMediaUrl(rawUrl: string): boolean {
         for (const prefix of SSRF_BLOCKED_PREFIXES) {
             if (lowerHost.startsWith(prefix)) return false;
         }
+        for (const domain of SSRF_BLOCKED_DOMAINS) {
+            if (lowerHost.endsWith(domain)) return false;
+        }
         return true;
     } catch {
         return false;
     }
 }
 
+function parseBase64Audio(rawBase64: string, mimeType: string): { buffer: Buffer; mimeType: string } | null {
+    if (rawBase64.length > 16 * 1024 * 1024) {
+        logger.warn('Rejected inbound WhatsApp audioBase64: exceeds 16MB limit');
+        return null;
+    }
+    const cleanBase64 = rawBase64.includes('base64,') ? rawBase64.split('base64,')[1] : rawBase64;
+    const buf = Buffer.from(cleanBase64, 'base64');
+    if (buf.length === 0) {
+        logger.warn('Rejected inbound WhatsApp audioBase64: empty or unparseable payload');
+        return null;
+    }
+    return { buffer: buf, mimeType };
+}
+
+async function downloadRemoteAudio(url: string, mimeType: string): Promise<{ buffer?: Buffer; url: string; mimeType: string } | null> {
+    if (!isSafeWebhookMediaUrl(url)) {
+        logger.warn(`Rejected potential SSRF or unsupported audio URL in WhatsApp inbound: ${url}`);
+        return null;
+    }
+    try {
+        const resp = await axios.get(url, {
+            responseType: 'arraybuffer',
+            timeout: 8000,
+            maxContentLength: 12 * 1024 * 1024,
+            maxRedirects: 3,
+            beforeRedirect: (options: Record<string, unknown>) => {
+                const target = (options.href as string) || `${options.protocol}//${options.host}${options.path}`;
+                if (!isSafeWebhookMediaUrl(target)) {
+                    throw new Error(`SSRF blocked redirect to ${target}`);
+                }
+            },
+        });
+        return { buffer: Buffer.from(resp.data), url, mimeType };
+    } catch (err) {
+        logger.warn('Could not download audio from remote URL for transcription:', err);
+        return { url, mimeType };
+    }
+}
+
 async function resolveAudioPayload(payload: InboundMessagePayload): Promise<{ buffer?: Buffer; url?: string; mimeType: string } | null> {
-    const url = payload.MediaUrl0 || payload.audioUrl;
     const mimeType = payload.MediaContentType0 || payload.mimeType || payload.mediaContentType || 'audio/ogg';
 
     if (payload.audioBase64) {
-        return { buffer: Buffer.from(payload.audioBase64, 'base64'), mimeType };
+        return parseBase64Audio(payload.audioBase64, mimeType);
     }
 
+    const url = payload.MediaUrl0 || payload.audioUrl;
     if (url) {
-        if (!isSafeWebhookMediaUrl(url)) {
-            logger.warn(`Rejected potential SSRF or unsupported audio URL in WhatsApp inbound: ${url}`);
-            return null;
-        }
-        try {
-            const resp = await axios.get(url, {
-                responseType: 'arraybuffer',
-                timeout: 8000,
-                maxContentLength: 12 * 1024 * 1024,
-            });
-            return { buffer: Buffer.from(resp.data), url, mimeType };
-        } catch (err) {
-            logger.warn('Could not download audio from remote URL for transcription:', err);
-            return { url, mimeType };
-        }
+        return await downloadRemoteAudio(url, mimeType);
     }
 
     return null;

@@ -54,7 +54,10 @@ This **Cybersecurity Playbook** documents the platform's threat assessment, oper
 - **Threat**: Forging incoming WhatsApp webhook reports, replaying captured requests, or abusing media URLs to probe internal network infrastructure (Server-Side Request Forgery).
 - **Controls Implemented**:
   - [`webhookSignature.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/middleware/webhookSignature.ts) computes HMAC-SHA256 (Meta) and HMAC-SHA1 (Twilio) using `crypto.timingSafeEqual` against the raw unparsed request buffer.
-  - In [`routes/whatsapp.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/whatsapp.ts), `isSafeWebhookMediaUrl` rejects cloud metadata (`169.254.169.254`), loopback (`127.0.0.1`), and RFC 1918 private IP ranges (`10.*`, `172.16-31.*`, `192.168.*`), accompanied by a 12MB download size ceiling.
+  - Multi-hop reverse proxy headers (`x-forwarded-proto`, `x-forwarded-host`) with port stripping (`:443`/`:80`) and protocol fallback (`https`/`http`) are supported to prevent cryptographic signature failures behind TLS-terminating load balancers.
+  - In [`routes/whatsapp.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/whatsapp.ts), `isSafeWebhookMediaUrl` rejects cloud metadata (`169.254.169.254`), loopback (`127.*`, `[::1]`, `[::ffff:7f*]`), IPv6 link-local (`[fe8*]`, `[fc*]`, `[fd*]`), RFC 1918 private IP ranges (`10.*`, `172.16-31.*`, `192.168.*`), and internal domains (`.internal`, `.local`, `.lan`, `.corp`, etc.).
+  - Egress audio downloads via Axios are protected against Open Redirect SSRF bypasses via `beforeRedirect` validation and bounded by a 12MB download ceiling.
+  - Base64 audio payloads are sanitized by stripping data URI schemes, bounding length $\le 16\text{ MB}$, and rejecting zero-byte buffers.
   - In production (`NODE_ENV === 'production'`), requests missing cryptographic signature headers or missing provider secrets are immediately rejected with HTTP 503 / 403.
 
 ### 5. Client-Side Markdown XSS & CSV Formula Injection (CWE-1236)
@@ -66,6 +69,19 @@ This **Cybersecurity Playbook** documents the platform's threat assessment, oper
   - In [`MarkdownRenderer.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/MarkdownRenderer.tsx), link protocols are filtered against `javascript:`, `data:`, and `vbscript:` schemes, rendering blocked links safely, while images enforce safe origin checks and lazy loading.
   - In [`bulkOperationsService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/bulkOperationsService.ts) and [`misExportService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/misExportService.ts), cells starting with `=+\-@\t\r` are prepended with `'` to neutralize formula execution in Excel and LibreOffice Calc.
   - In [`routes/diseases.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/diseases.ts), string length is checked prior to allocating `Buffer.from`, returning HTTP 413 immediately, alongside zero-byte payload rejection (HTTP 400).
+
+### 6. Perimeter Query Sanitization, JWT Algorithm Pinning & Timing Defense
+- **Threat**:
+  - Injection attacks disguised in query parameters of non-GET requests (`POST`, `PUT`, `DELETE`).
+  - JWT algorithm confusion or downgrade attacks (e.g. `none` algorithm).
+  - Username enumeration via authentication response timing discrepancies between valid and invalid emails.
+  - Ghost sessions after registration lacking server-side revocation capabilities.
+- **Controls Implemented**:
+  - In [`securityGate.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/middleware/securityGate.ts), `checkQuerySecurity` scans query parameters across all HTTP methods, preventing non-GET injection bypasses.
+  - In [`authorize.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/middleware/authorize.ts), `jwt.verify` strictly specifies `{ algorithms: ['HS256'] }`, barring algorithm confusion or insecure header substitutions.
+  - In [`routes/auth/login.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/auth/login.ts), unauthenticated queries execute constant-time `bcrypt.compare` against `DUMMY_BCRYPT_HASH`, neutralizing username enumeration timing attacks.
+  - In [`routes/auth/register.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/auth/register.ts), newly registered tokens are automatically bound to tracked database sessions via `createSession`, enabling multi-device tracking and immediate revocation.
+  - In [`app.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/app.ts), Express body parsers (`json` and `urlencoded`) are aligned to `16mb` with raw buffer preservation, while AI/voice pillar timeouts are extended to 300s to support heavy local Whisper STT operations.
 
 ---
 
