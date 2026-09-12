@@ -43,3 +43,8 @@ WhatsApp voice note (existing inbound webhook, `routes/whatsapp.ts`) → downloa
 - SALT availability/SLA as a research-derived service — mitigate with the Groq/gpt-4o-mini fallback chain and by caching transcripts
 - Noisy field audio degrades all models (Google's Chirp 3 denoiser is best-in-class but lacks Chichewa) — accept: farmers can repeat; text fallback always shown
 - Hallucination on very short/silent clips — enforce min-duration + empty-transcript guard
+
+---
+
+## Related Specifications
+- For the interactive web/landing-page voice assistant, see: [`docs/specs/PHASE2-TALKING-ASSISTANT-ENHANCEMENT.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/docs/specs/PHASE2-TALKING-ASSISTANT-ENHANCEMENT.md).
