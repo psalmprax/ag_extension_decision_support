@@ -464,4 +464,47 @@ router.post(
   }
 );
 
+const publicDemoTtsSchema = z.object({
+  text: z.string().min(1, 'Text is required').max(1000, 'Text exceeds 1000 characters limit'),
+  voice: z.enum(['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer', 'default']).optional().default('nova'),
+  language: z.enum(['en', 'sw']).optional().default('en'),
+});
+
+router.post(
+  '/public-demo/tts',
+  publicDemoRateLimiter,
+  validate({ body: publicDemoTtsSchema }),
+  async (req: Request, res: Response) => {
+    try {
+      const { text, voice = 'nova', language = 'en' } = req.body;
+      const provider = await AIProviderFactory.getProvider();
+
+      if (typeof provider.textToSpeech !== 'function' || !provider.isConfigured()) {
+        return res.status(503).json({
+          success: false,
+          fallback: 'client_tts',
+          error: 'Server neural TTS unavailable. Please use browser natural speech synthesis.',
+        });
+      }
+
+      const ttsResult = await provider.textToSpeech(text, { voice, language });
+      return res.json({
+        success: true,
+        data: {
+          audioBase64: ttsResult.audio.toString('base64'),
+          format: ttsResult.format,
+          voice,
+        },
+      });
+    } catch (error) {
+      logger.warn('Public demo TTS synthesis failed:', error instanceof Error ? error.message : String(error));
+      return res.status(503).json({
+        success: false,
+        fallback: 'client_tts',
+        error: 'Neural TTS synthesis failed. Falling back to client speech synthesis.',
+      });
+    }
+  }
+);
+
 export default router;

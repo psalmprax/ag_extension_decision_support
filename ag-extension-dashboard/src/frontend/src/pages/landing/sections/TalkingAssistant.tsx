@@ -584,12 +584,330 @@ function startMediaRecorderCapture(
   }
 }
 
+export type VoicePersona = 'amani' | 'baraka' | 'zawadi';
+
+interface PersonaProsody {
+  rate: number;
+  pitch: number;
+}
+
+interface PersonaConfig {
+  id: VoicePersona;
+  label: string;
+  avatar: string;
+  role: string;
+  desc: string;
+  prosody: PersonaProsody;
+  serverVoice: 'nova' | 'alloy' | 'shimmer';
+  voiceKeywords: {
+    en: string[];
+    sw: string[];
+  };
+}
+
+const PERSONA_CONFIGS: Record<VoicePersona, PersonaConfig> = {
+  amani: {
+    id: 'amani',
+    label: 'Amani',
+    avatar: '🌿',
+    role: 'Warm Field Agronomist',
+    desc: 'Empathetic, warm, encouraging cadence',
+    prosody: { rate: 0.94, pitch: 1.04 },
+    serverVoice: 'nova',
+    voiceKeywords: {
+      en: ['natural', 'online', 'jenny', 'samantha', 'serena', 'katherine', 'victoria', 'google', 'female', 'neural'],
+      sw: ['natural', 'online', 'swahili', 'google', 'female'],
+    },
+  },
+  baraka: {
+    id: 'baraka',
+    label: 'Baraka',
+    avatar: '⚡',
+    role: 'Dynamic Extension Lead',
+    desc: 'Resonant, confident, clear cadence',
+    prosody: { rate: 0.98, pitch: 0.98 },
+    serverVoice: 'alloy',
+    voiceKeywords: {
+      en: ['natural', 'online', 'guy', 'david', 'daniel', 'oliver', 'rishi', 'google', 'male', 'neural'],
+      sw: ['natural', 'online', 'swahili', 'google', 'male'],
+    },
+  },
+  zawadi: {
+    id: 'zawadi',
+    label: 'Zawadi',
+    avatar: '🔬',
+    role: 'Diagnostic Specialist',
+    desc: 'Methodical, diagnostic, articulate cadence',
+    prosody: { rate: 0.92, pitch: 1.00 },
+    serverVoice: 'shimmer',
+    voiceKeywords: {
+      en: ['natural', 'online', 'aria', 'sonia', 'clara', 'enhanced', 'premium', 'google', 'neural'],
+      sw: ['natural', 'online', 'swahili', 'google'],
+    },
+  },
+};
+
+function cleanMarkdownFormatting(text: string): string {
+  return text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/\[\d+\]/g, '')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/[*_~`]/g, '')
+    .replace(/^\s*[-*+]\s+/gm, '')
+    .replace(/^\s*\d+\.\s+/gm, '')
+    .replace(/\s*\(([^)]+)\)/g, ', $1,');
+}
+
+function expandAgronomicUnitsEn(text: string): string {
+  return text
+    .replace(/(\d+(?:\.\d+)?)\s*ml\/L\b/gi, '$1 milliliters per liter')
+    .replace(/(\d+(?:\.\d+)?)\s*L\/acre\b/gi, '$1 liters per acre')
+    .replace(/(\d+(?:\.\d+)?)\s*t\/ha\b/gi, '$1 tonnes per hectare')
+    .replace(/(\d+(?:\.\d+)?)\s*kg\/ha\b/gi, '$1 kilograms per hectare')
+    .replace(/(\d+(?:\.\d+)?)\s*cm\b/gi, '$1 centimeters')
+    .replace(/(\d+(?:\.\d+)?)\s*mm\b/gi, '$1 millimeters')
+    .replace(/(\d+(?:\.\d+)?)\s*L\b/g, '$1 liters')
+    .replace(/(\d+(?:\.\d+)?)\s*ha\b/gi, '$1 hectares')
+    .replace(/pH\s*(\d+(?:\.\d+)?)/gi, 'p H, $1')
+    .replace(/(\d+(?:\.\d+)?)\s*%/g, '$1 percent')
+    .replace(/Bt subsp\. kurstaki/gi, 'Bacillus thuringiensis kurstaki')
+    .replace(/\bCEC\b/g, 'cation exchange capacity')
+    .replace(/\bEC\b/g, 'concentrate')
+    .replace(/\bSPEI\b/g, 'drought index');
+}
+
+function expandAgronomicUnitsSw(text: string): string {
+  return text
+    .replace(/(\d+(?:\.\d+)?)\s*ml\/L\b/gi, 'mililita $1 kwa lita ya maji')
+    .replace(/(\d+(?:\.\d+)?)\s*t\/ha\b/gi, 'tani $1 kwa hekta')
+    .replace(/(\d+(?:\.\d+)?)\s*L\b/g, 'lita $1')
+    .replace(/(\d+(?:\.\d+)?)\s*ha\b/gi, 'hekta $1')
+    .replace(/pH\s*(\d+(?:\.\d+)?)/gi, 'p H $1')
+    .replace(/(\d+(?:\.\d+)?)\s*%/g, 'asilimia $1');
+}
+
+function smoothProsodyPunctuation(text: string): string {
+  return text
+    .replace(/,+/g, ',')
+    .replace(/\s+,/g, ',')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function humanizeSpeechText(raw: string, language: 'en' | 'sw' = 'en'): string {
+  if (!raw) return '';
+  const noMd = cleanMarkdownFormatting(raw);
+  const withUnits = language === 'sw' ? expandAgronomicUnitsSw(noMd) : expandAgronomicUnitsEn(noMd);
+  return smoothProsodyPunctuation(withUnits);
+}
+
+const NEURAL_VOICE_BONUSES: Array<{ token: string; bonus: number }> = [
+  { token: 'natural', bonus: 50 },
+  { token: 'online', bonus: 40 },
+  { token: 'neural', bonus: 50 },
+  { token: 'premium', bonus: 35 },
+  { token: 'enhanced', bonus: 35 },
+  { token: 'google', bonus: 30 },
+  { token: 'espeak', bonus: -80 },
+  { token: 'festival', bonus: -60 },
+];
+
+function getLanguageScore(langLower: string, targetLang: 'en' | 'sw'): number {
+  if (targetLang === 'sw') {
+    return langLower.startsWith('sw') ? 100 : 0;
+  }
+  if (!langLower.startsWith('en')) {
+    return 0;
+  }
+  const isPreferredAccent = langLower.includes('us') || langLower.includes('gb') || langLower.includes('uk');
+  return isPreferredAccent ? 120 : 100;
+}
+
+function getVoiceQualityBonus(nameLower: string): number {
+  let bonus = 0;
+  for (const item of NEURAL_VOICE_BONUSES) {
+    if (nameLower.includes(item.token)) {
+      bonus += item.bonus;
+    }
+  }
+  return bonus;
+}
+
+function getPersonaMatchBonus(nameLower: string, persona: VoicePersona, targetLang: 'en' | 'sw'): number {
+  const cfg = PERSONA_CONFIGS[persona];
+  const list = targetLang === 'sw' ? cfg.voiceKeywords.sw : cfg.voiceKeywords.en;
+  let bonus = 0;
+  for (const kw of list) {
+    if (nameLower.includes(kw)) {
+      bonus += 15;
+    }
+  }
+  return bonus;
+}
+
+function scoreVoiceCandidate(
+  voice: SpeechSynthesisVoice,
+  targetLang: 'en' | 'sw',
+  persona: VoicePersona
+): number {
+  const langLower = voice.lang.toLowerCase();
+  const nameLower = voice.name.toLowerCase();
+
+  const langScore = getLanguageScore(langLower, targetLang);
+  if (langScore === 0) return 0;
+
+  const qualityScore = getVoiceQualityBonus(nameLower);
+  const personaScore = getPersonaMatchBonus(nameLower, persona, targetLang);
+
+  return langScore + qualityScore + personaScore;
+}
+
+function findBestNaturalVoice(
+  voices: SpeechSynthesisVoice[],
+  lang: 'en' | 'sw',
+  persona: VoicePersona
+): SpeechSynthesisVoice | null {
+  if (!voices || voices.length === 0) return null;
+  let bestVoice: SpeechSynthesisVoice | null = null;
+  let highestScore = -Infinity;
+
+  for (const voice of voices) {
+    const score = scoreVoiceCandidate(voice, lang, persona);
+    if (score > highestScore) {
+      highestScore = score;
+      bestVoice = voice;
+    }
+  }
+
+  return highestScore > 0 ? bestVoice : (voices[0] ?? null);
+}
+
+async function requestServerTts(
+  text: string,
+  voice: 'nova' | 'alloy' | 'shimmer',
+  language: 'en' | 'sw',
+  signal?: AbortSignal
+): Promise<string | null> {
+  try {
+    const res = await apiClient.post(
+      '/chatbot/public-demo/tts',
+      { text: text.slice(0, 950), voice, language },
+      { signal }
+    );
+    return res.data?.data?.audioBase64 ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function stopSpeechAndAudio(
+  ttsAbortRef: React.MutableRefObject<AbortController | null>,
+  audioRef: React.MutableRefObject<HTMLAudioElement | null>,
+  synthRef: React.MutableRefObject<SpeechSynthesis | null>
+): void {
+  if (ttsAbortRef.current) {
+    ttsAbortRef.current.abort();
+    ttsAbortRef.current = null;
+  }
+  if (audioRef.current) {
+    try {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    } catch {
+      // ignore
+    }
+    audioRef.current = null;
+  }
+  if (synthRef.current) {
+    try {
+      synthRef.current.cancel();
+    } catch {
+      // ignore
+    }
+  }
+}
+
+function stopActiveRecording(
+  recognitionRef: React.MutableRefObject<SpeechRecognitionInstance | null>,
+  mediaRecorderRef: React.MutableRefObject<MediaRecorder | null>
+): void {
+  if (recognitionRef.current) {
+    try {
+      recognitionRef.current.stop();
+    } catch {
+      // ignore
+    }
+    recognitionRef.current = null;
+  }
+  if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+    try {
+      mediaRecorderRef.current.stop();
+    } catch {
+      // ignore
+    }
+  }
+}
+
+function playServerAudio(
+  base64Audio: string,
+  onEnd: () => void,
+  onError: () => void
+): HTMLAudioElement | null {
+  if (typeof window === 'undefined' || typeof window.Audio === 'undefined') {
+    return null;
+  }
+  try {
+    const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+    audio.onended = onEnd;
+    audio.onerror = onError;
+    void audio.play().catch(onError);
+    return audio;
+  } catch {
+    return null;
+  }
+}
+
+function startListeningCapture(
+  selectedLanguage: 'en' | 'sw',
+  onTranscript: (t: string) => void,
+  onNativeEnd: () => void,
+  analyserResult: AudioAnalyserResult | null,
+  audioChunksRef: React.MutableRefObject<Blob[]>,
+  handleRecorderStop: () => void
+): { recognition: SpeechRecognitionInstance | null; recorder: MediaRecorder | null } {
+  const nativeInstance = startNativeSpeechRecognition(
+    selectedLanguage,
+    onTranscript,
+    () => {},
+    onNativeEnd,
+    onNativeEnd
+  );
+  if (nativeInstance) {
+    return { recognition: nativeInstance, recorder: null };
+  }
+  if (analyserResult?.stream) {
+    audioChunksRef.current = [];
+    const recorder = startMediaRecorderCapture(
+      analyserResult.stream,
+      (chunk) => audioChunksRef.current.push(chunk),
+      handleRecorderStop
+    );
+    return { recognition: null, recorder };
+  }
+  return { recognition: null, recorder: null };
+}
+
 interface UseSpeechControllerProps {
   selectedLanguage: 'en' | 'sw';
+  selectedPersona: VoicePersona;
   onTranscript: (transcript: string) => void;
 }
 
-function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechControllerProps) {
+function useSpeechController({
+  selectedLanguage,
+  selectedPersona,
+  onTranscript,
+}: UseSpeechControllerProps) {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -601,20 +919,27 @@ function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechContro
   const audioChunksRef = useRef<Blob[]>([]);
   const audioAnalyserRef = useRef<AudioAnalyserResult | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const ttsAbortControllerRef = useRef<AbortController | null>(null);
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setTtsSupported('speechSynthesis' in window);
-      synthRef.current = window.speechSynthesis || null;
-    }
-    return () => {
-      if (synthRef.current) {
-        try {
-          synthRef.current.cancel();
-        } catch {
-          // ignore
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      synthRef.current = window.speechSynthesis;
+      setTtsSupported(true);
+
+      const updateVoices = () => {
+        if (synthRef.current && typeof synthRef.current.getVoices === 'function') {
+          voicesRef.current = synthRef.current.getVoices();
         }
-      }
+      };
+
+      updateVoices();
+      synthRef.current.onvoiceschanged = updateVoices;
+    }
+
+    return () => {
+      stopSpeechAndAudio(ttsAbortControllerRef, audioElementRef, synthRef);
     };
   }, []);
 
@@ -631,18 +956,30 @@ function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechContro
     }
   }, []);
 
-  const speakText = useCallback(
-    (text: string, lang: 'en' | 'sw' = selectedLanguage) => {
-      if (!synthRef.current || !ttsSupported) return;
+  const stopSpeaking = useCallback(() => {
+    stopSpeechAndAudio(ttsAbortControllerRef, audioElementRef, synthRef);
+    setIsSpeaking(false);
+  }, []);
+
+  const speakClientFallback = useCallback(
+    (cleanText: string, lang: 'en' | 'sw', persona: VoicePersona) => {
+      if (!synthRef.current || !ttsSupported) {
+        setIsSpeaking(false);
+        return;
+      }
 
       try {
         synthRef.current.cancel();
-        setIsSpeaking(true);
-
-        const utterance = new SpeechSynthesisUtterance(text);
+        const cfg = PERSONA_CONFIGS[persona];
+        const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = lang === 'sw' ? 'sw-KE' : 'en-US';
-        utterance.rate = 0.95;
-        utterance.pitch = 1.0;
+        utterance.rate = cfg.prosody.rate;
+        utterance.pitch = cfg.prosody.pitch;
+
+        const bestVoice = findBestNaturalVoice(voicesRef.current, lang, persona);
+        if (bestVoice) {
+          utterance.voice = bestVoice;
+        }
 
         utterance.onend = () => setIsSpeaking(false);
         utterance.onerror = () => setIsSpeaking(false);
@@ -653,36 +990,56 @@ function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechContro
         setIsSpeaking(false);
       }
     },
-    [selectedLanguage, ttsSupported]
+    [ttsSupported]
   );
 
-  const stopSpeaking = useCallback(() => {
-    if (synthRef.current) {
-      try {
-        synthRef.current.cancel();
-      } catch {
-        // ignore
+  const speakText = useCallback(
+    async (text: string, lang: 'en' | 'sw' = selectedLanguage) => {
+      stopSpeaking();
+      const cleanText = humanizeSpeechText(text, lang);
+      if (!cleanText) return;
+
+      const persona = selectedPersona;
+      const cfg = PERSONA_CONFIGS[persona];
+      setIsSpeaking(true);
+
+      const abortController = new AbortController();
+      ttsAbortControllerRef.current = abortController;
+
+      const base64Audio = await requestServerTts(
+        cleanText,
+        cfg.serverVoice,
+        lang,
+        abortController.signal
+      );
+
+      if (abortController.signal.aborted) return;
+
+      if (base64Audio) {
+        const audio = playServerAudio(
+          base64Audio,
+          () => {
+            setIsSpeaking(false);
+            audioElementRef.current = null;
+          },
+          () => {
+            audioElementRef.current = null;
+            speakClientFallback(cleanText, lang, persona);
+          }
+        );
+        if (audio) {
+          audioElementRef.current = audio;
+          return;
+        }
       }
-    }
-    setIsSpeaking(false);
-  }, []);
+
+      speakClientFallback(cleanText, lang, persona);
+    },
+    [selectedLanguage, selectedPersona, stopSpeaking, speakClientFallback]
+  );
 
   const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
-      recognitionRef.current = null;
-    }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      try {
-        mediaRecorderRef.current.stop();
-      } catch {
-        // ignore
-      }
-    }
+    stopActiveRecording(recognitionRef, mediaRecorderRef);
     setIsListening(false);
     if (!mediaRecorderRef.current) {
       cleanupAudioAnalyser();
@@ -725,31 +1082,24 @@ function useSpeechController({ selectedLanguage, onTranscript }: UseSpeechContro
       cleanupAudioAnalyser();
     };
 
-    const nativeInstance = startNativeSpeechRecognition(
+    const { recognition, recorder } = startListeningCapture(
       selectedLanguage,
       onTranscript,
-      () => setIsListening(true),
       onNativeEnd,
-      onNativeEnd
+      analyserResult,
+      audioChunksRef,
+      handleRecorderStop
     );
 
-    if (nativeInstance) {
-      recognitionRef.current = nativeInstance;
+    if (recognition) {
+      recognitionRef.current = recognition;
+      setIsListening(true);
       return;
     }
-
-    if (analyserResult?.stream) {
-      audioChunksRef.current = [];
-      const recorder = startMediaRecorderCapture(
-        analyserResult.stream,
-        (chunk) => audioChunksRef.current.push(chunk),
-        handleRecorderStop
-      );
-      if (recorder) {
-        mediaRecorderRef.current = recorder;
-        setIsListening(true);
-        return;
-      }
+    if (recorder) {
+      mediaRecorderRef.current = recorder;
+      setIsListening(true);
+      return;
     }
 
     alert('Microphone recording is not supported in this browser. Please use Chrome, Edge, or Safari.');
@@ -1031,6 +1381,55 @@ function Waveform({ isListening, isSpeaking, analyser }: WaveformProps) {
           className={`w-1 rounded-full transition-colors ${barColor}`}
         />
       ))}
+    </div>
+  );
+}
+
+interface PersonaSelectorProps {
+  selectedPersona: VoicePersona;
+  onSelectPersona: (p: VoicePersona) => void;
+}
+
+function PersonaSelector({ selectedPersona, onSelectPersona }: PersonaSelectorProps) {
+  const personas: Array<{ id: VoicePersona; label: string; icon: string; desc: string }> = [
+    { id: 'amani', label: 'Amani', icon: '🌿', desc: 'Warm Field Agronomist' },
+    { id: 'baraka', label: 'Baraka', icon: '⚡', desc: 'Dynamic Extension Lead' },
+    { id: 'zawadi', label: 'Zawadi', icon: '🔬', desc: 'Diagnostic Specialist' },
+  ];
+
+  return (
+    <div className="w-full my-3">
+      <div className="flex items-center justify-between mb-1.5 px-0.5">
+        <span className="text-[11px] font-semibold tracking-wider uppercase text-white/50">
+          Voice Persona
+        </span>
+        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+          <Sparkles className="w-2.5 h-2.5" />
+          HD Neural
+        </span>
+      </div>
+      <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+        {personas.map((p) => {
+          const isSelected = selectedPersona === p.id;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => onSelectPersona(p.id)}
+              className={`flex flex-col items-center py-2 px-1.5 rounded-lg text-xs font-medium transition-all ${
+                isSelected
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
+                  : 'text-white/60 hover:text-white/90 hover:bg-white/[0.04] border border-transparent'
+              }`}
+              title={p.desc}
+              aria-pressed={isSelected}
+            >
+              <span className="text-sm leading-none mb-1">{p.icon}</span>
+              <span className="text-[11px] font-semibold leading-tight">{p.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -1340,6 +1739,7 @@ export function TalkingAssistant() {
   ]);
   const [inputText, setInputText] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'sw'>('en');
+  const [selectedPersona, setSelectedPersona] = useState<VoicePersona>('amani');
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [entitySlots, setEntitySlots] = useState<AgronomicEntitySlots>({
@@ -1428,6 +1828,7 @@ export function TalkingAssistant() {
     toggleListening,
   } = useSpeechController({
     selectedLanguage,
+    selectedPersona,
     onTranscript: (transcript: string) => handleSendMessageRef.current(transcript),
   });
 
@@ -1547,6 +1948,11 @@ export function TalkingAssistant() {
             />
 
             <Waveform isListening={isListening} isSpeaking={isSpeaking} analyser={analyser} />
+
+            <PersonaSelector
+              selectedPersona={selectedPersona}
+              onSelectPersona={setSelectedPersona}
+            />
 
             <AudioControls
               autoSpeak={autoSpeak}
