@@ -1,142 +1,77 @@
-# P0–P3 Production Truthfulness and Completeness Remediation Plan
+# Implementation Plan: Conversational Voice AI (Phase 2.3.3 & 2.3.4) + In-App Advisory & Form Studio (Pillar 2)
 
-## Goal
-Remove misleading, fabricated, simulated, placeholder, and incomplete behavior from production frontend/backend paths; preserve explicitly labeled demo/simulator features; repair confirmed API contract defects; and improve maintainability without introducing new dependencies.
+**Status:** Plan Proposed — Awaiting User Approval  
+**Classification:** Frontend Voice AI / Backend Public Demo / In-App Visual Builder Studio  
 
-## Constraints
-- Work only on the local `stage` branch.
-- Preserve intentional demo/simulator content, but isolate it visually and semantically from live workflows.
-- No fabricated fallback values in production paths.
-- Use explicit `unavailable`, `estimated`, `queued`, `pending`, `sent`, `completed`, and `failed` states.
-- Do not add dependencies unless an existing dependency cannot satisfy the requirement.
-- Use existing shared API contracts and project conventions.
-- Add or update tests alongside implementation.
-- Do not commit, push, deploy, or alter infrastructure.
+---
 
-## Batch 1 — P0: Operational correctness and false-success prevention
+## 1. Executive Summary & Goals
 
-### Frontend
-- `ag-extension-dashboard/src/frontend/src/pages/ReportsPage.tsx`
-  - Remove fabricated report viewer fallback text and hardcoded executive metrics.
-  - Render API-backed values only; show explicit unavailable states.
-  - Correct PDF download to use `/reporting/:id/download/pdf`.
-  - Add download error handling and revoke object URLs.
-  - Add explicit export format behavior.
-- `ag-extension-dashboard/src/frontend/src/api/reportService.ts`
-  - Separate CSV/PDF download methods with typed return contracts.
-- `ag-extension-dashboard/src/frontend/src/components/LiveActivityStream.tsx`
-  - Inspect response success before showing SMS success.
-  - Show unavailable/error state when backend returns `{ success: false }`.
-- `ag-extension-browser-ext/entrypoints/sidepanel/components/VisitLogger.tsx`
-  - Separate persisted success from offline queued state.
-  - Ensure button/status text says `Queued for sync` rather than `Logged` for HTTP 202.
-- `ag-extension-dashboard/src/frontend/src/components/forms/VisitSynthesisForm.tsx`
-  - Mark field presets as sample text.
-  - Track preset usage and require explicit confirmation before saving sample-derived content to a farmer record.
+This plan executes on all three dimensions requested:
+1. **Phase 2.3.3**: Server-side fallback speech-to-text (Whisper) for browsers lacking native Web Speech API + real-time Web Audio API soundwave/frequency equalizer in [`TalkingAssistant.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx).
+2. **Phase 2.3.4**: Seamless cryptographic conversation handoff from landing page into [`FarmerChatPage.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/FarmerChatPage.tsx) upon user registration, importing active entity slots and advisory history into PostgreSQL.
+3. **Pillar 2 (In-App Visual Builder)**: Full production React implementation of the **Advisory & Field Form Studio** in the dashboard (`/advisory-studio`), backed by Prisma schema persistence and offline field PWA sync readiness.
 
-### Backend
-- `ag-extension-dashboard/src/backend/src/services/smsService.ts`
-  - Correct USSD choice routing.
-  - Remove generic fake disease diagnosis wording; return explicit unavailable state or real bounded diagnosis integration.
-  - Validate phone formats and remove unsafe Kenya fallback behavior where no tenant geography exists.
-- `ag-extension-dashboard/src/backend/src/routes/reporting.ts`
-  - Validate supported report types.
-  - Do not mark empty/unsupported reports as completed.
-  - Enforce tenant scope consistently for report data queries.
-  - Remove redundant Excel workbook write.
-- `ag-extension-dashboard/src/backend/src/routes/whatsapp.ts`
-  - Capture outbound reply result and persist/log failed delivery.
-  - Do not imply successful handling when reply dispatch failed.
-- `ag-extension-dashboard/src/backend/src/routes/analytics.ts`
-  - Distinguish database failure from valid empty analytics.
-  - Return explicit unavailable/error metadata rather than successful zero values.
+---
 
-## Batch 2 — P1: Provenance, live/demo separation, and geographic correctness
+## 2. Proposed Changes & Affected Files
 
-- `ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx`
-  - Remove synthetic citations from free-form responses.
-  - Replace unsupported live telemetry badges with API-derived or unavailable states.
-  - Mark preset output as demo preview data throughout the result message.
-  - Keep unavailable image/PDF/SMS controls explicit; disable or route to real workflows.
-  - Replace fake voice-input affordance with a disabled/unavailable control or connect it to the existing recorder flow.
-- `ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAgentOps.tsx`
-  - Separate demo fleet cards from live agent status.
-  - Disable execute/stop controls when backend returns not-wired responses.
-  - Remove static “healthy/live” console claims or label them as demo logs.
-  - Use live API data where available and show unknown/unavailable otherwise.
-- `ag-extension-dashboard/src/frontend/src/components/ReportsPage.tsx`
-  - Derive summary metrics from API data or show unavailable values.
-  - Remove hardcoded NDVI and security hash claims.
-- `ag-extension-dashboard/src/backend/src/routes/channels.ts`
-  - Replace placeholder provider identities with null/not-configured values.
-  - Avoid hardcoded Kenya/East Africa weather for unknown users; resolve linked location or return unavailable.
-  - Rename Telegram echo response from conversational AI fallback unless real AI is invoked.
-- `ag-extension-dashboard/src/backend/src/services/marketPriceService.ts`
-  - Return unavailable for unknown geography rather than defaulting to another country.
-  - Preserve visible estimated/live provenance across all consumers.
-- `ag-extension-dashboard/src/backend/src/services/plantDiseaseService.ts`
-  - Replace `any` payloads with typed input contracts.
-  - Mark heuristic/internal knowledge matches as estimates rather than verified field evidence.
-  - Validate provider response shape before normalization.
+### Phase 2.3.3: Voice Audio Enhancements & Server Fallback STT
+- **Frontend: `ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx`**:
+  - Add Web Audio API `AudioContext` + `AnalyserNode` connected to a canvas to draw real-time frequency soundwave bars when voice recording is active.
+  - Implement `MediaRecorder` audio capture fallback when `window.webkitSpeechRecognition` / `window.SpeechRecognition` is unavailable (e.g. Firefox on Linux, mobile webviews).
+  - Stream/POST base64 audio to `/api/v1/chatbot/public-demo/stt`.
+- **Backend: `ag-extension-dashboard/src/backend/src/routes/chatbot/publicDemo.ts`**:
+  - Add `POST /api/v1/chatbot/public-demo/stt` route guarded by `publicDemoRateLimiter` (10 queries/hr per IP).
+  - Decode audio buffer (max 2MB / 30s) and call `AIProviderFactory.getProvider().speechToText(buffer, { language })`.
+- **Backend Tests: `ag-extension-dashboard/src/backend/src/__tests__/publicDemo.test.ts`**:
+  - Add test case verifying STT endpoint with mocked audio payload, language selection, and rate-limiting.
 
-## Batch 3 — P2: Complete or remove dangling features
+### Phase 2.3.4: Registration Session Handoff
+- **Frontend: `ag-extension-dashboard/src/frontend/src/pages/Register.tsx`**:
+  - Check for `ag_ext_talking_session` in `sessionStorage` upon successful sign-up.
+  - Call `POST /api/v1/chatbot/import-session` with the newly generated JWT token.
+  - Redirect to `/farmer-chat?imported=1` and show toast acknowledging imported advisory history.
+- **Backend: `ag-extension-dashboard/src/backend/src/routes/chatbot/importSession.ts` (new)**:
+  - Add authenticated route `POST /api/v1/chatbot/import-session`.
+  - Validate schema via Zod (`messages`, `entitySlots`).
+  - Persist conversation thread and agronomic slot context into database.
+- **Backend Route Mount: `ag-extension-dashboard/src/backend/src/routes/chatbot/index.ts`**:
+  - Mount `/import-session` route with authentication middleware.
 
-- `ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx`
-  - Wire image analysis, voice STT, PDF export, and advisory SMS to existing APIs where contracts support it; otherwise remove controls from this view and link users to working pages.
-- `ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAgentOps.tsx`
-  - Connect control actions to the actual orchestrator where supported, or make controls visibly disabled with a configuration explanation.
-- `ag-extension-dashboard/src/frontend/src/components/LiveActivityStream.tsx`
-  - Persist claim/release actions through backend endpoints, or relabel them as local-only preview actions and disable production use.
-  - Disable unimplemented WebRTC microphone/camera buttons.
-- `ag-extension-dashboard/src/frontend/src/components/ContextMenu.tsx`
-- `ag-extension-dashboard/src/frontend/src/api/contextMenuService.ts`
-- `ag-extension-dashboard/src/backend/src/routes/contextMenus.ts`
-  - Keep templates explicitly unavailable until storage/configuration exists, and remove or gate controls that imply templates are usable.
-- `ag-extension-dashboard/src/frontend/src/components/campaigns/GoalModeCampaignModal.tsx`
-  - Verify queued/completed campaign response semantics and correct success messaging.
-- `ag-extension-dashboard/src/frontend/src/components/forms/VisitModal.tsx`
-  - Use persisted scheduling result semantics and remove demo wording from production success paths.
+### Pillar 2: In-App Advisory & Field Form Studio (Visual Builder)
+- **Database: `ag-extension-dashboard/src/backend/prisma/schema.prisma`**:
+  - Add `AdvisoryWorkflow` model (id, title, description, version, stepsJson, status, authorId, createdAt, updatedAt).
+- **Backend API: `ag-extension-dashboard/src/backend/src/routes/workflows.ts` (new)**:
+  - CRUD endpoints (`GET /api/v1/workflows`, `POST /api/v1/workflows`, `PUT /api/v1/workflows/:id`, `POST /api/v1/workflows/:id/publish`).
+- **Frontend: `ag-extension-dashboard/src/frontend/src/pages/AdvisoryStudioPage.tsx` (new)**:
+  - Full-featured React component:
+    - Component Palette: Crop & Phenology, Soil pH & Acidity Gate, Pest Severity Slider, Camera Diagnostic, Precision Bio-Dosage Calculator.
+    - Drag-and-drop / click-to-add step canvas with conditional logic badges (`IF: Crop == "Maize"`).
+    - Real-time Mobile PWA simulator preview.
+    - Save Draft, Publish, and Export JSON actions.
+- **Frontend Navigation & Routing: `App.tsx`, `TabContent.tsx`, `navItems.ts`**:
+  - Register `/advisory-studio` route and lazy-load `AdvisoryStudioPage`.
+  - Add navigation item with icon to dashboard sidebar under Agricultural Management.
 
-## Batch 4 — P3: Maintainability, typing, and verification coverage
+---
 
-- Extract shared report download/notification helpers and typed API response contracts.
-- Extract AlphaAI message construction/routing and AlphaAgentOps live/demo state handling into focused modules under existing feature directories.
-- Extract SMS state/loading/send logic into hooks or focused service helpers while preserving public components.
-- Replace touched `any` usage with typed DTOs and runtime validation using existing Zod dependency.
-- Add regression tests for:
-  - report PDF vs CSV downloads
-  - fabricated report fallback removal
-  - analytics unavailable state
-  - USSD menu routing
-  - SMS `{ success: false }` handling
-  - WhatsApp outbound delivery failure
-  - queued vs persisted VisitLogger state
-  - sample preset save confirmation
-  - placeholder channel configuration
-  - unknown geography handling
-  - demo/live AlphaAI and AgentOps labeling
-- Add or update browser-level tests for report export and unavailable operational controls where test infrastructure permits.
+## 3. Verification & Quality Gates
 
-## Verification plan
+1. **Linting**:
+   - `npm run lint:frontend` & `npm run lint:backend` (0 errors, 0 warnings, cognitive complexity $\le 15$).
+2. **Unit & Integration Tests**:
+   - `npm run test:frontend -- src/__tests__/TalkingAssistant.test.tsx`
+   - `npm run test:backend -- src/__tests__/publicDemo.test.ts`
+   - Add frontend unit test for `AdvisoryStudioPage.test.tsx`.
+   - Add backend test for `workflows.test.ts`.
+3. **Regression & Safety**:
+   - `npm run fallow:check` (verify delta $\le 0$ against baseline 255).
+   - `npm run verify:anti` (verify anti-flop and anti-hallucination suites).
+   - `npm run build:frontend` & `npm run build:backend` (clean production compilation).
 
-After each batch:
-- `npm run lint:backend`
-- `npm run lint:frontend`
-- relevant backend Jest tests
-- relevant frontend Vitest tests
-- backend/frontend typechecks or builds
+---
 
-Final:
-- `npm run lint`
-- `npm run build:backend`
-- `npm run build:frontend`
-- `npm test`
-- `npm run fallow:audit`
-- `npm run fallow:check`
-- `git diff --check`
-- source scan for fabricated success, placeholder provider values, unsupported live claims, and stale mock comments
-- review frontend accessibility, sanitization, error states, and object URL cleanup
+## 4. User Review & Decision Point
 
-## Expected residuals
-
-Intentional simulator/demo UI may continue to contain deterministic sample data and animation, but it must remain visibly labeled and must not write fabricated operational records or report live success. Existing inherited Fallow complexity/duplication may remain if not introduced by this work; all new regressions must be eliminated or justified.
+Please review the plan above. Once approved, I will begin execution sequentially starting with **Phase 2.3.3 (Voice STT Fallback & Web Audio Waveform)**, followed by **Phase 2.3.4 (Session Handoff)**, and finally **Pillar 2 (In-App Advisory Studio)**.

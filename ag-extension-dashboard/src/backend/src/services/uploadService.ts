@@ -41,6 +41,32 @@ export const UPLOAD_TYPES = {
 
 export type SupportedMimeType = keyof typeof UPLOAD_TYPES;
 
+const DANGEROUS_SVG_PATTERNS = [
+  '<script',
+  'javascript:',
+  'vbscript:',
+  'data:text/html',
+  '<!entity',
+  '<!doctype',
+  '<foreignobject',
+  '<use',
+  '<animate',
+  '<set',
+];
+
+function isSafeSvgContent(buffer: Buffer): boolean {
+  const text = buffer.toString('utf8').trim().toLowerCase();
+  const isSvg = text.includes('<svg') || (text.startsWith('<?xml') && text.includes('<svg'));
+  if (!isSvg) return false;
+
+  for (const dangerous of DANGEROUS_SVG_PATTERNS) {
+    if (text.includes(dangerous)) return false;
+  }
+
+  // Reject all HTML inline event handlers (onload=, onerror=, onclick=, etc.)
+  return !/on[a-z]+\s*=/i.test(text);
+}
+
 function matchesImageSignature(buffer: Buffer, mimeType: SupportedMimeType): boolean {
   if (mimeType === 'image/jpeg') {
     return buffer.length >= 3 && buffer.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]));
@@ -56,10 +82,7 @@ function matchesImageSignature(buffer: Buffer, mimeType: SupportedMimeType): boo
     return buffer.length >= 12 && buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP';
   }
   if (mimeType === 'image/svg+xml') {
-    const text = buffer.subarray(0, Math.min(buffer.length, 1024)).toString('utf8').trim().toLowerCase();
-    const isSvg = text.includes('<svg') || (text.startsWith('<?xml') && text.includes('<svg'));
-    const hasScript = text.includes('<script') || text.includes('javascript:');
-    return isSvg && !hasScript;
+    return isSafeSvgContent(buffer);
   }
   return false;
 }

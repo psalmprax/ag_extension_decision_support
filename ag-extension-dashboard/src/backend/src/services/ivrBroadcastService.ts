@@ -22,14 +22,29 @@ export interface DtmfActionResponse {
   nextPromptXml: string;
 }
 
+function escapeXml(unsafe: string): string {
+  return unsafe.replace(/[<>&"']/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '"': return '&quot;';
+      case "'": return '&apos;';
+      default: return c;
+    }
+  });
+}
+
 export function generateIvrXml(options: IvrCallOptions): string {
   const { alertTitle, advisorySwahili, repeatAllowed = true } = options;
+  const safeTitle = escapeXml(alertTitle);
+  const safeAdvisory = escapeXml(advisorySwahili);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say voice="alice" language="sw-KE">
-    Habari mkulima. Hii ni taarifa muhimu ya kilimo kuhusu ${alertTitle}.
-    ${advisorySwahili}
+    Habari mkulima. Hii ni taarifa muhimu ya kilimo kuhusu ${safeTitle}.
+    ${safeAdvisory}
   </Say>
   <Gather numDigits="1" timeout="10" finishOnKey="#">
     <Say voice="alice" language="sw-KE">

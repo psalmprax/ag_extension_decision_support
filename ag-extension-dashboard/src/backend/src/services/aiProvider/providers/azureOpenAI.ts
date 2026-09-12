@@ -41,6 +41,9 @@ export class AzureOpenAIProvider extends BaseAIProvider {
 
     private async getClient(): Promise<any> {
         if (this.client) return this.client;
+        if (!this.isConfigured()) {
+            throw new Error('Azure OpenAI client initialization failed — API key or endpoint not configured');
+        }
 
         try {
             const { OpenAIClient, AzureKeyCredential } = await import('@azure/openai');
@@ -302,6 +305,7 @@ export class AzureOpenAIProvider extends BaseAIProvider {
     }
 
     async healthCheck(): Promise<boolean> {
+        if (!this.isConfigured()) return false;
         try {
             const client = await this.getClient();
             // Try a simple request to check connectivity

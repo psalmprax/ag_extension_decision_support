@@ -29,7 +29,7 @@ export const authorize = (allowedRoles: UserRole[]) => {
             const token = authHeader.split(' ')[1];
 
             // Verify token
-            const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret) as {
+            const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as {
                 userId: string;
                 email: string;
                 role: UserRole;
@@ -103,7 +103,7 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction): v
         }
 
         const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret) as {
+        const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as {
             userId: string;
             email: string;
             role: UserRole;

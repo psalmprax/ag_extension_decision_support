@@ -53,6 +53,9 @@ const BulkUpdateModal = React.lazy(() =>
 const ConfirmModal = React.lazy(() =>
   import('@/components/ConfirmModal').then(module => ({ default: module.ConfirmModal }))
 );
+const AuditReasonModal = React.lazy(() =>
+  import('@/components/audit/AuditReasonModal').then(module => ({ default: module.AuditReasonModal }))
+);
 
 interface AppModalsProps {
   // Visit Modal
@@ -146,6 +149,17 @@ interface AppModalsProps {
     actionLabel?: string;
     onAction?: () => void;
   }) => void;
+
+  auditModal?: {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: (audit: { reasonCode: string; justification: string }) => void;
+    actionTitle: string;
+    actionDescription?: string;
+    resourceName?: string;
+    confirmText?: string;
+    isLoading?: boolean;
+  } | null;
 }
 
 export const AppModals: React.FC<AppModalsProps> = props => {
@@ -460,6 +474,18 @@ export const AppModals: React.FC<AppModalsProps> = props => {
           message={props.confirmModal.message}
           variant={props.confirmModal.variant}
           confirmText={props.confirmModal.confirmText}
+        />
+      )}
+      {props.auditModal && (
+        <AuditReasonModal
+          isOpen={props.auditModal.isOpen}
+          onClose={props.auditModal.onClose}
+          onConfirm={props.auditModal.onConfirm}
+          actionTitle={props.auditModal.actionTitle}
+          actionDescription={props.auditModal.actionDescription}
+          resourceName={props.auditModal.resourceName}
+          confirmText={props.auditModal.confirmText}
+          isLoading={props.auditModal.isLoading}
         />
       )}
       </>

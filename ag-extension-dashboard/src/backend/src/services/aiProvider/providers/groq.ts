@@ -28,6 +28,10 @@ export class GroqProvider extends BaseAIProvider {
         this.client = new Groq({ apiKey: config.groq.apiKey });
     }
 
+    override isConfigured(): boolean {
+        return !!config.groq.apiKey && config.groq.apiKey !== 'gsk_...' && config.groq.apiKey !== 'invalid_api_key';
+    }
+
     async generateText(prompt: string | any[], options?: TextGenerationOptions): Promise<TextGenerationResult> {
         const model = options?.model || 'llama-3.3-70b-versatile';
 
@@ -191,6 +195,7 @@ export class GroqProvider extends BaseAIProvider {
     }
 
     async healthCheck(): Promise<boolean> {
+        if (!this.isConfigured()) return false;
         try {
             await this.client.chat.completions.create({
                 model: 'llama-3.1-8b-instant',
@@ -200,7 +205,7 @@ export class GroqProvider extends BaseAIProvider {
             this.recordHealthError();
             return true;
         } catch (error) {
-            logger.error('Groq health check failed:', error);
+            logger.warn('Groq health check failed:', (error as Error).message);
             this.recordHealthError(error instanceof Error ? error.message : String(error));
             return false;
         }

@@ -395,6 +395,31 @@ describe('verifyInboundWebhookSignature — Twilio provider path', () => {
         expect(res.status).toHaveBeenCalledWith(403);
         expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Webhook signature verification failed' });
     });
+
+    it('accepts Twilio signature behind multi-hop reverse proxy with port and missing rawBody', () => {
+        process.env.TWILIO_AUTH_TOKEN = 'test-twilio-auth-token';
+        const form: Record<string, string> = { From: 'whatsapp:+265999000888', Body: 'Forwarded' };
+        const url = 'https://api.gpexts.com/api/v1/whatsapp/inbound';
+        const sortedParams = Object.keys(form).sort().reduce((acc, key) => acc + key + form[key], '');
+        const sig = crypto.createHmac('sha1', 'test-twilio-auth-token').update(Buffer.from(url + sortedParams, 'utf8')).digest('base64');
+
+        const req = {
+            headers: {
+                'x-twilio-signature': sig,
+                'x-forwarded-proto': 'https, http',
+                'x-forwarded-host': 'api.gpexts.com:443',
+            },
+            protocol: 'http',
+            originalUrl: '/api/v1/whatsapp/inbound',
+            get: () => 'internal-backend:3000',
+            body: { ...form },
+            // Intentionally no rawBody (mimics standard form urlencoded without buffer)
+        };
+
+        const next = jest.fn();
+        verifyInboundWebhookSignature(req as never, buildRes() as never, next);
+        expect(next).toHaveBeenCalledTimes(1);
+    });
 });
 
 describe('POST /inbound — voice note transcription and synthesized advisory dispatch', () => {

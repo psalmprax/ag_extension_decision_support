@@ -81,11 +81,17 @@ router.post('/diagnose/image', allowedRoles, checkUsageLimit('ai_vision'), async
             return res.status(400).json({ success: false, error: 'Image data is required' });
         }
 
-        // Validate file size (max 10MB decoded)
+        // Validate file size (max 10MB decoded) before heap allocation
         const base64Data = imageData.split(',')[1] || imageData;
+        if (base64Data.length > Math.ceil(MAX_UPLOAD_BYTES * 4 / 3)) {
+            return res.status(413).json({ success: false, error: `Image size exceeds maximum limit of ${MAX_UPLOAD_BYTES / (1024 * 1024)}MB` });
+        }
         const decodedBytes = Buffer.from(base64Data, 'base64').length;
+        if (decodedBytes === 0) {
+            return res.status(400).json({ success: false, error: 'Invalid or empty image payload' });
+        }
         if (decodedBytes > MAX_UPLOAD_BYTES) {
-            return res.status(400).json({ success: false, error: `Image size exceeds maximum limit of ${MAX_UPLOAD_BYTES / (1024 * 1024)}MB` });
+            return res.status(413).json({ success: false, error: `Image size exceeds maximum limit of ${MAX_UPLOAD_BYTES / (1024 * 1024)}MB` });
         }
 
         const analysis = await plantDiseaseService.analyzeImage(imageData);
@@ -128,11 +134,17 @@ router.post('/diagnose/soil', allowedRoles, checkUsageLimit('ai_vision'), async 
             return res.status(400).json({ success: false, error: 'Soil image data is required' });
         }
 
-        // Validate file size (max 10MB decoded)
+        // Validate file size (max 10MB decoded) before heap allocation
         const base64Data = imageData.split(',')[1] || imageData;
+        if (base64Data.length > Math.ceil(MAX_UPLOAD_BYTES * 4 / 3)) {
+            return res.status(413).json({ success: false, error: `Soil image size exceeds maximum limit of ${MAX_UPLOAD_BYTES / (1024 * 1024)}MB` });
+        }
         const decodedBytes = Buffer.from(base64Data, 'base64').length;
+        if (decodedBytes === 0) {
+            return res.status(400).json({ success: false, error: 'Invalid or empty soil image payload' });
+        }
         if (decodedBytes > MAX_UPLOAD_BYTES) {
-            return res.status(400).json({ success: false, error: `Image size exceeds maximum limit of ${MAX_UPLOAD_BYTES / (1024 * 1024)}MB` });
+            return res.status(413).json({ success: false, error: `Soil image size exceeds maximum limit of ${MAX_UPLOAD_BYTES / (1024 * 1024)}MB` });
         }
 
         const analysis = await plantDiseaseService.analyzeSoilImage(imageData, details);

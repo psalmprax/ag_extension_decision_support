@@ -19,6 +19,7 @@ import {
   Search,
   UserCog,
   Globe,
+  Layers,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -167,6 +168,13 @@ export const getNavItems = (): NavItem[] => [
     icon: Leaf,
     roles: ['extension_officer', 'admin'],
     requiresPro: true,
+  },
+  {
+    id: 'advisory_studio',
+    label: 'Advisory Studio',
+    labelKey: 'nav_advisory_studio',
+    icon: Layers,
+    roles: ['extension_officer', 'admin'],
   },
   {
     id: 'memory',

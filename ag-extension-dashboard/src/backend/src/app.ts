@@ -79,6 +79,7 @@ import worldmonitorRoutes from './routes/worldmonitor';
 import offlineRoutes from './routes/offline';
 import auditLogsRoutes from './routes/auditLogs';
 import accountRoutes from './routes/account';
+import workflowsRoutes from './routes/workflows';
 
 const app: Application = express();
 // Trust exactly the number of reverse-proxy hops in front of the app (default 1 = Traefik).
@@ -113,12 +114,18 @@ const allowedOrigins = config.cors.origin.split(',').map(o => o.trim());
 app.use(cors({ origin: resolveCorsOrigin(allowedOrigins), credentials: true }));
 app.use(morgan('combined', { stream: { write: (message) => logger.info(message) } }));
 app.use(express.json({
-    limit: '10mb',
+    limit: '16mb',
     verify: (req, _res, buf) => {
         (req as Request).rawBody = buf;
     },
 }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({
+    extended: true,
+    limit: '16mb',
+    verify: (req, _res, buf) => {
+        (req as Request).rawBody = buf;
+    },
+}));
 app.use(cookieParser());
 app.use(securityGate); // Security gate runs FIRST — before auth and rate limiting
 app.use(optionalAuth); // Parse optional user credentials before applying rate limiting
@@ -129,9 +136,9 @@ app.use((req, _res, next) => {
 app.use(globalAuditMiddleware); // privileged / sensitive mutations → audit_logs
 app.use(idempotencyMiddleware);
 
-// Request timeout middleware — AI-heavy routes (knowledge/ask, chatbot) get 120s, rest get 30s
+// Request timeout middleware — AI/Voice-heavy routes (knowledge/ask, chatbot, speech, pillars) get 300s, rest get 30s
 app.use((req, res, next) => {
-    const isAiHeavy = ['/api/knowledge', '/api/chatbot', '/api/v1/knowledge', '/api/v1/chatbot', '/api/ai', '/api/v1/ai']
+    const isAiHeavy = ['/api/knowledge', '/api/chatbot', '/api/v1/knowledge', '/api/v1/chatbot', '/api/ai', '/api/v1/ai', '/api/pillars', '/api/v1/pillars']
         .some(p => req.path.startsWith(p));
     const timeout = isAiHeavy ? 300000 : 30000;
     res.setTimeout(timeout, () => {
@@ -432,6 +439,7 @@ const routeMounts: RouteMount[] = [
   { path: '/offline', router: offlineRoutes },
   { path: '/audit-logs', router: auditLogsRoutes },
   { path: '/account', router: accountRoutes },
+  { path: '/workflows', router: workflowsRoutes },
 ];
 
 // Mount with i18n support (v1)

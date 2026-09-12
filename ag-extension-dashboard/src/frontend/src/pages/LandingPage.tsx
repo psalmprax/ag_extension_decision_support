@@ -9,6 +9,7 @@ import { Hero } from './landing/sections/Hero';
 import { Problem } from './landing/sections/Problem';
 import { Features } from './landing/sections/Features';
 import { AgentOS } from './landing/sections/AgentOS';
+import { TalkingAssistant } from './landing/sections/TalkingAssistant';
 import { HowItWorks } from './landing/sections/HowItWorks';
 import { Demo } from './landing/sections/Demo';
 import { ROI } from './landing/sections/ROI';
@@ -16,6 +17,7 @@ import { FAQ } from './landing/sections/FAQ';
 import { Mission } from './landing/sections/Mission';
 import { CTA } from './landing/sections/CTA';
 import { Footer } from './landing/sections/Footer';
+import { Mic } from 'lucide-react';
 
 // ─── Main component ─────────────────────────────────────────────
 export function LandingPage() {
@@ -139,6 +141,7 @@ export function LandingPage() {
           activeChannelTab={activeChannelTab}
           setActiveChannelTab={setActiveChannelTab}
         />
+        <TalkingAssistant />
         <HowItWorks />
 
         {/* ── INTERACTIVE 3D SCROLL-DRIVEN AGRO-ECOSYSTEM STORYTELLING ── */}
@@ -150,6 +153,23 @@ export function LandingPage() {
         <CTA />
         <Footer />
       </main>
+
+      {/* Floating Voice Assistant Shortcut */}
+      <motion.a
+        href="#talking-assistant"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.8 }}
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs tracking-wider uppercase shadow-2xl shadow-emerald-950/80 border border-emerald-400/30 backdrop-blur-md transition-all hover:scale-105 active:scale-95 group"
+        title="Talk to AI Agronomic Assistant"
+      >
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
+        </span>
+        <Mic className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+        <span className="hidden sm:inline">Talk to Copilot</span>
+      </motion.a>
     </div>
   );
 }

@@ -46,6 +46,22 @@ describe('Cybersecurity Suite — Perimeter Security Gate & RBAC Authorization',
       expect(nextFunction).not.toHaveBeenCalled();
     });
 
+    it('should block POST/DELETE requests containing SQL injection in query parameters', () => {
+      mockRequest.method = 'DELETE';
+      mockRequest.query = { id: "1'; DROP TABLE users; --" };
+
+      securityGate(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: 'Request blocked by security filter',
+        })
+      );
+      expect(nextFunction).not.toHaveBeenCalled();
+    });
+
     it('should block POST requests containing XSS or prompt injection in JSON body', () => {
       mockRequest.method = 'POST';
       mockRequest.path = '/api/ai/ask';
@@ -93,12 +109,24 @@ describe('Cybersecurity Suite — Perimeter Security Gate & RBAC Authorization',
       expect(nextFunction).toHaveBeenCalled();
       expect(mockResponse.status).not.toHaveBeenCalled();
 
-      // 2. Data URL audio recording (>50,000 chars)
+      // 2. Data URL audio recording (>50,000 chars) with quoted codecs
       nextFunction = jest.fn();
       mockRequest.path = '/api/ai/transcribe-audio';
       mockRequest.body = {
-        audio: 'data:audio/webm;codecs=opus;base64,' + 'A'.repeat(60000),
+        audio: 'data:audio/webm;codecs="opus";base64,' + 'A-_'.repeat(20000),
         language: 'sw',
+      };
+
+      securityGate(mockRequest as Request, mockResponse as Response, nextFunction);
+      expect(nextFunction).toHaveBeenCalled();
+      expect(mockResponse.status).not.toHaveBeenCalled();
+
+      // 3. Snake_case media key with URL-safe base64
+      nextFunction = jest.fn();
+      mockRequest.path = '/api/pillars/voice/transcribe';
+      mockRequest.body = {
+        audio_base64: 'AbC-_123'.repeat(50),
+        mimeType: 'audio/mp4',
       };
 
       securityGate(mockRequest as Request, mockResponse as Response, nextFunction);

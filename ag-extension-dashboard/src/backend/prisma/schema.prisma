@@ -66,6 +66,7 @@ model User {
   dataExportRequests DataExportRequest[]
   createdSupportTickets SupportTicket[] @relation("SupportTicketCreator")
   assignedSupportTickets SupportTicket[] @relation("SupportTicketAssignee")
+  createdWorkflows AdvisoryWorkflow[] @relation("CreatedWorkflows")
   lastLoginAt   DateTime?          @map("last_login_at") @db.Timestamp(6)
   loginHistories LoginHistory[]
   mfaEnabled    Boolean            @default(false) @map("mfa_enabled")
@@ -849,6 +850,7 @@ model Tenant {
   supportTickets   SupportTicket[]
   whatsappMessages WhatsappMessage[]
   smsFeedbacks     SmsFeedback[]
+  advisoryWorkflows AdvisoryWorkflow[]
 
   @@map("tenants")
 }
@@ -1233,5 +1235,29 @@ model SmsFeedback {
   @@index([tenantId])
   @@map("sms_feedback")
 }
+
+model AdvisoryWorkflow {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String?   @map("tenant_id") @db.Uuid
+  title       String    @db.VarChar(255)
+  description String?   @db.Text
+  category    String?   @default("general") @db.VarChar(50)
+  status      String    @default("draft") @db.VarChar(50)
+  version     Int       @default(1)
+  stepsJson   Json      @map("steps_json")
+  createdBy   String?   @map("created_by") @db.Uuid
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  creator     User?     @relation("CreatedWorkflows", fields: [createdBy], references: [id], onDelete: SetNull)
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([category])
+  @@index([createdBy])
+  @@map("advisory_workflows")
+}
+
 
 

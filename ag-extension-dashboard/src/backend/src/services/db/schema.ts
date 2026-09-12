@@ -377,6 +377,24 @@ export async function createTables(pool: Pool): Promise<void> {
       );
       CREATE INDEX IF NOT EXISTS soil_lab_results_farmer_idx ON soil_lab_results(farmer_id, tested_at);
 
+      CREATE TABLE IF NOT EXISTS advisory_workflows (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE SET NULL,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        category VARCHAR(50) NOT NULL DEFAULT 'general',
+        status VARCHAR(50) NOT NULL DEFAULT 'draft',
+        version INTEGER NOT NULL DEFAULT 1,
+        steps_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+        created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+        created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS advisory_workflows_tenant_idx ON advisory_workflows(tenant_id);
+      CREATE INDEX IF NOT EXISTS advisory_workflows_status_idx ON advisory_workflows(status);
+      CREATE INDEX IF NOT EXISTS advisory_workflows_category_idx ON advisory_workflows(category);
+      CREATE INDEX IF NOT EXISTS advisory_workflows_created_by_idx ON advisory_workflows(created_by);
+
       CREATE TABLE IF NOT EXISTS farmer_onboarding_sessions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         tenant_id UUID REFERENCES tenants(id) ON DELETE SET NULL,

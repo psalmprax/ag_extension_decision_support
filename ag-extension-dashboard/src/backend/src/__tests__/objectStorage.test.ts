@@ -106,6 +106,13 @@ describe('Object Storage & Media Pipeline', () => {
 
       await objectStorage.deleteObject(testKey);
     });
+
+    it('rejects directory traversal attempts in storage keys', async () => {
+      await expect(objectStorage.getObject('../../../etc/passwd')).rejects.toThrow('directory traversal prohibited');
+      await expect(objectStorage.getObject('folder/../../secret.txt')).rejects.toThrow('directory traversal prohibited');
+      await expect(objectStorage.hasObject('../config.json')).rejects.toThrow('directory traversal prohibited');
+      await expect(objectStorage.deleteObject('nested/../../../file')).rejects.toThrow('directory traversal prohibited');
+    });
   });
 
   describe('Signature Matching & Media Type Normalization', () => {
@@ -159,6 +166,29 @@ describe('Object Storage & Media Pipeline', () => {
         Buffer.from('openxml-sheet-contents'),
       ]);
       expect(signatureMatches(xlsxBuffer, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')).toBe(true);
+    });
+
+    it('validates SVG images and strictly rejects scripts, event handlers, and XXE payloads', () => {
+      // 1. Legitimate SVG
+      const safeSvg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="green"/></svg>');
+      expect(signatureMatches(safeSvg, 'image/svg+xml')).toBe(true);
+
+      // 2. SVG with script placed beyond 1024 bytes
+      const padding = ' '.repeat(1500);
+      const deepScriptSvg = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg">${padding}<script>alert(1)</script></svg>`);
+      expect(signatureMatches(deepScriptSvg, 'image/svg+xml')).toBe(false);
+
+      // 3. SVG with inline event handler (onload)
+      const onloadSvg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" onload="fetch(\'/api/v1/auth/session\')"></svg>');
+      expect(signatureMatches(onloadSvg, 'image/svg+xml')).toBe(false);
+
+      // 4. SVG with XXE entity expansion
+      const xxeSvg = Buffer.from('<?xml version="1.0"?><!DOCTYPE svg [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><svg>&xxe;</svg>');
+      expect(signatureMatches(xxeSvg, 'image/svg+xml')).toBe(false);
+
+      // 5. SVG with foreignObject HTML injection
+      const foreignObjectSvg = Buffer.from('<svg><foreignObject width="100" height="50"><div>test</div></foreignObject></svg>');
+      expect(signatureMatches(foreignObjectSvg, 'image/svg+xml')).toBe(false);
     });
 
     it('rejects binary executables masquerading as media', () => {

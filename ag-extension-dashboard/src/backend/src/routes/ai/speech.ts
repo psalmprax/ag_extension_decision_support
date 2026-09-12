@@ -17,6 +17,8 @@ const router = Router();
  *     security:
  *       - bearerAuth: []
  */
+const MAX_AUDIO_BASE64_LENGTH = 16 * 1024 * 1024; // ~12MB binary limit for DoS mitigation
+
 router.post('/transcribe-audio', [checkUsageLimit('speech', { meter: false })], async (req: AuthRequest, res: Response) => {
     try {
         const { audio, language } = req.body;
@@ -24,6 +26,10 @@ router.post('/transcribe-audio', [checkUsageLimit('speech', { meter: false })], 
 
         if (!audio || typeof audio !== 'string') {
             return res.status(400).json({ success: false, error: 'Audio data is required (base64 string).' });
+        }
+
+        if (audio.length > MAX_AUDIO_BASE64_LENGTH) {
+            return res.status(413).json({ success: false, error: 'Audio payload exceeds maximum size limit (12MB).' });
         }
 
         const base64Data = audio.includes('base64,') ? audio.split('base64,')[1] : audio;

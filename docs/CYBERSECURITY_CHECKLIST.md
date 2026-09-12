@@ -2,6 +2,9 @@
 
 This document establishes the official **Cybersecurity Protocol Checklist** and verification standards for the Ag-Extension Decision Support Platform. It covers all system tiers: Backend API, Frontend Web & Mobile, AI Agents & LLM Pipelines, Browser Extension, Shared Contracts, Reverse Proxy / Edge, Database, Containers, and CI/CD Supply Chain.
 
+> [!NOTE]
+> For active threat mitigations, incident response runbooks (IR-01 through IR-04), and operational attack surface triage, refer to the [Master Cybersecurity Playbook](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/docs/CYBERSECURITY_PLAYBOOK.md).
+
 ---
 
 ## 🏛️ Security Architecture & Threat Model Overview

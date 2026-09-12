@@ -96,6 +96,16 @@ async function transcribeWithLocalWhisper(audioBuffer: Buffer | undefined, langu
   };
 }
 
+function resolveAudioFileExtension(mimeType?: string): string {
+  if (!mimeType) return 'ogg';
+  const lower = mimeType.toLowerCase();
+  if (lower.includes('webm')) return 'webm';
+  if (lower.includes('mp4') || lower.includes('m4a')) return 'm4a';
+  if (lower.includes('mp3')) return 'mp3';
+  if (lower.includes('wav')) return 'wav';
+  return 'ogg';
+}
+
 /** Strategy 2: OpenAI Whisper API. Returns null when unconfigured, unauthenticated audio, or on failure. */
 async function transcribeWithOpenAI(audioBuffer: Buffer | undefined, mimeType: string | undefined, languageHint: string): Promise<VoiceTranscriptionResult | null> {
   const whisperApiKey = process.env.OPENAI_API_KEY;
@@ -105,7 +115,7 @@ async function transcribeWithOpenAI(audioBuffer: Buffer | undefined, mimeType: s
     const OpenAI = (await import('openai')).default;
     const { toFile } = await import('openai/uploads');
     const client = new OpenAI({ apiKey: whisperApiKey });
-    const ext = mimeType?.includes('mp3') ? 'mp3' : mimeType?.includes('wav') ? 'wav' : 'ogg';
+    const ext = resolveAudioFileExtension(mimeType);
     const file = await toFile(audioBuffer, `voice-note.${ext}`, { type: mimeType || 'audio/ogg' });
     const tr = await client.audio.transcriptions.create({
       file,

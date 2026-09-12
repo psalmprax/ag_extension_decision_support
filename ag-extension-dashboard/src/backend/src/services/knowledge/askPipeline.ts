@@ -13,6 +13,7 @@ import { callReasoningAgentic, callReasoningWithTimeout } from '@/services/knowl
 import { buildExtractiveAnswer } from '@/services/knowledge/insightExtract';
 import { postProcessResponse } from '@/services/knowledge/visuals';
 import { logSearch } from '@/services/knowledge/searchLog';
+import { aegisShield } from '@/services/security/aegisShield';
 import type { AskOptions, FinalAnswer, KnowledgeAttachment, ReasonOptions } from '@/services/knowledge/types';
 
 /**
@@ -39,7 +40,10 @@ async function resolveAggregatedContext(
     }
 
     const contextText = contextResults
-        .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType || 'text'}, Score: ${res.score !== undefined ? res.score.toFixed(2) : '1.0'}, URL: ${res.metadata.sourceUrl || ''})\n${res.content}`)
+        .map(res => {
+            const sanitized = aegisShield.sanitizeToolResult(res.content || '');
+            return `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType || 'text'}, Score: ${res.score !== undefined ? res.score.toFixed(2) : '1.0'}, URL: ${res.metadata.sourceUrl || ''})\n${sanitized.sanitizedInput}`;
+        })
         .join('\n\n---\n\n');
 
     return { contextResults, contextText };
