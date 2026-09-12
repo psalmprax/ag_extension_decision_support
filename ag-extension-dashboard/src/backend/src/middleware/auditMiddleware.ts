@@ -102,11 +102,44 @@ export async function writeAuditLog(entry: {
     }
 }
 
+function pickFirstString(...values: unknown[]): string | null {
+    for (const v of values) {
+        if (typeof v === 'string' && v.trim()) return v.trim();
+    }
+    return null;
+}
+
+function extractAuditContext(req: Request): { reasonCode: string | null; justification: string | null } {
+    const b = (req.body && typeof req.body === 'object' && !Array.isArray(req.body))
+        ? (req.body as Record<string, unknown>)
+        : {};
+
+    const rawReason = pickFirstString(req.headers['x-audit-reason-code'], b.reasonCode, b.reason_code);
+    const rawJust = pickFirstString(req.headers['x-audit-justification'], b.justification, b.auditJustification);
+
+    return {
+        reasonCode: rawReason ? rawReason.slice(0, 80) : null,
+        justification: rawJust ? rawJust.slice(0, 1000) : null,
+    };
+}
+
+function mergeAuditPayload(body: unknown, reasonCode: string | null, justification: string | null): unknown {
+    if (!reasonCode && !justification) return body;
+    const auditContext = { reasonCode, justification };
+    if (body && typeof body === 'object' && !Array.isArray(body)) {
+        return { ...(body as Record<string, unknown>), _auditContext: auditContext };
+    }
+    return { raw: body, _auditContext: auditContext };
+}
+
 function recordOnFinish(req: Request, res: Response, action: string): void {
     if (typeof res.on !== 'function') return;
     res.on('finish', () => {
         if (res.statusCode < 200 || res.statusCode >= 300) return;
         const { type, id } = inferResource(req);
+        const { reasonCode, justification } = extractAuditContext(req);
+        const bodyWithAudit = mergeAuditPayload(req.body, reasonCode, justification);
+
         void writeAuditLog({
             actorId: req.user?.userId ?? null,
             actorRole: req.user?.role ?? null,
@@ -118,7 +151,7 @@ function recordOnFinish(req: Request, res: Response, action: string): void {
             statusCode: res.statusCode,
             ipAddress: req.ip ?? null,
             userAgent: req.get('user-agent') ?? null,
-            requestBody: safeBody(req.body),
+            requestBody: safeBody(bodyWithAudit),
         });
     });
 }

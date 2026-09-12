@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Layers, Menu, X, Sparkles } from 'lucide-react';
+import { ArrowRight, Layers, Menu, X, Sparkles, Mic } from 'lucide-react';
 import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 
 export function Navbar() {
@@ -39,6 +39,13 @@ export function Navbar() {
             >
               <Sparkles className="w-3.5 h-3.5" />
               Agent OS
+            </a>
+            <a
+              href="#talking-assistant"
+              className="text-sm font-medium text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1.5"
+            >
+              <Mic className="w-3.5 h-3.5" />
+              Voice Copilot
             </a>
             <a
               href="#interactive-story"

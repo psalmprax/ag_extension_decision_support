@@ -6,6 +6,18 @@ import { logger } from '@/utils/logger';
 
 const router = Router();
 
+function parseAuditContext(reqBody: unknown): { reasonCode: string | null; justification: string | null } {
+    if (!reqBody) return { reasonCode: null, justification: null };
+    const obj = typeof reqBody === 'string'
+        ? (() => { try { return JSON.parse(reqBody); } catch { return null; } })()
+        : reqBody;
+    const ctx = (obj as { _auditContext?: { reasonCode?: string; justification?: string } })?._auditContext;
+    return {
+        reasonCode: ctx?.reasonCode ?? null,
+        justification: ctx?.justification ?? null,
+    };
+}
+
 /**
  * GET /api/v1/audit-logs?actorId=&action=&resourceType=&resourceId=&from=&to=&limit=&offset=
  * Admin-only read access to the audit trail.
@@ -40,7 +52,16 @@ router.get('/', authorize(['admin']), async (req: AuthRequest, res: Response) =>
         );
         const count = await query(`SELECT COUNT(*)::int AS total FROM audit_logs a ${whereSql}`, params.slice(0, -2));
 
-        res.json({ success: true, data: { items: rows.rows, total: count.rows[0]?.total ?? 0, limit, offset } });
+        const items = rows.rows.map(r => {
+            const { reasonCode, justification } = parseAuditContext(r.request_body);
+            return {
+                ...r,
+                reason_code: reasonCode,
+                justification,
+            };
+        });
+
+        res.json({ success: true, data: { items, total: count.rows[0]?.total ?? 0, limit, offset } });
     } catch (error) {
         logger.error('audit-logs query failed:', error);
         safeError(res, 500, 'Failed to load audit logs');
