@@ -39,6 +39,9 @@ export class GoogleVertexProvider extends BaseAIProvider {
 
     private async getClient(): Promise<any> {
         if (this.client) return this.client;
+        if (!this.isConfigured()) {
+            throw new Error('Google Vertex client initialization failed — Project ID not configured');
+        }
 
         try {
             const { GoogleGenerativeAI } = await import('@google/generative-ai');
@@ -263,6 +266,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
     }
 
     async healthCheck(): Promise<boolean> {
+        if (!this.isConfigured()) return false;
         try {
             const client = await this.getClient();
             const model = client.getGenerativeModel({ model: config.ai.fallback.model });

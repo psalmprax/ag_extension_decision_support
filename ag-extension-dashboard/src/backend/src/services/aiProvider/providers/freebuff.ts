@@ -152,6 +152,7 @@ export class FreebuffProvider extends BaseAIProvider {
      * Lightweight health check — hits /v1/models (no tokens spent, validates auth + URL).
      */
     async healthCheck(): Promise<boolean> {
+        if (!this.isConfigured()) return false;
         try {
             const client = await this.getClient();
             await client.models.list();

@@ -29,8 +29,15 @@ export class AnthropicProvider extends BaseAIProvider {
 
     private client: any = null;
 
+    override isConfigured(): boolean {
+        return !!config.anthropic.apiKey && config.anthropic.apiKey !== 'sk-ant-...';
+    }
+
     private async getClient(): Promise<any> {
         if (this.client) return this.client;
+        if (!this.isConfigured()) {
+            throw new Error('Anthropic client initialization failed — API key not configured');
+        }
 
         try {
             const Anthropic = await import('@anthropic-ai/sdk');
@@ -235,6 +242,7 @@ export class AnthropicProvider extends BaseAIProvider {
     }
 
     async healthCheck(): Promise<boolean> {
+        if (!this.isConfigured()) return false;
         try {
             const client = await this.getClient();
             await client.messages.create({

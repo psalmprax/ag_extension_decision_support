@@ -343,6 +343,7 @@ export class OpenAIProvider extends BaseAIProvider {
     }
 
     async healthCheck(): Promise<boolean> {
+        if (!this.isConfigured()) return false;
         try {
             const client = await this.getClient();
             
@@ -362,7 +363,7 @@ export class OpenAIProvider extends BaseAIProvider {
             this.recordHealthError();
             return true;
         } catch (error) {
-            logger.error('OpenAI healthCheck error:', error);
+            logger.warn('OpenAI healthCheck failed:', error instanceof Error ? error.message : String(error));
             this.recordHealthError(error instanceof Error ? error.message : String(error));
             return false;
         }
