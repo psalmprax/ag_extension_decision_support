@@ -1,264 +1,309 @@
 ---
 name: anti-flaws
 description: >-
-  Enforces deep architectural integrity, security perimeter defense, agronomic precision,
-  concurrency hygiene, and cognitive complexity bounds across the Agri-Extension Decision Support platform,
-  with dedicated, rigorous standards for Frontend and Backend separately.
-  Use whenever designing schemas, authoring services, implementing UI components, AI/voice copilots, or auditing code quality.
+  Comprehensive Agricultural Decision Safety and Engineering Integrity Protocol (AG-SKILL-AFL-01).
+  Governs the agricultural operating environment: Farmer -> Extension Officer -> Regional Manager ->
+  Agronomic AI -> Field Data -> Decisions -> Actions -> Outcomes.
+  Enforces frontend/backend standards, 12-stage Agricultural Decision Safety Gate, and P0-P3 severity model.
 ---
 
-# Anti-Flaws Protocol (AG-SKILL-AFL-01)
+# Anti-Flaws Protocol: Agricultural Decision Safety & Engineering Integrity (AG-SKILL-AFL-01)
 
-This protocol establishes the architectural, structural, agronomic, security, and algorithmic standards for the **Agri-Extension Decision Support Platform**. It is strictly organized into dedicated, comprehensive sections for **Frontend** and **Backend** engineering disciplines, alongside cross-cutting shared standards.
+This protocol establishes the architectural, agronomic, security, and operational standards for the **Agri-Extension Decision Support Platform**. 
+
+Unlike generic software enterprise checklists, this protocol is anchored in the **physical agricultural operating environment**:
+
+$$\text{Farmer} \longrightarrow \text{Extension Officer} \longrightarrow \text{Regional Manager} \longrightarrow \text{Agronomic Knowledge / AI} \longrightarrow \text{Field Data} \longrightarrow \text{Decisions} \longrightarrow \text{Actions} \longrightarrow \text{Outcomes}$$
+
+The overarching mandate is:
+> **Can the platform prevent an incorrect, unsafe, unauthorized, misleading, or operationally impossible agricultural decision from reaching the farmer or management layer?**
 
 ---
 
 ## 1. The Quality Hierarchy: Flop vs. Hallucination vs. Flaw
 
-Engineering quality on this platform is governed by three complementary pillars:
-
 ```mermaid
 flowchart TD
     A["Agri-Extension Quality Governance"] --> B["Anti-Flop (AG-SKILL-AF-01)<br/>Execution & Failure Prevention"]
     A --> C["Anti-Hallucination (AG-SKILL-AH-01)<br/>Epistemic & Factual Grounding"]
-    A --> D["Anti-Flaws (AG-SKILL-AFL-01)<br/>Architectural, Security & Domain Integrity"]
+    A --> D["Anti-Flaws (AG-SKILL-AFL-01)<br/>Agricultural Decision Safety & System Integrity"]
 
     B -.-> B1["Broken builds, regressions, dead stubs, CI failures, offline crashes"]
     C -.-> C1["Phantom packages, imaginary schema models, fabricated agrochemical dosages"]
-    D -.-> D1["Subtle design defects, unit distortions, security leaks, state races, cognitive spaghetti"]
+    D -.-> D1["Insidious design defects, unit distortions, unsafe pesticide timing, impossible velocity, state races"]
 ```
 
-* **Flop ([`anti_flop.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/anti_flop.md))**: A direct execution failure—broken builds, failing unit tests, dead stubs, unhandled runtime crashes, or regression breaches.
-* **Hallucination ([`anti_hullicination.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/anti_hullicination.md))**: An epistemic untruth—claiming code works without testing, referencing non-existent npm modules, or inventing agrochemical formulations.
-* **Flaw (This Protocol)**: An **insidious design defect, architectural anti-pattern, security blindspot, unit distortion, state race condition, or cognitive complexity trap** that compiles cleanly and passes basic happy-path tests, but causes production failures, data leakage, crop poisoning, or systemic unmaintainability under real field conditions.
+* **Flop ([`anti_flop.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/anti_flop.md))**: Direct failure modes—broken builds, failing unit tests, dead stubs, unhandled runtime crashes, or regression breaches.
+* **Hallucination ([`anti_hullicination.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/anti_hullicination.md))**: Epistemic untruths—claiming code works without testing, referencing non-existent npm modules, or inventing imaginary database fields.
+* **Flaw (This Protocol)**: An **insidious design defect, architectural anti-pattern, agronomic safety blindspot, unit distortion, state race condition, or operational impossibility** that compiles cleanly and passes basic happy-path tests, but creates crop destruction, pesticide poisoning, data leakage, fraudulent visit reporting, or systemic unmaintainability.
 
 ---
 
-## 2. Frontend Anti-Flaws Protocol
+## 2. Anti-Flaw Severity Classification Model
 
-The frontend client applications (React Dashboard, Progressive Web App / PWA, and WebExtension) operate on low-power mobile devices under erratic connectivity in rural farming hubs. The following standards prevent frontend flaws:
+All platform flaws are triaged under four strict agricultural operational severity tiers:
 
-### 2.1 React State & Asynchronous Turn Hygiene
-Modern interactive interfaces—such as the multilingual voice copilot in [`TalkingAssistant.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx)—coordinate multiple asynchronous event streams (Speech-to-Text, LLM inference, Audio playback, Audio visualizers).
+```mermaid
+flowchart LR
+    P0["P0: Agricultural / Human Safety Hazard"] --> P1["P1: Critical Data, Financial & Operational Risk"]
+    P1 --> P2["P2: Major Functional & Workflow Integrity Risk"]
+    P2 --> P3["P3: Quality, UX & Maintainability Degradation"]
+```
 
-1. **Elimination of Stale Closure Traps**:
-   * Never reference closed-over React state variables across asynchronous event callbacks (`setTimeout`, `Promise`, WebSocket listeners) when state updates might occur while the callback is in flight.
-   * Pass runtime arguments explicitly through event pipelines or bridge through mutable `useRef` handles:
-     ```typescript
-     // ❌ FLAWED: selectedLanguage is stale when prompt chip is clicked
-     const handleSelectPrompt = (item: SampleQuestion) => {
-       setSelectedLanguage(item.lang);
-       handleSendMessage(item.text); // BUG: handleSendMessage closes over old selectedLanguage!
-     };
-
-     // ✅ FLAWLESS: Parameter override guarantees immediate runtime validity
-     const handleSelectPrompt = (item: SampleQuestion) => {
-       setSelectedLanguage(item.lang);
-       handleSendMessage(item.text, item.lang);
-     };
-     ```
-2. **Functional State Updates for Collections**:
-   * Always use functional state updaters `setItems(prev => [...prev, newItem])` when appending messages, consultation logs, or cache entries to avoid dropping parallel updates.
-3. **Double-Submit Prevention & Loading Locks**:
-   * All user mutation triggers (sending messages, saving field records, submitting forms) must disable inputs and buttons during pending network requests (`disabled={isLoading || isTranscribing}`).
-
-### 2.2 Component Decomposition & Fast-Refresh Compliance
-1. **The 300-Line Component Upper Bound**:
-   * No single UI component file should exceed 300 lines of code. If a component grows beyond this limit, extract presentational child components, custom hooks, and utility modules.
-   * Example: In [`TalkingAssistant.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx), logic is decomposed into `VoiceOrb`, `Waveform`, `PersonaSelector`, `LanguageSelector`, `ActiveContextBanner`, `HandoffCard`, `ChatMessage`, `ChatInputForm`, and the `useSpeechController` hook.
-2. **Vite Fast-Refresh Compliance (`react-refresh/only-export-components`)**:
-   * Files that declare React components must ONLY export React components or type definitions (`export type ...`).
-   * Never export helper functions, mutable variables, or non-component constants from component files; place them in dedicated utility files or keep them internal.
-
-### 2.3 Web Speech, MediaStream & Web Audio Lifecycle
-Voice AI features interact directly with browser hardware (Microphone, AudioContext, SpeechSynthesis). Improper teardown causes memory leaks, battery drain, and browser crashes.
-
-1. **Deterministic Hardware Teardown**:
-   * Every active `MediaStream` must stop all tracks upon unmount or recording stop:
-     ```typescript
-     stream.getTracks().forEach((track) => track.stop());
-     ```
-   * Every `AudioContext` must be explicitly closed (`await audioCtx.close()`).
-   * `SpeechSynthesis` must be canceled (`speechSynthesis.cancel()`) before initiating new speech playback or unmounting.
-2. **Cancellation Token Abort Hygiene**:
-   * In-flight server audio synthesis requests must carry an `AbortController` signal (`ttsAbortControllerRef.current.abort()`). When the user clicks "Stop Audio" or speaks again, previous requests must abort immediately.
-3. **Two-Tier Audio Synthesis Fallback**:
-   * Voice synthesis must attempt high-fidelity server neural audio (Studio TTS) first, but immediately fall back to the browser's native Web Speech API (`SpeechSynthesisUtterance`) with zero latency if network errors occur or latency thresholds are breached.
-
-### 2.4 Offline-First Client Security & PII Protection
-1. **Zero Plaintext Offline Storage**:
-   * Farmer profile records, GPS boundaries, national identity numbers, and diagnostic consultation notes must NEVER be stored unencrypted in `localStorage` or IndexedDB.
-   * Encrypt all offline payloads using AES-256-GCM authenticated encryption with PBKDF2 key derivation via [`EncryptedStorageService`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/services/encryptedStorageService.ts).
-2. **Remote Wipe Execution**:
-   * The client must listen for cryptographic revocation signals from the server. Upon receipt of a remote wipe directive, purge all cached credentials, IndexedDB databases, and service worker caches immediately.
-
-### 2.5 Responsive & Multilingual UX Resilience
-1. **24-Language Layout Resilience**:
-   * The platform supports 24 languages sourced from [`i18n.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/lib/i18n.ts).
-   * UI components must accommodate 30% to 45% text expansion (e.g., German, French, and Swahili translations are significantly longer than English). Never use fixed `width` or `height` containers for text labels.
-   * The language selector must balance quick-access pills for pilot languages (`en`, `sw`, `fr`, `es`, `pt`) with a complete, accessible dropdown for all 24 languages.
-2. **BCP-47 Locale Binding**:
-   * Web Speech recognition (`recognition.lang`) and speech synthesis utterances (`utterance.lang`) must bind to the exact BCP-47 locale (e.g. `sw-KE`, `fr-FR`, `pt-PT`, `zu-ZA`, `en-US`).
-3. **Multi-State UI Completeness**:
-   * Every data-fetching component must render five distinct UI states: **loading** (skeleton, not spinner), **data** (content), **empty** (helpful onboarding prompt), **error** (retry action), and **offline** (cached data indicator).
-
-### 2.6 Cognitive Complexity in Frontend Helpers
-1. **Complexity Threshold $\le 15$**:
-   * Replace nested `if-else` and `switch` blocks with declarative dictionaries and normalizer maps.
-   * Example: Unit speech expansion maps (`UNIT_EXPANDERS: Record<string, (t: string) => string>`) ensure cognitive complexity $\le 2$ while supporting 24 languages cleanly.
+* **P0 — Agricultural & Human Safety Hazard (Blocker)**:
+  * Advice that causes crop burn, pesticide residue poisoning (exceeding MRLs), livestock toxicity, or water-table contamination.
+  * Recommending chemicals inside Pre-Harvest Intervals (PHI) or Re-Entry Intervals (REI).
+  * Spraying bee-toxic chemicals during peak flowering.
+* **P1 — Critical Data, Financial & Operational Risk (Critical)**:
+  * Cross-tenant data leaks between cooperatives or commercial agribusinesses.
+  * Silent overwriting of historical field observations.
+  * Plaintext exposure of farmer PII or homestead GPS coordinates.
+  * Denial-of-wallet exploitation on public AI endpoints.
+* **P2 — Major Functional & Workflow Integrity Risk (Major)**:
+  * Extension officer logging visits with impossible travel times (teleportation).
+  * Field visit completed without diagnostic observation evidence.
+  * Generating chemical recommendations without translating rates into farmer knapsack operational units.
+  * Offline sync conflict resolving by silently discarding field notes.
+* **P3 — Quality, UX & Maintainability Degradation (Normal)**:
+  * Multilingual text clipping on mobile displays.
+  * Audio synthesis dropouts failing to fall back to Web Speech API.
+  * Functions exceeding SonarJS cognitive complexity 15.
 
 ---
 
-## 3. Backend Anti-Flaws Protocol
+## 3. The 12-Stage Agricultural Decision Safety Gate
 
-The backend service (Express, Prisma ORM, PostgreSQL/PostGIS, Redis, BullMQ) powers mission-critical agronomic advice, telemetry ingestion, and user authentication. The following standards prevent backend flaws:
+Before any agronomic advisory is presented to a farmer or extension officer, it must pass through the **12-Stage Agricultural Decision Safety Gate**. **Every single stage is capable of halting, rejecting, or escalating the advisory.**
 
-### 3.1 Multi-Tenant Isolation & Zero Cross-Tenant Leakage
-1. **Mandatory Tenant Scoping in Prisma Queries**:
-   * The database enforces multi-tenancy. Every query touching tenant-owned records (`Farmer`, `FieldVisit`, `AdvisoryWorkflow`, `TelemetryAnomaly`) must enforce `tenant_id`:
+```mermaid
+flowchart TD
+    S1["1. User & Query Ingestion"] --> S2["2. Tenant & Territory Auth"]
+    S2 --> S3["3. Field & Parcel Validation"]
+    S3 --> S4["4. Agronomic Context & Slot Matching"]
+    S4 --> S5["5. Authoritative Knowledge Retrieval"]
+    S5 --> S6["6. Source & Provenance Validation"]
+    S6 --> S7["7. AI Differential Reasoning"]
+    S7 --> S8["8. Agrochemical Safety (PHI/REI)"]
+    S8 --> S9["9. Real-Time Weather & Spray Gate"]
+    S9 --> S10{"10. Confidence & Anti-Sycophancy"}
+    S10 -->|Low / Ambiguous| ESC["Escalate to Human Agronomist"]
+    S10 -->|High / Grounded| S11["11. Knapsack Operational Unit Translation"]
+    S11 --> S12["12. Farmer-Facing Multilingual Delivery"]
+    S12 --> OUT["13. Follow-Up & Efficacy Feedback Loop"]
+```
+
+1. **User & Query Ingestion**: Sanitizes input, verifies language code against [`i18n.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/lib/i18n.ts), and blocks prompt injection or non-agricultural queries.
+2. **Tenant & Territory Authorization**: Verifies user tenant ID and validates that an extension officer is authorized for the target farmer's assigned ward/district.
+3. **Field & Parcel Validation**: Confirms valid parcel ID, boundary coordinates, and historical crop rotation status.
+4. **Agronomic Context & Slot Matching**: Extracts structured slots: host crop, target pest/disease, planting date, growth stage, soil pH, and field size.
+5. **Authoritative Knowledge Retrieval**: Retrieves peer-reviewed extension guides, CABI biopesticide manuals, ISRIC soil grids, and FAO standards.
+6. **Source & Provenance Validation**: Checks that citations are regionally applicable, legally approved, and non-conflicting.
+7. **AI Differential Reasoning**: Generates clinical differential diagnoses based on observable markers; rejects superficial single-symptom leaps.
+8. **Agrochemical Safety Check (PHI/REI)**: Validates that harvest date $> \text{application date} + \text{PHI}$. Rejects synthetic toxins if biological alternatives (*Bt*, Neem oil) are viable.
+9. **Real-Time Weather & Spray Gate**: Checks NASA POWER and live meteorological telemetry. Halts foliar spray advice if wind $> 15$ km/h (drift risk) or rain expected $< 4$ hours (wash-off).
+10. **Confidence & Anti-Sycophancy Verification**:
+    * If confidence is below 85% or symptoms match multiple pathogens: **HALT** advisory, request specific physical markers, or escalate to human extension specialist.
+    * Rejects farmer's false self-diagnoses with respectful evidence-based counter-analysis.
+11. **Knapsack Operational Unit Translation**: Translates scientific concentrations (e.g. `2.5 L/ha` or `0.03% EC at 3ml/L`) into farmer-executable units (e.g. *"Mix 60ml (3 standard bottle caps) per 20L knapsack sprayer, applying 4 full knapsacks across your 0.5 acre plot"*).
+12. **Farmer-Facing Multilingual Delivery**: Dispatches via preferred channel (PWA voice, SMS, WhatsApp) in validated native tongue with audio prosody smoothing.
+
+---
+
+## 4. Farmer & Field Data Integrity Protocol
+
+1. **Immutable Observation Append-Only Trail**:
+   * **Never silently overwrite field history.**
+   * When an extension officer re-evaluates a field, the system must create a versioned observation record:
+     $$\text{Observation} \longrightarrow \text{Validation} \longrightarrow \text{Versioned Record} \longrightarrow \text{Correction / Supersession} \longrightarrow \text{Immutable Audit Trail}$$
+   * Past pest severity ratings, photographs, and soil readings must remain preserved for multi-season agronomic yield analytics.
+2. **Field Polygon & Spatial Boundary Hygiene**:
+   * Parcel boundary polygons must be topologically valid: no self-intersecting lines (bow-tie polygons) or zero-area geometries.
+   * Adjacent farm parcels must be validated against overlap thresholds to prevent double-claiming of acreage for carbon credits or subsidized seed distribution.
+3. **Historical Context Preservation**:
+   * Crop rotations (e.g. maize following beans) and prior chemical applications must remain permanently accessible to prevent herbicide residual carryover damage to sensitive rotation crops.
+
+---
+
+## 5. Extension Officer Workflow Integrity Protocol
+
+1. **GPS & Physical Presence Verification**:
+   * Field visit start timestamps must correlate with mobile GPS telemetry within a 150-meter radius of the registered farm parcel centroid.
+   * Flag visits logged without location evidence or with low-accuracy cell tower triangulation ($> 500$m error radius).
+2. **Impossible Travel Time & Teleportation Detection**:
+   * The system must analyze consecutive visit timestamps and physical coordinates for each officer:
+     $$\text{Velocity} = \frac{\text{Geodesic Distance}(V_1, V_2)}{\text{Timestamp}(V_2) - \text{Timestamp}(V_1)}$$
+   * If calculated speed exceeds plausible rural road transport limits ($> 90$ km/h between visits within a 15-minute window), flag the visit as a **Data Quality & Anomaly Signal** for manager review.
+3. **Strict Workflow Sequence Enforcer**:
+   * A field visit cannot be transitioned to `completed` without:
+     * $\ge 1$ verified physical observation or diagnostic photograph.
+     * Diagnostic finding tied to specific observable symptoms.
+     * Concrete advisory with clear farmer actionable steps.
+4. **Territory Compliance**:
+   * Extension officers are restricted to their assigned operational zones as enforced in [`visits.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/visits.ts):
      ```typescript
-     // ❌ FLAWED: Cross-tenant data breach vulnerability (IDOR)
-     export async function getVisitById(id: string) {
-       return prisma.fieldVisit.findUnique({ where: { id } });
-     }
-
-     // ✅ FLAWLESS: Strict tenant isolation enforced at database query level
-     export async function getVisitById(id: string, tenantId: string) {
-       return prisma.fieldVisit.findFirst({
-         where: { id, tenant_id: tenantId },
-       });
-     }
-     ```
-2. **Tenant Namespace Isolation in Redis & Caches**:
-   * All cache keys in [`semanticCacheService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/semanticCacheService.ts) and Redis queues must prefix the tenant ID: `cache:tenant:<tenantId>:query:<hash>`.
-   * BullMQ jobs must carry `tenant_id` in their job payload and validate tenant status before execution.
-
-### 3.2 Transactional Atomicity & Multi-Table Mutations
-1. **Mandatory `prisma.$transaction` Wrappers**:
-   * Any business mutation spanning more than one database table must execute inside a database transaction:
-     ```typescript
-     // ❌ FLAWED: Partial write vulnerability
-     async function completeFieldVisit(visitId: string, diagnosisData: DiagnosisDTO) {
-       await prisma.fieldVisit.update({ where: { id: visitId }, data: { status: 'COMPLETED' } });
-       // If this next call fails, visit is marked complete with no diagnosis records!
-       await prisma.diagnosticRecord.create({ data: { visitId, ...diagnosisData } });
-     }
-
-     // ✅ FLAWLESS: Atomic multi-table transaction
-     async function completeFieldVisit(visitId: string, diagnosisData: DiagnosisDTO) {
-       return prisma.$transaction(async (tx) => {
-         const visit = await tx.fieldVisit.update({
-           where: { id: visitId },
-           data: { status: 'COMPLETED' },
-         });
-         const diagnosis = await tx.diagnosticRecord.create({
-           data: { visitId, ...diagnosisData },
-         });
-         return { visit, diagnosis };
-       });
+     if (officerId && assignedOfficerId && officerId !== assignedOfficerId) {
+       throw new Error('Visit officer must be the farmer\'s assigned extension officer');
      }
      ```
-2. **Idempotency on Asynchronous Workers**:
-   * Background workers (SMS dispatch, WhatsApp delivery, weather telemetry ingestion) must be idempotent. Use unique composite constraint keys (`provider_id`, `message_id`) to prevent duplicate billing or duplicate SMS broadcasts to farmers during network retries.
-
-### 3.3 Security Perimeter, Rate-Limiting & Input Sanitization
-1. **Public Demo API Rate Limiting**:
-   * In [`publicDemo.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/chatbot/publicDemo.ts), public demo requests must enforce a strict sliding window limit (10 queries/hour per IP) to prevent financial denial-of-wallet on upstream LLM and TTS APIs.
-2. **Domain Boundary & Prompt Injection Guardrails**:
-   * Input text must be verified against agricultural domain perimeters before dispatching to LLMs.
-   * Reject non-agricultural queries, math homework requests, code generation tasks, and system jailbreak attempts (`Ignore previous instructions`) with standardized domain guard messages.
-3. **Zero Plaintext PII in Logs**:
-   * Never log unmasked phone numbers, national IDs, or precise homestead coordinates in server output or Winston logs. Mask MSISDNs (`+254 712 *** *89`) and truncate coordinates to regional boundaries in log contexts.
-
-### 3.4 Resource Protection & Streaming Architecture
-1. **Audio & Media Streaming**:
-   * Never buffer voice notes (Whisper STT) or drone imagery monolithically in server memory (`Buffer.concat` across unbounded arrays).
-   * Stream incoming multipart uploads directly to S3/MinIO using chunked pipelines or direct presigned S3 URLs.
-2. **Memory Leaks & Redis Eviction**:
-   * BullMQ queues must declare job retention limits (`removeOnComplete: 100`, `removeOnFail: 500`) to avoid Redis memory exhaustion.
-   * Redis connections must be managed via singleton pool services with reconnection backoffs.
-
-### 3.5 Geospatial & Spatial Precision Sovereignty
-1. **Ellipsoidal Geodesics vs. Cartesian Approximations**:
-   * Farm parcel acreage, perimeter boundaries, and geofenced alert radii must execute over ellipsoidal geodetic projections (PostGIS `geography` types or Haversine/Vincenty formulas).
-   * Raw Euclidean Pythagorean calculations ($(x_2 - x_1)^2 + (y_2 - y_1)^2$) produce massive 20% to 45% calculation errors at non-equatorial latitudes, leading to catastrophic miscalculations in seed and fertilizer quotas.
-2. **Spatial Indexing**:
-   * Parcel geometries and visit coordinates must have spatial GIST/R-tree indexes in PostgreSQL. Never run unbounded $O(N^2)$ cross-join spatial intersections.
-
-### 3.6 Agronomic Knowledge Grounding & Provenance
-1. **Strict Agrochemical Safety Margins**:
-   * The backend must never generate pesticide advisories without evaluating the **Pre-Harvest Interval (PHI)** and **Re-Entry Interval (REI)** against the farmer's target harvest schedule.
-   * Toxic synthetic chemicals (e.g. organophosphates) must never be recommended when biological pest management (Neem oil, *Bt*, ICIPE push-pull intercropping) is viable.
-2. **Mandatory Citations**:
-   * Advisory responses must return explicit citations with `sourceId`, title, domain category, excerpt, and confidence score.
-3. **Structured Dialogue Slot Memory**:
-   * Dialogue sessions must maintain structured entity slots (`crop`, `pest_disease`, `field_size`, `location_climate`, `soil_profile`) rather than appending raw unconstrained prompt history. Rolling context must be capped at 6 turns.
 
 ---
 
-## 4. Cross-Cutting & Shared Contract Anti-Flaws
+## 6. Agronomic Decision Safety & Treatment Protocol
 
-### 4.1 Schema Sovereignty & Parity
-1. **Prisma Schema Sovereignty**:
-   * Database structure must strictly match [`schema.prisma`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/prisma/schema.prisma).
-   * Never query or insert fields not defined in the canonical schema. Verify schema state using `npm run check:drift`.
-2. **Shared Contract Parity ([`ag-extension-shared`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-shared/src/index.ts))**:
-   * DTOs and Zod validation schemas shared between Backend, Frontend, and Browser Extension must reside in `ag-extension-shared`.
-   * Run `npm run shared:check` to ensure contracts are in sync across workspaces.
-
-### 4.2 Code Cleanliness & Dead Code Elimination
-1. **Fallow Regression Gate**:
-   * Every change must keep the dead-code issue count at or below the baseline (256 issues) using `npm run fallow:check`.
-2. **Zero `any` Types**:
-   * Full end-to-end strict TypeScript compilation. No untyped escape hatches.
+1. **Pre-Harvest Interval (PHI) & Re-Entry Interval (REI) Verification**:
+   * Every agrochemical recommendation must check the crop's projected harvest date against the chemical's mandated PHI.
+   * If harvest is anticipated within the PHI window, **block synthetic chemical application** and prescribe non-residual organic or cultural treatments.
+   * Provide explicit REI warnings to prevent farm laborers from entering treated fields prematurely.
+2. **Bee Toxicity & Pollinator Protection**:
+   * Do not recommend neonicotinoids or broad-spectrum insecticides during peak crop flowering periods.
+   * If insecticide application is unavoidable, mandate evening/dusk application windows when bees are not actively foraging.
+3. **Resistance Management & Mode of Action (MoA) Rotation**:
+   * Track cumulative seasonal chemical applications per field.
+   * Prevent repeated applications of single-class fungicides (e.g. FRAC Group 11 strobilurins) or insecticides (e.g. IRAC Group 1B organophosphates) to avert pathogen resistance.
 
 ---
 
-## 5. Taxonomy of Flaws vs. Flawless Engineering
+## 7. AI / Advisory Anti-Flaws & Anti-Sycophancy
 
-| Domain | Flaw Category | The Flawed Pattern | The Subtle Catastrophic Risk | The Flawless Pattern |
-| :--- | :--- | :--- | :--- | :--- |
-| **Frontend** | **Async State** | Calling `handleSendMessage(text)` immediately after `setSelectedLanguage(lang)` | State update is asynchronous; message dispatches with old closed-over language. | Pass explicit `overrideLang` argument through the event dispatch pipeline. |
-| **Frontend** | **Component Monolith** | Single component file with 1,200 lines managing UI, audio, STT, and API calls | Untestable spaghetti; any state edit causes unintended re-renders and breaks Fast Refresh. | Decompose into sub-components under 300 lines and extract custom hooks (`useSpeechController`). |
-| **Frontend** | **Audio Lifecycle** | Starting `navigator.mediaDevices.getUserMedia` without track cleanup on unmount | Microphone remains active indefinitely; drains mobile battery and exposes user privacy. | Deterministically stop all tracks on stream and close `AudioContext` on unmount. |
-| **Frontend** | **Offline Storage** | Storing farmer records in unencrypted `localStorage` | Plaintext farmer identity and farm location theft if field smartphone is stolen. | Authenticated envelope encryption (AES-256-GCM) via [`EncryptedStorageService`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/services/encryptedStorageService.ts). |
-| **Frontend** | **Complexity** | 100-line function with nested `if/switch` statements for 24 languages | High cognitive complexity (>20), regression-prone, unmaintainable. | Declarative lookup dictionaries (`UNIT_EXPANDERS`, `PLACEHOLDERS`) with complexity $\le 2$. |
-| **Backend** | **Multi-Tenancy** | `prisma.farmer.findUnique({ where: { id } })` | IDOR vulnerability: allows one cooperative to view another cooperative's farmers. | Always enforce tenant scoping: `where: { id, tenant_id: session.tenant_id }`. |
-| **Backend** | **Data Mutation** | Successive `await prisma.a.create()`, `await prisma.b.create()` | If step B fails, step A is orphaned; leaves corrupted records and inconsistent balances. | Wrap in `await prisma.$transaction([stepA, stepB])`. |
-| **Backend** | **AI Security** | Unthrottled public endpoint calling OpenAI or Studio neural TTS | Denial-of-wallet attack depletes API budgets within minutes. | Sliding-window rate-limiting (10 queries/hr per IP) in [`publicDemo.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/chatbot/publicDemo.ts). |
-| **Backend** | **PII Exposure** | `logger.info("Sending SMS to " + farmer.phone + " at " + farmer.lat)` | Leaks farmer PII into log sinks, monitoring aggregators, and third-party dashboards. | Mask phone numbers (`+254 712 *** *89`) and redact exact GPS homestead coordinates. |
-| **Backend** | **Spatial Calc** | Calculating field acreage using planar Euclidean geometry on GPS lat/long | Distorts field size by 20-40%, leading to dangerous chemical overdose or under-fertilization. | Project coordinates over WGS-84 ellipsoid geodesics via PostGIS geography functions. |
-| **Backend** | **Agro-Safety** | Recommending chlorpyrifos 2 days before harvesting market tomatoes | Severe consumer chemical poisoning; breaches Maximum Residue Limits (MRLs). | Enforce mandatory Pre-Harvest Interval (PHI) checks and prioritize bio-control solutions. |
+1. **Anti-Sycophancy (Objective Diagnostic Rigor)**:
+   * AI copilots must be strictly trained and prompted to prioritize clinical symptoms over farmer assertions.
+   * If a farmer states: *"My maize has drought stress,"* but symptoms describe Fall Armyworm windowing and frass, the copilot must politely dispute the hypothesis, explain the physical diagnostic indicators, and redirect to the correct pest treatment.
+2. **Structured Entity Slots vs. Context Bloat**:
+   * In [`publicDemo.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/chatbot/publicDemo.ts) and [`TalkingAssistant.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx), multi-turn consultations must track structured agronomic slots:
+     ```typescript
+     interface AgronomicEntitySlots {
+       crop?: string | null;
+       pest_disease?: string | null;
+       field_size?: string | null;
+       location_climate?: string | null;
+       soil_profile?: string | null;
+     }
+     ```
+   * Rolling LLM prompt history must be capped at 6 turns with compressed slot memory to eliminate token exhaustion and attention drift.
+3. **Escalation Protocol**:
+   * When visual symptoms are ambiguous or confidence score is $< 0.85$, the AI engine must state uncertainty and trigger human officer review. Never invent confident diagnoses under ambiguous evidence.
 
 ---
 
-## 6. Pre-Shipment Anti-Flaw Audit Checklists
+## 8. Farmer Safety, Comprehension & Localized Operational Units
 
-### Frontend Audit Checklist
-- [ ] **State & Closures**: Are all async event handlers free of stale React closures?
-- [ ] **Line Count Bounds**: Are all React component files under 300 lines?
-- [ ] **Hardware Lifecycle**: Are all microphone tracks stopped and `AudioContext` closed upon unmount?
-- [ ] **Speech Fallbacks**: Does voice playback fall back cleanly to Web Speech API if server TTS fails?
-- [ ] **Offline Encryption**: Is client storage wrapped in AES-256-GCM envelope encryption?
-- [ ] **Multilingual Resilience**: Does the UI render gracefully across all 24 languages without layout truncation?
-- [ ] **Complexity Bounds**: Is every frontend helper function's cognitive complexity $\le 15$?
-- [ ] **Fast-Refresh**: Are all exports from `.tsx` files strictly React components or types?
+1. **Scientific to Operational Unit Translation**:
+   * Abstract scientific rates (e.g. `1.5 kg/ha`, `3 ml/L`) must be systematically converted into accessible field measurements based on the farmer's equipment:
+     * Standard 16L / 20L knapsack sprayers.
+     * Bottle-cap measures (5ml, 10ml, 20ml).
+     * Handful / matchbox fertilizer micro-dosing guides.
+2. **Multilingual Clarity Across 24 Languages**:
+   * Voice copilots must humanize agronomic units via localized unit expanders ([`TalkingAssistant.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx)):
+     * Swahili: `expandAgronomicUnitsSw` (`mililita 3 kwa lita ya maji`).
+     * French: `expandAgronomicUnitsFr` (`millilitres par litre`).
+     * Spanish: `expandAgronomicUnitsEs` (`mililitros por litro`).
+     * Portuguese: `expandAgronomicUnitsPt` (`mililitros por litro`).
 
-### Backend Audit Checklist
-- [ ] **Multi-Tenant Scoping**: Does every query touching tenant models enforce `where: { tenant_id }`?
-- [ ] **Transactional Atomicity**: Are multi-table database operations wrapped in `prisma.$transaction`?
-- [ ] **Perimeter Rate-Limiting**: Are public demo endpoints throttled to 10 queries/hour per IP?
-- [ ] **Prompt Injection Defense**: Does the system validate domain boundaries and reject jailbreaks?
-- [ ] **PII Masking**: Are phone numbers and exact GPS coordinates redacted in logs?
-- [ ] **Spatial Geodesics**: Are field acreage calculations projected over WGS-84 ellipsoids?
-- [ ] **Agrochemical Safety**: Are pesticide advisories validated against PHI and REI safety thresholds?
-- [ ] **Provenance**: Do all RAG advisory outputs include source citations with confidence scores?
-- [ ] **Idempotency**: Are asynchronous BullMQ queue jobs idempotent?
+---
 
-### Combined Quality Gate Checklist
-- [ ] `npm run lint` passes with 0 errors and 0 warnings across frontend and backend.
-- [ ] `npm run test:frontend` and `npm run test:backend` pass 100%.
-- [ ] `npm run fallow:check` confirms delta $\le 0$ against baseline 256.
-- [ ] `python3 scripts/verify_anti_flop.py` passes with zero dead stubs.
-- [ ] `python3 scripts/verify_anti_hallucination.py` passes with all links grounded.
-- [ ] `npm run build:frontend` and `npm run build:backend` compile cleanly.
+## 9. Offline Field Operations & Synchronization
+
+1. **Two-Tier Envelope Encryption**:
+   * Client devices store records in IndexedDB encrypted with AES-256-GCM via [`EncryptedStorageService`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/services/encryptedStorageService.ts).
+2. **Conflict Resolution Without Observation Destruction**:
+   * When syncing offline queues, the server must never blindly execute "last-write-wins" over conflicting observations.
+   * If both officer and farmer modified field notes simultaneously, retain both entries as distinct timestamped records in the field visit history.
+
+---
+
+## 10. Regional Manager & Operational Controls
+
+1. **Truth in Aggregation (Non-Deceptive Metrics)**:
+   * Operational analytics dashboards must distinguish between:
+     * **Assigned Farmers**: Total farmers registered in officer roster.
+     * **Visited Farmers**: Unique individual farmers physically visited this period.
+     * **Total Field Visits**: Aggregate visit count (including repeats).
+     * **Active Farmers**: Farmers adopting advisories and reporting outcomes.
+   * Never conflate total visits with farmer coverage percentage.
+2. **Outbreak Anomaly Detection & Geographic Clustering**:
+   * Track disease and pest clusters geographically using spatial queries.
+   * If $\ge 5$ farms within a 15km radius report Late Blight or Fall Armyworm within 7 days, trigger automated early-warning alerts across the regional extension network.
+
+---
+
+## 11. Geospatial & Environmental Context Controls
+
+1. **WGS-84 Geodesic Acreage Sovereignty**:
+   * Never calculate acreage using planar Euclidean geometry. All parcel polygons must execute over ellipsoidal geodetic projections via PostGIS `ST_Area(geog)`.
+2. **Real-Time Weather Suitability Gate**:
+   * Integrate NASA POWER and live station data ([`seasonalAdvisoryService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/seasonalAdvisoryService.ts)):
+     * Check precipitation thresholds (planting window $\ge 25$mm, dry spell alerts $< 5$mm).
+     * Prohibit spraying in high winds ($> 15$ km/h) or temperatures $> 32^\circ\text{C}$ to prevent spray vaporization.
+
+---
+
+## 12. Farmer Privacy & Tiered Precision Visibility
+
+1. **Tiered Geospatial Obfuscation**:
+   * **Farmer**: Exact boundary lines and parcel centroid coordinates.
+   * **Assigned Extension Officer**: Exact parcel coordinates for navigation.
+   * **Regional Manager**: Aggregated village / ward boundary level.
+   * **National / Executive / Donor Views**: GPS jittered or aggregated to 5km grid cells to prevent predatory land acquisition or commercial data exploitation.
+2. **PII Redaction**:
+   * Phone numbers, IDs, and financial records must be masked in logs, telemetry streams, and Sentry breadcrumbs.
+
+---
+
+## 13. Outcome & Feedback Loops
+
+1. **Closed-Loop Efficacy Tracking**:
+   * Every advisory must conclude with an outcome assessment recorded in [`adviceEfficacyService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/adviceEfficacyService.ts):
+     * `resolved`, `improved`, `unresolved`, `worsened`, `lost_to_followup`.
+2. **Automated Knowledge Quality Degradation**:
+   * If an AI or extension advisory shows an unresolved/worsened rate $> 30\%$ across a region, down-rank the RAG knowledge source and flag the protocol for national agronomic board re-evaluation.
+
+---
+
+## 14. Frontend Engineering Anti-Flaws Protocol
+
+1. **React State & Asynchronous Turn Hygiene**:
+   * Eradicate stale closures in voice and multi-turn loops. Pass explicit parameters across async event loops rather than closing over stale React state variables.
+2. **Component Line Count Limits**:
+   * Keep components under 300 lines. Decompose large views into sub-components and custom hooks (`useSpeechController`).
+3. **Hardware Lifecycle Teardown**:
+   * Deterministically stop all `MediaStream` tracks, close `AudioContext`, and cancel `SpeechSynthesis` upon unmount.
+4. **Two-Tier Audio Synthesis**:
+   * Server studio neural audio (Tier 1) with seamless 0ms fallback to native Web Speech API (Tier 2).
+
+---
+
+## 15. Backend Engineering Anti-Flaws Protocol
+
+1. **Multi-Tenant Isolation**:
+   * Every Prisma query on tenant models must enforce `where: { tenant_id }` to prevent cross-tenant IDOR breaches.
+2. **Transactional Atomicity**:
+   * Multi-table operations must be wrapped in `prisma.$transaction`.
+3. **Public Demo Rate Limiting**:
+   * Enforce per-IP rate limiting (10 queries/hour) in [`publicDemo.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/chatbot/publicDemo.ts).
+4. **Streaming Architecture**:
+   * Stream audio and imagery directly to S3/MinIO; never buffer large files monolithically in Node.js memory.
+
+---
+
+## 16. Comprehensive Anti-Flaw Audit Checklists
+
+### Agronomic & Decision Safety Audit
+- [ ] Are pesticide recommendations verified against PHI and REI harvest calendar margins? (P0)
+- [ ] Are bee-safety windows enforced during peak flowering periods? (P0)
+- [ ] Does the AI copilot reject sycophantic agreement and execute differential diagnosis? (P0)
+- [ ] Is scientific dosage translated into practical knapsack sprayer units for the farmer? (P1)
+- [ ] Does the system halt or escalate to human officers when confidence is below 85%? (P1)
+
+### Field Operations & Officer Workflow Audit
+- [ ] Are field visits GPS-verified within 150m of farm parcel centroids? (P1)
+- [ ] Are consecutive visits validated against impossible travel velocity thresholds? (P1)
+- [ ] Are historical field observations immutable and append-only? (P1)
+- [ ] Does the regional dashboard distinguish between assigned, visited, and active farmers? (P2)
+
+### Software & Architecture Audit
+- [ ] Does every tenant database query enforce `where: { tenant_id }`? (P1)
+- [ ] Are multi-table database operations wrapped in `prisma.$transaction`? (P1)
+- [ ] Is client offline storage encrypted with AES-256-GCM envelope encryption? (P1)
+- [ ] Are React asynchronous callbacks free of stale closures? (P2)
+- [ ] Is every helper function's SonarJS cognitive complexity $\le 15$? (P3)
+- [ ] Do all quality gates pass (`npm run lint`, `npm test`, `npm run fallow:check`, `verify:anti`)? (P0)
