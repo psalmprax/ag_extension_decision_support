@@ -8,7 +8,7 @@ export interface AppConfig {
     port: number;
     nodeEnv: string;
     database: { url: string };
-    redis: { url: string };
+    redis: { url: string; queueUrl: string };
     jwt: { secret: string; expiresIn: string };
     stripeSecretKey?: string;
     stripeWebhookSecret?: string;
@@ -62,6 +62,12 @@ export const config: AppConfig = {
 
     redis: {
         url: getEnv('REDIS_URL', 'redis://localhost:6379', false),
+        // BullMQ queues connect here, separate from the general cache Redis.
+        // The queue instance must run with maxmemory-policy noeviction — an
+        // allkeys-lru queue Redis silently evicts pending jobs under memory
+        // pressure, losing scheduled SMS/emails/notifications with no error.
+        // Falls back to REDIS_URL so single-Redis deployments keep working.
+        queueUrl: getEnv('QUEUE_REDIS_URL', getEnv('REDIS_URL', 'redis://localhost:6379', false), false),
     },
 
     jwt: {

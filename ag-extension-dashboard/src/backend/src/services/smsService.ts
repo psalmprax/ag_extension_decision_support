@@ -34,6 +34,11 @@ export interface BulkSMSOptions {
     senderId?: string;
 }
 
+// How long a row may sit in 'sending' before the stale-claim sweep assumes the
+// sender crashed and returns it to 'pending' for redelivery. Generous because
+// provider calls are wrapped in axios timeouts well below this.
+const ScheduledSmsSendingStaleMs = 5 * 60 * 1000;
+
 class SMSService {
     // Africa's Talking configuration
     private africaTalkingApiKey: string | undefined;
@@ -496,36 +501,73 @@ class SMSService {
     }
 
     /**
-     * Background worker to process due SMS.
-     * This should be called by a cron job or interval.
+     * Background worker to process due SMS (polling fallback for rows missed
+     * by the BullMQ worker).
+     *
+     * Exactly-once dispatch: each row is CLAIMED first via a conditional
+     * UPDATE that flips status 'pending' → 'sending'. The claim is atomic, so
+     * concurrent pollers (multiple app instances, or the BullMQ worker racing
+     * this poller) can never select the same row. Rows stuck in 'sending'
+     * (crash mid-send) are reclaimed after SENDING_STALE_MS.
      */
     async processScheduledSMS(): Promise<number> {
         try {
             const now = new Date();
-            // Fetch pending SMS that are due
-            const { rows } = await query(
-                `SELECT * FROM scheduled_sms WHERE status = 'pending' AND scheduled_at <= $1 LIMIT 50`,
+            const staleSendingCutoff = new Date(now.getTime() - ScheduledSmsSendingStaleMs);
+
+            // Reclaim rows whose sender died mid-dispatch (stuck 'sending').
+            // Guard against clock skew / churn: only flip rows last touched
+            // before the cutoff.
+            try {
+                const { rowCount: reclaimed } = await query(
+                    `UPDATE scheduled_sms SET status = 'pending', updated_at = NOW()
+                     WHERE status = 'sending'
+                       AND updated_at <= $1`,
+                    [staleSendingCutoff]
+                );
+                if (reclaimed && reclaimed > 0) {
+                    logger.warn(`Scheduled SMS: reclaimed ${reclaimed} stale 'sending' rows for redelivery`);
+                }
+            } catch (reclaimErr) {
+                logger.warn('Scheduled SMS stale-claim sweep failed:', reclaimErr);
+            }
+
+            const { rows } = await query<{
+                id: string; phone_number: string; message: string; user_id: string;
+            }>(
+                // Ordering matters: the atomic 'pending' → 'sending' claim below
+                // (not this SELECT) is what prevents duplicate dispatch across
+                // concurrent workers and app instances.
+                `SELECT id, phone_number, message, user_id
+                 FROM scheduled_sms
+                 WHERE status = 'pending' AND scheduled_at <= $1
+                 LIMIT 50`,
                 [now]
             );
-
             if (rows.length === 0) return 0;
-
-            logger.info(`Processing ${rows.length} due scheduled SMS`);
 
             let processedCount = 0;
             for (const sms of rows) {
+                // Atomic claim — the concurrent loser's UPDATE affects 0 rows
+                // and it skips the row, closing the duplicate-dispatch race.
+                const { rowCount } = await query(
+                    `UPDATE scheduled_sms SET status = 'sending', updated_at = NOW()
+                     WHERE id = $1 AND status = 'pending'`,
+                    [sms.id]
+                );
+                if (!rowCount) continue; // claimed by another worker — skip
+
                 const success = await this.sendSMS({
                     to: sms.phone_number,
                     message: sms.message,
                     senderId: sms.user_id,
                 });
 
-                // Update status
                 await query(
                     `UPDATE scheduled_sms SET status = $1, updated_at = NOW() WHERE id = $2`,
                     [success ? 'sent' : 'failed', sms.id]
                 );
-                
+
                 if (success) processedCount++;
             }
 

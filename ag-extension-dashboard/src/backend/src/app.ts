@@ -113,15 +113,44 @@ app.use(compression());
 const allowedOrigins = config.cors.origin.split(',').map(o => o.trim());
 app.use(cors({ origin: resolveCorsOrigin(allowedOrigins), credentials: true }));
 app.use(morgan('combined', { stream: { write: (message) => logger.info(message) } }));
-app.use(express.json({
+// Body parsing — deliberately SMALL by default. A 16MB pre-auth JSON parser on
+// every route lets any anonymous request pin ~16MB × concurrency of process
+// memory per request (DoS amplification) and widens the request-smuggling
+// surface. Media-heavy endpoints opt back up to 16MB below; everything else,
+// including auth and webhooks, fits in 1MB with room to spare.
+//
+// Ordering: the conditional 16MB parser runs FIRST (body parsers are stream
+// consumers — a parser further down the chain would never see a body the
+// 1MB parser already rejected). body-parser sets req._body after parsing, so
+// the global parsers below no-op on media routes instead of clobbering or 413.
+const LARGE_BODY_ROUTES = [
+    '/api/ai', '/api/chatbot', '/api/knowledge', '/api/pillars', '/api/upload',
+    '/api/whatsapp', '/api/v1/ai', '/api/v1/chatbot', '/api/v1/knowledge',
+    '/api/v1/pillars', '/api/v1/upload', '/api/v1/whatsapp',
+];
+const largeBodyParser = express.json({
     limit: '16mb',
+    verify: (req, _res, buf) => {
+        (req as Request).rawBody = buf;
+    },
+});
+app.use((req, res, next) => {
+    if (req.method !== 'GET' && LARGE_BODY_ROUTES.some(p => req.path === p || req.path.startsWith(p + '/'))) {
+        largeBodyParser(req, res, next);
+    } else {
+        next();
+    }
+});
+
+app.use(express.json({
+    limit: '1mb',
     verify: (req, _res, buf) => {
         (req as Request).rawBody = buf;
     },
 }));
 app.use(express.urlencoded({
     extended: true,
-    limit: '16mb',
+    limit: '1mb',
     verify: (req, _res, buf) => {
         (req as Request).rawBody = buf;
     },

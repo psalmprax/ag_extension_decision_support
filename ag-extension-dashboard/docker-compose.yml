@@ -43,11 +43,32 @@ services:
     image: redis:alpine
     container_name: ag-dashboard-redis
     restart: unless-stopped
+    # Cache instance: LRU eviction is fine here. NOT used by BullMQ — see redis-queue.
     command: redis-server --requirepass ${REDIS_PASSWORD:-agext_redis_2024} --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
       - "${REDIS_PORT:-127.0.0.1:7502}:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - ag-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-agext_redis_2024}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Dedicated Redis for BullMQ queues (scheduled SMS/emails/notifications).
+  # noeviction: under memory pressure writes fail loudly instead of silently
+  # evicting pending jobs — LRU on queue data means lost scheduled messages.
+  redis-queue:
+    image: redis:alpine
+    container_name: ag-dashboard-redis-queue
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-agext_redis_2024} --maxmemory 256mb --maxmemory-policy noeviction
+    ports:
+      - "${REDIS_QUEUE_PORT:-127.0.0.1:7503}:6379"
+    volumes:
+      - redis_queue_data:/data
     networks:
       - ag-network
     healthcheck:
@@ -103,6 +124,8 @@ services:
     environment:
       DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@app-db:5432/${DATABASE_NAME:-ag_extension}?schema=public
       REDIS_URL: redis://:${REDIS_PASSWORD:-agext_redis_2024}@redis:6379
+      # BullMQ goes to the dedicated noeviction instance, never the LRU cache
+      QUEUE_REDIS_URL: redis://:${REDIS_PASSWORD:-agext_redis_2024}@redis-queue:6379
       PORT: 3001
       JWT_SECRET: ${JWT_SECRET}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -289,6 +312,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  redis_queue_data:
   ollama_data:
   db_backups:
   clamav_db:

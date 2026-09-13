@@ -8,10 +8,26 @@ import { config } from '../config';
 
 let _worker: Worker<ScheduledSmsJobData> | null = null;
 
-async function processScheduledSmsJob(job: Job<ScheduledSmsJobData>): Promise<void> {
+// Exported for tests (claim-before-send regression coverage).
+export async function processScheduledSmsJob(job: Job<ScheduledSmsJobData>): Promise<void> {
     const { scheduledSmsId, to, message, senderId, farmerId } = job.data;
     logger.info(`Processing scheduled SMS job ${job.id} → ${to}`);
     try {
+        // Atomic claim before sending: flips 'pending' → 'sending' only if
+        // still pending. The DB polling fallback races this worker on the same
+        // rows, so without the claim both paths could dispatch the same SMS.
+        // Stale 'sending' rows (crash mid-send) are reclaimed by the poller.
+        const { rowCount } = await query(
+            `UPDATE scheduled_sms SET status = 'sending', updated_at = NOW()
+             WHERE id = $1 AND status = 'pending'`,
+            [scheduledSmsId]
+        );
+        if (!rowCount) {
+            // Already claimed/sent by another path — nothing to do.
+            logger.info(`Scheduled SMS job ${job.id}: row ${scheduledSmsId} not claimable (already dispatched or reclaimed); skipping`);
+            return;
+        }
+
         const success = await smsService.sendSMS({ to, message, senderId: senderId ?? undefined, farmerId: farmerId ?? undefined });
         await query(`UPDATE scheduled_sms SET status = $1, updated_at = NOW() WHERE id = $2`, [success ? 'sent' : 'failed', scheduledSmsId]);
         if (!success) throw new Error('SMS provider reported failure');
