@@ -116,7 +116,7 @@ jobs:
       # step's env would be dead code-with-no-`with.envs:`-forward and would
       # mislead future readers into thinking the gate was profile-aware.
       - name: "Pre-pull model on existing ollama (cached volume survives --force-recreate)"
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           port: ${{ secrets.TEST_SERVER_PORT || 22 }}
@@ -135,7 +135,7 @@ jobs:
             fi
 
       - name: "Pre-build smoke gate: verify ettametta-ollama"
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           port: ${{ secrets.TEST_SERVER_PORT || 22 }}
@@ -160,7 +160,7 @@ jobs:
             echo "✅ Pre-build smoke gate passed"
 
       - name: Build + redeploy backend + frontend on host
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         env:
           # Enables the `ai` Compose profile so the profile-gated
           # `ettametta-ollama` service starts alongside backend + frontend
@@ -171,7 +171,7 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET || vars.JWT_SECRET }}
           CREDENTIAL_ENCRYPTION_KEY: ${{ secrets.CREDENTIAL_ENCRYPTION_KEY || vars.CREDENTIAL_ENCRYPTION_KEY }}
           DEMO_ENABLED: ${{ secrets.DEMO_ENABLED || vars.DEMO_ENABLED || 'true' }}
-          DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD || vars.DEMO_PASSWORD || 'demo-trial-2024' }}
+          DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD || vars.DEMO_PASSWORD }}
           # LLM provider keys + selection config (mirrors deploy-all production)
           # Keys come from repo secrets or repo vars.
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

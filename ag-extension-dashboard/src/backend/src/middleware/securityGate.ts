@@ -37,6 +37,41 @@ const MEDIA_KEYS = new Set([
 const DATA_URL_REGEX = /^data:(audio|image|video|application)\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+=" \-_]+)*;base64,[A-Za-z0-9+/=\-_ \r\n]+$/i;
 const BASE64_CHAR_REGEX = /^[A-Za-z0-9+/=\-_ \r\n]+$/;
 
+// Decode inputs larger than this are treated as pure binary and never decoded.
+const MAX_DECODE_INPUT_CHARS = 1_000_000;
+const MIN_SMUGGLED_TEXT_CHARS = 24;
+
+/** True when ≥90% of the sampled string is printable ASCII (incl. common whitespace). */
+function isMostlyPrintableText(s: string): boolean {
+  if (!s) return false;
+  const n = Math.min(s.length, 4096);
+  let printable = 0;
+  for (let i = 0; i < n; i++) {
+    const c = s.charCodeAt(i);
+    if (c === 9 || c === 10 || c === 13 || (c >= 32 && c <= 126)) printable++;
+  }
+  return printable / n >= 0.9;
+}
+
+/**
+ * Decode a base64 (standard or URL-safe) media value and return the text when
+ * it decodes to mostly printable ASCII — i.e. someone smuggled plain text
+ * inside a media field. Returns null for genuine binary media (decoded bytes
+ * are non-printable) so binary noise never reaches the injection scanner.
+ */
+function decodeSmuggledText(val: string): string | null {
+  const trimmed = val.trim();
+  if (trimmed.length < MIN_SMUGGLED_TEXT_CHARS || trimmed.length > MAX_DECODE_INPUT_CHARS) return null;
+  // For data URLs, decode only the payload after the ;base64, marker.
+  const marker = ';base64,';
+  const markerIdx = trimmed.toLowerCase().indexOf(marker);
+  const b64 = markerIdx >= 0 ? trimmed.slice(markerIdx + marker.length) : trimmed;
+  if (b64.length < MIN_SMUGGLED_TEXT_CHARS) return null;
+  const normalized = b64.replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, '');
+  const decoded = Buffer.from(normalized, 'base64').toString('utf8');
+  return isMostlyPrintableText(decoded) ? decoded : null;
+}
+
 /** Check if a string property represents a legitimate binary media payload rather than injection text. */
 function isMediaValue(key: string, val: unknown): boolean {
   if (typeof val !== 'string') return false;
@@ -49,12 +84,19 @@ function isMediaValue(key: string, val: unknown): boolean {
   return false;
 }
 
-/** Redact media/binary payloads before perimeter inspection to prevent false-positive base64 payload blocks. */
+/**
+ * Prepare payloads for perimeter inspection: media fields that decode to
+ * genuine binary are replaced with a sentinel (prevents false-positive blocks
+ * on audio/image blobs), while media fields that decode to printable text are
+ * UNREDACTED in decoded form so hidden injection payloads are still scanned.
+ */
 function redactMediaPayloads(payload: unknown, key = '', depth = 0): unknown {
   if (depth > 20) return '[NESTING_LIMIT_EXCEEDED]';
   if (payload === null || payload === undefined) return payload;
   if (typeof payload === 'string') {
-    return isMediaValue(key, payload) ? '[SANITIZED_MEDIA_PAYLOAD]' : payload;
+    if (!isMediaValue(key, payload)) return payload;
+    const smuggled = decodeSmuggledText(payload);
+    return smuggled !== null ? smuggled : '[SANITIZED_MEDIA_PAYLOAD]';
   }
   if (Array.isArray(payload)) {
     return payload.map(item => redactMediaPayloads(item, key, depth + 1));

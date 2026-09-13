@@ -92,9 +92,12 @@ export const authorize = (allowedRoles: UserRole[]) => {
 
 /**
  * Optional authentication middleware
- * Attaches user to request if token is valid, but doesn't require it
+ * Attaches user to request if token is valid, but doesn't require it.
+ * Validity = JWT signature/expiry AND the session not being revoked/expired
+ * (same check as `authorize`). A revoked token is treated as anonymous so it
+ * cannot keep privileged rate-limit tiers or pass `req.user`-gated paths.
  */
-export const optionalAuth = (req: Request, res: Response, next: NextFunction): void => {
+export const optionalAuth = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
         const authHeader = req.headers.authorization;
 
@@ -108,6 +111,11 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction): v
             email: string;
             role: UserRole;
         };
+
+        const sessionActive = await isSessionValid(token);
+        if (!sessionActive) {
+            return next(); // revoked or expired session → continue unauthenticated
+        }
 
         req.user = {
             userId: decoded.userId,

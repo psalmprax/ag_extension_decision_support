@@ -24,32 +24,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Scan for Exposed Secrets and Private Keys
+      # gitleaks full-history scan (real secret detectors + entropy, ~800 rules
+      # vs. the 4 grep patterns this job used before). Config/allowlist live in
+      # .gitleaks.toml; .gitleaks-baseline-report.json pins the historical
+      # findings so only NEW leaks fail the build. Same rules run pre-commit
+      # via husky (`gitleaks protect --staged`).
+      # Note: the binary is run directly rather than via gitleaks-action,
+      # whose EULA requires a commercial license for organizations.
+      - name: Install gitleaks (pinned 8.28.0)
         run: |
-          echo "Scanning for high-entropy secret patterns..."
-          PATTERNS=(
-            "-----BEGIN (RSA|EC|OPENSSH|DSA|PRIVATE) KEY-----"
-            "AIza[0-9A-Za-z_-]{35}"
-            "sk-[a-zA-Z0-9]{20,48}"
-            "ghp_[a-zA-Z0-9]{36}"
-          )
+          curl -sSL --fail -o /tmp/gitleaks.tar.gz \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          /tmp/gitleaks version | grep -qx "8.28.0"
 
-          LEAKS=0
-          for pattern in "${PATTERNS[@]}"; do
-            MATCHES=$(git grep -nEI -- "$pattern" -- \
-              ':!*.lock' ':!package-lock.json' ':!*.min.js' ':!.env.example' || true)
-            if [ -n "$MATCHES" ]; then
-              echo "::error::Potential secret match found: $pattern"
-              echo "$MATCHES"
-              LEAKS=$((LEAKS + 1))
-            fi
-          done
-
-          if [ "$LEAKS" -gt 0 ]; then
-            echo "::error::Secret scanning failed: $LEAKS potential credential leak(s) detected."
-            exit 1
-          fi
-          echo "✅ Secret scanning passed: No exposed private keys or API tokens detected."
+      - name: Gitleaks — full history secret scan
+        run: |
+          /tmp/gitleaks git . \
+            --config .gitleaks.toml \
+            --baseline-path .gitleaks-baseline-report.json \
+            --redact --report-path gitleaks-report.json --verbose
 
   # ----------------------------------------------------------------------------
   # Job 2: Multi-Service Dependency Vulnerability Audits

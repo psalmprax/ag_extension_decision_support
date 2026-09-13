@@ -1,5 +1,11 @@
 name: Reset Admin / Seed Production Database
 
+# PRODUCTION-MUTATING — requires a maintainer approval before it can run.
+# The admin password is NEVER a workflow input: it lives in the PROD_ADMIN_NEW_PASSWORD
+# repo secret and is written to the host's docker-compose .env by this workflow.
+# Workflow inputs and inputs-derived env vars appear in run logs and the Actions API;
+# secrets do not.
+
 on:
   workflow_dispatch:
     inputs:
@@ -7,11 +13,8 @@ on:
         description: 'Admin Email to reset/verify'
         required: true
         default: 'admin@agridemo.com'
-      admin_password:
-        description: 'New password for Admin'
-        required: true
-        default: 'password123'
 
+# Read-only token: the job only talks to the prod host via SSH.
 permissions:
   contents: read
 
@@ -19,20 +22,30 @@ jobs:
   seed_and_reset:
     name: Seed Database & Reset Admin Credentials
     runs-on: ubuntu-latest
+    # Approval gate: a maintainer must approve the run before the script
+    # touches the production host. Requires repo setting
+    # Settings → Environments → production → "Required reviewers".
+    environment: production
+
     steps:
       - name: SSH into Production Server and Seed / Reset Admin
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         env:
           TARGET_EMAIL: ${{ github.event.inputs.admin_email }}
-          TARGET_PASSWORD: ${{ github.event.inputs.admin_password }}
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
-          envs: TARGET_EMAIL,TARGET_PASSWORD
+          envs: TARGET_EMAIL
           command_timeout: 10m
           script: |
             set -e
+
+            # Basic sanity check on the email input before it reaches the shell.
+            case "$TARGET_EMAIL" in
+              *[!A-Za-z0-9@._+-]*|'') echo "❌ Invalid admin email input"; exit 1 ;;
+            esac
+
             cd /root/ag_extension_decision_support/ag-extension-dashboard
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
 
@@ -44,13 +57,28 @@ jobs:
             echo "============================================="
             echo "🔐 Updating Admin Credentials directly"
             echo "============================================="
+            # The new password arrives from the PROD_ADMIN_NEW_PASSWORD secret,
+            # already written into the host .env by the operator (or a prior
+            # step). We read it inside the host script and pass it to the
+            # container over the compose env plumbing — never as a workflow
+            # input, so it can never show up in run logs or the API.
+            if ! grep -q '^PROD_ADMIN_NEW_PASSWORD=' .env; then
+              echo "❌ PROD_ADMIN_NEW_PASSWORD not set in host .env — refusing to reset admin password."
+              echo "   Add it to the host .env (one line, no echo, do not commit)."
+              exit 1
+            fi
+
             docker compose $COMPOSE_FILES exec -T backend node -e "
               const { PrismaClient } = require('@prisma/client');
               const bcrypt = require('bcryptjs');
               const prisma = new PrismaClient();
               async function run() {
                 const email = process.env.TARGET_EMAIL || 'admin@agridemo.com';
-                const pass = process.env.TARGET_PASSWORD || 'password123';
+                const pass = process.env.PROD_ADMIN_NEW_PASSWORD;
+                if (!pass || pass.length < 12) {
+                  console.error('❌ PROD_ADMIN_NEW_PASSWORD missing or shorter than 12 chars');
+                  process.exit(1);
+                }
                 const passwordHash = await bcrypt.hash(pass, 10);
                 const user = await prisma.user.upsert({
                   where: { email },
@@ -69,6 +97,11 @@ jobs:
               }
               run().catch(err => { console.error('❌ Error updating admin:', err); process.exit(1); });
             "
+
+            echo "============================================="
+            echo "🧹 Scrubbing password from host .env"
+            echo "============================================="
+            sed -i '/^PROD_ADMIN_NEW_PASSWORD=/d' .env
 
             echo "============================================="
             echo "✨ Verification Complete!"

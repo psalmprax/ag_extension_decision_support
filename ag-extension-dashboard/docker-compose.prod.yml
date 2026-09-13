@@ -49,6 +49,9 @@ services:
     restart: always
 
   backend:
+    # Pinned by deploy-all.yml to the immutable image ID produced by the bake
+    # (see BACKEND_IMAGE_ID in the host .env). Falls back to the tag otherwise.
+    image: ${BACKEND_IMAGE_ID:-ag-extension-dashboard-backend:latest}
     build:
       context: ..
       dockerfile: ag-extension-dashboard/src/backend/Dockerfile
@@ -85,6 +88,7 @@ services:
     networks:
         - ag-network
   frontend:
+    image: ${FRONTEND_IMAGE_ID:-ag-extension-dashboard-frontend:latest}
     build:
       context: ..
       dockerfile: ag-extension-dashboard/src/frontend/Dockerfile

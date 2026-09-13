@@ -64,7 +64,7 @@ jobs:
       # ── Step 2: Fix cert on production server ───────────────
       - name: 2/4 Fix — renew SSL certificate on production
         if: steps.diagnose.outputs.cert_status != 'valid' || github.event.inputs.force_renew == 'true'
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         env:
           ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
         with:

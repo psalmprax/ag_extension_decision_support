@@ -376,7 +376,29 @@ app.head('/api/v1/health', (_req: Request, res: Response) => res.status(200).end
 app.head('/health', (_req: Request, res: Response) => res.status(200).end());
 
 app.get('/health/live', (_req: Request, res: Response) => res.json({ status: 'ok' }));
-app.get('/health/ready', (_req: Request, res: Response) => res.json({ status: 'ready' }));
+// Readiness gates on process-local dependencies only (DB + cache connectivity).
+// Deliberately EXCLUDES the AI provider health check: that probes external
+// services, belongs in /api/health (liveness/observability), and would keep
+// pods out of rotation (or restart-loop them via liveness) on provider blips.
+app.get('/health/ready', async (_req: Request, res: Response) => {
+    const [db, cache] = await Promise.all([checkDatabase(), checkCache()]);
+    const dbOk = db.status === 'connected';
+    const cacheOk = cache.status === 'connected';
+    const body = {
+        status: dbOk && cacheOk ? 'ready' : 'not ready',
+        services: {
+            database: db.status,
+            cache: cache.status,
+        },
+        timestamp: new Date().toISOString(),
+    };
+    if (dbOk && cacheOk) {
+        res.status(200).json(body);
+    } else {
+        logger.warn('Readiness check failed:', body);
+        res.status(503).json(body);
+    }
+});
 
 // Apply global rate limiter to all API routes (excluding health checks)
 app.use(limiter);

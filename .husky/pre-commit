@@ -1,6 +1,18 @@
 #!/bin/sh
-# Dead-code gate: block commits that introduce new dead code, complexity, or duplication.
-# `fallow audit --base HEAD` is a changed-file, new-only gate, so pre-existing debt
-# never blocks you — only what this commit adds. Run `npm run fallow:check` for the
-# full-repo regression gate (same command CI runs).
-npm run fallow:check || true
+# Secret-leak gate: scan STAGED changes with gitleaks before they can be committed.
+# Skips silently when gitleaks isn't installed (pre-push CI check is the backstop),
+# except on macOS where `brew install gitleaks` is one command.
+#
+# Install gitleaks:  brew install gitleaks   |   https://github.com/gitleaks/gitleaks#installing
+
+set -e
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "⚠️  gitleaks not installed — skipping secret scan (CI will still scan). Install: brew install gitleaks"
+  exit 0
+fi
+
+# Scan only what's being committed (staged diffs), not the whole repo: fast and
+# zero-noise on history. Full-history scanning happens in CI and via
+# `npx gitleaks git .` (see .gitleaks.toml for baseline/config).
+gitleaks protect --staged --redact -c .gitleaks.toml --verbose

@@ -1,3 +1,8 @@
+# Backend deployment — probe semantics:
+#   readiness  → /health/ready  (DB + cache connectivity only; process-local deps)
+#   liveness   → /health/live   (process is up; NEVER external providers, so a
+#                                  third-party AI blip can't restart-loop the fleet)
+# Full dependency/AI status remains observable via /api/health (not probe-wired).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,19 +16,56 @@ spec:
     metadata:
       labels: { app: backend }
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: backend
-          image: ghcr.io/org/ag-extension-backend:latest
+          # Pin by digest; `latest` is mutable and makes rollbacks non-reproducible.
+          # The compose deploy path (deploy-all.yml) pins automatically via
+          # BACKEND_IMAGE_ID/FRONTEND_IMAGE_ID in the host .env. For this k8s
+          # manifest, fill the digest after building & pushing:
+          #   docker buildx bake --load -f ag-extension-dashboard/docker-bake.hcl backend
+          #   docker tag ag-extension-dashboard-backend:latest ghcr.io/org/ag-extension-backend:v<git-sha>
+          #   docker push ghcr.io/org/ag-extension-backend:v<git-sha>
+          #   docker inspect --format '{{index .RepoDigests 0}}' ag-extension-dashboard-backend:latest
+          image: ghcr.io/org/ag-extension-backend@sha256:REPLACE_WITH_IMAGE_DIGEST
           ports: [{ containerPort: 3001 }]
           envFrom: [{ secretRef: { name: backend-env } }]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          # Writable dirs for logs and any runtime temp files (root fs is read-only).
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: logs
+              mountPath: /app/logs
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
           readinessProbe:
-            httpGet: { path: /health/live, port: 3001 }
+            httpGet: { path: /health/ready, port: 3001 }
             initialDelaySeconds: 10
             periodSeconds: 10
+            failureThreshold: 3
           livenessProbe:
-            httpGet: { path: /api/health, port: 3001 }
+            httpGet: { path: /health/live, port: 3001 }
             initialDelaySeconds: 30
             periodSeconds: 30
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -38,10 +80,46 @@ spec:
     metadata:
       labels: { app: frontend }
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: frontend
-          image: ghcr.io/org/ag-extension-frontend:latest
+          # Pin by digest (see backend note above).
+          image: ghcr.io/org/ag-extension-frontend@sha256:REPLACE_WITH_IMAGE_DIGEST
           ports: [{ containerPort: 80 }]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: cache
+              mountPath: /var/cache/nginx
+            - name: run
+              mountPath: /var/run
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            httpGet: { path: /, port: 80 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /, port: 80 }
+            initialDelaySeconds: 15
+            periodSeconds: 30
+      volumes:
+        - name: cache
+          emptyDir: {}
+        - name: run
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -69,6 +147,11 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # WebSocket upgrade for Socket.IO (path-based routing needs explicit config)
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
 spec:
   ingressClassName: nginx
   tls:
@@ -78,6 +161,9 @@ spec:
     - host: www.gpexts.com
       http:
         paths:
+          - path: /socket.io
+            pathType: Prefix
+            backend: { service: { name: backend, port: { number: 80 } } }
           - path: /api
             pathType: Prefix
             backend: { service: { name: backend, port: { number: 80 } } }

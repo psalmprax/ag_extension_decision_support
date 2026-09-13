@@ -107,7 +107,7 @@ jobs:
     steps:
       # ── Step 1/5: Git sync & .env (fast) ─────────────────────
       - name: 1/5 Sync — git checkout + .env
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
@@ -192,7 +192,7 @@ jobs:
       # backend image first (step 3/5) and avoid running migrations against a
       # stale image.
       - name: 2/5 Infra — start app-db + redis (no migrations yet)
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
@@ -233,7 +233,7 @@ jobs:
 
       # ── Step 3/5: Build ALL services in parallel via BuildKit ─
       - name: 3/5 Build — all services in parallel (backend + frontend + agents)
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -362,6 +362,28 @@ jobs:
               echo "$BAKE_OUTPUT" | tail -5
             fi
 
+            # ── Digest pinning: record exactly which image bytes this deploy used ──
+            # Compose files reference ${BACKEND_IMAGE_ID:-ag-extension-dashboard-backend:latest}
+            # (and FRONTEND_IMAGE_ID), so containers run from the immutable image ID the
+            # bake just produced — immune to a concurrent retag of the :latest tag.
+            # k8s/deployment.yaml still uses registry digests; this pins the compose path.
+            BACKEND_ID=$(docker images --no-trunc --format '{{.ID}}' ag-extension-dashboard-backend:latest 2>/dev/null | head -1)
+            FRONTEND_ID=$(docker images --no-trunc --format '{{.ID}}' ag-extension-dashboard-frontend:latest 2>/dev/null | head -1)
+            if [ -n "$BACKEND_ID" ]; then
+              sed -i '/^BACKEND_IMAGE_ID=/d' .env 2>/dev/null || true
+              echo "BACKEND_IMAGE_ID=$BACKEND_ID" >> .env
+              echo "Pinned backend to image ID: $BACKEND_ID"
+            else
+              echo "WARN: backend image not found after bake — compose will fall back to :latest tag" >&2
+            fi
+            if [ -n "$FRONTEND_ID" ]; then
+              sed -i '/^FRONTEND_IMAGE_ID=/d' .env 2>/dev/null || true
+              echo "FRONTEND_IMAGE_ID=$FRONTEND_ID" >> .env
+              echo "Pinned frontend to image ID: $FRONTEND_ID"
+            else
+              echo "WARN: frontend image not found after bake — compose will fall back to :latest tag" >&2
+            fi
+
             # Pre-create external networks referenced by compose
             docker network create --driver bridge ettametta_ettametta >/dev/null 2>&1 || true
             docker network create --driver bridge ag-network >/dev/null 2>&1 || true
@@ -394,7 +416,7 @@ jobs:
       #       message away. Now we surface the last 40 lines on every
       #       non-handled failure so the next CI run gives real evidence.
       - name: 4/5 Migrate — prisma migrate deploy (extension pre-create + visible retry)
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
@@ -465,7 +487,7 @@ jobs:
             '
 
       - name: 4.5/5 Idempotent Seed — check and populate seed data if empty
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
@@ -481,7 +503,7 @@ jobs:
 
       # ── Step 5/5: Health Check — verify services are up ─────────────────────
       - name: 5/5 Health Check — verify services
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
@@ -509,7 +531,7 @@ jobs:
     steps:
       # ── Step 1/5: Git sync & .env with GitHub Secrets ──────────
       - name: 1/5 Sync — git checkout + .env
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           # LLM provider API keys (secrets)
@@ -634,7 +656,7 @@ jobs:
 
       # ── Step 2/5: Infrastructure — bring up app-db + redis ONLY ─
       - name: 2/5 Infra — start app-db + redis (no migrations yet)
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
@@ -690,7 +712,7 @@ jobs:
       # build step's env would be dead code-with-no-`with.envs:`-forward and
       # would mislead future readers into thinking the gate was profile-aware.
       - name: "Pre-build smoke gate: verify ettametta-ollama"
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
@@ -713,7 +735,7 @@ jobs:
 
       # ── Step 3/5: Build ALL services in parallel ─────────────────────
       - name: 3/5 Build — all services in parallel (backend + frontend + agents)
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -884,7 +906,7 @@ jobs:
 
       # ── Step 4/5: Migrations against the FRESHLY BUILT backend image ──
       - name: 4/5 Migrate — prisma migrate deploy (extension pre-create + visible retry)
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
@@ -956,7 +978,7 @@ jobs:
 
       # ── Step 4.5/5: Seed Database (Admin & Initial Users) ─────
       - name: 4.5/5 Idempotent Seed — check and populate seed data
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
@@ -976,7 +998,7 @@ jobs:
 
       # ── Step 5/5: SSL + Health Check ──────────────────────────
       - name: 5/5 SSL & Health Check — verify certificate and services
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         env:
           ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
         with:

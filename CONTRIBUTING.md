@@ -131,6 +131,41 @@ npm run typecheck           # tsc --noEmit
 
 Both backend and frontend use **husky** + **lint-staged** — linting runs automatically on staged files before every commit. If linting fails, the commit is blocked.
 
+The root `.husky/pre-commit` hook also runs a **gitleaks secret scan** on staged changes, so API keys and tokens are caught before they ever reach git history (CI runs the same scan over full history — see `.gitleaks.toml` for the config and `.gitleaks-baseline-report.json` for the known-clean baseline).
+
+#### Installing gitleaks
+
+The hook skips the scan with a warning if gitleaks isn't installed, but installing it is strongly recommended:
+
+```bash
+# macOS (Homebrew)
+brew install gitleaks
+
+# Windows (Scoop)
+scoop install gitleaks
+
+# Windows (Chocolatey)
+choco install gitleaks
+
+# Windows (Git Bash / manual) — download the binary and put it on PATH:
+# https://github.com/gitleaks/gitleaks/releases (windows_x64 zip)
+
+# Linux (Debian/Ubuntu)
+sudo apt install gitleaks
+
+# Anywhere with Go installed
+go install github.com/gitleaks/gitleaks/v8@latest
+```
+
+To test your setup:
+
+```bash
+gitleaks version                    # should print a version number
+gitleaks protect --staged -c .gitleaks.toml   # what the hook runs
+```
+
+If gitleaks ever flags a **false positive**, do not delete the baseline blindly — add a scoped entry to the `paths`/`regexes` allowlist in `.gitleaks.toml` instead. For real findings, remove the secret, rotate the credential, and, if it was already pushed, follow the incident process in `docs/` before force-pushing history.
+
 ---
 
 ## Testing
