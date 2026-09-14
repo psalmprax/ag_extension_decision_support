@@ -1,7 +1,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const localesDir = path.join(__dirname, '../src/frontend/public/locales');
+const base = path.resolve(__dirname, '..', '..');
+const isDocker = !fs.existsSync(path.join(base, 'ag-extension-dashboard'));
+const localesDir = path.join(base, isDocker ? 'src/frontend/public/locales' : 'ag-extension-dashboard/src/frontend/public/locales');
 const enPath = path.join(localesDir, 'en.json');
 const enData = JSON.parse(fs.readFileSync(enPath, 'utf8'));
 const enKeys = Object.keys(enData);

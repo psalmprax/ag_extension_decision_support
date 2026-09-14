@@ -3,7 +3,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const DEFAULT_LOCALES_DIR = path.join(__dirname, '../src/frontend/public/locales');
+const base = path.resolve(__dirname, '..', '..');
+const isDocker = !fs.existsSync(path.join(base, 'ag-extension-dashboard'));
+const DEFAULT_LOCALES_DIR = path.join(base, isDocker ? 'src/frontend/public/locales' : 'ag-extension-dashboard/src/frontend/public/locales');
 const UNIVERSAL_TERMS = new Set([
   'AI',
   'API',
