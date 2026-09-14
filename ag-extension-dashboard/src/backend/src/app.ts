@@ -18,7 +18,20 @@ import { degradationStatus } from './services/sharedState';
 import { setRequestUserId } from './services/requestContext';
 
 import { correlationIdMiddleware } from './middleware/correlationIdMiddleware';
-import { perUserRateLimit } from './middleware/rateLimitMiddleware';
+import { perUserRateLimit, aiRateLimiter } from './middleware/rateLimitMiddleware';
+
+/**
+ * Wrap a router so every request first passes through the dedicated AI/LLM
+ * rate limiter (separate, much smaller bucket than general API traffic).
+ * Applied to routers whose endpoints invoke AI providers: /ai, /ai/diseases,
+ * /ai/memories and the chatbot generation routes (inside the router itself).
+ */
+function aiRateLimiterMount<T extends Router>(router: T): T {
+    const wrapped = Router();
+    wrapped.use(aiRateLimiter);
+    wrapped.use(router);
+    return wrapped as unknown as T;
+}
 import { optionalAuth } from './middleware/authorize';
 import { globalAuditMiddleware } from './middleware/auditMiddleware';
 import { idempotencyMiddleware } from './middleware/idempotencyMiddleware';
@@ -521,7 +534,8 @@ const routeMounts: RouteMount[] = [
   { path: '/knowledge', router: knowledgeRoutes },
   { path: '/knowledge/sources', router: knowledgeSourcesRoutes },
   { path: '/knowledge/sync', router: knowledgeSyncRoutes },
-  { path: '/chatbot', router: chatbotRoutes },
+  { path: '/chatbot', router: chatbotRoutes }, // aiRateLimiter applied inside the router (generation routes only)
+  { path: '/ai', router: aiRateLimiterMount(aiRoutes) },
   { path: '/chatbot/speech', router: chatbotSpeechRoutes },
   { path: '/reporting', router: reportingRoutes },
   { path: '/analytics', router: analyticsRoutes },
@@ -537,7 +551,6 @@ const routeMounts: RouteMount[] = [
   { path: '/alerts', router: alertRoutes },
   { path: '/external', router: externalRoutes },
   { path: '/language', router: languageRoutes },
-  { path: '/ai', router: aiRoutes },
   { path: '/upload', router: uploadRoutes },
   { path: '/data-rights', router: dataRightsRoutes },
   { path: '/organizations', router: organizationsRoutes },
@@ -554,9 +567,9 @@ const routeMounts: RouteMount[] = [
   { path: '/system/health', router: systemHealthRoutes },
   { path: '/health/diagnostics', router: diagnosticsRoutes },
   { path: '/system/diagnostics', router: diagnosticsRoutes },
-  { path: '/ai/memories', router: memoryRoutes },
-  { path: '/ai/diseases', router: diseaseRoutes },
-  { path: '/ai', router: diseaseRoutes },
+  { path: '/ai/memories', router: aiRateLimiterMount(memoryRoutes) },
+  { path: '/ai/diseases', router: aiRateLimiterMount(diseaseRoutes) },
+  { path: '/ai', router: aiRateLimiterMount(diseaseRoutes) },
   { path: '/whatsapp', router: whatsappRoutes },
   { path: '/api-clients', router: apiClientRoutes },
   { path: '/commercial/knowledge', router: commercialKnowledgeRoutes },

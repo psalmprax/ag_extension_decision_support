@@ -26,6 +26,52 @@ class SharedStateStore implements Store {
 }
 
 /**
+ * Dedicated limiter for AI/LLM endpoints (chat completions, vision, speech,
+ * synthesis, agent execution). These routes are orders of magnitude more
+ * expensive than CRUD traffic — each hit costs provider tokens and can take
+ * seconds of provider latency — so they get their own, much smaller bucket
+ * IN ADDITION to the general per-user limit above. Draining the AI bucket
+ * no longer starves the general one, and vice versa.
+ *
+ * Configurable via env:
+ *   AI_RATE_LIMIT_MAX       — authenticated requests per window (default 60)
+ *   AI_RATE_LIMIT_WINDOW_MS — window length (default 5 minutes)
+ */
+const aiMax = Number.parseInt(process.env.AI_RATE_LIMIT_MAX || '60', 10);
+const aiWindowMs = Number.parseInt(process.env.AI_RATE_LIMIT_WINDOW_MS || '300000', 10);
+
+export const aiRateLimiter = rateLimit({
+    store: new SharedStateStore('rl:ai:'),
+    windowMs: Number.isFinite(aiWindowMs) && aiWindowMs > 0 ? aiWindowMs : 300000,
+    max: (req: AuthRequest) => {
+        // Admins keep generous headroom but no longer an unlimited escape hatch.
+        if (req.user?.role === 'admin') return 600;
+        // Authenticated users: 60 AI calls / 5 min (12/min) — enough for
+        // interactive agronomic chat, hostile to scripted token drains.
+        if (req.user) return Number.isFinite(aiMax) && aiMax > 0 ? aiMax : 60;
+        // Anonymous (public demo endpoints): tightest bucket.
+        return 20;
+    },
+    keyGenerator: (req: AuthRequest) => {
+        return req.user?.userId || ipKeyGenerator(req.ip || 'anonymous');
+    },
+    skip: (_req: AuthRequest) => {
+        if (process.env.RATE_LIMIT_DISABLED === 'true') return true;
+        return config.nodeEnv === 'test';
+    },
+    handler: (_req: AuthRequest, res: Response) => {
+        logger.warn(`AI rate limit exceeded for user: ${_req.user?.userId || _req.ip}`);
+        res.status(429).json({
+            success: false,
+            error: 'Too many AI requests',
+            message: 'You have exceeded the AI request limit. Please wait a few minutes before trying again.',
+        });
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+/**
  * Professional Rate Limiter that prioritizes authenticated users.
  * Uses userId as key if available, otherwise falls back to IP.
  */
