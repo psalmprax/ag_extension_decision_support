@@ -160,6 +160,30 @@ export async function createSession(params: {
   }
 }
 
+/**
+ * Revoke a session by raw bearer token (logout). Marks the DB row revoked and
+ * publishes the revocation cross-replica so the token dies immediately.
+ * Returns false when no session row exists (legacy/demo tokens issued without
+ * createSession) — callers still get a valid logout because revokeToken's
+ * in-process/Redis revocation list makes isSessionValid fail for the token.
+ */
+export async function revokeSessionByToken(token: string): Promise<boolean> {
+  const tokenHash = hashToken(token);
+  // Publish first so a concurrent request on any replica sees the revocation
+  // even if the DB update below fails or the row is missing.
+  markRevokedLocally(tokenHash);
+  try {
+    const res = await query(
+      `UPDATE user_sessions SET is_revoked = true WHERE token_hash = $1 AND is_revoked = false`,
+      [tokenHash],
+    );
+    return (res.rowCount ?? 0) > 0;
+  } catch (error) {
+    logger.error("Failed to revoke session by token:", error);
+    return false;
+  }
+}
+
 export function revokeToken(token: string): void {
   markRevokedLocally(hashToken(token));
 }

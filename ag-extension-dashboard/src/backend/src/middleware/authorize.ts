@@ -117,10 +117,13 @@ export const optionalAuth = async (req: Request, _res: Response, next: NextFunct
             return next(); // revoked or expired session → continue unauthenticated
         }
 
+        // Normalize legacy 'agent' role to 'extension_officer' — same mapping as
+        // `authorize`, so req.user.role is consistent across middleware
+        // (rate-limit tiers, audit logs, downstream role checks).
         req.user = {
             userId: decoded.userId,
             email: decoded.email,
-            role: decoded.role,
+            role: decoded.role === ('agent' as unknown as UserRole) ? 'extension_officer' : decoded.role,
         };
 
         next();

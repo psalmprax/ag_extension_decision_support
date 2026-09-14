@@ -94,18 +94,31 @@ function handleUserJoinRooms(socket: Socket) {
 
 export function initializeSocketHandlers(io: SocketServer): void {
     // Authentication middleware
-    io.use((socket, next) => {
+    io.use(async (socket, next) => {
         try {
-            const token = socket.handshake.auth.token || socket.handshake.query.token;
+            // Auth token is accepted ONLY from handshake.auth. Query-string
+            // tokens end up in access logs, proxy logs, and Referer headers.
+            const token = socket.handshake.auth?.token;
             
-            if (!token) {
+            if (!token || typeof token !== 'string') {
                 return next(new Error('Authentication required'));
             }
 
-            const decoded = jwt.verify(token, config.jwt.secret) as Record<string, any>;
+            const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ['HS256'] }) as Record<string, any>;
+            if (!decoded.userId) {
+                return next(new Error('Invalid authentication token'));
+            }
+
+            // Honor session revocation: a logged-out/killed JWT must not keep a
+            // live socket after reconnect.
+            const { isSessionValid } = await import('./sessionService');
+            if (!(await isSessionValid(token))) {
+                return next(new Error('Session has been revoked'));
+            }
+
             socket.data.user = {
-                userId: decoded.userId || decoded.id,
-                role: decoded.role || 'user'
+                userId: decoded.userId,
+                role: decoded.role
             };
             
             next();

@@ -4,6 +4,7 @@ import { config } from '@/config';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { getLoginHistory, getLoginStats } from '@/services/loginHistoryService';
+import { isSessionValid } from '@/services/sessionService';
 
 const router = Router();
 
@@ -11,6 +12,27 @@ interface JWTPayload {
     userId: string;
     email: string;
     role: string;
+}
+
+/**
+ * Shared bearer-token auth for the session routes. Verifies the JWT signature
+ * (pinned to HS256) AND checks the session has not been revoked — identical
+ * semantics to the `authorize` middleware. Hand-rolled `jwt.verify` calls
+ * previously skipped the revocation check, letting logged-out tokens read
+ * /me, /login-history and /login-stats.
+ */
+async function requireSession(req: Request): Promise<JWTPayload | null> {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+    const token = authHeader.split(' ')[1];
+    let decoded: JWTPayload;
+    try {
+        decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as JWTPayload;
+    } catch {
+        return null;
+    }
+    if (!(await isSessionValid(token))) return null;
+    return decoded;
 }
 
 // Refresh token.
@@ -72,8 +94,19 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
 });
 
-// Logout — clear auth on client side (server can't invalidate stateless JWT without a blocklist)
-router.post('/logout', (_req: Request, res: Response) => {
+// Logout — revokes the presented session so the token is dead immediately,
+// not at JWT expiry. Idempotent: already-revoked/unknown tokens still 200 so
+// clients can always clear local state.
+router.post('/logout', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        const { revokeSessionByToken } = await import('@/services/sessionService');
+        const revoked = await revokeSessionByToken(token);
+        if (!revoked) {
+            logger.info('Logout for token without a session row (legacy/demo) — revocation list entry written');
+        }
+    }
     res.json({ success: true, message: 'Logged out successfully' });
 });
 
@@ -87,8 +120,10 @@ router.get('/me', async (req: Request, res: Response) => {
     }
 
     try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+        const decoded = await requireSession(req);
+        if (!decoded) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
 
         const result = await query(`
             SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.region, u.is_demo,
@@ -149,8 +184,10 @@ router.get('/login-history', async (req: Request, res: Response) => {
     }
 
     try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+        const decoded = await requireSession(req);
+        if (!decoded) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
 
         const { email, status, limit, offset, userId } = req.query;
         const isManager = decoded.role === 'admin' || decoded.role === 'regional_manager';
@@ -187,8 +224,10 @@ router.get('/login-stats', async (req: Request, res: Response) => {
     }
 
     try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+        const decoded = await requireSession(req);
+        if (!decoded) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
 
         const { userId } = req.query;
         const isManager = decoded.role === 'admin' || decoded.role === 'regional_manager';

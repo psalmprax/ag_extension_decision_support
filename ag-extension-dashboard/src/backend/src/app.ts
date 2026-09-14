@@ -116,13 +116,22 @@ app.use(morgan('combined', { stream: { write: (message) => logger.info(message) 
 // Body parsing — deliberately SMALL by default. A 16MB pre-auth JSON parser on
 // every route lets any anonymous request pin ~16MB × concurrency of process
 // memory per request (DoS amplification) and widens the request-smuggling
-// surface. Media-heavy endpoints opt back up to 16MB below; everything else,
-// including auth and webhooks, fits in 1MB with room to spare.
+// surface. Media-heavy endpoints opt back up to 16mb — but ONLY for
+// authenticated requests (see below); anonymous clients are capped at 1mb
+// everywhere except signature-verified webhook endpoints, which get a bounded
+// 4mb allowance because providers legitimately push media payloads.
 //
-// Ordering: the conditional 16MB parser runs FIRST (body parsers are stream
-// consumers — a parser further down the chain would never see a body the
-// 1MB parser already rejected). body-parser sets req._body after parsing, so
-// the global parsers below no-op on media routes instead of clobbering or 413.
+// Ordering:
+//   1. optionalAuth FIRST — it only reads headers, so it can run before any
+//      body parser, and the 16mb gate needs req.user.
+//   2. Then the conditional 16mb parser (body parsers are stream consumers — a
+//      parser further down the chain would never see a body the 1mb parser
+//      already rejected). body-parser sets req._body after parsing, so the
+//      global parsers below no-op on media routes instead of clobbering or 413.
+//   3. Then the global 1mb parsers.
+//
+// Stripe webhooks are handled even earlier (raw body for signature
+// verification) — see the STRIPE_WEBHOOK_PATHS block above.
 const LARGE_BODY_ROUTES = [
     '/api/ai', '/api/chatbot', '/api/knowledge', '/api/pillars', '/api/upload',
     '/api/whatsapp', '/api/v1/ai', '/api/v1/chatbot', '/api/v1/knowledge',
@@ -134,12 +143,33 @@ const largeBodyParser = express.json({
         (req as Request).rawBody = buf;
     },
 });
+// Signature-verified inbound webhook endpoints keep a bounded anonymous
+// allowance — Meta/Twilio servers are anonymous to us by design.
+const WEBHOOK_ROUTES = ['/api/whatsapp', '/api/v1/whatsapp', '/api/channels', '/api/v1/channels'];
+app.use(optionalAuth); // Parse optional user credentials before body parsing and rate limiting
 app.use((req, res, next) => {
     if (req.method !== 'GET' && LARGE_BODY_ROUTES.some(p => req.path === p || req.path.startsWith(p + '/'))) {
-        largeBodyParser(req, res, next);
-    } else {
-        next();
+        const isWebhook = WEBHOOK_ROUTES.some(p => req.path === p || req.path.startsWith(p + '/'));
+        if (req.user || isWebhook) {
+            return largeBodyParser(req, res, next);
+        }
+        // Anonymous client on a media route: cap at the small-parser limit and
+        // let the global 1mb parser below handle (or reject) the body.
+        return next();
     }
+    next();
+});
+
+// Stripe webhook gets its RAW body here at the app level, BEFORE any JSON
+// parser can consume the stream — otherwise req.body is a parsed object and
+// signature verification fails. Stripe-signed requests are also exempt from
+// the anonymous 1MB JSON cap (webhook payloads can exceed it legitimately).
+const STRIPE_WEBHOOK_PATHS = ['/api/billing/webhook', '/api/v1/billing/webhook'];
+app.use((req, res, next) => {
+    if (req.method === 'POST' && STRIPE_WEBHOOK_PATHS.includes(req.path)) {
+        return express.raw({ type: 'application/json' })(req, res, next);
+    }
+    next();
 });
 
 app.use(express.json({
@@ -156,8 +186,7 @@ app.use(express.urlencoded({
     },
 }));
 app.use(cookieParser());
-app.use(securityGate); // Security gate runs FIRST — before auth and rate limiting
-app.use(optionalAuth); // Parse optional user credentials before applying rate limiting
+app.use(securityGate); // Security gate — after auth/body parsing, before rate limiting
 app.use((req, _res, next) => {
     setRequestUserId(req.user?.userId);
     next();
@@ -249,11 +278,24 @@ async function checkPrimaryProviderHealth(): Promise<{ healthy: boolean; configu
     return { healthy, configured, name: primaryProvider.provider, error };
 }
 
+// AI provider health checks hit external APIs — cache the result so an
+// anonymous loop against /api/health cannot turn the backend into an amplifier
+// that hammers the LLM providers (quota drain / provider-side rate limits).
+const AI_HEALTH_CACHE_TTL_MS = 60_000;
+let aiHealthCache: { at: number; primary: Awaited<ReturnType<typeof checkPrimaryProviderHealth>>; fallback: Awaited<ReturnType<typeof checkFallbackProvider>> } | null = null;
 async function checkAIProvider(): Promise<{ status: string; error?: string }> {
     try {
-        const primary = await checkPrimaryProviderHealth();
+        let primary: Awaited<ReturnType<typeof checkPrimaryProviderHealth>>;
+        let fallback: Awaited<ReturnType<typeof checkFallbackProvider>>;
+        if (aiHealthCache && Date.now() - aiHealthCache.at < AI_HEALTH_CACHE_TTL_MS) {
+            primary = aiHealthCache.primary;
+            fallback = aiHealthCache.fallback;
+        } else {
+            primary = await checkPrimaryProviderHealth();
+            fallback = await checkFallbackProvider();
+            aiHealthCache = { at: Date.now(), primary, fallback };
+        }
 
-        const fallback = await checkFallbackProvider();
         let fallbackActiveName = fallback.name;
 
         let anyCascadingHealthy = false;
@@ -360,7 +402,7 @@ function resolveHealthStatus(opts: {
 }
 
 // Health check handler with full dependency checks
-const healthHandler = async (_req: Request, res: Response) => {
+const healthHandler = async (req: Request, res: Response) => {
     const [db, cache, ai, external, agents] = await Promise.all([
         checkDatabase(),
         checkCache(),
@@ -378,21 +420,32 @@ const healthHandler = async (_req: Request, res: Response) => {
         inWarmup,
     });
 
+    // Detailed diagnostics (per-dependency status, failure reasons, node env,
+    // uptime) are disclosed only to admins or same-origin probers carrying a
+    // local check token. Anonymous callers get the verdict + code only — the
+    // failure *why* (missing key vs 401 vs quota) is an inventory for attackers.
+    const isAdmin = req.user?.role === 'admin';
+    const isLocalProbe = process.env.NODE_ENV !== 'production' &&
+        ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.ip || '');
+    const includeDetails = isAdmin || isLocalProbe;
+
     res.status(statusCode).json({
         status: statusText,
         timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        environment: config.nodeEnv,
-        version: '1.0.1',
-        services: {
-            database: db.status,
-            cache: cache.status,
-            ai_provider: ai.status,
-            external_apis: external.status,
-            agent_orchestrator: agents.status,
-        },
-        warmup: inWarmup,
-        errors: errors.length > 0 ? errors : undefined,
+        ...(includeDetails ? {
+            uptime: process.uptime(),
+            environment: config.nodeEnv,
+            version: '1.0.1',
+            services: {
+                database: db.status,
+                cache: cache.status,
+                ai_provider: ai.status,
+                external_apis: external.status,
+                agent_orchestrator: agents.status,
+            },
+            warmup: inWarmup,
+            errors: errors.length > 0 ? errors : undefined,
+        } : {}),
     });
 };
 
@@ -550,17 +603,30 @@ app.get('/api/versions', (_req: Request, res: Response) => {
     });
 });
 
-// Client-side error reporting endpoint
+// Client-side error reporting endpoint. Validated and size-capped: any
+// anonymous client can POST here, so unbounded/log-shaped payloads would give
+// an attacker free rein over the log stream (log injection / write spam).
+const CLIENT_ERROR_FIELD_MAX = 2_000;
+const CLIENT_ERROR_STACK_MAX = 8_000;
+const clip = (v: unknown, max: number): string | undefined => {
+    if (typeof v !== 'string') return undefined;
+    // Strip control characters so newlines cannot forge log entries.
+    // eslint-disable-next-line no-control-regex
+    return v.replace(/[\u0000-\u001F\u007F]/g, ' ').slice(0, max) || undefined;
+};
 app.post('/api/errors', (req: Request, res: Response) => {
-    const { error, componentStack, componentName, url, userAgent } = req.body;
+    const { error } = req.body || {};
+    if (!error || typeof error !== 'object') {
+        return res.status(400).json({ success: false, error: 'error object is required' });
+    }
     logger.warn('Client error reported:', {
-        message: error?.message,
-        stack: error?.stack,
-        name: error?.name,
-        componentName,
-        componentStack,
-        url,
-        userAgent,
+        message: clip(error.message, CLIENT_ERROR_FIELD_MAX) || 'unknown',
+        stack: clip(error.stack, CLIENT_ERROR_STACK_MAX),
+        name: clip(error.name, 100),
+        componentName: clip(req.body?.componentName, 200),
+        componentStack: clip(req.body?.componentStack, CLIENT_ERROR_STACK_MAX),
+        url: clip(req.body?.url, 500),
+        userAgent: clip(req.body?.userAgent, 300),
         ip: req.ip,
     });
     res.status(200).json({ success: true });

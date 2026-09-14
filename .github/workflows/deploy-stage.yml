@@ -34,7 +34,9 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        # Parity with production (postgis/postgis:15) — testing against a
+        # different major than you ship hides pg15-specific behavior.
+        image: postgis/postgis:15-3.4
         env:
           POSTGRES_USER: psalmprax
           POSTGRES_PASSWORD: password
@@ -57,10 +59,10 @@ jobs:
           - 6379:6379
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -272,9 +274,15 @@ jobs:
             fi
 
             # Ensure JWT_SECRET is configured in ag-extension-dashboard/.env
+            # No timestamp fallback: a predictable secret is worse than a failed
+            # deploy. openssl and node are both guaranteed on this image.
             if ! grep -q "^JWT_SECRET=[^[:space:]]\{16,\}" ag-extension-dashboard/.env 2>/dev/null; then
               echo "🔑 Generating JWT_SECRET..."
-              JWT_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" 2>/dev/null || echo "jwt_secret_$(date +%s)")
+              JWT_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+              if [ -z "$JWT_RAND" ]; then
+                echo "FATAL: could not generate a cryptographically random JWT_SECRET" >&2
+                exit 1
+              fi
               sed -i '/^JWT_SECRET=/d' ag-extension-dashboard/.env 2>/dev/null || true
               echo "JWT_SECRET=$JWT_RAND" >> ag-extension-dashboard/.env
               echo "✅ Added JWT_SECRET to ag-extension-dashboard/.env"
@@ -283,7 +291,11 @@ jobs:
             # Ensure MCP_API_TOKEN is configured in ag-extension-dashboard/.env
             if ! grep -q "^MCP_API_TOKEN=[^[:space:]]\{16,\}" ag-extension-dashboard/.env 2>/dev/null; then
               echo "🔑 Generating MCP_API_TOKEN..."
-              MCP_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" 2>/dev/null || echo "mcp_token_$(date +%s)")
+              MCP_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+              if [ -z "$MCP_RAND" ]; then
+                echo "FATAL: could not generate a cryptographically random MCP_API_TOKEN" >&2
+                exit 1
+              fi
               sed -i '/^MCP_API_TOKEN=/d' ag-extension-dashboard/.env 2>/dev/null || true
               echo "MCP_API_TOKEN=$MCP_RAND" >> ag-extension-dashboard/.env
               echo "✅ Added MCP_API_TOKEN to ag-extension-dashboard/.env"

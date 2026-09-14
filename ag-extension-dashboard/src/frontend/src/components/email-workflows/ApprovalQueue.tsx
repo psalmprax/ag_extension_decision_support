@@ -23,6 +23,13 @@ export function EmailWorkflowsApprovalQueue({
   t: (key: string) => string;
   radiusClass: string;
 }) {
+  // Sanitize the FULL html first, then truncate the sanitized result. Truncating
+  // raw html before sanitizing can split a tag/attribute mid-boundary and turn
+  // inert markup into an XSS vector after sanitization.
+  const previewHtml = (rawHtml: string): string => {
+    const sanitized = DOMPurify.sanitize(rawHtml);
+    return sanitized.length > 300 ? sanitized.substring(0, 300) + '...' : sanitized;
+  };
   return (
     <div className="space-y-6">
       {approvals.length > 0 ? (
@@ -62,13 +69,7 @@ export function EmailWorkflowsApprovalQueue({
               <div className={`bg-gray-50 dark:bg-gray-800/50 ${radiusClass} p-4 mb-4`}>
                 <div
                   className="text-sm text-gray-900 dark:text-white prose prose-sm max-w-none dark:prose-invert"
-                  dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(
-                      approval.emailData.html.length > 300
-                        ? approval.emailData.html.substring(0, 300) + '...'
-                        : approval.emailData.html
-                    ),
-                  }}
+                  dangerouslySetInnerHTML={{ __html: previewHtml(approval.emailData.html) }}
                 />
               </div>
 

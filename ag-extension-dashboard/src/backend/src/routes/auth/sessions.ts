@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
-import { getUserSessions, revokeSession, revokeAllOtherSessions } from '@/services/sessionService';
+import { getUserSessions, revokeSession, revokeAllOtherSessions, isSessionValid } from '@/services/sessionService';
 
 const router = Router();
 
@@ -10,6 +10,26 @@ interface JWTPayload {
     userId: string;
     email: string;
     role: string;
+}
+
+/**
+ * Shared bearer-token auth for the session-management routes — JWT signature
+ * (HS256-pinned) plus session-revocation check, matching the `authorize`
+ * middleware. Hand-rolled `jwt.verify` calls here previously skipped the
+ * revocation check, letting logged-out tokens list/revoke sessions.
+ */
+async function requireSession(req: Request): Promise<{ decoded: JWTPayload; token: string } | null> {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+    const token = authHeader.split(' ')[1];
+    let decoded: JWTPayload;
+    try {
+        decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as JWTPayload;
+    } catch {
+        return null;
+    }
+    if (!(await isSessionValid(token))) return null;
+    return { decoded, token };
 }
 
 /**
@@ -23,8 +43,11 @@ router.get('/sessions', async (req: Request, res: Response) => {
     }
 
     try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+        const session = await requireSession(req);
+        if (!session) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+        const { decoded, token } = session;
 
         const sessions = await getUserSessions(decoded.userId, token);
         res.json({
@@ -48,8 +71,11 @@ router.delete('/sessions/:id', async (req: Request, res: Response) => {
     }
 
     try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+        const session = await requireSession(req);
+        if (!session) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+        const { decoded } = session;
 
         const revoked = await revokeSession(req.params.id, decoded.userId);
         res.json({
@@ -74,8 +100,11 @@ router.post('/sessions/revoke-others', async (req: Request, res: Response) => {
     }
 
     try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+        const session = await requireSession(req);
+        if (!session) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+        const { decoded, token } = session;
 
         const count = await revokeAllOtherSessions(decoded.userId, token);
         res.json({

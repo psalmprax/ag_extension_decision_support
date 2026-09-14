@@ -1,5 +1,11 @@
 pipeline {
     agent any
+    options {
+        // Parallel runs race the --force-recreate deploy and can interleave
+        // `down`/`up` from two builds on the same host.
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '30'))
+    }
     environment {
         PROJECT_DIR = 'ag-extension-dashboard'
         COMPOSE_PROJECT_NAME = 'ag-extension'
@@ -19,16 +25,19 @@ pipeline {
                 sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml -f ${PROJECT_DIR}/docker-compose.agents.yml down --remove-orphans || true"
             }
         }
-        stage('Debug Config') {
+        stage('Validate Compose') {
             steps {
-                sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml -f ${PROJECT_DIR}/docker-compose.agents.yml config > compose-config.txt 2>&1 || true"
-                sh "cat compose-config.txt"
+                // Validate compose syntax WITHOUT printing the resolved config:
+                // `docker compose config` inlines every secret (DATABASE_PASSWORD,
+                // JWT_SECRET, provider API keys) and `cat`-ing it to the build log
+                // gave read-access users the full credential set.
+                sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml -f ${PROJECT_DIR}/docker-compose.agents.yml config --quiet"
             }
         }
         stage('Test') {
             steps {
                 // Tests and typechecks gate the deploy — a failure here must fail the build.
-                sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml run --rm --no-deps backend npm test -- --passWithNoTests 2>&1"
+                sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml run --rm --no-deps backend npm test -- --forceExit 2>&1"
                 sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml run --rm --no-deps backend npx tsc --noEmit 2>&1"
                 sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml run --rm --no-deps frontend npm run typecheck 2>&1"
             }
@@ -43,12 +52,10 @@ pipeline {
             steps {
                 sh "sleep 5"
                 sh 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep ag-'
+                // Real smoke gate: the backend must actually answer /health,
+                // not merely appear in `docker ps` output. Node's native fetch
+                // is used (per deployment rules — curl may not exist in slim
+                // base images). Retries cover the app's 60s health warmup.
+                sh "node scripts/smoke-probe.cjs 90 http://127.0.0.1:7500/health"
             }
         }
-    }
-    post {
-        failure {
-            sh "cat compose-deploy.log || echo 'No log file found'"
-        }
-    }
-}

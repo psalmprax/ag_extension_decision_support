@@ -128,11 +128,16 @@ export function errorHandler(
     const statusCode = err.statusCode || 500;
     const errorType = err.code || ErrorTypes.INTERNAL_ERROR;
 
+    // 5xx internals (Prisma/PG driver messages, stack hints) are logged above
+    // but never echoed to the client — they leak schema and infrastructure
+    // detail. 4xx client errors keep their message so callers can self-correct.
+    const clientMessage = statusCode >= 500 ? 'Internal Server Error' : (err.message || 'Internal Server Error');
+
     // Build error response
     const response: ErrorResponse = {
         success: false,
         error: {
-            message: err.message || 'Internal Server Error',
+            message: clientMessage,
             type: errorType,
             code: err.code,
         },

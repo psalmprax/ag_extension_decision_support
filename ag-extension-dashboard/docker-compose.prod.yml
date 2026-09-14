@@ -80,9 +80,13 @@ services:
       - "traefik.http.routers.backend.tls=true"
       - "traefik.http.routers.backend.tls.domains[0].main=www.gpexts.com"
       - "traefik.http.routers.backend.tls.domains[0].sans=gpexts.com"
-      # Router 3 — localhost/IP for health checks (HTTP only, no TLS)
-      - "traefik.http.routers.backend-local.rule=(Host(`localhost`) || Host(`127.0.0.1`) || Host(`145.223.97.248`) || Host(`161.97.126.84`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
-      - "traefik.http.routers.backend-local.entrypoints=web"
+      # Router 3 — health checks from the host itself. Loopback probes hit the
+      # container port directly (127.0.0.1:7500), so this router is REMOVED: the
+      # old rule matched any external client sending Host: <server-ip> and
+      # served the full API over plaintext HTTP (no redirect, no TLS).
+      # If an external HTTP-only probe is ever needed, gate it:
+      #   traefik.http.routers.backend-local.middlewares=local-whitelist@file
+      # with an ipAllowList of loopback/private monitor IPs in a dynamic file.
       # HTTP → HTTPS redirect middleware (per-service scope)
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
     networks:
@@ -109,9 +113,9 @@ services:
       - "traefik.http.routers.frontend.tls=true"
       - "traefik.http.routers.frontend.tls.domains[0].main=www.gpexts.com"
       - "traefik.http.routers.frontend.tls.domains[0].sans=gpexts.com"
-      # Router 3 — localhost/IP for local dev testing (HTTP only)
-      - "traefik.http.routers.frontend-local.rule=Host(`localhost`) || Host(`127.0.0.1`) || Host(`145.223.97.248`) || Host(`161.97.126.84`)"
-      - "traefik.http.routers.frontend-local.entrypoints=web"
+      # Router 3 — removed along with backend-local: Host-based "local" rules
+      # are forgeable by any external client and created a plain-HTTP path to
+      # the app in production. Local testing uses the loopback host port.
       # HTTP → HTTPS redirect middleware
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
     networks:

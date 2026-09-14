@@ -22,21 +22,42 @@ import { authorize } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { RAGV2Service } from '@/services/ragV2Service';
 import { mcpAdapter } from '@/services/mcpAdapter';
+import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
 
 const router = Router();
 
 type AuthedRequest = Request & { user?: AuthenticatedRequestUser };
 
-/** Load the last turns of a conversation as a context block (empty when none/unavailable). */
-async function loadHistoryBlock(conversationId?: string): Promise<string> {
+/**
+ * Load the last turns of a conversation as a context block (empty when
+ * none/unavailable). The conversation must belong to the caller: farmers match
+ * via their farmer record id or user id, officers via officer_id — the same
+ * scoping the /conversations endpoints enforce. Without this check any
+ * authenticated user could pass a foreign conversation_id and have another
+ * user's messages injected into their prompt context (IDOR).
+ */
+async function loadHistoryBlock(conversationId: string | undefined, userId: string, role: string): Promise<string> {
   if (!conversationId) return '';
   try {
+    const ownerClause = role === 'admin' || role === 'regional_manager'
+      ? ''
+      : ' AND (cv.farmer_id = $2 OR cv.officer_id = $2)';
+    const params: unknown[] = [conversationId];
+    if (ownerClause) {
+      const { rows: farmerRows } = await query<{ id: string }>(
+        `SELECT id FROM farmers WHERE user_id = $1 OR id = $1 LIMIT 1`,
+        [userId]
+      );
+      params.push(farmerRows[0]?.id || userId);
+    }
     const { rows } = await query<ChatMessageRow>(
-      `SELECT role, content FROM chat_messages
-        WHERE conversation_id = $1
-        ORDER BY created_at DESC LIMIT 10`,
-      [conversationId]
+      `SELECT m.role, m.content FROM chat_messages m
+        JOIN chat_conversations cv ON cv.id = m.conversation_id
+        WHERE m.conversation_id = $1${ownerClause}
+        ORDER BY m.created_at DESC LIMIT 10`,
+      params
     );
+    if (rows.length === 0) return '';
     const history = rows.reverse().map(m => `${m.role}: ${String(m.content).slice(0, 300)}`).join('\n');
     return history ? `\n\nRECENT CONVERSATION:\n${history}` : '';
   } catch (err) {
@@ -216,7 +237,7 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
 
     // Fetch context in parallel: history + RAG
     const [historyBlock, ragResult] = await Promise.all([
-      loadHistoryBlock(body.conversation_id),
+      loadHistoryBlock(body.conversation_id, user.userId, user.role),
       loadRagBlock(sanitizedMessage),
     ]);
 
@@ -235,11 +256,14 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
 
     const { text: assistantText, usedToolNames } = await runAssistantTurn(systemPrompt, sanitizedMessage, tools);
 
+    // Guard and enrich agronomic advice
+    const { text: safeAssistantText, boundaryCheck } = agronomicSafetyGuard.guardAndEnrichAdvice(assistantText);
+
     // Persist assistant message
     await query(
       `INSERT INTO chat_messages (conversation_id, role, content, language)
        VALUES ($1, 'assistant', $2, $3)`,
-      [body.conversation_id ?? null, assistantText, body.language ?? null]
+      [body.conversation_id ?? null, safeAssistantText, body.language ?? null]
     );
 
     return res.json({
@@ -247,10 +271,11 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
       data: {
         messages: [
           { role: 'user', content: sanitizedMessage },
-          { role: 'assistant', content: assistantText },
+          { role: 'assistant', content: safeAssistantText },
         ],
         citations: ragResult.citations,
         usedTools: usedToolNames,
+        safety: boundaryCheck,
       },
     });
   } catch (error) {
