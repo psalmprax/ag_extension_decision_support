@@ -1,5 +1,5 @@
 import { hasAuthSession } from '@/hooks/useAppAuth';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
@@ -361,6 +361,32 @@ const DashboardMapSection: React.FC<{
     refetchWithRetry();
   }, [resetRetry, refetchWithRetry]);
 
+  // Only farmers with a real GPS fix are plottable. Defaulting missing
+  // coordinates to Nairobi used to fabricate pin positions on the map.
+  const mappedFarmers = useMemo(
+    () =>
+      effectiveFarmers
+        .filter(
+          f =>
+            typeof f.latitude === 'number' &&
+            Number.isFinite(f.latitude) &&
+            typeof f.longitude === 'number' &&
+            Number.isFinite(f.longitude)
+        )
+        .map(f => ({
+          id: f.id,
+          name: `${f.firstName} ${f.lastName}`,
+          lat: f.latitude as number,
+          lng: f.longitude as number,
+          crop: f.crops?.[0] || 'Unspecified',
+          region: f.region || 'Unknown',
+          size: f.farmSize || 0,
+          phone: f.phone,
+          yield: f.yield || 0,
+        })),
+    [effectiveFarmers, t]
+  );
+
   if (showInitialLoading) {
     return <MapSectionSkeleton cardClass={cardClass} radiusClass={radiusClass} t={t} />;
   }
@@ -391,17 +417,7 @@ const DashboardMapSection: React.FC<{
             height="100%"
             isExternalExpanded={isMapExpanded}
             onToggleExpand={setIsMapExpanded}
-            farmers={effectiveFarmers.map(f => ({
-              id: f.id,
-              name: `${f.firstName} ${f.lastName}`,
-              lat: f.latitude || -1.2863,
-              lng: f.longitude || 36.8172,
-              crop: f.crops?.[0] || 'Maize',
-              region: f.region || 'Unknown',
-              size: f.farmSize || 0,
-              phone: f.phone,
-              yield: f.yield || 0,
-            }))}
+            farmers={mappedFarmers}
             onFarmerClick={async farmerData => {
               const farmer = effectiveFarmers.find(f => f.id === farmerData.id);
               const action = resolveMapFarmerAction(canMapChat, farmer !== undefined);
