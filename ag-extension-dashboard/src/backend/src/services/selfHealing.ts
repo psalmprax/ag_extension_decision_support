@@ -1,5 +1,6 @@
 import { logger } from '@/utils/logger';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
+import { runIfLeader } from '@/services/leaderElection';
 
 export interface HealthCheck {
   component: string;
@@ -57,11 +58,14 @@ export class SelfHealingService {
       clearInterval(this.checkInterval);
     }
 
-    this.checkInterval = setInterval(async () => {
-      await this.runHealthChecks();
+    this.checkInterval = setInterval(() => {
+      // Leader-gated: recovery actions (restarts, alerts) must fire once per
+      // deployment, not once per replica.
+      void runIfLeader('self-healing', () => this.runHealthChecks());
     }, intervalMs);
+    this.checkInterval.unref?.();
 
-    logger.info(`Self-healing monitoring started (interval: ${intervalMs}ms)`);
+    logger.info(`Self-healing monitoring started (interval: ${intervalMs}ms, leader-gated)`);
   }
 
   stopMonitoring(): void {

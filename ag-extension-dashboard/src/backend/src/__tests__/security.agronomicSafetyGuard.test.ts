@@ -74,4 +74,33 @@ describe('Deep-Tier Security — AgronomicSafetyGuard AI Boundary Validation', (
       expect(result.violations.length).toBe(0);
     });
   });
+
+  describe('3. Knapsack Sprayer Calibration & Advice Enrichment', () => {
+    it('should append knapsack sprayer calibration when application rates are mentioned', () => {
+      const advice = 'Apply 2.5 L/ha of contact fungicide across the affected area.';
+      const enriched = agronomicSafetyGuard.translateToKnapsackUnits(advice);
+
+      expect(enriched).toContain('Knapsack Sprayer Calibration (Field Guidance)');
+      expect(enriched).toContain('16L or 20L');
+    });
+
+    it('should prepend lethal dosage alert and knapsack calibration during guardAndEnrichAdvice', () => {
+      const hazardousAdvice = 'Apply 30 Liters per hectare of pesticide solution to control the pest.';
+      const { text, boundaryCheck } = agronomicSafetyGuard.guardAndEnrichAdvice(hazardousAdvice);
+
+      expect(boundaryCheck.safe).toBe(false);
+      expect(text).toContain('AGRONOMIC DOSAGE WARNING');
+      expect(text).toContain('Knapsack Sprayer Calibration');
+    });
+
+    it('should prepend quarantine alert when high-consequence pathogen is detected in advice', () => {
+      const quarantineAdvice = 'Symptoms match maize lethal necrosis disease in the lower parcel.';
+      const { text, boundaryCheck } = agronomicSafetyGuard.guardAndEnrichAdvice(quarantineAdvice);
+
+      expect(boundaryCheck.quarantineAlert).toBe(true);
+      expect(text).toContain('QUARANTINE ALERT');
+      expect(text).toContain('maize lethal necrosis');
+    });
+  });
 });
+

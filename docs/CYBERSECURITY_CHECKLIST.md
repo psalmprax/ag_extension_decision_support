@@ -136,7 +136,7 @@ graph TD
 | ID | Control Requirement | Implementation / File Location | Status | Verification Method |
 | :--- | :--- | :--- | :---: | :--- |
 | **INF-01** | **Non-Root Execution in Containers**: Application containers (Backend, Frontend Nginx, Agents) must run as non-root unprivileged users. | Dockerfiles | ✅ Enforced | Dockerfile linting & CI/CD scan |
-| **INF-02** | **Minimal Base Images**: Multi-stage builds using `node:20-alpine`, `python:3.11-slim`, and `nginx:alpine` to minimize CVE attack surface. | `Dockerfile.production` | ✅ Enforced | Container image vulnerability scan |
+| **INF-02** | **Minimal Base Images**: Multi-stage builds using `node:20-alpine`, `python:3.11-slim`, and `nginx:alpine` to minimize CVE attack surface. | `Dockerfile` (production stage) | ✅ Enforced | Container image vulnerability scan |
 | **INF-03** | **Isolated Bridge Networks**: Databases and Redis must not be directly exposed to the public internet; services communicate over internal `ag-network`. | `docker-compose.yml` | ✅ Enforced | Compose configuration audit |
 | **INF-04** | **Automated SSL/TLS Certificate Provisioning**: Traefik handles automated Let's Encrypt TLS renewal with TLS 1.3 preferred and automatic HTTP-to-HTTPS redirection. | `docker-compose.prod.yml` | ✅ Enforced | HTTPS handshake & redirection tests |
 | **INF-05** | **Sensitive File Access Denial**: Nginx must explicitly deny requests for hidden files (`.env`, `.git`, `package.json`, `tsconfig.json`). | [`frontend/nginx.conf#L98-L110`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/nginx.conf#L98-L110) | ✅ Enforced | Nginx configuration inspection |

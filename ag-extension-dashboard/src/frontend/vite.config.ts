@@ -38,10 +38,68 @@ interface VitestConfigExport extends UserConfig {
   test?: UserConfig['test'];
 }
 
+/**
+ * Self-host onnxruntime-web's WASM binaries.
+ *
+ * The edge vision classifier previously fetched the runtime from cdn.jsdelivr.net,
+ * which (a) violated the production CSP (script/connect-src) so inference silently
+ * degraded to heuristics, and (b) added a third-party supply-chain dependency for
+ * an offline-first feature. The dist/ wasm files are now copied into the build at
+ * /models/ort/ and served same-origin next to the ONNX models.
+ */
+function selfHostOnnxRuntime(): Plugin {
+  const ortDist = path.resolve(__dirname, 'node_modules/onnxruntime-web/dist');
+  const wasmFiles = [
+    'ort-wasm-simd-threaded.wasm',
+    'ort-wasm-simd-threaded.jsep.wasm',
+    'ort-wasm-simd-threaded.mjs',
+  ];
+  return {
+    name: 'self-host-onnx-runtime',
+    apply: 'build',
+    closeBundle() {
+      const outDir = path.resolve(__dirname, 'dist/models/ort');
+      fs.mkdirSync(outDir, { recursive: true });
+      for (const file of wasmFiles) {
+        const src = path.join(ortDist, file);
+        if (fs.existsSync(src)) {
+          fs.copyFileSync(src, path.join(outDir, file));
+          console.log(`  self-hosted onnxruntime: /models/ort/${file}`);
+        } else {
+          console.warn(`  [!] onnxruntime-web dist file missing: ${file}`);
+        }
+      }
+    },
+  };
+}
+
+// Dev server serves /models/* directly from node_modules so the classifier works
+// without a full build. (Production nginx aliases /models/ from the copied files.)
+function serveOrtInDev(): Plugin {
+  return {
+    name: 'serve-ort-in-dev',
+    configureServer(server) {
+      server.middlewares.use('/models/ort', (req, _res, next) => {
+        const file = String(req.url || '').replace(/^\//, '').split('?')[0];
+        if (!file || file.includes('..')) return next();
+        const filePath = path.join(__dirname, 'node_modules/onnxruntime-web/dist', file);
+        if (fs.existsSync(filePath)) {
+          _res.setHeader('Content-Type', file.endsWith('.mjs') ? 'text/javascript' : 'application/wasm');
+          fs.createReadStream(filePath).pipe(_res);
+        } else {
+          next();
+        }
+      });
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
     react(),
     minifyLocaleJson(),
+    selfHostOnnxRuntime(),
+    serveOrtInDev(),
     VitePWA({
       strategies: 'injectManifest',
       srcDir: 'src',
@@ -145,6 +203,17 @@ export default defineConfig({
             options: {
               cacheName: 'ml-models',
               expiration: { maxEntries: 4, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // Self-hosted onnxruntime-web WASM runtime binaries — same cache-first
+            // treatment as the models so on-device inference works fully offline.
+            urlPattern: /\/models\/ort\/.*\.(?:wasm|mjs)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'ml-runtime',
+              expiration: { maxEntries: 6, maxAgeSeconds: 30 * 24 * 60 * 60 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },

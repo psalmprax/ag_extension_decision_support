@@ -1,5 +1,6 @@
 import { ConnectionOptions } from 'bullmq';
 import { config } from '@/config';
+import { logger } from '@/utils/logger';
 
 // Dedicated connection for ALL BullMQ queues and workers.
 //
@@ -14,3 +15,23 @@ export const redisConnection: ConnectionOptions = {
     // Max duration to retry a command while the connection is down
     maxRetriesPerRequest: null,
 };
+
+// Workers/queues created against redisConnection. Populated by the workers so
+// graceful shutdown can drain them without each shutdown site knowing the list.
+const queueClients: Array<{ close: () => Promise<void>; label: string }> = [];
+export function registerQueueClient(label: string, close: () => Promise<void>): void {
+    queueClients.push({ label, close });
+}
+
+/** Close all registered BullMQ workers/queues; safe to call before init. */
+export async function closeQueueConnections(): Promise<void> {
+    while (queueClients.length > 0) {
+        const c = queueClients.pop()!;
+        try {
+            await c.close();
+            logger.info(`Queue client closed: ${c.label}`);
+        } catch (err) {
+            logger.warn(`Queue client close failed: ${c.label}:`, err instanceof Error ? err.message : err);
+        }
+    }
+}

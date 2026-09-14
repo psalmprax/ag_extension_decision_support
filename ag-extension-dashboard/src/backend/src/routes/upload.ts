@@ -1,4 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import fs from 'fs';
+import fsp from 'fs/promises';
+import os from 'os';
+import path from 'path';
 import multer from 'multer';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
@@ -19,8 +23,44 @@ import {
 import { objectStorage } from '@/services/objectStorageService';
 
 const router = Router();
+
+/**
+ * Disk-spooled upload storage.
+ *
+ * memoryStorage() previously buffered every file fully in RAM before any
+ * validation — a bounded burst of legitimate (or malicious) uploads pinned
+ * 100MB × files × concurrency of process memory and invited OOM kills.
+ * Files now stream to a private temp dir, the SAME magic-byte signature check
+ * runs against the spooled file's head bytes, and cleanup is guaranteed via
+ * express response finalizer even when handlers throw.
+ */
+const UPLOAD_TMP_DIR = process.env.UPLOAD_TMP_DIR || path.join(os.tmpdir(), 'ag-uploads');
+try { fs.mkdirSync(UPLOAD_TMP_DIR, { recursive: true }); } catch { /* exists or unavailable — multer errors visibly below */ }
+
+const spoolStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, UPLOAD_TMP_DIR),
+  filename: (_req, file, cb) => cb(null, `spool-${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname || '') || ''}`),
+});
+
+/** Read the magic-byte head of a spooled file (signature checks need ≤64 bytes). */
+async function readSpooledHead(filePath: string, bytes: number): Promise<Buffer> {
+  const fh = await fsp.open(filePath, 'r');
+  try {
+    const { buffer, bytesRead } = await fh.read(Buffer.alloc(bytes), 0, bytes, 0);
+    return buffer.subarray(0, bytesRead);
+  } finally {
+    await fh.close();
+  }
+}
+
+/** Delete a spooled temp file; never throws. */
+function discardSpooled(filePath?: string): void {
+  if (!filePath) return;
+  void fsp.unlink(filePath).catch(() => { /* best effort */ });
+}
+
 const upload = multer({
-  storage: multer.memoryStorage(),
+  storage: spoolStorage,
   limits: { fileSize: MAX_UPLOAD_BYTES, files: 5 },
   fileFilter: (_req, file, callback) => {
     let normalized: SupportedMimeType;
@@ -29,7 +69,9 @@ const upload = multer({
     } catch {
       return callback(new Error('Unsupported file type'));
     }
-
+    // Pre-stream check on buffered head when the client provided it (multipart
+    // bodies usually include small non-file parts first); the authoritative
+    // signature check re-runs against the spooled file inside the handler.
     if (file.buffer && file.buffer.length > 0) {
       if (!signatureMatches(file.buffer, normalized)) {
         return callback(new Error('File content does not match declared type'));
@@ -38,6 +80,61 @@ const upload = multer({
     callback(null, true);
   },
 });
+
+/**
+ * Post-multer validation against the spooled file + guaranteed cleanup.
+ * Wraps every upload handler: verifies magic bytes from disk, then removes the
+ * temp file when the response finishes — success or failure.
+ */
+function withSpooledFile(
+  req: Request,
+  res: Response,
+  handler: (files: Express.Multer.File[]) => Promise<void>
+): void {
+  const files: Express.Multer.File[] = [];
+  const single = (req as unknown as { file?: Express.Multer.File }).file;
+  const many = (req as unknown as { files?: Express.Multer.File[] }).files;
+  if (single) files.push(single);
+  if (many) files.push(...many);
+
+  const cleanup = () => { for (const f of files) discardSpooled(f.path); };
+  res.on('finish', cleanup);
+  res.on('close', cleanup);
+
+  void (async () => {
+    try {
+      for (const file of files) {
+        if (!file.path) continue;
+        const stat = await fsp.stat(file.path).catch(() => null);
+        if (!stat || stat.size === 0 || stat.size > MAX_UPLOAD_BYTES) {
+          throw new Error('Uploaded file is empty or exceeds the size limit');
+        }
+        const normalized = normalizeMimeType(file.mimetype);
+        // SVG needs full-content inspection, not just head bytes.
+        if (normalized === 'image/svg+xml') {
+          const content = await fsp.readFile(file.path);
+          if (!signatureMatches(content, normalized)) {
+            throw new Error('File content does not match declared type');
+          }
+        } else {
+          const head = await readSpooledHead(file.path, 64);
+          if (!signatureMatches(head, normalized)) {
+            throw new Error('File content does not match declared type');
+          }
+        }
+      }
+      await handler(files);
+    } catch (error) {
+      if (!res.headersSent) {
+        const status = (error as { statusCode?: number }).statusCode;
+        res.status(typeof status === 'number' ? status : 400).json({
+          success: false,
+          error: error instanceof Error ? error.message : 'Upload failed',
+        });
+      }
+    }
+  })();
+}
 
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
@@ -191,109 +288,98 @@ router.post('/confirm', async (req: Request, res: Response) => {
 });
 
 // ── Standard Multipart Upload ──
-router.post('/upload', upload.single('file'), async (req: Request, res: Response) => {
-  try {
-    const user = principal(req);
-    if (!user || !req.file) return res.status(400).json({ success: false, error: 'A supported file is required' });
+router.post('/upload', upload.single('file'), (req, res) => withSpooledFile(req, res, async (files) => {
+  const user = principal(req);
+  const file = files[0];
+  if (!user || !file) throw new Error('A supported file is required');
 
-    const farmerId = typeof req.body.farmerId === 'string' ? req.body.farmerId : undefined;
-    if (farmerId && !(await assertFarmerAccess(req, farmerId))) {
-      return res.status(403).json({ success: false, error: 'Access denied to farmer' });
-    }
-
-    const saved = await saveUpload({
-      buffer: req.file.buffer,
-      originalName: req.file.originalname,
-      mimeType: req.file.mimetype,
-      ownerUserId: user.userId,
-      farmerId,
-    });
-
-    logger.info('File uploaded', { uploadId: saved.id, userId: user.userId, farmerId });
-    return res.status(201).json({ success: true, data: uploadResponse(req.file, saved) });
-  } catch (error) {
-    logger.error('Upload error:', error);
-    return safeError(res, 400, error instanceof Error ? error.message : 'Upload failed');
+  const farmerId = typeof req.body.farmerId === 'string' ? req.body.farmerId : undefined;
+  if (farmerId && !(await assertFarmerAccess(req, farmerId))) {
+    throw Object.assign(new Error('Access denied to farmer'), { statusCode: 403 });
   }
-});
+
+  // Read the spooled file one-at-a-time; the multer parse phase no longer
+  // holds every upload in RAM. Full S3 multipart streaming needs
+  // @aws-sdk/lib-storage (tracked separately) — putObject still takes a buffer.
+  const saved = await saveUpload({
+    buffer: await fsp.readFile(file.path),
+    originalName: file.originalname,
+    mimeType: file.mimetype,
+    ownerUserId: user.userId,
+    farmerId,
+  });
+
+  logger.info('File uploaded', { uploadId: saved.id, userId: user.userId, farmerId });
+  res.status(201).json({ success: true, data: uploadResponse(file, saved) });
+}));
 
 // ── Multiple Files Upload ──
-router.post('/upload/multiple', upload.array('files', 5), async (req: Request, res: Response) => {
-  try {
-    const user = principal(req);
-    const files = req.files as Express.Multer.File[] | undefined;
-    if (!user || !files?.length) return res.status(400).json({ success: false, error: 'At least one supported file is required' });
+router.post('/upload/multiple', upload.array('files', 5), (req, res) => withSpooledFile(req, res, async (files) => {
+  const user = principal(req);
+  if (!user || !files.length) throw new Error('At least one supported file is required');
 
-    const farmerId = typeof req.body.farmerId === 'string' ? req.body.farmerId : undefined;
-    if (farmerId && !(await assertFarmerAccess(req, farmerId))) {
-      return res.status(403).json({ success: false, error: 'Access denied to farmer' });
-    }
-
-    const saved = [];
-    for (const file of files) {
-      const record = await saveUpload({
-        buffer: file.buffer,
-        originalName: file.originalname,
-        mimeType: file.mimetype,
-        ownerUserId: user.userId,
-        farmerId,
-      });
-      saved.push(uploadResponse(file, record));
-    }
-
-    return res.status(201).json({ success: true, data: saved });
-  } catch (error) {
-    logger.error('Multiple upload error:', error);
-    return safeError(res, 400, error instanceof Error ? error.message : 'Upload failed');
+  const farmerId = typeof req.body.farmerId === 'string' ? req.body.farmerId : undefined;
+  if (farmerId && !(await assertFarmerAccess(req, farmerId))) {
+    throw Object.assign(new Error('Access denied to farmer'), { statusCode: 403 });
   }
-});
+
+  const saved = [];
+  for (const file of files) {
+    const record = await saveUpload({
+      buffer: await fsp.readFile(file.path),
+      originalName: file.originalname,
+      mimeType: file.mimetype,
+      ownerUserId: user.userId,
+      farmerId,
+    });
+    saved.push(uploadResponse(file, record));
+  }
+
+  res.status(201).json({ success: true, data: saved });
+}));
 
 // ── Farmer Image Upload ──
-router.post('/farmer/image', upload.single('image'), async (req: Request, res: Response) => {
-  try {
-    const user = principal(req);
-    const farmerId = typeof req.body.farmerId === 'string' ? req.body.farmerId : '';
-    if (!user || !req.file || !farmerId) return res.status(400).json({ success: false, error: 'farmerId and image are required' });
-    if (!(await assertFarmerAccess(req, farmerId))) return res.status(403).json({ success: false, error: 'Access denied to farmer' });
-
-    const saved = await saveUpload({
-      buffer: req.file.buffer,
-      originalName: req.file.originalname,
-      mimeType: req.file.mimetype,
-      ownerUserId: user.userId,
-      farmerId,
-    });
-    return res.status(201).json({ success: true, data: { ...uploadResponse(req.file, saved), farmerId } });
-  } catch (error) {
-    logger.error('Farmer image upload error:', error);
-    return safeError(res, 400, error instanceof Error ? error.message : 'Upload failed');
+router.post('/farmer/image', upload.single('image'), (req, res) => withSpooledFile(req, res, async (files) => {
+  const user = principal(req);
+  const file = files[0];
+  const farmerId = typeof req.body.farmerId === 'string' ? req.body.farmerId : '';
+  if (!user || !file || !farmerId) throw new Error('farmerId and image are required');
+  if (!(await assertFarmerAccess(req, farmerId))) {
+    throw Object.assign(new Error('Access denied to farmer'), { statusCode: 403 });
   }
-});
+
+  const saved = await saveUpload({
+    buffer: await fsp.readFile(file.path),
+    originalName: file.originalname,
+    mimeType: file.mimetype,
+    ownerUserId: user.userId,
+    farmerId,
+  });
+  res.status(201).json({ success: true, data: { ...uploadResponse(file, saved), farmerId } });
+}));
 
 // ── Farm Document Upload ──
-router.post('/farm/document', upload.single('document'), async (req: Request, res: Response) => {
-  try {
-    const user = principal(req);
-    const farmerId = typeof req.body.farmerId === 'string' ? req.body.farmerId : undefined;
-    if (!user || !req.file) return res.status(400).json({ success: false, error: 'A supported document is required' });
-    if (farmerId && !(await assertFarmerAccess(req, farmerId))) return res.status(403).json({ success: false, error: 'Access denied to farmer' });
-
-    const saved = await saveUpload({
-      buffer: req.file.buffer,
-      originalName: req.file.originalname,
-      mimeType: req.file.mimetype,
-      ownerUserId: user.userId,
-      farmerId,
-    });
-    return res.status(201).json({
-      success: true,
-      data: { ...uploadResponse(req.file, saved), farmerId, documentType: req.body.documentType },
-    });
-  } catch (error) {
-    logger.error('Farm document upload error:', error);
-    return safeError(res, 400, error instanceof Error ? error.message : 'Upload failed');
+router.post('/farm/document', upload.single('document'), (req, res) => withSpooledFile(req, res, async (files) => {
+  const user = principal(req);
+  const file = files[0];
+  if (!user || !file) throw new Error('A supported document is required');
+  const farmerId = typeof req.body.farmerId === 'string' ? req.body.farmerId : undefined;
+  if (farmerId && !(await assertFarmerAccess(req, farmerId))) {
+    throw Object.assign(new Error('Access denied to farmer'), { statusCode: 403 });
   }
-});
+
+  const saved = await saveUpload({
+    buffer: await fsp.readFile(file.path),
+    originalName: file.originalname,
+    mimeType: file.mimetype,
+    ownerUserId: user.userId,
+    farmerId,
+  });
+  res.status(201).json({
+    success: true,
+    data: { ...uploadResponse(file, saved), farmerId, documentType: req.body.documentType },
+  });
+}));
 
 router.use((error: unknown, _req: Request, res: Response, next: NextFunction) => {
   if (error instanceof multer.MulterError) {

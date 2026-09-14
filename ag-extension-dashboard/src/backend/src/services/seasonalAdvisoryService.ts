@@ -129,6 +129,7 @@ interface OptedInRow {
     phone: string | null;
     channels: string[] | null;
     categories: string[] | null;
+    crops?: string[] | null;
     lat: number | null;
     lng: number | null;
 }
@@ -229,6 +230,20 @@ export const seasonalAdvisoryService = {
             const categories = farmer.categories || [];
             if (!categories.includes(ruleKey)) continue;
 
+            // Crop-specific advisory check: skip if farmer's registered crops do not match pathogen host
+            if (farmer.crops && farmer.crops.length > 0) {
+                const lowerCrops = farmer.crops.map(c => c.toLowerCase());
+                if (ruleKey === 'faw_degree_day') {
+                    const cerealHosts = ['maize', 'corn', 'sorghum', 'millet', 'rice', 'wheat', 'cereal'];
+                    const hasCereal = lowerCrops.some(c => cerealHosts.some(host => c.includes(host)));
+                    if (!hasCereal) continue;
+                } else if (ruleKey === 'late_blight_risk') {
+                    const solanaceousHosts = ['potato', 'tomato', 'solanaceae', 'irish potato', 'eggplant', 'pepper'];
+                    const hasSolanaceous = lowerCrops.some(c => solanaceousHosts.some(host => c.includes(host)));
+                    if (!hasSolanaceous) continue;
+                }
+            }
+
             for (const channel of channels) {
                 const sent = await this.dispatchToFarmerChannel(channel, farmer, verdict.message, { ruleKey, district });
                 if (sent) audience += 1;
@@ -279,8 +294,8 @@ export const seasonalAdvisoryService = {
     /** Daily cycle: evaluate all districts with opted-in farmers, then email an officer digest. */
     async runDailyCycle(): Promise<{ districtsEvaluated: number; advisoriesSent: number }> {
         const today = new Date().toISOString().slice(0, 10);
-        const { rows } = await query<{ district: string; farmer_id: string; phone: string | null; channels: string[] | null; categories: string[] | null; lat: number | null; lng: number | null }>(
-            `SELECT f.district, f.id AS farmer_id, f.phone, p.channels, p.categories, f.location_lat AS lat, f.location_lng AS lng
+        const { rows } = await query<{ district: string; farmer_id: string; phone: string | null; channels: string[] | null; categories: string[] | null; crops: string[] | null; lat: number | null; lng: number | null }>(
+            `SELECT f.district, f.id AS farmer_id, f.phone, p.channels, p.categories, f.crops, f.location_lat AS lat, f.location_lng AS lng
              FROM farmers f
              JOIN advisory_preferences p ON p.farmer_id = f.id
              WHERE p.opt_in = true AND f.district IS NOT NULL AND f.is_active = true`
@@ -289,7 +304,7 @@ export const seasonalAdvisoryService = {
         const byDistrict = new Map<string, OptedInRow[]>();
         for (const row of rows) {
             const list = byDistrict.get(row.district) || [];
-            list.push({ farmer_id: row.farmer_id, phone: row.phone, channels: row.channels, categories: row.categories, lat: row.lat, lng: row.lng });
+            list.push({ farmer_id: row.farmer_id, phone: row.phone, channels: row.channels, categories: row.categories, crops: row.crops, lat: row.lat, lng: row.lng });
             byDistrict.set(row.district, list);
         }
 

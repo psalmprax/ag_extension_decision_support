@@ -125,7 +125,9 @@ function configureOrtWasm(ort: OrtModule) {
   if (ort.env?.wasm) {
     (ort.env.wasm as Record<string, unknown>).numThreads = 1;
     (ort.env.wasm as Record<string, unknown>).simd = true;
-    (ort.env.wasm as Record<string, unknown>).wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.0/dist/';
+    // Self-hosted runtime binaries (copied to /models/ort/ at build time by the
+    // selfHostOnnxRuntime vite plugin) — same-origin, CSP-compatible, no CDN.
+    (ort.env.wasm as Record<string, unknown>).wasmPaths = '/models/ort/';
   }
 }
 

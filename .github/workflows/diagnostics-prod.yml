@@ -9,6 +9,9 @@ permissions:
 jobs:
   diagnose:
     name: Run Diagnostics on Production Server
+    # Touches the production host: require maintainer approval via the
+    # production environment, matching reset-admin-prod.yml.
+    environment: production
     runs-on: ubuntu-latest
     steps:
       - name: SSH and run diagnostics

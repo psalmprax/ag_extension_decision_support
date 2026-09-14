@@ -99,42 +99,49 @@ class PlantDiseaseService {
     treatment: string[];
     prevention: string[];
     description: string;
+    susceptibleCrops: string[];
   }> = {
     'late_blight': {
       symptoms: ['Dark water-soaked lesions on leaves', 'White fungal growth on leaf undersides', 'Brown lesions on stems', 'Rapid leaf death'],
       treatment: ['Apply copper-based fungicide immediately', 'Remove and destroy infected plant parts', 'Apply mancozeb as preventive spray', 'Ensure proper spacing for air circulation'],
       prevention: ['Use resistant varieties', 'Avoid overhead irrigation', 'Rotate crops every 3 years', 'Apply preventive fungicide during humid weather'],
       description: 'Late blight (Phytophthora infestans) is a devastating disease affecting tomatoes and potatoes. It spreads rapidly in cool, wet conditions.',
+      susceptibleCrops: ['tomato', 'potato', 'solanaceae'],
     },
     'powdery_mildew': {
       symptoms: ['White powdery coating on leaves', 'Yellowing leaves', 'Distorted new growth', 'Premature leaf drop'],
       treatment: ['Apply sulfur-based fungicide', 'Use neem oil spray (2ml/L water)', 'Apply potassium bicarbonate solution', 'Remove severely infected leaves'],
       prevention: ['Ensure good air circulation', 'Avoid overhead watering', 'Plant resistant varieties', 'Apply preventive sulfur spray'],
       description: 'Powdery mildew is a common fungal disease that affects many crops. It thrives in warm, dry conditions with high humidity at night.',
+      susceptibleCrops: ['cucurbits', 'squash', 'grapes', 'apple', 'pea', 'tomato', 'general'],
     },
     'bacterial_wilt': {
       symptoms: ['Sudden wilting of entire plant', 'Yellowing of lower leaves', 'Brown discoloration in stem vascular tissue', 'Plant death within days'],
       treatment: ['No effective chemical treatment available', 'Remove and destroy infected plants', 'Apply copper sulfate to surrounding soil', 'Solarize soil in affected area'],
       prevention: ['Use resistant varieties', 'Rotate crops', 'Ensure well-drained soil', 'Avoid planting in previously infected areas'],
       description: 'Bacterial wilt (Ralstonia solanacearum) causes sudden wilting and death. It persists in soil for years and spreads through water and contaminated tools.',
+      susceptibleCrops: ['tomato', 'potato', 'banana', 'eggplant', 'pepper'],
     },
     'leaf_spot': {
       symptoms: ['Circular brown spots on leaves', 'Yellow halos around spots', 'Spots may merge causing leaf death', 'Premature defoliation'],
       treatment: ['Apply chlorothalonil fungicide', 'Remove infected leaves', 'Apply copper-based spray', 'Improve air circulation'],
       prevention: ['Avoid overhead irrigation', 'Space plants properly', 'Remove plant debris', 'Use disease-free seeds'],
       description: 'Leaf spot diseases are caused by various fungi and bacteria. They reduce photosynthetic area and can significantly impact yield.',
+      susceptibleCrops: ['bean', 'groundnut', 'maize', 'cabbage', 'general'],
     },
     'rust': {
       symptoms: ['Orange-brown pustules on leaf undersides', 'Yellow spots on upper leaf surface', 'Premature leaf drop', 'Reduced yield'],
       treatment: ['Apply triazole fungicide', 'Remove infected leaves', 'Apply sulfur spray', 'Use systemic fungicide for severe cases'],
       prevention: ['Plant resistant varieties', 'Ensure proper spacing', 'Avoid excessive nitrogen', 'Monitor fields regularly'],
       description: 'Rust diseases affect many cereal and legume crops. They reduce photosynthetic capacity and can cause significant yield losses.',
+      susceptibleCrops: ['maize', 'beans', 'wheat', 'coffee', 'sorghum'],
     },
     'mosaic_virus': {
       symptoms: ['Mottled yellow-green pattern on leaves', 'Stunted growth', 'Distorted leaves', 'Reduced fruit size'],
       treatment: ['No cure for viral diseases', 'Remove and destroy infected plants', 'Control insect vectors (aphids)', 'Use virus-free seeds'],
       prevention: ['Use certified virus-free seeds', 'Control aphid populations', 'Practice good hygiene', 'Remove weeds that host viruses'],
       description: 'Mosaic viruses are spread by insects and contaminated tools. Once infected, plants cannot be cured and must be removed.',
+      susceptibleCrops: ['cassava', 'maize', 'tomato', 'tobacco', 'cucumber'],
     },
   };
 
@@ -398,9 +405,10 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
     return dotProduct / (Math.sqrt(mag1) * Math.sqrt(mag2));
   }
 
-  async diagnoseFromSymptoms(symptoms: string[], _cropType?: string): Promise<DiseaseDiagnosis[]> {
+  async diagnoseFromSymptoms(symptoms: string[], cropType?: string): Promise<DiseaseDiagnosis[]> {
     const queryText = symptoms.join(' ');
     const queryTokens = this.tokenize(queryText);
+    const normalizedCrop = cropType ? cropType.trim().toLowerCase() : null;
     
     const { vocab, idf, docVectors } = this.buildTFIDFVectors();
     const queryVector = this.vectorize(queryTokens, vocab, idf);
@@ -408,6 +416,13 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
     const diagnoses: DiseaseDiagnosis[] = [];
 
     for (const [diseaseId, diseaseInfo] of Object.entries(PlantDiseaseService.DISEASE_DATABASE)) {
+      if (normalizedCrop) {
+        const isCompatible = diseaseInfo.susceptibleCrops.some(c =>
+          c === 'general' || normalizedCrop.includes(c) || c.includes(normalizedCrop)
+        );
+        if (!isCompatible) continue;
+      }
+
       const docVector = docVectors[diseaseId];
       const similarity = this.cosineSimilarity(queryVector, docVector);
 

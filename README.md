@@ -32,7 +32,7 @@ ag-extension-shared/           # Shared zod schemas — frontend/backend API con
 - **Multi-agent orchestration** — specialized AI agents (Agent Zero, Crew AI, OpenClaw) with self-healing monitoring
 - **MCP tool support** — 22 agricultural tools exposed via the Model Context Protocol
 - **Localization** — multi-language UI with a translation validator and CI hard gate
-- **Field/mobile support** — PWA + Capacitor mobile builds, offline-first with CRDT conflict resolution, low-end-device thermal/memory budgets
+- **Field/mobile support** — PWA + Capacitor mobile builds, offline-first with durable mirrored mutation queue and conflict reconciliation, low-end-device thermal/memory budgets
 - **Browser extension** — MV3 extension with sidepanel, offline queue, and content scripts
 - **Payments & comms** — Stripe/PayPal billing, SMS/USSD, WhatsApp, email workflows, web push
 - **Enterprise Security & Identity Hardening** — RFC 6238 TOTP Authenticator (2FA), brute-force account lockout, SHA-256 session invalidation, and GeoIP login auditing
@@ -44,7 +44,7 @@ ag-extension-shared/           # Shared zod schemas — frontend/backend API con
 - **Satellite Earth Observation & Sentinel-2 NDVI Indexing** — 10m multispectral NDVI/EVI/NDWI calculation & crop stress anomaly detection
 - **Agronomic Credit Scoring & Parametric Insurance** — 0–1000 creditworthiness scoring (AAA–C tiers) and automated weather-index insurance underwriting
 - **Multi-Tenant Agribusiness Federation** — Organization-Region-Cooperative hierarchical tenancy, custom chemical restrictions, and white-label branding
-- **Conflict-Free Bi-Directional Offline Sync (CRDT)** — Vector clocks and Last-Write-Wins (LWW) deterministic multi-master sync
+- **Durable Offline Mutation Queue & Stateful Conflict Reconciliation** — Cryptographic idempotency keys, dual IndexedDB/localStorage persistence, and exponential backoff retry
 - **On-Farm IoT & LoRaWAN Sensor Mesh Telemetry** — Soil moisture/salinity probe ingestion and VPD-driven smart solar irrigation
 - **EUDR Zero-Deforestation & GS1 Digital Passports** — EUDR 2020 forest baseline verification and cryptographically signed farm-to-fork batch passports
 - **Shared Mechanization & Drone Fleet Dispatcher** — Tractor sharing marketplace and ULV drone spray mission planning with wind speed safety buffers

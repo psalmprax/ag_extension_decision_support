@@ -68,13 +68,15 @@ services:
   # Dedicated Redis for BullMQ queues (scheduled SMS/emails/notifications).
   # noeviction: under memory pressure writes fail loudly instead of silently
   # evicting pending jobs — LRU on queue data means lost scheduled messages.
+  # appendonly: AOF with fsync everysec bounds job loss to ~1s on crash, vs the
+  # RDB default which can lose the entire snapshot window of scheduled sends.
   redis-queue:
     image: redis:alpine
     container_name: ag-dashboard-redis-queue
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
-    command: redis-server --requirepass ${REDIS_PASSWORD:-agext_redis_2024} --maxmemory 256mb --maxmemory-policy noeviction
+    command: redis-server --requirepass ${REDIS_PASSWORD:-agext_redis_2024} --maxmemory 256mb --maxmemory-policy noeviction --appendonly yes --appendfsync everysec
     ports:
       - "${REDIS_QUEUE_BIND_IP:-127.0.0.1}:${REDIS_QUEUE_PORT:-7503}:6379"
     volumes:

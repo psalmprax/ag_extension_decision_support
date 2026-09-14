@@ -28,16 +28,64 @@ const isContentRequestMessage = (message: unknown): message is ContentRequestMes
     );
 };
 
-/** Safely set HTML content — escapes any non-SVG text to prevent XSS */
+/**
+ * HTML sanitizer for toolbar templates.
+ *
+ * All HTML rendered in the content script passes through here. The toolbar
+ * templates are static (built-in SVG + text), but a sanitizer — not trust —
+ * is the enforcement point: anything dynamic that ever flows into a template
+ * cannot smuggle event handlers, script/style elements, or javascript: URLs
+ * into the host page, which runs with the extension's privileges.
+ */
+const ALLOWED_HTML_TAGS = new Set([
+  'div', 'span', 'svg', 'circle', 'path', 'rect', 'line', 'polyline', 'polygon', 'g', 'defs', 'title',
+  'p', 'strong', 'em', 'b', 'i', 'u', 'br', 'small', 'sub', 'sup', 'code', 'pre', 'span',
+]);
+const FORBIDDEN_ATTR_NAMES = /^(?:on[a-z]+|srcdoc|formaction)$/i;
+const FORBIDDEN_URL_ATTRS = new Set(['href', 'xlink:href', 'src', 'action', 'data', 'poster']);
+const FORBIDDEN_URL_VALUES = /^\s*(?:javascript|vbscript|data(?!:image\/(?:png|gif|jpeg|webp);)):/i;
+
+function sanitizeHtml(html: string): string {
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+  const walk = (node: Element): void => {
+    for (const child of Array.from(node.children)) {
+      if (!ALLOWED_HTML_TAGS.has(child.tagName.toLowerCase())) {
+        child.replaceWith(...Array.from(child.childNodes)); // unwrap, keep text
+        continue;
+      }
+      for (const attr of Array.from(child.attributes)) {
+        const name = attr.name.toLowerCase();
+        if (FORBIDDEN_ATTR_NAMES.test(name) ||
+            (FORBIDDEN_URL_ATTRS.has(name) && FORBIDDEN_URL_VALUES.test(attr.value))) {
+          child.removeAttribute(attr.name);
+        }
+      }
+      walk(child);
+    }
+  };
+  const body = doc.body;
+  if (body) walk(body);
+  return body ? body.innerHTML : '';
+}
+
+/**
+ * Sanitize, then set HTML content. The old implementation assigned
+ * `template.innerHTML` directly — a future template with dynamic interpolation
+ * would have executed in the host page. All callers go through the sanitizer.
+ */
 const safeSetHTML = (el: HTMLElement, html: string) => {
-  // For static SVG/icon templates with no user input, use a sandboxed approach
   const template = document.createElement('template');
-  template.innerHTML = html.trim();
+  template.innerHTML = sanitizeHtml(html.trim());
   el.appendChild(template.content);
 };
 
 export default defineContentScript({
-  matches: ['<all_urls>'],
+  // On-demand injection: NOT statically registered (no `matches`). The
+  // background service worker injects this script via chrome.scripting when
+  // the officer invokes "Capture this page" — so the extension holds no
+  // standing read access to arbitrary websites, only `activeTab`-style
+  // access granted at the moment of user intent.
+  registration: 'runtime',
   async main(ctx: ContentScriptContext) {
     console.log('GPExts Content Script Active');
 

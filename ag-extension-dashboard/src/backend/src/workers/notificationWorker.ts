@@ -1,5 +1,5 @@
 import { Worker, Job } from 'bullmq';
-import { redisConnection } from '../queues/connection';
+import { redisConnection, registerQueueClient } from '../queues/connection';
 import { NotificationJobData } from '../queues/notificationQueue';
 import { notificationService } from '../services/notificationService';
 import { logger } from '../utils/logger';
@@ -56,6 +56,7 @@ function getNotificationWorker(): Worker<NotificationJobData> | null {
             }
         );
 
+        registerQueueClient('notification-worker', () => _notificationWorker!.close());
         _notificationWorker.on('completed', (job) => {
             logger.info(`Notification worker: Job ${job.id} completed`);
         });

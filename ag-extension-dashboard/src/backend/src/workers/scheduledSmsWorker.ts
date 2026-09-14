@@ -1,5 +1,5 @@
 import { Worker, Job } from 'bullmq';
-import { redisConnection } from '../queues/connection';
+import { redisConnection, registerQueueClient } from '../queues/connection';
 import { ScheduledSmsJobData } from '../queues/scheduledSmsQueue';
 import { query } from '../services/databaseService';
 import { smsService } from '../services/smsService';
@@ -55,6 +55,7 @@ function getScheduledSmsWorker(): Worker<ScheduledSmsJobData> | null {
             processScheduledSmsJob,
             { connection: redisConnection, concurrency: 5 }
         );
+        registerQueueClient('scheduled-sms-worker', () => _worker!.close());
         _worker.on('completed', j => logger.info(`Scheduled SMS worker: Job ${j.id} completed`));
         _worker.on('failed', (j, err) => logger.error(`Scheduled SMS worker: Job ${j?.id} failed: ${err.message}`));
     }

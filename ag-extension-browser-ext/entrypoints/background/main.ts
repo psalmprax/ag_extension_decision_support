@@ -26,7 +26,8 @@ type BackgroundRequestMessage =
     | { action: 'delete_queued_request'; id: string }
     | { action: 'get_offline_status' }
     | { action: 'sync_now' }
-    | { action: 'open_sidepanel'; tab?: string };
+    | { action: 'open_sidepanel'; tab?: string }
+    | { action: 'inject_toolbar'; tabId?: number };
 
 const BACKGROUND_ACTIONS: ReadonlySet<string> = new Set([
     'queue_request',
@@ -40,7 +41,26 @@ const BACKGROUND_ACTIONS: ReadonlySet<string> = new Set([
     'get_offline_status',
     'sync_now',
     'open_sidepanel',
+    'inject_toolbar',
 ]);
+
+/**
+ * On-demand toolbar injection.
+ *
+ * The content script is registered at runtime (no `matches` in the manifest),
+ * so the extension has NO standing access to arbitrary pages. Injection happens
+ * only here, on explicit user intent, into the tab the user is looking at.
+ * `activeTab` grants temporary host access for that tab once the user invoked
+ * the extension (context menu / toolbar action); `scripting` provides the API.
+ */
+async function injectToolbar(tabId?: number): Promise<void> {
+    const targetId = tabId ?? (await chromeAPI.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+    if (!targetId) throw new Error('No active tab to inject the toolbar into');
+    await chromeAPI.scripting.executeScript({
+        target: { tabId: targetId },
+        files: ['content-scripts/ag-toolbar.js'],
+    });
+}
 
 const isBackgroundRequestMessage = (message: unknown): message is BackgroundRequestMessage => {
     if (!message || typeof message !== 'object') return false;
@@ -713,6 +733,15 @@ export default defineBackground(() => {
                 title: 'Summarize Page',
                 contexts: ['page']
             });
+
+            // On-demand toolbar capture — the ONLY path that injects the
+            // content script (runtime registration; no standing <all_urls>).
+            chromeAPI.contextMenus.create({
+                id: 'alfa-capture-page',
+                parentId: 'alfa-root',
+                title: 'Capture this page',
+                contexts: ['page']
+            });
         });
 
         // Initial status check
@@ -737,6 +766,12 @@ export default defineBackground(() => {
 
     // Context Menu Click Handler
     chromeAPI.contextMenus.onClicked.addListener((info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab) => {
+        if (info.menuItemId === 'alfa-capture-page') {
+            // User explicitly invoked the extension on this tab → activeTab
+            // access is granted; inject the toolbar on demand.
+            if (tab?.id) void injectToolbar(tab.id).catch(err => console.error('Toolbar injection failed:', err));
+            return;
+        }
         if (info.menuItemId === 'alfa-analyze' && info.selectionText && tab?.windowId) {
             chromeAPI.sidePanel.open({ windowId: tab.windowId }).then(() => {
                 // Short delay to ensure sidepanel is ready
@@ -841,6 +876,10 @@ export default defineBackground(() => {
                         break;
                     case 'sync_now':
                         await processQueue();
+                        sendResponse({ success: true });
+                        break;
+                    case 'inject_toolbar':
+                        await injectToolbar(message.tabId);
                         sendResponse({ success: true });
                         break;
                     case 'open_sidepanel':

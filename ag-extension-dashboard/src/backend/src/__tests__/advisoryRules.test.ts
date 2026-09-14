@@ -146,4 +146,59 @@ describe('seasonalAdvisoryService.evaluateDistrict', () => {
         expect(fired).toEqual([]);
         expect(mockSend).not.toHaveBeenCalled();
     });
+
+    it('skips fall armyworm advisory when farmer only grows non-cereal crops (e.g. coffee)', async () => {
+        // Hot days to trigger FAW
+        mockGetDaily.mockResolvedValue(
+            Array.from({ length: 30 }, (_, i) => ({
+                date: `2026-08-${String(i + 1).padStart(2, '0')}`,
+                T2M: 28,
+                T2M_MIN: 22,
+                T2M_MAX: 34,
+                PRECTOTCORR: 1,
+                RH2M: 60,
+            }))
+        );
+        mockQuery.mockImplementation((sql: string) => {
+            if (sql.includes('ON CONFLICT (dedupe_hash) DO NOTHING')) {
+                return Promise.resolve({ rows: [{ id: 'd-faw' }], rowCount: 1 });
+            }
+            return Promise.resolve({ rows: [], rowCount: 0 });
+        });
+
+        const coffeeFarmer = [{
+            farmer_id: 'f-coffee', phone: '+265999777888', channels: ['whatsapp'],
+            categories: ['faw_degree_day'], crops: ['coffee', 'macadamia'], lat: -13.9, lng: 33.7,
+        }];
+        await seasonalAdvisoryService.evaluateDistrict('Lilongwe', coffeeFarmer, '2026-08-24');
+        expect(mockSend).not.toHaveBeenCalled();
+    });
+
+    it('dispatches fall armyworm advisory when farmer grows maize', async () => {
+        mockGetDaily.mockResolvedValue(
+            Array.from({ length: 30 }, (_, i) => ({
+                date: `2026-08-${String(i + 1).padStart(2, '0')}`,
+                T2M: 28,
+                T2M_MIN: 22,
+                T2M_MAX: 34,
+                PRECTOTCORR: 1,
+                RH2M: 60,
+            }))
+        );
+        mockQuery.mockImplementation((sql: string) => {
+            if (sql.includes('ON CONFLICT (dedupe_hash) DO NOTHING')) {
+                return Promise.resolve({ rows: [{ id: 'd-faw-maize' }], rowCount: 1 });
+            }
+            return Promise.resolve({ rows: [], rowCount: 0 });
+        });
+
+        const maizeFarmer = [{
+            farmer_id: 'f-maize', phone: '+265999777999', channels: ['whatsapp'],
+            categories: ['faw_degree_day'], crops: ['maize', 'beans'], lat: -13.9, lng: 33.7,
+        }];
+        await seasonalAdvisoryService.evaluateDistrict('Lilongwe', maizeFarmer, '2026-08-24');
+        expect(mockSend).toHaveBeenCalledTimes(1);
+        expect(mockSend.mock.calls[0][0].to).toBe('+265999777999');
+    });
 });
+

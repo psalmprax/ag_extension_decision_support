@@ -10,6 +10,7 @@ import { createTables } from './schema';
 let pool: Pool | null = null;
 
 export async function initializeDatabase(): Promise<void> {
+  const isProduction = process.env.NODE_ENV === 'production';
   try {
     pool = new Pool({
       connectionString: config.database.url,
@@ -46,18 +47,32 @@ export async function initializeDatabase(): Promise<void> {
     getPrisma();
     logger.info('Prisma ORM initialized');
 
-    // Sync Prisma schema with database
-    await syncPrismaSchema();
+    // Schema management ownership:
+    //  - Production: the docker entrypoint applies `prisma migrate deploy`
+    //    BEFORE the app boots. Running schema sync here again raced across
+    //    replicas booting concurrently and blocked the event loop (execSync).
+    //  - Dev/test: `prisma db push` + legacy table bootstrap keeps the
+    //    low-friction local workflow.
+    if (isProduction) {
+      logger.info('Production: skipping boot-time schema sync (migrations owned by docker-entrypoint.sh)');
+    } else {
+      await syncPrismaSchema();
+      await createTables(pool);
+    }
 
-    // Create tables if they don't exist (legacy fallback)
-    await createTables(pool);
-
-    // Seed initial data if tables are empty
+    // Seed initial data if tables are empty (self-skips in production)
     await seedInitialData();
   } catch (error) {
     logger.error('Failed to initialize database:', error);
-    // Continue without database for development
-    logger.warn('Continuing without database connection');
+    if (isProduction) {
+      // Fail fast: a container that stays up while unable to serve any
+      // request is a zombie — orchestrators never restart it, Traefik keeps
+      // routing to it, and every call 500s. Crashing surfaces the failure
+      // and lets the restart policy (plus health gates) handle recovery.
+      throw error;
+    }
+    // Development convenience only: keep the server up without a DB.
+    logger.warn('Continuing without database connection (development only)');
   }
 }
 
