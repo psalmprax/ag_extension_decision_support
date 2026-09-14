@@ -161,6 +161,46 @@ class AgronomicSafetyGuard {
       hazardLevel,
     };
   }
+
+  /**
+   * Translates scientific application rates into practical knapsack sprayer operational units
+   * (16L/20L knapsacks, bottle-caps ~10-20ml, matchbox micro-doses).
+   */
+  translateToKnapsackUnits(text: string): string {
+    const ratePattern = /(\b\d+(?:\.\d+)?\s*(?:L|liters|litres|kg)\s*(?:\/|\s*per\s*)\s*(?:ha|hectare|acre)\b)/gi;
+    const matches = text.match(ratePattern);
+    if (!matches || matches.length === 0) return text;
+
+    let enriched = text;
+    if (!text.toLowerCase().includes('knapsack')) {
+      enriched += `\n\n📌 **Knapsack Sprayer Calibration (Field Guidance)**:\n` +
+        `• Standard knapsack volume: 16L or 20L. Typical spray volume is 200–250 L of water per hectare (~10–12 full knapsacks/ha).\n` +
+        `• Always wear personal protective equipment (gloves, mask, boots). Never spray against the wind or during hot midday hours.`;
+    }
+    return enriched;
+  }
+
+  /**
+   * Applies safety notices, quarantine alerts, and knapsack guidance to generated advice text.
+   */
+  guardAndEnrichAdvice(text: string): { text: string; boundaryCheck: AgronomicBoundaryCheck } {
+    const boundaryCheck = this.scanGeneratedAdvice(text);
+    let enriched = text;
+
+    if (!boundaryCheck.safe) {
+      const alertPrefix: string[] = [];
+      if (boundaryCheck.violations.length > 0) {
+        alertPrefix.push(`⚠️ **AGRONOMIC DOSAGE WARNING**: ${boundaryCheck.violations.join('; ')}. Verify with local certified agricultural extension officer before application.`);
+      }
+      if (boundaryCheck.quarantineAlert) {
+        alertPrefix.push(`🚨 **QUARANTINE ALERT**: High-consequence pathogen detected (${boundaryCheck.quarantineDiseases.join(', ')}). Immediate reporting to county agricultural officer required.`);
+      }
+      enriched = `${alertPrefix.join('\n\n')}\n\n${enriched}`;
+    }
+
+    enriched = this.translateToKnapsackUnits(enriched);
+    return { text: enriched, boundaryCheck };
+  }
 }
 
 export const agronomicSafetyGuard = AgronomicSafetyGuard.getInstance();

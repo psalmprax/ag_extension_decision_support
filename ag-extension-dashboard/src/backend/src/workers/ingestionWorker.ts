@@ -122,7 +122,7 @@ function startIngestionWorker(): void {
         runIfLeader('ingestion-worker', async () => {
             logger.info('Triggering initial Ingestion crawl...');
             await runBatchIngestion();
-        }).catch(err => logger.error('Initial ingestion failed:', err));
+        }).catch((err: unknown) => logger.error('Initial ingestion failed:', err));
     }, 30000);
     initialRun.unref?.();
 
@@ -134,7 +134,7 @@ function startIngestionWorker(): void {
         runIfLeader('ingestion-worker', async () => {
             logger.info(`Recurring Ingestion trigger started (${config.ingestion.schedule})...`);
             await runBatchIngestion();
-        }).catch(err => logger.error('Recurring ingestion failed:', err));
+        }).catch((err: unknown) => logger.error('Recurring ingestion failed:', err));
     }, intervalMs);
     ingestionTimer.unref?.();
 }

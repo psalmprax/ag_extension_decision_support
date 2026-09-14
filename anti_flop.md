@@ -144,3 +144,8 @@ When a test, build, or container fails during development:
 ### 2026-09-14 — CI action-pin fix: trivy-action SHA typo (stage)
 - Scope: `security-audit.yml` backend/frontend scan steps pinned a nonexistent SHA (`...87db90`); corrected to the verified v0.29.0 commit (`...87dbb0`, confirmed via upstream `ls-remote`). Both steps updated, YAML re-validated.
 - Verification: `git ls-remote` match on `refs/tags/v0.29.0`, `yaml.safe_load` parse clean.
+
+### 2026-09-14 — CI tsc red: half-landed concurrent work completed (stage)
+- Root cause: two half-landed breakages — `ingestionWorker.ts` imported `runIfLeader` without its module file (sealed into 20741c5 from concurrent worktree state), and `completions.ts` called `guardAndEnrichAdvice` whose method existed only uncommitted. Plus 2 implicit-`any` catch params.
+- Fix: committed `leaderElection.ts` + tests (201+177 lines, fail-closed Redis leases, fencing tokens), the +40-line guard method, typed both catches `(err: unknown)`; refactored `runIfLeader` (complexity 44→within limit) into `runStatelessFallback`/`learnDeposal`/`ensureRenewalTimer`/`runLeaderTask` with identical behavior.
+- Verification: `tsc` clean, eslint clean, leaderElection 8/8 green, full suite **91/91, 835/835**. Commit credits concurrent work; no reverts of others' code.
