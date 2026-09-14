@@ -1,6 +1,5 @@
 import crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 

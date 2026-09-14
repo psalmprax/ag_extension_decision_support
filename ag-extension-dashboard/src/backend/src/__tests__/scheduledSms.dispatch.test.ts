@@ -18,6 +18,7 @@ jest.mock('../services/databaseService', () => ({
 }));
 
 import { processScheduledSmsJob } from '../workers/scheduledSmsWorker';
+import { ScheduledSmsJobData } from '../queues/scheduledSmsQueue';
 import { smsService } from '../services/smsService';
 import { logger } from '../utils/logger';
 import type { Job } from 'bullmq';
@@ -26,8 +27,8 @@ let sendSmsSpy: jest.SpyInstance;
 
 const dbResult = (rowCount = 0, rows: unknown[] = []) => ({ rows, rowCount });
 
-const makeJob = (data: Record<string, unknown>): Job<any> =>
-    ({ id: 'job-1', data }) as unknown as Job<any>;
+const makeJob = (data: Record<string, unknown>): Job<ScheduledSmsJobData> =>
+    ({ id: 'job-1', data }) as unknown as Job<ScheduledSmsJobData>;
 
 beforeEach(() => {
     mockQuery.mockReset();

@@ -90,24 +90,32 @@ function isMediaValue(key: string, val: unknown): boolean {
  * on audio/image blobs), while media fields that decode to printable text are
  * UNREDACTED in decoded form so hidden injection payloads are still scanned.
  */
+/** Redact one string value: media payloads become a sentinel (or decoded smuggling text); everything else passes through. */
+function redactStringValue(key: string, payload: string): unknown {
+  if (!isMediaValue(key, payload)) return payload;
+  const smuggled = decodeSmuggledText(payload);
+  return smuggled !== null ? smuggled : '[SANITIZED_MEDIA_PAYLOAD]';
+}
+
+/** Redact one plain-object level, skipping prototype-pollution keys. */
+function redactObjectEntries(payload: Record<string, unknown>, depth: number): Record<string, unknown> {
+  const cleaned: Record<string, unknown> = Object.create(null);
+  for (const [k, v] of Object.entries(payload)) {
+    if (k === '__proto__' || k === 'constructor' || k === 'prototype') continue;
+    cleaned[k] = redactMediaPayloads(v, k, depth + 1);
+  }
+  return cleaned;
+}
+
 function redactMediaPayloads(payload: unknown, key = '', depth = 0): unknown {
   if (depth > 20) return '[NESTING_LIMIT_EXCEEDED]';
   if (payload === null || payload === undefined) return payload;
-  if (typeof payload === 'string') {
-    if (!isMediaValue(key, payload)) return payload;
-    const smuggled = decodeSmuggledText(payload);
-    return smuggled !== null ? smuggled : '[SANITIZED_MEDIA_PAYLOAD]';
-  }
+  if (typeof payload === 'string') return redactStringValue(key, payload);
   if (Array.isArray(payload)) {
     return payload.map(item => redactMediaPayloads(item, key, depth + 1));
   }
   if (typeof payload === 'object') {
-    const cleaned: Record<string, unknown> = Object.create(null);
-    for (const [k, v] of Object.entries(payload as Record<string, unknown>)) {
-      if (k === '__proto__' || k === 'constructor' || k === 'prototype') continue;
-      cleaned[k] = redactMediaPayloads(v, k, depth + 1);
-    }
-    return cleaned;
+    return redactObjectEntries(payload as Record<string, unknown>, depth);
   }
   return payload;
 }

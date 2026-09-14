@@ -133,7 +133,6 @@ describe('logout revocation', () => {
     it('issues the auth cookie pair on login', async () => {
         // Real hash of 'password' so bcrypt.compare succeeds.
         const passwordHash = await bcrypt.hash('password', 10);
-        const token = makeToken('user-login-cookie');
         mockQuery.mockImplementation((sql: string) => {
             if (typeof sql === 'string' && sql.includes('FROM users WHERE email')) {
                 return Promise.resolve({

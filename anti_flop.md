@@ -41,6 +41,7 @@ A **flop** is an incomplete implementation, an introduced regression, a broken b
   - Security gates: `npm run security:test` and `npm run security:audit`.
   - Database schema integrity: `npm run check:drift` and `scripts/prisma-migration-replay-check.cjs`.
   - Shared contract sync: `npm run shared:check`.
+- Production-touching workflows (`deploy-all.yml` production job, `reset-admin-prod.yml`, `diagnostics-prod.yml`, `ssl-cert-fix.yml`) must declare `environment: production` (required-reviewer approval) and destructive inputs must default to **false** — a routine manual run must never mutate production on its own.
 
 ### 4. Zero-Connectivity & Edge Resilience (Zero-Conn Field Edge)
 - Agricultural field extension workers operate in rural areas with erratic or zero cellular network access.
@@ -51,9 +52,12 @@ A **flop** is an incomplete implementation, an introduced regression, a broken b
 
 ### 5. Resource Protection & Scale Safety
 - **Media & Audio Streaming**: Voice notes (Whisper STT) and high-resolution crop imagery must be streamed in chunks (using streams or presigned S3 URLs via `@aws-sdk/client-s3`), never buffered monolithically in memory.
-- **Queue Limits**: BullMQ workers and Redis queues must specify concurrency limits, TTLs, and job eviction policies to avoid Redis memory exhaustion.
+- **Queue Limits**: BullMQ workers and Redis queues must specify concurrency limits, TTLs, and job eviction policies to avoid Redis memory exhaustion. The queue Redis (`redis-queue`) must run `--appendonly yes` (AOF, `appendfsync everysec`) — RDB-only snapshots can lose an entire snapshot window of scheduled SMS/email jobs on crash.
 - **Geospatial & Spatial Calculations**: WGS-84 polygon acreage calculations and GeoJSON spatial lookups must avoid $O(N^2)$ brute-force intersection loops; use spatial indexing (e.g. PostGIS indexes, R-tree bounds).
 - **Rate Limiting & Token Budgets**: All LLM queries (Gemini, Anthropic, Groq) and external weather API calls (Open-Meteo, NOAA) must be wrapped in rate limiters, retries with exponential backoff, and caching layers (`semanticCacheService.ts`).
+- **Singleton Workers Must Be Leader-Gated**: Any interval worker with one-deployment side effects (alert dispatch, ingestion crawls, outreach delivery, self-healing recovery, agent task loop, SMS polling fallbacks) must gate ticks through Redis lease election (`services/leaderElection.ts`). Election is **fail-closed**: when Redis is unavailable, singleton work does not run (set `ALLOW_STATELESS_LEADER=true` only for single-node dev). Workers that are already exactly-once by construction (BullMQ consumers with atomic row claims, `concurrency: 1`) are exempt.
+- **Fail-Fast Boot on Load-Bearing Dependencies**: In production, a failed database initialization must crash the process (`process.exit(1)`), never serve a zombie API that 500s every request. Boot-time schema mutation (`prisma db push`, ad-hoc `CREATE TABLE`) is forbidden in production — migrations are owned by the container entrypoint (`prisma migrate deploy`) before boot, so replicas never race.
+- **Complete Graceful Shutdown**: SIGTERM handling must stop interval workers first, drain HTTP (`close()` + `closeIdleConnections()`), release leader leases (immediate failover, not TTL-bound), close Socket.IO/adapter and BullMQ workers, then close DB/cache — every step under a hard timeout cap (`SHUTDOWN_TIMEOUT_MS`) so the process always exits. Unhandled rejections must log, not `exit(1)` the replica.
 
 ### 6. Git Hygiene & Branch Protection
 - In accordance with the project constitution (`CLAUDE.md`):
@@ -126,3 +130,13 @@ When a test, build, or container fails during development:
 - Contract changes were intentional and approved: session fail-open→fail-closed, webhook dev-bypass removal, `yieldHistory`/`boundaryCoordinates` typing. Affected tests were updated to the new contracts, not deleted; mid-session regressions (39) were triaged to the new contracts plus one genuine Twilio proxy regression, fixed by stripping only the default `:443`.
 - Verification at commit: backend `tsc --noEmit` clean, frontend `tsc --noEmit` clean, eslint clean on touched files, backend full suite **90/90 suites, 830/830 tests**, frontend `syncQueueService` suite green.
 - Residual: `logger.crit` was missing on the real logger while pre-existing call sites invoked it — added (error-level emission); field calibration harnesses await one pilot season of data per `docs/FIELD_CALIBRATION_PROTOCOL.md`.
+
+### 2026-09-14 — Multi-replica scale + lifecycle hardening (stage, uncommitted)
+- Scope: Redis-lease leader election (`services/leaderElection.ts`, fail-closed, fencing tokens) gating alert/ingestion/outreach/agent-loop/self-healing/SMS-poll interval workers; production boot-time schema sync removed (entrypoint-owned `migrate deploy`); fail-fast DB boot in prod; full graceful shutdown (worker stop → HTTP drain → lease release → adapter/BullMQ close → DB/cache close, per-step timeout caps); adapter pub/sub clients retained and closed; `ssl-cert-fix.yml` `force_renew` default flipped to false + `environment: production` gates on prod-touching workflows; dead divergent `Dockerfile.production` pair deleted (docs updated); `redis-queue` AOF (`appendonly yes`, `appendfsync everysec`).
+- Correction of record: the Socket.IO Redis adapter was found **already wired** in `index.ts` — the audit finding was stale (grep scoped to `socketService.ts` only); the actual gap (adapter connections leaked on shutdown) is fixed.
+- Verification: backend `tsc --noEmit` clean, full suite **90/90 suites, 830/830 tests** (8 new `leaderElection` tests: acquire/renew/depose/fail-closed/stateless/release), `docker compose config` valid, all touched workflow YAMLs parse.
+- Residual: uncommitted at time of writing; staging should verify two-replica boot + SIGTERM failover handover before merge to master.
+
+### 2026-09-14 — CI lint remediation: complexity errors + warning cleanup (stage)
+- Scope: extracted `redactStringValue`/`redactObjectEntries` (`middleware/securityGate.ts`, 16→≤15) and `matchesWildcardSuffix` (`utils/corsOrigin.ts`, 18→≤15) with behavior-identical logic; removed 4 dead declarations (`token` in logout test, `jwt` import, `Request/Response/NextFunction` in swagger); typed `scheduledSms` test job as `Job<ScheduledSmsJobData>` (first attempt with a generic broke `tsc`, corrected before finishing).
+- Verification: eslint clean on all 6 CI-flagged files, backend `tsc --noEmit` clean, 33/33 tests pass across gate, CORS behavior (9, confirming identical logic), SMS dispatch, and logout suites.

@@ -1,6 +1,6 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import { Application, Request, Response, NextFunction } from 'express';
+import { Application } from 'express';
 import path from 'path';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
