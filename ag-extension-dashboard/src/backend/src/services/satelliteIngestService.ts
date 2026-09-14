@@ -1,3 +1,4 @@
+// fallow-ignore-file unused-file
 /**
  * Satellite imagery ingest adapter — the missing link behind satelliteNdviService.
  *

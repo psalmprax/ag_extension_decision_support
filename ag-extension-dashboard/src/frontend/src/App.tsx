@@ -39,6 +39,8 @@ import { useAppModalState } from './hooks/useAppModalState';
 import { useAppQueries } from './hooks/useAppQueries';
 import { useAppMenuActions } from './hooks/useAppMenuActions';
 import { fetchUnreadCount } from '@/api/notificationService';
+import { ensurePersistentQueueStorage } from '@/api/syncQueueService';
+import { OfflineQueueBanner } from './components/common/OfflineQueueBanner';
 
 // Lazy loaded components
 const LandingPage = lazy(() =>
@@ -116,6 +118,12 @@ function App() {
   // in a single pass.
   const prevPathRef = React.useRef<string | null>(null);
   const prevTabRef = React.useRef(activeTab);
+
+  React.useEffect(() => {
+    // Request persistent storage once so the offline mutation queue survives
+    // browser storage pressure (eviction = silent field-data loss).
+    void ensurePersistentQueueStorage();
+  }, []);
 
   React.useEffect(() => {
     const pathChanged = prevPathRef.current === null || prevPathRef.current !== location.pathname;
@@ -486,6 +494,8 @@ function App() {
         >
           {t('skip_to_main_content') || 'Skip to main content'}
         </a>
+
+        <OfflineQueueBanner />
 
         <AppHeader
           sidebarOpen={sidebarOpen}

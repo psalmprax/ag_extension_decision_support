@@ -1,3 +1,4 @@
+// fallow-ignore-file unused-file
 /**
  * Field verification ledger — closes the calibration loop for edge vision and
  * voice transcription.

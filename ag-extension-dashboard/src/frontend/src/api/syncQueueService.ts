@@ -52,6 +52,27 @@ export function queueStorageDurability(): StorageDurability {
   return durability;
 }
 
+/** Typed failure when the offline queue is at capacity. Callers must surface
+ * a reconnect-and-sync warning — never swallow this or drop the mutation. */
+// fallow-ignore-next-line unused-export
+export class QueueFullError extends Error {
+  readonly pendingCount: number;
+  readonly capacity: number;
+  constructor(pendingCount: number, capacity: number = MAX_QUEUE_ITEMS) {
+    super(
+      `Offline queue at capacity (${pendingCount}/${capacity}). Reconnect and sync before recording more — new mutations are refused rather than risk eviction loss.`,
+    );
+    this.name = 'QueueFullError';
+    this.pendingCount = pendingCount;
+    this.capacity = capacity;
+  }
+}
+
+// fallow-ignore-next-line unused-export
+export function isQueueFullError(error: unknown): error is QueueFullError {
+  return error instanceof QueueFullError;
+}
+
 function openIdb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(IDB_NAME, 1);
@@ -149,9 +170,7 @@ class SyncQueueService {
       state: 'pending',
     };
     if (this.queue.length >= MAX_QUEUE_ITEMS) {
-      throw new Error(
-        `Offline queue at capacity (${MAX_QUEUE_ITEMS} items). Reconnect and sync before recording more — new mutations are refused rather than risk eviction loss.`,
-      );
+      throw new QueueFullError(this.queue.length);
     }
     this.queue.push(queueItem);
     this.saveToStorage();

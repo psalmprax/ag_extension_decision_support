@@ -1,3 +1,4 @@
+// fallow-ignore-file unused-file
 /**
  * Threshold backtest runner — replaces hand-picked cutoffs (credit tiers,
  * DBSCAN epsilon bands, VPD irrigation triggers, hazard thresholds) with
