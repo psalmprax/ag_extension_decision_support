@@ -1,6 +1,8 @@
 import { logger } from '@/utils/logger';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 import { query } from '@/services/databaseService';
+import { runIfLeader } from '@/services/leaderElection';
+import os from 'os';
 
 export interface AgentTask {
   id: string;
@@ -18,6 +20,51 @@ export interface AgentTask {
   handoffReason?: string;
   retryCount: number;
   maxRetries: number;
+}
+
+/**
+ * Lease-based task claiming.
+ *
+ * The in-memory queue is only ever touched by the leader-elected worker loop,
+ * but a leader can lose its lease mid-task (network partition, restart, GC
+ * pause). Without a DB-side lease another replica's boot-time queue load — or
+ * a new leader's reclaim sweep — would hand the SAME task to two executors.
+ *
+ * Lease protocol:
+ *  - Claiming a task writes `locked_by` (replica id) + `lease_expires_at` via
+ *    a single conditional UPDATE. Only the winner proceeds.
+ *  - A live executor renews the lease from a heartbeat timer; expiry means
+ *    the owner is gone (or deposed) and the task may be reclaimed.
+ *  - On reclaim the task goes back to `pending` and its retry budget is
+ *    consumed, so a poisoned task cannot loop forever.
+ */
+const LEASE_TTL_MS = 120_000; // > 2x worker tick + AI call overhead headroom
+const LEASE_RENEW_INTERVAL_MS = 30_000;
+const instanceId = `${process.pid}-${os.hostname()}-${Math.random().toString(36).slice(2, 8)}`;
+const leaseTimers = new Map<string, NodeJS.Timeout>();
+
+function stopLeaseTimer(taskId: string): void {
+  const t = leaseTimers.get(taskId);
+  if (t) {
+    clearInterval(t);
+    leaseTimers.delete(taskId);
+  }
+}
+
+function startLeaseHeartbeat(taskId: string): void {
+  stopLeaseTimer(taskId);
+  const timer = setInterval(() => {
+    void query(
+      `UPDATE agent_tasks
+         SET lease_expires_at = NOW() + ($2 || ' milliseconds')::interval
+       WHERE id = $1 AND locked_by = $3 AND status = 'running'`,
+      [taskId, String(LEASE_TTL_MS), instanceId]
+    ).catch(err =>
+      logger.warn('Agent task lease renewal failed:', err instanceof Error ? err.message : err)
+    );
+  }, LEASE_RENEW_INTERVAL_MS);
+  (timer as unknown as { unref?: () => void }).unref?.();
+  leaseTimers.set(taskId, timer);
 }
 
 export interface AgentCapability {
@@ -46,16 +93,31 @@ interface PersistedAgentTaskRow {
   handoff_reason: string | null;
   retry_count: number;
   max_retries: number;
+  locked_by?: string | null;
+  lease_expires_at?: Date | string | null;
+}
+
+interface AgentTaskRow extends PersistedAgentTaskRow {
+  locked_by: string | null;
+  lease_expires_at: Date | string | null;
 }
 
 function mapPersistedTask(row: PersistedAgentTaskRow): AgentTask {
+  const status: AgentTask['status'] =
+    row.status === 'running' &&
+    row.lease_expires_at && new Date(row.lease_expires_at).getTime() > Date.now() &&
+    row.locked_by && row.locked_by !== instanceId
+      ? 'pending' // another live replica holds the lease — requeue locally, never run it here
+      : row.status === 'running'
+        ? 'pending' // our own or an expired-lease 'running' row is safe to re-claim
+        : row.status;
   return {
     id: row.id,
     agentId: row.agent_id,
     type: row.task_type,
     payload: row.payload || {},
     priority: row.priority,
-    status: row.status === 'running' ? 'pending' : row.status,
+    status,
     createdAt: new Date(row.created_at).toISOString(),
     startedAt: row.started_at ? new Date(row.started_at).toISOString() : undefined,
     completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : undefined,
@@ -88,8 +150,14 @@ class AgentOrchestrator {
     if (this.persistenceLoaded) return;
     this.persistenceLoaded = true;
     try {
-      const result = await query<PersistedAgentTaskRow>(
-        `SELECT * FROM agent_tasks WHERE status IN ('pending', 'running') ORDER BY created_at ASC`
+      // Only pull rows this replica may run: pending, or running rows whose
+      // lease has lapsed (owner crashed/deposed). Rows leased to another live
+      // replica stay untouched — that is the point of the lease.
+      const result = await query<AgentTaskRow>(
+        `SELECT * FROM agent_tasks
+          WHERE status = 'pending'
+             OR (status = 'running' AND (lease_expires_at IS NULL OR lease_expires_at < NOW()))
+          ORDER BY created_at ASC`
       );
       for (const row of result.rows) {
         const task = mapPersistedTask(row);
@@ -102,16 +170,18 @@ class AgentOrchestrator {
 
   private async persistTask(task: AgentTask): Promise<void> {
     try {
-      await query(
-        `INSERT INTO agent_tasks
+      await query(        `INSERT INTO agent_tasks
           (id, agent_id, task_type, payload, priority, status, created_at, started_at, completed_at,
-           result, error, handed_off_to, handoff_reason, retry_count, max_retries, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())
+            result, error, handed_off_to, handoff_reason, retry_count, max_retries,
+            locked_by, lease_expires_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW())
          ON CONFLICT (id) DO UPDATE SET
            agent_id = EXCLUDED.agent_id, status = EXCLUDED.status, started_at = EXCLUDED.started_at,
            completed_at = EXCLUDED.completed_at, result = EXCLUDED.result, error = EXCLUDED.error,
            handed_off_to = EXCLUDED.handed_off_to, handoff_reason = EXCLUDED.handoff_reason,
-           retry_count = EXCLUDED.retry_count, max_retries = EXCLUDED.max_retries, updated_at = NOW()`,
+           retry_count = EXCLUDED.retry_count, max_retries = EXCLUDED.max_retries,
+           locked_by = EXCLUDED.locked_by, lease_expires_at = EXCLUDED.lease_expires_at,
+           updated_at = NOW()`,
         [
           task.id,
           task.agentId,
@@ -128,6 +198,8 @@ class AgentOrchestrator {
           task.handoffReason || null,
           task.retryCount,
           task.maxRetries,
+          task.status === 'running' ? instanceId : null,
+          task.status === 'running' ? new Date(Date.now() + LEASE_TTL_MS) : null,
         ]
       );
     } catch (error) {
@@ -198,11 +270,41 @@ class AgentOrchestrator {
       return null;
     }
 
+    // Atomically claim the task in the DB before running it. The conditional
+    // UPDATE is a single-statement compare-and-set: it only succeeds when the
+    // row is still claimable (pending, or running with a lapsed lease). If
+    // another replica claimed it first, rowCount is 0 — drop it locally.
     task.status = 'running';
     task.startedAt = new Date().toISOString();
+    let claimed = false;
+    try {
+      const claim = await query(
+        `UPDATE agent_tasks
+           SET status = 'running',
+               started_at = COALESCE(started_at, NOW()),
+               locked_by = $2,
+               lease_expires_at = NOW() + ($3 || ' milliseconds')::interval,
+               updated_at = NOW()
+         WHERE id = $1
+           AND (status = 'pending'
+                OR (status = 'running' AND (lease_expires_at IS NULL OR lease_expires_at < NOW())))`,
+        [task.id, instanceId, String(LEASE_TTL_MS)]
+      );
+      claimed = claim.rowCount > 0;
+    } catch (error) {
+      // DB unavailable — legacy dev fallback: run optimistically without a lease.
+      logger.warn('Agent task claim failed; running without DB lease:', error instanceof Error ? error.message : error);
+      claimed = true;
+    }
+    if (!claimed) {
+      logger.info(`Task ${task.id} already claimed by another replica; skipping`);
+      return null;
+    }
+
     agent.currentLoad++;
     this.activeTasks.set(task.id, task);
     await this.persistTask(task);
+    startLeaseHeartbeat(task.id);
 
     try {
       const result = await this.executeTaskOnAgent(task, agent);
@@ -211,6 +313,7 @@ class AgentOrchestrator {
       task.completedAt = new Date().toISOString();
       agent.currentLoad--;
       this.activeTasks.delete(task.id);
+      stopLeaseTimer(task.id);
       this.completedTasks.push(task);
       await this.persistTask(task);
 
@@ -219,6 +322,7 @@ class AgentOrchestrator {
     } catch (error) {
       agent.currentLoad--;
       this.activeTasks.delete(task.id);
+      stopLeaseTimer(task.id);
 
       if (task.retryCount < task.maxRetries) {
         task.retryCount++;
@@ -243,6 +347,7 @@ class AgentOrchestrator {
   async handoffTask(taskId: string, targetAgentId: string, reason: string): Promise<boolean> {
     const task = this.activeTasks.get(taskId) || this.taskQueue.find(t => t.id === taskId);
     if (!task) return false;
+    stopLeaseTimer(taskId);
 
     const targetAgent = this.agentRegistry.get(targetAgentId);
     if (!targetAgent || targetAgent.health === 'offline') return false;
@@ -315,11 +420,20 @@ class AgentOrchestrator {
 
   startWorkerLoop(intervalMs = 5000): NodeJS.Timeout {
     const t = setInterval(() => {
-      this.executeNext().catch(err => logger.warn('Agent worker loop tick failed:', err instanceof Error ? err.message : err));
+      // Leader-gated: the task queue is DB-backed, so without the gate N
+      // replicas would claim and run the same agent tasks concurrently.
+      void runIfLeader('agent-orchestrator', () =>
+        this.executeNext().catch(err => logger.warn('Agent worker loop tick failed:', err instanceof Error ? err.message : err))
+      );
     }, intervalMs);
     (t as unknown as { unref?: () => void }).unref?.();
-    logger.info(`Agent orchestrator worker loop started (interval=${intervalMs}ms)`);
+    logger.info(`Agent orchestrator worker loop started (interval=${intervalMs}ms, leader-gated)`);
     return t;
+  }
+
+  /** Stop the worker loop timer (leadership release is handled by stopAll). */
+  stopWorkerLoop(timer: NodeJS.Timeout): void {
+    clearInterval(timer);
   }
 
   private selectBestAgent(taskType: string, preferredAgentId?: string): AgentCapability | null {
@@ -391,6 +505,7 @@ Execute this task and return a clear, structured result. Include any relevant da
         const agent = this.agentRegistry.get(agentId);
         if (agent) agent.currentLoad--;
         this.activeTasks.delete(taskId);
+        stopLeaseTimer(taskId);
 
         task.status = 'failed';
         task.error = 'Stopped by user request';
@@ -410,6 +525,7 @@ Execute this task and return a clear, structured result. Include any relevant da
         task.completedAt = new Date().toISOString();
         this.completedTasks.push(task);
         await this.persistTask(task);
+        stopLeaseTimer(task.id);
         queued++;
       } else {
         remainingQueue.push(task);

@@ -151,6 +151,8 @@ CREATE TABLE IF NOT EXISTS agent_tasks (
   handoff_reason TEXT,
   retry_count INTEGER NOT NULL DEFAULT 0,
   max_retries INTEGER NOT NULL DEFAULT 3,
-  updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  locked_by VARCHAR(160),
+  lease_expires_at TIMESTAMP(6)
 );
 CREATE INDEX IF NOT EXISTS agent_tasks_status_updated_idx ON agent_tasks(status, updated_at);

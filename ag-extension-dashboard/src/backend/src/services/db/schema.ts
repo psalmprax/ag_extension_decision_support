@@ -102,6 +102,8 @@ export async function createTables(pool: Pool): Promise<void> {
       ALTER TABLE alerts ADD COLUMN IF NOT EXISTS tenant_id UUID;
       ALTER TABLE notifications ADD COLUMN IF NOT EXISTS tenant_id UUID;
       ALTER TABLE reports ADD COLUMN IF NOT EXISTS tenant_id UUID;
+      ALTER TABLE agent_tasks ADD COLUMN IF NOT EXISTS locked_by VARCHAR(160);
+      ALTER TABLE agent_tasks ADD COLUMN IF NOT EXISTS lease_expires_at TIMESTAMP(6);
       ALTER TABLE notifications ADD COLUMN IF NOT EXISTS farmer_id UUID;
       CREATE INDEX IF NOT EXISTS visits_tenant_id_idx ON visits(tenant_id);
       CREATE INDEX IF NOT EXISTS chat_conversations_tenant_id_idx ON chat_conversations(tenant_id);
@@ -250,7 +252,9 @@ export async function createTables(pool: Pool): Promise<void> {
         handoff_reason TEXT,
         retry_count INTEGER NOT NULL DEFAULT 0,
         max_retries INTEGER NOT NULL DEFAULT 3,
-        updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        locked_by VARCHAR(160),
+        lease_expires_at TIMESTAMP(6)
       );
       CREATE INDEX IF NOT EXISTS agent_tasks_status_updated_idx ON agent_tasks(status, updated_at);
 
