@@ -18,6 +18,9 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY ag-extension-shared /ag-extension-shared
 COPY ag-extension-dashboard/src/frontend/package.json ./
 COPY ag-extension-dashboard/src/frontend/ .
+# Locale gate scripts live outside the frontend dir; the audit-locales chain
+# resolves them at ../../scripts relative to the frontend root (/scripts here).
+COPY ag-extension-dashboard/scripts/ /scripts/
 RUN npm run build:docker
 
 # ============================================================
