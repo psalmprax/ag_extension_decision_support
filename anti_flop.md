@@ -161,3 +161,8 @@ When a test, build, or container fails during development:
 - Root cause: 6 CI-only flags all consumed by uncommitted concurrent work — except `degradationStatus`, whose consumer (`/health` wiring) was my own uncommitted change. Committed it.
 - Fix: committed `app.ts` health wiring; suppressed 5 in-flight-consumed exports with justification (`resetForTests`, `stopAll`, `consumeTtl`, `runBatchIngestion`, `stopIngestionWorker`) — additive comment lines, no semantic changes, self-clearing as stale warnings when consumers land. No rebase, no deletions of others' code.
 - Verification: `tsc`/`eslint` clean, leaderElection + ingestion worker suites green. CI is the final verifier (local tree carries concurrent dirt that shifts counts).
+
+### 2026-09-14 — CI tsc red: quarantine service file never committed (stage)
+- Root cause: `quarantineReview.test.ts` shipped without `quarantineReviewService.ts` — same half-land pattern as the queue test. Service was reviewed and tested locally but left untracked.
+- Fix: committed the service file (no changes needed — 5/5 green, `tsc` clean).
+- Process note: new-file pairs (source + test) must be staged together; added to pre-commit self-check.
