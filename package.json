@@ -2,6 +2,11 @@
   "name": "ag-extension-decision-support",
   "private": true,
   "description": "Ag Extension Decision Support System",
+  "workspaces": [
+    "ag-extension-shared",
+    "ag-extension-browser-ext",
+    "ag-extension-dashboard/src/*"
+  ],
   "scripts": {
     "build:backend": "cd ag-extension-dashboard/src/backend && npm run build",
     "build:frontend": "cd ag-extension-dashboard/src/frontend && npm run build:docker",
