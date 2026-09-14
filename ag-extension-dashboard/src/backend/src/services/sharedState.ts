@@ -129,6 +129,7 @@ export async function delKey(key: string): Promise<void> {
 }
 
 /** Atomically read-and-delete (consume a one-time token). */
+// fallow-ignore-next-line unused-export
 export async function consumeTtl(key: string): Promise<string | null> {
     const r = redis();
     if (r) {

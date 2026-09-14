@@ -14,6 +14,7 @@ import { csrfProtection, AUTH_COOKIE_NAME } from './middleware/authCookie';
 import { setupSwagger } from './utils/swagger';
 import { getPool } from './services/databaseService';
 import { getCache } from './services/cacheService';
+import { degradationStatus } from './services/sharedState';
 import { setRequestUserId } from './services/requestContext';
 
 import { correlationIdMiddleware } from './middleware/correlationIdMiddleware';
@@ -258,6 +259,12 @@ async function checkCache(): Promise<{ status: string; error?: string }> {
     }
 }
 
+function checkDistributedState(): { status: string; error?: string } {
+    const { redisBacked, degradedSince } = degradationStatus();
+    if (redisBacked) return { status: 'shared' };
+    return { status: 'degraded', error: `distributed-state: per-process fallback since ${degradedSince} — revocations/rate-limits not shared` };
+}
+
 async function checkFallbackProvider(): Promise<{ healthy: boolean; name: string }> {
     try {
         const fallbackProvider = await AIProviderFactory.getFallbackProvider();
@@ -430,8 +437,9 @@ const healthHandler = async (req: Request, res: Response) => {
         Promise.resolve(checkExternalAPIs()),
         Promise.resolve(checkAgentServices()),
     ]);
+    const distributed = checkDistributedState();
 
-    const errors = [db.error, cache.error, ai.error, external.error, agents.error].filter((e): e is string => Boolean(e));
+    const errors = [db.error, cache.error, ai.error, external.error, agents.error, distributed.error].filter((e): e is string => Boolean(e));
     const inWarmup = Date.now() - PROCESS_START_TIME < HEALTH_WARMUP_WINDOW_MS;
     const { statusCode, statusText } = resolveHealthStatus({
         dbOk: db.status === 'connected',
@@ -459,6 +467,7 @@ const healthHandler = async (req: Request, res: Response) => {
             services: {
                 database: db.status,
                 cache: cache.status,
+                distributed_state: distributed.status,
                 ai_provider: ai.status,
                 external_apis: external.status,
                 agent_orchestrator: agents.status,

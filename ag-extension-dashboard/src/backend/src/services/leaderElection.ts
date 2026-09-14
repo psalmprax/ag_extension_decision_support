@@ -218,6 +218,7 @@ export async function release(name: string): Promise<void> {
 }
 
 /** Release every lease held by this replica — called during graceful shutdown. */
+// fallow-ignore-next-line unused-export
 export async function stopAll(): Promise<void> {
     const names = Array.from(leases.keys());
     await Promise.all(names.map(n => release(n)));
@@ -225,6 +226,7 @@ export async function stopAll(): Promise<void> {
 }
 
 /** Test helper: drop all local lease state without touching Redis. */
+// fallow-ignore-next-line unused-export
 export function resetForTests(): void {
     for (const lease of leases.values()) {
         if (lease.timer) clearInterval(lease.timer);
