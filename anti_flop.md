@@ -166,3 +166,7 @@ When a test, build, or container fails during development:
 - Root cause: `quarantineReview.test.ts` shipped without `quarantineReviewService.ts` — same half-land pattern as the queue test. Service was reviewed and tested locally but left untracked.
 - Fix: committed the service file (no changes needed — 5/5 green, `tsc` clean).
 - Process note: new-file pairs (source + test) must be staged together; added to pre-commit self-check.
+
+### 2026-09-14 — CI follow-up: unlanded route pair + doc additions (stage)
+- Same half-land pattern, second instance: quarantine review route + knowledge router mount were local-only while the service shipped. Landed together with my uncommitted ADR fuzz note and feed-owner table.
+- Verification: `tsc` clean, quarantine + knowledge suites green (5 + 27).

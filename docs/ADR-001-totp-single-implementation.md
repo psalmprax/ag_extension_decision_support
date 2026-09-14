@@ -19,3 +19,9 @@ Strict Base32 (rejects invalid input), 80-bit minimum key with fail-closed verif
 ## Residual risks accepted
 
 No fuzzing run yet; side-channel review outstanding. Revisit if authenticator-app interop reports arrive or if explicit-timestamp verification is ever removed (then swap to `otplib` outright and delete the custom path).
+
+## Fuzz note (open)
+
+- Harness: feed `base32Decode` + `generateTotpCode` random/mutated inputs (valid alphabet, invalid chars, empty, oversized) asserting fail-closed behavior (throw or null/false, never a code) — no crash, no hang, no valid code from invalid input.
+- Owner: backend security owner; run before any authenticator-related change and attach the seed + corpus size to the change.
+- Not yet run — tracked here so the residual above stays visible.

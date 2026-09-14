@@ -7,6 +7,7 @@ import searchRouter from './search';
 import metaRouter from './meta';
 import articlesRouter from './articles';
 import ingestRouter from './ingest';
+import quarantineRouter from './quarantine';
 import { createShareRoute } from '../shareRouteFactory';
 
 const router = Router();
@@ -55,6 +56,7 @@ router.use(createShareRoute('knowledge'));
 
 router.use(articlesRouter);
 router.use(ingestRouter);
+router.use(quarantineRouter);
 
 export { seedKnowledgeArticles, seedKnowledgeArticlesData } from './articles';
 

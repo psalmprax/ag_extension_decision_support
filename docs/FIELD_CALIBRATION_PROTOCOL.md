@@ -33,6 +33,15 @@ Companion to `docs/AG_PROJECT_CONCEPT_REVENUE_COCOA_COFFEE.md` Section 14. The c
 - Replace one static table per quarter with a live feed or a measured local survey, starting with FX (last-known-good cache already narrows the gap) then FAOSTAT baselines, then cross-border snapshots.
 - Demo-sourced endpoints keep `settlementGrade: 'estimate'` until their inputs are live; removing the flag requires a backtest, not an opinion.
 
+### Feed-contract owners
+
+| Feed | Current state | Owner to contract | Acceptance |
+|---|---|---|---|
+| FX rates (open.er-api) | Live with last-known-good + stale flags | Backend platform owner | `isSettlementGradeRate` true on 99% of pilot settlement computations |
+| FAOSTAT producer prices | 2022 static fallback, flagged | Data partnerships owner | Current-year coverage for pilot crops, fallback older than 2 years refused |
+| Sentinel Hub imagery | UNCONFIGURED (manual scouting) | Field ops + data partnerships | First ingested parcel pass with cloud <40% |
+| Cross-border prices | Static snapshot, `settlementGrade: 'estimate'` | Regional trade analyst | Two corroborating sources per corridor or flag stays |
+
 ## 7. Calibration ownership and rotation discipline
 
 - **Owner:** one named agronomy data steward owns the verification ledger (`fieldVerificationService.ts`), the weekly accuracy review, and threshold-change proposals. No cutoff moves without their sign-off plus an attached backtest table.
