@@ -38,8 +38,8 @@ export function hashToken(token: string): string {
  * Validate a bearer token against the session store.
  * - Revoked or expired session row → false
  * - No session row (legacy/demo tokens issued without createSession) → true
- * - DB error → true (fail-open on availability, logged) so an outage doesn't
- *   lock every user out; JWT signature/expiry is still enforced by the caller.
+ * - DB error → false (fail-closed on security state, logged). Callers enforce
+ *   JWT signature/expiry independently; unknown revocation state must not pass.
  */
 export async function isSessionValid(token: string): Promise<boolean> {
   if (!token) return false;
@@ -68,7 +68,19 @@ async function checkSessionInDatabase(tokenHash: string): Promise<boolean> {
     );
     const row = res.rows[0] as
       { is_revoked?: boolean; expires_at?: string | Date } | undefined;
-    if (row) {
+    if (!row) {
+      // Legacy/demo tokens issued without createSession. Default denies them
+      // in production and allows them elsewhere for backwards compatibility;
+      // SESSION_ALLOW_LEGACY_NO_ROW_TOKENS overrides explicitly either way.
+      const flag = process.env.SESSION_ALLOW_LEGACY_NO_ROW_TOKENS;
+      const legacyAllowed = flag !== undefined ? flag === 'true' : process.env.NODE_ENV !== 'production';
+      if (!legacyAllowed) {
+        logger.warn('Rejecting bearer token with no session row (legacy tokens disabled)');
+        validityCache.delete(tokenHash);
+        return false;
+      }
+      logger.warn('Allowing bearer token with no session row (legacy/demo token; JWT still enforced by caller)');
+    } else {
       if (row.is_revoked) {
         revokedTokenHashes.add(tokenHash);
         return false;
@@ -82,11 +94,12 @@ async function checkSessionInDatabase(tokenHash: string): Promise<boolean> {
     updateValidityCache(tokenHash);
     return true;
   } catch (error) {
+    validityCache.delete(tokenHash);
     logger.warn(
-      "Session validity lookup failed; allowing request on JWT alone:",
+      "Session validity lookup failed; denying request on unknown revocation state:",
       error,
     );
-    return true;
+    return false;
   }
 }
 

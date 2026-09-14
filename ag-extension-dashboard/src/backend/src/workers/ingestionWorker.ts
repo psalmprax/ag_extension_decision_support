@@ -2,6 +2,7 @@ import { config } from '../config';
 import { logger } from '../utils/logger';
 import { StealthScraperService, type ScrapedDocument } from '../services/stealthScraperService';
 import { VectorService } from '../services/vectorService';
+import { runIfLeader } from '../services/leaderElection';
 
 interface ScrapeTask {
     niche: string;
@@ -40,6 +41,7 @@ const INGESTION_TASKS: ScrapeTask[] = [
 ];
 
 let ingestionTimer: NodeJS.Timeout | null = null;
+let initialRun: NodeJS.Timeout | null = null;
 let isIngesting = false;
 
 /**
@@ -114,27 +116,48 @@ function startIngestionWorker(): void {
 
     logger.info(`Starting Ingestion Worker. Schedule: ${config.ingestion.schedule.toUpperCase()} (${intervalMs}ms)`);
 
-    // Run first ingestion crawl in background after 30 seconds to allow DB startup
-    setTimeout(() => {
-        logger.info('Triggering initial Ingestion crawl...');
-        runBatchIngestion().catch(err => logger.error('Initial ingestion failed:', err));
+    // Leader-gated initial crawl: only the lease holder runs it, so N replicas
+    // don't fire N concurrent crawls at the same sources.
+    initialRun = setTimeout(() => {
+        runIfLeader('ingestion-worker', async () => {
+            logger.info('Triggering initial Ingestion crawl...');
+            await runBatchIngestion();
+        }).catch(err => logger.error('Initial ingestion failed:', err));
     }, 30000);
+    initialRun.unref?.();
 
-    // Set recurring timer
+    // Recurring timer: tick on every replica, crawl only on the leader.
     if (ingestionTimer) {
         clearInterval(ingestionTimer);
     }
     ingestionTimer = setInterval(() => {
-        logger.info(`Recurring Ingestion trigger started (${config.ingestion.schedule})...`);
-        runBatchIngestion().catch(err => logger.error('Recurring ingestion failed:', err));
+        runIfLeader('ingestion-worker', async () => {
+            logger.info(`Recurring Ingestion trigger started (${config.ingestion.schedule})...`);
+            await runBatchIngestion();
+        }).catch(err => logger.error('Recurring ingestion failed:', err));
     }, intervalMs);
+    ingestionTimer.unref?.();
+}
+
+/** Stop ingestion timers (leadership release is handled by stopAll). */
+export function stopIngestionWorker(): void {
+    if (ingestionTimer) {
+        clearInterval(ingestionTimer);
+        ingestionTimer = null;
+    }
+    if (initialRun) {
+        clearTimeout(initialRun);
+        initialRun = null;
+    }
 }
 
 // Auto-start the ingestion worker
+let ingestionStart: NodeJS.Timeout | null = null;
 if (process.env.NODE_ENV !== 'test') {
-    setTimeout(() => {
+    ingestionStart = setTimeout(() => {
         startIngestionWorker();
     }, 15000); // Wait 15 seconds for database to initialize
+    ingestionStart.unref?.();
 }
 
 let consecutiveTransportFailures = 0;
@@ -182,8 +205,9 @@ function buildDocumentContent(item: ScrapedDocument, task: ScrapeTask): string {
 }
 
 function buildDocumentMetadata(task: ScrapeTask, item: ScrapedDocument): Record<string, unknown> {
-    // Scraped material is NOT validated by anyone. Label it as such so the
-    // RAG layer and UI can down-weight or flag it.
+    // Scraped material is NOT validated by anyone. It enters quarantine:
+    // excluded from RAG grounding (see groundingPolicy) until human review
+    // clears it. The flags below are the enforcement mechanism, not a label.
     return {
         title: `Web extract (unverified): ${item.title}`,
         category: task.category,
@@ -193,6 +217,8 @@ function buildDocumentMetadata(task: ScrapeTask, item: ScrapedDocument): Record<
         source: `${task.platform} via stealth scrape`,
         sourceUrl: item.url,        contentType: 'text',
         dataStatus: item.dataStatus,
+        quarantine: true,
+        groundingAllowed: false,
         ingestedAt: new Date().toISOString(),
     };
 }

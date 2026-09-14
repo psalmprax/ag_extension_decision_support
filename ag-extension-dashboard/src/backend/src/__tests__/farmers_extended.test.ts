@@ -41,12 +41,12 @@ jest.mock('../services/prismaService', () => ({
                 updatedAt: new Date()
             })),
             findMany: jest.fn(() => Promise.resolve([
-                { 
-                    id: '1', 
-                    firstName: 'John', 
+                {
+                    id: '1',
+                    firstName: 'John',
                     lastName: 'Doe',
                     vitalScore: 85,
-                    yieldHistory: [{ month: 'Jan', yield: 40 }],
+                    yieldHistory: [{ season: '2025-long-rains', crop: 'maize', yieldTonesPerHa: 4.0 }],
                     locationLat: -1.2833,
                     locationLng: 36.8167
                 }
@@ -56,7 +56,7 @@ jest.mock('../services/prismaService', () => ({
                 firstName: 'John',
                 lastName: 'Doe',
                 vitalScore: 85,
-                yieldHistory: [{ month: 'Jan', yield: 40 }],
+                yieldHistory: [{ season: '2025-long-rains', crop: 'maize', yieldTonesPerHa: 4.0 }],
                 locationLat: -1.2833,
                 locationLng: 36.8167,
                 region: 'Central',
@@ -90,7 +90,7 @@ describe('Extended Farmers API Tests', () => {
             farmSize: 3.5,
             crops: ['beans'],
             vitalScore: 92,
-            yieldHistory: [{ month: 'Feb', yield: 50 }],
+            yieldHistory: [{ season: '2026-short-rains', crop: 'beans', yieldTonesPerHa: 5.0 }],
             locationLat: -1.3,
             locationLng: 36.9
         };

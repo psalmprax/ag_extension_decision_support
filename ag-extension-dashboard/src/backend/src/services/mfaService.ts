@@ -30,13 +30,14 @@ export function base32Encode(buffer: Buffer): string {
 // fallow-ignore-next-line unused-export
 export function base32Decode(input: string): Buffer {
   const cleanInput = input.toUpperCase().replace(/=+$/, '').replace(/\s+/g, '');
+  if (cleanInput.length === 0) throw new Error('Invalid Base32 secret: empty input');
   let bits = 0;
   let value = 0;
   const bytes: number[] = [];
 
   for (let i = 0; i < cleanInput.length; i++) {
     const index = BASE32_ALPHABET.indexOf(cleanInput[i]);
-    if (index === -1) continue;
+    if (index === -1) throw new Error(`Invalid Base32 secret: unexpected character at position ${i}`);
 
     value = (value << 5) | index;
     bits += 5;
@@ -47,6 +48,7 @@ export function base32Decode(input: string): Buffer {
     }
   }
 
+  if (bytes.length === 0) throw new Error('Invalid Base32 secret: no decodable bytes');
   return Buffer.from(bytes);
 }
 
@@ -77,6 +79,8 @@ export function generateMfaSecret(
 // fallow-ignore-next-line unused-export
 export function generateTotpCode(secret: string, timeStep: number = 30, timestampMs: number = Date.now()): string {
   const key = base32Decode(secret);
+  // Fail closed on weak/malformed secrets: RFC 4226 recommends >= 128-bit shared secrets.
+  if (key.length < 10) throw new Error('Invalid TOTP secret: decoded key below 80-bit minimum');
   const counter = Math.floor(timestampMs / 1000 / timeStep);
 
   const counterBuffer = Buffer.alloc(8);
@@ -115,7 +119,12 @@ export function matchTotpStep(
 
   for (let offset = -window; offset <= window; offset++) {
     const timestampToCheck = currentTimestampMs + offset * timeStep * 1000;
-    const expected = generateTotpCode(secret, timeStep, timestampToCheck);
+    let expected: string;
+    try {
+      expected = generateTotpCode(secret, timeStep, timestampToCheck);
+    } catch {
+      return null;
+    }
     const a = Buffer.from(expected);
     const b = Buffer.from(cleanToken);
     if (a.length === b.length && crypto.timingSafeEqual(a, b)) {
@@ -138,7 +147,12 @@ export function verifyTotp(
 
   for (let offset = -window; offset <= window; offset++) {
     const timestampToCheck = currentTimestampMs + offset * timeStep * 1000;
-    const generatedCode = generateTotpCode(secret, timeStep, timestampToCheck);
+    let generatedCode: string;
+    try {
+      generatedCode = generateTotpCode(secret, timeStep, timestampToCheck);
+    } catch {
+      return false;
+    }
 
     if (crypto.timingSafeEqual(Buffer.from(cleanToken), Buffer.from(generatedCode))) {
       return true;

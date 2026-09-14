@@ -17,6 +17,17 @@ jest.mock('../utils/logger', () => ({
     },
 }));
 
+// Session lookup mock — fail-closed sessions require a valid row for authed
+// requests; other queries return empty rows (diagnostics uses helpers, not DB).
+jest.mock('../services/databaseService', () => ({
+    query: jest.fn((text: string) => {
+        if (typeof text === 'string' && text.includes('FROM user_sessions')) {
+            return Promise.resolve({ rows: [{ is_revoked: false, expires_at: '2099-01-01T00:00:00Z' }] });
+        }
+        return Promise.resolve({ rows: [] });
+    }),
+}));
+
 // DNS mock — control which domains resolve (preserve rest of the module)
 const mockDnsResolve4 = jest.fn();
 jest.mock('dns/promises', () => {

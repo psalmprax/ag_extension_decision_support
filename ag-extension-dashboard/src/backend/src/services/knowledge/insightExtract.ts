@@ -1,5 +1,6 @@
 import type { ReasoningResult } from '@/services/aiProvider/aiProvider';
 import type { SearchResult } from '@/services/vectorService';
+import { splitQuarantined } from '@/services/knowledge/groundingPolicy';
 import { isAgronomicContent } from '@/utils/agronomicQueryNormalizer';
 import {
     METADATA_LABELS,
@@ -219,7 +220,9 @@ function buildExtractiveSections(
 }
 
 export function buildExtractiveAnswer(queryText: string, contextResults: SearchResult[]): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
-    const validResults = filterAgronomicResults(contextResults);
+    // Defense in depth: quarantined scrapes never ground extractive answers,
+    // even when callers pass unfiltered retrieval output.
+    const validResults = filterAgronomicResults(splitQuarantined(contextResults).groundable);
 
     if (validResults.length === 0) {
         return buildEmptyExtractiveAnswer(queryText);

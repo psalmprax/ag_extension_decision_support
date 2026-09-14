@@ -257,6 +257,9 @@ export class OmniRouteService {
 
   /**
    * OmniRoute Execution with automatic in-flight failover across free & paid models.
+   * Spend guard: paid-model attempts per call are capped via
+   * OMNIROUTE_MAX_PAID_ATTEMPTS (default 2). Free candidates are always tried;
+   * paid candidates beyond the cap are skipped and logged.
    */
   public static async executeWithFailover(
     messages: Array<{ role: string; content: string }>,
@@ -268,27 +271,18 @@ export class OmniRouteService {
     }
 
     const sorted = [...candidates].sort((a, b) => b.score - a.score);
+    const spend = { maxPaidAttempts: Math.max(0, Number(process.env.OMNIROUTE_MAX_PAID_ATTEMPTS ?? 2) || 0), paidAttempts: 0 };
 
     // Try dynamic primary first
     const primary = this.getCurrentPrimary();
     if (primary) {
-      const key = `${primary.providerName}:${primary.model}`;
-      if (!this.blocklist.has(key)) {
-        const result = await this.attemptCandidate(primary, messages, /* isPrimary */ true);
-        if (result) return result;
-      }
+      const result = await this.tryCandidateGated(primary, messages, /* isPrimary */ true, spend);
+      if (result) return result;
     }
 
-    // Fallback: try all candidates in score order (excluding blocked)
+    // Fallback: try all candidates in score order (excluding blocked/over-cap)
     for (const candidate of sorted) {
-      const key = `${candidate.providerName}:${candidate.model}`;
-
-      if (this.blocklist.has(key)) {
-        logger.warn(`[OmniRoute] Skipping blocked model: ${key}`);
-        continue;
-      }
-
-      const result = await this.attemptCandidate(candidate, messages, /* isPrimary */ false);
+      const result = await this.tryCandidateGated(candidate, messages, /* isPrimary */ false, spend);
       if (result) return result;
     }
 
@@ -298,6 +292,28 @@ export class OmniRouteService {
     throw new Error(
       `OmniRoute exhausted all ${sorted.length} candidate model(s) — no free or paid fallback provider is configured and healthy`
     );
+  }
+
+  /** Gated single-candidate attempt: blocklist + per-call paid spend cap. */
+  private static async tryCandidateGated(
+    candidate: RouteCandidate,
+    messages: Array<{ role: string; content: string }>,
+    isPrimary: boolean,
+    spend: { maxPaidAttempts: number; paidAttempts: number },
+  ): Promise<{ text: string; providerUsed: string; modelUsed: string; isFreeModel: boolean } | null> {
+    const key = `${candidate.providerName}:${candidate.model}`;
+    if (this.blocklist.has(key)) {
+      logger.warn(`[OmniRoute] Skipping blocked model: ${key}`);
+      return null;
+    }
+    if (!candidate.isFree) {
+      if (spend.paidAttempts >= spend.maxPaidAttempts) {
+        logger.warn(`[OmniRoute] Skipping paid model over spend cap (${spend.paidAttempts}/${spend.maxPaidAttempts}): ${key}`);
+        return null;
+      }
+      spend.paidAttempts += 1;
+    }
+    return this.attemptCandidate(candidate, messages, isPrimary);
   }
 
   /** Try one candidate; on quota errors add it to the 15m blocklist, record success/failure, and log the transition. */

@@ -275,13 +275,25 @@ describe('POST /inbound — provider signature verification', () => {
     afterEach(() => {
         delete process.env.META_APP_SECRET;
         delete process.env.TWILIO_AUTH_TOKEN;
+        delete process.env.ALLOW_UNSIGNED_WEBHOOKS_FOR_LOCAL_DEV;
         process.env.NODE_ENV = ORIGINAL_ENV.NODE_ENV;
     });
 
     const signedPayload = (secret: string, payload: string): string =>
         `sha256=${crypto.createHmac('sha256', secret).update(Buffer.from(payload, 'utf8')).digest('hex')}`;
 
-    it('allows unsigned requests in dev when no provider secret is configured', async () => {
+    it('rejects unsigned requests by default even in dev (fail-closed)', async () => {
+        const response = await request(app)
+            .post('/api/v1/whatsapp/inbound')
+            .set('Content-Type', 'application/json')
+            .send(JSON.stringify({ from: '+265999000333', body: 'Hello', messageId: 'm-dev' }));
+
+        expect(response.status).toBe(503);
+        expect(response.body.success).toBe(false);
+    });
+
+    it('allows unsigned requests only with explicit local-dev opt-in', async () => {
+        process.env.ALLOW_UNSIGNED_WEBHOOKS_FOR_LOCAL_DEV = 'true';
         mockQuery.mockResolvedValueOnce({ rows: [{ id: 'wa-1' }], rowCount: 1 });
 
         const response = await request(app)
@@ -425,6 +437,13 @@ describe('verifyInboundWebhookSignature — Twilio provider path', () => {
 describe('POST /inbound — voice note transcription and synthesized advisory dispatch', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        // These tests exercise downstream dispatch, not auth: use the explicit
+        // local-dev unsigned opt-in required by the fail-closed webhook contract.
+        process.env.ALLOW_UNSIGNED_WEBHOOKS_FOR_LOCAL_DEV = 'true';
+    });
+
+    afterEach(() => {
+        delete process.env.ALLOW_UNSIGNED_WEBHOOKS_FOR_LOCAL_DEV;
     });
 
     it('transcribes inbound voice note when body is omitted and delivers synthesized voice advisory', async () => {

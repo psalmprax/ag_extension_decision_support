@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '@/utils/logger';
 
@@ -164,20 +163,21 @@ export function errorHandler(
  * This ensures all async errors are properly caught and passed to the error handler
  */
 // fallow-ignore-next-line unused-export
-export const asyncWrapper = <T extends (...args: any[]) => any>(fn: T) => (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch((err: any) => {
+export const asyncWrapper = <T extends (...args: [Request, Response, NextFunction]) => unknown>(fn: T) => (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(fn(req, res, next)).catch((err: unknown) => {
+        const code = err as { name?: string; code?: string };
         // Handle specific error types
-        if (err.name === 'JsonWebTokenError') {
+        if (code.name === 'JsonWebTokenError') {
             return next(createAuthenticationError('Invalid token'));
         }
-        if (err.name === 'TokenExpiredError') {
+        if (code.name === 'TokenExpiredError') {
             return next(createAuthenticationError('Token expired'));
         }
-        if (err.code === 'P2000' || err.code?.startsWith('P2')) {
-            return next(handlePrismaError(err));
+        if (code.code === 'P2000' || code.code?.startsWith('P2')) {
+            return next(handlePrismaError(err as { code?: string; message?: string; meta?: ErrorDetails }));
         }
-        if (err.name === 'MulterError') {
-            return next(handleMulterError(err));
+        if (code.name === 'MulterError') {
+            return next(handleMulterError(err as { code?: string; field?: string; message?: string }));
         }
         next(err);
     });

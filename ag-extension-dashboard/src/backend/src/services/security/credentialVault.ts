@@ -14,6 +14,18 @@ export interface CredentialRecord {
 }
 
 class CredentialVault {
+  /**
+   * Paging-grade log resilient to partial logger doubles: prefers
+   * logger.crit, degrades to a tagged error when absent.
+   */
+  private logCrit(message: string): void {
+    const maybeCrit = (logger as unknown as { crit?: unknown }).crit;
+    if (typeof maybeCrit === 'function') {
+      (maybeCrit as (msg: string) => void).call(logger, message);
+    } else {
+      logger.error(`[CRIT] ${message}`);
+    }
+  }
   private static instance: CredentialVault;
   private credentials: Map<string, CredentialRecord> = new Map();
   private encryptionKey: string;
@@ -68,10 +80,11 @@ class CredentialVault {
     }
 
     if (new Date(record.expiresAt) < new Date()) {
-      logger.warn(`Credential expired: ${name} (${category})`);
+      // CRIT: an expired credential was requested — rotation is overdue and
+      // someone must act. Paging/monitoring should fire on this level.
+      this.logCrit(`Credential expired and requested (rotation overdue): ${name} (${category})`);
       return null;
     }
-
     record.accessCount++;
     record.lastAccessedAt = new Date().toISOString();
     this.credentials.set(id, record);
@@ -83,6 +96,29 @@ class CredentialVault {
     });
 
     return this.decrypt(record.encrypted);
+  }
+
+  /**
+   * Strict read: throws on missing or expired credentials instead of
+   * returning null, so callers cannot silently run with absent secrets.
+   * Rotation is enforced by expiry — expired credentials must be rotated
+   * via storeCredential/rotateCredential before use.
+   */
+  getCredentialOrThrow(name: string, category: string): string {
+    const id = this.generateId(name, category);
+    const record = this.credentials.get(id);
+    if (!record) throw new Error(`Credential not found: ${name} (${category})`);
+    if (new Date(record.expiresAt) < new Date()) {
+      this.logCrit(`Credential expired and requested via strict read (rotation overdue): ${name} (${category})`);
+      throw new Error(`Credential expired and must be rotated: ${name} (${category})`);
+    }
+    return this.getCredential(name, category) as string;
+  }
+
+  /** Credentials past expiry that must be rotated before further use. */
+  listOverdueCredentials(): CredentialRecord[] {
+    const now = new Date();
+    return Array.from(this.credentials.values()).filter(cred => new Date(cred.expiresAt) < now);
   }
 
   rotateCredential(name: string, category: string, newValue: string): boolean {
@@ -132,34 +168,52 @@ class CredentialVault {
     }));
   }
 
+  private deriveKey(salt: Buffer): Buffer {
+    // scrypt with per-value salt replaces the previous single-SHA-256 stretch.
+    return crypto.scryptSync(this.encryptionKey, salt, 32);
+  }
+
   private encrypt(value: string): string {
-    const key = crypto.createHash('sha256').update(this.encryptionKey).digest();
-    const iv = crypto.randomBytes(16);
+    const salt = crypto.randomBytes(16);
+    const key = this.deriveKey(salt);
+    const iv = crypto.randomBytes(12);
     const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
     let encrypted = cipher.update(value, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     const authTag = cipher.getAuthTag().toString('hex');
-    return iv.toString('hex') + ':' + authTag + ':' + encrypted;
+    return ['v2', salt.toString('hex'), iv.toString('hex'), authTag, encrypted].join(':');
+  }
+
+  private decryptV1(parts: string[]): string {
+    // Pre-scrypt rows (iv:tag:data with SHA-256-stretched key). Decrypt once for
+    // transparent upgrade; callers re-encrypt to v2 on next store/rotate.
+    const key = crypto.createHash('sha256').update(this.encryptionKey).digest();
+    const iv = Buffer.from(parts[0], 'hex');
+    const authTag = Buffer.from(parts[1], 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(authTag);
+    let decrypted = decipher.update(parts[2], 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
   }
 
   private decrypt(encrypted: string): string {
-    const key = crypto.createHash('sha256').update(this.encryptionKey).digest();
     const parts = encrypted.split(':');
-    if (parts.length === 3) {
-      const iv = Buffer.from(parts[0], 'hex');
-      const authTag = Buffer.from(parts[1], 'hex');
-      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
-      decipher.setAuthTag(authTag);
-      let decrypted = decipher.update(parts[2], 'hex', 'utf8');
+    if (parts[0] === 'v2' && parts.length === 5) {
+      const key = this.deriveKey(Buffer.from(parts[1], 'hex'));
+      const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(parts[2], 'hex'));
+      decipher.setAuthTag(Buffer.from(parts[3], 'hex'));
+      let decrypted = decipher.update(parts[4], 'hex', 'utf8');
       decrypted += decipher.final('utf8');
       return decrypted;
     }
-    // Legacy XOR fallback for existing encrypted values
-    let result = '';
-    for (let i = 0; i < encrypted.length; i++) {
-      result += String.fromCharCode(encrypted.charCodeAt(i) ^ key[i % key.length]);
+    if (parts.length === 3) {
+      logger.warn('Credential in retired v1 format — decrypting once for upgrade; re-encrypting to v2');
+      return this.decryptV1(parts);
     }
-    return result;
+    // Legacy XOR rows are no longer decryptable in-process. They must be
+    // rotated via storeCredential; failing loudly avoids silent weak-crypto use.
+    throw new Error('Credential uses retired legacy encryption and must be rotated via storeCredential');
   }
 
   private generateId(name: string, category: string): string {

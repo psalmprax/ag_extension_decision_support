@@ -23,6 +23,27 @@ export interface MarketPrice {
 interface ExchangeRateResult {
   rate: number;
   source: 'live' | 'fallback';
+  asOf: string;
+  estimated: boolean;
+  /** True when even the fallback is past its freshness TTL — display only, never settle. */
+  stale: boolean;
+}
+
+/**
+ * Settlement-grade gate: only live, non-estimated, non-stale FX may back settlement,
+ * BCR publication, or arbitrage execution. Estimated rates are display-only.
+ */
+export function isSettlementGradeRate(result: ExchangeRateResult): boolean {
+  return result.source === 'live' && !result.estimated && !result.stale;
+}
+
+// Last-known-good live rates: served (flagged estimated) while fresh so a
+// transient feed outage degrades to minutes-old reality, not static tables.
+const lastLiveRates = new Map<string, { rate: number; asOf: string }>();
+
+function fxFreshnessTtlMs(): number {
+  const parsed = Number(process.env.FX_LIVE_TTL_MS ?? 24 * 60 * 60 * 1000);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 24 * 60 * 60 * 1000;
 }
 
 // ─── FAOSTAT commodity code → display name mapping ──────────────────
@@ -107,7 +128,9 @@ function getCurrencyForCountry(country: string): string {
 }
 
 async function fetchExchangeRate(targetCurrency: string): Promise<ExchangeRateResult> {
-  if (targetCurrency === 'USD') return { rate: 1, source: 'live' };
+  if (targetCurrency === 'USD') {
+    return { rate: 1, source: 'live', asOf: new Date().toISOString(), estimated: false, stale: false };
+  }
   const cacheKey = `rate:${targetCurrency}`;
   try {
     return await rateLimitedFetch<ExchangeRateResult>('openERate', cacheKey, async () => {
@@ -115,18 +138,28 @@ async function fetchExchangeRate(targetCurrency: string): Promise<ExchangeRateRe
       const rate = response.data?.rates?.[targetCurrency];
       if (typeof rate === 'number' && Number.isFinite(rate)) {
         logger.info(`Live USD/${targetCurrency} exchange rate: ${rate}`);
-        return { rate, source: 'live' as const };
+        lastLiveRates.set(targetCurrency, { rate, asOf: new Date().toISOString() });
+        return { rate, source: 'live' as const, asOf: new Date().toISOString(), estimated: false, stale: false };
       }
       throw new Error('Invalid rate in response');
     });
   } catch (err: unknown) {
     logger.warn(`Failed to fetch live USD/${targetCurrency} exchange rate: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
+  const lastGood = lastLiveRates.get(targetCurrency);
+  if (lastGood && Date.now() - new Date(lastGood.asOf).getTime() <= fxFreshnessTtlMs()) {
+    logger.warn(`Serving last-known-good USD/${targetCurrency} from ${lastGood.asOf} (estimated)`);
+    return { rate: lastGood.rate, source: 'fallback', asOf: lastGood.asOf, estimated: true, stale: false };
+  }
+  // Static fallback is ESTIMATED and STALE by construction — display only.
+  // Callers (BCR, arbitrage) must surface exchangeRateSource=fallback + asOf to the user.
   const fallbackRates: Record<string, number> = {
     NGN: 1500, GHS: 14.5, TZS: 2600, UGX: 3750, ETB: 57,
     INR: 83.5, BRL: 5.5, KES: 129.5,
   };
-  return { rate: fallbackRates[targetCurrency] || 129.5, source: 'fallback' };
+  const asOf = new Date().toISOString();
+  logger.warn(`Using STALE ESTIMATED fallback FX for USD/${targetCurrency} as of ${asOf} — do not use for settlement`);
+  return { rate: fallbackRates[targetCurrency] || 129.5, source: 'fallback', asOf, estimated: true, stale: true };
 }
 
 function roundPrice(rawPrice: number, targetCurrency: string): number {
@@ -286,7 +319,8 @@ function buildFaostatPriceRow(
     trend,
     updatedAt: new Date(fetchedAt),
     source: 'faostat_producer_prices' as const,
-    dataStatus: 'live' as const,
+    // A FAOSTAT price converted with estimated FX is not a live quote.
+    dataStatus: (exchangeRate.estimated ? 'estimated' : 'live') as MarketDataStatus,
     fetchedAt,
     exchangeRateSource: exchangeRate.source,
     currency: targetCurrency,
@@ -342,7 +376,7 @@ function mapGiewsPrices(
       trend: 'Updated',
       updatedAt: new Date(fetchedAt),
       source: 'giews_fpma' as const,
-      dataStatus: 'live' as const,
+      dataStatus: (exchangeRate.estimated ? 'estimated' : 'live') as MarketDataStatus,
       fetchedAt,
       exchangeRateSource: exchangeRate.source,
       currency: targetCurrency,

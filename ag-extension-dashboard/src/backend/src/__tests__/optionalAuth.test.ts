@@ -108,7 +108,7 @@ describe('optionalAuth middleware — session revocation', () => {
     expect(req.user).toBeDefined();
   });
 
-  it('stays fail-open on DB outage: valid JWT still attaches user (availability trade-off)', async () => {
+  it('goes fail-closed on DB outage: valid JWT does NOT attach user on unknown revocation state', async () => {
     const token = signToken();
     mockQuery.mockRejectedValueOnce(new Error('connection refused'));
     req.headers = { authorization: `Bearer ${token}` };
@@ -116,7 +116,7 @@ describe('optionalAuth middleware — session revocation', () => {
     await optionalAuth(req as Request, res as Response, next);
 
     expect(next).toHaveBeenCalledTimes(1);
-    expect(req.user).toBeDefined();
+    expect(req.user).toBeUndefined();
   });
 
   it('does not attach user for a tampered/invalid signature', async () => {

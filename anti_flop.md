@@ -116,3 +116,13 @@ When a test, build, or container fails during development:
 3. Compare against canonical schemas in `ag-extension-dashboard/src/backend/prisma/schema.prisma` and `ag-extension-shared/src`.
 4. Validate environment configurations against `.env.example`.
 5. Fix the underlying root cause cleanly, adhering to Karpathy's rule of **surgical changes only**.
+
+---
+
+## 5. Compliance Record
+
+### 2026-09-14 — Security fail-closed remediation + grounding quarantine (stage)
+- Scope: TOTP hardening (RFC 6238 vectors + otplib interop), scrypt vault KDF, session fail-closed on DB error, webhook fail-closed + strict Twilio, typed parcel/yield schemas, FX staleness flags + settlement gate, voice/edge/satellite safety gates, OmniRoute spend cap, RAG grounding quarantine, offline-queue durability cap, provider eval / threshold backtest / field-verification harnesses.
+- Contract changes were intentional and approved: session fail-open→fail-closed, webhook dev-bypass removal, `yieldHistory`/`boundaryCoordinates` typing. Affected tests were updated to the new contracts, not deleted; mid-session regressions (39) were triaged to the new contracts plus one genuine Twilio proxy regression, fixed by stripping only the default `:443`.
+- Verification at commit: backend `tsc --noEmit` clean, frontend `tsc --noEmit` clean, eslint clean on touched files, backend full suite **90/90 suites, 830/830 tests**, frontend `syncQueueService` suite green.
+- Residual: `logger.crit` was missing on the real logger while pre-existing call sites invoked it — added (error-level emission); field calibration harnesses await one pilot season of data per `docs/FIELD_CALIBRATION_PROTOCOL.md`.

@@ -78,6 +78,21 @@ export interface OfflineDiagnosisResult {
   analyzedAt: string;
 }
 
+// Field-safety gate: heuristic results and low-confidence or >=moderate cases
+// must be confirmed by cloud verification or an officer before chemical advice
+// is acted on. Centralizes the rule so UI modals and services cannot drift.
+export const EDGE_CONFIRM_CONFIDENCE_THRESHOLD = 0.8;
+
+export function shouldConfirmEdgeDiagnosis(
+  origin: InferenceOrigin,
+  confidence: number,
+  severity: EdgeDiagnosisCandidate['severity'],
+): boolean {
+  if (origin === 'heuristic') return true;
+  if (confidence < EDGE_CONFIRM_CONFIDENCE_THRESHOLD) return true;
+  return severity === 'moderate' || severity === 'severe';
+}
+
 // ── ONNX loaders (lazy, cached) ───────────────────────────────────────────
 let onnxSession: unknown | null = null;
 let onnxLoadAttempted = false;
@@ -246,15 +261,16 @@ function mapLabelToCondition(label: string, _cropHint: string | undefined, prob?
   // is prohibited. Unmappable labels return null and fall back to heuristic triage.
   const mapping: Array<{ keywords: string[]; condition: string }> = [
     { keywords: ['tomato', 'late_blight'], condition: 'Tomato Late Blight' },
-    { keywords: ['tomato', 'early_blight'], condition: 'Tomato Late Blight' },
-    { keywords: ['tomato', 'septoria'], condition: 'Tomato Late Blight' },
+    { keywords: ['tomato', 'early_blight'], condition: 'Tomato Early Blight' },
+    { keywords: ['tomato', 'septoria'], condition: 'Tomato Early Blight' },
     { keywords: ['potato', 'early_blight'], condition: 'Potato Early Blight' },
-    { keywords: ['potato', 'late_blight'], condition: 'Potato Early Blight' },
-    { keywords: ['corn', 'rust'], condition: 'Maize Foliar Rust & Chlorosis' },
-    { keywords: ['corn', 'blight'], condition: 'Maize Lethal Necrosis Disease (MLND)' },
+    { keywords: ['potato', 'late_blight'], condition: 'Potato Late Blight' },
+    { keywords: ['corn', 'rust'], condition: 'Maize Common Rust' },
+    { keywords: ['corn', 'blight'], condition: 'Northern Corn Leaf Blight (NCLB)' },
     { keywords: ['bean'], condition: 'Bean Angular Leaf Spot' },
     { keywords: ['coffee'], condition: 'Coffee Leaf Rust (CLR)' },
-    { keywords: ['cassava'], condition: 'Cassava Mosaic Disease (CMD)' },
+    { keywords: ['cassava', 'mosaic'], condition: 'Cassava Mosaic Disease (CMD)' },
+    { keywords: ['cassava', 'streak'], condition: 'Cassava Brown Streak Disease (CBSD)' },
   ];
   const match = mapping.find(m => m.keywords.every(k => lower.includes(k)));
   if (!match) return null;
@@ -540,6 +556,74 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
     culturalControl: ['Deploy resistant varieties (e.g. Kingbird)', 'Eliminate volunteer wheat and barberry alternate hosts', 'Early sowing to escape peak spore load'],
     biologicalControl: ['No effective bio-control; cultural/genetic control preferred'],
     chemicalIntervention: 'Preventive propiconazole or tebuconazole at booting if regional warning active.',
+  },
+  {
+    condition: 'Tomato Early Blight',
+    scientificName: 'Alternaria solani',
+    crop: 'Tomato',
+    matcher: (m, cropHint) => {
+      const isTomato = !cropHint || /tomato/i.test(cropHint);
+      const score = (m.brownSpotRatio * 1.7 + m.yellowHaloRatio * 1.3 + m.necrosisRatio * 1.0) / 3;
+      const match = isTomato && m.brownSpotRatio > 0.12 && m.yellowHaloRatio > 0.07;
+      const confidence = match ? Math.min(0.90, 0.54 + score * 0.55) : 0.12;
+      const severity = m.brownSpotRatio > 0.28 ? 'severe' : 'moderate';
+      return { match, confidence, severity, score };
+    },
+    symptoms: ['Dark brown concentric target-spot lesions with yellow halos on older leaves', 'Stem cankers near soil line', 'Dark leathery sunken spots on fruit stem end'],
+    culturalControl: ['Prune lower foliage touching soil', 'Avoid overhead watering; use drip lines', 'Rotate with non-solanaceous crops for 2-3 seasons'],
+    biologicalControl: ['Bacillus subtilis foliar spray', 'Copper octanoate bio-fungicide'],
+    chemicalIntervention: 'Apply protective chlorothalonil or mancozeb at first sign; alternate with difenoconazole to prevent resistance.',
+  },
+  {
+    condition: 'Potato Late Blight',
+    scientificName: 'Phytophthora infestans',
+    crop: 'Potato',
+    matcher: (m, cropHint) => {
+      const isPotato = !cropHint || /potato/i.test(cropHint);
+      const score = (m.necrosisRatio * 1.8 + (1 - m.greenCanopyIndex) * 1.2 + m.edgeDensity * 0.7) / 3;
+      const match = isPotato && m.necrosisRatio > 0.20 && m.greenCanopyIndex < 0.60;
+      const confidence = match ? Math.min(0.92, 0.58 + score * 0.55) : 0.13;
+      const severity = m.necrosisRatio > 0.36 ? 'severe' : 'moderate';
+      return { match, confidence, severity, score };
+    },
+    symptoms: ['Water-soaked purplish-brown lesions on leaves and stems', 'White mildew growth on lower leaf surfaces in high humidity', 'Dry granular reddish-brown rot beneath potato tuber skin'],
+    culturalControl: ['Plant certified disease-free seed tubers (e.g. Shangi, Asante)', 'Destroy cull piles and volunteer potatoes', 'Hill up soil well to protect tubers from spores washing down'],
+    biologicalControl: ['Trichoderma viride preventative drench'],
+    chemicalIntervention: 'Preventive sprays with Mancozeb 80% WP or cymoxanil + mancozeb. Apply systemic metalaxyl-M immediately if active lesions appear.',
+  },
+  {
+    condition: 'Northern Corn Leaf Blight (NCLB)',
+    scientificName: 'Exserohilum turcicum',
+    crop: 'Maize',
+    matcher: (m, cropHint) => {
+      const isMaize = !cropHint || /maize|corn/i.test(cropHint);
+      const score = (m.necrosisRatio * 1.6 + m.brownSpotRatio * 1.3 + m.edgeDensity * 0.8) / 3;
+      const match = isMaize && m.necrosisRatio > 0.14 && m.brownSpotRatio > 0.10;
+      const confidence = match ? Math.min(0.91, 0.56 + score * 0.55) : 0.12;
+      const severity = m.necrosisRatio > 0.30 ? 'severe' : 'moderate';
+      return { match, confidence, severity, score };
+    },
+    symptoms: ['Long, elliptical cigar-shaped grayish-green to tan lesions (2.5 to 15 cm)', 'Lesions coalesce causing extensive canopy blighting', 'Dark sporulation inside lesions under humid conditions'],
+    culturalControl: ['Plant tolerant/resistant hybrid varieties (e.g. H614, H628)', 'Deep ploughing to bury infested maize residue', 'One- to two-year crop rotation with legumes or sunflower'],
+    biologicalControl: ['Trichoderma harzianum foliar application at early vegetative stage'],
+    chemicalIntervention: 'Apply azoxystrobin + difenoconazole or pyraclostrobin if lesions reach ear leaf before or at tasseling.',
+  },
+  {
+    condition: 'Maize Common Rust',
+    scientificName: 'Puccinia sorghi',
+    crop: 'Maize',
+    matcher: (m, cropHint) => {
+      const isMaize = !cropHint || /maize|corn/i.test(cropHint);
+      const score = (m.rustPustuleRatio * 2.0 + m.brownSpotRatio * 0.9) / 3;
+      const match = isMaize && m.rustPustuleRatio > 0.09;
+      const confidence = match ? Math.min(0.90, 0.55 + score * 0.6) : 0.10;
+      const severity = m.rustPustuleRatio > 0.22 ? 'severe' : 'moderate';
+      return { match, confidence, severity, score };
+    },
+    symptoms: ['Oval to elongate golden-brown to cinnamon-brown pustules scattered on both leaf surfaces', 'Powdery brick-red urediniospores rub off easily on fingertips', 'Pustules turn dark brownish-black late in season'],
+    culturalControl: ['Plant certified rust-resistant maize hybrids', 'Early planting to avoid high airborne spore loads', 'Adequate plant spacing to facilitate sunlight and rapid canopy drying'],
+    biologicalControl: ['Bacillus pumilus biofungicide foliar applications'],
+    chemicalIntervention: 'Apply triazole fungicides (tebuconazole or propiconazole) if severe infection develops before blister stage.',
   },
 ];
 

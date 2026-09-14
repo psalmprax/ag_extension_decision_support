@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { query } from './databaseService';
 import { logger } from '@/utils/logger';
 

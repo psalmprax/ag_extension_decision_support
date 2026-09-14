@@ -122,6 +122,30 @@ export function analyzeParcelMultispectral(params: {
     };
   }
 
+  // Cloud-mask gate: high cloud cover makes NDVI stress grades unreliable.
+  // Downgrade to manual scouting instead of emitting a false stress anomaly.
+  if (cloudCoverPct >= 40) {
+    return {
+      parcelId,
+      capturedAt: new Date().toISOString(),
+      cloudCoverPct,
+      meanNdvi: 0,
+      meanEvi: 0,
+      meanNdwi: 0,
+      vegetationHealthGrade: 'severe_stress',
+      chlorophyllDensityIndex: 0,
+      moistureStressIndex: 1.0,
+      stressAnomaliesDetected: false,
+      recommendedAction: `Cloud cover ${cloudCoverPct}% exceeds 40% reliability threshold. Discard this pass and schedule manual ground scouting.`,
+      provenance: pillarProvenance(
+        'unavailable',
+        'Cloud-masked pass — indices withheld to avoid false stress alerts.',
+        [...derivedAssumptions, `Cloud cover ${cloudCoverPct}% >= 40% threshold`],
+        false
+      ),
+    };
+  }
+
   let totalNdvi = 0;
   let totalEvi = 0;
   let totalNdwi = 0;

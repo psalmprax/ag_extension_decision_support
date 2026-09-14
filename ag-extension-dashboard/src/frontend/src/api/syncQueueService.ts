@@ -23,6 +23,34 @@ const MAX_RETRIES = 5;
 const BASE_BACKOFF_MS = 30_000; // 30s, 1m, 2m, 4m, 8m
 const IDB_NAME = 'ag-sync-queue-db';
 const IDB_STORE = 'queue';
+// Upper bound so an officer who stays offline for weeks gets a loud warning
+// instead of silently outgrowing browser storage and losing mutations.
+const MAX_QUEUE_ITEMS = 500;
+
+export type StorageDurability = 'persistent' | 'best-effort' | 'unknown';
+let durability: StorageDurability = 'unknown';
+
+/**
+ * Ask the browser to exempt the offline queue from automatic eviction.
+ * Fire-and-forget safe: records the outcome for UI surfacing.
+ */
+export async function ensurePersistentQueueStorage(): Promise<StorageDurability> {
+  try {
+    const storage = navigator.storage;
+    if (storage?.persist) {
+      durability = (await storage.persist()) ? 'persistent' : 'best-effort';
+    } else {
+      durability = 'unknown';
+    }
+  } catch {
+    durability = 'unknown';
+  }
+  return durability;
+}
+
+export function queueStorageDurability(): StorageDurability {
+  return durability;
+}
 
 function openIdb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -120,6 +148,11 @@ class SyncQueueService {
       retryCount: 0,
       state: 'pending',
     };
+    if (this.queue.length >= MAX_QUEUE_ITEMS) {
+      throw new Error(
+        `Offline queue at capacity (${MAX_QUEUE_ITEMS} items). Reconnect and sync before recording more — new mutations are refused rather than risk eviction loss.`,
+      );
+    }
     this.queue.push(queueItem);
     this.saveToStorage();
     this.notifyListeners();
