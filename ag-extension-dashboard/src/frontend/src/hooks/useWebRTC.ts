@@ -172,9 +172,9 @@ export function useWebRTC(): UseWebRTCReturn {
       reconnection: true,
       reconnectionAttempts: 3,
       reconnectionDelay: 2000,
-      // Backend socket.io middleware requires a valid JWT — resolve it lazily so
-      // the token is current when the socket (re)connects.
-      auth: cb => cb({ token: localStorage.getItem('token') || undefined }),
+      // Backend socket.io middleware verifies the httpOnly ag_token cookie on
+      // the websocket upgrade — no token in the auth payload.
+      auth: cb => cb({}),
     });
 
     socket.on('connect', () => {

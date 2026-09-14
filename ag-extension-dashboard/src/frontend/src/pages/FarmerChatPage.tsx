@@ -171,7 +171,9 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
     const socket = io(window.location.origin, {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
-      auth: cb => cb({ token: localStorage.getItem('token') || undefined }),
+      // Cookie auth: the browser attaches the httpOnly ag_token cookie on the
+      // websocket upgrade automatically — no token in the auth payload.
+      auth: cb => cb({}),
     });
     socketRef.current = socket;
 

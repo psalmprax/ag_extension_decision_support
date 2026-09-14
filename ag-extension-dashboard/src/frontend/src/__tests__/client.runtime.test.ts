@@ -16,11 +16,25 @@ describe('API client runtime behavior', () => {
     window.history.replaceState({}, '', '/login');
   });
 
-  it('adds the stored bearer token to outgoing requests', async () => {
-    localStorage.setItem('token', 'token-123');
+  it('adds the CSRF header to mutating requests when the session cookie exists', async () => {
+    // Cookie auth: session JWT is httpOnly (invisible to JS); the readable
+    // ag_csrf cookie is echoed in the x-csrf-token header on mutations.
+    document.cookie = 'ag_csrf=csrf-token-123; path=/';
     const handlers = apiClient.interceptors.request.handlers!;
-    const config = await handlers[0].fulfilled!({ headers: {} } as never);
-    expect(config.headers.Authorization).toBe('Bearer token-123');
+    const config = await handlers[0].fulfilled!({ method: 'post', url: '/farmers', headers: {} } as never);
+    expect(config.headers['x-csrf-token']).toBe('csrf-token-123');
+    expect(config.headers.Authorization).toBeUndefined();
+    document.cookie = 'ag_csrf=; path=/; max-age=0';
+  });
+
+  it('omits the CSRF header on safe methods and CSRF-exempt auth endpoints', async () => {
+    document.cookie = 'ag_csrf=csrf-token-123; path=/';
+    const handlers = apiClient.interceptors.request.handlers!;
+    const safeConfig = await handlers[0].fulfilled!({ method: 'get', url: '/farmers', headers: {} } as never);
+    expect(safeConfig.headers['x-csrf-token']).toBeUndefined();
+    const exemptConfig = await handlers[0].fulfilled!({ method: 'post', url: '/auth/login', headers: {} } as never);
+    expect(exemptConfig.headers['x-csrf-token']).toBeUndefined();
+    document.cookie = 'ag_csrf=; path=/; max-age=0';
   });
 
   it('blocks requests containing synthetic demo identifiers', async () => {
@@ -32,14 +46,14 @@ describe('API client runtime behavior', () => {
 
   it('clears the session and rejects unauthorized responses without retrying', async () => {
     vi.spyOn(axios, 'post').mockRejectedValue(new Error('refresh unavailable'));
-    localStorage.setItem('token', 'token-123');
+    document.cookie = 'ag_csrf=csrf-token-123; path=/';
     localStorage.setItem('user', JSON.stringify({ id: 'user-1' }));
     const handler = apiClient.interceptors.response.handlers![0].rejected!;
     const error = { response: { status: 401 }, config: {} } as never;
 
     await expect(handler(error)).rejects.toMatchObject({ __nonRetryable: true });
-    expect(localStorage.getItem('token')).toBeNull();
     expect(localStorage.getItem('user')).toBeNull();
+    document.cookie = 'ag_csrf=; path=/; max-age=0';
   });
 
   it('evaluates remote wipe signals for forbidden responses', async () => {

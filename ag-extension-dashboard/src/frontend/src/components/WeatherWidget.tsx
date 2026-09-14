@@ -1,3 +1,4 @@
+import { hasAuthSession } from '@/hooks/useAppAuth';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Cloud, CloudRain, Sun, MapPin } from 'lucide-react';
@@ -20,7 +21,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location = 'Kenya'
     queryKey: ['weather', location],
     queryFn: () => fetchWeather(location),
     refetchInterval: 1000 * 60 * 30, // 30 mins
-    enabled: !!localStorage.getItem('token'),
+    enabled: hasAuthSession(),
   });
 
   if (isLoading) {

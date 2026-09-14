@@ -62,7 +62,7 @@ describe('Deep-Tier Stolen Device Security — Client AES-256-GCM & Remote Wipe 
     });
 
     it('should trigger remote wipe automatically when evaluating a 403 revoke signal', async () => {
-      localStorage.setItem('token', 'valid_token');
+      localStorage.setItem('cached_farmers', JSON.stringify([{ name: 'Bob' }]));
 
       const triggered = await RemoteWipeService.evaluateSignal(
         { error: 'ACCOUNT_REVOKED_WIPE_DEVICE' },
@@ -70,7 +70,7 @@ describe('Deep-Tier Stolen Device Security — Client AES-256-GCM & Remote Wipe 
       );
 
       expect(triggered).toBe(true);
-      expect(localStorage.getItem('token')).toBeNull();
+      expect(localStorage.getItem('cached_farmers')).toBeNull();
     });
   });
 });

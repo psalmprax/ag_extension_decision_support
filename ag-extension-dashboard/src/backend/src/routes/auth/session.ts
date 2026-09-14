@@ -5,6 +5,7 @@ import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { getLoginHistory, getLoginStats } from '@/services/loginHistoryService';
 import { isSessionValid } from '@/services/sessionService';
+import { setAuthCookie, clearAuthCookie, getBearerToken } from '@/middleware/authCookie';
 
 const router = Router();
 
@@ -22,9 +23,9 @@ interface JWTPayload {
  * /me, /login-history and /login-stats.
  */
 async function requireSession(req: Request): Promise<JWTPayload | null> {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-    const token = authHeader.split(' ')[1];
+    // Header first, then the httpOnly auth cookie — mirrors authorize().
+    const token = getBearerToken(req);
+    if (!token) return null;
     let decoded: JWTPayload;
     try {
         decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as JWTPayload;
@@ -43,7 +44,9 @@ const REFRESH_GRACE_SECONDS = 7 * 24 * 3600;
 
 router.post('/refresh', async (req: Request, res: Response) => {
     try {
-        const { token } = req.body;
+        // Cookie callers (SPA) send no body token — the httpOnly cookie carries
+        // the current JWT. Header/body callers (mobile/extension) keep working.
+        const token = getBearerToken(req) || (typeof req.body?.token === 'string' ? req.body.token : null);
 
         if (!token) {
             return res.status(400).json({
@@ -84,6 +87,8 @@ router.post('/refresh', async (req: Request, res: Response) => {
             logger.warn('Refresh: failed to record rotated session (continuing):', sessionErr);
         }
 
+        setAuthCookie(res, newToken);
+
         res.json({
             success: true,
             data: { token: newToken },
@@ -98,24 +103,26 @@ router.post('/refresh', async (req: Request, res: Response) => {
 // not at JWT expiry. Idempotent: already-revoked/unknown tokens still 200 so
 // clients can always clear local state.
 router.post('/logout', async (req: Request, res: Response) => {
-    const authHeader = req.headers.authorization;
-    if (authHeader?.startsWith('Bearer ')) {
-        const token = authHeader.split(' ')[1];
+    // Works for both auth styles: Bearer header or httpOnly cookie.
+    const token = getBearerToken(req);
+    if (token) {
         const { revokeSessionByToken } = await import('@/services/sessionService');
         const revoked = await revokeSessionByToken(token);
         if (!revoked) {
             logger.info('Logout for token without a session row (legacy/demo) — revocation list entry written');
         }
     }
+    // Always clear the cookies, even when the token was missing/unknown —
+    // logout must never leave an auth cookie behind.
+    clearAuthCookie(res);
     res.json({ success: true, message: 'Logged out successfully' });
 });
 
 // Get current user
 router.get('/me', async (req: Request, res: Response) => {
-    // In production, verify JWT from header
-    const authHeader = req.headers.authorization;
+    const token = getBearerToken(req);
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
@@ -178,8 +185,7 @@ router.get('/me', async (req: Request, res: Response) => {
  * Query login history entries for security audit.
  */
 router.get('/login-history', async (req: Request, res: Response) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!getBearerToken(req)) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
@@ -218,8 +224,7 @@ router.get('/login-history', async (req: Request, res: Response) => {
  * Query high-level login metrics for the current user or tenant.
  */
 router.get('/login-stats', async (req: Request, res: Response) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!getBearerToken(req)) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 

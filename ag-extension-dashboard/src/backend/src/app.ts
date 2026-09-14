@@ -10,6 +10,7 @@ import { resolveCorsOrigin } from './utils/corsOrigin';
 import { errorHandler } from './middleware/errorHandler';
 import i18nUrlMiddleware, { i18nRouteHandler, restoreOriginalPath } from './middleware/i18nUrlMiddleware';
 import { securityGate } from './middleware/securityGate';
+import { csrfProtection, AUTH_COOKIE_NAME } from './middleware/authCookie';
 import { setupSwagger } from './utils/swagger';
 import { getPool } from './services/databaseService';
 import { getCache } from './services/cacheService';
@@ -187,6 +188,7 @@ app.use(express.urlencoded({
 }));
 app.use(cookieParser());
 app.use(securityGate); // Security gate — after auth/body parsing, before rate limiting
+app.use(csrfProtection); // Cookie-auth CSRF double-submit check (Bearer callers pass through)
 app.use((req, _res, next) => {
     setRequestUserId(req.user?.userId);
     next();
@@ -194,7 +196,25 @@ app.use((req, _res, next) => {
 app.use(globalAuditMiddleware); // privileged / sensitive mutations → audit_logs
 app.use(idempotencyMiddleware);
 
-// Request timeout middleware — AI/Voice-heavy routes (knowledge/ask, chatbot, speech, pillars) get 300s, rest get 30s
+const isProduction = process.env.NODE_ENV === 'production';
+if (isProduction) {
+    // SameSite=Lax already blocks cross-site POSTs in modern browsers; this
+    // barrier is defense-in-depth for legacy/edge browsers and non-browser
+    // abuse of the cookie.
+    app.use((req, res, next) => {
+        const secFetchSite = req.headers['sec-fetch-site'];
+        if (
+            typeof secFetchSite === 'string' &&
+            ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) &&
+            !['same-origin', 'same-site', 'none'].includes(secFetchSite) &&
+            req.cookies?.[AUTH_COOKIE_NAME]
+        ) {
+            logger.warn(`Blocked cross-site ${req.method} ${req.path} (Sec-Fetch-Site: ${secFetchSite})`);
+            return res.status(403).json({ success: false, error: 'Cross-site request forbidden' });
+        }
+        next();
+    });
+}
 app.use((req, res, next) => {
     const isAiHeavy = ['/api/knowledge', '/api/chatbot', '/api/v1/knowledge', '/api/v1/chatbot', '/api/ai', '/api/v1/ai', '/api/pillars', '/api/v1/pillars']
         .some(p => req.path.startsWith(p));

@@ -1,3 +1,4 @@
+import { hasAuthSession } from '@/hooks/useAppAuth';
 import React, { useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
@@ -147,7 +148,7 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
       const res = await apiClient.get('/health');
       return res.data;
     },
-    enabled: isDemo || !!localStorage.getItem('token'),
+    enabled: isDemo || hasAuthSession(),
     refetchInterval: 30_000,
     staleTime: 15_000,
   });

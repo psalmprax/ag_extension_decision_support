@@ -113,18 +113,16 @@ export function Register() {
       const data = await register(formData);
 
       // Handle nested response structure { success: true, data: { token, user } }
+      // The JWT arrives as an httpOnly cookie — only the profile is stored.
       const token = data.token || data.data?.token;
       const userData = data.data?.user || data.user;
 
-      if (token) {
-        localStorage.setItem('token', token);
-      }
       if (userData) {
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData as User);
       }
 
-      if (!token) {
+      if (!userData && !token) {
         throw new Error(t('register_failed_no_token'));
       }
 

@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { containsDemoId } from '@/demo/demoIds';
 import { RemoteWipeService } from '@/services/remoteWipeService';
 
@@ -8,21 +8,45 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
 const RETRY_BACKOFF = 2; // Exponential backoff multiplier
 
+/**
+ * CSRF token for the double-submit check: the backend sets a readable ag_csrf
+ * cookie whose value is an HMAC bound to the session; the request interceptor
+ * echoes it in the x-csrf-token header on mutating requests.
+ */
+export function getCsrfToken(): string | null {
+  const match = document.cookie
+    .split(';')
+    .map(c => c.trim())
+    .find(c => c.startsWith('ag_csrf='));
+  return match ? decodeURIComponent(match.slice('ag_csrf='.length)) : null;
+}
+
+const CSRF_EXEMPT_URLS = /\/auth\/(login|register|demo|refresh|logout|forgot-password|reset-password|verify-email|resend-verification|mfa\/verify)$/;
+
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
+  withCredentials: true, // carries the httpOnly ag_token cookie
   timeout: 300000, // Explicitly set 5m timeout for AI/RAG queries on CPU
 });
 
-// Request interceptor to add JWT token to all requests
+// Request interceptor: CSRF header on mutating requests (cookie auth). The
+// legacy Authorization header is still honored if a caller set one explicitly
+// (mobile/extension flows that manage their own token) — the SPA no longer
+// stores or attaches tokens itself.
 apiClient.interceptors.request.use(
   config => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const method = (config.method || 'get').toLowerCase();
+    if (['post', 'put', 'patch', 'delete'].includes(method)) {
+      const url = config.url || '';
+      if (!CSRF_EXEMPT_URLS.test(url)) {
+        const csrf = getCsrfToken();
+        if (csrf) {
+          config.headers['x-csrf-token'] = csrf;
+        }
+      }
     }
     return config;
   },
@@ -94,7 +118,6 @@ export const getRetryDelay = (retryCount: number): number => {
 };
 
 function forceLogout(): void {
-  localStorage.removeItem('token');
   localStorage.removeItem('user');
   window.dispatchEvent(new Event('auth-unauthorized'));
   const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email'];
@@ -103,24 +126,19 @@ function forceLogout(): void {
   }
 }
 
-// Single in-flight refresh shared by concurrent 401s.
-let refreshPromise: Promise<string | null> | null = null;
+// Single in-flight refresh shared by concurrent 401s. The current JWT lives in
+// the httpOnly cookie; the browser sends it automatically.
+let refreshPromise: Promise<boolean> | null = null;
 
-async function tryRefreshToken(): Promise<string | null> {
+async function tryRefreshSession(): Promise<boolean> {
   if (refreshPromise) return refreshPromise;
-  const current = localStorage.getItem('token');
-  if (!current) return null;
   refreshPromise = axios
-    .post(`${API_BASE_URL}/auth/refresh`, { token: current }, { withCredentials: true, timeout: 15000 })
+    .post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true, timeout: 15000 })
     .then(res => {
       const next = (res.data as { data?: { token?: string } })?.data?.token;
-      if (typeof next === 'string' && next.length > 0) {
-        localStorage.setItem('token', next);
-        return next;
-      }
-      return null;
+      return typeof next === 'string' && next.length > 0;
     })
-    .catch(() => null)
+    .catch(() => false)
     .finally(() => {
       refreshPromise = null;
     });
@@ -141,12 +159,14 @@ async function handleAuthErrors(error: AxiosError): Promise<unknown> {
   if (error.response?.status === 401) {
     const config = error.config as (AxiosError['config'] & { __authRetried?: boolean }) | undefined;
     const isAuthEndpoint = /\/auth\/(login|refresh|register|mfa)/.test(config?.url || '');
-    if (config && !config.__authRetried && !isAuthEndpoint && localStorage.getItem('token')) {
-      const fresh = await tryRefreshToken();
-      if (fresh) {
+    const hasSession = !!getCsrfToken();
+    if (config && !config.__authRetried && !isAuthEndpoint && hasSession) {
+      const refreshed = await tryRefreshSession();
+      if (refreshed) {
         config.__authRetried = true;
-        config.headers = { ...(config.headers as Record<string, string>), Authorization: `Bearer ${fresh}` } as typeof config.headers;
-        return apiClient(config);
+        // No Authorization header to swap — the refreshed cookie is attached
+        // automatically on the retry.
+        return apiClient(config as AxiosRequestConfig);
       }
     }
     forceLogout();

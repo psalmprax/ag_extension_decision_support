@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Server as SocketServer, Socket } from 'socket.io';
+import type { IncomingMessage } from 'http';
 import { logger } from '@/utils/logger';
 import jwt from 'jsonwebtoken';
 import { config } from '@/config';
+import { AUTH_COOKIE_NAME } from '@/middleware/authCookie';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface UserSocket {
@@ -96,11 +98,23 @@ export function initializeSocketHandlers(io: SocketServer): void {
     // Authentication middleware
     io.use(async (socket, next) => {
         try {
-            // Auth token is accepted ONLY from handshake.auth. Query-string
-            // tokens end up in access logs, proxy logs, and Referer headers.
-            const token = socket.handshake.auth?.token;
+            // Token sources, in order: handshake.auth.token (mobile/extension),
+            // then the httpOnly ag_token cookie (SPA — the browser attaches it
+            // automatically on the websocket upgrade request).
+            const handshakeToken = socket.handshake.auth?.token;
+            let token: string | undefined = typeof handshakeToken === 'string' ? handshakeToken : undefined;
+            if (!token) {
+                const cookieHeader = (socket.handshake.headers as IncomingMessage['headers']).cookie;
+                if (typeof cookieHeader === 'string') {
+                    const match = cookieHeader
+                        .split(';')
+                        .map(c => c.trim())
+                        .find(c => c.startsWith(`${AUTH_COOKIE_NAME}=`));
+                    if (match) token = decodeURIComponent(match.slice(AUTH_COOKIE_NAME.length + 1));
+                }
+            }
             
-            if (!token || typeof token !== 'string') {
+            if (!token) {
                 return next(new Error('Authentication required'));
             }
 

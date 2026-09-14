@@ -10,6 +10,7 @@ import { loginSchema } from '@/utils/schemas';
 import { recordLoginAttempt, resolveLocationFromHeaders } from '@/services/loginHistoryService';
 import { isAccountLocked, recordFailedLogin, resetFailedAttempts } from '@/services/lockoutService';
 import { createSession } from '@/services/sessionService';
+import { setAuthCookie } from '@/middleware/authCookie';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
@@ -48,7 +49,7 @@ const DUMMY_BCRYPT_HASH = '$2a$10$NVqK3ijujMkE3ZwVVOLruutAEJwLmNCDXAGVKvTqLGxhBp
 router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
-        const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.ip || null;
+        const clientIp = req.ip || (typeof req.headers['x-forwarded-for'] === 'string' ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || null;
 
         if (!email || !password) {
             await recordLoginAttempt({
@@ -152,6 +153,8 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
                 success: true,
                 data: {
                     mfaRequired: true,
+                    // Kept in the JSON body (never a cookie): 5m lifetime, and
+                    // mfa/verify is CSRF-exempt so the challenge works pre-auth.
                     tempToken,
                     message: 'Two-factor authentication required. Please enter your 6-digit TOTP code or a backup code.',
                 },
@@ -211,6 +214,11 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
                 // fallback to Free
             }
         }
+
+        // httpOnly cookie for the SPA; the body token remains for
+        // mobile/extension/API clients (they never receive cookies' protection
+        // and still authenticate via the Authorization header).
+        setAuthCookie(res, token);
 
         res.json({
             success: true,

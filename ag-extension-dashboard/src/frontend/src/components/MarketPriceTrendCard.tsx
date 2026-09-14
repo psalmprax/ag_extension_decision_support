@@ -1,3 +1,4 @@
+import { hasAuthSession } from '@/hooks/useAppAuth';
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -159,7 +160,7 @@ const PriceHistorySection: React.FC = () => {
   const { data: historyData, isLoading } = useQuery<PriceHistorySeries[]>({
     queryKey: ['analytics-price-history'],
     queryFn: () => fetchPriceHistory(30),
-    enabled: !!localStorage.getItem('token'),
+    enabled: hasAuthSession(),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -253,7 +254,7 @@ export const MarketPriceTrendCard: React.FC = () => {
   const { data, isLoading, isError } = useQuery<MarketPricesResponse>({
     queryKey: ['analytics-market-prices'],
     queryFn: fetchMarketPricesWithMetadata,
-    enabled: !!localStorage.getItem('token'),
+    enabled: hasAuthSession(),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -273,7 +274,7 @@ export const MarketPriceTrendCard: React.FC = () => {
   const { data: retailData } = useQuery<MarketPricesResponse>({
     queryKey: ['analytics-retail-prices'],
     queryFn: () => fetchRetailPrices(),
-    enabled: !!localStorage.getItem('token'),
+    enabled: hasAuthSession(),
     staleTime: 60 * 60 * 1000,
     retry: 1,
   });

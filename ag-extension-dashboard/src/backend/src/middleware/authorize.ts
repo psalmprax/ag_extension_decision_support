@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import { isSessionValid } from '@/services/sessionService';
+import { getBearerToken } from '@/middleware/authCookie';
 
 export type UserRole = 'admin' | 'regional_manager' | 'extension_officer' | 'farmer';
 
@@ -16,17 +17,17 @@ export type AuthRequest = Request;
 export const authorize = (allowedRoles: UserRole[]) => {
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            // Get token from Authorization header
-            const authHeader = req.headers.authorization;
-            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            // Token source: Authorization header (mobile/extension/API clients)
+            // or the httpOnly auth cookie (SPA). Cookie callers are CSRF-checked
+            // by csrfProtection upstream.
+            const token = getBearerToken(req);
+            if (!token) {
                 res.status(401).json({
                     success: false,
                     error: 'No token provided',
                 });
                 return;
             }
-
-            const token = authHeader.split(' ')[1];
 
             // Verify token
             const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as {
@@ -99,13 +100,11 @@ export const authorize = (allowedRoles: UserRole[]) => {
  */
 export const optionalAuth = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
-        const authHeader = req.headers.authorization;
-
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        // Header first, then the httpOnly auth cookie — mirrors authorize().
+        const token = getBearerToken(req);
+        if (!token) {
             return next();
         }
-
-        const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as {
             userId: string;
             email: string;

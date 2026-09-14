@@ -34,7 +34,7 @@ import { useAppSearch } from './hooks/useAppSearch';
 import { useAppChat } from './hooks/useAppChat';
 import { useAppTheme } from './hooks/useAppTheme';
 import { useAppBootstrap } from './hooks/useAppBootstrap';
-import { useAppAuth } from './hooks/useAppAuth';
+import { useAppAuth, hasAuthSession } from './hooks/useAppAuth';
 import { useAppModalState } from './hooks/useAppModalState';
 import { useAppQueries } from './hooks/useAppQueries';
 import { useAppMenuActions } from './hooks/useAppMenuActions';
@@ -144,10 +144,10 @@ function App() {
   const { user, isOfficer } = useAppAuth(storeUser, setUser as (user: unknown) => void);
   const effectiveUser = user || storeUser;
 
-  // Logout handler
+  // Logout handler — the backend clears the auth cookies; only the cached
+  // profile lives in localStorage.
   const handleLogout = async () => {
     await apiLogout();
-    localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
     window.location.href = '/login';
@@ -200,7 +200,7 @@ function App() {
 
   // Fetch unread notification count
   React.useEffect(() => {
-    if (!storeUser || !localStorage.getItem('token')) return;
+    if (!storeUser || !hasAuthSession()) return;
     const loadUnreadCount = async () => {
       try {
         setApiUnreadCount(await fetchUnreadCount());

@@ -50,7 +50,6 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
 
   const handleLogout = async () => {
     await apiLogout();
-    localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/login';
   };

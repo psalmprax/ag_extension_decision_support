@@ -13,6 +13,7 @@ import { issueEmailVerification } from './passwordReset';
 import { incrWindow } from '@/services/sharedState';
 import { createSession } from '@/services/sessionService';
 import { resolveLocationFromHeaders } from '@/services/loginHistoryService';
+import { setAuthCookie } from '@/middleware/authCookie';
 
 const router = Router();
 
@@ -133,6 +134,8 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
             location: resolveLocationFromHeaders(req.headers, clientIp, newUser.region),
         }).catch(err => logger.warn(`Session for new user ${newUser.id} could not be persisted:`, err));
 
+        setAuthCookie(res, token);
+
         res.status(201).json({
             success: true,
             data: {
@@ -223,6 +226,8 @@ router.post('/demo', async (req: Request, res: Response) => {
             userAgent: req.get('user-agent') || null,
             location: resolveLocationFromHeaders(req.headers, ip, user.region),
         }).catch(err => logger.warn(`Session for demo user ${user.id} could not be persisted:`, err));
+
+        setAuthCookie(res, token);
 
         res.json({
             success: true,

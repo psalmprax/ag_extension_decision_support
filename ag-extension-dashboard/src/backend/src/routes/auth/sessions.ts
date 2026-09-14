@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import { getUserSessions, revokeSession, revokeAllOtherSessions, isSessionValid } from '@/services/sessionService';
+import { getBearerToken } from '@/middleware/authCookie';
 
 const router = Router();
 
@@ -19,9 +20,9 @@ interface JWTPayload {
  * revocation check, letting logged-out tokens list/revoke sessions.
  */
 async function requireSession(req: Request): Promise<{ decoded: JWTPayload; token: string } | null> {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-    const token = authHeader.split(' ')[1];
+    // Header first, then the httpOnly auth cookie — mirrors authorize().
+    const token = getBearerToken(req);
+    if (!token) return null;
     let decoded: JWTPayload;
     try {
         decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as JWTPayload;

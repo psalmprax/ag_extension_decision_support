@@ -7,6 +7,7 @@ import { logger } from '@/utils/logger';
 import { recordLoginAttempt, resolveLocationFromHeaders } from '@/services/loginHistoryService';
 import { generateMfaSecret, verifyTotp, matchTotpStep, verifyAndConsumeBackupCode, hashBackupCodes } from '@/services/mfaService';
 import { createSession } from '@/services/sessionService';
+import { setAuthCookie } from '@/middleware/authCookie';
 import { isAccountLocked, recordFailedLogin, resetFailedAttempts } from '@/services/lockoutService';
 import { safeError } from '@/utils/safeResponse';
 
@@ -132,6 +133,8 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
             userAgent: req.get('user-agent'),
             location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
         });
+
+        setAuthCookie(res, token);
 
         let planName = 'Free';
         try {
