@@ -140,3 +140,7 @@ When a test, build, or container fails during development:
 ### 2026-09-14 — CI lint remediation: complexity errors + warning cleanup (stage)
 - Scope: extracted `redactStringValue`/`redactObjectEntries` (`middleware/securityGate.ts`, 16→≤15) and `matchesWildcardSuffix` (`utils/corsOrigin.ts`, 18→≤15) with behavior-identical logic; removed 4 dead declarations (`token` in logout test, `jwt` import, `Request/Response/NextFunction` in swagger); typed `scheduledSms` test job as `Job<ScheduledSmsJobData>` (first attempt with a generic broke `tsc`, corrected before finishing).
 - Verification: eslint clean on all 6 CI-flagged files, backend `tsc --noEmit` clean, 33/33 tests pass across gate, CORS behavior (9, confirming identical logic), SMS dispatch, and logout suites.
+
+### 2026-09-14 — CI action-pin fix: trivy-action SHA typo (stage)
+- Scope: `security-audit.yml` backend/frontend scan steps pinned a nonexistent SHA (`...87db90`); corrected to the verified v0.29.0 commit (`...87dbb0`, confirmed via upstream `ls-remote`). Both steps updated, YAML re-validated.
+- Verification: `git ls-remote` match on `refs/tags/v0.29.0`, `yaml.safe_load` parse clean.

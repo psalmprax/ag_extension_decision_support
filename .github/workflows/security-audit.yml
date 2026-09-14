@@ -248,7 +248,7 @@ jobs:
             .
 
       - name: Scan backend image
-        uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87db90 # v0.29.0
+        uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # v0.29.0
         with:
           image-ref: ag-ext-backend:scan
           severity: HIGH,CRITICAL
@@ -256,7 +256,7 @@ jobs:
           ignore-unfixed: 'true'
 
       - name: Scan frontend image
-        uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87db90 # v0.29.0
+        uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # v0.29.0
         with:
           image-ref: ag-ext-frontend:scan
           severity: HIGH,CRITICAL
