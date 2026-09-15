@@ -45,7 +45,8 @@ describe('HuggingFaceProvider (Reasoning & Tool-Calling)', () => {
 
     expect(res.answer).toBe('Apply DAP at 50kg/acre at planting.');
     expect(res.visuals?.kpis?.[0].value).toBe('50kg');
-    expect(res.confidence).toBe(0.95);
+    // Providers no longer publish an uncalibrated confidence score.
+    expect(res.confidence).toBeUndefined();
     expect(mockedAxios.post).toHaveBeenCalledWith(
       'https://router.huggingface.co/v1/chat/completions',
       expect.objectContaining({

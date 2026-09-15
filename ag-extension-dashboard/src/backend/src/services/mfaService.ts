@@ -208,20 +208,32 @@ export async function verifyAndConsumeBackupCode(
     return { valid: false, remainingCodes: storedBackupCodes };
   }
 
-  const remainingCodes = storedBackupCodes.filter((_, idx) => idx !== matchedIndex);
+  // Consume atomically. `array_remove` fires only when the exact stored entry is
+  // still present, so two concurrent logins cannot both spend the same code (the
+  // previous read-then-write lost the race). The returned row count is the source of
+  // truth: an empty result means the code was already spent, and a DB error means we
+  // could not prove consumption — both fail closed rather than authenticating.
+  const matchedStored = storedBackupCodes[matchedIndex];
+  const valueToRemove = matchedStored.startsWith(HASH_PREFIX)
+    ? hashBackupCode(normalizedCandidate)
+    : normalizedCandidate;
 
   try {
-    await query(
+    const { rows } = await query<{ mfa_backup_codes: string[] }>(
       `
       UPDATE users
-      SET mfa_backup_codes = $1
-      WHERE id = $2
+      SET mfa_backup_codes = array_remove(mfa_backup_codes, $1)
+      WHERE id = $2 AND $1 = ANY(mfa_backup_codes)
+      RETURNING mfa_backup_codes
     `,
-      [remainingCodes, userId]
+      [valueToRemove, userId]
     );
+    if (rows.length === 0) {
+      return { valid: false, remainingCodes: storedBackupCodes };
+    }
+    return { valid: true, remainingCodes: rows[0].mfa_backup_codes };
   } catch (error) {
-    logger.error('Failed to consume backup code:', error);
+    logger.error('Failed to consume backup code — denying authentication (fail-closed):', error);
+    return { valid: false, remainingCodes: storedBackupCodes };
   }
-
-  return { valid: true, remainingCodes };
 }

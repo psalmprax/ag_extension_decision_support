@@ -25,6 +25,12 @@ on:
 permissions:
   contents: read
 
+# Touches Traefik/ACME storage on the production host — never run two at once,
+# and never cancel one mid-renewal.
+concurrency:
+  group: ssl-cert-fix-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   ssl-fix-and-verify:
     # Prod-mutating (may restart Traefik): require maintainer approval via the

@@ -18,6 +18,11 @@ on:
 permissions:
   contents: read
 
+# Production-mutating: one run at a time, never cancelled part-way.
+concurrency:
+  group: reset-admin-prod-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   seed_and_reset:
     name: Seed Database & Reset Admin Credentials

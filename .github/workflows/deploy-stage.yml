@@ -25,6 +25,13 @@ on:
 permissions:
   contents: read
 
+# One stage deploy at a time per ref: two runs building the same compose project
+# on the same host race on image tags and container names. Queued, not cancelled
+# (interrupting a deploy leaves the host half-updated).
+concurrency:
+  group: deploy-stage-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   # Tests must pass before anything is deployed to the testing server.
   # This is the single gate for stage-branch deploys — a failing lint,
@@ -172,7 +179,12 @@ jobs:
           # Core & Security
           JWT_SECRET: ${{ secrets.JWT_SECRET || vars.JWT_SECRET }}
           CREDENTIAL_ENCRYPTION_KEY: ${{ secrets.CREDENTIAL_ENCRYPTION_KEY || vars.CREDENTIAL_ENCRYPTION_KEY }}
-          DEMO_ENABLED: ${{ secrets.DEMO_ENABLED || vars.DEMO_ENABLED || 'true' }}
+          # Git credentials for the deploy host. Passed as an env var so it is never
+          # interpolated into the script text, written to .git/config, or logged.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Demo login is opt-in everywhere: an unset secret must NOT re-open it on
+          # the staging host (base compose defaults DEMO_ENABLED=false).
+          DEMO_ENABLED: ${{ secrets.DEMO_ENABLED || vars.DEMO_ENABLED || 'false' }}
           DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD || vars.DEMO_PASSWORD }}
           # LLM provider keys + selection config (mirrors deploy-all production)
           # Keys come from repo secrets or repo vars.
@@ -209,25 +221,35 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           timeout: 60s
           command_timeout: 15m
-          envs: COMPOSE_PROFILES,JWT_SECRET,CREDENTIAL_ENCRYPTION_KEY,DEMO_ENABLED,DEMO_PASSWORD,OPENAI_API_KEY,GROQ_API_KEY,ANTHROPIC_API_KEY,AZURE_OPENAI_API_KEY,GOOGLE_VERTEX_PROJECT_ID,AIHUBMIX_API_KEY,AIHUBMIX_ACCESS_KEY,OPENROUTER_API_KEY,HUGGINGFACE_API_KEY,NVIDIA_API_KEY,FREEBUFF_AUTH_TOKEN,WEATHER_API_KEY,WEATHER_API_URL,TAVILY_API_KEY,AI_PRIMARY_PROVIDER,AI_PRIMARY_MODEL,AIHUBMIX_WEB_SEARCH,AI_FALLBACK_PROVIDER,AI_FALLBACK_MODEL,AI_EMBEDDINGS_PROVIDER,AI_EMBEDDINGS_MODEL,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_DEPLOYMENT_NAME,OLLAMA_HOST,OLLAMA_MODEL,MCP_API_TOKEN
+          envs: COMPOSE_PROFILES,GITHUB_TOKEN,JWT_SECRET,CREDENTIAL_ENCRYPTION_KEY,DEMO_ENABLED,DEMO_PASSWORD,OPENAI_API_KEY,GROQ_API_KEY,ANTHROPIC_API_KEY,AZURE_OPENAI_API_KEY,GOOGLE_VERTEX_PROJECT_ID,AIHUBMIX_API_KEY,AIHUBMIX_ACCESS_KEY,OPENROUTER_API_KEY,HUGGINGFACE_API_KEY,NVIDIA_API_KEY,FREEBUFF_AUTH_TOKEN,WEATHER_API_KEY,WEATHER_API_URL,TAVILY_API_KEY,AI_PRIMARY_PROVIDER,AI_PRIMARY_MODEL,AIHUBMIX_WEB_SEARCH,AI_FALLBACK_PROVIDER,AI_FALLBACK_MODEL,AI_EMBEDDINGS_PROVIDER,AI_EMBEDDINGS_MODEL,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_DEPLOYMENT_NAME,OLLAMA_HOST,OLLAMA_MODEL,MCP_API_TOKEN
           script: |
             set -euo pipefail
+            # Credentials stay in an env var and a transient fetch URL: they are never
+            # written into .git/config, never interpolated into this script, and are
+            # not logged (this script does not enable `set -x`).
+            : "${GITHUB_TOKEN:?GITHUB_TOKEN must be supplied by the workflow for git sync}"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            AUTH_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+            if [ ! -d /root/ag_extension_decision_support/.git ]; then
+              echo "Cloning repository..."
+              rm -rf /root/ag_extension_decision_support
+              cd /root && git clone "$AUTH_URL" ag_extension_decision_support
+            fi
             cd /root/ag_extension_decision_support
             chmod -R u+rw .git 2>/dev/null || true
             rm -rf .git/config.lock .git/*.lock .git/refs/heads/*.lock 2>/dev/null || true
-            # Ensure remote uses HTTPS with token authentication
-            if ! git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git; then
-              echo "Git config failed; performing clean re-clone..."
-              cd /root
-              rm -rf /root/ag_extension_decision_support
-              git clone -b stage https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git ag_extension_decision_support
-              cd /root/ag_extension_decision_support
-            fi
+            # Scrub any token a previous deploy persisted in the remote URL.
+            git remote set-url origin "$REPO_URL" 2>/dev/null || git remote add origin "$REPO_URL"
             echo "=== before: current commit ==="
             git log -1 --oneline
-            echo "=== git pull --ff-only origin stage ==="
-            git fetch origin
-            git pull --ff-only origin stage
+            echo "=== fetch + fast-forward origin/stage ==="
+            git fetch --prune "$AUTH_URL" '+refs/heads/stage:refs/remotes/origin/stage'
+            if git show-ref --verify --quiet refs/heads/stage; then
+              git checkout stage
+            else
+              git checkout -B stage refs/remotes/origin/stage
+            fi
+            git merge --ff-only refs/remotes/origin/stage
             echo
             echo "=== after: new commit ==="
             git log -1 --oneline

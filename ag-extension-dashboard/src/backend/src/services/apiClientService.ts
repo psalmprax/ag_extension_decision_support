@@ -296,7 +296,7 @@ export async function authenticateCommercialAccess(req: CommercialAuthRequest, r
             return;
         }
 
-        const decoded = jwt.verify(authHeader.split(' ')[1], config.jwt.secret as jwt.Secret) as { userId: string; role: UserRole; email: string };
+        const decoded = jwt.verify(authHeader.split(' ')[1], config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as { userId: string; role: UserRole; email: string };
         req.user = { userId: decoded.userId, email: decoded.email, role: decoded.role };
         req.commercialAuth = { type: 'jwt', userId: decoded.userId, role: decoded.role };
         next();

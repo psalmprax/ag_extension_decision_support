@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [stage, master, develop]
 
+concurrency:
+  group: ci-cd-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # Frontend checks
   frontend:

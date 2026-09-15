@@ -307,3 +307,49 @@ flowchart TD
 - [ ] Are React asynchronous callbacks free of stale closures? (P2)
 - [ ] Is every helper function's SonarJS cognitive complexity $\le 15$? (P3)
 - [ ] Do all quality gates pass (`npm run lint`, `npm test`, `npm run fallow:check`, `verify:anti`)? (P0)
+
+---
+
+## 17. Trust-Boundary, Security-Gate & Provenance Protocol
+
+Codified from the 2026-09 flaw analysis and its remediation. These rules are retroactive-proof: each one maps to a concrete, previously-shipped defect class.
+
+### 17.1 Authentication & Session Integrity (P1)
+1. **Server-owned secrets**: any cryptographic secret used for verification (TOTP seed, backup codes, reset tokens) MUST be generated and persisted server-side before the client can confirm enrollment. A client-supplied secret is an account-takeover primitive — `/mfa/enable`-style flows must verify against the stored enrollment, never `req.body`.
+2. **Fail-closed security writes**: a failed DB write in a single-use credential path (backup code consume, refresh-token rotate) must abort the operation. `catch { log } continue` turns a security control into a replayable bypass.
+3. **Algorithm pinning**: every `jwt.verify` call MUST pass `algorithms` explicitly. Unpinned verification accepts algorithm-confusion tokens.
+4. **No default credentials on deployed hosts**: `JWT_SECRET` fallbacks may exist only when `NODE_ENV` is exactly `development`/`test`; staging/production must fail fast at boot (see `config/index.ts resolveJwtSecret`). Dev-token backdoors must be gated on the same condition and never grant elevated roles outside development.
+
+### 17.2 Authorization & Realtime Channels (P1)
+1. **Room joins are authorizations**: joining a Socket.IO room is an access-control decision. `join_conversation` (and any analogous realtime subscription) MUST verify the authenticated user is a participant of the entity being joined — rate limiting is not authorization.
+2. **IDOR surface scan**: every route that accepts an entity ID in the path/query/body must trace the ID to an ownership/participation check before first read. Writes through shared helpers (`messageAccessService`) keep this in one place — reuse them, don't fork them.
+
+### 17.3 Token & Network Egress (P1)
+1. **Origin allowlists for credential-bearing fetches**: any runtime that holds a bearer token (browser extension service workers, CLI agents) MUST gate every `fetch` through an explicit origin allowlist before attaching credentials. Queued/replayed requests resolve the URL at send time — the gate must run then, not at enqueue time.
+2. **Session-only token storage**: bearer tokens in browser extensions live in `storage.session` (memory-only); `storage.local` persistence is a regression.
+3. **`docker.sock` is root**: never mount it directly into a container that parses untrusted input (reverse proxies). Route through a least-privilege socket proxy exposing read-only discovery endpoints only (see `docker-compose.yml docker-socket-proxy`).
+
+### 17.4 Data Honesty & Provenance (P0 for farmer-facing output, P1 otherwise)
+1. **No fabricated “verified” labels**: on AI/provider failure, systems must surface “AI unavailable / unverified” — never render canned answers stamped as `verified_sources`, “Verified Advisory”, or “LIVE” when the underlying data was synthesized or stale. Fallback content must carry a distinct, honest evidence status.
+2. **No fabricated confidence**: LLM responses must not be stamped with invented confidence scores (e.g. a constant `0.88`). Confidence either comes from the model/calibration data or is absent.
+3. **Derived metrics must disclose their formula**: any index shown to users (e.g. ChlorophyllDensityIndex) must state what it is computed from; single-factor proxies must not be named as independent measurements.
+4. **Certification flags default to unknown**: booleans like `fairTradeCertified` default `null`/`false` until verified — defaulting `true` fabricates a compliance claim.
+5. **Health/config honesty**: `/health` and readiness endpoints report what is *actually* configured (key present AND non-placeholder), never hardcoded `true`. Demo-login defaults are opt-in on every deployed host; an unset secret must not re-open demo auth (workflow env defaults `|| 'true'` are forbidden for auth-affecting flags).
+
+### 17.5 Deployment & Secret Hygiene (P1)
+1. **No tokens on deploy hosts**: CI/CD scripts MUST NOT embed `GITHUB_TOKEN` into git remote URLs (it persists in `.git/config`). Pass tokens via workflow `env` + `envs:` and use transient fetch URLs; scrub remote URLs on each deploy; never run deploy scripts under `set -x` while secrets are in scope (GitHub masks `secrets.*`, not `vars.*` or expanded secrets).
+2. **Health gates decide exit codes**: deploy scripts exit non-zero when post-deploy health checks fail; a ❌ log line followed by `exit 0` is a false-success report.
+3. **No hardcoded hosts/keys in scripts**: SSH key paths, IPs, and `StrictHostKeyChecking=no` are environment configuration (`DEPLOY_SSH_KEY`, `DEPLOY_STAGE_HOST`), not script content.
+4. **Concurrency groups on mutating workflows**: deploy/prod-mutating workflows declare `concurrency` groups (queued, not cancelled); CI/test workflows cancel in-progress runs.
+
+### 17.6 Reliability Gates (P2)
+1. **Bounded in-process history**: append-only arrays that grow with traffic (`completedTasks`, `handoffLog`) MUST be capped; status lookups over unbounded lists are latency regressions and memory leaks.
+2. **No event-loop migrations**: schema migration runs in the entrypoint/init container, not via `execSync` from the API process (blocks the loop; replicas race).
+3. **Unawaited async constructors**: constructors must not fire async initializers fire-and-forget; expose an explicit readiness promise that request handlers await (see `paymentService.whenReady`).
+4. **Realtime resource teardown**: WebRTC/multimedia hooks must hold streams in refs (not stale closures), release tracks and close sockets on unmount *and* on modal dismissal, and release on failed `startCall`.
+5. **Queue integrity**: enqueue failures are surfaced to the user (typed errors/toasts), quota errors are not swallowed, offline drains hold a cross-tab lock, and queued writes do not report fake success codes.
+
+### 17.7 Verification Hooks Added By This Remediation
+- `ag-extension-browser-ext/scripts/verify-security.js` — enforces 17.3.1/17.3.2 (origin-allowlist wiring on every fetch site, session-only token storage) plus MV3/permission/eval checks. Wired as `npm run test:security` in CI (`ci-cd.yml`, `security-audit.yml`).
+- `docker compose config` must pass for base+prod/staging/dev merges — the socket-proxy wiring is part of the contract.
+- `scripts/deploy-safe.sh` / `scripts/deploy_stage_safe.sh` — health gates control exit codes (17.5.2).

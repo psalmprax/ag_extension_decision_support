@@ -51,6 +51,10 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    # Container env for the healthcheck below: $$ defers expansion to runtime
+    # inside the container, so the password never appears in healthcheck args.
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-agext_redis_2024}
     # Cache instance: LRU eviction is fine here. NOT used by BullMQ — see redis-queue.
     command: redis-server --requirepass ${REDIS_PASSWORD:-agext_redis_2024} --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
@@ -60,7 +64,7 @@ services:
     networks:
       - ag-network
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-agext_redis_2024}", "ping"]
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a \"$$REDIS_PASSWORD\" ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -76,6 +80,10 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    # Container env for the healthcheck below: $$ defers expansion to runtime
+    # inside the container, so the password never appears in healthcheck args.
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-agext_redis_2024}
     command: redis-server --requirepass ${REDIS_PASSWORD:-agext_redis_2024} --maxmemory 256mb --maxmemory-policy noeviction --appendonly yes --appendfsync everysec
     ports:
       - "${REDIS_QUEUE_BIND_IP:-127.0.0.1}:${REDIS_QUEUE_PORT:-7503}:6379"
@@ -84,27 +92,56 @@ services:
     networks:
       - ag-network
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-agext_redis_2024}", "ping"]
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a \"$$REDIS_PASSWORD\" ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # ── Docker Socket Proxy ─────────────────────────────────────
+  # Least-privilege gateway in front of /var/run/docker.sock. Traefik only needs to
+  # LIST containers/networks to auto-discover backends; a direct socket mount would
+  # give a compromised Traefik root-equivalent access to the host (create containers,
+  # mount the filesystem, reach other services). This proxy exposes read-only
+  # discovery endpoints only — no container exec, start/stop, image, volume, or
+  # swarm APIs.
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: ag-docker-socket-proxy
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      CONTAINERS: 1   # GET /containers/* — Traefik service discovery
+      NETWORKS: 1     # GET /networks/*
+      VERSION: 1      # GET /version
+      POST: 0         # no mutating requests
+      # Everything else defaults to 0 (denied): exec, images, volumes, swarm.
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - ag-network
+    tmpfs:
+      - /tmp
+
   # ── Reverse Proxy ─────────────────────────────────────────
-  # Traefik auto-discovers services via Docker labels.
+  # Traefik auto-discovers services via Docker labels — through the read-only
+  # socket proxy above, never the raw docker.sock.
   # Dev: HTTP only on port 80.
   # Prod: add -f docker-compose.prod.yml for HTTPS + Let's Encrypt.
   traefik:
     image: traefik:v3.7
     container_name: ag-traefik
+    depends_on:
+      - docker-socket-proxy
     command:
       - "--providers.docker=true"
+      - "--providers.docker.endpoint=tcp://docker-socket-proxy:2375"
       - "--providers.docker.exposedByDefault=false"
       - "--providers.docker.network=ag-network"
       - "--entrypoints.web.address=:80"
     ports:
       - "${TRAEFIK_HTTP_PORT:-80}:80"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+    volumes: []
     networks:
       - ag-network
     restart: unless-stopped

@@ -364,21 +364,32 @@ async function checkAIProvider(): Promise<{ status: string; error?: string }> {
 
 function checkExternalAPIs(): { status: string; error?: string } {
     try {
-        const weatherKey = config.externalApis.weather.apiKey;
-        const weatherUrl = config.externalApis.weather.url;
-        const faoConfigured = !!config.externalApis.fao.url;
-        // NASA POWER requires no API key (public endpoints), so it counts as configured.
-        const nasaConfigured = true;
+        // Split by whether a credential is actually required. Reporting a default URL
+        // as "configured" made this check claim full coverage with zero API keys.
+        const keyed: Record<string, boolean> = {
+            weather: !!config.externalApis.weather.apiKey,
+            tavily: !!config.externalApis.tavily.apiKey,
+        };
+        // Keyless public endpoints have nothing to configure — they are reachable by
+        // design, so they are reported separately and never counted as credentials.
+        const keyless: Record<string, boolean> = {
+            fao: !!config.externalApis.fao.url,
+            nasa: true, // NASA POWER public endpoints require no key
+        };
 
-        if (weatherKey || weatherUrl || faoConfigured || nasaConfigured) {
-            const configured = ['weather', 'fao', 'nasa'].filter(k =>
-                (k === 'weather' && (weatherKey || weatherUrl)) ||
-                (k === 'fao' && faoConfigured) ||
-                (k === 'nasa')
-            ).length;
-            return { status: `${configured}/3 configured` };
+        const configuredKeyed = Object.keys(keyed).filter(k => keyed[k]);
+        const reachableKeyless = Object.keys(keyless).filter(k => keyless[k]);
+
+        const keylessNote = reachableKeyless.length
+            ? `; keyless by design: ${reachableKeyless.join(', ')}`
+            : '';
+
+        if (configuredKeyed.length === 0) {
+            return { status: `no keyed external APIs configured (0/${Object.keys(keyed).length})${keylessNote}` };
         }
-        return { status: 'none configured' };
+        return {
+            status: `${configuredKeyed.length}/${Object.keys(keyed).length} keyed external APIs configured (${configuredKeyed.join(', ')})${keylessNote}`,
+        };
     } catch (error) {
         return { status: 'error', error: `external_apis: ${(error as Error).message}` };
     }

@@ -111,7 +111,7 @@ describe('Security Hardening Pillar (MFA, Sessions, Lockout)', () => {
     });
 
     it('consumes a valid backup code and updates database', async () => {
-      mockQuery.mockResolvedValueOnce({ rows: [] });
+      mockQuery.mockResolvedValueOnce({ rows: [{ mfa_backup_codes: ['BBBB-2222', 'CCCC-3333'] }] });
       const initialCodes = ['AAAA-1111', 'BBBB-2222', 'CCCC-3333'];
 
       const result = await verifyAndConsumeBackupCode('user-1', 'aaaa-1111', initialCodes);
@@ -126,6 +126,18 @@ describe('Security Hardening Pillar (MFA, Sessions, Lockout)', () => {
       expect(result.valid).toBe(false);
       expect(result.remainingCodes).toEqual(initialCodes);
       expect(mockQuery).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when the consume cannot be confirmed (DB error)', async () => {
+      mockQuery.mockRejectedValueOnce(new Error('connection terminated'));
+      const result = await verifyAndConsumeBackupCode('user-1', 'aaaa-1111', ['AAAA-1111']);
+      expect(result.valid).toBe(false);
+    });
+
+    it('fails closed when the guard matches no row (already spent / concurrent use)', async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+      const result = await verifyAndConsumeBackupCode('user-1', 'aaaa-1111', ['AAAA-1111']);
+      expect(result.valid).toBe(false);
     });
   });
 

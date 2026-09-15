@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger';
+import { isSubscriptionActive } from './paymentService';
 
 let prisma: PrismaClient;
 function getPrisma() {
@@ -139,7 +140,9 @@ class UsageService {
             const planName = (data.plan.name?.toLowerCase() || '').trim();
             const price = data.plan.price != null ? Number(data.plan.price) : 0;
             const isFreeName = planName === 'free' || planName.startsWith('free ') || planName.includes(' free');
-            const isActive = data.status === 'active' || data.status === 'trialing';
+            // Period-aware: an expired subscription (status still 'active', period ended)
+            // falls back to the free tier until it is renewed or lapsed.
+            const isActive = isSubscriptionActive(data);
             return isFreeName || price === 0 || !isActive;
         } catch (error) {
             logger.error(`Failed to check if user ${userId} is free:`, error);
@@ -273,12 +276,12 @@ class UsageService {
 
     private isFreeTierUsage(
         plan: { price?: unknown; name?: string | null } | undefined,
-        status: string | undefined,
+        subscription: { status?: string | null; currentPeriodEnd?: Date | string | null } | undefined,
         isDemo: boolean
     ): boolean {
         if (isDemo) return true;
-        const isActive = status === 'active' || status === 'trialing';
-        if (!isActive || !plan) return true;
+        // Period-aware active check — see isSubscriptionActive in paymentService.
+        if (!isSubscriptionActive(subscription) || !plan) return true;
 
         const price = plan.price != null ? Number(plan.price) : 0;
         const planName = (plan.name?.toLowerCase() || '').trim();
@@ -306,7 +309,7 @@ class UsageService {
             }
             const data = await this.getUsage(userId);
             const plan = data?.plan;
-            const isFree = this.isFreeTierUsage(plan, data?.status, isDemo);
+            const isFree = this.isFreeTierUsage(plan, data ?? undefined, isDemo);
 
             if (!isFree) {
                 // Paid subscribers: access governed by plan features

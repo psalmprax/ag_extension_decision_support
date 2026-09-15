@@ -6,6 +6,7 @@ import { logger } from '@/utils/logger';
 import { getLoginHistory, getLoginStats } from '@/services/loginHistoryService';
 import { isSessionValid } from '@/services/sessionService';
 import { setAuthCookie, clearAuthCookie, getBearerToken } from '@/middleware/authCookie';
+import { isSubscriptionActive } from '@/services/paymentService';
 
 const router = Router();
 
@@ -55,7 +56,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
             });
         }
 
-        const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { ignoreExpiration: true }) as JWTPayload & { exp?: number; mfaPending?: boolean };
+        const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'], ignoreExpiration: true }) as JWTPayload & { exp?: number; mfaPending?: boolean };
         if (decoded.mfaPending) {
             return res.status(401).json({ success: false, error: 'MFA challenge tokens cannot be refreshed' });
         }
@@ -71,7 +72,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
         const newToken = jwt.sign(
             { userId: decoded.userId, email: decoded.email, role: decoded.role },
             config.jwt.secret as jwt.Secret,
-            { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
+            { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
 
         // Rotate: the old token is retired locally and a new session row is recorded.
@@ -136,7 +137,8 @@ router.get('/me', async (req: Request, res: Response) => {
             SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.region, u.is_demo,
                    sp.name as plan_name,
                    sp.price as plan_price,
-                   s.status as subscription_status
+                   s.status as subscription_status,
+                   s.current_period_end as subscription_period_end
             FROM users u
             LEFT JOIN subscriptions s ON s.user_id = u.id
             LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
@@ -156,7 +158,7 @@ router.get('/me', async (req: Request, res: Response) => {
         } else if (user.is_demo || user.email === 'demo@agridemo.com') {
             planName = 'Free';
             isFree = true;
-        } else if (user.plan_name && (user.subscription_status === 'active' || user.subscription_status === 'trialing')) {
+        } else if (user.plan_name && isSubscriptionActive({ status: user.subscription_status, currentPeriodEnd: user.subscription_period_end })) {
             const price = user.plan_price != null ? Number(user.plan_price) : 0;
             planName = user.plan_name;
             isFree = price === 0 || planName.toLowerCase().includes('free');

@@ -6,6 +6,7 @@ import { safeError } from '@/utils/safeResponse';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { calculateVpdKPa, evaluateSmartIrrigation } from '@/services/iotTelemetryService';
 import { analyzeParcelMultispectral } from '@/services/satelliteNdviService';
+import { ingestParcelBands, ingestStatus } from '@/services/satelliteIngestService';
 import { calculateSocStock, auditSoilCarbonSequestration } from '@/services/soilCarbonMrvService';
 import { calculateAgronomicRoi } from '@/services/agronomicRoiService';
 import { evaluateWeatherHazardsWithProvenance, runProactiveHazardScan } from '@/services/weatherHazardDaemonService';
@@ -24,11 +25,54 @@ router.post('/iot/evaluate', checkUsageLimit('ai_chat'), validate({ body: z.obje
     } catch (e) { return safeError(res, 500, (e as Error).message); }
 });
 
-router.post('/satellite/analyze', checkUsageLimit('ai_chat'), validate({ body: z.object({
-    parcelId: z.string().min(1), pixels: z.array(z.object({ bandRed: z.number(), bandNir: z.number(), bandGreen: z.number().optional(), bandSwir: z.number().optional() })).min(1),
+const satelliteBboxSchema = z.object({
+    minLat: z.number(), maxLat: z.number(), minLng: z.number(), maxLng: z.number(),
+    fromDate: z.string(), toDate: z.string(), maxCloudCoverPct: z.number().optional(),
+});
+
+const satelliteAnalyzeSchema = z.object({
+    parcelId: z.string().min(1),
+    pixels: z.array(z.object({ bandRed: z.number(), bandNir: z.number(), bandGreen: z.number().optional(), bandSwir: z.number().optional() })).min(1).optional(),
+    bbox: satelliteBboxSchema.optional(),
     cloudCoverPct: z.number().optional(), baselineNdvi: z.number().optional(),
-})}), async (req: AuthRequest, res: Response) => {
-    try { return res.json({ success: true, data: analyzeParcelMultispectral(req.body as never) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
+}).refine(v => v.pixels || v.bbox, { message: 'Supply either pixels (caller bands) or bbox (Sentinel Hub ingest)' });
+
+/**
+ * Analyze a parcel. Callers may POST raw bands, or a bbox to ingest real Sentinel-2
+ * imagery first. The ingest path fails loudly when SENTINEL_HUB_* is not configured
+ * rather than analyzing assumed bands.
+ */
+router.post('/satellite/analyze', checkUsageLimit('ai_chat'), validate({ body: satelliteAnalyzeSchema }), async (req: AuthRequest, res: Response) => {
+    try {
+        const { parcelId, pixels, bbox, cloudCoverPct, baselineNdvi } = req.body as {
+            parcelId: string;
+            pixels?: Parameters<typeof analyzeParcelMultispectral>[0]['pixels'];
+            bbox?: Parameters<typeof ingestParcelBands>[0];
+            cloudCoverPct?: number;
+            baselineNdvi?: number;
+        };
+
+        let bands = pixels;
+        let effectiveCloudCover = cloudCoverPct;
+        let ingestSource = 'caller_supplied_bands';
+
+        if (!bands) {
+            const ingest = await ingestParcelBands(bbox as Parameters<typeof ingestParcelBands>[0]);
+            bands = ingest.pixels;
+            effectiveCloudCover = effectiveCloudCover ?? ingest.cloudCoverPct;
+            ingestSource = ingest.source;
+        }
+
+        const analysis = analyzeParcelMultispectral({ parcelId, pixels: bands, cloudCoverPct: effectiveCloudCover, baselineNdvi });
+        return res.json({ success: true, data: { ...analysis, ingestSource } });
+    } catch (e) {
+        return safeError(res, 502, (e as Error).message);
+    }
+});
+
+/** Report whether satellite ingest credentials are present (no imagery fetched). */
+router.get('/satellite/ingest-status', checkUsageLimit('ai_chat'), async (_req: AuthRequest, res: Response) => {
+    return res.json({ success: true, data: ingestStatus() });
 });
 
 router.post('/soil/carbon-stock', checkUsageLimit('ai_chat'), validate({ body: z.object({

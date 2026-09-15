@@ -47,6 +47,7 @@ async function runAlertChecks(): Promise<void> {
             checkDiseaseAlerts(),
             checkWeatherAlerts(),
             checkSubscriptionExpiry(),
+            lapseExpiredSubscriptions(),
             checkChatbotSatisfaction(),
             checkFarmerAssignment()
         ]);
@@ -143,6 +144,32 @@ async function checkSubscriptionExpiry(): Promise<void> {
         logger.info(`Processed ${result.rows.length} subscription expiry notifications`);
     } catch (error) {
         logger.error('Error checking subscription expiry:', error);
+    }
+}
+
+/**
+ * Retire subscriptions whose period has ended and that no billing webhook will renew.
+ *
+ * PayPal checkout is a one-time sale, so its entitlements never auto-renew — without
+ * this sweep a lapsed pass stayed 'active' forever. Stripe subscriptions are excluded
+ * because their period end is advanced by the Stripe webhook; lapsing them here would
+ * punish a paying customer whenever that webhook is briefly delayed.
+ */
+async function lapseExpiredSubscriptions(): Promise<void> {
+    try {
+        const result = await query<{ user_id: string }>(`
+            UPDATE subscriptions
+               SET status = 'expired', updated_at = NOW()
+             WHERE status = 'active'
+               AND current_period_end < NOW()
+               AND (stripe_subscription_id IS NULL OR stripe_subscription_id = '')
+         RETURNING user_id
+        `);
+        if (result.rowCount) {
+            logger.info(`Lapsed ${result.rowCount} non-Stripe subscription(s) past their period end`);
+        }
+    } catch (error) {
+        logger.error('Error lapsing expired subscriptions:', error);
     }
 }
 

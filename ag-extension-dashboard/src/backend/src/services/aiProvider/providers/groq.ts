@@ -168,7 +168,6 @@ export class GroqProvider extends BaseAIProvider {
         return {
             reasoning: 'Detailed Intelligence Analysis completed via Groq (llama-3.3-70b-versatile).',
             answer: cleanAnswer,
-            confidence: 0.9,
             visuals,
             toolCalls: result.toolCalls as any,
         };

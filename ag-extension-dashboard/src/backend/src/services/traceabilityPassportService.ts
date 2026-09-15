@@ -2,8 +2,9 @@
  * EUDR compliance checks and GS1 farm-to-fork batch passports — wired via POST /api/pillars/traceability/*.
  *
  * EUDR audits fail closed: without caller-supplied verified canopy measurements the
- * result is `assessment_unavailable`, never a compliance claim. Passports carry a DEMO
- * GTIN and a display-only hash; both are disclosed in the `provenance` block.
+ * result is `assessment_unavailable`, never a compliance claim. Passports disclose any
+ * field not supplied by the caller (a derived GTIN, the signature basis, the carbon
+ * estimate) in the `provenance` block.
  */
 import crypto from 'crypto';
 import { logger } from '../utils/logger';
@@ -117,6 +118,22 @@ export function verifyEudrDeforestationCompliance(params: {
   };
 }
 
+/**
+ * Derive a stable, batch-specific GTIN from the passport's own identifying fields
+ * (never a fixed demo constant): the first 13 digits are hashed from the batch
+ * identity and the 14th is the GS1 modulo-10 check digit. Deterministic per batch,
+ * but NOT a GS1-registered number — that is disclosed in the provenance block.
+ */
+function deriveGtin(batchId: string, commodityName: string, originCooperative: string): string {
+  const digest = crypto.createHash('sha256').update(`${batchId}|${commodityName}|${originCooperative}`).digest('hex');
+  let base = '';
+  for (let i = 0; base.length < 13; i++) {
+    base += String(parseInt(digest[i], 16) % 10);
+  }
+  const checksum = base.split('').reduce((sum, digit, idx) => sum + Number(digit) * (idx % 2 === 0 ? 3 : 1), 0);
+  return base + String((10 - (checksum % 10)) % 10);
+}
+
 export function generateFarmToForkPassport(params: {
   batchId: string;
   commodityName: string;
@@ -126,7 +143,12 @@ export function generateFarmToForkPassport(params: {
   originCountry: string;
   farmCoordinates: [number, number];
   harvestDate: string;
+  /** Fair-trade certification is only asserted when the caller supplies it. */
   fairTradeCertified?: boolean;
+  /** Tenant-registered GS1 GTIN. Falls back to a value derived from the batch payload (disclosed) when absent. */
+  gtin?: string;
+  /** Measured lifecycle value. Omitted means "not measured", never a default. */
+  carbonFootprintKgCo2ePerKg?: number;
 }): CommodityBatchPassport {
   const {
     batchId,
@@ -137,17 +159,27 @@ export function generateFarmToForkPassport(params: {
     originCountry,
     farmCoordinates,
     harvestDate,
-    fairTradeCertified = true,
+    // Unverified certification claims must not default to true — absence of evidence
+    // is not evidence of certification.
+    fairTradeCertified = false,
   } = params;
 
   logger.info(`Generating GS1 Digital Link Passport for batch ${batchId} (${commodityName})`);
 
-  const gtin = '06164000189214'; // DEMO GTIN — replace with tenant-registered value before production use
+  const usesDerivedGtin = !params.gtin;
+  const gtin = params.gtin || deriveGtin(batchId, commodityName, originCooperative);
   const gs1DigitalLinkUrl = `https://id.agriextension.org/01/${gtin}/10/${batchId}`;
 
-  // Display-only integrity hash: unsalted SHA-256 over the payload. Not a cryptographic attestation.
+  // Keyed HMAC when a signing secret is provisioned (real integrity); otherwise an
+  // unkeyed display hash, which is disclosed as non-attesting.
   const payloadToSign = `${batchId}|${commodityName}|${farmCoordinates[0]},${farmCoordinates[1]}|${harvestDate}|${originCooperative}`;
-  const digitalSignatureHash = crypto.createHash('sha256').update(payloadToSign).digest('hex');
+  const signingSecret = process.env.PASSPORT_SIGNING_SECRET;
+  const digitalSignatureHash = signingSecret
+    ? crypto.createHmac('sha256', signingSecret).update(payloadToSign).digest('hex')
+    : crypto.createHash('sha256').update(payloadToSign).digest('hex');
+
+  const carbonFootprintKgCo2ePerKg = params.carbonFootprintKgCo2ePerKg ?? 0.85;
+  const carbonFootprintMeasured = params.carbonFootprintKgCo2ePerKg !== undefined;
 
   return {
     batchId,
@@ -162,15 +194,22 @@ export function generateFarmToForkPassport(params: {
     harvestDate,
     chemicalResidueMrlStatus: 'pending_lab' as const,
     fairTradeCertified,
-    carbonFootprintKgCo2ePerKg: 0.85, // ESTIMATED — requires lifecycle assessment, not measured
+    carbonFootprintKgCo2ePerKg: carbonFootprintKgCo2ePerKg, // ESTIMATED unless supplied — requires lifecycle assessment
     digitalSignatureHash,
     provenance: pillarProvenance(
-      'demo_reference_data',
-      'Passport structure is live but the GTIN is a demo placeholder and the signature is an unsalted display hash. Carbon footprint is a fixed estimate pending lifecycle assessment.',
+      usesDerivedGtin || !signingSecret || !carbonFootprintMeasured ? 'demo_reference_data' : 'computed_from_supplied_inputs',
+      'Passport structure is live. Any field that was not supplied by the caller is flagged rather than asserted.',
       [
-        'GTIN is a DEMO value — tenant-registered GS1 prefix required for production',
-        'digitalSignatureHash is display-only, not a cryptographic attestation',
-        'carbonFootprintKgCo2ePerKg fixed at 0.85 (illustrative)',
+        ...(usesDerivedGtin ? ['DEMO data: GTIN is derived from the batch payload, not a GS1-registered identifier — tenant-registered GS1 prefix required for production'] : []),
+        ...(!signingSecret
+          ? ['DEMO data: digitalSignatureHash is an unkeyed display hash, not a cryptographic attestation (set PASSPORT_SIGNING_SECRET to sign)']
+          : ['digitalSignatureHash is an HMAC-SHA256 over the payload fields, keyed by PASSPORT_SIGNING_SECRET']),
+        ...(!carbonFootprintMeasured
+          ? ['carbonFootprintKgCo2ePerKg is an illustrative estimate (0.85), not a measured lifecycle value']
+          : ['carbonFootprintKgCo2ePerKg supplied by the caller']),
+        ...(params.fairTradeCertified === undefined
+          ? ['fairTradeCertified was not supplied — reported as false']
+          : ['fairTradeCertified supplied by the caller and not independently verified']),
       ],
       true
     ),

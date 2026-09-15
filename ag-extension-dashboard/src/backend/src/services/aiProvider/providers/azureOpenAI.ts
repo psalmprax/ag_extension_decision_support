@@ -221,7 +221,6 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             return {
                 reasoning: 'Detailed Azure-based Intelligence Analysis completed.',
                 answer: cleanAnswer,
-                confidence: 0.9,
                 visuals
             };
         } catch (error) {

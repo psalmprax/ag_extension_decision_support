@@ -214,7 +214,6 @@ export class OpenAIProvider extends BaseAIProvider {
         return {
             reasoning: 'Detailed Intelligence Analysis completed.',
             answer: cleanAnswer,
-            confidence: 0.9,
             visuals
         };
     }

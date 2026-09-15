@@ -6,6 +6,7 @@ import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import type { AuthenticatedRequestUser } from '@/types/rowTypes';
+import { resolveFarmerId } from '@/services/messageAccessService';
 
 const router = Router();
 
@@ -37,14 +38,6 @@ const importSessionSchema = z.object({
     .optional()
     .default({}),
 });
-
-async function resolveFarmerId(userId: string): Promise<string | null> {
-  const { rows } = await query<{ id: string }>(
-    `SELECT id FROM farmers WHERE user_id = $1 OR id = $1 LIMIT 1`,
-    [userId]
-  );
-  return rows[0]?.id || null;
-}
 
 router.post(
   '/import-session',

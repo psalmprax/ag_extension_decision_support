@@ -39,7 +39,28 @@ app.add_middleware(
 # Environment variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 DATABASE_URL = os.getenv("DATABASE_URL", "")
-JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret")
+
+
+def _resolve_jwt_secret() -> str:
+    """Resolve the JWT signing secret, failing loud rather than defaulting.
+
+    A baked-in default secret is a signing-key forgery backdoor: anyone who knows it
+    can mint tokens for any user. Production requires a strong, provisioned secret.
+    """
+    secret = os.getenv("JWT_SECRET", "").strip()
+    if secret:
+        if NODE_ENV == "production" and len(secret) < 32:
+            raise RuntimeError("JWT_SECRET must be at least 32 characters in production")
+        return secret
+    if NODE_ENV == "production":
+        raise RuntimeError("JWT_SECRET is required in production; refusing to start with a default")
+    logger.warning(
+        "JWT_SECRET not set — generating an ephemeral development secret (tokens are invalidated on restart)"
+    )
+    return os.urandom(48).hex()
+
+
+JWT_SECRET = _resolve_jwt_secret()
 
 # Import Crew AI
 try:
@@ -215,11 +236,18 @@ async def verify_token(authorization: Optional[str] = Header(None)):
 
     token = authorization.split(" ")[1]
 
-    if not token or token == "dev-token":
-        if NODE_ENV == "production":
-            raise HTTPException(status_code=401, detail="Invalid or expired token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Empty token")
+
+    # SECURITY: dev-token is development-only AND must be explicitly enabled. Gating
+    # on NODE_ENV alone let any non-production deploy accept it with role=admin.
+    if token == "dev-token":
+        if NODE_ENV != "development" or os.getenv("ALLOW_DEV_TOKEN", "false").strip().lower() != "true":
+            logger.warning("Rejected dev-token: dev-token login is disabled (set ALLOW_DEV_TOKEN=true for local dev)")
+            raise HTTPException(status_code=401, detail="dev-token is not accepted")
+        logger.warning("dev-token accepted: development mode with ALLOW_DEV_TOKEN=true")
         return {"user_id": "dev-user", "role": "admin"}
-    
+
     try:
         import jwt
         payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])

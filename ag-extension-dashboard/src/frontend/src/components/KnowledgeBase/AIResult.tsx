@@ -241,7 +241,9 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
               <p className="mt-1 text-xs text-amber-100/90">
                 {result.evidenceStatus === 'context_only'
                   ? 'Synthesized using retrieved knowledge chunks without definitive rule citations. Recommended for verification.'
-                  : 'Retrieved context is sparse. Treat as an estimate and cross-reference with localized field testing.'}
+                  : result.evidenceStatus === 'unverified'
+                    ? 'Not verified against live grounded backend sources. Cross-reference this content before acting on it.'
+                    : 'Retrieved context is sparse. Treat as an estimate and cross-reference with localized field testing.'}
               </p>
             </div>
           </div>

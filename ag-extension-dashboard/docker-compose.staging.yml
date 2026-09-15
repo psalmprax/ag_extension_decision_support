@@ -65,9 +65,11 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       # Staging uses its own domain for CORS
       CORS_ORIGIN: ${CORS_ORIGIN:-https://${STAGING_DOMAIN:-staging.gpexts.com}}
-      # Demo login (overrides .env DEMO_ENABLED=false)
-      DEMO_ENABLED: "true"
-      DEMO_PASSWORD: ${DEMO_PASSWORD:-demo-trial-2024}
+      # Demo login is opt-in everywhere: the staging deploy must set DEMO_ENABLED=true
+      # (and a non-default DEMO_PASSWORD) explicitly. The backend refuses to boot with
+      # DEMO_ENABLED=true and no/example password on a non-development NODE_ENV.
+      DEMO_ENABLED: ${DEMO_ENABLED:-false}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-}
       # AI providers — Ollama primary on staging server, OpenAI fallback
       AI_PRIMARY_PROVIDER: ${AI_PRIMARY_PROVIDER:-ollama}
       AI_PRIMARY_MODEL: ${AI_PRIMARY_MODEL:-llama3.2:1b}

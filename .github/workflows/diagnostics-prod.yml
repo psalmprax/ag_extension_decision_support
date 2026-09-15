@@ -6,6 +6,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: diagnostics-prod-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   diagnose:
     name: Run Diagnostics on Production Server

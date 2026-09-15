@@ -196,7 +196,6 @@ export class OpenRouterProvider extends BaseAIProvider {
     return {
       reasoning: `Detailed Intelligence Analysis completed via OpenRouter (${result.model || 'meta-llama/llama-3.3-70b-instruct'}).`,
       answer: cleanAnswer,
-      confidence: 0.95,
       visuals,
       toolCalls: result.toolCalls as any,
     };

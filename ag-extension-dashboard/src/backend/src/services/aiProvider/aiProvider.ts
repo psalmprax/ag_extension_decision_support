@@ -205,7 +205,9 @@ export class AIProviderFactory {
                 userId: context.userId,
                 durationMs: Date.now() - startedAt,
                 tokensUsed: result?.usage?.totalTokens,
-                costUsd: 0,
+                // No per-token pricing tables exist in this codebase, so no honest cost
+                // can be computed here — the field is omitted (persisted as NULL) rather
+                // than recorded as a fake 0.
                 status,
                 correlationId: context.correlationId,
                 metadata: {
@@ -335,7 +337,6 @@ export class AIRouter {
                 return {
                     reasoning: `Synthesized via live AI reasoning (${result.providerUsed}/${result.modelUsed}).`,
                     answer: cleanAnswer,
-                    confidence: 0.88,
                     visuals: visuals || { kpis: [], charts: [], images: [], videos: [] },
                     providerUsed: result.providerUsed,
                     modelUsed: result.modelUsed,

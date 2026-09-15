@@ -188,7 +188,6 @@ export class GoogleVertexProvider extends BaseAIProvider {
             return {
                 reasoning: 'Detailed Gemini-based Intelligence Analysis completed.',
                 answer: cleanAnswer,
-                confidence: 0.9,
                 visuals
             };
         } catch (error) {

@@ -195,7 +195,6 @@ export class NVIDIAProvider extends BaseAIProvider {
     return {
       reasoning: `Detailed Intelligence Analysis completed via NVIDIA NIM (${result.model || model}).`,
       answer: cleanAnswer,
-      confidence: 0.95,
       visuals,
       toolCalls: result.toolCalls as any,
     };

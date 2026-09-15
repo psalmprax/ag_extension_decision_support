@@ -288,7 +288,8 @@ describe('FreebuffProvider', () => {
 
         expect(result.answer).toBe('Based on CABI, apply fungicide.');
         expect(result.reasoning).toContain('Freebuff best-effort answer');
-        expect(result.confidence).toBe(0.7);
+        // Providers no longer publish an uncalibrated confidence score.
+        expect(result.confidence).toBeUndefined();
 
         const callArgs = mockChatCompletionsCreate.mock.calls[0][0];
         const userContent = callArgs.messages[1].content as string;

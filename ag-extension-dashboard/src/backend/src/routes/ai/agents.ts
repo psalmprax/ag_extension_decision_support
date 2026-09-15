@@ -3,6 +3,7 @@ import { logger } from '@/utils/logger';
 import { AuthRequest } from '@/middleware/authorize';
 import { selfHealingService } from '@/services/selfHealing';
 import { safeError } from '@/utils/safeResponse';
+import { config } from '@/config';
 
 const router = Router();
 

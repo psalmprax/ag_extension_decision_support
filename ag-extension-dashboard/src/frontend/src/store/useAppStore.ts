@@ -228,6 +228,9 @@ export const useAppStore = create<AppState>()(
               farmers: state.farmers.map(f => (f.id === id ? { ...f, ...updates } : f)),
             }));
             toast.success('Farmer updated successfully');
+          } else {
+            // A success:false response changes nothing on screen; say so.
+            toast.error('Failed to update farmer');
           }
         } catch (error) {
           console.error('Update farmer error:', error);
@@ -245,6 +248,8 @@ export const useAppStore = create<AppState>()(
               farmers: state.farmers.map(f => (ids.includes(f.id) ? { ...f, ...updates } : f)),
             }));
             toast.success(`${ids.length} farmers updated successfully`);
+          } else {
+            toast.error('Failed to update farmers');
           }
         } catch (error) {
           console.error('Bulk update farmers error:', error);
@@ -262,6 +267,8 @@ export const useAppStore = create<AppState>()(
               farmers: state.farmers.filter(f => f.id !== id),
             }));
             toast.success('Farmer removed successfully');
+          } else {
+            toast.error('Failed to remove farmer');
           }
         } catch (error) {
           console.error('Remove farmer error:', error);
@@ -280,6 +287,8 @@ export const useAppStore = create<AppState>()(
               farmers: state.farmers.filter(f => !ids.includes(f.id)),
             }));
             toast.success(`${ids.length} farmers removed successfully`);
+          } else {
+            toast.error('Failed to remove farmers');
           }
         } catch (error) {
           console.error('Bulk remove farmers error:', error);
@@ -309,6 +318,8 @@ export const useAppStore = create<AppState>()(
               visits: [newVisit, ...state.visits],
             }));
             toast.success('Visit scheduled successfully');
+          } else {
+            toast.error('Failed to schedule visit');
           }
         } catch (error) {
           console.error('Add visit error:', error);
@@ -326,6 +337,8 @@ export const useAppStore = create<AppState>()(
               visits: state.visits.map(v => (v.id === id ? { ...v, ...updates } : v)),
             }));
             toast.success('Visit updated successfully');
+          } else {
+            toast.error('Failed to update visit');
           }
         } catch (error) {
           console.error('Update visit error:', error);

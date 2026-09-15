@@ -147,11 +147,11 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    # WebSocket upgrade for Socket.IO (path-based routing needs explicit config)
+    # WebSocket upgrade for Socket.IO: ingress-nginx handles the Upgrade/Connection
+    # headers automatically (built-in $connection_upgrade map). The old
+    # configuration-snippet was removed — that annotation is deprecated and
+    # ignored when allow-snippet-annotations=false (default in newer ingress-nginx).
     nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_set_header Upgrade $http_upgrade;
-      proxy_set_header Connection "upgrade";
 spec:
   ingressClassName: nginx
   tls:

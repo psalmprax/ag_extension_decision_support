@@ -154,17 +154,24 @@ describe('embedding dimension guard', () => {
   });
 });
 
-// ─── MFA backup codes are stored hashed and still verify ──────────────────────
-jest.mock('@/services/databaseService', () => ({ query: jest.fn().mockResolvedValue({ rows: [] }) }));
+// ─── MFA backup codes are stored hashed, consumed atomically, and fail closed ──
+jest.mock('@/services/databaseService', () => ({ query: jest.fn() }));
+import { query } from '@/services/databaseService';
 import { hashBackupCodes, verifyAndConsumeBackupCode, generateBackupCodes } from '@/services/mfaService';
 
+const mockQuery = query as jest.Mock;
+
 describe('MFA backup codes', () => {
+  beforeEach(() => mockQuery.mockReset());
+
   it('hashes codes at rest and verifies plaintext input against the hash', async () => {
     const codes = generateBackupCodes(3);
     const stored = hashBackupCodes(codes);
     expect(stored.every(c => c.startsWith('sha256:'))).toBe(true);
     expect(stored).not.toContain(codes[0]);
 
+    // Atomic consume returns the surviving array.
+    mockQuery.mockResolvedValueOnce({ rows: [{ mfa_backup_codes: [stored[0], stored[2]] }] });
     const ok = await verifyAndConsumeBackupCode('user-1', codes[1].toLowerCase(), stored);
     expect(ok.valid).toBe(true);
     expect(ok.remainingCodes).toHaveLength(2);
@@ -174,7 +181,30 @@ describe('MFA backup codes', () => {
   });
 
   it('still accepts legacy plaintext rows', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [{ mfa_backup_codes: [] }] });
     const ok = await verifyAndConsumeBackupCode('user-1', 'ab12-cd34', ['AB12-CD34']);
     expect(ok.valid).toBe(true);
+  });
+
+  it('fails closed when consumption cannot be confirmed', async () => {
+    // DB error must never authenticate.
+    mockQuery.mockRejectedValueOnce(new Error('db down'));
+    const failed = await verifyAndConsumeBackupCode('user-1', 'ab12-cd34', ['AB12-CD34']);
+    expect(failed.valid).toBe(false);
+
+    // Atomic consume matched nothing — the code was already spent by a concurrent request.
+    mockQuery.mockResolvedValueOnce({ rows: [] });
+    const raced = await verifyAndConsumeBackupCode('user-1', 'ab12-cd34', ['AB12-CD34']);
+    expect(raced.valid).toBe(false);
+  });
+
+  it('consumes exactly one occurrence via a guarded, atomic UPDATE', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [{ mfa_backup_codes: [] }] });
+    await verifyAndConsumeBackupCode('user-1', 'ab12-cd34', ['AB12-CD34']);
+
+    const [sql, params] = mockQuery.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain('array_remove');
+    expect(sql).toContain('ANY(mfa_backup_codes)');
+    expect(params).toEqual(['AB12CD34', 'user-1']);
   });
 });

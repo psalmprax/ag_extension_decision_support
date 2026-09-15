@@ -1,5 +1,5 @@
 import toast from 'react-hot-toast';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   fetchConversations,
   fetchMessages,
@@ -116,11 +116,19 @@ export const useAppChat = (language: string) => {
     }
   }, [activeConvId]);
 
+  // Guards against out-of-order responses: switching conversations quickly could
+  // otherwise render the previous conversation's messages under the newly selected one.
+  const aiMessagesRequestRef = useRef(0);
+  const farmerMessagesRequestRef = useRef(0);
+
   const loadMessages = useCallback(async (id: string) => {
+    const requestId = ++aiMessagesRequestRef.current;
     try {
       const res = await fetchMessages(id);
+      if (requestId !== aiMessagesRequestRef.current) return;
       setChatMessages(res.data);
     } catch (error) {
+      if (requestId !== aiMessagesRequestRef.current) return;
       console.error('Failed to load messages:', error);
     }
   }, []);
@@ -178,10 +186,14 @@ export const useAppChat = (language: string) => {
     if (id.startsWith('conv-demo-farmer-')) {
       return;
     }
+    const requestId = ++farmerMessagesRequestRef.current;
     try {
       const res = await fetchMessages(id);
+      // Drop a stale resolution so the active conversation always shows its own messages.
+      if (requestId !== farmerMessagesRequestRef.current) return;
       setFarmerChatMessages(res.data || []);
     } catch (error) {
+      if (requestId !== farmerMessagesRequestRef.current) return;
       console.error('Failed to load farmer messages:', error);
     }
   }, []);
@@ -229,16 +241,35 @@ export const useAppChat = (language: string) => {
     }
   };
 
-  // Drain offline queue when back online
+  // Drain the offline queue when the connection returns.
   useEffect(() => {
+    const DRAIN_LOCK_KEY = 'chatOfflineDrainLock';
+    const DRAIN_LOCK_TTL_MS = 15_000;
+
     const drain = async () => {
       if (!navigator.onLine) return;
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (!key?.startsWith('chatOfflineQueue:')) continue;
-        await drainChatOfflineQueue(key);
+
+      // Single-flight across tabs. Both tabs share one localStorage queue, so without a
+      // lock simultaneous drains would send every queued message twice.
+      const heldSince = Number(localStorage.getItem(DRAIN_LOCK_KEY) || 0);
+      if (heldSince && Date.now() - heldSince < DRAIN_LOCK_TTL_MS) return;
+      localStorage.setItem(DRAIN_LOCK_KEY, String(Date.now()));
+
+      try {
+        // Snapshot keys first: draining removes entries, which shifts the live
+        // localStorage index and would otherwise skip whole conversations.
+        const keys: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key?.startsWith('chatOfflineQueue:')) keys.push(key);
+        }
+        for (const key of keys) {
+          await drainChatOfflineQueue(key);
+        }
+        if (activeFarmerConvId) loadFarmerMessages(activeFarmerConvId);
+      } finally {
+        localStorage.removeItem(DRAIN_LOCK_KEY);
       }
-      if (activeFarmerConvId) loadFarmerMessages(activeFarmerConvId);
     };
     window.addEventListener('online', drain);
     return () => window.removeEventListener('online', drain);

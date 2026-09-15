@@ -22,6 +22,13 @@ permissions:
   contents: read
   packages: write
 
+# Serialise deploys per ref. In-flight deploys are never cancelled: a workflow
+# killed between `compose up` and its health gate would leave the host in an
+# unknown state, so later runs queue instead.
+concurrency:
+  group: deploy-all-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   # 1. CI Checks (Runs for all triggers)
   ci-checks:
@@ -110,35 +117,36 @@ jobs:
       # ── Step 1/5: Git sync & .env (fast) ─────────────────────
       - name: 1/5 Sync — git checkout + .env
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           command_timeout: 3m
+          envs: GITHUB_TOKEN
           script: |
             set -e
-            if [ ! -d "/root/ag_extension_decision_support" ]; then
+            : "${GITHUB_TOKEN:?GITHUB_TOKEN must be supplied by the workflow for git sync}"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            AUTH_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+            if [ ! -d "/root/ag_extension_decision_support/.git" ]; then
               echo "Cloning repository..."
-              cd /root && git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+              rm -rf /root/ag_extension_decision_support
+              cd /root && git clone "$AUTH_URL" ag_extension_decision_support
             fi
             cd /root/ag_extension_decision_support
             chmod -R u+rw .git 2>/dev/null || true
             rm -rf .git/config.lock .git/*.lock .git/refs/heads/*.lock 2>/dev/null || true
-            # Ensure the remote uses HTTPS with token authentication
-            if ! git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git; then
-              echo "Git config failed; performing clean re-clone..."
-              cd /root
-              rm -rf /root/ag_extension_decision_support
-              git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git ag_extension_decision_support
-              cd /root/ag_extension_decision_support
-            fi
-            git fetch origin
+            # Scrub any token a previous deploy persisted in the remote URL.
+            git remote set-url origin "$REPO_URL" 2>/dev/null || git remote add origin "$REPO_URL"
+            git fetch --prune "$AUTH_URL" '+refs/heads/${{ github.ref_name }}:refs/remotes/origin/${{ github.ref_name }}'
             if git show-ref --verify --quiet refs/heads/${{ github.ref_name }}; then
               git checkout ${{ github.ref_name }}
             else
-              git checkout -b ${{ github.ref_name }} origin/${{ github.ref_name }}
+              git checkout -B ${{ github.ref_name }} origin/${{ github.ref_name }}
             fi
-            git reset --hard origin/${{ github.ref_name }}
+            git merge --ff-only refs/remotes/origin/${{ github.ref_name }}
             cd /root/ag_extension_decision_support/ag-extension-dashboard
             if [ ! -f .env ]; then
               cp .env.example .env
@@ -585,33 +593,38 @@ jobs:
           OLLAMA_HOST: ${{ secrets.OLLAMA_HOST || vars.OLLAMA_HOST || 'http://ettametta-ollama:11434' }}
           OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL || vars.OLLAMA_MODEL || 'llama3.2:3b' }}
           MCP_API_TOKEN: ${{ secrets.MCP_API_TOKEN || vars.MCP_API_TOKEN }}
+          # Git credentials for the deploy host: env var only — never persisted into
+          # the remote URL, never interpolated into the script, never traced.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
-          envs: JWT_SECRET,OPENAI_API_KEY,GROQ_API_KEY,ANTHROPIC_API_KEY,AZURE_OPENAI_API_KEY,GOOGLE_VERTEX_PROJECT_ID,AIHUBMIX_API_KEY,AIHUBMIX_ACCESS_KEY,OPENROUTER_API_KEY,HUGGINGFACE_API_KEY,NVIDIA_API_KEY,FREEBUFF_AUTH_TOKEN,WEATHER_API_KEY,WEATHER_API_URL,TAVILY_API_KEY,ACME_EMAIL,DEMO_ENABLED,DEMO_PASSWORD,AI_PRIMARY_PROVIDER,AI_PRIMARY_MODEL,AIHUBMIX_WEB_SEARCH,AI_FALLBACK_PROVIDER,AI_FALLBACK_MODEL,AI_EMBEDDINGS_PROVIDER,AI_EMBEDDINGS_MODEL,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_DEPLOYMENT_NAME,OLLAMA_HOST,OLLAMA_MODEL,MCP_API_TOKEN
+          envs: GITHUB_TOKEN,JWT_SECRET,OPENAI_API_KEY,GROQ_API_KEY,ANTHROPIC_API_KEY,AZURE_OPENAI_API_KEY,GOOGLE_VERTEX_PROJECT_ID,AIHUBMIX_API_KEY,AIHUBMIX_ACCESS_KEY,OPENROUTER_API_KEY,HUGGINGFACE_API_KEY,NVIDIA_API_KEY,FREEBUFF_AUTH_TOKEN,WEATHER_API_KEY,WEATHER_API_URL,TAVILY_API_KEY,ACME_EMAIL,DEMO_ENABLED,DEMO_PASSWORD,AI_PRIMARY_PROVIDER,AI_PRIMARY_MODEL,AIHUBMIX_WEB_SEARCH,AI_FALLBACK_PROVIDER,AI_FALLBACK_MODEL,AI_EMBEDDINGS_PROVIDER,AI_EMBEDDINGS_MODEL,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_DEPLOYMENT_NAME,OLLAMA_HOST,OLLAMA_MODEL,MCP_API_TOKEN
           command_timeout: 3m
           script: |
-            set -ex
+            set -e
             df -h
             docker system prune -f || true
+            : "${GITHUB_TOKEN:?GITHUB_TOKEN must be supplied by the workflow for git sync}"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            AUTH_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
             if [ ! -d "/root/ag_extension_decision_support/.git" ]; then
               rm -rf /root/ag_extension_decision_support
-              cd /root && git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git ag_extension_decision_support
+              cd /root && git clone "$AUTH_URL" ag_extension_decision_support
             fi
             cd /root/ag_extension_decision_support
             chmod -R u+rw .git 2>/dev/null || true
             rm -rf .git/config.lock .git/*.lock .git/refs/heads/*.lock 2>/dev/null || true
-            if ! git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git; then
-              echo "Git config failed; performing clean re-clone..."
-              cd /root
-              rm -rf /root/ag_extension_decision_support
-              git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git ag_extension_decision_support
-              cd /root/ag_extension_decision_support
+            # Scrub any token a previous deploy persisted in the remote URL.
+            git remote set-url origin "$REPO_URL" 2>/dev/null || git remote add origin "$REPO_URL"
+            git fetch --prune "$AUTH_URL" '+refs/heads/master:refs/remotes/origin/master'
+            if git show-ref --verify --quiet refs/heads/master; then
+              git checkout master
+            else
+              git checkout -B master refs/remotes/origin/master
             fi
-            git fetch origin master
-            git checkout master
-            git reset --hard origin/master
+            git merge --ff-only refs/remotes/origin/master
             cd /root/ag_extension_decision_support/ag-extension-dashboard
 
             if [ ! -f ".env" ]; then

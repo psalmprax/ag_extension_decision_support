@@ -195,7 +195,6 @@ export class HuggingFaceProvider extends BaseAIProvider {
     return {
       reasoning: `Detailed Intelligence Analysis completed via Hugging Face (${result.model || model}).`,
       answer: cleanAnswer,
-      confidence: 0.95,
       visuals,
       toolCalls: result.toolCalls as any,
     };

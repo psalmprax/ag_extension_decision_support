@@ -4,10 +4,12 @@ import { getPrisma } from '../../services/prismaService';
 import { logger } from '../../utils/logger';
 import { authorize, AuthRequest } from '../../middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
+import { creditPayPalPass, PAYPAL_PASS_DAYS } from '@/services/paypalLifecycleService';
 
-// PayPal subscription state is created/updated only here. There is no PayPal webhook
-// equivalent in this codebase, so this success handler is the single PayPal subscription
-// writer. See services/paymentService.ts for the ownership contract.
+// PayPal checkout is a ONE-TIME sale, so it grants a fixed-length prepaid pass rather
+// than an auto-renewing subscription. Two writers share one idempotent implementation
+// (services/paypalLifecycleService.ts): this browser return handler and the
+// signature-verified webhook in ./paypalWebhook.ts.
 
 const router = Router();
 
@@ -44,12 +46,24 @@ async function storePendingPaypalPayment(paymentId: string, userId: string, plan
     });
 }
 
-async function consumePendingPaypalPayment(paymentId: string): Promise<{ planId: string; amount: number; userId: string } | null> {
+async function loadPendingPaypalPayment(paymentId: string): Promise<{ planId: string; amount: number; userId: string } | null> {
     const pending = await prisma.pendingPaypalPayment.findUnique({ where: { paymentId } });
     if (!pending) return null;
-    await prisma.pendingPaypalPayment.delete({ where: { paymentId } });
-    if (pending.expiresAt.getTime() < Date.now()) return null;
+    if (pending.expiresAt.getTime() < Date.now()) {
+        await deletePendingPaypalPayment(paymentId);
+        return null;
+    }
     return { planId: pending.planId, amount: Number(pending.amount), userId: pending.userId };
+}
+
+async function deletePendingPaypalPayment(paymentId: string): Promise<void> {
+    try {
+        await prisma.pendingPaypalPayment.delete({ where: { paymentId } });
+    } catch (error) {
+        // Non-fatal: the sale is idempotent on payment id via the payments table,
+        // so a stale pending row cannot double-credit the buyer.
+        logger.warn(`Could not clear pending PayPal payment ${paymentId}:`, error);
+    }
 }
 
 router.post('/paypal/subscribe', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
@@ -116,8 +130,9 @@ router.get('/paypal/success', authorize(['admin', 'extension_officer', 'farmer']
         const success = await paymentService.executePayPalPayment(paymentId as string, PayerID as string);
 
         if (success) {
-            // Look up plan details from pending payment (DB-backed, restart-safe)
-            const pending = await consumePendingPaypalPayment(paymentId as string);
+            // Look up plan details from pending payment (DB-backed, restart-safe).
+            // The row is only cleared once the sale is confirmed bound to the payer.
+            const pending = await loadPendingPaypalPayment(paymentId as string);
 
             if (!pending) {
                 logger.error(`PayPal payment ${paymentId} succeeded but no pending plan found`);
@@ -125,43 +140,26 @@ router.get('/paypal/success', authorize(['admin', 'extension_officer', 'farmer']
             }
 
             // The subscription belongs to whoever initiated the checkout, not to
-            // whoever follows the return URL. Reject mismatches (admins excepted).
+            // whoever follows the return URL. Reject mismatches (admins excepted) and
+            // keep the pending row so the actual payer can still complete the sale.
             if (pending.userId !== userId && req.user!.role !== 'admin') {
                 logger.warn(`PayPal payment ${paymentId} initiated by ${pending.userId} but completed by ${userId} — refusing to bind`);
                 return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=payer_mismatch`);
             }
             const targetUserId = pending.userId;
 
-            // Update subscription in database
-            const subscription = await prisma.subscription.upsert({
-                where: { userId: targetUserId },
-                update: {
-                    status: 'active',
-                    planId: pending.planId,
-                    currentPeriodStart: new Date(),
-                    currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
-                },
-                create: {
-                    userId: targetUserId,
-                    planId: pending.planId,
-                    status: 'active',
-                    currentPeriodStart: new Date(),
-                    currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-                }
-            });
+            await deletePendingPaypalPayment(paymentId as string);
 
-            // Create payment record
-            await prisma.payment.create({
-                data: {
-                    subscriptionId: subscription.id,
-                    amount: pending.amount,
-                    currency: 'USD',
-                    status: 'completed',
-                    paymentMethod: 'paypal',
-                    transactionId: paymentId as string,
-                    paidAt: new Date()
-                }
+            const credit = await creditPayPalPass({
+                paymentId: paymentId as string,
+                userId: targetUserId,
+                planId: pending.planId,
+                amount: pending.amount,
             });
+            logger.info(
+                `PayPal ${PAYPAL_PASS_DAYS}-day pass for ${targetUserId} ` +
+                `${credit.alreadyRecorded ? 'already credited' : 'credited'} until ${credit.currentPeriodEnd.toISOString()}`
+            );
 
             res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?success=true&payment=paypal`);
         } else {

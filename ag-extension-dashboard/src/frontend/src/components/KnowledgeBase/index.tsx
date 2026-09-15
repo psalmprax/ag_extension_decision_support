@@ -68,6 +68,8 @@ interface Result {
   citations?: Citation[];
   evidenceStatus?: KnowledgeEvidenceStatus;
   dailyRemaining?: number;
+  /** Set when the request itself failed — the panel renders an honest error state. */
+  failed?: boolean;
 }
 import { DOCUMENT_CATALOG, type DocumentArticle } from './catalog';
 import { RESEARCH_SCENARIOS, type ResearchScenario, type SpatialCanvasMode } from './scenarios';
@@ -103,6 +105,8 @@ const matchesArticle = (art: DocumentArticle, category: string, query: string): 
   );
 };
 
+// Demo benchmark: built from the curated scenario, not from a live backend
+// synthesis — so it must not claim the backend's "verified" grounding badge.
 const buildBenchmarkResult = (scenario: ResearchScenario, queryText: string): Result => ({
   answer: scenario.sampleAnswer,
   contextUsed: [],
@@ -110,16 +114,35 @@ const buildBenchmarkResult = (scenario: ResearchScenario, queryText: string): Re
   query: queryText || scenario.query,
   timestamp: new Date().toISOString(),
   citations: scenario.citations,
-  evidenceStatus: 'verified_sources',
+  evidenceStatus: 'unverified',
   visuals: {
     kpis: [
-      { label: 'Data Grounding', value: 'Verified', status: 'good' },
+      { label: 'Data Grounding', value: 'Demo benchmark (not live-verified)', status: 'warning' },
       { label: 'Latency', value: '<50ms (Demo Benchmark)', status: 'good' },
     ],
     charts: [],
     images: [],
     videos: [],
   },
+});
+
+// Honest failure state for a failed/exception'd search: no fabricated answer,
+// no citations, no verified badge. Retry runs through the panel's Regenerate action.
+const SEARCH_FAILURE_ANSWER =
+  'The knowledge search failed, so no answer was produced. No cached or fabricated ' +
+  'content is substituted in its place — retry the search, or browse the Document ' +
+  'Library for source material.';
+
+const buildErrorResult = (queryText: string): Result => ({
+  answer: SEARCH_FAILURE_ANSWER,
+  contextUsed: [],
+  cached: false,
+  query: queryText || 'Search failed',
+  timestamp: new Date().toISOString(),
+  citations: [],
+  evidenceStatus: 'no_verified_source',
+  failed: true,
+  visuals: { kpis: [], charts: [], images: [], videos: [] },
 });
 
 const findMatchingScenario = (queryText: string): ResearchScenario | undefined => {
@@ -138,10 +161,14 @@ const resolveSearchResult = (
   isDemo: boolean,
   matchingScenario?: ResearchScenario
 ): Result => {
-  const isUnavailable = res.data.answer?.includes('and the AI assistant is currently unavailable');
-  if (isUnavailable || (isDemo && matchingScenario)) {
-    return buildBenchmarkResult(matchingScenario || RESEARCH_SCENARIOS[0], queryText);
+  // Demo mode may serve the canned benchmark scenario (the user is explicitly in demo).
+  if (isDemo && matchingScenario) {
+    return buildBenchmarkResult(matchingScenario, queryText);
   }
+
+  // The backend reports evidenceStatus honestly (derived from citation/context
+  // counts) — an unavailable assistant arrives as a no_verified_source answer
+  // with no citations, which AIResult renders with an evidence warning.
   return {
     ...res.data,
     query: queryText || 'Multimodal Search',
@@ -154,6 +181,11 @@ const notifySearchResult = (
   bypassCache: boolean,
   notify: (opts: { type: 'info' | 'success'; message: string }) => void
 ): void => {
+  // Never claim a fresh synthesis when the assistant answered nothing.
+  if (res.data.evidenceStatus === 'no_verified_source') {
+    notify({ type: 'info', message: 'No grounded answer available — the assistant is unavailable right now.' });
+    return;
+  }
   if (res.data.cached) {
     notify({
       type: 'info',
@@ -244,8 +276,8 @@ export const KnowledgeBase: React.FC = () => {
     try {
       const data = await fetchKnowledgeStats();
       if (data.success) setStats(data.data);
-    } catch {
-      // ignore
+    } catch (error) {
+      console.error('Knowledge stats fetch failed:', error);
     }
   };
 
@@ -271,8 +303,7 @@ export const KnowledgeBase: React.FC = () => {
 
       if (!res.success) {
         handleSearchError(new Error(res.error || 'Knowledge search failed'));
-        const fallbackScenario = matchingScenario || RESEARCH_SCENARIOS[0];
-        setLastResult(buildBenchmarkResult(fallbackScenario, queryText));
+        setLastResult(buildErrorResult(queryText));
         setAttachments([]);
         return;
       }
@@ -286,8 +317,7 @@ export const KnowledgeBase: React.FC = () => {
       clearInterval(stepInterval);
       setRetrievalStep(4);
       handleSearchError(error);
-      const fallbackScenario = matchingScenario || RESEARCH_SCENARIOS[0];
-      setLastResult(buildBenchmarkResult(fallbackScenario, queryText));
+      setLastResult(buildErrorResult(queryText));
       setAttachments([]);
     } finally {
       setIsAsking(false);
@@ -555,9 +585,9 @@ export const KnowledgeBase: React.FC = () => {
                 {/* Result Top Action Bar */}
                 <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/10">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className={`w-2 h-2 rounded-full ${lastResult.failed ? 'bg-amber-400' : 'bg-emerald-400'} animate-pulse`} />
                     <span className="text-xs font-bold text-white font-mono uppercase tracking-wide">
-                      Grounded Synthesis Completed
+                      {lastResult.failed ? 'Search Failed — No Answer Generated' : 'Grounded Synthesis Completed'}
                     </span>
                   </div>
 

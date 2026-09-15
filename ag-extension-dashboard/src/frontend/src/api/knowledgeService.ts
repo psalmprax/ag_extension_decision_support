@@ -51,7 +51,7 @@ export interface Citation {
   score: number;
 }
 
-export type KnowledgeEvidenceStatus = 'verified_sources' | 'context_only' | 'no_verified_source';
+export type KnowledgeEvidenceStatus = 'verified_sources' | 'context_only' | 'no_verified_source' | 'unverified';
 
 export interface AskResponse {
   success: boolean;

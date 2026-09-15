@@ -1,6 +1,8 @@
 import CONFIG, { healthUrl, apiUrl } from '../../shared/config';
 import type { OfflineAttachment, OfflineStatus, QueuedRequest } from '../../shared/offlineTypes';
 import { mirrorUpsert, mirrorRetry, mirrorDelete, flushMirrorQueue } from '../../shared/offlineQueueMirror';
+import { isAllowedApiUrl } from '../../shared/apiOrigin';
+import { getAuthToken } from '../../shared/authToken';
 import type { Browser } from 'wxt/browser';
 
 /** Shape of a request the background queue accepts from the sidepanel/content script. */
@@ -53,12 +55,19 @@ const BACKGROUND_ACTIONS: ReadonlySet<string> = new Set([
  * `activeTab` grants temporary host access for that tab once the user invoked
  * the extension (context menu / toolbar action); `scripting` provides the API.
  */
+/**
+ * Uses the auto-imported `browser` API directly. The previous body referenced
+ * `chromeAPI`, which is a `const` declared inside defineBackground() below — not in
+ * scope here, so every call threw a ReferenceError at runtime.
+ */
 async function injectToolbar(tabId?: number): Promise<void> {
-    const targetId = tabId ?? (await chromeAPI.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+    const targetId = tabId ?? (await browser.tabs.query({ active: true, currentWindow: true }))[0]?.id;
     if (!targetId) throw new Error('No active tab to inject the toolbar into');
-    await chromeAPI.scripting.executeScript({
+    // Root-absolute path: WXT emits entrypoints/ag-toolbar.content to
+    // content-scripts/ag-toolbar.js, and chrome.scripting requires the leading slash.
+    await browser.scripting.executeScript({
         target: { tabId: targetId },
-        files: ['content-scripts/ag-toolbar.js'],
+        files: ['/content-scripts/ag-toolbar.js'],
     });
 }
 
@@ -338,13 +347,19 @@ export default defineBackground(() => {
 
     const uploadOfflineAttachment = async (attachment: OfflineAttachment, headers: Record<string, string>): Promise<string> => {
         if (attachment.uploadedId) return attachment.uploadedId;
+        // Token-exfiltration guard: uploads can carry the fresh bearer token, so the
+        // target must be the configured API origin (same rule as queued replays).
+        const uploadUrl = await apiUrl('/upload/upload');
+        if (!(await isAllowedApiUrl(uploadUrl))) {
+            throw new Error('Blocked: upload target is not the configured API origin');
+        }
         const formData = new FormData();
         formData.append('file', attachment.file, `${attachment.id}.jpg`);
         formData.append('farmerId', attachment.farmerId);
         const uploadHeaders = { ...headers };
         delete uploadHeaders['Content-Type'];
         delete uploadHeaders['content-type'];
-        const response = await fetch(await apiUrl('/upload/upload'), { method: 'POST', headers: uploadHeaders, body: formData });
+        const response = await fetch(uploadUrl, { method: 'POST', headers: uploadHeaders, body: formData });
         const result = await response.json() as { success?: boolean; data?: { id?: string }; error?: string };
         if (!response.ok || !result.success || !result.data?.id) throw new Error(result.error || `Attachment upload failed (${response.status})`);
         attachment.uploadedId = result.data.id;
@@ -371,13 +386,8 @@ export default defineBackground(() => {
     // Replays must carry the *current* token, not the one captured at queue time
     // (which may have expired while offline).
     const freshAuthHeader = async (): Promise<Record<string, string>> => {
-        try {
-            const stored = await browser.storage.local.get('authToken');
-            const token = (stored as Record<string, unknown>)?.authToken;
-            return typeof token === 'string' && token ? { Authorization: `Bearer ${token}` } : {};
-        } catch {
-            return {};
-        }
+        const token = await getAuthToken();
+        return token ? { Authorization: `Bearer ${token}` } : {};
     };
 
     // Exponential backoff for automatic retries: 30s, 1m, 2m, ... capped at 30m.
@@ -603,6 +613,24 @@ export default defineBackground(() => {
                 delete payload.attachmentRefs;
                 requestBody = JSON.stringify(payload);
             }
+            // Token-exfiltration guard: a queued request is replayed with a FRESH bearer
+            // token, so it may only ever target the configured API origin. A queued URL
+            // pointing anywhere else is dead-lettered instead of sent.
+            if (!(await isAllowedApiUrl(request.url))) {
+                console.error(
+                    `Refusing to replay queued request ${request.id}: ${request.url} is not the configured API origin`
+                );
+                request.state = 'dead_letter';
+                request.movedToDeadLetterAt = Date.now();
+                request.originalRetries = request.maxRetries;
+                request.lastError = 'Blocked: target is not the configured API origin';
+                await idbPut(DEAD_LETTER_STORE, request);
+                await removeQueuedRequest(request.id);
+                mirrorUpsert(request);
+                notifyQueueUpdate();
+                return;
+            }
+
             const response = await fetch(request.url, {
                 method: request.method,
                 headers,
@@ -823,6 +851,12 @@ export default defineBackground(() => {
 
                 switch (message.action) {
                     case 'queue_request':
+                        // Reject foreign targets at enqueue time as well, so a bad URL is
+                        // never persisted (and never mirrored to the server queue).
+                        if (!(await isAllowedApiUrl(message.request.url))) {
+                            sendResponse({ success: false, error: 'Target is not the configured API origin' });
+                            break;
+                        }
                         await queueRequest(message.request);
                         sendResponse({ success: true });
                         break;

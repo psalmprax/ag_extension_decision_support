@@ -39,7 +39,11 @@ export interface AppConfig {
     };
 }
 
-const isProduction = process.env.NODE_ENV === 'production';
+const nodeEnv = process.env.NODE_ENV || 'development';
+const isProduction = nodeEnv === 'production';
+// Anything other than an explicit development/test environment is treated as a
+// deployed host: placeholders and default credentials are refused there.
+const isDeployedEnv = nodeEnv !== 'development' && nodeEnv !== 'test';
 
 // Helper to get environment variables with validation
 function getEnv(key: string, defaultValue?: string, requiredInProd = false): string {
@@ -49,6 +53,55 @@ function getEnv(key: string, defaultValue?: string, requiredInProd = false): str
         throw new Error(`Environment variable ${key} is required in production`);
     }
     return defaultValue || '';
+}
+
+const DEV_JWT_SECRET = 'dev-secret-key-for-local-only';
+const MIN_JWT_SECRET_LENGTH = 32;
+
+/**
+ * Resolve the JWT signing secret, failing closed on deployed hosts.
+ *
+ * A missing/empty JWT_SECRET previously degraded to the public dev placeholder on
+ * any non-production NODE_ENV (e.g. `staging`), which silently lets anyone who has
+ * read this repository mint valid tokens for the staging deployment. Only
+ * development/test may fall back; staging and production must supply a real secret.
+ */
+function resolveJwtSecret(): string {
+    const value = (process.env.JWT_SECRET || '').trim();
+    if (!isDeployedEnv) return value || DEV_JWT_SECRET;
+    if (!value) {
+        throw new Error(`JWT_SECRET is required when NODE_ENV=${nodeEnv} (generate with: openssl rand -base64 48)`);
+    }
+    if (value.length < MIN_JWT_SECRET_LENGTH) {
+        throw new Error(
+            `JWT_SECRET must be at least ${MIN_JWT_SECRET_LENGTH} characters when NODE_ENV=${nodeEnv} ` +
+            `(got ${value.length}); generate with: openssl rand -base64 48`
+        );
+    }
+    return value;
+}
+
+const DEFAULT_DEMO_PASSWORD = 'demo-trial-2024';
+
+/**
+ * Resolve demo-login config, failing closed on deployed hosts.
+ *
+ * Demo login mints a session without a real credential, so on a deployed host it
+ * requires BOTH an explicit DEMO_ENABLED=true and a DEMO_PASSWORD that is not the
+ * shipped example value. Development keeps the convenience defaults.
+ */
+function resolveDemoConfig(): { password: string; enabled: boolean } {
+    const enabled = (process.env.DEMO_ENABLED || 'false').trim().toLowerCase() === 'true';
+    const password = (process.env.DEMO_PASSWORD || '').trim();
+    if (!enabled) return { password: password || DEFAULT_DEMO_PASSWORD, enabled: false };
+    if (!isDeployedEnv) return { password: password || DEFAULT_DEMO_PASSWORD, enabled: true };
+    if (!password) {
+        throw new Error(`DEMO_PASSWORD is required when DEMO_ENABLED=true on NODE_ENV=${nodeEnv}`);
+    }
+    if (password === DEFAULT_DEMO_PASSWORD) {
+        throw new Error('DEMO_PASSWORD must not be the shipped example value when DEMO_ENABLED=true on a deployed host');
+    }
+    return { password, enabled: true };
 }
 
 
@@ -71,7 +124,7 @@ export const config: AppConfig = {
     },
 
     jwt: {
-        secret: getEnv('JWT_SECRET', isProduction ? undefined : 'dev-secret-key-for-local-only', true),
+        secret: resolveJwtSecret(),
         expiresIn: getEnv('JWT_EXPIRES_IN', '7d'),
     },
 
@@ -154,10 +207,7 @@ export const config: AppConfig = {
         origin: getEnv('CORS_ORIGIN', 'http://localhost:5173'),
     },
 
-    demo: {
-        password: getEnv('DEMO_PASSWORD', 'demo-trial-2024'),
-        enabled: getEnv('DEMO_ENABLED', 'false') === 'true',
-    },
+    demo: resolveDemoConfig(),
     ollama: {
         host: getEnv('OLLAMA_HOST', 'http://localhost:11434'),
         model: getEnv('OLLAMA_MODEL', 'llama3'),

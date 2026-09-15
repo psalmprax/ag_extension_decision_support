@@ -10,6 +10,10 @@ on:
     - cron: '0 4 * * 1'
   workflow_dispatch:
 
+concurrency:
+  group: security-audit-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ----------------------------------------------------------------------------
   # Job 1: Secret Scanning & Token Leak Detection

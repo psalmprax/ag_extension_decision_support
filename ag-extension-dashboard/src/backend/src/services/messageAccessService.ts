@@ -155,6 +155,70 @@ export async function assertAllRecipientsAllowed(
   return resolved;
 }
 
+/**
+ * Resolve the farmer record id for a farmer user account. Shared by the chat
+ * routes and the socket authorization guard so the lookup has one definition.
+ */
+export async function resolveFarmerId(userId: string): Promise<string | null> {
+  const { rows } = await query<{ id: string }>(
+    `SELECT id FROM farmers WHERE user_id = $1 OR id = $1 LIMIT 1`,
+    [userId]
+  );
+  return rows[0]?.id || null;
+}
+
+interface ConversationOwnershipRow {
+  farmer_id: string | null;
+  officer_id: string | null;
+  region: string | null;
+}
+
+/**
+ * Enforce read/write access to a single conversation.
+ *
+ *  - admin: unrestricted.
+ *  - regional_manager: conversations whose farmer is in the manager's region.
+ *  - extension_officer: conversations they own (officer_id).
+ *  - farmer: their own thread (farmer_id, matched via the farmer record or user id).
+ *
+ * Throws MessageAccessError (404 when the conversation does not exist) so callers
+ * cannot distinguish "not yours" from "does not exist".
+ */
+export async function assertConversationAccess(
+  principal: MessagePrincipal,
+  conversationId: string
+): Promise<void> {
+  if (!conversationId) {
+    throw new MessageAccessError('Conversation id is required.', 400);
+  }
+  if (principal.role === 'admin') return;
+
+  const { rows } = await query<ConversationOwnershipRow>(
+    `SELECT cv.farmer_id, cv.officer_id, f.region
+       FROM chat_conversations cv
+       LEFT JOIN farmers f ON f.id = cv.farmer_id
+      WHERE cv.id = $1
+      LIMIT 1`,
+    [conversationId]
+  );
+  const row = rows[0];
+  if (!row) {
+    throw new MessageAccessError('Conversation not found.', 404);
+  }
+
+  if (principal.role === 'farmer') {
+    const farmerId = (await resolveFarmerId(principal.userId)) ?? principal.userId;
+    if (row.farmer_id === farmerId || row.officer_id === principal.userId) return;
+  } else if (row.officer_id === principal.userId) {
+    return;
+  } else if (principal.role === 'regional_manager') {
+    const region = principal.region ?? (await resolvePrincipalRegion(principal.userId));
+    if (region && row.region === region) return;
+  }
+
+  throw new MessageAccessError('You do not have access to this conversation.', 403);
+}
+
 /** Map an unknown thrown value from these guards into a safe log line. */
 export function messageAccessErrorDetail(error: unknown): string {
   if (error instanceof MessageAccessError) return error.message;

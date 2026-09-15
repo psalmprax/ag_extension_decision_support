@@ -121,7 +121,7 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
         const token = jwt.sign(
             { userId: newUser.id, email: newUser.email, role: newUser.role },
             config.jwt.secret as jwt.Secret,
-            { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
+            { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
 
         // Record initial user session for active session visibility and revocation support
@@ -216,7 +216,7 @@ router.post('/demo', async (req: Request, res: Response) => {
         const token = jwt.sign(
             { userId: user.id, email: user.email, role: user.role },
             config.jwt.secret as jwt.Secret,
-            { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
+            { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
 
         createSession({

@@ -7,6 +7,11 @@ on:
       - 'v*'
   workflow_dispatch:
 
+# App-store uploads must not overlap: two runs would race on the same bundle id.
+concurrency:
+  group: mobile-release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-mobile-web:
     name: Build PWA & Capacitor Web Assets

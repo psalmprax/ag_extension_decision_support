@@ -15,6 +15,9 @@ app.use(express.json({ limit: '2mb' }));
 const PORT = Number(process.env.PORT || 8010);
 const NAV_TIMEOUT_MS = Number(process.env.SCRAPE_NAV_TIMEOUT_MS || 30000);
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+// Optional shared-token auth for /scrape/*: when set, requests must present it
+// via `Authorization: Bearer <token>` or the `x-scrape-token` header.
+const SCRAPE_TOKEN = process.env.SCRAPE_TOKEN || '';
 
 let browser = null;
 
@@ -28,10 +31,30 @@ async function getBrowser() {
   return browser;
 }
 
+// SSRF guard: the scraper must never be pointed at loopback, private,
+// link-local, or cluster-internal hostnames.
+function isBlockedHost(hostname) {
+  const host = String(hostname || '').toLowerCase().replace(/^\[|\]$/g, '');
+  if (!host) return true;
+  if (host === 'localhost' || host.endsWith('.internal')) return true;
+  if (host === '::1') return true;
+  const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (m) {
+    const octet1 = Number(m[1]);
+    const octet2 = Number(m[2]);
+    if (octet1 === 127 || octet1 === 10) return true;                // loopback / 10/8
+    if (octet1 === 172 && octet2 >= 16 && octet2 <= 31) return true; // 172.16/12
+    if (octet1 === 192 && octet2 === 168) return true;               // 192.168/16
+    if (octet1 === 169 && octet2 === 254) return true;               // link-local
+  }
+  return false;
+}
+
 function isHttpUrl(value) {
   try {
     const u = new URL(value);
-    return u.protocol === 'http:' || u.protocol === 'https:';
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+    return !isBlockedHost(u.hostname);
   } catch {
     return false;
   }
@@ -88,7 +111,7 @@ async function scrapeHandler(req, res) {
   const scroll = String(params.scroll || '') === 'true';
 
   if (!isHttpUrl(url)) {
-    return res.status(400).json({ success: false, error: 'url must be an absolute http(s) URL', candidates: [] });
+    return res.status(400).json({ success: false, error: 'url must be an absolute public http(s) URL (loopback/private/internal hosts are blocked)', candidates: [] });
   }
 
   let page = null;
@@ -126,10 +149,23 @@ async function scrapeHandler(req, res) {
   }
 }
 
+// Shared-token auth for /scrape/*: enforced only when SCRAPE_TOKEN is set
+// (unset keeps the old open dev behaviour — see the startup warning).
+function requireScrapeAuth(req, res, next) {
+  if (!SCRAPE_TOKEN) return next();
+  const header = req.headers.authorization || '';
+  const bearer = header.startsWith('Bearer ') ? header.slice('Bearer '.length) : '';
+  const token = bearer || req.headers['x-scrape-token'] || '';
+  if (token !== SCRAPE_TOKEN) {
+    return res.status(401).json({ success: false, error: 'scrape auth required: provide SCRAPE_TOKEN via Authorization: Bearer or x-scrape-token' });
+  }
+  next();
+}
+
 // Endpoint the Python scanner calls (GET with query params); POST also accepted.
-app.get('/scrape/web', scrapeHandler);
-app.post('/scrape/web', scrapeHandler);
-app.post('/scrape', scrapeHandler);
+app.get('/scrape/web', requireScrapeAuth, scrapeHandler);
+app.post('/scrape/web', requireScrapeAuth, scrapeHandler);
+app.post('/scrape', requireScrapeAuth, scrapeHandler);
 
 async function start() {
   try {
@@ -138,6 +174,9 @@ async function start() {
   } catch (err) {
     // Serve /health so orchestration can see the container, but report the failure.
     console.error('Browser launch failed at startup (will retry per request):', err && err.message ? err.message : err);
+  }
+  if (!SCRAPE_TOKEN) {
+    console.warn('SCRAPE_TOKEN not set — /scrape/* endpoints are unauthenticated (set SCRAPE_TOKEN to require bearer auth)');
   }
   app.listen(PORT, '0.0.0.0', () => console.log(`Discovery scraper listening on :${PORT}`));
 }

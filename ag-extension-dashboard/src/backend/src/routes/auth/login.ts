@@ -147,7 +147,7 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
             const tempToken = jwt.sign(
                 { userId: user.id, email: user.email, mfaPending: true },
                 config.jwt.secret as jwt.Secret,
-                { expiresIn: '5m' }
+                { algorithm: 'HS256', expiresIn: '5m' }
             );
             return res.json({
                 success: true,
@@ -175,7 +175,7 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
         const token = jwt.sign(
             { userId: user.id, email: user.email, role: user.role },
             config.jwt.secret as jwt.Secret,
-            { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
+            { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
 
         // Create active user session
@@ -202,7 +202,9 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
                     SELECT sp.name as plan_name, sp.price
                     FROM subscriptions s
                     JOIN subscription_plans sp ON sp.id = s.plan_id
-                    WHERE s.user_id = $1 AND (s.status = 'active' OR s.status = 'trialing')
+                    WHERE s.user_id = $1
+                      AND (s.status = 'active' OR s.status = 'trialing')
+                      AND (s.current_period_end IS NULL OR s.current_period_end > NOW())
                 `, [user.id]);
                 if (subResult.rows.length > 0) {
                     const row = subResult.rows[0];

@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
 import type { PoolClient } from 'pg';
-import { execSync } from 'child_process';
+import { spawn } from 'child_process';
 import bcrypt from 'bcryptjs';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
@@ -48,16 +48,20 @@ export async function initializeDatabase(): Promise<void> {
     logger.info('Prisma ORM initialized');
 
     // Schema management ownership:
-    //  - Production: the docker entrypoint applies `prisma migrate deploy`
-    //    BEFORE the app boots. Running schema sync here again raced across
-    //    replicas booting concurrently and blocked the event loop (execSync).
-    //  - Dev/test: `prisma db push` + legacy table bootstrap keeps the
-    //    low-friction local workflow.
-    if (isProduction) {
-      logger.info('Production: skipping boot-time schema sync (migrations owned by docker-entrypoint.sh)');
-    } else {
+    //  - Production: the docker entrypoint applies `prisma migrate deploy` BEFORE the
+    //    app boots. Boot-time sync is OFF by default there; DB_SYNC_ON_BOOT=true opts a
+    //    single-node deployment back in (it then runs under the advisory lock below).
+    //  - Dev/test: boot-time sync stays on (DB_SYNC_ON_BOOT=false disables), so the
+    //    low-friction local workflow is kept.
+    const syncOnBoot = process.env.DB_SYNC_ON_BOOT === 'true' ||
+      (!isProduction && process.env.DB_SYNC_ON_BOOT !== 'false');
+    if (syncOnBoot) {
       await syncPrismaSchema();
       await createTables(pool);
+    } else {
+      logger.info(
+        `Skipping boot-time schema sync (${isProduction ? 'production default — set DB_SYNC_ON_BOOT=true to override' : 'DB_SYNC_ON_BOOT=false'})`
+      );
     }
 
     // Seed initial data if tables are empty (self-skips in production)
@@ -168,9 +172,40 @@ async function seedInitialData(): Promise<void> {
   }
 }
 
+/** Run a command asynchronously (never blocks the event loop). */
+function runCommand(cmd: string, args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env } });
+    let output = '';
+    child.stdout?.on('data', chunk => { output += chunk.toString(); });
+    child.stderr?.on('data', chunk => { output += chunk.toString(); });
+    child.on('error', reject);
+    child.on('close', code => {
+      if (code === 0) {
+        logger.info(`Schema sync output:\n${output}`);
+        resolve();
+      } else {
+        reject(new Error(`exited with code ${code}\n${output}`));
+      }
+    });
+  });
+}
+
+/** Advisory-lock key for boot-time schema sync: any constant int works, as long as
+ * every replica uses the same one so concurrent boots serialize instead of racing. */
+const SCHEMA_SYNC_LOCK_ID = 727401;
+
+/**
+ * Boot-time schema sync, gated by DB_SYNC_ON_BOOT (see initializeDatabase).
+ *
+ * The `prisma db push` subprocess runs while a session-scoped PostgreSQL advisory
+ * lock is held on a dedicated pool client, so replicas booting concurrently
+ * serialize instead of racing. The lock is released in `finally`, and the command
+ * is spawned asynchronously — the previous execSync blocked the event loop for the
+ * entire migration duration.
+ */
 async function syncPrismaSchema(): Promise<void> {
   try {
-    const isProduction = process.env.NODE_ENV === 'production';
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient({
       datasourceUrl: process.env.DATABASE_URL,
@@ -178,15 +213,24 @@ async function syncPrismaSchema(): Promise<void> {
     await prisma.$executeRaw`SELECT 1`; // Test connection
     await prisma.$disconnect();
 
-    const cmd = isProduction ? 'npx prisma migrate deploy' : 'npx prisma db push';
-    logger.info(`Running database schema sync: ${cmd}`);
-    const output = execSync(cmd, {
-      stdio: 'pipe',
-      env: { ...process.env }
-    });
-    logger.info('Database schema sync output:\n' + output.toString());
+    const dbPool = pool;
+    if (!dbPool) {
+      logger.warn('Schema sync skipped: database pool is unavailable');
+      return;
+    }
+
+    const client = await dbPool.connect();
+    try {
+      await client.query('SELECT pg_advisory_lock($1)', [SCHEMA_SYNC_LOCK_ID]);
+      logger.info('Running database schema sync: prisma db push (advisory lock held)');
+      await runCommand('npx', ['prisma', 'db', 'push']);
+      logger.info('Database schema sync completed (advisory lock released)');
+    } finally {
+      await client.query('SELECT pg_advisory_unlock($1)', [SCHEMA_SYNC_LOCK_ID]);
+      client.release();
+    }
   } catch (error) {
-    logger.warn('Prisma schema sync / migration failed:', error);
+    logger.warn('Prisma schema sync / migration failed:', error instanceof Error ? error.message : error);
   }
 }
 

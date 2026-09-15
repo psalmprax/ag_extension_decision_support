@@ -179,7 +179,6 @@ export class AnthropicProvider extends BaseAIProvider {
         return {
             reasoning: 'Analysis completed using Claude.',
             answer: cleanAnswer,
-            confidence: 0.9,
             visuals,
         };
     }

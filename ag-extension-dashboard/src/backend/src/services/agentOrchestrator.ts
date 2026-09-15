@@ -130,14 +130,45 @@ function mapPersistedTask(row: PersistedAgentTaskRow): AgentTask {
   };
 }
 
+interface HandoffLogEntry {
+  from: string;
+  to: string;
+  taskId: string;
+  reason: string;
+  timestamp: string;
+}
+
 class AgentOrchestrator {
   private static instance: AgentOrchestrator;
+
+  /**
+   * In-memory history caps. Completed tasks and handoffs are also written to the DB
+   * on every transition, so the DB is the durable record; these arrays only answer
+   * status lookups. Without a cap they grew unbounded for the process lifetime.
+   */
+  private static readonly MAX_COMPLETED_TASKS = 500;
+  private static readonly MAX_HANDOFF_LOG = 200;
+
   private taskQueue: AgentTask[] = [];
   private activeTasks: Map<string, AgentTask> = new Map();
   private completedTasks: AgentTask[] = [];
   private agentRegistry: Map<string, AgentCapability> = new Map();
-  private handoffLog: Array<{ from: string; to: string; taskId: string; reason: string; timestamp: string }> = [];
+  private handoffLog: HandoffLogEntry[] = [];
   private persistenceLoaded = false;
+
+  /** Append to the bounded completed-task ring (oldest evicted first). */
+  private recordCompleted(task: AgentTask): void {
+    this.completedTasks.push(task);
+    const overflow = this.completedTasks.length - AgentOrchestrator.MAX_COMPLETED_TASKS;
+    if (overflow > 0) this.completedTasks.splice(0, overflow);
+  }
+
+  /** Append to the bounded handoff log (oldest evicted first). */
+  private recordHandoff(entry: HandoffLogEntry): void {
+    this.handoffLog.push(entry);
+    const overflow = this.handoffLog.length - AgentOrchestrator.MAX_HANDOFF_LOG;
+    if (overflow > 0) this.handoffLog.splice(0, overflow);
+  }
 
   static getInstance(): AgentOrchestrator {
     if (!AgentOrchestrator.instance) {
@@ -314,7 +345,7 @@ class AgentOrchestrator {
       agent.currentLoad--;
       this.activeTasks.delete(task.id);
       stopLeaseTimer(task.id);
-      this.completedTasks.push(task);
+      this.recordCompleted(task);
       await this.persistTask(task);
 
       logger.info(`Task completed: ${task.id} by ${agent.name}`);
@@ -336,7 +367,7 @@ class AgentOrchestrator {
       task.status = 'failed';
       task.error = error instanceof Error ? error.message : String(error);
       task.completedAt = new Date().toISOString();
-      this.completedTasks.push(task);
+      this.recordCompleted(task);
       await this.persistTask(task);
 
       logger.error(`Task ${task.id} failed permanently: ${task.error}`);
@@ -359,7 +390,7 @@ class AgentOrchestrator {
     task.status = 'pending';
     // Do NOT reset retryCount — prevents infinite handoff loops
 
-    this.handoffLog.push({
+    this.recordHandoff({
       from: previousAgent,
       to: targetAgentId,
       taskId,
@@ -414,7 +445,7 @@ class AgentOrchestrator {
     return Array.from(this.agentRegistry.values());
   }
 
-  getHandoffLog(): typeof this.handoffLog {
+  getHandoffLog(): HandoffLogEntry[] {
     return [...this.handoffLog];
   }
 
@@ -510,7 +541,7 @@ Execute this task and return a clear, structured result. Include any relevant da
         task.status = 'failed';
         task.error = 'Stopped by user request';
         task.completedAt = new Date().toISOString();
-        this.completedTasks.push(task);
+        this.recordCompleted(task);
         await this.persistTask(task);
         stopped++;
       }
@@ -523,7 +554,7 @@ Execute this task and return a clear, structured result. Include any relevant da
         task.status = 'failed';
         task.error = 'Stopped by user request (removed from queue)';
         task.completedAt = new Date().toISOString();
-        this.completedTasks.push(task);
+        this.recordCompleted(task);
         await this.persistTask(task);
         stopLeaseTimer(task.id);
         queued++;

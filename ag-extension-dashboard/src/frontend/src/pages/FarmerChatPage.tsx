@@ -20,10 +20,11 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useDeviceThermalMemoryBudget } from '@/hooks/useDeviceThermalMemoryBudget';
 import { VirtualizedList } from '@/components/common/VirtualizedList';
-import { ProvenanceBadge } from '@/components/ProvenanceBadge';
 import { useDemoMode } from '@/demo';
 import { AudioReaderButton } from '@/components/audio/AudioReaderButton';
 import { VoiceNoteTaker } from '@/components/audio/VoiceNoteTaker';
+import { fetchWeather } from '@/api/weatherService';
+import apiClient from '@/api/client';
 
 interface FarmerChatPageProps {
   farmerConversations: Conversation[];
@@ -39,32 +40,11 @@ interface FarmerChatPageProps {
   onDeleteConversation?: (id: string) => void;
 }
 
-type HazardProvenance = import('@/components/ProvenanceBadge').PillarProvenance;
-
-/** Map hazard evaluation to a 0–100 outbreak risk score. */
-function scoreOutbreakRisk(hazards: { threatLevel: string }[]): number {
-  const hasWatch = hazards.some(h => h.threatLevel === 'watch' || h.threatLevel === 'warning' || h.threatLevel === 'emergency');
-  const hasEmergency = hazards.some(h => h.threatLevel === 'emergency');
-  return hasEmergency ? 85 : hasWatch ? 55 : hazards.length ? 25 : 10;
-}
-
-/** Evaluate live outbreak risk for a farmer's plot from current telemetry. */
-async function fetchOutbreakRisk(
-  telemetry: { temp: number | null; moisture: number | null },
-  fallbackTemp: number | undefined
-): Promise<{ risk: number; provenance: HazardProvenance | null }> {
-  const { default: apiClient } = await import('@/api/client');
-  const temp = telemetry.temp ?? fallbackTemp ?? 25;
-  const moisture = telemetry.moisture ?? 20;
-  const rh = 75 + (moisture > 25 ? 10 : 0);
-  const { data } = await apiClient.post('/pillars/hazard/evaluate', {
-    forecast: [{ date: new Date().toISOString().slice(0, 10), minTempC: Math.max(8, temp - 6), maxTempC: temp + 4, precipitationMm: moisture > 30 ? 18 : 4, relativeHumidityPct: rh, windSpeedKmh: 12 }],
-  });
-  const payload = ((data as { data?: unknown })?.data ?? data) as { hazards?: { threatLevel: string }[]; provenance?: HazardProvenance } | { threatLevel: string }[];
-  const hazards = Array.isArray(payload) ? payload : payload.hazards ?? [];
-  const provenance = Array.isArray(payload) ? null : payload.provenance ?? null;
-  return { risk: scoreOutbreakRisk(hazards), provenance };
-}
+// NOTE: outbreak risk is read from the farmer record only. An earlier version derived a
+// 7-day forecast from soil telemetry (temperature defaulted to 25°C, humidity computed
+// from moisture) and posted it to /pillars/hazard/evaluate, then displayed the result as a
+// "LIVE" risk score. That presented synthesized inputs as measured weather, so the path was
+// removed rather than relabelled.
 
 export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   farmerConversations,
@@ -95,8 +75,6 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   const activeFarmer = activeConv as unknown as { ndvi?: number; ph?: number; temperature?: number; outbreakRisk?: number } | undefined;
 
   const [plotTelemetry, setPlotTelemetry] = useState<{ ph: number | null; soc: number | null; moisture: number | null; temp: number | null; loading: boolean }>({ ph: null, soc: null, moisture: null, temp: null, loading: false });
-  const [liveOutbreakRisk, setLiveOutbreakRisk] = useState<number | null>(null);
-  const [outbreakProvenance, setOutbreakProvenance] = useState<HazardProvenance | null>(null);
   const [showVoiceComposer, setShowVoiceComposer] = useState(false);
 
   useEffect(() => {
@@ -121,18 +99,6 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   }, [activeFarmerConvId, activeConv]);
 
   const { temp: plotTemp, moisture: plotMoisture } = plotTelemetry;
-  useEffect(() => {
-    if (!activeFarmerConvId || !activeConv) { setLiveOutbreakRisk(null); setOutbreakProvenance(null); return; }
-    const farmerId = (activeConv as unknown as { farmerId?: string }).farmerId;
-    if (!farmerId || typeof navigator !== 'undefined' && !navigator.onLine) return;
-    let cancelled = false;
-    fetchOutbreakRisk({ temp: plotTemp, moisture: plotMoisture }, activeFarmer?.temperature)
-      .then(({ risk, provenance }) => {
-        if (!cancelled) { setLiveOutbreakRisk(risk); setOutbreakProvenance(provenance); }
-      })
-      .catch(() => { if (!cancelled) { setLiveOutbreakRisk(null); setOutbreakProvenance(null); } });
-    return () => { cancelled = true; };
-  }, [activeFarmerConvId, activeConv, plotTemp, plotMoisture, activeFarmer?.temperature]);
 
   // AI Copilot suggestions — fetched live when conversation has context, otherwise fallback to
   // curated defaults. Re-fires when the last officer/user message changes.
@@ -146,6 +112,9 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
     '🥔 Damp overcast forecast. Apply preventive copper spray before Thursday.',
     '🌧️ 45mm rainfall recorded. Apply second split CAN top-dressing once topsoil drains.',
   ];
+  // The list above is a static reference when the live call has not produced output —
+  // it must not be presented as AI-generated or "verified" advice.
+  const suggestionsAreLive = liveSuggestions !== null;
   useEffect(() => {
     if (!activeFarmerConvId) { setLiveSuggestions(null); return; }
     if (!lastUserMessage) return;
@@ -157,8 +126,10 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
         // eslint-disable-next-line no-useless-escape
         const lines = String(text).split('\n').map(s => s.replace(/^[\d\-*\.\s]+/, '').trim()).filter(Boolean).slice(0,3);
         if (lines.length >= 2) setLiveSuggestions(lines);
-      } catch { /* fallback to static */ }
-    }).catch(()=>{});
+      } catch (err) {
+        console.error('AI copilot suggestions fetch failed — keeping static suggestions:', err);
+      }
+    }).catch((err) => console.error('AI copilot suggestions module load failed:', err));
   }, [activeFarmerConvId, lastUserMessage]);
 
   // Realtime: join the active conversation room and reload messages on new_message events.
@@ -350,7 +321,12 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                           {displayName}
                         </span>
                         <span className="text-[9px] font-mono text-white/40">
-                          {new Date(conv.startedAt || conv.updatedAt || Date.now()).toLocaleDateString()}
+                          {(() => {
+                            const rawStarted = conv.startedAt || conv.updatedAt;
+                            if (!rawStarted) return '—';
+                            const parsed = new Date(rawStarted);
+                            return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString();
+                          })()}
                         </span>
                       </div>
                       {regionText && (
@@ -493,7 +469,11 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
               <div className="px-4 py-2 bg-slate-950/60 border-t border-white/[0.04] space-y-1.5">
                 <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400">
                   <Sparkles className="w-3 h-3" />
-                  <span>AI Copilot Verified Advisory Suggestions:</span>
+                  <span>
+                    {suggestionsAreLive
+                      ? 'AI Copilot Advisory Suggestions:'
+                      : 'Suggested follow-ups (reference only, not AI-generated):'}
+                  </span>
                 </div>
                 <div className="flex gap-2 overflow-x-auto pb-1">
                   {copilotSuggestions.map((sug, idx) => (
@@ -617,12 +597,10 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
               <div className="text-[10px] font-mono text-white/40">OUTBREAK RISK</div>
               <div className="text-base font-bold text-emerald-400 flex items-center gap-1">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>{liveOutbreakRisk != null ? `${liveOutbreakRisk}%` : activeFarmer?.outbreakRisk !== undefined ? `${activeFarmer.outbreakRisk}%` : '—'}</span>
-                {liveOutbreakRisk != null && <span className="text-[9px] font-mono text-emerald-300 bg-emerald-500/10 px-1 py-0.5 rounded border border-emerald-500/20">LIVE</span>}
+                <span>{activeFarmer?.outbreakRisk !== undefined ? `${activeFarmer.outbreakRisk}%` : '—'}</span>
               </div>
-              <div className="text-[9px] text-white/40 flex items-center gap-1">
-                <span>Pillar hazard model {liveOutbreakRisk != null ? '• live' : '• needs scouting'}</span>
-                {outbreakProvenance && <ProvenanceBadge provenance={outbreakProvenance} />}
+              <div className="text-[9px] text-white/40">
+                <span>Pillar hazard model • requires a live forecast to evaluate</span>
               </div>
             </div>
           </div>

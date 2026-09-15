@@ -527,7 +527,6 @@ export class AIHubMixProvider extends BaseAIProvider {
     return {
       reasoning: `Detailed Intelligence Analysis completed via AIHubMix (${result.model || 'gemini-2.5-flash'}).`,
       answer: cleanAnswer,
-      confidence: 0.95,
       visuals,
       toolCalls: result.toolCalls as any,
     };

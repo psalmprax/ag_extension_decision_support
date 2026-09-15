@@ -25,9 +25,13 @@
 services:
   traefik:
     image: traefik:v3.7
+    depends_on:
+      - docker-socket-proxy
     command:
-      # Docker provider — auto-discovers labeled services
+      # Docker provider — auto-discovers labeled services via the read-only
+      # socket proxy (base compose), never the raw docker.sock.
       - "--providers.docker=true"
+      - "--providers.docker.endpoint=tcp://docker-socket-proxy:2375"
       - "--providers.docker.exposedByDefault=false"
       - "--providers.docker.network=ag-network"
       # HTTP → HTTPS redirect entrypoint
@@ -42,7 +46,6 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik_letsencrypt:/letsencrypt
     networks:
       - ag-network
