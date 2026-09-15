@@ -210,6 +210,7 @@ export function useWebRTC(): UseWebRTCReturn {
     socket.on('ice-candidate', (data: { candidate: RTCIceCandidateInit; from: string }) => handleRemoteIce(data));
 
     socketRef.current = socket;
+    const peerConnections = peerConnectionsRef.current;
 
     return () => {
       isMounted = false;
@@ -223,8 +224,8 @@ export function useWebRTC(): UseWebRTCReturn {
         localStreamRef.current = null;
         setLocalStream(null);
       }
-      peerConnectionsRef.current.forEach(pc => pc.close());
-      peerConnectionsRef.current.clear();
+      peerConnections.forEach(pc => pc.close());
+      peerConnections.clear();
 
       // Only close if socket is fully connected to avoid "closed before established" errors
       if (socket.connected) {

@@ -30,8 +30,7 @@ jobs:
 
       - name: Install Dependencies
         working-directory: ag-extension-dashboard/src/frontend
-        run: npm ci
-
+        run: npm ci --workspaces=false
       - name: Run Typecheck & Tests
         working-directory: ag-extension-dashboard/src/frontend
         run: |

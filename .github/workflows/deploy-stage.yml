@@ -80,7 +80,7 @@ jobs:
       - name: Frontend lint, typecheck, build & tests
         run: |
           cd ag-extension-dashboard/src/frontend
-          npm ci
+          npm ci --workspaces=false
           npm run lint
           npx tsc --noEmit
           npm run build

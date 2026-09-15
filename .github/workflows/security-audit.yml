@@ -154,7 +154,7 @@ jobs:
       - name: Install and Test Frontend Security Policy & Resilience
         run: |
           cd ag-extension-dashboard/src/frontend
-          npm ci
+          npm ci --workspaces=false
           npm run test -- src/__tests__/securityPolicy.test.ts src/__tests__/virtualizationAndThermal.test.ts src/__tests__/remoteWipeAndEncryptedStorage.test.ts src/__tests__/chaosNetworkSimulation.test.ts
 
       - name: Install and Verify Browser Extension Security

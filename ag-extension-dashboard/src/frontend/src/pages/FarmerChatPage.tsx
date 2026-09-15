@@ -119,8 +119,6 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
     }).catch(() => setPlotTelemetry(prev => ({ ...prev, loading: false })));
   }, [activeFarmerConvId, activeConv]);
 
-  const { temp: plotTemp, moisture: plotMoisture } = plotTelemetry;
-
   // Outbreak risk: evaluated from the live forecast via /pillars/hazard/evaluate.
   // Days with missing measured fields are skipped (never defaulted), and a failed
   // weather/evaluation call degrades the card instead of scoring fabricated inputs.

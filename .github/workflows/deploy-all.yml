@@ -74,7 +74,7 @@ jobs:
       - name: Lint, Build & Test Frontend (with coverage)
         run: |
           cd ag-extension-dashboard/src/frontend
-          npm ci
+          npm ci --workspaces=false
           npm run lint
           npm run build
           npm run test:coverage
