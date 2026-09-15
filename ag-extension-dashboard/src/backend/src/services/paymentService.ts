@@ -140,13 +140,15 @@ class PaymentService {
         }
     }
 
-    private paypalApiBase(): string {
+    /** Public: the PayPal Subscriptions service (services/paypalSubscriptionService.ts)
+     *  reuses the same API base + OAuth token as the classic sale flow. */
+    paypalApiBase(): string {
         return process.env.NODE_ENV === 'production'
             ? 'https://api-m.paypal.com'
             : 'https://api-m.sandbox.paypal.com';
     }
 
-    private async fetchPayPalAccessToken(): Promise<string> {
+    async fetchPayPalAccessToken(): Promise<string> {
         if (!this.paypalClientId || !this.paypalClientSecret) {
             throw new Error('PayPal credentials are not loaded');
         }

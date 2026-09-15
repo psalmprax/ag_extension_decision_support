@@ -40,11 +40,32 @@ interface FarmerChatPageProps {
   onDeleteConversation?: (id: string) => void;
 }
 
-// NOTE: outbreak risk is read from the farmer record only. An earlier version derived a
+// NOTE: outbreak risk is evaluated from the REAL live forecast (weatherService ->
+// /external/weather -> /pillars/hazard/evaluate). An earlier version derived a
 // 7-day forecast from soil telemetry (temperature defaulted to 25°C, humidity computed
-// from moisture) and posted it to /pillars/hazard/evaluate, then displayed the result as a
-// "LIVE" risk score. That presented synthesized inputs as measured weather, so the path was
-// removed rather than relabelled.
+// from moisture) and displayed the result as a "LIVE" risk score. That presented
+// synthesized inputs as measured weather; when weather or evaluation fails the card
+// degrades to "unavailable" instead of scoring fabricated inputs.
+
+interface WeatherForecastDay {
+  date: string;
+  maxTemp: number;
+  minTemp: number;
+  precipitationMm?: number;
+  relativeHumidityPct?: number;
+  windSpeedKmh?: number;
+}
+
+interface DetectedHazard {
+  hazardType: string;
+  threatLevel: string;
+  title: string;
+}
+
+interface HazardEvaluation {
+  status: 'idle' | 'loading' | 'ready' | 'unavailable';
+  hazards: DetectedHazard[];
+}
 
 export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   farmerConversations,
@@ -99,6 +120,52 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   }, [activeFarmerConvId, activeConv]);
 
   const { temp: plotTemp, moisture: plotMoisture } = plotTelemetry;
+
+  // Outbreak risk: evaluated from the live forecast via /pillars/hazard/evaluate.
+  // Days with missing measured fields are skipped (never defaulted), and a failed
+  // weather/evaluation call degrades the card instead of scoring fabricated inputs.
+  const [hazardEval, setHazardEval] = useState<HazardEvaluation>({ status: 'idle', hazards: [] });
+
+  useEffect(() => {
+    const region = (activeConv as unknown as { farmerRegion?: string }).farmerRegion;
+    if (!activeFarmerConvId || !activeConv || !region) {
+      setHazardEval({ status: 'idle', hazards: [] });
+      return;
+    }
+    let cancelled = false;
+    setHazardEval(prev => ({ ...prev, status: 'loading' }));
+    (async () => {
+      try {
+        const weatherRes = await fetchWeather(region);
+        const forecast = (weatherRes?.data?.forecast ?? []) as WeatherForecastDay[];
+        const hazardDays = forecast
+          .slice(0, 3)
+          .map(d => ({
+            date: String(d.date),
+            minTempC: Number(d.minTemp),
+            maxTempC: Number(d.maxTemp),
+            precipitationMm: Number(d.precipitationMm),
+            relativeHumidityPct: Number(d.relativeHumidityPct),
+            windSpeedKmh: Number(d.windSpeedKmh),
+          }))
+          .filter(d =>
+            [d.minTempC, d.maxTempC, d.precipitationMm, d.relativeHumidityPct, d.windSpeedKmh].every(Number.isFinite)
+          );
+        if (!hazardDays.length) throw new Error('Live forecast returned no measurable days');
+        const res = await apiClient.post<{ success: boolean; data: { hazards?: DetectedHazard[] } }>(
+          '/pillars/hazard/evaluate',
+          { forecast: hazardDays }
+        );
+        if (cancelled) return;
+        setHazardEval({ status: 'ready', hazards: res.data?.data?.hazards ?? [] });
+      } catch (err) {
+        console.error('Live hazard evaluation failed:', err);
+        if (cancelled) return;
+        setHazardEval({ status: 'unavailable', hazards: [] });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [activeFarmerConvId, activeConv]);
 
   // AI Copilot suggestions — fetched live when conversation has context, otherwise fallback to
   // curated defaults. Re-fires when the last officer/user message changes.
@@ -595,12 +662,26 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">OUTBREAK RISK</div>
-              <div className="text-base font-bold text-emerald-400 flex items-center gap-1">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>{activeFarmer?.outbreakRisk !== undefined ? `${activeFarmer.outbreakRisk}%` : '—'}</span>
+              <div className={`text-base font-bold ${hazardEval.status === 'ready' && hazardEval.hazards.length > 0 ? 'text-amber-400' : 'text-emerald-400'} flex items-center gap-1`}>
+                <CheckCircle2 className={`w-4 h-4 ${hazardEval.status === 'ready' && hazardEval.hazards.length > 0 ? 'text-amber-400' : 'text-emerald-400'}`} />
+                <span>
+                  {hazardEval.status === 'loading'
+                    ? '…'
+                    : hazardEval.status === 'ready'
+                      ? hazardEval.hazards.length > 0
+                        ? `${hazardEval.hazards.length} hazard window${hazardEval.hazards.length > 1 ? 's' : ''}`
+                        : 'No outbreak windows'
+                      : '—'}
+                </span>
               </div>
               <div className="text-[9px] text-white/40">
-                <span>Pillar hazard model • requires a live forecast to evaluate</span>
+                {hazardEval.status === 'ready' && hazardEval.hazards.length > 0
+                  ? hazardEval.hazards[0].title
+                  : hazardEval.status === 'unavailable'
+                    ? 'Live weather unavailable — hazard evaluation skipped'
+                    : hazardEval.status === 'idle'
+                      ? 'Add farmer region for live hazard evaluation'
+                      : 'Pillar hazard model • evaluated from live forecast'}
               </div>
             </div>
           </div>

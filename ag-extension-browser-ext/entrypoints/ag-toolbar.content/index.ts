@@ -79,6 +79,22 @@ const safeSetHTML = (el: HTMLElement, html: string) => {
   el.appendChild(template.content);
 };
 
+/**
+ * Hover lift for toolbar buttons: the sanitizer strips inline `onmouseover`/
+ * `onmouseout` from templates (event handlers are forbidden markup), so the
+ * hover behavior is attached here instead.
+ */
+const attachHoverLift = (button: HTMLElement) => {
+  const inner = button.firstElementChild as HTMLElement | null;
+  if (!inner) return;
+  inner.addEventListener('mouseenter', () => {
+    inner.style.transform = 'scale(1.05) translateY(-2px)';
+  });
+  inner.addEventListener('mouseleave', () => {
+    inner.style.transform = 'scale(1) translateY(0)';
+  });
+};
+
 export default defineContentScript({
   // On-demand injection: NOT statically registered (no `matches`). The
   // background service worker injects this script via chrome.scripting when
@@ -116,7 +132,7 @@ export default defineContentScript({
             cursor: pointer;
             border: 1px solid rgba(255,255,255,0.2);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
+          ">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6"/></svg>
           </div>
         `);
@@ -160,7 +176,13 @@ export default defineContentScript({
 
                   // Persist first: if the sidepanel is not open yet there is no listener
                   // for `photo_captured`, and the frame would otherwise be lost.
-                  try { await browser.storage.local.set({ lastCapturedPhoto: { imageData, capturedAt: Date.now() } }); } catch { /* ignore */ }
+                  try {
+                    await browser.storage.local.set({ lastCapturedPhoto: { imageData, capturedAt: Date.now() } });
+                  } catch (storageError) {
+                    // Silent quota loss would drop the frame entirely: surface it.
+                    console.error('Could not persist the captured photo:', storageError);
+                    alert('Extension storage is full — the captured photo could not be kept for the side panel. Open the side panel now to send it, or free up extension storage.');
+                  }
 
                   // Open sidepanel, then notify (an open panel consumes the message and
                   // clears the stored copy; a cold panel restores it on mount).
@@ -191,7 +213,7 @@ export default defineContentScript({
             cursor: pointer;
             border: 1px solid rgba(255,255,255,0.2);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
+          ">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
           </div>
         `);
@@ -215,7 +237,7 @@ export default defineContentScript({
             cursor: pointer;
             border: 1px solid rgba(255,255,255,0.2);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
+          ">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
           </div>
         `);
@@ -287,7 +309,7 @@ export default defineContentScript({
             cursor: pointer;
             border: 1px solid rgba(255,255,255,0.2);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
+          ">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6"/></svg>
           </div>
         `);
@@ -373,7 +395,7 @@ export default defineContentScript({
             cursor: pointer;
             border: 1px solid rgba(255,255,255,0.2);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
+          ">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
         `);
@@ -387,6 +409,9 @@ export default defineContentScript({
         wrapper.appendChild(photoBtn);
         wrapper.appendChild(logVisitBtn);
         wrapper.appendChild(fab);
+        // Hover lift: the sanitizer strips inline onmouseover/onmouseout from
+        // templates (event handlers are forbidden markup), so it is wired here.
+        for (const btn of [syncBtn, gpsBtn, photoBtn, logVisitBtn, fab]) attachHoverLift(btn);
         container.appendChild(wrapper);
       },
     });

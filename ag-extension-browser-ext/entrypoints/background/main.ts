@@ -63,6 +63,13 @@ const BACKGROUND_ACTIONS: ReadonlySet<string> = new Set([
 async function injectToolbar(tabId?: number): Promise<void> {
     const targetId = tabId ?? (await browser.tabs.query({ active: true, currentWindow: true }))[0]?.id;
     if (!targetId) throw new Error('No active tab to inject the toolbar into');
+    // Re-injection guard: a second executeScript would stack a duplicate
+    // #ag-toolbar-root with doubled listeners, so probe before injecting.
+    const [alreadyInjected] = await browser.scripting.executeScript({
+        target: { tabId: targetId },
+        func: () => Boolean(document.getElementById('ag-toolbar-root')),
+    });
+    if (alreadyInjected?.result) return;
     // Root-absolute path: WXT emits entrypoints/ag-toolbar.content to
     // content-scripts/ag-toolbar.js, and chrome.scripting requires the leading slash.
     await browser.scripting.executeScript({
@@ -76,6 +83,26 @@ const isBackgroundRequestMessage = (message: unknown): message is BackgroundRequ
     const action = (message as { action?: unknown }).action;
     return typeof action === 'string' && BACKGROUND_ACTIONS.has(action);
 };
+
+/** Sender contexts inside the extension itself (popup, sidepanel, options). */
+const isExtensionPageSender = (sender: Browser.runtime.MessageSender): boolean => {
+    if (sender.id !== browser.runtime.id) return false;
+    if (!sender.tab) return true; // popup/sidepanel senders carry no tab
+    return (sender.tab.url ?? '').startsWith(browser.runtime.getURL('/'));
+};
+
+/**
+ * Actions a content script may send: flush/read-only triggers only — no data
+ * crosses, nothing is mutated. Data-bearing and privileged actions
+ * (queue_request, attachments, DLQ ops, inject_toolbar, open_sidepanel) must
+ * come from extension pages.
+ */
+const CONTENT_SCRIPT_ALLOWED_ACTIONS: ReadonlySet<string> = new Set([
+    'sync_now',
+    'get_offline_status',
+    'get_queued_requests',
+    'get_dead_letter_requests',
+]);
 
 const backgroundErrorMessage = (error: unknown): string =>
     error instanceof Error ? error.message : String(error);
@@ -162,6 +189,10 @@ export default defineBackground(() => {
     const STATUS_STORE = 'offlineStatus';
     const ATTACHMENT_STORE = 'offlineAttachments';
     const ATTACHMENT_BUDGET_BYTES = 50 * 1024 * 1024;
+    // Count/age caps for the request stores: a long outage must not grow them
+    // unboundedly (attachments have their own size budget instead).
+    const MAX_QUEUED_REQUESTS = 200;
+    const MAX_DEAD_LETTER_ITEMS = 100;
 
     let db: IDBDatabase | null = null;
 
@@ -359,7 +390,14 @@ export default defineBackground(() => {
         const uploadHeaders = { ...headers };
         delete uploadHeaders['Content-Type'];
         delete uploadHeaders['content-type'];
-        const response = await fetch(uploadUrl, { method: 'POST', headers: uploadHeaders, body: formData });
+        const response = await fetch(uploadUrl, {
+            method: 'POST',
+            headers: uploadHeaders,
+            body: formData,
+            // One hung upload must not block the queue drain; the retry/backoff
+            // path treats a timeout as a retryable failure.
+            signal: AbortSignal.timeout(30000),
+        });
         const result = await response.json() as { success?: boolean; data?: { id?: string }; error?: string };
         if (!response.ok || !result.success || !result.data?.id) throw new Error(result.error || `Attachment upload failed (${response.status})`);
         attachment.uploadedId = result.data.id;
@@ -388,6 +426,48 @@ export default defineBackground(() => {
     const freshAuthHeader = async (): Promise<Record<string, string>> => {
         const token = await getAuthToken();
         return token ? { Authorization: `Bearer ${token}` } : {};
+    };
+
+    // Keep a store bounded: evict the OLDEST entries (by index order) beyond the
+    // cap so long outages cannot grow storage unboundedly. Best-effort — prune
+    // failures are logged, never thrown into the write path.
+    const pruneStoreToCap = async (storeName: string, indexName: string, cap: number): Promise<void> => {
+        if (!db) return;
+        let overflowIds: string[] = [];
+        try {
+            overflowIds = await new Promise<string[]>((resolve, reject) => {
+                const tx = db!.transaction([storeName], 'readonly');
+                const req = tx.objectStore(storeName).index(indexName).openCursor(null, 'next');
+                const ids: string[] = [];
+                let seen = 0;
+                req.onsuccess = () => {
+                    const cursor = req.result;
+                    if (!cursor) {
+                        resolve(ids);
+                        return;
+                    }
+                    seen++;
+                    if (seen > cap) ids.push((cursor.value as { id: string }).id);
+                    cursor.continue();
+                };
+                req.onerror = () => reject(new Error(req.error?.message || `prune scan of ${storeName} failed`));
+            });
+        } catch (error) {
+            console.warn(`Prune scan of ${storeName} failed:`, error);
+            return;
+        }
+        for (const id of overflowIds) {
+            await new Promise<void>((resolve) => {
+                const tx = db!.transaction([storeName], 'readwrite');
+                tx.objectStore(storeName).delete(id);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => resolve();
+            });
+        }
+        if (overflowIds.length > 0) {
+            console.warn(`Pruned ${overflowIds.length} oldest ${storeName} entries beyond the cap of ${cap}`);
+            notifyQueueUpdate();
+        }
     };
 
     // Exponential backoff for automatic retries: 30s, 1m, 2m, ... capped at 30m.
@@ -421,6 +501,8 @@ export default defineBackground(() => {
                 // Notify UI about queue update
                 notifyQueueUpdate();
                 mirrorUpsert(queuedRequest);
+                // Keep the pending queue bounded (oldest evicted beyond the cap).
+                void pruneStoreToCap(QUEUE_STORE, 'timestamp', MAX_QUEUED_REQUESTS);
                 resolve();
             };
             dbRequest.onerror = () => reject(new Error(dbRequest.error?.message || 'Queue request failed'));
@@ -626,6 +708,8 @@ export default defineBackground(() => {
                 request.lastError = 'Blocked: target is not the configured API origin';
                 await idbPut(DEAD_LETTER_STORE, request);
                 await removeQueuedRequest(request.id);
+                // Keep the dead-letter store bounded (oldest evicted beyond the cap).
+                void pruneStoreToCap(DEAD_LETTER_STORE, 'movedToDeadLetterAt', MAX_DEAD_LETTER_ITEMS);
                 mirrorUpsert(request);
                 notifyQueueUpdate();
                 return;
@@ -634,7 +718,10 @@ export default defineBackground(() => {
             const response = await fetch(request.url, {
                 method: request.method,
                 headers,
-                body: requestBody
+                body: requestBody,
+                // One hung replay must not head-of-line block the whole queue; the
+                // retry/backoff path treats a timeout as a retryable failure.
+                signal: AbortSignal.timeout(30000),
             });
 
             if (response.ok) {
@@ -665,6 +752,8 @@ export default defineBackground(() => {
                 request.lastError = `HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`;
                 await idbPut(DEAD_LETTER_STORE, request);
                 await removeQueuedRequest(request.id);
+                // Keep the dead-letter store bounded (oldest evicted beyond the cap).
+                void pruneStoreToCap(DEAD_LETTER_STORE, 'movedToDeadLetterAt', MAX_DEAD_LETTER_ITEMS);
                 mirrorUpsert(request); // server mirror learns the dead_letter state
                 notifyQueueUpdate();
             } else {
@@ -683,6 +772,8 @@ export default defineBackground(() => {
                 request.originalRetries = request.maxRetries;
                 await idbPut(DEAD_LETTER_STORE, request);
                 await removeQueuedRequest(request.id);
+                // Keep the dead-letter store bounded (oldest evicted beyond the cap).
+                void pruneStoreToCap(DEAD_LETTER_STORE, 'movedToDeadLetterAt', MAX_DEAD_LETTER_ITEMS);
                 mirrorUpsert(request);
                 notifyQueueUpdate();
             } else {
@@ -738,6 +829,29 @@ export default defineBackground(() => {
 
     // Initialize
     const init = async () => {
+        // MV3 service workers are terminated when idle; setInterval does not survive.
+        // chrome.alarms wakes the worker on schedule instead. Alarm creation and the
+        // listener are registered BEFORE the DB init so one IndexedDB failure cannot
+        // silence connectivity checks or mirror flushes.
+        await chromeAPI.alarms.create('connectivity-check', { periodInMinutes: 1 });
+        await chromeAPI.alarms.create('mirror-flush', { periodInMinutes: 5 });
+        chromeAPI.alarms.onAlarm.addListener((alarm: { name: string }) => {
+            if (alarm.name === 'connectivity-check') {
+                void (async () => {
+                    const currentStatus = await getOfflineStatus();
+                    const isOnline = await checkOnlineStatus();
+
+                    if (currentStatus.isOnline !== isOnline) {
+                        await handleOnlineStatusChange();
+                    }
+                })();
+            } else if (alarm.name === 'mirror-flush') {
+                // The mirror outbox is persisted, so a flush at wake-up drains
+                // whatever failed while the worker was suspended.
+                void flushMirrorQueue();
+            }
+        });
+
         await initDB();
 
         // Register Context Menus
@@ -774,22 +888,6 @@ export default defineBackground(() => {
 
         // Initial status check
         await handleOnlineStatusChange();
-
-        // MV3 service workers are terminated when idle; setInterval does not survive.
-        // chrome.alarms wakes the worker on schedule instead.
-        await chromeAPI.alarms.create('connectivity-check', { periodInMinutes: 1 });
-        chromeAPI.alarms.onAlarm.addListener((alarm: { name: string }) => {
-            if (alarm.name === 'connectivity-check') {
-                void (async () => {
-                    const currentStatus = await getOfflineStatus();
-                    const isOnline = await checkOnlineStatus();
-
-                    if (currentStatus.isOnline !== isOnline) {
-                        await handleOnlineStatusChange();
-                    }
-                })();
-            }
-        });
     };
 
     // Context Menu Click Handler
@@ -846,6 +944,13 @@ export default defineBackground(() => {
             try {
                 if (!isBackgroundRequestMessage(message)) {
                     sendResponse({ success: false, error: 'Unknown message action' });
+                    return;
+                }
+
+                // Sender validation: privileged/data-bearing actions must come from
+                // extension pages; content scripts may only trigger flush/read actions.
+                if (!CONTENT_SCRIPT_ALLOWED_ACTIONS.has(message.action) && !isExtensionPageSender(sender)) {
+                    sendResponse({ success: false, error: 'Sender is not allowed to invoke this action' });
                     return;
                 }
 
@@ -967,5 +1072,7 @@ export default defineBackground(() => {
         chromeAPI.runtime.onMessage.addListener(handleMessage);
     }
 
-    init();
+    // One DB failure must not kill the whole background: listeners above are
+    // already registered; log the init failure instead of an unhandled rejection.
+    init().catch((error) => console.error('Background init failed:', error));
 });

@@ -27,20 +27,26 @@ ssh "${SSH_OPTS[@]}" "${DEPLOY_STAGE_USER}@${DEPLOY_STAGE_HOST}" <<'EOS'
   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --no-recreate app-db redis
   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans
 
-  # ── Post-deploy health gate (Node fetch: slim images may lack wget/curl) ──
+  # ── Post-deploy health gate (Node fetch: slim images may lack wget/curl).
+  # Retries 10 × 6s ≈ 60s so a slow boot isn't reported as a failed deploy.
   sleep 15
-  HEALTH_OK=0
-  if docker exec ag-dashboard-backend \
-      node -e "fetch('http://localhost:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then
-    echo "  ✅ Backend healthy"
-  else
-    echo "  ❌ Backend unhealthy"; HEALTH_OK=1
-  fi
-  if docker exec ag-dashboard-frontend \
-      node -e "fetch('http://localhost:80/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then
-    echo "  ✅ Frontend healthy"
-  else
-    echo "  ❌ Frontend unhealthy"; HEALTH_OK=1
-  fi
+  HEALTH_OK=1
+  for i in $(seq 1 10); do
+    HEALTH_OK=0
+    if docker exec ag-dashboard-backend \
+        node -e "fetch('http://localhost:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then
+      echo "  ✅ Backend healthy (attempt $i)"
+    else
+      echo "  ❌ Backend unhealthy (attempt $i)"; HEALTH_OK=1
+    fi
+    if docker exec ag-dashboard-frontend \
+        node -e "fetch('http://localhost:80/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then
+      echo "  ✅ Frontend healthy (attempt $i)"
+    else
+      echo "  ❌ Frontend unhealthy (attempt $i)"; HEALTH_OK=1
+    fi
+    if [ "$HEALTH_OK" -eq 0 ]; then break; fi
+    if [ "$i" -lt 10 ]; then sleep 6; fi
+  done
   exit "$HEALTH_OK"
 EOS

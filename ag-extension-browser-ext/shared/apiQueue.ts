@@ -90,12 +90,27 @@ class APIQueueService {
         }
     }
 
+    /**
+     * Queue rows persist to IndexedDB unencrypted, so the Authorization header is
+     * stripped before a request is stored. The background re-attaches the *current*
+     * token from storage.session at replay time (freshAuthHeader), so nothing is lost.
+     */
+    private persistableHeaders(headers: Headers): Record<string, string> {
+        const entries: Record<string, string> = {};
+        headers.forEach((value, key) => {
+            if (key.toLowerCase() !== 'authorization') entries[key] = value;
+        });
+        return entries;
+    }
+
     public async isCurrentlyOnline(): Promise<boolean> {
         try {
             const browserAPI = browser;
             if (browserAPI?.runtime) {
                 const response = await browserAPI.runtime.sendMessage({ action: 'get_offline_status' });
-                if (response.success) {
+                // Guard the untyped sendMessage response: a malformed reply must not
+                // throw a TypeError on a missing/foreign shape.
+                if (response?.success && response.status && typeof response.status.isOnline === 'boolean') {
                     this.isOnline = response.status.isOnline;
                     return this.isOnline;
                 }
@@ -175,7 +190,7 @@ class APIQueueService {
             await this.queueRequest({
                 url,
                 method,
-                headers: Object.fromEntries(requestHeaders.entries()),
+                headers: this.persistableHeaders(requestHeaders),
                 body: options.body as string | Record<string, unknown> | undefined,
                 maxRetries: 3,
                 idempotencyKey,

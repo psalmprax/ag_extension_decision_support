@@ -40,7 +40,9 @@ apiClient.interceptors.request.use(
   config => {
     const method = (config.method || 'get').toLowerCase();
     if (['post', 'put', 'patch', 'delete'].includes(method)) {
-      const url = config.url || '';
+      // Test the path without its query string: exempt endpoints (e.g.
+      // /auth/login?next=...) stay exempt regardless of parameters.
+      const url = (config.url || '').split('?')[0];
       if (!CSRF_EXEMPT_URLS.test(url)) {
         const csrf = getCsrfToken();
         if (csrf) {
@@ -169,7 +171,11 @@ async function handleAuthErrors(error: AxiosError): Promise<unknown> {
         return apiClient(config as AxiosRequestConfig);
       }
     }
-    forceLogout();
+    // A failed login/register/MFA call is not a lost session — rejecting the
+    // request is enough and must not wipe cached user state (forceLogout).
+    if (!isAuthEndpoint) {
+      forceLogout();
+    }
     const nonRetryable = Object.assign(error, { __nonRetryable: true });
     return Promise.reject(nonRetryable);
   }

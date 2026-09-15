@@ -149,3 +149,62 @@ export async function lookupPendingPayPalPayment(paymentId: string): Promise<{
   }
   return { userId: pending.userId, planId: pending.planId, amount: Number(pending.amount) };
 }
+
+const PAYPAL_CUSTOM_ID_PATTERN = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}):([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+
+/**
+ * Parse the custom_id carried by Subscriptions API events
+ * ("<userId>:<planId>", both UUIDs). Deliberately strict: anything that does not
+ * match the exact shape is not our subscription and must not touch entitlements.
+ */
+export function parsePayPalSubscriptionCustomId(customId: unknown): {
+  userId: string;
+  planId: string;
+} | null {
+  if (typeof customId !== 'string') return null;
+  const match = PAYPAL_CUSTOM_ID_PATTERN.exec(customId);
+  if (!match) return null;
+  return { userId: match[1].toLowerCase(), planId: match[2].toLowerCase() };
+}
+
+export type PayPalSubscriptionEventStatus = 'active' | 'cancelled' | 'suspended' | 'expired';
+
+/**
+ * Apply a PayPal Subscriptions API lifecycle event (activate / cancel / suspend /
+ * expire) to the user's subscription row. Idempotent on (userId) — the row is unique
+ * per user, so a repeated webhook delivery converges to the same state.
+ */
+export async function applyPayPalSubscriptionEvent(params: {
+  userId: string;
+  planId: string;
+  status: PayPalSubscriptionEventStatus;
+  /** Next billing time for active subscriptions; ignored for terminal states. */
+  periodEnd?: Date;
+}): Promise<void> {
+  const prisma = getPrisma();
+  const now = new Date();
+  const end = params.periodEnd ?? now;
+  const activating = params.status === 'active';
+
+  await prisma.subscription.upsert({
+    where: { userId: params.userId },
+    update: {
+      status: params.status,
+      planId: params.planId,
+      ...(activating
+        ? { currentPeriodStart: now, currentPeriodEnd: end, expiryNotificationSent: false }
+        : {}),
+    },
+    create: {
+      userId: params.userId,
+      planId: params.planId,
+      status: params.status,
+      currentPeriodStart: now,
+      currentPeriodEnd: end,
+    },
+  });
+  logger.info(
+    `PayPal subscription for ${params.userId} set to ${params.status}` +
+      (activating && params.periodEnd ? ` until ${params.periodEnd.toISOString()}` : '')
+  );
+}

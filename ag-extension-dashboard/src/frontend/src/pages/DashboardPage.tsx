@@ -131,7 +131,7 @@ const DashboardStats: React.FC<{
 const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ cardClass, isLoading }) => {
   const { isDemo } = useDemoMode();
   const { t } = useLanguage();
-  const { data: health, isLoading: hl } = useQuery({
+  const { data: health, isLoading: hl, isError } = useQuery({
     queryKey: ['active-pulse-health', isDemo],
     queryFn: async () => {
       if (isDemo) {
@@ -153,7 +153,9 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
     staleTime: 15_000,
   });
 
-  const showLoading = isLoading || hl || !health;
+  // A failed /health call must not spin forever: surface an honest degraded
+  // state; refetchInterval keeps retrying automatically.
+  const showLoading = isLoading || hl || (!health && !isError);
   const dbConnected = health?.services?.database === 'connected';
   const cacheConnected = health?.services?.cache === 'connected';
   const uptime = health?.uptime ? formatPulseUptime(health.uptime) : null;
@@ -167,7 +169,13 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
         </h3>
       </div>
       <div className="space-y-3 sm:space-y-4">
-        {showLoading ? (
+        {isError ? (
+          <div className="flex items-center justify-center py-6">
+            <p className="text-xxs text-slate-500 uppercase tracking-wide">
+              {t('dashboard_pulse_unavailable', { defaultValue: 'Health status unavailable — retrying' })}
+            </p>
+          </div>
+        ) : showLoading ? (
           <div className="flex items-center justify-center py-6">
             <Loader2 className="w-5 h-5 animate-spin text-primary-400" />
           </div>
