@@ -29,21 +29,21 @@ ag-extension-shared/           # Shared zod schemas — frontend/backend API con
 - **Disease monitoring** — AI plant disease detection, quarantine escalation, and alerts
 - **Weather & market intelligence** — localized forecasts and commodity price analysis
 - **Visit scheduling** — farmer visit coordination and reporting
-- **Multi-agent orchestration** — specialized AI agents (Agent Zero, Crew AI, OpenClaw) with self-healing monitoring
+- **Multi-agent orchestration** — specialized AI agents (Agent Zero, Crew AI, OpenClaw) with self-healing monitoring; the OpenClaw runtime bridges to a configurable gateway and fails loud (503) when none is configured
 - **MCP tool support** — 22 agricultural tools exposed via the Model Context Protocol
 - **Localization** — multi-language UI with a translation validator and CI hard gate
 - **Field/mobile support** — PWA + Capacitor mobile builds, offline-first with durable mirrored mutation queue and conflict reconciliation, low-end-device thermal/memory budgets
 - **Browser extension** — MV3 extension with sidepanel, offline queue, and content scripts
-- **Payments & comms** — Stripe/PayPal billing, SMS/USSD, WhatsApp, email workflows, web push
+- **Payments & comms** — Stripe billing (checkout + signature-verified webhooks) and PayPal billing (one-time sales granting prepaid passes, plus Subscriptions API auto-renewing profiles with lifecycle webhooks), SMS/USSD, WhatsApp (incl. template messages), email workflows, web push
 - **Enterprise Security & Identity Hardening** — RFC 6238 TOTP Authenticator (2FA), brute-force account lockout, SHA-256 session invalidation, and GeoIP login auditing
 - **Zero-Connectivity Field Edge** — On-device visual disease classification via HTML5 canvas, WGS-84 geodesic parcel boundary tracing & acreage calculation
 - **Smallholder Voice & IVR Channels** — WhatsApp voice note Whisper transcription in Swahili/vernacular and automated TwiML/AT IVR voice broadcasts
 - **Economic Loop Closure** — Certified agro-dealer geo-inventory, anti-counterfeit batch verification, and institutional harvest offtaker matchmaking
 - **Agronomic ROI & Soil Carbon MRV** — Quantifiable yield differential & BCR financial modeling, IPCC Tier 2 Soil Organic Carbon (SOC) carbon credit auditing
 - **Automated Proactive Hazard Warning** — Weather anomaly scanning daemon & 48-hour preventive early warning alert dispatch
-- **Satellite Earth Observation & Sentinel-2 NDVI Indexing** — 10m multispectral NDVI/EVI/NDWI calculation & crop stress anomaly detection
+- **Satellite Earth Observation & Sentinel-2 NDVI Indexing** — 10m multispectral NDVI/EVI/NDWI calculation, crop stress anomaly detection, and Sentinel Hub parcel band ingestion (fails loud with an explicit "unconfigured" error when Sentinel Hub credentials are absent)
 - **Agronomic Credit Scoring & Parametric Insurance** — 0–1000 creditworthiness scoring (AAA–C tiers) and automated weather-index insurance underwriting
-- **Multi-Tenant Agribusiness Federation** — Organization-Region-Cooperative hierarchical tenancy, custom chemical restrictions, and white-label branding
+- **Multi-Tenant Agribusiness Federation** — Organization-Region-Cooperative hierarchical tenancy, custom chemical restrictions, and white-label branding *(demo-scale: two seeded tenants in a registry with fail-closed compliance checks; tenant CRUD/multi-DB tenancy is not implemented yet)*
 - **Durable Offline Mutation Queue & Stateful Conflict Reconciliation** — Cryptographic idempotency keys, dual IndexedDB/localStorage persistence, and exponential backoff retry
 - **On-Farm IoT & LoRaWAN Sensor Mesh Telemetry** — Soil moisture/salinity probe ingestion and VPD-driven smart solar irrigation
 - **EUDR Zero-Deforestation & GS1 Digital Passports** — EUDR 2020 forest baseline verification and cryptographically signed farm-to-fork batch passports
@@ -53,6 +53,8 @@ ag-extension-shared/           # Shared zod schemas — frontend/backend API con
 - **Unified Multi-Cloud Object Storage** — S3-compatible architecture supporting the cheapest raw storage (Backblaze B2 @ $0.006/GB) and zero-egress streaming (Cloudflare R2), with direct presigned uploads, dual local caching, and report archival (see [`docs/MEDIA_OBJECT_STORAGE_GUIDE.md`](./docs/MEDIA_OBJECT_STORAGE_GUIDE.md))
 
 > 📖 **Complete Architecture Documentation**: See [`ARCHITECTURE_PILLARS.md`](./ARCHITECTURE_PILLARS.md) for full data models, algorithmic formulas, and API contracts.
+>
+> 📜 **Feature honesty**: derived metrics (satellite indices, carbon estimates, passport flags) disclose their provenance and assumptions in each service's response payload, and unconfigured integrations fail loud instead of returning fabricated data — see `Anti-Flaws.md` §17 for the trust-boundary protocol.
 
 ## Tech stack
 

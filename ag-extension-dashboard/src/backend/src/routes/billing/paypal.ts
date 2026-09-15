@@ -223,6 +223,96 @@ router.get('/paypal/subscription-return', authorize(['admin', 'extension_officer
 
 /**
  * @swagger
+ * /api/v1/billing/paypal/subscription:
+ *   post:
+ *     summary: Create a real auto-renewing PayPal subscription (Subscriptions API)
+ *     tags: [Billing]
+ */
+// Unlike POST /paypal/subscribe (one-time sale → fixed-length pass), this endpoint
+// creates a true recurring PayPal profile. State is owned by the signature-verified
+// webhook (BILLING.SUBSCRIPTION.*); the return handler below only verifies + activates.
+router.post('/paypal/subscription', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
+    try {
+        const { planId } = req.body;
+        const userId = req.user!.userId;
+
+        if (!planId) {
+            return res.status(400).json({ success: false, message: 'Plan ID is required' });
+        }
+
+        const plans = await paymentService.getPricingPlans();
+        const selectedPlan = plans.find(p => p.id === planId);
+
+        if (!selectedPlan) {
+            return res.status(400).json({ success: false, message: 'Invalid plan ID' });
+        }
+
+        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const result = await createPayPalSubscription({
+            userId,
+            planId: selectedPlan.id,
+            planName: selectedPlan.name,
+            price: selectedPlan.price,
+            interval: selectedPlan.interval,
+            returnUrl: `${baseUrl}/billing/paypal/subscription-return`,
+            cancelUrl: `${baseUrl}/billing/paypal/cancel`,
+        });
+
+        res.json({ success: true, data: result });
+    } catch (error) {
+        logger.error('Failed to create PayPal recurring subscription:', error);
+        safeError(res, 502, error instanceof Error ? error.message : 'Failed to create PayPal subscription');
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/paypal/subscription-return:
+ *   get:
+ *     summary: Handle PayPal subscription approval return
+ *     tags: [Billing]
+ */
+// PayPal redirects here with subscription_id after the buyer approves. The webhook
+// owns subscription state (BILLING.SUBSCRIPTION.ACTIVATED lands independently), so
+// this handler only verifies the subscription against PayPal and activates it
+// idempotently — webhooks and returns converge on the same lifecycle write.
+router.get('/paypal/subscription-return', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
+    try {
+        const { subscription_id } = req.query;
+        const userId = req.user!.userId;
+
+        if (!subscription_id || typeof subscription_id !== 'string') {
+            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=missing_params`);
+        }
+
+        const details = await getPayPalSubscription(subscription_id);
+        const identity = parsePayPalSubscriptionCustomId(details.customId);
+
+        if (details.status !== 'ACTIVE' && details.status !== 'APPROVED') {
+            logger.warn(`PayPal subscription ${subscription_id} returned with status ${details.status}`);
+            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=subscription_not_active`);
+        }
+        if (!identity || identity.userId !== userId) {
+            logger.warn(`PayPal subscription ${subscription_id} custom_id does not match the returning user ${userId}`);
+            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=payer_mismatch`);
+        }
+
+        await applyPayPalSubscriptionEvent({
+            userId: identity.userId,
+            planId: identity.planId,
+            status: 'active',
+            periodEnd: details.nextBillingTime ?? undefined,
+        });
+
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?success=true&payment=paypal-subscription`);
+    } catch (error) {
+        logger.error('PayPal subscription return handling failed:', error);
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=server_error`);
+    }
+});
+
+/**
+ * @swagger
  * /api/v1/billing/paypal/success:
  *   get:
  *     summary: Handle PayPal payment success

@@ -32,6 +32,9 @@
     "verify:anti-hallucination": "python3 scripts/verify_anti_hallucination.py",
     "verify:anti": "npm run verify:anti-flop && npm run verify:anti-hallucination"
   },
+  "overrides": {
+    "typescript": "^5.3.3"
+  },
   "dependencies": {
     "playwright": "^1.59.1"
   },
