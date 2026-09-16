@@ -237,5 +237,61 @@ describe('AIHubMix Integration (REST Account API, MCP Tool & Model Provider)', (
         expect.any(Object)
       );
     });
+
+    it('declares vision capability and executes analyzeImage with multimodal image_url payload', async () => {
+      mockedAxios.post.mockResolvedValueOnce({
+        data: {
+          id: 'vision-1',
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: '```json\n{"overallHealth":"diseased","diseases":[{"disease":"Late Blight","confidence":95}]}\n```',
+              },
+            },
+          ],
+          usage: {
+            prompt_tokens: 150,
+            completion_tokens: 45,
+            total_tokens: 195,
+          },
+        },
+      });
+
+      const provider = new AIHubMixProvider('sk-test-key');
+      expect(provider.capabilities).toContain('vision');
+
+      const result = await provider.analyzeImage(
+        Buffer.from('fake-image-bytes'),
+        'Analyze this potato leaf for blight.',
+        { temperature: 0.1 }
+      );
+
+      expect(result.analysis).toContain('Late Blight');
+      expect(result.model).toBe('gemini-2.5-flash');
+      expect(result.usage?.totalTokens).toBe(195);
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        'https://aihubmix.com/v1/chat/completions',
+        expect.objectContaining({
+          model: 'gemini-2.5-flash',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: 'Analyze this potato leaf for blight.' },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: expect.stringMatching(/^data:image\/jpeg;base64,/),
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+        expect.any(Object)
+      );
+    });
   });
 });
+

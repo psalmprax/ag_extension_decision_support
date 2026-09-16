@@ -67,11 +67,11 @@ jobs:
 
       - name: Generate Prisma client
         working-directory: ag-extension-dashboard/src/backend
-        run: npx prisma generate
+        run: npx --no-install prisma generate
 
       - name: Prepare CI database schema
         working-directory: ag-extension-dashboard/src/backend
-        run: npx prisma db push --skip-generate
+        run: npx --no-install prisma db push --skip-generate
         env:
           DATABASE_URL: postgres://psalmprax:password@localhost:5432/ag_extension
 

@@ -131,6 +131,25 @@ jest.mock('../services/prismaService', () => {
             },
             cropCycle: {
                 findMany: jest.fn().mockResolvedValue([]),
+                findUnique: jest.fn().mockImplementation((args: Prisma.CropCycleFindUniqueArgs) => {
+                    if (args.where.id === 'cycle-1') {
+                        return Promise.resolve({
+                            id: 'cycle-1',
+                            fieldId: '22222222-2222-2222-2222-222222222222',
+                            cropName: 'Maize',
+                            variety: 'H614',
+                            status: 'growing',
+                            field: {
+                                id: '22222222-2222-2222-2222-222222222222',
+                                farmer: {
+                                    userId: 'farm-1',
+                                    assignedOfficerId: 'off-1',
+                                },
+                            },
+                        });
+                    }
+                    return Promise.resolve(null);
+                }),
                 create: jest.fn().mockImplementation((args: Prisma.CropCycleCreateArgs) => Promise.resolve({
                     id: 'cycle-1',
                     ...args.data
@@ -263,5 +282,47 @@ describe('Fields & Crops API Integration Tests', () => {
         expect(response.body.success).toBe(true);
         expect(response.body.data.yieldKg).toBe(3500.0);
         expect(response.body.data.status).toBe('harvested');
+    });
+
+    it('should allow farmer to update their own field', async () => {
+        const response = await request(app)
+            .put('/api/v1/fields/22222222-2222-2222-2222-222222222222')
+            .set('Authorization', `Bearer ${farmerToken}`)
+            .send({ name: 'North Plot Updated', areaHectares: 2.5 });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+    });
+
+    it('should allow farmer to soft-delete their own field', async () => {
+        const response = await request(app)
+            .delete('/api/v1/fields/22222222-2222-2222-2222-222222222222')
+            .set('Authorization', `Bearer ${farmerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+    });
+
+    it('should allow assigned extension officer to create a field for farmer', async () => {
+        const response = await request(app)
+            .post('/api/v1/fields')
+            .set('Authorization', `Bearer ${officerToken}`)
+            .send({
+                farmerId: '11111111-1111-1111-1111-111111111111',
+                name: 'Officer Plot',
+                areaHectares: 3.0,
+            });
+
+        expect(response.status).toBe(201);
+        expect(response.body.success).toBe(true);
+    });
+
+    it('should reject unauthorized user from updating crop cycle', async () => {
+        const response = await request(app)
+            .patch('/api/v1/fields/22222222-2222-2222-2222-222222222222/cycles/cycle-1')
+            .set('Authorization', `Bearer ${unauthorizedToken}`)
+            .send({ status: 'harvested' });
+
+        expect(response.status).toBe(403);
     });
 });

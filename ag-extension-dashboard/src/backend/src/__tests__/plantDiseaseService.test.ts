@@ -35,4 +35,35 @@ describe('PlantDiseaseService — Crop Isolation & Symptom Diagnostics', () => {
     expect(results.length).toBeGreaterThan(0);
     expect(results[0].disease).toBe('Powdery Mildew');
   });
+
+  it('should support expanded 30-disease FAO and national extension catalog', () => {
+    const all = plantDiseaseService.getAllDiseases();
+    expect(all.length).toBe(30);
+    expect(all).toContain('Maize Lethal Necrosis');
+    expect(all).toContain('Fall Armyworm');
+    expect(all).toContain('Coffee Leaf Rust');
+    expect(all).toContain('Rice Blast');
+    expect(all).toContain('Banana Xanthomonas Wilt');
+  });
+
+  it('should retrieve detailed dossier via getDiseaseDetails alias', () => {
+    const mlnd = plantDiseaseService.getDiseaseDetails('maize_lethal_necrosis');
+    expect(mlnd).toBeDefined();
+    expect(mlnd?.disease).toBe('Maize Lethal Necrosis');
+    expect(mlnd?.susceptibleCrops).toContain('maize');
+    expect(mlnd?.description).toContain('biosecurity quarantine');
+
+    const rust = plantDiseaseService.getDiseaseInfo('Coffee Leaf Rust');
+    expect(rust).toBeDefined();
+    expect(rust?.disease).toBe('Coffee Leaf Rust');
+    expect(rust?.susceptibleCrops).toContain('coffee');
+  });
+
+  it('should diagnose Coffee Leaf Rust on coffee when orange pustules match', async () => {
+    const symptoms = ['Powdery orange-yellow spore pustules on leaf undersides', 'Premature heavy defoliation'];
+    const results = await plantDiseaseService.diagnosePlant(symptoms, 'coffee');
+
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.some(d => d.disease === 'Coffee Leaf Rust')).toBe(true);
+  });
 });

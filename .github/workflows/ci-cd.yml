@@ -120,12 +120,12 @@ jobs:
       - name: Generate Prisma client
         run: |
           cd ag-extension-dashboard/src/backend
-          npx prisma generate
+          npx --no-install prisma generate
 
       - name: Push database schema
         run: |
           cd ag-extension-dashboard/src/backend
-          npx prisma db push --skip-generate
+          npx --no-install prisma db push --skip-generate
         env:
           DATABASE_URL: postgres://psalmprax:password@localhost:5432/ag_extension
 

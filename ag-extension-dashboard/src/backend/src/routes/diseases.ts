@@ -7,6 +7,8 @@ import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { logSensitiveAction } from '@/middleware/auditMiddleware';
+import { outbreakService } from '@/services/outbreakService';
+import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
 
 const router = Router();
 
@@ -50,6 +52,29 @@ router.post('/diagnose', allowedRoles, checkUsageLimit('ai_vision'), async (req:
             return res.status(400).json({ success: false, error: 'Symptoms array is required' });
         }
 
+        // Regulatory Safety Gating (AD-001 / CE-001)
+        if (req.body.jurisdiction && (req.body.pesticideName || req.body.pesticideMlHa)) {
+            const boundaryCheck = agronomicSafetyGuard.validateStructuredMetrics({
+                cropType: typeof cropType === 'string' ? cropType : undefined,
+                jurisdiction: req.body.jurisdiction,
+                pesticideName: req.body.pesticideName,
+                pesticideMlHa: typeof req.body.pesticideMlHa === 'number' ? req.body.pesticideMlHa : undefined,
+                daysToHarvest: typeof req.body.daysToHarvest === 'number' ? req.body.daysToHarvest : undefined,
+                floweringOrPollinatorsPresent: Boolean(req.body.floweringPresent || req.body.pollinatorsPresent),
+                adviceTimestamp: req.body.adviceTimestamp,
+                farmerId: req.body.farmerId,
+                clientOfflineContext: req.body.clientOfflineContext,
+            });
+
+            if (boundaryCheck.regulatoryDecision?.status === 'HARD_REJECTION') {
+                return res.status(422).json({
+                    success: false,
+                    error: boundaryCheck.regulatoryDecision.rejectionMessage || 'Chemical recommendation rejected under fail-closed regulatory governance',
+                    regulatoryDecision: boundaryCheck.regulatoryDecision,
+                });
+            }
+        }
+
         const diagnosis = await plantDiseaseService.diagnoseFromSymptoms(symptoms, cropType);
         const userId = req.user?.userId;
         if (userId) {
@@ -65,6 +90,29 @@ router.post('/diagnose', allowedRoles, checkUsageLimit('ai_vision'), async (req:
                 })),
             });
         }
+
+        // Feed outbreak intelligence system with high-confidence symptom diagnoses
+        try {
+            const resolvedFarmerId = req.body.farmerId || (req.user?.role === 'farmer' ? req.user.userId : null);
+            const resolvedDistrict = req.body.district || null;
+            for (const item of diagnosis) {
+                if ((item.confidence ?? 0) >= 50) {
+                    void outbreakService
+                        .recordDiagnosisEvent({
+                            farmerId: resolvedFarmerId,
+                            district: resolvedDistrict,
+                            crop: cropType || 'unspecified',
+                            diseaseLabel: item.disease,
+                            confidence: item.confidence,
+                            source: 'symptom_diagnosis',
+                        })
+                        .catch(err => logger.error('[outbreak] failed to record symptom diagnosis event:', err));
+                }
+            }
+        } catch (outbreakErr) {
+            logger.error('[outbreak] error processing symptom diagnosis events:', outbreakErr);
+        }
+
         res.json({ success: true, data: diagnosis });
     } catch (error) {
         logger.error('Failed to diagnose disease:', error);
@@ -94,6 +142,29 @@ router.post('/diagnose/image', allowedRoles, checkUsageLimit('ai_vision'), async
             return res.status(413).json({ success: false, error: `Image size exceeds maximum limit of ${MAX_UPLOAD_BYTES / (1024 * 1024)}MB` });
         }
 
+        // Regulatory Safety Gating (AD-001 / CE-001)
+        if (req.body.jurisdiction && (req.body.pesticideName || req.body.pesticideMlHa)) {
+            const boundaryCheck = agronomicSafetyGuard.validateStructuredMetrics({
+                cropType: typeof cropType === 'string' ? cropType : undefined,
+                jurisdiction: req.body.jurisdiction,
+                pesticideName: req.body.pesticideName,
+                pesticideMlHa: typeof req.body.pesticideMlHa === 'number' ? req.body.pesticideMlHa : undefined,
+                daysToHarvest: typeof req.body.daysToHarvest === 'number' ? req.body.daysToHarvest : undefined,
+                floweringOrPollinatorsPresent: Boolean(req.body.floweringPresent || req.body.pollinatorsPresent),
+                adviceTimestamp: req.body.adviceTimestamp,
+                farmerId: req.body.farmerId,
+                clientOfflineContext: req.body.clientOfflineContext,
+            });
+
+            if (boundaryCheck.regulatoryDecision?.status === 'HARD_REJECTION') {
+                return res.status(422).json({
+                    success: false,
+                    error: boundaryCheck.regulatoryDecision.rejectionMessage || 'Chemical recommendation rejected under fail-closed regulatory governance',
+                    regulatoryDecision: boundaryCheck.regulatoryDecision,
+                });
+            }
+        }
+
         const analysis = await plantDiseaseService.analyzeImage(imageData);
 
         // Save report telemetry
@@ -116,6 +187,31 @@ router.post('/diagnose/image', allowedRoles, checkUsageLimit('ai_vision'), async
             }
         } catch (dbError) {
             logger.error('Failed to save disease diagnosis report telemetry:', dbError);
+        }
+
+        // Feed outbreak intelligence system with detected image diseases
+        try {
+            const resolvedFarmerId = req.body.farmerId || (req.user?.role === 'farmer' ? req.user.userId : null);
+            const resolvedDistrict = req.body.district || null;
+            if (analysis.diseases && Array.isArray(analysis.diseases)) {
+                for (const item of analysis.diseases) {
+                    const conf = typeof item.confidence === 'string'
+                        ? parseFloat(item.confidence)
+                        : (typeof item.confidence === 'number' ? item.confidence : null);
+                    void outbreakService
+                        .recordDiagnosisEvent({
+                            farmerId: resolvedFarmerId,
+                            district: resolvedDistrict,
+                            crop: cropType || 'unspecified',
+                            diseaseLabel: item.disease,
+                            confidence: conf,
+                            source: 'ai_vision',
+                        })
+                        .catch(err => logger.error('[outbreak] failed to record image diagnosis event:', err));
+                }
+            }
+        } catch (outbreakErr) {
+            logger.error('[outbreak] error processing image diagnosis events:', outbreakErr);
         }
 
         res.json({ success: true, data: { ...analysis, reportId } });

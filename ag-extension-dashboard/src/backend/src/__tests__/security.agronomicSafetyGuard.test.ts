@@ -101,6 +101,39 @@ describe('Deep-Tier Security — AgronomicSafetyGuard AI Boundary Validation', (
       expect(text).toContain('QUARANTINE ALERT');
       expect(text).toContain('maize lethal necrosis');
     });
+
+    it('should append Pre-Harvest Interval (PHI) and Pollinator safety warnings for chemical recommendations', () => {
+      const chemicalAdvice = 'Spray 1.5 L/ha of pesticide during flowering stage to control aphids.';
+      const { text } = agronomicSafetyGuard.guardAndEnrichAdvice(chemicalAdvice);
+
+      expect(text).toContain('Pre-Harvest & Re-Entry Safety (PHI / REI)');
+      expect(text).toContain('Pollinator & Bee Protection Warning');
+    });
+  });
+
+  describe('4. Pre-Harvest Interval & Pollinator Boundary Checks', () => {
+    it('should flag violation when pesticide is applied too close to harvest', () => {
+      const result = agronomicSafetyGuard.validateStructuredMetrics({
+        cropType: 'Tomato',
+        pesticideMlHa: 1000,
+        daysToHarvest: 3, // Less than 7 days safe PHI
+      });
+
+      expect(result.safe).toBe(false);
+      expect(result.hazardLevel).toBe('critical_hazard');
+      expect(result.violations.some((v) => v.includes('Pre-Harvest Interval (PHI) violation'))).toBe(true);
+    });
+
+    it('should flag violation when insecticide is applied during active flowering or pollinator foraging', () => {
+      const result = agronomicSafetyGuard.validateStructuredMetrics({
+        cropType: 'Sunflower',
+        pesticideMlHa: 500,
+        floweringOrPollinatorsPresent: true,
+      });
+
+      expect(result.safe).toBe(false);
+      expect(result.violations.some((v) => v.includes('Pollinator safety violation'))).toBe(true);
+    });
   });
 });
 

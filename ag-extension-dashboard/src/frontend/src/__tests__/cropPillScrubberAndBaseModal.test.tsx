@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BaseModal } from '@/components/BaseModal';
-import { CROP_PRESETS } from '@/components/EdgeVisionScannerModal';
+import { CROP_PRESETS, SvgBoundingBoxesOverlay } from '@/components/EdgeVisionScannerModal';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
 
 describe('Base App UX Additions: CropPillScrubber & BaseModal', () => {
@@ -66,6 +66,53 @@ describe('Base App UX Additions: CropPillScrubber & BaseModal', () => {
       );
 
       expect(screen.queryByText('Hidden Modal')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('AD-003: SvgBoundingBoxesOverlay (Low-RAM Android Go)', () => {
+    it('renders SVG bounding box elements without canvas overhead', () => {
+      const mockBoxes = [
+        {
+          id: 'box-1',
+          label: 'foliar_lesion' as const,
+          box: [0.1, 0.2, 0.4, 0.5] as [number, number, number, number],
+          confidence: 0.88,
+          color: '#ef4444',
+        },
+      ];
+
+      render(<SvgBoundingBoxesOverlay boxes={mockBoxes} />);
+
+      const svgOverlay = screen.getByTestId('svg-bounding-boxes-overlay');
+      expect(svgOverlay).toBeInTheDocument();
+      expect(screen.getByText('Foliar Lesion 88%')).toBeInTheDocument();
+    });
+
+    it('applies custom bounding rect style to prevent letterbox/pillarbox offset (REM-06)', () => {
+      const mockBoxes = [
+        {
+          id: 'box-2',
+          label: 'foliar_lesion' as const,
+          box: [0.2, 0.3, 0.6, 0.7] as [number, number, number, number],
+          confidence: 0.95,
+          color: '#ef4444',
+        },
+      ];
+
+      render(
+        <SvgBoundingBoxesOverlay
+          boxes={mockBoxes}
+          style={{ top: '10px', left: '20px', width: '300px', height: '200px' }}
+        />
+      );
+
+      const svgOverlay = screen.getByTestId('svg-bounding-boxes-overlay');
+      expect(svgOverlay).toHaveStyle({
+        top: '10px',
+        left: '20px',
+        width: '300px',
+        height: '200px',
+      });
     });
   });
 });

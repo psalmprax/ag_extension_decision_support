@@ -239,6 +239,7 @@
     "dashboard_operations_subtitle": "वास्तविक समय फ़ील्ड इंटेलिजेंस, फसल टेलीमेट्री, और किसान इंटरैक्शन फ़ीड",
     "dashboard_operations_title": "संचालन डैशबोर्ड",
     "dashboard_overview": "डैशबोर्ड विवरण",
+    "dashboard_pulse_unavailable": "Health status unavailable — retrying",
     "dashboard_redis_cache": "रेडिस कैश",
     "dashboard_title": "बुद्धिमत्ता डैशबोर्ड",
     "dashboard_unknown": "अज्ञात",

@@ -239,6 +239,7 @@
     "dashboard_operations_subtitle": "Inteligência de campo em tempo real, telemetria de culturas e feed de interação com agricultores",
     "dashboard_operations_title": "Painel de operações",
     "dashboard_overview": "Visão Geral do Painel",
+    "dashboard_pulse_unavailable": "Health status unavailable — retrying",
     "dashboard_redis_cache": "Cache Redis",
     "dashboard_title": "Painel de Inteligência",
     "dashboard_unknown": "Desconhecido",

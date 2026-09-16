@@ -30,10 +30,12 @@
     "fallow:audit": "fallow audit --base HEAD",
     "verify:anti-flop": "python3 scripts/verify_anti_flop.py",
     "verify:anti-hallucination": "python3 scripts/verify_anti_hallucination.py",
-    "verify:anti": "npm run verify:anti-flop && npm run verify:anti-hallucination"
+    "verify:anti": "npm run verify:anti-flop && npm run verify:anti-hallucination",
+    "assurance:check": "node ag-extension-dashboard/scripts/assurance-gates.cjs"
   },
   "overrides": {
-    "typescript": "^5.3.3"
+    "typescript": "~5.3.3",
+    "ts-api-utils": "^1.4.3"
   },
   "dependencies": {
     "playwright": "^1.59.1"

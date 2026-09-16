@@ -239,6 +239,7 @@
     "dashboard_operations_subtitle": "实时田间情报、农作物遥测和农民互动反馈",
     "dashboard_operations_title": "操作仪表板",
     "dashboard_overview": "仪表盘概览",
+    "dashboard_pulse_unavailable": "Health status unavailable — retrying",
     "dashboard_redis_cache": "Redis缓存",
     "dashboard_title": "智能仪表盘",
     "dashboard_unknown": "未知",

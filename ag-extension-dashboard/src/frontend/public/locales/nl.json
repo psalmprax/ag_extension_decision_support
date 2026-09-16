@@ -239,6 +239,7 @@
     "dashboard_operations_subtitle": "Realtime veldgegevens, gewastelemetrie en interactiestroom met boeren",
     "dashboard_operations_title": "Operatie-dashboard",
     "dashboard_overview": "Overzicht Dashboard",
+    "dashboard_pulse_unavailable": "Health status unavailable — retrying",
     "dashboard_redis_cache": "Redis-cache",
     "dashboard_title": "Intelligente Dashboard",
     "dashboard_unknown": "Onbekend",

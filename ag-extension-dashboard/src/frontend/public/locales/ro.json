@@ -239,6 +239,7 @@
     "dashboard_operations_subtitle": "Inteligență de teren în timp real, telemetrie pentru culturi și flux de interacțiuni cu fermierii",
     "dashboard_operations_title": "Tablou de bord Operațiuni",
     "dashboard_overview": "Rezumatul Panoului",
+    "dashboard_pulse_unavailable": "Health status unavailable — retrying",
     "dashboard_redis_cache": "Cache Redis",
     "dashboard_title": "Panoul de Inteligență",
     "dashboard_unknown": "Necunoscut",

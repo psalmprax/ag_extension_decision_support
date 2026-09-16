@@ -392,7 +392,7 @@ const DashboardMapSection: React.FC<{
           phone: f.phone,
           yield: f.yield || 0,
         })),
-    [effectiveFarmers, t]
+    [effectiveFarmers]
   );
 
   if (showInitialLoading) {

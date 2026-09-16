@@ -17,6 +17,9 @@ try {
 }
 
 fs.rmSync(link, { force: true, recursive: true });
+// The scoped parent may not exist on a fresh runner (npm does not always create
+// node_modules/@ag-extension for a file: dep), so create it before linking.
+fs.mkdirSync(path.dirname(link), { recursive: true });
 fs.symlinkSync(expectedTarget, link, 'dir');
 
 if (!fs.existsSync(path.join(link, 'package.json'))) {

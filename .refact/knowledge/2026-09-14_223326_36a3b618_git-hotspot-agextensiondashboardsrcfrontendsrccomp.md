@@ -6,7 +6,7 @@ tags:
 - git
 - hotspot
 created: 2026-09-14
-updated: 2026-09-15
+updated: 2026-09-16
 filenames:
 - ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/index.tsx
 links: []
@@ -14,7 +14,7 @@ kind: code
 status: proposed
 superseded_by: null
 deprecated_at: null
-review_after: 2026-09-15
+review_after: 2026-09-16
 source_chat_id: null
 created_at: 2026-09-14T20:33:26.228708015+00:00
 summary: null

@@ -13,6 +13,8 @@ import {
   ReasoningResult,
   ClassificationOptions,
   ClassificationResult,
+  ImageAnalysisOptions,
+  ImageAnalysisResult,
 } from '../types';
 import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt } from '../assetLibrary';
 
@@ -265,7 +267,7 @@ export class AIHubMixAccountService {
  */
 export class AIHubMixProvider extends BaseAIProvider {
   readonly provider: AIProviderType = 'aihubmix';
-  readonly capabilities: string[] = ['text', 'chat', 'reasoning', 'embedding'];
+  readonly capabilities: string[] = ['text', 'chat', 'reasoning', 'embedding', 'vision'];
 
   private apiKey: string;
   private baseUrl: string;
@@ -549,4 +551,76 @@ export class AIHubMixProvider extends BaseAIProvider {
       return { labels: [{ label: 'general_inquiry', score: 1.0 }] };
     }
   }
+
+  public override async analyzeImage(
+    imageData: string | Buffer,
+    prompt?: string,
+    options?: ImageAnalysisOptions
+  ): Promise<ImageAnalysisResult> {
+    const key = await this.resolveApiKey();
+    if (!key) {
+      throw new Error('AIHubMix API key not configured (AIHUBMIX_API_KEY or AIHUBMIX_ACCESS_KEY missing).');
+    }
+
+    const model = options?.model || process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash';
+
+    let base64Image: string;
+    if (Buffer.isBuffer(imageData)) {
+      base64Image = imageData.toString('base64');
+    } else if (typeof imageData === 'string' && imageData.startsWith('data:image/')) {
+      base64Image = imageData.split(',')[1];
+    } else {
+      base64Image = imageData as string;
+    }
+
+    const messages = [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: prompt || 'Analyze this agricultural image.' },
+          {
+            type: 'image_url',
+            image_url: {
+              url: `data:image/jpeg;base64,${base64Image}`,
+            },
+          },
+        ],
+      },
+    ];
+
+    try {
+      const response = await axios.post<AIHubMixResponse>(
+        `${this.baseUrl}/chat/completions`,
+        {
+          model,
+          messages,
+          temperature: options?.temperature ?? 0.2,
+          max_tokens: options?.maxTokens ?? 1000,
+        },
+        {
+          headers: {
+            Authorization: key.startsWith('Bearer ') ? key : `Bearer ${key}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 45000,
+        }
+      );
+
+      const choice = response.data?.choices?.[0];
+      return {
+        analysis: choice?.message?.content || 'Unable to analyze image',
+        model,
+        usage: response.data?.usage ? {
+          promptTokens: response.data.usage.prompt_tokens || 0,
+          completionTokens: response.data.usage.completion_tokens || 0,
+          totalTokens: response.data.usage.total_tokens || 0,
+        } : undefined,
+      };
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { status?: number; data?: unknown }; message?: string };
+      logger.error(`AIHubMix analyzeImage error (${axiosError.response?.status || 'Network'}):`, axiosError.message);
+      throw err;
+    }
+  }
 }
+
