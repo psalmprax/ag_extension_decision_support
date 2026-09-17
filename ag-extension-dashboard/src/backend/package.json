@@ -12,6 +12,7 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "lint": "eslint src/**/*.ts",
+    "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "check:drift": "node ../../../scripts/prisma-drift-check.cjs",

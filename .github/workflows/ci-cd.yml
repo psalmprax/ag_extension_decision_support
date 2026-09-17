@@ -44,7 +44,7 @@ jobs:
       - name: Type check frontend
         run: |
           cd ag-extension-dashboard/src/frontend
-          npx tsc --noEmit
+          npm run typecheck
       
       - name: Build frontend
         run: |
@@ -154,7 +154,7 @@ jobs:
       - name: Type check backend
         run: |
           cd ag-extension-dashboard/src/backend
-          npx tsc --noEmit
+          npm run typecheck
       
       - name: Run backend tests
         run: |

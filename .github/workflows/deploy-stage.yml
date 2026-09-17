@@ -82,7 +82,7 @@ jobs:
           cd ag-extension-dashboard/src/frontend
           npm ci --workspaces=false
           npm run lint
-          npx tsc --noEmit
+          npm run typecheck
           npm run build
           npm run test -- --run
 
@@ -104,7 +104,7 @@ jobs:
           npx prisma db push --skip-generate
           npm run shared:sync
           npm run lint
-          npx tsc --noEmit
+          npm run typecheck
           npm run build
           npm test -- --forceExit
         env:
