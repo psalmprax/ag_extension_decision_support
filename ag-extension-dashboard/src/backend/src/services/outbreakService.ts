@@ -116,7 +116,7 @@ export function applyDifferentialPrivacyPerturbation(
             seedState = (seedState * 9301 + 49297) % 233280;
             return seedState / 233280;
         }
-        return Math.random();
+        return parseInt(crypto.randomUUID().slice(0, 8), 16) / 0xFFFFFFFF;
     };
 
     // Sample from Laplace distribution via inverse CDF:

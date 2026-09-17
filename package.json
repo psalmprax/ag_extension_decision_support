@@ -34,8 +34,7 @@
     "assurance:check": "node ag-extension-dashboard/scripts/assurance-gates.cjs"
   },
   "overrides": {
-    "typescript": "~5.3.3",
-    "ts-api-utils": "^1.4.3"
+    "typescript": "~5.3.3"
   },
   "dependencies": {
     "playwright": "^1.59.1"

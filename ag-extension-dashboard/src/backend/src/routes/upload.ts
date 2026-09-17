@@ -39,7 +39,7 @@ try { fs.mkdirSync(UPLOAD_TMP_DIR, { recursive: true }); } catch { /* exists or 
 
 const spoolStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOAD_TMP_DIR),
-  filename: (_req, file, cb) => cb(null, `spool-${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname || '') || ''}`),
+  filename: (_req, file, cb) => cb(null, `spool-${Date.now()}-${crypto.randomUUID()}${path.extname(file.originalname || '') || ''}`),
 });
 
 /** Read the magic-byte head of a spooled file (signature checks need ≤64 bytes). */

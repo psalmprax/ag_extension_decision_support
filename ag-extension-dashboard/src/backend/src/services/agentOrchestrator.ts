@@ -40,7 +40,7 @@ export interface AgentTask {
  */
 const LEASE_TTL_MS = 120_000; // > 2x worker tick + AI call overhead headroom
 const LEASE_RENEW_INTERVAL_MS = 30_000;
-const instanceId = `${process.pid}-${os.hostname()}-${Math.random().toString(36).slice(2, 8)}`;
+const instanceId = `${process.pid}-${os.hostname()}-${crypto.randomUUID()}`;
 const leaseTimers = new Map<string, NodeJS.Timeout>();
 
 function stopLeaseTimer(taskId: string): void {
@@ -259,9 +259,10 @@ class AgentOrchestrator {
 
   async dispatchTask(task: Omit<AgentTask, 'id' | 'status' | 'createdAt' | 'retryCount'>): Promise<AgentTask> {
     await this.ensurePersistenceLoaded();
-    const randomPart = typeof crypto !== 'undefined' && crypto.getRandomValues
-        ? crypto.getRandomValues(new Uint32Array(1))[0].toString(36).substring(2, 8)
-        : Math.random().toString(36).substring(2, 8);
+    if (typeof crypto === 'undefined' || !crypto.getRandomValues) {
+        throw new Error('crypto.getRandomValues is required for task ID generation');
+    }
+    const randomPart = crypto.getRandomValues(new Uint32Array(1))[0].toString(36).substring(2, 8);
     const taskId = `task_${Date.now()}_${randomPart}`;
     const fullTask: AgentTask = {
       ...task,

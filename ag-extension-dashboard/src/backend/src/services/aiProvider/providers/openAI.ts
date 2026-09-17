@@ -281,12 +281,7 @@ export class OpenAIProvider extends BaseAIProvider {
         try {
             return { labels: JSON.parse(result.text ?? '[]') };
         } catch {
-            return {
-                labels: [
-                    { label: 'general', score: 0.8 },
-                    { label: 'crop_management', score: 0.5 },
-                ],
-            };
+            throw new Error('Failed to parse OpenAI classification response');
         }
     }
 

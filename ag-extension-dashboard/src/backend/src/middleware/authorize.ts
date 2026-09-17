@@ -126,9 +126,13 @@ export const optionalAuth = async (req: Request, _res: Response, next: NextFunct
         };
 
         next();
-    } catch {
-        // Token invalid or expired - continue without user
-        next();
+    } catch (error) {
+        if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.TokenExpiredError) {
+            logger.warn('Invalid or expired token in optionalAuth, proceeding without user:', (error as Error).message);
+            return next();
+        }
+        logger.error('Unexpected error in optionalAuth:', error);
+        next(error);
     }
 };
 

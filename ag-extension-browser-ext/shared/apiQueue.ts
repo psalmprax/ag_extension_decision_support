@@ -169,13 +169,16 @@ class APIQueueService {
         const isOnline = await this.isCurrentlyOnline();
         const method = (options.method || 'GET').toUpperCase();
         const isMutation = !['GET', 'HEAD', 'OPTIONS'].includes(method);
-        const idempotencyKey = isMutation
-            ? (typeof crypto !== 'undefined' && crypto.randomUUID
-                ? crypto.randomUUID()
-                : (typeof crypto !== 'undefined' && crypto.getRandomValues
-                    ? `ext_${Date.now()}_${crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(2, 10)}`
-                    : `ext_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`))
-            : undefined;
+        let idempotencyKey: string | undefined;
+        if (isMutation) {
+            if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+                idempotencyKey = crypto.randomUUID();
+            } else if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+                idempotencyKey = `ext_${Date.now()}_${crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(2, 10)}`;
+            } else {
+                throw new Error('Secure crypto API is unavailable for idempotency key generation');
+            }
+        }
         const requestHeaders = new Headers(options.headers);
         if (idempotencyKey) requestHeaders.set('Idempotency-Key', idempotencyKey);
         // Inject JWT if stored by extension login (graceful fallback when not logged in)

@@ -130,7 +130,9 @@ export async function rateLimitedFetch<T>(
         logger.warn(`[ext-api] rate-limited (${apiName}), serving stale cache: ${fullCacheKey}`);
         return JSON.parse(staleCached) as T;
       }
-    } catch { /* fall through */ }
+    } catch (cacheErr) {
+      logger.debug('[ext-api] Stale cache lookup failed during rate limit:', cacheErr);
+    }
     logger.warn(`[ext-api] rate-limited (${apiName}), no cache available: ${fullCacheKey}`);
     throw new Error(`External API rate limit exceeded for ${apiName}`);
   }
@@ -138,8 +140,10 @@ export async function rateLimitedFetch<T>(
   // 3. Live fetch
   try {
     const data = await fetchFn();
-    // Cache the result (fire-and-forget — don't block on cache failures)
-    cacheSet(fullCacheKey, JSON.stringify(data), config.cacheTtlSeconds).catch(() => {});
+    // Cache the result (fire-and-forget — log failure without blocking caller)
+    cacheSet(fullCacheKey, JSON.stringify(data), config.cacheTtlSeconds).catch((err) => {
+      logger.warn('[ext-api] Failed to cache response:', err);
+    });
     return data;
   } catch (err) {
     // 4. On fetch failure, try stale cache as fallback
@@ -149,7 +153,9 @@ export async function rateLimitedFetch<T>(
         logger.warn(`[ext-api] fetch failed (${apiName}), serving stale cache: ${fullCacheKey}`);
         return JSON.parse(staleCached) as T;
       }
-    } catch { /* fall through */ }
+    } catch (cacheErr) {
+      logger.debug('[ext-api] Stale cache lookup failed after fetch error:', cacheErr);
+    }
     throw err;
   }
 }

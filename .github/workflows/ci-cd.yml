@@ -115,7 +115,7 @@ jobs:
       - name: Install backend dependencies
         run: |
           cd ag-extension-dashboard/src/backend
-          npm ci
+          npm ci --workspaces=false
 
       - name: Generate Prisma client
         run: |
@@ -268,7 +268,7 @@ jobs:
       - name: Install backend dependencies
         run: |
           cd ag-extension-dashboard/src/backend
-          npm ci
+          npm ci --workspaces=false
 
       - name: Replay migrations on fresh DB and diff against schema
         run: node scripts/prisma-migration-replay-check.cjs
@@ -327,7 +327,7 @@ jobs:
       - name: Run Backend Security Tests
         run: |
           cd ag-extension-dashboard/src/backend
-          npm ci
+          npm ci --workspaces=false
           npm test -- security
         env:
           NODE_ENV: test
@@ -336,7 +336,7 @@ jobs:
 
       - name: Install frontend dependencies for security tests
         working-directory: ag-extension-dashboard/src/frontend
-        run: npm ci
+        run: npm ci --workspaces=false
 
       - name: Run Frontend Security & Resilience Tests
         working-directory: ag-extension-dashboard/src/frontend

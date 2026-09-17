@@ -8125,7 +8125,7 @@
         "kind": 2,
         "importPath": "scripts.verify_anti_hallucination",
         "description": "scripts.verify_anti_hallucination",
-        "peekOfCode": "def check_docs_link_grounding():\n    \"\"\"Verify that file:/// links in markdown protocols point to real existing files.\"\"\"\n    errors = []\n    file_link_pattern = re.compile(r\"\\[([^\\]]+)\\]\\(file://(/[^#\\)]+)(?:#[^\\)]*)?\\)\")\n    target_docs = [\n        os.path.join(REPO_ROOT, \"anti_flop.md\"),\n        os.path.join(REPO_ROOT, \"anti_hullicination.md\"),\n        os.path.join(REPO_ROOT, \"Anti-Flaws.md\"),\n        os.path.join(REPO_ROOT, \"CLAUDE.md\"),\n        os.path.join(REPO_ROOT, \"KARPATHY_RULES.md\"),",
+        "peekOfCode": "def check_docs_link_grounding():\n    \"\"\"Verify that file:/// links in markdown protocols point to real existing files.\"\"\"\n    errors = []\n    file_link_pattern = re.compile(r\"\\[([^\\]]+)\\]\\(file://(/[^#\\)]+)(?:#[^\\)]*)?\\)\")\n    target_docs = [\n        os.path.join(REPO_ROOT, \"anti_flop.md\"),\n        os.path.join(REPO_ROOT, \"anti_hallucination.md\"),\n        os.path.join(REPO_ROOT, \"Anti-Flaws.md\"),\n        os.path.join(REPO_ROOT, \"CLAUDE.md\"),\n        os.path.join(REPO_ROOT, \"KARPATHY_RULES.md\"),",
         "detail": "scripts.verify_anti_hallucination",
         "documentation": {}
     },
@@ -8161,7 +8161,7 @@
         "kind": 5,
         "importPath": "scripts.verify_anti_hallucination",
         "description": "scripts.verify_anti_hallucination",
-        "peekOfCode": "REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), \"..\"))\ndef check_docs_link_grounding():\n    \"\"\"Verify that file:/// links in markdown protocols point to real existing files.\"\"\"\n    errors = []\n    file_link_pattern = re.compile(r\"\\[([^\\]]+)\\]\\(file://(/[^#\\)]+)(?:#[^\\)]*)?\\)\")\n    target_docs = [\n        os.path.join(REPO_ROOT, \"anti_flop.md\"),\n        os.path.join(REPO_ROOT, \"anti_hullicination.md\"),\n        os.path.join(REPO_ROOT, \"Anti-Flaws.md\"),\n        os.path.join(REPO_ROOT, \"CLAUDE.md\"),",
+        "peekOfCode": "REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), \"..\"))\ndef check_docs_link_grounding():\n    \"\"\"Verify that file:/// links in markdown protocols point to real existing files.\"\"\"\n    errors = []\n    file_link_pattern = re.compile(r\"\\[([^\\]]+)\\]\\(file://(/[^#\\)]+)(?:#[^\\)]*)?\\)\")\n    target_docs = [\n        os.path.join(REPO_ROOT, \"anti_flop.md\"),\n        os.path.join(REPO_ROOT, \"anti_hallucination.md\"),\n        os.path.join(REPO_ROOT, \"Anti-Flaws.md\"),\n        os.path.join(REPO_ROOT, \"CLAUDE.md\"),",
         "detail": "scripts.verify_anti_hallucination",
         "documentation": {}
     }

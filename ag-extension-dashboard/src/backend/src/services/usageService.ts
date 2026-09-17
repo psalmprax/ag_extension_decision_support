@@ -1,11 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger';
 import { isSubscriptionActive } from './paymentService';
+import { config } from '@/config';
 
 let prisma: PrismaClient;
 function getPrisma() {
     if (!prisma) {
-        prisma = new PrismaClient({ datasourceUrl: process.env.DATABASE_URL });
+        prisma = new PrismaClient({ datasourceUrl: config.database.url });
     }
     return prisma;
 }

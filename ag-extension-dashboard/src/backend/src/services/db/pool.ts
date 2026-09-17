@@ -208,7 +208,7 @@ async function syncPrismaSchema(): Promise<void> {
   try {
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient({
-      datasourceUrl: process.env.DATABASE_URL,
+      datasourceUrl: config.database.url,
     });
     await prisma.$executeRaw`SELECT 1`; // Test connection
     await prisma.$disconnect();

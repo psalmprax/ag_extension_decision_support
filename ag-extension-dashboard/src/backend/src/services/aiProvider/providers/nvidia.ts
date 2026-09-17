@@ -214,7 +214,7 @@ export class NVIDIAProvider extends BaseAIProvider {
       const parsed = JSON.parse(res.text || '{}');
       return { labels: parsed.labels || [{ label: 'general_inquiry', score: 1.0 }] };
     } catch {
-      return { labels: [{ label: 'general_inquiry', score: 1.0 }] };
+      throw new Error('Failed to parse NVIDIA classification response');
     }
   }
 }

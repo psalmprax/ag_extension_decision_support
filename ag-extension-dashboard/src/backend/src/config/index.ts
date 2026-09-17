@@ -48,7 +48,7 @@ const isDeployedEnv = nodeEnv !== 'development' && nodeEnv !== 'test';
 // Helper to get environment variables with validation
 function getEnv(key: string, defaultValue?: string, requiredInProd = false): string {
     const value = process.env[key];
-    if (value) return value;
+    if (value !== undefined) return value;
     if (isProduction && requiredInProd) {
         throw new Error(`Environment variable ${key} is required in production`);
     }
@@ -93,8 +93,8 @@ const DEFAULT_DEMO_PASSWORD = 'demo-trial-2024';
 function resolveDemoConfig(): { password: string; enabled: boolean } {
     const enabled = (process.env.DEMO_ENABLED || 'false').trim().toLowerCase() === 'true';
     const password = (process.env.DEMO_PASSWORD || '').trim();
-    if (!enabled) return { password: password || DEFAULT_DEMO_PASSWORD, enabled: false };
-    if (!isDeployedEnv) return { password: password || DEFAULT_DEMO_PASSWORD, enabled: true };
+    if (!enabled) return { password: '', enabled: false };
+    if (!isDeployedEnv) return { password: password || '', enabled: true };
     if (!password) {
         throw new Error(`DEMO_PASSWORD is required when DEMO_ENABLED=true on NODE_ENV=${nodeEnv}`);
     }

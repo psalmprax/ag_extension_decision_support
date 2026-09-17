@@ -414,9 +414,6 @@ process.on('SIGUSR2', () => {
     process.exit(1);
 });
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
 if (process.env.NODE_ENV !== 'test') {
     bootstrap();
 }

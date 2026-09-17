@@ -215,7 +215,7 @@ export class OpenRouterProvider extends BaseAIProvider {
       const parsed = JSON.parse(res.text || '{}');
       return { labels: parsed.labels || [{ label: 'general_inquiry', score: 1.0 }] };
     } catch {
-      return { labels: [{ label: 'general_inquiry', score: 1.0 }] };
+      throw new Error('Failed to parse OpenRouter classification response');
     }
   }
 }

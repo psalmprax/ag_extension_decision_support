@@ -19,7 +19,41 @@ interface ImportMetaEnv {
 // Safely access import.meta.env with proper type handling
 const metaEnv = (import.meta as unknown as { env: ImportMetaEnv }).env;
 
-const DEFAULT_API_BASE_URL = 'http://localhost:7500/api/v1';
+export function isLocalhost(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+    return (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '0.0.0.0' ||
+      host === '::1' ||
+      host === '[::1]' ||
+      host.endsWith('.localhost') ||
+      /^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/.test(host)
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function resolveEffectiveEnv(mode: string | undefined, apiUrl: string): string {
+  // If the API endpoint is localhost or defaults to local dev, never falsely report 'production'
+  if (isLocalhost(apiUrl)) {
+    return mode && mode !== 'production' ? mode : 'development';
+  }
+  return mode || (apiUrl.includes('gpexts.com') ? 'production' : 'development');
+}
+
+const rawMode = metaEnv?.MODE;
+const rawApiUrl = metaEnv?.VITE_API_URL;
+const isExplicitDevMode = rawMode === 'development' || rawMode === 'dev' || rawMode === 'test';
+
+// Production and staging builds must default to the production API origin, never localhost.
+// Development builds default to local docker-compose backend port mapping (7500 -> 3001).
+export const DEFAULT_DEV_API_BASE_URL = 'http://localhost:7500/api/v1';
+export const DEFAULT_PROD_API_BASE_URL = 'https://api.gpexts.com/api/v1';
+export const DEFAULT_API_BASE_URL = isExplicitDevMode ? DEFAULT_DEV_API_BASE_URL : DEFAULT_PROD_API_BASE_URL;
 
 function normalizeBase(value: string | undefined): string {
   const v = (value || '').trim().replace(/\/+$/, '');
@@ -31,13 +65,16 @@ function normalizeBase(value: string | undefined): string {
   return v;
 }
 
+const resolvedApiBaseUrl = normalizeBase(rawApiUrl);
+const effectiveEnv = resolveEffectiveEnv(rawMode, resolvedApiBaseUrl);
+
 export const CONFIG = {
   // API Endpoints — absolute URL, e.g. https://api.gpexts.com/api/v1
-  API_BASE_URL: normalizeBase(metaEnv?.VITE_API_URL),
+  API_BASE_URL: resolvedApiBaseUrl,
 
   // Versions and Metadata
   VERSION: '1.0.0',
-  ENV: metaEnv?.MODE || 'production',
+  ENV: effectiveEnv,
 
   // Feature Flags
   OFFLINE_MODE_ENABLED: true,

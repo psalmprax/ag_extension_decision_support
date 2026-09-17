@@ -99,7 +99,7 @@ jobs:
       - name: Backend lint, typecheck, build & tests
         run: |
           cd ag-extension-dashboard/src/backend
-          npm ci
+          npm ci --workspaces=false
           npx prisma generate
           npx prisma db push --skip-generate
           npm run shared:sync

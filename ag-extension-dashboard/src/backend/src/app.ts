@@ -421,15 +421,24 @@ function checkAgentServices(): { status: string; error?: string } {
 // process lifetime so /api/health doesn't return 503 during Prisma pool cold-start.
 // After the window closes the original strict logic takes over so a real DB outage
 // is still surfaced as 503.
-const HEALTH_WARMUP_WINDOW_MS = 60_000;
+export const DEFAULT_HEALTH_WARMUP_WINDOW_MS = 15_000;
+
+export function getHealthWarmupWindowMs(): number {
+    const raw = process.env.HEALTH_WARMUP_WINDOW_MS;
+    if (!raw) return DEFAULT_HEALTH_WARMUP_WINDOW_MS;
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_HEALTH_WARMUP_WINDOW_MS;
+}
+
+export const HEALTH_WARMUP_WINDOW_MS = getHealthWarmupWindowMs();
 const PROCESS_START_TIME = Date.now();
 
-type HealthStatus = 'healthy' | 'degraded' | 'unhealthy' | 'healthy (warmup)' | 'starting (warmup)';
+export type HealthStatus = 'healthy' | 'degraded' | 'unhealthy' | 'healthy (warmup)' | 'starting (warmup)';
 
 // Warm-up window: the DB dependency is tolerated (Prisma pool cold-start can
 // outlast a single curl probe). The AI provider doesn't share this cold-start
 // path, so it is still gated on during warmup.
-function resolveHealthStatus(opts: {
+export function resolveHealthStatus(opts: {
     dbOk: boolean;
     aiOk: boolean;
     errors: string[];
@@ -443,9 +452,9 @@ function resolveHealthStatus(opts: {
         return { statusCode: 200, statusText: 'starting (warmup)' };
     }
 
-    // Strict post-warmup behavior -- original logic verbatim.
-    const isHealthyStrict = dbOk && aiOk;
-    const isDegradedStrict = dbOk && errors.length > 0;
+    // Strict post-warmup behavior:
+    const isHealthyStrict = dbOk && aiOk && errors.length === 0;
+    const isDegradedStrict = dbOk && (errors.length > 0 || !aiOk);
     return {
         statusCode: isHealthyStrict || isDegradedStrict ? 200 : 503,
         statusText: isHealthyStrict ? 'healthy' : isDegradedStrict ? 'degraded' : 'unhealthy',
@@ -464,7 +473,7 @@ const healthHandler = async (req: Request, res: Response) => {
     const distributed = checkDistributedState();
 
     const errors = [db.error, cache.error, ai.error, external.error, agents.error, distributed.error].filter((e): e is string => Boolean(e));
-    const inWarmup = Date.now() - PROCESS_START_TIME < HEALTH_WARMUP_WINDOW_MS;
+    const inWarmup = Date.now() - PROCESS_START_TIME < getHealthWarmupWindowMs();
     const { statusCode, statusText } = resolveHealthStatus({
         dbOk: db.status === 'connected',
         aiOk: ai.status !== 'unhealthy',
@@ -507,8 +516,6 @@ app.get('/api/health', healthHandler);
 // Versioned alias so clients that only know the /api/v1 base (browser extension,
 // mobile) can probe connectivity without hard-coding the unversioned path.
 app.get('/api/v1/health', healthHandler);
-app.head('/api/v1/health', (_req: Request, res: Response) => res.status(200).end());
-app.head('/health', (_req: Request, res: Response) => res.status(200).end());
 
 app.get('/health/live', (_req: Request, res: Response) => res.json({ status: 'ok' }));
 // Readiness gates on process-local dependencies only (DB + cache connectivity).
@@ -580,7 +587,6 @@ const routeMounts: RouteMount[] = [
   { path: '/system/diagnostics', router: diagnosticsRoutes },
   { path: '/ai/memories', router: aiRateLimiterMount(memoryRoutes) },
   { path: '/ai/diseases', router: aiRateLimiterMount(diseaseRoutes) },
-  { path: '/ai', router: aiRateLimiterMount(diseaseRoutes) },
   { path: '/whatsapp', router: whatsappRoutes },
   { path: '/api-clients', router: apiClientRoutes },
   { path: '/commercial/knowledge', router: commercialKnowledgeRoutes },
@@ -626,24 +632,9 @@ app.use('/api/v1/mcp', (req, res, next) => {
     res.status(503).json({ error: 'MCP service not available' });
   }
 });
-app.use('/api/mcp', (req, res, next) => {
-  if (mcpRouter) {
-    mcpRouter(req, res, next);
-  } else {
-    res.status(503).json({ error: 'MCP service not available' });
-  }
-});
 
 // Legacy redirects (no i18n)
 routeMounts.forEach(m => app.use(`/api${m.path}`, m.router));
-app.use('/api/public/shares', publicShareRouter);
-app.use('/api/mcp', (req, res, next) => {
-  if (mcpRouter) {
-    mcpRouter(req, res, next);
-  } else {
-    res.status(503).json({ error: 'MCP service not available' });
-  }
-});
 // Restore original path after routing
 app.use(restoreOriginalPath);
 
