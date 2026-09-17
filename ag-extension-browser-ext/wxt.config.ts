@@ -1,5 +1,11 @@
 import { defineConfig } from 'wxt';
 import path from 'path';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const resolvePaths = [__dirname, path.resolve(__dirname, '..')];
+const resolvePkgDir = (pkg: string) => path.dirname(require.resolve(`${pkg}/package.json`, { paths: resolvePaths }));
+const resolveEntry = (entry: string) => require.resolve(entry, { paths: resolvePaths });
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
@@ -8,15 +14,15 @@ export default defineConfig({
     resolve: {
       preserveSymlinks: true,
       dedupe: ['react', 'react-dom'],
-      alias: {
-        '@ag-extension/shared': path.resolve(__dirname, '../ag-extension-shared/src'),
-        'react': path.resolve(__dirname, 'node_modules/react'),
-        'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
-        'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
-        'react/jsx-dev-runtime': path.resolve(__dirname, 'node_modules/react/jsx-dev-runtime.js'),
-        'lucide-react': path.resolve(__dirname, 'node_modules/lucide-react'),
-        'zod': path.resolve(__dirname, 'node_modules/zod'),
-      },
+      alias: [
+        { find: '@ag-extension/shared', replacement: path.resolve(__dirname, '../ag-extension-shared/src') },
+        { find: /^react\/jsx-runtime$/, replacement: resolveEntry('react/jsx-runtime') },
+        { find: /^react\/jsx-dev-runtime$/, replacement: resolveEntry('react/jsx-dev-runtime') },
+        { find: /^react$/, replacement: resolvePkgDir('react') },
+        { find: /^react-dom$/, replacement: resolvePkgDir('react-dom') },
+        { find: /^lucide-react$/, replacement: resolvePkgDir('lucide-react') },
+        { find: /^zod$/, replacement: resolvePkgDir('zod') },
+      ],
     },
   }),
   manifest: (env) => {
