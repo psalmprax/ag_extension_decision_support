@@ -150,8 +150,10 @@ const findMatchingScenario = (queryText: string): ResearchScenario | undefined =
   return RESEARCH_SCENARIOS.find(
     s => s.query.toLowerCase().trim() === q ||
          s.title.toLowerCase().includes(q) ||
+         q.includes(s.title.toLowerCase()) ||
          q.includes(s.query.toLowerCase().slice(0, 30)) ||
-         q.includes(s.crop.toLowerCase())
+         (s.crop && q.includes(s.crop.toLowerCase())) ||
+         (s.id === 'fall_armyworm_ipm' && (q.includes('armyworm') || q.includes('faw')))
   );
 };
 
@@ -264,10 +266,16 @@ export const KnowledgeBase: React.FC = () => {
   }, [addNotification]);
 
   const finishFailedSearch = useCallback((queryText: string, error: unknown): void => {
+    const matchingScenario = findMatchingScenario(queryText) || (isDemo ? RESEARCH_SCENARIOS[0] : undefined);
+    if (isDemo && matchingScenario) {
+      setLastResult(buildBenchmarkResult(matchingScenario, queryText));
+      setAttachments([]);
+      return;
+    }
     handleSearchError(error);
     setLastResult(buildErrorResult(queryText));
     setAttachments([]);
-  }, [handleSearchError]);
+  }, [handleSearchError, isDemo]);
 
   const fetchQuotaData = useCallback(async () => {
     try {
