@@ -1,7 +1,7 @@
 # ============================================================
 # Stage 1: Dependencies — install production dependencies
 # ============================================================
-FROM node:20-slim AS deps
+FROM node:22-slim AS deps
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates curl ffmpeg && rm -rf /var/lib/apt/lists/*
 
@@ -19,7 +19,7 @@ RUN npm install --omit=dev --no-audit --no-fund && npx prisma generate
 # ============================================================
 # Stage 2: Build — install devDeps + compile TypeScript
 # ============================================================
-FROM node:20-slim AS build
+FROM node:22-slim AS build
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates curl ffmpeg && rm -rf /var/lib/apt/lists/*
 
@@ -46,7 +46,7 @@ RUN npm run build
 # ============================================================
 # Stage 3: Development — hot-reload with ts-node-dev
 # ============================================================
-FROM node:20-slim AS development
+FROM node:22-slim AS development
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates curl ffmpeg && rm -rf /var/lib/apt/lists/*
 
@@ -72,7 +72,7 @@ CMD ["npm", "run", "dev"]
 # ============================================================
 # Stage 4: Production — minimal runtime image
 # ============================================================
-FROM node:20-slim AS production
+FROM node:22-slim AS production
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates tini curl ffmpeg && rm -rf /var/lib/apt/lists/*

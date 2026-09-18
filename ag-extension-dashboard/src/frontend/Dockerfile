@@ -1,7 +1,7 @@
 # ============================================================
 # Stage 1: Dependencies
 # ============================================================
-FROM node:20-slim AS deps
+FROM node:22-slim AS deps
 WORKDIR /app
 COPY ag-extension-shared /ag-extension-shared
 ENV npm_config_fetch_retries=5 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
@@ -11,7 +11,7 @@ RUN npm install --no-audit --no-fund
 # ============================================================
 # Stage 2: Build
 # ============================================================
-FROM node:20-slim AS build
+FROM node:22-slim AS build
 WORKDIR /app
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 COPY --from=deps /app/node_modules ./node_modules
@@ -26,7 +26,7 @@ RUN npm run build:docker
 # ============================================================
 # Stage 3: Development
 # ============================================================
-FROM node:20-slim AS development
+FROM node:22-slim AS development
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY ag-extension-shared /ag-extension-shared
