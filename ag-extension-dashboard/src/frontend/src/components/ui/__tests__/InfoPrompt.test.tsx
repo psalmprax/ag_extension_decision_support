@@ -178,15 +178,15 @@ describe('InfoPrompt Components', () => {
         </InfoPrompt>
       );
 
-      // isTierMet should be false, so upgrade footer and tier badge render
-      expect(screen.getByText(/pro tier/i)).toBeInTheDocument();
-      expect(screen.getByText(/current:/i)).toBeInTheDocument();
-
+      // Tier badge and upgrade footer live inside the popover, so open it first
       await act(async () => {
         fireEvent.click(screen.getByText('NDVI Radar'));
       });
-      expect(screen.getByText(/upgrade to pro/i)).toBeInTheDocument();
+
+      // isTierMet should be false, so upgrade footer and tier badge render
+      expect(screen.getByText(/pro tier/i)).toBeInTheDocument();
       expect(screen.getByText(/current:/i)).toBeInTheDocument();
+      expect(screen.getByText(/upgrade to pro/i)).toBeInTheDocument();
 
       const upgradeBtn = screen.getByText(/Upgrade to PRO/i);
       expect(upgradeBtn).toBeInTheDocument();
@@ -226,12 +226,11 @@ describe('InfoPrompt Components', () => {
         </InfoPrompt>
       );
 
-      expect(screen.getByText(/pro tier/i)).toBeInTheDocument();
-      expect(screen.queryByText(/upgrade to pro/i)).not.toBeInTheDocument();
-
+      // Open popover first — tier badge renders inside the popover
       await act(async () => {
         fireEvent.click(screen.getByText('NDVI Radar Active'));
       });
+
       expect(screen.getByText(/pro tier/i)).toBeInTheDocument();
       expect(screen.queryByText(/upgrade to pro/i)).not.toBeInTheDocument();
     });
