@@ -37,7 +37,6 @@
     "assurance:check": "node ag-extension-dashboard/scripts/assurance-gates.cjs"
   },
   "overrides": {
-    "typescript": "~5.3.3",
     "fallow": {
       "typescript": "~5.3.3"
     },
