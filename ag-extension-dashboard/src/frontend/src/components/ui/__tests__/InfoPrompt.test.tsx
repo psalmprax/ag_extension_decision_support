@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { InfoPrompt, InfoPromptIcon, InlinePrompt } from '../InfoPrompt';
 import { resolveSubscriptionState } from '../subscriptionPromptState';
@@ -34,7 +34,7 @@ describe('InfoPrompt Components', () => {
     });
   });
 
-  it('renders trigger element and reveals prompt content on click', () => {
+  it('renders trigger element and reveals prompt content on click', async () => {
     render(
       <InfoPrompt title="Voice Calling" content="Available for extension officers only." trigger="click">
         <button>Call Farmer</button>
@@ -46,16 +46,20 @@ describe('InfoPrompt Components', () => {
     expect(screen.queryByText('Available for extension officers only.')).not.toBeInTheDocument();
 
     // Click to open
-    fireEvent.click(button);
+    await act(async () => {
+      fireEvent.click(button);
+    });
     expect(screen.getByText('Voice Calling')).toBeInTheDocument();
     expect(screen.getByText('Available for extension officers only.')).toBeInTheDocument();
 
     // Click trigger again to close
-    fireEvent.click(button);
+    await act(async () => {
+      fireEvent.click(button);
+    });
     expect(screen.queryByText('Available for extension officers only.')).not.toBeInTheDocument();
   });
 
-  it('renders dismiss button when showDismiss is true and calls onDismiss', () => {
+  it('renders dismiss button when showDismiss is true and calls onDismiss', async () => {
     const onDismiss = vi.fn();
     render(
       <InfoPrompt
@@ -69,16 +73,20 @@ describe('InfoPrompt Components', () => {
       </InfoPrompt>
     );
 
-    fireEvent.click(screen.getByText('Hover Info'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('Hover Info'));
+    });
     const gotItBtn = screen.getByText('Got it');
     expect(gotItBtn).toBeInTheDocument();
 
-    fireEvent.click(gotItBtn);
+    await act(async () => {
+      fireEvent.click(gotItBtn);
+    });
     expect(onDismiss).toHaveBeenCalled();
     expect(screen.queryByText('Farmers are auto-assigned in your ward.')).not.toBeInTheDocument();
   });
 
-  it('renders InfoPromptIcon as accessible button', () => {
+  it('renders InfoPromptIcon as accessible button', async () => {
     render(
       <div className="flex items-center">
         <span>Vital Score</span>
@@ -93,12 +101,14 @@ describe('InfoPrompt Components', () => {
     const iconBtn = screen.getByLabelText('Vital score explanation');
     expect(iconBtn).toBeInTheDocument();
 
-    fireEvent.click(iconBtn);
+    await act(async () => {
+      fireEvent.click(iconBtn);
+    });
     expect(screen.getByText('About Vital Score')).toBeInTheDocument();
     expect(screen.getByText('Calculated composite index based on soil and NDVI.')).toBeInTheDocument();
   });
 
-  it('renders InlinePrompt and allows dismissal', () => {
+  it('renders InlinePrompt and allows dismissal', async () => {
     const onDismiss = vi.fn();
     render(
       <InlinePrompt title="Agronomic Tip" variant="tip" dismissible onDismiss={onDismiss}>
@@ -110,7 +120,9 @@ describe('InfoPrompt Components', () => {
     expect(screen.getByText('Optimal maize sowing starts 3 days post first heavy rains.')).toBeInTheDocument();
 
     const dismissBtn = screen.getByLabelText('Dismiss prompt');
-    fireEvent.click(dismissBtn);
+    await act(async () => {
+      fireEvent.click(dismissBtn);
+    });
 
     expect(onDismiss).toHaveBeenCalled();
     expect(screen.queryByText('Optimal maize sowing starts 3 days post first heavy rains.')).not.toBeInTheDocument();
@@ -147,84 +159,98 @@ describe('InfoPrompt Components', () => {
       expect(demoState.isProOrHigher).toBe(true);
     });
 
-    it('renders upgrade button and tier badge when user does not meet requiredPlan', () => {
-      const onUpgrade = vi.fn();
-      render(
-        <InfoPrompt
-          title="Satellite Vegetation Radar"
-          content="Sentinel-2 multispectral NDVI scans require high-capacity telemetry."
-          requiredPlan="pro"
-          trigger="click"
-          onUpgrade={onUpgrade}
-        >
-          <button>NDVI Radar</button>
-        </InfoPrompt>
-      );
+it('renders upgrade button and tier badge when user does not meet requiredPlan', async () => {
+    const onUpgrade = vi.fn();
+    render(
+      <InfoPrompt
+        title="Satellite Vegetation Radar"
+        content="Sentinel-2 multispectral NDVI scans require high-capacity telemetry."
+        requiredPlan="pro"
+        trigger="click"
+        onUpgrade={onUpgrade}
+      >
+        <button>NDVI Radar</button>
+      </InfoPrompt>
+    );
 
+    expect(screen.getByText('PRO Tier')).toBeInTheDocument();
+    expect(screen.getByText('Current:')).toBeInTheDocument();
+
+    await act(async () => {
       fireEvent.click(screen.getByText('NDVI Radar'));
-      expect(screen.getByText('PRO Tier')).toBeInTheDocument();
-      expect(screen.getByText('Current:')).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Upgrade to PRO/i)).toBeInTheDocument();
+    expect(screen.getByText('Current:')).toBeInTheDocument();
 
-      const upgradeBtn = screen.getByText(/Upgrade to PRO/i);
-      expect(upgradeBtn).toBeInTheDocument();
+    const upgradeBtn = screen.getByText(/Upgrade to PRO/i);
+    expect(upgradeBtn).toBeInTheDocument();
 
+    await act(async () => {
       fireEvent.click(upgradeBtn);
-      expect(onUpgrade).toHaveBeenCalled();
+    });
+    expect(onUpgrade).toHaveBeenCalled();
+  });
+
+it('renders positive plan confirmation when user meets requiredPlan', async () => {
+    useAppStore.setState({
+      user: {
+        id: 'user-pro',
+        firstName: 'Pro',
+        lastName: 'Officer',
+        email: 'pro@example.com',
+        role: 'extension_officer',
+        planName: 'Pro Tier',
+        isFree: false,
+      },
+      subscription: {
+        plan: { name: 'Pro Tier', status: 'active' },
+        periodEnd: '2026-12-31',
+        usage: [],
+      },
     });
 
-    it('renders positive plan confirmation when user meets requiredPlan', () => {
-      useAppStore.setState({
-        user: {
-          id: 'user-pro',
-          firstName: 'Pro',
-          lastName: 'Officer',
-          email: 'pro@example.com',
-          role: 'extension_officer',
-          planName: 'Pro Tier',
-          isFree: false,
-        },
-        subscription: {
-          plan: { name: 'Pro Tier', status: 'active' },
-          periodEnd: '2026-12-31',
-          usage: [],
-        },
-      });
+    render(
+      <InfoPrompt
+        title="Satellite Vegetation Radar"
+        content="Sentinel-2 multispectral NDVI scans active."
+        requiredPlan="pro"
+        trigger="click"
+      >
+        <button>NDVI Radar Active</button>
+      </InfoPrompt>
+    );
 
-      render(
-        <InfoPrompt
-          title="Satellite Vegetation Radar"
-          content="Sentinel-2 multispectral NDVI scans active."
-          requiredPlan="pro"
-          trigger="click"
-        >
-          <button>NDVI Radar Active</button>
-        </InfoPrompt>
-      );
+    expect(screen.getByText('Pro Tier')).toBeInTheDocument();
+    expect(screen.queryByText(/Upgrade to PRO/i)).not.toBeInTheDocument();
 
+    await act(async () => {
       fireEvent.click(screen.getByText('NDVI Radar Active'));
-      expect(screen.getByText('Pro Tier')).toBeInTheDocument();
-      expect(screen.queryByText(/Upgrade to PRO/i)).not.toBeInTheDocument();
     });
+    expect(screen.getByText('Pro Tier')).toBeInTheDocument();
+    expect(screen.queryByText(/Upgrade to PRO/i)).not.toBeInTheDocument();
+  });
 
-    it('renders upgrade button on InlinePrompt when requiredPlan is not met', () => {
-      const onUpgrade = vi.fn();
-      render(
-        <InlinePrompt
-          title="Advanced Outbreak Heatmap"
-          requiredPlan="pro"
-          onUpgrade={onUpgrade}
-        >
-          Predictive disease diffusion models are unlocked on Pro plans.
-        </InlinePrompt>
-      );
+it('renders upgrade button on InlinePrompt when requiredPlan is not met', async () => {
+    const onUpgrade = vi.fn();
+    render(
+      <InlinePrompt
+        title="Advanced Outbreak Heatmap"
+        requiredPlan="pro"
+        onUpgrade={onUpgrade}
+      >
+        Predictive disease diffusion models are unlocked on Pro plans.
+      </InlinePrompt>
+    );
 
-      expect(screen.getByText('PRO Tier')).toBeInTheDocument();
-      const upgradeBtn = screen.getByText(/Upgrade to PRO to unlock/i);
-      expect(upgradeBtn).toBeInTheDocument();
+    expect(screen.getByText('PRO Tier')).toBeInTheDocument();
+    const upgradeBtn = screen.getByText(/Upgrade to PRO to unlock/i);
+    expect(upgradeBtn).toBeInTheDocument();
 
+    await act(async () => {
       fireEvent.click(upgradeBtn);
-      expect(onUpgrade).toHaveBeenCalled();
     });
+    expect(onUpgrade).toHaveBeenCalled();
+  });
 
     it('renders AudioReaderButton when enableAudio is true', () => {
       render(
