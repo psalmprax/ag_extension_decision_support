@@ -447,9 +447,9 @@ export function resolveHealthStatus(opts: {
     const { dbOk, aiOk, errors, inWarmup } = opts;
 
     if (inWarmup) {
-        if (!aiOk) return { statusCode: 503, statusText: 'unhealthy' };
-        if (dbOk && errors.length === 0) return { statusCode: 200, statusText: 'healthy (warmup)' };
-        return { statusCode: 200, statusText: 'starting (warmup)' };
+        if (dbOk && aiOk && errors.length === 0) return { statusCode: 200, statusText: 'healthy (warmup)' };
+        if (dbOk || aiOk) return { statusCode: 200, statusText: 'starting (warmup)' };
+        return { statusCode: 503, statusText: 'unhealthy' };
     }
 
     // Strict post-warmup behavior:

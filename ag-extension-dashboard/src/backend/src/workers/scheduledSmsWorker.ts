@@ -58,6 +58,7 @@ function getScheduledSmsWorker(): Worker<ScheduledSmsJobData> | null {
         registerQueueClient('scheduled-sms-worker', () => _worker!.close());
         _worker.on('completed', j => logger.info(`Scheduled SMS worker: Job ${j.id} completed`));
         _worker.on('failed', (j, err) => logger.error(`Scheduled SMS worker: Job ${j?.id} failed: ${err.message}`));
+        _worker.on('error', (err) => logger.warn('Scheduled SMS worker error:', err instanceof Error ? err.message : err));
     }
     return _worker;
 }

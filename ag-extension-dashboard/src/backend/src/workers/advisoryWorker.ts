@@ -25,6 +25,7 @@ export const startAdvisoryScheduler = async (): Promise<void> => {
     try {
         const { Queue } = await import('bullmq');
         const queue = new Queue(ADVISORY_CYCLE_QUEUE, { connection: redisConnection });
+        queue.on('error', (err) => logger.warn('Advisory queue error:', err instanceof Error ? err.message : err));
         await queue.add(
             'daily-advisory-cycle',
             {},
@@ -41,6 +42,7 @@ export const startAdvisoryScheduler = async (): Promise<void> => {
             { connection: redisConnection, concurrency: 1 }
         );
         _worker.on('failed', (job, error) => logger.error(`Advisory cycle job failed: ${job?.id}`, error));
+        _worker.on('error', (err) => logger.warn('Advisory worker error:', err instanceof Error ? err.message : err));
         logger.info(`Advisory scheduler started (cron: ${CRON_EXPRESSION})`);
     } catch (error) {
         logger.error('Failed to start advisory scheduler:', error);

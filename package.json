@@ -37,7 +37,13 @@
     "assurance:check": "node ag-extension-dashboard/scripts/assurance-gates.cjs"
   },
   "overrides": {
-    "typescript": "~5.3.3"
+    "typescript": "~5.3.3",
+    "fallow": {
+      "typescript": "~5.3.3"
+    },
+    "fallow-type-aware": {
+      "typescript": "~5.3.3"
+    }
   },
   "dependencies": {
     "playwright": "^1.59.1"
@@ -45,6 +51,7 @@
   "devDependencies": {
     "@opengsd/gsd-pi": "^1.2.0",
     "fallow": "3.17.0",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "typescript": "5.3.3"
   }
 }

@@ -64,6 +64,10 @@ function getNotificationWorker(): Worker<NotificationJobData> | null {
         _notificationWorker.on('failed', (job, err) => {
             logger.error(`Notification worker: Job ${job?.id} failed with error: ${err.message}`);
         });
+
+        _notificationWorker.on('error', (err) => {
+            logger.warn('Notification worker error:', err instanceof Error ? err.message : err);
+        });
     }
     return _notificationWorker;
 }

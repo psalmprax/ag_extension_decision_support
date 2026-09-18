@@ -295,10 +295,10 @@ jobs:
               fi
             fi
 
-            # Ensure JWT_SECRET is configured in ag-extension-dashboard/.env
+            # Ensure JWT_SECRET is configured in ag-extension-dashboard/.env (>= 32 chars)
             # No timestamp fallback: a predictable secret is worse than a failed
             # deploy. openssl and node are both guaranteed on this image.
-            if ! grep -q "^JWT_SECRET=[^[:space:]]\{16,\}" ag-extension-dashboard/.env 2>/dev/null; then
+            if ! grep -q "^JWT_SECRET=[^[:space:]]\{32,\}" ag-extension-dashboard/.env 2>/dev/null; then
               echo "🔑 Generating JWT_SECRET..."
               JWT_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
               if [ -z "$JWT_RAND" ]; then
@@ -413,7 +413,7 @@ jobs:
             docker compose \
               -f docker-compose.yml \
               -f docker-compose.staging.yml \
-              up -d --build --force-recreate backend frontend ettametta-ollama
+              up -d --build --force-recreate backend frontend ettametta-ollama redis-queue
             echo
             echo "=== wait 30s for deps (db+redis) + build + boot ==="
             sleep 30
@@ -424,7 +424,7 @@ jobs:
             echo "=== backend health check (10 attempts + visible failure text) ==="
             HEALTH_PASS=0
             for i in $(seq 1 10); do
-              if RESP=$(curl -fsSL --max-time 10 http://127.0.0.1:7500/api/health 2>&1 || python3 -c "import urllib.request; res = urllib.request.urlopen('http://127.0.0.1:7500/api/health', timeout=10); print(res.read().decode()); exit(0 if res.status < 400 else 1)" 2>&1 || docker compose exec -T backend wget -qO- http://127.0.0.1:7500/api/health 2>&1); then
+              if RESP=$(curl -fsSL --max-time 10 http://127.0.0.1:7500/api/health 2>&1 || python3 -c "import urllib.request; res = urllib.request.urlopen('http://127.0.0.1:7500/api/health', timeout=10); print(res.read().decode()); exit(0 if res.status < 400 else 1)" 2>&1 || docker compose exec -T backend wget -qO- http://127.0.0.1:3001/api/health 2>&1); then
                 echo "✅ Backend is healthy! (attempt $i)"
                 echo "$RESP" | head -3
                 HEALTH_PASS=1

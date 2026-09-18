@@ -240,6 +240,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      redis-queue:
+        condition: service_healthy
     networks:
       - ag-network
       - ettametta_ettametta

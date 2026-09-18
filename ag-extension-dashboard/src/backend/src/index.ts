@@ -118,6 +118,8 @@ async function bootstrap() {
     await initializeStep('Socket.IO Redis adapter', async () => {
         adapterPubClient = createClient({ url: config.redis.url });
         adapterSubClient = adapterPubClient.duplicate();
+        adapterPubClient.on('error', (err) => logger.warn('Socket.IO Redis adapter pub client error:', err instanceof Error ? err.message : err));
+        adapterSubClient.on('error', (err) => logger.warn('Socket.IO Redis adapter sub client error:', err instanceof Error ? err.message : err));
         await Promise.all([adapterPubClient.connect(), adapterSubClient.connect()]);
         io.adapter(createAdapter(adapterPubClient, adapterSubClient));
     }, true);

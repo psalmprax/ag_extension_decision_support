@@ -193,5 +193,25 @@ describe('Health Check Helpers', () => {
             });
             expect(result).toEqual({ statusCode: 503, statusText: 'unhealthy' });
         });
+
+        it('resolves unhealthy (503) during warmup when both db and AI are down', () => {
+            const result = resolveHealthStatus({
+                dbOk: false,
+                aiOk: false,
+                errors: ['database: connecting', 'ai_provider: not configured'],
+                inWarmup: true,
+            });
+            expect(result).toEqual({ statusCode: 503, statusText: 'unhealthy' });
+        });
+
+        it('resolves starting (warmup) when AI is down but db is up during warmup', () => {
+            const result = resolveHealthStatus({
+                dbOk: true,
+                aiOk: false,
+                errors: ['ai_provider: not configured'],
+                inWarmup: true,
+            });
+            expect(result).toEqual({ statusCode: 200, statusText: 'starting (warmup)' });
+        });
     });
 });

@@ -98,7 +98,7 @@ async function seedInitialData(): Promise<void> {
     const userCount = await pool.query('SELECT COUNT(*) FROM users');
     let officerId = '00000000-0000-0000-0000-000000000001';
 
-    if (parseInt(userCount.rows[0].count) === 0) {
+    if (parseInt(userCount.rows[0].count) === 0 && config.demo.enabled && config.demo.password) {
       logger.info('Seeding default officer...');
       const passwordHash = await bcrypt.hash(config.demo.password, 10);
       await pool.query(`

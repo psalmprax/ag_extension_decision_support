@@ -45,6 +45,10 @@ function getEmailWorker(): Worker<EmailJobData> | null {
         _emailWorker.on('failed', (job, err) => {
             logger.error(`Worker: Job ${job?.id} failed with error: ${err.message}`);
         });
+
+        _emailWorker.on('error', (err) => {
+            logger.warn('Worker: Email worker error:', err instanceof Error ? err.message : err);
+        });
     }
     return _emailWorker;
 }
