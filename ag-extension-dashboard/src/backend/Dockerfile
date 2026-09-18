@@ -14,7 +14,7 @@ COPY ${BACKEND_DIR}/package*.json ./
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
 
 ENV npm_config_fetch_retries=5 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
-RUN npm install --omit=dev --no-audit --no-fund && npx prisma generate
+RUN npm ci --omit=dev --no-audit --no-fund && npx prisma generate
 
 # ============================================================
 # Stage 2: Build — install devDeps + compile TypeScript
@@ -29,7 +29,7 @@ COPY ${BACKEND_DIR}/package*.json ./
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
 
 # Install ALL dependencies including devDeps
-RUN npm install --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
 
 # Generate Prisma client
 RUN npx prisma generate
