@@ -163,24 +163,9 @@ describe('InfoPrompt Components', () => {
     it('renders upgrade button and tier badge when user does not meet requiredPlan', async () => {
       const onUpgrade = vi.fn();
 
-      // Override store state: user is NOT free, has PRO plan
-      useAppStore.setState({
-        user: {
-          id: 'user-pro',
-          firstName: 'Pro',
-          lastName: 'Officer',
-          email: 'pro@example.com',
-          role: 'extension_officer',
-          planName: 'Pro Tier',
-          isFree: false,
-        },
-        subscription: {
-          plan: { name: 'Pro Tier', status: 'active' },
-          periodEnd: '2026-12-31',
-          usage: [],
-        },
-      });
-
+      // Rely on beforeEach state: isFree=true, subscription=null, planName='Free Starter'
+      // This resolves to tier='free', isProOrHigher=false
+      // With requiredPlan='pro', checkTierMet returns false → upgrade UI renders
       render(
         <InfoPrompt
           title="Satellite Vegetation Radar"
@@ -193,7 +178,7 @@ describe('InfoPrompt Components', () => {
         </InfoPrompt>
       );
 
-      // With isFree=false and PRO plan, isTierMet should be false for requiredPlan='pro'
+      // isTierMet should be false, so upgrade footer and tier badge render
       expect(screen.getByText(/pro tier/i)).toBeInTheDocument();
       expect(screen.getByText(/current:/i)).toBeInTheDocument();
 
