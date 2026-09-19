@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { AudioReaderButton } from '../AudioReaderButton';
 import { cleanTextForSpeech, stopAllAudioPlayback } from '../audioHelpers';
@@ -70,7 +70,7 @@ describe('AudioReaderButton', () => {
     expect(button).toBeInTheDocument();
   });
 
-  it('initiates SpeechSynthesis utterance when clicked', () => {
+  it('initiates SpeechSynthesis utterance when clicked', async () => {
     render(
       <AudioReaderButton
         text="Ndio, mvua inatarajiwa kesho kutwa."
@@ -79,7 +79,10 @@ describe('AudioReaderButton', () => {
     );
 
     const button = screen.getByRole('button', { name: /Listen to this information aloud/i });
-    fireEvent.click(button);
+
+    await act(async () => {
+      fireEvent.click(button);
+    });
 
     expect(mockCancel).toHaveBeenCalled();
     expect(mockSpeak).toHaveBeenCalledTimes(1);
@@ -90,7 +93,7 @@ describe('AudioReaderButton', () => {
     expect(calledUtterance.voice?.lang).toBe('sw-KE');
   });
 
-  it('stops playback when clicked while active', () => {
+  it('stops playback when clicked while active', async () => {
     render(
       <AudioReaderButton
         text="Taarifa ya hali ya hewa."
@@ -99,10 +102,14 @@ describe('AudioReaderButton', () => {
     );
 
     const button = screen.getByRole('button');
-    fireEvent.click(button); // Start
+    await act(async () => {
+      fireEvent.click(button); // Start
+    });
     expect(mockSpeak).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(button); // Stop
+    await act(async () => {
+      fireEvent.click(button); // Stop
+    });
     expect(mockCancel).toHaveBeenCalled();
   });
 

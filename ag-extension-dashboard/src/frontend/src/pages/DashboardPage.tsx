@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect } from 'react';
+import { hasAuthSession } from '@/hooks/useAppAuth';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
@@ -130,7 +131,7 @@ const DashboardStats: React.FC<{
 const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ cardClass, isLoading }) => {
   const { isDemo } = useDemoMode();
   const { t } = useLanguage();
-  const { data: health, isLoading: hl } = useQuery({
+  const { data: health, isLoading: hl, isError } = useQuery({
     queryKey: ['active-pulse-health', isDemo],
     queryFn: async () => {
       if (isDemo) {
@@ -147,12 +148,14 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
       const res = await apiClient.get('/health');
       return res.data;
     },
-    enabled: isDemo || !!localStorage.getItem('token'),
+    enabled: isDemo || hasAuthSession(),
     refetchInterval: 30_000,
     staleTime: 15_000,
   });
 
-  const showLoading = isLoading || hl || !health;
+  // A failed /health call must not spin forever: surface an honest degraded
+  // state; refetchInterval keeps retrying automatically.
+  const showLoading = isLoading || hl || (!health && !isError);
   const dbConnected = health?.services?.database === 'connected';
   const cacheConnected = health?.services?.cache === 'connected';
   const uptime = health?.uptime ? formatPulseUptime(health.uptime) : null;
@@ -166,7 +169,13 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
         </h3>
       </div>
       <div className="space-y-3 sm:space-y-4">
-        {showLoading ? (
+        {isError ? (
+          <div className="flex items-center justify-center py-6">
+            <p className="text-xxs text-slate-500 uppercase tracking-wide">
+              {t('dashboard_pulse_unavailable', { defaultValue: 'Health status unavailable — retrying' })}
+            </p>
+          </div>
+        ) : showLoading ? (
           <div className="flex items-center justify-center py-6">
             <Loader2 className="w-5 h-5 animate-spin text-primary-400" />
           </div>
@@ -360,6 +369,32 @@ const DashboardMapSection: React.FC<{
     refetchWithRetry();
   }, [resetRetry, refetchWithRetry]);
 
+  // Only farmers with a real GPS fix are plottable. Defaulting missing
+  // coordinates to Nairobi used to fabricate pin positions on the map.
+  const mappedFarmers = useMemo(
+    () =>
+      effectiveFarmers
+        .filter(
+          f =>
+            typeof f.latitude === 'number' &&
+            Number.isFinite(f.latitude) &&
+            typeof f.longitude === 'number' &&
+            Number.isFinite(f.longitude)
+        )
+        .map(f => ({
+          id: f.id,
+          name: `${f.firstName} ${f.lastName}`,
+          lat: f.latitude as number,
+          lng: f.longitude as number,
+          crop: f.crops?.[0] || 'Unspecified',
+          region: f.region || 'Unknown',
+          size: f.farmSize || 0,
+          phone: f.phone,
+          yield: f.yield || 0,
+        })),
+    [effectiveFarmers]
+  );
+
   if (showInitialLoading) {
     return <MapSectionSkeleton cardClass={cardClass} radiusClass={radiusClass} t={t} />;
   }
@@ -390,17 +425,7 @@ const DashboardMapSection: React.FC<{
             height="100%"
             isExternalExpanded={isMapExpanded}
             onToggleExpand={setIsMapExpanded}
-            farmers={effectiveFarmers.map(f => ({
-              id: f.id,
-              name: `${f.firstName} ${f.lastName}`,
-              lat: f.latitude || -1.2863,
-              lng: f.longitude || 36.8172,
-              crop: f.crops?.[0] || 'Maize',
-              region: f.region || 'Unknown',
-              size: f.farmSize || 0,
-              phone: f.phone,
-              yield: f.yield || 0,
-            }))}
+            farmers={mappedFarmers}
             onFarmerClick={async farmerData => {
               const farmer = effectiveFarmers.find(f => f.id === farmerData.id);
               const action = resolveMapFarmerAction(canMapChat, farmer !== undefined);

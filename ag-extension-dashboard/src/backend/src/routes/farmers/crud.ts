@@ -24,6 +24,32 @@ async function applyTenantScope(
     return true;
 }
 
+async function recordInitialAssignment(
+    prisma: ReturnType<typeof getPrisma>,
+    farmerId: string,
+    assignedOfficerId: string | null,
+    userId: string | undefined,
+    userRole: string | undefined
+): Promise<void> {
+    // Audit assignment in FarmerAssignmentHistory
+    if (assignedOfficerId && userId && typeof prisma.farmerAssignmentHistory?.create === 'function') {
+        try {
+            await prisma.farmerAssignmentHistory.create({
+                data: {
+                    farmerId,
+                    officerId: assignedOfficerId,
+                    reassignedBy: userId,
+                    reason: userRole === 'extension_officer'
+                        ? 'Auto-assigned upon registration by extension officer'
+                        : 'Assigned upon creation',
+                },
+            });
+        } catch (historyErr) {
+            logger.warn('Failed to record farmer assignment history on creation:', historyErr);
+        }
+    }
+}
+
 /**
  * @openapi
  * /api/farmers:
@@ -337,23 +363,7 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
             },
         });
 
-        // Audit assignment in FarmerAssignmentHistory
-        if (assignedOfficerId && userId && typeof (prisma as any).farmerAssignmentHistory?.create === 'function') {
-            try {
-                await (prisma as any).farmerAssignmentHistory.create({
-                    data: {
-                        farmerId: farmer.id,
-                        officerId: assignedOfficerId,
-                        reassignedBy: userId,
-                        reason: userRole === 'extension_officer'
-                            ? 'Auto-assigned upon registration by extension officer'
-                            : 'Assigned upon creation',
-                    },
-                });
-            } catch (historyErr) {
-                logger.warn('Failed to record farmer assignment history on creation:', historyErr);
-            }
-        }
+        await recordInitialAssignment(prisma, farmer.id, assignedOfficerId, userId, userRole);
 
         res.status(201).json({
             success: true,

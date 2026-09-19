@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { FarmerMap } from '../FarmerMap';
 import { LanguageProvider } from '../../lib/LanguageContext';
@@ -124,12 +124,19 @@ describe('FarmerMap Component - Unexpanded State', () => {
     await renderWithProviders(<FarmerMap farmers={customFarmers} onFarmerClick={onFarmerClick} />);
 
     const marker = screen.getByTestId('map-marker');
-    marker.click();
+
+    // Click marker
+    act(() => {
+      fireEvent.click(marker);
+    });
     expect(onFarmerClick).not.toHaveBeenCalled();
 
     // Clicking the chat button inside the popup triggers onFarmerClick
     const chatButton = screen.getByRole('button', { name: /Chat/i });
-    chatButton.click();
+
+    act(() => {
+      fireEvent.click(chatButton);
+    });
     expect(onFarmerClick).toHaveBeenCalledTimes(1);
     expect(onFarmerClick).toHaveBeenCalledWith(customFarmers[0]);
   });

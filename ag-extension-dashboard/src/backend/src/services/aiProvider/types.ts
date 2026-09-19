@@ -213,11 +213,8 @@ export abstract class BaseAIProvider implements AICapability {
      * Base default: throw so callers fail loudly instead of streaming nothing.
      * Providers that support streaming must override this method.
      */
-    // eslint-disable-next-line require-yield
     async *streamText(_prompt: string, _options?: TextGenerationOptions): AsyncGenerator<string> {
-        throw new Error(`${this.provider} does not support streaming. Use a provider that lists it in capabilities.`);
-        // eslint-disable-next-line @typescript-eslint/no-unreachable
-        yield '';
+        yield await Promise.reject(new Error(`${this.provider} does not support streaming. Use a provider that lists it in capabilities.`));
     }
 
     /**

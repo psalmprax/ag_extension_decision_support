@@ -2,6 +2,11 @@ import type { Pool } from 'pg';
 import { getPool } from '@/services/databaseService';
 import { getCache } from '@/services/cacheService';
 import { selfHealingService } from '@/services/selfHealing';
+import {
+    DEFAULT_HEALTH_WARMUP_WINDOW_MS,
+    getHealthWarmupWindowMs,
+    resolveHealthStatus,
+} from '../app';
 
 // Mock dependencies
 jest.mock('@/services/databaseService');
@@ -123,6 +128,90 @@ describe('Health Check Helpers', () => {
             ).length;
             const status = unhealthyCount === 0 ? `${registeredCount} registered, all healthy` : `${registeredCount} registered, ${unhealthyCount} unhealthy`;
             expect(status).toBe('3 registered, all healthy');
+        });
+    });
+
+    describe('Warm-Up Window & Health Status Resolution', () => {
+        const originalEnv = process.env.HEALTH_WARMUP_WINDOW_MS;
+
+        afterEach(() => {
+            if (originalEnv !== undefined) {
+                process.env.HEALTH_WARMUP_WINDOW_MS = originalEnv;
+            } else {
+                delete process.env.HEALTH_WARMUP_WINDOW_MS;
+            }
+        });
+
+        it('defaults warm-up window to 15,000 ms (15s)', () => {
+            delete process.env.HEALTH_WARMUP_WINDOW_MS;
+            expect(DEFAULT_HEALTH_WARMUP_WINDOW_MS).toBe(15_000);
+            expect(getHealthWarmupWindowMs()).toBe(15_000);
+        });
+
+        it('configures warm-up window via process.env.HEALTH_WARMUP_WINDOW_MS', () => {
+            process.env.HEALTH_WARMUP_WINDOW_MS = '20000';
+            expect(getHealthWarmupWindowMs()).toBe(20_000);
+
+            process.env.HEALTH_WARMUP_WINDOW_MS = '5000';
+            expect(getHealthWarmupWindowMs()).toBe(5_000);
+        });
+
+        it('falls back to default for invalid or negative environment variable values', () => {
+            process.env.HEALTH_WARMUP_WINDOW_MS = 'not-a-number';
+            expect(getHealthWarmupWindowMs()).toBe(15_000);
+
+            process.env.HEALTH_WARMUP_WINDOW_MS = '-100';
+            expect(getHealthWarmupWindowMs()).toBe(15_000);
+        });
+
+        it('resolves healthy (warmup) when db is healthy and in warmup', () => {
+            const result = resolveHealthStatus({
+                dbOk: true,
+                aiOk: true,
+                errors: [],
+                inWarmup: true,
+            });
+            expect(result).toEqual({ statusCode: 200, statusText: 'healthy (warmup)' });
+        });
+
+        it('resolves starting (warmup) when db has not yet connected during warmup', () => {
+            const result = resolveHealthStatus({
+                dbOk: false,
+                aiOk: true,
+                errors: ['database: connecting'],
+                inWarmup: true,
+            });
+            expect(result).toEqual({ statusCode: 200, statusText: 'starting (warmup)' });
+        });
+
+        it('resolves unhealthy (503) post-warmup when db is down', () => {
+            const result = resolveHealthStatus({
+                dbOk: false,
+                aiOk: true,
+                errors: ['database: connection refused'],
+                inWarmup: false,
+            });
+            expect(result).toEqual({ statusCode: 503, statusText: 'unhealthy' });
+        });
+
+        it('resolves unhealthy (503) during warmup when both db and AI are down', () => {
+            const result = resolveHealthStatus({
+                dbOk: false,
+                aiOk: false,
+                errors: ['database: connecting', 'ai_provider: not configured'],
+                inWarmup: true,
+            });
+            expect(result).toEqual({ statusCode: 503, statusText: 'unhealthy' });
+        });
+
+        it('resolves starting (warmup) when AI is down but db is up during warmup', () => {
+            const result = resolveHealthStatus({
+                dbOk: true,
+                aiOk: false,
+                errors: ['ai_provider: not configured'],
+                inWarmup: true,
+            });
+            expect(result).toEqual({ statusCode: 200, statusText: 'starting (warmup)' });
         });
     });
 });

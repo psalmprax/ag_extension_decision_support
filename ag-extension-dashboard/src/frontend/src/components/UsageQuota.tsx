@@ -1,3 +1,4 @@
+import { hasAuthSession } from '@/hooks/useAppAuth';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { MessageSquare, Send, FileText, AlertCircle, TrendingUp, Activity } from 'lucide-react';
@@ -85,7 +86,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
     queryKey: ['usage'],
     queryFn: fetchUsage,
     refetchInterval: 60000,
-    enabled: !!localStorage.getItem('token'),
+    enabled: hasAuthSession(),
   });
 
   const usageData = usageResponse?.data?.usage || [];

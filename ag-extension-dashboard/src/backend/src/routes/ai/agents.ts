@@ -108,11 +108,19 @@ async function handleAgentControl(
                 maxRetries: 2,
             });
             // Kick the worker loop once (best-effort)
-            agentOrchestrator.executeNext().catch(() => {});
+            agentOrchestrator.executeNext().catch((err) => {
+                logger.error('Worker loop execution error after dispatch:', err);
+            });
             res.json({ success: true, data: task, note: `Task queued for ${config.name} via orchestrator` });
             return;
         } catch (e) {
-            logger.warn('Orchestrator dispatch on /ai/execute failed, falling back to 501:', e);
+            logger.error('Orchestrator dispatch on /ai/execute failed:', e);
+            res.status(500).json({
+                success: false,
+                errorCode: 'AGENT_DISPATCH_FAILED',
+                error: `Failed to dispatch task for ${config.name}: ${(e as Error).message}`,
+            });
+            return;
         }
     }
 
@@ -123,7 +131,13 @@ async function handleAgentControl(
             res.json({ success: true, data: result, note: `Stopped ${result.stopped} running tasks, removed ${result.queued} queued tasks for ${config.name}` });
             return;
         } catch (e) {
-            logger.warn('Orchestrator stop on /ai/stop failed:', e);
+            logger.error('Orchestrator stop on /ai/stop failed:', e);
+            res.status(500).json({
+                success: false,
+                errorCode: 'AGENT_STOP_FAILED',
+                error: `Failed to stop tasks for ${config.name}: ${(e as Error).message}`,
+            });
+            return;
         }
     }
 

@@ -152,7 +152,11 @@ export const createFarmerSchema = z.object({
     crops: z.array(z.string()).min(1),
     phone: z.string().optional(),
     vitalScore: z.number().min(0).max(100).optional(),
-    yieldHistory: z.any().optional(),
+    yieldHistory: z.array(z.object({
+      season: z.string().min(4).max(16),
+      crop: z.string().min(2),
+      yieldTonesPerHa: z.number().min(0).max(50),
+    })).max(20).optional(),
     locationLat: z.number().optional(),
     locationLng: z.number().optional(),
     languagePreference: z.string().optional(),
@@ -169,6 +173,10 @@ const legacyVisitAliases = z.object({
   type: z.string().optional(),
   scheduled_at: z.string().optional(),
   officerId: z.string().uuid().optional(),
+  durationMinutes: z.number().optional(),
+  duration: z.number().optional(),
+  startedAt: z.string().optional(),
+  completedAt: z.string().optional(),
 });
 
 export const createVisitSchema = z.object({
@@ -180,6 +188,7 @@ export const createVisitSchema = z.object({
       visitType: (b.visitType ?? b.visit_type ?? b.type ?? 'routine') as string,
       scheduledAt: b.scheduledAt ?? b.scheduled_at,
       status: b.status ?? 'scheduled',
+      durationMinutes: b.durationMinutes ?? b.duration,
     }))
     .pipe(
       z.object({
@@ -194,6 +203,10 @@ export const createVisitSchema = z.object({
         attachmentIds: z.array(z.string().uuid()).optional(),
         attachmentRefs: z.array(z.string()).optional(),
         officerId: z.string().uuid().optional(),
+        durationMinutes: z.number().optional(),
+        duration: z.number().optional(),
+        startedAt: z.string().datetime({ offset: true }).optional(),
+        completedAt: z.string().datetime({ offset: true }).optional(),
       })
     ),
 });
@@ -209,7 +222,11 @@ export const updateFarmerSchema = z.object({
     crops: z.array(z.string()).min(1).optional(),
     languagePreference: z.string().optional(),
     vitalScore: z.number().min(0).max(100).optional(),
-    yieldHistory: z.any().optional(),
+    yieldHistory: z.array(z.object({
+      season: z.string().min(4).max(16),
+      crop: z.string().min(2),
+      yieldTonesPerHa: z.number().min(0).max(50),
+    })).max(20).optional(),
     locationLat: z.number().optional(),
     locationLng: z.number().optional(),
   }).strict(),
@@ -223,6 +240,7 @@ export const updateVisitSchema = z.object({
     startedAt: z.string().datetime().optional(),
     completedAt: z.string().datetime().optional(),
     duration: z.number().positive().optional(),
+    durationMinutes: z.number().positive().optional(),
   }).strict(),
 });
 

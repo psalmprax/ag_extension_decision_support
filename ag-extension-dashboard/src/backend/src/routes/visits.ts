@@ -25,6 +25,19 @@ const router = Router();
 
 type VisitPrincipal = { userId: string; role: string };
 
+export function haversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Earth's radius in kilometers
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
 async function buildVisitScope(user: VisitPrincipal | undefined): Promise<{ clause: string; params: unknown[] }> {
     if (!user?.userId || !user.role) throw new Error('AUTHENTICATION_REQUIRED');
     if (user.role === 'admin') return { clause: '', params: [] };
@@ -157,6 +170,9 @@ interface InsertVisitParams {
     status?: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
     locationLat?: number;
     locationLng?: number;
+    durationMinutes?: number;
+    startedAt?: string;
+    completedAt?: string;
 }
 
 async function resolveVisitFarmerContext(farmerId: string, officerId?: string): Promise<{ tenantId: string | null; resolvedOfficerId: string }> {
@@ -176,11 +192,12 @@ async function resolveVisitFarmerContext(farmerId: string, officerId?: string): 
 
 async function validateAttachments(
     attachmentIds: string[],
-    ownerUserId: string,
+    ownerUserId: string | undefined,
     farmerId: string,
     executor: typeof query | PoolClient
 ): Promise<void> {
     if (attachmentIds.length === 0) return;
+    if (!ownerUserId) throw new Error('Attachment owner is required');
     const attachmentCheckSql = `SELECT id FROM upload_records
         WHERE id = ANY($1::uuid[]) AND owner_user_id = $2 AND farmer_id = $3 AND status = 'active'`;
     const attachmentCheck = executor === query
@@ -206,6 +223,124 @@ async function linkAttachments(
     }
 }
 
+function assertMinimumDwellTime(
+    duration: number | null | undefined,
+    startedAt: string | null | undefined,
+    completedAt: string | null | undefined,
+    source: 'provided' | 'recorded'
+): void {
+    const dwell = duration ?? (startedAt && completedAt ? (new Date(completedAt).getTime() - new Date(startedAt).getTime()) / 60000 : null);
+    if (dwell === null || isNaN(dwell) || dwell < 10) {
+        throw new Error(`STATIONARY_FRAUD_DETECTED: Minimum parcel dwell time of 10 minutes required to verify completed visit (${source}: ${dwell != null && !isNaN(dwell) ? Math.round(dwell) : 0} mins)`);
+    }
+}
+
+interface PriorVisitLocation {
+    farmer_id: string | null;
+    location_lat: string | number;
+    location_lng: string | number;
+    completed_at: Date | string | null;
+    scheduled_at: Date | string | null;
+    created_at: Date | string | null;
+}
+
+function getPriorVisitMovement(prev: PriorVisitLocation, scheduledAt: string, locationLat: number, locationLng: number) {
+    const prevLat = parseFloat(String(prev.location_lat));
+    const prevLng = parseFloat(String(prev.location_lng));
+    const prevTimestamp = prev.completed_at || prev.scheduled_at || prev.created_at;
+    const prevTime = prevTimestamp ? new Date(prevTimestamp).getTime() : null;
+    const currTime = scheduledAt ? new Date(scheduledAt).getTime() : Date.now();
+    if (isNaN(prevLat) || isNaN(prevLng) || !prevTime) return null;
+
+    return {
+        diffMinutes: Math.abs(currTime - prevTime) / (1000 * 60),
+        distKm: haversineDistanceKm(prevLat, prevLng, locationLat, locationLng),
+    };
+}
+
+function appendVisitNote(notes: string | undefined, anomaly: string): string {
+    return notes ? `${notes} ${anomaly}` : anomaly;
+}
+
+function appendVelocityAnomalyNote(finalNotes: string | undefined, diffMinutes: number, distKm: number, effectiveOfficerId: string) {
+    // 1. Velocity anomaly (> 90 km/h)
+    if (diffMinutes > 0 && diffMinutes <= 15) {
+        const speedKmH = distKm / (diffMinutes / 60);
+        if (speedKmH > 90) {
+            logger.warn(
+                `[anomaly] Impossible travel velocity detected for officer ${effectiveOfficerId}: ${Math.round(speedKmH)} km/h over ${distKm.toFixed(1)} km in ${Math.round(diffMinutes)} mins`
+            );
+            finalNotes = appendVisitNote(finalNotes, `[VELOCITY ANOMALY: Impossible travel ${Math.round(speedKmH)} km/h]`);
+        }
+    }
+
+    return finalNotes;
+}
+
+function appendStationaryAnomalyNote(
+    finalNotes: string | undefined,
+    diffMinutes: number,
+    distKm: number,
+    effectiveOfficerId: string,
+    farmerId: string,
+    prevFarmerId: string | null,
+    status: InsertVisitParams['status']
+) {
+    // 2. Stationary anomaly / Dwell-Time Fraud (AD-002 / CE-003)
+    if (diffMinutes < 10) {
+        logger.warn(
+            `[anomaly] Stationary fraud detected for officer ${effectiveOfficerId}: consecutive visit logged in ${Math.round(diffMinutes)} mins (< 10 min dwell required)`
+        );
+        if (status === 'completed') {
+            throw new Error(`STATIONARY_FRAUD_DETECTED: Officer logged consecutive visit within ${Math.round(diffMinutes)} mins (minimum 10 minutes dwell required)`);
+        }
+        finalNotes = appendVisitNote(finalNotes, `[STATIONARY ANOMALY: Insufficient interval ${Math.round(diffMinutes)} mins]`);
+    } else if (prevFarmerId && prevFarmerId !== farmerId && distKm < 0.05) {
+        logger.warn(
+            `[anomaly] Stationary armchair visit detected for officer ${effectiveOfficerId}: distinct farmers at identical location (${Math.round(distKm * 1000)}m)`
+        );
+        if (status === 'completed') {
+            throw new Error('STATIONARY_FRAUD_DETECTED: Consecutive visits for distinct farmers logged from identical coordinates');
+        }
+        finalNotes = appendVisitNote(finalNotes, `[STATIONARY ANOMALY: Identical coordinates for distinct farmers]`);
+    }
+    return finalNotes;
+}
+
+async function checkVisitLocationAnomalies(
+    params: InsertVisitParams & { locationLat: number; locationLng: number },
+    effectiveOfficerId: string,
+    executor: typeof query | PoolClient
+): Promise<string | undefined> {
+    const { farmerId, scheduledAt, locationLat, locationLng, status = 'scheduled' } = params;
+    let finalNotes = params.notes;
+    try {
+        const priorQuery = `SELECT farmer_id, location_lat, location_lng, completed_at, scheduled_at, created_at
+                            FROM visits
+                            WHERE officer_id = $1 AND location_lat IS NOT NULL AND location_lng IS NOT NULL
+                            ORDER BY COALESCE(completed_at, scheduled_at, created_at) DESC
+                            LIMIT 1`;
+        const priorResult = executor === query
+            ? await query<PriorVisitLocation>(priorQuery, [effectiveOfficerId])
+            : await (executor as PoolClient).query(priorQuery, [effectiveOfficerId]) as { rows: PriorVisitLocation[] };
+
+        if (!priorResult.rows || priorResult.rows.length === 0) return finalNotes;
+        const prev = priorResult.rows[0];
+        const movement = getPriorVisitMovement(prev, scheduledAt, locationLat, locationLng);
+        if (!movement) return finalNotes;
+
+        const { diffMinutes, distKm } = movement;
+        finalNotes = appendVelocityAnomalyNote(finalNotes, diffMinutes, distKm, effectiveOfficerId);
+        finalNotes = appendStationaryAnomalyNote(finalNotes, diffMinutes, distKm, effectiveOfficerId, farmerId, prev.farmer_id, status);
+    } catch (anomalyErr) {
+        if (anomalyErr instanceof Error && anomalyErr.message.startsWith('STATIONARY_FRAUD_DETECTED')) {
+            throw anomalyErr;
+        }
+        logger.error('[anomaly] Failed to compute velocity anomaly check:', anomalyErr);
+    }
+    return finalNotes;
+}
+
 async function performInsertVisit(
     params: InsertVisitParams,
     executor: typeof query | PoolClient
@@ -218,20 +353,30 @@ async function performInsertVisit(
     // farmer-created visits (no assignment), fall back to the submitting user.
     const explicitOrAssigned = farmerContext.resolvedOfficerId !== 'unassigned' ? farmerContext.resolvedOfficerId : (userId || 'u1');
     const effectiveOfficerId = officerId || explicitOrAssigned;
-    if (attachmentIds.length > 0 && !userId) throw new Error('Attachment owner is required');
-    if (attachmentIds.length > 0) await validateAttachments(attachmentIds, userId as string, farmerId, executor);
+    await validateAttachments(attachmentIds, userId, farmerId, executor);
 
     // A visit logged as completed from the field records completed_at = scheduled_at
     // (the officer is reporting something that already happened).
-    const completedAt = status === 'completed' ? scheduledAt : null;
+    const completedAt = status === 'completed' ? (params.completedAt || scheduledAt) : null;
     const hasLocation = typeof locationLat === 'number' && typeof locationLng === 'number';
+
+    // AD-002: Mandate minimum 10-minute parcel dwell time on completed visits
+    if (status === 'completed') {
+        assertMinimumDwellTime(params.durationMinutes, params.startedAt, params.completedAt, 'provided');
+    }
+
+    let finalNotes = notes;
+    if (hasLocation && effectiveOfficerId) {
+        finalNotes = await checkVisitLocationAnomalies({ ...params, locationLat, locationLng }, effectiveOfficerId, executor);
+    }
+
     const sql = `INSERT INTO visits (farmer_id, officer_id, visit_type, status, scheduled_at, completed_at, location_lat, location_lng, notes, tenant_id, created_at)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
                  RETURNING *`;
     const values = [
         farmerId, effectiveOfficerId, visitType, status, scheduledAt, completedAt,
         hasLocation ? locationLat : null, hasLocation ? locationLng : null,
-        notes, farmerTenantId,
+        finalNotes, farmerTenantId,
     ];
 
     const result = executor === query
@@ -250,13 +395,24 @@ interface UpdateVisitParams {
     startedAt?: string;
     completedAt?: string;
     duration?: number;
+    durationMinutes?: number;
 }
 
 async function performUpdateVisit(
     params: UpdateVisitParams,
-    executor: typeof query | PoolClient
+    executor: typeof query | PoolClient,
+    existingRecord?: { duration_minutes?: number | null; started_at?: string | null; completed_at?: string | null }
 ) {
-    const { id, status, notes, outcomes, startedAt, completedAt, duration } = params;
+    const { id, status, notes, outcomes, startedAt, completedAt, duration, durationMinutes } = params;
+
+    // AD-002: Mandate minimum 10-minute parcel dwell time on completing visits
+    if (status === 'completed') {
+        const effectiveDuration = duration ?? durationMinutes ?? existingRecord?.duration_minutes;
+        const effectiveStart = startedAt ?? existingRecord?.started_at;
+        const effectiveCompleted = completedAt ?? existingRecord?.completed_at;
+        assertMinimumDwellTime(effectiveDuration, effectiveStart, effectiveCompleted, 'recorded');
+    }
+
     const updates: string[] = [];
     const sqlParams: unknown[] = [];
     let paramIndex = 1;
@@ -281,9 +437,10 @@ async function performUpdateVisit(
         updates.push(`completed_at = $${paramIndex++}`);
         sqlParams.push(completedAt);
     }
-    if (duration !== undefined) {
+    const finalDuration = duration ?? durationMinutes;
+    if (finalDuration !== undefined) {
         updates.push(`duration_minutes = $${paramIndex++}`);
-        sqlParams.push(duration);
+        sqlParams.push(finalDuration);
     }
 
     updates.push('updated_at = NOW()');
@@ -370,6 +527,8 @@ router.post('/', validate(createVisitSchema), async (req: Request, res: Response
             farmerId: string; officerId?: string; visitType: string; scheduledAt: string;
             status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
             notes?: string; attachmentIds?: string[]; locationLat?: number | null; locationLng?: number | null;
+            durationMinutes?: number | null; duration?: number | null;
+            startedAt?: string; completedAt?: string;
         };
         const insertParams: InsertVisitParams = {
             farmerId: body.farmerId,
@@ -382,6 +541,9 @@ router.post('/', validate(createVisitSchema), async (req: Request, res: Response
             status: body.status === 'no_show' ? 'cancelled' : body.status,
             locationLat: typeof body.locationLat === 'number' ? body.locationLat : undefined,
             locationLng: typeof body.locationLng === 'number' ? body.locationLng : undefined,
+            durationMinutes: typeof body.durationMinutes === 'number' ? body.durationMinutes : (typeof body.duration === 'number' ? body.duration : undefined),
+            startedAt: body.startedAt,
+            completedAt: body.completedAt,
         };
 
         if (!getPool()) {
@@ -400,6 +562,9 @@ router.post('/', validate(createVisitSchema), async (req: Request, res: Response
         );
         return res.status(result.status).json(result.body);
     } catch (error) {
+        if (error instanceof Error && error.message.startsWith('STATIONARY_FRAUD_DETECTED')) {
+            return res.status(422).json({ success: false, error: error.message });
+        }
         logger.error('Create visit error:', error);
         safeError(res, 500, 'Failed to create visit');
     }
@@ -417,7 +582,8 @@ router.patch('/:id', validate(updateVisitSchema), async (req: Request, res: Resp
             outcomes: body.outcomes as string | undefined,
             startedAt: body.startedAt as string | undefined,
             completedAt: body.completedAt as string | undefined,
-            duration: body.duration as number | undefined,
+            duration: typeof body.duration === 'number' ? body.duration : undefined,
+            durationMinutes: typeof body.durationMinutes === 'number' ? body.durationMinutes : undefined,
         };
 
         if (!getPool()) {
@@ -426,8 +592,8 @@ router.patch('/:id', validate(updateVisitSchema), async (req: Request, res: Resp
         if (!req.user?.userId || !req.user.role) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
-        const existingVisit = await query<{ farmer_id: string | null }>(
-            'SELECT farmer_id FROM visits WHERE id = $1', [id]
+        const existingVisit = await query<{ farmer_id: string | null; duration_minutes?: number | null; started_at?: string | null; completed_at?: string | null }>(
+            'SELECT farmer_id, duration_minutes, started_at, completed_at FROM visits WHERE id = $1', [id]
         );
         const existingFarmerId = existingVisit.rows[0]?.farmer_id;
         if (!existingFarmerId || !(await canAccessFarmer(req, existingFarmerId))) {
@@ -439,10 +605,13 @@ router.patch('/:id', validate(updateVisitSchema), async (req: Request, res: Resp
             'update',
             updateParams as unknown as Record<string, unknown>,
             200,
-            executor => performUpdateVisit(updateParams, executor)
+            executor => performUpdateVisit(updateParams, executor, existingVisit.rows[0])
         );
         return res.status(result.status).json(result.body);
     } catch (error) {
+        if (error instanceof Error && error.message.startsWith('STATIONARY_FRAUD_DETECTED')) {
+            return res.status(422).json({ success: false, error: error.message });
+        }
         logger.error('Update visit error:', error);
         safeError(res, 500, 'Failed to update visit');
     }

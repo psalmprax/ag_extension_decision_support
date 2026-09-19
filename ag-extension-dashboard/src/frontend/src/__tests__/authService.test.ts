@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('@/api/client', () => ({
   default: {
@@ -16,6 +16,7 @@ const mockGet = vi.mocked(apiClient.get);
 const mockPost = vi.mocked(apiClient.post);
 
 describe('authService', () => {
+  afterEach(() => vi.unstubAllGlobals());
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
@@ -144,12 +145,35 @@ describe('authService', () => {
   });
 
   describe('logout', () => {
+    it.each([false, true])('purges private responses on logout, including network failure=%s', async fails => {
+      const remove = vi.fn().mockResolvedValue(true);
+      vi.stubGlobal('caches', { delete: remove });
+      if (fails) mockPost.mockRejectedValue(new Error('Offline'));
+      else mockPost.mockResolvedValue({ data: {} });
+      await logout();
+      expect(remove).toHaveBeenCalledWith('api-cache');
+    });
+
     it('should call logout endpoint', async () => {
       mockPost.mockResolvedValue({ data: {} });
 
       await logout();
 
       expect(mockPost).toHaveBeenCalledWith('/auth/logout');
+    });
+
+    it.each([false, true])('does not block local logout when cache deletion fails, including network failure=%s', async fails => {
+      vi.stubGlobal('caches', { delete: vi.fn().mockRejectedValue(new Error('Cache unavailable')) });
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      if (fails) mockPost.mockRejectedValue(new Error('Offline'));
+      else mockPost.mockResolvedValue({ data: {} });
+      try {
+        await expect(logout()).resolves.toBeUndefined();
+        expect(mockPost).toHaveBeenCalledWith('/auth/logout');
+        expect(warn).toHaveBeenCalledWith('Failed to clear private API cache during logout');
+      } finally {
+        warn.mockRestore();
+      }
     });
 
     it('should handle logout API failure gracefully', async () => {

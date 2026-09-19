@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import { isSessionValid } from '@/services/sessionService';
+import { getBearerToken } from '@/middleware/authCookie';
 
 export type UserRole = 'admin' | 'regional_manager' | 'extension_officer' | 'farmer';
 
@@ -16,17 +17,17 @@ export type AuthRequest = Request;
 export const authorize = (allowedRoles: UserRole[]) => {
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            // Get token from Authorization header
-            const authHeader = req.headers.authorization;
-            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            // Token source: Authorization header (mobile/extension/API clients)
+            // or the httpOnly auth cookie (SPA). Cookie callers are CSRF-checked
+            // by csrfProtection upstream.
+            const token = getBearerToken(req);
+            if (!token) {
                 res.status(401).json({
                     success: false,
                     error: 'No token provided',
                 });
                 return;
             }
-
-            const token = authHeader.split(' ')[1];
 
             // Verify token
             const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as {
@@ -92,33 +93,46 @@ export const authorize = (allowedRoles: UserRole[]) => {
 
 /**
  * Optional authentication middleware
- * Attaches user to request if token is valid, but doesn't require it
+ * Attaches user to request if token is valid, but doesn't require it.
+ * Validity = JWT signature/expiry AND the session not being revoked/expired
+ * (same check as `authorize`). A revoked token is treated as anonymous so it
+ * cannot keep privileged rate-limit tiers or pass `req.user`-gated paths.
  */
-export const optionalAuth = (req: Request, res: Response, next: NextFunction): void => {
+export const optionalAuth = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
-        const authHeader = req.headers.authorization;
-
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        // Header first, then the httpOnly auth cookie — mirrors authorize().
+        const token = getBearerToken(req);
+        if (!token) {
             return next();
         }
-
-        const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as {
             userId: string;
             email: string;
             role: UserRole;
         };
 
+        const sessionActive = await isSessionValid(token);
+        if (!sessionActive) {
+            return next(); // revoked or expired session → continue unauthenticated
+        }
+
+        // Normalize legacy 'agent' role to 'extension_officer' — same mapping as
+        // `authorize`, so req.user.role is consistent across middleware
+        // (rate-limit tiers, audit logs, downstream role checks).
         req.user = {
             userId: decoded.userId,
             email: decoded.email,
-            role: decoded.role,
+            role: decoded.role === ('agent' as unknown as UserRole) ? 'extension_officer' : decoded.role,
         };
 
         next();
-    } catch {
-        // Token invalid or expired - continue without user
-        next();
+    } catch (error) {
+        if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.TokenExpiredError) {
+            logger.warn('Invalid or expired token in optionalAuth, proceeding without user:', (error as Error).message);
+            return next();
+        }
+        logger.error('Unexpected error in optionalAuth:', error);
+        next(error);
     }
 };
 

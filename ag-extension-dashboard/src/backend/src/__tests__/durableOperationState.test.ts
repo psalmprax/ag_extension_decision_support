@@ -17,8 +17,8 @@ interface MockPrisma {
     offlineQueueItem: { upsert: JestFn; findUnique: JestFn; update: JestFn; deleteMany: JestFn; groupBy: JestFn };
     activityClaim: { findUnique: JestFn; upsert: JestFn; delete: JestFn };
     pendingPaypalPayment: { upsert: JestFn; findUnique: JestFn; delete: JestFn; deleteMany: JestFn };
-    subscription: { upsert: JestFn };
-    payment: { create: JestFn };
+    subscription: { findUnique: JestFn; upsert: JestFn; update: JestFn };
+    payment: { create: JestFn; findFirst: JestFn; update: JestFn };
 }
 
 // Prisma mock: the client object is built inside the factory because route
@@ -41,13 +41,21 @@ jest.mock('../services/prismaService', () => {
         pendingPaypalPayment: {
             upsert: jest.fn(),
             findUnique: jest.fn(),
-            delete: jest.fn(),
+            delete: jest.fn().mockResolvedValue({}),
             deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
         },
         subscription: {
+            findUnique: jest.fn().mockResolvedValue(null),
             upsert: jest.fn().mockResolvedValue({ id: 'sub-1' }),
+            update: jest.fn().mockResolvedValue({ id: 'sub-1' }),
         },
-        payment: { create: jest.fn().mockResolvedValue({}) },
+        payment: {
+            // findFirst is the PayPal double-credit guard: null = this sale has not
+            // been recorded yet, so the pass is credited exactly once.
+            findFirst: jest.fn().mockResolvedValue(null),
+            create: jest.fn().mockResolvedValue({}),
+            update: jest.fn().mockResolvedValue({}),
+        },
     };
     return { getPrisma: jest.fn(() => mockClient), __mockClient: mockClient };
 });
@@ -86,6 +94,9 @@ jest.mock('../services/aiProvider/aiProvider', () => ({
 }));
 jest.mock('../services/paymentService', () => ({
     paymentService: {
+        // Billing routes hold on whenReady() so a cold start cannot read a
+        // half-initialized gateway; the mock resolves immediately.
+        whenReady: jest.fn(() => Promise.resolve()),
         getPricingPlans: jest.fn(() => Promise.resolve([
             { id: '11111111-1111-1111-1111-111111111111', name: 'Pro', price: 19.99, interval: 'month', features: [] },
         ])),

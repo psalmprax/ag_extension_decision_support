@@ -3,7 +3,15 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const DEFAULT_LOCALES_DIR = path.join(__dirname, '../src/frontend/public/locales');
+// Resolve repo layout from where THIS script actually lives (repo checkout:
+// scripts/ sits two levels under the repo root) with an explicit Docker
+// fallback (the frontend image mounts this dir at /scripts and builds /app).
+const repoBase = path.resolve(__dirname, '..', '..');
+const base = fs.existsSync(path.join(repoBase, 'ag-extension-dashboard'))
+    ? repoBase
+    : (process.env.FRONTEND_DIR || '/app');
+const isDocker = base !== repoBase;
+const DEFAULT_LOCALES_DIR = path.join(base, isDocker ? 'public/locales' : 'ag-extension-dashboard/src/frontend/public/locales');
 const UNIVERSAL_TERMS = new Set([
   'AI',
   'API',

@@ -1,5 +1,5 @@
 import express, { Router } from 'express';
-import { paymentService } from '../../services/paymentService';
+import { isSubscriptionActive, paymentService } from '../../services/paymentService';
 import { getPrisma } from '../../services/prismaService';
 import { logger } from '../../utils/logger';
 import { authorize, AuthRequest } from '../../middleware/authorize';
@@ -20,13 +20,6 @@ const errorStatusMap: Record<string, number> = {
     'PAYPAL_ERROR': 402,
     'ACTIVE_SUBSCRIPTION_EXISTS': 409,
     'ALREADY_SUBSCRIBED': 400
-};
-
-// Helper to check if subscription is active
-const isSubscriptionActive = (subscription: { status: string }): boolean => {
-    if (!subscription) return false;
-    const validStatuses = ['active', 'trialing', 'past_due'];
-    return validStatuses.includes(subscription.status);
 };
 
 /**

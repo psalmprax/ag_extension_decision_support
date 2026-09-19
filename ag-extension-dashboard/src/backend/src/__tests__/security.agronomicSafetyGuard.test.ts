@@ -74,4 +74,66 @@ describe('Deep-Tier Security — AgronomicSafetyGuard AI Boundary Validation', (
       expect(result.violations.length).toBe(0);
     });
   });
+
+  describe('3. Knapsack Sprayer Calibration & Advice Enrichment', () => {
+    it('should append knapsack sprayer calibration when application rates are mentioned', () => {
+      const advice = 'Apply 2.5 L/ha of contact fungicide across the affected area.';
+      const enriched = agronomicSafetyGuard.translateToKnapsackUnits(advice);
+
+      expect(enriched).toContain('Knapsack Sprayer Calibration (Field Guidance)');
+      expect(enriched).toContain('16L or 20L');
+    });
+
+    it('should prepend lethal dosage alert and knapsack calibration during guardAndEnrichAdvice', () => {
+      const hazardousAdvice = 'Apply 30 Liters per hectare of pesticide solution to control the pest.';
+      const { text, boundaryCheck } = agronomicSafetyGuard.guardAndEnrichAdvice(hazardousAdvice);
+
+      expect(boundaryCheck.safe).toBe(false);
+      expect(text).toContain('AGRONOMIC DOSAGE WARNING');
+      expect(text).toContain('Knapsack Sprayer Calibration');
+    });
+
+    it('should prepend quarantine alert when high-consequence pathogen is detected in advice', () => {
+      const quarantineAdvice = 'Symptoms match maize lethal necrosis disease in the lower parcel.';
+      const { text, boundaryCheck } = agronomicSafetyGuard.guardAndEnrichAdvice(quarantineAdvice);
+
+      expect(boundaryCheck.quarantineAlert).toBe(true);
+      expect(text).toContain('QUARANTINE ALERT');
+      expect(text).toContain('maize lethal necrosis');
+    });
+
+    it('should append Pre-Harvest Interval (PHI) and Pollinator safety warnings for chemical recommendations', () => {
+      const chemicalAdvice = 'Spray 1.5 L/ha of pesticide during flowering stage to control aphids.';
+      const { text } = agronomicSafetyGuard.guardAndEnrichAdvice(chemicalAdvice);
+
+      expect(text).toContain('Pre-Harvest & Re-Entry Safety (PHI / REI)');
+      expect(text).toContain('Pollinator & Bee Protection Warning');
+    });
+  });
+
+  describe('4. Pre-Harvest Interval & Pollinator Boundary Checks', () => {
+    it('should flag violation when pesticide is applied too close to harvest', () => {
+      const result = agronomicSafetyGuard.validateStructuredMetrics({
+        cropType: 'Tomato',
+        pesticideMlHa: 1000,
+        daysToHarvest: 3, // Less than 7 days safe PHI
+      });
+
+      expect(result.safe).toBe(false);
+      expect(result.hazardLevel).toBe('critical_hazard');
+      expect(result.violations.some((v) => v.includes('Pre-Harvest Interval (PHI) violation'))).toBe(true);
+    });
+
+    it('should flag violation when insecticide is applied during active flowering or pollinator foraging', () => {
+      const result = agronomicSafetyGuard.validateStructuredMetrics({
+        cropType: 'Sunflower',
+        pesticideMlHa: 500,
+        floweringOrPollinatorsPresent: true,
+      });
+
+      expect(result.safe).toBe(false);
+      expect(result.violations.some((v) => v.includes('Pollinator safety violation'))).toBe(true);
+    });
+  });
 });
+

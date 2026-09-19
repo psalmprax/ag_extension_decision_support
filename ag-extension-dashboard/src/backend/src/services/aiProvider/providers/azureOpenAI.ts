@@ -221,7 +221,6 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             return {
                 reasoning: 'Detailed Azure-based Intelligence Analysis completed.',
                 answer: cleanAnswer,
-                confidence: 0.9,
                 visuals
             };
         } catch (error) {
@@ -239,13 +238,7 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             const labels = JSON.parse(result.text ?? '[]');
             return { labels };
         } catch {
-            // Return default classification if parsing fails
-            return {
-                labels: [
-                    { label: 'general', score: 0.8 },
-                    { label: 'crop_management', score: 0.5 },
-                ],
-            };
+            throw new Error('Failed to parse Azure OpenAI classification response');
         }
     }
 

@@ -51,27 +51,45 @@ function areaCode(country: string): string {
 }
 
 // ─── Production anomaly → disease alert helper ─────────────────────
-function buildProductionAnomalyAlerts(
-  current: CropProductionStat[],
-  previous: CropProductionStat[],
-  region: string,
-): DiseaseAlert[] {
-  const prevMap = new Map<string, number>();
-  for (const row of previous) prevMap.set(row.itemCode, row.value);
-
-  const alerts: DiseaseAlert[] = [];
-  for (const row of current) {
+/**
+ * Derive anomaly alerts from a multi-year production series.
+ *
+ * Series are grouped per item+element and compared against the two most recent years
+ * that actually carry data, because FAOSTAT publishes with a lag — a fixed
+ * "current year vs previous year" diff silently produced an empty list forever.
+ */
+function groupProductionSeries(rows: CropProductionStat[]): Map<string, CropProductionStat[]> {
+  const bySeries = new Map<string, CropProductionStat[]>();
+  for (const row of rows) {
     if (row.element !== 'Yield' && row.element !== 'Production') continue;
-    const prevVal = prevMap.get(row.itemCode);
-    if (prevVal == null || prevVal <= 0 || row.value <= 0) continue;
-    const change = ((row.value - prevVal) / prevVal) * 100;
+    if (row.value <= 0) continue;
+    const key = `${row.itemCode}|${row.element}`;
+    const series = bySeries.get(key);
+    if (series) series.push(row);
+    else bySeries.set(key, [row]);
+  }
+
+  return bySeries;
+}
+
+function buildProductionAnomalyAlerts(rows: CropProductionStat[], region: string): DiseaseAlert[] {
+  const alerts: DiseaseAlert[] = [];
+  for (const series of groupProductionSeries(rows).values()) {
+    const ordered = [...series].sort((a, b) => Number(a.year) - Number(b.year));
+    if (ordered.length < 2) continue;
+    const latest = ordered[ordered.length - 1];
+    const previous = ordered[ordered.length - 2];
+    if (previous.value <= 0 || latest.value <= 0) continue;
+
+    const change = ((latest.value - previous.value) / previous.value) * 100;
     if (change >= -15) continue;
+
     alerts.push({
-      id: `fao-${row.itemCode}-${row.year}`,
-      title: `${row.item} ${row.element} Decline`,
-      description: `${row.item} ${row.element.toLowerCase()} dropped ${Math.abs(Math.round(change))}% in ${region} (${row.year} vs previous). This may indicate pest/disease pressure or adverse growing conditions.`,
+      id: `fao-${latest.itemCode}-${latest.element}-${latest.year}`,
+      title: `${latest.item} ${latest.element} Decline`,
+      description: `${latest.item} ${latest.element.toLowerCase()} dropped ${Math.abs(Math.round(change))}% in ${region} (${latest.year} vs ${previous.year}). This may indicate pest/disease pressure or adverse growing conditions.`,
       severity: change < -30 ? 'high' : 'medium',
-      crop: row.item,
+      crop: latest.item,
       region,
       publishedDate: new Date().toISOString().split('T')[0],
     });
@@ -134,13 +152,19 @@ export class FAOService {
    */
   static async getDiseaseAlerts(region: string, crop?: string): Promise<DiseaseAlert[]> {
     try {
-      const currentYear = String(new Date().getFullYear());
-      const prevYear = String(Number(currentYear) - 1);
-      const [current, previous] = await Promise.all([
-        this.getCropProduction(region, crop, currentYear),
-        this.getCropProduction(region, crop, prevYear),
-      ]);
-      return buildProductionAnomalyAlerts(current, previous, region);
+      // FAOSTAT publishes with a 1-2 year lag, so the newest calendar year is always
+      // empty. Pull a window of recent years and diff the two most recent that carry
+      // data, instead of comparing "this year" (always empty) to last year.
+      const currentYear = new Date().getFullYear();
+      const years = [currentYear - 1, currentYear - 2, currentYear - 3].map(String);
+      const batches = await Promise.all(years.map(y => this.getCropProduction(region, crop, y)));
+      const rows = batches.flat();
+
+      const alerts = buildProductionAnomalyAlerts(rows, region);
+      if (alerts.length === 0) {
+        logger.info(`No FAOSTAT production anomalies for ${region} across ${years.join(', ')}`);
+      }
+      return alerts;
     } catch (error) {
       logger.error(`FAO disease alerts computation failed for ${region}:`, error);
       return [];

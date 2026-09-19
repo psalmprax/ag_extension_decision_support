@@ -16,7 +16,7 @@ const OFF_TOPIC_CODING_PATTERNS: RegExp[] = [
 
 const OFF_TOPIC_MATH_PATTERNS: RegExp[] = [
   /(?:solve|calculate|evaluate)\s+(?:the\s+)?(?:integral|derivative|calculus|equation\s+x|matrix|fibonacci)/i,
-  /^\s*(?:what\s+is\s+|calculate\s+)?\s*\d+\s*[\+\-\*\/\^\%]\s*\d+\s*\??\s*$/i,
+  /^\s*(?:what\s+is\s+|calculate\s+)?\s*\d+\s*[+*/^%-]\s*\d+\s*\??\s*$/i,
 ];
 
 const OFF_TOPIC_GENERAL_PATTERNS: RegExp[] = [

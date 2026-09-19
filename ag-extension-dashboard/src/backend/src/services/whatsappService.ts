@@ -66,7 +66,32 @@ class WhatsAppService {
         return digits;
     }
 
-    private async dispatchTwilioWhatsApp(options: WhatsAppOptions & { to: string }): Promise<WhatsAppDeliveryResult> {
+    /**
+     * Template name → Twilio ContentSid map, provided as JSON in
+     * WHATSAPP_TEMPLATE_SIDS (e.g. {"alert":"HXxxxxxxxx"}). Pre-approved templates are
+     * the only deliverable form for business-initiated WhatsApp messages, so an unmapped
+     * template is a configuration error, never a reason to send free-form text.
+     */
+    private templateSidMap(): Record<string, string> {
+        const raw = process.env.WHATSAPP_TEMPLATE_SIDS;
+        if (!raw) return {};
+        try {
+            const parsed: unknown = JSON.parse(raw);
+            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+            return Object.fromEntries(
+                Object.entries(parsed as Record<string, unknown>)
+                    .filter(([, value]) => typeof value === 'string' && value.length > 0) as Array<[string, string]>
+            );
+        } catch (error) {
+            logger.error('WHATSAPP_TEMPLATE_SIDS is not valid JSON — no WhatsApp templates are available:', error);
+            return {};
+        }
+    }
+
+    private async dispatchTwilioWhatsApp(
+        options: WhatsAppOptions & { to: string },
+        content?: { sid: string; variables: string[] }
+    ): Promise<WhatsAppDeliveryResult> {
         const toWhatsApp = `whatsapp:+${this.formatWhatsAppId(options.to)}`;
         const fromWhatsApp = `whatsapp:${this.twilioWhatsAppNumber}`;
 
@@ -76,11 +101,18 @@ class WhatsAppService {
         const params: Record<string, string> = {
             To: toWhatsApp,
             From: fromWhatsApp,
-            Body: options.message,
         };
 
-        if (options.templateName) {
-            params.ProvideFeedback = 'true';
+        if (content) {
+            // Content API template send: variables are positional ("1", "2", …).
+            params.ContentSid = content.sid;
+            if (content.variables.length > 0) {
+                params.ContentVariables = JSON.stringify(
+                    Object.fromEntries(content.variables.map((value, index) => [String(index + 1), value]))
+                );
+            }
+        } else {
+            params.Body = options.message;
         }
 
         if (options.mediaUrl) {
@@ -145,16 +177,51 @@ class WhatsAppService {
             };
         }
 
+        // A templated send must use the approved template, never free-form text.
+        if (options.templateName) {
+            return this.sendTemplateMessage(options as WhatsAppOptions & { templateName: string });
+        }
+
         return this.dispatchTwilioWhatsApp(options as WhatsAppOptions & { to: string });
     }
 
     /**
-     * Send a templated WhatsApp message (for notifications, alerts, etc.)
+     * Send a pre-approved WhatsApp template via the Twilio Content API.
+     *
+     * Refuses (rather than silently downgrading to a free-form Body) when the template
+     * has no ContentSid mapping: WhatsApp only honours business-initiated messages inside
+     * an approved template, so a downgrade would quietly drop the message outside the
+     * 24-hour customer service window.
      */
     async sendTemplateMessage(options: WhatsAppOptions & { templateName: string }): Promise<WhatsAppDeliveryResult> {
-        // Templates are sent as regular messages with structured content
-        // Twilio WhatsApp supports templates via the Content API
-        return this.sendMessage(options);
+        if (!options.to) {
+            logger.warn('WhatsApp sendTemplateMessage called without a recipient');
+            return { success: false, status: 'failed', provider: 'none', error: 'Recipient is required' };
+        }
+
+        if (!this.isConfigured()) {
+            await this.persistMessage(options, 'not_configured');
+            return { success: false, status: 'not_configured', provider: 'none', error: 'WhatsApp provider is not configured' };
+        }
+
+        const contentSid = this.templateSidMap()[options.templateName];
+        if (!contentSid) {
+            logger.error(
+                `WhatsApp template "${options.templateName}" has no ContentSid mapping (WHATSAPP_TEMPLATE_SIDS) — refusing to substitute free-form text`
+            );
+            await this.persistMessage(options, 'failed');
+            return {
+                success: false,
+                status: 'failed',
+                provider: 'twilio',
+                error: `WhatsApp template "${options.templateName}" is not mapped to a Twilio ContentSid`,
+            };
+        }
+
+        return this.dispatchTwilioWhatsApp(
+            options as WhatsAppOptions & { to: string },
+            { sid: contentSid, variables: options.templateParams ?? [] }
+        );
     }
 
     /**

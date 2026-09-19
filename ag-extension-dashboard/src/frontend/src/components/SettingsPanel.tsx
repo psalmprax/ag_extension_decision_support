@@ -312,7 +312,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                   </h3>
                   <button
                     onClick={async () => {
-                      const preserveKeys = ['token', 'user', 'theme', 'ag-theme-name'];
+                      const preserveKeys = ['user', 'theme', 'ag-theme-name'];
                       const preserved: Record<string, string> = {};
                       preserveKeys.forEach(key => {
                         const val = localStorage.getItem(key);

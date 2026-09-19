@@ -85,6 +85,19 @@ export function useWebRTC(): UseWebRTCReturn {
   const currentRoomRef = useRef<string | null>(null);
   const currentUserRef = useRef<{ id: string; name: string } | null>(null);
 
+  /**
+   * Mirror of `localStream` for the socket handlers.
+   *
+   * Those handlers are registered once on mount, so reading the `localStream` state
+   * gave them the mount-time value (always null) and peers joining later received peer
+   * connections with no local tracks. The ref always holds the current stream.
+   */
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const setStream = (stream: MediaStream | null) => {
+    localStreamRef.current = stream;
+    setLocalStream(stream);
+  };
+
   const buildIceServers = () => {
     const turnUrl = import.meta.env.VITE_TURN_URL as string | undefined;
     const turnUser = import.meta.env.VITE_TURN_USERNAME as string | undefined;
@@ -172,9 +185,9 @@ export function useWebRTC(): UseWebRTCReturn {
       reconnection: true,
       reconnectionAttempts: 3,
       reconnectionDelay: 2000,
-      // Backend socket.io middleware requires a valid JWT — resolve it lazily so
-      // the token is current when the socket (re)connects.
-      auth: cb => cb({ token: localStorage.getItem('token') || undefined }),
+      // Backend socket.io middleware verifies the httpOnly ag_token cookie on
+      // the websocket upgrade — no token in the auth payload.
+      auth: cb => cb({}),
     });
 
     socket.on('connect', () => {
@@ -197,9 +210,23 @@ export function useWebRTC(): UseWebRTCReturn {
     socket.on('ice-candidate', (data: { candidate: RTCIceCandidateInit; from: string }) => handleRemoteIce(data));
 
     socketRef.current = socket;
+    const peerConnections = peerConnectionsRef.current;
 
     return () => {
       isMounted = false;
+
+      // Unmount teardown: closing the call UI (rather than pressing End) must release
+      // the camera/microphone and every peer connection. Without this the capture
+      // device stayed active and recording in the background.
+      const stream = localStreamRef.current;
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        localStreamRef.current = null;
+        setLocalStream(null);
+      }
+      peerConnections.forEach(pc => pc.close());
+      peerConnections.clear();
+
       // Only close if socket is fully connected to avoid "closed before established" errors
       if (socket.connected) {
         socket.close();
@@ -233,9 +260,11 @@ export function useWebRTC(): UseWebRTCReturn {
       });
     };
 
-    if (localStream) {
-      localStream.getTracks().forEach(track => {
-        pc.addTrack(track, localStream);
+    // Read the ref, not the captured state: this runs from mount-time socket handlers.
+    const stream = localStreamRef.current;
+    if (stream) {
+      stream.getTracks().forEach(track => {
+        pc.addTrack(track, stream);
       });
     }
 
@@ -256,6 +285,7 @@ export function useWebRTC(): UseWebRTCReturn {
 
   const startCall = useCallback(
     async (roomId: string, userId: string, userName: string) => {
+      let acquiredStream: MediaStream | null = null;
       try {
         setError(null);
         currentRoomRef.current = roomId;
@@ -272,7 +302,8 @@ export function useWebRTC(): UseWebRTCReturn {
           video: true,
           audio: true,
         });
-        setLocalStream(stream);
+        acquiredStream = stream;
+        setStream(stream);
 
         if (socketRef.current && !socketRef.current.connected) {
           socketRef.current.connect();
@@ -292,6 +323,11 @@ export function useWebRTC(): UseWebRTCReturn {
           }
         );
       } catch (err: unknown) {
+        // Release the capture device on a failed start; otherwise the camera/mic stay on.
+        if (acquiredStream) {
+          acquiredStream.getTracks().forEach(track => track.stop());
+          setStream(null);
+        }
         setError((err as Error).message);
       }
     },
@@ -299,6 +335,7 @@ export function useWebRTC(): UseWebRTCReturn {
   );
 
   const joinCall = useCallback(async (roomId: string, userId: string, userName: string) => {
+    let acquiredStream: MediaStream | null = null;
     try {
       setError(null);
       currentRoomRef.current = roomId;
@@ -315,7 +352,8 @@ export function useWebRTC(): UseWebRTCReturn {
         video: true,
         audio: true,
       });
-      setLocalStream(stream);
+      acquiredStream = stream;
+      setStream(stream);
 
       if (socketRef.current && !socketRef.current.connected) {
         socketRef.current.connect();
@@ -340,6 +378,11 @@ export function useWebRTC(): UseWebRTCReturn {
         }
       );
     } catch (err: unknown) {
+      // Release the capture device on a failed join; otherwise camera/mic stay on.
+      if (acquiredStream) {
+        acquiredStream.getTracks().forEach(track => track.stop());
+        setStream(null);
+      }
       setError((err as Error).message);
     }
   }, []);
@@ -348,9 +391,12 @@ export function useWebRTC(): UseWebRTCReturn {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       try { mediaRecorderRef.current.stop(); } catch { /* recorder already stopping */ }
     }
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
-      setLocalStream(null);
+    // Read the ref so this callback can stay dependency-free and therefore safe to call
+    // from a mount-scoped teardown.
+    const stream = localStreamRef.current;
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
     }
 
     peerConnectionsRef.current.forEach(pc => pc.close());
@@ -368,7 +414,7 @@ export function useWebRTC(): UseWebRTCReturn {
     setParticipants([]);
     setIsInCall(false);
     currentRoomRef.current = null;
-  }, [localStream]);
+  }, []);
 
   const toggleAudio = useCallback(() => {
     if (localStream) {

@@ -225,4 +225,256 @@ describe('Visits Route — Mapper-before-response: mapVisitWithFarmerRows + mapV
         // mapVisitIdRow: { id: row.id } — the response wraps it under .data.visitId
         expect(response.body.data.visitId).toBe('visit-loc-1');
     });
+
+    it('POST / flags velocity anomaly when consecutive visits imply speed > 90 km/h in < 15 min', async () => {
+        const prevVisitRow = {
+            location_lat: '-13.9626',
+            location_lng: '33.7741',
+            completed_at: '2024-12-20T09:50:00Z',
+            scheduled_at: '2024-12-20T09:50:00Z',
+            created_at: '2024-12-20T09:50:00Z',
+        };
+
+        const insertedAnomalyRow = {
+            id: 'visit-teleport',
+            officer_id: 'off-1',
+            farmer_id: 'farm-uuid-1',
+            visit_type: 'routine',
+            status: 'scheduled',
+            scheduled_at: '2024-12-20T10:00:00Z',
+            started_at: null,
+            completed_at: null,
+            duration_minutes: null,
+            location_lat: '-13.2000', // ~85 km away in 10 minutes => ~510 km/h
+            location_lng: '33.7741',
+            notes: 'Field survey [VELOCITY ANOMALY: Impossible travel 510 km/h]',
+            outcomes: null,
+            follow_up_required: false,
+            follow_up_date: null,
+            reminder_sent: false,
+            overdue_alert_sent: false,
+            follow_up_reminder_sent: false,
+            created_at: '2024-12-20T10:00:00Z',
+            updated_at: '2024-12-20T10:00:00Z',
+        };
+
+        // 1. Farmer context lookup
+        mockQuery.mockResolvedValueOnce({
+            rows: [{ tenant_id: null, assigned_officer_id: 'off-1' }],
+            rowCount: 1,
+        });
+        // 2. Prior visit query for velocity anomaly check
+        mockQuery.mockResolvedValueOnce({
+            rows: [prevVisitRow],
+            rowCount: 1,
+        });
+        // 3. Insert visit returning row
+        mockQuery.mockResolvedValueOnce({
+            rows: [insertedAnomalyRow],
+            rowCount: 1,
+        });
+
+        const response = await request(app)
+            .post('/api/v1/visits')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({
+                farmerId: 'farm-uuid-1',
+                officerId: 'off-1',
+                scheduledAt: '2024-12-20T10:00:00Z',
+                locationLat: -13.2000,
+                locationLng: 33.7741,
+                notes: 'Field survey',
+            });
+
+        expect(response.status).toBe(201);
+        expect(response.body.data.notes).toContain('VELOCITY ANOMALY');
+        const insertCall = mockQuery.mock.calls.find(([sql]) => sql.includes('INSERT INTO visits'));
+        expect(insertCall?.[1][8]).toMatch(/^Field survey \[VELOCITY ANOMALY: Impossible travel \d+ km\/h\]$/);
+    });
+
+    it.each([
+        ['scheduled', 201],
+        ['completed', 422],
+    ])('handles identical coordinates for distinct farmers on a %s visit', async (status, expectedStatus) => {
+        mockQuery
+            .mockResolvedValueOnce({ rows: [{ tenant_id: 'tenant-1', assigned_officer_id: 'off-1' }] })
+            .mockResolvedValueOnce({ rows: [{ farmer_id: 'other', location_lat: '0', location_lng: '0', completed_at: '2024-12-20T09:30:00Z' }] })
+            .mockResolvedValueOnce({ rows: [] });
+
+        const response = await request(app).post('/api/v1/visits')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ farmerId: 'farm-1', scheduledAt: '2024-12-20T10:00:00Z', status, durationMinutes: 15, locationLat: 0, locationLng: 0, notes: 'Inspection' });
+
+        expect(response.status).toBe(expectedStatus);
+        const insertCall = mockQuery.mock.calls.find(([sql]) => sql.includes('INSERT INTO visits'));
+        if (status === 'completed') {
+            expect(response.body.error).toContain('identical coordinates');
+            expect(insertCall).toBeUndefined();
+        } else {
+            expect(insertCall?.[1][8]).toBe('Inspection [STATIONARY ANOMALY: Identical coordinates for distinct farmers]');
+            expect(insertCall?.[1][9]).toBe('tenant-1');
+        }
+    });
+
+    it('keeps the visit writable if the best-effort anomaly lookup fails', async () => {
+        mockQuery
+            .mockResolvedValueOnce({ rows: [{ tenant_id: null, assigned_officer_id: 'off-1' }] })
+            .mockRejectedValueOnce(new Error('Anomaly lookup unavailable'))
+            .mockResolvedValueOnce({ rows: [] });
+
+        const response = await request(app).post('/api/v1/visits')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ farmerId: 'farm-1', scheduledAt: '2024-12-20T10:00:00Z', locationLat: 0, locationLng: 0, notes: 'Inspection' });
+
+        expect(response.status).toBe(201);
+        const insertCall = mockQuery.mock.calls.find(([sql]) => sql.includes('INSERT INTO visits'));
+        expect(insertCall?.[1][8]).toBe('Inspection');
+    });
+
+    it('uses stored timestamps when completing an existing visit without a supplied duration', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [{
+            farmer_id: 'farm-1',
+            started_at: '2024-12-20T10:00:00Z',
+            completed_at: '2024-12-20T10:10:00Z',
+            duration_minutes: null,
+        }] }).mockResolvedValueOnce({ rows: [] });
+
+        const response = await request(app).patch('/api/v1/visits/visit-1')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ status: 'completed' });
+
+        expect(response.status).toBe(200);
+        expect(mockQuery).toHaveBeenLastCalledWith(expect.stringContaining('UPDATE visits'), ['completed', 'visit-1']);
+    });
+
+    it('POST / rejects completed visit when duration is < 10 minutes (AD-002)', async () => {
+        // Farmer context lookup
+        mockQuery.mockResolvedValueOnce({
+            rows: [{ tenant_id: null, assigned_officer_id: 'off-1' }],
+            rowCount: 1,
+        });
+
+        const response = await request(app)
+            .post('/api/v1/visits')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({
+                farmerId: 'farm-uuid-1',
+                officerId: 'off-1',
+                scheduledAt: '2024-12-20T10:00:00Z',
+                status: 'completed',
+                durationMinutes: 5, // < 10 min
+            });
+
+        expect(response.status).toBe(422);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error).toContain('STATIONARY_FRAUD_DETECTED');
+        expect(response.body.error).toContain('Minimum parcel dwell time of 10 minutes required');
+    });
+
+    it('POST / accepts completed visit when duration is >= 10 minutes (AD-002)', async () => {
+        const completedRow = {
+            id: 'visit-completed-1',
+            officer_id: 'off-1',
+            farmer_id: 'farm-uuid-1',
+            visit_type: 'routine',
+            status: 'completed',
+            scheduled_at: '2024-12-20T10:00:00Z',
+            completed_at: '2024-12-20T10:20:00Z',
+            duration_minutes: 20,
+            location_lat: null,
+            location_lng: null,
+            notes: 'Thorough inspection',
+            outcomes: null,
+            follow_up_required: false,
+            follow_up_date: null,
+            reminder_sent: false,
+            overdue_alert_sent: false,
+            follow_up_reminder_sent: false,
+            created_at: '2024-12-20T10:00:00Z',
+            updated_at: '2024-12-20T10:00:00Z',
+        };
+
+        mockQuery.mockResolvedValueOnce({
+            rows: [{ tenant_id: null, assigned_officer_id: 'off-1' }],
+            rowCount: 1,
+        });
+        mockQuery.mockResolvedValueOnce({
+            rows: [completedRow],
+            rowCount: 1,
+        });
+
+        const response = await request(app)
+            .post('/api/v1/visits')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({
+                farmerId: 'farm-uuid-1',
+                officerId: 'off-1',
+                scheduledAt: '2024-12-20T10:00:00Z',
+                status: 'completed',
+                durationMinutes: 20,
+            });
+
+        expect(response.status).toBe(201);
+        expect(response.body.data.status).toBe('completed');
+        expect(response.body.data.durationMinutes).toBe(20);
+    });
+
+    it('PATCH /:id rejects completing a visit when duration is < 10 minutes (AD-002)', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{ farmer_id: 'farm-uuid-1' }],
+            rowCount: 1,
+        });
+
+        const response = await request(app)
+            .patch('/api/v1/visits/visit-1')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({
+                status: 'completed',
+                duration: 6, // < 10 min
+            });
+
+        expect(response.status).toBe(422);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error).toContain('STATIONARY_FRAUD_DETECTED');
+    });
+
+    it('POST / rejects consecutive completed visits for different farmers within < 10 minutes (AD-002)', async () => {
+        const prevVisitRow = {
+            farmer_id: 'farm-uuid-other',
+            location_lat: '-13.9626',
+            location_lng: '33.7741',
+            completed_at: '2024-12-20T09:55:00Z',
+            scheduled_at: '2024-12-20T09:55:00Z',
+            created_at: '2024-12-20T09:55:00Z',
+        };
+
+        // 1. Farmer context lookup
+        mockQuery.mockResolvedValueOnce({
+            rows: [{ tenant_id: null, assigned_officer_id: 'off-1' }],
+            rowCount: 1,
+        });
+        // 2. Prior visit query
+        mockQuery.mockResolvedValueOnce({
+            rows: [prevVisitRow],
+            rowCount: 1,
+        });
+
+        const response = await request(app)
+            .post('/api/v1/visits')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({
+                farmerId: 'farm-uuid-1',
+                officerId: 'off-1',
+                scheduledAt: '2024-12-20T10:00:00Z', // 5 minutes after prev visit
+                status: 'completed',
+                durationMinutes: 15,
+                locationLat: -13.9620,
+                locationLng: 33.7740,
+            });
+
+        expect(response.status).toBe(422);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error).toContain('STATIONARY_FRAUD_DETECTED');
+        expect(response.body.error).toContain('Officer logged consecutive visit within 5 mins');
+    });
 });

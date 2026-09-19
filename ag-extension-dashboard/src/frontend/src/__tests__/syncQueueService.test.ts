@@ -125,3 +125,27 @@ describe('syncQueueService', () => {
     expect(syncQueue.getStuckItems()).toHaveLength(1);
   });
 });
+
+describe('queue capacity contract', () => {
+  it('throws a typed QueueFullError at capacity instead of losing data', async () => {
+    const { QueueFullError, isQueueFullError } = await import('@/api/syncQueueService');
+    syncQueue.clear();
+    // Fill to capacity through the public API.
+    for (let i = 0; i < 500; i++) {
+      syncQueue.enqueue({ action: 'create', entity: 'visit', endpoint: '/visits', method: 'POST' });
+    }
+    expect(syncQueue.getPendingCount()).toBe(500);
+    let caught: unknown;
+    try {
+      syncQueue.enqueue({ action: 'create', entity: 'visit', endpoint: '/visits', method: 'POST' });
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toBeInstanceOf(QueueFullError);
+    expect(isQueueFullError(caught)).toBe(true);
+    expect((caught as InstanceType<typeof QueueFullError>).pendingCount).toBe(500);
+    // Queue contents untouched by the refused write.
+    expect(syncQueue.getPendingCount()).toBe(500);
+    syncQueue.clear();
+  });
+});

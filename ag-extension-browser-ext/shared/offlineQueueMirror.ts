@@ -13,6 +13,7 @@
 
 import { browser } from 'wxt/browser';
 import { CONFIG } from './config';
+import { getAuthToken } from './authToken';
 import type { QueuedRequest } from './offlineTypes';
 
 const MIRROR_FLUSH_DELAY_MS = 1_000;
@@ -31,6 +32,62 @@ interface MirrorCall {
 const pendingCalls = new Map<string, MirrorCall>();
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
 let flushing = false;
+let outboxRehydrated = false;
+
+/**
+ * The outbox is persisted to browser.storage.local.
+ *
+ * MV3 workers are torn down ~30s after their last event, which used to destroy this
+ * Map (and its pending setTimeout retries) mid-flight — silently losing mirror calls.
+ * Persisting on every mutation and rehydrating on module load means an evicted worker
+ * resumes its outbox on the next wake instead of dropping it.
+ */
+const OUTBOX_STORAGE_KEY = 'offlineQueueMirrorOutbox';
+
+async function persistOutbox(): Promise<void> {
+    try {
+        await browser.storage.local.set({
+            [OUTBOX_STORAGE_KEY]: [...pendingCalls.entries()].map(([key, call]) => ({ key, ...call })),
+        });
+    } catch (error) {
+        console.warn('Offline queue mirror could not persist its outbox:',
+            error instanceof Error ? error.message : error);
+    }
+}
+
+interface PersistedMirrorCall {
+    key?: string;
+    kind?: MirrorKind;
+    id?: string;
+    payload?: Record<string, unknown>;
+    attempts?: number;
+}
+
+async function rehydrateOutbox(): Promise<void> {
+    if (outboxRehydrated) return;
+    outboxRehydrated = true;
+    try {
+        const stored = await browser.storage.local.get(OUTBOX_STORAGE_KEY);
+        const entries = (stored as Record<string, unknown>)?.[OUTBOX_STORAGE_KEY];
+        if (!Array.isArray(entries)) return;
+        for (const raw of entries as PersistedMirrorCall[]) {
+            if (!raw || typeof raw !== 'object') continue;
+            const { key, kind, id, payload, attempts } = raw;
+            if (typeof key !== 'string' || typeof id !== 'string') continue;
+            if (kind !== 'upsert' && kind !== 'retry' && kind !== 'delete') continue;
+            pendingCalls.set(key, {
+                kind,
+                id,
+                payload: payload && typeof payload === 'object' ? payload : {},
+                attempts: typeof attempts === 'number' ? attempts : 0,
+            });
+        }
+        if (pendingCalls.size > 0) scheduleFlush(flushDelayMs);
+    } catch (error) {
+        console.warn('Offline queue mirror could not rehydrate its outbox:',
+            error instanceof Error ? error.message : error);
+    }
+}
 
 let flushDelayMs = MIRROR_FLUSH_DELAY_MS;
 let retryDelayMs = MIRROR_RETRY_DELAY_MS;
@@ -52,9 +109,11 @@ export function resetMirrorForTests(): void {
         flushTimer = null;
     }
     flushing = false;
+    outboxRehydrated = true; // do not re-read storage between tests
     pendingCalls.clear();
     flushDelayMs = MIRROR_FLUSH_DELAY_MS;
     retryDelayMs = MIRROR_RETRY_DELAY_MS;
+    void persistOutbox();
 }
 
 function scheduleFlush(delayMs: number): void {
@@ -75,6 +134,7 @@ function enqueue(kind: MirrorKind, id: string, payload: Record<string, unknown>)
     } else if (!existing) {
         pendingCalls.set(key, { kind, id, payload, attempts: 0 });
     }
+    void persistOutbox();
     scheduleFlush(flushDelayMs);
 }
 
@@ -113,15 +173,8 @@ export function mirrorDelete(id: string): void {
 }
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
-    try {
-        const stored = await browser.storage.local.get('authToken');
-        const token = (stored as Record<string, unknown>)?.authToken;
-        return typeof token === 'string' && token.length > 0
-            ? { Authorization: `Bearer ${token}` }
-            : {};
-    } catch {
-        return {};
-    }
+    const token = await getAuthToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 /**
@@ -185,7 +238,11 @@ export async function flushMirrorQueue(): Promise<void> {
     } finally {
         flushing = false;
     }
+    void persistOutbox();
     if (pendingCalls.size > 0) {
         scheduleFlush(retryDelayMs);
     }
 }
+
+// Resume any outbox that outlived the previous service-worker instance.
+void rehydrateOutbox();

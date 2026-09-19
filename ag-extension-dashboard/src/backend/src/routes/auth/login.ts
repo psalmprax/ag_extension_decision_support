@@ -10,18 +10,46 @@ import { loginSchema } from '@/utils/schemas';
 import { recordLoginAttempt, resolveLocationFromHeaders } from '@/services/loginHistoryService';
 import { isAccountLocked, recordFailedLogin, resetFailedAttempts } from '@/services/lockoutService';
 import { createSession } from '@/services/sessionService';
+import { setAuthCookie } from '@/middleware/authCookie';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
-interface JWTPayload {
-    userId: string;
-    email: string;
-    role: string;
-}
-
 // Fixed pre-computed bcrypt hash to neutralize authentication timing side-channels (user enumeration)
 const DUMMY_BCRYPT_HASH = '$2a$10$NVqK3ijujMkE3ZwVVOLruutAEJwLmNCDXAGVKvTqLGxhBpNeLz.BO';
+
+async function resolveLoginPlan(user: { id: string; role: string; is_demo?: boolean; email: string }) {
+    let planName = 'Free';
+    let isFree = true;
+
+    if (user.role === 'admin') {
+        planName = 'Admin';
+        isFree = false;
+    } else if (user.is_demo || user.email === 'demo@agridemo.com') {
+        planName = 'Free';
+        isFree = true;
+    } else {
+        try {
+            const subResult = await query(`
+                SELECT sp.name as plan_name, sp.price
+                FROM subscriptions s
+                JOIN subscription_plans sp ON sp.id = s.plan_id
+                WHERE s.user_id = $1
+                  AND (s.status = 'active' OR s.status = 'trialing')
+                  AND (s.current_period_end IS NULL OR s.current_period_end > NOW())
+            `, [user.id]);
+            if (subResult.rows.length > 0) {
+                const row = subResult.rows[0];
+                const price = row.price != null ? Number(row.price) : 0;
+                planName = row.plan_name || 'Free';
+                isFree = price === 0 || planName.toLowerCase().includes('free');
+            }
+        } catch {
+            // fallback to Free
+        }
+    }
+    return { planName, isFree };
+}
 
 /**
  * @swagger
@@ -48,7 +76,7 @@ const DUMMY_BCRYPT_HASH = '$2a$10$NVqK3ijujMkE3ZwVVOLruutAEJwLmNCDXAGVKvTqLGxhBp
 router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
-        const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.ip || null;
+        const clientIp = req.ip || (typeof req.headers['x-forwarded-for'] === 'string' ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || null;
 
         if (!email || !password) {
             await recordLoginAttempt({
@@ -146,12 +174,14 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
             const tempToken = jwt.sign(
                 { userId: user.id, email: user.email, mfaPending: true },
                 config.jwt.secret as jwt.Secret,
-                { expiresIn: '5m' }
+                { algorithm: 'HS256', expiresIn: '5m' }
             );
             return res.json({
                 success: true,
                 data: {
                     mfaRequired: true,
+                    // Kept in the JSON body (never a cookie): 5m lifetime, and
+                    // mfa/verify is CSRF-exempt so the challenge works pre-auth.
                     tempToken,
                     message: 'Two-factor authentication required. Please enter your 6-digit TOTP code or a backup code.',
                 },
@@ -172,7 +202,7 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
         const token = jwt.sign(
             { userId: user.id, email: user.email, role: user.role },
             config.jwt.secret as jwt.Secret,
-            { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
+            { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
 
         // Create active user session
@@ -184,33 +214,14 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
             location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
         });
 
-        let planName = 'Free';
-        let isFree = true;
+        const { planName, isFree } = await resolveLoginPlan({
+            id: user.id, role: user.role, is_demo: user.is_demo, email: user.email,
+        });
 
-        if (user.role === 'admin') {
-            planName = 'Admin';
-            isFree = false;
-        } else if (user.is_demo || user.email === 'demo@agridemo.com') {
-            planName = 'Free';
-            isFree = true;
-        } else {
-            try {
-                const subResult = await query(`
-                    SELECT sp.name as plan_name, sp.price
-                    FROM subscriptions s
-                    JOIN subscription_plans sp ON sp.id = s.plan_id
-                    WHERE s.user_id = $1 AND (s.status = 'active' OR s.status = 'trialing')
-                `, [user.id]);
-                if (subResult.rows.length > 0) {
-                    const row = subResult.rows[0];
-                    const price = row.price != null ? Number(row.price) : 0;
-                    planName = row.plan_name || 'Free';
-                    isFree = price === 0 || planName.toLowerCase().includes('free');
-                }
-            } catch {
-                // fallback to Free
-            }
-        }
+        // httpOnly cookie for the SPA; the body token remains for
+        // mobile/extension/API clients (they never receive cookies' protection
+        // and still authenticate via the Authorization header).
+        setAuthCookie(res, token);
 
         res.json({
             success: true,

@@ -149,7 +149,6 @@ export class OllamaProvider extends BaseAIProvider {
         return {
             reasoning: 'Ollama local analysis completed.',
             answer: cleanAnswer,
-            confidence: 0.8,
             visuals
         };
     }

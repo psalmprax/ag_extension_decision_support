@@ -1,6 +1,7 @@
 // API Queue Service for offline synchronization
 
-import { isJwtExpired } from './authToken';
+import { getAuthToken, setAuthToken, isJwtExpired } from './authToken';
+import { isAllowedApiUrl } from './apiOrigin';
 import type { OfflineStatus, QueuedRequest as PersistedQueuedRequest } from './offlineTypes';
 
 export type { OfflineStatus };
@@ -89,12 +90,27 @@ class APIQueueService {
         }
     }
 
+    /**
+     * Queue rows persist to IndexedDB unencrypted, so the Authorization header is
+     * stripped before a request is stored. The background re-attaches the *current*
+     * token from storage.session at replay time (freshAuthHeader), so nothing is lost.
+     */
+    private persistableHeaders(headers: Headers): Record<string, string> {
+        const entries: Record<string, string> = {};
+        headers.forEach((value, key) => {
+            if (key.toLowerCase() !== 'authorization') entries[key] = value;
+        });
+        return entries;
+    }
+
     public async isCurrentlyOnline(): Promise<boolean> {
         try {
             const browserAPI = browser;
             if (browserAPI?.runtime) {
                 const response = await browserAPI.runtime.sendMessage({ action: 'get_offline_status' });
-                if (response.success) {
+                // Guard the untyped sendMessage response: a malformed reply must not
+                // throw a TypeError on a missing/foreign shape.
+                if (response?.success && response.status && typeof response.status.isOnline === 'boolean') {
                     this.isOnline = response.status.isOnline;
                     return this.isOnline;
                 }
@@ -141,20 +157,32 @@ class APIQueueService {
     }
 
     public async makeRequest(url: string, options: RequestInit = {}): Promise<Response> {
+        // Origin gate: the bearer token must never be attached to, queued for, or sent
+        // to a host other than the configured API. Refusing here (before queueing) also
+        // stops a foreign URL from being mirrored to the backend queue.
+        if (!(await isAllowedApiUrl(url))) {
+            throw new Error(
+                `Refused request to ${url}: not on the configured API origin. The extension only talks to its own backend.`
+            );
+        }
+
         const isOnline = await this.isCurrentlyOnline();
         const method = (options.method || 'GET').toUpperCase();
         const isMutation = !['GET', 'HEAD', 'OPTIONS'].includes(method);
-        const idempotencyKey = isMutation
-            ? (typeof crypto !== 'undefined' && crypto.randomUUID
-                ? crypto.randomUUID()
-                : (typeof crypto !== 'undefined' && crypto.getRandomValues
-                    ? `ext_${Date.now()}_${crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(2, 10)}`
-                    : `ext_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`))
-            : undefined;
+        let idempotencyKey: string | undefined;
+        if (isMutation) {
+            if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+                idempotencyKey = crypto.randomUUID();
+            } else if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+                idempotencyKey = `ext_${Date.now()}_${crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(2, 10)}`;
+            } else {
+                throw new Error('Secure crypto API is unavailable for idempotency key generation');
+            }
+        }
         const requestHeaders = new Headers(options.headers);
         if (idempotencyKey) requestHeaders.set('Idempotency-Key', idempotencyKey);
         // Inject JWT if stored by extension login (graceful fallback when not logged in)
-        await this.injectAuthToken(requestHeaders);
+        await this.injectAuthToken(requestHeaders, url);
         const requestOptions: RequestInit = { ...options, method, headers: requestHeaders };
 
         const attachmentRefs = this.getAttachmentRefs(options.body);
@@ -165,7 +193,7 @@ class APIQueueService {
             await this.queueRequest({
                 url,
                 method,
-                headers: Object.fromEntries(requestHeaders.entries()),
+                headers: this.persistableHeaders(requestHeaders),
                 body: options.body as string | Record<string, unknown> | undefined,
                 maxRetries: 3,
                 idempotencyKey,
@@ -210,16 +238,22 @@ class APIQueueService {
     /** Last auth-injection problem, exposed so the UI can show "not signed in / storage error". */
     public lastAuthWarning: string | null = null;
 
-    private async injectAuthToken(headers: Headers): Promise<void> {
+    private async injectAuthToken(headers: Headers, url: string): Promise<void> {
         if (headers.has('Authorization')) return;
+        // Defence in depth behind makeRequest's gate: never attach the token to an
+        // origin outside the allowlist, whatever the caller passed in.
+        if (!(await isAllowedApiUrl(url))) {
+            this.lastAuthWarning = 'Refused to attach credentials to a non-API origin';
+            console.error(`Refusing to attach Authorization header for ${url}`);
+            return;
+        }
         try {
-            const stored = await browser.storage.local.get('authToken');
-            const token = (stored as Record<string, unknown>)?.authToken as string | undefined;
+            const token = await getAuthToken();
             if (token && isJwtExpired(token)) {
                 // Sending a known-expired token only produces 401s; drop it so the popup
                 // shows "signed out" and the user re-authenticates.
                 this.lastAuthWarning = 'Session expired — sign in again from the extension popup';
-                await browser.storage.local.remove('authToken').catch(() => {});
+                await setAuthToken(null);
             } else if (token) {
                 headers.set('Authorization', `Bearer ${token}`);
                 this.lastAuthWarning = null;

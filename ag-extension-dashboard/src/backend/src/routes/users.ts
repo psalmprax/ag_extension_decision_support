@@ -6,6 +6,7 @@ import { mapUserPublicRows, mapUserPublicRow, mapUserRows } from '@/types/dtos';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
+import { revokeAllUserSessions } from '@/services/sessionService';
 
 const router = Router();
 
@@ -191,7 +192,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 /**
  * POST /api/users — create a user.
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', authorize(['admin']), async (req: Request, res: Response) => {
     try {
         const pool = getPool();
         if (!pool) {
@@ -256,7 +257,7 @@ router.post('/', async (req: Request, res: Response) => {
 /**
  * PUT /api/users/:id — update a user.
  */
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', authorize(['admin']), async (req: Request, res: Response) => {
     try {
         const id = req.params.id;
         if (!id) {
@@ -272,6 +273,14 @@ router.put('/:id', async (req: Request, res: Response) => {
         const safeUpdates = extractSafeUserUpdates(updates);
         if (Object.keys(safeUpdates).length === 0) {
             return res.status(400).json({ success: false, error: 'No valid updates supplied' });
+        }
+        if (safeUpdates.is_active !== undefined && typeof safeUpdates.is_active !== 'boolean') {
+            return res.status(400).json({ success: false, error: 'isActive must be a boolean' });
+        }
+
+        // Reactivation must not restore tokens issued before the account was disabled.
+        if (safeUpdates.is_active !== undefined) {
+            await revokeAllUserSessions(id);
         }
 
         safeUpdates.updated_at = new Date();
@@ -293,7 +302,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 /**
  * DELETE /api/users/:id — soft-delete a user.
  */
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', authorize(['admin']), async (req: Request, res: Response) => {
     try {
         const id = req.params.id;
         if (!id) {
@@ -314,6 +323,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
             return res.status(404).json({ success: false, error: 'User not found' });
         }
 
+        await revokeAllUserSessions(id);
         return res.json({ success: true });
     } catch (error) {
         logger.error('Failed to deactivate user:', error);

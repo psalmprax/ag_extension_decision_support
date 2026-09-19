@@ -11,10 +11,38 @@ import { getCache } from './cacheService';
 import { logger } from '@/utils/logger';
 
 let warnedFallback = false;
+
+/**
+ * Paging-grade log that survives partial logger mocks: prefers logger.crit,
+ * degrades to a tagged error when the method is absent (e.g., test doubles).
+ */
+function logCrit(message: string): void {
+  const maybeCrit = (logger as unknown as { crit?: unknown }).crit;
+  if (typeof maybeCrit === 'function') {
+    (maybeCrit as (msg: string) => void).call(logger, message);
+  } else {
+    logger.error(`[CRIT] ${message}`);
+  }
+}
+
 function fallbackWarn(what: string): void {
-    if (warnedFallback) return;
+    if (warnedFallback) {
+        // Repeat at most as debug: the crit alert below fires once per process.
+        logger.debug(`[sharedState] still on process-local memory for ${what}`);
+        return;
+    }
     warnedFallback = true;
-    logger.warn(`[sharedState] Redis unavailable — ${what} is using process-local memory. Multi-replica limits/tokens will not be shared.`);
+    degradedSince = new Date().toISOString();
+    // CRIT so paging/monitoring fires: per-process security state (revocations,
+    // rate limits, one-time codes) is no longer shared across replicas.
+    logCrit(`[sharedState] Redis unavailable — ${what} is using process-local memory. Multi-replica limits/tokens will not be shared.`);
+}
+
+let degradedSince: string | null = null;
+
+/** Degradation status for /health and alerting: is distributed state intact? */
+export function degradationStatus(): { redisBacked: boolean; degradedSince: string | null } {
+    return { redisBacked: degradedSince === null, degradedSince };
 }
 
 function redis() {
@@ -101,6 +129,7 @@ export async function delKey(key: string): Promise<void> {
 }
 
 /** Atomically read-and-delete (consume a one-time token). */
+// fallow-ignore-next-line unused-export
 export async function consumeTtl(key: string): Promise<string | null> {
     const r = redis();
     if (r) {
@@ -146,4 +175,5 @@ export function __resetSharedStateForTests(): void {
     localCounters.clear();
     localKv.clear();
     warnedFallback = false;
+    degradedSince = null;
 }

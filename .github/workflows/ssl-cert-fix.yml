@@ -14,9 +14,9 @@ on:
   workflow_dispatch:
     inputs:
       force_renew:
-        description: 'Force certificate renewal (delete acme.json and restart Traefik)'
+        description: 'Force renewal — DELETES acme.json and restarts Traefik (downtime while re-issuing). Leave false unless the cert is actually broken.'
         required: false
-        default: true
+        default: false
         type: boolean
   schedule:
     # Run every Monday at 06:00 UTC to catch cert issues early
@@ -25,8 +25,17 @@ on:
 permissions:
   contents: read
 
+# Touches Traefik/ACME storage on the production host — never run two at once,
+# and never cancel one mid-renewal.
+concurrency:
+  group: ssl-cert-fix-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   ssl-fix-and-verify:
+    # Prod-mutating (may restart Traefik): require maintainer approval via the
+    # production environment, matching reset-admin-prod.yml.
+    environment: production
     runs-on: ubuntu-latest
     steps:
       # ── Step 1: Diagnose current SSL state ──────────────────
@@ -62,9 +71,12 @@ jobs:
           fi
 
       # ── Step 2: Fix cert on production server ───────────────
+      # Renewal runs when the weekly diagnosis found an INVALID cert, or when a
+      # maintainer explicitly opted in via the (now default-false) force_renew
+      # input — a routine manual run must never nuke acme.json on its own.
       - name: 2/4 Fix — renew SSL certificate on production
         if: steps.diagnose.outputs.cert_status != 'valid' || github.event.inputs.force_renew == 'true'
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         env:
           ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
         with:

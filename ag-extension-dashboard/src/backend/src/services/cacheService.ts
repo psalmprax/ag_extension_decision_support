@@ -24,7 +24,10 @@ export async function initializeCache(): Promise<void> {
 
         await redisClient.connect();
     } catch (error) {
-        logger.warn('Failed to initialize Redis cache, continuing without cache');
+        logger.error('Failed to initialize Redis cache', error);
+        if (config.nodeEnv === 'production') {
+            throw error;
+        }
         redisClient = null;
     }
 }

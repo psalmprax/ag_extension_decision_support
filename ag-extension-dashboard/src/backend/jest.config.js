@@ -15,7 +15,18 @@ module.exports = {
         tsconfig: '<rootDir>/tsconfig.json',
       },
     ],
+    // ESM-only allowlisted node_modules (see transformIgnorePatterns): transpile to CJS.
+    '^.+\\.js$': [
+      'ts-jest',
+      {
+        tsconfig: '<rootDir>/tsconfig.json',
+        allowJs: true,
+      },
+    ],
   },
+  // otplib's @scure/* transitive deps ship ESM-only: transform them instead of
+  // ignoring the whole node_modules tree.
+  transformIgnorePatterns: ['/node_modules/(?!(@scure|@noble)/)'],
   testMatch: ['**/__tests__/**/*.test.ts'],
   setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
   // v8 provider: babel-plugin-istanbul crashes on this tree

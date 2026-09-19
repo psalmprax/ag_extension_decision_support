@@ -9,6 +9,7 @@ import {
     getMirrorOutbox,
     resetMirrorForTests,
 } from '../offlineQueueMirror';
+import { setAuthToken } from '../authToken';
 import type { QueuedRequest } from '../offlineTypes';
 
 const makeItem = (overrides: Partial<QueuedRequest> = {}): QueuedRequest => ({
@@ -43,13 +44,8 @@ describe('offlineQueueMirror', () => {
         vi.restoreAllMocks();
     });
 
-    const setAuthToken = async (token: string | null) => {
-        if (token === null) {
-            await browser.storage.local.remove('authToken');
-        } else {
-            await browser.storage.local.set({ authToken: token });
-        }
-    };
+    // Tokens are seeded through the shared store (imported above) so the test exercises
+    // the same storage area the mirror reads from (storage.session when available).
 
     it('delivers an upsert to /offline/queue with sanitized payload', async () => {
         await setAuthToken('token-1');

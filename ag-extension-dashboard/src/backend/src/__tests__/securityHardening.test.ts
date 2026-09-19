@@ -70,6 +70,40 @@ describe('Security Hardening Pillar (MFA, Sessions, Lockout)', () => {
       expect(typeof isValid).toBe('boolean');
     });
 
+    it('matches RFC 6238 Appendix B SHA-1 vectors (interop with vetted implementations)', () => {
+      // RFC 6238 test secret "12345678901234567890" (20 ASCII bytes), 30s step, 6-digit truncation.
+      const secret = base32Encode(Buffer.from('12345678901234567890', 'ascii'));
+      const vectors: Array<[number, string]> = [
+        [59, '287082'],
+        [1111111109, '081804'],
+        [1111111111, '050471'],
+        [1234567890, '005924'],
+        [2000000000, '279037'],
+      ];
+      for (const [unixTime, expected] of vectors) {
+        expect(generateTotpCode(secret, 30, unixTime * 1000)).toBe(expected);
+      }
+    });
+
+    it('rejects malformed base32 secrets and sub-80-bit keys (fail-closed)', () => {
+      expect(() => base32Decode('!!!!not-base32!!!!')).toThrow();
+      const shortSecret = base32Encode(Buffer.from('short', 'ascii'));
+      expect(() => generateTotpCode(shortSecret, 30, Date.now())).toThrow();
+    });
+
+    it('interoperates with the vetted otplib implementation (both directions)', async () => {
+      const { TOTP, NobleCryptoPlugin, ScureBase32Plugin } = await import('otplib');
+      const plugins = { crypto: new NobleCryptoPlugin(), base32: new ScureBase32Plugin() };
+      const { secret } = generateMfaSecret('officer@example.com');
+      const totp = new TOTP({ secret, ...plugins });
+      // Ours → theirs: a code we generate verifies under otplib.
+      const ours = generateTotpCode(secret, 30, Date.now());
+      await expect(totp.verify(ours).then(r => r.valid)).resolves.toBe(true);
+      // Theirs → ours: a code otplib generates verifies under our checker.
+      const theirs = await totp.generate();
+      expect(verifyTotp(theirs, secret, 1, 30, Date.now())).toBe(true);
+    });
+
     it('generates 8 formatted backup codes', () => {
       const codes = generateBackupCodes(8);
       expect(codes).toHaveLength(8);
@@ -77,7 +111,7 @@ describe('Security Hardening Pillar (MFA, Sessions, Lockout)', () => {
     });
 
     it('consumes a valid backup code and updates database', async () => {
-      mockQuery.mockResolvedValueOnce({ rows: [] });
+      mockQuery.mockResolvedValueOnce({ rows: [{ mfa_backup_codes: ['BBBB-2222', 'CCCC-3333'] }] });
       const initialCodes = ['AAAA-1111', 'BBBB-2222', 'CCCC-3333'];
 
       const result = await verifyAndConsumeBackupCode('user-1', 'aaaa-1111', initialCodes);
@@ -92,6 +126,18 @@ describe('Security Hardening Pillar (MFA, Sessions, Lockout)', () => {
       expect(result.valid).toBe(false);
       expect(result.remainingCodes).toEqual(initialCodes);
       expect(mockQuery).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when the consume cannot be confirmed (DB error)', async () => {
+      mockQuery.mockRejectedValueOnce(new Error('connection terminated'));
+      const result = await verifyAndConsumeBackupCode('user-1', 'aaaa-1111', ['AAAA-1111']);
+      expect(result.valid).toBe(false);
+    });
+
+    it('fails closed when the guard matches no row (already spent / concurrent use)', async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+      const result = await verifyAndConsumeBackupCode('user-1', 'aaaa-1111', ['AAAA-1111']);
+      expect(result.valid).toBe(false);
     });
   });
 
@@ -137,13 +183,22 @@ describe('Security Hardening Pillar (MFA, Sessions, Lockout)', () => {
       expect(mockQuery.mock.calls.length).toBe(callsBefore);
     });
 
+    it('rejects row-less tokens when legacy no-row tokens are disabled', async () => {
+      process.env.SESSION_ALLOW_LEGACY_NO_ROW_TOKENS = 'false';
+      try {
+        mockQuery.mockResolvedValueOnce({ rows: [] });
+        await expect(isSessionValid('token-legacy-disabled-1')).resolves.toBe(false);
+      } finally {
+        delete process.env.SESSION_ALLOW_LEGACY_NO_ROW_TOKENS;
+      }
+    });
     it('rejects sessions revoked in the DB by another instance', async () => {
       mockQuery.mockResolvedValueOnce({ rows: [{ is_revoked: true, expires_at: '2099-01-01T00:00:00Z' }] });
       expect(await isSessionValid('token-revoked-elsewhere')).toBe(false);
     });
 
     it('rejects sessions whose DB row has expired', async () => {
-      mockQuery.mockResolvedValueOnce({ rows: [{ is_revoked: false, expires_at: '2000-01-01T00:00:00Z' }] });
+      mockQuery.mockResolvedValueOnce({ rows: [{ is_revoked: false, is_active: true, expires_at: '2000-01-01T00:00:00Z' }] });
       expect(await isSessionValid('token-expired-row')).toBe(false);
     });
 

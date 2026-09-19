@@ -241,7 +241,10 @@ export const fieldSchemas = {
         areaHectares: z.number().positive().optional(),
         soilType: z.string().optional(),
         soilPh: z.number().min(0).max(14).optional(),
-        boundaryCoordinates: z.any().optional(),
+        boundaryCoordinates: z.array(z.object({
+            lat: z.number().min(-90).max(90),
+            lng: z.number().min(-180).max(180),
+        })).min(3).max(500).optional(),
     }),
 
     update: z.object({
@@ -249,7 +252,10 @@ export const fieldSchemas = {
         areaHectares: z.number().positive().optional(),
         soilType: z.string().optional(),
         soilPh: z.number().min(0).max(14).optional(),
-        boundaryCoordinates: z.any().optional(),
+        boundaryCoordinates: z.array(z.object({
+            lat: z.number().min(-90).max(90),
+            lng: z.number().min(-180).max(180),
+        })).min(3).max(500).optional(),
         isActive: z.boolean().optional(),
     }),
 };

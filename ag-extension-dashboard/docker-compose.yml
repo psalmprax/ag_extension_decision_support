@@ -21,12 +21,18 @@ services:
       dockerfile: Dockerfile.db
     container_name: ag-dashboard-db
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       POSTGRES_USER: ${DATABASE_USER:-postgres}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
       POSTGRES_DB: ${DATABASE_NAME:-ag_extension}
+    # Loopback-only bind. NOTE: the host side MUST carry an explicit
+    # `127.0.0.1:` prefix — a bare `DATABASE_PORT=7501` in .env would bind
+    # Postgres to 0.0.0.0 and bypass Traefik entirely. DATABASE_BIND_IP lets a
+    # deliberate remote-bind override (e.g. a bastion host), default loopback.
     ports:
-      - "${DATABASE_PORT:-127.0.0.1:7501}:5432"
+      - "${DATABASE_BIND_IP:-127.0.0.1}:${DATABASE_PORT:-7501}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -43,35 +49,100 @@ services:
     image: redis:alpine
     container_name: ag-dashboard-redis
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    # Container env for the healthcheck below: $$ defers expansion to runtime
+    # inside the container, so the password never appears in healthcheck args.
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-agext_redis_2024}
+    # Cache instance: LRU eviction is fine here. NOT used by BullMQ — see redis-queue.
     command: redis-server --requirepass ${REDIS_PASSWORD:-agext_redis_2024} --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
-      - "${REDIS_PORT:-127.0.0.1:7502}:6379"
+      - "${REDIS_BIND_IP:-127.0.0.1}:${REDIS_PORT:-7502}:6379"
     volumes:
       - redis_data:/data
     networks:
       - ag-network
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-agext_redis_2024}", "ping"]
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a \"$$REDIS_PASSWORD\" ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # Dedicated Redis for BullMQ queues (scheduled SMS/emails/notifications).
+  # noeviction: under memory pressure writes fail loudly instead of silently
+  # evicting pending jobs — LRU on queue data means lost scheduled messages.
+  # appendonly: AOF with fsync everysec bounds job loss to ~1s on crash, vs the
+  # RDB default which can lose the entire snapshot window of scheduled sends.
+  redis-queue:
+    image: redis:alpine
+    container_name: ag-dashboard-redis-queue
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    # Container env for the healthcheck below: $$ defers expansion to runtime
+    # inside the container, so the password never appears in healthcheck args.
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-agext_redis_2024}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-agext_redis_2024} --maxmemory 256mb --maxmemory-policy noeviction --appendonly yes --appendfsync everysec
+    # 7503 is the frontend; 7504-7506 are reserved for optional agent services.
+    ports:
+      - "${REDIS_QUEUE_BIND_IP:-127.0.0.1}:${REDIS_QUEUE_PORT:-7507}:6379"
+    volumes:
+      - redis_queue_data:/data
+    networks:
+      - ag-network
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a \"$$REDIS_PASSWORD\" ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Docker Socket Proxy ─────────────────────────────────────
+  # Least-privilege gateway in front of /var/run/docker.sock. Traefik only needs to
+  # LIST containers/networks to auto-discover backends; a direct socket mount would
+  # give a compromised Traefik root-equivalent access to the host (create containers,
+  # mount the filesystem, reach other services). This proxy exposes read-only
+  # discovery endpoints only — no container exec, start/stop, image, volume, or
+  # swarm APIs.
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: ag-docker-socket-proxy
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      CONTAINERS: 1   # GET /containers/* — Traefik service discovery
+      NETWORKS: 1     # GET /networks/*
+      VERSION: 1      # GET /version
+      POST: 0         # no mutating requests
+      # Everything else defaults to 0 (denied): exec, images, volumes, swarm.
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - ag-network
+    tmpfs:
+      - /tmp
+
   # ── Reverse Proxy ─────────────────────────────────────────
-  # Traefik auto-discovers services via Docker labels.
+  # Traefik auto-discovers services via Docker labels — through the read-only
+  # socket proxy above, never the raw docker.sock.
   # Dev: HTTP only on port 80.
   # Prod: add -f docker-compose.prod.yml for HTTPS + Let's Encrypt.
   traefik:
     image: traefik:v3.7
     container_name: ag-traefik
+    depends_on:
+      - docker-socket-proxy
     command:
       - "--providers.docker=true"
+      - "--providers.docker.endpoint=tcp://docker-socket-proxy:2375"
       - "--providers.docker.exposedByDefault=false"
       - "--providers.docker.network=ag-network"
       - "--entrypoints.web.address=:80"
     ports:
       - "${TRAEFIK_HTTP_PORT:-80}:80"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+    volumes: []
     networks:
       - ag-network
     restart: unless-stopped
@@ -79,6 +150,13 @@ services:
   # ── Application Services (dev default, prod override) ──────
 
   backend:
+    # Image pin: BACKEND_IMAGE_ID (written by deploy-all.yml after the bake) pins
+    # the service to the exact immutable image ID built for this deploy, so a
+    # concurrent retag of :latest can't change what runs. Falls back to the
+    # mutable tag for plain `docker compose up --build` dev flows.
+    image: ${BACKEND_IMAGE_ID:-ag-extension-dashboard-backend:latest}
+    security_opt:
+      - no-new-privileges:true
     build:
       # Monorepo root so the shared API contract (ag-extension-shared) is in scope.
       context: ..
@@ -92,12 +170,15 @@ services:
           memory: ${BACKEND_MEMORY_LIMIT:-1G}
           cpus: ${BACKEND_CPU_LIMIT:-1.0}
     ports:
-      - "${BACKEND_PORT:-127.0.0.1:7500}:3001"
+      - "${BACKEND_BIND_IP:-127.0.0.1}:${BACKEND_PORT:-7500}:3001"
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@app-db:5432/${DATABASE_NAME:-ag_extension}?schema=public
       REDIS_URL: redis://:${REDIS_PASSWORD:-agext_redis_2024}@redis:6379
+      # BullMQ goes to the dedicated noeviction instance, never the LRU cache
+      QUEUE_REDIS_URL: redis://:${REDIS_PASSWORD:-agext_redis_2024}@redis-queue:6379
       PORT: 3001
       JWT_SECRET: ${JWT_SECRET}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -148,8 +229,12 @@ services:
       MPESA_PASSKEY: ${MPESA_PASSKEY:-}
       MPESA_CALLBACK_SECRET: ${MPESA_CALLBACK_SECRET:-}
       MPESA_KES_PER_USD: ${MPESA_KES_PER_USD:-}
-      DEMO_ENABLED: ${DEMO_ENABLED:-true}
-      DEMO_PASSWORD: ${DEMO_PASSWORD:-demo-trial-2024}
+      # Demo login is opt-in everywhere now — no environment gets it by
+      # default. (The base compose used to default DEMO_ENABLED=true with a
+      # publicly-known fallback password, granting a free extension_officer
+      # account on any `docker compose up` that forgot to set the vars.)
+      DEMO_ENABLED: ${DEMO_ENABLED:-false}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:7503}
     depends_on:
@@ -157,12 +242,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      redis-queue:
+        condition: service_healthy
     networks:
       - ag-network
       - ettametta_ettametta
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend-dev.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`) || Host(`145.223.97.248`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
+      - "traefik.http.routers.backend-dev.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
       - "traefik.http.routers.backend-dev.entrypoints=web"
       - "traefik.http.routers.backend-dev.middlewares=https-redirect"
       - "traefik.http.services.backend.loadbalancer.server.port=3001"
@@ -174,17 +261,20 @@ services:
       - "traefik.http.routers.backend-dev-secure.tls.certresolver=letsencrypt"
       - "traefik.http.routers.backend-dev-secure.tls.domains[0].main=www.gpexts.com"
       - "traefik.http.routers.backend-dev-secure.tls.domains[0].sans=gpexts.com"
-      - "traefik.http.routers.backend-dev-secure.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`) || Host(`145.223.97.248`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
+      - "traefik.http.routers.backend-dev-secure.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
 
   frontend:
+    image: ${FRONTEND_IMAGE_ID:-ag-extension-dashboard-frontend:latest}
     build:
       context: ..
       dockerfile: ag-extension-dashboard/src/frontend/Dockerfile
       target: ${FRONTEND_DOCKER_TARGET:-development}
     container_name: ag-dashboard-frontend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     ports:
-      - "${FRONTEND_PORT:-127.0.0.1:7503}:5173"
+      - "${FRONTEND_BIND_IP:-127.0.0.1}:${FRONTEND_PORT:-7503}:5173"
     environment:
       - VITE_API_URL=${VITE_API_URL:-/api}
       - VITE_WS_URL=${VITE_WS_URL:-}
@@ -194,7 +284,7 @@ services:
       - ag-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend-dev.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`) || Host(`145.223.97.248`)"
+      - "traefik.http.routers.frontend-dev.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`)"
       - "traefik.http.routers.frontend-dev.entrypoints=web"
       - "traefik.http.routers.frontend-dev.middlewares=https-redirect"
       - "traefik.http.routers.frontend-dev-secure.entrypoints=websecure"
@@ -202,7 +292,7 @@ services:
       - "traefik.http.routers.frontend-dev-secure.tls.certresolver=letsencrypt"
       - "traefik.http.routers.frontend-dev-secure.tls.domains[0].main=www.gpexts.com"
       - "traefik.http.routers.frontend-dev-secure.tls.domains[0].sans=gpexts.com"
-      - "traefik.http.routers.frontend-dev-secure.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`) || Host(`145.223.97.248`)"
+      - "traefik.http.routers.frontend-dev-secure.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`)"
 
   # ── Local AI (optional) ───────────────────────────────────
   # Disabled by default; enable with COMPOSE_PROFILES=ai
@@ -283,6 +373,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  redis_queue_data:
   ollama_data:
   db_backups:
   clamav_db:

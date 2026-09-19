@@ -11,23 +11,12 @@ import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
-import { MessageAccessError } from '@/services/messageAccessService';
+import { MessageAccessError, resolveFarmerId } from '@/services/messageAccessService';
 import { getRealtimeServer } from '@/services/realtimeHub';
 
 const router = Router();
 
 type AuthedRequest = Request & { user?: AuthenticatedRequestUser };
-
-/**
- * Helper to get farmer record id for a farmer user account.
- */
-async function resolveFarmerId(userId: string): Promise<string | null> {
-  const { rows } = await query<{ id: string }>(
-    `SELECT id FROM farmers WHERE user_id = $1 OR id = $1 LIMIT 1`,
-    [userId]
-  );
-  return rows[0]?.id || null;
-}
 
 /**
  * Enforce message write-scope for chat turns:

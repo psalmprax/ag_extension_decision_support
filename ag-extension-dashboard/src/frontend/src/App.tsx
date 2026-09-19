@@ -34,11 +34,13 @@ import { useAppSearch } from './hooks/useAppSearch';
 import { useAppChat } from './hooks/useAppChat';
 import { useAppTheme } from './hooks/useAppTheme';
 import { useAppBootstrap } from './hooks/useAppBootstrap';
-import { useAppAuth } from './hooks/useAppAuth';
+import { useAppAuth, hasAuthSession } from './hooks/useAppAuth';
 import { useAppModalState } from './hooks/useAppModalState';
 import { useAppQueries } from './hooks/useAppQueries';
 import { useAppMenuActions } from './hooks/useAppMenuActions';
 import { fetchUnreadCount } from '@/api/notificationService';
+import { ensurePersistentQueueStorage } from '@/api/syncQueueService';
+import { OfflineQueueBanner } from './components/common/OfflineQueueBanner';
 
 // Lazy loaded components
 const LandingPage = lazy(() =>
@@ -118,6 +120,12 @@ function App() {
   const prevTabRef = React.useRef(activeTab);
 
   React.useEffect(() => {
+    // Request persistent storage once so the offline mutation queue survives
+    // browser storage pressure (eviction = silent field-data loss).
+    void ensurePersistentQueueStorage();
+  }, []);
+
+  React.useEffect(() => {
     const pathChanged = prevPathRef.current === null || prevPathRef.current !== location.pathname;
     const tabChanged = prevTabRef.current !== activeTab;
     prevPathRef.current = location.pathname;
@@ -144,10 +152,10 @@ function App() {
   const { user, isOfficer } = useAppAuth(storeUser, setUser as (user: unknown) => void);
   const effectiveUser = user || storeUser;
 
-  // Logout handler
+  // Logout handler — the backend clears the auth cookies; only the cached
+  // profile lives in localStorage.
   const handleLogout = async () => {
     await apiLogout();
-    localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
     window.location.href = '/login';
@@ -200,7 +208,7 @@ function App() {
 
   // Fetch unread notification count
   React.useEffect(() => {
-    if (!storeUser || !localStorage.getItem('token')) return;
+    if (!storeUser || !hasAuthSession()) return;
     const loadUnreadCount = async () => {
       try {
         setApiUnreadCount(await fetchUnreadCount());
@@ -486,6 +494,8 @@ function App() {
         >
           {t('skip_to_main_content') || 'Skip to main content'}
         </a>
+
+        <OfflineQueueBanner />
 
         <AppHeader
           sidebarOpen={sidebarOpen}

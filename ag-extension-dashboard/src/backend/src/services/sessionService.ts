@@ -24,12 +24,6 @@ export interface UserSessionRecord {
 // round-trip for the common "just revoked here" case.
 const revokedTokenHashes = new Set<string>();
 
-// Short-lived positive cache so hot paths don't hit the DB on every request.
-// Revocation invalidates the entry immediately in-process; other instances see
-// the DB change within VALIDITY_CACHE_TTL_MS.
-const VALIDITY_CACHE_TTL_MS = 30_000;
-const validityCache = new Map<string, number>(); // tokenHash -> expiresAt(ms)
-
 export function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
@@ -38,38 +32,47 @@ export function hashToken(token: string): string {
  * Validate a bearer token against the session store.
  * - Revoked or expired session row → false
  * - No session row (legacy/demo tokens issued without createSession) → true
- * - DB error → true (fail-open on availability, logged) so an outage doesn't
- *   lock every user out; JWT signature/expiry is still enforced by the caller.
+ * - DB error → false (fail-closed on security state, logged). Callers enforce
+ *   JWT signature/expiry independently; unknown revocation state must not pass.
  */
 export async function isSessionValid(token: string): Promise<boolean> {
   if (!token) return false;
   const tokenHash = hashToken(token);
   if (revokedTokenHashes.has(tokenHash)) return false;
 
-  // Cross-replica revocation list (Redis). Checked before the positive cache so a
-  // revoke on another node takes effect immediately rather than after 30s.
+  // Cross-replica revocations can reject a request without a database round trip.
   if (await inSet(REVOKED_SET, tokenHash)) {
     revokedTokenHashes.add(tokenHash);
-    validityCache.delete(tokenHash);
     return false;
   }
 
-  const cachedUntil = validityCache.get(tokenHash);
-  if (cachedUntil && cachedUntil > Date.now()) return true;
-
+  // Recheck account status on every request, including when another replica disabled it.
   return await checkSessionInDatabase(tokenHash);
 }
 
 async function checkSessionInDatabase(tokenHash: string): Promise<boolean> {
   try {
     const res = await query(
-      `SELECT is_revoked, expires_at FROM user_sessions WHERE token_hash = $1 LIMIT 1`,
+      `SELECT s.is_revoked, s.expires_at, u.is_active
+       FROM user_sessions s LEFT JOIN users u ON u.id = s.user_id
+       WHERE s.token_hash = $1 LIMIT 1`,
       [tokenHash],
     );
     const row = res.rows[0] as
-      { is_revoked?: boolean; expires_at?: string | Date } | undefined;
-    if (row) {
-      if (row.is_revoked) {
+      { is_revoked: boolean; expires_at: string | Date; is_active: boolean | null } | undefined;
+    if (!row) {
+      // Legacy/demo tokens issued without createSession. Default denies them
+      // in production and allows them elsewhere for backwards compatibility;
+      // SESSION_ALLOW_LEGACY_NO_ROW_TOKENS overrides explicitly either way.
+      const flag = process.env.SESSION_ALLOW_LEGACY_NO_ROW_TOKENS;
+      const legacyAllowed = flag !== undefined ? flag === 'true' : process.env.NODE_ENV !== 'production';
+      if (!legacyAllowed) {
+        logger.warn('Rejecting bearer token with no session row (legacy tokens disabled)');
+        return false;
+      }
+      logger.warn('Allowing bearer token with no session row (legacy/demo token; JWT still enforced by caller)');
+    } else {
+      if (row.is_revoked || row.is_active !== true) {
         revokedTokenHashes.add(tokenHash);
         return false;
       }
@@ -79,22 +82,13 @@ async function checkSessionInDatabase(tokenHash: string): Promise<boolean> {
       }
     }
 
-    updateValidityCache(tokenHash);
     return true;
   } catch (error) {
     logger.warn(
-      "Session validity lookup failed; allowing request on JWT alone:",
+      "Session validity lookup failed; denying request on unknown revocation state:",
       error,
     );
-    return true;
-  }
-}
-
-function updateValidityCache(tokenHash: string): void {
-  validityCache.set(tokenHash, Date.now() + VALIDITY_CACHE_TTL_MS);
-  if (validityCache.size > 10_000) {
-    const now = Date.now();
-    for (const [k, v] of validityCache) if (v <= now) validityCache.delete(k);
+    return false;
   }
 }
 
@@ -104,7 +98,6 @@ const REVOKED_TTL_MS = 8 * 24 * 60 * 60 * 1000;
 
 function markRevokedLocally(tokenHash: string): void {
   revokedTokenHashes.add(tokenHash);
-  validityCache.delete(tokenHash);
   // Best-effort publish to other replicas; the DB row is still authoritative.
   void addToSet(REVOKED_SET, tokenHash, REVOKED_TTL_MS).catch((err: unknown) =>
     logger.warn("Failed to publish session revocation to shared state:", err),
@@ -160,6 +153,30 @@ export async function createSession(params: {
   }
 }
 
+/**
+ * Revoke a session by raw bearer token (logout). Marks the DB row revoked and
+ * publishes the revocation cross-replica so the token dies immediately.
+ * Returns false when no session row exists (legacy/demo tokens issued without
+ * createSession) — callers still get a valid logout because revokeToken's
+ * in-process/Redis revocation list makes isSessionValid fail for the token.
+ */
+export async function revokeSessionByToken(token: string): Promise<boolean> {
+  const tokenHash = hashToken(token);
+  // Publish first so a concurrent request on any replica sees the revocation
+  // even if the DB update below fails or the row is missing.
+  markRevokedLocally(tokenHash);
+  try {
+    const res = await query(
+      `UPDATE user_sessions SET is_revoked = true WHERE token_hash = $1 AND is_revoked = false`,
+      [tokenHash],
+    );
+    return (res.rowCount ?? 0) > 0;
+  } catch (error) {
+    logger.error("Failed to revoke session by token:", error);
+    return false;
+  }
+}
+
 export function revokeToken(token: string): void {
   markRevokedLocally(hashToken(token));
 }
@@ -208,7 +225,7 @@ export async function revokeAllUserSessions(userId: string): Promise<number> {
     return res.rowCount ?? res.rows.length ?? 0;
   } catch (error) {
     logger.error("Failed to revoke all user sessions:", error);
-    return 0;
+    throw error;
   }
 }
 

@@ -2,10 +2,18 @@
   "name": "ag-extension-decision-support",
   "private": true,
   "description": "Ag Extension Decision Support System",
+  "workspaces": [
+    "ag-extension-shared",
+    "ag-extension-browser-ext",
+    "ag-extension-dashboard/src/*"
+  ],
   "scripts": {
     "build:backend": "cd ag-extension-dashboard/src/backend && npm run build",
     "build:frontend": "cd ag-extension-dashboard/src/frontend && npm run build:docker",
     "build": "npm run build:backend && npm run build:frontend",
+    "typecheck:frontend": "cd ag-extension-dashboard/src/frontend && npm run typecheck",
+    "typecheck:backend": "cd ag-extension-dashboard/src/backend && npm run typecheck",
+    "typecheck": "npm run typecheck:frontend && npm run typecheck:backend",
     "test:backend": "cd ag-extension-dashboard/src/backend && npm test",
     "test:frontend": "cd ag-extension-dashboard/src/frontend && npm run test",
     "test": "npm run test:backend && npm run test:frontend",
@@ -25,7 +33,16 @@
     "fallow:audit": "fallow audit --base HEAD",
     "verify:anti-flop": "python3 scripts/verify_anti_flop.py",
     "verify:anti-hallucination": "python3 scripts/verify_anti_hallucination.py",
-    "verify:anti": "npm run verify:anti-flop && npm run verify:anti-hallucination"
+    "verify:anti": "npm run verify:anti-flop && npm run verify:anti-hallucination",
+    "assurance:check": "node ag-extension-dashboard/scripts/assurance-gates.cjs"
+  },
+  "overrides": {
+    "fallow": {
+      "typescript": "~5.3.3"
+    },
+    "fallow-type-aware": {
+      "typescript": "~5.3.3"
+    }
   },
   "dependencies": {
     "playwright": "^1.59.1"
@@ -33,6 +50,7 @@
   "devDependencies": {
     "@opengsd/gsd-pi": "^1.2.0",
     "fallow": "3.17.0",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "typescript": "5.3.3"
   }
 }

@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Server as SocketServer, Socket } from 'socket.io';
+import type { IncomingMessage } from 'http';
 import { logger } from '@/utils/logger';
 import jwt from 'jsonwebtoken';
 import { config } from '@/config';
+import { AUTH_COOKIE_NAME } from '@/middleware/authCookie';
+import { assertConversationAccess, messageAccessErrorDetail } from '@/services/messageAccessService';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface UserSocket {
@@ -30,30 +33,76 @@ function checkRateLimit(socketId: string): boolean {
     return limit.count <= RATE_LIMIT_MAX;
 }
 
+/**
+ * Conversations this socket was authorized to read/write during this connection.
+ * Populated only by join_conversation, which verifies membership, so message and
+ * typing events can never target a room the socket did not legitimately join.
+ */
+function allowedConversations(socket: Socket): Set<string> {
+    const data = socket.data as { allowedConversations?: Set<string> };
+    if (!data.allowedConversations) data.allowedConversations = new Set<string>();
+    return data.allowedConversations;
+}
+
+async function authorizeConversation(socket: Socket, conversationId: string): Promise<boolean> {
+    const user = socket.data.user as { userId: string; role: string } | undefined;
+    if (!user?.userId) return false;
+    try {
+        await assertConversationAccess({ userId: user.userId, role: user.role }, conversationId);
+        return true;
+    } catch (error) {
+        logger.warn(
+            `Socket ${socket.id} denied conversation ${conversationId}: ${messageAccessErrorDetail(error)}`
+        );
+        return false;
+    }
+}
+
 function setupConversationHandlers(socket: Socket, io: SocketServer) {
-    socket.on('join_conversation', (conversationId: string) => {
+    socket.on('join_conversation', async (conversationId: string) => {
         if (!checkRateLimit(socket.id)) return;
+        if (typeof conversationId !== 'string' || !conversationId) return;
+        // Membership check: without it any authenticated socket could join (and
+        // therefore read) an arbitrary conversation room.
+        if (!(await authorizeConversation(socket, conversationId))) {
+            socket.emit('conversation_access_denied', { conversationId });
+            return;
+        }
+        allowedConversations(socket).add(conversationId);
         socket.join(`conversation:${conversationId}`);
         logger.info(`Socket ${socket.id} joined conversation ${conversationId}`);
     });
 
     socket.on('leave_conversation', (conversationId: string) => {
         if (!checkRateLimit(socket.id)) return;
+        if (typeof conversationId !== 'string' || !conversationId) return;
+        allowedConversations(socket).delete(conversationId);
         socket.leave(`conversation:${conversationId}`);
     });
 
+    // Message/typing events are gated on the authorized-join set so a socket cannot
+    // broadcast into, or observe typing in, a conversation it never joined.
+    const isMember = (conversationId: unknown): conversationId is string =>
+        typeof conversationId === 'string' && allowedConversations(socket).has(conversationId);
+
     socket.on('chat_message', (data: { conversationId: string; message: Record<string, unknown> }) => {
         if (!checkRateLimit(socket.id)) return;
+        if (!data || !isMember(data.conversationId)) {
+            logger.warn(`Socket ${socket.id} dropped chat_message for a conversation it did not join`);
+            return;
+        }
         io.to(`conversation:${data.conversationId}`).emit('new_message', data.message);
     });
 
     socket.on('typing', (data: { conversationId: string; userId: string }) => {
         if (!checkRateLimit(socket.id)) return;
+        if (!data || !isMember(data.conversationId)) return;
         socket.to(`conversation:${data.conversationId}`).emit('user_typing', data.userId);
     });
 
     socket.on('stop_typing', (data: { conversationId: string; userId: string }) => {
         if (!checkRateLimit(socket.id)) return;
+        if (!data || !isMember(data.conversationId)) return;
         socket.to(`conversation:${data.conversationId}`).emit('user_stop_typing', data.userId);
     });
 }
@@ -94,18 +143,43 @@ function handleUserJoinRooms(socket: Socket) {
 
 export function initializeSocketHandlers(io: SocketServer): void {
     // Authentication middleware
-    io.use((socket, next) => {
+    io.use(async (socket, next) => {
         try {
-            const token = socket.handshake.auth.token || socket.handshake.query.token;
+            // Token sources, in order: handshake.auth.token (mobile/extension),
+            // then the httpOnly ag_token cookie (SPA — the browser attaches it
+            // automatically on the websocket upgrade request).
+            const handshakeToken = socket.handshake.auth?.token;
+            let token: string | undefined = typeof handshakeToken === 'string' ? handshakeToken : undefined;
+            if (!token) {
+                const cookieHeader = (socket.handshake.headers as IncomingMessage['headers']).cookie;
+                if (typeof cookieHeader === 'string') {
+                    const match = cookieHeader
+                        .split(';')
+                        .map(c => c.trim())
+                        .find(c => c.startsWith(`${AUTH_COOKIE_NAME}=`));
+                    if (match) token = decodeURIComponent(match.slice(AUTH_COOKIE_NAME.length + 1));
+                }
+            }
             
             if (!token) {
                 return next(new Error('Authentication required'));
             }
 
-            const decoded = jwt.verify(token, config.jwt.secret) as Record<string, any>;
+            const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ['HS256'] }) as Record<string, any>;
+            if (!decoded.userId) {
+                return next(new Error('Invalid authentication token'));
+            }
+
+            // Honor session revocation: a logged-out/killed JWT must not keep a
+            // live socket after reconnect.
+            const { isSessionValid } = await import('./sessionService');
+            if (!(await isSessionValid(token))) {
+                return next(new Error('Session has been revoked'));
+            }
+
             socket.data.user = {
-                userId: decoded.userId || decoded.id,
-                role: decoded.role || 'user'
+                userId: decoded.userId,
+                role: decoded.role
             };
             
             next();

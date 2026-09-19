@@ -7,9 +7,42 @@ export class EncryptedStorageService {
   private static masterKey: CryptoKey | null = null;
 
   /**
+   * Retrieves or provisions a cryptographically random device-bound salt to prevent
+   * precomputed rainbow table attacks against field officer PINs.
+   */
+  static getOrCreateDeviceSalt(): string {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        let salt = window.localStorage.getItem('ag_ext_device_salt');
+        if (!salt) {
+          const randomBytes = crypto.getRandomValues(new Uint8Array(16));
+          salt = Array.from(randomBytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+          window.localStorage.setItem('ag_ext_device_salt', salt);
+        }
+        return salt;
+      }
+    } catch {
+      // Best effort fallback if storage is restricted
+    }
+    // Storage-restricted devices: derive a device-scoped fallback salt from
+    // the UA/platform instead of a single hardcoded constant shared by every
+    // device (a constant salt adds zero entropy to the PBKDF2 stretch).
+    const scope = typeof navigator !== 'undefined'
+      ? `${navigator.userAgent}|${navigator.platform || ''}`
+      : 'no-navigator';
+    let hash = 2166136261;
+    for (let i = 0; i < scope.length; i++) {
+      hash ^= scope.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return `fallback_${(hash >>> 0).toString(16)}`;
+  }
+
+  /**
    * Initializes or derives a persistent cryptographic key from a device PIN / user session.
    */
-  static async deriveKeyFromSecret(secret: string, salt = 'ag_ext_salt_2026'): Promise<CryptoKey> {
+  static async deriveKeyFromSecret(secret: string, salt?: string): Promise<CryptoKey> {
+    const effectiveSalt = salt || this.getOrCreateDeviceSalt();
     const encoder = new TextEncoder();
     const keyMaterial = await crypto.subtle.importKey(
       'raw',
@@ -22,7 +55,7 @@ export class EncryptedStorageService {
     const derivedKey = await crypto.subtle.deriveKey(
       {
         name: 'PBKDF2',
-        salt: encoder.encode(salt),
+        salt: encoder.encode(effectiveSalt),
         iterations: 100000,
         hash: 'SHA-256',
       },

@@ -41,6 +41,7 @@ A **flop** is an incomplete implementation, an introduced regression, a broken b
   - Security gates: `npm run security:test` and `npm run security:audit`.
   - Database schema integrity: `npm run check:drift` and `scripts/prisma-migration-replay-check.cjs`.
   - Shared contract sync: `npm run shared:check`.
+- Production-touching workflows (`deploy-all.yml` production job, `reset-admin-prod.yml`, `diagnostics-prod.yml`, `ssl-cert-fix.yml`) must declare `environment: production` (required-reviewer approval) and destructive inputs must default to **false** — a routine manual run must never mutate production on its own.
 
 ### 4. Zero-Connectivity & Edge Resilience (Zero-Conn Field Edge)
 - Agricultural field extension workers operate in rural areas with erratic or zero cellular network access.
@@ -51,9 +52,12 @@ A **flop** is an incomplete implementation, an introduced regression, a broken b
 
 ### 5. Resource Protection & Scale Safety
 - **Media & Audio Streaming**: Voice notes (Whisper STT) and high-resolution crop imagery must be streamed in chunks (using streams or presigned S3 URLs via `@aws-sdk/client-s3`), never buffered monolithically in memory.
-- **Queue Limits**: BullMQ workers and Redis queues must specify concurrency limits, TTLs, and job eviction policies to avoid Redis memory exhaustion.
+- **Queue Limits**: BullMQ workers and Redis queues must specify concurrency limits, TTLs, and job eviction policies to avoid Redis memory exhaustion. The queue Redis (`redis-queue`) must run `--appendonly yes` (AOF, `appendfsync everysec`) — RDB-only snapshots can lose an entire snapshot window of scheduled SMS/email jobs on crash.
 - **Geospatial & Spatial Calculations**: WGS-84 polygon acreage calculations and GeoJSON spatial lookups must avoid $O(N^2)$ brute-force intersection loops; use spatial indexing (e.g. PostGIS indexes, R-tree bounds).
 - **Rate Limiting & Token Budgets**: All LLM queries (Gemini, Anthropic, Groq) and external weather API calls (Open-Meteo, NOAA) must be wrapped in rate limiters, retries with exponential backoff, and caching layers (`semanticCacheService.ts`).
+- **Singleton Workers Must Be Leader-Gated**: Any interval worker with one-deployment side effects (alert dispatch, ingestion crawls, outreach delivery, self-healing recovery, agent task loop, SMS polling fallbacks) must gate ticks through Redis lease election (`services/leaderElection.ts`). Election is **fail-closed**: when Redis is unavailable, singleton work does not run (set `ALLOW_STATELESS_LEADER=true` only for single-node dev). Workers that are already exactly-once by construction (BullMQ consumers with atomic row claims, `concurrency: 1`) are exempt.
+- **Fail-Fast Boot on Load-Bearing Dependencies**: In production, a failed database initialization must crash the process (`process.exit(1)`), never serve a zombie API that 500s every request. Boot-time schema mutation (`prisma db push`, ad-hoc `CREATE TABLE`) is forbidden in production — migrations are owned by the container entrypoint (`prisma migrate deploy`) before boot, so replicas never race.
+- **Complete Graceful Shutdown**: SIGTERM handling must stop interval workers first, drain HTTP (`close()` + `closeIdleConnections()`), release leader leases (immediate failover, not TTL-bound), close Socket.IO/adapter and BullMQ workers, then close DB/cache — every step under a hard timeout cap (`SHUTDOWN_TIMEOUT_MS`) so the process always exits. Unhandled rejections must log, not `exit(1)` the replica.
 
 ### 6. Git Hygiene & Branch Protection
 - In accordance with the project constitution (`CLAUDE.md`):
@@ -116,3 +120,61 @@ When a test, build, or container fails during development:
 3. Compare against canonical schemas in `ag-extension-dashboard/src/backend/prisma/schema.prisma` and `ag-extension-shared/src`.
 4. Validate environment configurations against `.env.example`.
 5. Fix the underlying root cause cleanly, adhering to Karpathy's rule of **surgical changes only**.
+
+---
+
+## 5. Compliance Record
+
+### 2026-09-14 — Security fail-closed remediation + grounding quarantine (stage)
+- Scope: TOTP hardening (RFC 6238 vectors + otplib interop), scrypt vault KDF, session fail-closed on DB error, webhook fail-closed + strict Twilio, typed parcel/yield schemas, FX staleness flags + settlement gate, voice/edge/satellite safety gates, OmniRoute spend cap, RAG grounding quarantine, offline-queue durability cap, provider eval / threshold backtest / field-verification harnesses.
+- Contract changes were intentional and approved: session fail-open→fail-closed, webhook dev-bypass removal, `yieldHistory`/`boundaryCoordinates` typing. Affected tests were updated to the new contracts, not deleted; mid-session regressions (39) were triaged to the new contracts plus one genuine Twilio proxy regression, fixed by stripping only the default `:443`.
+- Verification at commit: backend `tsc --noEmit` clean, frontend `tsc --noEmit` clean, eslint clean on touched files, backend full suite **90/90 suites, 830/830 tests**, frontend `syncQueueService` suite green.
+- Residual: `logger.crit` was missing on the real logger while pre-existing call sites invoked it — added (error-level emission); field calibration harnesses await one pilot season of data per `docs/FIELD_CALIBRATION_PROTOCOL.md`.
+
+### 2026-09-14 — Multi-replica scale + lifecycle hardening (stage, uncommitted)
+- Scope: Redis-lease leader election (`services/leaderElection.ts`, fail-closed, fencing tokens) gating alert/ingestion/outreach/agent-loop/self-healing/SMS-poll interval workers; production boot-time schema sync removed (entrypoint-owned `migrate deploy`); fail-fast DB boot in prod; full graceful shutdown (worker stop → HTTP drain → lease release → adapter/BullMQ close → DB/cache close, per-step timeout caps); adapter pub/sub clients retained and closed; `ssl-cert-fix.yml` `force_renew` default flipped to false + `environment: production` gates on prod-touching workflows; dead divergent `Dockerfile.production` pair deleted (docs updated); `redis-queue` AOF (`appendonly yes`, `appendfsync everysec`).
+- Correction of record: the Socket.IO Redis adapter was found **already wired** in `index.ts` — the audit finding was stale (grep scoped to `socketService.ts` only); the actual gap (adapter connections leaked on shutdown) is fixed.
+- Verification: backend `tsc --noEmit` clean, full suite **90/90 suites, 830/830 tests** (8 new `leaderElection` tests: acquire/renew/depose/fail-closed/stateless/release), `docker compose config` valid, all touched workflow YAMLs parse.
+- Residual: uncommitted at time of writing; staging should verify two-replica boot + SIGTERM failover handover before merge to master.
+
+### 2026-09-15 — Full flaw-analysis remediation (stage, uncommitted)
+- Scope: the entire 2026-09 flaw analysis (security, feature honesty, reliability, CI/CD) fixed end-to-end. Security: TOTP secret persisted server-side at `/mfa/setup` (client-supplied secret accepted no more), backup-code consume fail-closed (transactional), JWT `algorithms` pinned at every `jwt.verify`, Socket.IO `join_conversation` participant authorization, Python agents JWT_SECRET startup guard + dev-token admin gated to development, extension origin allowlist (`shared/apiOrigin.ts`) gating all three background fetch sites, session-only token storage, `injectToolbar` scope fix + `esModuleInterop: true` (typecheck net real).
+- Feature honesty: Sentinel-2 ingest implemented + wired into `routes/pillars/telemetry.ts`, PayPal one-time-sale lifecycle extracted to `paypalLifecycleService.ts` with signature-verified webhook (`routes/billing/paypalWebhook.ts`) + idempotent credit/refund + worker expiry sweep, WhatsApp templates render with params, multi-tenant compliance fail-closed for unknown tenants (tenant resolution now session-scoped), FAO alerts diff latest two published years, passport fields verified-or-unknown (no `fairTradeCertified: true` default, no fixed 0.85 carbon), NDVI-derived index disclosed as derived, fabricated `confidence: 0.88` removed across all 11 AI providers, KnowledgeBase/FloatingAIPill/FarmerChat no longer render canned answers as `verified_sources`/"Verified Advisory"/"LIVE" on failure, `/health` reports real config state.
+- Reliability: `paymentService` async init behind awaited `whenReady()` billing middleware, `prisma migrate deploy` moved out of API `execSync` path, `agentOrchestrator` completedTasks/handoffLog bounded (500/200), WebRTC stream refs + full teardown incl. modal-close, syncQueue quota errors surfaced as typed `QueueFullError`, store/chat mutations surface `success:false` responses, AbortController on conversation fetches, extension outbox persisted to `browser.storage.local` with cross-context replay.
+- CI/CD: `deploy-stage.yml` DEMO_ENABLED default `|| 'true'` → `|| 'false'`; deploy workflows pass `GITHUB_TOKEN` via `env`+`envs` (never in remote URLs, scripts no longer `set -x` over secrets); `concurrency` groups on all 9 workflows; `docker.sock` proxied through read-only `docker-socket-proxy` (base+prod compose); Redis healthchecks moved to `$$REDIS_PASSWORD` env (password out of healthcheck args); `deploy-safe.sh` health gates now exit 1 on failure; `deploy_stage_safe.sh` de-hardcoded (env-driven key/host, StrictHostKeyChecking=yes, remote health gates); extension `verify-security.js` rewritten from 3-check manifest grep to 17-check invariant suite (origin-allowlist wiring, session-only tokens, eval-scan, tsconfig net) — it caught and fixed a real ungated upload fetch on first run.
+- Verification: backend `tsc --noEmit` clean + **91/91 suites, 840/840 tests**, frontend `tsc --noEmit` clean + **50/50 suites, 255/255 tests**, extension `tsc --noEmit` clean + **2/2 suites, 17/17 tests**, `node scripts/verify-security.js` all 17 checks pass, `bash -n` on both deploy scripts, `docker compose config` valid for base+prod/staging/dev/agents merges, all workflow YAMLs parse.
+- Residual: PayPal billing remains one-time-sale passes (not auto-renewing profiles) — documented and lifecycle-managed; NDVI calibration harnesses still await pilot-season field data.
+
+### 2026-09-14 — CI lint remediation: complexity errors + warning cleanup (stage)
+- Scope: extracted `redactStringValue`/`redactObjectEntries` (`middleware/securityGate.ts`, 16→≤15) and `matchesWildcardSuffix` (`utils/corsOrigin.ts`, 18→≤15) with behavior-identical logic; removed 4 dead declarations (`token` in logout test, `jwt` import, `Request/Response/NextFunction` in swagger); typed `scheduledSms` test job as `Job<ScheduledSmsJobData>` (first attempt with a generic broke `tsc`, corrected before finishing).
+- Verification: eslint clean on all 6 CI-flagged files, backend `tsc --noEmit` clean, 33/33 tests pass across gate, CORS behavior (9, confirming identical logic), SMS dispatch, and logout suites.
+
+### 2026-09-14 — CI action-pin fix: trivy-action SHA typo (stage)
+- Scope: `security-audit.yml` backend/frontend scan steps pinned a nonexistent SHA (`...87db90`); corrected to the verified v0.29.0 commit (`...87dbb0`, confirmed via upstream `ls-remote`). Both steps updated, YAML re-validated.
+- Verification: `git ls-remote` match on `refs/tags/v0.29.0`, `yaml.safe_load` parse clean.
+
+### 2026-09-14 — CI tsc red: half-landed concurrent work completed (stage)
+- Root cause: two half-landed breakages — `ingestionWorker.ts` imported `runIfLeader` without its module file (sealed into 20741c5 from concurrent worktree state), and `completions.ts` called `guardAndEnrichAdvice` whose method existed only uncommitted. Plus 2 implicit-`any` catch params.
+- Fix: committed `leaderElection.ts` + tests (201+177 lines, fail-closed Redis leases, fencing tokens), the +40-line guard method, typed both catches `(err: unknown)`; refactored `runIfLeader` (complexity 44→within limit) into `runStatelessFallback`/`learnDeposal`/`ensureRenewalTimer`/`runLeaderTask` with identical behavior.
+- Verification: `tsc` clean, eslint clean, leaderElection 8/8 green, full suite **91/91, 835/835**. Commit credits concurrent work; no reverts of others' code.
+
+### 2026-09-14 — CI frontend red + fallow regression: half-landed test fixed, intentional API marked (stage)
+- Root cause (test): `syncQueueService.test.ts` (capacity contract) was committed without its `QueueFullError` source change — my own half-land. Committed the 20-line source diff; suite green including `--coverage` CI mode (5/5).
+- UX wiring (was unused-file flag): `OfflineQueueBanner` mounted in `App.tsx` + `ensurePersistentQueueStorage()` on boot.
+- Fallow triage: my share is zero — 4 harness files (`aiProviderEval`, `fieldVerification`, `satelliteIngest`, `thresholdBacktest`) marked `unused-file` per repo convention (documented pilot-season API), 2 queue error exports suppressed, 6 leaderElection API exports suppressed (file committed here; `stopAll` suppression reverted — genuinely consumed). Remaining delta (exports +7 incl. concurrent cookie/vision/SMS fallout, types +1) verified not attributable to this change set; left for owning authors rather than blanket-suppressed or rebased.
+- Verification: fallow delta +20→+6 attributable remainder, backend/frontend `tsc` clean, eslint clean, targeted suites green.
+- 2026-09-14 follow-up — baseline rebased 256→262 (authorized to unblock CI): per-export triage showed the entire remainder in concurrent authors' active areas (cookie migration, vision pipeline, SMS race, demo/alpha/soil/malware modules) — deleting their exports would be destructive, suppressing would hide their signal. Rebase is transparent (SHA-stamped, history preserved); future regressions still detected from the new floor. Genuinely dead code, if any, stays visible in the full report for owners to reap. Gate now delta +0.
+
+### 2026-09-14 — CI fallow +3: wire health consumer, mark in-flight API (stage)
+- Root cause: 6 CI-only flags all consumed by uncommitted concurrent work — except `degradationStatus`, whose consumer (`/health` wiring) was my own uncommitted change. Committed it.
+- Fix: committed `app.ts` health wiring; suppressed 5 in-flight-consumed exports with justification (`resetForTests`, `stopAll`, `consumeTtl`, `runBatchIngestion`, `stopIngestionWorker`) — additive comment lines, no semantic changes, self-clearing as stale warnings when consumers land. No rebase, no deletions of others' code.
+- Verification: `tsc`/`eslint` clean, leaderElection + ingestion worker suites green. CI is the final verifier (local tree carries concurrent dirt that shifts counts).
+
+### 2026-09-14 — CI tsc red: quarantine service file never committed (stage)
+- Root cause: `quarantineReview.test.ts` shipped without `quarantineReviewService.ts` — same half-land pattern as the queue test. Service was reviewed and tested locally but left untracked.
+- Fix: committed the service file (no changes needed — 5/5 green, `tsc` clean).
+- Process note: new-file pairs (source + test) must be staged together; added to pre-commit self-check.
+
+### 2026-09-14 — CI follow-up: unlanded route pair + doc additions (stage)
+- Same half-land pattern, second instance: quarantine review route + knowledge router mount were local-only while the service shipped. Landed together with my uncommitted ADR fuzz note and feed-owner table.
+- Verification: `tsc` clean, quarantine + knowledge suites green (5 + 27).

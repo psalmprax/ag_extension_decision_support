@@ -49,7 +49,8 @@ describe('GroqProvider reasoning & classification', () => {
 
         expect(result.answer).toBe('Here is the advice');
         expect(result.visuals).toEqual({ kpis: [{ label: 'pH', value: '6.5', status: 'good' }] });
-        expect(result.confidence).toBe(0.9);
+        // Providers no longer publish an uncalibrated confidence score.
+        expect(result.confidence).toBeUndefined();
 
         expect(mockChatCompletionsCreate).toHaveBeenCalledTimes(1);
         const args = mockChatCompletionsCreate.mock.calls[0][0];

@@ -48,6 +48,16 @@ export interface InputQuotaResult {
   };
 }
 
+export interface DwellTimeVerificationResult {
+  isValid: boolean;
+  dwellTimeMinutes: number;
+  minimumRequiredMinutes: number;
+  status: 'VERIFIED' | 'INSUFFICIENT_DWELL_TIME' | 'STATIONARY_SPOOFING_DETECTED' | 'INVALID_TIMESTAMPS';
+  riskScore: number;
+  details: string;
+  integrityHash: string;
+}
+
 // In-memory co-sign OTP store (with 15 min TTL)
 // Co-sign OTPs live in Redis (sharedState) so the farmer can confirm on any replica.
 const COSIGN_KEY = (visitId: string) => `cosign:${visitId}`;
@@ -386,7 +396,207 @@ export function calculateInputQuota(params: {
  * 6. Cryptographic Audit Hash-Chaining
  * Generates an immutable SHA-256 integrity signature for visit logs and input distributions.
  */
+export function canonicalJsonStringify(val: unknown): string {
+  if (val === null || typeof val !== 'object') {
+    return JSON.stringify(val);
+  }
+  if (val instanceof Date) {
+    return JSON.stringify(val.toISOString());
+  }
+  if (Array.isArray(val)) {
+    return `[${val.map(item => canonicalJsonStringify(item)).join(',')}]`;
+  }
+  const obj = val as Record<string, unknown>;
+  const keys = Object.keys(obj).sort();
+  const entries: string[] = [];
+  for (const k of keys) {
+    const v = obj[k];
+    if (v !== undefined && typeof v !== 'function' && typeof v !== 'symbol') {
+      entries.push(`${JSON.stringify(k)}:${canonicalJsonStringify(v)}`);
+    }
+  }
+  return `{${entries.join(',')}}`;
+}
+
 export function generateAuditIntegrityHash(record: Record<string, unknown>, previousHash = 'GENESIS_HASH'): string {
-  const serialized = JSON.stringify(record, Object.keys(record).sort());
+  const serialized = canonicalJsonStringify(record);
   return crypto.createHash('sha256').update(`${previousHash}:${serialized}`).digest('hex');
+}
+
+interface DwellTimeVerificationParams {
+  startedAt?: string | Date | null;
+  completedAt?: string | Date | null;
+  durationMinutes?: number | null;
+  officerId?: string;
+  farmerId?: string;
+  locationLat?: number | null;
+  locationLng?: number | null;
+  priorVisit?: {
+    farmerId?: string | null;
+    completedAt?: string | Date | null;
+    locationLat?: number | null;
+    locationLng?: number | null;
+  } | null;
+  minimumRequiredMinutes?: number;
+}
+
+function resolveDwellMinutes(params: DwellTimeVerificationParams, minRequired: number): number | DwellTimeVerificationResult {
+  let dwellMinutes = 0;
+
+  if (typeof params.durationMinutes === 'number' && Number.isFinite(params.durationMinutes)) {
+    dwellMinutes = params.durationMinutes;
+  } else if (params.startedAt && params.completedAt) {
+    const start = new Date(params.startedAt).getTime();
+    const end = new Date(params.completedAt).getTime();
+    if (isNaN(start) || isNaN(end) || end < start) {
+      const hash = generateAuditIntegrityHash({
+        officerId: params.officerId,
+        farmerId: params.farmerId,
+        status: 'INVALID_TIMESTAMPS',
+      });
+      return {
+        isValid: false,
+        dwellTimeMinutes: 0,
+        minimumRequiredMinutes: minRequired,
+        status: 'INVALID_TIMESTAMPS',
+        riskScore: 90,
+        details: 'Invalid timestamps: completedAt is before startedAt or timestamps are malformed.',
+        integrityHash: hash,
+      };
+    }
+    dwellMinutes = Math.round(((end - start) / 60000) * 10) / 10;
+  }
+
+  return dwellMinutes;
+}
+
+function checkPriorVisitInterval(
+  params: DwellTimeVerificationParams,
+  minRequired: number,
+  dwellMinutes: number
+): DwellTimeVerificationResult | null {
+  // Check temporal interval between consecutive visits (enforced across all consecutive visits)
+  const prevTimestamp = params.priorVisit?.completedAt;
+  const currTimestamp = params.completedAt || params.startedAt;
+  if (prevTimestamp && currTimestamp) {
+    const prevTime = new Date(prevTimestamp).getTime();
+    const currTime = new Date(currTimestamp).getTime();
+    if (!isNaN(prevTime) && !isNaN(currTime)) {
+      const diffMinutes = Math.abs(currTime - prevTime) / 60000;
+      if (diffMinutes < minRequired) {
+        const hash = generateAuditIntegrityHash({
+          officerId: params.officerId,
+          farmerId: params.farmerId,
+          diffMinutes,
+          status: 'STATIONARY_SPOOFING_DETECTED',
+        });
+        return {
+          isValid: false,
+          dwellTimeMinutes: dwellMinutes,
+          minimumRequiredMinutes: minRequired,
+          status: 'STATIONARY_SPOOFING_DETECTED',
+          riskScore: 95,
+          details: `Stationary spoofing detected: consecutive visits logged within ${Math.round(diffMinutes)} mins (< ${minRequired} min required on-parcel dwell).`,
+          integrityHash: hash,
+        };
+      }
+    }
+  }
+  return null;
+}
+
+function checkPriorVisitSpoofing(
+  params: DwellTimeVerificationParams,
+  minRequired: number,
+  dwellMinutes: number
+): DwellTimeVerificationResult | null {
+  if (!params.priorVisit || !params.officerId) return null;
+  const prevFarmerId = params.priorVisit.farmerId;
+  const isDistinctFarmer = Boolean(params.farmerId && prevFarmerId && params.farmerId !== prevFarmerId);
+
+  // Check identical coordinates (< 50m separation) for distinct farmers
+  if (
+    isDistinctFarmer &&
+    params.locationLat != null &&
+    params.locationLng != null &&
+    params.priorVisit.locationLat != null &&
+    params.priorVisit.locationLng != null
+  ) {
+    const distMeters = calculateHaversineDistance(
+      params.locationLat,
+      params.locationLng,
+      params.priorVisit.locationLat,
+      params.priorVisit.locationLng
+    );
+    if (distMeters < 50) {
+      const hash = generateAuditIntegrityHash({
+        officerId: params.officerId,
+        farmerId: params.farmerId,
+        distMeters,
+        status: 'STATIONARY_SPOOFING_DETECTED',
+      });
+      return {
+        isValid: false,
+        dwellTimeMinutes: dwellMinutes,
+        minimumRequiredMinutes: minRequired,
+        status: 'STATIONARY_SPOOFING_DETECTED',
+        riskScore: 90,
+        details: `Stationary armchair visit detected: visits for distinct farmers logged from identical coordinates (${distMeters}m separation).`,
+        integrityHash: hash,
+      };
+    }
+  }
+
+  return checkPriorVisitInterval(params, minRequired, dwellMinutes);
+}
+
+/**
+ * 7. Minimum Parcel Dwell-Time & Stationary Anti-Fraud Verification (AD-002 / CE-003)
+ * Mandates >= 10 minutes of verified dwell time on-parcel for completed field visits,
+ * rejecting armchair visits where consecutive visits are logged rapidly from a stationary location.
+ */
+export function verifyParcelDwellTime(params: DwellTimeVerificationParams): DwellTimeVerificationResult {
+  const minRequired = params.minimumRequiredMinutes ?? 10;
+  const dwellMinutes = resolveDwellMinutes(params, minRequired);
+  if (typeof dwellMinutes !== 'number') return dwellMinutes;
+
+  const spoofing = checkPriorVisitSpoofing(params, minRequired, dwellMinutes);
+  if (spoofing) return spoofing;
+
+  // 2. Insufficient Dwell Time Check
+  if (dwellMinutes < minRequired) {
+    const riskScore = Math.min(100, 80 + Math.round((minRequired - dwellMinutes) * 2));
+    const hash = generateAuditIntegrityHash({
+      officerId: params.officerId,
+      farmerId: params.farmerId,
+      dwellMinutes,
+      status: 'INSUFFICIENT_DWELL_TIME',
+    });
+    return {
+      isValid: false,
+      dwellTimeMinutes: dwellMinutes,
+      minimumRequiredMinutes: minRequired,
+      status: 'INSUFFICIENT_DWELL_TIME',
+      riskScore,
+      details: `Dwell time of ${dwellMinutes} minutes is below the mandatory ${minRequired}-minute parcel threshold. Physical inspection unverified.`,
+      integrityHash: hash,
+    };
+  }
+
+  // 3. Verified Valid Dwell Time
+  const hash = generateAuditIntegrityHash({
+    officerId: params.officerId,
+    farmerId: params.farmerId,
+    dwellMinutes,
+    status: 'VERIFIED',
+  });
+  return {
+    isValid: true,
+    dwellTimeMinutes: dwellMinutes,
+    minimumRequiredMinutes: minRequired,
+    status: 'VERIFIED',
+    riskScore: 5,
+    details: `Parcel dwell time verified (${dwellMinutes} mins >= ${minRequired} min requirement). Physical presence established.`,
+    integrityHash: hash,
+  };
 }

@@ -277,6 +277,10 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
     onEnd?.();
   };
 
+  // Unmount teardown: dismissing the modal without pressing End must still release the
+  // camera/microphone and close the peer connections and signalling socket.
+  useEffect(() => () => { leaveCall(); }, [leaveCall]);
+
   if (error) {
     return (
       <ErrorState

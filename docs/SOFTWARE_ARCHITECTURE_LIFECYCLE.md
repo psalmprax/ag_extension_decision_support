@@ -296,7 +296,7 @@ Detailed in [`docs/PRODUCTION_DEPLOYMENT_GUIDE.md`](file:///home/psalmprax/ALL_P
 
 ## 8. Cross-Cutting Governance & Protocols
 
-The system enforces three primary operational protocols:
+The system enforces four primary operational protocols:
 
 1. **[`anti_flop.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/anti_flop.md) (`AG-SKILL-AF-01`)**:
    * Enforces zero regressions, eradication of dead stubs, offline graceful degradation, bounded memory usage for media streaming, and 100% CI green compliance.
@@ -306,7 +306,10 @@ The system enforces three primary operational protocols:
    * Enforces epistemic grounding: inspect source before asserting facts, reject uninstalled dependencies, prevent hallucinated agrochemical dosages or fake AI capabilities, and respect Prisma schema sovereignty.
    * Automated verification: `npm run verify:anti-hallucination`.
 
-3. **[`KARPATHY_RULES.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/KARPATHY_RULES.md)**:
+3. **[`Anti-Flaws.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/Anti-Flaws.md) (`AG-SKILL-AFL-01`)**:
+   * Enforces architectural, security, and agronomic integrity: spatial and unit precision sovereignty, multi-tenant database isolation, edge envelope encryption, React async closure hygiene, transactional atomicity, anti-sycophancy in AI diagnostics, and cognitive complexity bounds ($\le 15$).
+
+4. **[`KARPATHY_RULES.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/KARPATHY_RULES.md)**:
    * **Think before coding**: Deeply understand context, schemas, and data flow.
    * **Simplicity first**: Prefer concrete, flat architectures over unnecessary abstractions.
    * **Surgical changes only**: Never touch unrelated files or refactor outside the assigned goal.

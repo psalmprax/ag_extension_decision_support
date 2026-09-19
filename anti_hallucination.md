@@ -95,3 +95,17 @@ Before stating any implementation is complete or asserting system status:
 - [ ] Did I run `npm run fallow:check` to confirm no new dead code was introduced?
 - [ ] Did I verify Prisma schema alignment via `npm run check:drift`?
 - [ ] Are all referenced file paths clickable with markdown file URI links (`file:///...`)?
+
+---
+
+## 6. Output-Honesty Anti-Hallucination Rules (2026-09)
+
+Added after the flaw-analysis remediation; these forbid hallucinated *product claims*, not just hallucinated code:
+
+1. **Never label fabricated content as verified.** Fallback/canned AI answers may not carry `evidenceStatus: 'verified_sources'`, "Verified Advisory", "AI Copilot Verified", or a "LIVE" badge unless the data was actually produced by the live source at render time. Failure states say they are failure states.
+2. **Never invent numeric confidence.** A constant confidence value (e.g. `0.88`) stamped on every provider fallback is a fabricated measurement. Omit the field or derive it from real model/calibration output.
+3. **Never default certification/compliance booleans to true.** `fairTradeCertified`, organic, or similar claims default to unknown until a verifier says otherwise — a default `true` fabricates a certification.
+4. **Never claim an integration exists without a call path.** A service that no route/worker invokes (e.g. satellite ingest "wiring pending") is not integrated; docs/tests may not describe it as live until the wiring is merged.
+5. **Never report configured=true without a real credential check.** Health endpoints must validate non-empty, non-placeholder keys; defaults that make `/health` lie (non-empty URL defaults → "3/3 configured") are prohibited.
+6. **Never present synthetic data as live telemetry.** Synthesized weather/sensor values posted to evaluation endpoints must be labeled as synthetic end-to-end, including in any derived risk badges.
+7. **Test suites must not fake their runtime.** Shims that stub `pytest`/test runners so suites "pass" without the runner are test theater and count as hallucinated verification. The extension security suite (`scripts/verify-security.js`) must exercise real repo invariants, not grep theater — it is expected to fail when an invariant regresses (it did, on first run, catching an ungated upload fetch).

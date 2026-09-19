@@ -29,7 +29,7 @@ export class CanadianRegulatoryEngine {
 
     // PMRA Pest Control Products Act (PCPA) Check
     const restrictedActiveIngredients = ['neonicotinoids', 'glyphosate_aquatic_buffer', 'dicamba_high_volatility'];
-    const prohibitedIngredients = ['DDT', 'endosulfan', 'lindane'];
+    const prohibitedIngredients = ['ddt', 'endosulfan', 'lindane'];
 
     if (prohibitedIngredients.includes(activeIngredient.toLowerCase())) {
       isCompliant = false;

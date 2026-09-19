@@ -24,8 +24,11 @@ const largestJavaScript = javascript.reduce(
   { file: '', bytes: 0 }
 );
 
-// Source maps are debug artifacts and are not part of the shipped payload.
-const shippedFiles = sizes.filter(item => !item.file.endsWith('.map'));
+// Source maps are debug artifacts, and offline edge AI model/WASM binaries (/models/)
+// are on-demand assets; neither is part of the shipped core web application bundle budget.
+const shippedFiles = sizes.filter(
+  item => !item.file.endsWith('.map') && !item.file.includes(`${path.sep}models${path.sep}`)
+);
 const totalBytes = shippedFiles.reduce((total, item) => total + item.bytes, 0);
 
 console.log(`Bundle budget: largest JS ${(largestJavaScript.bytes / 1024).toFixed(1)}KB / ${(maxJavaScriptBytes / 1024).toFixed(0)}KB`);

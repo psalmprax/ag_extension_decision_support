@@ -103,7 +103,7 @@ export class StealthScraperService {
         return jwt.sign(
             { userId: 'backend-ingestion-worker', role: 'service', email: 'ingestion@system.local' },
             secret as jwt.Secret,
-            { expiresIn: '10m' }
+            { algorithm: 'HS256', expiresIn: '10m' }
         );
     }
 

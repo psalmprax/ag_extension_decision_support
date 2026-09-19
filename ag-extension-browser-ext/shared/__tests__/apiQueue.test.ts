@@ -14,8 +14,12 @@ const sendMessageCalls = (action: string): unknown[] =>
     .filter((message) => message.action === action);
 
 describe('apiQueue', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     fakeBrowser.reset();
+    // The origin allowlist derives from the configured API endpoint. Point it at the
+    // test host so token-bearing requests are permitted, and add a dedicated test for
+    // the refusal path below.
+    await fakeBrowser.storage.local.set({ apiEndpoint: 'https://api.example.test/api/v1' });
   });
 
   afterEach(() => {
@@ -93,6 +97,25 @@ describe('apiQueue', () => {
     await expect(
       apiQueue.makeRequest('https://api.example.test/upload', { method: 'POST', body: formData })
     ).rejects.toThrow('File uploads require an active connection');
+  });
+
+  it('refuses to send or queue a request to a non-API origin (token exfiltration guard)', async () => {
+    mockSendMessage(async (message) => {
+      const { action } = message as { action: string };
+      if (action === 'get_offline_status') return { success: true, status: { isOnline: true, lastChecked: 0 } };
+      return { success: true };
+    });
+
+    const fetchMock = vi.fn().mockResolvedValue(new Response('ok', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      apiQueue.makeRequest('https://evil.example.com/collect', { method: 'POST', body: '{}' })
+    ).rejects.toThrow(/not on the configured API origin/);
+
+    // Nothing was sent and nothing was queued for later replay with a fresh token.
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(sendMessageCalls('queue_request')).toHaveLength(0);
   });
 
   it('returns queued requests reported by the background', async () => {

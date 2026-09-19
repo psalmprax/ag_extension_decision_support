@@ -4,7 +4,8 @@ const path = require('path');
 // npm creates the wrong relative target for scoped `file:` deps installed in
 // nested node_modules (4 ups instead of 3), leaving a dangling symlink.
 const link = path.join(__dirname, '..', 'node_modules', '@ag-extension', 'shared');
-const expectedTarget = '../../../ag-extension-shared';
+const repoRoot = path.resolve(__dirname, '..', '..');
+const expectedTarget = path.join(repoRoot, 'ag-extension-shared');
 
 try {
     const current = fs.readlinkSync(link);
@@ -16,6 +17,9 @@ try {
 }
 
 fs.rmSync(link, { force: true, recursive: true });
+// The scoped parent may not exist on a fresh runner (npm does not always create
+// node_modules/@ag-extension for a file: dep), so create it before linking.
+fs.mkdirSync(path.dirname(link), { recursive: true });
 fs.symlinkSync(expectedTarget, link, 'dir');
 
 if (!fs.existsSync(path.join(link, 'package.json'))) {

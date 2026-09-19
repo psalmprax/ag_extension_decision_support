@@ -199,7 +199,6 @@ export class FreebuffProvider extends BaseAIProvider {
         return {
             reasoning: 'Freebuff best-effort answer (community proxy).',
             answer: result.text ?? '',
-            confidence: 0.7,
             visuals: undefined,
         };
     }

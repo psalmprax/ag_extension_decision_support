@@ -1,17 +1,21 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchUserProfile, ProfileResponse } from '@/api/authService';
+import { getCsrfToken } from '@/api/client';
+
+/** True when the backend has issued a session (readable ag_csrf cookie present). */
+export const hasAuthSession = (): boolean => !!getCsrfToken();
 
 export const useAppAuth = (
   storeUser: unknown,
   setUser: (user: Record<string, unknown> | null) => void
 ) => {
-  const hasToken = !!localStorage.getItem('token');
+  const hasSession = hasAuthSession();
 
   const { data: userResponse, error: userError } = useQuery<ProfileResponse>({
     queryKey: ['user-profile'],
     queryFn: fetchUserProfile,
-    enabled: !!storeUser && hasToken,
+    enabled: !!storeUser && hasSession,
   });
 
   // Clear invalid user session only on 401 errors
@@ -21,7 +25,6 @@ export const useAppAuth = (
       if (error?.response?.status === 401) {
         setUser(null);
         localStorage.removeItem('user');
-        localStorage.removeItem('token');
       }
     }
   }, [userError, storeUser, setUser]);
@@ -31,7 +34,6 @@ export const useAppAuth = (
     const handleUnauthorized = () => {
       setUser(null);
       localStorage.removeItem('user');
-      localStorage.removeItem('token');
     };
     window.addEventListener('auth-unauthorized', handleUnauthorized);
     return () => window.removeEventListener('auth-unauthorized', handleUnauthorized);

@@ -1,5 +1,6 @@
 import { logger } from '@/utils/logger';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
+import { runIfLeader } from '@/services/leaderElection';
 
 export interface HealthCheck {
   component: string;
@@ -57,11 +58,14 @@ export class SelfHealingService {
       clearInterval(this.checkInterval);
     }
 
-    this.checkInterval = setInterval(async () => {
-      await this.runHealthChecks();
+    this.checkInterval = setInterval(() => {
+      // Leader-gated: recovery actions (restarts, alerts) must fire once per
+      // deployment, not once per replica.
+      void runIfLeader('self-healing', () => this.runHealthChecks());
     }, intervalMs);
+    this.checkInterval.unref?.();
 
-    logger.info(`Self-healing monitoring started (interval: ${intervalMs}ms)`);
+    logger.info(`Self-healing monitoring started (interval: ${intervalMs}ms, leader-gated)`);
   }
 
   stopMonitoring(): void {
@@ -139,6 +143,7 @@ export class SelfHealingService {
     const urls: Record<string, string> = {
       'agent-zero': process.env.AGENT_ZERO_URL || 'http://ag-agent-zero:8000',
       'crew-ai': process.env.CREW_AI_URL || 'http://ag-crew-ai:8001',
+      'openclaw': process.env.OPENCLAW_URL || 'http://ag-openclaw:8002',
     };
     const url = urls[component];
     if (!url) return false;
@@ -156,7 +161,7 @@ export class SelfHealingService {
   }
 
   async requestRecovery(component: string): Promise<RecoveryRequestResult> {
-    const allowedComponents = new Set(['ai-provider', 'database', 'cache', 'agent-zero', 'crew-ai']);
+    const allowedComponents = new Set(['ai-provider', 'database', 'cache', 'agent-zero', 'crew-ai', 'openclaw']);
     if (!allowedComponents.has(component)) {
       return {
         success: false,
@@ -207,6 +212,7 @@ export class SelfHealingService {
           return await this.checkCache();
         case 'agent-zero':
         case 'crew-ai':
+        case 'openclaw':
           return await this.checkAgentService(component);
         default:
           // Unknown components have no probe; report unknown rather than "healthy".
@@ -243,6 +249,7 @@ export class SelfHealingService {
         break;
       case 'agent-zero':
       case 'crew-ai':
+      case 'openclaw':
         await this.recoverAgent(component);
         break;
       default:
@@ -308,6 +315,7 @@ export class SelfHealingService {
       const urls: Record<string, string> = {
         'agent-zero': process.env.AGENT_ZERO_URL || 'http://ag-agent-zero:8000',
         'crew-ai': process.env.CREW_AI_URL || 'http://ag-crew-ai:8001',
+        'openclaw': process.env.OPENCLAW_URL || 'http://ag-openclaw:8002',
       };
 
       const url = urls[agentId];

@@ -11,6 +11,7 @@ import { resolveUserContext, UserLocation } from '@/services/knowledge/userConte
 import { fetchLiveAgriContext } from '@/services/knowledge/liveAgriContext';
 import { callReasoningAgentic, callReasoningWithTimeout } from '@/services/knowledge/reasoning';
 import { buildExtractiveAnswer } from '@/services/knowledge/insightExtract';
+import { splitQuarantined, quarantineDisclosure } from '@/services/knowledge/groundingPolicy';
 import { postProcessResponse } from '@/services/knowledge/visuals';
 import { logSearch } from '@/services/knowledge/searchLog';
 import { aegisShield } from '@/services/security/aegisShield';
@@ -39,12 +40,16 @@ async function resolveAggregatedContext(
         contextResults = [...liveResults, ...contextResults];
     }
 
+    // Quarantine: unverified scrapes never enter grounding text.
+    const { groundable, withheld } = splitQuarantined(contextResults);
+    contextResults = groundable;
+
     const contextText = contextResults
         .map(res => {
             const sanitized = aegisShield.sanitizeToolResult(res.content || '');
             return `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType || 'text'}, Score: ${res.score !== undefined ? res.score.toFixed(2) : '1.0'}, URL: ${res.metadata.sourceUrl || ''})\n${sanitized.sanitizedInput}`;
         })
-        .join('\n\n---\n\n');
+        .join('\n\n---\n\n') + quarantineDisclosure(withheld);
 
     return { contextResults, contextText };
 }

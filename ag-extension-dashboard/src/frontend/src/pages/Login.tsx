@@ -37,21 +37,19 @@ export function Login({ onDemo }: LoginProps) {
       const data = await login({ email, password });
 
       // Handle nested response structure { success: true, data: { token, user } }
+      // The JWT itself arrives as an httpOnly cookie — nothing token-shaped is
+      // written to localStorage.
       const token = data.token || data.data?.token;
       const userData = data.data?.user || data.user;
 
-      // Store token in localStorage for API requests
-      if (token) {
-        localStorage.setItem('token', token);
-      }
-      // Also store user data
+      // Store user data
       if (userData) {
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData as User);
         exitDemoMode();
       }
 
-      if (!token) {
+      if (!userData && !token) {
         throw new Error(t('login_failed_no_token'));
       }
 
@@ -78,7 +76,7 @@ export function Login({ onDemo }: LoginProps) {
       const token = data.token || data.data?.token;
       const userData = data.data?.user || data.user;
 
-      if (token) localStorage.setItem('token', token);
+      // Demo JWT arrives as an httpOnly cookie; only the profile is stored.
       if (userData) {
         // Centralized demo entry — sets the demo user + flips the mode flag.
         enterDemoMode(userData as User);

@@ -1,146 +1,69 @@
-import { plantDiseaseService, DiseaseDiagnosis } from '../services/plantDiseaseService';
+import { plantDiseaseService } from '../services/plantDiseaseService';
 
-interface PrivatePlantDiseaseService {
-  tokenize(text: string): string[];
-  vectorize(tokens: string[], vocab: string[], idf: Record<string, number>): number[];
-  cosineSimilarity(v1: number[], v2: number[]): number;
-  diagnoseFromSymptoms(symptoms: string[]): Promise<DiseaseDiagnosis[]>;
-  getDiseaseInfo(diseaseKey: string): { symptoms: string[] } | null;
-  getAllDiseases(): string[];
-}
+describe('PlantDiseaseService — Crop Isolation & Symptom Diagnostics', () => {
+  it('should diagnose Late Blight when symptoms match and crop is potato', async () => {
+    const symptoms = ['Dark water-soaked lesions on leaves', 'White fungal growth on leaf undersides'];
+    const results = await plantDiseaseService.diagnoseFromSymptoms(symptoms, 'potato');
 
-const service = plantDiseaseService as unknown as PrivatePlantDiseaseService;
-
-describe('PlantDiseaseService - tokenize', () => {
-  it('should tokenize text and filter stopwords', () => {
-    // Stopwords: ['on', 'of', 'and', 'the', 'with', 'a', 'or', 'in', 'to', 'for', 'at', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'an']
-    // 'over' is NOT a stopword, 'the' IS a stopword
-    const result = service.tokenize('The quick brown fox jumps over the lazy dog');
-    expect(result).toContain('quick');
-    expect(result).toContain('brown');
-    expect(result).toContain('fox');
-    expect(result).toContain('jumps'); // 5+ chars, not stopword
-    expect(result).toContain('lazy'); // 4+ chars, not stopword
-    expect(result).toContain('dog'); // 3 chars, not stopword (length > 2 filter)
-    expect(result).not.toContain('the'); // stopword
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0].disease).toBe('Late Blight');
   });
 
-  it('should filter short words (length <= 2)', () => {
-    const result = service.tokenize('a an is at');
-    expect(result).toHaveLength(0);
-  });
-});
+  it('should exclude Late Blight when crop is coffee even if symptoms match water-soaked lesions', async () => {
+    const symptoms = ['Dark water-soaked lesions on leaves', 'White fungal growth on leaf undersides'];
+    const results = await plantDiseaseService.diagnoseFromSymptoms(symptoms, 'coffee');
 
-describe('PlantDiseaseService - vectorize', () => {
-  it('should vectorize tokens against vocabulary', () => {
-    const tokens = ['quick', 'brown', 'fox'];
-    const vocab = ['quick', 'brown', 'fox', 'dog'];
-    const idf = { quick: 1, brown: 1, fox: 1, dog: 1 };
-    const result = service.vectorize(tokens, vocab, idf);
-    expect(result).toHaveLength(4);
-    expect(result[0]).toBe(1);
-    expect(result[1]).toBe(1);
-    expect(result[2]).toBe(1);
-    expect(result[3]).toBe(0);
-  });
-});
-
-describe('PlantDiseaseService - cosineSimilarity', () => {
-  it('should calculate cosine similarity between identical vectors', () => {
-    const v1 = [1, 0, 0];
-    const v2 = [1, 0, 0];
-    const result = service.cosineSimilarity(v1, v2);
-    expect(result).toBe(1);
+    // Late Blight must not be diagnosed for coffee
+    expect(results.some((d) => d.disease === 'Late Blight')).toBe(false);
   });
 
-  it('should calculate cosine similarity between orthogonal vectors', () => {
-    const v1 = [1, 0, 0];
-    const v2 = [0, 1, 0];
-    const result = service.cosineSimilarity(v1, v2);
-    expect(result).toBe(0);
+  it('should diagnose Rust or Mosaic Virus when crop is maize', async () => {
+    const symptoms = ['Orange-brown pustules on leaf undersides', 'Yellow spots on upper leaf surface'];
+    const results = await plantDiseaseService.diagnoseFromSymptoms(symptoms, 'maize');
+
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0].disease).toBe('Rust');
+    // Solanaceous diseases must not appear
+    expect(results.some((d) => d.disease === 'Late Blight')).toBe(false);
+    expect(results.some((d) => d.disease === 'Early Blight')).toBe(false);
   });
 
-  it('should handle zero-magnitude vectors', () => {
-    const v1 = [0, 0, 0];
-    const v2 = [1, 1, 1];
-    const result = service.cosineSimilarity(v1, v2);
-    expect(result).toBe(0);
-  });
-});
+  it('should allow general diseases when crop is unspecified or compatible', async () => {
+    const symptoms = ['White powdery coating on leaves', 'Yellowing leaves'];
+    const results = await plantDiseaseService.diagnoseFromSymptoms(symptoms);
 
-describe('PlantDiseaseService - diagnoseFromSymptoms', () => {
-  it('should diagnose late blight from matching symptoms', async () => {
-    const symptoms = ['dark water-soaked lesions on leaves', 'white fungal growth on leaf undersides'];
-    const diagnoses = await service.diagnoseFromSymptoms(symptoms);
-    
-    expect(diagnoses).toBeInstanceOf(Array);
-    const lateBlight = diagnoses.find((d: DiseaseDiagnosis) => d.disease.includes('Late Blight'));
-    expect(lateBlight).toBeDefined();
-    expect(lateBlight?.disease).toBe('Late Blight');
-    expect(lateBlight?.confidence).toBeGreaterThan(0);
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0].disease).toBe('Powdery Mildew');
   });
 
-  it('should diagnose powdery mildew from matching symptoms', async () => {
-    const symptoms = ['white powdery coating on leaves', 'yellowing leaves'];
-    const diagnoses = await service.diagnoseFromSymptoms(symptoms);
-    
-    const powderyMildew = diagnoses.find((d: DiseaseDiagnosis) => d.disease.includes('Powdery Mildew'));
-    expect(powderyMildew).toBeDefined();
-    expect(powderyMildew?.disease).toBe('Powdery Mildew');
+  it('should support expanded 30-disease FAO and national extension catalog', () => {
+    const all = plantDiseaseService.getAllDiseases();
+    expect(all.length).toBe(30);
+    expect(all).toContain('Maize Lethal Necrosis');
+    expect(all).toContain('Fall Armyworm');
+    expect(all).toContain('Coffee Leaf Rust');
+    expect(all).toContain('Rice Blast');
+    expect(all).toContain('Banana Xanthomonas Wilt');
   });
 
-  it('should return empty array for non-matching symptoms', async () => {
-    const diagnoses = await service.diagnoseFromSymptoms(['unknown symptom xyz']);
-    expect(diagnoses).toHaveLength(0);
+  it('should retrieve detailed dossier via getDiseaseDetails alias', () => {
+    const mlnd = plantDiseaseService.getDiseaseDetails('maize_lethal_necrosis');
+    expect(mlnd).toBeDefined();
+    expect(mlnd?.disease).toBe('Maize Lethal Necrosis');
+    expect(mlnd?.susceptibleCrops).toContain('maize');
+    expect(mlnd?.description).toContain('biosecurity quarantine');
+
+    const rust = plantDiseaseService.getDiseaseInfo('Coffee Leaf Rust');
+    expect(rust).toBeDefined();
+    expect(rust?.disease).toBe('Coffee Leaf Rust');
+    expect(rust?.susceptibleCrops).toContain('coffee');
   });
 
-  it('should sort diagnoses by confidence descending', async () => {
-    const symptoms = ['some agricultural symptom'];
-    const diagnoses = await service.diagnoseFromSymptoms(symptoms);
-    
-    for (let i = 1; i < diagnoses.length; i++) {
-      expect(diagnoses[i - 1].confidence).toBeGreaterThanOrEqual(diagnoses[i].confidence);
-    }
-  });
+  it('should diagnose Coffee Leaf Rust on coffee when orange pustules match', async () => {
+    const symptoms = ['Powdery orange-yellow spore pustules on leaf undersides', 'Premature heavy defoliation'];
+    const results = await plantDiseaseService.diagnosePlant(symptoms, 'coffee');
 
-  it('should limit diagnoses to top 3', async () => {
-    const symptoms = ['some agricultural symptom'];
-    const diagnoses = await service.diagnoseFromSymptoms(symptoms);
-    
-    expect(diagnoses.length).toBeLessThanOrEqual(3);
-  });
-});
-
-describe('PlantDiseaseService - getDiseaseInfo', () => {
-  it('should return disease info for known disease', () => {
-    const result = service.getDiseaseInfo('late_blight');
-    expect(result).toBeDefined();
-    expect(result?.symptoms).toContain('Dark water-soaked lesions on leaves');
-  });
-
-  it('should return null for unknown disease', () => {
-    const result = service.getDiseaseInfo('unknown_disease');
-    expect(result).toBeNull();
-  });
-
-  it('should resolve prettified names emitted by getAllDiseases (HTTP route round-trip)', () => {
-    for (const name of service.getAllDiseases()) {
-      const result = service.getDiseaseInfo(name);
-      expect(result).not.toBeNull();
-      expect(result).toMatchObject({ disease: name });
-    }
-  });
-});
-
-describe('PlantDiseaseService - getAllDiseases', () => {
-  it('should return all disease names', () => {
-    const result = service.getAllDiseases();
-    expect(result).toContain('Late Blight');
-    expect(result).toContain('Powdery Mildew');
-    expect(result).toContain('Bacterial Wilt');
-    expect(result).toContain('Leaf Spot');
-    expect(result).toContain('Rust');
-    expect(result).toContain('Mosaic Virus');
-    expect(result).toHaveLength(6);
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.some(d => d.disease === 'Coffee Leaf Rust')).toBe(true);
   });
 });

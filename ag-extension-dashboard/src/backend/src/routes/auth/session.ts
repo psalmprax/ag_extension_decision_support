@@ -4,6 +4,9 @@ import { config } from '@/config';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { getLoginHistory, getLoginStats } from '@/services/loginHistoryService';
+import { isSessionValid } from '@/services/sessionService';
+import { setAuthCookie, clearAuthCookie, getBearerToken } from '@/middleware/authCookie';
+import { isSubscriptionActive } from '@/services/paymentService';
 
 const router = Router();
 
@@ -11,6 +14,27 @@ interface JWTPayload {
     userId: string;
     email: string;
     role: string;
+}
+
+/**
+ * Shared bearer-token auth for the session routes. Verifies the JWT signature
+ * (pinned to HS256) AND checks the session has not been revoked — identical
+ * semantics to the `authorize` middleware. Hand-rolled `jwt.verify` calls
+ * previously skipped the revocation check, letting logged-out tokens read
+ * /me, /login-history and /login-stats.
+ */
+async function requireSession(req: Request): Promise<JWTPayload | null> {
+    // Header first, then the httpOnly auth cookie — mirrors authorize().
+    const token = getBearerToken(req);
+    if (!token) return null;
+    let decoded: JWTPayload;
+    try {
+        decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as JWTPayload;
+    } catch {
+        return null;
+    }
+    if (!(await isSessionValid(token))) return null;
+    return decoded;
 }
 
 // Refresh token.
@@ -21,7 +45,9 @@ const REFRESH_GRACE_SECONDS = 7 * 24 * 3600;
 
 router.post('/refresh', async (req: Request, res: Response) => {
     try {
-        const { token } = req.body;
+        // Cookie callers (SPA) send no body token — the httpOnly cookie carries
+        // the current JWT. Header/body callers (mobile/extension) keep working.
+        const token = getBearerToken(req) || (typeof req.body?.token === 'string' ? req.body.token : null);
 
         if (!token) {
             return res.status(400).json({
@@ -30,7 +56,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
             });
         }
 
-        const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { ignoreExpiration: true }) as JWTPayload & { exp?: number; mfaPending?: boolean };
+        const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'], ignoreExpiration: true }) as JWTPayload & { exp?: number; mfaPending?: boolean };
         if (decoded.mfaPending) {
             return res.status(401).json({ success: false, error: 'MFA challenge tokens cannot be refreshed' });
         }
@@ -46,7 +72,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
         const newToken = jwt.sign(
             { userId: decoded.userId, email: decoded.email, role: decoded.role },
             config.jwt.secret as jwt.Secret,
-            { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
+            { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
 
         // Rotate: the old token is retired locally and a new session row is recorded.
@@ -62,6 +88,8 @@ router.post('/refresh', async (req: Request, res: Response) => {
             logger.warn('Refresh: failed to record rotated session (continuing):', sessionErr);
         }
 
+        setAuthCookie(res, newToken);
+
         res.json({
             success: true,
             data: { token: newToken },
@@ -72,29 +100,45 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
 });
 
-// Logout — clear auth on client side (server can't invalidate stateless JWT without a blocklist)
-router.post('/logout', (_req: Request, res: Response) => {
+// Logout — revokes the presented session so the token is dead immediately,
+// not at JWT expiry. Idempotent: already-revoked/unknown tokens still 200 so
+// clients can always clear local state.
+router.post('/logout', async (req: Request, res: Response) => {
+    // Works for both auth styles: Bearer header or httpOnly cookie.
+    const token = getBearerToken(req);
+    if (token) {
+        const { revokeSessionByToken } = await import('@/services/sessionService');
+        const revoked = await revokeSessionByToken(token);
+        if (!revoked) {
+            logger.info('Logout for token without a session row (legacy/demo) — revocation list entry written');
+        }
+    }
+    // Always clear the cookies, even when the token was missing/unknown —
+    // logout must never leave an auth cookie behind.
+    clearAuthCookie(res);
     res.json({ success: true, message: 'Logged out successfully' });
 });
 
 // Get current user
 router.get('/me', async (req: Request, res: Response) => {
-    // In production, verify JWT from header
-    const authHeader = req.headers.authorization;
+    const token = getBearerToken(req);
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
     try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+        const decoded = await requireSession(req);
+        if (!decoded) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
 
         const result = await query(`
             SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.region, u.is_demo,
                    sp.name as plan_name,
                    sp.price as plan_price,
-                   s.status as subscription_status
+                   s.status as subscription_status,
+                   s.current_period_end as subscription_period_end
             FROM users u
             LEFT JOIN subscriptions s ON s.user_id = u.id
             LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
@@ -114,7 +158,7 @@ router.get('/me', async (req: Request, res: Response) => {
         } else if (user.is_demo || user.email === 'demo@agridemo.com') {
             planName = 'Free';
             isFree = true;
-        } else if (user.plan_name && (user.subscription_status === 'active' || user.subscription_status === 'trialing')) {
+        } else if (user.plan_name && isSubscriptionActive({ status: user.subscription_status, currentPeriodEnd: user.subscription_period_end })) {
             const price = user.plan_price != null ? Number(user.plan_price) : 0;
             planName = user.plan_name;
             isFree = price === 0 || planName.toLowerCase().includes('free');
@@ -143,14 +187,15 @@ router.get('/me', async (req: Request, res: Response) => {
  * Query login history entries for security audit.
  */
 router.get('/login-history', async (req: Request, res: Response) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!getBearerToken(req)) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
     try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+        const decoded = await requireSession(req);
+        if (!decoded) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
 
         const { email, status, limit, offset, userId } = req.query;
         const isManager = decoded.role === 'admin' || decoded.role === 'regional_manager';
@@ -181,14 +226,15 @@ router.get('/login-history', async (req: Request, res: Response) => {
  * Query high-level login metrics for the current user or tenant.
  */
 router.get('/login-stats', async (req: Request, res: Response) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!getBearerToken(req)) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
     try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+        const decoded = await requireSession(req);
+        if (!decoded) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
 
         const { userId } = req.query;
         const isManager = decoded.role === 'admin' || decoded.role === 'regional_manager';

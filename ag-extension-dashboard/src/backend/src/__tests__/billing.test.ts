@@ -2,6 +2,7 @@ import request from 'supertest';
 import app from '../app';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
+import { paymentService } from '../services/paymentService';
 
 // Mock all services to avoid real DB/Cache connections
 jest.mock('../services/databaseService', () => ({
@@ -12,10 +13,12 @@ jest.mock('../services/databaseService', () => ({
             rowCount: 1 
         })
     })),
-    query: jest.fn().mockResolvedValue({ 
-        rows: [{ count: 0 }],
-        rowCount: 1 
-    })
+    query: jest.fn(async (sql: string) => ({
+        rows: sql.includes('FROM user_sessions')
+            ? [{ is_revoked: false, is_active: true, expires_at: '2099-01-01T00:00:00Z' }]
+            : [{ count: 0 }],
+        rowCount: 1
+    }))
 }));
 
 jest.mock('../services/cacheService', () => ({
@@ -71,6 +74,7 @@ jest.mock('../services/usageService', () => ({
 
 jest.mock('../services/paymentService', () => ({
     paymentService: {
+        whenReady: jest.fn().mockResolvedValue(undefined),
         getPricingPlans: jest.fn(() => Promise.resolve([
             { id: '1', name: 'Basic', price: 9.99, interval: 'month', features: [] },
             { id: '2', name: 'Pro', price: 19.99, interval: 'month', features: [] }
@@ -162,6 +166,7 @@ describe('Billing API Integration Tests', () => {
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
             expect(response.body.data).toBeDefined();
+            expect(paymentService.whenReady).toHaveBeenCalled();
         });
 
         it('should return 401 if no token provided', async () => {
@@ -171,6 +176,31 @@ describe('Billing API Integration Tests', () => {
     });
 
     describe('GET /api/billing/plans', () => {
+        it('waits for gateway readiness before loading plans', async () => {
+            let release = () => {};
+            let markStarted = () => {};
+            const ready = new Promise<void>(resolve => { release = resolve; });
+            const started = new Promise<void>(resolve => { markStarted = resolve; });
+            jest.mocked(paymentService.getPricingPlans).mockClear();
+            jest.mocked(paymentService.whenReady).mockImplementationOnce(() => {
+                markStarted();
+                return ready;
+            });
+
+            const response = request(app)
+                .get('/api/billing/plans')
+                .set('Authorization', `Bearer ${token}`)
+                .then(result => result);
+            try {
+                await started;
+                expect(paymentService.getPricingPlans).not.toHaveBeenCalled();
+            } finally {
+                release();
+            }
+            expect((await response).status).toBe(200);
+            expect(paymentService.getPricingPlans).toHaveBeenCalled();
+        });
+
         it('should return subscription plans', async () => {
             const response = await request(app)
                 .get('/api/billing/plans')

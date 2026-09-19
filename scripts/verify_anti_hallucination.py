@@ -17,7 +17,8 @@ def check_docs_link_grounding():
 
     target_docs = [
         os.path.join(REPO_ROOT, "anti_flop.md"),
-        os.path.join(REPO_ROOT, "anti_hullicination.md"),
+        os.path.join(REPO_ROOT, "anti_hallucination.md"),
+        os.path.join(REPO_ROOT, "Anti-Flaws.md"),
         os.path.join(REPO_ROOT, "CLAUDE.md"),
         os.path.join(REPO_ROOT, "KARPATHY_RULES.md"),
     ]

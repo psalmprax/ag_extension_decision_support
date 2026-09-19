@@ -1,7 +1,13 @@
+# Node 22 bundles npm 10 with vulnerable transitive dependencies. Keep npm/npx
+# available for Prisma migrations, but use a pinned, patched CLI in every stage.
+FROM node:22-slim AS node-base
+ARG NPM_VERSION=11.19.1
+RUN npm install --global npm@${NPM_VERSION} --no-audit --no-fund && npm cache clean --force
+
 # ============================================================
 # Stage 1: Dependencies — install production dependencies
 # ============================================================
-FROM node:20-slim AS deps
+FROM node-base AS deps
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates curl ffmpeg && rm -rf /var/lib/apt/lists/*
 
@@ -14,12 +20,12 @@ COPY ${BACKEND_DIR}/package*.json ./
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
 
 ENV npm_config_fetch_retries=5 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
-RUN npm install --omit=dev --no-audit --no-fund && npx prisma generate
+RUN npm ci --omit=dev --no-audit --no-fund && npx prisma generate
 
 # ============================================================
 # Stage 2: Build — install devDeps + compile TypeScript
 # ============================================================
-FROM node:20-slim AS build
+FROM node-base AS build
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates curl ffmpeg && rm -rf /var/lib/apt/lists/*
 
@@ -29,7 +35,7 @@ COPY ${BACKEND_DIR}/package*.json ./
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
 
 # Install ALL dependencies including devDeps
-RUN npm install --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
 
 # Generate Prisma client
 RUN npx prisma generate
@@ -46,7 +52,7 @@ RUN npm run build
 # ============================================================
 # Stage 3: Development — hot-reload with ts-node-dev
 # ============================================================
-FROM node:20-slim AS development
+FROM node-base AS development
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates curl ffmpeg && rm -rf /var/lib/apt/lists/*
 
@@ -72,7 +78,7 @@ CMD ["npm", "run", "dev"]
 # ============================================================
 # Stage 4: Production — minimal runtime image
 # ============================================================
-FROM node:20-slim AS production
+FROM node-base AS production
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates tini curl ffmpeg && rm -rf /var/lib/apt/lists/*

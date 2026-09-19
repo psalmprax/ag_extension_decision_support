@@ -2,6 +2,7 @@ import { notificationService } from '../services/notificationService';
 import { logger } from '../utils/logger';
 import { query } from '../services/databaseService';
 import { WeatherService } from '../services/weatherService';
+import { runIfLeader } from '../services/leaderElection';
 
 /**
  * Alert Worker
@@ -21,11 +22,18 @@ import { WeatherService } from '../services/weatherService';
 
 
 
+// Singleton interval handles: the timer runs on every replica, but each tick
+// is gated by Redis leader election so alert checks execute exactly once per
+// deployment. Without the gate, N replicas dispatch N duplicate notifications.
+let alertTimer: NodeJS.Timeout | null = null;
+let initialRun: NodeJS.Timeout | null = null;
+
 // Auto-start the alert worker (after a delay to ensure database is ready)
 if (process.env.NODE_ENV !== 'test') {
-    setTimeout(() => {
+    initialRun = setTimeout(() => {
         startAlertWorker();
     }, 10000); // Wait 10 seconds for database to initialize
+    initialRun.unref?.();
 }
 
 async function runAlertChecks(): Promise<void> {
@@ -39,6 +47,7 @@ async function runAlertChecks(): Promise<void> {
             checkDiseaseAlerts(),
             checkWeatherAlerts(),
             checkSubscriptionExpiry(),
+            lapseExpiredSubscriptions(),
             checkChatbotSatisfaction(),
             checkFarmerAssignment()
         ]);
@@ -135,6 +144,32 @@ async function checkSubscriptionExpiry(): Promise<void> {
         logger.info(`Processed ${result.rows.length} subscription expiry notifications`);
     } catch (error) {
         logger.error('Error checking subscription expiry:', error);
+    }
+}
+
+/**
+ * Retire subscriptions whose period has ended and that no billing webhook will renew.
+ *
+ * PayPal checkout is a one-time sale, so its entitlements never auto-renew — without
+ * this sweep a lapsed pass stayed 'active' forever. Stripe subscriptions are excluded
+ * because their period end is advanced by the Stripe webhook; lapsing them here would
+ * punish a paying customer whenever that webhook is briefly delayed.
+ */
+async function lapseExpiredSubscriptions(): Promise<void> {
+    try {
+        const result = await query<{ user_id: string }>(`
+            UPDATE subscriptions
+               SET status = 'expired', updated_at = NOW()
+             WHERE status = 'active'
+               AND current_period_end < NOW()
+               AND (stripe_subscription_id IS NULL OR stripe_subscription_id = '')
+         RETURNING user_id
+        `);
+        if (result.rowCount) {
+            logger.info(`Lapsed ${result.rowCount} non-Stripe subscription(s) past their period end`);
+        }
+    } catch (error) {
+        logger.error('Error lapsing expired subscriptions:', error);
     }
 }
 
@@ -459,14 +494,36 @@ async function checkDiseaseAlerts(): Promise<void> {
 }
 
 /**
- * Schedule alert checks to run every 15 minutes
+ * Leader-gated tick: only the replica holding the "alert-worker" lease runs
+ * the checks; everyone else skips silently.
  */
-function startAlertWorker(intervalMs: number = 15 * 60 * 1000): void {
-    logger.info(`Starting alert worker with ${intervalMs / 60000} minute interval`);
+function tickIfLeader(): void {
+    void runIfLeader('alert-worker', runAlertChecks);
+}
 
-    // Run immediately on start
-    runAlertChecks();
+/**
+ * Schedule alert checks to run every 15 minutes (leader-gated).
+ */
+export function startAlertWorker(intervalMs: number = 15 * 60 * 1000): void {
+    if (alertTimer) return;
+    logger.info(`Starting alert worker with ${intervalMs / 60000} minute interval (leader-gated)`);
 
-    // Then run on interval
-    setInterval(runAlertChecks, intervalMs);
+    // Run shortly after start (leader-gated), then on the interval.
+    initialRun = setTimeout(tickIfLeader, 5000);
+    initialRun.unref?.();
+
+    alertTimer = setInterval(tickIfLeader, intervalMs);
+    alertTimer.unref?.();
+}
+
+/** Stop the alert worker timers (leadership release is handled by stopAll). */
+export function stopAlertWorker(): void {
+    if (alertTimer) {
+        clearInterval(alertTimer);
+        alertTimer = null;
+    }
+    if (initialRun) {
+        clearTimeout(initialRun);
+        initialRun = null;
+    }
 }

@@ -169,6 +169,14 @@
         "documentation": {}
     },
     {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
         "label": "UTC",
         "importPath": "datetime",
         "description": "datetime",
@@ -459,6 +467,38 @@
     },
     {
         "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -927,19 +967,11 @@
         "documentation": {}
     },
     {
-        "label": "ABC",
-        "importPath": "abc",
-        "description": "abc",
+        "label": "BaseModel",
+        "importPath": "pydantic",
+        "description": "pydantic",
         "isExtraImport": true,
-        "detail": "abc",
-        "documentation": {}
-    },
-    {
-        "label": "abstractmethod",
-        "importPath": "abc",
-        "description": "abc",
-        "isExtraImport": true,
-        "detail": "abc",
+        "detail": "pydantic",
         "documentation": {}
     },
     {
@@ -959,35 +991,19 @@
         "documentation": {}
     },
     {
-        "label": "FastAPI",
-        "importPath": "fastapi",
-        "description": "fastapi",
+        "label": "ABC",
+        "importPath": "abc",
+        "description": "abc",
         "isExtraImport": true,
-        "detail": "fastapi",
+        "detail": "abc",
         "documentation": {}
     },
     {
-        "label": "HTTPException",
-        "importPath": "fastapi",
-        "description": "fastapi",
+        "label": "abstractmethod",
+        "importPath": "abc",
+        "description": "abc",
         "isExtraImport": true,
-        "detail": "fastapi",
-        "documentation": {}
-    },
-    {
-        "label": "Depends",
-        "importPath": "fastapi",
-        "description": "fastapi",
-        "isExtraImport": true,
-        "detail": "fastapi",
-        "documentation": {}
-    },
-    {
-        "label": "Header",
-        "importPath": "fastapi",
-        "description": "fastapi",
-        "isExtraImport": true,
-        "detail": "fastapi",
+        "detail": "abc",
         "documentation": {}
     },
     {
@@ -1084,6 +1100,78 @@
         "description": "fastapi",
         "isExtraImport": true,
         "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "FastAPI",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "HTTPException",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "Depends",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "Header",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "FastAPI",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "HTTPException",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "Depends",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "Header",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "CORSMiddleware",
+        "importPath": "fastapi.middleware.cors",
+        "description": "fastapi.middleware.cors",
+        "isExtraImport": true,
+        "detail": "fastapi.middleware.cors",
         "documentation": {}
     },
     {
@@ -1133,6 +1221,14 @@
         "importPath": "os",
         "description": "os",
         "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "Enum",
+        "importPath": "enum",
+        "description": "enum",
+        "isExtraImport": true,
+        "detail": "enum",
         "documentation": {}
     },
     {
@@ -4501,7 +4597,7 @@
         "kind": 6,
         "importPath": "ag-extension-dashboard.src.agents.crew_main",
         "description": "ag-extension-dashboard.src.agents.crew_main",
-        "peekOfCode": "class PestOutbreakTool(DiseaseAlertTool):\n    \"\"\"Alias kept for existing agent wiring.\"\"\"\n    name: str = \"get_disease_alerts\"\n# Authentication dependency\nasync def verify_token(authorization: Optional[str] = Header(None)):\n    \"\"\"Verify JWT token from Authorization header\"\"\"\n    if not authorization or not authorization.startswith(\"Bearer \"):\n        raise HTTPException(status_code=401, detail=\"Missing or invalid authorization header\")\n    token = authorization.split(\" \")[1]\n    if not token or token == \"dev-token\":",
+        "peekOfCode": "class PestOutbreakTool(DiseaseAlertTool):\n    \"\"\"Alias kept for existing agent wiring.\"\"\"\n    name: str = \"get_disease_alerts\"\n# Authentication dependency\nasync def verify_token(authorization: Optional[str] = Header(None)):\n    \"\"\"Verify JWT token from Authorization header\"\"\"\n    if not authorization or not authorization.startswith(\"Bearer \"):\n        raise HTTPException(status_code=401, detail=\"Missing or invalid authorization header\")\n    token = authorization.split(\" \")[1]\n    if not token:",
         "detail": "ag-extension-dashboard.src.agents.crew_main",
         "documentation": {}
     },
@@ -4654,7 +4750,7 @@
         "kind": 5,
         "importPath": "ag-extension-dashboard.src.agents.crew_main",
         "description": "ag-extension-dashboard.src.agents.crew_main",
-        "peekOfCode": "OPENAI_API_KEY = os.getenv(\"OPENAI_API_KEY\", \"\")\nDATABASE_URL = os.getenv(\"DATABASE_URL\", \"\")\nJWT_SECRET = os.getenv(\"JWT_SECRET\", \"dev-secret\")\n# Import Crew AI\ntry:\n    from crewai import Agent, Task, Crew, Process\n    from langchain_openai import ChatOpenAI\n    from crewai.tools import BaseTool\n    CREW_AI_AVAILABLE = True\n    logger.info(\"Crew AI library loaded successfully\")",
+        "peekOfCode": "OPENAI_API_KEY = os.getenv(\"OPENAI_API_KEY\", \"\")\nDATABASE_URL = os.getenv(\"DATABASE_URL\", \"\")\ndef _resolve_jwt_secret() -> str:\n    \"\"\"Resolve the JWT signing secret, failing loud rather than defaulting.\n    A baked-in default secret is a signing-key forgery backdoor: anyone who knows it\n    can mint tokens for any user. Production requires a strong, provisioned secret.\n    \"\"\"\n    secret = os.getenv(\"JWT_SECRET\", \"\").strip()\n    if secret:\n        if NODE_ENV == \"production\" and len(secret) < 32:",
         "detail": "ag-extension-dashboard.src.agents.crew_main",
         "documentation": {}
     },
@@ -4663,7 +4759,7 @@
         "kind": 5,
         "importPath": "ag-extension-dashboard.src.agents.crew_main",
         "description": "ag-extension-dashboard.src.agents.crew_main",
-        "peekOfCode": "DATABASE_URL = os.getenv(\"DATABASE_URL\", \"\")\nJWT_SECRET = os.getenv(\"JWT_SECRET\", \"dev-secret\")\n# Import Crew AI\ntry:\n    from crewai import Agent, Task, Crew, Process\n    from langchain_openai import ChatOpenAI\n    from crewai.tools import BaseTool\n    CREW_AI_AVAILABLE = True\n    logger.info(\"Crew AI library loaded successfully\")\nexcept ImportError:",
+        "peekOfCode": "DATABASE_URL = os.getenv(\"DATABASE_URL\", \"\")\ndef _resolve_jwt_secret() -> str:\n    \"\"\"Resolve the JWT signing secret, failing loud rather than defaulting.\n    A baked-in default secret is a signing-key forgery backdoor: anyone who knows it\n    can mint tokens for any user. Production requires a strong, provisioned secret.\n    \"\"\"\n    secret = os.getenv(\"JWT_SECRET\", \"\").strip()\n    if secret:\n        if NODE_ENV == \"production\" and len(secret) < 32:\n            raise RuntimeError(\"JWT_SECRET must be at least 32 characters in production\")",
         "detail": "ag-extension-dashboard.src.agents.crew_main",
         "documentation": {}
     },
@@ -4672,7 +4768,7 @@
         "kind": 5,
         "importPath": "ag-extension-dashboard.src.agents.crew_main",
         "description": "ag-extension-dashboard.src.agents.crew_main",
-        "peekOfCode": "JWT_SECRET = os.getenv(\"JWT_SECRET\", \"dev-secret\")\n# Import Crew AI\ntry:\n    from crewai import Agent, Task, Crew, Process\n    from langchain_openai import ChatOpenAI\n    from crewai.tools import BaseTool\n    CREW_AI_AVAILABLE = True\n    logger.info(\"Crew AI library loaded successfully\")\nexcept ImportError:\n    CREW_AI_AVAILABLE = False",
+        "peekOfCode": "JWT_SECRET = _resolve_jwt_secret()\n# Import Crew AI\ntry:\n    from crewai import Agent, Task, Crew, Process\n    from langchain_openai import ChatOpenAI\n    from crewai.tools import BaseTool\n    CREW_AI_AVAILABLE = True\n    logger.info(\"Crew AI library loaded successfully\")\nexcept ImportError:\n    CREW_AI_AVAILABLE = False",
         "detail": "ag-extension-dashboard.src.agents.crew_main",
         "documentation": {}
     },
@@ -4852,7 +4948,7 @@
         "kind": 5,
         "importPath": "ag-extension-dashboard.src.agents.main",
         "description": "ag-extension-dashboard.src.agents.main",
-        "peekOfCode": "OPENAI_API_KEY = os.getenv(\"OPENAI_API_KEY\", \"\")\nDATABASE_URL = os.getenv(\"DATABASE_URL\", \"\")\nREDIS_URL = os.getenv(\"REDIS_URL\", \"redis://localhost:6379\")\nJWT_SECRET = os.getenv(\"JWT_SECRET\", \"dev-secret\")\nSESSION_TTL = int(os.getenv(\"SESSION_TTL_SECONDS\", \"86400\"))  # 24h default\nif not OPENAI_API_KEY:\n    logger.warning(\"OPENAI_API_KEY not configured - AI features will be limited\")\n# ----------------------------------------------------------------\n# Redis Session Manager — enables state survival across restarts\n# ----------------------------------------------------------------",
+        "peekOfCode": "OPENAI_API_KEY = os.getenv(\"OPENAI_API_KEY\", \"\")\nDATABASE_URL = os.getenv(\"DATABASE_URL\", \"\")\nREDIS_URL = os.getenv(\"REDIS_URL\", \"redis://localhost:6379\")\nSESSION_TTL = int(os.getenv(\"SESSION_TTL_SECONDS\", \"86400\"))  # 24h default\ndef _resolve_jwt_secret() -> str:\n    \"\"\"Resolve the JWT signing secret, failing loud rather than defaulting.\n    A baked-in default secret is a signing-key forgery backdoor: anyone who knows it\n    can mint tokens for any user. Production requires a strong, provisioned secret.\n    \"\"\"\n    secret = os.getenv(\"JWT_SECRET\", \"\").strip()",
         "detail": "ag-extension-dashboard.src.agents.main",
         "documentation": {}
     },
@@ -4861,7 +4957,7 @@
         "kind": 5,
         "importPath": "ag-extension-dashboard.src.agents.main",
         "description": "ag-extension-dashboard.src.agents.main",
-        "peekOfCode": "DATABASE_URL = os.getenv(\"DATABASE_URL\", \"\")\nREDIS_URL = os.getenv(\"REDIS_URL\", \"redis://localhost:6379\")\nJWT_SECRET = os.getenv(\"JWT_SECRET\", \"dev-secret\")\nSESSION_TTL = int(os.getenv(\"SESSION_TTL_SECONDS\", \"86400\"))  # 24h default\nif not OPENAI_API_KEY:\n    logger.warning(\"OPENAI_API_KEY not configured - AI features will be limited\")\n# ----------------------------------------------------------------\n# Redis Session Manager — enables state survival across restarts\n# ----------------------------------------------------------------\nclass RedisSessionManager:",
+        "peekOfCode": "DATABASE_URL = os.getenv(\"DATABASE_URL\", \"\")\nREDIS_URL = os.getenv(\"REDIS_URL\", \"redis://localhost:6379\")\nSESSION_TTL = int(os.getenv(\"SESSION_TTL_SECONDS\", \"86400\"))  # 24h default\ndef _resolve_jwt_secret() -> str:\n    \"\"\"Resolve the JWT signing secret, failing loud rather than defaulting.\n    A baked-in default secret is a signing-key forgery backdoor: anyone who knows it\n    can mint tokens for any user. Production requires a strong, provisioned secret.\n    \"\"\"\n    secret = os.getenv(\"JWT_SECRET\", \"\").strip()\n    if secret:",
         "detail": "ag-extension-dashboard.src.agents.main",
         "documentation": {}
     },
@@ -4870,16 +4966,7 @@
         "kind": 5,
         "importPath": "ag-extension-dashboard.src.agents.main",
         "description": "ag-extension-dashboard.src.agents.main",
-        "peekOfCode": "REDIS_URL = os.getenv(\"REDIS_URL\", \"redis://localhost:6379\")\nJWT_SECRET = os.getenv(\"JWT_SECRET\", \"dev-secret\")\nSESSION_TTL = int(os.getenv(\"SESSION_TTL_SECONDS\", \"86400\"))  # 24h default\nif not OPENAI_API_KEY:\n    logger.warning(\"OPENAI_API_KEY not configured - AI features will be limited\")\n# ----------------------------------------------------------------\n# Redis Session Manager — enables state survival across restarts\n# ----------------------------------------------------------------\nclass RedisSessionManager:\n    \"\"\"Redis-backed session persistence for agent tasks and results.",
-        "detail": "ag-extension-dashboard.src.agents.main",
-        "documentation": {}
-    },
-    {
-        "label": "JWT_SECRET",
-        "kind": 5,
-        "importPath": "ag-extension-dashboard.src.agents.main",
-        "description": "ag-extension-dashboard.src.agents.main",
-        "peekOfCode": "JWT_SECRET = os.getenv(\"JWT_SECRET\", \"dev-secret\")\nSESSION_TTL = int(os.getenv(\"SESSION_TTL_SECONDS\", \"86400\"))  # 24h default\nif not OPENAI_API_KEY:\n    logger.warning(\"OPENAI_API_KEY not configured - AI features will be limited\")\n# ----------------------------------------------------------------\n# Redis Session Manager — enables state survival across restarts\n# ----------------------------------------------------------------\nclass RedisSessionManager:\n    \"\"\"Redis-backed session persistence for agent tasks and results.\n    Stores task history, analysis results, outreach records, and report",
+        "peekOfCode": "REDIS_URL = os.getenv(\"REDIS_URL\", \"redis://localhost:6379\")\nSESSION_TTL = int(os.getenv(\"SESSION_TTL_SECONDS\", \"86400\"))  # 24h default\ndef _resolve_jwt_secret() -> str:\n    \"\"\"Resolve the JWT signing secret, failing loud rather than defaulting.\n    A baked-in default secret is a signing-key forgery backdoor: anyone who knows it\n    can mint tokens for any user. Production requires a strong, provisioned secret.\n    \"\"\"\n    secret = os.getenv(\"JWT_SECRET\", \"\").strip()\n    if secret:\n        if NODE_ENV == \"production\" and len(secret) < 32:",
         "detail": "ag-extension-dashboard.src.agents.main",
         "documentation": {}
     },
@@ -4888,7 +4975,16 @@
         "kind": 5,
         "importPath": "ag-extension-dashboard.src.agents.main",
         "description": "ag-extension-dashboard.src.agents.main",
-        "peekOfCode": "SESSION_TTL = int(os.getenv(\"SESSION_TTL_SECONDS\", \"86400\"))  # 24h default\nif not OPENAI_API_KEY:\n    logger.warning(\"OPENAI_API_KEY not configured - AI features will be limited\")\n# ----------------------------------------------------------------\n# Redis Session Manager — enables state survival across restarts\n# ----------------------------------------------------------------\nclass RedisSessionManager:\n    \"\"\"Redis-backed session persistence for agent tasks and results.\n    Stores task history, analysis results, outreach records, and report\n    data so that agent state survives container restarts.  Each session",
+        "peekOfCode": "SESSION_TTL = int(os.getenv(\"SESSION_TTL_SECONDS\", \"86400\"))  # 24h default\ndef _resolve_jwt_secret() -> str:\n    \"\"\"Resolve the JWT signing secret, failing loud rather than defaulting.\n    A baked-in default secret is a signing-key forgery backdoor: anyone who knows it\n    can mint tokens for any user. Production requires a strong, provisioned secret.\n    \"\"\"\n    secret = os.getenv(\"JWT_SECRET\", \"\").strip()\n    if secret:\n        if NODE_ENV == \"production\" and len(secret) < 32:\n            raise RuntimeError(\"JWT_SECRET must be at least 32 characters in production\")",
+        "detail": "ag-extension-dashboard.src.agents.main",
+        "documentation": {}
+    },
+    {
+        "label": "JWT_SECRET",
+        "kind": 5,
+        "importPath": "ag-extension-dashboard.src.agents.main",
+        "description": "ag-extension-dashboard.src.agents.main",
+        "peekOfCode": "JWT_SECRET = _resolve_jwt_secret()\nif not OPENAI_API_KEY:\n    logger.warning(\"OPENAI_API_KEY not configured - AI features will be limited\")\n# ----------------------------------------------------------------\n# Redis Session Manager — enables state survival across restarts\n# ----------------------------------------------------------------\nclass RedisSessionManager:\n    \"\"\"Redis-backed session persistence for agent tasks and results.\n    Stores task history, analysis results, outreach records, and report\n    data so that agent state survives container restarts.  Each session",
         "detail": "ag-extension-dashboard.src.agents.main",
         "documentation": {}
     },
@@ -4908,6 +5004,105 @@
         "description": "ag-extension-dashboard.src.agents.main",
         "peekOfCode": "db = DatabaseManager()\n# Request/Response models\nclass TaskType(str, Enum):\n    OUTREACH = \"outreach\"\n    ANALYSIS = \"analysis\"\n    REPORT = \"report\"\n    STEALTH_SCRAPE = \"stealth_scrape\"\nclass TaskRequest(BaseModel):\n    task_type: TaskType\n    parameters: Dict[str, Any]",
         "detail": "ag-extension-dashboard.src.agents.main",
+        "documentation": {}
+    },
+    {
+        "label": "TaskType",
+        "kind": 6,
+        "importPath": "ag-extension-dashboard.src.agents.openclaw_main",
+        "description": "ag-extension-dashboard.src.agents.openclaw_main",
+        "peekOfCode": "class TaskType(str, Enum):\n    OUTREACH = \"outreach\"\n    ANALYSIS = \"analysis\"\n    REPORT = \"report\"\n    STEALTH_SCRAPE = \"stealth_scrape\"\nclass TaskRequest(BaseModel):\n    task_type: TaskType\n    parameters: Dict[str, Any]\n    callback: Optional[str] = None\ndef _require_gateway() -> str:",
+        "detail": "ag-extension-dashboard.src.agents.openclaw_main",
+        "documentation": {}
+    },
+    {
+        "label": "TaskRequest",
+        "kind": 6,
+        "importPath": "ag-extension-dashboard.src.agents.openclaw_main",
+        "description": "ag-extension-dashboard.src.agents.openclaw_main",
+        "peekOfCode": "class TaskRequest(BaseModel):\n    task_type: TaskType\n    parameters: Dict[str, Any]\n    callback: Optional[str] = None\ndef _require_gateway() -> str:\n    \"\"\"Return the configured gateway base URL, or fail loud if none is set.\"\"\"\n    if not OPENCLAW_GATEWAY_URL:\n        raise HTTPException(\n            status_code=503,\n            detail=\"OpenClaw gateway is not configured (set OPENCLAW_GATEWAY_URL); the service refuses to fake execution\",",
+        "detail": "ag-extension-dashboard.src.agents.openclaw_main",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "ag-extension-dashboard.src.agents.openclaw_main",
+        "description": "ag-extension-dashboard.src.agents.openclaw_main",
+        "peekOfCode": "logger = logging.getLogger(__name__)\nNODE_ENV = os.getenv(\"NODE_ENV\", \"development\")\nALLOWED_ORIGINS = os.getenv(\"CORS_ORIGINS\", \"https://www.gpexts.com,http://localhost:7503,http://localhost:5173\").split(\",\")\napp = FastAPI(title=\"OpenClaw Service\", version=\"1.0.0\")\n# CORS middleware - not wildcard with credentials\napp.add_middleware(\n    CORSMiddleware,\n    allow_origins=ALLOWED_ORIGINS,\n    allow_credentials=True,\n    allow_methods=[\"*\"],",
+        "detail": "ag-extension-dashboard.src.agents.openclaw_main",
+        "documentation": {}
+    },
+    {
+        "label": "NODE_ENV",
+        "kind": 5,
+        "importPath": "ag-extension-dashboard.src.agents.openclaw_main",
+        "description": "ag-extension-dashboard.src.agents.openclaw_main",
+        "peekOfCode": "NODE_ENV = os.getenv(\"NODE_ENV\", \"development\")\nALLOWED_ORIGINS = os.getenv(\"CORS_ORIGINS\", \"https://www.gpexts.com,http://localhost:7503,http://localhost:5173\").split(\",\")\napp = FastAPI(title=\"OpenClaw Service\", version=\"1.0.0\")\n# CORS middleware - not wildcard with credentials\napp.add_middleware(\n    CORSMiddleware,\n    allow_origins=ALLOWED_ORIGINS,\n    allow_credentials=True,\n    allow_methods=[\"*\"],\n    allow_headers=[\"*\"],",
+        "detail": "ag-extension-dashboard.src.agents.openclaw_main",
+        "documentation": {}
+    },
+    {
+        "label": "ALLOWED_ORIGINS",
+        "kind": 5,
+        "importPath": "ag-extension-dashboard.src.agents.openclaw_main",
+        "description": "ag-extension-dashboard.src.agents.openclaw_main",
+        "peekOfCode": "ALLOWED_ORIGINS = os.getenv(\"CORS_ORIGINS\", \"https://www.gpexts.com,http://localhost:7503,http://localhost:5173\").split(\",\")\napp = FastAPI(title=\"OpenClaw Service\", version=\"1.0.0\")\n# CORS middleware - not wildcard with credentials\napp.add_middleware(\n    CORSMiddleware,\n    allow_origins=ALLOWED_ORIGINS,\n    allow_credentials=True,\n    allow_methods=[\"*\"],\n    allow_headers=[\"*\"],\n)",
+        "detail": "ag-extension-dashboard.src.agents.openclaw_main",
+        "documentation": {}
+    },
+    {
+        "label": "app",
+        "kind": 5,
+        "importPath": "ag-extension-dashboard.src.agents.openclaw_main",
+        "description": "ag-extension-dashboard.src.agents.openclaw_main",
+        "peekOfCode": "app = FastAPI(title=\"OpenClaw Service\", version=\"1.0.0\")\n# CORS middleware - not wildcard with credentials\napp.add_middleware(\n    CORSMiddleware,\n    allow_origins=ALLOWED_ORIGINS,\n    allow_credentials=True,\n    allow_methods=[\"*\"],\n    allow_headers=[\"*\"],\n)\ndef _resolve_jwt_secret() -> str:",
+        "detail": "ag-extension-dashboard.src.agents.openclaw_main",
+        "documentation": {}
+    },
+    {
+        "label": "JWT_SECRET",
+        "kind": 5,
+        "importPath": "ag-extension-dashboard.src.agents.openclaw_main",
+        "description": "ag-extension-dashboard.src.agents.openclaw_main",
+        "peekOfCode": "JWT_SECRET = _resolve_jwt_secret()\n# OpenClaw gateway configuration. The gateway is the only execution backend: with no\n# URL configured, /api/execute fails loud instead of fabricating a result.\nOPENCLAW_GATEWAY_URL = os.getenv(\"OPENCLAW_GATEWAY_URL\", \"\").strip().rstrip(\"/\")\nOPENCLAW_GATEWAY_TOKEN = os.getenv(\"OPENCLAW_GATEWAY_TOKEN\", \"\")\n# OpenClaw's control API shape is version-dependent: the execute endpoint and payload\n# contract are configurable so the bridge can track the deployed gateway version.\nOPENCLAW_GATEWAY_EXECUTE_PATH = os.getenv(\"OPENCLAW_GATEWAY_EXECUTE_PATH\", \"/api/execute\")\nOPENCLAW_TIMEOUT_S = int(os.getenv(\"OPENCLAW_TIMEOUT_S\", \"30\"))\nasync def verify_token(authorization: Optional[str] = Header(None)):",
+        "detail": "ag-extension-dashboard.src.agents.openclaw_main",
+        "documentation": {}
+    },
+    {
+        "label": "OPENCLAW_GATEWAY_URL",
+        "kind": 5,
+        "importPath": "ag-extension-dashboard.src.agents.openclaw_main",
+        "description": "ag-extension-dashboard.src.agents.openclaw_main",
+        "peekOfCode": "OPENCLAW_GATEWAY_URL = os.getenv(\"OPENCLAW_GATEWAY_URL\", \"\").strip().rstrip(\"/\")\nOPENCLAW_GATEWAY_TOKEN = os.getenv(\"OPENCLAW_GATEWAY_TOKEN\", \"\")\n# OpenClaw's control API shape is version-dependent: the execute endpoint and payload\n# contract are configurable so the bridge can track the deployed gateway version.\nOPENCLAW_GATEWAY_EXECUTE_PATH = os.getenv(\"OPENCLAW_GATEWAY_EXECUTE_PATH\", \"/api/execute\")\nOPENCLAW_TIMEOUT_S = int(os.getenv(\"OPENCLAW_TIMEOUT_S\", \"30\"))\nasync def verify_token(authorization: Optional[str] = Header(None)):\n    \"\"\"Verify JWT token from Authorization header (same contract as main.py).\"\"\"\n    if not authorization or not authorization.startswith(\"Bearer \"):\n        raise HTTPException(status_code=401, detail=\"Missing or invalid authorization header\")",
+        "detail": "ag-extension-dashboard.src.agents.openclaw_main",
+        "documentation": {}
+    },
+    {
+        "label": "OPENCLAW_GATEWAY_TOKEN",
+        "kind": 5,
+        "importPath": "ag-extension-dashboard.src.agents.openclaw_main",
+        "description": "ag-extension-dashboard.src.agents.openclaw_main",
+        "peekOfCode": "OPENCLAW_GATEWAY_TOKEN = os.getenv(\"OPENCLAW_GATEWAY_TOKEN\", \"\")\n# OpenClaw's control API shape is version-dependent: the execute endpoint and payload\n# contract are configurable so the bridge can track the deployed gateway version.\nOPENCLAW_GATEWAY_EXECUTE_PATH = os.getenv(\"OPENCLAW_GATEWAY_EXECUTE_PATH\", \"/api/execute\")\nOPENCLAW_TIMEOUT_S = int(os.getenv(\"OPENCLAW_TIMEOUT_S\", \"30\"))\nasync def verify_token(authorization: Optional[str] = Header(None)):\n    \"\"\"Verify JWT token from Authorization header (same contract as main.py).\"\"\"\n    if not authorization or not authorization.startswith(\"Bearer \"):\n        raise HTTPException(status_code=401, detail=\"Missing or invalid authorization header\")\n    token = authorization.split(\" \")[1]",
+        "detail": "ag-extension-dashboard.src.agents.openclaw_main",
+        "documentation": {}
+    },
+    {
+        "label": "OPENCLAW_GATEWAY_EXECUTE_PATH",
+        "kind": 5,
+        "importPath": "ag-extension-dashboard.src.agents.openclaw_main",
+        "description": "ag-extension-dashboard.src.agents.openclaw_main",
+        "peekOfCode": "OPENCLAW_GATEWAY_EXECUTE_PATH = os.getenv(\"OPENCLAW_GATEWAY_EXECUTE_PATH\", \"/api/execute\")\nOPENCLAW_TIMEOUT_S = int(os.getenv(\"OPENCLAW_TIMEOUT_S\", \"30\"))\nasync def verify_token(authorization: Optional[str] = Header(None)):\n    \"\"\"Verify JWT token from Authorization header (same contract as main.py).\"\"\"\n    if not authorization or not authorization.startswith(\"Bearer \"):\n        raise HTTPException(status_code=401, detail=\"Missing or invalid authorization header\")\n    token = authorization.split(\" \")[1]\n    if not token:\n        raise HTTPException(status_code=401, detail=\"Empty token\")\n    # SECURITY: the dev-token shortcut is development-only AND must be explicitly",
+        "detail": "ag-extension-dashboard.src.agents.openclaw_main",
+        "documentation": {}
+    },
+    {
+        "label": "OPENCLAW_TIMEOUT_S",
+        "kind": 5,
+        "importPath": "ag-extension-dashboard.src.agents.openclaw_main",
+        "description": "ag-extension-dashboard.src.agents.openclaw_main",
+        "peekOfCode": "OPENCLAW_TIMEOUT_S = int(os.getenv(\"OPENCLAW_TIMEOUT_S\", \"30\"))\nasync def verify_token(authorization: Optional[str] = Header(None)):\n    \"\"\"Verify JWT token from Authorization header (same contract as main.py).\"\"\"\n    if not authorization or not authorization.startswith(\"Bearer \"):\n        raise HTTPException(status_code=401, detail=\"Missing or invalid authorization header\")\n    token = authorization.split(\" \")[1]\n    if not token:\n        raise HTTPException(status_code=401, detail=\"Empty token\")\n    # SECURITY: the dev-token shortcut is development-only AND must be explicitly\n    # enabled (same gate as the Agent Zero runtime).",
+        "detail": "ag-extension-dashboard.src.agents.openclaw_main",
         "documentation": {}
     },
     {
@@ -7930,7 +8125,7 @@
         "kind": 2,
         "importPath": "scripts.verify_anti_hallucination",
         "description": "scripts.verify_anti_hallucination",
-        "peekOfCode": "def check_docs_link_grounding():\n    \"\"\"Verify that file:/// links in markdown protocols point to real existing files.\"\"\"\n    errors = []\n    file_link_pattern = re.compile(r\"\\[([^\\]]+)\\]\\(file://(/[^#\\)]+)(?:#[^\\)]*)?\\)\")\n    target_docs = [\n        os.path.join(REPO_ROOT, \"anti_flop.md\"),\n        os.path.join(REPO_ROOT, \"anti_hullicination.md\"),\n        os.path.join(REPO_ROOT, \"CLAUDE.md\"),\n        os.path.join(REPO_ROOT, \"KARPATHY_RULES.md\"),\n    ]",
+        "peekOfCode": "def check_docs_link_grounding():\n    \"\"\"Verify that file:/// links in markdown protocols point to real existing files.\"\"\"\n    errors = []\n    file_link_pattern = re.compile(r\"\\[([^\\]]+)\\]\\(file://(/[^#\\)]+)(?:#[^\\)]*)?\\)\")\n    target_docs = [\n        os.path.join(REPO_ROOT, \"anti_flop.md\"),\n        os.path.join(REPO_ROOT, \"anti_hallucination.md\"),\n        os.path.join(REPO_ROOT, \"Anti-Flaws.md\"),\n        os.path.join(REPO_ROOT, \"CLAUDE.md\"),\n        os.path.join(REPO_ROOT, \"KARPATHY_RULES.md\"),",
         "detail": "scripts.verify_anti_hallucination",
         "documentation": {}
     },
@@ -7966,7 +8161,7 @@
         "kind": 5,
         "importPath": "scripts.verify_anti_hallucination",
         "description": "scripts.verify_anti_hallucination",
-        "peekOfCode": "REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), \"..\"))\ndef check_docs_link_grounding():\n    \"\"\"Verify that file:/// links in markdown protocols point to real existing files.\"\"\"\n    errors = []\n    file_link_pattern = re.compile(r\"\\[([^\\]]+)\\]\\(file://(/[^#\\)]+)(?:#[^\\)]*)?\\)\")\n    target_docs = [\n        os.path.join(REPO_ROOT, \"anti_flop.md\"),\n        os.path.join(REPO_ROOT, \"anti_hullicination.md\"),\n        os.path.join(REPO_ROOT, \"CLAUDE.md\"),\n        os.path.join(REPO_ROOT, \"KARPATHY_RULES.md\"),",
+        "peekOfCode": "REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), \"..\"))\ndef check_docs_link_grounding():\n    \"\"\"Verify that file:/// links in markdown protocols point to real existing files.\"\"\"\n    errors = []\n    file_link_pattern = re.compile(r\"\\[([^\\]]+)\\]\\(file://(/[^#\\)]+)(?:#[^\\)]*)?\\)\")\n    target_docs = [\n        os.path.join(REPO_ROOT, \"anti_flop.md\"),\n        os.path.join(REPO_ROOT, \"anti_hallucination.md\"),\n        os.path.join(REPO_ROOT, \"Anti-Flaws.md\"),\n        os.path.join(REPO_ROOT, \"CLAUDE.md\"),",
         "detail": "scripts.verify_anti_hallucination",
         "documentation": {}
     }

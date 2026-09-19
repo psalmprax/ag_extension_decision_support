@@ -74,11 +74,9 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
     if (!totpCode || !setupData) return;
     try {
       setLoading(true);
-      const res = await apiClient.post('/auth/mfa/enable', {
-        totpCode,
-        secret: setupData.secret,
-        backupCodes: setupData.backupCodes,
-      });
+      // Only the code is sent: the backend generated and persisted the secret +
+      // hashed backup codes during /auth/mfa/setup and verifies against those.
+      const res = await apiClient.post('/auth/mfa/enable', { code: totpCode });
       if (res.data.success) {
         setMfaEnabled(true);
         setSetupData(null);

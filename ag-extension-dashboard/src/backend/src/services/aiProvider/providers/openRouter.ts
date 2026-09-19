@@ -196,9 +196,8 @@ export class OpenRouterProvider extends BaseAIProvider {
     return {
       reasoning: `Detailed Intelligence Analysis completed via OpenRouter (${result.model || 'meta-llama/llama-3.3-70b-instruct'}).`,
       answer: cleanAnswer,
-      confidence: 0.95,
       visuals,
-      toolCalls: result.toolCalls as any,
+      toolCalls: result.toolCalls,
     };
   }
 
@@ -216,7 +215,7 @@ export class OpenRouterProvider extends BaseAIProvider {
       const parsed = JSON.parse(res.text || '{}');
       return { labels: parsed.labels || [{ label: 'general_inquiry', score: 1.0 }] };
     } catch {
-      return { labels: [{ label: 'general_inquiry', score: 1.0 }] };
+      throw new Error('Failed to parse OpenRouter classification response');
     }
   }
 }

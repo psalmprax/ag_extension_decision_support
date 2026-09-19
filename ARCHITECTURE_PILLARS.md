@@ -260,15 +260,16 @@ Enables large agribusiness unions, commodity exporters, and government agencies 
 
 ---
 
-## 11. Conflict-Free Bi-Directional Offline Sync (CRDT Protocol)
+## 11. Durable Offline Mutation Queue & Stateful Conflict Reconciliation
 
 ### Purpose
-Enables field officers to record farm visits, soil tests, and parcel boundaries completely offline across multiple devices with guaranteed deterministic conflict resolution upon reconnection.
+Enables field officers to record farm visits, soil tests, and parcel boundaries completely offline across multiple devices with guaranteed idempotency and stateful conflict resolution upon reconnection.
 
-### Key Components ([`crdtSyncService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/services/crdtSyncService.ts))
-- **Vector Clocks**: Tracks distributed causality ordering across multiple mobile nodes (`nodeId -> sequence`).
-- **Last-Write-Wins (LWW) Register**: Deterministic tie-breaking using `(timestamp, nodeId)` so all nodes converge to identical states.
-- **Delta Generation**: Computes minimal change payloads since the remote replica's last observed clock.
+### Key Components ([`syncQueueService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/api/syncQueueService.ts))
+- **Dual-Layer Persistence**: Mirrored persistence across IndexedDB (`ag-sync-queue-db`) and `localStorage` fallback to survive browser storage pressure.
+- **Cryptographic Idempotency Keys**: Generates stable UUID-based keys per mutation to prevent duplicate side effects upon re-connection.
+- **Exponential Backoff & Rate Handling**: Automatic scheduling with exponential backoff (`BASE_BACKOFF_MS = 30s` up to 8m, capped at 5 retries) and 429 throttling respect.
+- **Stateful Conflict Detection**: Tracks 409 HTTP conflicts explicitly (`conflict` state) for manual officer intervention or non-destructive merge.
 
 ---
 
@@ -363,7 +364,7 @@ Provides a cost-optimized, vendor-agnostic object storage infrastructure for hig
 | **Expanded Capabilities** | [`advancedPillarsExpanded.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/advancedPillarsExpanded.test.ts) | 9 / 9 | Sentinel-2 NDVI/EVI/NDWI, 0-1000 credit score, parametric insurance claim, multi-tenancy |
 | **Frontier Capabilities** | [`frontierCapabilities.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/frontierCapabilities.test.ts) | 9 / 9 | IoT soil telemetry, VPD irrigation, EUDR compliance, GS1 passports, drone missions, swarm radar, arbitrage |
 | **Edge Field Services** | [`edgeFieldServices.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/__tests__/edgeFieldServices.test.ts) | 3 / 3 | Haversine distance, WGS-84 metric Shoelace polygon acreage, RFC 7946 GeoJSON export |
-| **CRDT Offline Sync** | [`crdtSync.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/__tests__/crdtSync.test.ts) | 3 / 3 | Vector clocks, Last-Write-Wins conflict resolution, bidirectional delta sync between officers |
+| **Offline Sync Queue** | [`syncQueueService.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/__tests__/syncQueueService.test.ts) | 5 / 5 | Idempotency keys, dual IndexedDB/localStorage persistence, exponential backoff, 409 conflict handling |
 | **Backend Full Suite** | 70 test files | 656 / 656 | 100% passing across all backend routes, services, queues, and security gates |
 | **Frontend Full Suite** | 35 test files | 162 / 162 | 100% passing across UI components, state stores, and services |
 | **Linter & Dead-Code** | `fallow:check` | 0 regressions | Clean ESLint, strict TypeScript, and Fallow dead-code gate passing |

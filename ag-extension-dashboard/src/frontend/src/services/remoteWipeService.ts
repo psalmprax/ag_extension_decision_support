@@ -1,4 +1,5 @@
 import { EncryptedStorageService } from './encryptedStorageService';
+import { purgePrivateApiCache } from '../lib/privateApiCache';
 
 export interface WipeExecutionReport {
   timestamp: string;
@@ -55,6 +56,14 @@ export class RemoteWipeService {
         report.clearedSessionStorage = true;
       }
 
+      let privateCacheCleared = false;
+      try {
+        await purgePrivateApiCache();
+        privateCacheCleared = true;
+      } catch {
+        // Continue wiping other stores even if Cache Storage is unavailable.
+      }
+
       // 3. Delete IndexedDB databases
       if (typeof window !== 'undefined' && window.indexedDB && window.indexedDB.deleteDatabase) {
         for (const dbName of this.KNOWN_DATABASES) {
@@ -67,7 +76,7 @@ export class RemoteWipeService {
         }
       }
 
-      report.success = true;
+      report.success = privateCacheCleared;
     } catch {
       report.success = false;
     }

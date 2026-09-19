@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { logger } from '../utils/logger';
 import { sendPushNotification } from './pushNotificationService';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { addNotificationJob } from '../queues/notificationQueue';
+import { config } from '@/config';
 
 const prisma = new PrismaClient({
-    datasourceUrl: process.env.DATABASE_URL,
+    datasourceUrl: config.database.url,
 });
 
 export type NotificationType =

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Camera,
   Layers,
@@ -399,11 +399,12 @@ function getBoundingBoxLabel(label: string): string {
 
 interface YoloBoundingBoxesOverlayProps {
   boxes: DetectedBoundingBox[];
+  style?: React.CSSProperties;
 }
 
-const YoloBoundingBoxesOverlay: React.FC<YoloBoundingBoxesOverlayProps> = ({ boxes }) => {
+const YoloBoundingBoxesOverlay: React.FC<YoloBoundingBoxesOverlayProps> = ({ boxes, style }) => {
   return (
-    <div className="absolute inset-0 pointer-events-none">
+    <div className="absolute inset-0 pointer-events-none" style={style}>
       {boxes.map(b => {
         const [ymin, xmin, ymax, xmax] = b.box;
         const top = `${ymin * 100}%`;
@@ -435,6 +436,68 @@ const YoloBoundingBoxesOverlay: React.FC<YoloBoundingBoxesOverlayProps> = ({ box
         );
       })}
     </div>
+  );
+};
+
+export interface SvgBoundingBoxesOverlayProps {
+  boxes: DetectedBoundingBox[];
+  style?: React.CSSProperties;
+}
+
+export const SvgBoundingBoxesOverlay: React.FC<SvgBoundingBoxesOverlayProps> = ({ boxes, style }) => {
+  return (
+    <svg
+      className="absolute inset-0 pointer-events-none w-full h-full"
+      style={style}
+      viewBox="0 0 1000 1000"
+      preserveAspectRatio="none"
+      xmlns="http://www.w3.org/2000/svg"
+      data-testid="svg-bounding-boxes-overlay"
+    >
+      {boxes.map(b => {
+        const [ymin, xmin, ymax, xmax] = b.box;
+        const x = xmin * 1000;
+        const y = ymin * 1000;
+        const w = (xmax - xmin) * 1000;
+        const h = (ymax - ymin) * 1000;
+        const labelText = getBoundingBoxLabel(b.label);
+        const textLabel = `${labelText} ${Math.round(b.confidence * 100)}%`;
+        const badgeWidth = Math.min(240, textLabel.length * 10 + 16);
+
+        return (
+          <g key={b.id} className="svg-box-group">
+            <rect
+              x={x}
+              y={y}
+              width={w}
+              height={h}
+              fill={`${b.color}20`}
+              stroke={b.color}
+              strokeWidth="3"
+              rx="4"
+            />
+            <rect
+              x={x}
+              y={Math.max(0, y - 28)}
+              width={badgeWidth}
+              height="24"
+              fill={b.color}
+              rx="4"
+            />
+            <text
+              x={x + 6}
+              y={Math.max(16, y - 11)}
+              fill="#FFFFFF"
+              fontSize="13"
+              fontFamily="monospace"
+              fontWeight="bold"
+            >
+              {textLabel}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
   );
 };
 
@@ -577,7 +640,47 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
   const [verifiedSoil, setVerifiedSoil] = useState<SoilAnalysisResult | null>(null);
   const [loggedToMap, setLoggedToMap] = useState(false);
   const [showBoxes, setShowBoxes] = useState(true);
+  // AD-003: Low-RAM Android Go SVG Fallback Mode (auto-detects <= 2GB deviceMemory)
+  const [lowRamSvgMode, setLowRamSvgMode] = useState<boolean>(() => {
+    if (typeof navigator !== 'undefined') {
+      const navMem = (navigator as unknown as { deviceMemory?: number }).deviceMemory;
+      if (typeof navMem === 'number' && navMem <= 2) {
+        return true;
+      }
+    }
+    return false;
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [renderedBounds, setRenderedBounds] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  const updateRenderedBounds = () => {
+    if (!imgRef.current) return;
+    const img = imgRef.current;
+    if (img.offsetWidth > 0 && img.offsetHeight > 0) {
+      setRenderedBounds({
+        top: img.offsetTop,
+        left: img.offsetLeft,
+        width: img.offsetWidth,
+        height: img.offsetHeight,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (!imageSrc) {
+      setRenderedBounds(null);
+      return;
+    }
+    const handleResize = () => updateRenderedBounds();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [imageSrc]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -740,16 +843,40 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
         {imageSrc && (
           <div className="space-y-4">
             <div className="relative rounded-xl overflow-hidden border border-white/10 max-h-64 bg-black/40 flex items-center justify-center">
-              <img
-                src={imageSrc}
-                alt="Diagnostic Target Specimen"
-                className="object-contain max-h-64 w-full select-none"
-              />
+              <div className="relative inline-flex items-center justify-center max-h-64 max-w-full">
+                <img
+                  ref={imgRef}
+                  src={imageSrc}
+                  alt="Diagnostic Target Specimen"
+                  className="object-contain max-h-64 max-w-full w-auto h-auto select-none block"
+                  onLoad={updateRenderedBounds}
+                />
 
-              {/* Stage 1: YOLO Bounding Boxes & Foliar Saliency Overlay */}
-              {showBoxes && scanMode === 'crop' && cropResult?.twoStage?.stage1Detector.boxes && !analyzing && (
-                <YoloBoundingBoxesOverlay boxes={cropResult.twoStage.stage1Detector.boxes} />
-              )}
+                {/* Stage 1: YOLO Bounding Boxes Overlay (SVG Low-RAM mode AD-003 or Standard HTML5) */}
+                {showBoxes && scanMode === 'crop' && cropResult?.twoStage?.stage1Detector.boxes && !analyzing && (
+                  lowRamSvgMode ? (
+                    <SvgBoundingBoxesOverlay
+                      boxes={cropResult.twoStage.stage1Detector.boxes}
+                      style={renderedBounds ? {
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                      } : undefined}
+                    />
+                  ) : (
+                    <YoloBoundingBoxesOverlay
+                      boxes={cropResult.twoStage.stage1Detector.boxes}
+                      style={renderedBounds ? {
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                      } : undefined}
+                    />
+                  )
+                )}
+              </div>
 
               {analyzing && (
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white">
@@ -761,19 +888,39 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
               )}
             </div>
 
-            {/* YOLO Bounding Box & Saliency Toggle */}
+            {/* YOLO Bounding Box & Saliency Toggle & Low-RAM Mode (AD-003) */}
             {scanMode === 'crop' && cropResult?.twoStage?.stage1Detector.boxes && (
-              <div className="flex justify-between items-center text-xs px-1">
+              <div className="flex flex-wrap justify-between items-center gap-2 text-xs px-1">
                 <span className="text-slate-400 font-mono text-[11px]">
                   YOLO Detections: {cropResult.twoStage.stage1Detector.boxes.filter(b => b.label !== 'crop_leaf').length} lesion/damage sites
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setShowBoxes(!showBoxes)}
-                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-lg text-[11px] font-mono text-emerald-300 transition"
-                >
-                  {showBoxes ? 'Hide YOLO Boxes' : 'Show YOLO Boxes'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic('light');
+                      setLowRamSvgMode(!lowRamSvgMode);
+                    }}
+                    title="Toggle lightweight SVG rendering mode for devices with <= 2GB RAM (AD-003)"
+                    className={`px-2 py-1 rounded-lg text-[10px] font-mono border transition ${
+                      lowRamSvgMode
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                        : 'bg-slate-800 hover:bg-slate-700 border-white/10 text-slate-400'
+                    }`}
+                  >
+                    {lowRamSvgMode ? '⚡ Low-RAM SVG (Active)' : 'Std Overlay'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic('light');
+                      setShowBoxes(!showBoxes);
+                    }}
+                    className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-lg text-[11px] font-mono text-emerald-300 transition"
+                  >
+                    {showBoxes ? 'Hide YOLO Boxes' : 'Show YOLO Boxes'}
+                  </button>
+                </div>
               </div>
             )}
 

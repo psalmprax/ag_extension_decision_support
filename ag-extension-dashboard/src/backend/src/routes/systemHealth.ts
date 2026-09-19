@@ -4,6 +4,7 @@ import { selfHealingService } from '@/services/selfHealing';
 import { logger } from '@/utils/logger';
 import { getPoolStats } from '@/services/databaseService';
 import { getEmbeddingCacheStats } from '@/services/embeddingCache';
+import { credentialVault } from '@/services/security/credentialVault';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
@@ -80,6 +81,25 @@ router.post('/recover/:component', authorize(['admin']), async (req: Request, re
     } catch (error) {
         logger.error(`Failed to process recovery request for ${req.params.component}:`, error);
         return safeError(res, 500, 'Failed to process recovery request');
+    }
+});
+
+// Credential rotation backlog (names + expiry only — never secret material).
+router.get('/vault', authorize(['admin']), async (req: Request, res: Response) => {
+    try {
+        const overdue = credentialVault.listOverdueCredentials().map(c => ({
+            name: c.name,
+            category: c.category,
+            expiresAt: c.expiresAt,
+            accessCount: c.accessCount,
+        }));
+        const expiring = credentialVault.getExpiringCredentials(7)
+            .filter(c => !overdue.some(o => o.name === c.name && o.category === c.category))
+            .map(c => ({ name: c.name, category: c.category, expiresAt: c.expiresAt }));
+        res.json({ success: true, data: { overdue, expiringWithin7Days: expiring } });
+    } catch (error) {
+        logger.error('Failed to get vault rotation status:', error);
+        safeError(res, 500, 'Failed to get vault rotation status');
     }
 });
 

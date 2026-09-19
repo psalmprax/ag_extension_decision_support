@@ -5,17 +5,57 @@ import { config } from '@/config';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { recordLoginAttempt, resolveLocationFromHeaders } from '@/services/loginHistoryService';
-import { generateMfaSecret, verifyTotp, matchTotpStep, verifyAndConsumeBackupCode, hashBackupCodes } from '@/services/mfaService';
+import { generateMfaSecret, matchTotpStep, verifyAndConsumeBackupCode, hashBackupCodes } from '@/services/mfaService';
 import { createSession } from '@/services/sessionService';
+import { setAuthCookie } from '@/middleware/authCookie';
 import { isAccountLocked, recordFailedLogin, resetFailedAttempts } from '@/services/lockoutService';
+import { setWithTtl, getTtl, delKey } from '@/services/sharedState';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
+
+/** Pending /mfa/setup enrollments expire after 10 minutes (Redis TTL). */
+const MFA_PENDING_TTL_MS = 10 * 60 * 1000;
 
 interface JWTPayload {
     userId: string;
     email: string;
     role: string;
+}
+
+interface MfaChallengeUser {
+    id: string;
+    mfa_secret: string;
+    mfa_backup_codes: Parameters<typeof verifyAndConsumeBackupCode>[2];
+    last_totp_step?: number | string | null;
+}
+
+async function verifyMfaChallenge(user: MfaChallengeUser, code: string, isBackupCode: boolean) {
+    if (isBackupCode) {
+        const backupRes = await verifyAndConsumeBackupCode(user.id, code, user.mfa_backup_codes || []);
+        return { isValid: backupRes.valid, failureReasonOverride: null };
+    }
+
+    const step = matchTotpStep(code, user.mfa_secret);
+    if (step === null) return { isValid: false, failureReasonOverride: null };
+
+    // Claim each TOTP step once, including concurrent verification requests.
+    const lastStep = user.last_totp_step !== null && user.last_totp_step !== undefined ? Number(user.last_totp_step) : -1;
+    if (step <= lastStep) return { isValid: false, failureReasonOverride: 'totp_code_replayed' };
+
+    const claim = await query(
+        `UPDATE users SET last_totp_step = $1 WHERE id = $2 AND (last_totp_step IS NULL OR last_totp_step < $1) RETURNING id`,
+        [step, user.id]
+    );
+    const isValid = claim.rows.length > 0;
+    const failureReasonOverride = isValid ? null : 'totp_code_replayed';
+    return { isValid, failureReasonOverride };
+}
+
+function mfaFailureMessage(reason: string | null, failedInfo: Awaited<ReturnType<typeof recordFailedLogin>>): string {
+    if (reason === 'totp_code_replayed') return 'That code was already used. Wait for the next code.';
+    if (failedInfo.locked) return 'Too many invalid codes. Account temporarily locked.';
+    return `Invalid verification code. ${failedInfo.remainingAttempts} attempt(s) remaining.`;
 }
 
 /**
@@ -33,7 +73,7 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
 
         let decoded: { userId: string; email: string; mfaPending?: boolean };
         try {
-            decoded = jwt.verify(tempToken, config.jwt.secret as jwt.Secret) as typeof decoded;
+            decoded = jwt.verify(tempToken, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as typeof decoded;
         } catch {
             return res.status(401).json({ success: false, error: 'Invalid or expired MFA token' });
         }
@@ -59,29 +99,12 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
             });
         }
 
-        let isValid = false;
-        let failureReasonOverride: string | null = null;
-        if (isBackupCode) {
-            const backupRes = await verifyAndConsumeBackupCode(user.id, code, user.mfa_backup_codes || []);
-            isValid = backupRes.valid;
-        } else {
-            const step = matchTotpStep(code, user.mfa_secret);
-            if (step !== null) {
-                // Replay guard: a code is single-use. Reject anything at or before the last
-                // accepted step, then advance the watermark atomically.
-                const lastStep = user.last_totp_step !== null && user.last_totp_step !== undefined ? Number(user.last_totp_step) : -1;
-                if (step <= lastStep) {
-                    failureReasonOverride = 'totp_code_replayed';
-                } else {
-                    const claim = await query(
-                        `UPDATE users SET last_totp_step = $1 WHERE id = $2 AND (last_totp_step IS NULL OR last_totp_step < $1) RETURNING id`,
-                        [step, user.id]
-                    );
-                    isValid = claim.rows.length > 0;
-                    if (!isValid) failureReasonOverride = 'totp_code_replayed';
-                }
-            }
-        }
+        const { isValid, failureReasonOverride } = await verifyMfaChallenge({
+            id: user.id,
+            mfa_secret: user.mfa_secret,
+            mfa_backup_codes: user.mfa_backup_codes,
+            last_totp_step: user.last_totp_step,
+        }, code, isBackupCode);
 
         if (!isValid) {
             const failedInfo = await recordFailedLogin(user.id);
@@ -96,11 +119,7 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
             });
             return res.status(401).json({
                 success: false,
-                error: failureReasonOverride === 'totp_code_replayed'
-                    ? 'That code was already used. Wait for the next code.'
-                    : failedInfo.locked
-                    ? 'Too many invalid codes. Account temporarily locked.'
-                    : `Invalid verification code. ${failedInfo.remainingAttempts} attempt(s) remaining.`,
+                error: mfaFailureMessage(failureReasonOverride, failedInfo),
                 remainingAttempts: failedInfo.remainingAttempts,
             });
         }
@@ -121,7 +140,7 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
         const token = jwt.sign(
             { userId: user.id, email: user.email, role: user.role },
             config.jwt.secret as jwt.Secret,
-            { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
+            { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
 
         // Create active user session
@@ -132,6 +151,8 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
             userAgent: req.get('user-agent'),
             location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
         });
+
+        setAuthCookie(res, token);
 
         let planName = 'Free';
         try {
@@ -172,66 +193,154 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
 });
 
 /**
+ * Resolve the caller from a Bearer JWT, rejecting anything not signed HS256.
+ * Returns null when the header is missing or the token is invalid/expired.
+ */
+function authenticateBearer(req: Request): JWTPayload | null {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+    try {
+        return jwt.verify(authHeader.split(' ')[1], config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as JWTPayload;
+    } catch {
+        return null;
+    }
+}
+
+/**
  * POST /api/v1/auth/mfa/setup
- * Generate a new TOTP secret, backup codes, and QR auth URL.
+ * Generate a TOTP secret + backup codes, persist them as a pending enrollment,
+ * and return the plaintext set once for the user to record.
+ *
+ * The secret is generated and stored server-side. /mfa/enable verifies against the
+ * stored secret, so a client can never nominate the enrolled secret for the account.
  */
 router.post('/mfa/setup', async (req: Request, res: Response) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const decoded = authenticateBearer(req);
+    if (!decoded) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
     try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+        const userRes = await query('SELECT mfa_enabled FROM users WHERE id = $1', [decoded.userId]);
+        const user = userRes.rows[0];
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        if (user.mfa_enabled) {
+            // Never allow an existing 2FA enrollment to be overwritten from a session:
+            // that would let a stolen JWT rebind an attacker's authenticator. Disabling
+            // 2FA is password-gated, so rotation must go through disable -> setup.
+            return res.status(409).json({
+                success: false,
+                error: 'Two-factor authentication is already enabled. Disable it before enrolling a new authenticator.',
+            });
+        }
 
         const setup = generateMfaSecret(decoded.email, 'AgriExtension');
+
+        // Persist the pending enrollment server-side: a Redis key with a 10-minute TTL
+        // (process-local fallback keeps single-node/dev deployments working). The users
+        // table is only written on /mfa/enable success, so an abandoned setup leaves no
+        // enrollment on the account. Only the hashed backup codes are stored — the
+        // plaintext set is returned exactly once here and never persisted.
+        await setWithTtl(
+            `mfa:pending:${decoded.userId}`,
+            JSON.stringify({ secret: setup.secret, backupCodes: hashBackupCodes(setup.backupCodes) }),
+            MFA_PENDING_TTL_MS
+        );
+
         res.json({
             success: true,
             data: setup,
         });
     } catch (error) {
         logger.error('MFA setup error:', error);
-        res.status(401).json({ success: false, error: 'Invalid token' });
+        res.status(500).json({ success: false, error: 'Failed to start 2FA setup' });
     }
 });
 
 /**
  * POST /api/v1/auth/mfa/enable
- * Confirm verification code and activate 2FA for the account.
+ * Confirm the code from the pending enrollment and activate 2FA.
+ *
+ * Only `code` is accepted. The secret and backup codes were generated and persisted
+ * by /mfa/setup; accepting either from the client would let a stolen JWT bind an
+ * attacker-chosen authenticator (and attacker-chosen backup codes) to the account.
  */
 router.post('/mfa/enable', async (req: Request, res: Response) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const decoded = authenticateBearer(req);
+    if (!decoded) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
     try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
-        const { secret, code, backupCodes } = req.body;
-
-        if (!secret || !code || !Array.isArray(backupCodes)) {
-            return res.status(400).json({ success: false, error: 'secret, code, and backupCodes are required' });
+        const code = String(req.body?.code ?? req.body?.totpCode ?? '').trim();
+        if (!code) {
+            return res.status(400).json({ success: false, error: 'code is required' });
         }
 
-        const isValid = verifyTotp(code, secret);
-        if (!isValid) {
+        const userRes = await query('SELECT mfa_enabled FROM users WHERE id = $1', [decoded.userId]);
+        const user = userRes.rows[0];
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        if (user.mfa_enabled) {
+            return res.status(409).json({ success: false, error: 'Two-factor authentication is already enabled.' });
+        }
+
+        // Verify against the SERVER-side pending enrollment from /mfa/setup. Only `code`
+        // is accepted: the secret and backup codes are never taken from the client, so a
+        // stolen JWT cannot bind an attacker-chosen authenticator to the account.
+        const pendingRaw = await getTtl(`mfa:pending:${decoded.userId}`);
+        if (!pendingRaw) {
+            return res.status(400).json({
+                success: false,
+                error: 'No pending 2FA setup found (or it expired). Call /mfa/setup again.',
+            });
+        }
+
+        let pending: { secret: string; backupCodes: string[] };
+        try {
+            const parsed = JSON.parse(pendingRaw) as { secret?: unknown; backupCodes?: unknown };
+            if (typeof parsed.secret !== 'string' || !Array.isArray(parsed.backupCodes)) {
+                throw new Error('invalid pending enrollment payload');
+            }
+            pending = {
+                secret: parsed.secret,
+                backupCodes: parsed.backupCodes.filter((c): c is string => typeof c === 'string'),
+            };
+        } catch {
+            // Corrupt entry: drop it so the next /mfa/setup starts clean.
+            await delKey(`mfa:pending:${decoded.userId}`);
+            return res.status(400).json({ success: false, error: 'Pending 2FA setup is invalid. Call /mfa/setup again.' });
+        }
+
+        const step = matchTotpStep(code, pending.secret);
+        if (step === null) {
             return res.status(400).json({ success: false, error: 'Invalid verification code' });
         }
 
-        // Backup codes are stored hashed; the plaintext set is shown to the user
-        // exactly once by /mfa/setup and never persisted.
-        await query(
+        // Promote the pending enrollment into the account and record the enrollment step
+        // as the replay watermark so the code used to enable 2FA cannot be replayed at
+        // the first login challenge. The conditional UPDATE keeps a concurrent second
+        // enable from double-writing.
+        const claim = await query(
             `
             UPDATE users
-            SET mfa_enabled = true,
-                mfa_secret = $1,
-                mfa_backup_codes = $2
-            WHERE id = $3
+            SET mfa_secret = $1,
+                mfa_backup_codes = $2,
+                mfa_enabled = true,
+                last_totp_step = $3
+            WHERE id = $4 AND mfa_enabled = false
+            RETURNING id
         `,
-            [secret, hashBackupCodes(backupCodes.map(String)), decoded.userId]
+            [pending.secret, pending.backupCodes, step, decoded.userId]
         );
+        if (claim.rows.length === 0) {
+            return res.status(409).json({ success: false, error: 'Two-factor authentication is already enabled.' });
+        }
+
+        await delKey(`mfa:pending:${decoded.userId}`);
 
         res.json({
             success: true,
@@ -248,14 +357,12 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
  * Disable 2FA after password confirmation.
  */
 router.post('/mfa/disable', async (req: Request, res: Response) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const decoded = authenticateBearer(req);
+    if (!decoded) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
     try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
         const { password } = req.body;
 
         if (!password) {
@@ -278,11 +385,14 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
             UPDATE users
             SET mfa_enabled = false,
                 mfa_secret = NULL,
-                mfa_backup_codes = '{}'
+                mfa_backup_codes = '{}',
+                last_totp_step = NULL
             WHERE id = $1
         `,
             [decoded.userId]
         );
+        // Drop any pending enrollment so it cannot be confirmed after a disable.
+        await delKey(`mfa:pending:${decoded.userId}`);
 
         res.json({
             success: true,

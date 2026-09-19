@@ -1,5 +1,5 @@
 import { Worker, Job } from 'bullmq';
-import { redisConnection } from '../queues/connection';
+import { redisConnection, registerQueueClient } from '../queues/connection';
 import { EmailJobData } from '../queues/emailQueue';
 import { emailService } from '../services/emailService';
 import { logger } from '../utils/logger';
@@ -36,6 +36,7 @@ function getEmailWorker(): Worker<EmailJobData> | null {
                 concurrency: 5,
             }
         );
+        registerQueueClient('email-worker', () => _emailWorker!.close());
 
         _emailWorker.on('completed', (job) => {
             logger.info(`Worker: Job ${job.id} completed`);
@@ -43,6 +44,10 @@ function getEmailWorker(): Worker<EmailJobData> | null {
 
         _emailWorker.on('failed', (job, err) => {
             logger.error(`Worker: Job ${job?.id} failed with error: ${err.message}`);
+        });
+
+        _emailWorker.on('error', (err) => {
+            logger.warn('Worker: Email worker error:', err instanceof Error ? err.message : err);
         });
     }
     return _emailWorker;

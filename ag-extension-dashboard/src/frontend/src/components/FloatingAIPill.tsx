@@ -404,8 +404,21 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
 
     try {
       const res = await getChatCompletion(userText, undefined, language);
-      const reply = res.data?.messages?.find(m => m.role === 'assistant')?.content ||
-        'I evaluated your field observation against current agricultural agronomy standards. Ensure regular moisture monitoring and appropriate NPK split application.';
+      const reply = res.data?.messages?.find(m => m.role === 'assistant')?.content;
+
+      if (!reply) {
+        // No canned advisory is substituted: a fabricated recommendation presented as AI
+        // output is worse for the farmer than admitting the model returned nothing.
+        setMessages(prev => [
+          ...prev,
+          {
+            sender: 'ai',
+            text: 'The AI returned no content for this observation. No advisory was generated — please retry, or save the observation for your extension officer to review.',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+        return;
+      }
 
       setMessages(prev => [
         ...prev,
@@ -664,8 +677,20 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                         getChatCompletion(note, undefined, language)
                           .then(res => {
                             const reply =
-                              res.data?.messages?.find(m => m.role === 'assistant')?.content ||
-                              'I evaluated your field observation against current agricultural agronomy standards.';
+                              res.data?.messages?.find(m => m.role === 'assistant')?.content;
+                            if (!reply) {
+                              // No canned advisory is substituted: an honest no-response beats
+                              // a fabricated recommendation presented as AI output.
+                              setMessages(prev => [
+                                ...prev,
+                                {
+                                  sender: 'ai',
+                                  text: 'No response received — please try again, or save the observation for your extension officer to review.',
+                                  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                },
+                              ]);
+                              return;
+                            }
                             setMessages(prev => [
                               ...prev,
                               {
@@ -713,8 +738,13 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                       setIsLoadingAi(true);
                       getChatCompletion(enrichedQuery, undefined, language)
                         .then(res => {
-                          const reply = res.data?.messages?.find(m => m.role === 'assistant')?.content ||
-                            'I evaluated your field observation against current agricultural agronomy standards.';
+                          const reply = res.data?.messages?.find(m => m.role === 'assistant')?.content;
+                          if (!reply) {
+                            // No canned advisory is substituted: an honest no-response beats
+                            // a fabricated recommendation presented as AI output.
+                            setMessages(prev => [...prev, { sender: 'ai', text: 'No response received — please try again, or save the observation for your extension officer to review.', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+                            return;
+                          }
                           setMessages(prev => [...prev, { sender: 'ai', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
                         })
                         .catch(err => {

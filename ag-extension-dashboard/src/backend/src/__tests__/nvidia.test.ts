@@ -45,7 +45,8 @@ describe('NVIDIAProvider (Reasoning & Tool-Calling)', () => {
 
     expect(res.answer).toBe('Recommended lime: 3.2 tons/ha.');
     expect(res.visuals?.kpis?.[0].value).toBe('3.2t');
-    expect(res.confidence).toBe(0.95);
+    // Providers no longer publish an uncalibrated confidence score.
+    expect(res.confidence).toBeUndefined();
     expect(mockedAxios.post).toHaveBeenCalledWith(
       'https://integrate.api.nvidia.com/v1/chat/completions',
       expect.objectContaining({

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Settings, Shield, Zap, ChevronRight, BarChart3, Cloud, ArrowLeft, Globe, Server, Bot, Save, LogIn, LogOut, User as UserIcon } from 'lucide-react';
 import { usePersistence } from '@/shared/hooks/usePersistence';
 import CONFIG, { resolveApiBase } from '../../shared/config';
-import { decodeJwtExpiry } from '../../shared/authToken';
+import { decodeJwtExpiry, setAuthToken as persistAuthToken } from '../../shared/authToken';
 
 function App() {
   const [activeAgent, setActiveAgent] = usePersistence('activeAgent', 'AGENT ALPHA');
@@ -21,7 +21,7 @@ function App() {
   React.useEffect(() => {
     if (tokenExpired) {
       setAuthToken(null);
-      browser.storage.local.remove('authToken').catch(() => {});
+      void persistAuthToken(null);
       setLoginError('Your session expired — please sign in again');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -39,7 +39,7 @@ function App() {
       const token = data.token || data.data?.token;
       if (res.ok && token) {
         setAuthToken(token);
-        await browser.storage.local.set({ authToken: token });
+        await persistAuthToken(token);
         setPassword('');
         setLoginError(null);
       } else {
@@ -49,7 +49,7 @@ function App() {
       setLoginError(err instanceof Error ? err.message : 'Network error');
     } finally { setIsLoggingIn(false); }
   };
-  const handleLogout = async () => { setAuthToken(null); await browser.storage.local.remove('authToken'); };
+  const handleLogout = async () => { setAuthToken(null); await persistAuthToken(null); };
 
   const handleOpenSidepanel = async () => {
     // Popup has no sender.tab; query the active tab to get its windowId

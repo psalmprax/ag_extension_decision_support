@@ -1,9 +1,9 @@
 /**
  * Multispectral parcel analysis (NDVI/EVI/NDWI indices) — wired via POST /api/pillars/satellite/analyze.
  *
- * All indices are computed from caller-supplied band reflectances; this service ingests
- * no satellite imagery itself. Defaults for missing cloud cover and baseline are flagged
- * in the result via the `provenance` block.
+ * Indices are computed from the band reflectances supplied by the caller, or from bands
+ * fetched by satelliteIngestService when the request carries a bbox. Defaults for missing
+ * cloud cover and baseline are flagged in the result via the `provenance` block.
  */
 import { logger } from '../utils/logger';
 import { pillarProvenance } from './provenance';
@@ -23,7 +23,8 @@ export interface ParcelSatelliteAnalysis {
   meanEvi: number;
   meanNdwi: number;
   vegetationHealthGrade: 'severe_stress' | 'moderate_stress' | 'normal' | 'optimal';
-  chlorophyllDensityIndex: number;
+  /** Green NDVI = (NIR − Green)/(NIR + Green) — canopy chlorophyll/nitrogen proxy. */
+  meanGndvi: number;
   moistureStressIndex: number;
   stressAnomaliesDetected: boolean;
   anomalyDescription?: string;
@@ -52,12 +53,26 @@ export function calculateNdvi(nir: number, red: number): number {
 /**
  * Calculates EVI (Enhanced Vegetation Index) for dense crop canopy
  * Formula: 2.5 * (NIR - Red) / (NIR + 6*Red - 7.5*Blue + 1)
+ * The blue band is not ingested; the fixed 0.05 surrogate is disclosed in the
+ * result's provenance assumptions.
  */
 export function calculateEvi(nir: number, red: number, blue: number = 0.05): number {
   const denominator = nir + 6 * red - 7.5 * blue + 1.0;
   if (denominator === 0) return 0;
   const evi = (2.5 * (nir - red)) / denominator;
   return +Math.max(-1.0, Math.min(1.0, evi)).toFixed(3);
+}
+
+/**
+ * Calculates GNDVI (Green Normalized Difference Vegetation Index)
+ * Formula: (NIR - Green) / (NIR + Green)
+ * A standard chlorophyll / canopy-nitrogen proxy that uses only the bands we ingest.
+ */
+export function calculateGndvi(nir: number, green: number): number {
+  const denominator = nir + green;
+  if (denominator === 0) return 0;
+  const gndvi = (nir - green) / denominator;
+  return +Math.max(-1.0, Math.min(1.0, gndvi)).toFixed(3);
 }
 
 /**
@@ -98,6 +113,7 @@ export function analyzeParcelMultispectral(params: {
     ...(params.cloudCoverPct === undefined ? ['Cloud cover not supplied — assumed 5%'] : []),
     ...(params.baselineNdvi === undefined ? ['Baseline NDVI not supplied — assumed 0.62 for anomaly detection'] : []),
     ...(pixels.some(p => p.bandSwir === undefined) ? ['SWIR missing on some pixels — NDWI assumes 0.15'] : []),
+    'EVI computed without a true blue band; fixed 0.05 blue-band surrogate',
   ];
 
   if (pixels.length === 0) {
@@ -109,7 +125,7 @@ export function analyzeParcelMultispectral(params: {
       meanEvi: 0,
       meanNdwi: 0,
       vegetationHealthGrade: 'severe_stress',
-      chlorophyllDensityIndex: 0,
+      meanGndvi: 0,
       moistureStressIndex: 1.0,
       stressAnomaliesDetected: false,
       recommendedAction: 'No multispectral pixels supplied. Schedule manual ground scouting.',
@@ -122,19 +138,46 @@ export function analyzeParcelMultispectral(params: {
     };
   }
 
+  // Cloud-mask gate: high cloud cover makes NDVI stress grades unreliable.
+  // Downgrade to manual scouting instead of emitting a false stress anomaly.
+  if (cloudCoverPct >= 40) {
+    return {
+      parcelId,
+      capturedAt: new Date().toISOString(),
+      cloudCoverPct,
+      meanNdvi: 0,
+      meanEvi: 0,
+      meanNdwi: 0,
+      vegetationHealthGrade: 'severe_stress',
+      meanGndvi: 0,
+      moistureStressIndex: 1.0,
+      stressAnomaliesDetected: false,
+      recommendedAction: `Cloud cover ${cloudCoverPct}% exceeds 40% reliability threshold. Discard this pass and schedule manual ground scouting.`,
+      provenance: pillarProvenance(
+        'unavailable',
+        'Cloud-masked pass — indices withheld to avoid false stress alerts.',
+        [...derivedAssumptions, `Cloud cover ${cloudCoverPct}% >= 40% threshold`],
+        false
+      ),
+    };
+  }
+
   let totalNdvi = 0;
   let totalEvi = 0;
   let totalNdwi = 0;
+  let totalGndvi = 0;
 
   for (const px of pixels) {
     totalNdvi += calculateNdvi(px.bandNir, px.bandRed);
     totalEvi += calculateEvi(px.bandNir, px.bandRed);
     totalNdwi += calculateNdwi(px.bandNir, px.bandSwir || 0.15);
+    totalGndvi += calculateGndvi(px.bandNir, px.bandGreen);
   }
 
   const meanNdvi = +(totalNdvi / pixels.length).toFixed(3);
   const meanEvi = +(totalEvi / pixels.length).toFixed(3);
   const meanNdwi = +(totalNdwi / pixels.length).toFixed(3);
+  const meanGndvi = +(totalGndvi / pixels.length).toFixed(3);
 
   const healthGrade = classifyVegetationHealth(meanNdvi);
   const deviationFromBaselinePct = +(((meanNdvi - baselineNdvi) / (baselineNdvi || 1)) * 100).toFixed(1);
@@ -155,7 +198,7 @@ export function analyzeParcelMultispectral(params: {
     meanEvi,
     meanNdwi,
     vegetationHealthGrade: healthGrade,
-    chlorophyllDensityIndex: +(meanNdvi * 1.25).toFixed(2),
+    meanGndvi,
     moistureStressIndex: +(1.0 - Math.max(0, meanNdwi)).toFixed(2),
     stressAnomaliesDetected: isAnomaly,
     anomalyDescription: isAnomaly ? `Abrupt NDVI drop of ${deviationFromBaselinePct}% compared to historical baseline (${baselineNdvi})` : undefined,

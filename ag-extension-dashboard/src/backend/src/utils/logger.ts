@@ -34,7 +34,16 @@ export const logger = winston.createLogger({
         new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
         new winston.transports.File({ filename: 'logs/combined.log' }),
     ],
-});
+}) as winston.Logger & { crit: (message: string, ...meta: unknown[]) => winston.Logger };
+
+// CRIT level (paging/monitoring hook) — winston's default npm levels have no
+// crit, but existing call sites (webhooks, shared-state degradation, vault
+// rotation) already invoke logger.crit. Emitted at error level so the error
+// file transport captures it. Paging systems should alert on `[CRIT]`.
+logger.crit = (function crit(message: string, ...meta: unknown[]) {
+    logger.error(`[CRIT] ${message}`, ...meta);
+    return logger;
+} as unknown) as typeof logger.crit;
 
 // Create a stream for Morgan HTTP logging
 export const logStream = {

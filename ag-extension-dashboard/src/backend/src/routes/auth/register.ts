@@ -13,6 +13,7 @@ import { issueEmailVerification } from './passwordReset';
 import { incrWindow } from '@/services/sharedState';
 import { createSession } from '@/services/sessionService';
 import { resolveLocationFromHeaders } from '@/services/loginHistoryService';
+import { setAuthCookie } from '@/middleware/authCookie';
 
 const router = Router();
 
@@ -120,7 +121,7 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
         const token = jwt.sign(
             { userId: newUser.id, email: newUser.email, role: newUser.role },
             config.jwt.secret as jwt.Secret,
-            { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
+            { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
 
         // Record initial user session for active session visibility and revocation support
@@ -132,6 +133,8 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
             userAgent: req.get('user-agent') || null,
             location: resolveLocationFromHeaders(req.headers, clientIp, newUser.region),
         }).catch(err => logger.warn(`Session for new user ${newUser.id} could not be persisted:`, err));
+
+        setAuthCookie(res, token);
 
         res.status(201).json({
             success: true,
@@ -213,7 +216,7 @@ router.post('/demo', async (req: Request, res: Response) => {
         const token = jwt.sign(
             { userId: user.id, email: user.email, role: user.role },
             config.jwt.secret as jwt.Secret,
-            { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
+            { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
 
         createSession({
@@ -223,6 +226,8 @@ router.post('/demo', async (req: Request, res: Response) => {
             userAgent: req.get('user-agent') || null,
             location: resolveLocationFromHeaders(req.headers, ip, user.region),
         }).catch(err => logger.warn(`Session for demo user ${user.id} could not be persisted:`, err));
+
+        setAuthCookie(res, token);
 
         res.json({
             success: true,

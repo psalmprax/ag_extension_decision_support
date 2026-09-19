@@ -3,6 +3,7 @@ import { logger } from '../utils/logger';
 import { smsService } from '../services/smsService';
 import { whatsappService } from '../services/whatsappService';
 import { emailService } from '../services/emailService';
+import { runIfLeader } from '../services/leaderElection';
 
 /**
  * Outreach Worker
@@ -80,13 +81,14 @@ export class OutreachWorker {
 
     start(intervalMs: number = DEFAULT_INTERVAL_MS): void {
         if (this.intervalHandle) return;
-        logger.info(`Starting outreach worker with ${Math.round(intervalMs / 1000)}s interval`);
+        logger.info(`Starting outreach worker with ${Math.round(intervalMs / 1000)}s interval (leader-gated)`);
 
         void this.tick();
 
         this.intervalHandle = setInterval(() => {
             void this.tick();
         }, intervalMs);
+        this.intervalHandle.unref?.();
     }
 
     stop(): void {
@@ -98,14 +100,20 @@ export class OutreachWorker {
 
     private async tick(): Promise<void> {
         try {
-            if (!this.tableReady) {
-                this.tableReady = await this.ensureTable();
-                if (!this.tableReady) return;
-            }
-            const processed = await this.processQueue();
-            if (processed > 0) {
-                logger.info(`Outreach worker delivered ${processed} queued message(s)`);
-            }
+            // Leader-gated: the queue is polled on every replica but only the
+            // lease holder dispatches, so messages aren't sent multiple times.
+            const isLeader = await runIfLeader('outreach-worker', async () => {
+                if (!this.tableReady) {
+                    this.tableReady = await this.ensureTable();
+                    if (!this.tableReady) return false;
+                }
+                const processed = await this.processQueue();
+                if (processed > 0) {
+                    logger.info(`Outreach worker delivered ${processed} queued message(s)`);
+                }
+                return true;
+            });
+            if (isLeader === null) return; // not the leader — nothing to do
         } catch (error) {
             logger.warn(
                 'Outreach worker tick failed:',

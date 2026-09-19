@@ -3,13 +3,13 @@ import { describe, it, expect, beforeEach } from 'vitest';
 describe('API Client', () => {
   beforeEach(() => {
     localStorage.clear();
+    document.cookie = 'ag_csrf=; path=/; max-age=0';
   });
 
-  it('should have token management', () => {
-    localStorage.setItem('token', 'test-token-123');
-    expect(localStorage.getItem('token')).toBe('test-token-123');
-
-    localStorage.removeItem('token');
+  it('should have no token in localStorage — the session JWT is an httpOnly cookie', () => {
+    // Cookie auth contract: the SPA never holds the JWT. Nothing token-shaped
+    // may appear in localStorage.
+    localStorage.setItem('user', JSON.stringify({ id: '1' }));
     expect(localStorage.getItem('token')).toBeNull();
   });
 

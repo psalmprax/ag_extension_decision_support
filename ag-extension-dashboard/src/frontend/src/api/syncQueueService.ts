@@ -23,9 +23,67 @@ const MAX_RETRIES = 5;
 const BASE_BACKOFF_MS = 30_000; // 30s, 1m, 2m, 4m, 8m
 const IDB_NAME = 'ag-sync-queue-db';
 const IDB_STORE = 'queue';
+// Upper bound so an officer who stays offline for weeks gets a loud warning
+// instead of silently outgrowing browser storage and losing mutations.
+const MAX_QUEUE_ITEMS = 500;
+
+export type StorageDurability = 'persistent' | 'best-effort' | 'unknown';
+let durability: StorageDurability = 'unknown';
+
+/**
+ * Ask the browser to exempt the offline queue from automatic eviction.
+ * Fire-and-forget safe: records the outcome for UI surfacing.
+ */
+export async function ensurePersistentQueueStorage(): Promise<StorageDurability> {
+  try {
+    const storage = navigator.storage;
+    if (storage?.persist) {
+      durability = (await storage.persist()) ? 'persistent' : 'best-effort';
+    } else {
+      durability = 'unknown';
+    }
+  } catch {
+    durability = 'unknown';
+  }
+  return durability;
+}
+
+export function queueStorageDurability(): StorageDurability {
+  return durability;
+}
+
+/** Typed failure when the offline queue is at capacity. Callers must surface
+ * a reconnect-and-sync warning — never swallow this or drop the mutation. */
+// fallow-ignore-next-line unused-export
+export class QueueFullError extends Error {
+  readonly pendingCount: number;
+  readonly capacity: number;
+  constructor(pendingCount: number, capacity: number = MAX_QUEUE_ITEMS) {
+    super(
+      `Offline queue at capacity (${pendingCount}/${capacity}). Reconnect and sync before recording more — new mutations are refused rather than risk eviction loss.`,
+    );
+    this.name = 'QueueFullError';
+    this.pendingCount = pendingCount;
+    this.capacity = capacity;
+  }
+}
+
+// fallow-ignore-next-line unused-export
+export function isQueueFullError(error: unknown): error is QueueFullError {
+  return error instanceof QueueFullError;
+}
+
+/** True when the runtime exposes IndexedDB (absent in some test/SSR environments). */
+function hasIndexedDb(): boolean {
+  return typeof indexedDB !== 'undefined';
+}
 
 function openIdb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
+    if (!hasIndexedDb()) {
+      reject(new Error('IndexedDB is unavailable in this environment'));
+      return;
+    }
     const req = indexedDB.open(IDB_NAME, 1);
     req.onupgradeneeded = () => { const db = req.result; if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE, { keyPath: 'id' }); };
     req.onsuccess = () => resolve(req.result);
@@ -43,7 +101,11 @@ async function idbGetAll(): Promise<SyncQueueItem[]> {
     });
   } catch { return []; }
 }
-async function idbPutAll(items: SyncQueueItem[]): Promise<void> {
+/**
+ * Write the queue to IndexedDB. Returns false instead of swallowing the failure so the
+ * caller can report it: a queue that did not persist means an offline write is lost.
+ */
+async function idbPutAll(items: SyncQueueItem[]): Promise<boolean> {
   try {
     const db = await openIdb();
     await new Promise<void>((res, rej) => {
@@ -54,13 +116,21 @@ async function idbPutAll(items: SyncQueueItem[]): Promise<void> {
       tx.oncomplete = () => res();
       tx.onerror = () => rej(tx.error);
     });
-  } catch { /* fallback to localStorage */ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch { /* ignore */ } }
+    return true;
+  } catch (error) {
+    // Expected where IndexedDB is unavailable (the caller already persisted to
+    // localStorage); only warn for a real write failure inside IndexedDB.
+    if (hasIndexedDb()) console.warn('IndexedDB queue write failed:', error);
+    return false;
+  }
 }
 
 class SyncQueueService {
   private queue: SyncQueueItem[] = [];
   private isProcessing = false;
   private listeners: Array<(count: number) => void> = [];
+  private persistenceErrorListeners: Array<(message: string) => void> = [];
+  private lastPersistenceError: string | null = null;
   private ready: Promise<void>;
 
   constructor() {
@@ -88,8 +158,52 @@ class SyncQueueService {
   }
 
   private saveToStorage(): void {
+    this.persistNow();
+  }
+
+  /**
+   * Persist the queue, reporting any failure.
+   *
+   * The localStorage write stays synchronous because callers depend on the queue being
+   * durable as soon as `enqueue` returns; IndexedDB is the preferred store and is
+   * upgraded asynchronously. Quota errors used to be swallowed, so a queued offline
+   * diagnosis (often a base64 image) could fail to save and vanish on reload silently.
+   */
+  private persistNow(): void {
+    let failure: unknown = null;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.queue));
+    } catch (error) {
+      failure = error;
+    }
+    // Best-effort upgrade to IndexedDB (the fallback above already guarantees storage).
     void idbPutAll(this.queue);
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.queue)); } catch { /* ignore */ }
+
+    if (!failure) {
+      this.lastPersistenceError = null;
+      return;
+    }
+
+    const isQuota = failure instanceof Error
+      && (failure.name === 'QuotaExceededError' || failure.name === 'NS_ERROR_DOM_QUOTA_REACHED');
+    this.lastPersistenceError = isQuota
+      ? 'Device storage is full — this queued item was NOT saved. Free up space, then retry.'
+      : 'Could not persist the offline queue — this queued item may be lost on reload.';
+    console.error('Failed to persist sync queue:', failure);
+    this.persistenceErrorListeners.forEach(cb => cb(this.lastPersistenceError as string));
+  }
+
+  /** Last persistence failure, if any (null when the queue is durably stored). */
+  getPersistenceError(): string | null {
+    return this.lastPersistenceError;
+  }
+
+  /** Subscribe to persistence failures. Returns an unsubscribe function. */
+  onPersistenceError(callback: (message: string) => void): () => void {
+    this.persistenceErrorListeners.push(callback);
+    return () => {
+      this.persistenceErrorListeners = this.persistenceErrorListeners.filter(cb => cb !== callback);
+    };
   }
 
   private notifyListeners(): void {
@@ -120,6 +234,9 @@ class SyncQueueService {
       retryCount: 0,
       state: 'pending',
     };
+    if (this.queue.length >= MAX_QUEUE_ITEMS) {
+      throw new QueueFullError(this.queue.length);
+    }
     this.queue.push(queueItem);
     this.saveToStorage();
     this.notifyListeners();

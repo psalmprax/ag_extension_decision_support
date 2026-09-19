@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { getCache } from '@/services/cacheService';
 import { logger } from '@/utils/logger';
+import crypto from 'crypto';
 
 const WINDOW_MS = 60 * 60 * 1000; // 60 minutes
 const MAX_QUERIES = 10;
@@ -41,7 +42,7 @@ async function checkRedisSlidingWindow(
       return { allowed: false, remaining: 0, resetTimeMs, retryAfterSeconds };
     }
 
-    const member = `${now}:${Math.random().toString(36).substring(2, 9)}`;
+    const member = `${now}:${crypto.randomUUID()}`;
     await redis.zAdd(key, [{ score: now, value: member }]);
     await redis.pExpire(key, WINDOW_MS);
 

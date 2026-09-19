@@ -3,6 +3,7 @@ import swaggerUi from 'swagger-ui-express';
 import { Application } from 'express';
 import path from 'path';
 import { config } from '@/config';
+import { logger } from '@/utils/logger';
 
 const options: swaggerJsdoc.Options = {
     definition: {
@@ -66,8 +67,27 @@ export function setupSwagger(app: Application): void {
     if (process.env.NODE_ENV === 'test') {
         return;
     }
+    // API surface disclosure: the interactive docs (and the raw OpenAPI spec)
+    // are for developers, not anonymous internet traffic. Allowed in dev and
+    // staging; production requires an explicit opt-in AND the docs sit behind
+    // the MCP token so only operators holding the secret can read them.
+    const isProduction = process.env.NODE_ENV === 'production';
+    const token = process.env.MCP_API_TOKEN;
+    if (isProduction && (!token || process.env.SWAGGER_ENABLED_IN_PROD !== 'true')) {
+        logger.info('Swagger UI disabled in production (set SWAGGER_ENABLED_IN_PROD=true to opt in)');
+        return;
+    }
     try {
         const swaggerSpecs = getSwaggerSpecs();
+        if (isProduction && token) {
+            app.use('/api-docs', (req, res, next) => {
+                const provided = req.headers['x-api-token'] || req.headers.authorization?.replace(/^Bearer\s+/i, '');
+                if (provided !== token) {
+                    return res.status(403).json({ success: false, error: 'Forbidden' });
+                }
+                next();
+            });
+        }
         app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
         console.log('Swagger API documentation available at /api-docs');
     } catch (err) {

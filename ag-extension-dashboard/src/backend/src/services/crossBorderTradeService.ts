@@ -33,6 +33,12 @@ export interface ArbitrageOpportunity {
   netArbitrageProfitUsdPerTon: number;
   netMarginPct: number;
   recommendedTrade: boolean;
+  /**
+   * Screening estimate only: computed over a static reference snapshot with an
+   * illustrative freight model. recommendedTrade means "passes the margin
+   * screen on estimated inputs" — never settlement advice.
+   */
+  settlementGrade: 'estimate';
   provenance: ReturnType<typeof pillarProvenance>;
 }
 
@@ -115,6 +121,7 @@ function evaluateMarketPair(
     netArbitrageProfitUsdPerTon: netProfit,
     netMarginPct,
     recommendedTrade: true,
+    settlementGrade: 'estimate',
     provenance: pillarProvenance(
       'demo_reference_data',
       'Computed over a static reference price snapshot with an illustrative freight model. Not a live market feed; treat as a screening estimate only.',

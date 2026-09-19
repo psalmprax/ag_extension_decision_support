@@ -28,16 +28,80 @@ const isContentRequestMessage = (message: unknown): message is ContentRequestMes
     );
 };
 
-/** Safely set HTML content — escapes any non-SVG text to prevent XSS */
+/**
+ * HTML sanitizer for toolbar templates.
+ *
+ * All HTML rendered in the content script passes through here. The toolbar
+ * templates are static (built-in SVG + text), but a sanitizer — not trust —
+ * is the enforcement point: anything dynamic that ever flows into a template
+ * cannot smuggle event handlers, script/style elements, or javascript: URLs
+ * into the host page, which runs with the extension's privileges.
+ */
+const ALLOWED_HTML_TAGS = new Set([
+  'div', 'span', 'svg', 'circle', 'path', 'rect', 'line', 'polyline', 'polygon', 'g', 'defs', 'title',
+  'p', 'strong', 'em', 'b', 'i', 'u', 'br', 'small', 'sub', 'sup', 'code', 'pre', 'span',
+]);
+const FORBIDDEN_ATTR_NAMES = /^(?:on[a-z]+|srcdoc|formaction)$/i;
+const FORBIDDEN_URL_ATTRS = new Set(['href', 'xlink:href', 'src', 'action', 'data', 'poster']);
+const FORBIDDEN_URL_VALUES = /^\s*(?:javascript|vbscript|data(?!:image\/(?:png|gif|jpeg|webp);)):/i;
+
+function sanitizeHtml(html: string): string {
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+  const walk = (node: Element): void => {
+    for (const child of Array.from(node.children)) {
+      if (!ALLOWED_HTML_TAGS.has(child.tagName.toLowerCase())) {
+        child.replaceWith(...Array.from(child.childNodes)); // unwrap, keep text
+        continue;
+      }
+      for (const attr of Array.from(child.attributes)) {
+        const name = attr.name.toLowerCase();
+        if (FORBIDDEN_ATTR_NAMES.test(name) ||
+            (FORBIDDEN_URL_ATTRS.has(name) && FORBIDDEN_URL_VALUES.test(attr.value))) {
+          child.removeAttribute(attr.name);
+        }
+      }
+      walk(child);
+    }
+  };
+  const body = doc.body;
+  if (body) walk(body);
+  return body ? body.innerHTML : '';
+}
+
+/**
+ * Sanitize, then set HTML content. The old implementation assigned
+ * `template.innerHTML` directly — a future template with dynamic interpolation
+ * would have executed in the host page. All callers go through the sanitizer.
+ */
 const safeSetHTML = (el: HTMLElement, html: string) => {
-  // For static SVG/icon templates with no user input, use a sandboxed approach
   const template = document.createElement('template');
-  template.innerHTML = html.trim();
+  template.innerHTML = sanitizeHtml(html.trim());
   el.appendChild(template.content);
 };
 
+/**
+ * Hover lift for toolbar buttons: the sanitizer strips inline `onmouseover`/
+ * `onmouseout` from templates (event handlers are forbidden markup), so the
+ * hover behavior is attached here instead.
+ */
+const attachHoverLift = (button: HTMLElement) => {
+  const inner = button.firstElementChild as HTMLElement | null;
+  if (!inner) return;
+  inner.addEventListener('mouseenter', () => {
+    inner.style.transform = 'scale(1.05) translateY(-2px)';
+  });
+  inner.addEventListener('mouseleave', () => {
+    inner.style.transform = 'scale(1) translateY(0)';
+  });
+};
+
 export default defineContentScript({
-  matches: ['<all_urls>'],
+  // On-demand injection: NOT statically registered (no `matches`). The
+  // background service worker injects this script via chrome.scripting when
+  // the officer invokes "Capture this page" — so the extension holds no
+  // standing read access to arbitrary websites, only `activeTab`-style
+  // access granted at the moment of user intent.
+  registration: 'runtime',
   async main(ctx: ContentScriptContext) {
     console.log('GPExts Content Script Active');
 
@@ -68,7 +132,7 @@ export default defineContentScript({
             cursor: pointer;
             border: 1px solid rgba(255,255,255,0.2);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
+          ">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6"/></svg>
           </div>
         `);
@@ -112,7 +176,13 @@ export default defineContentScript({
 
                   // Persist first: if the sidepanel is not open yet there is no listener
                   // for `photo_captured`, and the frame would otherwise be lost.
-                  try { await browser.storage.local.set({ lastCapturedPhoto: { imageData, capturedAt: Date.now() } }); } catch { /* ignore */ }
+                  try {
+                    await browser.storage.local.set({ lastCapturedPhoto: { imageData, capturedAt: Date.now() } });
+                  } catch (storageError) {
+                    // Silent quota loss would drop the frame entirely: surface it.
+                    console.error('Could not persist the captured photo:', storageError);
+                    alert('Extension storage is full — the captured photo could not be kept for the side panel. Open the side panel now to send it, or free up extension storage.');
+                  }
 
                   // Open sidepanel, then notify (an open panel consumes the message and
                   // clears the stored copy; a cold panel restores it on mount).
@@ -143,7 +213,7 @@ export default defineContentScript({
             cursor: pointer;
             border: 1px solid rgba(255,255,255,0.2);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
+          ">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
           </div>
         `);
@@ -167,7 +237,7 @@ export default defineContentScript({
             cursor: pointer;
             border: 1px solid rgba(255,255,255,0.2);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
+          ">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
           </div>
         `);
@@ -239,7 +309,7 @@ export default defineContentScript({
             cursor: pointer;
             border: 1px solid rgba(255,255,255,0.2);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
+          ">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6"/></svg>
           </div>
         `);
@@ -325,7 +395,7 @@ export default defineContentScript({
             cursor: pointer;
             border: 1px solid rgba(255,255,255,0.2);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
+          ">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
         `);
@@ -339,6 +409,9 @@ export default defineContentScript({
         wrapper.appendChild(photoBtn);
         wrapper.appendChild(logVisitBtn);
         wrapper.appendChild(fab);
+        // Hover lift: the sanitizer strips inline onmouseover/onmouseout from
+        // templates (event handlers are forbidden markup), so it is wired here.
+        for (const btn of [syncBtn, gpsBtn, photoBtn, logVisitBtn, fab]) attachHoverLift(btn);
         container.appendChild(wrapper);
       },
     });

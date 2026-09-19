@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import paypal from 'paypal-rest-sdk';
+import axios from 'axios';
 
 import { logger } from '../utils/logger';
 import { systemConfigService } from './systemConfigService';
@@ -24,9 +25,14 @@ import type {
 //    complementary local writes only. They must not contradict the webhook's understanding
 //    of the same subscription row.
 //
-// 2. PayPal subscription state is created/updated only in routes/billing/paypal.ts
-//    success handler. There is no PayPal webhook equivalent in this codebase, so that
-//    handler is the single PayPal subscription writer.
+// 2. PayPal is a ONE-TIME sale (intent: 'sale'), not an auto-renewing profile. Its
+//    entitlement is therefore a fixed-length prepaid pass, not a subscription that
+//    renews itself. State is written by two parties:
+//      - routes/billing/paypal.ts (browser return handler) for the attended path
+//      - routes/billing/paypalWebhook.ts (signature-verified PayPal webhook) for the
+//        unattended/refund path
+//    Both are idempotent on the PayPal payment/sale id. Expired passes are lapsed by
+//    workers/alertWorker.ts (subscriptions without a stripeSubscriptionId).
 //
 // 3. Payment records must be created by the same path that finalizes the subscription
 //    for that provider, so there is no orphan payment and no duplicate subscription claim.
@@ -38,10 +44,37 @@ import type {
 class PaymentService {
     private stripe: Stripe | null = null;
     private paypalConfigured: boolean = false;
+    private paypalClientId: string | null = null;
+    private paypalClientSecret: string | null = null;
+    /** Settles when gateway clients have been initialized. Never rejects. */
+    private readonly ready: Promise<void>;
 
     constructor() {
-        this.initializeStripe();
-        this.initializePayPal();
+        // Providers initialize asynchronously. The result is captured rather than
+        // fire-and-forgotten: an unawaited initializer both logged spurious
+        // PAYMENT_GATEWAY_NOT_CONFIGURED warnings at boot and could surface as an
+        // unhandled rejection. Callers await whenReady() before touching a gateway.
+        this.ready = this.initializeGateways();
+    }
+
+    private async initializeGateways(): Promise<void> {
+        try {
+            await this.initializeStripe();
+        } catch (error) {
+            logger.error('Stripe initialization failed — card payments unavailable:', error);
+            this.stripe = null;
+        }
+        try {
+            await this.initializePayPal();
+        } catch (error) {
+            logger.error('PayPal initialization failed — PayPal payments unavailable:', error);
+            this.paypalConfigured = false;
+        }
+    }
+
+    /** Await gateway initialization. Safe to call repeatedly and never throws. */
+    async whenReady(): Promise<void> {
+        await this.ready;
     }
 
     private async initializeStripe() {
@@ -90,10 +123,16 @@ class PaymentService {
                     client_secret: paypalClientSecret
                 });
                 this.paypalConfigured = true;
+                // Retained for the REST-webhook signature check, which needs the raw
+                // credentials rather than the SDK's configured client.
+                this.paypalClientId = paypalClientId;
+                this.paypalClientSecret = paypalClientSecret;
                 logger.info('PayPal payment service initialized');
             } catch (error) {
                 logger.warn('Failed to initialize PayPal:', error);
                 this.paypalConfigured = false;
+                this.paypalClientId = null;
+                this.paypalClientSecret = null;
             }
         } else {
             logger.warn('PayPal not configured - PayPal payments unavailable');
@@ -101,10 +140,95 @@ class PaymentService {
         }
     }
 
+    /** Public: the PayPal Subscriptions service (services/paypalSubscriptionService.ts)
+     *  reuses the same API base + OAuth token as the classic sale flow. */
+    paypalApiBase(): string {
+        return process.env.NODE_ENV === 'production'
+            ? 'https://api-m.paypal.com'
+            : 'https://api-m.sandbox.paypal.com';
+    }
+
+    async fetchPayPalAccessToken(): Promise<string> {
+        if (!this.paypalClientId || !this.paypalClientSecret) {
+            throw new Error('PayPal credentials are not loaded');
+        }
+        const basic = Buffer.from(`${this.paypalClientId}:${this.paypalClientSecret}`).toString('base64');
+        const { data } = await axios.post(
+            `${this.paypalApiBase()}/v1/oauth2/token`,
+            'grant_type=client_credentials',
+            {
+                headers: {
+                    Authorization: `Basic ${basic}`,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                timeout: 15_000,
+            }
+        );
+        if (!data?.access_token) throw new Error('PayPal token response contained no access_token');
+        return data.access_token as string;
+    }
+
+    /**
+     * Verify a PayPal webhook against PayPal's own signature service.
+     *
+     * Verification is delegated to PayPal (cert URL + transmission signature) rather
+     * than reimplementing certificate chain validation. A missing PAYPAL_WEBHOOK_ID or
+     * unavailable PayPal API fails closed so an unverified payload is never trusted.
+     */
+    async verifyPayPalWebhookSignature(
+        headers: Record<string, string | string[] | undefined>,
+        event: unknown
+    ): Promise<{ verified: boolean; reason?: string }> {
+        if (!this.paypalConfigured || !this.paypalClientId || !this.paypalClientSecret) {
+            return { verified: false, reason: 'PayPal is not configured' };
+        }
+        const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+        if (!webhookId) {
+            return { verified: false, reason: 'PAYPAL_WEBHOOK_ID is not configured' };
+        }
+
+        const header = (name: string): string | undefined => {
+            const value = headers[name];
+            return Array.isArray(value) ? value[0] : value;
+        };
+
+        const transmissionId = header('paypal-transmission-id');
+        const transmissionTime = header('paypal-transmission-time');
+        const certUrl = header('paypal-cert-url');
+        const authAlgo = header('paypal-auth-algo');
+        const transmissionSig = header('paypal-transmission-sig');
+
+        if (!transmissionId || !transmissionTime || !certUrl || !authAlgo || !transmissionSig) {
+            return { verified: false, reason: 'Missing PayPal transmission headers' };
+        }
+
+        try {
+            const token = await this.fetchPayPalAccessToken();
+            const { data } = await axios.post(
+                `${this.paypalApiBase()}/v1/notifications/verify-webhook-signature`,
+                {
+                    transmission_id: transmissionId,
+                    transmission_time: transmissionTime,
+                    cert_url: certUrl,
+                    auth_algo: authAlgo,
+                    transmission_sig: transmissionSig,
+                    webhook_id: webhookId,
+                    webhook_event: event,
+                },
+                {
+                    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    timeout: 15_000,
+                }
+            );
+            return { verified: data?.verification_status === 'SUCCESS' };
+        } catch (error) {
+            return { verified: false, reason: `Signature verification failed: ${errorMessage(error)}` };
+        }
+    }
+
     // Explicitly reload keys (useful after admin updates)
     async reloadConfiguration() {
-        await this.initializeStripe();
-        await this.initializePayPal();
+        await this.initializeGateways();
     }
 
     public isStripeConfigured(): boolean {
@@ -805,3 +929,20 @@ class PaymentService {
 }
 
 export const paymentService = new PaymentService();
+
+/**
+ * Entitlement check for local subscription rows: the plan must be in an active state
+ * AND its period must not have ended. A row whose currentPeriodEnd has passed (e.g. a
+ * prepaid pass awaiting the expiry sweeper) no longer grants a paid entitlement, even
+ * before its status is lapsed by the worker.
+ */
+export function isSubscriptionActive(
+    sub: { status?: string | null; currentPeriodEnd?: Date | string | null } | null | undefined
+): boolean {
+    if (!sub) return false;
+    // 'trialing' counts as active (its period end is the trial end); 'past_due' does
+    // not — a failed payment must not keep granting a paid entitlement.
+    if (sub.status !== 'active' && sub.status !== 'trialing') return false;
+    if (sub.currentPeriodEnd === undefined || sub.currentPeriodEnd === null) return false;
+    return new Date(sub.currentPeriodEnd).getTime() > Date.now();
+}

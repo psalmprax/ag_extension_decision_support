@@ -22,13 +22,22 @@ permissions:
   contents: read
   packages: write
 
+# Serialise deploys per ref. In-flight deploys are never cancelled: a workflow
+# killed between `compose up` and its health gate would leave the host in an
+# unknown state, so later runs queue instead.
+concurrency:
+  group: deploy-all-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   # 1. CI Checks (Runs for all triggers)
   ci-checks:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        # Parity with production (postgis/postgis:15) — testing against a
+        # different major than you ship hides pg15-specific behavior.
+        image: postgis/postgis:15-3.4
         env:
           POSTGRES_USER: psalmprax
           POSTGRES_PASSWORD: password
@@ -51,12 +60,12 @@ jobs:
           - 6379:6379
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: |
             ag-extension-dashboard/src/frontend/package-lock.json
@@ -65,7 +74,7 @@ jobs:
       - name: Lint, Build & Test Frontend (with coverage)
         run: |
           cd ag-extension-dashboard/src/frontend
-          npm ci
+          npm ci --workspaces=false
           npm run lint
           npm run build
           npm run test:coverage
@@ -107,36 +116,37 @@ jobs:
     steps:
       # ── Step 1/5: Git sync & .env (fast) ─────────────────────
       - name: 1/5 Sync — git checkout + .env
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           command_timeout: 3m
+          envs: GITHUB_TOKEN
           script: |
             set -e
-            if [ ! -d "/root/ag_extension_decision_support" ]; then
+            : "${GITHUB_TOKEN:?GITHUB_TOKEN must be supplied by the workflow for git sync}"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            AUTH_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+            if [ ! -d "/root/ag_extension_decision_support/.git" ]; then
               echo "Cloning repository..."
-              cd /root && git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+              rm -rf /root/ag_extension_decision_support
+              cd /root && git clone "$AUTH_URL" ag_extension_decision_support
             fi
             cd /root/ag_extension_decision_support
             chmod -R u+rw .git 2>/dev/null || true
             rm -rf .git/config.lock .git/*.lock .git/refs/heads/*.lock 2>/dev/null || true
-            # Ensure the remote uses HTTPS with token authentication
-            if ! git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git; then
-              echo "Git config failed; performing clean re-clone..."
-              cd /root
-              rm -rf /root/ag_extension_decision_support
-              git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git ag_extension_decision_support
-              cd /root/ag_extension_decision_support
-            fi
-            git fetch origin
+            # Scrub any token a previous deploy persisted in the remote URL.
+            git remote set-url origin "$REPO_URL" 2>/dev/null || git remote add origin "$REPO_URL"
+            git fetch --prune "$AUTH_URL" '+refs/heads/${{ github.ref_name }}:refs/remotes/origin/${{ github.ref_name }}'
             if git show-ref --verify --quiet refs/heads/${{ github.ref_name }}; then
               git checkout ${{ github.ref_name }}
             else
-              git checkout -b ${{ github.ref_name }} origin/${{ github.ref_name }}
+              git checkout -B ${{ github.ref_name }} origin/${{ github.ref_name }}
             fi
-            git reset --hard origin/${{ github.ref_name }}
+            git merge --ff-only refs/remotes/origin/${{ github.ref_name }}
             cd /root/ag_extension_decision_support/ag-extension-dashboard
             if [ ! -f .env ]; then
               cp .env.example .env
@@ -170,9 +180,15 @@ jobs:
             fi
 
             # Ensure JWT_SECRET is configured in .env
+            # No timestamp fallback: a predictable secret is worse than a failed
+            # deploy. openssl and node are both guaranteed on this image.
             if ! grep -q "^JWT_SECRET=[^[:space:]]\{16,\}" .env 2>/dev/null; then
               echo "Generating JWT_SECRET..."
-              JWT_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" 2>/dev/null || echo "jwt_secret_$(date +%s)")
+              JWT_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+              if [ -z "$JWT_RAND" ]; then
+                echo "FATAL: could not generate a cryptographically random JWT_SECRET" >&2
+                exit 1
+              fi
               sed -i '/^JWT_SECRET=/d' .env 2>/dev/null || true
               echo "JWT_SECRET=$JWT_RAND" >> .env
               echo "Added JWT_SECRET to .env"
@@ -181,7 +197,11 @@ jobs:
             # Ensure MCP_API_TOKEN is configured in .env
             if ! grep -q "^MCP_API_TOKEN=[^[:space:]]\{16,\}" .env 2>/dev/null; then
               echo "Generating MCP_API_TOKEN..."
-              MCP_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" 2>/dev/null || echo "mcp_token_$(date +%s)")
+              MCP_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+              if [ -z "$MCP_RAND" ]; then
+                echo "FATAL: could not generate a cryptographically random MCP_API_TOKEN" >&2
+                exit 1
+              fi
               sed -i '/^MCP_API_TOKEN=/d' .env 2>/dev/null || true
               echo "MCP_API_TOKEN=$MCP_RAND" >> .env
               echo "Added MCP_API_TOKEN to .env"
@@ -192,7 +212,7 @@ jobs:
       # backend image first (step 3/5) and avoid running migrations against a
       # stale image.
       - name: 2/5 Infra — start app-db + redis (no migrations yet)
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
@@ -233,7 +253,7 @@ jobs:
 
       # ── Step 3/5: Build ALL services in parallel via BuildKit ─
       - name: 3/5 Build — all services in parallel (backend + frontend + agents)
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -362,6 +382,28 @@ jobs:
               echo "$BAKE_OUTPUT" | tail -5
             fi
 
+            # ── Digest pinning: record exactly which image bytes this deploy used ──
+            # Compose files reference ${BACKEND_IMAGE_ID:-ag-extension-dashboard-backend:latest}
+            # (and FRONTEND_IMAGE_ID), so containers run from the immutable image ID the
+            # bake just produced — immune to a concurrent retag of the :latest tag.
+            # k8s/deployment.yaml still uses registry digests; this pins the compose path.
+            BACKEND_ID=$(docker images --no-trunc --format '{{.ID}}' ag-extension-dashboard-backend:latest 2>/dev/null | head -1)
+            FRONTEND_ID=$(docker images --no-trunc --format '{{.ID}}' ag-extension-dashboard-frontend:latest 2>/dev/null | head -1)
+            if [ -n "$BACKEND_ID" ]; then
+              sed -i '/^BACKEND_IMAGE_ID=/d' .env 2>/dev/null || true
+              echo "BACKEND_IMAGE_ID=$BACKEND_ID" >> .env
+              echo "Pinned backend to image ID: $BACKEND_ID"
+            else
+              echo "WARN: backend image not found after bake — compose will fall back to :latest tag" >&2
+            fi
+            if [ -n "$FRONTEND_ID" ]; then
+              sed -i '/^FRONTEND_IMAGE_ID=/d' .env 2>/dev/null || true
+              echo "FRONTEND_IMAGE_ID=$FRONTEND_ID" >> .env
+              echo "Pinned frontend to image ID: $FRONTEND_ID"
+            else
+              echo "WARN: frontend image not found after bake — compose will fall back to :latest tag" >&2
+            fi
+
             # Pre-create external networks referenced by compose
             docker network create --driver bridge ettametta_ettametta >/dev/null 2>&1 || true
             docker network create --driver bridge ag-network >/dev/null 2>&1 || true
@@ -376,7 +418,11 @@ jobs:
 
             # Ensure MCP_API_TOKEN is present in .env before compose up
             if ! grep -q "^MCP_API_TOKEN=[^[:space:]]\{16,\}" .env 2>/dev/null; then
-              MCP_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" 2>/dev/null || echo "mcp_token_$(date +%s)")
+              MCP_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+              if [ -z "$MCP_RAND" ]; then
+                echo "FATAL: could not generate a cryptographically random MCP_API_TOKEN" >&2
+                exit 1
+              fi
               sed -i '/^MCP_API_TOKEN=/d' .env 2>/dev/null || true
               echo "MCP_API_TOKEN=$MCP_RAND" >> .env
             fi
@@ -394,7 +440,7 @@ jobs:
       #       message away. Now we surface the last 40 lines on every
       #       non-handled failure so the next CI run gives real evidence.
       - name: 4/5 Migrate — prisma migrate deploy (extension pre-create + visible retry)
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
@@ -465,7 +511,7 @@ jobs:
             '
 
       - name: 4.5/5 Idempotent Seed — check and populate seed data if empty
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
@@ -481,7 +527,7 @@ jobs:
 
       # ── Step 5/5: Health Check — verify services are up ─────────────────────
       - name: 5/5 Health Check — verify services
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
@@ -505,11 +551,15 @@ jobs:
   deploy-production:
     needs: ci-checks
     if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'master') || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    # Production-mutating deploy: require maintainer approval via the
+    # production environment (Settings → Environments → production →
+    # "Required reviewers"), matching reset-admin-prod.yml.
+    environment: production
     runs-on: ubuntu-latest
     steps:
       # ── Step 1/5: Git sync & .env with GitHub Secrets ──────────
       - name: 1/5 Sync — git checkout + .env
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           # LLM provider API keys (secrets)
@@ -543,33 +593,38 @@ jobs:
           OLLAMA_HOST: ${{ secrets.OLLAMA_HOST || vars.OLLAMA_HOST || 'http://ettametta-ollama:11434' }}
           OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL || vars.OLLAMA_MODEL || 'llama3.2:3b' }}
           MCP_API_TOKEN: ${{ secrets.MCP_API_TOKEN || vars.MCP_API_TOKEN }}
+          # Git credentials for the deploy host: env var only — never persisted into
+          # the remote URL, never interpolated into the script, never traced.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
-          envs: JWT_SECRET,OPENAI_API_KEY,GROQ_API_KEY,ANTHROPIC_API_KEY,AZURE_OPENAI_API_KEY,GOOGLE_VERTEX_PROJECT_ID,AIHUBMIX_API_KEY,AIHUBMIX_ACCESS_KEY,OPENROUTER_API_KEY,HUGGINGFACE_API_KEY,NVIDIA_API_KEY,FREEBUFF_AUTH_TOKEN,WEATHER_API_KEY,WEATHER_API_URL,TAVILY_API_KEY,ACME_EMAIL,DEMO_ENABLED,DEMO_PASSWORD,AI_PRIMARY_PROVIDER,AI_PRIMARY_MODEL,AIHUBMIX_WEB_SEARCH,AI_FALLBACK_PROVIDER,AI_FALLBACK_MODEL,AI_EMBEDDINGS_PROVIDER,AI_EMBEDDINGS_MODEL,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_DEPLOYMENT_NAME,OLLAMA_HOST,OLLAMA_MODEL,MCP_API_TOKEN
+          envs: GITHUB_TOKEN,JWT_SECRET,OPENAI_API_KEY,GROQ_API_KEY,ANTHROPIC_API_KEY,AZURE_OPENAI_API_KEY,GOOGLE_VERTEX_PROJECT_ID,AIHUBMIX_API_KEY,AIHUBMIX_ACCESS_KEY,OPENROUTER_API_KEY,HUGGINGFACE_API_KEY,NVIDIA_API_KEY,FREEBUFF_AUTH_TOKEN,WEATHER_API_KEY,WEATHER_API_URL,TAVILY_API_KEY,ACME_EMAIL,DEMO_ENABLED,DEMO_PASSWORD,AI_PRIMARY_PROVIDER,AI_PRIMARY_MODEL,AIHUBMIX_WEB_SEARCH,AI_FALLBACK_PROVIDER,AI_FALLBACK_MODEL,AI_EMBEDDINGS_PROVIDER,AI_EMBEDDINGS_MODEL,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_DEPLOYMENT_NAME,OLLAMA_HOST,OLLAMA_MODEL,MCP_API_TOKEN
           command_timeout: 3m
           script: |
-            set -ex
+            set -e
             df -h
             docker system prune -f || true
+            : "${GITHUB_TOKEN:?GITHUB_TOKEN must be supplied by the workflow for git sync}"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            AUTH_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
             if [ ! -d "/root/ag_extension_decision_support/.git" ]; then
               rm -rf /root/ag_extension_decision_support
-              cd /root && git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git ag_extension_decision_support
+              cd /root && git clone "$AUTH_URL" ag_extension_decision_support
             fi
             cd /root/ag_extension_decision_support
             chmod -R u+rw .git 2>/dev/null || true
             rm -rf .git/config.lock .git/*.lock .git/refs/heads/*.lock 2>/dev/null || true
-            if ! git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git; then
-              echo "Git config failed; performing clean re-clone..."
-              cd /root
-              rm -rf /root/ag_extension_decision_support
-              git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git ag_extension_decision_support
-              cd /root/ag_extension_decision_support
+            # Scrub any token a previous deploy persisted in the remote URL.
+            git remote set-url origin "$REPO_URL" 2>/dev/null || git remote add origin "$REPO_URL"
+            git fetch --prune "$AUTH_URL" '+refs/heads/master:refs/remotes/origin/master'
+            if git show-ref --verify --quiet refs/heads/master; then
+              git checkout master
+            else
+              git checkout -B master refs/remotes/origin/master
             fi
-            git fetch origin master
-            git checkout master
-            git reset --hard origin/master
+            git merge --ff-only refs/remotes/origin/master
             cd /root/ag_extension_decision_support/ag-extension-dashboard
 
             if [ ! -f ".env" ]; then
@@ -615,9 +670,15 @@ jobs:
             fi
 
             # Ensure JWT_SECRET is configured in .env
+            # No timestamp fallback: a predictable secret is worse than a failed
+            # deploy. openssl and node are both guaranteed on this image.
             if ! grep -q "^JWT_SECRET=[^[:space:]]\{16,\}" .env 2>/dev/null; then
               echo "Generating JWT_SECRET..."
-              JWT_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" 2>/dev/null || echo "jwt_secret_$(date +%s)")
+              JWT_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+              if [ -z "$JWT_RAND" ]; then
+                echo "FATAL: could not generate a cryptographically random JWT_SECRET" >&2
+                exit 1
+              fi
               sed -i '/^JWT_SECRET=/d' .env 2>/dev/null || true
               echo "JWT_SECRET=$JWT_RAND" >> .env
               echo "Added JWT_SECRET to .env"
@@ -626,7 +687,11 @@ jobs:
             # Ensure MCP_API_TOKEN is configured in .env
             if ! grep -q "^MCP_API_TOKEN=[^[:space:]]\{16,\}" .env 2>/dev/null; then
               echo "Generating MCP_API_TOKEN..."
-              MCP_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" 2>/dev/null || echo "mcp_token_$(date +%s)")
+              MCP_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+              if [ -z "$MCP_RAND" ]; then
+                echo "FATAL: could not generate a cryptographically random MCP_API_TOKEN" >&2
+                exit 1
+              fi
               sed -i '/^MCP_API_TOKEN=/d' .env 2>/dev/null || true
               echo "MCP_API_TOKEN=$MCP_RAND" >> .env
               echo "Added MCP_API_TOKEN to .env"
@@ -634,7 +699,7 @@ jobs:
 
       # ── Step 2/5: Infrastructure — bring up app-db + redis ONLY ─
       - name: 2/5 Infra — start app-db + redis (no migrations yet)
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
@@ -690,7 +755,7 @@ jobs:
       # build step's env would be dead code-with-no-`with.envs:`-forward and
       # would mislead future readers into thinking the gate was profile-aware.
       - name: "Pre-build smoke gate: verify ettametta-ollama"
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
@@ -713,7 +778,7 @@ jobs:
 
       # ── Step 3/5: Build ALL services in parallel ─────────────────────
       - name: 3/5 Build — all services in parallel (backend + frontend + agents)
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -869,7 +934,11 @@ jobs:
 
             # Ensure MCP_API_TOKEN is present in .env before compose up
             if ! grep -q "^MCP_API_TOKEN=[^[:space:]]\{16,\}" .env 2>/dev/null; then
-              MCP_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" 2>/dev/null || echo "mcp_token_$(date +%s)")
+              MCP_RAND=$(openssl rand -hex 32 2>/dev/null || node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+              if [ -z "$MCP_RAND" ]; then
+                echo "FATAL: could not generate a cryptographically random MCP_API_TOKEN" >&2
+                exit 1
+              fi
               sed -i '/^MCP_API_TOKEN=/d' .env 2>/dev/null || true
               echo "MCP_API_TOKEN=$MCP_RAND" >> .env
             fi
@@ -884,7 +953,7 @@ jobs:
 
       # ── Step 4/5: Migrations against the FRESHLY BUILT backend image ──
       - name: 4/5 Migrate — prisma migrate deploy (extension pre-create + visible retry)
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
@@ -956,7 +1025,7 @@ jobs:
 
       # ── Step 4.5/5: Seed Database (Admin & Initial Users) ─────
       - name: 4.5/5 Idempotent Seed — check and populate seed data
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
@@ -976,7 +1045,7 @@ jobs:
 
       # ── Step 5/5: SSL + Health Check ──────────────────────────
       - name: 5/5 SSL & Health Check — verify certificate and services
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         env:
           ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
         with:

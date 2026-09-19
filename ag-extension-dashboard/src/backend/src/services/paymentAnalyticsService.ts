@@ -157,6 +157,26 @@ class PaymentAnalyticsService {
             const newRevenue = totalRevenue;
             const netRevenueChange = totalRevenue - previousTotalRevenue;
 
+            // Calculate churned revenue from canceled subscriptions in this period
+            const churnedSubscriptions = await this.prisma.subscription.findMany({
+                where: {
+                    status: 'canceled',
+                    updatedAt: {
+                        gte: startDate,
+                        lte: now
+                    }
+                },
+                include: {
+                    plan: true
+                }
+            });
+            const churnedSubscriptionRevenue = churnedSubscriptions.reduce((total, sub) => {
+                return total + Number(sub.plan?.price || 0);
+            }, 0);
+            const churnedRevenue = churnedSubscriptionRevenue > 0
+                ? churnedSubscriptionRevenue
+                : Math.max(0, previousTotalRevenue - totalRevenue);
+
             // Expansion/contraction require subscription item history; returns null when change events table is not yet populated
             const hasHistory = false;
             return {
@@ -166,7 +186,7 @@ class PaymentAnalyticsService {
                 newRevenue,
                 expansionRevenue: hasHistory ? 0 : null as unknown as number,
                 contractionRevenue: hasHistory ? 0 : null as unknown as number,
-                churnedRevenue: Math.max(0, previousTotalRevenue - totalRevenue),
+                churnedRevenue,
                 netRevenueChange,
                 _meta: hasHistory ? undefined : { expansionRevenue: 'unavailable — subscription_change_events not yet collected', contractionRevenue: 'unavailable — subscription_change_events not yet collected' },
             } as unknown as typeof mrr extends never ? never : ReturnType<typeof Object>;
@@ -227,7 +247,7 @@ class PaymentAnalyticsService {
             const churnRate = totalCustomers > 0 ? (churnedCustomers / totalCustomers) * 100 : 0;
             const retentionRate = 100 - churnRate;
 
-            // Calculate LTV (simplified - average revenue per customer)
+            // Aggregate completed revenue
             const totalRevenue = await this.prisma.payment.aggregate({
                 where: {
                     status: 'completed'
@@ -237,9 +257,12 @@ class PaymentAnalyticsService {
                 }
             });
 
-            const customerLifetimeValue = totalCustomers > 0
-                ? (Number(totalRevenue._sum.amount || 0) / 100) / totalCustomers
-                : 0;
+            // Calculate LTV: ARPU / churnRate (standard SaaS forward-looking lifetime value)
+            const totalRevenueAmount = Number(totalRevenue._sum.amount || 0) / 100;
+            const arpu = totalCustomers > 0 ? totalRevenueAmount / totalCustomers : 0;
+            const customerLifetimeValue = churnRate > 0
+                ? arpu / (churnRate / 100)
+                : arpu;
 
             return {
                 totalCustomers,

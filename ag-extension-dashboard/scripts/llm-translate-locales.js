@@ -147,7 +147,7 @@ ${JSON.stringify(chunk, null, 2)}`;
   return validated;
 }
 
-async function translateLanguage(code) {
+async function translateLanguage(code, onlyKeys = null) {
   const langName = LANGUAGE_NAMES[code];
   if (!langName) {
     console.warn(`Unknown language code: ${code}`);
@@ -164,6 +164,7 @@ async function translateLanguage(code) {
   const locale = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
   const pendingKeys = Object.keys(en).filter(k => {
+    if (onlyKeys && !onlyKeys.has(k)) return false;
     const src = en[k];
     const cur = locale[k];
     if (typeof src !== 'string' || typeof cur !== 'string') return false;
@@ -179,7 +180,9 @@ async function translateLanguage(code) {
 
   console.log(`[${code} - ${langName}] Translating ${pendingKeys.length} fallback keys...`);
 
-  const CHUNK_SIZE = 30;
+  // Large chunks intermittently fail JSON-mode validation on the provider;
+  // CHUNK_SIZE env override allows smaller, reliable batches (default 30).
+  const CHUNK_SIZE = Math.max(1, Number(process.env.TRANSLATE_CHUNK_SIZE ?? 30) || 30);
   let translatedCount = 0;
 
   for (let i = 0; i < pendingKeys.length; i += CHUNK_SIZE) {
@@ -209,12 +212,16 @@ async function translateLanguage(code) {
 }
 
 async function main() {
-  const args = process.argv.slice(2);
+  const rawArgs = process.argv.slice(2);
+  // Optional scoped runs: node llm-translate-locales.js fr sw --keys k1,k2
+  const keysFlag = rawArgs.find(a => a.startsWith('--keys='));
+  const onlyKeys = keysFlag ? new Set(keysFlag.slice('--keys='.length).split(',').map(s => s.trim()).filter(Boolean)) : null;
+  const args = rawArgs.filter(a => !a.startsWith('--keys='));
   const targets = args.length > 0 ? args : Object.keys(LANGUAGE_NAMES);
 
-  console.log(`Starting LLM-driven localization for: ${targets.join(', ')}\n`);
+  console.log(`Starting LLM-driven localization for: ${targets.join(', ')}${onlyKeys ? ` (scoped to ${onlyKeys.size} keys)` : ''}\n`);
   for (const lang of targets) {
-    await translateLanguage(lang);
+    await translateLanguage(lang, onlyKeys);
     await new Promise(r => setTimeout(r, 1000));
   }
   console.log('\nAll targeted languages processed!');

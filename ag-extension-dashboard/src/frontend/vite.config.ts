@@ -1,8 +1,9 @@
 /// <reference types="vitest" />
-import { defineConfig, type UserConfig, type Plugin } from 'vite';
+import { defineConfig, defaultClientConditions, type UserConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { VitePWA } from 'vite-plugin-pwa';
 
 /**
@@ -38,10 +39,72 @@ interface VitestConfigExport extends UserConfig {
   test?: UserConfig['test'];
 }
 
+/**
+ * Self-host onnxruntime-web's WASM binaries.
+ *
+ * The edge vision classifier previously fetched the runtime from cdn.jsdelivr.net,
+ * which (a) violated the production CSP (script/connect-src) so inference silently
+ * degraded to heuristics, and (b) added a third-party supply-chain dependency for
+ * an offline-first feature. The dist/ wasm files are now copied into the build at
+ * /models/ort/ and served same-origin next to the ONNX models.
+ */
+const ortDist = path.dirname(createRequire(import.meta.url).resolve('onnxruntime-web/wasm'));
+
+function selfHostOnnxRuntime(): Plugin {
+  let outputDir = 'dist';
+  const wasmFiles = [
+    'ort-wasm-simd-threaded.wasm',
+    'ort-wasm-simd-threaded.mjs',
+  ];
+  return {
+    name: 'self-host-onnx-runtime',
+    apply: 'build',
+    configResolved(config) {
+      outputDir = config.build.outDir;
+    },
+    closeBundle() {
+      const outDir = path.resolve(outputDir, 'models/ort');
+      fs.mkdirSync(outDir, { recursive: true });
+      for (const file of wasmFiles) {
+        const src = path.join(ortDist, file);
+        if (fs.existsSync(src)) {
+          fs.copyFileSync(src, path.join(outDir, file));
+          console.log(`  self-hosted onnxruntime: /models/ort/${file}`);
+        } else {
+          throw new Error(`onnxruntime-web runtime file missing: ${file}`);
+        }
+      }
+    },
+  };
+}
+
+// Dev server serves /models/* directly from node_modules so the classifier works
+// without a full build. (Production nginx aliases /models/ from the copied files.)
+function serveOrtInDev(): Plugin {
+  return {
+    name: 'serve-ort-in-dev',
+    configureServer(server) {
+      server.middlewares.use('/models/ort', (req, _res, next) => {
+        const file = String(req.url || '').replace(/^\//, '').split('?')[0];
+        if (!file || file.includes('..')) return next();
+        const filePath = path.join(ortDist, file);
+        if (fs.existsSync(filePath)) {
+          _res.setHeader('Content-Type', file.endsWith('.mjs') ? 'text/javascript' : 'application/wasm');
+          fs.createReadStream(filePath).pipe(_res);
+        } else {
+          next();
+        }
+      });
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
     react(),
     minifyLocaleJson(),
+    selfHostOnnxRuntime(),
+    serveOrtInDev(),
     VitePWA({
       strategies: 'injectManifest',
       srcDir: 'src',
@@ -102,57 +165,11 @@ export default defineConfig({
         globIgnores: ['**/*.wasm', '**/node_modules/**'],
         maximumFileSizeToCacheInBytes: 30 * 1024 * 1024,
       },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
-        // The multi-MB ONNX model is fetched on demand by the classifier (served by
-        // nginx from the ml/ image path) and runtime-cached, never precached.
-        // Locale JSON files are fetched on demand by the language provider and are
-        // intentionally excluded from the precache to keep the install payload small.
-        // Large raster icons remain available by URL but are not precached;
-        // this keeps service-worker installation from duplicating static payload.
-        additionalManifestEntries: [],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/api\./i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 24 * 60 * 60,
-              },
-            },
-          },
-          {
-            // Offline map tiles: cache-first so field areas render with no connectivity.
-            urlPattern: /^https:\/\/(?:[a-z]\.)?tile\.openstreetmap\.org\/|\/\/server\.arcgisonline\.com\//i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'map-tiles',
-              expiration: {
-                maxEntries: 8000,
-                maxAgeSeconds: 30 * 24 * 60 * 60,
-              },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            // Plant disease ONNX model — cache-first after first download, 30d
-            // On-device edge ONNX models (YOLO detector, MobileViT/EfficientNet classifier) —
-            // fetched on first use (served on demand by nginx), then cache-first for 30d so field diagnosis works offline.
-            urlPattern: /\/models\/.*\.onnx$/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'ml-models',
-              expiration: { maxEntries: 4, maxAgeSeconds: 30 * 24 * 60 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-        ],
-      },
     }),
   ],
   resolve: {
+    // The runtime is already served from /models/ort; do not bundle a second WASM copy.
+    conditions: ['onnxruntime-web-use-extern-wasm', ...defaultClientConditions],
     preserveSymlinks: true,
     alias: {
       '@': path.resolve(__dirname, './src'),

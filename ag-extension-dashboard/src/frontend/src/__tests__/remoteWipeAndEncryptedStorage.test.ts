@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { EncryptedStorageService } from '../services/encryptedStorageService';
 import { RemoteWipeService } from '../services/remoteWipeService';
 
 describe('Deep-Tier Stolen Device Security — Client AES-256-GCM & Remote Wipe Protocol', () => {
+  afterEach(() => vi.unstubAllGlobals());
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
@@ -43,6 +44,28 @@ describe('Deep-Tier Stolen Device Security — Client AES-256-GCM & Remote Wipe 
   });
 
   describe('2. Remote Device Wipe Protocol', () => {
+    it('removes private API responses left by previous service workers', async () => {
+      const remove = vi.fn().mockResolvedValue(true);
+      vi.stubGlobal('caches', { delete: remove });
+      const result = await RemoteWipeService.executeRemoteWipe();
+      expect(remove).toHaveBeenCalledWith('api-cache');
+      expect(result.success).toBe(true);
+    });
+
+    it('continues deleting databases but reports failure if private cache removal fails', async () => {
+      const deleteDatabase = vi.fn();
+      vi.stubGlobal('indexedDB', { deleteDatabase });
+      vi.stubGlobal('caches', { delete: vi.fn().mockRejectedValue(new Error('Cache unavailable')) });
+      const result = await RemoteWipeService.executeRemoteWipe();
+      expect(result.success).toBe(false);
+      expect(deleteDatabase.mock.calls.map(([name]) => name)).toEqual([
+        'ag-extension-db',
+        'ag-offline-sync-queue',
+        'ag-crop-photos-cache',
+        'ag-farmer-registry',
+      ]);
+    });
+
     it('should execute full local wipe and key zeroization upon remote wipe command', async () => {
       localStorage.setItem('auth_token', 'secret_token_123');
       localStorage.setItem('cached_farmers', JSON.stringify([{ name: 'Jane' }]));
@@ -62,7 +85,7 @@ describe('Deep-Tier Stolen Device Security — Client AES-256-GCM & Remote Wipe 
     });
 
     it('should trigger remote wipe automatically when evaluating a 403 revoke signal', async () => {
-      localStorage.setItem('token', 'valid_token');
+      localStorage.setItem('cached_farmers', JSON.stringify([{ name: 'Bob' }]));
 
       const triggered = await RemoteWipeService.evaluateSignal(
         { error: 'ACCOUNT_REVOKED_WIPE_DEVICE' },
@@ -70,7 +93,7 @@ describe('Deep-Tier Stolen Device Security — Client AES-256-GCM & Remote Wipe 
       );
 
       expect(triggered).toBe(true);
-      expect(localStorage.getItem('token')).toBeNull();
+      expect(localStorage.getItem('cached_farmers')).toBeNull();
     });
   });
 });

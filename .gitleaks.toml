@@ -1,0 +1,44 @@
+# gitleaks configuration — repo-specific tuning only.
+# Extends gitleaks' built-in rules; the [allowlist] below suppresses known
+# false positives (example/template files, demo fixtures, synthetic test data).
+#
+# A baseline report pins historical findings so CI/pre-commit only fail on NEW
+# leaks. Regenerate it after deliberately cleaning history:
+#   gitleaks git . --report-path .gitleaks-baseline-report.json --baseline-path .gitleaks-baseline-report.json
+
+[extend]
+useDefault = true
+
+[allowlist]
+  description = "Known-safe patterns: examples, templates, demo fixtures, synthetic test tokens"
+  paths = [
+    '''(^|/)\.env\.(example|template|bak)$''',
+    '''(^|/)\.gitleaks\.toml$''',
+    '''(^|/)\.refact/''',
+    '''(^|/)INVESTOR_MATERIALS/''',
+    '''(^|/)presentations/''',
+    '''(^|/)test-results/''',
+    '''translation-audit-report\.json$''',
+    '''\.(test|spec)\.[jt]sx?$''',
+    '''(^|/)__tests__/''',
+    '''(^|/)node_modules/''',
+    '''package-lock\.json$''',
+  ]
+  # VAPID key *generation script* lines in deploy workflows assign freshly
+  # generated values to env vars — the text itself is not a secret. The generic
+  # rule also keys on the long python3 crypto one-liner in KEYS=$(python3 -c ...).
+  regexTarget = "line"
+  regexes = [
+    '''VAPID_(PUBLIC|PRIVATE)_KEY=''',
+    '''KEYS="?\$\(python3''',
+    '''KEYS="?\$\(npx -y web-push''',
+    '''Authorization: Bearer dev-token''',
+  ]
+  # Synthetic/demo credentials used by tests and demo flows — not real secrets.
+  stopwords = [
+    "demo-trial-2024",
+    "password123",
+    "agext_redis_2024",
+    "test-secret",
+    "dev-secret-key-for-local-only",
+  ]

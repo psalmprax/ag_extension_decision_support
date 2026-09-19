@@ -6,6 +6,7 @@ import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import type { AuthenticatedRequestUser } from '@/types/rowTypes';
+import { resolveFarmerId } from '@/services/messageAccessService';
 
 const router = Router();
 
@@ -38,12 +39,29 @@ const importSessionSchema = z.object({
     .default({}),
 });
 
-async function resolveFarmerId(userId: string): Promise<string | null> {
-  const { rows } = await query<{ id: string }>(
-    `SELECT id FROM farmers WHERE user_id = $1 OR id = $1 LIMIT 1`,
-    [userId]
-  );
-  return rows[0]?.id || null;
+async function importMessages(
+  conversationId: string,
+  messages: z.infer<typeof importSessionMessageSchema>[],
+  entitySlots: z.infer<typeof importSessionSchema>['entitySlots'],
+  primaryLang: string
+): Promise<number> {
+  let importedCount = 0;
+  for (const msg of messages) {
+    const textContent = (msg.content || msg.text || '').trim();
+    if (!textContent) continue;
+
+    const role = msg.role || (msg.sender === 'assistant' ? 'assistant' : 'user');
+    const lang = msg.language || primaryLang;
+    const entitiesJson = entitySlots ? JSON.stringify(entitySlots) : null;
+
+    await query(
+      `INSERT INTO chat_messages (conversation_id, role, content, language, entities, created_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [conversationId, role, textContent, lang, entitiesJson]
+    );
+    importedCount++;
+  }
+  return importedCount;
 }
 
 router.post(
@@ -90,23 +108,7 @@ router.post(
       }
 
       const conversationId = conversation.id;
-      let importedCount = 0;
-
-      for (const msg of messages) {
-        const textContent = (msg.content || msg.text || '').trim();
-        if (!textContent) continue;
-
-        const role = msg.role || (msg.sender === 'assistant' ? 'assistant' : 'user');
-        const lang = msg.language || primaryLang;
-        const entitiesJson = entitySlots ? JSON.stringify(entitySlots) : null;
-
-        await query(
-          `INSERT INTO chat_messages (conversation_id, role, content, language, entities, created_at)
-           VALUES ($1, $2, $3, $4, $5, NOW())`,
-          [conversationId, role, textContent, lang, entitiesJson]
-        );
-        importedCount++;
-      }
+      const importedCount = await importMessages(conversationId, messages, entitySlots, primaryLang);
 
       logger.info('Imported public consultation session', {
         userId: user.userId,

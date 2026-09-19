@@ -146,13 +146,15 @@ EXTENSION_ID=your-chrome-extension-id
 #### **Option A: Docker Compose (Recommended)**
 
 ```yaml
-# docker-compose.prod.yml
+# docker-compose.prod.yml — builds the `production` stage of the dev Dockerfiles
+# (the dedicated Dockerfile.production files were removed as dead/divergent).
 version: '3.8'
 services:
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.production
+      context: ..
+      dockerfile: ag-extension-dashboard/src/backend/Dockerfile
+      target: production
     environment:
       - NODE_ENV=production
     env_file:

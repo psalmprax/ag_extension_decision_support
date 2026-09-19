@@ -18,6 +18,46 @@ interface FieldUser {
     role?: string;
 }
 
+async function checkFieldCreationAccess(
+    prisma: ReturnType<typeof getPrisma>,
+    user: FieldUser | undefined,
+    farmerId: string
+): Promise<{ status: number; error: string } | null> {
+    if (user?.role === 'farmer') {
+        const farmer = await prisma.farmer.findFirst({ where: { userId: user.userId } });
+        if (!farmer) {
+            return { status: 403, error: 'Access denied' };
+        }
+        if (farmerId !== farmer.id) {
+            return { status: 403, error: 'Field must belong to your farm' };
+        }
+    } else if (user?.role === 'extension_officer') {
+        const assigned = await prisma.farmer.findFirst({
+            where: { id: farmerId, assignedOfficerId: user.userId },
+            select: { id: true },
+        });
+        if (!assigned) {
+            return { status: 403, error: 'Access denied: farmer not assigned to officer' };
+        }
+    } else if (user?.role === 'admin' || user?.role === 'regional_manager') {
+        const farmerExists = await prisma.farmer.findUnique({
+            where: { id: farmerId },
+            select: { id: true },
+        });
+        if (!farmerExists) {
+            return { status: 404, error: 'Farmer not found' };
+        }
+    } else {
+        return { status: 403, error: 'Access denied' };
+    }
+    return null;
+}
+
+function parseCropCycleDate(camel?: string, snake?: string): Date | null {
+    const value = camel || snake;
+    return value ? new Date(value) : null;
+}
+
 async function buildFieldListWhere(
     prisma: ReturnType<typeof getPrisma>,
     user: FieldUser | undefined,
@@ -175,13 +215,11 @@ router.post('/', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'farmerId must be a valid UUID' });
         }
         const prisma = getPrisma();
-        // Verify farmer ownership: the calling farmer must own this farmer record
-        const farmer = await prisma.farmer.findFirst({ where: { userId: req.user!.userId } });
-        if (!farmer) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
-        if (farmerId !== farmer.id) {
-            return res.status(403).json({ success: false, error: 'Field must belong to your farm' });
+        const user = req.user as { userId?: string; role?: string } | undefined;
+
+        const accessError = await checkFieldCreationAccess(prisma, user, farmerId);
+        if (accessError) {
+            return res.status(accessError.status).json({ success: false, error: accessError.error });
         }
         const field = await prisma.field.create({
             data: {
@@ -211,24 +249,21 @@ router.put('/:id', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'Field id is required' });
         }
         const prisma = getPrisma();
-        // First, verify the field exists and get its farmerId
-        const foundField = await prisma.field.findUnique({ where: { id } });
+        // First, verify the field exists and include its farmer for ownership checking
+        const foundField = await prisma.field.findUnique({
+            where: { id },
+            include: { farmer: { select: { userId: true, assignedOfficerId: true } } },
+        });
         if (!foundField) {
             return res.status(404).json({ success: false, error: 'Field not found' });
         }
         // Verify ownership: farmer sees own, officer sees assigned, admin/manager see all
         const user = req.user as { userId?: string; role?: string } | undefined;
-        if (user?.role === 'farmer' && foundField.farmerId !== user.userId) {
+        if (user?.role === 'farmer' && foundField.farmer?.userId !== user.userId) {
             return res.status(403).json({ success: false, error: 'Access denied' });
         }
-        if (user?.role === 'extension_officer') {
-            const assigned = await prisma.farmer.findFirst({
-                where: { id: foundField.farmerId, assignedOfficerId: user.userId },
-                select: { id: true },
-            });
-            if (!assigned) {
-                return res.status(403).json({ success: false, error: 'Access denied' });
-            }
+        if (user?.role === 'extension_officer' && foundField.farmer?.assignedOfficerId !== user.userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
         const body = req.body as Partial<{
@@ -266,21 +301,18 @@ router.delete('/:id', async (req: Request, res: Response) => {
         const prisma = getPrisma();
         // Verify ownership: farmer sees own, officer sees assigned, admin/manager see all
         const user = req.user as { userId?: string; role?: string } | undefined;
-        const field = await prisma.field.findUnique({ where: { id } });
+        const field = await prisma.field.findUnique({
+            where: { id },
+            include: { farmer: { select: { userId: true, assignedOfficerId: true } } },
+        });
         if (!field) {
             return res.status(404).json({ success: false, error: 'Field not found' });
         }
-        if (user?.role === 'farmer' && field.farmerId !== user.userId) {
+        if (user?.role === 'farmer' && field.farmer?.userId !== user.userId) {
             return res.status(403).json({ success: false, error: 'Access denied' });
         }
-        if (user?.role === 'extension_officer') {
-            const assigned = await prisma.farmer.findFirst({
-                where: { id: field.farmerId, assignedOfficerId: user.userId },
-                select: { id: true },
-            });
-            if (!assigned) {
-                return res.status(403).json({ success: false, error: 'Access denied' });
-            }
+        if (user?.role === 'extension_officer' && field.farmer?.assignedOfficerId !== user.userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
         }
         await prisma.field.update({ where: { id }, data: { isActive: false } });
         return res.json({ success: true });
@@ -303,14 +335,28 @@ router.post('/:fieldId/cycles', async (req: Request, res: Response) => {
         const cropName = body.cropName || body.crop_name;
         const variety = body.variety ?? null;
         const status = body.status || 'planned';
-        const plantingDate = body.plantingDate || body.planting_date ? new Date(body.plantingDate || body.planting_date) : null;
-        const expectedHarvestDate = body.expectedHarvestDate || body.expected_harvest_date ? new Date(body.expectedHarvestDate || body.expected_harvest_date) : null;
+        const plantingDate = parseCropCycleDate(body.plantingDate, body.planting_date);
+        const expectedHarvestDate = parseCropCycleDate(body.expectedHarvestDate, body.expected_harvest_date);
 
         if (!cropName) {
             return res.status(400).json({ success: false, error: 'cropName is required' });
         }
 
         const prisma = getPrisma();
+        const user = req.user as { userId?: string; role?: string } | undefined;
+        const field = await prisma.field.findUnique({
+            where: { id: fieldId },
+            include: { farmer: { select: { userId: true, assignedOfficerId: true } } },
+        });
+        if (!field) {
+            return res.status(404).json({ success: false, error: 'Field not found' });
+        }
+        if (user?.role === 'farmer' && field.farmer?.userId !== user.userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+        if (user?.role === 'extension_officer' && field.farmer?.assignedOfficerId !== user.userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
         const cycle = await prisma.cropCycle.create({
             data: {
                 fieldId,
@@ -424,6 +470,27 @@ router.patch('/:fieldId/cycles/:id', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'fieldId and cycle id are required' });
         }
         const prisma = getPrisma();
+        const user = req.user as { userId?: string; role?: string } | undefined;
+        const existingCycle = await prisma.cropCycle.findUnique({
+            where: { id },
+            include: {
+                field: {
+                    include: {
+                        farmer: { select: { userId: true, assignedOfficerId: true } },
+                    },
+                },
+            },
+        });
+        if (!existingCycle || existingCycle.fieldId !== fieldId) {
+            return res.status(404).json({ success: false, error: 'Crop cycle not found' });
+        }
+        if (user?.role === 'farmer' && existingCycle.field?.farmer?.userId !== user.userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+        if (user?.role === 'extension_officer' && existingCycle.field?.farmer?.assignedOfficerId !== user.userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+
         const data = mapCropCycleUpdate(req.body as CropCycleUpdateBody);
 
         const cycle = await prisma.cropCycle.update({

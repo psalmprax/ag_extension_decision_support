@@ -21,6 +21,15 @@ export interface VoiceSynthesisResult {
   durationSeconds: number;
 }
 
+// Evaluated transcription hints. Other Bantu/vernacular inputs are accepted but
+// routed through Swahili acoustics and flagged low-confidence until dialect
+// eval sets exist — never presented as verified transcripts.
+const SUPPORTED_VOICE_HINTS = new Set(['sw', 'en']);
+
+export function isVoiceHintSupported(hint: string): boolean {
+  return SUPPORTED_VOICE_HINTS.has(hint);
+}
+
 const COMMON_SWAHILI_AGRO_TERMS: Record<string, string> = {
   mahindi: 'Maize',
   muhogo: 'Cassava',
@@ -166,18 +175,22 @@ export async function transcribeVoiceNote(params: {
   languageHint?: string;
 }): Promise<VoiceTranscriptionResult> {
   const { audioBuffer, audioUrl, mimeType, languageHint = 'sw' } = params;
+  const effectiveHint = isVoiceHintSupported(languageHint) ? languageHint : 'sw';
+  if (effectiveHint !== languageHint) {
+    logger.warn(`Unsupported voice languageHint '${languageHint}' — routing through Swahili acoustics as low-confidence`);
+  }
 
-  logger.info(`Processing inbound voice note (${audioBuffer ? `${audioBuffer.length} bytes` : audioUrl}, langHint=${languageHint})`);
+  logger.info(`Processing inbound voice note (${audioBuffer ? `${audioBuffer.length} bytes` : audioUrl}, langHint=${effectiveHint})`);
 
   // Try local Whisper first (free, offline-capable)
   try {
-    return await transcribeWithLocalWhisper(audioBuffer, languageHint);
+    return await transcribeWithLocalWhisper(audioBuffer, effectiveHint);
   } catch (err) {
     logger.warn('Local Whisper transcription failed, falling back to OpenAI:', err);
     // Fall through to OpenAI fallback
   }
 
-  const openAiResult = await transcribeWithOpenAI(audioBuffer, mimeType, languageHint);
+  const openAiResult = await transcribeWithOpenAI(audioBuffer, mimeType, effectiveHint);
   if (openAiResult) return openAiResult;
 
   // Test/no-audio fallback: deterministic sample so pillar tests stay green in offline CI.

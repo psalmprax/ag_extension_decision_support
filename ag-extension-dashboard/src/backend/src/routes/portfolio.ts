@@ -66,7 +66,7 @@ router.get('/', async (req: Request, res: Response) => {
             upcomingVisits,
             highPriority
         ] = await Promise.all([
-            query<CountRow>(`SELECT COUNT(*) as count FROM farmers f WHERE f.user_id = $1${farmerTenantFilter}`, [oId, tenantId]),
+            query<CountRow>(`SELECT COUNT(*) as count FROM farmers f WHERE (f.assigned_officer_id = $1 OR f.user_id = $1)${farmerTenantFilter}`, [oId, tenantId]),
             query<CountRow>(`SELECT COUNT(*) as count FROM visits WHERE officer_id = $1 AND status = 'scheduled'${visitTenantFilter}`, [oId, tenantId]),
             query<CountRow>(`SELECT COUNT(*) as count FROM visits WHERE officer_id = $1 AND status = 'scheduled' AND scheduled_at < NOW()${visitTenantFilter}`, [oId, tenantId]),
             query<CountRow>(`SELECT COUNT(*) as count FROM visits WHERE officer_id = $1 AND status = 'scheduled' AND scheduled_at > NOW() AND scheduled_at < NOW() + INTERVAL '7 days'${visitTenantFilter}`, [oId, tenantId]),
@@ -99,7 +99,7 @@ router.get('/', async (req: Request, res: Response) => {
                 ORDER BY v.completed_at DESC
                 LIMIT 1
             ) v ON true
-            WHERE f.user_id = $1${farmerTenantFilter}
+            WHERE (f.assigned_officer_id = $1 OR f.user_id = $1)${farmerTenantFilter}
             ORDER BY v.created_at ASC NULLS FIRST
             LIMIT 10
         `, [oId, tenantId]);
@@ -160,7 +160,7 @@ router.get('/recommendations', async (req: Request, res: Response) => {
                 ORDER BY v.completed_at DESC
                 LIMIT 1
             ) v ON true
-            WHERE f.user_id = $1${farmerTenantFilter}
+            WHERE (f.assigned_officer_id = $1 OR f.user_id = $1)${farmerTenantFilter}
             ORDER BY v.completed_at ASC NULLS FIRST
             LIMIT 10
         `, [oId, tenantId]);
@@ -332,7 +332,7 @@ router.get('/export/excel', async (req: Request, res: Response) => {
                    (SELECT COUNT(*) FROM visits v WHERE v.farmer_id = f.id AND v.status = 'completed') as total_visits,
                    (SELECT MAX(v.completed_at) FROM visits v WHERE v.farmer_id = f.id AND v.status = 'completed') as last_visit_date
             FROM farmers f
-            WHERE f.user_id = $1
+            WHERE (f.assigned_officer_id = $1 OR f.user_id = $1)
               ${tenantId ? 'AND f.tenant_id = $2' : ''}
             ORDER BY f.last_name, f.first_name
         `, [oId, tenantId]);

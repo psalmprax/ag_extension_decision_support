@@ -2,6 +2,17 @@ import request from 'supertest';
 import app from '../app';
 import { makeOfficerToken } from './helpers/setupMocks';
 
+// Session lookup mock — fail-closed sessions require a valid row for authed requests.
+jest.mock('../services/databaseService', () => ({
+  getPool: jest.fn(() => null),
+  query: jest.fn((text: string) => {
+    if (typeof text === 'string' && text.includes('FROM user_sessions')) {
+      return Promise.resolve({ rows: [{ is_revoked: false, is_active: true, expires_at: '2099-01-01T00:00:00Z' }] });
+    }
+    return Promise.resolve({ rows: [] });
+  }),
+}));
+
 describe('Canadian Services API (/api/v1/canadian)', () => {
   const officerToken = makeOfficerToken();
 

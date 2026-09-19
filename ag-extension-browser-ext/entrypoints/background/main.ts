@@ -1,6 +1,8 @@
 import CONFIG, { healthUrl, apiUrl } from '../../shared/config';
 import type { OfflineAttachment, OfflineStatus, QueuedRequest } from '../../shared/offlineTypes';
 import { mirrorUpsert, mirrorRetry, mirrorDelete, flushMirrorQueue } from '../../shared/offlineQueueMirror';
+import { isAllowedApiUrl } from '../../shared/apiOrigin';
+import { getAuthToken } from '../../shared/authToken';
 import type { Browser } from 'wxt/browser';
 
 /** Shape of a request the background queue accepts from the sidepanel/content script. */
@@ -26,7 +28,8 @@ type BackgroundRequestMessage =
     | { action: 'delete_queued_request'; id: string }
     | { action: 'get_offline_status' }
     | { action: 'sync_now' }
-    | { action: 'open_sidepanel'; tab?: string };
+    | { action: 'open_sidepanel'; tab?: string }
+    | { action: 'inject_toolbar'; tabId?: number };
 
 const BACKGROUND_ACTIONS: ReadonlySet<string> = new Set([
     'queue_request',
@@ -40,13 +43,66 @@ const BACKGROUND_ACTIONS: ReadonlySet<string> = new Set([
     'get_offline_status',
     'sync_now',
     'open_sidepanel',
+    'inject_toolbar',
 ]);
+
+/**
+ * On-demand toolbar injection.
+ *
+ * The content script is registered at runtime (no `matches` in the manifest),
+ * so the extension has NO standing access to arbitrary pages. Injection happens
+ * only here, on explicit user intent, into the tab the user is looking at.
+ * `activeTab` grants temporary host access for that tab once the user invoked
+ * the extension (context menu / toolbar action); `scripting` provides the API.
+ */
+/**
+ * Uses the auto-imported `browser` API directly. The previous body referenced
+ * `chromeAPI`, which is a `const` declared inside defineBackground() below — not in
+ * scope here, so every call threw a ReferenceError at runtime.
+ */
+async function injectToolbar(tabId?: number): Promise<void> {
+    const targetId = tabId ?? (await browser.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+    if (!targetId) throw new Error('No active tab to inject the toolbar into');
+    // Re-injection guard: a second executeScript would stack a duplicate
+    // #ag-toolbar-root with doubled listeners, so probe before injecting.
+    const [alreadyInjected] = await browser.scripting.executeScript({
+        target: { tabId: targetId },
+        func: () => Boolean(document.getElementById('ag-toolbar-root')),
+    });
+    if (alreadyInjected?.result) return;
+    // Root-absolute path: WXT emits entrypoints/ag-toolbar.content to
+    // content-scripts/ag-toolbar.js, and chrome.scripting requires the leading slash.
+    await browser.scripting.executeScript({
+        target: { tabId: targetId },
+        files: ['/content-scripts/ag-toolbar.js'],
+    });
+}
 
 const isBackgroundRequestMessage = (message: unknown): message is BackgroundRequestMessage => {
     if (!message || typeof message !== 'object') return false;
     const action = (message as { action?: unknown }).action;
     return typeof action === 'string' && BACKGROUND_ACTIONS.has(action);
 };
+
+/** Sender contexts inside the extension itself (popup, sidepanel, options). */
+const isExtensionPageSender = (sender: Browser.runtime.MessageSender): boolean => {
+    if (sender.id !== browser.runtime.id) return false;
+    if (!sender.tab) return true; // popup/sidepanel senders carry no tab
+    return (sender.tab.url ?? '').startsWith(browser.runtime.getURL('/'));
+};
+
+/**
+ * Actions a content script may send: flush/read-only triggers only — no data
+ * crosses, nothing is mutated. Data-bearing and privileged actions
+ * (queue_request, attachments, DLQ ops, inject_toolbar, open_sidepanel) must
+ * come from extension pages.
+ */
+const CONTENT_SCRIPT_ALLOWED_ACTIONS: ReadonlySet<string> = new Set([
+    'sync_now',
+    'get_offline_status',
+    'get_queued_requests',
+    'get_dead_letter_requests',
+]);
 
 const backgroundErrorMessage = (error: unknown): string =>
     error instanceof Error ? error.message : String(error);
@@ -133,6 +189,10 @@ export default defineBackground(() => {
     const STATUS_STORE = 'offlineStatus';
     const ATTACHMENT_STORE = 'offlineAttachments';
     const ATTACHMENT_BUDGET_BYTES = 50 * 1024 * 1024;
+    // Count/age caps for the request stores: a long outage must not grow them
+    // unboundedly (attachments have their own size budget instead).
+    const MAX_QUEUED_REQUESTS = 200;
+    const MAX_DEAD_LETTER_ITEMS = 100;
 
     let db: IDBDatabase | null = null;
 
@@ -318,13 +378,26 @@ export default defineBackground(() => {
 
     const uploadOfflineAttachment = async (attachment: OfflineAttachment, headers: Record<string, string>): Promise<string> => {
         if (attachment.uploadedId) return attachment.uploadedId;
+        // Token-exfiltration guard: uploads can carry the fresh bearer token, so the
+        // target must be the configured API origin (same rule as queued replays).
+        const uploadUrl = await apiUrl('/upload/upload');
+        if (!(await isAllowedApiUrl(uploadUrl))) {
+            throw new Error('Blocked: upload target is not the configured API origin');
+        }
         const formData = new FormData();
         formData.append('file', attachment.file, `${attachment.id}.jpg`);
         formData.append('farmerId', attachment.farmerId);
         const uploadHeaders = { ...headers };
         delete uploadHeaders['Content-Type'];
         delete uploadHeaders['content-type'];
-        const response = await fetch(await apiUrl('/upload/upload'), { method: 'POST', headers: uploadHeaders, body: formData });
+        const response = await fetch(uploadUrl, {
+            method: 'POST',
+            headers: uploadHeaders,
+            body: formData,
+            // One hung upload must not block the queue drain; the retry/backoff
+            // path treats a timeout as a retryable failure.
+            signal: AbortSignal.timeout(30000),
+        });
         const result = await response.json() as { success?: boolean; data?: { id?: string }; error?: string };
         if (!response.ok || !result.success || !result.data?.id) throw new Error(result.error || `Attachment upload failed (${response.status})`);
         attachment.uploadedId = result.data.id;
@@ -351,12 +424,49 @@ export default defineBackground(() => {
     // Replays must carry the *current* token, not the one captured at queue time
     // (which may have expired while offline).
     const freshAuthHeader = async (): Promise<Record<string, string>> => {
+        const token = await getAuthToken();
+        return token ? { Authorization: `Bearer ${token}` } : {};
+    };
+
+    // Keep a store bounded: evict the OLDEST entries (by index order) beyond the
+    // cap so long outages cannot grow storage unboundedly. Best-effort — prune
+    // failures are logged, never thrown into the write path.
+    const pruneStoreToCap = async (storeName: string, indexName: string, cap: number): Promise<void> => {
+        if (!db) return;
+        let overflowIds: string[] = [];
         try {
-            const stored = await browser.storage.local.get('authToken');
-            const token = (stored as Record<string, unknown>)?.authToken;
-            return typeof token === 'string' && token ? { Authorization: `Bearer ${token}` } : {};
-        } catch {
-            return {};
+            overflowIds = await new Promise<string[]>((resolve, reject) => {
+                const tx = db!.transaction([storeName], 'readonly');
+                const req = tx.objectStore(storeName).index(indexName).openCursor(null, 'next');
+                const ids: string[] = [];
+                let seen = 0;
+                req.onsuccess = () => {
+                    const cursor = req.result;
+                    if (!cursor) {
+                        resolve(ids);
+                        return;
+                    }
+                    seen++;
+                    if (seen > cap) ids.push((cursor.value as { id: string }).id);
+                    cursor.continue();
+                };
+                req.onerror = () => reject(new Error(req.error?.message || `prune scan of ${storeName} failed`));
+            });
+        } catch (error) {
+            console.warn(`Prune scan of ${storeName} failed:`, error);
+            return;
+        }
+        for (const id of overflowIds) {
+            await new Promise<void>((resolve) => {
+                const tx = db!.transaction([storeName], 'readwrite');
+                tx.objectStore(storeName).delete(id);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => resolve();
+            });
+        }
+        if (overflowIds.length > 0) {
+            console.warn(`Pruned ${overflowIds.length} oldest ${storeName} entries beyond the cap of ${cap}`);
+            notifyQueueUpdate();
         }
     };
 
@@ -391,6 +501,8 @@ export default defineBackground(() => {
                 // Notify UI about queue update
                 notifyQueueUpdate();
                 mirrorUpsert(queuedRequest);
+                // Keep the pending queue bounded (oldest evicted beyond the cap).
+                void pruneStoreToCap(QUEUE_STORE, 'timestamp', MAX_QUEUED_REQUESTS);
                 resolve();
             };
             dbRequest.onerror = () => reject(new Error(dbRequest.error?.message || 'Queue request failed'));
@@ -583,10 +695,33 @@ export default defineBackground(() => {
                 delete payload.attachmentRefs;
                 requestBody = JSON.stringify(payload);
             }
+            // Token-exfiltration guard: a queued request is replayed with a FRESH bearer
+            // token, so it may only ever target the configured API origin. A queued URL
+            // pointing anywhere else is dead-lettered instead of sent.
+            if (!(await isAllowedApiUrl(request.url))) {
+                console.error(
+                    `Refusing to replay queued request ${request.id}: ${request.url} is not the configured API origin`
+                );
+                request.state = 'dead_letter';
+                request.movedToDeadLetterAt = Date.now();
+                request.originalRetries = request.maxRetries;
+                request.lastError = 'Blocked: target is not the configured API origin';
+                await idbPut(DEAD_LETTER_STORE, request);
+                await removeQueuedRequest(request.id);
+                // Keep the dead-letter store bounded (oldest evicted beyond the cap).
+                void pruneStoreToCap(DEAD_LETTER_STORE, 'movedToDeadLetterAt', MAX_DEAD_LETTER_ITEMS);
+                mirrorUpsert(request);
+                notifyQueueUpdate();
+                return;
+            }
+
             const response = await fetch(request.url, {
                 method: request.method,
                 headers,
-                body: requestBody
+                body: requestBody,
+                // One hung replay must not head-of-line block the whole queue; the
+                // retry/backoff path treats a timeout as a retryable failure.
+                signal: AbortSignal.timeout(30000),
             });
 
             if (response.ok) {
@@ -617,6 +752,8 @@ export default defineBackground(() => {
                 request.lastError = `HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`;
                 await idbPut(DEAD_LETTER_STORE, request);
                 await removeQueuedRequest(request.id);
+                // Keep the dead-letter store bounded (oldest evicted beyond the cap).
+                void pruneStoreToCap(DEAD_LETTER_STORE, 'movedToDeadLetterAt', MAX_DEAD_LETTER_ITEMS);
                 mirrorUpsert(request); // server mirror learns the dead_letter state
                 notifyQueueUpdate();
             } else {
@@ -635,6 +772,8 @@ export default defineBackground(() => {
                 request.originalRetries = request.maxRetries;
                 await idbPut(DEAD_LETTER_STORE, request);
                 await removeQueuedRequest(request.id);
+                // Keep the dead-letter store bounded (oldest evicted beyond the cap).
+                void pruneStoreToCap(DEAD_LETTER_STORE, 'movedToDeadLetterAt', MAX_DEAD_LETTER_ITEMS);
                 mirrorUpsert(request);
                 notifyQueueUpdate();
             } else {
@@ -690,6 +829,29 @@ export default defineBackground(() => {
 
     // Initialize
     const init = async () => {
+        // MV3 service workers are terminated when idle; setInterval does not survive.
+        // chrome.alarms wakes the worker on schedule instead. Alarm creation and the
+        // listener are registered BEFORE the DB init so one IndexedDB failure cannot
+        // silence connectivity checks or mirror flushes.
+        await chromeAPI.alarms.create('connectivity-check', { periodInMinutes: 1 });
+        await chromeAPI.alarms.create('mirror-flush', { periodInMinutes: 5 });
+        chromeAPI.alarms.onAlarm.addListener((alarm: { name: string }) => {
+            if (alarm.name === 'connectivity-check') {
+                void (async () => {
+                    const currentStatus = await getOfflineStatus();
+                    const isOnline = await checkOnlineStatus();
+
+                    if (currentStatus.isOnline !== isOnline) {
+                        await handleOnlineStatusChange();
+                    }
+                })();
+            } else if (alarm.name === 'mirror-flush') {
+                // The mirror outbox is persisted, so a flush at wake-up drains
+                // whatever failed while the worker was suspended.
+                void flushMirrorQueue();
+            }
+        });
+
         await initDB();
 
         // Register Context Menus
@@ -713,30 +875,29 @@ export default defineBackground(() => {
                 title: 'Summarize Page',
                 contexts: ['page']
             });
+
+            // On-demand toolbar capture — the ONLY path that injects the
+            // content script (runtime registration; no standing <all_urls>).
+            chromeAPI.contextMenus.create({
+                id: 'alfa-capture-page',
+                parentId: 'alfa-root',
+                title: 'Capture this page',
+                contexts: ['page']
+            });
         });
 
         // Initial status check
         await handleOnlineStatusChange();
-
-        // MV3 service workers are terminated when idle; setInterval does not survive.
-        // chrome.alarms wakes the worker on schedule instead.
-        await chromeAPI.alarms.create('connectivity-check', { periodInMinutes: 1 });
-        chromeAPI.alarms.onAlarm.addListener((alarm: { name: string }) => {
-            if (alarm.name === 'connectivity-check') {
-                void (async () => {
-                    const currentStatus = await getOfflineStatus();
-                    const isOnline = await checkOnlineStatus();
-
-                    if (currentStatus.isOnline !== isOnline) {
-                        await handleOnlineStatusChange();
-                    }
-                })();
-            }
-        });
     };
 
     // Context Menu Click Handler
     chromeAPI.contextMenus.onClicked.addListener((info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab) => {
+        if (info.menuItemId === 'alfa-capture-page') {
+            // User explicitly invoked the extension on this tab → activeTab
+            // access is granted; inject the toolbar on demand.
+            if (tab?.id) void injectToolbar(tab.id).catch(err => console.error('Toolbar injection failed:', err));
+            return;
+        }
         if (info.menuItemId === 'alfa-analyze' && info.selectionText && tab?.windowId) {
             chromeAPI.sidePanel.open({ windowId: tab.windowId }).then(() => {
                 // Short delay to ensure sidepanel is ready
@@ -786,8 +947,21 @@ export default defineBackground(() => {
                     return;
                 }
 
+                // Sender validation: privileged/data-bearing actions must come from
+                // extension pages; content scripts may only trigger flush/read actions.
+                if (!CONTENT_SCRIPT_ALLOWED_ACTIONS.has(message.action) && !isExtensionPageSender(sender)) {
+                    sendResponse({ success: false, error: 'Sender is not allowed to invoke this action' });
+                    return;
+                }
+
                 switch (message.action) {
                     case 'queue_request':
+                        // Reject foreign targets at enqueue time as well, so a bad URL is
+                        // never persisted (and never mirrored to the server queue).
+                        if (!(await isAllowedApiUrl(message.request.url))) {
+                            sendResponse({ success: false, error: 'Target is not the configured API origin' });
+                            break;
+                        }
                         await queueRequest(message.request);
                         sendResponse({ success: true });
                         break;
@@ -843,6 +1017,10 @@ export default defineBackground(() => {
                         await processQueue();
                         sendResponse({ success: true });
                         break;
+                    case 'inject_toolbar':
+                        await injectToolbar(message.tabId);
+                        sendResponse({ success: true });
+                        break;
                     case 'open_sidepanel':
                         if (chromeAPI?.sidePanel) {
                             let windowId: number | undefined;
@@ -894,5 +1072,7 @@ export default defineBackground(() => {
         chromeAPI.runtime.onMessage.addListener(handleMessage);
     }
 
-    init();
+    // One DB failure must not kill the whole background: listeners above are
+    // already registered; log the init failure instead of an unhandled rejection.
+    init().catch((error) => console.error('Background init failed:', error));
 });

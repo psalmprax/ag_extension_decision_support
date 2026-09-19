@@ -4,10 +4,23 @@ import { getPrisma } from '../../services/prismaService';
 import { logger } from '../../utils/logger';
 import { authorize, AuthRequest } from '../../middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
+import {
+  creditPayPalPass,
+  PAYPAL_PASS_DAYS,
+  applyPayPalSubscriptionEvent,
+  parsePayPalSubscriptionCustomId,
+} from '@/services/paypalLifecycleService';
+import {
+  createPayPalSubscription,
+  getPayPalSubscription,
+} from '@/services/paypalSubscriptionService';
 
-// PayPal subscription state is created/updated only here. There is no PayPal webhook
-// equivalent in this codebase, so this success handler is the single PayPal subscription
-// writer. See services/paymentService.ts for the ownership contract.
+// PayPal checkout is a ONE-TIME sale, so it grants a fixed-length prepaid pass rather
+// than an auto-renewing subscription. Two writers share one idempotent implementation
+// (services/paypalLifecycleService.ts): this browser return handler and the
+// signature-verified webhook in ./paypalWebhook.ts.
+// A buyer who wants an auto-renewing plan uses POST /paypal/subscription instead —
+// a real PayPal Subscriptions API profile whose lifecycle the webhook owns.
 
 const router = Router();
 
@@ -44,12 +57,24 @@ async function storePendingPaypalPayment(paymentId: string, userId: string, plan
     });
 }
 
-async function consumePendingPaypalPayment(paymentId: string): Promise<{ planId: string; amount: number; userId: string } | null> {
+async function loadPendingPaypalPayment(paymentId: string): Promise<{ planId: string; amount: number; userId: string } | null> {
     const pending = await prisma.pendingPaypalPayment.findUnique({ where: { paymentId } });
     if (!pending) return null;
-    await prisma.pendingPaypalPayment.delete({ where: { paymentId } });
-    if (pending.expiresAt.getTime() < Date.now()) return null;
+    if (pending.expiresAt.getTime() < Date.now()) {
+        await deletePendingPaypalPayment(paymentId);
+        return null;
+    }
     return { planId: pending.planId, amount: Number(pending.amount), userId: pending.userId };
+}
+
+async function deletePendingPaypalPayment(paymentId: string): Promise<void> {
+    try {
+        await prisma.pendingPaypalPayment.delete({ where: { paymentId } });
+    } catch (error) {
+        // Non-fatal: the sale is idempotent on payment id via the payments table,
+        // so a stale pending row cannot double-credit the buyer.
+        logger.warn(`Could not clear pending PayPal payment ${paymentId}:`, error);
+    }
 }
 
 router.post('/paypal/subscribe', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
@@ -99,6 +124,195 @@ router.post('/paypal/subscribe', authorize(['admin', 'extension_officer', 'farme
 
 /**
  * @swagger
+ * /api/v1/billing/paypal/subscription:
+ *   post:
+ *     summary: Create a real auto-renewing PayPal subscription (Subscriptions API)
+ *     tags: [Billing]
+ */
+// Unlike /paypal/subscribe (a one-time sale granting a prepaid pass), this creates a
+// PayPal Subscriptions API profile that renews automatically. Lifecycle events
+// (activation, renewal payments, cancellation) are owned by the signature-verified
+// webhook in ./paypalWebhook.ts; the return route below verifies and activates.
+router.post('/paypal/subscription', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
+    try {
+        const { planId } = req.body;
+        const userId = req.user!.userId;
+
+        if (!planId) {
+            return res.status(400).json({ success: false, message: 'Plan ID is required' });
+        }
+
+        const plans = await paymentService.getPricingPlans();
+        const selectedPlan = plans.find(p => p.id === planId);
+
+        if (!selectedPlan) {
+            return res.status(400).json({ success: false, message: 'Invalid plan ID' });
+        }
+
+        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const result = await createPayPalSubscription({
+            userId,
+            planId: selectedPlan.id,
+            planName: selectedPlan.name,
+            price: selectedPlan.price,
+            interval: selectedPlan.interval,
+            returnUrl: `${baseUrl}/billing/paypal/subscription-return`,
+            cancelUrl: `${baseUrl}/billing/paypal/cancel`,
+        });
+
+        res.json({ success: true, data: result });
+    } catch (error) {
+        logger.error('Failed to create PayPal recurring subscription:', error);
+        // Upstream PayPal/API failure — map like the other gateway errors (PAYPAL_ERROR → 402).
+        safeError(res, 402, 'Failed to create PayPal recurring subscription');
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/paypal/subscription-return:
+ *   get:
+ *     summary: Handle PayPal subscription approval return
+ *     tags: [Billing]
+ */
+// PayPal redirects here with subscription_id after the buyer approves. The webhook
+// BILLING.SUBSCRIPTION.ACTIVATED event owns the state for unattended flows; this
+// return path verifies the subscription against PayPal and activates idempotently
+// so the buyer is not left waiting on webhook latency.
+router.get('/paypal/subscription-return', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
+    const frontendBase = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing`;
+    try {
+        const { subscription_id: subscriptionId } = req.query;
+        const userId = req.user!.userId;
+
+        if (!subscriptionId || typeof subscriptionId !== 'string') {
+            return res.redirect(`${frontendBase}?error=missing_params`);
+        }
+
+        const details = await getPayPalSubscription(subscriptionId);
+        const identity = parsePayPalSubscriptionCustomId(details.customId);
+
+        // The subscription's custom_id binds it to the user who created the checkout.
+        // A mismatch means this session user is not the buyer — refuse to activate.
+        if (!identity || identity.userId !== userId) {
+            logger.warn(
+                `PayPal subscription ${subscriptionId} custom_id ${details.customId ?? 'missing'} does not match session user ${userId} — refusing to activate`
+            );
+            return res.redirect(`${frontendBase}?error=payer_mismatch`);
+        }
+
+        if (details.status !== 'ACTIVE' && details.status !== 'APPROVED') {
+            logger.warn(`PayPal subscription ${subscriptionId} returned status ${details.status} — not activating`);
+            return res.redirect(`${frontendBase}?error=payment_failed`);
+        }
+
+        await applyPayPalSubscriptionEvent({
+            userId: identity.userId,
+            planId: identity.planId,
+            status: 'active',
+            periodEnd: details.nextBillingTime ?? undefined,
+        });
+        logger.info(`PayPal subscription ${subscriptionId} activated for ${identity.userId} via return flow`);
+
+        res.redirect(`${frontendBase}?success=true&payment=paypal-subscription`);
+    } catch (error) {
+        logger.error('PayPal subscription return handling failed:', error);
+        res.redirect(`${frontendBase}?error=server_error`);
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/paypal/subscription:
+ *   post:
+ *     summary: Create a real auto-renewing PayPal subscription (Subscriptions API)
+ *     tags: [Billing]
+ */
+// Unlike POST /paypal/subscribe (one-time sale → fixed-length pass), this endpoint
+// creates a true recurring PayPal profile. State is owned by the signature-verified
+// webhook (BILLING.SUBSCRIPTION.*); the return handler below only verifies + activates.
+router.post('/paypal/subscription', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
+    try {
+        const { planId } = req.body;
+        const userId = req.user!.userId;
+
+        if (!planId) {
+            return res.status(400).json({ success: false, message: 'Plan ID is required' });
+        }
+
+        const plans = await paymentService.getPricingPlans();
+        const selectedPlan = plans.find(p => p.id === planId);
+
+        if (!selectedPlan) {
+            return res.status(400).json({ success: false, message: 'Invalid plan ID' });
+        }
+
+        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const result = await createPayPalSubscription({
+            userId,
+            planId: selectedPlan.id,
+            planName: selectedPlan.name,
+            price: selectedPlan.price,
+            interval: selectedPlan.interval,
+            returnUrl: `${baseUrl}/billing/paypal/subscription-return`,
+            cancelUrl: `${baseUrl}/billing/paypal/cancel`,
+        });
+
+        res.json({ success: true, data: result });
+    } catch (error) {
+        logger.error('Failed to create PayPal recurring subscription:', error);
+        safeError(res, 502, error instanceof Error ? error.message : 'Failed to create PayPal subscription');
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/paypal/subscription-return:
+ *   get:
+ *     summary: Handle PayPal subscription approval return
+ *     tags: [Billing]
+ */
+// PayPal redirects here with subscription_id after the buyer approves. The webhook
+// owns subscription state (BILLING.SUBSCRIPTION.ACTIVATED lands independently), so
+// this handler only verifies the subscription against PayPal and activates it
+// idempotently — webhooks and returns converge on the same lifecycle write.
+router.get('/paypal/subscription-return', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
+    try {
+        const { subscription_id } = req.query;
+        const userId = req.user!.userId;
+
+        if (!subscription_id || typeof subscription_id !== 'string') {
+            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=missing_params`);
+        }
+
+        const details = await getPayPalSubscription(subscription_id);
+        const identity = parsePayPalSubscriptionCustomId(details.customId);
+
+        if (details.status !== 'ACTIVE' && details.status !== 'APPROVED') {
+            logger.warn(`PayPal subscription ${subscription_id} returned with status ${details.status}`);
+            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=subscription_not_active`);
+        }
+        if (!identity || identity.userId !== userId) {
+            logger.warn(`PayPal subscription ${subscription_id} custom_id does not match the returning user ${userId}`);
+            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=payer_mismatch`);
+        }
+
+        await applyPayPalSubscriptionEvent({
+            userId: identity.userId,
+            planId: identity.planId,
+            status: 'active',
+            periodEnd: details.nextBillingTime ?? undefined,
+        });
+
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?success=true&payment=paypal-subscription`);
+    } catch (error) {
+        logger.error('PayPal subscription return handling failed:', error);
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=server_error`);
+    }
+});
+
+/**
+ * @swagger
  * /api/v1/billing/paypal/success:
  *   get:
  *     summary: Handle PayPal payment success
@@ -115,58 +329,41 @@ router.get('/paypal/success', authorize(['admin', 'extension_officer', 'farmer']
 
         const success = await paymentService.executePayPalPayment(paymentId as string, PayerID as string);
 
-        if (success) {
-            // Look up plan details from pending payment (DB-backed, restart-safe)
-            const pending = await consumePendingPaypalPayment(paymentId as string);
-
-            if (!pending) {
-                logger.error(`PayPal payment ${paymentId} succeeded but no pending plan found`);
-                return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=plan_not_found`);
-            }
-
-            // The subscription belongs to whoever initiated the checkout, not to
-            // whoever follows the return URL. Reject mismatches (admins excepted).
-            if (pending.userId !== userId && req.user!.role !== 'admin') {
-                logger.warn(`PayPal payment ${paymentId} initiated by ${pending.userId} but completed by ${userId} — refusing to bind`);
-                return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=payer_mismatch`);
-            }
-            const targetUserId = pending.userId;
-
-            // Update subscription in database
-            const subscription = await prisma.subscription.upsert({
-                where: { userId: targetUserId },
-                update: {
-                    status: 'active',
-                    planId: pending.planId,
-                    currentPeriodStart: new Date(),
-                    currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
-                },
-                create: {
-                    userId: targetUserId,
-                    planId: pending.planId,
-                    status: 'active',
-                    currentPeriodStart: new Date(),
-                    currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-                }
-            });
-
-            // Create payment record
-            await prisma.payment.create({
-                data: {
-                    subscriptionId: subscription.id,
-                    amount: pending.amount,
-                    currency: 'USD',
-                    status: 'completed',
-                    paymentMethod: 'paypal',
-                    transactionId: paymentId as string,
-                    paidAt: new Date()
-                }
-            });
-
-            res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?success=true&payment=paypal`);
-        } else {
-            res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=payment_failed`);
+        if (!success) {
+            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=payment_failed`);
         }
+        // Look up plan details from pending payment (DB-backed, restart-safe).
+        // The row is only cleared once the sale is confirmed bound to the payer.
+        const pending = await loadPendingPaypalPayment(paymentId as string);
+
+        if (!pending) {
+            logger.error(`PayPal payment ${paymentId} succeeded but no pending plan found`);
+            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=plan_not_found`);
+        }
+
+        // The subscription belongs to whoever initiated the checkout, not to
+        // whoever follows the return URL. Reject mismatches (admins excepted) and
+        // keep the pending row so the actual payer can still complete the sale.
+        if (pending.userId !== userId && req.user!.role !== 'admin') {
+            logger.warn(`PayPal payment ${paymentId} initiated by ${pending.userId} but completed by ${userId} — refusing to bind`);
+            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=payer_mismatch`);
+        }
+        const targetUserId = pending.userId;
+
+        await deletePendingPaypalPayment(paymentId as string);
+
+        const credit = await creditPayPalPass({
+            paymentId: paymentId as string,
+            userId: targetUserId,
+            planId: pending.planId,
+            amount: pending.amount,
+        });
+        logger.info(
+            `PayPal ${PAYPAL_PASS_DAYS}-day pass for ${targetUserId} ` +
+            `${credit.alreadyRecorded ? 'already credited' : 'credited'} until ${credit.currentPeriodEnd.toISOString()}`
+        );
+
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?success=true&payment=paypal`);
     } catch (error) {
         logger.error('PayPal success handling failed:', error);
         res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=server_error`);
