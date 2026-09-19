@@ -161,6 +161,7 @@ const largeBodyParser = express.json({
 // Signature-verified inbound webhook endpoints keep a bounded anonymous
 // allowance — Meta/Twilio servers are anonymous to us by design.
 const WEBHOOK_ROUTES = ['/api/whatsapp', '/api/v1/whatsapp', '/api/channels', '/api/v1/channels'];
+app.use(cookieParser());
 app.use(optionalAuth); // Parse optional user credentials before body parsing and rate limiting
 app.use((req, res, next) => {
     if (req.method !== 'GET' && LARGE_BODY_ROUTES.some(p => req.path === p || req.path.startsWith(p + '/'))) {
@@ -200,7 +201,6 @@ app.use(express.urlencoded({
         (req as Request).rawBody = buf;
     },
 }));
-app.use(cookieParser());
 app.use(securityGate); // Security gate — after auth/body parsing, before rate limiting
 app.use(csrfProtection); // Cookie-auth CSRF double-submit check (Bearer callers pass through)
 app.use((req, _res, next) => {

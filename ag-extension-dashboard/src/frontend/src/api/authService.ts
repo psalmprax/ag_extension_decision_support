@@ -1,4 +1,5 @@
 import apiClient from '@/api/client';
+import { purgePrivateApiCache } from '@/lib/privateApiCache';
 import type {
   AuthResponse,
   LoginCredentials,
@@ -106,6 +107,7 @@ export const logout = async (): Promise<void> => {
     await apiClient.post('/auth/logout');
   } catch {
     // Logout best-effort
+  } finally {
+    await purgePrivateApiCache();
   }
 };
-

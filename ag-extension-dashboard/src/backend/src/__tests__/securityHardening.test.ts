@@ -198,7 +198,7 @@ describe('Security Hardening Pillar (MFA, Sessions, Lockout)', () => {
     });
 
     it('rejects sessions whose DB row has expired', async () => {
-      mockQuery.mockResolvedValueOnce({ rows: [{ is_revoked: false, expires_at: '2000-01-01T00:00:00Z' }] });
+      mockQuery.mockResolvedValueOnce({ rows: [{ is_revoked: false, is_active: true, expires_at: '2000-01-01T00:00:00Z' }] });
       expect(await isSessionValid('token-expired-row')).toBe(false);
     });
 

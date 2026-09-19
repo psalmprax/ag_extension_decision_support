@@ -114,8 +114,7 @@ async function getOrtModule(): Promise<OrtModule | null> {
     if (typeof window !== 'undefined' && (window as unknown as { ort?: OrtModule }).ort) {
       return (window as unknown as { ort: OrtModule }).ort;
     }
-    const moduleName = 'onnxruntime-web';
-    return (await import(/* @vite-ignore */ moduleName).catch(() => null)) as unknown as OrtModule | null;
+    return (await import('onnxruntime-web/wasm')) as unknown as OrtModule;
   } catch {
     return null;
   }
@@ -1199,4 +1198,3 @@ export function diagnoseSoilOffline(
     analyzedAt: new Date().toISOString(),
   };
 }
-

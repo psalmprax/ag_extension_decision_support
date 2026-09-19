@@ -24,12 +24,6 @@ export interface UserSessionRecord {
 // round-trip for the common "just revoked here" case.
 const revokedTokenHashes = new Set<string>();
 
-// Short-lived positive cache so hot paths don't hit the DB on every request.
-// Revocation invalidates the entry immediately in-process; other instances see
-// the DB change within VALIDITY_CACHE_TTL_MS.
-const VALIDITY_CACHE_TTL_MS = 30_000;
-const validityCache = new Map<string, number>(); // tokenHash -> expiresAt(ms)
-
 export function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
@@ -46,28 +40,26 @@ export async function isSessionValid(token: string): Promise<boolean> {
   const tokenHash = hashToken(token);
   if (revokedTokenHashes.has(tokenHash)) return false;
 
-  // Cross-replica revocation list (Redis). Checked before the positive cache so a
-  // revoke on another node takes effect immediately rather than after 30s.
+  // Cross-replica revocations can reject a request without a database round trip.
   if (await inSet(REVOKED_SET, tokenHash)) {
     revokedTokenHashes.add(tokenHash);
-    validityCache.delete(tokenHash);
     return false;
   }
 
-  const cachedUntil = validityCache.get(tokenHash);
-  if (cachedUntil && cachedUntil > Date.now()) return true;
-
+  // Recheck account status on every request, including when another replica disabled it.
   return await checkSessionInDatabase(tokenHash);
 }
 
 async function checkSessionInDatabase(tokenHash: string): Promise<boolean> {
   try {
     const res = await query(
-      `SELECT is_revoked, expires_at FROM user_sessions WHERE token_hash = $1 LIMIT 1`,
+      `SELECT s.is_revoked, s.expires_at, u.is_active
+       FROM user_sessions s LEFT JOIN users u ON u.id = s.user_id
+       WHERE s.token_hash = $1 LIMIT 1`,
       [tokenHash],
     );
     const row = res.rows[0] as
-      { is_revoked?: boolean; expires_at?: string | Date } | undefined;
+      { is_revoked: boolean; expires_at: string | Date; is_active: boolean | null } | undefined;
     if (!row) {
       // Legacy/demo tokens issued without createSession. Default denies them
       // in production and allows them elsewhere for backwards compatibility;
@@ -76,12 +68,11 @@ async function checkSessionInDatabase(tokenHash: string): Promise<boolean> {
       const legacyAllowed = flag !== undefined ? flag === 'true' : process.env.NODE_ENV !== 'production';
       if (!legacyAllowed) {
         logger.warn('Rejecting bearer token with no session row (legacy tokens disabled)');
-        validityCache.delete(tokenHash);
         return false;
       }
       logger.warn('Allowing bearer token with no session row (legacy/demo token; JWT still enforced by caller)');
     } else {
-      if (row.is_revoked) {
+      if (row.is_revoked || row.is_active !== true) {
         revokedTokenHashes.add(tokenHash);
         return false;
       }
@@ -91,23 +82,13 @@ async function checkSessionInDatabase(tokenHash: string): Promise<boolean> {
       }
     }
 
-    updateValidityCache(tokenHash);
     return true;
   } catch (error) {
-    validityCache.delete(tokenHash);
     logger.warn(
       "Session validity lookup failed; denying request on unknown revocation state:",
       error,
     );
     return false;
-  }
-}
-
-function updateValidityCache(tokenHash: string): void {
-  validityCache.set(tokenHash, Date.now() + VALIDITY_CACHE_TTL_MS);
-  if (validityCache.size > 10_000) {
-    const now = Date.now();
-    for (const [k, v] of validityCache) if (v <= now) validityCache.delete(k);
   }
 }
 
@@ -117,7 +98,6 @@ const REVOKED_TTL_MS = 8 * 24 * 60 * 60 * 1000;
 
 function markRevokedLocally(tokenHash: string): void {
   revokedTokenHashes.add(tokenHash);
-  validityCache.delete(tokenHash);
   // Best-effort publish to other replicas; the DB row is still authoritative.
   void addToSet(REVOKED_SET, tokenHash, REVOKED_TTL_MS).catch((err: unknown) =>
     logger.warn("Failed to publish session revocation to shared state:", err),
@@ -245,7 +225,7 @@ export async function revokeAllUserSessions(userId: string): Promise<number> {
     return res.rowCount ?? res.rows.length ?? 0;
   } catch (error) {
     logger.error("Failed to revoke all user sessions:", error);
-    return 0;
+    throw error;
   }
 }
 

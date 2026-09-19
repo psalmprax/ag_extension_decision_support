@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { EncryptedStorageService } from '../services/encryptedStorageService';
 import { RemoteWipeService } from '../services/remoteWipeService';
 
 describe('Deep-Tier Stolen Device Security — Client AES-256-GCM & Remote Wipe Protocol', () => {
+  afterEach(() => vi.unstubAllGlobals());
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
@@ -43,6 +44,20 @@ describe('Deep-Tier Stolen Device Security — Client AES-256-GCM & Remote Wipe 
   });
 
   describe('2. Remote Device Wipe Protocol', () => {
+    it('removes private API responses left by previous service workers', async () => {
+      const remove = vi.fn().mockResolvedValue(true);
+      vi.stubGlobal('caches', { delete: remove });
+      const result = await RemoteWipeService.executeRemoteWipe();
+      expect(remove).toHaveBeenCalledWith('api-cache');
+      expect(result.success).toBe(true);
+    });
+
+    it('does not report successful wiping if private cache removal fails', async () => {
+      vi.stubGlobal('caches', { delete: vi.fn().mockRejectedValue(new Error('Cache unavailable')) });
+      const result = await RemoteWipeService.executeRemoteWipe();
+      expect(result.success).toBe(false);
+    });
+
     it('should execute full local wipe and key zeroization upon remote wipe command', async () => {
       localStorage.setItem('auth_token', 'secret_token_123');
       localStorage.setItem('cached_farmers', JSON.stringify([{ name: 'Jane' }]));

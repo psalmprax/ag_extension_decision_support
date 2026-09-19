@@ -49,7 +49,7 @@ describe('optionalAuth middleware — session revocation', () => {
 
   it('attaches req.user when JWT is valid and session is active', async () => {
     const token = signToken();
-    mockQuery.mockResolvedValueOnce({ rows: [{ is_revoked: false, expires_at: '2099-01-01T00:00:00Z' }] });
+    mockQuery.mockResolvedValueOnce({ rows: [{ is_revoked: false, is_active: true, expires_at: '2099-01-01T00:00:00Z' }] });
     req.headers = { authorization: `Bearer ${token}` };
 
     await optionalAuth(req as Request, res as Response, next);
@@ -88,7 +88,7 @@ describe('optionalAuth middleware — session revocation', () => {
 
   it('treats a session whose DB row expired as anonymous', async () => {
     const token = signToken();
-    mockQuery.mockResolvedValueOnce({ rows: [{ is_revoked: false, expires_at: '2000-01-01T00:00:00Z' }] });
+    mockQuery.mockResolvedValueOnce({ rows: [{ is_revoked: false, is_active: true, expires_at: '2000-01-01T00:00:00Z' }] });
     req.headers = { authorization: `Bearer ${token}` };
 
     await optionalAuth(req as Request, res as Response, next);

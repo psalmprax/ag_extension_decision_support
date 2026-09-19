@@ -213,7 +213,7 @@ describe('Cybersecurity Suite — Perimeter Security Gate & RBAC Authorization',
         { expiresIn: '1h' }
       );
       // Valid, non-revoked session row so the role check (not session state) decides.
-      mockQuery.mockResolvedValueOnce({ rows: [{ is_revoked: false, expires_at: '2099-01-01T00:00:00Z' }] });
+      mockQuery.mockResolvedValueOnce({ rows: [{ is_revoked: false, is_active: true, expires_at: '2099-01-01T00:00:00Z' }] });
       mockRequest.headers = { authorization: `Bearer ${officerToken}` };
       const middleware = authorize(['admin']);
 
@@ -236,7 +236,7 @@ describe('Cybersecurity Suite — Perimeter Security Gate & RBAC Authorization',
         config.jwt.secret,
         { expiresIn: '1h' }
       );
-      mockQuery.mockResolvedValueOnce({ rows: [{ is_revoked: false, expires_at: '2099-01-01T00:00:00Z' }] });
+      mockQuery.mockResolvedValueOnce({ rows: [{ is_revoked: false, is_active: true, expires_at: '2099-01-01T00:00:00Z' }] });
       mockRequest.headers = { authorization: `Bearer ${adminToken}` };
       const middleware = authorize(['admin', 'extension_officer']);
 

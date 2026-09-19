@@ -6,7 +6,7 @@ import { makeOfficerToken } from './helpers/setupMocks';
 jest.mock('../services/databaseService', () => ({
   query: jest.fn((text: string) => {
     if (typeof text === 'string' && text.includes('FROM user_sessions')) {
-      return Promise.resolve({ rows: [{ is_revoked: false, expires_at: '2099-01-01T00:00:00Z' }] });
+      return Promise.resolve({ rows: [{ is_revoked: false, is_active: true, expires_at: '2099-01-01T00:00:00Z' }] });
     }
     return Promise.resolve({ rows: [] });
   }),

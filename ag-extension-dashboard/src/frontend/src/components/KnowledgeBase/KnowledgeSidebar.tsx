@@ -13,7 +13,7 @@ import {
   Target,
   Lock,
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { useAppStore } from '@/store/useAppStore';
 import { useDemoMode } from '@/demo';
 import { logout as apiLogout } from '@/api/authService';

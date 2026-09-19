@@ -25,6 +25,7 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import app from '../app';
+import { csrfTokenFor } from '../middleware/authCookie';
 
 // 1.5MB of JSON — over the 1MB global cap, under the 16MB media cap.
 const bigPayload = { data: 'x'.repeat(1.5 * 1024 * 1024) };
@@ -39,6 +40,21 @@ const officerToken = jwt.sign(
 const authHeader = { Authorization: `Bearer ${officerToken}` };
 
 describe('request body limits', () => {
+    it.each(['/api/ai/speech', '/api/v1/ai/speech'])('allows the same large payload for cookie and bearer authentication at %s', async path => {
+        const csrf = csrfTokenFor(officerToken);
+        const bearer = await request(app).post(path).set(authHeader).send(bigPayload);
+        const cookie = await request(app).post(path)
+            .set('Cookie', [`ag_token=${officerToken}`, `ag_csrf=${csrf}`])
+            .set('x-csrf-token', csrf).send(bigPayload);
+        expect(cookie.status).not.toBe(413);
+        expect(cookie.status).toBe(bearer.status);
+    });
+
+    it('does not grant the large-body allowance to invalid cookies', async () => {
+        const response = await request(app).post('/api/ai/speech').set('Cookie', 'ag_token=invalid').send(bigPayload);
+        expect(response.status).toBe(413);
+    });
+
     it('rejects oversized JSON on regular routes (413)', async () => {
         const res = await request(app).post('/api/auth/login').send(bigPayload);
         expect(res.status).toBe(413);
