@@ -65,8 +65,8 @@ services:
       target: development
     # Bind-mount source for hot-reload
     volumes:
-      - ./src/frontend/src:/app/src:rw
-      - ./src/frontend/public:/app/public:rw
+      - ./src/frontend/src:/workspace/ag-extension-dashboard/src/frontend/src:rw
+      - ./src/frontend/public:/workspace/ag-extension-dashboard/src/frontend/public:rw
     environment:
       VITE_API_URL: http://localhost:7500/api
       VITE_WS_URL: ws://localhost:7500

@@ -28,6 +28,7 @@ before(async () => {
       resolveDir: root,
     },
     bundle: true, write: false, format: 'esm', platform: 'browser', logLevel: 'silent',
+    conditions: ['onnxruntime-web-use-extern-wasm'],
   });
   server = createServer(async (req, res) => {
     const pathname = new URL(req.url, 'http://localhost').pathname;

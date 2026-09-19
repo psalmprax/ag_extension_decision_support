@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { defineConfig, type UserConfig, type Plugin } from 'vite';
+import { defineConfig, defaultClientConditions, type UserConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -168,6 +168,8 @@ export default defineConfig({
     }),
   ],
   resolve: {
+    // The runtime is already served from /models/ort; do not bundle a second WASM copy.
+    conditions: ['onnxruntime-web-use-extern-wasm', ...defaultClientConditions],
     preserveSymlinks: true,
     alias: {
       '@': path.resolve(__dirname, './src'),
