@@ -1,18 +1,23 @@
+# Node 22 bundles npm 10.9.x which has the edgesOut null crash.
+# Upgrade npm once in a shared base, reuse across stages.
+FROM node:22-slim AS node-base
+ARG NPM_VERSION=11.19.1
+RUN npm install --global npm@${NPM_VERSION} --no-audit --no-fund && npm cache clean --force
+
 # ============================================================
 # Stage 1: Dependencies
 # ============================================================
-FROM node:22-slim AS deps
-# Preserve the local dependency's ../../../ path recorded in package-lock.json.
+FROM node-base AS deps
 WORKDIR /workspace/ag-extension-dashboard/src/frontend
 COPY ag-extension-shared /workspace/ag-extension-shared
 ENV npm_config_fetch_retries=5 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
 COPY ag-extension-dashboard/src/frontend/package.json ./
-RUN npm install --no-audit --no-fund --package-lock=false
+RUN npm install --no-audit --no-fund
 
 # ============================================================
 # Stage 2: Build
 # ============================================================
-FROM node:22-slim AS build
+FROM node-base AS build
 WORKDIR /workspace/ag-extension-dashboard/src/frontend
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 COPY --from=deps /workspace/ag-extension-dashboard/src/frontend/node_modules ./node_modules
@@ -27,7 +32,7 @@ RUN npm run build:docker && npm run check:bundle
 # ============================================================
 # Stage 3: Development
 # ============================================================
-FROM node:22-slim AS development
+FROM node-base AS development
 WORKDIR /workspace/ag-extension-dashboard/src/frontend
 COPY --from=deps /workspace/ag-extension-dashboard/src/frontend/node_modules ./node_modules
 COPY ag-extension-shared /workspace/ag-extension-shared
