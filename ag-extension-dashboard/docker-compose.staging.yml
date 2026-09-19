@@ -104,6 +104,10 @@ services:
       context: ..
       dockerfile: ag-extension-dashboard/src/frontend/Dockerfile
       target: production
+    # Replace the Vite mapping instead of merging another binding on port 7503.
+    # !override requires Docker Compose 2.24.4 or newer.
+    ports: !override
+      - "${FRONTEND_BIND_IP:-127.0.0.1}:${FRONTEND_PORT:-7503}:80"
     labels:
       # Enable Traefik service discovery
       - "traefik.enable=true"

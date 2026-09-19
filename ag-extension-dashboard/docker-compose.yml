@@ -85,8 +85,9 @@ services:
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-agext_redis_2024}
     command: redis-server --requirepass ${REDIS_PASSWORD:-agext_redis_2024} --maxmemory 256mb --maxmemory-policy noeviction --appendonly yes --appendfsync everysec
+    # 7503 is the frontend; 7504-7506 are reserved for optional agent services.
     ports:
-      - "${REDIS_QUEUE_BIND_IP:-127.0.0.1}:${REDIS_QUEUE_PORT:-7503}:6379"
+      - "${REDIS_QUEUE_BIND_IP:-127.0.0.1}:${REDIS_QUEUE_PORT:-7507}:6379"
     volumes:
       - redis_queue_data:/data
     networks:
