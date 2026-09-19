@@ -59,7 +59,8 @@ services:
       dockerfile: ag-extension-dashboard/src/backend/Dockerfile
       target: production
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       NODE_ENV: staging
       LOG_LEVEL: ${LOG_LEVEL:-info}

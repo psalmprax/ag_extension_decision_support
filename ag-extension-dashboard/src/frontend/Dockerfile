@@ -6,8 +6,8 @@ FROM node:22-slim AS deps
 WORKDIR /workspace/ag-extension-dashboard/src/frontend
 COPY ag-extension-shared /workspace/ag-extension-shared
 ENV npm_config_fetch_retries=5 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
-COPY ag-extension-dashboard/src/frontend/package.json ag-extension-dashboard/src/frontend/package-lock.json ./
-RUN npm ci --no-audit --no-fund
+COPY ag-extension-dashboard/src/frontend/package.json ./
+RUN npm install --no-audit --no-fund --package-lock=false
 
 # ============================================================
 # Stage 2: Build

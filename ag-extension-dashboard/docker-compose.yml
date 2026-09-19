@@ -172,7 +172,8 @@ services:
     ports:
       - "${BACKEND_BIND_IP:-127.0.0.1}:${BACKEND_PORT:-7500}:3001"
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@app-db:5432/${DATABASE_NAME:-ag_extension}?schema=public
       REDIS_URL: redis://:${REDIS_PASSWORD:-agext_redis_2024}@redis:6379
