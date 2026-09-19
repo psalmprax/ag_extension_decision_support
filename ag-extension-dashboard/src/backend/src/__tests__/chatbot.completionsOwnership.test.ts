@@ -47,6 +47,7 @@ jest.mock('../services/vectorService', () => ({
     },
 }));
 jest.mock('../services/mcpAdapter', () => ({
+    createMCPRouter: jest.fn(() => jest.requireActual<typeof import('express')>('express').Router()),
     mcpAdapter: {
         convertToMCPTools: jest.fn().mockReturnValue([]),
         callTool: jest.fn(),

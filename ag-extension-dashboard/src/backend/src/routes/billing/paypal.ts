@@ -329,42 +329,41 @@ router.get('/paypal/success', authorize(['admin', 'extension_officer', 'farmer']
 
         const success = await paymentService.executePayPalPayment(paymentId as string, PayerID as string);
 
-        if (success) {
-            // Look up plan details from pending payment (DB-backed, restart-safe).
-            // The row is only cleared once the sale is confirmed bound to the payer.
-            const pending = await loadPendingPaypalPayment(paymentId as string);
-
-            if (!pending) {
-                logger.error(`PayPal payment ${paymentId} succeeded but no pending plan found`);
-                return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=plan_not_found`);
-            }
-
-            // The subscription belongs to whoever initiated the checkout, not to
-            // whoever follows the return URL. Reject mismatches (admins excepted) and
-            // keep the pending row so the actual payer can still complete the sale.
-            if (pending.userId !== userId && req.user!.role !== 'admin') {
-                logger.warn(`PayPal payment ${paymentId} initiated by ${pending.userId} but completed by ${userId} — refusing to bind`);
-                return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=payer_mismatch`);
-            }
-            const targetUserId = pending.userId;
-
-            await deletePendingPaypalPayment(paymentId as string);
-
-            const credit = await creditPayPalPass({
-                paymentId: paymentId as string,
-                userId: targetUserId,
-                planId: pending.planId,
-                amount: pending.amount,
-            });
-            logger.info(
-                `PayPal ${PAYPAL_PASS_DAYS}-day pass for ${targetUserId} ` +
-                `${credit.alreadyRecorded ? 'already credited' : 'credited'} until ${credit.currentPeriodEnd.toISOString()}`
-            );
-
-            res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?success=true&payment=paypal`);
-        } else {
-            res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=payment_failed`);
+        if (!success) {
+            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=payment_failed`);
         }
+        // Look up plan details from pending payment (DB-backed, restart-safe).
+        // The row is only cleared once the sale is confirmed bound to the payer.
+        const pending = await loadPendingPaypalPayment(paymentId as string);
+
+        if (!pending) {
+            logger.error(`PayPal payment ${paymentId} succeeded but no pending plan found`);
+            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=plan_not_found`);
+        }
+
+        // The subscription belongs to whoever initiated the checkout, not to
+        // whoever follows the return URL. Reject mismatches (admins excepted) and
+        // keep the pending row so the actual payer can still complete the sale.
+        if (pending.userId !== userId && req.user!.role !== 'admin') {
+            logger.warn(`PayPal payment ${paymentId} initiated by ${pending.userId} but completed by ${userId} — refusing to bind`);
+            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=payer_mismatch`);
+        }
+        const targetUserId = pending.userId;
+
+        await deletePendingPaypalPayment(paymentId as string);
+
+        const credit = await creditPayPalPass({
+            paymentId: paymentId as string,
+            userId: targetUserId,
+            planId: pending.planId,
+            amount: pending.amount,
+        });
+        logger.info(
+            `PayPal ${PAYPAL_PASS_DAYS}-day pass for ${targetUserId} ` +
+            `${credit.alreadyRecorded ? 'already credited' : 'credited'} until ${credit.currentPeriodEnd.toISOString()}`
+        );
+
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?success=true&payment=paypal`);
     } catch (error) {
         logger.error('PayPal success handling failed:', error);
         res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=server_error`);

@@ -1,6 +1,8 @@
 import request from 'supertest';
 import app from '../app';
 import { __resetPublicDemoRateLimitForTests } from '../routes/chatbot/publicDemoRateLimit';
+import { AIRouter } from '../services/aiProvider/aiProvider';
+import { isNonAgronomicOrInjection } from '../routes/chatbot/publicDemoDomainGuard';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -69,6 +71,44 @@ jest.mock('../services/ragV2Service', () => ({
 describe('POST /api/v1/chatbot/public-demo', () => {
   beforeEach(() => {
     __resetPublicDemoRateLimitForTests();
+    jest.clearAllMocks();
+  });
+
+  it('strips forbidden control bytes while retaining whitespace and Unicode', async () => {
+    const controls = Array.from({ length: 32 }, (_, code) => String.fromCharCode(code)).join('');
+    const res = await request(app)
+      .post('/api/v1/chatbot/public-demo')
+      .send({ query: `maize${controls}soil \u00e9\ud83c\udf31\u007f` });
+
+    expect(res.status).toBe(200);
+    expect(AIRouter.routeRequest).toHaveBeenCalledWith('generate', expect.objectContaining({
+      prompt: expect.arrayContaining([
+        expect.objectContaining({ role: 'user', content: 'maize\t\n\rsoil \u00e9\ud83c\udf31\u007f' }),
+      ]),
+    }));
+  });
+
+  it.each(['+', '-', '*', '/', '^', '%'])('keeps the math guard for the %s operator', operator => {
+    expect(isNonAgronomicOrInjection(`what is 8 ${operator} 2?`)).toBe(true);
+  });
+
+  it.each([
+    ['corn and cassava', 'Maize'],
+    ['mihogo', 'Cassava'],
+    ['nyanya', 'Tomato'],
+    ['mtama', 'Sorghum'],
+    ['kahawa', 'Coffee'],
+    ['ngano', 'Wheat'],
+    ['mpunga', 'Rice'],
+    ['maharage', 'Beans'],
+    ['viazi', 'Potato'],
+  ])('preserves crop aliases and priority for %s', async (crop, expected) => {
+    const res = await request(app)
+      .post('/api/v1/chatbot/public-demo')
+      .send({ query: `How should I plant ${crop}?` });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.entitySlots.crop).toBe(expected);
   });
 
   it('resolves valid agronomic query with slot extraction and citations', async () => {

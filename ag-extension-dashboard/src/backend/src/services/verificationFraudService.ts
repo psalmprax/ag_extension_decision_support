@@ -423,12 +423,7 @@ export function generateAuditIntegrityHash(record: Record<string, unknown>, prev
   return crypto.createHash('sha256').update(`${previousHash}:${serialized}`).digest('hex');
 }
 
-/**
- * 7. Minimum Parcel Dwell-Time & Stationary Anti-Fraud Verification (AD-002 / CE-003)
- * Mandates >= 10 minutes of verified dwell time on-parcel for completed field visits,
- * rejecting armchair visits where consecutive visits are logged rapidly from a stationary location.
- */
-export function verifyParcelDwellTime(params: {
+interface DwellTimeVerificationParams {
   startedAt?: string | Date | null;
   completedAt?: string | Date | null;
   durationMinutes?: number | null;
@@ -443,8 +438,9 @@ export function verifyParcelDwellTime(params: {
     locationLng?: number | null;
   } | null;
   minimumRequiredMinutes?: number;
-}): DwellTimeVerificationResult {
-  const minRequired = params.minimumRequiredMinutes ?? 10;
+}
+
+function resolveDwellMinutes(params: DwellTimeVerificationParams, minRequired: number): number | DwellTimeVerificationResult {
   let dwellMinutes = 0;
 
   if (typeof params.durationMinutes === 'number' && Number.isFinite(params.durationMinutes)) {
@@ -471,30 +467,27 @@ export function verifyParcelDwellTime(params: {
     dwellMinutes = Math.round(((end - start) / 60000) * 10) / 10;
   }
 
-  // 1. Stationary Spoofing Check against Prior Visit
-  if (params.priorVisit && params.officerId) {
-    const prevFarmerId = params.priorVisit.farmerId;
-    const isDistinctFarmer = Boolean(params.farmerId && prevFarmerId && params.farmerId !== prevFarmerId);
+  return dwellMinutes;
+}
 
-    // Check identical coordinates (< 50m separation) for distinct farmers
-    if (
-      isDistinctFarmer &&
-      params.locationLat != null &&
-      params.locationLng != null &&
-      params.priorVisit.locationLat != null &&
-      params.priorVisit.locationLng != null
-    ) {
-      const distMeters = calculateHaversineDistance(
-        params.locationLat,
-        params.locationLng,
-        params.priorVisit.locationLat,
-        params.priorVisit.locationLng
-      );
-      if (distMeters < 50) {
+function checkPriorVisitInterval(
+  params: DwellTimeVerificationParams,
+  minRequired: number,
+  dwellMinutes: number
+): DwellTimeVerificationResult | null {
+  // Check temporal interval between consecutive visits (enforced across all consecutive visits)
+  const prevTimestamp = params.priorVisit?.completedAt;
+  const currTimestamp = params.completedAt || params.startedAt;
+  if (prevTimestamp && currTimestamp) {
+    const prevTime = new Date(prevTimestamp).getTime();
+    const currTime = new Date(currTimestamp).getTime();
+    if (!isNaN(prevTime) && !isNaN(currTime)) {
+      const diffMinutes = Math.abs(currTime - prevTime) / 60000;
+      if (diffMinutes < minRequired) {
         const hash = generateAuditIntegrityHash({
           officerId: params.officerId,
           farmerId: params.farmerId,
-          distMeters,
+          diffMinutes,
           status: 'STATIONARY_SPOOFING_DETECTED',
         });
         return {
@@ -502,41 +495,73 @@ export function verifyParcelDwellTime(params: {
           dwellTimeMinutes: dwellMinutes,
           minimumRequiredMinutes: minRequired,
           status: 'STATIONARY_SPOOFING_DETECTED',
-          riskScore: 90,
-          details: `Stationary armchair visit detected: visits for distinct farmers logged from identical coordinates (${distMeters}m separation).`,
+          riskScore: 95,
+          details: `Stationary spoofing detected: consecutive visits logged within ${Math.round(diffMinutes)} mins (< ${minRequired} min required on-parcel dwell).`,
           integrityHash: hash,
         };
       }
     }
+  }
+  return null;
+}
 
-    // Check temporal interval between consecutive visits (enforced across all consecutive visits)
-    const prevTimestamp = params.priorVisit.completedAt;
-    const currTimestamp = params.completedAt || params.startedAt;
-    if (prevTimestamp && currTimestamp) {
-      const prevTime = new Date(prevTimestamp).getTime();
-      const currTime = new Date(currTimestamp).getTime();
-      if (!isNaN(prevTime) && !isNaN(currTime)) {
-        const diffMinutes = Math.abs(currTime - prevTime) / 60000;
-        if (diffMinutes < minRequired) {
-          const hash = generateAuditIntegrityHash({
-            officerId: params.officerId,
-            farmerId: params.farmerId,
-            diffMinutes,
-            status: 'STATIONARY_SPOOFING_DETECTED',
-          });
-          return {
-            isValid: false,
-            dwellTimeMinutes: dwellMinutes,
-            minimumRequiredMinutes: minRequired,
-            status: 'STATIONARY_SPOOFING_DETECTED',
-            riskScore: 95,
-            details: `Stationary spoofing detected: consecutive visits logged within ${Math.round(diffMinutes)} mins (< ${minRequired} min required on-parcel dwell).`,
-            integrityHash: hash,
-          };
-        }
-      }
+function checkPriorVisitSpoofing(
+  params: DwellTimeVerificationParams,
+  minRequired: number,
+  dwellMinutes: number
+): DwellTimeVerificationResult | null {
+  if (!params.priorVisit || !params.officerId) return null;
+  const prevFarmerId = params.priorVisit.farmerId;
+  const isDistinctFarmer = Boolean(params.farmerId && prevFarmerId && params.farmerId !== prevFarmerId);
+
+  // Check identical coordinates (< 50m separation) for distinct farmers
+  if (
+    isDistinctFarmer &&
+    params.locationLat != null &&
+    params.locationLng != null &&
+    params.priorVisit.locationLat != null &&
+    params.priorVisit.locationLng != null
+  ) {
+    const distMeters = calculateHaversineDistance(
+      params.locationLat,
+      params.locationLng,
+      params.priorVisit.locationLat,
+      params.priorVisit.locationLng
+    );
+    if (distMeters < 50) {
+      const hash = generateAuditIntegrityHash({
+        officerId: params.officerId,
+        farmerId: params.farmerId,
+        distMeters,
+        status: 'STATIONARY_SPOOFING_DETECTED',
+      });
+      return {
+        isValid: false,
+        dwellTimeMinutes: dwellMinutes,
+        minimumRequiredMinutes: minRequired,
+        status: 'STATIONARY_SPOOFING_DETECTED',
+        riskScore: 90,
+        details: `Stationary armchair visit detected: visits for distinct farmers logged from identical coordinates (${distMeters}m separation).`,
+        integrityHash: hash,
+      };
     }
   }
+
+  return checkPriorVisitInterval(params, minRequired, dwellMinutes);
+}
+
+/**
+ * 7. Minimum Parcel Dwell-Time & Stationary Anti-Fraud Verification (AD-002 / CE-003)
+ * Mandates >= 10 minutes of verified dwell time on-parcel for completed field visits,
+ * rejecting armchair visits where consecutive visits are logged rapidly from a stationary location.
+ */
+export function verifyParcelDwellTime(params: DwellTimeVerificationParams): DwellTimeVerificationResult {
+  const minRequired = params.minimumRequiredMinutes ?? 10;
+  const dwellMinutes = resolveDwellMinutes(params, minRequired);
+  if (typeof dwellMinutes !== 'number') return dwellMinutes;
+
+  const spoofing = checkPriorVisitSpoofing(params, minRequired, dwellMinutes);
+  if (spoofing) return spoofing;
 
   // 2. Insufficient Dwell Time Check
   if (dwellMinutes < minRequired) {

@@ -87,7 +87,9 @@ async function fetchKnowledgeArticles(q: unknown, limit: unknown, offset: unknow
     let articles: SearchResult[] = [];
     const pool = getPool();
 
-    if (pool && q) {
+    if (!pool) return articles;
+
+    if (q) {
         if (v2 === 'true' || v2 === true) {
             const ragRes = await executeRagV2Search(q as string, limit as string, category as string | undefined, crop as string | undefined, cacheKey, res);
             if (ragRes) return ragRes; // Response already sent
@@ -104,16 +106,13 @@ async function fetchKnowledgeArticles(q: unknown, limit: unknown, offset: unknow
             category: category as string | undefined,
             crop: crop as string | undefined
         });
-    } else if (pool) {
+    } else {
         const legacy = await performLegacySearch(limit as string, offset as string, category as string | undefined, crop as string | undefined);
         articles = legacy.articles;
         (articles as unknown as { totalCount: number }).totalCount = legacy.totalCount;
     }
 
-    if (!articles || articles.length === 0) {
-        articles = [];
-    }
-    return articles;
+    return articles?.length ? articles : [];
 }
 
 // Search knowledge base
@@ -296,6 +295,43 @@ router.get('/live-context', async (req: Request, res: Response) => {
     }
 });
 
+function getMaxCitationScore(citations: Citation[]): number {
+    return citations.length ? Math.max(...citations.map(c => typeof c.score === 'number' ? c.score : 0)) : 0;
+}
+
+async function resolveAnswerCitations(
+    question: string,
+    contextUsed: Awaited<ReturnType<typeof KnowledgeService.askQuestion>>['contextUsed']
+): Promise<Citation[]> {
+    let citations: Citation[] = [];
+    if (contextUsed && contextUsed.length > 0) {
+        // Map contextUsed directly to citations: 0ms latency, exact match to retrieved ground truth
+        citations = contextUsed.slice(0, 3).map((item, idx) => ({
+            sourceId: item.id || `src-${idx + 1}`,
+            title: (item.metadata?.title as string) || `${item.metadata?.crop || 'Agro'} ${item.metadata?.category || 'Knowledge'}`,
+            category: (item.metadata?.category as string) || 'Knowledge Base',
+            excerpt: (item.content || '').replace(/[\n\r]+/g, ' ').slice(0, 250),
+            score: typeof item.score === 'number' ? item.score : 0.85
+        }));
+    } else {
+        try {
+            const { RAGV2Service } = await import('@/services/ragV2Service');
+            const enhanced = await RAGV2Service.enhancedSearch(question, {
+                limit: 3,
+                useChunks: true,
+                useGraph: false,
+                useReranking: false
+            });
+            citations = enhanced.citations;
+        } catch (ragErr) {
+            // Non-fatal for the answer, but never silent: an empty citation list is
+            // otherwise indistinguishable from "retrieval found nothing".
+            logger.warn('RAG v2 citation retrieval failed for /knowledge/ask; evidenceStatus will reflect zero citations:', ragErr);
+        }
+    }
+    return citations;
+}
+
 // Ask AI a question (RAG-based)
 router.post('/ask', async (req: Request, res: Response) => {
     try {
@@ -346,35 +382,10 @@ router.post('/ask', async (req: Request, res: Response) => {
         // Record search for daily quota tracking
         await usageService.recordKnowledgeSearch(userId, question, result.answer);
 
-        let citations: Citation[] = [];
-        if (result.contextUsed && result.contextUsed.length > 0) {
-            // Map contextUsed directly to citations: 0ms latency, exact match to retrieved ground truth
-            citations = result.contextUsed.slice(0, 3).map((item, idx) => ({
-                sourceId: item.id || `src-${idx + 1}`,
-                title: (item.metadata?.title as string) || `${item.metadata?.crop || 'Agro'} ${item.metadata?.category || 'Knowledge'}`,
-                category: (item.metadata?.category as string) || 'Knowledge Base',
-                excerpt: (item.content || '').replace(/[\n\r]+/g, ' ').slice(0, 250),
-                score: typeof item.score === 'number' ? item.score : 0.85
-            }));
-        } else {
-            try {
-                const { RAGV2Service } = await import('@/services/ragV2Service');
-                const enhanced = await RAGV2Service.enhancedSearch(question, {
-                    limit: 3,
-                    useChunks: true,
-                    useGraph: false,
-                    useReranking: false
-                });
-                citations = enhanced.citations;
-            } catch (ragErr) {
-                // Non-fatal for the answer, but never silent: an empty citation list is
-                // otherwise indistinguishable from "retrieval found nothing".
-                logger.warn('RAG v2 citation retrieval failed for /knowledge/ask; evidenceStatus will reflect zero citations:', ragErr);
-            }
-        }
+        const citations = await resolveAnswerCitations(question, result.contextUsed);
 
         const remainingAfter = userRole === 'admin' ? 999999 : Math.max(0, dailyQuota.remaining - 1);
-        const maxScore = citations.length ? Math.max(...citations.map(c => typeof c.score === 'number' ? c.score : 0)) : 0;
+        const maxScore = getMaxCitationScore(citations);
         const evidenceStatus = getKnowledgeEvidenceStatus(citations.length, result.contextUsed.length, maxScore);
 
         res.json({

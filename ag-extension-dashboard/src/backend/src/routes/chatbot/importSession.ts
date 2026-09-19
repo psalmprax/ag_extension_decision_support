@@ -39,6 +39,31 @@ const importSessionSchema = z.object({
     .default({}),
 });
 
+async function importMessages(
+  conversationId: string,
+  messages: z.infer<typeof importSessionMessageSchema>[],
+  entitySlots: z.infer<typeof importSessionSchema>['entitySlots'],
+  primaryLang: string
+): Promise<number> {
+  let importedCount = 0;
+  for (const msg of messages) {
+    const textContent = (msg.content || msg.text || '').trim();
+    if (!textContent) continue;
+
+    const role = msg.role || (msg.sender === 'assistant' ? 'assistant' : 'user');
+    const lang = msg.language || primaryLang;
+    const entitiesJson = entitySlots ? JSON.stringify(entitySlots) : null;
+
+    await query(
+      `INSERT INTO chat_messages (conversation_id, role, content, language, entities, created_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [conversationId, role, textContent, lang, entitiesJson]
+    );
+    importedCount++;
+  }
+  return importedCount;
+}
+
 router.post(
   '/import-session',
   authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']),
@@ -83,23 +108,7 @@ router.post(
       }
 
       const conversationId = conversation.id;
-      let importedCount = 0;
-
-      for (const msg of messages) {
-        const textContent = (msg.content || msg.text || '').trim();
-        if (!textContent) continue;
-
-        const role = msg.role || (msg.sender === 'assistant' ? 'assistant' : 'user');
-        const lang = msg.language || primaryLang;
-        const entitiesJson = entitySlots ? JSON.stringify(entitySlots) : null;
-
-        await query(
-          `INSERT INTO chat_messages (conversation_id, role, content, language, entities, created_at)
-           VALUES ($1, $2, $3, $4, $5, NOW())`,
-          [conversationId, role, textContent, lang, entitiesJson]
-        );
-        importedCount++;
-      }
+      const importedCount = await importMessages(conversationId, messages, entitySlots, primaryLang);
 
       logger.info('Imported public consultation session', {
         userId: user.userId,

@@ -15,14 +15,41 @@ import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
-interface JWTPayload {
-    userId: string;
-    email: string;
-    role: string;
-}
-
 // Fixed pre-computed bcrypt hash to neutralize authentication timing side-channels (user enumeration)
 const DUMMY_BCRYPT_HASH = '$2a$10$NVqK3ijujMkE3ZwVVOLruutAEJwLmNCDXAGVKvTqLGxhBpNeLz.BO';
+
+async function resolveLoginPlan(user: { id: string; role: string; is_demo?: boolean; email: string }) {
+    let planName = 'Free';
+    let isFree = true;
+
+    if (user.role === 'admin') {
+        planName = 'Admin';
+        isFree = false;
+    } else if (user.is_demo || user.email === 'demo@agridemo.com') {
+        planName = 'Free';
+        isFree = true;
+    } else {
+        try {
+            const subResult = await query(`
+                SELECT sp.name as plan_name, sp.price
+                FROM subscriptions s
+                JOIN subscription_plans sp ON sp.id = s.plan_id
+                WHERE s.user_id = $1
+                  AND (s.status = 'active' OR s.status = 'trialing')
+                  AND (s.current_period_end IS NULL OR s.current_period_end > NOW())
+            `, [user.id]);
+            if (subResult.rows.length > 0) {
+                const row = subResult.rows[0];
+                const price = row.price != null ? Number(row.price) : 0;
+                planName = row.plan_name || 'Free';
+                isFree = price === 0 || planName.toLowerCase().includes('free');
+            }
+        } catch {
+            // fallback to Free
+        }
+    }
+    return { planName, isFree };
+}
 
 /**
  * @swagger
@@ -187,35 +214,9 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
             location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
         });
 
-        let planName = 'Free';
-        let isFree = true;
-
-        if (user.role === 'admin') {
-            planName = 'Admin';
-            isFree = false;
-        } else if (user.is_demo || user.email === 'demo@agridemo.com') {
-            planName = 'Free';
-            isFree = true;
-        } else {
-            try {
-                const subResult = await query(`
-                    SELECT sp.name as plan_name, sp.price
-                    FROM subscriptions s
-                    JOIN subscription_plans sp ON sp.id = s.plan_id
-                    WHERE s.user_id = $1
-                      AND (s.status = 'active' OR s.status = 'trialing')
-                      AND (s.current_period_end IS NULL OR s.current_period_end > NOW())
-                `, [user.id]);
-                if (subResult.rows.length > 0) {
-                    const row = subResult.rows[0];
-                    const price = row.price != null ? Number(row.price) : 0;
-                    planName = row.plan_name || 'Free';
-                    isFree = price === 0 || planName.toLowerCase().includes('free');
-                }
-            } catch {
-                // fallback to Free
-            }
-        }
+        const { planName, isFree } = await resolveLoginPlan({
+            id: user.id, role: user.role, is_demo: user.is_demo, email: user.email,
+        });
 
         // httpOnly cookie for the SPA; the body token remains for
         // mobile/extension/API clients (they never receive cookies' protection

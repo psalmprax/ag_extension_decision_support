@@ -35,7 +35,7 @@ router.post('/voice/transcribe', checkUsageLimit('speech'), validate({ body: z.o
 
 router.post('/voice/transcribe-local', checkUsageLimit('speech'), validate({ body: z.object({ audio: z.string().optional(), audioUrl: z.string().optional(), mimeType: z.string().optional(), languageHint: z.string().optional() }) }), async (req: AuthRequest, res: Response) => {
     try {
-        const { audio, audioUrl, mimeType, languageHint } = req.body as { audio?: string; audioUrl?: string; mimeType?: string; languageHint?: string };
+        const { audio, audioUrl, languageHint } = req.body as { audio?: string; audioUrl?: string; mimeType?: string; languageHint?: string };
         if (!audio && !audioUrl) {
             return res.status(400).json({ success: false, error: 'Audio data or audioUrl is required' });
         }

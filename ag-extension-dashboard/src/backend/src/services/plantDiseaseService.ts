@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { logger } from '@/utils/logger';
-import { AIProviderFactory, AIRouter } from '@/services/aiProvider/aiProvider';
+import { AIRouter } from '@/services/aiProvider/aiProvider';
 
 // NOTE: A backend ONNX inference path was removed during the truthfulness remediation:
 // it fed a uniform tensor derived from the first byte of the JPEG header into an
@@ -597,12 +597,7 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
     const diagnoses: DiseaseDiagnosis[] = [];
 
     for (const [diseaseId, diseaseInfo] of Object.entries(PlantDiseaseService.DISEASE_DATABASE)) {
-      if (normalizedCrop) {
-        const isCompatible = diseaseInfo.susceptibleCrops.some(c =>
-          c === 'general' || normalizedCrop.includes(c) || c.includes(normalizedCrop)
-        );
-        if (!isCompatible) continue;
-      }
+      if (!this.isCropCompatible(diseaseInfo.susceptibleCrops, normalizedCrop)) continue;
 
       const docVector = docVectors[diseaseId];
       const similarity = this.cosineSimilarity(queryVector, docVector);
@@ -625,7 +620,7 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
           reviewStatus: getReviewStatus(confidence),
           provenance,
           safetyNotice: DIAGNOSTIC_SAFETY_NOTICE,
-          severity: similarity > 0.7 ? 'severe' : similarity > 0.4 ? 'moderate' : 'mild',
+          severity: this.getSymptomSeverity(similarity),
           description: diseaseInfo.description,
           symptoms: matchedSymptoms.length > 0 ? matchedSymptoms : [diseaseInfo.symptoms[0]],
           treatment: diseaseInfo.treatment,
@@ -636,6 +631,18 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
 
     diagnoses.sort((a, b) => b.confidence - a.confidence);
     return diagnoses.slice(0, 3);
+  }
+
+  private getSymptomSeverity(similarity: number): DiseaseDiagnosis['severity'] {
+    if (similarity > 0.7) return 'severe';
+    return similarity > 0.4 ? 'moderate' : 'mild';
+  }
+
+  private isCropCompatible(susceptibleCrops: string[], normalizedCrop: string | null): boolean {
+    if (!normalizedCrop) return true;
+    return susceptibleCrops.some(c =>
+      c === 'general' || normalizedCrop.includes(c) || c.includes(normalizedCrop)
+    );
   }
 
   /** Alias for diagnoseFromSymptoms for caller contract flexibility */

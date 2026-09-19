@@ -31,23 +31,23 @@ async function enhanceImages(enhancedVisuals: AnswerVisuals, searchQuery: string
         validImageUrls.includes(img.url)
     );
 
-    if ((enhancedVisuals.images?.length ?? 0) < 2) {
-        try {
-            const additionalImages = await AssetValidationService.getRelevantImages(searchQuery, 3);
-            const existingUrls = new Set((enhancedVisuals.images ?? []).map((img) => img.url));
+    if ((enhancedVisuals.images?.length ?? 0) >= 2) return;
 
-            for (const additional of additionalImages) {
-                if (!existingUrls.has(additional.url)) {
-                    (enhancedVisuals.images ?? []).push({
-                        url: additional.url,
-                        caption: `Verified agricultural image (${additional.category})`
-                    });
-                    if ((enhancedVisuals.images?.length ?? 0) >= 3) break;
-                }
+    try {
+        const additionalImages = await AssetValidationService.getRelevantImages(searchQuery, 3);
+        const existingUrls = new Set((enhancedVisuals.images ?? []).map((img) => img.url));
+
+        for (const additional of additionalImages) {
+            if (!existingUrls.has(additional.url)) {
+                (enhancedVisuals.images ?? []).push({
+                    url: additional.url,
+                    caption: `Verified agricultural image (${additional.category})`
+                });
+                if ((enhancedVisuals.images?.length ?? 0) >= 3) break;
             }
-        } catch (error) {
-            logger.warn('Failed to get additional relevant images:', error);
         }
+    } catch (error) {
+        logger.warn('Failed to get additional relevant images:', error);
     }
 }
 

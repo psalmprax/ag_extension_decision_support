@@ -18,6 +18,46 @@ interface FieldUser {
     role?: string;
 }
 
+async function checkFieldCreationAccess(
+    prisma: ReturnType<typeof getPrisma>,
+    user: FieldUser | undefined,
+    farmerId: string
+): Promise<{ status: number; error: string } | null> {
+    if (user?.role === 'farmer') {
+        const farmer = await prisma.farmer.findFirst({ where: { userId: user.userId } });
+        if (!farmer) {
+            return { status: 403, error: 'Access denied' };
+        }
+        if (farmerId !== farmer.id) {
+            return { status: 403, error: 'Field must belong to your farm' };
+        }
+    } else if (user?.role === 'extension_officer') {
+        const assigned = await prisma.farmer.findFirst({
+            where: { id: farmerId, assignedOfficerId: user.userId },
+            select: { id: true },
+        });
+        if (!assigned) {
+            return { status: 403, error: 'Access denied: farmer not assigned to officer' };
+        }
+    } else if (user?.role === 'admin' || user?.role === 'regional_manager') {
+        const farmerExists = await prisma.farmer.findUnique({
+            where: { id: farmerId },
+            select: { id: true },
+        });
+        if (!farmerExists) {
+            return { status: 404, error: 'Farmer not found' };
+        }
+    } else {
+        return { status: 403, error: 'Access denied' };
+    }
+    return null;
+}
+
+function parseCropCycleDate(camel?: string, snake?: string): Date | null {
+    const value = camel || snake;
+    return value ? new Date(value) : null;
+}
+
 async function buildFieldListWhere(
     prisma: ReturnType<typeof getPrisma>,
     user: FieldUser | undefined,
@@ -177,32 +217,9 @@ router.post('/', async (req: Request, res: Response) => {
         const prisma = getPrisma();
         const user = req.user as { userId?: string; role?: string } | undefined;
 
-        if (user?.role === 'farmer') {
-            const farmer = await prisma.farmer.findFirst({ where: { userId: user.userId } });
-            if (!farmer) {
-                return res.status(403).json({ success: false, error: 'Access denied' });
-            }
-            if (farmerId !== farmer.id) {
-                return res.status(403).json({ success: false, error: 'Field must belong to your farm' });
-            }
-        } else if (user?.role === 'extension_officer') {
-            const assigned = await prisma.farmer.findFirst({
-                where: { id: farmerId, assignedOfficerId: user.userId },
-                select: { id: true },
-            });
-            if (!assigned) {
-                return res.status(403).json({ success: false, error: 'Access denied: farmer not assigned to officer' });
-            }
-        } else if (user?.role === 'admin' || user?.role === 'regional_manager') {
-            const farmerExists = await prisma.farmer.findUnique({
-                where: { id: farmerId },
-                select: { id: true },
-            });
-            if (!farmerExists) {
-                return res.status(404).json({ success: false, error: 'Farmer not found' });
-            }
-        } else {
-            return res.status(403).json({ success: false, error: 'Access denied' });
+        const accessError = await checkFieldCreationAccess(prisma, user, farmerId);
+        if (accessError) {
+            return res.status(accessError.status).json({ success: false, error: accessError.error });
         }
         const field = await prisma.field.create({
             data: {
@@ -318,8 +335,8 @@ router.post('/:fieldId/cycles', async (req: Request, res: Response) => {
         const cropName = body.cropName || body.crop_name;
         const variety = body.variety ?? null;
         const status = body.status || 'planned';
-        const plantingDate = body.plantingDate || body.planting_date ? new Date(body.plantingDate || body.planting_date) : null;
-        const expectedHarvestDate = body.expectedHarvestDate || body.expected_harvest_date ? new Date(body.expectedHarvestDate || body.expected_harvest_date) : null;
+        const plantingDate = parseCropCycleDate(body.plantingDate, body.planting_date);
+        const expectedHarvestDate = parseCropCycleDate(body.expectedHarvestDate, body.expected_harvest_date);
 
         if (!cropName) {
             return res.status(400).json({ success: false, error: 'cropName is required' });

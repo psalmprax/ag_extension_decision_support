@@ -34,8 +34,37 @@ export interface ChatMessage {
     tool_calls?: NormalizedToolCall[];
 }
 
-function isZodSchema(v: unknown): boolean {
+function isZodSchema(v: unknown): v is Parameters<typeof zodToJsonSchema>[0] {
     return !!v && typeof v === 'object' && typeof (v as any).safeParse === 'function';
+}
+
+function resolveToolParameters(t: Record<string, unknown>): Record<string, unknown> {
+    let parameters: Record<string, unknown> = { type: 'object', properties: {} };
+    if (t.jsonSchema && typeof t.jsonSchema === 'object') {
+        parameters = t.jsonSchema as Record<string, unknown>;
+    } else if (isZodSchema(t.schema)) {
+        try {
+            parameters = zodToJsonSchema(t.schema, { $refStrategy: 'none' }) as Record<string, unknown>;
+            // zod-to-json-schema wraps in a top-level with $schema; strip non-parameter keys.
+            delete parameters.$schema;
+        } catch {
+            parameters = { type: 'object', properties: {} };
+        }
+    } else if (t.inputSchema && typeof t.inputSchema === 'object') {
+        parameters = t.inputSchema as Record<string, unknown>;
+    }
+    return parameters;
+}
+
+function formatFunctionTool(fn: { name: unknown; description?: unknown; parameters?: unknown }): OpenAIToolDefinition {
+    return {
+        type: 'function',
+        function: {
+            name: String(fn.name),
+            description: fn.description ? String(fn.description) : undefined,
+            parameters: (fn.parameters as Record<string, unknown>) || { type: 'object', properties: {} },
+        },
+    };
 }
 
 /** Convert any supported tool shape into OpenAI function-tool definitions. */
@@ -45,31 +74,11 @@ export function normalizeToolDefinitions(tools: unknown[] | undefined): OpenAITo
     for (const t of tools as any[]) {
         if (!t) continue;
         if (t.type === 'function' && t.function?.name) {
-            out.push({
-                type: 'function',
-                function: {
-                    name: String(t.function.name),
-                    description: t.function.description ? String(t.function.description) : undefined,
-                    parameters: (t.function.parameters as Record<string, unknown>) || { type: 'object', properties: {} },
-                },
-            });
+            out.push(formatFunctionTool(t.function));
             continue;
         }
         if (typeof t.name === 'string') {
-            let parameters: Record<string, unknown> = { type: 'object', properties: {} };
-            if (t.jsonSchema && typeof t.jsonSchema === 'object') {
-                parameters = t.jsonSchema;
-            } else if (isZodSchema(t.schema)) {
-                try {
-                    parameters = zodToJsonSchema(t.schema, { $refStrategy: 'none' }) as Record<string, unknown>;
-                    // zod-to-json-schema wraps in a top-level with $schema; strip non-parameter keys.
-                    delete (parameters as any).$schema;
-                } catch {
-                    parameters = { type: 'object', properties: {} };
-                }
-            } else if (t.inputSchema && typeof t.inputSchema === 'object') {
-                parameters = t.inputSchema;
-            }
+            const parameters = resolveToolParameters(t);
             out.push({
                 type: 'function',
                 function: { name: t.name, description: t.description ? String(t.description) : undefined, parameters },

@@ -1,6 +1,6 @@
 import type { SearchResult } from '@/services/vectorService';
 import { logger } from '@/utils/logger';
-import { tavilyService, TavilySearchResult } from '@/services/tavilyService';
+import { tavilyService } from '@/services/tavilyService';
 import { StealthScraperService, ScrapedDocument } from '@/services/stealthScraperService';
 import { isAgronomicContent, prepareWebSearchQuery } from '@/utils/agronomicQueryNormalizer';
 

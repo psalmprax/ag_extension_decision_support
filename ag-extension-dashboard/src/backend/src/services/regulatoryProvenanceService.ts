@@ -250,17 +250,11 @@ export class RegulatoryProvenanceService {
     return crypto.createHash('sha256').update(canonicalPayload).digest('hex');
   }
 
-  /**
-   * Authoritative regulatory decision engine enforcing the fail-closed invariant.
-   */
-  public evaluateRecommendation(req: RecommendationEvaluationRequest): RegulatoryDecision {
-    const adviceTimestamp = req.adviceTimestamp || new Date().toISOString();
-    const warnings: string[] = [];
-    const jurisdiction = req.jurisdiction.toUpperCase().trim();
-    const crop = req.crop.toLowerCase().trim();
-    const pestOrDisease = req.pestOrDisease.toLowerCase().trim();
-    const searchTreatment = req.treatmentTradeNameOrIngredient.toLowerCase().trim();
-
+  private checkOfflineDataset(
+    req: RecommendationEvaluationRequest,
+    adviceTimestamp: string,
+    warnings: string[]
+  ): { isOfflineApproval: boolean; datasetAgeDays: number } | RegulatoryDecision {
     // 1. Offline Staleness Policy Check
     let isOfflineApproval = false;
     let datasetAgeDays = 0;
@@ -293,6 +287,15 @@ export class RegulatoryProvenanceService {
       isOfflineApproval = true;
     }
 
+    return { isOfflineApproval, datasetAgeDays };
+  }
+
+  private resolveRegisteredProducts(
+    req: RecommendationEvaluationRequest,
+    adviceTimestamp: string,
+    jurisdiction: string,
+    searchTreatment: string
+  ): { matchedProducts: RegulatoryRule[] } | RegulatoryDecision {
     // 2. Jurisdiction & Authority Verification
     const authorityExists = Array.from(this.authorities.values()).some(a => a.jurisdiction === jurisdiction);
     if (!authorityExists) {
@@ -345,6 +348,17 @@ export class RegulatoryProvenanceService {
       );
     }
 
+    return { matchedProducts };
+  }
+
+  private resolveTargetRules(
+    req: RecommendationEvaluationRequest,
+    adviceTimestamp: string,
+    jurisdiction: string,
+    crop: string,
+    pestOrDisease: string,
+    matchedProducts: RegulatoryRule[]
+  ): { matchedPestRules: RegulatoryRule[] } | RegulatoryDecision {
     // 6. Crop Authorization Check
     const matchedCropRules = matchedProducts.filter(r => r.crop.toLowerCase() === crop);
     if (matchedCropRules.length === 0) {
@@ -373,8 +387,15 @@ export class RegulatoryProvenanceService {
       );
     }
 
-    let selectedRule = matchedPestRules[0];
+    return { matchedPestRules };
+  }
 
+  private validateRuleAuthorization(
+    req: RecommendationEvaluationRequest,
+    adviceTimestamp: string,
+    jurisdiction: string,
+    selectedRule: RegulatoryRule
+  ): RegulatoryDecision | null {
     // 8. Rule Cryptographic Integrity Verification (Fail early if database record was tampered with)
     const recomputedRuleHash = this.calculateRuleHash(selectedRule);
     if (recomputedRuleHash !== selectedRule.ruleHash) {
@@ -427,6 +448,17 @@ export class RegulatoryProvenanceService {
       }
     }
 
+    return null;
+  }
+
+  private resolveFormulationRule(
+    req: RecommendationEvaluationRequest,
+    adviceTimestamp: string,
+    jurisdiction: string,
+    matchedPestRules: RegulatoryRule[]
+  ): { selectedRule: RegulatoryRule } | RegulatoryDecision {
+    let selectedRule = matchedPestRules[0];
+    const adviceTime = new Date(adviceTimestamp).getTime();
     // 10. Formulation Verification (if specified by caller)
     if (req.formulation) {
       const formMatch = matchedPestRules.find(r => r.formulationType === req.formulation);
@@ -472,6 +504,14 @@ export class RegulatoryProvenanceService {
       }
     }
 
+    return { selectedRule };
+  }
+
+  private validateApplicationSafety(
+    req: RecommendationEvaluationRequest,
+    adviceTimestamp: string,
+    selectedRule: RegulatoryRule
+  ): RegulatoryDecision | null {
     // 11. Dosage Upper Ceiling Enforcement
     if (req.doseGramsOrMlHa > selectedRule.maxDoseMlOrGramsHa) {
       return this.createRejection(
@@ -507,6 +547,43 @@ export class RegulatoryProvenanceService {
         selectedRule
       );
     }
+
+    return null;
+  }
+
+  /**
+   * Authoritative regulatory decision engine enforcing the fail-closed invariant.
+   */
+  public evaluateRecommendation(req: RecommendationEvaluationRequest): RegulatoryDecision {
+    const adviceTimestamp = req.adviceTimestamp || new Date().toISOString();
+    const warnings: string[] = [];
+    const jurisdiction = req.jurisdiction.toUpperCase().trim();
+    const crop = req.crop.toLowerCase().trim();
+    const pestOrDisease = req.pestOrDisease.toLowerCase().trim();
+    const searchTreatment = req.treatmentTradeNameOrIngredient.toLowerCase().trim();
+
+    const offline = this.checkOfflineDataset(req, adviceTimestamp, warnings);
+    if ('status' in offline) return offline;
+    const { isOfflineApproval, datasetAgeDays } = offline;
+
+    const products = this.resolveRegisteredProducts(req, adviceTimestamp, jurisdiction, searchTreatment);
+    if ('status' in products) return products;
+
+    const targets = this.resolveTargetRules(req, adviceTimestamp, jurisdiction, crop, pestOrDisease, products.matchedProducts);
+    if ('status' in targets) return targets;
+    const { matchedPestRules } = targets;
+
+    let selectedRule = matchedPestRules[0];
+
+    const authorizationError = this.validateRuleAuthorization(req, adviceTimestamp, jurisdiction, selectedRule);
+    if (authorizationError) return authorizationError;
+
+    const formulation = this.resolveFormulationRule(req, adviceTimestamp, jurisdiction, matchedPestRules);
+    if ('status' in formulation) return formulation;
+    selectedRule = formulation.selectedRule;
+
+    const applicationError = this.validateApplicationSafety(req, adviceTimestamp, selectedRule);
+    if (applicationError) return applicationError;
 
     // 14. Restricted-Entry Interval (REI) Warning
     if (selectedRule.legalReiHours > 0) {

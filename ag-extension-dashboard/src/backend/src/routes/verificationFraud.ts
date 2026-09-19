@@ -58,7 +58,7 @@ router.post('/spatial-conflict', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'targetLat and targetLng are required' });
     }
 
-    const principalTenantId = (req as any).user?.userId ? await getPrincipalTenantId((req as any).user.userId) : null;
+    const principalTenantId = req.user?.userId ? await getPrincipalTenantId(req.user.userId) : null;
     const result = await checkFarmerSpatialConflict({
       targetLat: parseFloat(targetLat),
       targetLng: parseFloat(targetLng),
@@ -219,13 +219,96 @@ router.post('/dwell-time', (req: Request, res: Response) => {
   }
 });
 
+interface GeofenceEvidenceRow {
+  visit_id: string;
+  officer_first_name: string | null;
+  officer_last_name: string | null;
+  farmer_first_name: string | null;
+  farmer_last_name: string | null;
+  visit_created_at: Date | string | null;
+  visit_lat: string;
+  visit_lng: string;
+  farmer_lat: string;
+  farmer_lng: string;
+  visit_notes: string | null;
+  visit_duration: number | null;
+}
+
+function buildVisitFraudAlerts(row: GeofenceEvidenceRow) {
+  const generated: Array<{
+    id: string;
+    type: string;
+    severity: string;
+    officerName: string;
+    farmerName: string;
+    timestamp: string;
+    details: string;
+    status: string;
+    integrityHash: string;
+  }> = [];
+
+  const officerName = [row.officer_first_name, row.officer_last_name].filter(Boolean).join(' ') || 'Unknown officer';
+  const farmerName = [row.farmer_first_name, row.farmer_last_name].filter(Boolean).join(' ') || 'Unknown farmer';
+
+  const distanceMeters = calculateHaversineDistance(
+    Number(row.visit_lat),
+    Number(row.visit_lng),
+    Number(row.farmer_lat),
+    Number(row.farmer_lng),
+  );
+  if (distanceMeters > 200) {
+    generated.push({
+      id: `visit-geofence-${row.visit_id}`,
+      type: 'GEOFENCE_BREACH',
+      severity: distanceMeters >= 1000 ? 'CRITICAL' : 'HIGH',
+      officerName,
+      farmerName,
+      timestamp: new Date(row.visit_created_at || Date.now()).toISOString(),
+      details: `Visit GPS was recorded ${distanceMeters}m from the farmer's registered parcel.`,
+      status: 'PENDING_REVIEW',
+      integrityHash: generateAuditIntegrityHash({
+        visitId: row.visit_id,
+        distanceMeters,
+        visitLat: row.visit_lat,
+        visitLng: row.visit_lng,
+        farmerLat: row.farmer_lat,
+        farmerLng: row.farmer_lng,
+      }),
+    });
+  }
+
+  // Stationary Dwell Anomaly Check (AD-002)
+  if (row.visit_notes?.includes('STATIONARY ANOMALY') || (row.visit_duration != null && row.visit_duration < 10)) {
+    generated.push({
+      id: `visit-stationary-${row.visit_id}`,
+      type: 'STATIONARY_FRAUD',
+      severity: 'HIGH',
+      officerName,
+      farmerName,
+      timestamp: new Date(row.visit_created_at || Date.now()).toISOString(),
+      details: row.visit_notes?.includes('STATIONARY ANOMALY')
+        ? row.visit_notes
+        : `Visit logged with insufficient parcel dwell time (${row.visit_duration} mins < 10 min requirement).`,
+      status: 'PENDING_REVIEW',
+      integrityHash: generateAuditIntegrityHash({
+        visitId: row.visit_id,
+        duration: row.visit_duration,
+        notes: row.visit_notes,
+        type: 'STATIONARY_FRAUD',
+      }),
+    });
+  }
+
+  return generated;
+}
+
 /**
  * GET /api/verification/fraud-alerts
  * Supervisor audit queue of suspicious visits, geofence breaches, crop evidence mismatches, and stationary fraud
  */
 router.get('/fraud-alerts', authorize(['admin', 'regional_manager']), async (req: Request, res: Response) => {
   try {
-    const principalTenantId = (req as any).user?.userId ? await getPrincipalTenantId((req as any).user.userId) : null;
+    const principalTenantId = req.user?.userId ? await getPrincipalTenantId(req.user.userId) : null;
     const alertTenantFilter = principalTenantId ? 'AND tenant_id = $1' : '';
     const visitTenantFilter = principalTenantId ? 'AND (f.tenant_id = $1 OR v.tenant_id = $1)' : '';
     const queryParams = principalTenantId ? [principalTenantId] : [];
@@ -248,20 +331,7 @@ router.get('/fraud-alerts', authorize(['admin', 'regional_manager']), async (req
       queryParams,
     );
 
-    const geofenceEvidence = await query<{
-      visit_id: string;
-      officer_first_name: string | null;
-      officer_last_name: string | null;
-      farmer_first_name: string | null;
-      farmer_last_name: string | null;
-      visit_created_at: Date | string | null;
-      visit_lat: string;
-      visit_lng: string;
-      farmer_lat: string;
-      farmer_lng: string;
-      visit_notes: string | null;
-      visit_duration: number | null;
-    }>(
+    const geofenceEvidence = await query<GeofenceEvidenceRow>(
       `SELECT v.id AS visit_id,
               u.first_name AS officer_first_name,
               u.last_name AS officer_last_name,
@@ -303,73 +373,7 @@ router.get('/fraud-alerts', authorize(['admin', 'regional_manager']), async (req
           triggeredAt: alert.triggered_at,
         }),
       })),
-      ...geofenceEvidence.rows.flatMap(row => {
-        const generated: Array<{
-          id: string;
-          type: string;
-          severity: string;
-          officerName: string;
-          farmerName: string;
-          timestamp: string;
-          details: string;
-          status: string;
-          integrityHash: string;
-        }> = [];
-
-        const officerName = [row.officer_first_name, row.officer_last_name].filter(Boolean).join(' ') || 'Unknown officer';
-        const farmerName = [row.farmer_first_name, row.farmer_last_name].filter(Boolean).join(' ') || 'Unknown farmer';
-
-        const distanceMeters = calculateHaversineDistance(
-          Number(row.visit_lat),
-          Number(row.visit_lng),
-          Number(row.farmer_lat),
-          Number(row.farmer_lng),
-        );
-        if (distanceMeters > 200) {
-          generated.push({
-            id: `visit-geofence-${row.visit_id}`,
-            type: 'GEOFENCE_BREACH',
-            severity: distanceMeters >= 1000 ? 'CRITICAL' : 'HIGH',
-            officerName,
-            farmerName,
-            timestamp: new Date(row.visit_created_at || Date.now()).toISOString(),
-            details: `Visit GPS was recorded ${distanceMeters}m from the farmer's registered parcel.`,
-            status: 'PENDING_REVIEW',
-            integrityHash: generateAuditIntegrityHash({
-              visitId: row.visit_id,
-              distanceMeters,
-              visitLat: row.visit_lat,
-              visitLng: row.visit_lng,
-              farmerLat: row.farmer_lat,
-              farmerLng: row.farmer_lng,
-            }),
-          });
-        }
-
-        // Stationary Dwell Anomaly Check (AD-002)
-        if (row.visit_notes?.includes('STATIONARY ANOMALY') || (row.visit_duration != null && row.visit_duration < 10)) {
-          generated.push({
-            id: `visit-stationary-${row.visit_id}`,
-            type: 'STATIONARY_FRAUD',
-            severity: 'HIGH',
-            officerName,
-            farmerName,
-            timestamp: new Date(row.visit_created_at || Date.now()).toISOString(),
-            details: row.visit_notes?.includes('STATIONARY ANOMALY')
-              ? row.visit_notes
-              : `Visit logged with insufficient parcel dwell time (${row.visit_duration} mins < 10 min requirement).`,
-            status: 'PENDING_REVIEW',
-            integrityHash: generateAuditIntegrityHash({
-              visitId: row.visit_id,
-              duration: row.visit_duration,
-              notes: row.visit_notes,
-              type: 'STATIONARY_FRAUD',
-            }),
-          });
-        }
-
-        return generated;
-      }),
+      ...geofenceEvidence.rows.flatMap(buildVisitFraudAlerts),
     ];
 
     return res.json({ success: true, data: alerts });

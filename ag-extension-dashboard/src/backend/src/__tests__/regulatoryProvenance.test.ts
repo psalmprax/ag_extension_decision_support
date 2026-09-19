@@ -26,6 +26,19 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
   });
 
   describe('1. Authoritative Regulatory Decisioning (Invariants 1–12)', () => {
+    it.each([
+      [{ jurisdiction: 'UNKNOWN', clientOfflineContext: { isOffline: true, cachedDatasetVersion: 'old', cachedDatasetTimestamp: 'invalid' } }, 'OFFLINE_DATASET_STALE_EXPIRED'],
+      [{ treatmentTradeNameOrIngredient: 'Dursban 480 EC', crop: 'unregistered' }, 'REGISTRATION_REVOKED_BANNED'],
+      [{ crop: 'unregistered', pestOrDisease: 'unregistered' }, 'UNREGISTERED_CROP'],
+      [{ adviceTimestamp: '2099-01-01T00:00:00Z', formulation: 'EC' }, 'REGISTRATION_EXPIRED'],
+      [{ doseGramsOrMlHa: 99999, daysToHarvest: 0, floweringPresent: true }, 'EXCEEDS_MAX_LEGAL_RATE'],
+      [{ daysToHarvest: 0, floweringPresent: true }, 'PHI_VIOLATION'],
+    ])('preserves rejection precedence for %j', (overrides, reasonCode) => {
+      const decision = regulatoryProvenanceService.evaluateRecommendation(createCompliantRequest(overrides));
+      expect(decision.status).toBe('HARD_REJECTION');
+      expect(decision.reasonCode).toBe(reasonCode);
+    });
+
     it('1. Valid active registration -> APPROVE with cryptographic provenance', () => {
       const req = createCompliantRequest();
       const decision = regulatoryProvenanceService.evaluateRecommendation(req);

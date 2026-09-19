@@ -47,6 +47,42 @@ const SUBSCRIPTION_EVENT_STATUS: Record<string, 'active' | 'cancelled' | 'suspen
   'BILLING.SUBSCRIPTION.EXPIRED': 'expired',
 };
 
+async function handleCompletedSale(event: PayPalWebhookEvent, paymentId: string | null): Promise<void> {
+  if (!paymentId) {
+    logger.warn('PayPal PAYMENT.SALE.COMPLETED without a resolvable payment id');
+    return;
+  }
+  const pending = await lookupPendingPayPalPayment(paymentId);
+  if (pending) {
+    await creditPayPalPass({
+      paymentId,
+      userId: pending.userId,
+      planId: pending.planId,
+      amount: pending.amount,
+    });
+    return;
+  }
+  // Subscription renewals arrive as PAYMENT.SALE.COMPLETED with a custom_id
+  // ("<userId>:<planId>") and no pending checkout row. The payment extends the
+  // entitlement period exactly like the one-time-sale pass (idempotent on the
+  // sale id), keeping the active period aligned with actual renewals.
+  const renewal = parsePayPalSubscriptionCustomId(event?.resource?.custom_id);
+  if (renewal) {
+    const amount = Number(event?.resource?.amount?.total || 0);
+    await creditPayPalPass({
+      paymentId,
+      userId: renewal.userId,
+      planId: renewal.planId,
+      amount,
+    });
+    return;
+  }
+  // Either the browser return handler already consumed the row (both paths
+  // are idempotent, so this is expected), or the sale is not ours.
+  logger.info(`PayPal sale ${paymentId} has no pending checkout — treated as already credited or foreign`);
+  return;
+}
+
 router.post('/paypal/webhook', async (req: Request, res: Response) => {
   const event = req.body as PayPalWebhookEvent;
 
@@ -65,38 +101,7 @@ router.post('/paypal/webhook', async (req: Request, res: Response) => {
   try {
     switch (eventType) {
       case 'PAYMENT.SALE.COMPLETED': {
-        if (!paymentId) {
-          logger.warn('PayPal PAYMENT.SALE.COMPLETED without a resolvable payment id');
-          break;
-        }
-        const pending = await lookupPendingPayPalPayment(paymentId);
-        if (pending) {
-          await creditPayPalPass({
-            paymentId,
-            userId: pending.userId,
-            planId: pending.planId,
-            amount: pending.amount,
-          });
-          break;
-        }
-        // Subscription renewals arrive as PAYMENT.SALE.COMPLETED with a custom_id
-        // ("<userId>:<planId>") and no pending checkout row. The payment extends the
-        // entitlement period exactly like the one-time-sale pass (idempotent on the
-        // sale id), keeping the active period aligned with actual renewals.
-        const renewal = parsePayPalSubscriptionCustomId(event?.resource?.custom_id);
-        if (renewal) {
-          const amount = Number(event?.resource?.amount?.total || 0);
-          await creditPayPalPass({
-            paymentId,
-            userId: renewal.userId,
-            planId: renewal.planId,
-            amount,
-          });
-          break;
-        }
-        // Either the browser return handler already consumed the row (both paths
-        // are idempotent, so this is expected), or the sale is not ours.
-        logger.info(`PayPal sale ${paymentId} has no pending checkout — treated as already credited or foreign`);
+        await handleCompletedSale(event, paymentId);
         break;
       }
 

@@ -91,30 +91,10 @@ export class AIProviderFactory {
             allProviders = Array.from(new Set([preferredProvider, ...allProviders])).filter((p): p is AIProviderType => Boolean(p));
         }
 
-        // Prioritize configured providers before unconfigured ones so requests are serviced promptly
-        const configuredProviders: AIProviderType[] = [];
-        const unconfiguredProviders: AIProviderType[] = [];
-        for (const pType of allProviders) {
-            try {
-                const p = await this.getProvider(pType);
-                if (p.isConfigured()) {
-                    configuredProviders.push(pType);
-                } else {
-                    unconfiguredProviders.push(pType);
-                }
-            } catch {
-                unconfiguredProviders.push(pType);
-            }
-        }
-        allProviders = [...configuredProviders, ...unconfiguredProviders];
+        allProviders = await this.prioritizeConfiguredProviders(allProviders);
 
         let lastError: Error | null = null;
-        const requestContext = getRequestContext();
-        const context = {
-            correlationId: telemetryContext?.correlationId || requestContext?.correlationId,
-            userId: telemetryContext?.userId || requestContext?.userId,
-            operation: telemetryContext?.operation || 'ai_provider_request',
-        };
+        const context = this.resolveAttemptContext(telemetryContext);
 
         for (const [attempt, providerType] of allProviders.entries()) {
             const startedAt = Date.now();
@@ -126,28 +106,7 @@ export class AIProviderFactory {
                     continue;
                 }
 
-                const now = Date.now();
-                const cachedHealth = this.healthCache.get(providerType);
-                let isHealthy: boolean;
-
-                if (cachedHealth && now < cachedHealth.expiresAt) {
-                    isHealthy = cachedHealth.isHealthy;
-                } else {
-                    try {
-                        isHealthy = await Promise.race([
-                            provider.healthCheck(),
-                            new Promise<boolean>((_, rej) =>
-                                setTimeout(() => rej(new Error('health check timeout')), 4000)
-                            ),
-                        ]);
-                    } catch {
-                        isHealthy = false;
-                    }
-                    this.healthCache.set(providerType, {
-                        isHealthy,
-                        expiresAt: now + (isHealthy ? 120_000 : 45_000),
-                    });
-                }
+                const isHealthy = await this.checkProviderHealth(providerType, provider);
 
                 if (!isHealthy) {
                     await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'error', 'provider_unhealthy');
@@ -187,6 +146,61 @@ export class AIProviderFactory {
 
         logger.error('All AI providers failed (including OmniRoute free tier)');
         throw lastError || new Error('All AI providers failed — no provider is configured or healthy');
+    }
+
+    private static resolveAttemptContext(telemetryContext?: { correlationId?: string; userId?: string; operation?: string }) {
+        const requestContext = getRequestContext();
+        return {
+            correlationId: telemetryContext?.correlationId || requestContext?.correlationId,
+            userId: telemetryContext?.userId || requestContext?.userId,
+            operation: telemetryContext?.operation || 'ai_provider_request',
+        };
+    }
+
+    private static async prioritizeConfiguredProviders(allProviders: AIProviderType[]): Promise<AIProviderType[]> {
+        // Prioritize configured providers before unconfigured ones so requests are serviced promptly
+        const configuredProviders: AIProviderType[] = [];
+        const unconfiguredProviders: AIProviderType[] = [];
+        for (const pType of allProviders) {
+            try {
+                const p = await this.getProvider(pType);
+                if (p.isConfigured()) {
+                    configuredProviders.push(pType);
+                } else {
+                    unconfiguredProviders.push(pType);
+                }
+            } catch {
+                unconfiguredProviders.push(pType);
+            }
+        }
+        return [...configuredProviders, ...unconfiguredProviders];
+
+    }
+
+    private static async checkProviderHealth(providerType: AIProviderType, provider: AICapability): Promise<boolean> {
+        const now = Date.now();
+        const cachedHealth = this.healthCache.get(providerType);
+        let isHealthy: boolean;
+
+        if (cachedHealth && now < cachedHealth.expiresAt) {
+            isHealthy = cachedHealth.isHealthy;
+        } else {
+            try {
+                isHealthy = await Promise.race([
+                    provider.healthCheck(),
+                    new Promise<boolean>((_, rej) =>
+                        setTimeout(() => rej(new Error('health check timeout')), 4000)
+                    ),
+                ]);
+            } catch {
+                isHealthy = false;
+            }
+            this.healthCache.set(providerType, {
+                isHealthy,
+                expiresAt: now + (isHealthy ? 120_000 : 45_000),
+            });
+        }
+        return isHealthy;
     }
 
     private static async recordProviderAttempt(
@@ -283,6 +297,12 @@ export class AIRouter {
         this.providerWeights.set(provider, weight);
     }
 
+    private static getFallbackPrompt(requestType: string, params: { prompt?: string; context?: string; query?: string }) {
+        if (requestType === 'generate') return params.prompt;
+        if (requestType === 'reason') return buildGroundedReasoningPrompt(params.context || '', params.query || '');
+        return undefined;
+    }
+
     static async routeRequest(
         requestType: 'generate' | 'embed' | 'speech' | 'classify' | 'reason' | 'weather' | 'disease_alerts' | 'vision' | 'video',
         params: any
@@ -318,11 +338,7 @@ export class AIRouter {
                     throw new Error(`Unknown request type: ${requestType}`);
             }
         }, params.options?.preferredProvider, {
-            promptText: requestType === 'generate'
-                ? params.prompt
-                : requestType === 'reason'
-                    ? buildGroundedReasoningPrompt(params.context || '', params.query || '')
-                    : undefined,
+            promptText: this.getFallbackPrompt(requestType, params),
         });
 
         // Normalize OmniRoute free-model fallback result into the standard shape callers expect.

@@ -288,6 +288,63 @@ describe('Visits Route — Mapper-before-response: mapVisitWithFarmerRows + mapV
 
         expect(response.status).toBe(201);
         expect(response.body.data.notes).toContain('VELOCITY ANOMALY');
+        const insertCall = mockQuery.mock.calls.find(([sql]) => sql.includes('INSERT INTO visits'));
+        expect(insertCall?.[1][8]).toMatch(/^Field survey \[VELOCITY ANOMALY: Impossible travel \d+ km\/h\]$/);
+    });
+
+    it.each([
+        ['scheduled', 201],
+        ['completed', 422],
+    ])('handles identical coordinates for distinct farmers on a %s visit', async (status, expectedStatus) => {
+        mockQuery
+            .mockResolvedValueOnce({ rows: [{ tenant_id: 'tenant-1', assigned_officer_id: 'off-1' }] })
+            .mockResolvedValueOnce({ rows: [{ farmer_id: 'other', location_lat: '0', location_lng: '0', completed_at: '2024-12-20T09:30:00Z' }] })
+            .mockResolvedValueOnce({ rows: [] });
+
+        const response = await request(app).post('/api/v1/visits')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ farmerId: 'farm-1', scheduledAt: '2024-12-20T10:00:00Z', status, durationMinutes: 15, locationLat: 0, locationLng: 0, notes: 'Inspection' });
+
+        expect(response.status).toBe(expectedStatus);
+        const insertCall = mockQuery.mock.calls.find(([sql]) => sql.includes('INSERT INTO visits'));
+        if (status === 'completed') {
+            expect(response.body.error).toContain('identical coordinates');
+            expect(insertCall).toBeUndefined();
+        } else {
+            expect(insertCall?.[1][8]).toBe('Inspection [STATIONARY ANOMALY: Identical coordinates for distinct farmers]');
+            expect(insertCall?.[1][9]).toBe('tenant-1');
+        }
+    });
+
+    it('keeps the visit writable if the best-effort anomaly lookup fails', async () => {
+        mockQuery
+            .mockResolvedValueOnce({ rows: [{ tenant_id: null, assigned_officer_id: 'off-1' }] })
+            .mockRejectedValueOnce(new Error('Anomaly lookup unavailable'))
+            .mockResolvedValueOnce({ rows: [] });
+
+        const response = await request(app).post('/api/v1/visits')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ farmerId: 'farm-1', scheduledAt: '2024-12-20T10:00:00Z', locationLat: 0, locationLng: 0, notes: 'Inspection' });
+
+        expect(response.status).toBe(201);
+        const insertCall = mockQuery.mock.calls.find(([sql]) => sql.includes('INSERT INTO visits'));
+        expect(insertCall?.[1][8]).toBe('Inspection');
+    });
+
+    it('uses stored timestamps when completing an existing visit without a supplied duration', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [{
+            farmer_id: 'farm-1',
+            started_at: '2024-12-20T10:00:00Z',
+            completed_at: '2024-12-20T10:10:00Z',
+            duration_minutes: null,
+        }] }).mockResolvedValueOnce({ rows: [] });
+
+        const response = await request(app).patch('/api/v1/visits/visit-1')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ status: 'completed' });
+
+        expect(response.status).toBe(200);
+        expect(mockQuery).toHaveBeenLastCalledWith(expect.stringContaining('UPDATE visits'), ['completed', 'visit-1']);
     });
 
     it('POST / rejects completed visit when duration is < 10 minutes (AD-002)', async () => {

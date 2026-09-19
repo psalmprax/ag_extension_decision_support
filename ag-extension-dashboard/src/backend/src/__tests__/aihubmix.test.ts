@@ -141,6 +141,45 @@ describe('AIHubMix Integration (REST Account API, MCP Tool & Model Provider)', (
   });
 
   describe('AIHubMixProvider (Chat Completions)', () => {
+    it.each([429, 403])('signals quota exhaustion without retrying for HTTP %s', async status => {
+      mockedAxios.post.mockRejectedValueOnce({ response: { status, data: { error: 'insufficient_user_quota' } } });
+      const provider = new AIHubMixProvider('sk-test-key');
+
+      await expect(provider.generateText('Soil moisture?')).rejects.toThrow('AIHUBMIX_QUOTA_EXCEEDED');
+      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+    });
+
+    it('preserves the original error when a retry returns no choices', async () => {
+      const original = { response: { status: 422, data: { error: 'unknown web_search parameter' } } };
+      mockedAxios.post.mockRejectedValueOnce(original).mockResolvedValueOnce({ data: { choices: [] } });
+      const provider = new AIHubMixProvider('sk-test-key');
+
+      await expect(provider.generateText('Soil moisture?', { webSearch: true })).rejects.toBe(original);
+      expect(mockedAxios.post).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not retry parameter failures when web search is disabled', async () => {
+      const original = { response: { status: 400, data: { error: 'unknown parameter' } } };
+      mockedAxios.post.mockRejectedValueOnce(original);
+      const provider = new AIHubMixProvider('sk-test-key');
+
+      await expect(provider.generateText('Soil moisture?', { webSearch: false })).rejects.toBe(original);
+      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(['YWJj', 'data:image/png;base64,YWJj', Buffer.from('abc')])('preserves image encoding for %s', async image => {
+      mockedAxios.post.mockResolvedValueOnce({ data: { choices: [{ message: { content: 'Healthy leaf' } }] } });
+      const provider = new AIHubMixProvider('sk-test-key');
+
+      await provider.analyzeImage(image);
+      expect(mockedAxios.post).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
+        messages: [{ role: 'user', content: [
+          { type: 'text', text: 'Analyze this agricultural image.' },
+          { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,YWJj' } },
+        ] }],
+      }), expect.any(Object));
+    });
+
     it('sends chat completions request with bearer token', async () => {
       mockedAxios.post.mockResolvedValueOnce({
         data: {
@@ -294,4 +333,3 @@ describe('AIHubMix Integration (REST Account API, MCP Tool & Model Provider)', (
     });
   });
 });
-

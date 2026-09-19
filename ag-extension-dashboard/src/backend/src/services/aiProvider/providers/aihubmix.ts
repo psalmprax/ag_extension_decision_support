@@ -372,6 +372,63 @@ export class AIHubMixProvider extends BaseAIProvider {
     return content || '';
   }
 
+  private makeChatRequest(req: AIHubMixRequest, model: string, key: string, withWebSearch: boolean) {
+    const payload: Record<string, unknown> = {
+      model,
+      messages: req.messages,
+      temperature: req.temperature ?? 0.7,
+      max_tokens: req.max_tokens ?? 4096,
+      ...(req.tools && req.tools.length > 0 ? { tools: req.tools, tool_choice: 'auto' } : {}),
+    };
+    if (withWebSearch) {
+      payload.web_search = true;
+      payload.web_search_options = req.web_search_options || {};
+    }
+    return axios.post<AIHubMixResponse>(
+      `${this.baseUrl}/chat/completions`,
+      payload,
+      {
+        headers: {
+          Authorization: key.startsWith('Bearer ') ? key : `Bearer ${key}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 45000,
+      }
+    );
+  }
+
+  private async handleChatError(
+    err: unknown,
+    enableWebSearch: boolean,
+    model: string,
+    retryWithoutWebSearch: () => Promise<{ data: AIHubMixResponse }>
+  ): Promise<AIHubMixResponse> {
+    const axiosError = err as { response?: { status?: number; data?: unknown }; message?: string };
+    const status = axiosError.response?.status;
+    const responseBodyStr = JSON.stringify(axiosError.response?.data || '');
+
+    // If the model rejects web_search_options (e.g. 400 unknown parameter), retry once without it
+    if (enableWebSearch && (status === 400 || status === 422) && (responseBodyStr.includes('web_search') || responseBodyStr.includes('unknown') || responseBodyStr.includes('parameter'))) {
+      logger.warn(`AIHubMix model ${model} does not accept web_search_options, retrying without parameter...`);
+      try {
+        const retryResponse = await retryWithoutWebSearch();
+        if (retryResponse.data?.choices?.length) {
+          return retryResponse.data;
+        }
+      } catch (retryErr) {
+        logger.error(`AIHubMix retry without web_search failed:`, retryErr);
+      }
+    }
+
+    if (status === 429 || responseBodyStr.includes('insufficient_user_quota') || responseBodyStr.includes('quota')) {
+      logger.warn(`AIHubMix quota/rate limit exceeded (HTTP ${status}) for model ${model}. Triggering OmniRoute failover.`);
+      throw new Error(`AIHUBMIX_QUOTA_EXCEEDED: Quota limit reached for ${model}`);
+    }
+
+    logger.error(`AIHubMix API error (${status || 'Network'}):`, axiosError.message);
+    throw err;
+  }
+
   /** Full chat completion including tool_calls and optional web search (OpenAI-compatible). */
   public async chatRaw(req: AIHubMixRequest): Promise<AIHubMixResponse> {
     const key = await this.resolveApiKey();
@@ -382,30 +439,7 @@ export class AIHubMixProvider extends BaseAIProvider {
     const model = req.model || process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash';
     const enableWebSearch = req.web_search ?? (process.env.AIHUBMIX_WEB_SEARCH !== 'false');
 
-    const makeRequest = (withWebSearch: boolean) => {
-      const payload: Record<string, unknown> = {
-        model,
-        messages: req.messages,
-        temperature: req.temperature ?? 0.7,
-        max_tokens: req.max_tokens ?? 4096,
-        ...(req.tools && req.tools.length > 0 ? { tools: req.tools, tool_choice: 'auto' } : {}),
-      };
-      if (withWebSearch) {
-        payload.web_search = true;
-        payload.web_search_options = req.web_search_options || {};
-      }
-      return axios.post<AIHubMixResponse>(
-        `${this.baseUrl}/chat/completions`,
-        payload,
-        {
-          headers: {
-            Authorization: key.startsWith('Bearer ') ? key : `Bearer ${key}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 45000,
-        }
-      );
-    };
+    const makeRequest = (withWebSearch: boolean) => this.makeChatRequest(req, model, key, withWebSearch);
 
     try {
       logger.info(`Routing request to AIHubMix provider (model: ${model}, web_search: ${enableWebSearch})`);
@@ -417,30 +451,7 @@ export class AIHubMixProvider extends BaseAIProvider {
 
       return response.data;
     } catch (err: unknown) {
-      const axiosError = err as { response?: { status?: number; data?: unknown }; message?: string };
-      const status = axiosError.response?.status;
-      const responseBodyStr = JSON.stringify(axiosError.response?.data || '');
-
-      // If the model rejects web_search_options (e.g. 400 unknown parameter), retry once without it
-      if (enableWebSearch && (status === 400 || status === 422) && (responseBodyStr.includes('web_search') || responseBodyStr.includes('unknown') || responseBodyStr.includes('parameter'))) {
-        logger.warn(`AIHubMix model ${model} does not accept web_search_options, retrying without parameter...`);
-        try {
-          const retryResponse = await makeRequest(false);
-          if (retryResponse.data?.choices?.length) {
-            return retryResponse.data;
-          }
-        } catch (retryErr) {
-          logger.error(`AIHubMix retry without web_search failed:`, retryErr);
-        }
-      }
-
-      if (status === 429 || responseBodyStr.includes('insufficient_user_quota') || responseBodyStr.includes('quota')) {
-        logger.warn(`AIHubMix quota/rate limit exceeded (HTTP ${status}) for model ${model}. Triggering OmniRoute failover.`);
-        throw new Error(`AIHUBMIX_QUOTA_EXCEEDED: Quota limit reached for ${model}`);
-      }
-
-      logger.error(`AIHubMix API error (${status || 'Network'}):`, axiosError.message);
-      throw err;
+      return this.handleChatError(err, enableWebSearch, model, () => makeRequest(false));
     }
   }
 
@@ -530,7 +541,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       reasoning: `Detailed Intelligence Analysis completed via AIHubMix (${result.model || 'gemini-2.5-flash'}).`,
       answer: cleanAnswer,
       visuals,
-      toolCalls: result.toolCalls as any,
+      toolCalls: result.toolCalls,
     };
   }
 
@@ -552,6 +563,14 @@ export class AIHubMixProvider extends BaseAIProvider {
     }
   }
 
+  private encodeImage(imageData: string | Buffer): string {
+    if (Buffer.isBuffer(imageData)) return imageData.toString('base64');
+    if (typeof imageData === 'string' && imageData.startsWith('data:image/')) {
+      return imageData.split(',')[1];
+    }
+    return imageData;
+  }
+
   public override async analyzeImage(
     imageData: string | Buffer,
     prompt?: string,
@@ -564,14 +583,7 @@ export class AIHubMixProvider extends BaseAIProvider {
 
     const model = options?.model || process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash';
 
-    let base64Image: string;
-    if (Buffer.isBuffer(imageData)) {
-      base64Image = imageData.toString('base64');
-    } else if (typeof imageData === 'string' && imageData.startsWith('data:image/')) {
-      base64Image = imageData.split(',')[1];
-    } else {
-      base64Image = imageData as string;
-    }
+    const base64Image = this.encodeImage(imageData);
 
     const messages = [
       {
@@ -623,4 +635,3 @@ export class AIHubMixProvider extends BaseAIProvider {
     }
   }
 }
-

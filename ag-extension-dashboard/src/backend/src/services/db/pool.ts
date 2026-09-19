@@ -9,6 +9,24 @@ import { createTables } from './schema';
 
 let pool: Pool | null = null;
 
+async function connectWithRetry(pool: Pool): Promise<PoolClient | null> {
+  // Test connection with retry
+  let client: PoolClient | null = null;
+  let retries = 5;
+  while (retries > 0) {
+    try {
+      client = await pool.connect();
+      break;
+    } catch (err) {
+      retries--;
+      if (retries === 0) throw err;
+      logger.warn(`Database connection attempt failed, retrying in 2 seconds... (${retries} retries left):`, err instanceof Error ? err.message : err);
+      await new Promise(res => setTimeout(res, 2000));
+    }
+  }
+  return client;
+}
+
 export async function initializeDatabase(): Promise<void> {
   const isProduction = process.env.NODE_ENV === 'production';
   try {
@@ -19,20 +37,7 @@ export async function initializeDatabase(): Promise<void> {
       connectionTimeoutMillis: 15000,
     });
 
-    // Test connection with retry
-    let client: PoolClient | null = null;
-    let retries = 5;
-    while (retries > 0) {
-      try {
-        client = await pool.connect();
-        break;
-      } catch (err) {
-        retries--;
-        if (retries === 0) throw err;
-        logger.warn(`Database connection attempt failed, retrying in 2 seconds... (${retries} retries left):`, err instanceof Error ? err.message : err);
-        await new Promise(res => setTimeout(res, 2000));
-      }
-    }
+    const client = await connectWithRetry(pool);
 
     if (!client) {
       throw new Error('Database client connection failed');

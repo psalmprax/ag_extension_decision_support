@@ -30,6 +30,18 @@ app.use(express.json());
 app.use('/users', usersRouter);
 app.get('/protected', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), (req, res) => res.json(req.user));
 
+function revokeUserSessions(userId: unknown) {
+  if (revocationFails) throw new Error('Session update unavailable');
+  const rows: Array<{ token_hash: string }> = [];
+  for (const [hash, session] of sessions) {
+    if (session.userId === userId && !session.revoked) {
+      session.revoked = true;
+      rows.push({ token_hash: hash });
+    }
+  }
+  return { rows, rowCount: rows.length };
+}
+
 beforeEach(() => {
   targetActive = true;
   revocationFails = false;
@@ -41,15 +53,7 @@ beforeEach(() => {
       return { rows: session ? [{ is_revoked: session.revoked, is_active: session.userId !== 'target' || targetActive, expires_at: new Date(Date.now() + 3600000) }] : [], rowCount: session ? 1 : 0 };
     }
     if (sql.includes('UPDATE user_sessions')) {
-      if (revocationFails) throw new Error('Session update unavailable');
-      const rows: Array<{ token_hash: string }> = [];
-      for (const [hash, session] of sessions) {
-        if (session.userId === params[0] && !session.revoked) {
-          session.revoked = true;
-          rows.push({ token_hash: hash });
-        }
-      }
-      return { rows, rowCount: rows.length };
+      return revokeUserSessions(params[0]);
     }
     if (sql.includes('INSERT INTO users')) {
       return { rows: [{ id: 'created', email: params[0], role: params[4], first_name: params[2], last_name: params[3], is_active: true }], rowCount: 1 };

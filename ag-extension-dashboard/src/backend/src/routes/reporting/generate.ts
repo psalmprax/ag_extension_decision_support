@@ -79,25 +79,8 @@ interface ReportContent {
 
 const SUPPORTED_REPORT_TYPES = new Set(['visit_summary', 'activity_report', 'impact_metrics', 'knowledge_factsheet']);
 
-async function generateReportData(type: string, effectiveStartDate: string, effectiveEndDate: string, officerId: string | undefined, region: string | undefined, title: string | undefined, req: AuthRequest, res: Response) {
+async function loadActivityStats(type: string, effectiveStartDate: string, effectiveEndDate: string, officerId: string | undefined): Promise<Partial<ReportContent>> {
     const reportData: Partial<ReportContent> = {};
-
-    if (type === 'knowledge_factsheet') {
-        const body = typeof req.body?.content === 'string' ? req.body.content.trim() : '';
-        if (!body) {
-            return res.status(400).json({ success: false, error: 'knowledge_factsheet requires a non-empty `content` field' });
-        }
-        const citations = Array.isArray(req.body?.citations) ? req.body.citations.map(String).slice(0, 20) : [];
-        reportData.factsheet = {
-            question: typeof req.body?.question === 'string' ? req.body.question.slice(0, 500) : null,
-            body: body.slice(0, 20000),
-            citations,
-            sourceNote: citations.length
-                ? 'AI-generated advisory grounded in the cited knowledge-base articles. Verify locally before acting.'
-                : 'AI-generated advisory without knowledge-base citations. Treat as general guidance only.',
-        };
-    }
-
     if (type === 'visit_summary' || type === 'activity_report') {
         const visitResult = await query<VisitStatsRow>(`
             SELECT COUNT(*) as total,
@@ -126,6 +109,33 @@ async function generateReportData(type: string, effectiveStartDate: string, effe
             reportData.conversations = mapConversationStatsRow(convResult.rows[0]);
         }
     }
+    return reportData;
+}
+
+function buildFactsheet(req: AuthRequest, body: string): ReportContent['factsheet'] {
+    const citations = Array.isArray(req.body?.citations) ? req.body.citations.map(String).slice(0, 20) : [];
+    return {
+        question: typeof req.body?.question === 'string' ? req.body.question.slice(0, 500) : null,
+        body: body.slice(0, 20000),
+        citations,
+        sourceNote: citations.length
+            ? 'AI-generated advisory grounded in the cited knowledge-base articles. Verify locally before acting.'
+            : 'AI-generated advisory without knowledge-base citations. Treat as general guidance only.',
+    };
+}
+
+async function generateReportData(type: string, effectiveStartDate: string, effectiveEndDate: string, officerId: string | undefined, region: string | undefined, title: string | undefined, req: AuthRequest, res: Response) {
+    const reportData: Partial<ReportContent> = {};
+
+    if (type === 'knowledge_factsheet') {
+        const body = typeof req.body?.content === 'string' ? req.body.content.trim() : '';
+        if (!body) {
+            return res.status(400).json({ success: false, error: 'knowledge_factsheet requires a non-empty `content` field' });
+        }
+        reportData.factsheet = buildFactsheet(req, body);
+    }
+
+    Object.assign(reportData, await loadActivityStats(type, effectiveStartDate, effectiveEndDate, officerId));
 
     const reportTitle = title || `${type.replace('_', ' ')} - ${new Date(effectiveStartDate).toLocaleDateString()} to ${new Date(effectiveEndDate).toLocaleDateString()}`;
 

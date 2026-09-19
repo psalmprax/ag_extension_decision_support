@@ -93,6 +93,80 @@ async function initializeStep(label: string, init: () => Promise<void> | void, w
     }
 }
 
+async function initializeSocketAdapter() {
+    adapterPubClient = createClient({ url: config.redis.url });
+    adapterSubClient = adapterPubClient.duplicate();
+    adapterPubClient.on('error', (err) => logger.warn('Socket.IO Redis adapter pub client error:', err instanceof Error ? err.message : err));
+    adapterSubClient.on('error', (err) => logger.warn('Socket.IO Redis adapter sub client error:', err instanceof Error ? err.message : err));
+    await Promise.all([adapterPubClient.connect(), adapterSubClient.connect()]);
+    io.adapter(createAdapter(adapterPubClient, adapterSubClient));
+}
+
+async function bootstrapKnowledge() {
+    try {
+        const { seedKnowledgeArticles, seedKnowledgeArticlesData } = await import('./routes/knowledge');
+        await seedKnowledgeArticles();
+        await VectorService.seedKnowledge(seedKnowledgeArticlesData);
+
+        const { KnowledgeSyncOrchestrator } = await import('./services/data/knowledgeSyncOrchestrator');
+        await KnowledgeSyncOrchestrator.syncLightweight();
+
+        // Anything inserted without a vector (legacy rows, plain-SQL paths) gets one now.
+        // Drains fully (batched) so a large existing corpus is indexed in one boot,
+        // not one batch per restart. Disable with EMBEDDING_BACKFILL_ON_BOOT=false.
+        if (process.env.EMBEDDING_BACKFILL_ON_BOOT !== 'false') {
+            const bf = await VectorService.backfillAllMissingEmbeddings(100);
+            if (bf.remaining > 0) logger.warn(`Embedding backfill left ${bf.remaining} rows unindexed${bf.aborted ? ` — ${bf.aborted}` : ''}`);
+        }
+
+        const { RAGV2Service } = await import('./services/ragV2Service');
+        await RAGV2Service.bootstrap();
+        logger.info('Knowledge bootstrap complete');
+    } catch (err) {
+        logger.error('Knowledge bootstrap failed:', err);
+    }
+}
+
+function seedCredentials() {
+    if (process.env.OPENAI_API_KEY) {
+        credentialVault.storeCredential('openai_api_key', 'ai_provider', process.env.OPENAI_API_KEY, 90);
+    }
+    if (process.env.GROQ_API_KEY) {
+        credentialVault.storeCredential('groq_api_key', 'ai_provider', process.env.GROQ_API_KEY, 90);
+    }
+    if (process.env.TAVILY_API_KEY) {
+        credentialVault.storeCredential('tavily_api_key', 'search', process.env.TAVILY_API_KEY, 90);
+    }
+}
+
+async function startScheduledSms() {
+    try {
+        const { startScheduledSmsWorker } = await import('./workers/scheduledSmsWorker');
+        startScheduledSmsWorker();
+    } catch (error) {
+        logger.error('Scheduled SMS BullMQ worker startup failed:', error);
+    }
+    try {
+        const { smsService } = await import('./services/smsService');
+        const intervalMs = Number(process.env.SCHEDULED_SMS_POLL_MS || 60_000);
+        // Leader-gated: the BullMQ worker already delivers jobs once; this
+        // polling fallback exists for Redis outages / pre-existing rows. Allowing
+        // every replica to poll would double-send when BullMQ is healthy.
+        smsPollTimer = setInterval(async () => {
+            try {
+                const ran = await runIfLeader('scheduled-sms-poller', () => smsService.processScheduledSMS());
+                if (ran !== null && ran > 0) logger.info(`Scheduled SMS polling fallback dispatched ${ran} messages`);
+            } catch (e) {
+                logger.warn('Scheduled SMS polling tick failed:', e);
+            }
+        }, intervalMs);
+        smsPollTimer.unref?.();
+        logger.info(`Scheduled SMS polling fallback armed (poll=${intervalMs}ms, leader-gated)`);
+    } catch (error) {
+        logger.error('Scheduled SMS polling startup failed:', error);
+    }
+}
+
 // Initialize services and start server
 async function bootstrap() {
     // Run startup configuration validation
@@ -115,14 +189,7 @@ async function bootstrap() {
     await initializeStep('cache', () => initializeCache());
 
     // Attach Redis adapter to Socket.IO for multi-instance scaling
-    await initializeStep('Socket.IO Redis adapter', async () => {
-        adapterPubClient = createClient({ url: config.redis.url });
-        adapterSubClient = adapterPubClient.duplicate();
-        adapterPubClient.on('error', (err) => logger.warn('Socket.IO Redis adapter pub client error:', err instanceof Error ? err.message : err));
-        adapterSubClient.on('error', (err) => logger.warn('Socket.IO Redis adapter sub client error:', err instanceof Error ? err.message : err));
-        await Promise.all([adapterPubClient.connect(), adapterSubClient.connect()]);
-        io.adapter(createAdapter(adapterPubClient, adapterSubClient));
-    }, true);
+    await initializeStep('Socket.IO Redis adapter', initializeSocketAdapter, true);
 
     // Initialize Socket.IO handlers
     await initializeStep('WebRTC service', () => {
@@ -137,30 +204,7 @@ async function bootstrap() {
     // before embeddings are generated, embeddings must exist before RAG v2 chunks
     // them, and the seeders must not race each other on the same ids.
     await initializeStep('knowledge bootstrap (background)', async () => {
-        void (async () => {
-            try {
-                const { seedKnowledgeArticles, seedKnowledgeArticlesData } = await import('./routes/knowledge');
-                await seedKnowledgeArticles();
-                await VectorService.seedKnowledge(seedKnowledgeArticlesData);
-
-                const { KnowledgeSyncOrchestrator } = await import('./services/data/knowledgeSyncOrchestrator');
-                await KnowledgeSyncOrchestrator.syncLightweight();
-
-                // Anything inserted without a vector (legacy rows, plain-SQL paths) gets one now.
-                // Drains fully (batched) so a large existing corpus is indexed in one boot,
-                // not one batch per restart. Disable with EMBEDDING_BACKFILL_ON_BOOT=false.
-                if (process.env.EMBEDDING_BACKFILL_ON_BOOT !== 'false') {
-                    const bf = await VectorService.backfillAllMissingEmbeddings(100);
-                    if (bf.remaining > 0) logger.warn(`Embedding backfill left ${bf.remaining} rows unindexed${bf.aborted ? ` — ${bf.aborted}` : ''}`);
-                }
-
-                const { RAGV2Service } = await import('./services/ragV2Service');
-                await RAGV2Service.bootstrap();
-                logger.info('Knowledge bootstrap complete');
-            } catch (err) {
-                logger.error('Knowledge bootstrap failed:', err);
-            }
-        })();
+        void bootstrapKnowledge();
     });
 
     await initializeStep('persistent memory layer', () => persistentMemory.initialize());
@@ -189,17 +233,7 @@ async function bootstrap() {
     });
 
     // Seed credentials from environment into secure vault
-    await initializeStep('credentials', () => {
-        if (process.env.OPENAI_API_KEY) {
-            credentialVault.storeCredential('openai_api_key', 'ai_provider', process.env.OPENAI_API_KEY, 90);
-        }
-        if (process.env.GROQ_API_KEY) {
-            credentialVault.storeCredential('groq_api_key', 'ai_provider', process.env.GROQ_API_KEY, 90);
-        }
-        if (process.env.TAVILY_API_KEY) {
-            credentialVault.storeCredential('tavily_api_key', 'search', process.env.TAVILY_API_KEY, 90);
-        }
-    });
+    await initializeStep('credentials', seedCredentials);
 
     // Register agents in orchestrator
     await initializeStep('agents', () => {
@@ -252,34 +286,8 @@ async function bootstrap() {
         }
     })();
 
-    // Scheduled SMS dispatcher — BullMQ delayed jobs (primary) + polling fallback (covers pre-existing rows / Redis outage)
-    void (async () => {
-        try {
-            const { startScheduledSmsWorker } = await import('./workers/scheduledSmsWorker');
-            startScheduledSmsWorker();
-        } catch (error) {
-            logger.error('Scheduled SMS BullMQ worker startup failed:', error);
-        }
-        try {
-            const { smsService } = await import('./services/smsService');
-            const intervalMs = Number(process.env.SCHEDULED_SMS_POLL_MS || 60_000);
-            // Leader-gated: the BullMQ worker already delivers jobs once; this
-            // polling fallback exists for Redis outages / pre-existing rows. Allowing
-            // every replica to poll would double-send when BullMQ is healthy.
-            smsPollTimer = setInterval(async () => {
-                try {
-                    const ran = await runIfLeader('scheduled-sms-poller', () => smsService.processScheduledSMS());
-                    if (ran !== null && ran > 0) logger.info(`Scheduled SMS polling fallback dispatched ${ran} messages`);
-                } catch (e) {
-                    logger.warn('Scheduled SMS polling tick failed:', e);
-                }
-            }, intervalMs);
-            smsPollTimer.unref?.();
-            logger.info(`Scheduled SMS polling fallback armed (poll=${intervalMs}ms, leader-gated)`);
-        } catch (error) {
-            logger.error('Scheduled SMS polling startup failed:', error);
-        }
-    })();
+    // Scheduled SMS dispatcher and leader-gated polling fallback.
+    void startScheduledSms();
 
     // Start server
     try {
@@ -327,9 +335,7 @@ function withTimeout<T>(p: Promise<T>, label: string): Promise<void> {
     ]);
 }
 
-async function gracefulShutdown(signal: string) {
-    logger.info(`Received ${signal}, starting graceful shutdown...`);
-
+async function stopIntervalWorkers() {
     // 1. Stop all interval workers first — no new batches/ticks can start.
     try {
         const { stopAlertWorker } = await import('./workers/alertWorker');
@@ -355,6 +361,12 @@ async function gracefulShutdown(signal: string) {
         const { selfHealingService } = await import('./services/selfHealing');
         selfHealingService.stopMonitoring();
     } catch { /* monitoring may not have started */ }
+}
+
+async function gracefulShutdown(signal: string) {
+    logger.info(`Received ${signal}, starting graceful shutdown...`);
+
+    await stopIntervalWorkers();
 
     // 2. Stop accepting new HTTP connections and drain in-flight requests.
     await withTimeout(

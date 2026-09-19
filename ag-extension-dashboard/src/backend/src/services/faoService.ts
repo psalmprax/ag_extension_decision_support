@@ -58,7 +58,7 @@ function areaCode(country: string): string {
  * that actually carry data, because FAOSTAT publishes with a lag — a fixed
  * "current year vs previous year" diff silently produced an empty list forever.
  */
-function buildProductionAnomalyAlerts(rows: CropProductionStat[], region: string): DiseaseAlert[] {
+function groupProductionSeries(rows: CropProductionStat[]): Map<string, CropProductionStat[]> {
   const bySeries = new Map<string, CropProductionStat[]>();
   for (const row of rows) {
     if (row.element !== 'Yield' && row.element !== 'Production') continue;
@@ -69,8 +69,12 @@ function buildProductionAnomalyAlerts(rows: CropProductionStat[], region: string
     else bySeries.set(key, [row]);
   }
 
+  return bySeries;
+}
+
+function buildProductionAnomalyAlerts(rows: CropProductionStat[], region: string): DiseaseAlert[] {
   const alerts: DiseaseAlert[] = [];
-  for (const series of bySeries.values()) {
+  for (const series of groupProductionSeries(rows).values()) {
     const ordered = [...series].sort((a, b) => Number(a.year) - Number(b.year));
     if (ordered.length < 2) continue;
     const latest = ordered[ordered.length - 1];

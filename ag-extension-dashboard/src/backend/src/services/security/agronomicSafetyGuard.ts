@@ -101,14 +101,7 @@ class AgronomicSafetyGuard {
     return violations.length > 0 ? 'warning' : 'safe';
   }
 
-  /**
-   * Validates structured numerical agronomic metrics against hard safety ceilings
-   * and authoritative regulatory provenance rules.
-   */
-  validateStructuredMetrics(metrics: AgronomicMetricInput): AgronomicBoundaryCheck {
-    const violations: string[] = [];
-    const quarantineDiseases = AgronomicSafetyGuard.detectQuarantineConditions(metrics.identifiedPestsOrDiseases ?? []);
-
+  private evaluateRegulatoryMetrics(metrics: AgronomicMetricInput, violations: string[]): RegulatoryDecision | undefined {
     // 1. Authoritative Regulatory Decision Service Evaluation (AD-001)
     let regulatoryDecision: RegulatoryDecision | undefined;
     if (metrics.jurisdiction && (metrics.pesticideName || (metrics.pesticideMlHa && metrics.pesticideMlHa > 0))) {
@@ -133,7 +126,10 @@ class AgronomicSafetyGuard {
         violations.push(regulatoryDecision.rejectionMessage || 'Regulatory authorization rejected under fail-closed governance.');
       }
     }
+    return regulatoryDecision;
+  }
 
+  private validateSafetyBounds(metrics: AgronomicMetricInput, violations: string[]): void {
     // 2. Nitrogen validation
     if (metrics.nitrogenKgHa !== undefined && metrics.nitrogenKgHa > AgronomicSafetyGuard.SAFETY_BOUNDS.nitrogenMaxKgHa) {
       violations.push(
@@ -159,6 +155,19 @@ class AgronomicSafetyGuard {
     if (metrics.soilPh !== undefined && (metrics.soilPh < AgronomicSafetyGuard.SAFETY_BOUNDS.minSoilPh || metrics.soilPh > AgronomicSafetyGuard.SAFETY_BOUNDS.maxSoilPh)) {
       violations.push(`Unrealistic or extreme Soil pH: ${metrics.soilPh} (Valid arable range is 3.5 - 9.5)`);
     }
+  }
+
+  /**
+   * Validates structured numerical agronomic metrics against hard safety ceilings
+   * and authoritative regulatory provenance rules.
+   */
+  validateStructuredMetrics(metrics: AgronomicMetricInput): AgronomicBoundaryCheck {
+    const violations: string[] = [];
+    const quarantineDiseases = AgronomicSafetyGuard.detectQuarantineConditions(metrics.identifiedPestsOrDiseases ?? []);
+
+    const regulatoryDecision = this.evaluateRegulatoryMetrics(metrics, violations);
+
+    this.validateSafetyBounds(metrics, violations);
 
     // 6. Pre-Harvest Interval (PHI) check (Baseline heuristic fallback if regulatory record absent)
     if (!regulatoryDecision && metrics.daysToHarvest !== undefined && metrics.daysToHarvest < 7 && (metrics.pesticideMlHa !== undefined && metrics.pesticideMlHa > 0)) {
@@ -268,7 +277,6 @@ class AgronomicSafetyGuard {
 
     enriched = this.translateToKnapsackUnits(enriched);
 
-    const lowerText = text.toLowerCase();
     const hasChemical = /\b(pesticide|fungicide|insecticide|herbicide|spray|spraying|chemical|malathion|chlorpyrifos|mancozeb|dimethoate|deltamethrin|lambda)\b/i.test(text);
 
     if (hasChemical) {

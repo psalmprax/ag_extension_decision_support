@@ -23,6 +23,41 @@ interface JWTPayload {
     role: string;
 }
 
+interface MfaChallengeUser {
+    id: string;
+    mfa_secret: string;
+    mfa_backup_codes: Parameters<typeof verifyAndConsumeBackupCode>[2];
+    last_totp_step?: number | string | null;
+}
+
+async function verifyMfaChallenge(user: MfaChallengeUser, code: string, isBackupCode: boolean) {
+    if (isBackupCode) {
+        const backupRes = await verifyAndConsumeBackupCode(user.id, code, user.mfa_backup_codes || []);
+        return { isValid: backupRes.valid, failureReasonOverride: null };
+    }
+
+    const step = matchTotpStep(code, user.mfa_secret);
+    if (step === null) return { isValid: false, failureReasonOverride: null };
+
+    // Claim each TOTP step once, including concurrent verification requests.
+    const lastStep = user.last_totp_step !== null && user.last_totp_step !== undefined ? Number(user.last_totp_step) : -1;
+    if (step <= lastStep) return { isValid: false, failureReasonOverride: 'totp_code_replayed' };
+
+    const claim = await query(
+        `UPDATE users SET last_totp_step = $1 WHERE id = $2 AND (last_totp_step IS NULL OR last_totp_step < $1) RETURNING id`,
+        [step, user.id]
+    );
+    const isValid = claim.rows.length > 0;
+    const failureReasonOverride = isValid ? null : 'totp_code_replayed';
+    return { isValid, failureReasonOverride };
+}
+
+function mfaFailureMessage(reason: string | null, failedInfo: Awaited<ReturnType<typeof recordFailedLogin>>): string {
+    if (reason === 'totp_code_replayed') return 'That code was already used. Wait for the next code.';
+    if (failedInfo.locked) return 'Too many invalid codes. Account temporarily locked.';
+    return `Invalid verification code. ${failedInfo.remainingAttempts} attempt(s) remaining.`;
+}
+
 /**
  * POST /api/v1/auth/mfa/verify
  * Complete 2FA login challenge with TOTP code or backup code.
@@ -64,29 +99,12 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
             });
         }
 
-        let isValid = false;
-        let failureReasonOverride: string | null = null;
-        if (isBackupCode) {
-            const backupRes = await verifyAndConsumeBackupCode(user.id, code, user.mfa_backup_codes || []);
-            isValid = backupRes.valid;
-        } else {
-            const step = matchTotpStep(code, user.mfa_secret);
-            if (step !== null) {
-                // Replay guard: a code is single-use. Reject anything at or before the last
-                // accepted step, then advance the watermark atomically.
-                const lastStep = user.last_totp_step !== null && user.last_totp_step !== undefined ? Number(user.last_totp_step) : -1;
-                if (step <= lastStep) {
-                    failureReasonOverride = 'totp_code_replayed';
-                } else {
-                    const claim = await query(
-                        `UPDATE users SET last_totp_step = $1 WHERE id = $2 AND (last_totp_step IS NULL OR last_totp_step < $1) RETURNING id`,
-                        [step, user.id]
-                    );
-                    isValid = claim.rows.length > 0;
-                    if (!isValid) failureReasonOverride = 'totp_code_replayed';
-                }
-            }
-        }
+        const { isValid, failureReasonOverride } = await verifyMfaChallenge({
+            id: user.id,
+            mfa_secret: user.mfa_secret,
+            mfa_backup_codes: user.mfa_backup_codes,
+            last_totp_step: user.last_totp_step,
+        }, code, isBackupCode);
 
         if (!isValid) {
             const failedInfo = await recordFailedLogin(user.id);
@@ -101,11 +119,7 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
             });
             return res.status(401).json({
                 success: false,
-                error: failureReasonOverride === 'totp_code_replayed'
-                    ? 'That code was already used. Wait for the next code.'
-                    : failedInfo.locked
-                    ? 'Too many invalid codes. Account temporarily locked.'
-                    : `Invalid verification code. ${failedInfo.remainingAttempts} attempt(s) remaining.`,
+                error: mfaFailureMessage(failureReasonOverride, failedInfo),
                 remainingAttempts: failedInfo.remainingAttempts,
             });
         }

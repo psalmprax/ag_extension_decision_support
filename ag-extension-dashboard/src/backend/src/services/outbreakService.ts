@@ -156,6 +156,29 @@ export function applyDifferentialPrivacyPerturbation(
     };
 }
 
+function calculateGerminationIndex(relativeHumidity: number, temperatureC: number): number {
+    // Microclimate Viability & Germination Index:
+    // Fungal spores (e.g. Puccinia rust) and insect larvae exhibit optimal viability
+    // at temperatures between 18°C and 28°C and high relative humidity (>=70%).
+    let humidityFactor = 0.2;
+    if (relativeHumidity >= 80) {
+        humidityFactor = 1.0;
+    } else if (relativeHumidity >= 70) {
+        humidityFactor = 0.8;
+    } else if (relativeHumidity >= 50) {
+        humidityFactor = 0.5;
+    }
+
+    let tempFactor = 0.3;
+    if (temperatureC >= 18 && temperatureC <= 28) {
+        tempFactor = 1.0;
+    } else if ((temperatureC >= 14 && temperatureC < 18) || (temperatureC > 28 && temperatureC <= 34)) {
+        tempFactor = 0.7;
+    }
+
+    return Number((humidityFactor * tempFactor).toFixed(2));
+}
+
 /**
  * Atmospheric Spore & Pest Plume Dispersal Cone Projection (CE-002).
  *
@@ -181,26 +204,7 @@ export function projectAtmosphericDispersalCone(
     const rawAperture = 45.0 - Math.min(30.0, Math.max(0, windSpeedKmH) * 0.5);
     const apertureDegrees = Math.min(45.0, Math.max(15.0, Number(rawAperture.toFixed(1))));
 
-    // 3. Microclimate Viability & Germination Index:
-    // Fungal spores (e.g. Puccinia rust) and insect larvae exhibit optimal viability
-    // at temperatures between 18°C and 28°C and high relative humidity (>=70%).
-    let humidityFactor = 0.2;
-    if (relativeHumidity >= 80) {
-        humidityFactor = 1.0;
-    } else if (relativeHumidity >= 70) {
-        humidityFactor = 0.8;
-    } else if (relativeHumidity >= 50) {
-        humidityFactor = 0.5;
-    }
-
-    let tempFactor = 0.3;
-    if (temperatureC >= 18 && temperatureC <= 28) {
-        tempFactor = 1.0;
-    } else if ((temperatureC >= 14 && temperatureC < 18) || (temperatureC > 28 && temperatureC <= 34)) {
-        tempFactor = 0.7;
-    }
-
-    const germinationIndex = Number((humidityFactor * tempFactor).toFixed(2));
+    const germinationIndex = calculateGerminationIndex(relativeHumidity, temperatureC);
     const viabilityScore = germinationIndex;
 
     // 4. Overall Outbreak Propagation Risk Level

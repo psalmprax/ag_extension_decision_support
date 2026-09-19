@@ -52,6 +52,39 @@ describe('Diseases Route — Outbreak Intelligence Event Recording', () => {
         jest.clearAllMocks();
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it.each([
+        ['/diagnose', { symptoms: ['wilting'] }],
+        ['/diagnose/image', { imageData: 'aW1hZ2U=' }],
+    ])('rejects unsafe recommendations before diagnosis on %s', async (path, payload) => {
+        const symptoms = jest.spyOn(plantDiseaseService, 'diagnoseFromSymptoms');
+        const image = jest.spyOn(plantDiseaseService, 'analyzeImage');
+        const response = await request(app)
+            .post(`/api/v1/ai/diseases${path}`)
+            .set('Authorization', `Bearer ${officerToken}`)
+            .send({ ...payload, cropType: 'tomato', jurisdiction: 'UNKNOWN', pesticideName: 'Unregistered product', pesticideMlHa: 1 });
+
+        expect(response.status).toBe(422);
+        expect(response.body.regulatoryDecision.status).toBe('HARD_REJECTION');
+        expect(symptoms).not.toHaveBeenCalled();
+        expect(image).not.toHaveBeenCalled();
+        expect(outbreakService.recordDiagnosisEvent).not.toHaveBeenCalled();
+    });
+
+    it('rejects an empty decoded image before analysis', async () => {
+        const image = jest.spyOn(plantDiseaseService, 'analyzeImage');
+        const response = await request(app)
+            .post('/api/v1/ai/diseases/diagnose/image')
+            .set('Authorization', `Bearer ${officerToken}`)
+            .send({ imageData: '====' });
+        expect(response.status).toBe(400);
+        expect(response.body.error).toBe('Invalid or empty image payload');
+        expect(image).not.toHaveBeenCalled();
+    });
+
     it('POST /api/v1/diseases/diagnose triggers outbreakService.recordDiagnosisEvent for high confidence results', async () => {
         jest.spyOn(plantDiseaseService, 'diagnoseFromSymptoms').mockResolvedValueOnce([
             {

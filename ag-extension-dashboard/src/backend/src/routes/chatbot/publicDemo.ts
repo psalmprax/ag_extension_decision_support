@@ -62,16 +62,18 @@ const publicDemoSttSchema = z.object({
 
 function extractCrop(text: string): string | null {
   const lower = text.toLowerCase();
-  if (lower.includes('maize') || lower.includes('mahindi') || lower.includes('corn')) return 'Maize';
-  if (lower.includes('cassava') || lower.includes('mhogo') || lower.includes('mihogo')) return 'Cassava';
-  if (lower.includes('tomato') || lower.includes('nyanya')) return 'Tomato';
-  if (lower.includes('sorghum') || lower.includes('mtama')) return 'Sorghum';
-  if (lower.includes('coffee') || lower.includes('kahawa')) return 'Coffee';
-  if (lower.includes('wheat') || lower.includes('ngano')) return 'Wheat';
-  if (lower.includes('rice') || lower.includes('mchele') || lower.includes('mpunga')) return 'Rice';
-  if (lower.includes('bean') || lower.includes('maharage')) return 'Beans';
-  if (lower.includes('potato') || lower.includes('viazi')) return 'Potato';
-  return null;
+  const crops = [
+    { crop: 'Maize', aliases: ['maize', 'mahindi', 'corn'] },
+    { crop: 'Cassava', aliases: ['cassava', 'mhogo', 'mihogo'] },
+    { crop: 'Tomato', aliases: ['tomato', 'nyanya'] },
+    { crop: 'Sorghum', aliases: ['sorghum', 'mtama'] },
+    { crop: 'Coffee', aliases: ['coffee', 'kahawa'] },
+    { crop: 'Wheat', aliases: ['wheat', 'ngano'] },
+    { crop: 'Rice', aliases: ['rice', 'mchele', 'mpunga'] },
+    { crop: 'Beans', aliases: ['bean', 'maharage'] },
+    { crop: 'Potato', aliases: ['potato', 'viazi'] },
+  ];
+  return crops.find(({ aliases }) => aliases.some(alias => lower.includes(alias)))?.crop ?? null;
 }
 
 function extractPestDisease(text: string): string | null {
@@ -135,6 +137,45 @@ interface EdgeFollowUpResult {
   citations: DemoCitation[];
 }
 
+function buildArmywormFollowUp(slots: AgronomicEntitySlots, language: string): EdgeFollowUpResult {
+  const acresMatch = slots.field_size?.match(/(\d+(?:\.\d+)?)\s*acre/i);
+  const acres = acresMatch ? parseFloat(acresMatch[1] ?? '3') : 3;
+  const liters = (acres * 0.4).toFixed(1);
+  const waterLiters = Math.round(acres * 133.3);
+
+  if (language === 'sw') {
+    return {
+      text: `Kwa ekari ${acres} za mahindi, changanya lita ${liters} za mafuta ya mwarobaini (Neem oil mililita 3 kwa lita ya maji katika lita ${waterLiters} za maji) na unyunyize moja kwa moja kwenye funeli za mahindi.`,
+      source: 'FAO Fall Armyworm Management Guide & Dosage Norms',
+      citations: [
+        {
+          sourceId: 'fao-faw-2024',
+          title: 'FAO Fall Armyworm IPM Field Manual',
+          category: 'pest_control',
+          excerpt:
+            'Neem oil (Azadirachtin 0.03% EC) at 3ml/L water applied into whorls provides effective early instar bio-control.',
+          score: 0.98,
+        },
+      ],
+    };
+  }
+
+  return {
+    text: `For ${acres} acres of maize, mix ${liters} liters of Neem oil (at 3ml/L water rate across ${waterLiters}L total spray volume) applied directly into the central leaf whorls.`,
+    source: 'FAO Fall Armyworm Management Guide & Dosage Norms',
+    citations: [
+      {
+        sourceId: 'fao-faw-2024',
+        title: 'FAO Fall Armyworm IPM Field Manual',
+        category: 'pest_control',
+        excerpt:
+          'Neem oil (Azadirachtin 0.03% EC) at 3ml/L water applied into whorls provides effective early instar bio-control.',
+        score: 0.98,
+      },
+    ],
+  };
+}
+
 function resolveEdgeFollowUp(
   query: string,
   slots: AgronomicEntitySlots,
@@ -154,42 +195,7 @@ function resolveEdgeFollowUp(
     (slots.pest_disease === 'Fall Armyworm' || slots.crop === 'Maize') &&
     (isDosageQuery || q.includes('acre') || q.includes('ekari'))
   ) {
-    const acresMatch = slots.field_size?.match(/(\d+(?:\.\d+)?)\s*acre/i);
-    const acres = acresMatch ? parseFloat(acresMatch[1] ?? '3') : 3;
-    const liters = (acres * 0.4).toFixed(1);
-    const waterLiters = Math.round(acres * 133.3);
-
-    if (language === 'sw') {
-      return {
-        text: `Kwa ekari ${acres} za mahindi, changanya lita ${liters} za mafuta ya mwarobaini (Neem oil mililita 3 kwa lita ya maji katika lita ${waterLiters} za maji) na unyunyize moja kwa moja kwenye funeli za mahindi.`,
-        source: 'FAO Fall Armyworm Management Guide & Dosage Norms',
-        citations: [
-          {
-            sourceId: 'fao-faw-2024',
-            title: 'FAO Fall Armyworm IPM Field Manual',
-            category: 'pest_control',
-            excerpt:
-              'Neem oil (Azadirachtin 0.03% EC) at 3ml/L water applied into whorls provides effective early instar bio-control.',
-            score: 0.98,
-          },
-        ],
-      };
-    }
-
-    return {
-      text: `For ${acres} acres of maize, mix ${liters} liters of Neem oil (at 3ml/L water rate across ${waterLiters}L total spray volume) applied directly into the central leaf whorls.`,
-      source: 'FAO Fall Armyworm Management Guide & Dosage Norms',
-      citations: [
-        {
-          sourceId: 'fao-faw-2024',
-          title: 'FAO Fall Armyworm IPM Field Manual',
-          category: 'pest_control',
-          excerpt:
-            'Neem oil (Azadirachtin 0.03% EC) at 3ml/L water applied into whorls provides effective early instar bio-control.',
-          score: 0.98,
-        },
-      ],
-    };
+    return buildArmywormFollowUp(slots, language);
   }
 
   // Acidic soil lime dosage follow-up
@@ -354,10 +360,12 @@ router.post(
       const language = parsed.language ?? 'en';
       const history = parsed.history ?? [];
 
-      // eslint-disable-next-line no-control-regex
-      const sanitizedQuery = rawQuery
-        .slice(0, 2000)
-        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+      const sanitizedQuery = Array.from(rawQuery.slice(0, 2000))
+        .filter(character => {
+          const code = character.charCodeAt(0);
+          return code >= 32 || code === 9 || code === 10 || code === 13;
+        })
+        .join('');
 
       // 1. Domain Boundary & Prompt Injection Safety Guard
       if (isNonAgronomicOrInjection(sanitizedQuery)) {

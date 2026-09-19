@@ -32,6 +32,58 @@ describe('auditCropLossAnomaly', () => {
 });
 
 describe('verifyParcelDwellTime (AD-002 / CE-003)', () => {
+  it('prioritizes identical-location spoofing over the short-interval check', () => {
+    const result = verifyParcelDwellTime({
+      durationMinutes: 15,
+      officerId: 'off-1',
+      farmerId: 'farm-2',
+      completedAt: '2026-09-16T10:20:00Z',
+      locationLat: 0,
+      locationLng: 0,
+      priorVisit: {
+        farmerId: 'farm-1',
+        completedAt: '2026-09-16T10:19:00Z',
+        locationLat: 0,
+        locationLng: 0,
+      },
+    });
+    expect(result.status).toBe('STATIONARY_SPOOFING_DETECTED');
+    expect(result.riskScore).toBe(90);
+    expect(result.details).toContain('identical coordinates');
+  });
+
+  it('enforces short intervals even when the consecutive visits are for the same farmer', () => {
+    const result = verifyParcelDwellTime({
+      durationMinutes: 15,
+      officerId: 'off-1',
+      farmerId: 'farm-1',
+      completedAt: '2026-09-16T10:20:00Z',
+      priorVisit: { farmerId: 'farm-1', completedAt: '2026-09-16T10:19:00Z' },
+    });
+    expect(result.status).toBe('STATIONARY_SPOOFING_DETECTED');
+    expect(result.riskScore).toBe(95);
+  });
+
+  it('uses a finite supplied duration before considering malformed timestamps', () => {
+    const result = verifyParcelDwellTime({ durationMinutes: 10, startedAt: 'invalid', completedAt: 'invalid' });
+    expect(result.status).toBe('VERIFIED');
+    expect(result.dwellTimeMinutes).toBe(10);
+  });
+
+  it('rejects malformed timestamps before attempting prior-visit checks', () => {
+    const result = verifyParcelDwellTime({
+      durationMinutes: NaN,
+      startedAt: 'invalid',
+      completedAt: '2026-09-16T10:20:00Z',
+      officerId: 'off-1',
+      farmerId: 'farm-2',
+      locationLat: 0,
+      locationLng: 0,
+      priorVisit: { farmerId: 'farm-1', locationLat: 0, locationLng: 0 },
+    });
+    expect(result.status).toBe('INVALID_TIMESTAMPS');
+  });
+
   it('accepts visit with verified dwell time >= 10 minutes', () => {
     const res = verifyParcelDwellTime({
       durationMinutes: 15,

@@ -134,6 +134,22 @@ interface OptedInRow {
     lng: number | null;
 }
 
+function isEligibleForAdvisory(farmer: OptedInRow, ruleKey: string): boolean {
+    if (!(farmer.categories || []).includes(ruleKey)) return false;
+    if (!farmer.crops || farmer.crops.length === 0) return true;
+
+    const lowerCrops = farmer.crops.map(c => c.toLowerCase());
+    if (ruleKey === 'faw_degree_day') {
+        const hosts = ['maize', 'corn', 'sorghum', 'millet', 'rice', 'wheat', 'cereal'];
+        return lowerCrops.some(c => hosts.some(host => c.includes(host)));
+    }
+    if (ruleKey === 'late_blight_risk') {
+        const hosts = ['potato', 'tomato', 'solanaceae', 'irish potato', 'eggplant', 'pepper'];
+        return lowerCrops.some(c => hosts.some(host => c.includes(host)));
+    }
+    return true;
+}
+
 export const seasonalAdvisoryService = {
     advisoryRules,
 
@@ -227,22 +243,7 @@ export const seasonalAdvisoryService = {
         let audience = 0;
         for (const farmer of farmers) {
             const channels = farmer.channels || ['whatsapp'];
-            const categories = farmer.categories || [];
-            if (!categories.includes(ruleKey)) continue;
-
-            // Crop-specific advisory check: skip if farmer's registered crops do not match pathogen host
-            if (farmer.crops && farmer.crops.length > 0) {
-                const lowerCrops = farmer.crops.map(c => c.toLowerCase());
-                if (ruleKey === 'faw_degree_day') {
-                    const cerealHosts = ['maize', 'corn', 'sorghum', 'millet', 'rice', 'wheat', 'cereal'];
-                    const hasCereal = lowerCrops.some(c => cerealHosts.some(host => c.includes(host)));
-                    if (!hasCereal) continue;
-                } else if (ruleKey === 'late_blight_risk') {
-                    const solanaceousHosts = ['potato', 'tomato', 'solanaceae', 'irish potato', 'eggplant', 'pepper'];
-                    const hasSolanaceous = lowerCrops.some(c => solanaceousHosts.some(host => c.includes(host)));
-                    if (!hasSolanaceous) continue;
-                }
-            }
+            if (!isEligibleForAdvisory(farmer, ruleKey)) continue;
 
             for (const channel of channels) {
                 const sent = await this.dispatchToFarmerChannel(channel, farmer, verdict.message, { ruleKey, district });

@@ -81,6 +81,46 @@ const upload = multer({
   },
 });
 
+async function validateSpooledFile(file: Express.Multer.File): Promise<void> {
+  if (!file.path) return;
+  const stat = await fsp.stat(file.path).catch(() => null);
+  if (!stat || stat.size === 0 || stat.size > MAX_UPLOAD_BYTES) {
+    throw new Error('Uploaded file is empty or exceeds the size limit');
+  }
+  const normalized = normalizeMimeType(file.mimetype);
+  // SVG needs full-content inspection, not just head bytes.
+  if (normalized === 'image/svg+xml') {
+    const content = await fsp.readFile(file.path);
+    if (!signatureMatches(content, normalized)) {
+      throw new Error('File content does not match declared type');
+    }
+  } else {
+    const head = await readSpooledHead(file.path, 64);
+    if (!signatureMatches(head, normalized)) {
+      throw new Error('File content does not match declared type');
+    }
+  }
+}
+
+async function processSpooledFiles(
+  files: Express.Multer.File[],
+  res: Response,
+  handler: (files: Express.Multer.File[]) => Promise<void>
+): Promise<void> {
+  try {
+    for (const file of files) await validateSpooledFile(file);
+    await handler(files);
+  } catch (error) {
+    if (!res.headersSent) {
+      const status = (error as { statusCode?: number }).statusCode;
+      res.status(typeof status === 'number' ? status : 400).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Upload failed',
+      });
+    }
+  }
+}
+
 /**
  * Post-multer validation against the spooled file + guaranteed cleanup.
  * Wraps every upload handler: verifies magic bytes from disk, then removes the
@@ -101,39 +141,7 @@ function withSpooledFile(
   res.on('finish', cleanup);
   res.on('close', cleanup);
 
-  void (async () => {
-    try {
-      for (const file of files) {
-        if (!file.path) continue;
-        const stat = await fsp.stat(file.path).catch(() => null);
-        if (!stat || stat.size === 0 || stat.size > MAX_UPLOAD_BYTES) {
-          throw new Error('Uploaded file is empty or exceeds the size limit');
-        }
-        const normalized = normalizeMimeType(file.mimetype);
-        // SVG needs full-content inspection, not just head bytes.
-        if (normalized === 'image/svg+xml') {
-          const content = await fsp.readFile(file.path);
-          if (!signatureMatches(content, normalized)) {
-            throw new Error('File content does not match declared type');
-          }
-        } else {
-          const head = await readSpooledHead(file.path, 64);
-          if (!signatureMatches(head, normalized)) {
-            throw new Error('File content does not match declared type');
-          }
-        }
-      }
-      await handler(files);
-    } catch (error) {
-      if (!res.headersSent) {
-        const status = (error as { statusCode?: number }).statusCode;
-        res.status(typeof status === 'number' ? status : 400).json({
-          success: false,
-          error: error instanceof Error ? error.message : 'Upload failed',
-        });
-      }
-    }
-  })();
+  void processSpooledFiles(files, res, handler);
 }
 
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));

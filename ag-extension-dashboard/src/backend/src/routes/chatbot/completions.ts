@@ -158,6 +158,17 @@ const executeToolCalls = async (toolCalls: ToolCall[]): Promise<Array<{ call: To
   return results;
 };
 
+function formatToolCall(tc: ToolCall, fallbackId: string) {
+  return {
+    id: tc.id || fallbackId,
+    type: 'function',
+    function: {
+      name: tc.function.name,
+      arguments: typeof tc.function.arguments === 'string' ? tc.function.arguments : JSON.stringify(tc.function.arguments ?? {}),
+    },
+  };
+}
+
 /**
  * Agentic turn: the model may request tools; results are fed back as proper
  * `tool` role messages (OpenAI-compatible) for up to MAX_TOOL_ROUNDS before a
@@ -190,14 +201,7 @@ const runAssistantTurn = async (systemPrompt: string, message: string, tools: Ch
     messages.push({
       role: 'assistant',
       content: assistantText || null,
-      tool_calls: toolCalls.map((tc, i) => ({
-        id: tc.id || `call_${round}_${i}`,
-        type: 'function',
-        function: {
-          name: tc.function.name,
-          arguments: typeof tc.function.arguments === 'string' ? tc.function.arguments : JSON.stringify(tc.function.arguments ?? {}),
-        },
-      })),
+      tool_calls: toolCalls.map((tc, i) => formatToolCall(tc, `call_${round}_${i}`)),
     });
     const results = await executeToolCalls(toolCalls);
     results.forEach((r, i) => {
