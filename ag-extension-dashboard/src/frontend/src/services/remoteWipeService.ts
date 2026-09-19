@@ -56,7 +56,13 @@ export class RemoteWipeService {
         report.clearedSessionStorage = true;
       }
 
-      await purgePrivateApiCache();
+      let privateCacheCleared = false;
+      try {
+        await purgePrivateApiCache();
+        privateCacheCleared = true;
+      } catch {
+        // Continue wiping other stores even if Cache Storage is unavailable.
+      }
 
       // 3. Delete IndexedDB databases
       if (typeof window !== 'undefined' && window.indexedDB && window.indexedDB.deleteDatabase) {
@@ -70,7 +76,7 @@ export class RemoteWipeService {
         }
       }
 
-      report.success = true;
+      report.success = privateCacheCleared;
     } catch {
       report.success = false;
     }

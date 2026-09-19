@@ -52,10 +52,18 @@ describe('Deep-Tier Stolen Device Security — Client AES-256-GCM & Remote Wipe 
       expect(result.success).toBe(true);
     });
 
-    it('does not report successful wiping if private cache removal fails', async () => {
+    it('continues deleting databases but reports failure if private cache removal fails', async () => {
+      const deleteDatabase = vi.fn();
+      vi.stubGlobal('indexedDB', { deleteDatabase });
       vi.stubGlobal('caches', { delete: vi.fn().mockRejectedValue(new Error('Cache unavailable')) });
       const result = await RemoteWipeService.executeRemoteWipe();
       expect(result.success).toBe(false);
+      expect(deleteDatabase.mock.calls.map(([name]) => name)).toEqual([
+        'ag-extension-db',
+        'ag-offline-sync-queue',
+        'ag-crop-photos-cache',
+        'ag-farmer-registry',
+      ]);
     });
 
     it('should execute full local wipe and key zeroization upon remote wipe command', async () => {

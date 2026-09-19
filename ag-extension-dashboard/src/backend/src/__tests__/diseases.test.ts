@@ -8,7 +8,12 @@ import { plantDiseaseService } from '../services/plantDiseaseService';
 jest.mock('../services/databaseService', () => ({
     initializeDatabase: jest.fn(),
     getPool: jest.fn(() => ({ query: jest.fn() })),
-    query: jest.fn().mockResolvedValue({ rows: [{ id: 'rep-1' }], rowCount: 1 }),
+    query: jest.fn(async (sql: string) => ({
+        rows: sql.includes('FROM user_sessions')
+            ? [{ is_revoked: false, is_active: true, expires_at: '2099-01-01T00:00:00Z' }]
+            : [{ id: 'rep-1' }],
+        rowCount: 1,
+    })),
 }));
 
 jest.mock('../services/cacheService', () => ({

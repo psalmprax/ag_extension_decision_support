@@ -7,13 +7,26 @@ import { config } from '../config';
 // Mocks
 // ---------------------------------------------------------------------------
 
-jest.mock('../services/databaseService', () => ({
-    initializeDatabase: jest.fn(),
-    getPool: jest.fn(() => ({
-        query: jest.fn().mockResolvedValue({ rows: [{ count: 0 }], rowCount: 1 })
-    })),
-    query: jest.fn().mockResolvedValue({ rows: [{ count: 0 }], rowCount: 1 })
-}));
+jest.mock('../services/databaseService', () => {
+    const templateQuery = jest.fn().mockResolvedValue({ rows: [{ count: 0 }], rowCount: 1 });
+    return {
+        initializeDatabase: jest.fn(),
+        getPool: jest.fn(() => ({
+            query: jest.fn().mockResolvedValue({ rows: [{ count: 0 }], rowCount: 1 })
+        })),
+        templateQuery,
+        query: jest.fn(async (sql: string, ...args: unknown[]) => {
+            if (sql.includes('FROM user_sessions')) {
+                return {
+                    rows: [{ is_revoked: false, is_active: true, expires_at: '2099-01-01T00:00:00Z' }],
+                    rowCount: 1
+                };
+            }
+            if (sql.includes('UPDATE email_templates')) return templateQuery(sql, ...args);
+            return { rows: [{ count: 0 }], rowCount: 1 };
+        })
+    };
+});
 
 jest.mock('../services/cacheService', () => ({
     initializeCache: jest.fn(),
@@ -42,8 +55,8 @@ jest.mock('../services/emailService', () => ({
 // ---------------------------------------------------------------------------
 // Helper – reference to the mocked query so we can control per-test behaviour
 // ---------------------------------------------------------------------------
-const { query: mockQuery } = jest.requireMock('../services/databaseService') as {
-    query: jest.Mock;
+const { templateQuery: mockQuery } = jest.requireMock('../services/databaseService') as {
+    templateQuery: jest.Mock;
     initializeDatabase: jest.Mock;
     getPool: jest.Mock;
 };

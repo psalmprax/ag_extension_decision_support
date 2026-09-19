@@ -108,6 +108,11 @@ export const logout = async (): Promise<void> => {
   } catch {
     // Logout best-effort
   } finally {
-    await purgePrivateApiCache();
+    try {
+      await purgePrivateApiCache();
+    } catch {
+      // Callers must still clear their local user state when cache deletion fails.
+      console.warn('Failed to clear private API cache during logout');
+    }
   }
 };

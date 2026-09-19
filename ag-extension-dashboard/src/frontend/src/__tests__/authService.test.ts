@@ -162,6 +162,20 @@ describe('authService', () => {
       expect(mockPost).toHaveBeenCalledWith('/auth/logout');
     });
 
+    it.each([false, true])('does not block local logout when cache deletion fails, including network failure=%s', async fails => {
+      vi.stubGlobal('caches', { delete: vi.fn().mockRejectedValue(new Error('Cache unavailable')) });
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      if (fails) mockPost.mockRejectedValue(new Error('Offline'));
+      else mockPost.mockResolvedValue({ data: {} });
+      try {
+        await expect(logout()).resolves.toBeUndefined();
+        expect(mockPost).toHaveBeenCalledWith('/auth/logout');
+        expect(warn).toHaveBeenCalledWith('Failed to clear private API cache during logout');
+      } finally {
+        warn.mockRestore();
+      }
+    });
+
     it('should handle logout API failure gracefully', async () => {
       mockPost.mockRejectedValue(new Error('Network error'));
 

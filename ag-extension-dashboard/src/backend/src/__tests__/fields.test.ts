@@ -23,10 +23,12 @@ jest.mock('../services/databaseService', () => ({
             rowCount: 1 
         })
     })),
-    query: jest.fn().mockResolvedValue({ 
-        rows: [{ count: 0 }],
-        rowCount: 1 
-    })
+    query: jest.fn(async (sql: string) => ({
+        rows: sql.includes('FROM user_sessions')
+            ? [{ is_revoked: false, is_active: true, expires_at: '2099-01-01T00:00:00Z' }]
+            : [{ count: 0 }],
+        rowCount: 1
+    }))
 }));
 
 jest.mock('../services/cacheService', () => ({
