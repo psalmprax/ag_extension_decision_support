@@ -40,7 +40,7 @@ export const diagnoseFromSymptoms = async (
   symptoms: string[],
   cropType?: string
 ): Promise<{ success: boolean; data: DiseaseDiagnosis[] }> => {
-  const response = await apiClient.post('/ai/diagnose', { symptoms, cropType });
+  const response = await apiClient.post('/ai/diseases/diagnose', { symptoms, cropType });
   return response.data;
 };
 
@@ -71,7 +71,7 @@ export const analyzePlantImage = async (
     reportId?: string;
   };
 }> => {
-  const response = await apiClient.post('/ai/diagnose/image', { imageData, cropType });
+  const response = await apiClient.post('/ai/diseases/diagnose/image', { imageData, cropType });
   return response.data;
 };
 
@@ -99,6 +99,6 @@ export const analyzeSoilImage = async (
   cropType?: string,
   details?: Record<string, unknown>
 ): Promise<{ success: boolean; data: SoilAnalysisResult }> => {
-  const response = await apiClient.post('/ai/diagnose/soil', { imageData, cropType, details });
+  const response = await apiClient.post('/ai/diseases/diagnose/soil', { imageData, cropType, details });
   return response.data;
 };

@@ -12,7 +12,7 @@ export function queueSpecimenForAnalysis(imageData: string, cropType?: string): 
   return syncQueue.enqueue({
     action: 'create',
     entity: 'plant_image_diagnosis',
-    endpoint: '/ai/diagnose/image',
+    endpoint: '/ai/diseases/diagnose/image',
     method: 'POST',
     data: {
       imageData,

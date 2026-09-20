@@ -21,7 +21,7 @@ describe('offline specimen diagnosis queue', () => {
     expect(syncQueue.enqueue).toHaveBeenCalledWith({
       action: 'create',
       entity: 'plant_image_diagnosis',
-      endpoint: '/ai/diagnose/image',
+      endpoint: '/ai/diseases/diagnose/image',
       method: 'POST',
       data: { imageData: 'base64-image-data', cropType: 'Coffee' },
     });
