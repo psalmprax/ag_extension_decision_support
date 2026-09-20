@@ -124,7 +124,13 @@ export function errorHandler(
     });
 
     // Determine status code and response
-    const statusCode = err.statusCode || 500;
+    // The `cors` package forwards origin rejections as a plain Error with no
+    // statusCode, which would otherwise surface as a masked 500 ("Internal
+    // Server Error" with the real cause only in server logs). A rejected
+    // origin is a client/configuration problem, not an internal failure:
+    // answer 403 and keep the message so the misconfiguration is visible.
+    const isCorsRejection = err.message === 'Not allowed by CORS';
+    const statusCode = isCorsRejection ? 403 : (err.statusCode || 500);
     const errorType = err.code || ErrorTypes.INTERNAL_ERROR;
 
     // 5xx internals (Prisma/PG driver messages, stack hints) are logged above
