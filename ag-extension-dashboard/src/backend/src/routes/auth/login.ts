@@ -11,6 +11,7 @@ import { recordLoginAttempt, resolveLocationFromHeaders } from '@/services/login
 import { isAccountLocked, recordFailedLogin, resetFailedAttempts } from '@/services/lockoutService';
 import { createSession } from '@/services/sessionService';
 import { setAuthCookie } from '@/middleware/authCookie';
+import { verifyPassword } from '@/utils/password';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
@@ -132,8 +133,9 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
             });
         }
 
-        // Check password
-        const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+        // Check password. verifyPassword never throws: a missing or malformed
+        // hash fails closed as invalid credentials (401), never a 500.
+        const isPasswordValid = await verifyPassword(password, user.password_hash);
         if (!isPasswordValid) {
             const failedInfo = await recordFailedLogin(user.id);
             await recordLoginAttempt({

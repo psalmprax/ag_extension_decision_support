@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Lock, Loader2, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import { resetPassword } from '@/api/authService';
+import { getApiErrorMessage } from '@/lib/apiError';
 
 const MIN_LEN = 10;
 
@@ -41,9 +42,8 @@ export const ResetPassword: React.FC = () => {
         setMessage(res.error || 'Reset failed.');
       }
     } catch (err) {
-      const e = err as { response?: { data?: { error?: string } } };
       setStatus('error');
-      setMessage(e.response?.data?.error || 'Reset link is invalid or has expired.');
+      setMessage(getApiErrorMessage(err, 'Reset link is invalid or has expired.'));
     } finally {
       setIsLoading(false);
     }
