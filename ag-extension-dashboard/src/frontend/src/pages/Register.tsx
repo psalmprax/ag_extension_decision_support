@@ -9,6 +9,7 @@ import { LiquidBackgroundCanvas } from '@/components/canvasui/LiquidBackgroundCa
 import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 import { AgroEcosystemCanvasScrubber } from '@/components/canvas-ui/AgroEcosystemCanvasScrubber';
 import { register } from '@/api/authService';
+import { getApiErrorMessage } from '@/lib/apiError';
 import apiClient from '@/api/client';
 import { EncryptedStorageService } from '@/services/encryptedStorageService';
 
@@ -133,10 +134,7 @@ export function Register() {
         navigate('/dashboard');
       }
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: string } }; message?: string };
-      const errorMsg =
-        error.response?.data?.error || error.message || t('register_creation_failed');
-      setError(errorMsg);
+      setError(getApiErrorMessage(err, t('register_creation_failed')));
     } finally {
       setIsLoading(false);
     }

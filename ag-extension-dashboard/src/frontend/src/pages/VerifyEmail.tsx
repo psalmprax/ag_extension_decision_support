@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { verifyEmail } from '@/api/authService';
+import { getApiErrorMessage } from '@/lib/apiError';
 
 export const VerifyEmail: React.FC = () => {
   const navigate = useNavigate();
@@ -22,9 +23,8 @@ export const VerifyEmail: React.FC = () => {
         setMessage(res.success ? 'Your email is verified. You can sign in now.' : res.error || 'Verification failed.');
       })
       .catch(err => {
-        const e = err as { response?: { data?: { error?: string } } };
         setStatus('error');
-        setMessage(e.response?.data?.error || 'Verification link is invalid or has expired.');
+        setMessage(getApiErrorMessage(err, 'Verification link is invalid or has expired.'));
       });
   }, [token]);
 

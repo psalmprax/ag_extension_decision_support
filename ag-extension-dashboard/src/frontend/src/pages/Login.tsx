@@ -11,6 +11,7 @@ import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 import { AgroEcosystemCanvasScrubber } from '@/components/canvas-ui/AgroEcosystemCanvasScrubber';
 
 import { login, demoLogin } from '@/api/authService';
+import { getApiErrorMessage } from '@/lib/apiError';
 
 interface LoginProps {
   onDemo?: () => void;
@@ -58,10 +59,7 @@ export function Login({ onDemo }: LoginProps) {
       const from = (location.state as { from?: string } | null)?.from;
       navigate(from && from.startsWith('/') ? from : '/dashboard');
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: string } }; message?: string };
-      const errorMsg =
-        error.response?.data?.error || error.message || t('login_invalid_credentials');
-      setError(errorMsg);
+      setError(getApiErrorMessage(err, t('login_invalid_credentials')));
     } finally {
       setIsLoading(false);
     }
@@ -91,9 +89,7 @@ export function Login({ onDemo }: LoginProps) {
       onDemo?.();
       navigate('/dashboard');
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: string } }; message?: string };
-      const errorMsg = error.response?.data?.error || error.message || 'Demo login failed';
-      setError(errorMsg);
+      setError(getApiErrorMessage(err, 'Demo login failed'));
     } finally {
       setIsLoading(false);
     }

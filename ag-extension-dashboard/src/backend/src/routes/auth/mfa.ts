@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
 import { config } from '@/config';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
@@ -10,6 +9,7 @@ import { createSession } from '@/services/sessionService';
 import { setAuthCookie } from '@/middleware/authCookie';
 import { isAccountLocked, recordFailedLogin, resetFailedAttempts } from '@/services/lockoutService';
 import { setWithTtl, getTtl, delKey } from '@/services/sharedState';
+import { verifyPassword } from '@/utils/password';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
@@ -375,7 +375,7 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
             return res.status(404).json({ success: false, error: 'User not found' });
         }
 
-        const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+        const isPasswordValid = await verifyPassword(password, user.password_hash);
         if (!isPasswordValid) {
             return res.status(401).json({ success: false, error: 'Invalid password' });
         }
