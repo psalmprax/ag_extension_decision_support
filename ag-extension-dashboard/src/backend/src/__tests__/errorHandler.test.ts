@@ -189,6 +189,16 @@ describe('Error Handler Middleware', () => {
             expect(mockResponse.status).toHaveBeenCalledWith(500);
         });
 
+        it('should map cors origin rejections to 403 with the cause preserved', () => {
+            const error = new Error('Not allowed by CORS') as AppError;
+            errorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
+
+            expect(mockResponse.status).toHaveBeenCalledWith(403);
+            const response = (mockResponse.json as jest.Mock).mock.calls[0][0];
+            expect(response.success).toBe(false);
+            expect(response.error.message).toBe('Not allowed by CORS');
+        });
+
         it('should use x-request-id header if provided', () => {
             mockRequest.headers = { 'x-request-id': 'custom-request-id' };
             const error = createError('Test', 500);
