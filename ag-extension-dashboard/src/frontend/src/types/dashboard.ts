@@ -14,6 +14,7 @@ export interface Conversation {
   title: string;
   farmerId?: string;
   farmerName?: string;
+  farmerRegion?: string;
   lastMessage?: string;
   updatedAt: string;
   startedAt: string;

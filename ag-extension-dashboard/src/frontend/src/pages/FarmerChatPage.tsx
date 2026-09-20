@@ -125,7 +125,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   const [hazardEval, setHazardEval] = useState<HazardEvaluation>({ status: 'idle', hazards: [] });
 
   useEffect(() => {
-    const region = (activeConv as unknown as { farmerRegion?: string }).farmerRegion;
+    const region = activeConv?.farmerRegion;
     if (!activeFarmerConvId || !activeConv || !region) {
       setHazardEval({ status: 'idle', hazards: [] });
       return;
@@ -360,7 +360,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
               const isSelected = activeFarmerConvId === conv.id;
               const displayName = conv.farmerName || conv.title || (conv.farmerId ? `Farmer #${conv.farmerId.slice(0, 8)}` : 'Smallholder Client');
               const initial = displayName.trim().charAt(0).toUpperCase() || 'F';
-              const regionText = (conv as unknown as { farmerRegion?: string }).farmerRegion;
+              const regionText = conv.farmerRegion;
               return (
                 <div
                   key={conv.id}
@@ -457,7 +457,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                     <div className="flex items-center gap-2 text-xxs text-white/40 font-mono">
                       <span>1-TO-1 ADVISORY</span>
                       <span>•</span>
-                      <span className="truncate">{(activeConv as unknown as { farmerRegion?: string }).farmerRegion || 'ACTIVE REGION'}</span>
+                      <span className="truncate">{activeConv?.farmerRegion || 'ACTIVE REGION'}</span>
                     </div>
                   </div>
                 </div>
