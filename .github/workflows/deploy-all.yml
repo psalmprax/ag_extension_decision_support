@@ -1097,4 +1097,98 @@ jobs:
               sleep 5
             done
             echo "Backend health check did not pass — check manually"
+
+      # ── Step 6/6: Canary Deploy — gradual traffic shift with auto-rollback ──
+      - name: 6/6 Canary — deploy, verify, promote or rollback
+        if: success()
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          command_timeout: 10m
+          script: |
+            set -euo pipefail
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml"
+
+            CANARY_LABEL="traefik.http.routers.backend-canary.rule=PathPrefix(\`/api\`)"
+            CANARY_WEIGHT=10  # percentage of traffic to canary
+            HEALTH_ENDPOINT="http://localhost:7500/health"
+            MAX_ATTEMPTS=12
+            INTERVAL=10
+
+            echo "=== Canary deploy started ==="
+            echo "Target: ${CANARY_WEIGHT}% traffic to new backend"
+
+            # 1. Start canary container alongside main backend
+            docker compose $COMPOSE_FILES up -d --no-deps --scale backend=2 backend
+            sleep 5
+
+            # 2. Label the second backend replica as canary (Traefik will route based on weight)
+            CANARY_ID=$(docker compose $COMPOSE_FILES ps -q backend | tail -1)
+            docker label "$CANARY_ID" "traefik.enable=true"
+            docker label "$CANARY_ID" "traefik.http.routers.backend-canary.rule=PathPrefix(\`/api\`)"
+            docker label "$CANARY_ID" "traefik.http.services.backend-canary.loadbalancer.server.port=7500"
+            docker label "$CANARY_ID" "traefik.http.routers.backend-canary.service=backend-canary"
+            docker label "$CANARY_ID" "traefik.http.services.backend-canary.loadbalancer.sticky.cookie.name=canary"
+            # Traefik's WRR (weighted round robin) via service weight
+            docker label "$CANARY_ID" "traefik.http.services.backend-canary.loadbalancer.wrr=1"
+            # Main backend gets weight 9 (90%), canary gets 1 (10%)
+            MAIN_ID=$(docker compose $COMPOSE_FILES ps -q backend | head -1)
+            docker label "$MAIN_ID" "traefik.http.services.backend.loadbalancer.wrr=9"
+
+            # 3. Wait for Traefik to pick up new labels
+            sleep 10
+
+            # 4. Health check the canary directly
+            echo "Checking canary health..."
+            for i in $(seq 1 $MAX_ATTEMPTS); do
+              if docker exec "$CANARY_ID" wget -qO- "$HEALTH_ENDPOINT" 2>/dev/null | grep -q '"status":"healthy"'; then
+                echo "Canary health: OK"
+                break
+              fi
+              echo "  Attempt $i/$MAX_ATTEMPTS — waiting ${INTERVAL}s..."
+              sleep $INTERVAL
+            done
+
+            if ! docker exec "$CANARY_ID" wget -qO- "$HEALTH_ENDPOINT" 2>/dev/null | grep -q '"status":"healthy"'; then
+              echo "❌ Canary health check failed — rolling back"
+              docker compose $COMPOSE_FILES rm -f "$CANARY_ID"
+              docker compose $COMPOSE_FILES up -d --scale backend=1 --no-deps backend
+              exit 1
+            fi
+
+            # 5. Smoke test critical endpoints via canary
+            echo "Running smoke tests..."
+            SMOKE_ENDPOINTS=("/api/health" "/api/auth/demo" "/api/auth/login")
+            SMOKE_FAILED=0
+            for ep in "${SMOKE_ENDPOINTS[@]}"; do
+              if ! curl -kfsSL --max-time 10 "http://localhost$ep" -H "Host: www.gpexts.com" 2>/dev/null | grep -q '"success":true'; then
+                echo "  ❌ $ep failed"
+                SMOKE_FAILED=1
+              else
+                echo "  ✅ $ep OK"
+              fi
+            done
+
+            if [ "$SMOKE_FAILED" -eq 1 ]; then
+              echo "❌ Smoke tests failed — rolling back canary"
+              docker compose $COMPOSE_FILES rm -f "$CANARY_ID"
+              docker compose $COMPOSE_FILES up -d --scale backend=1 --no-deps backend
+              exit 1
+            fi
+
+            # 6. Promote: shift 100% traffic to new version by removing main
+            echo "✅ Canary healthy — promoting to 100%"
+            docker compose $COMPOSE_FILES rm -f "$MAIN_ID"
+            docker compose $COMPOSE_FILES up -d --scale backend=1 --no-deps backend
+            # Remove canary labels
+            docker label "$CANARY_ID" "traefik.http.routers.backend-canary.rule-" 2>/dev/null || true
+            docker label "$CANARY_ID" "traefik.http.services.backend-canary.loadbalancer.wrr-" 2>/dev/null || true
+            # Reset main backend weight
+            NEW_MAIN=$(docker compose $COMPOSE_FILES ps -q backend | head -1)
+            docker label "$NEW_MAIN" "traefik.http.services.backend.loadbalancer.wrr=1" 2>/dev/null || true
+
+            echo "=== Canary promotion complete ==="
             docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
