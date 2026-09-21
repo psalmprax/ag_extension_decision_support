@@ -13,7 +13,7 @@ type Filters = { region?: string; crop?: string; county?: string };
  * Heavy globe canvas is intentionally deferred (bundle budget); this page
  * surfaces the live layer data without shipping the deck.gl payload.
  */
-export const WorldMonitor: React.FC = () => {
+const WorldMonitor: React.FC = () => {
   const { isDemo } = useDemoMode();
   const user = useAppStore(s => s.user);
   const isOfficer = user?.role === 'extension_officer' || user?.role === 'admin' || user?.role === 'regional_manager';

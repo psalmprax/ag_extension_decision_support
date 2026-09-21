@@ -55,11 +55,6 @@ export const verifyEmail = async (
   return response.data;
 };
 
-export const resendVerificationEmail = async (): Promise<{ success: boolean; message?: string }> => {
-  const response = await apiClient.post('/auth/resend-verification');
-  return response.data;
-};
-
 export interface LoginHistoryItem {
   id: string;
   userId: string | null;

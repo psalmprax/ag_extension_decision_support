@@ -33,6 +33,11 @@ export interface AppConfig {
     cors: { origin: string };
     demo: { password: string; enabled: boolean };
     ollama: { host: string; model: string };
+    crossBorder: {
+        freightDistanceKm: number;
+        freightRatePerKm: number;
+        borderFeesPerTon: number;
+    };
     ingestion: {
         enabled: boolean;
         schedule: 'daily' | 'weekly';
@@ -224,10 +229,15 @@ export const config: AppConfig = {
         host: getEnv('OLLAMA_HOST', 'http://localhost:11434'),
         model: getEnv('OLLAMA_MODEL', 'llama3'),
     },
+    crossBorder: {
+        freightDistanceKm: parseInt(getEnv('CROSS_BORDER_FREIGHT_DISTANCE_KM', '650'), 10),
+        freightRatePerKm: parseFloat(getEnv('CROSS_BORDER_FREIGHT_RATE_PER_KM', '0.075')),
+        borderFeesPerTon: parseFloat(getEnv('CROSS_BORDER_BORDER_FEES_PER_TON', '18.5')),
+    },
     ingestion: {
-        // Either name is accepted; default OFF because the crawl depends on the
-        // agent + discovery-scraper containers being deployed.
-        enabled: (process.env.INGESTION_ENABLED ?? process.env.ENABLE_KNOWLEDGE_INGESTION ?? 'false') === 'true',
+        // Default ON. Disable with INGESTION_ENABLED=false or ENABLE_KNOWLEDGE_INGESTION=false.
+        // The crawl depends on the agent + discovery-scraper containers being deployed.
+        enabled: (process.env.INGESTION_ENABLED ?? process.env.ENABLE_KNOWLEDGE_INGESTION ?? 'true') === 'true',
         schedule: getEnv('INGESTION_SCHEDULE', 'weekly') as 'daily' | 'weekly',
     },
 };

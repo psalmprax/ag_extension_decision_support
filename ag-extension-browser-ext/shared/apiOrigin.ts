@@ -32,7 +32,7 @@ function configuredExtraOrigins(): string[] {
 }
 
 /** Origins the extension may attach its bearer token to. */
-export async function allowedApiOrigins(): Promise<string[]> {
+async function allowedApiOrigins(): Promise<string[]> {
   const origins = new Set<string>(configuredExtraOrigins());
   const baseOrigin = originOf(await resolveApiBase()) ?? originOf(CONFIG.API_BASE_URL);
   if (baseOrigin) origins.add(baseOrigin);

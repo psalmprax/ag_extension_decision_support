@@ -20,7 +20,7 @@ export function isJwtExpired(token: string, skewMs = 30_000): boolean {
 }
 
 /** Storage key for the extension's bearer token. */
-export const AUTH_TOKEN_KEY = 'authToken';
+const AUTH_TOKEN_KEY = 'authToken';
 
 type TokenArea = Pick<typeof browser.storage.local, 'get' | 'set' | 'remove'>;
 

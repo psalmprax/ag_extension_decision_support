@@ -40,7 +40,7 @@ export interface AutonomousScenario {
   initialLog: string;
 }
 
-export const AUTONOMOUS_SCENARIOS: AutonomousScenario[] = [
+const AUTONOMOUS_SCENARIOS: AutonomousScenario[] = [
   { id: 'outbreak_triage', title: 'Emergency Fall Armyworm Region-Wide Sweep', desc: 'Orchestrates vision models, queries FAO IPM rules, and drafts SMS alerts.', tag: 'ENTOMOLOGY', agent: 'crew-ai', initialLog: 'Initiating regional pest triage... Processing 142 smallholder scout reports.' },
   { id: 'soil_batch', title: 'Batch Soil Acidity & Liming Prescription Engine', desc: 'Runs SoilGrids v2 NPK analysis and computes CaCO3 neutralizing requirements.', tag: 'AGRONOMY', agent: 'crew-ai', initialLog: 'Ingesting ISRIC SoilGrids v2 layer... Calculating CaCO3 requirement for 28 registered plots.' },
   { id: 'nasa_anomaly', title: 'NASA Satellite Precipitation Anomaly Sweep', desc: 'Fetches 14-day rainfall anomalies and detects drought/waterlogging risk zones.', tag: 'CLIMATOLOGY', agent: 'agent-zero', initialLog: 'Syncing NASA POWER surface meteorology... 14-day rainfall anomaly: +18.4% above median.' },

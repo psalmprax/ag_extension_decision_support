@@ -10,7 +10,6 @@ const KEY_PREFIX = 'rl:public-demo:';
 // In-memory sliding window fallback
 const localSlidingWindows = new Map<string, number[]>();
 
-// fallow-ignore-next-line unused-export
 export function __resetPublicDemoRateLimitForTests(): void {
   localSlidingWindows.clear();
 }

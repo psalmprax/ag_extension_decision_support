@@ -46,16 +46,6 @@ export interface FarmerSoilProfile {
   location: { lat: number; lon: number } | null;
 }
 
-export const fetchSoilGrids = async (lat: number, lon: number) => {
-  const { data } = await apiClient.get<{ success: boolean; data: SoilGridsBaseline }>(`/soil/grid`, { params: { lat, lon } });
-  return data;
-};
-
-export const fetchSoilMoisture = async (lat: number, lon: number) => {
-  const { data } = await apiClient.get<{ success: boolean; data: SoilMoistureSnapshot }>(`/soil/moisture`, { params: { lat, lon } });
-  return data;
-};
-
 export const fetchFarmerSoilProfile = async (farmerId: string) => {
   const { data } = await apiClient.get<{ success: boolean; data: FarmerSoilProfile }>(`/soil/farmer/${farmerId}`);
   return data;

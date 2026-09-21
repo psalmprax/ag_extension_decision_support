@@ -35,42 +35,34 @@ export function createError(message: string, statusCode: number, type?: ErrorTyp
     return error;
 }
 
-// fallow-ignore-next-line unused-export
 export function createValidationError(details: ErrorDetails): AppError {
     return createError('Validation failed', 400, ErrorTypes.VALIDATION_ERROR, details);
 }
 
-// fallow-ignore-next-line unused-export
 export function createAuthenticationError(message = 'Authentication required'): AppError {
     return createError(message, 401, ErrorTypes.AUTHENTICATION_ERROR);
 }
 
-// fallow-ignore-next-line unused-export
 export function createAuthorizationError(message = 'Insufficient permissions'): AppError {
     return createError(message, 403, ErrorTypes.AUTHORIZATION_ERROR);
 }
 
-// fallow-ignore-next-line unused-export
 export function createNotFoundError(resource = 'Resource'): AppError {
     return createError(`${resource} not found`, 404, ErrorTypes.NOT_FOUND_ERROR);
 }
 
-// fallow-ignore-next-line unused-export
 export function createConflictError(message = 'Resource conflict'): AppError {
     return createError(message, 409, ErrorTypes.CONFLICT_ERROR);
 }
 
-// fallow-ignore-next-line unused-export
 export function createDatabaseError(message = 'Database operation failed'): AppError {
     return createError(message, 500, ErrorTypes.DATABASE_ERROR);
 }
 
-// fallow-ignore-next-line unused-export
 export function createRateLimitError(message = 'Too many requests'): AppError {
     return createError(message, 429, ErrorTypes.RATE_LIMIT_ERROR);
 }
 
-// fallow-ignore-next-line unused-export
 export function createExternalServiceError(service: string, message?: string): AppError {
     return createError(
         message || `External service ${service} failed`,
@@ -168,7 +160,6 @@ export function errorHandler(
  * Error handling for Express async routes
  * This ensures all async errors are properly caught and passed to the error handler
  */
-// fallow-ignore-next-line unused-export
 export const asyncWrapper = <T extends (...args: [Request, Response, NextFunction]) => unknown>(fn: T) => (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch((err: unknown) => {
         const code = err as { name?: string; code?: string };
@@ -189,13 +180,11 @@ export const asyncWrapper = <T extends (...args: [Request, Response, NextFunctio
     });
 };
 
-// fallow-ignore-next-line unused-export
 export const asyncHandler = asyncWrapper;
 
 /**
  * 404 Not Found handler
  */
-// fallow-ignore-next-line unused-export
 export function notFound(req: Request, res: Response, next: NextFunction): void {
     const error = createNotFoundError(`Route ${req.method} ${req.path}`);
     next(error);
@@ -254,7 +243,6 @@ export function handlePrismaError(error: { code?: string; message?: string; meta
 /**
  * Handle JSON parsing errors
  */
-// fallow-ignore-next-line unused-export
 export function handleJsonParseError(error: SyntaxError): AppError {
     if (error instanceof SyntaxError && error.message.includes('JSON')) {
         return createError(
@@ -270,7 +258,6 @@ export function handleJsonParseError(error: SyntaxError): AppError {
 /**
  * Handle multer (file upload) errors
  */
-// fallow-ignore-next-line unused-export
 export function handleMulterError(error: { code?: string; field?: string; message?: string }): AppError {
     const multerErrorMessages: Record<string, string> = {
         LIMIT_FILE_SIZE: 'File size exceeds the maximum allowed limit',

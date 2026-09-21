@@ -1,5 +1,6 @@
 import express, { Router } from 'express';
-import { isSubscriptionActive, paymentService } from '../../services/paymentService';
+import { isSubscriptionActive } from '../../services/subscriptionUtils';
+import { paymentService } from '../../services/paymentService';
 import { getPrisma } from '../../services/prismaService';
 import { logger } from '../../utils/logger';
 import { authorize, AuthRequest } from '../../middleware/authorize';

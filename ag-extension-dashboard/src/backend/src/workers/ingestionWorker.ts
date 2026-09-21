@@ -59,8 +59,8 @@ function slugify(text: string): string {
  */
 // fallow-ignore-next-line unused-export
 export async function runBatchIngestion(): Promise<void> {
-    if (!config.ingestion.enabled) {
-        logger.info('Batch Ingestion is disabled in config.');
+    if (process.env.INGESTION_ENABLED === 'false') {
+        logger.info('Batch Ingestion is disabled via INGESTION_ENABLED=false.');
         return;
     }
 
@@ -106,8 +106,8 @@ export async function runBatchIngestion(): Promise<void> {
  * Initializes and schedules the Ingestion Worker
  */
 function startIngestionWorker(): void {
-    if (!config.ingestion.enabled) {
-        logger.info('Ingestion worker is disabled in configurations.');
+    if (process.env.INGESTION_ENABLED === 'false') {
+        logger.info('Ingestion worker is disabled via INGESTION_ENABLED=false.');
         return;
     }
 
