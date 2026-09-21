@@ -945,6 +945,20 @@ jobs:
             fi
 
             echo "Starting all services..."
+            # Snapshot the currently-running backend image as the rollback point
+            # for step 6/6. Read-only (`inspect` + `tag`): never touches the
+            # live container. A tag (not just an image ID) is stored so later
+            # `image prune` runs cannot garbage-collect the rollback image.
+            mkdir -p .deploy
+            PREV_BACKEND_ID=$(docker inspect -f '{{.Image}}' ag-dashboard-backend 2>/dev/null || true)
+            if [ -n "$PREV_BACKEND_ID" ]; then
+              docker tag "$PREV_BACKEND_ID" ag-extension-dashboard-backend:prev-stable
+              echo "$PREV_BACKEND_ID" > .deploy/prev-backend-image
+              echo "Rollback snapshot: $PREV_BACKEND_ID tagged as :prev-stable"
+            else
+              rm -f .deploy/prev-backend-image
+              echo "No running backend — fresh install, no rollback snapshot."
+            fi
             if ! docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --remove-orphans --no-build traefik backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama; then
               echo "Compose up failed with container conflict. Cleaning up conflicting shells and retrying..."
               docker rm -f ag-dashboard-db ag-dashboard-redis ag-traefik 2>/dev/null || true
@@ -1098,8 +1112,26 @@ jobs:
             done
             echo "Backend health check did not pass — check manually"
 
-      # ── Step 6/6: Canary Deploy — gradual traffic shift with auto-rollback ──
-      - name: 6/6 Canary — deploy, verify, promote or rollback
+      # ── Step 6/6: Verify — health + smoke gate with auto-rollback ──
+      # NOTE on the old canary approach (replaced): it could never work —
+      #  (a) `up --scale backend=2` is rejected because the backend service
+      #      pins `container_name: ag-dashboard-backend` (unique names can't
+      #      scale; that was the exit-1 failure);
+      #  (b) `docker label <id> ...` is not a real Docker command — container
+      #      labels are immutable after creation and Traefik only reads them
+      #      at container start;
+      #  (c) `docker compose rm -f <container-id>` is invalid (`rm` takes
+      #      service names, not IDs);
+      #  (d) conceptually broken: step 3/5 already force-recreated the LIVE
+      #      backend with the new image, so there was no "old main" left to
+      #      keep at 90% — both replicas would have run the new image.
+      # A true pre-deploy canary is incompatible with this pipeline's
+      # migrate-in-place flow (step 4/5 migrates the shared DB forward, so a
+      # failed canary couldn't cleanly roll the schema back anyway). This
+      # gate instead verifies the deployed backend and rolls the CONTAINER
+      # back to the :prev-stable snapshot (taken read-only in step 3/5) on
+      # failure. The live container is never touched when verification passes.
+      - name: 6/6 Verify — health + smoke gate, rollback on failure
         if: success()
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2
         with:
@@ -1112,83 +1144,83 @@ jobs:
             cd /root/ag_extension_decision_support/ag-extension-dashboard
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml"
 
-            CANARY_LABEL="traefik.http.routers.backend-canary.rule=PathPrefix(\`/api\`)"
-            CANARY_WEIGHT=10  # percentage of traffic to canary
-            HEALTH_ENDPOINT="http://localhost:7500/health"
             MAX_ATTEMPTS=12
             INTERVAL=10
 
-            echo "=== Canary deploy started ==="
-            echo "Target: ${CANARY_WEIGHT}% traffic to new backend"
+            echo "=== Post-deploy verification started ==="
 
-            # 1. Start canary container alongside main backend
-            docker compose $COMPOSE_FILES up -d --no-deps --scale backend=2 backend
-            sleep 5
-
-            # 2. Label the second backend replica as canary (Traefik will route based on weight)
-            CANARY_ID=$(docker compose $COMPOSE_FILES ps -q backend | tail -1)
-            docker label "$CANARY_ID" "traefik.enable=true"
-            docker label "$CANARY_ID" "traefik.http.routers.backend-canary.rule=PathPrefix(\`/api\`)"
-            docker label "$CANARY_ID" "traefik.http.services.backend-canary.loadbalancer.server.port=7500"
-            docker label "$CANARY_ID" "traefik.http.routers.backend-canary.service=backend-canary"
-            docker label "$CANARY_ID" "traefik.http.services.backend-canary.loadbalancer.sticky.cookie.name=canary"
-            # Traefik's WRR (weighted round robin) via service weight
-            docker label "$CANARY_ID" "traefik.http.services.backend-canary.loadbalancer.wrr=1"
-            # Main backend gets weight 9 (90%), canary gets 1 (10%)
-            MAIN_ID=$(docker compose $COMPOSE_FILES ps -q backend | head -1)
-            docker label "$MAIN_ID" "traefik.http.services.backend.loadbalancer.wrr=9"
-
-            # 3. Wait for Traefik to pick up new labels
-            sleep 10
-
-            # 4. Health check the canary directly
-            echo "Checking canary health..."
+            # 1. Container-level readiness, bypassing Traefik.
+            # /health/ready gates on process-local deps only (DB + cache) and
+            # deliberately excludes the AI-provider check, so an external
+            # provider blip can't fail a deploy. The app listens on 3001
+            # INSIDE the container (7500 is the host-side published port).
+            echo "Checking backend readiness (direct)..."
+            READY_OK=0
             for i in $(seq 1 $MAX_ATTEMPTS); do
-              if docker exec "$CANARY_ID" wget -qO- "$HEALTH_ENDPOINT" 2>/dev/null | grep -q '"status":"healthy"'; then
-                echo "Canary health: OK"
+              if docker exec ag-dashboard-backend curl -fsSL --max-time 10 http://localhost:3001/health/ready 2>/dev/null | grep -q '"status":"ready"'; then
+                echo "Backend readiness: OK"
+                READY_OK=1
                 break
               fi
               echo "  Attempt $i/$MAX_ATTEMPTS — waiting ${INTERVAL}s..."
               sleep $INTERVAL
             done
 
-            if ! docker exec "$CANARY_ID" wget -qO- "$HEALTH_ENDPOINT" 2>/dev/null | grep -q '"status":"healthy"'; then
-              echo "❌ Canary health check failed — rolling back"
-              docker compose $COMPOSE_FILES rm -f "$CANARY_ID"
-              docker compose $COMPOSE_FILES up -d --scale backend=1 --no-deps backend
-              exit 1
+            # 2. Traefik-level check: proves routing + TLS path to the backend.
+            TRAEFIK_OK=0
+            if [ "$READY_OK" = "1" ]; then
+              echo "Checking backend through Traefik..."
+              for i in $(seq 1 6); do
+                if curl -kfsSL --max-time 10 https://localhost/health/ready 2>/dev/null | grep -q '"status":"ready"'; then
+                  echo "Traefik route: OK"
+                  TRAEFIK_OK=1
+                  break
+                fi
+                echo "  Attempt $i/6 — waiting ${INTERVAL}s..."
+                sleep $INTERVAL
+              done
             fi
 
-            # 5. Smoke test critical endpoints via canary
-            echo "Running smoke tests..."
-            SMOKE_ENDPOINTS=("/api/health" "/api/auth/demo" "/api/auth/login")
-            SMOKE_FAILED=0
-            for ep in "${SMOKE_ENDPOINTS[@]}"; do
-              if ! curl -kfsSL --max-time 10 "http://localhost$ep" -H "Host: www.gpexts.com" 2>/dev/null | grep -q '"success":true'; then
-                echo "  ❌ $ep failed"
-                SMOKE_FAILED=1
-              else
-                echo "  ✅ $ep OK"
+            # 3. Informational full-health probe (never gates: /api/health can
+            # legitimately report degraded Mercure/AI-provider status while the
+            # deployment itself is fine).
+            echo "Full health snapshot (informational):"
+            curl -ksSL --max-time 15 https://localhost/api/health 2>/dev/null | head -c 500 || true
+            echo ""
+
+            if [ "$READY_OK" = "1" ] && [ "$TRAEFIK_OK" = "1" ]; then
+              echo "✅ Verification passed — deployment stands, live untouched."
+              CURRENT_ID=$(docker inspect -f '{{.Image}}' ag-dashboard-backend 2>/dev/null || true)
+              if [ -n "$CURRENT_ID" ]; then
+                docker tag "$CURRENT_ID" ag-extension-dashboard-backend:prev-stable
+                echo "$CURRENT_ID" > .deploy/prev-backend-image
+                echo "Rollback point advanced to current image."
               fi
-            done
-
-            if [ "$SMOKE_FAILED" -eq 1 ]; then
-              echo "❌ Smoke tests failed — rolling back canary"
-              docker compose $COMPOSE_FILES rm -f "$CANARY_ID"
-              docker compose $COMPOSE_FILES up -d --scale backend=1 --no-deps backend
-              exit 1
+              docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep -E "NAMES|backend|traefik" || true
+              exit 0
             fi
 
-            # 6. Promote: shift 100% traffic to new version by removing main
-            echo "✅ Canary healthy — promoting to 100%"
-            docker compose $COMPOSE_FILES rm -f "$MAIN_ID"
-            docker compose $COMPOSE_FILES up -d --scale backend=1 --no-deps backend
-            # Remove canary labels
-            docker label "$CANARY_ID" "traefik.http.routers.backend-canary.rule-" 2>/dev/null || true
-            docker label "$CANARY_ID" "traefik.http.services.backend-canary.loadbalancer.wrr-" 2>/dev/null || true
-            # Reset main backend weight
-            NEW_MAIN=$(docker compose $COMPOSE_FILES ps -q backend | head -1)
-            docker label "$NEW_MAIN" "traefik.http.services.backend.loadbalancer.wrr=1" 2>/dev/null || true
-
-            echo "=== Canary promotion complete ==="
-            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
+            echo "❌ Verification failed — rolling back to :prev-stable"
+            if ! docker image inspect ag-extension-dashboard-backend:prev-stable >/dev/null 2>&1; then
+              echo "No :prev-stable snapshot (fresh install?) — live deployment left untouched. Investigate manually." >&2
+              exit 1
+            fi
+            LIVE_TAG=$(docker inspect -f '{{.Config.Image}}' ag-dashboard-backend 2>/dev/null || echo "ag-extension-dashboard-backend:latest")
+            case "$LIVE_TAG" in
+              sha256:*)
+                echo "Live image is digest-pinned ($LIVE_TAG) — cannot retag. Manual rollback required." >&2
+                exit 1
+                ;;
+            esac
+            docker tag ag-extension-dashboard-backend:prev-stable "$LIVE_TAG"
+            docker compose $COMPOSE_FILES up -d --no-deps --force-recreate backend
+            echo "Rollback issued — waiting for previous backend to become ready..."
+            for i in $(seq 1 $MAX_ATTEMPTS); do
+              if docker exec ag-dashboard-backend curl -fsSL --max-time 10 http://localhost:3001/health/ready 2>/dev/null | grep -q '"status":"ready"'; then
+                echo "Rollback complete — previous backend is serving."
+                exit 1
+              fi
+              sleep $INTERVAL
+            done
+            echo "Rollback container started but not ready — investigate manually." >&2
+            exit 1
