@@ -22,10 +22,12 @@ jest.mock('@/services/usageService', () => ({
 jest.mock('@/middleware/authorize', () => ({
     AuthRequest: express.Request,
     authorize: () => (req: express.Request, _res: express.Response, next: express.NextFunction) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (req as any).user = { userId: 'test-user-id', role: 'extension_officer' };
         next();
     },
     optionalAuth: (req: express.Request, _res: express.Response, next: express.NextFunction) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (req as any).user = { userId: 'test-user-id', role: 'extension_officer' };
         next();
     },
@@ -40,6 +42,7 @@ const app = express();
 app.use(express.json({ limit: '100mb' }));
 // Simulate app-level optionalAuth middleware that runs before routes
 app.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (req as any).user = { userId: 'test-user-id', role: 'extension_officer' };
     next();
 });

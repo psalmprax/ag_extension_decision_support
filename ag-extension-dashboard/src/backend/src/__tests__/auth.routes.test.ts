@@ -4,7 +4,6 @@ import { jest } from '@jest/globals';
 import authRouter from '@/routes/auth';
 import { query } from '@/services/databaseService';
 import { verifyPassword } from '@/utils/password';
-import { validate } from '@/middleware/validationMiddleware';
 
 // Mock dependencies
 jest.mock('@/services/databaseService');

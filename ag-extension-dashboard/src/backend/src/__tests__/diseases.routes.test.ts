@@ -4,18 +4,24 @@ import { jest } from '@jest/globals';
 import diseaseRouter from '@/routes/diseases';
 import { plantDiseaseService } from '@/services/plantDiseaseService';
 import { query } from '@/services/databaseService';
-import { allowedRoles } from '@/middleware/authorize';
-import { checkUsageLimit } from '@/middleware/usageMiddleware';
-import { logSensitiveAction } from '@/middleware/auditMiddleware';
-import { outbreakService } from '@/services/outbreakService';
-import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
 
 // Mock dependencies
 jest.mock('@/services/plantDiseaseService');
 jest.mock('@/services/databaseService');
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { allowedRoles } from '@/middleware/authorize';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { checkUsageLimit } from '@/middleware/usageMiddleware';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { logSensitiveAction } from '@/middleware/auditMiddleware';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { outbreakService } from '@/services/outbreakService';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
 jest.mock('@/middleware/authorize', () => ({
     AuthRequest: express.Request,
     authorize: () => (req: express.Request, _res: express.Response, next: express.NextFunction) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (req as any).user = { userId: 'test-user-id', role: 'extension_officer' };
         next();
     },
@@ -87,12 +93,14 @@ describe('Diseases Routes', () => {
             ];
             (plantDiseaseService.diagnoseFromSymptoms as jest.Mock).mockResolvedValue(mockResult);
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let res: any;
             try {
                 res = await request(app)
                     .post('/api/ai/diseases/diagnose')
                     .send({ symptoms: ['yellow leaves', 'brown spots'], cropType: 'maize' });
                 console.log('[TEST] Diagnose Response:', res.status, res.body);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (err: any) {
                 console.log('[TEST] Diagnose Error:', err.status, err.message);
                 if (err.response) {
@@ -180,6 +188,7 @@ describe('Diseases Routes', () => {
                 expect(res.body.success).toBe(false);
                 expect(res.body.error).toBe('Invalid or empty soil image payload');
                 expect(analyzeSoilSpy).not.toHaveBeenCalled();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (err: any) {
                 console.log('[TEST] Error:', err.status, err.message);
                 if (err.response) {
