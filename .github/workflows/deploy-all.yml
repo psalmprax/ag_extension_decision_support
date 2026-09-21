@@ -523,7 +523,7 @@ jobs:
             docker exec ag-dashboard-backend npx prisma db seed
             echo "Purging truncated or poisoned search_cache entries..."
             docker compose $COMPOSE_FILES exec -T app-db psql -U "${DATABASE_USER:-postgres}" -d "${DATABASE_NAME:-ag_extension}" -c "DELETE FROM search_cache WHERE length(answer) < 200 OR answer LIKE '%AI assistant is currently unavailable%';" || true
-            docker compose $COMPOSE_FILES exec -T redis redis-cli --scan --pattern "rag:exact:*" | xargs -r docker compose $COMPOSE_FILES exec -T redis redis-cli del || true
+            docker compose $COMPOSE_FILES exec -T redis sh -c 'redis-cli --no-auth-warning -a "$REDIS_PASSWORD" --scan --pattern "rag:exact:*" | xargs -r redis-cli --no-auth-warning -a "$REDIS_PASSWORD" del' || true
 
       # ── Step 5/5: Health Check — verify services are up ─────────────────────
       - name: 5/5 Health Check — verify services
@@ -536,7 +536,7 @@ jobs:
           script: |
             echo "Waiting for backend to become healthy..."
             for i in $(seq 1 15); do
-              if curl -fsSL --max-time 10 http://localhost:7500/health 2>/dev/null || curl -fsSL --max-time 10 http://localhost:7500/api/health 2>/dev/null || docker compose exec -T backend wget -qO- http://localhost:7500/health 2>/dev/null; then
+              if curl -fsSL --max-time 10 http://localhost:7500/health 2>/dev/null || curl -fsSL --max-time 10 http://localhost:7500/api/health 2>/dev/null || docker compose exec -T backend curl -fsSL --max-time 10 http://localhost:3001/health 2>/dev/null; then
                 echo "Backend is healthy!"
                 exit 0
               fi
@@ -1056,7 +1056,7 @@ jobs:
             fi
             echo "Purging truncated or poisoned search_cache entries..."
             docker compose $COMPOSE_FILES exec -T app-db psql -U "${DATABASE_USER:-postgres}" -d "${DATABASE_NAME:-ag_extension}" -c "DELETE FROM search_cache WHERE length(answer) < 200 OR answer LIKE '%AI assistant is currently unavailable%';" || true
-            docker compose $COMPOSE_FILES exec -T redis redis-cli --scan --pattern "rag:exact:*" | xargs -r docker compose $COMPOSE_FILES exec -T redis redis-cli del || true
+            docker compose $COMPOSE_FILES exec -T redis sh -c 'redis-cli --no-auth-warning -a "$REDIS_PASSWORD" --scan --pattern "rag:exact:*" | xargs -r redis-cli --no-auth-warning -a "$REDIS_PASSWORD" del' || true
 
       # ── Step 5/5: SSL + Health Check ──────────────────────────
       - name: 5/5 SSL & Health Check — verify certificate and services
@@ -1103,7 +1103,7 @@ jobs:
             echo ""
             echo "Checking backend health..."
             for i in $(seq 1 10); do
-              if curl -kfsSL --max-time 10 https://localhost/health 2>/dev/null || curl -fsSL --max-time 10 http://localhost:7500/health 2>/dev/null || curl -fsSL --max-time 10 http://localhost:7500/api/health 2>/dev/null || docker compose $COMPOSE_FILES exec -T backend wget -qO- http://localhost:7500/health 2>/dev/null; then
+              if curl -kfsSL --max-time 10 https://localhost/health 2>/dev/null || curl -fsSL --max-time 10 http://localhost:7500/health 2>/dev/null || curl -fsSL --max-time 10 http://localhost:7500/api/health 2>/dev/null || docker compose $COMPOSE_FILES exec -T backend curl -fsSL --max-time 10 http://localhost:3001/health 2>/dev/null; then
                 echo "Backend is healthy!"
                 exit 0
               fi
@@ -1166,12 +1166,40 @@ jobs:
               sleep $INTERVAL
             done
 
-            # 2. Traefik-level check: proves routing + TLS path to the backend.
-            TRAEFIK_OK=0
+            # 2. Host-port check: published 127.0.0.1:7500 → backend, no Traefik.
+            # Catches "container up but not serving" independently of routing.
+            HOSTPORT_OK=0
+            LAST_BODY=""
             if [ "$READY_OK" = "1" ]; then
-              echo "Checking backend through Traefik..."
+              echo "Checking backend via host port..."
               for i in $(seq 1 6); do
-                if curl -kfsSL --max-time 10 https://localhost/health/ready 2>/dev/null | grep -q '"status":"ready"'; then
+                LAST_BODY=$(curl -fsSL --max-time 10 http://127.0.0.1:7500/health/ready 2>/dev/null || true)
+                if echo "$LAST_BODY" | grep -q '"status":"ready"'; then
+                  echo "Host-port route: OK"
+                  HOSTPORT_OK=1
+                  break
+                fi
+                echo "  Attempt $i/6 — waiting ${INTERVAL}s..."
+                sleep $INTERVAL
+              done
+              if [ "$HOSTPORT_OK" != "1" ]; then
+                echo "  Last host-port body: $(echo "$LAST_BODY" | head -c 300)"
+              fi
+            fi
+
+            # 3. Traefik-level check on the REAL external API path.
+            # Per docker-compose.prod.yml, Traefik routes the bare domain to
+            # the backend (Host(`gpexts.com`) + PathPrefix(`/health`)) while
+            # www.* serves the frontend SPA. Do NOT probe via localhost: no
+            # prod router matches Host(localhost), so such probes 404 and
+            # would false-fail the gate (observed 2026-09-21: healthy deploy
+            # rolled back on 6/6 localhost misses).
+            TRAEFIK_OK=0
+            if [ "$HOSTPORT_OK" = "1" ]; then
+              echo "Checking backend through Traefik (https://gpexts.com/health/ready)..."
+              for i in $(seq 1 6); do
+                LAST_BODY=$(curl -kfsSL --max-time 10 https://gpexts.com/health/ready 2>/dev/null || true)
+                if echo "$LAST_BODY" | grep -q '"status":"ready"'; then
                   echo "Traefik route: OK"
                   TRAEFIK_OK=1
                   break
@@ -1179,16 +1207,19 @@ jobs:
                 echo "  Attempt $i/6 — waiting ${INTERVAL}s..."
                 sleep $INTERVAL
               done
+              if [ "$TRAEFIK_OK" != "1" ]; then
+                echo "  Last Traefik body: $(echo "$LAST_BODY" | head -c 300)"
+              fi
             fi
 
-            # 3. Informational full-health probe (never gates: /api/health can
+            # 4. Informational full-health probe (never gates: /api/health can
             # legitimately report degraded Mercure/AI-provider status while the
             # deployment itself is fine).
             echo "Full health snapshot (informational):"
-            curl -ksSL --max-time 15 https://localhost/api/health 2>/dev/null | head -c 500 || true
+            curl -ksSL --max-time 15 https://gpexts.com/api/health 2>/dev/null | head -c 500 || true
             echo ""
 
-            if [ "$READY_OK" = "1" ] && [ "$TRAEFIK_OK" = "1" ]; then
+            if [ "$READY_OK" = "1" ] && [ "$HOSTPORT_OK" = "1" ] && [ "$TRAEFIK_OK" = "1" ]; then
               echo "✅ Verification passed — deployment stands, live untouched."
               CURRENT_ID=$(docker inspect -f '{{.Image}}' ag-dashboard-backend 2>/dev/null || true)
               if [ -n "$CURRENT_ID" ]; then

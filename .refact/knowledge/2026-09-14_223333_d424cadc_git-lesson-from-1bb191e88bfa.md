@@ -5,7 +5,7 @@ tags:
 - git
 - lesson
 created: 2026-09-14
-updated: 2026-09-20
+updated: 2026-09-21
 filenames:
 - .github/workflows/deploy-all.yml
 - .github/workflows/deploy-stage.yml
@@ -14,7 +14,7 @@ kind: lesson
 status: proposed
 superseded_by: null
 deprecated_at: null
-review_after: 2026-09-20
+review_after: 2026-09-21
 source_chat_id: null
 created_at: 2026-09-14T20:33:33.081239451+00:00
 summary: null
