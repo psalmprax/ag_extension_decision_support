@@ -536,7 +536,7 @@ jobs:
           script: |
             echo "Waiting for backend to become healthy..."
             for i in $(seq 1 15); do
-              if curl -fsSL --max-time 10 http://localhost:7500/health 2>/dev/null || curl -fsSL --max-time 10 http://localhost:7500/api/health 2>/dev/null || docker compose exec -T backend wget -qO- http://localhost:7500/health 2>/dev/null; then
+              if curl -fsSL --max-time 10 http://localhost:7500/health 2>/dev/null || curl -fsSL --max-time 10 http://localhost:7500/api/health 2>/dev/null || docker compose exec -T backend curl -fsSL --max-time 10 http://localhost:3001/health 2>/dev/null; then
                 echo "Backend is healthy!"
                 exit 0
               fi
@@ -1103,7 +1103,7 @@ jobs:
             echo ""
             echo "Checking backend health..."
             for i in $(seq 1 10); do
-              if curl -kfsSL --max-time 10 https://localhost/health 2>/dev/null || curl -fsSL --max-time 10 http://localhost:7500/health 2>/dev/null || curl -fsSL --max-time 10 http://localhost:7500/api/health 2>/dev/null || docker compose $COMPOSE_FILES exec -T backend wget -qO- http://localhost:7500/health 2>/dev/null; then
+              if curl -kfsSL --max-time 10 https://localhost/health 2>/dev/null || curl -fsSL --max-time 10 http://localhost:7500/health 2>/dev/null || curl -fsSL --max-time 10 http://localhost:7500/api/health 2>/dev/null || docker compose $COMPOSE_FILES exec -T backend curl -fsSL --max-time 10 http://localhost:3001/health 2>/dev/null; then
                 echo "Backend is healthy!"
                 exit 0
               fi
