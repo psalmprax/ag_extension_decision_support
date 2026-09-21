@@ -20,19 +20,19 @@ precacheAndRoute(self.__WB_MANIFEST);
 
 // Cache public assets only. Private responses must never survive an account change.
 registerRoute(
-  ({ url }) => /^(?:[a-z]\.)?tile\.openstreetmap\.org$/.test(url.hostname) || url.hostname === 'server.arcgisonline.com',
+  ({ url }: { url: URL }) => /^(?:[a-z]\.)?tile\.openstreetmap\.org$/.test(url.hostname) || url.hostname === 'server.arcgisonline.com',
   new CacheFirst({ cacheName: 'map-tiles', plugins: [new CacheableResponsePlugin({ statuses: [0, 200] }), new ExpirationPlugin({ maxEntries: 8000, maxAgeSeconds: 30 * 24 * 60 * 60 })] })
 );
 registerRoute(
-  ({ url }) => url.pathname.startsWith('/api/'),
+  ({ url }: { url: URL }) => url.pathname.startsWith('/api/'),
   new NetworkOnly({ fetchOptions: { cache: 'no-store' } })
 );
 registerRoute(
-  ({ url }) => url.origin === self.location.origin && /^\/models\/.*\.onnx$/.test(url.pathname),
+  ({ url }: { url: URL }) => url.origin === self.location.origin && /^\/models\/.*\.onnx$/.test(url.pathname),
   new CacheFirst({ cacheName: 'ml-models', plugins: [new CacheableResponsePlugin({ statuses: [200] }), new ExpirationPlugin({ maxEntries: 4, maxAgeSeconds: 30 * 24 * 60 * 60 })] })
 );
 registerRoute(
-  ({ url }) => url.origin === self.location.origin && /^\/models\/ort\/.*\.(?:wasm|mjs)$/.test(url.pathname),
+  ({ url }: { url: URL }) => url.origin === self.location.origin && /^\/models\/ort\/.*\.(?:wasm|mjs)$/.test(url.pathname),
   new CacheFirst({ cacheName: 'ml-runtime', plugins: [new CacheableResponsePlugin({ statuses: [200] }), new ExpirationPlugin({ maxEntries: 6, maxAgeSeconds: 30 * 24 * 60 * 60 })] })
 );
 
