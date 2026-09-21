@@ -37,6 +37,8 @@
     "assurance:check": "node ag-extension-dashboard/scripts/assurance-gates.cjs"
   },
   "overrides": {
+    "@typescript-eslint/eslint-plugin": "^8.70.1",
+    "@typescript-eslint/parser": "^8.70.1",
     "fallow": {
       "typescript": "~5.3.3"
     },
@@ -49,6 +51,8 @@
   },
   "devDependencies": {
     "@opengsd/gsd-pi": "^1.2.0",
+    "@typescript-eslint/eslint-plugin": "^8.70.1",
+    "@typescript-eslint/parser": "^8.70.1",
     "fallow": "3.17.0",
     "husky": "^9.1.7",
     "typescript": "5.3.3"

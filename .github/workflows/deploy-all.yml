@@ -68,13 +68,13 @@ jobs:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: |
-            ag-extension-dashboard/src/frontend/package-lock.json
+            package-lock.json
             ag-extension-dashboard/src/backend/package-lock.json
 
       - name: Lint, Build & Test Frontend (with coverage)
         run: |
+          npm ci --workspace=ag-extension-frontend
           cd ag-extension-dashboard/src/frontend
-          npm ci --workspaces=false
           npm run lint
           npm run build
           npm run test:coverage
