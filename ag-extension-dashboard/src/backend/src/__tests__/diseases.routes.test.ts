@@ -1,5 +1,6 @@
 import request from 'supertest';
 import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { jest } from '@jest/globals';
 import diseaseRouter from '@/routes/diseases';
 import { plantDiseaseService } from '@/services/plantDiseaseService';
@@ -8,39 +9,28 @@ import { query } from '@/services/databaseService';
 // Mock dependencies
 jest.mock('@/services/plantDiseaseService');
 jest.mock('@/services/databaseService');
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { allowedRoles } from '@/middleware/authorize';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { checkUsageLimit } from '@/middleware/usageMiddleware';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { logSensitiveAction } from '@/middleware/auditMiddleware';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { outbreakService } from '@/services/outbreakService';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
 jest.mock('@/middleware/authorize', () => ({
-    AuthRequest: express.Request,
-    authorize: () => (req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    authorize: () => (req: Request, _res: Response, next: NextFunction) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (req as any).user = { userId: 'test-user-id', role: 'extension_officer' };
         next();
     },
-    allowedRoles: () => (req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
+    allowedRoles: () => (_req: Request, _res: Response, next: NextFunction) => next(),
 }));
 jest.mock('@/middleware/usageMiddleware', () => ({
-    checkUsageLimit: () => (req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
+    checkUsageLimit: () => (_req: Request, _res: Response, next: NextFunction) => next(),
 }));
 jest.mock('@/middleware/auditMiddleware', () => ({
-    logSensitiveAction: jest.fn().mockResolvedValue(undefined),
+    logSensitiveAction: jest.fn(async () => undefined),
 }));
 jest.mock('@/services/outbreakService', () => ({
     outbreakService: {
-        recordDiagnosisEvent: jest.fn().mockResolvedValue(undefined),
+        recordDiagnosisEvent: jest.fn(async () => undefined),
     },
 }));
 jest.mock('@/services/security/agronomicSafetyGuard', () => ({
     agronomicSafetyGuard: {
-        validateStructuredMetrics: jest.fn().mockResolvedValue({ regulatoryDecision: { status: 'ALLOWED' } }),
+        validateStructuredMetrics: jest.fn(async () => ({ regulatoryDecision: { status: 'ALLOWED' } })),
     },
 }));
 
@@ -57,12 +47,23 @@ app.use((req, res) => {
 });
 
 describe('Diseases Routes', () => {
+    const mockDiagnoseFromSymptoms = plantDiseaseService.diagnoseFromSymptoms as jest.MockedFunction<
+        typeof plantDiseaseService.diagnoseFromSymptoms
+    >;
+    const mockAnalyzeImage = plantDiseaseService.analyzeImage as jest.MockedFunction<
+        typeof plantDiseaseService.analyzeImage
+    >;
+    const mockAnalyzeSoilImage = plantDiseaseService.analyzeSoilImage as jest.MockedFunction<
+        typeof plantDiseaseService.analyzeSoilImage
+    >;
+    const mockQuery = query as jest.MockedFunction<typeof query>;
+
     beforeEach(() => {
         jest.clearAllMocks();
         // Reset mock implementations that return specific values
-        (plantDiseaseService.analyzeSoilImage as jest.Mock).mockReset();
-        (plantDiseaseService.analyzeImage as jest.Mock).mockReset();
-        (plantDiseaseService.diagnoseFromSymptoms as jest.Mock).mockReset();
+        mockAnalyzeSoilImage.mockReset();
+        mockAnalyzeImage.mockReset();
+        mockDiagnoseFromSymptoms.mockReset();
     });
 
     describe('POST /api/ai/diseases/diagnose', () => {
@@ -81,17 +82,17 @@ describe('Diseases Routes', () => {
                 {
                     disease: 'Maize Rust',
                     confidence: 85,
-                    reviewStatus: 'ready',
-                    provenance: { evidenceStatus: 'verified_source', source: 'test', sourceUrl: null, sourceTimestamp: null, provider: 'test', model: 'test', generatedAt: new Date().toISOString() },
+                    reviewStatus: 'ready' as const,
+                    provenance: { evidenceStatus: 'verified_source' as const, source: 'test', sourceUrl: null, sourceTimestamp: null, provider: 'test', model: 'test', generatedAt: new Date().toISOString() },
                     safetyNotice: 'Test notice',
-                    severity: 'moderate',
+                    severity: 'moderate' as const,
                     description: 'Test description',
                     symptoms: ['yellow leaves'],
                     treatment: ['Apply fungicide'],
                     prevention: ['Rotate crops'],
                 },
             ];
-            (plantDiseaseService.diagnoseFromSymptoms as jest.Mock).mockResolvedValue(mockResult);
+            mockDiagnoseFromSymptoms.mockResolvedValue(mockResult);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let res: any;
@@ -117,7 +118,7 @@ describe('Diseases Routes', () => {
         });
 
         it('returns 500 when service throws', async () => {
-            (plantDiseaseService.diagnoseFromSymptoms as jest.Mock).mockRejectedValue(new Error('Service failed'));
+            mockDiagnoseFromSymptoms.mockRejectedValue(new Error('Service failed'));
 
             const res = await request(app)
                 .post('/api/ai/diseases/diagnose')
@@ -142,14 +143,27 @@ describe('Diseases Routes', () => {
 
         it('calls plantDiseaseService.analyzeImage and returns result', async () => {
             const mockResult = {
-                overallHealth: 'diseased',
-                diseases: [{ disease: 'Coffee Leaf Rust', confidence: 90, severity: 'severe' }],
+                overallHealth: 'diseased' as const,
+                diseases: [{
+                    disease: 'Coffee Leaf Rust',
+                    confidence: 90,
+                    reviewStatus: 'ready' as const,
+                    provenance: { evidenceStatus: 'verified_source' as const, source: 'test', sourceUrl: null, sourceTimestamp: null, provider: 'test', model: 'test', generatedAt: new Date().toISOString() },
+                    safetyNotice: 'Test notice',
+                    severity: 'severe' as const,
+                    description: 'Test description',
+                    symptoms: ['orange spots'],
+                    treatment: ['Apply fungicide'],
+                    prevention: ['Prune affected leaves'],
+                }],
                 nutrientDeficiencies: [],
                 recommendations: ['Apply fungicide'],
                 confidence: 90,
+                reviewStatus: 'ready' as const,
+                provenance: { evidenceStatus: 'verified_source' as const, source: 'test', sourceUrl: null, sourceTimestamp: null, provider: 'test', model: 'test', generatedAt: new Date().toISOString() },
             };
-            (plantDiseaseService.analyzeImage as jest.Mock).mockResolvedValue(mockResult);
-            (query as jest.Mock).mockResolvedValue({ rows: [{ id: 'report-456' }] });
+            mockAnalyzeImage.mockResolvedValue(mockResult);
+            mockQuery.mockResolvedValue({ rows: [{ id: 'report-456' }], rowCount: 1 });
 
             const res = await request(app)
                 .post('/api/ai/diseases/diagnose/image')
@@ -207,14 +221,15 @@ describe('Diseases Routes', () => {
                 estimatedMoisture: 'Optimal',
                 drainageClass: 'Well drained',
                 colorDiscoloration: 'Normal',
-                npkDeficiencies: { nitrogen: 'low', phosphorus: 'optimal', potassium: 'high' },
+                npkDeficiencies: { nitrogen: 'low' as const, phosphorus: 'optimal' as const, potassium: 'high' as const },
                 recommendations: ['Add nitrogen fertilizer'],
                 cropSuitability: ['Maize', 'Beans'],
                 confidence: 80,
-                reviewStatus: 'ready',
+                reviewStatus: 'ready' as const,
+                provenance: { evidenceStatus: 'verified_source' as const, source: 'test', sourceUrl: null, sourceTimestamp: null, provider: 'test', model: 'test', generatedAt: new Date().toISOString() },
             };
-            (plantDiseaseService.analyzeSoilImage as jest.Mock).mockResolvedValue(mockResult);
-            (query as jest.Mock).mockResolvedValue({ rows: [{ id: 'report-789' }] });
+            mockAnalyzeSoilImage.mockResolvedValue(mockResult);
+            mockQuery.mockResolvedValue({ rows: [{ id: 'report-789' }], rowCount: 1 });
 
             const imageData = 'data:image/jpeg;base64,' + Buffer.from('fake').toString('base64');
             const res = await request(app)

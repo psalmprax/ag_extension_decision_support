@@ -1,5 +1,6 @@
 import request from 'supertest';
 import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { jest } from '@jest/globals';
 import authRouter from '@/routes/auth';
 import { query } from '@/services/databaseService';
@@ -9,8 +10,11 @@ import { verifyPassword } from '@/utils/password';
 jest.mock('@/services/databaseService');
 jest.mock('@/utils/password');
 jest.mock('@/middleware/validationMiddleware', () => ({
-    validate: () => (req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
+    validate: () => (_req: Request, _res: Response, next: NextFunction) => next(),
 }));
+
+const mockQuery = query as jest.MockedFunction<typeof query>;
+const mockVerifyPassword = verifyPassword as jest.MockedFunction<typeof verifyPassword>;
 
 const app = express();
 app.use(express.json());
@@ -33,8 +37,8 @@ describe('Auth Routes', () => {
         });
 
         it('returns 401 when user not found', async () => {
-            (query as jest.Mock).mockResolvedValue({ rows: [] });
-            (verifyPassword as jest.Mock).mockResolvedValue(false);
+            mockQuery.mockResolvedValue({ rows: [], rowCount: 0 });
+            mockVerifyPassword.mockResolvedValue(false);
 
             const res = await request(app)
                 .post('/api/auth/login')
@@ -46,7 +50,7 @@ describe('Auth Routes', () => {
         });
 
         it('returns 401 when password is invalid', async () => {
-            (query as jest.Mock).mockResolvedValue({
+            mockQuery.mockResolvedValue({
                 rows: [{
                     id: 'user-123',
                     email: 'test@example.com',
@@ -58,11 +62,12 @@ describe('Auth Routes', () => {
                     mfa_enabled: false,
                     is_demo: false,
                     lockout_until: null,
-                }]
+                }],
+                rowCount: 1,
             });
-            (verifyPassword as jest.Mock).mockResolvedValue(false);
-            (query as jest.Mock).mockResolvedValueOnce({ rows: [] }); // lockout query
-            (query as jest.Mock).mockResolvedValueOnce({ rows: [] }); // login history
+            mockVerifyPassword.mockResolvedValue(false);
+            mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 }); // lockout query
+            mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 }); // login history
 
             const res = await request(app)
                 .post('/api/auth/login')
@@ -74,7 +79,7 @@ describe('Auth Routes', () => {
         });
 
         it('returns 200 with token and user on successful login', async () => {
-            (query as jest.Mock)
+            mockQuery
                 .mockResolvedValueOnce({
                     rows: [{
                         id: 'user-123',
@@ -87,13 +92,14 @@ describe('Auth Routes', () => {
                         mfa_enabled: false,
                         is_demo: false,
                         lockout_until: null,
-                    }]
+                    }],
+                    rowCount: 1,
                 })
-                .mockResolvedValueOnce({ rows: [] }) // lockout query
-                .mockResolvedValueOnce({ rows: [] }) // login history
-                .mockResolvedValueOnce({ rows: [] }); // subscription query
+                .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // lockout query
+                .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // login history
+                .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // subscription query
 
-            (verifyPassword as jest.Mock).mockResolvedValue(true);
+            mockVerifyPassword.mockResolvedValue(true);
 
             const res = await request(app)
                 .post('/api/auth/login')

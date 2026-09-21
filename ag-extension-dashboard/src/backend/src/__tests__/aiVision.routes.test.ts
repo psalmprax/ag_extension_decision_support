@@ -1,5 +1,6 @@
 import request from 'supertest';
 import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { jest } from '@jest/globals';
 import visionRouter from '@/routes/ai/vision';
 import { AIRouter } from '@/services/aiProvider/aiProvider';
@@ -14,19 +15,18 @@ jest.mock('@/services/aiProvider/aiProvider', () => ({
 // Mock usageService
 jest.mock('@/services/usageService', () => ({
     usageService: {
-        incrementUsage: jest.fn().mockResolvedValue(undefined),
+        incrementUsage: jest.fn(async () => undefined),
     },
 }));
 
 // Mock authorize middleware to inject user
 jest.mock('@/middleware/authorize', () => ({
-    AuthRequest: express.Request,
-    authorize: () => (req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    authorize: () => (req: Request, _res: Response, next: NextFunction) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (req as any).user = { userId: 'test-user-id', role: 'extension_officer' };
         next();
     },
-    optionalAuth: (req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    optionalAuth: (req: Request, _res: Response, next: NextFunction) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (req as any).user = { userId: 'test-user-id', role: 'extension_officer' };
         next();
@@ -35,13 +35,15 @@ jest.mock('@/middleware/authorize', () => ({
 
 // Mock usageMiddleware
 jest.mock('@/middleware/usageMiddleware', () => ({
-    checkUsageLimit: () => (req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
+    checkUsageLimit: () => (_req: Request, _res: Response, next: NextFunction) => next(),
 }));
+
+const mockRouteRequest = AIRouter.routeRequest as jest.MockedFunction<typeof AIRouter.routeRequest>;
 
 const app = express();
 app.use(express.json({ limit: '100mb' }));
 // Simulate app-level optionalAuth middleware that runs before routes
-app.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
+app.use((req: Request, _res: Response, next: NextFunction) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (req as any).user = { userId: 'test-user-id', role: 'extension_officer' };
     next();
@@ -56,7 +58,7 @@ describe('AI Vision Routes', () => {
     describe('POST /api/ai/analyze-image', () => {
         it('passes image to AIRouter even when not provided', async () => {
             const mockResult = { analysis: 'No image provided' };
-            (AIRouter.routeRequest as jest.Mock).mockResolvedValue(mockResult);
+            mockRouteRequest.mockResolvedValue(mockResult);
 
             const res = await request(app)
                 .post('/api/ai/analyze-image')
@@ -73,7 +75,7 @@ describe('AI Vision Routes', () => {
 
         it('calls AIRouter.routeRequest with correct params and returns result', async () => {
             const mockResult = { analysis: 'Healthy plant', model: 'gemini-2.5-flash' };
-            (AIRouter.routeRequest as jest.Mock).mockResolvedValue(mockResult);
+            mockRouteRequest.mockResolvedValue(mockResult);
 
             const res = await request(app)
                 .post('/api/ai/analyze-image')
@@ -90,7 +92,7 @@ describe('AI Vision Routes', () => {
         });
 
         it('returns 500 when AIRouter throws', async () => {
-            (AIRouter.routeRequest as jest.Mock).mockRejectedValue(new Error('Provider failed'));
+            mockRouteRequest.mockRejectedValue(new Error('Provider failed'));
 
             const res = await request(app)
                 .post('/api/ai/analyze-image')
@@ -137,7 +139,7 @@ describe('AI Vision Routes', () => {
 
         it('calls AIRouter.routeRequest with correct params for valid video', async () => {
             const mockResult = { analysis: 'Video analysis result', framesAnalyzed: 5 };
-            (AIRouter.routeRequest as jest.Mock).mockResolvedValue(mockResult);
+            mockRouteRequest.mockResolvedValue(mockResult);
 
             // Small valid base64 video
             const videoBase64 = Buffer.from('fake video data').toString('base64');
@@ -157,7 +159,7 @@ describe('AI Vision Routes', () => {
 
         it('uses default frameInterval and maxFrames when not provided', async () => {
             const mockResult = { analysis: 'Video analysis' };
-            (AIRouter.routeRequest as jest.Mock).mockResolvedValue(mockResult);
+            mockRouteRequest.mockResolvedValue(mockResult);
 
             const videoBase64 = Buffer.from('fake video data').toString('base64');
             await request(app)
