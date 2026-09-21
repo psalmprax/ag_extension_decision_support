@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { extractVideoFrames } from './videoFrameService';
 
 // ── Provider type identifier ──────────────────────────────────────────────
@@ -17,7 +15,37 @@ export type AIProviderType =
   | 'nvidia'
   | 'huggingface';
 
-// ── Capability interfaces ─────────────────────────────────────────────────
+// Tool calling types (aligned with OpenAI function calling schema)
+export interface FunctionDefinition {
+    name: string;
+    description?: string;
+    parameters: Record<string, unknown> | unknown;
+}
+
+// Message types for chat completions
+export interface ChatMessage {
+    role: string; // 'system' | 'user' | 'assistant' | 'tool' | custom
+    content: string | null;
+    tool_calls?: ToolCall[];
+    tool_call_id?: string;
+}
+
+export interface ToolDefinition {
+    type: 'function' | string;
+    function: FunctionDefinition;
+}
+
+// Prompt can be either a simple string, chat messages array, or tool definitions
+export type Prompt = string | ChatMessage[] | ToolDefinition[];
+
+export interface ToolCall {
+    id: string;
+    type: 'function';
+    function: {
+        name: string;
+        arguments: string; // JSON string
+    };
+}
 
 export interface TextGenerationOptions {
     model?: string;
@@ -27,14 +55,14 @@ export interface TextGenerationOptions {
     frequencyPenalty?: number;
     presencePenalty?: number;
     stop?: string[];
-    tools?: any[];
+    tools?: ToolDefinition[];
     webSearch?: boolean;
     webSearchOptions?: Record<string, unknown>;
 }
 
 export interface TextGenerationResult {
     text: string | null;
-    toolCalls?: any[];
+    toolCalls?: ToolCall[];
     model: string;
     usage?: {
         promptTokens: number;
@@ -100,7 +128,7 @@ export interface ReasoningOptions {
     preferredProvider?: AIProviderType | string;
     webSearch?: boolean;
     webSearchOptions?: Record<string, unknown>;
-    tools?: unknown[];
+    tools?: ToolDefinition[];
 }
 
 export interface ReasoningResult {
@@ -118,7 +146,7 @@ export interface ReasoningResult {
         images?: Array<{ url: string; caption?: string }>;
         videos?: Array<{ url: string; caption?: string }>;
     };
-    toolCalls?: Array<{ function: { name: string; arguments: unknown } }>;
+    toolCalls?: ToolCall[];
 }
 
 export interface ImageAnalysisOptions {
@@ -172,7 +200,7 @@ export interface AICapability {
      */
     getLastHealthError?(): string | undefined;
 
-    generateText(prompt: string | any[], options?: TextGenerationOptions): Promise<TextGenerationResult>;
+    generateText(prompt: Prompt, options?: TextGenerationOptions): Promise<TextGenerationResult>;
     streamText(prompt: string, options?: TextGenerationOptions): AsyncGenerator<string>;
 
     createEmbedding(text: string, options?: EmbeddingOptions): Promise<EmbeddingResult>;
@@ -205,7 +233,7 @@ export abstract class BaseAIProvider implements AICapability {
      * like success and silently corrupt downstream answers.
      * Providers that support text generation must override this method.
      */
-    async generateText(_messages: any[], _options?: TextGenerationOptions): Promise<TextGenerationResult> {
+    async generateText(_messages: Prompt, _options?: TextGenerationOptions): Promise<TextGenerationResult> {
         throw new Error(`${this.provider} does not support text generation. Use a provider that lists it in capabilities.`);
     }
 

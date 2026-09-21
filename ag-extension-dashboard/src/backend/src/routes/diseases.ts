@@ -247,7 +247,10 @@ router.post('/diagnose/soil', allowedRoles, checkUsageLimit('ai_vision'), async 
         }
 
         // Validate file size (max 10MB decoded) before heap allocation
-        const base64Data = imageData.split(',')[1] || imageData;
+        // Handle data URLs: split on comma, take everything after the first comma.
+        // If no comma exists, treat the whole string as base64.
+        const commaIdx = imageData.indexOf(',');
+        const base64Data = commaIdx >= 0 ? imageData.slice(commaIdx + 1) : imageData;
         if (base64Data.length > Math.ceil(MAX_UPLOAD_BYTES * 4 / 3)) {
             return res.status(413).json({ success: false, error: `Soil image size exceeds maximum limit of ${MAX_UPLOAD_BYTES / (1024 * 1024)}MB` });
         }
