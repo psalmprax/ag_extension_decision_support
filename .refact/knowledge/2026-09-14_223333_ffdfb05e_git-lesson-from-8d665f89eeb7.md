@@ -5,7 +5,7 @@ tags:
 - git
 - lesson
 created: 2026-09-14
-updated: 2026-09-17
+updated: 2026-09-22
 filenames:
 - ag-extension-dashboard/src/backend/src/services/knowledgeService.ts
 links: []
@@ -13,7 +13,7 @@ kind: lesson
 status: proposed
 superseded_by: null
 deprecated_at: null
-review_after: 2026-09-17
+review_after: 2026-09-21
 source_chat_id: null
 created_at: 2026-09-14T20:33:33.136187234+00:00
 summary: null
