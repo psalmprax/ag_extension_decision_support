@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@ag-extension/shared": "file:../../../ag-extension-shared",
+    "@capacitor/android": "^7.6.8",
     "@capacitor/core": "^7.6.8",
     "@headlessui/react": "^1.7.17",
     "@hookform/resolvers": "^5.2.2",
