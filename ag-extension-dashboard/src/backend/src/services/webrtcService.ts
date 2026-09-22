@@ -423,7 +423,7 @@ class WebRTCService {
                         where: { id: roomId },
                         data: { isActive: false }
                     });
-                } catch (err) {
+                } catch (_err) {
                     // ignore
                 }
             }

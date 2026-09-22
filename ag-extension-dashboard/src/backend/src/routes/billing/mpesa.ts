@@ -115,7 +115,7 @@ router.get('/status/:checkoutRequestId', authorize(['admin', 'extension_officer'
         }
         if (sub.userId !== req.user!.userId && req.user!.role !== 'admin') return res.status(403).json({ success: false, error: 'Forbidden' });
         res.json({ success: true, data: { status: sub.status, receipt: sub.status === 'verified' ? sub.transactionId : null, reason: sub.rejectionReason } });
-    } catch (error) {
+    } catch (_error) {
         safeError(res, 500, 'Status lookup failed');
     }
 });

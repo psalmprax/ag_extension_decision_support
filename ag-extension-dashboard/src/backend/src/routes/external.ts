@@ -135,7 +135,7 @@ router.get('/map', async (_req: Request, res: Response) => {
     try {
         const mapData = await getMapData();
         res.json({ success: true, data: mapData });
-    } catch (error) {
+    } catch (_error) {
         safeError(res, 500, 'Failed to fetch map data');
     }
 });

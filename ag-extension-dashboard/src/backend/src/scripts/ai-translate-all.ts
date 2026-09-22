@@ -220,7 +220,7 @@ async function run() {
         const targetName = langNames[code] || code;
         try {
             dictionaries[code] = await aiTranslateDictionary(code, targetName, enDict, dictionaries[code]);
-        } catch (err) {
+        } catch (_err) {
             stoppedByRateLimit = true;
             break;
         }

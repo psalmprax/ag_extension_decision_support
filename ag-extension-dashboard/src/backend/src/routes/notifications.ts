@@ -253,7 +253,7 @@ router.post('/broadcast', authorize(['admin', 'regional_manager']), async (req: 
             success: true,
             data: { sent: usersResult.rows.length }
         });
-    } catch (error) {
+    } catch (_error) {
         safeError(res, 500, 'Failed to broadcast notification');
     }
 });

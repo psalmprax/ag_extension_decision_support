@@ -183,7 +183,7 @@ export function initializeSocketHandlers(io: SocketServer): void {
             };
             
             next();
-        } catch (error) {
+        } catch (_error) {
             logger.warn(`Socket authentication failed: ${socket.id}`);
             next(new Error('Invalid authentication token'));
         }
