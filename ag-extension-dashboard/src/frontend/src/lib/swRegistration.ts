@@ -10,7 +10,7 @@ import { registerSW } from 'virtual:pwa-register';
 export const registerServiceWorker = () => {
   return registerSW({
     immediate: true,
-    onRegisterError(err) {
+    onRegisterError(err: Error) {
       if (import.meta.env.DEV) {
         console.warn(
           '[SW] Service worker registration failed — continuing without PWA features:',
@@ -18,7 +18,7 @@ export const registerServiceWorker = () => {
         );
       }
     },
-    onRegistered(registration) {
+    onRegistered(registration: ServiceWorkerRegistration | undefined | null) {
       if (registration && import.meta.env.DEV) {
         console.log('[SW] Service worker registered successfully');
       }

@@ -3,7 +3,7 @@ import { Sparkles, Play, Pause, RotateCcw, Volume2, VolumeX } from 'lucide-react
 import { playStageChime, playScrubTick, isAudioEnabled, setAudioMuted } from '@/lib/audioHaptics';
 import { AGRO_STAGES, type AgroStageMeta } from './agroStages';
 
-export { AGRO_STAGES, type AgroStageMeta };
+export { type AgroStageMeta };
 
 export interface AgroEcosystemCanvasScrubberProps {
   /** Scroll or manual progress value (0.0 to 1.0) */

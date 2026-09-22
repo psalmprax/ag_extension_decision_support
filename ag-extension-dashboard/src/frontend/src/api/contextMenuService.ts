@@ -174,7 +174,3 @@ export const fetchContextMenu = async (
     };
   }
 };
-
-export const getUnavailableMenu = (entityType: string): ContextMenuData => {
-  return getDefaultContextMenu(entityType);
-};

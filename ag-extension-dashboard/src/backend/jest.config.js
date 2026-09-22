@@ -24,7 +24,7 @@ module.exports = {
       },
     ],
   },
-  // otplib's @scure/* transitive deps ship ESM-only: transform them instead of
+  // otplib's @scure/* and @noble/* transitive deps ship ESM-only: transform them instead of
   // ignoring the whole node_modules tree.
   transformIgnorePatterns: ['/node_modules/(?!(@scure|@noble)/)'],
   testMatch: ['**/__tests__/**/*.test.ts'],

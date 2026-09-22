@@ -119,7 +119,7 @@ export function extractVisuals(text: string): any {
                 return JSON.parse(possibleJson);
             }
         }
-    } catch (e) {
+    } catch (_e) {
         return null;
     }
     return null;

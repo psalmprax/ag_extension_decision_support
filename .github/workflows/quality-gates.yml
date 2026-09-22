@@ -55,15 +55,10 @@ jobs:
           cache: npm
           cache-dependency-path: |
             ag-extension-dashboard/src/backend/package-lock.json
-            ag-extension-dashboard/src/frontend/package-lock.json
+            package-lock.json
 
-      - name: Install backend dependencies
-        working-directory: ag-extension-dashboard/src/backend
+      - name: Install workspace dependencies
         run: npm ci
-
-      - name: Install frontend dependencies
-        working-directory: ag-extension-dashboard/src/frontend
-        run: npm ci --workspaces=false
 
       - name: Generate Prisma client
         working-directory: ag-extension-dashboard/src/backend

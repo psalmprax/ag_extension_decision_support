@@ -136,7 +136,6 @@ export class AIHubMixAccountService {
   /**
    * GET /api/user/token — Rotates the Access Key immediately (DESTRUCTIVE write)
    */
-  // fallow-ignore-next-line unused-class-member
   public async rotateAccessKey(): Promise<string> {
     try {
       logger.warn('Rotating AIHubMix Access Key — previous key will be invalidated immediately');
@@ -186,7 +185,6 @@ export class AIHubMixAccountService {
   /**
    * GET /api/token/:id — Show one API key
    */
-  // fallow-ignore-next-line unused-class-member
   public async getToken(id: number): Promise<AIHubMixToken> {
     try {
       const res = await axios.get<{ success: boolean; data: AIHubMixToken }>(
@@ -228,7 +226,6 @@ export class AIHubMixAccountService {
   /**
    * PUT /api/token/ — Update an API key
    */
-  // fallow-ignore-next-line unused-class-member
   public async updateToken(token: Partial<AIHubMixToken> & { id: number }): Promise<boolean> {
     try {
       const res = await axios.put<{ success: boolean }>(
@@ -246,7 +243,6 @@ export class AIHubMixAccountService {
   /**
    * DELETE /api/token/:id — Delete an API key
    */
-  // fallow-ignore-next-line unused-class-member
   public async deleteToken(id: number): Promise<boolean> {
     try {
       const res = await axios.delete<{ success: boolean }>(

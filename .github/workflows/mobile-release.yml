@@ -26,11 +26,10 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
-          cache-dependency-path: ag-extension-dashboard/src/frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install Dependencies
-        working-directory: ag-extension-dashboard/src/frontend
-        run: npm ci --workspaces=false
+        run: npm ci --workspace=ag-extension-frontend
       - name: Run Typecheck & Tests
         working-directory: ag-extension-dashboard/src/frontend
         run: |
@@ -79,9 +78,9 @@ jobs:
           path: ag-extension-dashboard/src/frontend/dist
 
       - name: Prepare Capacitor Android
-        working-directory: ag-extension-dashboard/src/frontend
         run: |
-          npm ci
+          npm ci --workspace=ag-extension-frontend
+          cd ag-extension-dashboard/src/frontend
           npx --yes @capacitor/cli sync android
 
       - name: Build Signed Android APK/AAB

@@ -1,7 +1,6 @@
 import React from 'react';
 import { ABTestToggle } from './ABTestToggle';
 
-export { ABTestToggle };
 
 interface DesignToggleProps {
   className?: string;

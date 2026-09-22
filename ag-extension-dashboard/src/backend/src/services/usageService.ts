@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger';
-import { isSubscriptionActive } from './paymentService';
+import { isSubscriptionActive } from './subscriptionUtils';
 import { config } from '@/config';
 
 let prisma: PrismaClient;

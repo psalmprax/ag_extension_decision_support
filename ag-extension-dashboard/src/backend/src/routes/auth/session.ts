@@ -6,7 +6,7 @@ import { logger } from '@/utils/logger';
 import { getLoginHistory, getLoginStats } from '@/services/loginHistoryService';
 import { isSessionValid } from '@/services/sessionService';
 import { setAuthCookie, clearAuthCookie, getBearerToken } from '@/middleware/authCookie';
-import { isSubscriptionActive } from '@/services/paymentService';
+import { isSubscriptionActive } from '@/services/subscriptionUtils';
 
 const router = Router();
 

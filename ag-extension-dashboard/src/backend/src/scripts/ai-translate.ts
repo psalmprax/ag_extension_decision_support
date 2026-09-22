@@ -74,7 +74,7 @@ async function translateMissingKeys(sourceDict: Record<string, Record<string, st
                 const jsonText = result.text.match(/\{[\s\S]*\}/)?.[0] || result.text;
                 Object.assign(sourceDict[lang], JSON.parse(jsonText));
                 console.log(`   - AI Chunk ${Math.ceil((i+1)/chunkSize)} success`);
-            } catch (err) {
+            } catch (_err) {
                 console.warn(`   ⚠️ AI failed for chunk (using English fallbacks)`);
                 break; // Stop trying AI for this language if it's failing
             }

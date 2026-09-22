@@ -24,18 +24,16 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: ag-extension-dashboard/src/frontend/package-lock.json
+          cache-dependency-path: package-lock.json
       
-      - name: Install frontend dependencies
-        run: |
-          cd ag-extension-dashboard/src/frontend
-          npm ci --workspaces=false
+      - name: Install dependencies (root + workspaces)
+        run: npm ci
       
       - name: Lint frontend
         run: |
           cd ag-extension-dashboard/src/frontend
           npm run lint
-
+  
       - name: Validate locale translations
         run: |
           cd ag-extension-dashboard/src/frontend
@@ -110,12 +108,10 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: ag-extension-dashboard/src/backend/package-lock.json
+          cache-dependency-path: package-lock.json
       
-      - name: Install backend dependencies
-        run: |
-          cd ag-extension-dashboard/src/backend
-          npm ci --workspaces=false
+      - name: Install dependencies (root + workspaces)
+        run: npm ci
 
       - name: Generate Prisma client
         run: |
@@ -263,19 +259,17 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: ag-extension-dashboard/src/backend/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install backend dependencies
-        run: |
-          cd ag-extension-dashboard/src/backend
-          npm ci --workspaces=false
+      - name: Install dependencies (root + workspaces)
+        run: npm ci
 
       - name: Replay migrations on fresh DB and diff against schema
         run: node scripts/prisma-migration-replay-check.cjs
         env:
           MIGRATION_CHECK_DATABASE_URL: postgres://migration_gate:gate@localhost:5432/migration_gate
 
-  # Full-Spectrum Security & Compliance Audit
+# Full-Spectrum Security & Compliance Audit
   security:
     name: Multi-Service Security & Vulnerability Audit
     runs-on: ubuntu-latest
@@ -288,7 +282,12 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
-
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      
+      - name: Install dependencies (root + workspaces)
+        run: npm ci
+      
       - name: Setup Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
@@ -327,16 +326,11 @@ jobs:
       - name: Run Backend Security Tests
         run: |
           cd ag-extension-dashboard/src/backend
-          npm ci --workspaces=false
           npm test -- security
         env:
           NODE_ENV: test
           JWT_SECRET: ci_test_jwt_secret_32_characters_minimum!!
           CREDENTIAL_ENCRYPTION_KEY: ci_test_encryption_key_32_chars_minimum!
-
-      - name: Install frontend dependencies for security tests
-        working-directory: ag-extension-dashboard/src/frontend
-        run: npm ci --workspaces=false
 
       - name: Run Frontend Security & Resilience Tests
         working-directory: ag-extension-dashboard/src/frontend

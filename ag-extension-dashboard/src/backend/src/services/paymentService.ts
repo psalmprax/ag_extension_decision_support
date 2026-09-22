@@ -930,19 +930,3 @@ class PaymentService {
 
 export const paymentService = new PaymentService();
 
-/**
- * Entitlement check for local subscription rows: the plan must be in an active state
- * AND its period must not have ended. A row whose currentPeriodEnd has passed (e.g. a
- * prepaid pass awaiting the expiry sweeper) no longer grants a paid entitlement, even
- * before its status is lapsed by the worker.
- */
-export function isSubscriptionActive(
-    sub: { status?: string | null; currentPeriodEnd?: Date | string | null } | null | undefined
-): boolean {
-    if (!sub) return false;
-    // 'trialing' counts as active (its period end is the trial end); 'past_due' does
-    // not — a failed payment must not keep granting a paid entitlement.
-    if (sub.status !== 'active' && sub.status !== 'trialing') return false;
-    if (sub.currentPeriodEnd === undefined || sub.currentPeriodEnd === null) return false;
-    return new Date(sub.currentPeriodEnd).getTime() > Date.now();
-}

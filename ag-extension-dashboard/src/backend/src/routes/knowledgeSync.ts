@@ -48,7 +48,7 @@ router.get('/status', async (_req: Request, res: Response) => {
         const { KnowledgeSyncOrchestrator } = await import('@/services/data/knowledgeSyncOrchestrator');
         const status = KnowledgeSyncOrchestrator.getStatus();
         res.json({ success: true, data: status });
-    } catch (error) {
+    } catch (_error) {
         safeError(res, 500, 'Failed to get sync status');
     }
 });

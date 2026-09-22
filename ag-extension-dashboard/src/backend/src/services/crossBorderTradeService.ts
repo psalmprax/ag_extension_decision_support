@@ -1,12 +1,18 @@
 /**
  * Cross-border commodity arbitrage estimator — wired via POST /api/pillars/trade/arbitrage.
  *
- * Market prices are a static reference snapshot (not live quotes); freight uses a fixed
+ * Market prices are a static reference snapshot (not live quotes); freight uses an
  * illustrative corridor distance and border fees are flat estimates, not tariff schedules.
  * All of this is disclosed per response via the `provenance` block. Integrate OSRM/HERE
  * routing and a live price feed before treating outputs as actionable trade signals.
+ *
+ * Configuration (via environment variables):
+ * - CROSS_BORDER_FREIGHT_DISTANCE_KM: Default corridor distance in km (default: 650)
+ * - CROSS_BORDER_FREIGHT_RATE_PER_KM: Freight cost per km per ton (default: 0.075)
+ * - CROSS_BORDER_BORDER_FEES_PER_TON: Flat border fees per ton (default: 18.5)
  */
 import { logger } from '../utils/logger';
+import { config } from '../config';
 import { pillarProvenance } from './provenance';
 
 export interface RegionalMarketHub {
@@ -96,10 +102,11 @@ function evaluateMarketPair(
   const grossSpread = +(destPriceUsd - originPriceUsd).toFixed(2);
   if (grossSpread <= 0) return null;
 
-  // Illustrative freight model: fixed corridor distance; real corridors require OSRM/HERE routing
-  const distanceKm = 650;
-  const freightCost = +(distanceKm * 0.075).toFixed(2);
-  const borderFees = 18.5; // Flat per-ton SPS + bond estimate (not a tariff schedule)
+  // Freight model: configurable corridor distance; real corridors require OSRM/HERE routing
+  const distanceKm = config.crossBorder?.freightDistanceKm ?? 650;
+  const freightRatePerKm = config.crossBorder?.freightRatePerKm ?? 0.075;
+  const freightCost = +(distanceKm * freightRatePerKm).toFixed(2);
+  const borderFees = config.crossBorder?.borderFeesPerTon ?? 18.5; // Flat per-ton SPS + bond estimate (not a tariff schedule)
 
   const netProfit = +(grossSpread - (freightCost + borderFees)).toFixed(2);
   const netMarginPct = +((netProfit / originPriceUsd) * 100).toFixed(1);
@@ -127,8 +134,8 @@ function evaluateMarketPair(
       'Computed over a static reference price snapshot with an illustrative freight model. Not a live market feed; treat as a screening estimate only.',
       [
         'Prices are a static in-code snapshot (no live feed)',
-        'Freight distance fixed at 650km for all corridors',
-        'Border fees flat at $18.50/ton (not a tariff schedule)',
+        `Freight distance fixed at ${distanceKm}km for all corridors (configurable via CROSS_BORDER_FREIGHT_DISTANCE_KM)`,
+        `Border fees flat at $${borderFees}/ton (not a tariff schedule) (configurable via CROSS_BORDER_BORDER_FEES_PER_TON)`,
       ],
       true
     ),
