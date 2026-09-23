@@ -302,7 +302,7 @@ The system enforces four primary operational protocols:
    * Enforces zero regressions, eradication of dead stubs, offline graceful degradation, bounded memory usage for media streaming, and 100% CI green compliance.
    * Automated verification: `npm run verify:anti-flop`.
 
-2. **[`anti_hullicination.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/anti_hullicination.md) (`AG-SKILL-AH-01`)**:
+2. **[`anti_hallucination.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/anti_hallucination.md) (`AG-SKILL-AH-01`)**:
    * Enforces epistemic grounding: inspect source before asserting facts, reject uninstalled dependencies, prevent hallucinated agrochemical dosages or fake AI capabilities, and respect Prisma schema sovereignty.
    * Automated verification: `npm run verify:anti-hallucination`.
 

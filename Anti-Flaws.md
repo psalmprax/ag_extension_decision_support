@@ -34,7 +34,7 @@ flowchart TD
 ```
 
 * **Flop ([`anti_flop.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/anti_flop.md))**: Direct failure modes—broken builds, failing unit tests, dead stubs, unhandled runtime crashes, or regression breaches.
-* **Hallucination ([`anti_hullicination.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/anti_hullicination.md))**: Epistemic untruths—claiming code works without testing, referencing non-existent npm modules, or inventing imaginary database fields.
+* **Hallucination ([`anti_hallucination.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/anti_hallucination.md))**: Epistemic untruths—claiming code works without testing, referencing non-existent npm modules, or inventing imaginary database fields.
 * **Flaw (This Protocol)**: An **insidious design defect, architectural anti-pattern, agronomic safety blindspot, unit distortion, state race condition, or operational impossibility** that compiles cleanly and passes basic happy-path tests, but creates crop destruction, pesticide poisoning, data leakage, fraudulent visit reporting, or systemic unmaintainability.
 
 ---
