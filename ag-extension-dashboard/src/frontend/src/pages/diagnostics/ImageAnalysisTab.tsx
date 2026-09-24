@@ -323,12 +323,46 @@ export function ImageAnalysisTab({
     try {
       const base64Promise = new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = e => resolve(e.target?.result as string);
+        reader.onload = e => {
+          const rawResult = e.target?.result as string;
+          if (!rawResult) {
+            resolve('');
+            return;
+          }
+          // Downscale high-resolution smartphone photos (e.g. 48MP) to 1920px max dimension
+          // to conserve mobile bandwidth, eliminate 413 payload limits, and speed up CV inference
+          const img = new Image();
+          img.onload = () => {
+            const maxDim = 1920;
+            let { width, height } = img;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', 0.88));
+                return;
+              }
+            }
+            resolve(rawResult);
+          };
+          img.onerror = () => resolve(rawResult);
+          img.src = rawResult;
+        };
         reader.onerror = err => reject(err);
         reader.readAsDataURL(selectedImage);
       });
       const base64 = await base64Promise;
-      const imageData = base64.split(',')[1];
+      const imageData = base64.includes(',') ? base64.split(',')[1] : base64;
 
       if (!navigator.onLine) {
         queueSpecimenForAnalysis(imageData, cropType || undefined);
@@ -348,12 +382,19 @@ export function ImageAnalysisTab({
           message: 'Plant image analysis failed — no diagnosis was generated.',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Image analysis error:', error);
-      toast.error('Could not reach the analysis service. No diagnosis was generated.');
+      const isPayloadTooLarge = error?.response?.status === 413;
+      toast.error(
+        isPayloadTooLarge
+          ? 'Image file is too large for the analysis server. Please select a smaller photo.'
+          : 'Could not reach the analysis service. No diagnosis was generated.'
+      );
       addNotification({
         type: 'error',
-        message: 'Failed to analyze image — no diagnosis was generated.',
+        message: isPayloadTooLarge
+          ? 'Image upload failed: payload too large (413).'
+          : 'Failed to analyze image — no diagnosis was generated.',
       });
     } finally {
       setIsAnalyzingImage(false);
