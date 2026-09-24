@@ -153,7 +153,7 @@ const LARGE_BODY_ROUTES = [
     '/api/v1/pillars', '/api/v1/upload', '/api/v1/whatsapp',
 ];
 const largeBodyParser = express.json({
-    limit: '16mb',
+    limit: process.env.LARGE_BODY_LIMIT || '50mb',
     verify: (req, _res, buf) => {
         (req as Request).rawBody = buf;
     },
