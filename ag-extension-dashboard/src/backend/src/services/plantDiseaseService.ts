@@ -323,7 +323,7 @@ class PlantDiseaseService {
     },
   };
 
-  async analyzeImage(imageData: string | Buffer): Promise<PlantImageAnalysis> {
+  async analyzeImage(imageData: string | Buffer, cropType?: string): Promise<PlantImageAnalysis> {
     try {
       let base64Image: string;
       if (Buffer.isBuffer(imageData)) {
@@ -334,7 +334,12 @@ class PlantDiseaseService {
         base64Image = imageData as string;
       }
 
-      const prompt = `You are a professional agricultural plant pathologist. Analyze this plant leaf image.
+      const cropSpecifier = cropType && cropType.trim() && cropType.toLowerCase() !== 'all' && cropType.toLowerCase() !== 'unspecified'
+        ? `Target crop identified: ${cropType.trim()}. Focus specifically on known pathology, physiological stress markers, and nutrient dynamics for ${cropType.trim()}.`
+        : 'Analyze the specimen leaf image across known crop pathology and plant physiology.';
+
+      const prompt = `You are a professional agricultural plant pathologist and crop extension specialist.
+${cropSpecifier}
 Provide a diagnostic analysis in JSON format. The JSON MUST strictly match the following schema:
 {
   "overallHealth": "healthy" | "stressed" | "diseased",
@@ -353,7 +358,10 @@ Provide a diagnostic analysis in JSON format. The JSON MUST strictly match the f
   "recommendations": ["Recommendation 1"],
   "confidence": number (overall analysis confidence, 0 to 100)
 }
-IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do not write any conversational text.`;
+IMPORTANT GUIDELINES:
+- If overallHealth is "stressed", specify the exact nutrient deficiency (e.g., Nitrogen, Potassium, Iron, Magnesium) or abiotic stress factor (e.g., drought, heat scorch, waterlogging).
+- Tailor treatments, foliar sprays, and cultural practices specifically to the targeted crop if provided.
+- Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do not write any conversational text.`;
 
       const result = await AIRouter.routeRequest('vision', {
         imageData: base64Image,
@@ -385,8 +393,8 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
   }
 
   /** Alias for analyzeImage for contract compatibility */
-  async analyzePlantImage(imageData: string | Buffer): Promise<PlantImageAnalysis> {
-    return this.analyzeImage(imageData);
+  async analyzePlantImage(imageData: string | Buffer, cropType?: string): Promise<PlantImageAnalysis> {
+    return this.analyzeImage(imageData, cropType);
   }
 
   async analyzeSoilImage(imageData: string | Buffer, details?: any): Promise<SoilAnalysisResult> {

@@ -214,7 +214,7 @@ router.post('/diagnose', allowedRoles, checkUsageLimit('ai_vision'), async (req:
 // Analyze plant image with database log telemetry
 router.post('/diagnose/image', allowedRoles, checkUsageLimit('ai_vision'), async (req: AuthRequest, res: Response) => {
     try {
-        const { imageData } = req.body;
+        const { imageData, cropType } = req.body;
 
         if (!imageData) {
             return res.status(400).json({ success: false, error: 'Image data is required' });
@@ -224,7 +224,7 @@ router.post('/diagnose/image', allowedRoles, checkUsageLimit('ai_vision'), async
 
         if (rejectUnsafeRecommendation(req, res)) return;
 
-        const analysis = await plantDiseaseService.analyzeImage(imageData);
+        const analysis = await plantDiseaseService.analyzeImage(imageData, cropType);
 
         const reportId = await saveDiagnosisReport(req, analysis);
 
@@ -262,7 +262,8 @@ router.post('/diagnose/soil', allowedRoles, checkUsageLimit('ai_vision'), async 
             return res.status(413).json({ success: false, error: `Soil image size exceeds maximum limit of ${MAX_UPLOAD_BYTES / (1024 * 1024)}MB` });
         }
 
-        const analysis = await plantDiseaseService.analyzeSoilImage(imageData, details);
+        const enrichedDetails = cropType ? { ...(details || {}), targetCrop: cropType } : details;
+        const analysis = await plantDiseaseService.analyzeSoilImage(imageData, enrichedDetails);
 
         // Save report telemetry
         let reportId: string | null = null;
