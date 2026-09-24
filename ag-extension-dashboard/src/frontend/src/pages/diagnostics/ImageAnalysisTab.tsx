@@ -289,6 +289,50 @@ const AnalysisResultsHUD: React.FC<{
   );
 };
 
+function getBoundedDimensions(width: number, height: number, maxDim: number): { width: number; height: number } {
+  if (width <= maxDim && height <= maxDim) {
+    return { width, height };
+  }
+  if (width > height) {
+    return { width: maxDim, height: Math.round((height * maxDim) / width) };
+  }
+  return { width: Math.round((width * maxDim) / height), height: maxDim };
+}
+
+function downscaleImageCanvas(img: HTMLImageElement, rawFallback: string): string {
+  const maxDim = 1920;
+  const { width, height } = getBoundedDimensions(img.width, img.height, maxDim);
+  if (width === img.width && height === img.height) {
+    return rawFallback;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return rawFallback;
+  ctx.drawImage(img, 0, 0, width, height);
+  return canvas.toDataURL('image/jpeg', 0.88);
+}
+
+function processImageFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const rawResult = (e.target?.result as string) || '';
+      if (!rawResult) {
+        resolve('');
+        return;
+      }
+      const img = new Image();
+      img.onload = () => resolve(downscaleImageCanvas(img, rawResult));
+      img.onerror = () => resolve(rawResult);
+      img.src = rawResult;
+    };
+    reader.onerror = err => reject(err);
+    reader.readAsDataURL(file);
+  });
+}
+
 export function ImageAnalysisTab({
   cropType,
   setCropType,
@@ -321,47 +365,7 @@ export function ImageAnalysisTab({
     setOfflineQueued(false);
 
     try {
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = e => {
-          const rawResult = e.target?.result as string;
-          if (!rawResult) {
-            resolve('');
-            return;
-          }
-          // Downscale high-resolution smartphone photos (e.g. 48MP) to 1920px max dimension
-          // to conserve mobile bandwidth, eliminate 413 payload limits, and speed up CV inference
-          const img = new Image();
-          img.onload = () => {
-            const maxDim = 1920;
-            let { width, height } = img;
-            if (width > maxDim || height > maxDim) {
-              if (width > height) {
-                height = Math.round((height * maxDim) / width);
-                width = maxDim;
-              } else {
-                width = Math.round((width * maxDim) / height);
-                height = maxDim;
-              }
-              const canvas = document.createElement('canvas');
-              canvas.width = width;
-              canvas.height = height;
-              const ctx = canvas.getContext('2d');
-              if (ctx) {
-                ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', 0.88));
-                return;
-              }
-            }
-            resolve(rawResult);
-          };
-          img.onerror = () => resolve(rawResult);
-          img.src = rawResult;
-        };
-        reader.onerror = err => reject(err);
-        reader.readAsDataURL(selectedImage);
-      });
-      const base64 = await base64Promise;
+      const base64 = await processImageFile(selectedImage);
       const imageData = base64.includes(',') ? base64.split(',')[1] : base64;
 
       if (!navigator.onLine) {
@@ -382,9 +386,10 @@ export function ImageAnalysisTab({
           message: 'Plant image analysis failed — no diagnosis was generated.',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Image analysis error:', error);
-      const isPayloadTooLarge = error?.response?.status === 413;
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      const isPayloadTooLarge = status === 413;
       toast.error(
         isPayloadTooLarge
           ? 'Image file is too large for the analysis server. Please select a smaller photo.'
