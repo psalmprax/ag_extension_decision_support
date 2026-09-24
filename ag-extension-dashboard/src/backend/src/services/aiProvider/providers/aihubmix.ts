@@ -603,7 +603,7 @@ export class AIHubMixProvider extends BaseAIProvider {
           model,
           messages,
           temperature: options?.temperature ?? 0.2,
-          max_tokens: options?.maxTokens ?? 1000,
+          max_tokens: options?.maxTokens ?? 3000,
         },
         {
           headers: {
@@ -618,6 +618,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       return {
         analysis: choice?.message?.content || 'Unable to analyze image',
         model,
+        provider: 'AIMixHub',
         usage: response.data?.usage ? {
           promptTokens: response.data.usage.prompt_tokens || 0,
           completionTokens: response.data.usage.completion_tokens || 0,

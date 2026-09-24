@@ -308,6 +308,7 @@ describe('AIHubMix Integration (REST Account API, MCP Tool & Model Provider)', (
 
       expect(result.analysis).toContain('Late Blight');
       expect(result.model).toBe('gemini-2.5-flash');
+      expect(result.provider).toBe('AIMixHub');
       expect(result.usage?.totalTokens).toBe(195);
       expect(mockedAxios.post).toHaveBeenCalledWith(
         'https://aihubmix.com/v1/chat/completions',

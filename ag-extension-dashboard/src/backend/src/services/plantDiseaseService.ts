@@ -93,6 +93,16 @@ function createProvenance(
   };
 }
 
+function resolveVisionProvider(provider?: string | null): string {
+  if (!provider || provider === 'multimodal_vision_router') {
+    return 'AIMixHub';
+  }
+  if (provider.toLowerCase() === 'aihubmix' || provider.toLowerCase() === 'aimixhub') {
+    return 'AIMixHub';
+  }
+  return provider;
+}
+
 class PlantDiseaseService {
   private static readonly DISEASE_DATABASE: Record<string, {
     symptoms: string[];
@@ -348,12 +358,14 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
       const result = await AIRouter.routeRequest('vision', {
         imageData: base64Image,
         prompt,
-        options: { temperature: 0.2 },
+        options: { temperature: 0.2, maxTokens: 3000 },
       });
       const generatedAt = new Date().toISOString();
-      const provenance = createProvenance('AI vision analysis via AIRouter', generatedAt, {
-        provider: result?.provider || 'multimodal_vision_router',
-        model: result?.model || 'vision_llm',
+      const providerName = resolveVisionProvider(result?.provider);
+      const modelName = result?.model || 'gemini-2.5-flash';
+      const provenance = createProvenance(`AI vision analysis via ${providerName}`, generatedAt, {
+        provider: providerName,
+        model: modelName,
       });
       const rawAnalysis = typeof result === 'string' ? result : (result?.analysis || JSON.stringify(result));
       const parsed = this.parseJSONResponse<PlantImageAnalysis>(rawAnalysis);
@@ -411,12 +423,14 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
       const result = await AIRouter.routeRequest('vision', {
         imageData: base64Image,
         prompt,
-        options: { temperature: 0.2 },
+        options: { temperature: 0.2, maxTokens: 3000 },
       });
       const generatedAt = new Date().toISOString();
-      const provenance = createProvenance('AI soil image analysis via AIRouter', generatedAt, {
-        provider: result?.provider || 'multimodal_vision_router',
-        model: result?.model || 'vision_llm',
+      const providerName = resolveVisionProvider(result?.provider);
+      const modelName = result?.model || 'gemini-2.5-flash';
+      const provenance = createProvenance(`AI soil image analysis via ${providerName}`, generatedAt, {
+        provider: providerName,
+        model: modelName,
       });
       const rawAnalysis = typeof result === 'string' ? result : (result?.analysis || JSON.stringify(result));
       const parsed = this.parseJSONResponse<SoilAnalysisResult>(rawAnalysis);
@@ -481,19 +495,47 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
     };
   }
 
-  private parseJSONResponse<T>(content: string): T | null {
+  private parseJSONResponse<T>(content: unknown): T | null {
+    if (!content) return null;
+    if (typeof content === 'object') return content as T;
+    if (typeof content !== 'string') return null;
+
     try {
-      let rawJson = content;
-      const jsonBlockRegex = /```json\s*([\s\S]*?)\s*```/;
-      const match = content.match(jsonBlockRegex);
+      let rawJson = content.trim();
+
+      // 1. Try markdown code block with optional json/JSON tag
+      const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/i;
+      const match = rawJson.match(jsonBlockRegex);
       if (match && match[1]) {
-        rawJson = match[1];
-      } else {
-        rawJson = content.replace(/```/g, '').trim();
+        rawJson = match[1].trim();
       }
-      return JSON.parse(rawJson) as T;
+
+      // 2. Extract outermost { ... }
+      const firstBrace = rawJson.indexOf('{');
+      const lastBrace = rawJson.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        rawJson = rawJson.substring(firstBrace, lastBrace + 1);
+      }
+
+      // 3. Clean trailing commas and common comments
+      const cleanedJson = rawJson
+        .replace(/,\s*([}\]])/g, '$1')
+        .replace(/\/\/[^\n\r]*/g, '')
+        .replace(/\/\*[\s\S]*?\*\//g, '');
+
+      return JSON.parse(cleanedJson) as T;
     } catch (e) {
       logger.error('JSON parsing from vision provider response failed. Content:', content, e);
+      try {
+        const str = content as string;
+        const firstBrace = str.indexOf('{');
+        const lastBrace = str.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          return JSON.parse(str.substring(firstBrace, lastBrace + 1)) as T;
+        }
+      } catch {
+        // secondary parse error ignored
+      }
       return null;
     }
   }
