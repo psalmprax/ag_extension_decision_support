@@ -70,7 +70,30 @@ export class AIProviderFactory {
         preferredProvider?: AIProviderType,
         telemetryContext?: { correlationId?: string; userId?: string; operation?: string; promptText?: string }
     ): Promise<any> {
-        // Define all available providers for cascading fallback
+        const allProviders = await this.buildProviderChain(preferredProvider);
+        let lastError: Error | null = null;
+        const context = this.resolveAttemptContext(telemetryContext);
+
+        for (const [attempt, providerType] of allProviders.entries()) {
+            const outcome = await this.tryProviderOperation(providerType, attempt, operation, context);
+            if (outcome.success) {
+                return outcome.result;
+            }
+            if (outcome.error) {
+                lastError = outcome.error;
+            }
+        }
+
+        const omniResult = await this.tryOmniRouteFallback(telemetryContext?.promptText);
+        if (omniResult) {
+            return omniResult;
+        }
+
+        logger.error('All AI providers failed (including OmniRoute free tier)');
+        throw lastError || new Error('All AI providers failed — no provider is configured or healthy');
+    }
+
+    private static async buildProviderChain(preferredProvider?: AIProviderType): Promise<AIProviderType[]> {
         let allProviders: AIProviderType[] = Array.from(new Set([
             this.primaryProvider,
             this.fallbackProvider,
@@ -85,67 +108,67 @@ export class AIProviderFactory {
             'freebuff',
         ])).filter((p): p is AIProviderType => Boolean(p));
 
-        // If a caller (e.g. free-tier routing) prefers a specific provider,
-        // put it at the front of the chain so it's tried first.
         if (preferredProvider) {
             allProviders = Array.from(new Set([preferredProvider, ...allProviders])).filter((p): p is AIProviderType => Boolean(p));
         }
 
-        allProviders = await this.prioritizeConfiguredProviders(allProviders);
+        return this.prioritizeConfiguredProviders(allProviders);
+    }
 
-        let lastError: Error | null = null;
-        const context = this.resolveAttemptContext(telemetryContext);
+    private static async tryProviderOperation(
+        providerType: AIProviderType,
+        attempt: number,
+        operation: (provider: AICapability) => Promise<any>,
+        context: { correlationId?: string; userId?: string; operation: string }
+    ): Promise<{ success: true; result: any } | { success: false; error: Error | null }> {
+        const startedAt = Date.now();
+        try {
+            const provider = await this.getProvider(providerType);
 
-        for (const [attempt, providerType] of allProviders.entries()) {
-            const startedAt = Date.now();
-            try {
-                const provider = await this.getProvider(providerType);
-
-                if (!provider.isConfigured()) {
-                    logger.debug(`AI provider ${providerType} not configured, skipping...`);
-                    continue;
-                }
-
-                const isHealthy = await this.checkProviderHealth(providerType, provider);
-
-                if (!isHealthy) {
-                    await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'error', 'provider_unhealthy');
-                    logger.warn(`AI provider ${providerType} unhealthy, trying next...`);
-                    continue;
-                }
-
-                logger.info(`Using AI provider: ${providerType}`);
-                const result = await operation(provider);
-                this.healthCache.set(providerType, { isHealthy: true, expiresAt: Date.now() + 120_000 });
-                await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'success', undefined, result);
-                return result;
-            } catch (error) {
-                this.healthCache.set(providerType, { isHealthy: false, expiresAt: Date.now() + 45_000 });
-                lastError = error instanceof Error ? error : new Error(String(error));
-                await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'error', lastError.message);
-                logger.warn(`AI provider ${providerType} failed:`, error);
+            if (!provider.isConfigured()) {
+                logger.debug(`AI provider ${providerType} not configured, skipping...`);
+                return { success: false, error: null };
             }
-        }
 
-        // ── Final safety net: free LLM cascade via OmniRoute ──
-        const promptText = telemetryContext?.promptText;
-        if (promptText) {
-            try {
-                const { OmniRouteService } = await import('@/services/omniRouteService');
-                const fallback = await OmniRouteService.executeWithFailover([
-                    { role: 'user', content: promptText }
-                ]);
-                logger.info(
-                    `OmniRoute free-model fallback succeeded: ${fallback.providerUsed}/${fallback.modelUsed}`
-                );
-                return { text: fallback.text, providerUsed: fallback.providerUsed, modelUsed: fallback.modelUsed, isFreeModel: true };
-            } catch (omniError) {
-                logger.warn('OmniRoute free-model fallback also failed:', omniError);
+            const isHealthy = await this.checkProviderHealth(providerType, provider);
+            if (!isHealthy) {
+                await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'error', 'provider_unhealthy');
+                logger.warn(`AI provider ${providerType} unhealthy, trying next...`);
+                return { success: false, error: null };
             }
-        }
 
-        logger.error('All AI providers failed (including OmniRoute free tier)');
-        throw lastError || new Error('All AI providers failed — no provider is configured or healthy');
+            logger.info(`Using AI provider: ${providerType}`);
+            const result = await operation(provider);
+            this.healthCache.set(providerType, { isHealthy: true, expiresAt: Date.now() + 120_000 });
+            await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'success', undefined, result);
+            if (result && typeof result === 'object' && !result.provider) {
+                result.provider = providerType === 'aihubmix' ? 'AIMixHub' : providerType;
+            }
+            return { success: true, result };
+        } catch (error) {
+            this.healthCache.set(providerType, { isHealthy: false, expiresAt: Date.now() + 45_000 });
+            const err = error instanceof Error ? error : new Error(String(error));
+            await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'error', err.message);
+            logger.warn(`AI provider ${providerType} failed:`, error);
+            return { success: false, error: err };
+        }
+    }
+
+    private static async tryOmniRouteFallback(promptText?: string): Promise<any | null> {
+        if (!promptText) return null;
+        try {
+            const { OmniRouteService } = await import('@/services/omniRouteService');
+            const fallback = await OmniRouteService.executeWithFailover([
+                { role: 'user', content: promptText }
+            ]);
+            logger.info(
+                `OmniRoute free-model fallback succeeded: ${fallback.providerUsed}/${fallback.modelUsed}`
+            );
+            return { text: fallback.text, providerUsed: fallback.providerUsed, modelUsed: fallback.modelUsed, isFreeModel: true };
+        } catch (omniError) {
+            logger.warn('OmniRoute free-model fallback also failed:', omniError);
+            return null;
+        }
     }
 
     private static resolveAttemptContext(telemetryContext?: { correlationId?: string; userId?: string; operation?: string }) {

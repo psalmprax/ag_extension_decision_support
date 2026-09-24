@@ -163,7 +163,9 @@ export interface ImageAnalysisResult {
         completionTokens: number;
         totalTokens: number;
     };
+    provider?: string;
 }
+
 
 export interface VideoAnalysisOptions {
     model?: string;

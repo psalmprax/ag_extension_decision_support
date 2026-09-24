@@ -20,7 +20,7 @@ interface Props {
   getSeverityColor: (severity: string) => string;
 }
 
-interface ImageAnalysisData {
+export interface ImageAnalysisData {
   overallHealth: string;
   diseases: DiseaseDiagnosis[];
   recommendations: string[];
@@ -151,7 +151,7 @@ const ImageUploadViewfinder: React.FC<{
   </div>
 );
 
-const AnalysisResultsHUD: React.FC<{
+export const AnalysisResultsHUD: React.FC<{
   imageAnalysis: ImageAnalysisData | null;
   imagePreview: string | null;
   offlineQueued: boolean;
@@ -217,7 +217,11 @@ const AnalysisResultsHUD: React.FC<{
             </h4>
           </div>
           <p className="text-[10px] font-mono text-slate-400 mt-1">
-            Source: {imageAnalysis.provenance.source} {imageAnalysis.provenance.provider ? `(${imageAnalysis.provenance.provider})` : ''}
+            Source: {imageAnalysis.provenance.source}
+            {imageAnalysis.provenance.provider &&
+            !imageAnalysis.provenance.source.toLowerCase().includes(imageAnalysis.provenance.provider.toLowerCase())
+              ? ` (${imageAnalysis.provenance.provider})`
+              : ''}
           </p>
         </div>
         <div className="text-right">
