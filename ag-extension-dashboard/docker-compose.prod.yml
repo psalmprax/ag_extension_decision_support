@@ -62,7 +62,7 @@ services:
     environment:
       NODE_ENV: production
       LOG_LEVEL: ${LOG_LEVEL:-warn}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://www.gpexts.com}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://www.gpexts.com,https://gpexts.com}
       # Demo login is opt-in in production and must never ship with a default password.
       DEMO_ENABLED: ${DEMO_ENABLED:-false}
       DEMO_PASSWORD: ${DEMO_PASSWORD:-}

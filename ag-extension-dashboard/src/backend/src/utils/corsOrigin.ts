@@ -31,11 +31,50 @@ function matchesWildcardSuffix(origin: string, entry: string): boolean {
     return /^https:\/\//i.test(origin);
 }
 
+/**
+ * Match paired apex and www domains over the same scheme and port
+ * (e.g., https://www.gpexts.com <-> https://gpexts.com).
+ * This ensures that if either the www subdomain or the apex domain is
+ * whitelisted, the corresponding counterpart is also trusted.
+ */
+function matchesApexOrWww(origin: string, allowedOrigin: string): boolean {
+    if (!/^https?:\/\//i.test(origin) || !/^https?:\/\//i.test(allowedOrigin)) {
+        return false;
+    }
+    try {
+        const originUrl = new URL(origin);
+        const allowedUrl = new URL(allowedOrigin);
+        if (originUrl.protocol !== allowedUrl.protocol) return false;
+        if (originUrl.port !== allowedUrl.port) return false;
+
+        const originHost = originUrl.hostname.toLowerCase();
+        const allowedHost = allowedUrl.hostname.toLowerCase();
+
+        // Allowed is www.domain.tld, request is from apex domain.tld
+        if (allowedHost.startsWith('www.') && allowedHost.slice(4) === originHost) {
+            return true;
+        }
+        // Allowed is apex domain.tld, request is from www.domain.tld
+        if (originHost.startsWith('www.') && originHost.slice(4) === allowedHost) {
+            return true;
+        }
+        return false;
+    } catch {
+        return false;
+    }
+}
+
 export const isOriginAllowed = (origin: string | undefined, options: CorsOriginOptions): boolean => {
     if (!origin) return true;
     if (options.nodeEnv !== 'production') return true;
     if (options.allowedOrigins.includes('*')) return true;
     if (options.allowedOrigins.includes(origin)) return true;
+
+    // Direct www <-> apex domain pairing (e.g. www.gpexts.com <-> gpexts.com)
+    if (options.allowedOrigins.some(entry => matchesApexOrWww(origin, entry))) return true;
+
+    // Extension wildcard support (e.g. chrome-extension://*)
+    if (options.allowedOrigins.includes('chrome-extension://*') && origin.startsWith('chrome-extension://')) return true;
 
     // Opt-in wildcard suffixes: an entry like `*.gpexts.com` matches any
     // single-label (or deeper) subdomain of gpexts.com over https.

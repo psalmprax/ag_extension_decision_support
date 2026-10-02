@@ -27,7 +27,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 NODE_ENV = os.getenv("NODE_ENV", "development")
-ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "https://www.gpexts.com,http://localhost:7503,http://localhost:5173").split(",")
+ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "https://www.gpexts.com,https://gpexts.com,http://localhost:7503,http://localhost:5173").split(",")
 
 app = FastAPI(title="OpenClaw Service", version="1.0.0")
 

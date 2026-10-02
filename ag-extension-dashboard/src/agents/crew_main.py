@@ -26,7 +26,7 @@ app = FastAPI(title="Crew AI Service", version="2.0.0")
 
 # CORS middleware
 NODE_ENV = os.getenv("NODE_ENV", "development")
-ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "https://www.gpexts.com,http://localhost:7503,http://localhost:5173").split(",")
+ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "https://www.gpexts.com,https://gpexts.com,http://localhost:7503,http://localhost:5173").split(",")
 
 app.add_middleware(
     CORSMiddleware,
