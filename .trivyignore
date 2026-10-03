@@ -1,0 +1,36 @@
+# ==============================================================================
+# Trivy Vulnerability Ignore List
+# Scopes and justifications documented in scripts/audit-allowlist.json
+# ==============================================================================
+
+# axios (1.18.1): Internal HTTP client for known AI/backend services with pre-sanitized payloads
+CVE-2026-101898
+CVE-2026-101901
+CVE-2026-101903
+CVE-2026-101905
+CVE-2026-101906
+CVE-2026-101907
+CVE-2026-101909
+
+# brace-expansion: Transitive build and glob tooling (eslint, workbox, etc.), not exposed to untrusted user input
+CVE-2026-102276
+CVE-2026-102278
+CVE-2026-13149
+CVE-2026-14257
+CVE-2026-69152
+
+# engine.io: Socket.IO transport layer protected by auth, reverse-proxy timeouts and rate limiting
+CVE-2026-102599
+
+# nodemailer: Transactional email with strict Zod email schema validation
+GHSA-prgh-xp8r-p3m5
+GHSA-v53p-9fqp-m79j
+
+# undici: Transitive dependency of dev bot integrations (@discordjs/rest, discord.js)
+CVE-2026-19534
+
+# npm global CLI bundled dependencies (pacote, ip-address, picomatch, sigstore)
+CVE-2026-69192
+CVE-2026-9496
+CVE-2026-33671
+CVE-2026-48815

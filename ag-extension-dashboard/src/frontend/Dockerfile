@@ -46,8 +46,8 @@ CMD ["npm", "run", "dev", "--", "--host"]
 # ============================================================
 FROM nginx:alpine AS production
 
-# Install tini for signal handling
-RUN apk add --no-cache tini
+# Upgrade Alpine packages to patch upstream CVEs (e.g. pcre2, libexpat) and install tini
+RUN apk upgrade --no-cache && apk add --no-cache tini
 
 # Remove default config
 RUN rm /etc/nginx/conf.d/default.conf
