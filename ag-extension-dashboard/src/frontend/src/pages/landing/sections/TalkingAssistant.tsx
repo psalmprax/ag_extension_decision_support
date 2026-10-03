@@ -8,7 +8,6 @@ import {
   Send,
   Sparkles,
   Globe,
-  Radio,
   Bot,
   User,
   RotateCcw,
@@ -20,7 +19,7 @@ import {
 import apiClient from '@/api/client';
 import { EncryptedStorageService } from '@/services/encryptedStorageService';
 import { Language, languages } from '@/lib/i18n';
-import { fadeUp, stagger } from '../variants';
+import { FloatingAssistantShell } from './FloatingAssistantShell';
 
 const LANGUAGE_LOCALE_MAP: Record<Language, string> = {
   en: 'en-US',
@@ -1037,6 +1036,7 @@ function useSpeechController({
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const ttsAbortControllerRef = useRef<AbortController | null>(null);
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
+  const captureVersionRef = useRef(0);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -1161,7 +1161,30 @@ function useSpeechController({
     }
   }, [cleanupAudioAnalyser]);
 
+  const cancelListening = useCallback(() => {
+    captureVersionRef.current += 1;
+    if (recognitionRef.current) {
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.abort();
+      recognitionRef.current = null;
+    }
+    const recorder = mediaRecorderRef.current;
+    if (recorder) {
+      recorder.onstop = null;
+      recorder.ondataavailable = null;
+      if (recorder.state !== 'inactive') recorder.stop();
+      mediaRecorderRef.current = null;
+    }
+    audioChunksRef.current = [];
+    cleanupAudioAnalyser();
+    setIsListening(false);
+    setIsTranscribing(false);
+  }, [cleanupAudioAnalyser]);
+
+  useEffect(() => () => cancelListening(), [cancelListening]);
+
   const handleRecorderStop = useCallback(async () => {
+    const captureVersion = captureVersionRef.current;
     setIsListening(false);
     cleanupAudioAnalyser();
     const audioBlob = new Blob(audioChunksRef.current, {
@@ -1173,6 +1196,7 @@ function useSpeechController({
     if (audioBlob.size > 0) {
       setIsTranscribing(true);
       const transcript = await requestTranscribeAudioBlob(audioBlob, selectedLanguage);
+      if (captureVersion !== captureVersionRef.current) return;
       setIsTranscribing(false);
       if (transcript) {
         onTranscript(transcript);
@@ -1182,11 +1206,19 @@ function useSpeechController({
 
   const startListening = useCallback(async () => {
     if (typeof window === 'undefined') return;
+    const captureVersion = ++captureVersionRef.current;
     if (isSpeaking) {
       stopSpeaking();
     }
 
     const analyserResult = await createAudioAnalyser();
+    if (captureVersion !== captureVersionRef.current) {
+      if (analyserResult) {
+        analyserResult.stream.getTracks().forEach((track) => track.stop());
+        await analyserResult.audioCtx.close();
+      }
+      return;
+    }
     if (analyserResult) {
       audioAnalyserRef.current = analyserResult;
       setAnalyser(analyserResult.analyser);
@@ -1237,6 +1269,7 @@ function useSpeechController({
     analyser,
     speakText,
     stopSpeaking,
+    cancelListening,
     toggleListening,
   };
 }
@@ -1250,7 +1283,7 @@ const PILOT_LANGUAGES: Language[] = ['en', 'sw', 'fr', 'es', 'pt'];
 
 function LanguageSelector({ selectedLanguage, onSelectLanguage }: LanguageSelectorProps) {
   return (
-    <div className="w-full mb-6">
+    <div className="w-full mb-1">
       <div className="flex items-center justify-between mb-2 px-0.5">
         <div className="flex items-center gap-2 text-xs font-medium text-white/70">
           <Globe className="w-3.5 h-3.5 text-emerald-400" />
@@ -1393,7 +1426,7 @@ function VoiceOrb({ isListening, isSpeaking, isTranscribing, onToggle }: VoiceOr
   const ringBorder = getOrbRingBorderClass(isTranscribing, isListening);
 
   return (
-    <div className="my-6 relative flex items-center justify-center">
+    <div className="my-3 relative flex items-center justify-center">
       {active && (
         <>
           <motion.div
@@ -1532,7 +1565,7 @@ function PersonaSelector({ selectedPersona, onSelectPersona }: PersonaSelectorPr
   ];
 
   return (
-    <div className="w-full my-3">
+    <div className="w-full my-2">
       <div className="flex items-center justify-between mb-1.5 px-0.5">
         <span className="text-[11px] font-semibold tracking-wider uppercase text-white/50">
           Voice Persona
@@ -1582,7 +1615,7 @@ function AudioControls({
   onStopSpeaking,
 }: AudioControlsProps) {
   return (
-    <div className="w-full mt-4 pt-4 border-t border-white/[0.08] flex items-center justify-between text-xs text-white/70">
+    <div className="w-full mt-2 pt-2 border-t border-white/[0.08] flex items-center justify-between text-xs text-white/70">
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -1674,7 +1707,7 @@ function HandoffCard({ onHandoff }: HandoffCardProps) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mb-4 p-3 rounded-xl bg-gradient-to-r from-emerald-900/40 via-slate-900/80 to-teal-900/40 border border-emerald-500/30 flex items-center justify-between gap-3 shadow-lg"
+      className="mb-4 p-3 rounded-lg bg-gradient-to-r from-emerald-900/40 via-slate-900/80 to-teal-900/40 border border-emerald-500/30 flex flex-col items-start gap-3 shadow-lg"
     >
       <div className="flex items-center gap-2.5">
         <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
@@ -1724,7 +1757,7 @@ function ChatMessage({ msg, onSpeak }: ChatMessageProps) {
       </div>
 
       <div
-        className={`max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
+        className={`min-w-0 flex-1 max-w-[calc(100%-2.75rem)] rounded-lg px-3 py-3 text-sm leading-relaxed [overflow-wrap:anywhere] ${
           isUser
             ? 'bg-emerald-600 text-white rounded-tr-none'
             : 'bg-slate-950/80 border border-white/[0.08] text-white/90 rounded-tl-none'
@@ -1734,11 +1767,11 @@ function ChatMessage({ msg, onSpeak }: ChatMessageProps) {
 
         {msg.sourceBadge && (
           <div className="mt-2 pt-2 border-t border-white/[0.08] flex items-center justify-between text-[11px] text-emerald-400/90 font-mono">
-            <span className="truncate">Source: {msg.sourceBadge}</span>
+            <span className="min-w-0 truncate" title={msg.sourceBadge}>Source: {msg.sourceBadge}</span>
             <button
               type="button"
               onClick={() => onSpeak(msg.text, msg.language ?? 'en')}
-              className="ml-2 hover:text-emerald-300 inline-flex items-center gap-1 font-sans text-xs"
+              className="ml-2 shrink-0 hover:text-emerald-300 inline-flex items-center gap-1 font-sans text-xs"
               title="Listen to this advisory again"
             >
               <Volume2 className="w-3.5 h-3.5" />
@@ -1753,15 +1786,17 @@ function ChatMessage({ msg, onSpeak }: ChatMessageProps) {
 
 interface QuestionChipsProps {
   onSelect: (item: SampleQuestion) => void;
+  expanded: boolean;
 }
 
-function QuestionChips({ onSelect }: QuestionChipsProps) {
+function QuestionChips({ onSelect, expanded }: QuestionChipsProps) {
   return (
-    <div className="mb-4">
-      <div className="text-[11px] font-semibold tracking-wider text-white/50 uppercase mb-2 flex items-center gap-1.5">
+    <details open={expanded} className="mt-4 mb-2">
+      <summary className="min-h-[44px] cursor-pointer text-xs font-semibold text-white/70 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400">
         <Sparkles className="w-3 h-3 text-emerald-400" />
-        <span>Quick Agronomic Inquiries (Tap to Ask)</span>
-      </div>
+        <span>Suggested questions</span>
+        <ChevronDown className="ml-auto h-4 w-4" aria-hidden="true" />
+      </summary>
       <div className="flex flex-wrap gap-2">
         {SAMPLE_QUESTIONS.map((item, idx) => (
           <button
@@ -1775,7 +1810,7 @@ function QuestionChips({ onSelect }: QuestionChipsProps) {
           </button>
         ))}
       </div>
-    </div>
+    </details>
   );
 }
 
@@ -1824,11 +1859,12 @@ function ChatInputForm({
     >
       <input
         type="text"
+        aria-label="Your question"
         value={inputText}
         disabled={isLoading || isTranscribing}
         onChange={(e) => onChangeInput(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-xl bg-slate-950/90 border border-white/[0.12] text-sm text-white placeholder-white/40 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all pr-24 disabled:opacity-50"
+        className="w-full px-4 py-3 rounded-lg bg-slate-950/90 border border-white/[0.12] text-sm text-white placeholder-white/40 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all pr-28 disabled:opacity-50"
       />
 
       <div className="absolute right-2 flex items-center gap-1">
@@ -1837,7 +1873,7 @@ function ChatInputForm({
           onClick={onToggleListening}
           disabled={isTranscribing}
           aria-label={isListening ? 'Stop recording voice' : 'Speak inquiry with microphone'}
-          className={`p-2 rounded-lg transition-all ${
+          className={`flex h-11 w-11 items-center justify-center rounded-lg transition-all ${
             isListening
               ? 'bg-amber-500 text-slate-950 animate-pulse'
               : isTranscribing
@@ -1859,7 +1895,7 @@ function ChatInputForm({
           type="submit"
           disabled={!inputText.trim() || isLoading || isTranscribing}
           aria-label="Send message"
-          className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white transition-all"
+          className="flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white transition-all"
           title="Send message"
         >
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -1869,7 +1905,40 @@ function ChatInputForm({
   );
 }
 
-export function TalkingAssistant() {
+export interface TalkingAssistantProps {
+  defaultOpen?: boolean;
+  className?: string;
+}
+
+function getNextAssistantTab(tab: 'chat' | 'voice', key: string): 'chat' | 'voice' | null {
+  if (key === 'Home') return 'chat';
+  if (key === 'End') return 'voice';
+  if (key === 'ArrowLeft' || key === 'ArrowRight') return tab === 'chat' ? 'voice' : 'chat';
+  return null;
+}
+
+export function TalkingAssistant({ defaultOpen = false, className = '' }: TalkingAssistantProps = {}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [activeTab, setActiveTab] = useState<'chat' | 'voice'>('chat');
+  const isOpenRef = useRef(isOpen);
+  isOpenRef.current = isOpen;
+
+  useEffect(() => () => {
+    isOpenRef.current = false;
+  }, []);
+
+  useEffect(() => {
+    const handleHash = () => {
+      if (window.location.hash === '#talking-assistant') {
+        setIsOpen(true);
+      }
+    };
+    window.addEventListener('hashchange', handleHash);
+    if (window.location.hash === '#talking-assistant') {
+      setIsOpen(true);
+    }
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -1922,7 +1991,7 @@ export function TalkingAssistant() {
             return next;
           });
 
-          if (autoSpeak) {
+          if (autoSpeak && isOpenRef.current) {
             speakFn(local.text, lang);
           }
         }, 300);
@@ -1952,7 +2021,7 @@ export function TalkingAssistant() {
         return next;
       });
 
-      if (autoSpeak) {
+      if (autoSpeak && isOpenRef.current) {
         speakFn(apiResult.text, lang);
       }
     },
@@ -1968,12 +2037,22 @@ export function TalkingAssistant() {
     analyser,
     speakText,
     stopSpeaking,
+    cancelListening,
     toggleListening,
   } = useSpeechController({
     selectedLanguage,
     selectedPersona,
-    onTranscript: (transcript: string) => handleSendMessageRef.current(transcript),
+    onTranscript: (transcript: string) => {
+      if (isOpenRef.current) handleSendMessageRef.current(transcript);
+    },
   });
+
+  const handleClose = useCallback(() => {
+    isOpenRef.current = false;
+    stopSpeaking();
+    cancelListening();
+    setIsOpen(false);
+  }, [cancelListening, stopSpeaking]);
 
   const handleSendMessage = useCallback(
     (textToSend?: string, overrideLang?: Language) => {
@@ -2007,10 +2086,11 @@ export function TalkingAssistant() {
   handleSendMessageRef.current = handleSendMessage;
 
   useEffect(() => {
-    if (typeof messagesEndRef.current?.scrollIntoView === 'function') {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    const thread = messagesEndRef.current?.parentElement;
+    if (thread) {
+      thread.scrollTop = messages.length > 1 ? thread.scrollHeight : 0;
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, isOpen, activeTab]);
 
   const handleSelectPrompt = useCallback(
     (item: SampleQuestion) => {
@@ -2038,47 +2118,40 @@ export function TalkingAssistant() {
   const showHandoff = userTurnCount >= 2;
 
   return (
-    <section
-      id="talking-assistant"
-      className="relative py-20 sm:py-28 border-t border-white/[0.04] overflow-hidden bg-slate-950/80 scroll-mt-10"
+    <FloatingAssistantShell
+      isOpen={isOpen}
+      onOpen={() => setIsOpen(true)}
+      onClose={handleClose}
+      className={className}
     >
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-emerald-500/[0.04] rounded-full blur-[140px] pointer-events-none" />
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={stagger}
-          className="text-center mb-12 sm:mb-16"
-        >
-          <motion.div
-            variants={fadeUp}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-4"
+      <div className="flex shrink-0 items-center gap-1 border-b border-white/10 px-4 py-2" role="tablist" aria-label="Assistant mode">
+        {(['chat', 'voice'] as const).map((tab) => (
+          <button
+            key={tab}
+            id={`assistant-${tab}-tab`}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab}
+            aria-controls={`assistant-${tab}-panel`}
+            tabIndex={activeTab === tab ? 0 : -1}
+            onClick={() => setActiveTab(tab)}
+            onKeyDown={(event) => {
+              const nextTab = getNextAssistantTab(tab, event.key);
+              if (nextTab) {
+                event.preventDefault();
+                setActiveTab(nextTab);
+                document.getElementById(`assistant-${nextTab}-tab`)?.focus();
+              }
+            }}
+            className={`flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${activeTab === tab ? 'bg-emerald-500/15 text-emerald-300' : 'text-white/65 hover:bg-white/5 hover:text-white'}`}
           >
-            <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-400" />
-            <span>Interactive Voice & Speech AI</span>
-          </motion.div>
-
-          <motion.h2
-            variants={fadeUp}
-            className="text-2xl sm:text-4xl font-bold tracking-tight text-white mb-4"
-          >
-            Talk Directly to the Agronomic Copilot
-          </motion.h2>
-
-          <motion.p
-            variants={fadeUp}
-            className="text-sm sm:text-base text-white/65 max-w-2xl mx-auto leading-relaxed"
-          >
-            Test our multilingual voice intelligence right here. Press the microphone to speak,
-            or choose a prompt below to hear verified agronomic recommendations read aloud.
-          </motion.p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1.9fr] gap-6 sm:gap-8 items-stretch">
-          {/* Left Column: Voice Orb, Controls, and Settings */}
-          <div className="p-6 sm:p-8 rounded-2xl bg-slate-900/80 border border-white/[0.08] backdrop-blur-xl flex flex-col justify-between items-center text-center relative overflow-hidden shadow-2xl shadow-black/60">
+            {tab === 'chat' ? <Bot className="h-4 w-4" aria-hidden="true" /> : <Mic className="h-4 w-4" aria-hidden="true" />}
+            {tab === 'chat' ? 'Chat' : 'Voice'}
+          </button>
+        ))}
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4" hidden={activeTab !== 'voice'} role="tabpanel" id="assistant-voice-panel" aria-labelledby="assistant-voice-tab">
+        <div className="flex flex-col items-center gap-3">
             <LanguageSelector
               selectedLanguage={selectedLanguage}
               onSelectLanguage={setSelectedLanguage}
@@ -2104,14 +2177,11 @@ export function TalkingAssistant() {
               onToggleAutoSpeak={() => setAutoSpeak((prev) => !prev)}
               onStopSpeaking={stopSpeaking}
             />
-          </div>
-
-          {/* Right Column: Interactive Chat & Context Tracking */}
-          <div className="p-6 sm:p-8 rounded-2xl bg-slate-900/80 border border-white/[0.08] backdrop-blur-xl flex flex-col justify-between shadow-2xl shadow-black/60">
-            <div>
-              <ActiveContextBanner slots={entitySlots} onClear={handleClearContext} />
-
-              <div className="space-y-4 max-h-[340px] overflow-y-auto pr-2 mb-4 scrollbar-thin scrollbar-thumb-white/10">
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4" hidden={activeTab !== 'chat'} role="tabpanel" id="assistant-chat-panel" aria-labelledby="assistant-chat-tab">
+        <ActiveContextBanner slots={entitySlots} onClear={handleClearContext} />
+        <div className="space-y-4">
                 <AnimatePresence initial={false}>
                   {messages.map((msg) => (
                     <ChatMessage key={msg.id} msg={msg} onSpeak={speakText} />
@@ -2124,15 +2194,12 @@ export function TalkingAssistant() {
                     <span>Agronomic Engine consulting knowledge base...</span>
                   </div>
                 )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {showHandoff && <HandoffCard onHandoff={handleHandoff} />}
-            </div>
-
-            <div>
-              <QuestionChips onSelect={handleSelectPrompt} />
-
+        </div>
+        {showHandoff && <HandoffCard onHandoff={handleHandoff} />}
+        <QuestionChips onSelect={handleSelectPrompt} expanded={messages.length === 1} />
+        <div ref={messagesEndRef} />
+      </div>
+      <div className="shrink-0 border-t border-white/10 bg-slate-900/60 p-3">
               <ChatInputForm
                 inputText={inputText}
                 isListening={isListening}
@@ -2143,10 +2210,7 @@ export function TalkingAssistant() {
                 onSubmit={handleSendMessage}
                 onToggleListening={toggleListening}
               />
-            </div>
-          </div>
-        </div>
       </div>
-    </section>
+    </FloatingAssistantShell>
   );
 }
