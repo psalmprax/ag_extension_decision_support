@@ -46,6 +46,24 @@ describe('corsOrigin policy', () => {
         expect(isOriginAllowed('https://evil.example.com', PROD)).toBe(false);
     });
 
+    it('allows apex domain when www subdomain is in allowedOrigins', () => {
+        const prodWww = { nodeEnv: 'production', allowedOrigins: ['https://www.gpexts.com'] };
+        expect(isOriginAllowed('https://gpexts.com', prodWww)).toBe(true);
+        expect(isOriginAllowed('http://gpexts.com', prodWww)).toBe(false);
+    });
+
+    it('allows www subdomain when apex domain is in allowedOrigins', () => {
+        const prodApex = { nodeEnv: 'production', allowedOrigins: ['https://gpexts.com'] };
+        expect(isOriginAllowed('https://www.gpexts.com', prodApex)).toBe(true);
+        expect(isOriginAllowed('http://www.gpexts.com', prodApex)).toBe(false);
+    });
+
+    it('allows chrome-extension origin when chrome-extension wildcard is configured', () => {
+        const prodExt = { nodeEnv: 'production', allowedOrigins: ['https://www.gpexts.com', 'chrome-extension://*'] };
+        expect(isOriginAllowed('chrome-extension://abcdefghijklmnop', prodExt)).toBe(true);
+        expect(isOriginAllowed('moz-extension://abcdefghijklmnop', prodExt)).toBe(false);
+    });
+
     it('allows all origins outside production (dev/staging convenience)', () => {
         expect(isOriginAllowed('http://localhost:5173', DEV)).toBe(true);
         expect(isOriginAllowed('https://evil.example.com', DEV)).toBe(true);

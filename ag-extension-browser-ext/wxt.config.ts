@@ -28,7 +28,7 @@ export default defineConfig({
   manifest: (env) => {
     // Localhost origins are only included in development builds, not in production host_permissions
     const isDev = env?.mode === 'development' || (!env?.mode && process.env.NODE_ENV === 'development');
-    const hostPermissions = ['https://*.gpexts.com/*', 'https://api.gpexts.com/*'];
+    const hostPermissions = ['https://*.gpexts.com/*', 'https://gpexts.com/*', 'https://api.gpexts.com/*'];
     if (isDev) {
       hostPermissions.push('http://localhost:7500/*', 'http://127.0.0.1:7500/*', 'https://127.0.0.1:7500/*');
     }

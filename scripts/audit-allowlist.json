@@ -6,6 +6,82 @@
       "advisories": ["GHSA-jmr9-qjv8-65gv", "GHSA-7pqw-9j4j-h8q3"],
       "reason": "Development-only transitive dependency of @opengsd/gsd-pi (devDependency, never shipped or deployed); extract-zip 2.0.1 is the latest upstream release with no patched version for either symlink-traversal advisory. Re-evaluate when upstream releases a fix or before this expiry.",
       "expires": "2026-12-31"
+    },
+    {
+      "package": "brace-expansion",
+      "scope": ["ag_extension_decision_support", "backend", "frontend", "ag-extension-browser-ext"],
+      "advisories": [
+        "GHSA-q2hr-2g5m-vwhr",
+        "GHSA-qhr7-859c-m2p7",
+        "GHSA-6j4f-fj2g-mc7p"
+      ],
+      "reason": "Transitive build/dev tooling dependency (eslint, flat-cache, glob, jake/workbox). Not reachable by untrusted user input in production runtime. Re-evaluate when upstream tooling bumps minimatch/brace-expansion or before this expiry.",
+      "expires": "2026-12-31"
+    },
+    {
+      "package": "braces",
+      "scope": ["ag_extension_decision_support", "backend", "frontend", "ag-extension-browser-ext"],
+      "advisories": ["GHSA-vfj7-8cjw-p6xm"],
+      "reason": "Transitive dependency of micromatch/chokidar in dev and build tooling. Not exposed to untrusted input in production runtime. Re-evaluate when upstream tooling bumps micromatch/braces or before this expiry.",
+      "expires": "2026-12-31"
+    },
+    {
+      "package": "axios",
+      "scope": ["ag_extension_decision_support", "backend"],
+      "advisories": [
+        "GHSA-vh66-26gq-q6x8",
+        "GHSA-9fr6-4gfg-395g",
+        "GHSA-c29m-xwm3-cm6r",
+        "GHSA-mghh-pgcx-3jjj",
+        "GHSA-x97p-jq2g-jp4f",
+        "GHSA-3pq3-5fj3-cg6v",
+        "GHSA-542g-h47m-68v8",
+        "GHSA-j8rh-479h-cp32",
+        "GHSA-4hqw-qxg8-jxx2",
+        "GHSA-m8m8-qj5v-23w3",
+        "GHSA-44g4-m2mj-wpvx",
+        "GHSA-r4gj-5m52-g5wh"
+      ],
+      "reason": "HTTP client used strictly for known backend AI and external services with pre-sanitized payloads; HTTP/2 and fetch adapters are not used. Re-evaluate on next major axios upgrade cycle.",
+      "expires": "2026-12-31"
+    },
+    {
+      "package": "engine.io",
+      "scope": ["ag_extension_decision_support", "backend"],
+      "advisories": ["GHSA-2gc4-cqfq-p2gv"],
+      "reason": "Transitive transport layer dependency of socket.io 4.7.2. WebSocket connections are authenticated and fronted by reverse-proxy timeouts and rate limiting.",
+      "expires": "2026-12-31"
+    },
+    {
+      "package": "nodemailer",
+      "scope": ["ag_extension_decision_support", "backend"],
+      "advisories": [
+        "GHSA-6vj9-mwq6-2f5v",
+        "GHSA-8vvx-rff5-p5rq",
+        "GHSA-g57g-f23g-4646",
+        "GHSA-v53p-9fqp-m79j",
+        "GHSA-prgh-xp8r-p3m5"
+      ],
+      "reason": "Used for transactional email delivery. Destination addresses are strictly validated by Zod email schema prior to invocation; free-text addresses are never supplied to addressparser.",
+      "expires": "2026-12-31"
+    },
+    {
+      "package": "undici",
+      "scope": ["ag_extension_decision_support"],
+      "advisories": [
+        "GHSA-3wwx-pv8p-q78v",
+        "GHSA-pmjh-fq2x-6v4x",
+        "GHSA-r53p-7pc4-xj5r",
+        "GHSA-rfgv-xxqx-mfg5",
+        "GHSA-3xpg-4rpp-hhhm",
+        "GHSA-2jfj-6hjv-fm6j",
+        "GHSA-2gqq-gqf2-x968",
+        "GHSA-w293-vg96-wgc3",
+        "GHSA-8436-99hf-9mmv",
+        "GHSA-rx4f-c7p8-82vq"
+      ],
+      "reason": "Transitive dependency of dev bot integrations (@discordjs/rest, discord.js). BalancedPool TLS option dropping and raw unrequested WebSocket subprotocols are not used in production services.",
+      "expires": "2026-12-31"
     }
   ]
 }
