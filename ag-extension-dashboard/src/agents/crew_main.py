@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
+from contextlib import asynccontextmanager
 import os
 import json
 import logging
@@ -22,11 +23,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Crew AI Service", version="2.0.0")
-
 # CORS middleware
 NODE_ENV = os.getenv("NODE_ENV", "development")
 ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "https://www.gpexts.com,https://gpexts.com,http://localhost:7503,http://localhost:5173").split(",")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifecycle event handler for Crew AI Service"""
+    logger.info("Starting Crew AI Service v2.0.0")
+    logger.info(f"Crew AI Available: {CREW_AI_AVAILABLE}")
+    logger.info(f"OpenAI Client: {'Configured' if openai_client else 'Not Configured'}")
+    db.connect()
+    yield
+    logger.info("Shutting down Crew AI Service")
+    db.close()
+
+
+app = FastAPI(title="Crew AI Service", version="2.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -984,23 +998,6 @@ async def generate_report(request: ReportRequest, current_user: dict = Depends(v
     except Exception as e:
         logger.error(f"Report generation failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# Startup and shutdown events
-@app.on_event("startup")
-async def startup_event():
-    """Initialize services on startup"""
-    logger.info("Starting Crew AI Service v2.0.0")
-    logger.info(f"Crew AI Available: {CREW_AI_AVAILABLE}")
-    logger.info(f"OpenAI Client: {'Configured' if openai_client else 'Not Configured'}")
-    db.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Clean up on shutdown"""
-    logger.info("Shutting down Crew AI Service")
-    db.close()
 
 
 if __name__ == "__main__":

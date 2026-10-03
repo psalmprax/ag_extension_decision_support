@@ -8,11 +8,12 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
+from contextlib import asynccontextmanager
 import os
 import json
 import logging
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Optional
 import redis.asyncio as redis
@@ -31,7 +32,20 @@ logger = logging.getLogger(__name__)
 NODE_ENV = os.getenv("NODE_ENV", "development")
 ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "https://www.gpexts.com,https://gpexts.com,http://localhost:7503,http://localhost:5173").split(",")
 
-app = FastAPI(title="Agent Zero Service", version="2.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifecycle event handler for Agent Zero Service"""
+    logger.info("Starting Agent Zero Service v2.0.0")
+    db.connect()
+    await redis_sessions.connect()
+    yield
+    logger.info("Shutting down Agent Zero Service")
+    db.close()
+    await redis_sessions.disconnect()
+
+
+app = FastAPI(title="Agent Zero Service", version="2.0.0", lifespan=lifespan)
 
 # CORS middleware - not wildcard with credentials
 app.add_middleware(
@@ -586,7 +600,7 @@ async def health_check():
         "status": "healthy",
         "service": "agent-zero",
         "version": "2.0.0",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "dependencies": {
             "openai": "configured" if async_client else "not_configured",
             "database": "connected" if db.pool else "not_connected",
@@ -799,23 +813,6 @@ async def handle_stealth_scrape(params: Dict[str, Any]) -> Dict[str, Any]:
             "platform": platform,
             "niche": niche
         }
-
-# Startup and shutdown events
-@app.on_event("startup")
-async def startup_event():
-    """Initialize services on startup"""
-    logger.info("Starting Agent Zero Service v2.0.0")
-    db.connect()
-    await redis_sessions.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Clean up on shutdown"""
-    logger.info("Shutting down Agent Zero Service")
-    db.close()
-    await redis_sessions.disconnect()
-
 
 if __name__ == "__main__":
     import uvicorn
