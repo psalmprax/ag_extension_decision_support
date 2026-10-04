@@ -1,9 +1,20 @@
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
+const { readFileSync } = require('node:fs');
 const path = require('node:path');
 const { test } = require('node:test');
 
 const dashboard = path.resolve(__dirname, '../ag-extension-dashboard');
+
+test('backend images upgrade inherited PCRE2 in the shared base layer', () => {
+  const dockerfile = readFileSync(path.join(dashboard, 'src/backend/Dockerfile'), 'utf8');
+  const sharedBase = dockerfile.split(/^FROM node-base AS /m)[0];
+  assert.match(sharedBase,
+    /^RUN apt-get update && apt-get install -y --no-install-recommends libpcre2-8-0 && rm -rf \/var\/lib\/apt\/lists\/\*$/m);
+  for (const stage of ['deps', 'build', 'development', 'production']) {
+    assert.match(dockerfile, new RegExp(`^FROM node-base AS ${stage}$`, 'm'));
+  }
+});
 
 function composeConfig(overrides, environment = {}) {
   const files = ['docker-compose.yml', ...overrides];

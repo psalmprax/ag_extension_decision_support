@@ -1,6 +1,7 @@
 # Node 22 bundles npm 10 with vulnerable transitive dependencies. Keep npm/npx
 # available for Prisma migrations, but use a pinned, patched CLI in every stage.
 FROM node:22-slim AS node-base
+RUN apt-get update && apt-get install -y --no-install-recommends libpcre2-8-0 && rm -rf /var/lib/apt/lists/*
 ARG NPM_VERSION=11.19.1
 RUN npm install --global npm@${NPM_VERSION} --no-audit --no-fund && npm cache clean --force
 
