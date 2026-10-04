@@ -18,6 +18,7 @@ describe('TalkingAssistant Component', () => {
   beforeEach(() => {
     mockedPost.mockReset();
     sessionStorage.clear();
+    window.history.replaceState(null, '', '/');
 
     mockSpeak = vi.fn();
     mockCancel = vi.fn();
@@ -78,8 +79,32 @@ describe('TalkingAssistant Component', () => {
     });
   });
 
-  it('renders assistant welcome message and sample question chips', () => {
+  it('starts collapsed and focuses the composer when opened', async () => {
     render(<TalkingAssistant />);
+
+    const launcher = screen.getByRole('button', { name: /Open agronomic assistant/i });
+    expect(launcher).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(launcher);
+
+    expect(screen.getByRole('dialog', { name: /Agronomic Copilot/i })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('textbox', { name: /Your question/i })).toHaveFocus());
+  });
+
+  it('dismisses with Escape and restores launcher focus', async () => {
+    render(<TalkingAssistant />);
+
+    const launcher = screen.getByRole('button', { name: /Open agronomic assistant/i });
+    fireEvent.click(launcher);
+    fireEvent.keyDown(window, { key: 'Escape' });
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(launcher).toHaveFocus();
+    expect(mockCancel).toHaveBeenCalled();
+  });
+
+  it('renders assistant welcome message and sample question chips', () => {
+    render(<TalkingAssistant defaultOpen />);
 
     expect(screen.getByText(/AI Agronomic Extension Assistant/i)).toBeInTheDocument();
     expect(screen.getByText(/Fall Armyworm bio-control/i)).toBeInTheDocument();
@@ -87,7 +112,7 @@ describe('TalkingAssistant Component', () => {
   });
 
   it('performs multi-turn slot tracking and anaphora dosage resolution', async () => {
-    render(<TalkingAssistant />);
+    render(<TalkingAssistant defaultOpen />);
 
     const armywormPrompt = screen.getByText(/Fall Armyworm bio-control/i);
     fireEvent.click(armywormPrompt);
@@ -118,7 +143,7 @@ describe('TalkingAssistant Component', () => {
   });
 
   it('resolves lime dosage recommendation correctly even when maize context is active', async () => {
-    render(<TalkingAssistant />);
+    render(<TalkingAssistant defaultOpen />);
 
     // Turn 1: Establish maize context
     const armywormPrompt = screen.getByText(/Fall Armyworm bio-control/i);
@@ -160,7 +185,7 @@ describe('TalkingAssistant Component', () => {
       },
     });
 
-    render(<TalkingAssistant />);
+    render(<TalkingAssistant defaultOpen />);
 
     const input = screen.getByPlaceholderText(/Ask about crop diagnosis/i);
     fireEvent.change(input, { target: { value: 'Can I use push-pull intercropping with desmodium?' } });
@@ -191,7 +216,7 @@ describe('TalkingAssistant Component', () => {
       },
     });
 
-    render(<TalkingAssistant />);
+    render(<TalkingAssistant defaultOpen />);
 
     const input = screen.getByPlaceholderText(/Ask about crop diagnosis/i);
     fireEvent.change(input, { target: { value: 'Novel question exceeding rate limit' } });
@@ -205,7 +230,7 @@ describe('TalkingAssistant Component', () => {
   });
 
   it('allows clearing active context using the reset button', async () => {
-    render(<TalkingAssistant />);
+    render(<TalkingAssistant defaultOpen />);
 
     const armywormPrompt = screen.getByText(/Fall Armyworm bio-control/i);
     fireEvent.click(armywormPrompt);
@@ -222,15 +247,19 @@ describe('TalkingAssistant Component', () => {
     });
   });
 
-  it('falls back to MediaRecorder and server-side STT when native SpeechRecognition is unavailable', async () => {
+  it.each(['submit', 'dismiss', 'pending'])('handles MediaRecorder fallback with %s action', async (action) => {
     const mockTrack = { stop: vi.fn() };
     const mockStream = {
       getTracks: vi.fn().mockReturnValue([mockTrack]),
     };
+    let releasePermission: ((stream: typeof mockStream) => void) | undefined;
+    const permission = new Promise<typeof mockStream>((resolve) => {
+      releasePermission = resolve;
+    });
 
     Object.defineProperty(navigator, 'mediaDevices', {
       value: {
-        getUserMedia: vi.fn().mockResolvedValue(mockStream),
+        getUserMedia: vi.fn().mockImplementation(() => action === 'pending' ? permission : Promise.resolve(mockStream)),
       },
       writable: true,
       configurable: true,
@@ -312,14 +341,32 @@ describe('TalkingAssistant Component', () => {
       };
     });
 
-    render(<TalkingAssistant />);
+    render(<TalkingAssistant defaultOpen />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Voice' }));
 
     const orb = screen.getByLabelText(/Start speaking voice inquiry/i);
     fireEvent.click(orb);
 
+    if (action === 'pending') {
+      fireEvent.click(screen.getByRole('button', { name: /Close agronomic assistant/i }));
+      releasePermission?.(mockStream);
+      await waitFor(() => expect(mockTrack.stop).toHaveBeenCalled());
+      expect(mockedPost).not.toHaveBeenCalled();
+      return;
+    }
+
     await waitFor(() => {
-      expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ audio: true });
+      expect(screen.getAllByLabelText(/Stop recording voice/i).length).toBeGreaterThan(0);
     });
+    expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ audio: true });
+
+    if (action === 'dismiss') {
+      fireEvent.click(screen.getByRole('button', { name: /Close agronomic assistant/i }));
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(mockTrack.stop).toHaveBeenCalled();
+      expect(mockedPost).not.toHaveBeenCalled();
+      return;
+    }
 
     const stopOrbs = screen.getAllByLabelText(/Stop recording voice/i);
     fireEvent.click(stopOrbs[0]!);
@@ -333,7 +380,8 @@ describe('TalkingAssistant Component', () => {
   });
 
   it('renders voice persona selector with HD Neural badge and allows persona switching', async () => {
-    render(<TalkingAssistant />);
+    render(<TalkingAssistant defaultOpen />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Voice' }));
 
     expect(screen.getByText(/Voice Persona/i)).toBeInTheDocument();
     expect(screen.getByText(/HD Neural/i)).toBeInTheDocument();
@@ -357,7 +405,7 @@ describe('TalkingAssistant Component', () => {
   it('synthesizes humanized speech with expanded units and calibrated prosody on fallback', async () => {
     mockedPost.mockRejectedValue(new Error('Server neural TTS unavailable'));
 
-    render(<TalkingAssistant />);
+    render(<TalkingAssistant defaultOpen />);
 
     const promptBtn = screen.getByText(/Fall Armyworm bio-control/i);
     fireEvent.click(promptBtn);
@@ -394,7 +442,7 @@ describe('TalkingAssistant Component', () => {
       return { data: { success: true, data: {} } };
     });
 
-    render(<TalkingAssistant />);
+    render(<TalkingAssistant defaultOpen />);
 
     const promptBtn = screen.getByText(/Fall Armyworm bio-control/i);
     fireEvent.click(promptBtn);
@@ -416,7 +464,8 @@ describe('TalkingAssistant Component', () => {
   });
 
   it('renders 24 Languages badge and allows switching voice language via quick pills and dropdown', async () => {
-    render(<TalkingAssistant />);
+    render(<TalkingAssistant defaultOpen />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Voice' }));
 
     expect(screen.getByText(/24 Languages/i)).toBeInTheDocument();
 
@@ -436,7 +485,7 @@ describe('TalkingAssistant Component', () => {
   it('dispatches multilingual query with correct language code to public-demo and sets BCP-47 speech locale', async () => {
     mockedPost.mockRejectedValue(new Error('Server neural TTS unavailable'));
 
-    render(<TalkingAssistant />);
+    render(<TalkingAssistant defaultOpen />);
 
     const frPrompt = screen.getByText(/Chenille Légionnaire \(Français\)/i);
     fireEvent.click(frPrompt);
@@ -459,4 +508,40 @@ describe('TalkingAssistant Component', () => {
     const spokenUtterance = speakCalls[speakCalls.length - 1][0];
     expect(spokenUtterance.lang).toBe('fr-FR');
   });
+
+  it('preserves messages when closed and reopened without speaking a pending reply', async () => {
+    render(<TalkingAssistant defaultOpen />);
+    fireEvent.click(screen.getByText(/Fall Armyworm bio-control/i));
+    fireEvent.click(screen.getByRole('button', { name: /Close agronomic assistant/i }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    expect(mockSpeak).not.toHaveBeenCalled();
+    expect(mockedPost).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: /Open agronomic assistant/i }));
+    expect(screen.getByText(/scout leaf whorls at dawn or dusk/i)).toBeInTheDocument();
+    expect(screen.getByText(/Active Context:/i)).toBeInTheDocument();
+  });
+
+  it('opens for existing assistant hash links', () => {
+    window.history.replaceState(null, '', '/#talking-assistant');
+    render(<TalkingAssistant />);
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('supports keyboard navigation between chat and voice modes', () => {
+    render(<TalkingAssistant defaultOpen />);
+    const chatTab = screen.getByRole('tab', { name: 'Chat' });
+    fireEvent.keyDown(chatTab, { key: 'ArrowRight' });
+
+    const voiceTab = screen.getByRole('tab', { name: 'Voice' });
+    expect(voiceTab).toHaveFocus();
+    expect(voiceTab).toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(voiceTab, { key: 'Home' });
+    expect(chatTab).toHaveFocus();
+    expect(chatTab).toHaveAttribute('aria-selected', 'true');
+  });
+
 });
