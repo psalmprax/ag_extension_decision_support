@@ -25,7 +25,6 @@ import { PwaInstallPrompt } from './components/PwaInstallPrompt';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { FloatingAIPill } from './components/FloatingAIPill';
 import { USSDSimulatorDrawer } from './components/USSDSimulatorDrawer';
-import { LiquidBackgroundCanvas } from './components/canvasui/LiquidBackgroundCanvas';
 import { Farmer } from './types/dashboard';
 import { useAppSync } from './hooks/useAppSync';
 import { useAppShortcuts } from './hooks/useAppShortcuts';
@@ -94,7 +93,6 @@ function App() {
   const {
     themeName,
     darkMode,
-    liquidEffect,
     sidebarOpen,
     setSidebarOpen,
     activeTab,
@@ -456,25 +454,6 @@ function App() {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {/* ── WebGL / CanvasUI Fluid Dynamics Background ── */}
-        <LiquidBackgroundCanvas />
-
-        {/* Ambient Aurora Orbs (Active only when liquid effect and dark mode are enabled) */}
-        {liquidEffect && darkMode && (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
-            <motion.div
-              animate={{ x: [0, 100, 0], y: [0, -50, 0], scale: [1, 1.1, 1] }}
-              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-              className="absolute -top-[10%] -left-[10%] w-[800px] h-[800px] bg-sky-600/20 mix-blend-screen rounded-full blur-[150px]"
-            />
-            <motion.div
-              animate={{ x: [0, -100, 0], y: [0, 50, 0], scale: [1, 1.2, 1] }}
-              transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-              className="absolute top-[20%] -right-[10%] w-[600px] h-[600px] bg-emerald-600/20 mix-blend-screen rounded-full blur-[180px]"
-            />
-          </div>
-        )}
-
         {/* Drag overlay */}
         {isDragOver && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
