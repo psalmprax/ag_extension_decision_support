@@ -63,8 +63,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             animate="animate"
             exit="exit"
             className={cn(
-              'fixed left-0 top-16 bottom-0 flex flex-col pt-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8 px-4 border-r border-gray-200 dark:border-white/10 w-72 z-40',
-              'bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl'
+              'fixed left-0 top-16 bottom-0 flex flex-col pt-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8 px-4 border-r border-slate-200 dark:border-white/10 w-72 z-40',
+              'bg-white/98 dark:bg-slate-950/95 backdrop-blur-2xl'
             )}
           >
 
@@ -80,13 +80,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                       ? 'bg-primary-600/10 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400 shadow-[inset_0_0_15px_var(--color-outline)]'
                       : cn(
                           subtextClass,
-                          'hover:bg-black/5 dark:hover:bg-white/5 hover:text-primary-600 dark:hover:text-primary-200'
+                          'hover:bg-slate-100 dark:hover:bg-white/5 hover:text-primary-600 dark:hover:text-primary-200'
                         )
                   )}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <item.icon className="w-5 h-5 flex-shrink-0" />
-                    <span className="font-headline font-bold uppercase tracking-widest text-xs truncate">
+                    <span
+                      className="font-headline font-semibold tracking-wide text-xs truncate"
+                      title={t(item.labelKey || `nav_${item.id}`, { defaultValue: item.label })}
+                    >
                       {t(item.labelKey || `nav_${item.id}`, { defaultValue: item.label })}
                     </span>
                   </div>

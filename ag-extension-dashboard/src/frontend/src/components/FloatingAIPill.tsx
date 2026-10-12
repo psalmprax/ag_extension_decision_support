@@ -344,7 +344,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
   const [messages, setMessages] = useState<Array<{ sender: 'ai' | 'user'; text: string; time: string }>>([
     {
       sender: 'ai',
-      text: 'Hello! I am your AI Agronomist Assistant powered by Gemini & Ollama. Ask any crop health question, drop a leaf photo for neural vision diagnosis, or dictate a voice memo.',
+      text: 'Hello! I am your GPExts Agronomic Advisor. Ask any crop health question, drop a leaf photo for visual diagnosis, or dictate a field voice note.',
       time: 'Online',
     },
   ]);
@@ -545,7 +545,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                     <h3 className="text-sm font-bold text-white tracking-wide">AI Agronomist</h3>
                     <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
                       <Sparkles className="w-2.5 h-2.5" />
-                      Gemini / OpenAI
+                      GPExts Intelligence
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-400">Multimodal Decision Support</p>

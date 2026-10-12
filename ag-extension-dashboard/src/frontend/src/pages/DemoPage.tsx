@@ -180,12 +180,6 @@ export function DemoPage({
               color: 'text-cyan-400',
             },
             {
-              key: 'canvas' as const,
-              icon: Wand2,
-              label: 'Canvas UI Lab',
-              color: 'text-amber-400',
-            },
-            {
               key: 'telecom' as const,
               icon: Radio,
               label: 'USSD & Telecom',

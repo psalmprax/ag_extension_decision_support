@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
 import { useAppStore, type User } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
@@ -206,6 +206,15 @@ export function Register() {
           style={{ pointerEvents: 'auto', touchAction: 'auto' }}
         >
           <div>
+            {/* Back to Home Navigation */}
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-emerald-400 transition-colors mb-4"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              {t('common_back_to_home', { defaultValue: 'Back to Home' })}
+            </Link>
+
             {/* Logo and Controls */}
             <div className="flex justify-between items-start mb-6">
               <div className="flex-1">

@@ -6,11 +6,11 @@ const { test } = require('node:test');
 
 const dashboard = path.resolve(__dirname, '../ag-extension-dashboard');
 
-test('backend images upgrade inherited PCRE2 in the shared base layer', () => {
+test('backend images upgrade inherited PCRE2 and Perl in the shared base layer', () => {
   const dockerfile = readFileSync(path.join(dashboard, 'src/backend/Dockerfile'), 'utf8');
   const sharedBase = dockerfile.split(/^FROM node-base AS /m)[0];
   assert.match(sharedBase,
-    /^RUN apt-get update && apt-get install -y --no-install-recommends libpcre2-8-0 && rm -rf \/var\/lib\/apt\/lists\/\*$/m);
+    /^RUN apt-get update && apt-get install -y --no-install-recommends libpcre2-8-0 perl-base && rm -rf \/var\/lib\/apt\/lists\/\*$/m);
   for (const stage of ['deps', 'build', 'development', 'production']) {
     assert.match(dockerfile, new RegExp(`^FROM node-base AS ${stage}$`, 'm'));
   }

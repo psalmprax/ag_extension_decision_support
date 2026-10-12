@@ -69,22 +69,10 @@ const FullLiquidSwitch: React.FC<{
   );
 };
 
-export const LiquidToggleSwitch: React.FC<LiquidToggleSwitchProps> = ({
-  className = '',
-  compact = false,
-}) => {
-  const { liquidEffect, toggleLiquidEffect } = useAppStore();
-
-  const handleToggle = () => {
-    triggerHaptic('light');
-    toggleLiquidEffect();
-  };
-
-  if (compact) {
-    return <CompactLiquidSwitch active={liquidEffect} onToggle={handleToggle} className={className} />;
-  }
-
-  return <FullLiquidSwitch active={liquidEffect} onToggle={handleToggle} className={className} />;
+export const LiquidToggleSwitch: React.FC<LiquidToggleSwitchProps> = () => {
+  // Deactivated per QA v1 (#4, #12): liquid WebGL canvas effect is disabled
+  // to avoid confusing users, battery drain, and invisible-button issues in light mode.
+  return null;
 };
 
 export default LiquidToggleSwitch;

@@ -13,7 +13,7 @@ export function useThemeClasses() {
 
     const radiusClass = 'rounded';
     const panelClass =
-      'backdrop-blur-xl bg-white/70 dark:bg-white/5 shadow-[inset_0_1px_1px_var(--color-outline)] border border-white/10';
+      'backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 shadow-[inset_0_1px_1px_var(--color-outline)] border border-slate-200 dark:border-white/10';
     const headerOpacity = 'bg-white/30 dark:bg-slate-950/30';
     const btnClass =
       'rounded hover:scale-[1.01] active:scale-[0.99] hover:shadow-[0_0_20px_var(--color-outline)]';
