@@ -51,7 +51,7 @@ describe('OutbreakLayer Component', () => {
   });
 
   it('fetches and displays clusters when toggled on', async () => {
-    (outbreakService.getClusters as any).mockResolvedValueOnce([
+    vi.mocked(outbreakService.getClusters).mockResolvedValueOnce([
       {
         district: 'Meru',
         crop: 'Maize',
@@ -79,7 +79,7 @@ describe('OutbreakLayer Component', () => {
   });
 
   it('models and renders atmospheric spore dispersal cone (CE-002) on demand', async () => {
-    (outbreakService.getClusters as any).mockResolvedValueOnce([
+    vi.mocked(outbreakService.getClusters).mockResolvedValueOnce([
       {
         district: 'Meru',
         crop: 'Maize',
@@ -93,7 +93,7 @@ describe('OutbreakLayer Component', () => {
       },
     ]);
 
-    (outbreakService.getDispersalProjection as any).mockResolvedValueOnce({
+    vi.mocked(outbreakService.getDispersalProjection).mockResolvedValueOnce({
       origin: { lat: -0.0463, lng: 37.6559 },
       targetCentroid: { lat: -0.02, lng: 37.68 },
       coneFootprint: [

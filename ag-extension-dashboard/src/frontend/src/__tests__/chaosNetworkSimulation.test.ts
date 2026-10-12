@@ -22,7 +22,7 @@ describe('Deep-Tier Resilience — Chaos Network Drop & Backoff Simulation', () 
       try {
         const data = await fn();
         return { data, attempts, succeeded: true };
-      } catch (error) {
+      } catch {
         if (attempts >= options.maxRetries) {
           return { data: null, attempts, succeeded: false };
         }

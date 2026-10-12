@@ -669,7 +669,7 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
       } else {
         toast.error('Translation failed. Please retry shortly.');
       }
-    } catch (err) {
+    } catch {
       toast.error('Translation service currently unavailable.');
     } finally {
       setIsTranslating(false);

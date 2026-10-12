@@ -5,12 +5,12 @@ const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Auth schemas
-const loginSchema = z.object({
+export const loginSchema = z.object({
   username: z.string().min(1, 'Username is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
-const registerSchema = z.object({
+export const registerSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
@@ -33,24 +33,24 @@ export const farmerSchema = z.object({
   yieldHistory: z.any().optional(),
 });
 
-const farmerUpdateSchema = farmerSchema.partial();
+export const farmerUpdateSchema = farmerSchema.partial();
 
 // Visit schemas
-const visitSchema = z.object({
+export const visitSchema = z.object({
   farmerId: z.string().regex(uuidRegex, 'Invalid farmer ID'),
   farmerName: z.string().min(1, 'Farmer name is required'),
   scheduledDate: z.string().datetime({ message: 'Invalid date format' }),
   notes: z.string().max(1000).optional(),
 });
 
-const visitUpdateSchema = z.object({
+export const visitUpdateSchema = z.object({
   status: z.enum(['pending', 'completed', 'cancelled']).optional(),
   notes: z.string().max(1000).optional(),
   scheduledDate: z.string().datetime().optional(),
 });
 
 // Chat schemas
-const messageSchema = z.object({
+export const messageSchema = z.object({
   conversationId: z.string().regex(uuidRegex).optional(),
   message: z.string().min(1, 'Message is required').max(5000),
   farmerId: z.string().regex(uuidRegex).optional(),
@@ -58,7 +58,7 @@ const messageSchema = z.object({
 });
 
 // Knowledge base schemas
-const articleSchema = z.object({
+export const articleSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   content: z.string().min(1, 'Content is required'),
   category: z.string().min(1, 'Category is required'),
@@ -67,13 +67,13 @@ const articleSchema = z.object({
 });
 
 // Analytics schemas
-const dateRangeSchema = z.object({
+export const dateRangeSchema = z.object({
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
 });
 
 // User schemas
-const userUpdateSchema = z.object({
+export const userUpdateSchema = z.object({
   firstName: z.string().min(1).max(50).optional(),
   lastName: z.string().min(1).max(50).optional(),
   email: z.string().email().optional(),
@@ -81,7 +81,7 @@ const userUpdateSchema = z.object({
 });
 
 // Report schemas
-const reportGenerationSchema = z.object({
+export const reportGenerationSchema = z.object({
   type: z.enum(['visits', 'farmers', 'performance', 'impact']),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),

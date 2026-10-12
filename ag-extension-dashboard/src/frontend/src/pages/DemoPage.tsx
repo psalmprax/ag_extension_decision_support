@@ -13,7 +13,6 @@ import {
   Activity,
   CheckCircle,
   MapPin,
-  Wand2,
   Radio,
 } from 'lucide-react';
 import { CanvasUiLab } from '@/components/canvas-ui/CanvasUiLab';

@@ -274,7 +274,14 @@ function main() {
       if (directEntry) usedEntries.add(directEntry);
 
       const indirectVias = vias.filter((v) => typeof v === 'string');
-      const allIndirectExempt = indirectVias.every((dep) => exemptPackages.has(dep));
+      const allIndirectExempt = indirectVias.every((dep) => {
+        if (exemptPackages.has(dep)) return true;
+        const depVuln = vulnerabilities[dep];
+        if (!depVuln || !SEVERITY_RANK[depVuln.severity] || SEVERITY_RANK[depVuln.severity] < SEVERITY_RANK[args.level]) {
+          return true;
+        }
+        return false;
+      });
 
       if (vias.length > 0 && allDirectCovered && allIndirectExempt) {
         exemptPackages.add(name);
