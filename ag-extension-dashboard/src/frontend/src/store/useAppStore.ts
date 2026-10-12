@@ -53,6 +53,8 @@ export interface Notification {
 }
 
 // App Store
+localStorage.removeItem('ag-liquid-effect');
+
 export interface AppState {
   // User
   user: User | null;
@@ -159,7 +161,7 @@ export const useAppStore = create<AppState>()(
       sidebarOpen: true,
       themeName: (localStorage.getItem('ag-theme-name') as ThemeName) || 'forest',
       darkMode: localStorage.getItem('theme') === 'dark',
-      liquidEffect: localStorage.getItem('ag-liquid-effect') === 'true',
+      liquidEffect: false,
       activeTab: 'dashboard',
       preferredAudioLanguage: 'sw',
       farmers: [],
