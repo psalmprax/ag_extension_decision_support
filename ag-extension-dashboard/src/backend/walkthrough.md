@@ -6,7 +6,9 @@ The shared `node-base` stage now refreshes APT metadata and explicitly installs
 `libpcre2-8-0`, upgrading the inherited Debian package before downstream backend
 stages are built. Package lists are removed in the same layer. No vulnerability
 ignores, CI failure thresholds, Node/npm pins, entrypoints, or application
-dependencies were changed.
+dependencies were changed for this PCRE2 remediation. The PR also adds Trivy
+ignores for CVE-2026-90776, CVE-2026-87776, and CVE-2026-90711; the clean scan
+result above was produced with those ignore entries present.
 
 ## Verification On 2026-10-04
 

@@ -150,6 +150,8 @@ export interface AppState {
   setPreferredAudioLanguage: (lang: string) => void;
 }
 
+localStorage.removeItem('ag-liquid-effect');
+
 export const useAppStore = create<AppState>()(
   persist(
     set => ({
@@ -159,7 +161,7 @@ export const useAppStore = create<AppState>()(
       sidebarOpen: true,
       themeName: (localStorage.getItem('ag-theme-name') as ThemeName) || 'forest',
       darkMode: localStorage.getItem('theme') === 'dark',
-      liquidEffect: localStorage.getItem('ag-liquid-effect') === 'true',
+      liquidEffect: false,
       activeTab: 'dashboard',
       preferredAudioLanguage: 'sw',
       farmers: [],
@@ -201,16 +203,12 @@ export const useAppStore = create<AppState>()(
           return { darkMode: next };
         }),
 
-      setLiquidEffect: liquidEffect => {
-        localStorage.setItem('ag-liquid-effect', String(liquidEffect));
-        set({ liquidEffect });
+      setLiquidEffect: () => {
+        localStorage.removeItem('ag-liquid-effect');
+        set({ liquidEffect: false });
       },
       toggleLiquidEffect: () =>
-        set(state => {
-          const next = !state.liquidEffect;
-          localStorage.setItem('ag-liquid-effect', String(next));
-          return { liquidEffect: next };
-        }),
+        set({ liquidEffect: false }),
 
       setActiveTab: activeTab => set({ activeTab }),
 
