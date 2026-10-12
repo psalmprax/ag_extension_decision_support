@@ -27,9 +27,6 @@ GHSA-prgh-xp8r-p3m5
 GHSA-v53p-9fqp-m79j
 CVE-2026-90776
 
-# compression: HTTP response compression middleware, premature response close memory leak mitigated by connection timeouts
-CVE-2026-87776
-
 # proxy-addr: Transitive dependency of express, IPv4-mapped IPv6 trust subnet mitigated by reverse proxy configuration
 CVE-2026-90711
 
