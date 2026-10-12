@@ -49,6 +49,15 @@ describe('useAppStore', () => {
     expect(state.farmers).toEqual([]);
   });
 
+  it('clears the persisted liquid effect preference when the store loads', async () => {
+    localStorage.setItem('ag-liquid-effect', 'true');
+    vi.resetModules();
+
+    await import('../store/useAppStore');
+
+    expect(localStorage.getItem('ag-liquid-effect')).toBeNull();
+  });
+
   it('should toggle sidebar', () => {
     const { toggleSidebar } = useAppStore.getState();
 
