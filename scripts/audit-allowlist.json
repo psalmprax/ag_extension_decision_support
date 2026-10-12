@@ -82,6 +82,52 @@
       ],
       "reason": "Transitive dependency of dev bot integrations (@discordjs/rest, discord.js). BalancedPool TLS option dropping and raw unrequested WebSocket subprotocols are not used in production services.",
       "expires": "2026-12-31"
+    },
+    {
+      "package": "@modelcontextprotocol/sdk",
+      "scope": ["ag_extension_decision_support"],
+      "advisories": ["GHSA-6qxp-vccf-f47h"],
+      "reason": "Transitive devDependency of @opengsd/gsd-pi used only for local developer workflows; never shipped or reachable in production runtime.",
+      "expires": "2026-12-31"
+    },
+    {
+      "package": "sharp",
+      "scope": ["ag_extension_decision_support"],
+      "advisories": ["GHSA-wq5f-xc86-pv6w"],
+      "reason": "Transitive devDependency of @opengsd/gsd-pi used only for local developer workflows; never shipped or reachable in production runtime.",
+      "expires": "2026-12-31"
+    },
+    {
+      "package": "source-map-js",
+      "scope": ["ag_extension_decision_support", "backend", "frontend", "ag-extension-browser-ext"],
+      "advisories": ["GHSA-68fv-2mgg-jv7q"],
+      "reason": "Transitive build/dev tooling dependency of magicast and postcss. Offsets parsing denial of service is not reachable by untrusted user input in production runtime.",
+      "expires": "2026-12-31"
+    },
+    {
+      "package": "handlebars",
+      "scope": ["ag_extension_decision_support", "backend"],
+      "advisories": [
+        "GHSA-xw65-4hp5-5hc7",
+        "GHSA-8r5x-fm3f-whwj",
+        "GHSA-p8wg-vrv2-v86f"
+      ],
+      "reason": "Transitive test runner dependency of ts-jest in backend unit tests; not executed or reachable in production runtime.",
+      "expires": "2026-12-31"
+    },
+    {
+      "package": "compression",
+      "scope": ["ag_extension_decision_support", "backend"],
+      "advisories": ["GHSA-vc2v-76pw-4v95"],
+      "reason": "HTTP response compression middleware. Premature response close memory leak is mitigated by connection timeouts and reverse proxy buffering.",
+      "expires": "2026-12-31"
+    },
+    {
+      "package": "proxy-addr",
+      "scope": ["ag_extension_decision_support", "backend"],
+      "advisories": ["GHSA-jqcg-44mw-7w3h"],
+      "reason": "Transitive dependency of express. IPv4-mapped IPv6 trust subnet parsing is mitigated by reverse proxy headers and trusted proxy configuration.",
+      "expires": "2026-12-31"
     }
   ]
 }

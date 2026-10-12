@@ -711,16 +711,26 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         />
 
         <div className="space-y-4 sm:space-y-6">
-          <SupportEfficiencyCard performanceData={performanceData} t={t} cardClass={cardClass} />
-          <OutreachDeliveryWidget />
-          {(user?.role === 'admin' || user?.role === 'superadmin') && (
-            <ActivePulseCard cardClass={cardClass} isLoading={isLoading} />
-          )}
           <VegetationHealthCard cardClass={cardClass} />
-          <EfficacyCard />
-          <AdvisoriesCard />
+          <SupportEfficiencyCard performanceData={performanceData} t={t} cardClass={cardClass} />
+        </div>
+      </div>
+
+      {/* Balanced Agronomic Intelligence & Field Operations Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="space-y-4 sm:space-y-6">
           <FieldToolsCard />
           <LeaderboardCard />
+        </div>
+        <div className="space-y-4 sm:space-y-6">
+          <AdvisoriesCard />
+          <EfficacyCard />
+        </div>
+        <div className="space-y-4 sm:space-y-6">
+          <OutreachDeliveryWidget />
+          {(effectiveUser?.role === 'admin' || effectiveUser?.role === 'superadmin') && (
+            <ActivePulseCard cardClass={cardClass} isLoading={isLoading} />
+          )}
         </div>
       </div>
 

@@ -13,7 +13,6 @@ import {
   Activity,
   CheckCircle,
   MapPin,
-  Wand2,
   Radio,
 } from 'lucide-react';
 import { CanvasUiLab } from '@/components/canvas-ui/CanvasUiLab';
@@ -178,12 +177,6 @@ export function DemoPage({
               icon: Database,
               label: 'Soil Telemetry',
               color: 'text-cyan-400',
-            },
-            {
-              key: 'canvas' as const,
-              icon: Wand2,
-              label: 'Canvas UI Lab',
-              color: 'text-amber-400',
             },
             {
               key: 'telecom' as const,

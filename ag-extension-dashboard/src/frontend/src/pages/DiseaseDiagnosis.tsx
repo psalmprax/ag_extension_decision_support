@@ -87,37 +87,37 @@ export function DiseaseDiagnosis() {
     <PlanUpgradeGuard category="vision" featureName="Disease Checker">
       <div className="space-y-6">
         {/* Header & Live Status Telemetry Bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 rounded-[4px] bg-slate-950/80 border border-emerald-500/20 backdrop-blur-2xl shadow-xl shadow-emerald-950/30">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 rounded-2xl bg-slate-950/80 border border-emerald-500/20 backdrop-blur-2xl shadow-xl shadow-emerald-950/30">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-[3px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-black uppercase tracking-wider">
+              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
                 <Radio className="w-3 h-3 animate-pulse text-emerald-400" />
-                NEURAL PATHOLOGY HUD
+                CROP DOCTOR &amp; PATHOLOGY
               </span>
-              <span className="text-[11px] font-mono text-slate-400">
-                EDGE VISION + MULTIMODAL LLM
+              <span className="text-[11px] text-slate-400 font-medium">
+                INSTANT ON-DEVICE LEAF DIAGNOSIS
               </span>
             </div>
-            <h1 className={`text-2xl font-black text-white tracking-tight uppercase ${headingClass}`}>
-              Crop & Soil Pathology Suite
+            <h1 className={`text-2xl font-black text-white tracking-tight ${headingClass}`}>
+              Crop Doctor &amp; Plant Pathology Clinic
             </h1>
             <p className="text-slate-400 text-xs mt-1">
               {t('disease_diagnosis_subtitle') ||
-                'On-device leaf vision diagnosis, symptom inference, and localized bio-remedies.'}
+                'On-device leaf vision diagnosis, symptom inference, and localized biological & chemical treatment plans.'}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowScannerModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-mono font-bold shadow-md shadow-emerald-950/40 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/40 transition-all cursor-pointer active:scale-95"
             >
-              <Camera className="w-3.5 h-3.5" />
-              <span>OFFLINE CAMERA SCANNER</span>
+              <Camera className="w-4 h-4" />
+              <span>Camera Scan Leaf</span>
             </button>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-slate-900 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold shadow-md shadow-emerald-950/40">
+            <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>OFFLINE READY</span>
+              <span>Offline Ready</span>
             </span>
           </div>
         </div>

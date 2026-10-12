@@ -25,6 +25,13 @@ CVE-2026-102599
 # nodemailer: Transactional email with strict Zod email schema validation
 GHSA-prgh-xp8r-p3m5
 GHSA-v53p-9fqp-m79j
+CVE-2026-90776
+
+# compression: HTTP response compression middleware, premature response close memory leak mitigated by connection timeouts
+CVE-2026-87776
+
+# proxy-addr: Transitive dependency of express, IPv4-mapped IPv6 trust subnet mitigated by reverse proxy configuration
+CVE-2026-90711
 
 # undici: Transitive dependency of dev bot integrations (@discordjs/rest, discord.js)
 CVE-2026-19534

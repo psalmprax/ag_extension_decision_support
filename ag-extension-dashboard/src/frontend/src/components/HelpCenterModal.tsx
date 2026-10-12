@@ -69,7 +69,7 @@ function SupportTicketForm({
       ) : (
         <form onSubmit={handleTicketSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Subject
             </label>
             <input
@@ -77,18 +77,18 @@ function SupportTicketForm({
               value={ticketSubject}
               onChange={e => setTicketSubject(e.target.value)}
               placeholder="Brief description of your issue"
-              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500"
+              className="w-full mt-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-colors"
               required
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Category
             </label>
             <select
               value={ticketCategory}
               onChange={e => setTicketCategory(e.target.value)}
-              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500"
+              className="w-full mt-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-colors"
             >
               <option value="general">General</option>
               <option value="farmers">Farmer Management</option>
@@ -99,7 +99,7 @@ function SupportTicketForm({
             </select>
           </div>
           <div>
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Description
             </label>
             <textarea
@@ -107,7 +107,7 @@ function SupportTicketForm({
               onChange={e => setTicketDescription(e.target.value)}
               placeholder="Describe your issue in detail..."
               rows={4}
-              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 resize-none"
+              className="w-full mt-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-colors resize-none"
               required
             />
           </div>
@@ -159,7 +159,10 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
 
   const handleTicketSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ticketSubject.trim() || !ticketDescription.trim()) return;
+    if (!ticketSubject.trim() || !ticketDescription.trim()) {
+      addNotification({ type: 'warning', message: 'Please provide both a subject and a description.' });
+      return;
+    }
     setTicketSubmitting(true);
     try {
       const res = await createSupportTicket({
@@ -188,7 +191,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
     {
       icon: Book,
       label: t('help_docs') || 'Documentation',
-      color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',
+      color: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
       action: () => {
         onClose();
         React.startTransition(() => setActiveTab('knowledge'));
@@ -197,7 +200,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
     {
       icon: MessageSquare,
       label: t('help_chat') || 'Live Chat',
-      color: 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400',
+      color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
       action: () => {
         onClose();
         React.startTransition(() => setActiveTab('aiassistant'));
@@ -206,7 +209,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
     {
       icon: Mail,
       label: 'Submit Ticket',
-      color: 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400',
+      color: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-800',
       action: () => setShowTicketForm(true),
     },
   ];
@@ -234,7 +237,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-4"
           >
-            <div className="bg-slate-900 border border-white/10 text-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-hidden flex flex-col">
               {/* Header */}
               <div className="p-4 sm:p-6 bg-gradient-to-br from-emerald-600 to-teal-700 text-white">
                 <div className="flex items-center justify-between">
@@ -293,7 +296,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
 
                     {/* FAQs */}
                     <div className="space-y-3">
-                      <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                         {t('help_faq') || 'Frequently Asked Questions'}
                       </h3>
                       {faqsLoading ? (
@@ -301,22 +304,22 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                           <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
                         </div>
                       ) : faqs.length === 0 ? (
-                        <p className="text-sm text-gray-400 text-center py-4">No FAQs available</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">No FAQs available</p>
                       ) : (
                         faqs.map((faq, i) => (
                           <div
                             key={faq.id || i}
-                            className="border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden"
+                            className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden"
                           >
                             <button
                               onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
-                              className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                              className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                             >
-                              <span className="text-sm font-bold text-gray-900 dark:text-white pr-4">
+                              <span className="text-sm font-bold text-slate-900 dark:text-white pr-4">
                                 {faq.question}
                               </span>
                               <ChevronRight
-                                className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${expandedFaq === i ? 'rotate-90' : ''}`}
+                                className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform ${expandedFaq === i ? 'rotate-90' : ''}`}
                               />
                             </button>
                             {expandedFaq === i && (
@@ -325,7 +328,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                                 animate={{ height: 'auto', opacity: 1 }}
                                 className="px-4 pb-4"
                               >
-                                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                                   {faq.answer}
                                 </p>
                               </motion.div>
@@ -337,19 +340,19 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
 
                     {/* Keyboard Shortcuts */}
                     <div className="space-y-3">
-                      <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                         {t('help_shortcuts') || 'Keyboard Shortcuts'}
                       </h3>
                       <div className="grid grid-cols-2 gap-2">
                         {keyboardShortcuts.map(({ key, action }, i) => (
                           <div
                             key={i}
-                            className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl"
+                            className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl"
                           >
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                            <span className="text-sm text-slate-700 dark:text-slate-300">
                               {action}
                             </span>
-                            <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-xs font-mono rounded text-gray-700 dark:text-gray-300">
+                            <kbd className="px-2 py-1 bg-slate-200 dark:bg-slate-700 text-xs font-mono rounded text-slate-800 dark:text-slate-200 font-bold">
                               {key}
                             </kbd>
                           </div>
@@ -362,19 +365,25 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
 
               {/* Footer */}
               {!showTicketForm && (
-                <div className="p-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-2 gap-2">
+                <div className="p-4 border-t border-slate-200 dark:border-slate-800 grid grid-cols-2 gap-2">
                   <button
-                    onClick={() => setShowTicketForm(true)}
-                    className="flex items-center justify-center gap-2 py-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    onClick={() => {
+                      setTicketCategory('bug');
+                      setShowTicketForm(true);
+                    }}
+                    className="flex items-center justify-center gap-2 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors"
                   >
-                    <Bug className="w-4 h-4" />
+                    <Bug className="w-4 h-4 text-rose-500" />
                     {t('help_report_issue') || 'Report an Issue'}
                   </button>
                   <button
-                    onClick={() => setShowTicketForm(true)}
-                    className="flex items-center justify-center gap-2 py-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    onClick={() => {
+                      setTicketCategory('general');
+                      setShowTicketForm(true);
+                    }}
+                    className="flex items-center justify-center gap-2 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors"
                   >
-                    <ExternalLink className="w-4 h-4" />
+                    <ExternalLink className="w-4 h-4 text-emerald-500" />
                     {t('help_feature_request') || 'Feature Request'}
                   </button>
                 </div>

@@ -71,7 +71,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-4"
           >
-            <div className="bg-slate-900 border border-white/10 text-white rounded-xl shadow-2xl w-full max-w-lg max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-y-auto">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-y-auto">
               {/* Header */}
               <div className="relative p-4 sm:p-6 bg-gradient-to-br from-emerald-600 to-teal-700 text-white">
                 <button
@@ -104,7 +104,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               <div className="p-4 sm:p-6 space-y-4">
                 <div className="space-y-3">
                   <div>
-                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {t('common_first_name') || 'First Name'}
                     </label>
                     {isEditing ? (
@@ -114,12 +114,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         onChange={e =>
                           setFormData(prev => ({ ...prev, firstName: e.target.value }))
                         }
-                        className="w-full mt-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 dark:text-white"
+                        className="w-full mt-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors"
                       />
                     ) : (
                       <div className="flex items-center gap-2 mt-1 p-2.5">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-900 dark:text-white font-medium">
+                        <User className="w-4 h-4 text-slate-400" />
+                        <span className="text-slate-900 dark:text-white font-semibold">
                           {user.firstName}
                         </span>
                       </div>
@@ -127,7 +127,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {t('common_last_name') || 'Last Name'}
                     </label>
                     {isEditing ? (
@@ -135,12 +135,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         type="text"
                         value={formData.lastName}
                         onChange={e => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                        className="w-full mt-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 dark:text-white"
+                        className="w-full mt-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors"
                       />
                     ) : (
                       <div className="flex items-center gap-2 mt-1 p-2.5">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-900 dark:text-white font-medium">
+                        <User className="w-4 h-4 text-slate-400" />
+                        <span className="text-slate-900 dark:text-white font-semibold">
                           {user.lastName}
                         </span>
                       </div>
@@ -148,19 +148,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Email
                     </label>
                     <div className="flex items-center gap-2 mt-1 p-2.5">
-                      <Mail className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-900 dark:text-white font-medium">
+                      <Mail className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-900 dark:text-white font-semibold">
                         {user.email}
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {t('common_region') || 'Region'}
                     </label>
                     {isEditing ? (
@@ -168,12 +168,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         type="text"
                         value={formData.region}
                         onChange={e => setFormData(prev => ({ ...prev, region: e.target.value }))}
-                        className="w-full mt-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 dark:text-white"
+                        className="w-full mt-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors"
                       />
                     ) : (
                       <div className="flex items-center gap-2 mt-1 p-2.5">
-                        <MapPin className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-900 dark:text-white font-medium">
+                        <MapPin className="w-4 h-4 text-slate-400" />
+                        <span className="text-slate-900 dark:text-white font-semibold">
                           {user.region || 'Not set'}
                         </span>
                       </div>
@@ -182,19 +182,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
                   {isEditing ? (
                     <>
                       <button
                         onClick={() => setIsEditing(false)}
-                        className="flex-1 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                       >
                         {t('common_cancel') || 'Cancel'}
                       </button>
                       <button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="flex-1 py-2.5 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="flex-1 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                       >
                         {isSaving ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -207,7 +207,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   ) : (
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="w-full py-2.5 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-bold rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors"
+                      className="w-full py-2.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
                     >
                       {t('common_edit') || 'Edit Profile'}
                     </button>
