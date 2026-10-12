@@ -116,13 +116,6 @@
       "expires": "2026-12-31"
     },
     {
-      "package": "compression",
-      "scope": ["ag_extension_decision_support", "backend"],
-      "advisories": ["GHSA-vc2v-76pw-4v95"],
-      "reason": "HTTP response compression middleware. Premature response close memory leak is mitigated by connection timeouts and reverse proxy buffering.",
-      "expires": "2026-12-31"
-    },
-    {
       "package": "proxy-addr",
       "scope": ["ag_extension_decision_support", "backend"],
       "advisories": ["GHSA-jqcg-44mw-7w3h"],
