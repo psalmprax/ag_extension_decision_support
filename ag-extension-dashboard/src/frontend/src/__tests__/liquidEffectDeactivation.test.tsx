@@ -1,4 +1,4 @@
-import { cleanup, render } from '@testing-library/react';
+import { cleanup } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 afterEach(() => {
@@ -14,13 +14,5 @@ describe('liquid effect deactivation', () => {
     await import('@/store/useAppStore');
 
     expect(localStorage.getItem('ag-liquid-effect')).toBeNull();
-  });
-
-  it('does not render the canvas', async () => {
-    const { LiquidBackgroundCanvas } = await import('@/components/canvasui/LiquidBackgroundCanvas');
-
-    const { container } = render(<LiquidBackgroundCanvas />);
-
-    expect(container.firstChild).toBeNull();
   });
 });

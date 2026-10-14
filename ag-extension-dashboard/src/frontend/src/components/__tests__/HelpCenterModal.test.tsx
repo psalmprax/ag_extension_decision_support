@@ -26,6 +26,16 @@ vi.mock('@/api/supportService', () => ({
 }));
 
 describe('HelpCenterModal', () => {
+  it('resets the category when opening a generic support ticket', () => {
+    render(<HelpCenterModal isOpen onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Feature Request' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close support ticket form' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit Ticket' }));
+
+    expect(screen.getByRole('combobox')).toHaveValue('general');
+  });
+
   it('submits feature requests using the dedicated category', async () => {
     render(<HelpCenterModal isOpen onClose={vi.fn()} />);
 

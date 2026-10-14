@@ -24,10 +24,6 @@ vi.mock('@/api/authService', () => ({
   register: vi.fn(),
 }));
 
-vi.mock('@/components/canvasui/LiquidBackgroundCanvas', () => ({
-  LiquidBackgroundCanvas: () => <div data-testid="liquid-canvas" />,
-}));
-
 vi.mock('@/components/canvas-ui/AgroEcosystemCanvasScrubber', () => ({
   AgroEcosystemCanvasScrubber: () => <div data-testid="agro-scrubber" />,
 }));

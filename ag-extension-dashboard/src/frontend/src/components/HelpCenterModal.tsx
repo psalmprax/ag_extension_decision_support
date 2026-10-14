@@ -55,6 +55,7 @@ function SupportTicketForm({
         <h3 className="text-lg font-bold text-gray-900 dark:text-white">Submit Support Ticket</h3>
         <button
           onClick={() => setShowTicketForm(false)}
+          aria-label="Close support ticket form"
           className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
         >
           <X className="w-4 h-4 text-gray-400" />
@@ -211,7 +212,10 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
       icon: Mail,
       label: 'Submit Ticket',
       color: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-800',
-      action: () => setShowTicketForm(true),
+      action: () => {
+        setTicketCategory('general');
+        setShowTicketForm(true);
+      },
     },
   ];
 
