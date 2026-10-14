@@ -158,7 +158,6 @@ export const useAppStore = create<AppState>()(
       sidebarOpen: true,
       themeName: (localStorage.getItem('ag-theme-name') as ThemeName) || 'forest',
       darkMode: localStorage.getItem('theme') === 'dark',
-      liquidEffect: false,
       activeTab: 'dashboard',
       preferredAudioLanguage: 'sw',
       farmers: [],
