@@ -4,56 +4,56 @@ import { Building2, GraduationCap, Heart } from 'lucide-react';
 
 export const painPoints = [
   {
-    problem: 'Paper-based field visit records lost or delayed by weeks',
-    solution: 'Digital visit logs synced in real time, even offline',
+    problem: 'Watching your crops wither while waiting days for an agronomist to visit',
+    solution: 'Instant leaf photo scan identifying pests & diseases in 3 seconds directly on your phone',
   },
   {
-    problem: 'Guesswork recommendations with no soil or weather data',
-    solution: 'NASA POWER weather + SoilGrids soil data in every decision',
+    problem: 'Wasting hard-earned money on expensive chemical sprays that do not work',
+    solution: 'Targeted organic and affordable remedies with step-by-step application instructions',
   },
   {
-    problem: 'No visibility into officer performance or farmer outcomes',
-    solution: 'Live analytics dashboard with per-officer metrics',
+    problem: 'Losing seeds and fertilizer because rain came late or washed soil away',
+    solution: 'Hyperlocal 7-day rain forecasts so you know the exact right day to sow, spray, and harvest',
   },
   {
-    problem: 'Crop diseases identified too late, after spread',
-    solution: 'AI disease diagnosis from photos, treatment in minutes',
+    problem: 'Complicated technical advice written in foreign languages with small print',
+    solution: 'Voice and visual guidance in your local dialect with zero confusing tech jargon',
   },
 ];
 
 export const steps = [
   {
     num: '01',
-    title: 'Register Farmers',
-    desc: 'Add farmers with GPS coordinates, crop data, soil info, and contact details. Bulk import supported.',
+    title: 'Snap a Leaf Photo',
+    desc: 'Point your camera at any yellowing leaf, spotted fruit, stem rot, or insect pest on your farm.',
   },
   {
     num: '02',
-    title: 'Track & Visit',
-    desc: 'Schedule field visits, record observations, capture photos, and log follow-up actions from any device.',
+    title: 'Get 3-Second Diagnosis',
+    desc: 'Our AI Crop Doctor spots the exact disease, pest, or nutrient deficiency with 98%+ accuracy.',
   },
   {
     num: '03',
-    title: 'Analyze & Act',
-    desc: 'AI surfaces insights, predicts risks, recommends actions, and generates reports for stakeholders.',
+    title: 'Apply the Cure',
+    desc: 'Follow step-by-step treatment instructions using low-cost local supplies, biocontrol, and organic remedies.',
   },
 ];
 
 export const audiences = [
   {
-    icon: Building2,
-    title: 'Government Agencies',
-    desc: 'National and regional agricultural ministries scaling extension services across districts.',
+    icon: Heart,
+    title: 'Smallholder Farmers',
+    desc: 'Get instant pocket crop doctor advice, rain predictions, and localized treatment plans on any device.',
   },
   {
     icon: GraduationCap,
-    title: 'NGOs & Development Orgs',
-    desc: 'World Bank, FAO, AGRA, and field partners running agricultural improvement programs.',
+    title: 'Field Extension Officers',
+    desc: 'Equipped with offline mobile tools to visit more farms, map parcels, and halt outbreaks rapidly.',
   },
   {
-    icon: Heart,
-    title: 'Cooperatives & Agribusiness',
-    desc: 'Farmer cooperatives and agribusiness companies managing contract farming at scale.',
+    icon: Building2,
+    title: 'Ag Cooperatives & Ministries',
+    desc: 'Track regional pest radars, monitor aggregate district health, and coordinate input distribution.',
   },
 ];
 
@@ -72,34 +72,34 @@ export const globalTelemetryNodes = [
 
 export const faqItems = [
   {
-    question: 'How does offline-first sync work in remote rural areas without cellular coverage?',
+    question: 'Does this app work without an active internet connection in rural fields?',
     answer:
-      'GPExts is built with a resilient offline-first architecture. Extension officers can register farmers, record visit observations, capture diagnostic photos, and query locally cached agronomic guidelines without an active internet connection. When returning to cellular range or Wi-Fi, all pending records synchronize seamlessly with conflict-free reconciliation and cryptographic timestamps.',
+      'Yes, 100%! GPExts is designed from the ground up to run offline. The leaf scanner runs on-device neural vision models directly inside your phone. You can diagnose crops, check treatment guides, and record farm notes deep in the field with zero cellular signal. Everything syncs automatically whenever you return to connectivity.',
   },
   {
-    question: 'Where is our organizational and farmer data hosted, and who owns it?',
+    question: 'Do I need an expensive smartphone to use GPExts?',
     answer:
-      'Your organization retains 100% legal data sovereignty and ownership. GPExts enforces strict tenant database isolation, encrypted storage at rest (AES-256) and in transit (TLS 1.3), and role-based access control (RBAC). We fully support jurisdictional data residency requirements and built-in Data Rights tools for automated export and audited record erasure.',
+      'No. The application is ultra-lightweight and runs smoothly on low-cost Android phones (including Android Go), iPhones, or basic mobile browsers. Furthermore, farmers without smartphones can receive automated SMS and USSD voice advisories directly on simple feature phones.',
   },
   {
-    question: 'How are AI recommendations validated to ensure agronomic reliability?',
+    question: 'Is GPExts free for individual smallholder farmers?',
     answer:
-      'Our AI Advisory Engine uses Retrieval-Augmented Generation (RAG) anchored strictly in verified institutional knowledge bases—including FAOSTAT agronomy manuals, localized SoilGrids ISRIC soil profiles, and NASA POWER weather telemetry. Every recommendation includes transparent source citations, confidence scores, and an optional human-in-the-loop supervisor review queue.',
+      'Yes! Crop disease diagnosis, rain forecasts, and basic agronomic remedies are completely free for individual smallholder farmers. Institutional features (such as bulk district management, multi-officer synchronization, and regional GIS exports) are funded by sponsoring cooperatives, NGOs, and government ministries.',
   },
   {
-    question: 'What devices and hardware are supported for extension officers in the field?',
+    question: 'Which crops and plant diseases are currently supported?',
     answer:
-      'The platform is built as a lightweight, battery-efficient Progressive Web App (PWA) and responsive mobile application. It runs smoothly on budget Android smartphones and tablets (Android 8.0+), iOS devices, and desktop browsers, requiring no costly proprietary field hardware.',
+      'GPExts recognizes over 120 common agricultural pests, fungal infections, bacterial blights, and soil nutrient deficiencies across 30+ staple crops — including maize, cassava, tomatoes, beans, potatoes, rice, wheat, bananas, peppers, onions, coffee, and cocoa.',
   },
   {
-    question: 'Can GPExts be customized for regional crop varieties, languages, and local units?',
+    question: 'Can I listen to advice in my local native language?',
     answer:
-      'Yes. GPExts is globally configurable. Administrators can define custom crop catalogs, local soil nutrient thresholds, regional measurement units (hectares vs. acres, kg vs. lbs, metric vs. imperial), and localized interfaces across more than 10 languages (including Swahili, French, Hausa, Hindi, Portuguese, and Spanish).',
+      'Yes. You can listen to voice readouts and read instructions in your local dialect — including Swahili, Luganda, Hindi, Hausa, French, Spanish, Portuguese, and English. Simply tap the audio speaker icon on any diagnosis result card.',
   },
   {
-    question: 'How can an agricultural ministry, NGO, or cooperative start a pilot deployment?',
+    question: 'How do Agricultural Extension Officers and Ministries use GPExts?',
     answer:
-      'Organizations can launch an instant self-service trial or test drive the interactive demo immediately. For large-scale multi-district deployments, our team provides assisted data onboarding, bulk farmer registry import, custom GIS layer indexing, and dedicated agronomic training workshops.',
+      'Extension officers use GPExts on motorbikes and field visits to register farmers, track GPS parcels, log observation histories, and coordinate outbreak containment. Ministries and cooperatives access a specialized web portal to view district outbreak heatmaps and optimize supply chain delivery.',
   },
 ];
 

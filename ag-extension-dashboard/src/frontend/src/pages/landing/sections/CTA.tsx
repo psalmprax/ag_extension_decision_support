@@ -21,16 +21,16 @@ export function CTA() {
           >
             <motion.h2
               variants={fadeUp}
-              className="text-2xl sm:text-[clamp(2rem,4vw,3rem)] font-bold tracking-tight mb-4 sm:mb-5 leading-tight px-2"
+              className="text-2xl sm:text-[clamp(2rem,4vw,3rem)] font-bold tracking-tight mb-4 sm:mb-5 leading-tight px-2 text-white"
             >
-              Ready to transform your
+              Ready to protect your crops
               <br />
-              <span className="bg-gradient-to-r from-emerald-300 to-amber-400 bg-clip-text text-transparent">
-                agricultural extension?
+              <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-amber-300 bg-clip-text text-transparent">
+                and harvest more this season?
               </span>
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-sm sm:text-lg text-white/75 mb-6 sm:mb-8 px-2 font-normal">
-              Start with a free trial. No credit card required.
+            <motion.p variants={fadeUp} className="text-sm sm:text-lg text-white/80 mb-6 sm:mb-8 px-2 font-normal">
+              Completely free for smallholder farmers. Works 100% offline with zero data cost.
             </motion.p>
             <motion.div
               variants={fadeUp}

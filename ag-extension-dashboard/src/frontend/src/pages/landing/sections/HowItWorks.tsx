@@ -16,19 +16,25 @@ export function HowItWorks() {
             >
               <motion.div
                 variants={fadeUp}
-                className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/80 mb-4"
+                className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400 mb-3"
               >
-                How It Works
+                Simple 3-Step Process
               </motion.div>
               <motion.h2
                 variants={fadeUp}
-                className="text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight"
+                className="text-2xl sm:text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight text-white mb-3"
               >
-                Up and running in{' '}
-                <span className="bg-gradient-to-r from-emerald-300 to-amber-400 bg-clip-text text-transparent">
-                  three steps
+                Heal your crops in{' '}
+                <span className="bg-gradient-to-r from-emerald-300 to-amber-300 bg-clip-text text-transparent">
+                  three simple steps
                 </span>
               </motion.h2>
+              <motion.p
+                variants={fadeUp}
+                className="text-sm sm:text-base text-white/70 max-w-xl mx-auto font-normal leading-relaxed"
+              >
+                No expensive equipment, no technical training. Just point, scan, and protect your harvest.
+              </motion.p>
             </motion.div>
 
             <div className="grid md:grid-cols-3 gap-8 relative">
