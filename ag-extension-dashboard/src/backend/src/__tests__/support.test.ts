@@ -101,7 +101,7 @@ describe('Support Route — Mapper-before-response: mapSupportTicketRows + mapSu
             subject: 'New issue',
             status: 'open',
             priority: 'normal',
-            category: 'general',
+            category: 'feature-request',
             description: 'Something is broken',
             assigned_to: null,
             resolved_at: null,
@@ -113,12 +113,23 @@ describe('Support Route — Mapper-before-response: mapSupportTicketRows + mapSu
         const response = await request(app)
             .post('/api/v1/support/tickets')
             .set('Authorization', `Bearer ${officerToken}`)
-            .send({ subject: 'New issue', description: 'Something is broken' });
+            .send({ subject: 'New issue', description: 'Something is broken', category: 'feature-request' });
 
         expect(response.status).toBe(201);
         expect(response.body.data.id).toBe('ticket-new');
         expect(response.body.data.userId).toBe('off-1');
         expect(response.body.data.status).toBe('open');
+        expect(response.body.data.category).toBe('feature-request');
         expect(response.body.data.user_id).toBeUndefined();
+    });
+
+    it('rejects unknown ticket categories without writing to the database', async () => {
+        const response = await request(app)
+            .post('/api/v1/support/tickets')
+            .set('Authorization', 'Bearer ' + officerToken)
+            .send({ subject: 'New issue', description: 'Something is broken', category: 'unknown-category' });
+
+        expect(response.status).toBe(400);
+        expect(mockQuery).not.toHaveBeenCalled();
     });
 });

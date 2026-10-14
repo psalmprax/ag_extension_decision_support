@@ -10,6 +10,17 @@ const router = Router();
 
 type AuthedRequest = Request & { user?: AuthenticatedRequestUser };
 
+const SUPPORT_TICKET_CATEGORIES = new Set([
+    'general',
+    'farmers',
+    'visits',
+    'ai',
+    'billing',
+    'bug',
+    'feature-request',
+    'technical',
+]);
+
 interface FAQItem {
     id: string;
     question: string;
@@ -114,12 +125,16 @@ router.post('/tickets', authorize(['admin', 'regional_manager', 'extension_offic
         if (!body.subject || !body.description) {
             return res.status(400).json({ success: false, error: 'subject and description are required' });
         }
+        const category = body.category ?? 'general';
+        if (typeof category !== 'string' || !SUPPORT_TICKET_CATEGORIES.has(category)) {
+            return res.status(400).json({ success: false, error: 'Invalid support ticket category' });
+        }
 
         const { rows } = await query<SupportTicketRow>(
             `INSERT INTO support_tickets (user_id, subject, description, status, priority, category)
              VALUES ($1, $2, $3, 'open', $4, $5)
              RETURNING *`,
-            [userId, body.subject, body.description, body.priority ?? 'normal', body.category ?? 'general']
+            [userId, body.subject, body.description, body.priority ?? 'normal', category]
         );
 
         const created = rows[0];

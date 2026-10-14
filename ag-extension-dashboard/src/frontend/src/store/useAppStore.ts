@@ -55,6 +55,8 @@ export interface Notification {
 }
 
 // App Store
+localStorage.removeItem('ag-liquid-effect');
+
 export interface AppState {
   // User
   user: User | null;
