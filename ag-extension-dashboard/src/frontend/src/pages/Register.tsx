@@ -5,7 +5,6 @@ import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
 import { useAppStore, type User } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { LiquidBackgroundCanvas } from '@/components/canvasui/LiquidBackgroundCanvas';
 import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 import { AgroEcosystemCanvasScrubber } from '@/components/canvas-ui/AgroEcosystemCanvasScrubber';
 import { register } from '@/api/authService';
@@ -146,8 +145,7 @@ export function Register() {
       role="main"
       aria-label="Register page"
     >
-      {/* ── Liquid WebGL Fluid Background & Ambient Glow ── */}
-      <LiquidBackgroundCanvas />
+      {/* ── Ambient Glow ── */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-emerald-600/[0.12] blur-[150px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-amber-500/[0.08] blur-[150px]" />
@@ -463,4 +461,3 @@ export function Register() {
 }
 
 export default Register;
-

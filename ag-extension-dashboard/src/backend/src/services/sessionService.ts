@@ -19,10 +19,38 @@ export interface UserSessionRecord {
   isCurrent?: boolean;
 }
 
-// Fast-path set for revocations performed by this process. The authoritative
-// source is the `user_sessions.is_revoked` column; this set only avoids a DB
+const REVOKED_SET = "session:revoked";
+// Revocation entries only need to outlive the token itself.
+const REVOKED_TTL_MS = 8 * 24 * 60 * 60 * 1000;
+const REVOCATION_CACHE_CLEANUP_INTERVAL = 256;
+
+// Fast-path cache for revocations performed by this process. The authoritative
+// source is the `user_sessions.is_revoked` column; this cache only avoids a DB
 // round-trip for the common "just revoked here" case.
-const revokedTokenHashes = new Set<string>();
+const revokedTokenHashes = new Map<string, number>();
+let revocationCacheWritesSinceCleanup = 0;
+
+function isLocallyRevoked(tokenHash: string): boolean {
+  const expiresAt = revokedTokenHashes.get(tokenHash);
+  if (expiresAt === undefined) return false;
+  if (expiresAt <= Date.now()) {
+    revokedTokenHashes.delete(tokenHash);
+    return false;
+  }
+  return true;
+}
+
+function rememberLocalRevocation(tokenHash: string): void {
+  const now = Date.now();
+  revokedTokenHashes.set(tokenHash, now + REVOKED_TTL_MS);
+
+  if (++revocationCacheWritesSinceCleanup >= REVOCATION_CACHE_CLEANUP_INTERVAL) {
+    for (const [hash, expiresAt] of revokedTokenHashes) {
+      if (expiresAt <= now) revokedTokenHashes.delete(hash);
+    }
+    revocationCacheWritesSinceCleanup = 0;
+  }
+}
 
 export function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -38,11 +66,11 @@ export function hashToken(token: string): string {
 export async function isSessionValid(token: string): Promise<boolean> {
   if (!token) return false;
   const tokenHash = hashToken(token);
-  if (revokedTokenHashes.has(tokenHash)) return false;
+  if (isLocallyRevoked(tokenHash)) return false;
 
   // Cross-replica revocations can reject a request without a database round trip.
   if (await inSet(REVOKED_SET, tokenHash)) {
-    revokedTokenHashes.add(tokenHash);
+    rememberLocalRevocation(tokenHash);
     return false;
   }
 
@@ -73,7 +101,7 @@ async function checkSessionInDatabase(tokenHash: string): Promise<boolean> {
       logger.warn('Allowing bearer token with no session row (legacy/demo token; JWT still enforced by caller)');
     } else {
       if (row.is_revoked || row.is_active !== true) {
-        revokedTokenHashes.add(tokenHash);
+        rememberLocalRevocation(tokenHash);
         return false;
       }
 
@@ -92,12 +120,8 @@ async function checkSessionInDatabase(tokenHash: string): Promise<boolean> {
   }
 }
 
-const REVOKED_SET = "session:revoked";
-// Revocation entries only need to outlive the token itself.
-const REVOKED_TTL_MS = 8 * 24 * 60 * 60 * 1000;
-
 function markRevokedLocally(tokenHash: string): void {
-  revokedTokenHashes.add(tokenHash);
+  rememberLocalRevocation(tokenHash);
   // Best-effort publish to other replicas; the DB row is still authoritative.
   void addToSet(REVOKED_SET, tokenHash, REVOKED_TTL_MS).catch((err: unknown) =>
     logger.warn("Failed to publish session revocation to shared state:", err),

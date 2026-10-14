@@ -49,7 +49,7 @@ describe('useAppStore', () => {
     expect(state.farmers).toEqual([]);
   });
 
-  it('clears the persisted liquid effect preference when the store loads', async () => {
+  it('clears the legacy liquid effect preference when the store loads', async () => {
     localStorage.setItem('ag-liquid-effect', 'true');
     vi.resetModules();
 
