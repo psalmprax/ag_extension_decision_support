@@ -53,6 +53,8 @@ export interface Notification {
 }
 
 // App Store
+localStorage.removeItem('ag-liquid-effect');
+
 export interface AppState {
   // User
   user: User | null;
@@ -75,11 +77,6 @@ export interface AppState {
   darkMode: boolean;
   setDarkMode: (enabled: boolean) => void;
   toggleDarkMode: () => void;
-
-  // Liquid background effect
-  liquidEffect: boolean;
-  setLiquidEffect: (enabled: boolean) => void;
-  toggleLiquidEffect: () => void;
 
   // Navigation
   activeTab: string;
@@ -159,7 +156,6 @@ export const useAppStore = create<AppState>()(
       sidebarOpen: true,
       themeName: (localStorage.getItem('ag-theme-name') as ThemeName) || 'forest',
       darkMode: localStorage.getItem('theme') === 'dark',
-      liquidEffect: localStorage.getItem('ag-liquid-effect') === 'true',
       activeTab: 'dashboard',
       preferredAudioLanguage: 'sw',
       farmers: [],
@@ -199,17 +195,6 @@ export const useAppStore = create<AppState>()(
           const next = !state.darkMode;
           localStorage.setItem('theme', next ? 'dark' : 'light');
           return { darkMode: next };
-        }),
-
-      setLiquidEffect: liquidEffect => {
-        localStorage.setItem('ag-liquid-effect', String(liquidEffect));
-        set({ liquidEffect });
-      },
-      toggleLiquidEffect: () =>
-        set(state => {
-          const next = !state.liquidEffect;
-          localStorage.setItem('ag-liquid-effect', String(next));
-          return { liquidEffect: next };
         }),
 
       setActiveTab: activeTab => set({ activeTab }),

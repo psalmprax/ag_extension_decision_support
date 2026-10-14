@@ -36,6 +36,7 @@ import bcrypt from 'bcryptjs';
 import { config } from '../config';
 import app from '../app';
 import { mockQuery } from './helpers/setupMocks';
+import { isSessionValid, revokeToken } from '../services/sessionService';
 
 // Row returned when the UPDATE ... WHERE token_hash = $1 matches a session.
 const revokedRow = { token_hash: 'hash-of-presented-token' };
@@ -128,6 +129,29 @@ describe('logout revocation', () => {
 
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
+    });
+
+    it('checks the database after a local revocation cache entry expires', async () => {
+        const token = makeToken('user-revocation-cache-expiry');
+        const realNow = Date.now();
+        const now = jest.spyOn(Date, 'now').mockReturnValue(realNow);
+
+        try {
+            revokeToken(token);
+            now.mockReturnValue(realNow + 8 * 24 * 60 * 60 * 1000 + 1);
+            mockQuery.mockResolvedValueOnce({
+                rows: [{
+                    is_revoked: false,
+                    expires_at: new Date(realNow + 30 * 24 * 60 * 60 * 1000),
+                    is_active: true,
+                }],
+                rowCount: 1,
+            });
+
+            await expect(isSessionValid(token)).resolves.toBe(true);
+        } finally {
+            now.mockRestore();
+        }
     });
 
     it('issues the auth cookie pair on login', async () => {

@@ -1,7 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { LiquidBackgroundCanvas } from '@/components/canvasui/LiquidBackgroundCanvas';
 import { AgroStorytellingSection } from '@/components/landing/AgroStorytellingSection';
 import { SANDBOX_PRESETS } from './landing/data';
 import { Navbar } from './landing/sections/Navbar';
@@ -112,9 +111,6 @@ export function LandingPage() {
         .mesh-orb-3 { animation: meshShift3 10s ease-in-out infinite; }
         ${reducedMotion ? '.mesh-orb-1,.mesh-orb-2,.mesh-orb-3{animation:none !important;}' : ''}
       `}</style>
-
-      {/* ── WebGL / CanvasUI Fluid Dynamics Background ── */}
-      <LiquidBackgroundCanvas />
 
       {/* Accessible Skip to Main Content */}
       <a

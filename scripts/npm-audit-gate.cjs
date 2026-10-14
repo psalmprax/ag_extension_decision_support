@@ -212,6 +212,16 @@ function isAllowlisted(pkgName, vuln, entries, scope) {
   return matchedEntry;
 }
 
+function areIndirectViasExempt(indirectVias, exemptPackages, vulnerabilities, level) {
+  return indirectVias.every((dep) => {
+    if (exemptPackages.has(dep)) return true;
+    const depVuln = vulnerabilities[dep];
+    return !!depVuln
+      && !!SEVERITY_RANK[depVuln.severity]
+      && SEVERITY_RANK[depVuln.severity] < SEVERITY_RANK[level];
+  });
+}
+
 function main() {
   const args = parseArgs(process.argv.slice(2));
   const repoRoot = path.resolve(__dirname, '..');
@@ -274,14 +284,12 @@ function main() {
       if (directEntry) usedEntries.add(directEntry);
 
       const indirectVias = vias.filter((v) => typeof v === 'string');
-      const allIndirectExempt = indirectVias.every((dep) => {
-        if (exemptPackages.has(dep)) return true;
-        const depVuln = vulnerabilities[dep];
-        if (!depVuln || !SEVERITY_RANK[depVuln.severity] || SEVERITY_RANK[depVuln.severity] < SEVERITY_RANK[args.level]) {
-          return true;
-        }
-        return false;
-      });
+      const allIndirectExempt = areIndirectViasExempt(
+        indirectVias,
+        exemptPackages,
+        vulnerabilities,
+        args.level,
+      );
 
       if (vias.length > 0 && allDirectCovered && allIndirectExempt) {
         exemptPackages.add(name);
@@ -336,7 +344,7 @@ module.exports = {
   advisoryIdsOfVia,
   advisoryIdsOf,
   isAllowlisted,
+  areIndirectViasExempt,
   main,
 };
-
 
