@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { createSupportTicket } from '@/api/supportService';
 import { HelpCenterModal } from '../HelpCenterModal';
 
 vi.mock('framer-motion', () => ({
@@ -21,15 +22,33 @@ vi.mock('@/store/useAppStore', () => ({
 
 vi.mock('@/api/supportService', () => ({
   fetchFAQs: vi.fn().mockResolvedValue({ success: true, data: [] }),
-  createSupportTicket: vi.fn(),
+  createSupportTicket: vi.fn().mockResolvedValue({ success: true, data: {} }),
 }));
 
 describe('HelpCenterModal', () => {
-  it('selects the feature-request category from the Feature Request action', () => {
+  it('submits feature requests using the dedicated category', async () => {
     render(<HelpCenterModal isOpen onClose={vi.fn()} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Feature Request' }));
 
-    expect(screen.getByRole('combobox')).toHaveValue('feature-request');
+    const category = screen.getByRole('combobox');
+    expect(category).toHaveValue('feature-request');
+    expect(screen.getByRole('option', { name: 'Feature Request' })).toHaveValue('feature-request');
+
+    fireEvent.change(screen.getByPlaceholderText('Brief description of your issue'), {
+      target: { value: 'Add crop planning' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Describe your issue in detail...'), {
+      target: { value: 'Support seasonal crop planning.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Submit Ticket' }));
+
+    await waitFor(() => {
+      expect(createSupportTicket).toHaveBeenCalledWith({
+        subject: 'Add crop planning',
+        category: 'feature-request',
+        description: 'Support seasonal crop planning.',
+      });
+    });
   });
 });

@@ -6,7 +6,6 @@ import { ForgotPassword } from './pages/ForgotPassword';
 import { ResetPassword } from './pages/ResetPassword';
 import { VerifyEmail } from './pages/VerifyEmail';
 import { useState, Suspense, lazy } from 'react';
-import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { logout as apiLogout } from '@/api/authService';
 import { fetchFarmers } from '@/api/farmerService';

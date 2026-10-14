@@ -5,6 +5,8 @@ import * as farmerService from '@/api/farmerService';
 import * as visitService from '@/api/visitService';
 import { toast } from 'react-hot-toast';
 
+localStorage.removeItem('ag-liquid-effect');
+
 // Types
 export interface User {
   id: string;
@@ -77,11 +79,6 @@ export interface AppState {
   darkMode: boolean;
   setDarkMode: (enabled: boolean) => void;
   toggleDarkMode: () => void;
-
-  // Liquid background effect
-  liquidEffect: boolean;
-  setLiquidEffect: (enabled: boolean) => void;
-  toggleLiquidEffect: () => void;
 
   // Navigation
   activeTab: string;
@@ -201,17 +198,6 @@ export const useAppStore = create<AppState>()(
           const next = !state.darkMode;
           localStorage.setItem('theme', next ? 'dark' : 'light');
           return { darkMode: next };
-        }),
-
-      setLiquidEffect: liquidEffect => {
-        localStorage.setItem('ag-liquid-effect', String(liquidEffect));
-        set({ liquidEffect });
-      },
-      toggleLiquidEffect: () =>
-        set(state => {
-          const next = !state.liquidEffect;
-          localStorage.setItem('ag-liquid-effect', String(next));
-          return { liquidEffect: next };
         }),
 
       setActiveTab: activeTab => set({ activeTab }),
