@@ -5,8 +5,6 @@ import * as farmerService from '@/api/farmerService';
 import * as visitService from '@/api/visitService';
 import { toast } from 'react-hot-toast';
 
-localStorage.removeItem('ag-liquid-effect');
-
 // Types
 export interface User {
   id: string;
