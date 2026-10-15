@@ -72,10 +72,10 @@ export function Navbar() {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/diagnosis')}
+              onClick={() => navigate('/register')}
               className="px-4 py-2 text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 border border-emerald-400/40 text-white rounded-lg transition-all shadow-md shadow-emerald-950/20 active:scale-95"
             >
-              Diagnose Crop
+              Get Started
             </button>
             <button
               type="button"
