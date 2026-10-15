@@ -125,6 +125,7 @@ export function LandingPage() {
 
       <main id="main-content">
         <Hero heroY={heroY} heroOpacity={heroOpacity} />
+        <HowItWorks />
         <Problem />
         <Features />
         <AgentOS
@@ -136,7 +137,6 @@ export function LandingPage() {
           activeChannelTab={activeChannelTab}
           setActiveChannelTab={setActiveChannelTab}
         />
-        <HowItWorks />
 
         {/* ── INTERACTIVE 3D SCROLL-DRIVEN AGRO-ECOSYSTEM STORYTELLING ── */}
         <AgroStorytellingSection />

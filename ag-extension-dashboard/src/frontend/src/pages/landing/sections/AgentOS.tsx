@@ -31,15 +31,15 @@ export function AgentOS({
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
                 <span className="w-2 h-2 rounded-full bg-emerald-400 -ml-4 shrink-0" />
-                <span>Autonomous Agent Fleet: 24/7 Monitoring</span>
+                <span>Crop Clinic: Instant Disease Response</span>
               </div>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
                 <Radio className="w-3.5 h-3.5 shrink-0" />
-                <span>NASA POWER Satellite Stream Synced</span>
+                <span>Hyperlocal Rain Synced</span>
               </div>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-semibold">
                 <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                <span>Closed-Loop Regional Skill Synthesis</span>
+                <span>SMS &amp; WhatsApp Delivery Ready</span>
               </div>
             </div>
 
@@ -52,24 +52,24 @@ export function AgentOS({
             >
               <motion.div
                 variants={fadeUp}
-                className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/80 mb-3 sm:mb-4"
+                className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400 mb-3 sm:mb-4"
               >
-                Agentic Extension Decision Architecture
+                Interactive Advisory Simulator
               </motion.div>
               <motion.h2
                 variants={fadeUp}
-                className="text-2xl sm:text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight max-w-xl mx-auto px-2"
+                className="text-2xl sm:text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight max-w-2xl mx-auto px-2 text-white"
               >
-                Goal Mode:{' '}
+                Watch How GPExts Protects Your Crops{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300">
-                  Autonomous Agronomic Tele-Advisory
+                  in Real Time
                 </span>
               </motion.h2>
               <motion.p
                 variants={fadeUp}
-                className="text-xs sm:text-base text-white/60 max-w-2xl mx-auto mt-3 px-2 leading-relaxed"
+                className="text-xs sm:text-base text-white/70 max-w-2xl mx-auto mt-3 px-2 leading-relaxed"
               >
-                Extension directors define high-level agronomic goals. The agent analyzes micro-climates, queries farmer vital scores, injects localized skill cards, dispatches SMS/WhatsApp alerts, and schedules field visits.
+                Select a crop scenario below to see how our agronomic engine analyzes symptoms, cross-checks rainfall, and delivers immediate step-by-step remedies directly to farmers via phone.
               </motion.p>
             </motion.div>
 
@@ -84,12 +84,12 @@ export function AgentOS({
                     </div>
                     <div>
                       <div className="font-bold text-sm text-white flex items-center gap-2">
-                        Live Goal Mode Sandbox
+                        Crop Advisory Simulator
                         <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
                           Interactive
                         </span>
                       </div>
-                      <div className="text-xs text-white/40">Select an objective or run real-time orchestration</div>
+                      <div className="text-xs text-white/40">Select a real farm scenario to see immediate guidance</div>
                     </div>
                   </div>
 
@@ -102,7 +102,7 @@ export function AgentOS({
                     <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
                     <span className="relative z-10 flex items-center gap-2">
                       <Zap className={`w-4 h-4 ${isSimulating ? 'animate-spin' : 'text-amber-300'}`} />
-                      <span>{isSimulating ? 'Orchestrating...' : 'Run Simulation'}</span>
+                      <span>{isSimulating ? 'Analyzing Field Data...' : 'Run Advisory Simulation'}</span>
                     </span>
                   </button>
                 </div>

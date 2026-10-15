@@ -11,7 +11,9 @@ const BASE_URL = 'http://127.0.0.1:5173';
  * marker, so the slow transform happens once here instead of inside every spec.
  */
 export default async function globalSetup(_config: FullConfig) {
-  const browser = await chromium.launch();
+  const browser = await chromium.launch(
+    process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : undefined
+  );
   const page = await browser.newPage();
 
   const warm = async (path: string, marker: string) => {

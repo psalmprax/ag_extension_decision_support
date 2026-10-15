@@ -17,19 +17,25 @@ export function Problem() {
             >
               <motion.div
                 variants={fadeUp}
-                className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/80 mb-4"
+                className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400 mb-3"
               >
-                Why GPExts
+                Why Farmers Choose GPExts
               </motion.div>
               <motion.h2
                 variants={fadeUp}
-                className="text-[clamp(2rem,4vw,3rem)] font-bold tracking-tight leading-tight"
+                className="text-2xl sm:text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight text-white mb-3"
               >
-                The old way isn&apos;t{' '}
-                <span className="bg-gradient-to-r from-red-400 to-amber-400 bg-clip-text text-transparent">
-                  working
+                Farming is hard enough{' '}
+                <span className="bg-gradient-to-r from-red-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent">
+                  without the guesswork
                 </span>
               </motion.h2>
+              <motion.p
+                variants={fadeUp}
+                className="text-sm sm:text-base text-white/70 max-w-2xl mx-auto font-normal leading-relaxed"
+              >
+                Stop losing harvests to slow advice, misdiagnosed blights, and unpredictable weather. Here is how GPExts protects your family&apos;s yield.
+              </motion.p>
             </motion.div>
 
             <div className="space-y-3">
