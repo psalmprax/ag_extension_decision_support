@@ -20,8 +20,6 @@ import { DiseaseLibraryTab } from './diagnostics/DiseaseLibraryTab';
 import { DiseaseInfoModal } from './diagnostics/DiseaseInfoModal';
 import { EdgeVisionScannerModal } from '@/components/EdgeVisionScannerModal';
 
-import { PlanUpgradeGuard } from '@/components/PlanUpgradeGuard';
-
 export function DiseaseDiagnosis() {
   const { t } = useLanguage();
   const { headingClass, radiusClass, btnClass } = useThemeClasses();
@@ -84,8 +82,7 @@ export function DiseaseDiagnosis() {
   };
 
   return (
-    <PlanUpgradeGuard category="vision" featureName="Disease Checker">
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header & Live Status Telemetry Bar */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 rounded-2xl bg-slate-950/80 border border-emerald-500/20 backdrop-blur-2xl shadow-xl shadow-emerald-950/30">
           <div>
@@ -220,7 +217,6 @@ export function DiseaseDiagnosis() {
           defaultCrop={cropType || 'Maize'}
         />
       </div>
-    </PlanUpgradeGuard>
   );
 }
 

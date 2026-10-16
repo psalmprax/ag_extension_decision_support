@@ -117,8 +117,10 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
       <LanguageContext.Provider
         value={{
           language: 'en',
-          setLanguage: () => {},
-          t: (key: string) => key,
+          t: (
+            key: string,
+            options?: string | ({ defaultValue?: string } & Record<string, unknown>)
+          ) => (typeof options === 'string' ? options : options?.defaultValue) || key,
           isRTL: false,
         }}
       >
