@@ -73,7 +73,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
   const headerClass = cn(
     'fixed top-0 w-full z-50 flex justify-between items-center px-3 sm:px-6 h-16 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-[0_4px_30px_var(--color-outline)] dark:shadow-[0_4px_30px_var(--color-outline)]',
-    'bg-white/30 dark:bg-slate-950/30'
+    'bg-white/95 dark:bg-slate-950/90'
   );
 
   return (
@@ -97,31 +97,34 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
 
         {/* ── Quick-Action Interest Pills for First-Time Clients ── */}
-        <div className="hidden md:flex items-center gap-2 border-l border-white/10 pl-4">
+        <div className="hidden md:flex items-center gap-2 border-l border-slate-200 dark:border-white/10 pl-4">
           <button
+            type="button"
             onClick={() => React.startTransition(() => setActiveTab('disease_diagnosis'))}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/25 hover:border-emerald-500/40 text-xs font-bold transition-all shadow-sm shadow-emerald-950/20 active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/25 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
             title={t('header_edge_ai_tooltip', { defaultValue: 'Instant Edge AI Plant Disease Scanner' })}
           >
-            <Leaf className="w-3.5 h-3.5 text-emerald-400" />
+            <Leaf className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>{t('header_instant_ai_scan', { defaultValue: 'Instant AI Scan' })}</span>
           </button>
 
           <button
+            type="button"
             onClick={() => React.startTransition(() => setActiveTab('telemetry'))}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/25 hover:border-sky-500/40 text-xs font-bold transition-all shadow-sm shadow-sky-950/20 active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-500/10 dark:hover:bg-sky-500/20 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-500/25 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
             title={t('header_radar_tooltip', { defaultValue: 'Live Geospatial Weather & Soil Telemetry' })}
           >
-            <Activity className="w-3.5 h-3.5 text-sky-400" />
+            <Activity className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
             <span>{t('header_live_field_radar', { defaultValue: 'Live Field Radar' })}</span>
           </button>
 
           <button
+            type="button"
             onClick={() => React.startTransition(() => setActiveTab('sms'))}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/25 hover:border-purple-500/40 text-xs font-bold transition-all shadow-sm shadow-purple-950/20 active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-500/10 dark:hover:bg-purple-500/20 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-500/25 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
             title={t('header_bot_tooltip', { defaultValue: 'Interactive SMS & USSD Bot Sandbox' })}
           >
-            <Send className="w-3.5 h-3.5 text-purple-400" />
+            <Send className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
             <span>{t('header_test_sms_bot', { defaultValue: 'Test SMS Bot' })}</span>
           </button>
         </div>

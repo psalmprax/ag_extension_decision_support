@@ -190,13 +190,13 @@ export const CanvasUiLab: React.FC = () => {
               <div className="p-8">
                 <div className="flex items-center justify-between mb-4">
                   <span className="px-2.5 py-1 rounded-md text-xxs font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    Pro Plan Highlight
+                    Extension Field Protocol
                   </span>
-                  <span className="text-2xl font-black text-white">
-                    $29<span className="text-xs font-normal text-stone-400">/mo</span>
+                  <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    VERIFIED
                   </span>
                 </div>
-                <h4 className="text-xl font-bold text-white mb-2">Extension Officer Pro</h4>
+                <h4 className="text-xl font-bold text-white mb-2">Extension Officer Protocol</h4>
                 <p className="text-xs text-stone-300 mb-6 leading-relaxed">
                   Hover anywhere around the card to see the reactive edge lighting aura follow your
                   mouse in real time.
@@ -215,10 +215,10 @@ export const CanvasUiLab: React.FC = () => {
                 </div>
                 <button
                   type="button"
-                  aria-label="Select Pro Subscription"
+                  aria-label="Inspect Protocol Details"
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 cursor-pointer"
                 >
-                  Select Pro Subscription
+                  Inspect Protocol Details
                 </button>
               </div>
             </LuminousForceField>

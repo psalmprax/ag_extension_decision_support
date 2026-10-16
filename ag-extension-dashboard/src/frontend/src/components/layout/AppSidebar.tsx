@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, HelpCircle } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 import { NavItem } from '../../config/navItems';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { cn } from '@/lib/cn';
@@ -20,7 +20,7 @@ interface AppSidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   setShowHelpCenter: (show: boolean) => void;
-  onGenerateReport: () => void;
+  onGenerateReport?: () => void;
 }
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({
@@ -30,9 +30,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   activeTab,
   setActiveTab,
   setShowHelpCenter,
-  onGenerateReport,
+  onGenerateReport: _onGenerateReport,
 }) => {
-  const { subtextClass, headingClass } = useThemeClasses();
+  const { subtextClass } = useThemeClasses();
   const { t } = useLanguage();
   const { themeName, setThemeName } = useAppStore();
 
@@ -113,18 +113,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             </div>
 
             <button
-              onClick={onGenerateReport}
-              className={cn(
-                'bg-primary-500 text-white px-4 py-3 min-h-[48px] flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20 transition-all',
-                'rounded-xl hover:scale-[1.02] active:scale-[0.98]'
-              )}
-            >
-              <FileText className="w-4 h-4" />
-              <span className={headingClass}>{t('action_generate_report', { defaultValue: 'Generate Report' })}</span>
-            </button>
-            <button
+              type="button"
               onClick={() => setShowHelpCenter(true)}
-              className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-200 text-xs uppercase font-bold tracking-widest"
+              className="flex items-center gap-3 px-4 py-2.5 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 text-xs uppercase font-bold tracking-widest rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
             >
               <HelpCircle className="w-4 h-4" />
               {t('nav_support', { defaultValue: 'Support' })}

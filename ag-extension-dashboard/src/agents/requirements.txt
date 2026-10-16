@@ -23,11 +23,6 @@ PyJWT>=2.13.0
 httpx>=0.28.0
 aiohttp>=3.14.0
 
-# Security overrides for patched sub-dependencies
-click>=8.3.3
-json-repair>=0.60.1
-mcp>=1.28.1
-
 # Logging and monitoring
 python-json-logger>=3.0.0
 structlog>=25.0.0

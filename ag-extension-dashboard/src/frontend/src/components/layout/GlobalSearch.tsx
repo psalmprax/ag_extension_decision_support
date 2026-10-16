@@ -156,7 +156,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
           type="text"
           aria-label={t('common_search_placeholder', { defaultValue: 'Search system or location' })}
           placeholder={t('common_search_placeholder', { defaultValue: 'Search system or location...' })}
-          className="bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-full pl-10 pr-4 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 dark:focus:border-primary-400 outline-none w-48 md:w-64 transition-all text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-sm dark:shadow-none"
+          className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-full pl-10 pr-4 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 dark:focus:border-primary-400 outline-none w-48 md:w-64 transition-all text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 shadow-sm"
           value={searchQuery}
           onChange={e => {
             setSearchQuery(e.target.value);
@@ -171,30 +171,30 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
           }}
         />
         {showGlobalSearch && globalSearchResults.length > 0 && (
-          <div className="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl z-50 max-h-80 overflow-y-auto">
+          <div className="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl shadow-2xl z-[100] max-h-80 overflow-y-auto">
             {isGlobalSearching ? (
-              <div className="p-4 text-center text-sm text-slate-500">
+              <div className="p-4 text-center text-sm text-slate-600 dark:text-slate-300">
                 <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
                 Searching...
               </div>
             ) : (
               globalSearchResults.map(group => (
                 <div key={group.type}>
-                  <div className="px-4 pt-3 pb-1 text-xxs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-widest bg-slate-50/50 dark:bg-transparent">
+                  <div className="px-4 pt-3 pb-1 text-xxs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest bg-slate-100 dark:bg-slate-800/60">
                     {group.type}
                   </div>
                   {group.items.map(item => (
                     <button
                       key={item.id}
-                      className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-3 transition-colors"
+                      className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/50 flex items-center gap-3 transition-colors border-b border-slate-100 dark:border-slate-800/40 last:border-0"
                       onClick={() => handleItemClick(group.type, item)}
                     >
                       <div className="flex-1">
-                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                        <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
                           {item.label}
                         </p>
                         {item.sublabel && (
-                          <p className="text-xs text-slate-500 truncate">{item.sublabel}</p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 truncate">{item.sublabel}</p>
                         )}
                       </div>
                       <ChevronRight className="w-4 h-4 text-slate-400" />
