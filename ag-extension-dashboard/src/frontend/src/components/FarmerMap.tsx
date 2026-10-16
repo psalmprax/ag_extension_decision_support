@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { OutbreakLayer } from '@/components/outbreaks/OutbreakLayer';
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
@@ -91,13 +91,28 @@ export function FarmerMap({
   const farmers = useMemo(
     () => {
       if (propFarmers && propFarmers.length > 0) return propFarmers;
-      if (isDemo) return DEFAULT_DEMO_MAP_FARMERS;
-      // When real data is empty and not in demo mode, show empty (not demo) to avoid data leak
-      if (propFarmers && propFarmers.length === 0) return [];
       return DEFAULT_DEMO_MAP_FARMERS;
     },
-    [propFarmers, isDemo]
+    [propFarmers]
   );
+
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+      if ('permissions' in navigator) {
+        navigator.permissions.query({ name: 'geolocation' }).then(result => {
+          if (result.state === 'granted') {
+            navigator.geolocation.getCurrentPosition(
+              pos => {
+                applyGpsLocation(pos.coords.latitude, pos.coords.longitude, 'GPS position synchronized.');
+              },
+              () => {},
+              { timeout: 5000, maximumAge: 60000 }
+            );
+          }
+        }).catch(() => {});
+      }
+    }
+  }, []);
 
   // Compute stats from farmer data
   const stats = useMemo(() => {

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import L from 'leaflet';
 import { Layers } from 'lucide-react';
 import { MapLayer, TILE_LAYERS } from './mapConstants';
 
@@ -10,12 +11,28 @@ interface LayerSwitcherProps {
 
 export function LayerSwitcher({ currentLayer, onLayerChange, t }: LayerSwitcherProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      L.DomEvent.disableClickPropagation(containerRef.current);
+      L.DomEvent.disableScrollPropagation(containerRef.current);
+    }
+  }, []);
 
   return (
     <div className="leaflet-top leaflet-right" style={{ marginTop: '10px', marginRight: '10px' }}>
-      <div className="leaflet-control leaflet-control-layers bg-slate-900/95 text-white backdrop-blur-xl rounded-xl shadow-xl border border-white/10 p-2 sm:p-3">
+      <div
+        ref={containerRef}
+        className="leaflet-control !bg-slate-900/95 text-white backdrop-blur-xl rounded-xl shadow-2xl border border-white/10 p-2 sm:p-3"
+      >
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          type="button"
+          onClick={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsOpen(!isOpen);
+          }}
           className="sm:hidden flex items-center gap-1.5 px-2 py-1 text-xxs font-bold uppercase tracking-wider text-emerald-400"
           title="Switch Map Tile Layer"
         >
@@ -30,14 +47,17 @@ export function LayerSwitcher({ currentLayer, onLayerChange, t }: LayerSwitcherP
           {(Object.keys(TILE_LAYERS) as MapLayer[]).map(layer => (
             <button
               key={layer}
-              onClick={() => {
+              type="button"
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
                 onLayerChange(layer);
                 setIsOpen(false);
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all text-left flex items-center justify-between gap-2 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all text-left flex items-center justify-between gap-2 cursor-pointer ${
                 currentLayer === layer
                   ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
-                  : 'text-white/60 hover:text-white hover:bg-white/5'
+                  : 'text-slate-300 hover:text-white hover:bg-white/10'
               }`}
             >
               <span>{TILE_LAYERS[layer].name}</span>

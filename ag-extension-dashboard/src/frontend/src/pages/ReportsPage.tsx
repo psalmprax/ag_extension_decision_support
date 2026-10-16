@@ -91,13 +91,13 @@ function ReportCard({
     <motion.div
       whileHover={{ y: -3 }}
       transition={{ duration: 0.2 }}
-      className="group relative p-6 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] hover:border-emerald-500/30 hover:bg-slate-900/80 hover:shadow-2xl hover:shadow-emerald-950/20 transition-all cursor-pointer flex flex-col justify-between"
+      className="group relative p-6 rounded-xl backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm hover:border-emerald-500/30 hover:bg-slate-50/50 dark:hover:bg-slate-900/80 hover:shadow-xl hover:shadow-emerald-950/20 transition-all cursor-pointer flex flex-col justify-between"
       onClick={handleOpenReport}
     >
       <div className="space-y-4">
         {/* Card Header & Status Ribbon */}
         <div className="flex justify-between items-start">
-          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
+          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
             <FileText className="w-6 h-6" />
           </div>
 
@@ -105,13 +105,13 @@ function ReportCard({
             <span
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                 isReady
-                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                  : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                  : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
               }`}
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
-                  isReady ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                  isReady ? 'bg-emerald-500 dark:bg-emerald-400 animate-pulse' : 'bg-amber-500 dark:bg-amber-400'
                 }`}
               />
               {report.status || 'Ready'}
@@ -121,10 +121,10 @@ function ReportCard({
 
         {/* Title and Summary */}
         <div>
-          <h4 className="font-bold text-white text-base leading-snug group-hover:text-emerald-300 transition-colors capitalize line-clamp-1">
+          <h4 className="font-bold text-slate-900 dark:text-white text-base leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors capitalize line-clamp-1">
             {report.title}
           </h4>
-          <p className="text-xs text-white/50 line-clamp-2 mt-1.5 leading-relaxed">
+          <p className="text-xs text-slate-600 dark:text-white/50 line-clamp-2 mt-1.5 leading-relaxed">
             {t('reports_description_prefix') || 'Agronomic operational intelligence synthesized for '}
             {report.title.toLowerCase()}
             {t('reports_description_suffix') || '.'}
@@ -132,22 +132,22 @@ function ReportCard({
         </div>
 
         {/* Live cohort metric — derived from report metadata when available */}
-        <div className="p-3 rounded-xl bg-slate-950/60 border border-white/[0.04] space-y-1.5">
-          <div className="flex items-center justify-between text-[10px] font-mono text-white/40">
+        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-white/[0.04] space-y-1.5">
+          <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-white/40">
             <span>REPORT STATUS</span>
-            <span className="text-emerald-400 font-bold uppercase">{report.status || 'ready'}</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase">{report.status || 'ready'}</span>
           </div>
-          <div className="text-[10px] font-mono text-white/50 truncate">
+          <div className="text-[10px] font-mono text-slate-600 dark:text-white/50 truncate">
             {report.generatedAt ? new Date(report.generatedAt).toLocaleDateString() : '—'}
           </div>
         </div>
       </div>
 
       {/* Monospace Metadata Footer */}
-      <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center justify-between">
+      <div className="mt-6 pt-4 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Clock className="w-3.5 h-3.5 text-white/40" />
-          <span className="text-[10px] font-mono text-white/40 uppercase">
+          <Clock className="w-3.5 h-3.5 text-slate-400 dark:text-white/40" />
+          <span className="text-[10px] font-mono text-slate-500 dark:text-white/40 uppercase">
             {new Date(report.generatedAt).toLocaleDateString()}
           </span>
         </div>
@@ -217,22 +217,22 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
   return (
     <div className="space-y-8">
       <section className="mb-6" aria-label="Government MIS exports">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Government MIS exports (CSV)</h3>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-gray-400 mb-2">Government MIS exports (CSV)</h3>
         <MisExportButtons />
       </section>
       {/* Header & Generate Button */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-400">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
               Agronomic Audit & Analytics
             </span>
           </div>
-          <h1 className={`text-3xl font-extrabold text-white tracking-tight ${headingClass}`}>
+          <h1 className={`text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
             Data Reports
           </h1>
-          <p className="text-white/60 text-sm mt-1">
+          <p className="text-slate-600 dark:text-white/60 text-sm mt-1">
             Verified field synthesis, farmer cohort outcomes, and institutional audit logs.
           </p>
         </div>
@@ -255,44 +255,44 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
 
       {/* AI Executive Summary Highlight Strip (KnockKnock Bento Style) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
-          <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
-            <Layers className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="p-4 rounded-xl backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
+          <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+            <Layers className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>Reports Generated</span>
           </div>
-          <div className="text-xl font-bold text-white flex items-baseline gap-2">
+          <div className="text-xl font-bold text-slate-900 dark:text-white flex items-baseline gap-2">
             {reports.length}
-            <span className="text-xxs font-normal text-emerald-400">Active</span>
+            <span className="text-xxs font-normal text-emerald-600 dark:text-emerald-400">Active</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
-          <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
-            <Users className="w-3.5 h-3.5 text-sky-400" />
+        <div className="p-4 rounded-xl backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
+          <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+            <Users className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
             <span>Reports Archive</span>
           </div>
-          <div className="text-xl font-bold text-white flex items-baseline gap-2">
+          <div className="text-xl font-bold text-slate-900 dark:text-white flex items-baseline gap-2">
             {reports.length}
-            <span className="text-xxs font-normal text-white/40">Total</span>
+            <span className="text-xxs font-normal text-slate-400 dark:text-white/40">Total</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
-          <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
-            <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
+        <div className="p-4 rounded-xl backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
+          <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+            <TrendingUp className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
             <span>Latest Report</span>
           </div>
-          <div className="text-sm font-bold text-white truncate">
+          <div className="text-sm font-bold text-slate-900 dark:text-white truncate">
             {reports[0]?.title || '—'}
           </div>
         </div>
 
-        <div className="p-4 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
-          <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="p-4 rounded-xl backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
+          <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>Data Source</span>
           </div>
-          <div className="text-xs font-mono font-bold text-white/80 truncate">
+          <div className="text-xs font-mono font-bold text-slate-700 dark:text-white/80 truncate">
             System Generated
           </div>
         </div>
@@ -302,10 +302,10 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
       <RecommendationReviewQueue addNotification={addNotification} />
 
       {/* Filter / Search Bar */}
-      <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-        <div className="text-sm font-bold text-white flex items-center gap-2">
+      <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/[0.06]">
+        <div className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <span>Audit Log Archive</span>
-          <span className="text-xxs font-mono px-2 py-0.5 rounded-md bg-slate-800 text-white/60">
+          <span className="text-xxs font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white/60 border border-slate-200 dark:border-white/10">
             {filteredReports.length} Available
           </span>
         </div>
@@ -314,16 +314,16 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           placeholder="Filter reports by title..."
           value={filterQuery}
           onChange={e => setFilterQuery(e.target.value)}
-          className="px-3 py-1.5 rounded-xl bg-slate-950/80 border border-white/[0.08] text-xs text-white placeholder-white/40 focus:outline-none focus:border-emerald-500/40"
+          className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-950/80 border border-slate-300 dark:border-white/[0.08] text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:outline-none focus:border-emerald-500/40"
         />
       </div>
 
       {/* Reports Grid */}
       {filteredReports.length === 0 ? (
-        <div className="text-center py-16 backdrop-blur-xl bg-slate-900/30 border border-white/[0.06] rounded-xl space-y-3">
-          <FileText className="w-10 h-10 text-white/20 mx-auto" />
-          <div className="text-sm font-bold text-white/60">No reports found</div>
-          <p className="text-xs text-white/40 max-w-sm mx-auto">
+        <div className="text-center py-16 backdrop-blur-xl bg-white dark:bg-slate-900/30 border border-slate-200 dark:border-white/[0.06] rounded-xl space-y-3">
+          <FileText className="w-10 h-10 text-slate-400 dark:text-white/20 mx-auto" />
+          <div className="text-sm font-bold text-slate-700 dark:text-white/60">No reports found</div>
+          <p className="text-xs text-slate-500 dark:text-white/40 max-w-sm mx-auto">
             Click &quot;Generate AI Report&quot; to synthesize field data into an operational report.
           </p>
         </div>
@@ -361,17 +361,17 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-5xl max-h-[90vh] backdrop-blur-2xl bg-slate-900/95 border border-white/[0.12] rounded-xl shadow-2xl shadow-emerald-950/50 overflow-hidden flex flex-col z-10"
+              className="relative w-full max-w-5xl max-h-[90vh] backdrop-blur-2xl bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-white/[0.12] rounded-xl shadow-2xl shadow-emerald-950/50 overflow-hidden flex flex-col z-10"
             >
               {/* Modal Header */}
-              <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
+              <div className="p-6 border-b border-slate-200 dark:border-white/[0.08] flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                  <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                     <FileCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">{viewingReport.title}</h3>
-                    <div className="flex items-center gap-3 text-xs text-white/50 font-mono mt-0.5">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{viewingReport.title}</h3>
+                    <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-white/50 font-mono mt-0.5">
                       <span>DATE: {new Date(viewingReport.generatedAt).toLocaleString()}</span>
                       <span>STATUS: {viewingReport.status || 'READY'}</span>
                     </div>
@@ -392,7 +392,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                   </button>
                   <button
                     onClick={() => setViewingReport(null)}
-                    className="p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/[0.08] transition-colors"
+                    className="p-2 rounded-xl text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -400,25 +400,25 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
               </div>
 
               {/* Modal Body: Split Pane */}
-              <div className="grid md:grid-cols-[1.3fr_1fr] flex-1 overflow-y-auto divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
+              <div className="grid md:grid-cols-[1.3fr_1fr] flex-1 overflow-y-auto divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-white/[0.08]">
                 {/* Left Pane: Report Document Content */}
                 <div className="p-6 space-y-4">
-                  <div className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400">
+                  <div className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                     Document Synthesis & Observations
                   </div>
                   {isLoadingReport ? (
                     <div className="flex items-center justify-center py-20">
-                      <Loader2 className="w-8 h-8 animate-spin text-emerald-400" />
+                      <Loader2 className="w-8 h-8 animate-spin text-emerald-600 dark:text-emerald-400" />
                     </div>
                   ) : (
-                    <div className="prose prose-invert max-w-none text-xs sm:text-sm text-white/80 leading-relaxed space-y-3 font-sans">
+                    <div className="prose prose-slate dark:prose-invert max-w-none text-xs sm:text-sm text-slate-800 dark:text-white/80 leading-relaxed space-y-3 font-sans">
                       {reportContent ? (
-                        <div className="whitespace-pre-line bg-slate-950/60 p-5 rounded-xl border border-white/[0.06]">
+                        <div className="whitespace-pre-line bg-slate-50 dark:bg-slate-950/60 p-5 rounded-xl border border-slate-200 dark:border-white/[0.06] text-slate-800 dark:text-white/90">
                           {reportContent}
                         </div>
                       ) : (
-                        <div className="p-5 rounded-xl bg-slate-950/60 border border-white/[0.06]">
-                          <p className="font-semibold text-white">Report content unavailable.</p>
+                        <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/[0.06]">
+                          <p className="font-semibold text-slate-800 dark:text-white">Report content unavailable.</p>
                         </div>
                       )}
                     </div>
@@ -426,34 +426,34 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                 </div>
 
                 {/* Right Pane: Telemetry Metrics & Action Breakdown */}
-                <div className="p-6 bg-slate-950/40 space-y-5">
-                  <div className="text-xs font-mono font-bold uppercase tracking-wider text-white/50">
+                <div className="p-6 bg-slate-50 dark:bg-slate-950/40 space-y-5">
+                  <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-white/50">
                     Telemetry Metadata & Audit Trail
                   </div>
 
                   <div className="space-y-3">
-                    <div className="p-3.5 rounded-xl bg-slate-900/80 border border-white/[0.06] space-y-1">
-                      <div className="text-[10px] font-mono text-white/40 uppercase">DATASET INTEGRITY</div>
-                      <div className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                    <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/[0.06] shadow-sm space-y-1">
+                      <div className="text-[10px] font-mono text-slate-500 dark:text-white/40 uppercase">DATASET INTEGRITY</div>
+                      <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>ISRIC SoilGrids & NASA POWER Verified</span>
                       </div>
                     </div>
 
-                    <div className="p-3.5 rounded-xl bg-slate-900/80 border border-white/[0.06] space-y-1">
-                      <div className="text-[10px] font-mono text-white/40 uppercase">AUTHOR PROVENANCE</div>
-                      <div className="text-xs font-bold text-white">
+                    <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/[0.06] shadow-sm space-y-1">
+                      <div className="text-[10px] font-mono text-slate-500 dark:text-white/40 uppercase">AUTHOR PROVENANCE</div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white">
                         {viewingReport.createdBy || `${user?.firstName || 'Extension'} ${user?.lastName || 'Officer'}`}
                       </div>
                     </div>
 
-                    <div className="p-3.5 rounded-xl bg-slate-900/80 border border-white/[0.06] space-y-1">
-                      <div className="text-[10px] font-mono text-white/40 uppercase">EXPORT FORMATS</div>
+                    <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/[0.06] shadow-sm space-y-1">
+                      <div className="text-[10px] font-mono text-slate-500 dark:text-white/40 uppercase">EXPORT FORMATS</div>
                       <div className="flex gap-2 pt-1">
                         {['PDF', 'CSV', 'GeoJSON'].map(fmt => (
                           <span
                             key={fmt}
-                            className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-white/70 border border-white/[0.06]"
+                            className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white/70 border border-slate-200 dark:border-white/[0.06]"
                           >
                             {fmt}
                           </span>

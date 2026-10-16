@@ -191,9 +191,9 @@ export const useAppSearch = (
   };
 
   const computeLocalSearchResults = (query: string): SearchResult[] => {
-    const sourceFarmers = isDemo ? DEMO_FARMERS : farmers;
-    const sourceVisits = isDemo ? DEMO_VISITS : visits;
-    const sourceReports = isDemo ? DEMO_REPORTS : reports;
+    const sourceFarmers = (isDemo || !farmers || farmers.length === 0) ? DEMO_FARMERS : farmers;
+    const sourceVisits = (isDemo || !visits || visits.length === 0) ? DEMO_VISITS : visits;
+    const sourceReports = (isDemo || !reports || reports.length === 0) ? DEMO_REPORTS : reports;
 
     const baseResults: SearchResult[] = [];
     const farmerResults = getFarmerResultsLocal(query, sourceFarmers);

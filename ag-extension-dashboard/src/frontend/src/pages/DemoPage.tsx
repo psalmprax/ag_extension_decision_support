@@ -97,13 +97,29 @@ export function DemoPage({
     setIsTyping(false);
   };
 
-  const triggerAudioSynthesis = async () => {
-    if (isSynthesizing) return;
+  const triggerAudioPlayback = () => {
+    if (isPlayingAudio) return;
     setIsPlayingAudio(true);
-    await new Promise(r => setTimeout(r, 3000));
-    setIsPlayingAudio(false);
+
+    const noteText =
+      "Checked Emmanuel Mwangi's farm in Machakos. The beans look stable, but the maize leaves show significant light green discoloration. Recommended immediate check for nitrogen deficit.";
+
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(noteText);
+      utterance.rate = 0.95;
+      utterance.onend = () => setIsPlayingAudio(false);
+      utterance.onerror = () => setIsPlayingAudio(false);
+      window.speechSynthesis.speak(utterance);
+    } else {
+      setTimeout(() => setIsPlayingAudio(false), 3000);
+    }
+  };
+
+  const triggerSynthesisToDashboard = async () => {
+    if (isSynthesizing) return;
     setIsSynthesizing(true);
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 1200));
     setIsSynthesizing(false);
     setSynthesisOutput({
       crop: 'Maize & Beans',
@@ -310,11 +326,12 @@ export function DemoPage({
 
                 <div className="flex justify-center gap-3 flex-wrap">
                   <button
-                    onClick={triggerAudioSynthesis}
-                    disabled={isPlayingAudio || isSynthesizing}
-                    className={`px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                    type="button"
+                    onClick={triggerAudioPlayback}
+                    disabled={isPlayingAudio}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer transition-all ${
                       isPlayingAudio
-                        ? 'bg-yellow-500 text-stone-900 animate-pulse'
+                        ? 'bg-amber-500 text-stone-900 animate-pulse'
                         : 'bg-emerald-600 hover:bg-emerald-500 text-white'
                     }`}
                   >
@@ -329,9 +346,10 @@ export function DemoPage({
                     )}
                   </button>
                   <button
-                    onClick={triggerAudioSynthesis}
-                    disabled={isPlayingAudio || isSynthesizing}
-                    className="px-5 py-2.5 rounded-xl text-xs font-bold bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center gap-2"
+                    type="button"
+                    onClick={triggerSynthesisToDashboard}
+                    disabled={isSynthesizing}
+                    className="px-5 py-2.5 rounded-xl text-xs font-bold bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center gap-2 cursor-pointer transition-all"
                   >
                     {isSynthesizing ? (
                       <>
