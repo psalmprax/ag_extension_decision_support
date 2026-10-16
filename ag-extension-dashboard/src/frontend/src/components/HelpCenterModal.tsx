@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -134,7 +133,6 @@ function SupportTicketForm({
 }
 
 export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClose }) => {
-  const navigate = useNavigate();
   const { t } = useLanguage();
   const setActiveTab = useAppStore(s => s.setActiveTab);
   const addNotification = useAppStore(s => s.addNotification);
@@ -213,7 +211,6 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
       action: () => {
         onClose();
         setActiveTab('knowledge');
-        navigate('/knowledge');
       },
     },
     {
@@ -223,7 +220,6 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
       action: () => {
         onClose();
         setActiveTab('aiassistant');
-        navigate('/ai-assistant');
       },
     },
     {

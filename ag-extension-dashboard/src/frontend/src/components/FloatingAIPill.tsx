@@ -656,8 +656,8 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                 <button
                   type="button"
                   onClick={handleResetChat}
-                  title="Start New Chat (Clear History)"
-                  aria-label="Start New Chat"
+                  title="Reset conversation history"
+                  aria-label="Reset conversation history"
                   className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-emerald-400 transition-colors"
                 >
                   <RotateCcw className="w-4 h-4" />
