@@ -286,11 +286,7 @@ export function TabContent(props: TabContentProps) {
     case 'system_health':
       return <SystemHealth />;
     case 'disease_diagnosis':
-      return (
-        <PlanUpgradeGuard category="vision" featureName="Plant & Soil Disease Photo Diagnosis">
-          <DiseaseDiagnosisPage />
-        </PlanUpgradeGuard>
-      );
+      return <DiseaseDiagnosisPage />;
     case 'fields':
       return <CropsFields />;
     case 'memory':

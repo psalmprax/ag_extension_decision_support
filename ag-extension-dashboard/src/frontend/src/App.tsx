@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useLocation, Routes, Route } from 'react-router-dom';
+import { useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
@@ -55,6 +55,9 @@ const KnowledgeBase = lazy(() =>
 const AdvisoryStudioPage = lazy(() =>
   import('./pages/AdvisoryStudioPage').then(m => ({ default: m.AdvisoryStudioPage }))
 );
+const DiagnosisPage = lazy(() =>
+  import('./pages/DiagnosisPage').then(m => ({ default: m.DiagnosisPage }))
+);
 
 const TAB_TO_PATH: Record<string, string> = {
   dashboard: '/dashboard',
@@ -80,10 +83,13 @@ const TAB_TO_PATH: Record<string, string> = {
   advisory_studio: '/advisory-studio',
 };
 
-const PATH_TO_TAB: Record<string, string> = Object.entries(TAB_TO_PATH).reduce(
-  (acc, [tab, path]) => ({ ...acc, [path]: tab }),
-  {} as Record<string, string>
-);
+const PATH_TO_TAB: Record<string, string> = {
+  ...Object.entries(TAB_TO_PATH).reduce(
+    (acc, [tab, path]) => ({ ...acc, [path]: tab }),
+    {} as Record<string, string>
+  ),
+  '/diagnosis': 'disease_diagnosis',
+};
 
 function App() {
   const { t, language } = useLanguage();
@@ -399,6 +405,7 @@ function App() {
                 </div>
               }
             />
+            <Route path="/signin" element={<Navigate to="/login" replace />} />
             <Route
               path="/register"
               element={
@@ -407,6 +414,7 @@ function App() {
                 </div>
               }
             />
+            <Route path="/signup" element={<Navigate to="/register" replace />} />
             <Route
               path="/forgot-password"
               element={
@@ -438,6 +446,8 @@ function App() {
               }
             />
             <Route path="/advisory-studio" element={<AdvisoryStudioPage />} />
+            <Route path="/diagnosis" element={<DiagnosisPage />} />
+            <Route path="/disease-diagnosis" element={<DiagnosisPage />} />
             <Route path="*" element={<LandingPage />} />
           </Routes>
         </Suspense>

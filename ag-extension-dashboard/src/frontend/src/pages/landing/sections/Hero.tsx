@@ -234,8 +234,8 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
               {/* Camera Leaf Viewfinder */}
               <div className="relative h-[210px] sm:h-[230px] w-full overflow-hidden bg-slate-900">
                 <img
-                  src="/images/landing/persona-officer.webp"
-                  alt="Close-up of diagnosed crop leaf"
+                  src="/images/landing/maize-leaf-diagnostics.webp"
+                  alt="Close-up of diagnosed maize crop leaf with Fall Armyworm damage"
                   className="w-full h-full object-cover object-center filter saturate-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/30" />
@@ -330,6 +330,16 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                     <strong>Rain Alert:</strong> 14mm rain expected in 18 hrs. Hold foliar spray until Friday morning to prevent chemical wash-off.
                   </div>
                 </div>
+
+                {/* Tap to Launch Diagnosis Action Bar */}
+                <button
+                  type="button"
+                  onClick={() => navigate('/diagnosis')}
+                  className="w-full py-2.5 px-3 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-950/40 transition-all active:scale-95 group cursor-pointer"
+                >
+                  <Camera className="w-3.5 h-3.5 text-emerald-200" />
+                  <span>Diagnose Your Own Crop Free →</span>
+                </button>
               </div>
             </div>
           </div>

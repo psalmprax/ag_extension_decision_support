@@ -151,7 +151,24 @@ export function Register() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-amber-500/[0.08] blur-[150px]" />
       </div>
 
-      <div className="w-full max-w-md lg:max-w-5xl grid lg:grid-cols-12 gap-6 lg:gap-8 items-stretch relative z-10 my-auto py-6">
+      {/* ── Top Header Navigation Bar ── */}
+      <header className="absolute top-0 left-0 right-0 z-30 p-4 sm:p-6 flex items-center justify-between pointer-events-none">
+        <Link
+          to="/"
+          className="pointer-events-auto inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/10 text-slate-200 hover:text-white text-xs font-semibold backdrop-blur-md shadow-lg transition-all active:scale-95 group focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          aria-label={t('common_back_to_landing', { defaultValue: 'Back to Landing Page' })}
+        >
+          <ArrowLeft className="w-4 h-4 text-emerald-400 group-hover:-translate-x-0.5 transition-transform" />
+          <span className="hidden sm:inline">{t('common_back_to_landing', { defaultValue: 'Back to Landing Page' })}</span>
+          <span className="sm:hidden">{t('common_back_to_home', { defaultValue: 'Back to Home' })}</span>
+        </Link>
+        <div className="pointer-events-auto flex items-center gap-2">
+          <LiquidToggleSwitch compact />
+          <LanguageSwitcher compact />
+        </div>
+      </header>
+
+      <div className="w-full max-w-md lg:max-w-5xl grid lg:grid-cols-12 gap-6 lg:gap-8 items-stretch relative z-10 my-auto pt-16 pb-8 sm:py-6">
         {/* Left Side: Interactive Agro Intelligence Preview HUD (Desktop) */}
         <motion.div
           initial={{ opacity: 0, x: -30 }}
@@ -204,13 +221,14 @@ export function Register() {
           style={{ pointerEvents: 'auto', touchAction: 'auto' }}
         >
           <div>
-            {/* Back to Home Navigation */}
+            {/* Back to Landing Navigation (In-Card) */}
             <Link
               to="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-emerald-400 transition-colors mb-4"
+              className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-emerald-400 transition-all mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 w-fit group"
+              aria-label={t('common_back_to_landing', { defaultValue: 'Back to Landing Page' })}
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              {t('common_back_to_home', { defaultValue: 'Back to Home' })}
+              <ArrowLeft className="w-3.5 h-3.5 text-emerald-400 group-hover:-translate-x-0.5 transition-transform" />
+              <span>{t('common_back_to_landing', { defaultValue: 'Back to Landing Page' })}</span>
             </Link>
 
             {/* Logo and Controls */}

@@ -122,7 +122,21 @@ export const getRetryDelay = (retryCount: number): number => {
 function forceLogout(): void {
   localStorage.removeItem('user');
   window.dispatchEvent(new Event('auth-unauthorized'));
-  const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email'];
+  const publicRoutes = [
+    '/',
+    '/login',
+    '/signin',
+    '/register',
+    '/signup',
+    '/forgot-password',
+    '/reset-password',
+    '/verify-email',
+    '/diagnosis',
+    '/disease-diagnosis',
+    '/demo',
+    '/knowledge',
+    '/advisory-studio',
+  ];
   if (!publicRoutes.includes(window.location.pathname)) {
     window.location.href = '/login';
   }
