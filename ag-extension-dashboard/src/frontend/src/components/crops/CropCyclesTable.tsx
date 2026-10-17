@@ -10,11 +10,11 @@ interface CropCyclesTableProps {
 
 function getStatusClass(status: string): string {
   const map: Record<string, string> = {
-    growing: 'bg-primary-500/10 text-primary-400 border border-primary-500/20',
-    harvested: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
-    failed: 'bg-red-500/10 text-red-400 border border-red-500/20',
+    growing: 'bg-primary-500/10 text-primary-700 dark:text-primary-400 border border-primary-500/20',
+    harvested: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
+    failed: 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20',
   };
-  return map[status] ?? 'bg-slate-800 text-slate-400';
+  return map[status] ?? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
 }
 
 function formatHarvestDate(cycle: { actualHarvestDate?: string | null; expectedHarvestDate?: string | null }): string {
@@ -42,7 +42,7 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
-      className="bg-slate-900/60 border border-white/5 rounded-xl overflow-hidden shadow-2xl backdrop-blur-xl"
+      className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm dark:shadow-xl"
     >
       {allCycles.length === 0 ? (
         <div className="p-8 text-center text-xs text-slate-500">
@@ -51,14 +51,14 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
       ) : (
         <>
           {/* Mobile Card Layout */}
-          <div className="block md:hidden divide-y divide-white/5">
+          <div className="block md:hidden divide-y divide-slate-200 dark:divide-white/5">
             {allCycles.map(({ field, cycle }) => (
               <div key={cycle.id} className="p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-100">{cycle.cropName}</h4>
-                    <p className="text-xs text-slate-400">
-                      Sector: <span className="text-slate-200 font-semibold">{field.name}</span>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{cycle.cropName}</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Sector: <span className="text-slate-800 dark:text-slate-200 font-semibold">{field.name}</span>
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -71,7 +71,7 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
                     </span>
                     <button
                       onClick={() => handleDeleteCycle(field.id, cycle.id)}
-                      className="p-1.5 hover:bg-white/5 text-slate-500 hover:text-red-400 rounded-lg transition-colors"
+                      className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-colors"
                       title="Delete Cycle Record"
                       aria-label="Delete Cycle Record"
                     >
@@ -80,24 +80,24 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs bg-slate-950/40 p-2.5 rounded-lg border border-white/5">
+                <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 dark:bg-slate-950/40 p-2.5 rounded-lg border border-slate-200 dark:border-white/5">
                   <div>
                     <span className="text-[10px] text-slate-500 uppercase font-mono block">Variety</span>
-                    <span className="text-slate-300 font-medium">{cycle.variety || 'N/A'}</span>
+                    <span className="text-slate-700 dark:text-slate-300 font-medium">{cycle.variety || 'N/A'}</span>
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-500 uppercase font-mono block">Yield Output</span>
-                    <span className="text-emerald-400 font-bold font-mono">{formatYield(cycle.yieldKg)}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">{formatYield(cycle.yieldKg)}</span>
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-500 uppercase font-mono block">Planting Date</span>
-                    <span className="text-slate-400">
+                    <span className="text-slate-600 dark:text-slate-400">
                       {cycle.plantingDate ? new Date(cycle.plantingDate).toLocaleDateString() : 'N/A'}
                     </span>
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-500 uppercase font-mono block">Projected Harvest</span>
-                    <span className="text-slate-400">{formatHarvestDate(cycle)}</span>
+                    <span className="text-slate-600 dark:text-slate-400">{formatHarvestDate(cycle)}</span>
                   </div>
                 </div>
               </div>
@@ -108,7 +108,7 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="border-b border-white/5 bg-slate-950/40 text-xxs uppercase tracking-wider font-black text-slate-500">
+                <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-950/40 text-xxs uppercase tracking-wider font-black text-slate-500">
                   <th className="p-4 pl-6">Sector Name</th>
                   <th className="p-4">Crop Name</th>
                   <th className="p-4">Variety</th>
@@ -119,12 +119,12 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
                   <th className="p-4 pr-6 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {allCycles.map(({ field, cycle }) => (
-                  <tr key={cycle.id} className="hover:bg-white/5 transition-colors group">
-                    <td className="p-4 pl-6 font-bold text-slate-200">{field.name}</td>
-                    <td className="p-4 font-semibold text-slate-100">{cycle.cropName}</td>
-                    <td className="p-4 text-slate-400 font-mono text-xs">{cycle.variety || 'N/A'}</td>
+                  <tr key={cycle.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors group">
+                    <td className="p-4 pl-6 font-bold text-slate-900 dark:text-slate-200">{field.name}</td>
+                    <td className="p-4 font-semibold text-slate-800 dark:text-slate-100">{cycle.cropName}</td>
+                    <td className="p-4 text-slate-600 dark:text-slate-400 font-mono text-xs">{cycle.variety || 'N/A'}</td>
                     <td className="p-4">
                       <span
                         className={`px-2.5 py-1 rounded-md text-xxs font-black uppercase tracking-widest ${getStatusClass(
@@ -134,15 +134,15 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
                         {cycle.status}
                       </span>
                     </td>
-                    <td className="p-4 text-slate-400">
+                    <td className="p-4 text-slate-600 dark:text-slate-400">
                       {cycle.plantingDate ? new Date(cycle.plantingDate).toLocaleDateString() : 'N/A'}
                     </td>
-                    <td className="p-4 text-slate-400">{formatHarvestDate(cycle)}</td>
-                    <td className="p-4 font-mono font-bold text-emerald-400">{formatYield(cycle.yieldKg)}</td>
+                    <td className="p-4 text-slate-600 dark:text-slate-400">{formatHarvestDate(cycle)}</td>
+                    <td className="p-4 font-mono font-bold text-emerald-600 dark:text-emerald-400">{formatYield(cycle.yieldKg)}</td>
                     <td className="p-4 pr-6 text-right">
                       <button
                         onClick={() => handleDeleteCycle(field.id, cycle.id)}
-                        className="p-1.5 hover:bg-white/5 text-slate-500 hover:text-red-400 rounded-lg transition-colors"
+                        className="p-1.5 hover:bg-slate-200/60 dark:hover:bg-white/5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-colors"
                         title="Delete Cycle Record"
                       >
                         <Trash2 className="w-4 h-4" />

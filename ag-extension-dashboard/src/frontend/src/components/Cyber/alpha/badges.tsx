@@ -9,9 +9,9 @@ function getHealthStatus(data: { status?: string; services?: { external_apis?: s
 }
 
 function getStatusStyles(status: string): { dot: string; text: string } {
-  if (status.startsWith('healthy')) return { dot: 'bg-emerald-400 animate-pulse', text: 'text-emerald-300' };
-  if (status.startsWith('degraded') || status.includes('warmup')) return { dot: 'bg-amber-400', text: 'text-amber-300' };
-  return { dot: 'bg-rose-400', text: 'text-rose-300' };
+  if (status.startsWith('healthy')) return { dot: 'bg-emerald-500 dark:bg-emerald-400 animate-pulse', text: 'text-emerald-700 dark:text-emerald-300' };
+  if (status.startsWith('degraded') || status.includes('warmup')) return { dot: 'bg-amber-500 dark:bg-amber-400', text: 'text-amber-700 dark:text-amber-300' };
+  return { dot: 'bg-rose-500 dark:bg-rose-400', text: 'text-rose-700 dark:text-rose-300' };
 }
 
 /**
@@ -25,13 +25,13 @@ export const NasaPowerBadge: React.FC<{ data: { status?: string; uptime?: number
   const ext = data?.services?.external_apis;
   return (
     <div
-      className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono"
+      className="flex items-center gap-2 bg-slate-100 dark:bg-black/40 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/5 text-xxs font-mono"
       title={data ? `API status: ${data.status}${ext ? ` · external APIs ${ext}` : ''}` : 'Health check failed or pending'}
     >
       <span className={`w-2 h-2 rounded-full ${styles.dot}`} />
-      <span className="text-white/70">API:</span>
+      <span className="text-slate-600 dark:text-white/70">API:</span>
       <span className={`font-bold ${styles.text}`}>{label}</span>
-      {ext && <span className="text-white/40">· EXT {ext}</span>}
+      {ext && <span className="text-slate-400 dark:text-white/40">· EXT {ext}</span>}
     </div>
   );
 };
@@ -47,28 +47,28 @@ export const RagMeshBadge: React.FC<{ data: { data?: { totalQueries?: number; to
   const status = computeKnowledgeStatus(total, embedded);
   return (
     <div
-      className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono"
+      className="flex items-center gap-2 bg-slate-100 dark:bg-black/40 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/5 text-xxs font-mono"
       title={stats ? `${embedded ?? '?'} of ${total ?? '?'} articles embedded · ${stats.totalQueries ?? 0} queries recorded` : 'Knowledge stats unavailable'}
     >
       <span className={`w-2 h-2 rounded-full ${status.dot}`} />
-      <span className="text-white/70">KNOWLEDGE:</span>
+      <span className="text-slate-600 dark:text-white/70">KNOWLEDGE:</span>
       <span className={`${status.text} font-bold`}>
         {typeof total === 'number' ? `${total} ARTICLES` : '—'}
       </span>
-      {status.partial && <span className="text-white/40">· {embedded}/{total} INDEXED</span>}
+      {status.partial && <span className="text-slate-400 dark:text-white/40">· {embedded}/{total} INDEXED</span>}
     </div>
   );
 };
 
 function computeKnowledgeStatus(total: number | undefined, embedded: number | undefined): { dot: string; text: string; partial: boolean } {
   if (typeof total !== 'number' || typeof embedded !== 'number') {
-    return { dot: 'bg-slate-500', text: 'text-slate-400', partial: false };
+    return { dot: 'bg-slate-400 dark:bg-slate-500', text: 'text-slate-600 dark:text-slate-400', partial: false };
   }
   if (total > 0 && embedded === total) {
-    return { dot: 'bg-emerald-400', text: 'text-emerald-300', partial: false };
+    return { dot: 'bg-emerald-500 dark:bg-emerald-400', text: 'text-emerald-700 dark:text-emerald-300', partial: false };
   }
   if (embedded < total) {
-    return { dot: 'bg-amber-400', text: 'text-amber-300', partial: true };
+    return { dot: 'bg-amber-500 dark:bg-amber-400', text: 'text-amber-700 dark:text-amber-300', partial: true };
   }
-  return { dot: 'bg-cyan-400', text: 'text-cyan-300', partial: false };
+  return { dot: 'bg-cyan-500 dark:bg-cyan-400', text: 'text-cyan-700 dark:text-cyan-300', partial: false };
 }

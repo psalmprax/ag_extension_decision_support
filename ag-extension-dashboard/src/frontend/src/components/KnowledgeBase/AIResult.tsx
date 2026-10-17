@@ -152,10 +152,10 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
       className="space-y-6"
     >
       {/* ── Multilingual Translation & Dual-View Bar ── */}
-      <div className="p-4 rounded-xl bg-slate-900/90 border border-white/10 shadow-xl backdrop-blur-2xl flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+      <div className="p-4 rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-xl backdrop-blur-2xl flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider pr-2 border-r border-white/10">
-            <Globe className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider pr-2 border-r border-slate-200 dark:border-white/10">
+            <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>Localize ({MULTILINGUAL_LANGUAGES.length} Languages):</span>
           </div>
 
@@ -171,7 +171,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
                   className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all flex items-center gap-1 ${
                     isSelected
                       ? 'bg-emerald-500 text-slate-950 font-black shadow-md shadow-emerald-950/40 scale-105'
-                      : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/5'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 dark:bg-white/5 dark:hover:bg-white/10 dark:text-white/70 dark:hover:text-white dark:border-white/5'
                   }`}
                   title={`Translate to ${lang.native} (${lang.label})`}
                 >
@@ -188,7 +188,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
               value={activeLang}
               disabled={isTranslating}
               onChange={e => onSelectLanguage(e.target.value)}
-              className="appearance-none bg-slate-950/90 hover:bg-slate-950 text-white text-xs font-mono font-bold py-1.5 pl-3 pr-8 rounded-xl border border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              className="appearance-none bg-slate-50 dark:bg-slate-950/90 hover:bg-slate-100 dark:hover:bg-slate-950 text-slate-900 dark:text-white text-xs font-mono font-bold py-1.5 pl-3 pr-8 rounded-xl border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"
             >
               <option value="" disabled>All Languages ({MULTILINGUAL_LANGUAGES.length}) ▾</option>
               <optgroup label="── African Agricultural & Regional ──">
@@ -206,7 +206,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
                 ))}
               </optgroup>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-white/50 absolute right-2.5 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 dark:text-white/50 absolute right-2.5 pointer-events-none" />
           </div>
         </div>
 
@@ -215,8 +215,8 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
             onClick={() => setDualView(!dualView)}
             className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition-all flex items-center gap-1.5 shrink-0 ${
               dualView
-                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-sm shadow-cyan-950/40'
-                : 'bg-white/5 text-white/60 hover:text-white border-white/10'
+                ? 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-cyan-500/40 shadow-sm'
+                : 'bg-slate-100 text-slate-700 hover:text-slate-900 border-slate-200 dark:bg-white/5 dark:text-white/60 dark:hover:text-white dark:border-white/10'
             }`}
           >
             <Columns className="w-3.5 h-3.5" />
@@ -226,19 +226,19 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
       </div>
 
       {isTranslating && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 text-emerald-300 text-xs font-mono animate-pulse">
-          <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
+        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 text-emerald-700 dark:text-emerald-300 text-xs font-mono animate-pulse">
+          <RefreshCw className="w-4 h-4 animate-spin text-emerald-600 dark:text-emerald-400" />
           <span>Generating precision agricultural translation in {currentLangObj.native}...</span>
         </div>
       )}
 
-      <div className="p-6 sm:p-10 rounded-xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl space-y-6">
+      <div className="p-6 sm:p-10 rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl backdrop-blur-2xl space-y-6">
         {result.evidenceStatus && result.evidenceStatus !== 'verified_sources' && (
-          <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-200">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+          <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-800 dark:text-amber-200">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <div>
               <p className="text-xs font-bold uppercase tracking-wider">Evidence Status Notice</p>
-              <p className="mt-1 text-xs text-amber-100/90">
+              <p className="mt-1 text-xs text-amber-900 dark:text-amber-100/90">
                 {result.evidenceStatus === 'context_only'
                   ? 'Synthesized using retrieved knowledge chunks without definitive rule citations. Recommended for verification.'
                   : result.evidenceStatus === 'unverified'
@@ -252,40 +252,40 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
         {/* ── Content View (Dual vs Single) ── */}
         {dualView && activeLang !== 'en' ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="p-5 rounded-xl bg-slate-950/60 border border-white/10 space-y-3">
-              <div className="flex items-center gap-2 pb-2 border-b border-white/10 text-xs font-mono font-bold text-slate-400 uppercase">
+            <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-white/10 text-xs font-mono font-bold text-slate-500 dark:text-slate-400 uppercase">
                 <span>🇺🇸 English (Primary Grounded Context)</span>
               </div>
-              <div className="prose prose-invert max-w-none text-slate-200 leading-relaxed font-sans text-xs">
+              <div className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-sans text-xs">
                 <MarkdownRenderer content={originalContent} />
               </div>
             </div>
 
-            <div className="p-5 rounded-xl bg-slate-950/60 border border-emerald-500/30 space-y-3">
-              <div className="flex items-center gap-2 pb-2 border-b border-emerald-500/20 text-xs font-mono font-bold text-emerald-400 uppercase">
+            <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-emerald-500/30 space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-emerald-500/20 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 uppercase">
                 <span>{currentLangObj.flag} {currentLangObj.native} (Localized Farmer Advisory)</span>
               </div>
-              <div className="prose prose-invert max-w-none text-slate-200 leading-relaxed font-sans text-xs">
+              <div className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-sans text-xs">
                 <MarkdownRenderer content={activeContent} />
               </div>
             </div>
           </div>
         ) : (
-          <div className="prose prose-invert max-w-none text-slate-200 leading-relaxed font-sans">
+          <div className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-sans">
             <MarkdownRenderer content={activeContent} />
           </div>
         )}
 
         {result.contextUsed && result.contextUsed.length > 0 && (
-          <div className="pt-6 border-t border-white/5 flex flex-col gap-3">
+          <div className="pt-6 border-t border-slate-200 dark:border-white/5 flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <span className="text-xxs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-xxs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 Retrieved Verification Context
               </span>
               <button
                 onClick={onSwitchToEvidence}
-                className="text-xxs font-bold text-emerald-400 hover:text-emerald-300"
+                className="text-xxs font-bold text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
               >
                 View all ({result.contextUsed.length}) sources &rarr;
               </button>
@@ -294,9 +294,9 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
               {result.contextUsed.slice(0, 4).map((ctx, idx) => (
                 <div
                   key={idx}
-                  className="px-3 py-1.5 rounded-xl bg-slate-950/60 border border-white/5 text-xxs font-semibold text-slate-300 flex items-center gap-2"
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-white/5 text-xxs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2"
                 >
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                   <span className="truncate max-w-[200px]">
                     {ctx.metadata?.title || `${ctx.metadata?.crop || 'Crop'} / ${ctx.metadata?.category || 'Guidance'}`}
                   </span>
@@ -322,23 +322,23 @@ const KnowledgeGraphView: React.FC<{
     exit={{ opacity: 0, y: -10 }}
     className="space-y-4"
   >
-    <div className="p-4 sm:p-6 rounded-xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl">
+    <div className="p-4 sm:p-6 rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl backdrop-blur-2xl">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <Network className="w-4 h-4 text-emerald-400" />
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Network className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             Spatial Knowledge Graph Explorer
           </h3>
-          <p className="text-xxs text-slate-400">
+          <p className="text-xxs text-slate-500 dark:text-slate-400">
             Live semantic node network connecting query concepts, soil indices, FAO literature, and regional farmer records.
           </p>
         </div>
-        <span className="text-xxs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
+        <span className="text-xxs font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
           Physics: Active
         </span>
       </div>
 
-      <div className="h-[420px] rounded-xl overflow-hidden border border-white/10 bg-slate-950 relative">
+      <div className="h-[420px] rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-950 relative">
         <RagKnowledgeGraphCanvas
           className="w-full h-full"
           customNodes={customGraphNodes}
@@ -347,24 +347,24 @@ const KnowledgeGraphView: React.FC<{
       </div>
 
       {selectedGraphNode && (
-        <div className="mt-4 p-4 rounded-xl bg-slate-950/80 border border-emerald-500/30 flex items-start justify-between gap-4 animate-in fade-in">
+        <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-emerald-500/30 flex items-start justify-between gap-4 animate-in fade-in">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-white">{selectedGraphNode.label}</span>
-              <span className="text-xxs uppercase px-2 py-0.5 rounded-md font-black bg-emerald-500/20 text-emerald-400">
+              <span className="text-xs font-bold text-slate-900 dark:text-white">{selectedGraphNode.label}</span>
+              <span className="text-xxs uppercase px-2 py-0.5 rounded-md font-black bg-emerald-500/20 text-emerald-700 dark:text-emerald-400">
                 {selectedGraphNode.category}
               </span>
               {selectedGraphNode.score && (
-                <span className="text-xxs font-mono text-slate-400">
+                <span className="text-xxs font-mono text-slate-500 dark:text-slate-400">
                   Relevance: {Math.round(selectedGraphNode.score * 100)}%
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-300 mt-1 leading-relaxed">{selectedGraphNode.snippet}</p>
+            <p className="text-xs text-slate-700 dark:text-slate-300 mt-1 leading-relaxed">{selectedGraphNode.snippet}</p>
           </div>
           <button
             onClick={() => onSelectNode(null)}
-            className="text-slate-400 hover:text-white text-xs font-bold"
+            className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-xs font-bold"
           >
             &times;
           </button>
@@ -382,42 +382,42 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
     exit={{ opacity: 0, y: -10 }}
     className="space-y-4"
   >
-    <div className="p-6 sm:p-8 rounded-xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl space-y-6">
+    <div className="p-6 sm:p-8 rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl backdrop-blur-2xl space-y-6">
       <div>
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           Primary Evidence & Verification Provenance
         </h3>
-        <p className="text-xxs text-slate-400 mt-0.5">
+        <p className="text-xxs text-slate-500 dark:text-slate-400 mt-0.5">
           Full citation grounding retrieved from verified agronomic repositories and vector indices.
         </p>
       </div>
 
       {result.citations && result.citations.length > 0 && (
         <div className="space-y-3">
-          <span className="text-xxs font-black text-slate-400 uppercase tracking-widest">
+          <span className="text-xxs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
             Formal Agronomic Citations ({result.citations.length})
           </span>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {result.citations.map((cite, i) => (
               <div
                 key={i}
-                className="p-4 rounded-xl bg-slate-950/60 border border-amber-500/20 hover:border-amber-500/40 transition-all space-y-2"
+                className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 hover:border-amber-500/40 dark:border-amber-500/20 dark:hover:border-amber-500/40 transition-all space-y-2"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white truncate max-w-[200px]">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[200px]">
                     {cite.title}
                   </span>
-                  <span className="text-xxs px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 font-bold">
+                  <span className="text-xxs px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold">
                     {cite.category}
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed line-clamp-3">
+                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed line-clamp-3">
                   {cite.excerpt}
                 </p>
-                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xxs text-slate-400 font-mono">
+                <div className="pt-2 border-t border-slate-200 dark:border-white/5 flex items-center justify-between text-xxs text-slate-500 dark:text-slate-400 font-mono">
                   <span>Relevance Score</span>
-                  <span className="text-amber-400 font-bold">{Math.round(cite.score * 100)}% match</span>
+                  <span className="text-amber-600 dark:text-amber-400 font-bold">{Math.round(cite.score * 100)}% match</span>
                 </div>
               </div>
             ))}
@@ -426,8 +426,8 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
       )}
 
       {result.contextUsed && result.contextUsed.length > 0 && (
-        <div className="space-y-3 pt-4 border-t border-white/5">
-          <span className="text-xxs font-black text-slate-400 uppercase tracking-widest">
+        <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-white/5">
+          <span className="text-xxs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
             Retrieved Knowledge Vectors ({result.contextUsed.length})
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -446,21 +446,21 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
                 <Component
                   key={i}
                   {...linkProps}
-                  className="p-3.5 rounded-xl bg-slate-950/60 border border-white/5 hover:border-emerald-500/40 transition-all text-left flex flex-col justify-between gap-2 group"
+                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 hover:border-emerald-500/40 dark:border-white/5 dark:hover:border-emerald-500/40 transition-all text-left flex flex-col justify-between gap-2 group"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xxs font-black text-emerald-400 uppercase">
+                      <span className="text-xxs font-black text-emerald-700 dark:text-emerald-400 uppercase">
                         {ctx.metadata?.category || 'Vector Chunk'}
                       </span>
                       {hasUrl && (
-                        <ExternalLink className="w-3 h-3 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+                        <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-emerald-600 dark:text-slate-500 dark:group-hover:text-emerald-400 transition-colors" />
                       )}
                     </div>
-                    <h4 className="text-xs font-bold text-slate-200 group-hover:text-white truncate">
+                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-emerald-700 dark:text-slate-200 dark:group-hover:text-white truncate">
                       {ctx.metadata?.title || `${ctx.metadata?.crop || 'General'} Advice`}
                     </h4>
-                    <p className="text-xxs text-slate-400 line-clamp-2 mt-1">
+                    <p className="text-xxs text-slate-600 dark:text-slate-400 line-clamp-2 mt-1">
                       {ctx.content}
                     </p>
                   </div>
@@ -491,30 +491,30 @@ const AIResultHeader: React.FC<{
   onCopy,
   onBookmark,
 }) => (
-  <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
+  <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-slate-200 dark:border-white/10">
     <div className="flex items-center gap-4 min-w-0">
-      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/40 shrink-0">
+      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-lg shadow-emerald-950/20 dark:shadow-emerald-950/40 shrink-0">
         <Brain className="w-6 h-6" />
       </div>
       <div className="min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xxs font-black tracking-widest uppercase px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+          <span className="text-xxs font-black tracking-widest uppercase px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
             ALFA Spatial Reasoning
           </span>
           {result.cached && (
-            <span className="text-xxs font-black tracking-widest uppercase px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
+            <span className="text-xxs font-black tracking-widest uppercase px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
               <Zap className="w-2.5 h-2.5 fill-current" />
               Semantic Cache (0.04s)
             </span>
           )}
           {result.evidenceStatus === 'verified_sources' && (
-            <span className="text-xxs font-black tracking-widest uppercase px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+            <span className="text-xxs font-black tracking-widest uppercase px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
               Verified Evidence
             </span>
           )}
         </div>
-        <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight mt-1 truncate">
+        <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight mt-1 truncate">
           {result.query ? `"${result.query}"` : 'Agronomic Synthesis'}
         </h2>
       </div>
@@ -525,21 +525,21 @@ const AIResultHeader: React.FC<{
         onClick={onToggleSpeech}
         className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${
           isSpeaking
-            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 animate-pulse'
-            : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white'
+            ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 animate-pulse'
+            : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/5 dark:text-slate-300 dark:border-white/10 dark:hover:bg-white/10 dark:hover:text-white'
         }`}
         title="Voice Briefing"
       >
-        {isSpeaking ? <VolumeX className="w-4 h-4 text-emerald-400" /> : <Volume2 className="w-4 h-4" />}
+        {isSpeaking ? <VolumeX className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Volume2 className="w-4 h-4" />}
         <span className="hidden sm:inline">{isSpeaking ? 'Stop Audio' : 'Audio Brief'}</span>
       </button>
 
       <button
         onClick={onCopy}
-        className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
+        className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-300 dark:hover:text-white dark:border-white/10 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
         title="Copy Summary"
       >
-        {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+        {copied ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-4 h-4" />}
         <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
       </button>
 
@@ -547,8 +547,8 @@ const AIResultHeader: React.FC<{
         onClick={onBookmark}
         className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${
           savedBookmark
-            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-            : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white'
+            ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40'
+            : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/5 dark:text-slate-300 dark:border-white/10 dark:hover:bg-white/10 dark:hover:text-white'
         }`}
         title="Bookmark Advisory"
       >
@@ -567,13 +567,13 @@ const AIResultNav: React.FC<{
   sourceCount: number;
 }> = ({ viewMode, setViewMode, graphNodeCount, hasVisuals, sourceCount }) => (
   <div className="flex items-center justify-between gap-2 pt-4 overflow-x-auto custom-scrollbar">
-    <div className="flex items-center gap-1.5 p-1 bg-slate-950/60 rounded-xl border border-white/10">
+    <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-white/10">
       <button
         onClick={() => setViewMode('synthesis')}
         className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
           viewMode === 'synthesis'
             ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-            : 'text-slate-400 hover:text-white hover:bg-white/5'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5'
         }`}
       >
         <FileText className="w-3.5 h-3.5" />
@@ -585,12 +585,12 @@ const AIResultNav: React.FC<{
         className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
           viewMode === 'graph'
             ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-            : 'text-slate-400 hover:text-white hover:bg-white/5'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5'
         }`}
       >
         <Network className="w-3.5 h-3.5" />
         <span>Knowledge Graph</span>
-        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-900/60 text-slate-300">
+        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-200 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300">
           {graphNodeCount}
         </span>
       </button>
@@ -601,7 +601,7 @@ const AIResultNav: React.FC<{
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
             viewMode === 'visuals'
               ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-              : 'text-slate-400 hover:text-white hover:bg-white/5'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5'
           }`}
         >
           <BarChart2 className="w-3.5 h-3.5" />
@@ -614,12 +614,12 @@ const AIResultNav: React.FC<{
         className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
           viewMode === 'evidence'
             ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-            : 'text-slate-400 hover:text-white hover:bg-white/5'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5'
         }`}
       >
         <Layers className="w-3.5 h-3.5" />
         <span>Evidence & Sources</span>
-        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-900/60 text-slate-300">
+        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-200 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300">
           {sourceCount}
         </span>
       </button>
@@ -770,7 +770,7 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6 pb-12"
     >
-      <RefractiveGlassCard className="p-6 sm:p-8 bg-slate-900/90 border border-emerald-500/20 shadow-2xl backdrop-blur-2xl">
+      <RefractiveGlassCard className="p-6 sm:p-8 bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-emerald-500/20 shadow-sm dark:shadow-2xl backdrop-blur-2xl">
         <AIResultHeader
           result={result}
           isSpeaking={isSpeaking}
@@ -816,7 +816,7 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="p-6 sm:p-8 rounded-xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl"
+            className="p-6 sm:p-8 rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl backdrop-blur-2xl"
           >
             <ReasoningVisuals
               visuals={(result.visuals ?? {}) as VisualsData}

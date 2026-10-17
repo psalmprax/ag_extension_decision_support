@@ -127,21 +127,6 @@ interface TabContentProps {
   onOpenUSSDSimulator?: () => void;
 }
 
-const SimplePageWrapper = ({
-  title,
-  headingClass,
-  children,
-}: {
-  title: string;
-  headingClass: string;
-  children: React.ReactNode;
-}) => (
-  <div>
-    <h1 className={`text-3xl font-bold ${headingClass} mb-8`}>{title}</h1>
-    {children}
-  </div>
-);
-
 export function TabContent(props: TabContentProps) {
   const { activeTab, headingClass, isOfficer, user, addNotification } = props;
 
@@ -272,17 +257,9 @@ export function TabContent(props: TabContentProps) {
         </PlanUpgradeGuard>
       );
     case 'telemetry':
-      return (
-        <SimplePageWrapper title="System Telemetry" headingClass={headingClass}>
-          <Telemetry />
-        </SimplePageWrapper>
-      );
+      return <Telemetry />;
     case 'agents':
-      return (
-        <SimplePageWrapper title="Agent Manager" headingClass={headingClass}>
-          <Agents />
-        </SimplePageWrapper>
-      );
+      return <Agents />;
     case 'system_health':
       return <SystemHealth />;
     case 'disease_diagnosis':

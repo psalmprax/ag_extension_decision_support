@@ -47,13 +47,13 @@ export const StudioTabSwitcher: React.FC<{
   active: 'copilot' | 'agent_ops';
   onSelect: (tab: 'copilot' | 'agent_ops') => void;
 }> = ({ active, onSelect }) => (
-  <div className="flex items-center bg-white/[0.04] p-1 rounded-xl border border-white/10">
+  <div className="flex items-center bg-slate-100 dark:bg-white/[0.04] p-1 rounded-xl border border-slate-200 dark:border-white/10">
     <button
       onClick={() => onSelect('copilot')}
       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
         active === 'copilot'
-          ? 'bg-emerald-500 text-white shadow-md shadow-emerald-950/40'
-          : 'text-white/50 hover:text-white'
+          ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-md shadow-emerald-950/40'
+          : 'text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white'
       }`}
     >
       <Zap className="w-3.5 h-3.5" />
@@ -64,7 +64,7 @@ export const StudioTabSwitcher: React.FC<{
       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
         active === 'agent_ops'
           ? 'bg-purple-600 text-white shadow-md shadow-purple-950/40'
-          : 'text-white/50 hover:text-white'
+          : 'text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white'
       }`}
     >
       <Cpu className="w-3.5 h-3.5" />
@@ -75,8 +75,8 @@ export const StudioTabSwitcher: React.FC<{
 
 /** Header strip shared by every canvas workbench panel. */
 const CanvasPanelHeader: React.FC<{ icon: React.ReactNode; title: string; hint: string; hintClass: string }> = ({ icon, title, hint, hintClass }) => (
-  <div className="flex justify-between items-center text-xs pb-2 border-b border-white/5">
-    <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">{icon}{title}</span>
+  <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 dark:border-white/5">
+    <span className="font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">{icon}{title}</span>
     <span className={`text-xxs font-mono ${hintClass}`}>{hint}</span>
   </div>
 );
@@ -121,20 +121,20 @@ export const CanvasWorkbench: React.FC<{
           <motion.div
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-3 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-between text-xs"
+            className="p-3 rounded-xl bg-white border border-slate-200 dark:bg-white/[0.04] dark:border-white/10 flex items-center justify-between text-xs"
           >
             <div>
-              <strong className="text-white">{selectedProbeResult.label}:</strong>{' '}
-              <span className="font-mono text-emerald-400 font-bold">
+              <strong className="text-slate-900 dark:text-white">{selectedProbeResult.label}:</strong>{' '}
+              <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">
                 {selectedProbeResult.value} {selectedProbeResult.unit}
               </span>
-              <p className="text-xxs text-white/60 mt-0.5">{selectedProbeResult.recommendation}</p>
+              <p className="text-xxs text-slate-600 dark:text-white/60 mt-0.5">{selectedProbeResult.recommendation}</p>
             </div>
             <span
               className={`px-2 py-0.5 rounded text-xxs font-bold uppercase ${
                 selectedProbeResult.status === 'optimal'
-                  ? 'bg-emerald-500/20 text-emerald-400'
-                  : 'bg-amber-500/20 text-amber-400'
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
+                  : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
               }`}
             >
               {selectedProbeResult.status}

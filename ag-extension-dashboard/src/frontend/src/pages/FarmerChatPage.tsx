@@ -263,15 +263,15 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-400">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
+            <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
               Multi-Channel Advisory Bridge
             </span>
           </div>
-          <h1 className={`text-2xl sm:text-3xl font-extrabold text-white tracking-tight ${headingClass}`}>
+          <h1 className={`text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
             Farmer Chat
           </h1>
-          <p className="text-white/60 text-xs sm:text-sm mt-1 font-medium">
+          <p className="text-slate-600 dark:text-white/60 text-xs sm:text-sm mt-1 font-medium">
             {t('chat_subtitle') || 'Bi-directional advisory across SMS, WhatsApp, Telegram, and USSD.'}
           </p>
         </div>
@@ -280,8 +280,8 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
           <span
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md backdrop-blur-md border text-xs font-mono ${
               socketConnected
-                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
+                : 'bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400'
             }`}
             title={socketConnected ? 'Realtime updates connected' : 'Realtime updates unavailable — messages refresh on open'}
           >
@@ -294,19 +294,19 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
       <div className="flex flex-1 gap-4 md:gap-6 overflow-hidden relative">
         {/* Left Column: Farmer Conversations Roster */}
         <div
-          className={`w-full md:w-80 flex flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-xl shadow-xl shadow-emerald-950/20 overflow-hidden ${
+          className={`w-full md:w-80 flex flex-col backdrop-blur-xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-sm dark:shadow-xl dark:shadow-emerald-950/20 overflow-hidden ${
             activeFarmerConvId ? 'hidden md:flex' : 'flex'
           }`}
         >
-          <div className="p-4 border-b border-white/[0.08] flex justify-between items-center bg-slate-950/40">
+          <div className="p-4 border-b border-slate-200/80 dark:border-white/[0.08] flex justify-between items-center bg-slate-50/80 dark:bg-slate-950/40">
             <div>
-              <h3 className="font-bold text-sm text-white">{t('chat_farmer_chats') || 'Conversations'}</h3>
-              <div className="text-[10px] font-mono text-white/40">{farmerConversations.length} Active Smallholders</div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white">{t('chat_farmer_chats') || 'Conversations'}</h3>
+              <div className="text-[10px] font-mono text-slate-500 dark:text-white/40">{farmerConversations.length} Active Smallholders</div>
             </div>
 
             {isDemo ? (
               <span
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/15 text-amber-400 border border-amber-500/25 rounded-lg text-xxs font-bold uppercase tracking-wider"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 rounded-lg text-xxs font-bold uppercase tracking-wider"
                 title={t('demo_not_available') ?? 'Not available in demo version'}
               >
                 <Lock className="w-3.5 h-3.5" />
@@ -327,15 +327,15 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
           </div>
 
           {/* Channel Filter Strip */}
-          <div className="p-2 border-b border-white/[0.04] flex gap-1 bg-slate-950/20">
+          <div className="p-2 border-b border-slate-200/80 dark:border-white/[0.04] flex gap-1 bg-slate-50/50 dark:bg-slate-950/20">
             {(['all', 'sms', 'whatsapp', 'telegram'] as const).map(ch => (
               <button
                 key={ch}
                 onClick={() => setSelectedChannel(ch)}
                 className={`flex-1 py-1 rounded-lg text-[10px] font-mono font-bold uppercase transition-all ${
                   selectedChannel === ch
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    : 'text-white/40 hover:text-white'
+                    ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
+                    : 'text-slate-500 hover:text-slate-900 dark:text-white/40 dark:hover:text-white'
                 }`}
               >
                 {ch}
@@ -350,10 +350,10 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
             keyExtractor={conv => conv.id}
             className="flex-1 p-2 space-y-1.5"
             emptyComponent={
-              <div className="p-8 text-center text-white/40 text-xs space-y-2">
-                <Users className="w-8 h-8 text-white/20 mx-auto" />
+              <div className="p-8 text-center text-slate-400 dark:text-white/40 text-xs space-y-2">
+                <Users className="w-8 h-8 text-slate-300 dark:text-white/20 mx-auto" />
                 <div>{t('chat_no_conversations') || 'No conversations yet'}</div>
-                <div className="text-[10px] text-white/30">{t('chat_start_new_chat') || 'Click + to start'}</div>
+                <div className="text-[10px] text-slate-400 dark:text-white/30">{t('chat_start_new_chat') || 'Click + to start'}</div>
               </div>
             }
             renderItem={conv => {
@@ -366,8 +366,8 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                   key={conv.id}
                   className={`group relative flex items-center w-full rounded-xl transition-all border ${
                     isSelected
-                      ? 'bg-emerald-500/15 border-emerald-500/40 text-white shadow-lg'
-                      : 'bg-slate-950/40 border-white/[0.04] hover:border-white/[0.1] hover:bg-slate-950/80 text-white/70'
+                      ? 'bg-emerald-500/15 border-emerald-500/40 text-slate-900 dark:text-white shadow-sm'
+                      : 'bg-slate-50/60 dark:bg-slate-950/40 border-slate-200/70 dark:border-white/[0.04] hover:border-slate-300 dark:hover:border-white/[0.1] hover:bg-slate-100 dark:hover:bg-slate-950/80 text-slate-700 dark:text-white/70'
                   }`}
                 >
                   <button
@@ -377,15 +377,15 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                     }}
                     className="flex-1 p-3 text-left flex items-center gap-3 min-w-0"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-bold shrink-0">
                       {initial}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center">
-                        <span className="font-bold text-xs text-white truncate">
+                        <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
                           {displayName}
                         </span>
-                        <span className="text-[9px] font-mono text-white/40">
+                        <span className="text-[9px] font-mono text-slate-500 dark:text-white/40">
                           {(() => {
                             const rawStarted = conv.startedAt || conv.updatedAt;
                             if (!rawStarted) return '—';
@@ -395,11 +395,11 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                         </span>
                       </div>
                       {regionText && (
-                        <div className="text-[9px] text-emerald-400/80 font-mono truncate">
+                        <div className="text-[9px] text-emerald-600 dark:text-emerald-400/80 font-mono truncate">
                           {regionText}
                         </div>
                       )}
-                      <p className="text-[11px] text-white/50 truncate mt-0.5 font-sans">
+                      <p className="text-[11px] text-slate-500 dark:text-white/50 truncate mt-0.5 font-sans">
                         {conv.lastMessage || 'Advisory session active'}
                       </p>
                     </div>
@@ -414,7 +414,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                           onDeleteConversation(conv.id);
                         }
                       }}
-                      className="opacity-0 group-hover:opacity-100 p-2 mr-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-all border border-rose-500/20"
+                      className="opacity-0 group-hover:opacity-100 p-2 mr-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-all border border-rose-500/20"
                       title="Delete Conversation"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -428,33 +428,33 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
         {/* Center Column: Active Chat Thread */}
         <div
-          className={`flex-1 flex flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-xl shadow-xl shadow-emerald-950/20 overflow-hidden ${
+          className={`flex-1 flex flex-col backdrop-blur-xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-sm dark:shadow-xl dark:shadow-emerald-950/20 overflow-hidden ${
             activeFarmerConvId ? 'flex' : 'hidden md:flex'
           }`}
         >
           {activeFarmerConvId && activeConv ? (
             <>
               {/* Active Conversation Top Bar */}
-              <div className="p-3 sm:p-4 border-b border-white/[0.08] flex justify-between items-center bg-slate-950/40">
+              <div className="p-3 sm:p-4 border-b border-slate-200/80 dark:border-white/[0.08] flex justify-between items-center bg-slate-50/80 dark:bg-slate-950/40">
                 <div className="flex items-center gap-2 sm:gap-3">
                   <button
                     onClick={() => setActiveFarmerConvId(null)}
-                    className="md:hidden p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all mr-1"
+                    className="md:hidden p-2 rounded-xl bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 text-slate-700 dark:text-white transition-all mr-1"
                     aria-label="Back to conversations"
                   >
                     <ArrowLeft className="w-4 h-4" />
                   </button>
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-300 font-bold shadow-md shadow-emerald-950/30 shrink-0">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-300 font-bold shadow-sm dark:shadow-md dark:shadow-emerald-950/30 shrink-0">
                     {(activeConv.farmerName || activeConv.title || 'F').trim().charAt(0).toUpperCase() || 'F'}
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 truncate">
+                    <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-2 truncate">
                       <span className="truncate">{activeConv.farmerName || activeConv.title || 'Smallholder Client'}</span>
-                      <span className="hidden sm:inline text-[9px] font-mono uppercase px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shrink-0">
+                      <span className="hidden sm:inline text-[9px] font-mono uppercase px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 shrink-0">
                         SMS & WhatsApp Synced
                       </span>
                     </h4>
-                    <div className="flex items-center gap-2 text-xxs text-white/40 font-mono">
+                    <div className="flex items-center gap-2 text-xxs text-slate-500 dark:text-white/40 font-mono">
                       <span>1-TO-1 ADVISORY</span>
                       <span>•</span>
                       <span className="truncate">{activeConv?.farmerRegion || 'ACTIVE REGION'}</span>
@@ -471,15 +471,15 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                           onDeleteConversation(activeConv.id);
                         }
                       }}
-                      className="px-2.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-all border border-rose-500/20 flex items-center gap-1.5 text-xs font-mono"
+                      className="px-2.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-all border border-rose-500/20 flex items-center gap-1.5 text-xs font-mono"
                       title="Delete Conversation"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">Delete</span>
                     </button>
                   )}
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                  <span className="text-xxs font-mono text-emerald-400 font-bold uppercase hidden sm:inline">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
+                  <span className="text-xxs font-mono text-emerald-700 dark:text-emerald-400 font-bold uppercase hidden sm:inline">
                     Live Channel
                   </span>
                 </div>
@@ -489,7 +489,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 {typingUser && (
                   <div className="flex justify-start">
-                    <div className="px-3 py-1.5 rounded-full bg-slate-800/80 border border-white/[0.06] text-[10px] font-mono text-white/60 animate-pulse">
+                    <div className="px-3 py-1.5 rounded-full bg-slate-200/80 dark:bg-slate-800/80 border border-slate-300/60 dark:border-white/[0.06] text-[10px] font-mono text-slate-600 dark:text-white/60 animate-pulse">
                       Typing…
                     </div>
                   </div>
@@ -508,18 +508,28 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                         className={`max-w-[75%] p-4 rounded-xl shadow-md space-y-1.5 ${
                           isOfficer
                             ? 'bg-gradient-to-br from-emerald-600 to-emerald-700 text-white rounded-tr-none border border-emerald-500/40'
-                            : 'backdrop-blur-md bg-slate-950/80 text-white/90 rounded-tl-none border border-white/[0.08]'
+                            : 'backdrop-blur-md bg-slate-100 dark:bg-slate-950/80 text-slate-800 dark:text-white/90 rounded-tl-none border border-slate-200 dark:border-white/[0.08]'
                         }`}
                       >
                         <p className="text-xs sm:text-sm leading-relaxed">{msg.content}</p>
-                        <div className="flex items-center justify-between gap-3 text-[9px] font-mono text-white/50 pt-1 border-t border-white/[0.08]">
+                        <div
+                          className={`flex items-center justify-between gap-3 text-[9px] font-mono pt-1 border-t ${
+                            isOfficer
+                              ? 'text-white/70 border-white/20'
+                              : 'text-slate-600 dark:text-white/50 border-slate-200/80 dark:border-white/[0.08]'
+                          }`}
+                        >
                           <div className="flex items-center gap-1.5">
                             <span>{isOfficer ? 'OFFICER DISPATCH' : 'FARMER INCOMING'}</span>
                             <AudioReaderButton
                               text={msg.content}
                               size="xs"
                               variant="ghost"
-                              className="text-white/60 hover:text-white"
+                              className={
+                                isOfficer
+                                  ? 'text-white/70 hover:text-white'
+                                  : 'text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white'
+                              }
                             />
                           </div>
                           {timeLabel && <span>{timeLabel}</span>}
@@ -531,8 +541,8 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
               </div>
 
               {/* AI Copilot Suggestion Bar */}
-              <div className="px-4 py-2 bg-slate-950/60 border-t border-white/[0.04] space-y-1.5">
-                <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400">
+              <div className="px-4 py-2 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-200/80 dark:border-white/[0.04] space-y-1.5">
+                <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-700 dark:text-emerald-400">
                   <Sparkles className="w-3 h-3" />
                   <span>
                     {suggestionsAreLive
@@ -546,7 +556,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                       key={idx}
                       type="button"
                       onClick={() => setFarmerChatInput(sug)}
-                      className="px-2.5 py-1 rounded-lg text-xxs font-sans bg-slate-900 border border-white/[0.08] hover:border-emerald-500/40 text-white/70 hover:text-white shrink-0 transition-all text-left max-w-xs truncate"
+                      className="px-2.5 py-1 rounded-lg text-xxs font-sans bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] hover:border-emerald-500/40 text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white shrink-0 transition-all text-left max-w-xs truncate shadow-sm dark:shadow-none"
                     >
                       {sug}
                     </button>
@@ -556,16 +566,16 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
               {/* Voice Note Composer for Extension Officer / Hands-free */}
               {showVoiceComposer && (
-                <div className="p-3 bg-slate-900/95 border-t border-emerald-500/20 backdrop-blur-md">
+                <div className="p-3 bg-white dark:bg-slate-900/95 border-t border-emerald-500/20 backdrop-blur-md">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xxs font-mono uppercase tracking-wider text-emerald-400 flex items-center gap-1.5 font-bold">
+                    <span className="text-xxs font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 font-bold">
                       <Mic className="w-3 h-3 animate-pulse" />
                       Multilingual Voice Dictation
                     </span>
                     <button
                       type="button"
                       onClick={() => setShowVoiceComposer(false)}
-                      className="text-white/40 hover:text-white text-xxs px-2 py-0.5 rounded hover:bg-white/10"
+                      className="text-slate-500 hover:text-slate-800 dark:text-white/40 dark:hover:text-white text-xxs px-2 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-white/10"
                     >
                       Close
                     </button>
@@ -584,7 +594,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
               {/* Chat Input Form */}
               <form
                 onSubmit={handleFarmerChatSend}
-                className="p-4 bg-slate-950/80 border-t border-white/[0.08]"
+                className="p-4 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-200/80 dark:border-white/[0.08]"
               >
                 <div className="relative flex items-center gap-3">
                   <button
@@ -592,8 +602,8 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                     onClick={() => setShowVoiceComposer(prev => !prev)}
                     className={`p-3 rounded-xl border transition-all ${
                       showVoiceComposer
-                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                        : 'bg-slate-900 text-white/70 hover:text-white border-white/[0.1] hover:border-white/20'
+                        ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-500/40'
+                        : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white border-slate-200 dark:border-white/[0.1] hover:border-slate-300 dark:hover:border-white/20'
                     }`}
                     title="Dictate voice note (multilingual STT)"
                     aria-label="Dictate voice note"
@@ -605,7 +615,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                     value={farmerChatInput}
                     onChange={e => handleTyping(e.target.value)}
                     placeholder={t('farmer_chat_placeholder') || 'Type agronomic guidance or broadcast prompt...'}
-                    className="flex-1 bg-slate-900 border border-white/[0.1] rounded-xl px-4 py-3 text-xs text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-500/40 focus:outline-none transition-all"
+                    className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.1] rounded-xl px-4 py-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:ring-2 focus:ring-emerald-500/40 focus:outline-none transition-all"
                   />
                   <button
                     type="submit"
@@ -619,13 +629,13 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-3">
-              <div className="w-16 h-16 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
+              <div className="w-16 h-16 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2">
                 <MessageSquare className="w-8 h-8" />
               </div>
-              <h3 className="text-base font-bold text-white">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 {t('chat_select_conversation') || 'Select a Farmer Conversation'}
               </h3>
-              <p className="text-xs text-white/50 max-w-xs text-center">
+              <p className="text-xs text-slate-600 dark:text-white/50 max-w-xs text-center">
                 {t('chat_connect_farmers') || 'Connect with smallholders across SMS, WhatsApp, and Telegram in real time.'}
               </p>
             </div>
@@ -634,34 +644,34 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
         {/* Right Column: Farmer Mini Telemetry Drawer (Bento Style) */}
         {activeConv && (
-          <div className="hidden xl:flex w-72 flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-xl p-5 shadow-xl shadow-emerald-950/20 space-y-4 overflow-y-auto">
-            <div className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+          <div className="hidden xl:flex w-72 flex-col backdrop-blur-xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/[0.08] rounded-xl p-5 shadow-sm dark:shadow-xl dark:shadow-emerald-950/20 space-y-4 overflow-y-auto">
+            <div className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
               <Sprout className="w-4 h-4" />
               <span>Plot Telemetry</span>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
-              <div className="text-[10px] font-mono text-white/40">NDVI CANOPY VIGOR</div>
-              <div className="text-base font-bold text-emerald-400">{activeFarmer?.ndvi ? `${activeFarmer.ndvi.toFixed(2)}` : '—'} {activeFarmer?.ndvi ? (activeFarmer.ndvi > 0.6 ? '(Optimal)' : activeFarmer.ndvi > 0.3 ? '(Moderate)' : '(Low)') : ''}</div>
-              <div className="text-[9px] text-white/40">Sentinel-2 Multispectral — add field polygon for NDVI</div>
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] space-y-1">
+              <div className="text-[10px] font-mono text-slate-500 dark:text-white/40">NDVI CANOPY VIGOR</div>
+              <div className="text-base font-bold text-emerald-600 dark:text-emerald-400">{activeFarmer?.ndvi ? `${activeFarmer.ndvi.toFixed(2)}` : '—'} {activeFarmer?.ndvi ? (activeFarmer.ndvi > 0.6 ? '(Optimal)' : activeFarmer.ndvi > 0.3 ? '(Moderate)' : '(Low)') : ''}</div>
+              <div className="text-[9px] text-slate-500 dark:text-white/40">Sentinel-2 Multispectral — add field polygon for NDVI</div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
-              <div className="text-[10px] font-mono text-white/40">SOIL pH & CARBON</div>
-              <div className="text-base font-bold text-amber-400">{plotTelemetry.loading ? '…' : plotTelemetry.ph != null ? `${plotTelemetry.ph.toFixed(1)} pH / ${plotTelemetry.soc ?? '—'} g/kg SOC` : activeFarmer?.ph ? `${activeFarmer.ph.toFixed(1)} pH` : '—'}</div>
-              <div className="text-[9px] text-white/40">ISRIC SoilGrids 250m {plotTelemetry.ph != null ? '• live' : activeFarmer?.ph ? '• cached' : '• no farmer geo'}</div>
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] space-y-1">
+              <div className="text-[10px] font-mono text-slate-500 dark:text-white/40">SOIL pH & CARBON</div>
+              <div className="text-base font-bold text-amber-600 dark:text-amber-400">{plotTelemetry.loading ? '…' : plotTelemetry.ph != null ? `${plotTelemetry.ph.toFixed(1)} pH / ${plotTelemetry.soc ?? '—'} g/kg SOC` : activeFarmer?.ph ? `${activeFarmer.ph.toFixed(1)} pH` : '—'}</div>
+              <div className="text-[9px] text-slate-500 dark:text-white/40">ISRIC SoilGrids 250m {plotTelemetry.ph != null ? '• live' : activeFarmer?.ph ? '• cached' : '• no farmer geo'}</div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
-              <div className="text-[10px] font-mono text-white/40">NASA POWER WEATHER</div>
-              <div className="text-base font-bold text-sky-400">{plotTelemetry.temp != null ? `${plotTelemetry.temp}°C` : plotTelemetry.moisture != null ? `${plotTelemetry.moisture}% VWC` : activeFarmer?.temperature ? `${activeFarmer.temperature}°C` : '—'}</div>
-              <div className="text-[9px] text-white/40">Open-Meteo modeled {plotTelemetry.temp != null ? '• live' : '• no geo'}</div>
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] space-y-1">
+              <div className="text-[10px] font-mono text-slate-500 dark:text-white/40">NASA POWER WEATHER</div>
+              <div className="text-base font-bold text-sky-600 dark:text-sky-400">{plotTelemetry.temp != null ? `${plotTelemetry.temp}°C` : plotTelemetry.moisture != null ? `${plotTelemetry.moisture}% VWC` : activeFarmer?.temperature ? `${activeFarmer.temperature}°C` : '—'}</div>
+              <div className="text-[9px] text-slate-500 dark:text-white/40">Open-Meteo modeled {plotTelemetry.temp != null ? '• live' : '• no geo'}</div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
-              <div className="text-[10px] font-mono text-white/40">OUTBREAK RISK</div>
-              <div className={`text-base font-bold ${hazardEval.status === 'ready' && hazardEval.hazards.length > 0 ? 'text-amber-400' : 'text-emerald-400'} flex items-center gap-1`}>
-                <CheckCircle2 className={`w-4 h-4 ${hazardEval.status === 'ready' && hazardEval.hazards.length > 0 ? 'text-amber-400' : 'text-emerald-400'}`} />
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] space-y-1">
+              <div className="text-[10px] font-mono text-slate-500 dark:text-white/40">OUTBREAK RISK</div>
+              <div className={`text-base font-bold ${hazardEval.status === 'ready' && hazardEval.hazards.length > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'} flex items-center gap-1`}>
+                <CheckCircle2 className={`w-4 h-4 ${hazardEval.status === 'ready' && hazardEval.hazards.length > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`} />
                 <span>
                   {hazardEval.status === 'loading'
                     ? '…'
@@ -672,7 +682,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                       : '—'}
                 </span>
               </div>
-              <div className="text-[9px] text-white/40">
+              <div className="text-[9px] text-slate-500 dark:text-white/40">
                 {hazardEval.status === 'ready' && hazardEval.hazards.length > 0
                   ? hazardEval.hazards[0].title
                   : hazardEval.status === 'unavailable'

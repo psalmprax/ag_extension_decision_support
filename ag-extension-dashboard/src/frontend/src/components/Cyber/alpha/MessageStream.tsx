@@ -23,7 +23,7 @@ export const MessageStream: React.FC<MessageStreamProps> = ({ messages, isProces
           animate={{ opacity: 1, y: 0 }}
           className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
         >
-          <div className="flex items-center gap-1.5 mb-1 text-[10px] text-white/40 font-mono">
+          <div className="flex items-center gap-1.5 mb-1 text-[10px] text-slate-500 dark:text-white/40 font-mono">
             <span>{msg.sender === 'user' ? 'Extension Officer' : 'AI Agronomist'}</span>
             <span>•</span>
             <span>{msg.timestamp}</span>
@@ -33,7 +33,7 @@ export const MessageStream: React.FC<MessageStreamProps> = ({ messages, isProces
             className={`max-w-[92%] rounded-xl p-4 text-xs leading-relaxed ${
               msg.sender === 'user'
                 ? 'bg-emerald-600 text-white rounded-tr-none shadow-md shadow-emerald-950/40'
-                : 'bg-white/[0.04] border border-white/10 text-white/90 rounded-tl-none space-y-3'
+                : 'bg-slate-50 border border-slate-200 text-slate-800 dark:bg-white/[0.04] dark:border-white/10 dark:text-white/90 rounded-tl-none space-y-3'
             }`}
           >
             <div className="whitespace-pre-line prose-invert font-sans">
