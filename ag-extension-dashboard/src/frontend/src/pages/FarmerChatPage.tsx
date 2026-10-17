@@ -512,14 +512,24 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                         }`}
                       >
                         <p className="text-xs sm:text-sm leading-relaxed">{msg.content}</p>
-                        <div className="flex items-center justify-between gap-3 text-[9px] font-mono text-slate-500 dark:text-white/50 pt-1 border-t border-slate-200/80 dark:border-white/[0.08]">
+                        <div
+                          className={`flex items-center justify-between gap-3 text-[9px] font-mono pt-1 border-t ${
+                            isOfficer
+                              ? 'text-white/70 border-white/20'
+                              : 'text-slate-600 dark:text-white/50 border-slate-200/80 dark:border-white/[0.08]'
+                          }`}
+                        >
                           <div className="flex items-center gap-1.5">
                             <span>{isOfficer ? 'OFFICER DISPATCH' : 'FARMER INCOMING'}</span>
                             <AudioReaderButton
                               text={msg.content}
                               size="xs"
                               variant="ghost"
-                              className="text-slate-500 hover:text-slate-800 dark:text-white/60 dark:hover:text-white"
+                              className={
+                                isOfficer
+                                  ? 'text-white/70 hover:text-white'
+                                  : 'text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white'
+                              }
                             />
                           </div>
                           {timeLabel && <span>{timeLabel}</span>}

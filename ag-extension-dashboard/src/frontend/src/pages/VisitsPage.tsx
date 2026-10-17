@@ -25,11 +25,11 @@ interface VisitsPageProps {
 const getStatusBadge = (status: string) => {
   switch (status) {
     case 'completed':
-      return 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300';
+      return 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300';
     case 'cancelled':
-      return 'bg-rose-500/15 border-rose-500/30 text-rose-300';
+      return 'bg-rose-500/15 border-rose-500/30 text-rose-700 dark:text-rose-300';
     default:
-      return 'bg-amber-500/15 border-amber-500/30 text-amber-300';
+      return 'bg-amber-500/15 border-amber-500/30 text-amber-700 dark:text-amber-300';
   }
 };
 

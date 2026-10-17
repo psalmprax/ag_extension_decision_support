@@ -47,25 +47,25 @@ const ROLES = [
     value: 'admin',
     label: 'Admin',
     labelKey: 'users_role_admin',
-    color: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+    color: 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30',
   },
   {
     value: 'regional_manager',
     label: 'Regional Manager',
     labelKey: 'users_role_regional_manager',
-    color: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+    color: 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30',
   },
   {
     value: 'extension_officer',
     label: 'Extension Officer',
     labelKey: 'users_role_extension_officer',
-    color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+    color: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
   },
   {
     value: 'farmer',
     label: 'Farmer',
     labelKey: 'users_role_farmer',
-    color: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+    color: 'bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30',
   },
 ];
 

@@ -36,22 +36,22 @@ function IssuesSummary({ issues, summary }: { issues?: string[]; summary?: strin
   if (!issues || issues.length === 0) {
     return (
       <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-3">
-        <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
-        <p className="text-xs font-bold text-emerald-300">{summary || 'All edge subsystems and container clusters operating at optimal SLO latency.'}</p>
+        <CheckCircle className="w-5 h-5 text-emerald-700 dark:text-emerald-400 shrink-0" />
+        <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300">{summary || 'All edge subsystems and container clusters operating at optimal SLO latency.'}</p>
       </div>
     );
   }
   return (
     <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl">
       <div className="flex items-center gap-2 mb-2">
-        <AlertTriangle className="w-5 h-5 text-rose-400" />
-        <p className="text-xs font-bold text-rose-300">
+        <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+        <p className="text-xs font-bold text-rose-700 dark:text-rose-300">
           {issues.length} Infrastructure Incident(s) Detected
         </p>
       </div>
       <ul className="list-disc list-inside space-y-1 pl-1">
         {issues.map((issue, i) => (
-          <li key={i} className="text-xs text-rose-200 font-mono">
+          <li key={i} className="text-xs text-rose-800 dark:text-rose-200 font-mono">
             {issue}
           </li>
         ))}
@@ -316,25 +316,25 @@ function getStatusStyle(status: string) {
   switch (status) {
     case 'healthy':
       return {
-        pill: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+        pill: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
         dot: 'bg-emerald-400',
         border: 'border-emerald-500/30',
       };
     case 'degraded':
       return {
-        pill: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+        pill: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30',
         dot: 'bg-amber-400',
         border: 'border-amber-500/30',
       };
     case 'unhealthy':
       return {
-        pill: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+        pill: 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30',
         dot: 'bg-rose-400',
         border: 'border-rose-500/30',
       };
     default:
       return {
-        pill: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
+        pill: 'bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-500/30',
         dot: 'bg-slate-400',
         border: 'border-slate-500/30',
       };
