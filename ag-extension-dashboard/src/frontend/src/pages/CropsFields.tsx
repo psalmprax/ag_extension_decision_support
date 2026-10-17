@@ -358,21 +358,21 @@ export function CropsFields() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* ── Top Bento Header: Fields & Geospatial Parcels ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
+      <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-4 sm:p-6 shadow-sm dark:shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 shrink-0">
-              <Map className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+              <Map className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
               <div className="flex items-center gap-2 sm:gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Fields & Geospatial Parcels</h1>
-                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                  <Sprout className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Fields & Geospatial Parcels</h1>
+                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                  <Sprout className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
                   Growth Cycles Active
                 </span>
               </div>
-              <p className="text-xs text-white/60 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
                 {isFarmer
                   ? 'Manage farm sectors, track soil pH profiles, and monitor growth timelines.'
                   : 'Monitor agronomic fields and crop lifecycle performance for registered farmers.'}
@@ -382,15 +382,15 @@ export function CropsFields() {
 
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
             {!isFarmer && farmers.length > 0 && (
-              <div className="flex items-center gap-2 bg-white/[0.04] backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 shadow-sm w-full sm:w-auto">
-                <User className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/[0.04] backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm w-full sm:w-auto">
+                <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <select
                   value={selectedFarmerId}
                   onChange={e => setSelectedFarmerId(e.target.value)}
-                  className="bg-transparent border-0 text-xs font-semibold text-white focus:ring-0 focus:outline-none cursor-pointer pr-4 w-full sm:w-auto"
+                  className="bg-transparent border-0 text-xs font-semibold text-slate-900 dark:text-white focus:ring-0 focus:outline-none cursor-pointer pr-4 w-full sm:w-auto"
                 >
                   {farmers.map(farmer => (
-                    <option key={farmer.id} value={farmer.id} className="bg-slate-950 text-white">
+                    <option key={farmer.id} value={farmer.id} className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
                       {farmer.firstName} {farmer.lastName} ({farmer.region || 'No Region'})
                     </option>
                   ))}
@@ -412,49 +412,49 @@ export function CropsFields() {
 
       {/* ── Statistics Bento Row ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="backdrop-blur-xl bg-slate-900/60 border border-blue-500/20 rounded-xl p-5 shadow-lg space-y-3">
+        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-blue-500/20 rounded-xl p-5 shadow-sm dark:shadow-lg space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xxs font-bold text-blue-400 uppercase tracking-wider">Total Sectors</span>
-            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            <span className="text-xxs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Total Sectors</span>
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
               <Map className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-3xl font-black text-white font-mono">{totalFieldsCount}</p>
+          <p className="text-3xl font-black text-slate-900 dark:text-white font-mono">{totalFieldsCount}</p>
         </div>
 
-        <div className="backdrop-blur-xl bg-slate-900/60 border border-emerald-500/20 rounded-xl p-5 shadow-lg space-y-3">
+        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-emerald-500/20 rounded-xl p-5 shadow-sm dark:shadow-lg space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xxs font-bold text-emerald-400 uppercase tracking-wider">Total Cultivated Area</span>
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="text-xxs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Total Cultivated Area</span>
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               <Sliders className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-3xl font-black text-emerald-400 font-mono">{(Number(totalAreaHectares) || 0).toFixed(1)} ha</p>
+          <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-mono">{(Number(totalAreaHectares) || 0).toFixed(1)} ha</p>
         </div>
 
-        <div className="backdrop-blur-xl bg-slate-900/60 border border-teal-500/20 rounded-xl p-5 shadow-lg space-y-3">
+        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-teal-500/20 rounded-xl p-5 shadow-sm dark:shadow-lg space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xxs font-bold text-teal-400 uppercase tracking-wider">Active Timelines</span>
-            <div className="p-2 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20">
+            <span className="text-xxs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider">Active Timelines</span>
+            <div className="p-2 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
               <Sprout className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-3xl font-black text-teal-300 font-mono">{activeCycles.length}</p>
+          <p className="text-3xl font-black text-teal-600 dark:text-teal-300 font-mono">{activeCycles.length}</p>
         </div>
 
-        <div className="backdrop-blur-xl bg-slate-900/60 border border-purple-500/20 rounded-xl p-5 shadow-lg space-y-3">
+        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-purple-500/20 rounded-xl p-5 shadow-sm dark:shadow-lg space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xxs font-bold text-purple-400 uppercase tracking-wider">Harvested Yield</span>
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            <span className="text-xxs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Harvested Yield</span>
+            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-3xl font-black text-purple-300 font-mono">{((Number(totalYieldKg) || 0) / 1000).toFixed(1)} tons</p>
+          <p className="text-3xl font-black text-purple-600 dark:text-purple-300 font-mono">{((Number(totalYieldKg) || 0) / 1000).toFixed(1)} tons</p>
         </div>
       </div>
 
       {/* ── Main Tabs Navigation ── */}
-      <div className="flex border-b border-white/5 gap-4">
+      <div className="flex border-b border-slate-200 dark:border-white/5 gap-4">
         {[
           { id: 'overview', label: 'Field Sectors', icon: Map },
           { id: 'cycles', label: 'Growth Timelines', icon: Sprout },
@@ -467,8 +467,8 @@ export function CropsFields() {
               onClick={() => setActiveTab(tab.id as 'overview' | 'cycles')}
               className={`flex items-center gap-2 pb-4 font-bold text-sm tracking-wide transition-all border-b-2 uppercase ${
                 isActive
-                  ? 'text-primary-400 border-primary-400'
-                  : 'text-slate-500 border-transparent hover:text-slate-300'
+                  ? 'text-primary-600 dark:text-primary-400 border-primary-500'
+                  : 'text-slate-500 border-transparent hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
               <Icon className="w-4 h-4" />

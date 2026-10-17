@@ -84,23 +84,23 @@ const VisitCard: React.FC<VisitCardProps> = ({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
       transition={{ duration: 0.3, delay: Math.min(idx * 0.04, 0.3) }}
-      className={`backdrop-blur-xl bg-slate-900/60 border rounded-xl p-5 flex flex-col justify-between hover:shadow-2xl transition-all relative group min-h-[220px] ${
+      className={`backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border rounded-xl p-5 flex flex-col justify-between hover:shadow-xl dark:hover:shadow-2xl transition-all relative group min-h-[220px] ${
         isUrgent
           ? 'border-amber-500/40 shadow-lg shadow-amber-950/20'
-          : 'border-white/10 hover:border-emerald-500/30'
+          : 'border-slate-200 dark:border-white/10 hover:border-emerald-500/30'
       }`}
     >
       <div className="space-y-3">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-emerald-400">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <User className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-bold text-white text-base tracking-tight truncate max-w-[170px]">
+              <h4 className="font-bold text-slate-900 dark:text-white text-base tracking-tight truncate max-w-[170px]">
                 {farmerDisplayName}
               </h4>
-              <p className="text-xxs text-white/50 font-bold uppercase tracking-wider mt-0.5">
+              <p className="text-xxs text-slate-500 dark:text-white/50 font-bold uppercase tracking-wider mt-0.5">
                 {visitTypeDisplay}
               </p>
             </div>
@@ -117,9 +117,9 @@ const VisitCard: React.FC<VisitCardProps> = ({
         </div>
 
         {/* Scheduled Date & Time */}
-        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
-          <Clock className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-          <p className="text-xs font-mono text-white/80">
+        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5">
+          <Clock className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+          <p className="text-xs font-mono text-slate-700 dark:text-white/80">
             {parsedDate ? (
               <>
                 {parsedDate.toLocaleDateString(undefined, {
@@ -127,28 +127,28 @@ const VisitCard: React.FC<VisitCardProps> = ({
                   day: 'numeric',
                   year: 'numeric',
                 })}{' '}
-                <span className="text-white/40">@</span>{' '}
+                <span className="text-slate-400 dark:text-white/40">@</span>{' '}
                 {parsedDate.toLocaleTimeString([], {
                   hour: '2-digit',
                   minute: '2-digit',
                 })}
               </>
             ) : (
-              <span className="text-white/40">Flexible / As Needed</span>
+              <span className="text-slate-400 dark:text-white/40">Flexible / As Needed</span>
             )}
           </p>
         </div>
 
         {/* Notes Snippet */}
         {visit.notes && (
-          <p className="text-xs text-white/60 line-clamp-2 leading-relaxed italic">
+          <p className="text-xs text-slate-600 dark:text-white/60 line-clamp-2 leading-relaxed italic">
             "{visit.notes}"
           </p>
         )}
       </div>
 
       {/* Card Bottom Actions */}
-      <div className="mt-4 pt-3.5 border-t border-white/5 flex items-center justify-between gap-2">
+      <div className="mt-4 pt-3.5 border-t border-slate-200/80 dark:border-white/5 flex items-center justify-between gap-2">
         <div className="flex gap-2">
           {visit.status !== 'completed' && visit.status !== 'cancelled' && (
             <>
@@ -158,7 +158,7 @@ const VisitCard: React.FC<VisitCardProps> = ({
                   e.stopPropagation();
                   onComplete(visit.id, farmerDisplayName);
                 }}
-                className="px-3 py-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 rounded-lg text-xxs font-bold uppercase transition-colors"
+                className="px-3 py-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 rounded-lg text-xxs font-bold uppercase transition-colors"
               >
                 Complete
               </button>
@@ -168,7 +168,7 @@ const VisitCard: React.FC<VisitCardProps> = ({
                   e.stopPropagation();
                   onCancel(visit.id, farmerDisplayName);
                 }}
-                className="px-3 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 rounded-lg text-xxs font-bold uppercase transition-colors"
+                className="px-3 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-700 dark:text-rose-300 rounded-lg text-xxs font-bold uppercase transition-colors"
               >
                 Cancel
               </button>
@@ -181,7 +181,7 @@ const VisitCard: React.FC<VisitCardProps> = ({
           onClick={() => {
             if (farmerData) onOpenDetail(farmerData);
           }}
-          className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/[0.04] hover:bg-emerald-500/20 border border-white/10 hover:border-emerald-500/30 text-white/70 hover:text-white transition-all shadow-sm"
+          className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-emerald-100 dark:bg-white/[0.04] dark:hover:bg-emerald-500/20 border border-slate-200 hover:border-emerald-300 dark:border-white/10 dark:hover:border-emerald-500/30 text-slate-600 hover:text-slate-900 dark:text-white/70 dark:hover:text-white transition-all shadow-sm"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
@@ -246,21 +246,21 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
   return (
     <main id="visits-main" className="max-w-7xl mx-auto space-y-6">
       {/* ── Top Bento Banner & Quick Actions ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
+      <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-4 sm:p-6 shadow-sm dark:shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 shrink-0">
-              <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+              <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
               <div className="flex items-center gap-2 sm:gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Field Visits & Itineraries</h1>
-                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                  <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Field Visits & Itineraries</h1>
+                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                  <Radio className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
                   Dispatch Radar
                 </span>
               </div>
-              <p className="text-xs text-white/60 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
                 Manage scheduled on-site inspections, priority risk queue appointments, and tele-agronomy calls.
               </p>
             </div>
@@ -269,13 +269,13 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
           <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
             {/* Telemetry Stat Chips */}
             <div className="flex items-center gap-2 overflow-x-auto">
-              <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white/80 font-mono whitespace-nowrap">
-                Total: <strong className="text-white">{visits.length}</strong>
+              <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-slate-600 dark:text-white/80 font-mono whitespace-nowrap">
+                Total: <strong className="text-slate-900 dark:text-white">{visits.length}</strong>
               </span>
-              <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 font-mono whitespace-nowrap">
+              <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 font-mono whitespace-nowrap">
                 Pending: <strong>{pendingCount}</strong>
               </span>
-              <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 font-mono whitespace-nowrap">
+              <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300 font-mono whitespace-nowrap">
                 Done: <strong>{completedCount}</strong>
               </span>
             </div>
@@ -291,7 +291,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
         </div>
 
         {/* Status Filter Tabs */}
-        <div className="flex items-center gap-2 pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-white/5 overflow-x-auto pb-1">
+        <div className="flex items-center gap-2 pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-slate-200/80 dark:border-white/5 overflow-x-auto pb-1">
           {[
             { id: 'all', label: 'All Itineraries', count: visits.length },
             { id: 'pending', label: 'Active & Pending', count: pendingCount },
@@ -303,12 +303,12 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
               onClick={() => setFilter(tab.id as typeof filter)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
                 filter === tab.id
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm shadow-emerald-950/40'
-                  : 'bg-white/[0.02] text-white/50 border-white/5 hover:border-white/15 hover:text-white'
+                  ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 shadow-sm shadow-emerald-950/40'
+                  : 'bg-slate-50 dark:bg-white/[0.02] text-slate-600 dark:text-white/50 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/15 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <span>{tab.label}</span>
-              <span className="px-1.5 py-0.2 rounded-md bg-white/10 text-xxs font-mono">
+              <span className="px-1.5 py-0.2 rounded-md bg-slate-200/70 dark:bg-white/10 text-slate-700 dark:text-slate-200 text-xxs font-mono">
                 {tab.count}
               </span>
             </button>
@@ -318,13 +318,13 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
 
       {/* Visits Cards Grid */}
       {filteredVisits.length === 0 ? (
-        <div className="p-12 text-center backdrop-blur-xl bg-slate-900/40 border border-white/10 rounded-xl space-y-4">
-          <div className="w-16 h-16 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/40">
+        <div className="p-12 text-center backdrop-blur-xl bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-white/10 rounded-xl space-y-4 shadow-sm">
+          <div className="w-16 h-16 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/40">
             <Calendar className="w-8 h-8 opacity-70" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-white">No Field Visits Scheduled</h3>
-            <p className="text-xs text-white/50 max-w-sm mx-auto">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">No Field Visits Scheduled</h3>
+            <p className="text-xs text-slate-600 dark:text-white/50 max-w-sm mx-auto">
               {filter === 'all'
                 ? 'No farm visits in queue. Dispatch your extension team or schedule an agronomic visit.'
                 : `No visits matching status "${filter}". Try switching filters or scheduling a visit.`}
@@ -332,7 +332,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
           </div>
           <button
             onClick={() => setShowVisitModal(true)}
-            className="px-5 py-2.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-2"
+            className="px-5 py-2.5 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span>Schedule Field Visit</span>

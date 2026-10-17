@@ -57,16 +57,16 @@ export function SMSComposerPanel({
 
   return (
     <div
-      className="flex-1 backdrop-blur-xl bg-slate-900/60 rounded-xl border border-white/10 flex flex-col shadow-xl"
+      className="flex-1 backdrop-blur-xl bg-white dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-white/10 flex flex-col shadow-sm dark:shadow-xl"
     >
-      <div className="flex flex-wrap items-center justify-between p-4 border-b border-white/5 gap-3">
-        <div className="flex bg-white/[0.03] border border-white/5 p-1 rounded-xl">
+      <div className="flex flex-wrap items-center justify-between p-4 border-b border-slate-200 dark:border-white/5 gap-3">
+        <div className="flex bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 p-1 rounded-xl">
           <button
             onClick={() => setActiveTab('compose')}
             className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${
               activeTab === 'compose'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
-                : 'text-white/50 hover:text-white'
+                ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 dark:text-white/50 dark:hover:text-white'
             }`}
           >
             <Layout className="w-3.5 h-3.5 inline-block mr-1.5" />
@@ -76,8 +76,8 @@ export function SMSComposerPanel({
             onClick={() => setActiveTab('history')}
             className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${
               activeTab === 'history'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
-                : 'text-white/50 hover:text-white'
+                ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 dark:text-white/50 dark:hover:text-white'
             }`}
           >
             <History className="w-3.5 h-3.5 inline-block mr-1.5" />
@@ -86,13 +86,13 @@ export function SMSComposerPanel({
         </div>
 
         {activeTab === 'compose' && (
-          <div className="flex bg-white/[0.03] border border-white/5 p-1 rounded-xl">
+          <div className="flex bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 p-1 rounded-xl">
             <button
               onClick={() => setSendMode('single')}
               className={`px-3 py-1 text-xxs font-bold uppercase tracking-wider rounded-lg transition-all ${
                 sendMode === 'single'
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
-                  : 'text-white/40 hover:text-white'
+                  ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-white/40 dark:hover:text-white'
               }`}
             >
               {t('sms_single_tab') || 'Single'}
@@ -101,8 +101,8 @@ export function SMSComposerPanel({
               onClick={() => setSendMode('bulk')}
               className={`px-3 py-1 text-xxs font-bold uppercase tracking-wider rounded-lg transition-all ${
                 sendMode === 'bulk'
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
-                  : 'text-white/40 hover:text-white'
+                  ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-white/40 dark:hover:text-white'
               }`}
             >
               {t('sms_bulk_tab') || 'Bulk Cohort'}
@@ -114,24 +114,24 @@ export function SMSComposerPanel({
           <button
             type="button"
             onClick={onOpenGoalMode}
-            className="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-300 border border-amber-500/20 text-xs font-bold flex items-center gap-1.5 hover:bg-amber-500/20 transition-all shadow-sm"
+            className="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-xs font-bold flex items-center gap-1.5 hover:bg-amber-500/20 transition-all shadow-sm"
             title="Launch Autonomous Agronomy Goal Campaign"
           >
-            <Target className="w-3.5 h-3.5 text-amber-400" />
+            <Target className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
             <span className="hidden sm:inline">Goal Mode</span>
           </button>
           <button
             type="button"
             onClick={onOpenGateways}
-            className="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-xs font-bold flex items-center gap-1.5 hover:bg-emerald-500/20 transition-all shadow-sm"
+            className="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-xs font-bold flex items-center gap-1.5 hover:bg-emerald-500/20 transition-all shadow-sm"
             title="Configure SMS, WhatsApp & Telegram Gateways"
           >
-            <Zap className="w-3.5 h-3.5 text-emerald-400" />
+            <Zap className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span className="hidden sm:inline">Gateways</span>
           </button>
           <button
             onClick={() => setShowRightPanel(!showRightPanel)}
-            className="p-1.5 rounded-xl bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/[0.08] border border-white/10 transition-all"
+            className="p-1.5 rounded-xl bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 dark:bg-white/[0.04] dark:text-white/60 dark:hover:text-white dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 transition-all"
             title="Toggle Sidebar"
           >
             <Info className="w-4 h-4" />

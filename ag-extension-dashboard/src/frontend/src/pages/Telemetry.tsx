@@ -113,14 +113,14 @@ export function Telemetry() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className={`text-2xl font-bold tracking-tight text-white ${headingClass}`}>System Telemetry</h1>
-          <p className="text-white/60 text-xs sm:text-sm mt-1">{t('telemetry_subtitle')}</p>
+          <h1 className={`text-2xl font-bold tracking-tight text-slate-900 dark:text-white ${headingClass}`}>System Telemetry</h1>
+          <p className="text-slate-600 dark:text-white/60 text-xs sm:text-sm mt-1">{t('telemetry_subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <select
             value={timeRange}
             onChange={e => setTimeRange(Number(e.target.value))}
-            className={`px-3 py-2 bg-slate-900 border border-white/10 ${radiusClass} text-xs sm:text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-400`}
+            className={`px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 ${radiusClass} text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-400`}
           >
             <option value={1}>Last Hour</option>
             <option value={24}>Last 24 Hours</option>

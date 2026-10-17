@@ -33,18 +33,18 @@ export function SMSRightPanel({
     <div className="w-full lg:w-1/4 space-y-4 overflow-y-auto pr-1">
       {/* GLASS DASHBOARD CARD */}
       <div
-        className="relative overflow-hidden backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-5 shadow-xl space-y-5"
+        className="relative overflow-hidden backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm dark:shadow-xl space-y-5"
       >
         <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
 
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <Zap className="w-4 h-4 text-emerald-400" />
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+            <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             {t('sms_quota_title') || 'Delivery & Quota'}
           </h3>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-white/5 rounded-lg text-white/40 hover:text-white transition-colors"
+            className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400 dark:text-white/40 hover:text-slate-700 dark:hover:text-white transition-colors"
           >
             &times;
           </button>

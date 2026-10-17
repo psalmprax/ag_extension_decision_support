@@ -142,17 +142,17 @@ export function Agents() {
               Autonomous Mesh Fleet
             </span>
           </div>
-          <h1 className={`text-3xl font-extrabold text-white tracking-tight ${headingClass}`}>
+          <h1 className={`text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
             Agent Orchestration
           </h1>
-          <p className="text-white/60 text-sm mt-1">
+          <p className="text-slate-600 dark:text-white/60 text-sm mt-1">
             Real-time telemetry, auto-handoff coordination, and execution matrix.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           {agents.length > 0 && (
-            <div className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+            <div className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-mono">
               <Radio className="w-3.5 h-3.5" />
               <span>{agents.filter(a => a.health === 'healthy').length}/{agents.length} NODES HEALTHY</span>
             </div>
@@ -161,9 +161,9 @@ export function Agents() {
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-white/[0.1] text-white hover:border-emerald-500/40 hover:bg-slate-800 text-xs font-bold transition-all disabled:opacity-50 ${btnClass}`}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.1] text-slate-800 dark:text-white hover:border-emerald-500/40 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold transition-all disabled:opacity-50 shadow-sm ${btnClass}`}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-400' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-600 dark:text-emerald-400' : ''}`} />
             <span>Refresh</span>
           </button>
         </div>
@@ -172,47 +172,47 @@ export function Agents() {
       {/* Queue Stats Bento Strip */}
       {queueStatus && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
-            <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
-              <Clock className="w-3.5 h-3.5 text-amber-400" />
+          <div className="p-4 rounded-xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+              <Clock className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
               <span>Queued Tasks</span>
             </div>
-            <div className="text-xl font-bold text-amber-400 flex items-baseline gap-2">
+            <div className="text-xl font-bold text-amber-600 dark:text-amber-400 flex items-baseline gap-2">
               {queueStatus.queued}
-              <span className="text-xxs font-normal text-white/40">In Buffer</span>
+              <span className="text-xxs font-normal text-slate-400 dark:text-white/40">In Buffer</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
-            <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
-              <Activity className="w-3.5 h-3.5 text-sky-400" />
+          <div className="p-4 rounded-xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+              <Activity className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" />
               <span>Active Workers</span>
             </div>
-            <div className="text-xl font-bold text-sky-400 flex items-baseline gap-2">
+            <div className="text-xl font-bold text-sky-600 dark:text-sky-400 flex items-baseline gap-2">
               {queueStatus.active}
-              <span className="text-xxs font-normal text-white/40">Executing</span>
+              <span className="text-xxs font-normal text-slate-400 dark:text-white/40">Executing</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
-            <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="p-4 rounded-xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
               <span>Completed Total</span>
             </div>
-            <div className="text-xl font-bold text-emerald-400 flex items-baseline gap-2">
+            <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 flex items-baseline gap-2">
               {queueStatus.completed}
-              <span className="text-xxs font-normal text-emerald-400/80">98.5% Pass</span>
+              <span className="text-xxs font-normal text-emerald-600 dark:text-emerald-400/80">98.5% Pass</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
-            <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
-              <XCircle className="w-3.5 h-3.5 text-rose-400" />
+          <div className="p-4 rounded-xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+              <XCircle className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" />
               <span>Failed / Retried</span>
             </div>
-            <div className="text-xl font-bold text-rose-400 flex items-baseline gap-2">
+            <div className="text-xl font-bold text-rose-600 dark:text-rose-400 flex items-baseline gap-2">
               {queueStatus.failed}
-              <span className="text-xxs font-normal text-white/40">Auto-Handed Off</span>
+              <span className="text-xxs font-normal text-slate-400 dark:text-white/40">Auto-Handed Off</span>
             </div>
           </div>
         </div>
@@ -220,15 +220,15 @@ export function Agents() {
 
       {/* Agent Status Grid (KnockKnock Bento Style) */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-          <div className="text-sm font-bold text-white flex items-center gap-2">
-            <Server className="w-4 h-4 text-emerald-400" />
+        <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/[0.06]">
+          <div className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Server className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Active Agent Nodes</span>
           </div>
-          <span className="text-xxs font-mono text-white/40">CLUSTER: PROD-EAST-AFRICA</span>
+          <span className="text-xxs font-mono text-slate-500 dark:text-white/40">CLUSTER: PROD-EAST-AFRICA</span>
         </div>
         {agents.length === 0 && (
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-6 text-sm text-amber-200">
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-6 text-sm text-amber-700 dark:text-amber-200">
             Agent status is unavailable. Refresh to retry the live orchestration service.
           </div>
         )}
@@ -244,33 +244,33 @@ export function Agents() {
                 key={agent.agentId}
                 whileHover={{ y: -3 }}
                 transition={{ duration: 0.2 }}
-                className="p-6 rounded-xl backdrop-blur-xl bg-slate-900/70 border border-white/[0.1] hover:border-emerald-500/30 hover:bg-slate-900/90 hover:shadow-2xl hover:shadow-emerald-950/30 transition-all flex flex-col justify-between space-y-5"
+                className="p-6 rounded-xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/[0.1] hover:border-emerald-500/30 hover:bg-white dark:hover:bg-slate-900/90 shadow-sm hover:shadow-xl dark:shadow-none transition-all flex flex-col justify-between space-y-5"
               >
                 <div className="space-y-4">
                   {/* Top Status Strip */}
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="p-3 rounded-xl bg-slate-950 border border-white/[0.08] text-emerald-400">
+                      <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-white/[0.08] text-emerald-600 dark:text-emerald-400">
                         <Zap className="w-5 h-5" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-white text-base leading-tight">{agent.name}</h4>
-                        <p className="text-[10px] font-mono text-white/40 mt-0.5">ID: {agent.agentId}</p>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-base leading-tight">{agent.name}</h4>
+                        <p className="text-[10px] font-mono text-slate-500 dark:text-white/40 mt-0.5">ID: {agent.agentId}</p>
                       </div>
                     </div>
 
                     <span
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold font-mono uppercase tracking-wider ${
                         isHealthy
-                          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                          ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
                           : isDegraded
-                          ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
-                          : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                          ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
+                          : 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30'
                       }`}
                     >
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${
-                          isHealthy ? 'bg-emerald-400 animate-ping' : 'bg-amber-400'
+                          isHealthy ? 'bg-emerald-500 dark:bg-emerald-400 animate-ping' : 'bg-amber-500 dark:bg-amber-400'
                         }`}
                       />
                       {agent.health}
@@ -278,14 +278,14 @@ export function Agents() {
                   </div>
 
                   {/* Load Progress Bar */}
-                  <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-2">
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] space-y-2">
                     <div className="flex justify-between text-xxs font-mono">
-                      <span className="text-white/50 uppercase">Concurrency Load</span>
-                      <span className="text-emerald-400 font-bold">
+                      <span className="text-slate-600 dark:text-white/50 uppercase">Concurrency Load</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                         {agent.currentLoad} / {agent.maxConcurrentTasks} ({loadPercent}%)
                       </span>
                     </div>
-                    <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-gradient-to-r from-emerald-500 to-amber-400 h-full rounded-full transition-all duration-500"
                         style={{ width: `${loadPercent}%` }}
@@ -295,12 +295,12 @@ export function Agents() {
 
                   {/* Capabilities Chips */}
                   <div className="space-y-1.5">
-                    <div className="text-[10px] font-mono uppercase text-white/40">Capabilities</div>
+                    <div className="text-[10px] font-mono uppercase text-slate-500 dark:text-white/40">Capabilities</div>
                     <div className="flex flex-wrap gap-1.5">
                       {agent.capabilities.map(cap => (
                         <span
                           key={cap}
-                          className="px-2 py-0.5 rounded-lg text-[10px] font-mono bg-slate-950 text-white/70 border border-white/[0.06]"
+                          className="px-2 py-0.5 rounded-lg text-[10px] font-mono bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-white/70 border border-slate-200 dark:border-white/[0.06]"
                         >
                           {cap}
                         </span>
@@ -310,14 +310,14 @@ export function Agents() {
                 </div>
 
                 {/* Dispatch Trigger Button */}
-                <div className="pt-4 border-t border-white/[0.06] space-y-2">
-                  <div className="text-[9px] font-mono text-white/30 truncate">
+                <div className="pt-4 border-t border-slate-200 dark:border-white/[0.06] space-y-2">
+                  <div className="text-[9px] font-mono text-slate-400 dark:text-white/30 truncate">
                     HEARTBEAT: {new Date(agent.lastHeartbeat).toLocaleTimeString()}
                   </div>
                   <button
                     onClick={() => handleDispatch(agent.agentId)}
                     disabled={isDispatching === agent.agentId || agent.health === 'offline'}
-                    className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center gap-2 transition-all disabled:opacity-40"
+                    className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-bold text-xs flex items-center justify-center gap-2 transition-all disabled:opacity-40"
                   >
                     {isDispatching === agent.agentId ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -336,13 +336,13 @@ export function Agents() {
       {/* Analytics & Handoff Logs Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Task Queue Distribution */}
-        <div className="p-6 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-4">
+        <div className="p-6 rounded-xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>Queue Status Telemetry</span>
             </h3>
-            <span className="text-xxs font-mono text-white/40">REAL-TIME DENSITY</span>
+            <span className="text-xxs font-mono text-slate-500 dark:text-white/40">REAL-TIME DENSITY</span>
           </div>
 
           <ResponsiveContainer width="100%" height={240}>
@@ -367,33 +367,33 @@ export function Agents() {
         </div>
 
         {/* Handoff Log Terminal */}
-        <div className="p-6 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-4 flex flex-col justify-between">
+        <div className="p-6 rounded-xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-sky-400" />
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-sky-600 dark:text-sky-400" />
               <span>Autonomous Handoff Stream</span>
             </h3>
-            <span className="text-xxs font-mono text-emerald-400">0 ERRORS</span>
+            <span className="text-xxs font-mono text-emerald-600 dark:text-emerald-400">0 ERRORS</span>
           </div>
 
           <div className="space-y-2.5 max-h-60 overflow-y-auto font-mono text-xs pr-1">
             {handoffLog.map((handoff, index) => (
               <div
                 key={index}
-                className="p-3 rounded-xl bg-slate-950/80 border border-white/[0.06] flex items-center justify-between gap-3"
+                className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] flex items-center justify-between gap-3"
               >
                 <div className="space-y-0.5 min-w-0">
-                  <div className="font-bold text-white/90 flex items-center gap-1.5 truncate">
-                    <span className="text-emerald-400">{handoff.from}</span>
-                    <ArrowRight className="w-3 h-3 text-white/40 shrink-0" />
-                    <span className="text-sky-400">{handoff.to}</span>
+                  <div className="font-bold text-slate-800 dark:text-white/90 flex items-center gap-1.5 truncate">
+                    <span className="text-emerald-600 dark:text-emerald-400">{handoff.from}</span>
+                    <ArrowRight className="w-3 h-3 text-slate-400 dark:text-white/40 shrink-0" />
+                    <span className="text-sky-600 dark:text-sky-400">{handoff.to}</span>
                   </div>
-                  <div className="text-[10px] text-white/50 truncate">
+                  <div className="text-[10px] text-slate-500 dark:text-white/50 truncate">
                     TASK: {handoff.taskId} • {handoff.reason}
                   </div>
                 </div>
 
-                <div className="text-[9px] text-white/30 shrink-0">
+                <div className="text-[9px] text-slate-400 dark:text-white/30 shrink-0">
                   {new Date(handoff.timestamp).toLocaleTimeString()}
                 </div>
               </div>

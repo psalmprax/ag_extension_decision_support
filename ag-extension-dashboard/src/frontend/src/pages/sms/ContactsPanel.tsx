@@ -34,28 +34,28 @@ export function SMSContactsPanel({
 
   return (
     <div
-      className="w-full lg:w-1/4 backdrop-blur-xl bg-slate-900/60 rounded-xl border border-white/10 flex flex-col shadow-xl"
+      className="w-full lg:w-1/4 backdrop-blur-xl bg-white dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-white/10 flex flex-col shadow-sm dark:shadow-xl"
     >
-      <div className="p-4 border-b border-white/5">
-        <h2 className="text-base font-bold text-white mb-3 flex items-center gap-2">
-          <Users className="w-4 h-4 text-emerald-400" />
+      <div className="p-4 border-b border-slate-200 dark:border-white/5">
+        <h2 className="text-base font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+          <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           {t('sms_recent_recipients') || 'Recipients & Cohorts'}
         </h2>
         <div className="flex items-center justify-between gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-white/40" />
             <input
               type="text"
               placeholder={t('farmer_search_placeholder') || 'Search recipients...'}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 bg-white/[0.03] border border-white/10 rounded-xl focus:ring-1 focus:ring-emerald-400 text-xs text-white placeholder-white/30 outline-none"
+              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-1 focus:ring-emerald-500 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 outline-none"
             />
           </div>
           {sendMode === 'bulk' && (
             <button
               onClick={handleBulkSelectAll}
-              className="p-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-colors"
+              className="p-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-colors"
               title="Select All"
             >
               <CheckCircle className="w-4 h-4" />
@@ -67,7 +67,7 @@ export function SMSContactsPanel({
       <div className="flex-1 max-h-60 lg:max-h-none overflow-y-auto p-2 space-y-1 custom-scrollbar">
         {isLoadingContacts ? (
           <div className="flex flex-col items-center justify-center py-10">
-            <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
+            <Loader2 className="w-6 h-6 animate-spin text-emerald-600 dark:text-emerald-400" />
           </div>
         ) : (
           recentContacts
@@ -90,13 +90,13 @@ export function SMSContactsPanel({
             ))
         )}
         {!isLoadingContacts && recentContacts.length === 0 && (
-          <div className="text-center py-10 text-white/30 text-xs uppercase font-bold tracking-widest">
+          <div className="text-center py-10 text-slate-400 dark:text-white/30 text-xs uppercase font-bold tracking-widest">
             No contacts found
           </div>
         )}
       </div>
 
-      <div className="p-3.5 border-t border-white/5">
+      <div className="p-3.5 border-t border-slate-200 dark:border-white/5">
         <button
           onClick={() => {
             if (selectedContact) {
@@ -106,7 +106,7 @@ export function SMSContactsPanel({
               toast.error('Select a contact first');
             }
           }}
-          className="w-full flex items-center justify-center gap-1.5 py-2 bg-white/[0.04] hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/30 text-white/80 hover:text-emerald-300 rounded-xl text-xs font-bold transition-all"
+          className="w-full flex items-center justify-center gap-1.5 py-2 bg-slate-100 hover:bg-emerald-50 dark:bg-white/[0.04] dark:hover:bg-emerald-500/15 border border-slate-200 hover:border-emerald-500/30 dark:border-white/10 text-slate-700 hover:text-emerald-700 dark:text-white/80 dark:hover:text-emerald-300 rounded-xl text-xs font-bold transition-all"
         >
           <Plus className="w-3.5 h-3.5" />
           {t('common_add') || 'Add Recipient'}

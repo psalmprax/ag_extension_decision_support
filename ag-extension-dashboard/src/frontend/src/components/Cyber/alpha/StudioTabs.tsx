@@ -47,13 +47,13 @@ export const StudioTabSwitcher: React.FC<{
   active: 'copilot' | 'agent_ops';
   onSelect: (tab: 'copilot' | 'agent_ops') => void;
 }> = ({ active, onSelect }) => (
-  <div className="flex items-center bg-white/[0.04] p-1 rounded-xl border border-white/10">
+  <div className="flex items-center bg-slate-100 dark:bg-white/[0.04] p-1 rounded-xl border border-slate-200 dark:border-white/10">
     <button
       onClick={() => onSelect('copilot')}
       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
         active === 'copilot'
-          ? 'bg-emerald-500 text-white shadow-md shadow-emerald-950/40'
-          : 'text-white/50 hover:text-white'
+          ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-md shadow-emerald-950/40'
+          : 'text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white'
       }`}
     >
       <Zap className="w-3.5 h-3.5" />
@@ -64,7 +64,7 @@ export const StudioTabSwitcher: React.FC<{
       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
         active === 'agent_ops'
           ? 'bg-purple-600 text-white shadow-md shadow-purple-950/40'
-          : 'text-white/50 hover:text-white'
+          : 'text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white'
       }`}
     >
       <Cpu className="w-3.5 h-3.5" />

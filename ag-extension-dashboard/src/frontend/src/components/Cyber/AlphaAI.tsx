@@ -396,24 +396,24 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-20">
       {/* ── Top HUD Navigation Banner (knockknockapp.ai standard) ── */}
-      <div className="backdrop-blur-2xl bg-slate-900/70 border border-white/10 rounded-xl p-5 shadow-2xl relative overflow-hidden">
+      <div className="backdrop-blur-2xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm dark:shadow-2xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
           {/* Left: Branding & Model Badge */}
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 via-teal-500/20 to-cyan-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/40">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 via-teal-500/20 to-cyan-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-lg shadow-emerald-950/40">
               <Brain className="w-6 h-6 animate-pulse" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl font-bold tracking-tight text-white">
+                <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                   AI Agronomic Co-Pilot
                 </h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-black tracking-wider uppercase bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                  <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-black tracking-wider uppercase bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                  <Sparkles className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
                   AG-AGRONOMIST 4.5 PRO
                 </span>
               </div>
-              <p className="text-xs text-white/60 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
                 Multi-modal decision engine powered by NASA POWER, SoilGrids v2, and Spatial RAG.
               </p>
             </div>
@@ -441,7 +441,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
              ══════════════════════════════════════════════════════════════ */}
           <div className="lg:col-span-5 flex flex-col space-y-4">
             {/* Conversational Stream Card */}
-            <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-4 flex-1 flex flex-col justify-between shadow-xl min-h-[480px] max-h-[620px]">
+            <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-4 flex-1 flex flex-col justify-between shadow-sm dark:shadow-xl min-h-[480px] max-h-[620px]">
               {/* Message List */}
               <MessageStream
                 messages={messages}
@@ -452,7 +452,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
               />
 
               {/* Input Bar & Multi-Modal Controls (knockknockapp.ai voice/leaf standard) */}
-              <div className="pt-3 border-t border-white/5 space-y-2">
+              <div className="pt-3 border-t border-slate-200 dark:border-white/5 space-y-2">
                 {/* Dynamic Agronomic Intake Clarification */}
                 {isAgronomicQueryAmbiguous(inputPrompt) && !intakeDismissed && !isProcessing && (
                   <AgronomicIntakeCard
@@ -470,9 +470,9 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                 )}
 
                 {isRecordingVoice && (
-                  <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-400">
+                  <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
                     <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
                       <span className="font-mono text-xxs font-bold uppercase tracking-wider">
                         Recording Voice Audio... Speak prompt
                       </span>
@@ -484,18 +484,18 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                           key={i}
                           animate={{ height: [4, h, 6] }}
                           transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.05 }}
-                          className="w-1 bg-emerald-400 rounded-full"
+                          className="w-1 bg-emerald-500 dark:bg-emerald-400 rounded-full"
                         />
                       ))}
                     </div>
                   </div>
                 )}
 
-                <div className="relative flex items-center gap-2 bg-white/[0.03] border border-white/10 rounded-xl p-1.5 focus-within:border-emerald-500/50 focus-within:ring-1 focus-within:ring-emerald-500/30 transition-all">
+                <div className="relative flex items-center gap-2 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl p-1.5 focus-within:border-emerald-500/50 focus-within:ring-1 focus-within:ring-emerald-500/30 transition-all">
                   <button
                     onClick={handleImageUploadSim}
                     title="Attach Leaf Image for Saliency Detection"
-                    className="p-2 text-white/40 hover:text-emerald-400 rounded-lg hover:bg-white/5 transition-colors"
+                    className="p-2 text-slate-400 dark:text-white/40 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg hover:bg-slate-200 dark:hover:bg-white/5 transition-colors"
                   >
                     <ImageIcon className="w-4 h-4" />
                   </button>
@@ -505,8 +505,8 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                     title={isRecordingVoice ? 'Stop Recording' : 'Voice Input (STT)'}
                     className={`p-2 rounded-lg transition-colors ${
                       isRecordingVoice
-                        ? 'bg-rose-500/20 text-rose-400 animate-pulse'
-                        : 'text-white/40 hover:text-emerald-400 hover:bg-white/5'
+                        ? 'bg-rose-500/20 text-rose-500 dark:text-rose-400 animate-pulse'
+                        : 'text-slate-400 dark:text-white/40 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-200 dark:hover:bg-white/5'
                     }`}
                   >
                     {isRecordingVoice ? (
@@ -527,7 +527,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                     }}
                     placeholder="Ask an agronomic question or enter field observation..."
                     rows={1}
-                    className="w-full bg-transparent text-xs text-white placeholder-white/30 outline-none resize-none px-1 py-1 max-h-20"
+                    className="w-full bg-transparent text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 outline-none resize-none px-1 py-1 max-h-20"
                   />
 
                   <button
@@ -547,9 +547,9 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
              ══════════════════════════════════════════════════════════════ */}
           <div className="lg:col-span-7 flex flex-col space-y-4">
             {/* Workbench Navigation Header */}
-            <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+            <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-sm dark:shadow-lg">
               {/* Canvas Tabs */}
-              <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/5 overflow-x-auto max-w-full">
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-slate-200 dark:border-white/5 overflow-x-auto max-w-full">
                 {[
                   { id: 'soil_heatmap' as const, label: 'Soil Heatmap', icon: Droplets },
                   { id: 'disease_saliency' as const, label: 'Disease Saliency', icon: Eye },
@@ -565,8 +565,8 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                       onClick={() => setActiveCanvasView(tab.id)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
                         isActive
-                          ? 'bg-emerald-500 text-white shadow-md shadow-emerald-950/50'
-                          : 'text-white/50 hover:text-white'
+                          ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-md shadow-emerald-950/50'
+                          : 'text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       <Icon className="w-3.5 h-3.5" />
@@ -578,15 +578,15 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
 
               {/* Status Pill */}
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-md text-xxs font-mono uppercase bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="px-2.5 py-1 rounded-md text-xxs font-mono uppercase bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
                   GPU Interactive
                 </span>
               </div>
             </div>
 
             {/* Generative Interactive Canvas Container (canvasui.dev glassmorphic standard) */}
-            <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-xl p-5 shadow-2xl relative overflow-hidden min-h-[500px] flex flex-col justify-between">
+            <div className="backdrop-blur-2xl bg-white/95 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm dark:shadow-2xl relative overflow-hidden min-h-[500px] flex flex-col justify-between">
               {' '}
               {/* Dynamic Mounted Canvas */}
               <div className="flex-1 flex flex-col justify-center">
@@ -608,16 +608,16 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                 />
               </div>
               {/* ── Workbench Action Footer Dock ── */}
-              <div className="pt-4 mt-4 border-t border-white/5 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xxs text-white/50 font-mono">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <div className="pt-4 mt-4 border-t border-slate-200 dark:border-white/5 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-xxs text-slate-500 dark:text-white/50 font-mono">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>Agronomic Safety Guard Active (Zero Hallucination Tolerance)</span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleExportPdf}
-                    className="px-3.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-semibold text-white/80 hover:text-white transition-colors flex items-center gap-1.5"
+                    className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 text-xs font-semibold dark:text-white/80 dark:hover:text-white transition-colors flex items-center gap-1.5"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Export PDF</span>
