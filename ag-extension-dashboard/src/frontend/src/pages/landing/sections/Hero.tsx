@@ -28,11 +28,22 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
       {/* Authentic Agricultural Partnership Backdrop with Warm Agrarian Lighting */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         <img
+          src="/images/landing/officer-farmer-hero.webp"
+          srcSet="/images/landing/officer-farmer-hero-640.webp 640w, /images/landing/officer-farmer-hero-1024.webp 1024w, /images/landing/officer-farmer-hero.webp 1920w"
+          sizes="(max-width: 640px) 640px, (max-width: 1100px) 1024px, 1920px"
+          alt="Agricultural extension officer consulting with a smallholder farmer in a maize field using a digital tablet"
+          width={1920}
+          height={1080}
+          className="w-full h-full object-cover object-center opacity-30 filter saturate-125 contrast-105 transition-opacity duration-700"
+          loading="eager"
+          decoding="async"
+        />
+        <img
           src="/images/landing/maize-field-sunrise.webp"
-          alt="Lush green maize field glowing in warm morning sunlight"
+          alt="Lush green maize field glowing in morning sunlight"
           width={1319}
           height={860}
-          className="w-full h-full object-cover object-center opacity-30 filter saturate-125 contrast-105 transition-opacity duration-700"
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-20 mix-blend-screen pointer-events-none"
           loading="eager"
           decoding="async"
         />
