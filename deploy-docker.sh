@@ -83,7 +83,7 @@ if ss -tulpn 2>/dev/null | grep -qE ':(80|443) '; then
         fuser -k 80/tcp 2>/dev/null || true
         fuser -k 443/tcp 2>/dev/null || true
     fi
-    pkill -9 -f "docker-proxy.*(:80|:443)" 2>/dev/null || true
+    pkill -9 -f '[d]ocker-proxy.*-host-port (80|443)( |$)' 2>/dev/null || true
 fi
 
 # 4. Deploy with build

@@ -1,4 +1,5 @@
 import apiClient from './client';
+import { resolveOfflineConflict, type FieldConflict } from '@/services/offlineConflictResolver';
 
 export type SyncState = 'pending' | 'failed' | 'conflict';
 
@@ -10,6 +11,12 @@ export interface SyncQueueItem {
   endpoint: string;
   method: 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   data?: Record<string, unknown>;
+  /** DTP-05: Baseline snapshot before offline mutation was applied */
+  baseSnapshot?: Record<string, unknown>;
+  /** DTP-05: Microsecond/millisecond field-level edit timestamps */
+  fieldTimestamps?: Record<string, number>;
+  /** DTP-05: Field conflicts requiring manual review */
+  conflicts?: FieldConflict[];
   timestamp: number;
   retryCount: number;
   state: SyncState;
@@ -265,6 +272,95 @@ class SyncQueueService {
     this.notifyListeners();
   }
 
+  private async fetchRemoteState(endpoint: string): Promise<Record<string, unknown> | undefined> {
+    try {
+      const getRes = await apiClient.request<Record<string, unknown>>({
+        url: endpoint,
+        method: 'GET',
+      });
+      const body = getRes.data as { data?: Record<string, unknown> } | Record<string, unknown>;
+      return (body && typeof body === 'object' && 'data' in body && body.data)
+        ? (body.data as Record<string, unknown>)
+        : (body as Record<string, unknown>);
+    } catch {
+      return undefined;
+    }
+  }
+
+  private async reconcileAndReplay(
+    item: SyncQueueItem,
+    remoteData: Record<string, unknown>
+  ): Promise<'success' | 'conflict'> {
+    if (!item.baseSnapshot || !item.data) {
+      item.state = 'conflict';
+      return 'conflict';
+    }
+
+    try {
+      const resolution = resolveOfflineConflict(
+        item.baseSnapshot,
+        item.data,
+        remoteData,
+        {
+          localUpdatedAt: item.timestamp,
+          remoteUpdatedAt: typeof remoteData.updatedAt === 'number' ? remoteData.updatedAt : undefined,
+          localFieldTimestamps: item.fieldTimestamps,
+          remoteFieldTimestamps: typeof remoteData.fieldTimestamps === 'object' && remoteData.fieldTimestamps !== null
+            ? (remoteData.fieldTimestamps as Record<string, number>)
+            : undefined,
+        }
+      );
+
+      if (resolution.hasConflicts) {
+        item.conflicts = resolution.conflicts;
+        item.state = 'conflict';
+        return 'conflict';
+      }
+
+      item.data = resolution.merged;
+      item.baseSnapshot = remoteData;
+      item.conflicts = undefined;
+
+      await apiClient.request({
+        url: item.endpoint,
+        method: item.method,
+        data: item.data,
+        headers: { 'Idempotency-Key': `${item.idempotencyKey}_reconciled` },
+      });
+      return 'success';
+    } catch (reconcileErr: unknown) {
+      item.lastError = reconcileErr instanceof Error ? reconcileErr.message : 'Reconciliation failed';
+      item.state = 'conflict';
+      return 'conflict';
+    }
+  }
+
+  private async handleConflict(item: SyncQueueItem, respData?: Record<string, unknown>): Promise<'success' | 'conflict'> {
+    let remoteData = (respData?.current || respData?.record || respData?.data) as Record<string, unknown> | undefined;
+
+    if (!remoteData && item.baseSnapshot && item.data && (item.method === 'PUT' || item.method === 'PATCH')) {
+      remoteData = await this.fetchRemoteState(item.endpoint);
+    }
+
+    if (remoteData) {
+      return this.reconcileAndReplay(item, remoteData);
+    }
+
+    item.state = 'conflict';
+    return 'conflict';
+  }
+
+  private scheduleRetryOrDrop(item: SyncQueueItem): 'failed' | 'retry' {
+    item.retryCount++;
+    if (item.retryCount >= MAX_RETRIES) {
+      item.state = 'failed';
+      item.nextAttemptAt = undefined;
+      return 'failed';
+    }
+    item.nextAttemptAt = Date.now() + BASE_BACKOFF_MS * 2 ** (item.retryCount - 1);
+    return 'retry';
+  }
+
   private async executeSyncItem(item: SyncQueueItem): Promise<'success' | 'conflict' | 'failed' | 'retry'> {
     try {
       await apiClient.request({
@@ -275,20 +371,15 @@ class SyncQueueService {
       });
       return 'success';
     } catch (error: unknown) {
-      const response = (error as { response?: { status?: number; data?: { error?: string } } }).response;
-      item.lastError = response?.data?.error || (error instanceof Error ? error.message : 'Sync failed');
+      const response = (error as { response?: { status?: number; data?: Record<string, unknown> } }).response;
+      const respData = response?.data;
+      item.lastError = (typeof respData?.error === 'string' ? respData.error : undefined) || (error instanceof Error ? error.message : 'Sync failed');
+
       if (response?.status === 409) {
-        item.state = 'conflict';
-        return 'conflict';
+        return this.handleConflict(item, respData);
       }
-      item.retryCount++;
-      if (item.retryCount >= MAX_RETRIES) {
-        item.state = 'failed';
-        item.nextAttemptAt = undefined;
-        return 'failed';
-      }
-      item.nextAttemptAt = Date.now() + BASE_BACKOFF_MS * 2 ** (item.retryCount - 1);
-      return 'retry';
+
+      return this.scheduleRetryOrDrop(item);
     }
   }
 

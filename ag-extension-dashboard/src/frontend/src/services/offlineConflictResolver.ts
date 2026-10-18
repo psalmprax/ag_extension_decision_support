@@ -75,7 +75,7 @@ function deepEqual(a: unknown, b: unknown): boolean {
 
 function setField<T extends Record<string, unknown>>(merged: T, key: string, value: unknown): void {
   if (value !== undefined) {
-    merged[key as keyof T] = value as T[keyof T];
+    Object.defineProperty(merged, key, { value, enumerable: true, writable: true, configurable: true });
   } else {
     delete merged[key as keyof T];
   }

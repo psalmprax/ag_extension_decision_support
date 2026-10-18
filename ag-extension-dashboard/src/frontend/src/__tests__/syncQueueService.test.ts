@@ -85,6 +85,102 @@ describe('syncQueueService', () => {
     expect(syncQueue.getQueue()[0].state).toBe('pending');
   });
 
+  it('DTP-05: automatically reconciles non-conflicting concurrent edits on 409', async () => {
+    // First request (original mutation) returns 409 with current remote data
+    mockRequest
+      .mockRejectedValueOnce({
+        response: {
+          status: 409,
+          data: {
+            error: 'Concurrent modification',
+            current: {
+              id: 'visit-1',
+              notes: 'remote HQ note',
+              status: 'in_progress',
+            },
+          },
+        },
+      })
+      // Second request (reconciled replay) succeeds
+      .mockResolvedValueOnce({ status: 200 } as never);
+
+    syncQueue.enqueue({
+      action: 'update',
+      entity: 'visit',
+      endpoint: '/visits/visit-1',
+      method: 'PATCH',
+      data: {
+        id: 'visit-1',
+        notes: 'initial note',
+        status: 'completed', // local edited status
+      },
+      baseSnapshot: {
+        id: 'visit-1',
+        notes: 'initial note',
+        status: 'in_progress',
+      },
+    });
+
+    const result = await syncQueue.processQueue();
+    expect(result).toEqual({ success: 1, failed: 0, conflicts: 0 });
+    // Reconciled request should merge remote notes and local status
+    expect(mockRequest).toHaveBeenCalledTimes(2);
+    expect(mockRequest).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        url: '/visits/visit-1',
+        data: {
+          id: 'visit-1',
+          notes: 'remote HQ note',
+          status: 'completed',
+        },
+      })
+    );
+    expect(syncQueue.getQueue()).toEqual([]);
+  });
+
+  it('DTP-05: retains manual conflict details when same field was concurrently edited', async () => {
+    mockRequest.mockRejectedValue({
+      response: {
+        status: 409,
+        data: {
+          error: 'Concurrent modification',
+          current: {
+            id: 'visit-1',
+            status: 'cancelled',
+            fieldTimestamps: { status: 1000 },
+          },
+        },
+      },
+    });
+
+    const id = syncQueue.enqueue({
+      action: 'update',
+      entity: 'visit',
+      endpoint: '/visits/visit-1',
+      method: 'PATCH',
+      data: {
+        id: 'visit-1',
+        status: 'completed',
+      },
+      baseSnapshot: {
+        id: 'visit-1',
+        status: 'in_progress',
+      },
+      // Equal timestamps create unresolvable tie conflict
+      fieldTimestamps: { status: 1000 },
+    });
+
+    const result = await syncQueue.processQueue();
+    expect(result.conflicts).toBe(1);
+
+    const [item] = syncQueue.getQueue();
+    expect(item.id).toBe(id);
+    expect(item.state).toBe('conflict');
+    expect(item.conflicts).toBeDefined();
+    expect(item.conflicts?.[0].field).toBe('status');
+    expect(item.conflicts?.[0].resolution).toBe('manual');
+  });
+
   it('backs off between transient failures and marks the mutation failed at the retry limit', async () => {
     mockRequest.mockRejectedValue(new Error('Network unavailable'));
     syncQueue.enqueue({

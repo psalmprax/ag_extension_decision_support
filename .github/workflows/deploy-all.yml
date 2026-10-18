@@ -949,7 +949,7 @@ jobs:
                 fuser -k 80/tcp 2>/dev/null || true
                 fuser -k 443/tcp 2>/dev/null || true
               fi
-              pkill -9 -f "docker-proxy.*(:80|:443)" 2>/dev/null || true
+              pkill -9 -f '[d]ocker-proxy.*-host-port (80|443)( |$)' 2>/dev/null || true
               sleep 2
             fi
 
@@ -987,7 +987,7 @@ jobs:
                 fuser -k 80/tcp 2>/dev/null || true
                 fuser -k 443/tcp 2>/dev/null || true
               fi
-              pkill -9 -f "docker-proxy.*(:80|:443)" 2>/dev/null || true
+              pkill -9 -f '[d]ocker-proxy.*-host-port (80|443)( |$)' 2>/dev/null || true
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build app-db redis
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --remove-orphans --no-build traefik backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama
             fi

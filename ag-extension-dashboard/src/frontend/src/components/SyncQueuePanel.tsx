@@ -90,9 +90,14 @@ export const SyncQueuePanel: React.FC = () => {
                 }`}>{item.state}</span>
                 <span className="text-white/80 font-semibold truncate">{item.method} {item.endpoint}</span>
               </div>
-              <div className="text-white/40 mt-0.5 flex items-center gap-2">
-                <Clock className="w-3 h-3" /> queued {new Date(item.timestamp).toLocaleString()} · attempts {item.retryCount}
+              <div className="text-white/40 mt-0.5 flex flex-wrap items-center gap-2">
+                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> queued {new Date(item.timestamp).toLocaleString()} · attempts {item.retryCount}</span>
                 {item.lastError && <span className="text-rose-300/80 truncate">· {item.lastError}</span>}
+                {item.conflicts && item.conflicts.length > 0 && (
+                  <span className="text-amber-300/90 font-mono text-[10px]">
+                    · {item.conflicts.length} conflict(s): {item.conflicts.map(c => c.field).join(', ')}
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
