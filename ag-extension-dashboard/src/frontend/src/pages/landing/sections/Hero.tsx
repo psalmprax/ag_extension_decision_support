@@ -421,12 +421,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             <div className="text-left min-w-0">
               <div className="flex items-center gap-1 text-[11px] font-bold text-white">
                 <span className="truncate">Amina M.</span>
-                <span className="text-emerald-400 text-xxs font-normal">✓ Verified</span>
               </div>
-              <p className="text-[10px] text-white/70 leading-tight line-clamp-2">
-                &quot;Saved my maize from armyworm in Nakuru with the Neem recipe.&quot;
-              </p>
-              <span className="text-[9px] text-amber-300 font-medium">★ 4.9/5 from 45k+ farmers</span>
             </div>
           </motion.div>
         </motion.div>
