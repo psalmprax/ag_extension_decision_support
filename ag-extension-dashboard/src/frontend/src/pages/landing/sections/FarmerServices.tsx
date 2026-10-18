@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Camera, CloudRain, TrendingUp, BookOpenCheck,
-  ArrowRight, Check, Sparkles
+  ArrowRight, Check, Sparkles, Volume2
 } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
 
