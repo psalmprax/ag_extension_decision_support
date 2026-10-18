@@ -925,6 +925,10 @@ jobs:
             docker network create --driver bridge ettametta_ettametta >/dev/null 2>&1 || true
             docker network create --driver bridge ag-network >/dev/null 2>&1 || true
 
+            # Ensure host web servers do not hold ports 80/443
+            systemctl stop apache2 nginx 2>/dev/null || true
+            systemctl disable apache2 nginx 2>/dev/null || true
+
             # Remove any stopped or orphaned container shells to prevent daemon name conflicts
             docker rm -f ag-discovery-scraper ag-agent-zero ag-crew-ai 2>/dev/null || true
             for c in ag-dashboard-db ag-dashboard-redis ag-traefik ag-dashboard-backend ag-dashboard-frontend; do
@@ -932,6 +936,22 @@ jobs:
                 docker rm -f "$c" 2>/dev/null || true
               fi
             done
+
+            # Free up port 80 and 443 before Traefik starts
+            echo "Ensuring ports 80 and 443 are free for Traefik..."
+            docker rm -f ag-traefik 2>/dev/null || true
+            for cid in $(docker ps -q --filter "publish=80" --filter "publish=443" 2>/dev/null); do
+              docker rm -f "$cid" 2>/dev/null || true
+            done
+            if ss -tulpn 2>/dev/null | grep -qE ':(80|443) '; then
+              echo "  Active listener detected on 80/443 — terminating..."
+              if command -v fuser >/dev/null 2>&1; then
+                fuser -k 80/tcp 2>/dev/null || true
+                fuser -k 443/tcp 2>/dev/null || true
+              fi
+              pkill -9 -f '[d]ocker-proxy.*-host-port (80|443)( |$)' 2>/dev/null || true
+              sleep 2
+            fi
 
             # Ensure MCP_API_TOKEN is present in .env before compose up
             if ! grep -q "^MCP_API_TOKEN=[^[:space:]]\{16,\}" .env 2>/dev/null; then
@@ -962,6 +982,12 @@ jobs:
             if ! docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --remove-orphans --no-build traefik backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama; then
               echo "Compose up failed with container conflict. Cleaning up conflicting shells and retrying..."
               docker rm -f ag-dashboard-db ag-dashboard-redis ag-traefik 2>/dev/null || true
+              systemctl stop apache2 nginx 2>/dev/null || true
+              if command -v fuser >/dev/null 2>&1; then
+                fuser -k 80/tcp 2>/dev/null || true
+                fuser -k 443/tcp 2>/dev/null || true
+              fi
+              pkill -9 -f '[d]ocker-proxy.*-host-port (80|443)( |$)' 2>/dev/null || true
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build app-db redis
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --remove-orphans --no-build traefik backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama
             fi

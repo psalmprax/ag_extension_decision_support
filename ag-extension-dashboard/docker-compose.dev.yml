@@ -96,6 +96,7 @@ services:
   traefik:
     command:
       - "--providers.docker=true"
+      - "--providers.docker.endpoint=tcp://docker-socket-proxy:2375"
       - "--providers.docker.exposedByDefault=false"
       - "--providers.docker.network=ag-network"
       - "--entrypoints.web.address=:80"

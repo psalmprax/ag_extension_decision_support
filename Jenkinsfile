@@ -19,6 +19,7 @@ pipeline {
         stage('Setup') {
             steps {
                 sh "docker network create ag-network || true"
+                sh "docker network create --driver bridge ettametta_ettametta >/dev/null 2>&1 || true"
                 // Stop containers only. NEVER pass `-v` here: it deletes the Postgres,
                 // Redis and agent data volumes on every pipeline run. Stale frontend
                 // assets are handled by `--build --force-recreate` in the Deploy stage.

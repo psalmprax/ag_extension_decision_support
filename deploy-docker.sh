@@ -55,6 +55,7 @@ fi
 # 2. Create network if missing
 echo "🌐 Ensuring docker network exists..."
 docker network create ag-network || true
+docker network create --driver bridge ettametta_ettametta >/dev/null 2>&1 || true
 
 # 2.5 Containers are stopped via compose below. We deliberately do NOT `docker rm -f`
 #     the database container by name: compose `down` is the only lifecycle owner, and
@@ -69,6 +70,21 @@ docker compose -p ${COMPOSE_PROJECT_NAME} \
     -f ${PROJECT_DIR}/docker-compose.agents.yml \
     down --remove-orphans || true
 docker rm -f ag-discovery-scraper ag-agent-zero ag-crew-ai 2>/dev/null || true
+
+# Ensure host web servers and orphaned port 80/443 listeners are cleared
+echo "🌐 Ensuring ports 80 and 443 are free for Traefik..."
+systemctl stop apache2 nginx 2>/dev/null || true
+docker rm -f ag-traefik 2>/dev/null || true
+for cid in $(docker ps -q --filter "publish=80" --filter "publish=443" 2>/dev/null); do
+    docker rm -f "$cid" 2>/dev/null || true
+done
+if ss -tulpn 2>/dev/null | grep -qE ':(80|443) '; then
+    if command -v fuser >/dev/null 2>&1; then
+        fuser -k 80/tcp 2>/dev/null || true
+        fuser -k 443/tcp 2>/dev/null || true
+    fi
+    pkill -9 -f '[d]ocker-proxy.*-host-port (80|443)( |$)' 2>/dev/null || true
+fi
 
 # 4. Deploy with build
 echo "🏗️ Building and Starting Containers..."
