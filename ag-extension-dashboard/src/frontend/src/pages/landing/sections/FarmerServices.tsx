@@ -175,7 +175,7 @@ export function FarmerServices() {
                 className="w-full sm:w-auto px-6 py-3 rounded-xl bg-sky-600/90 hover:bg-sky-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-sky-950/40 transition-all active:scale-[0.98]"
               >
                 <CloudRain className="w-4 h-4" />
-                <span>Check Weather Demo</span>
+                <span>Explore Platform Demo</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
