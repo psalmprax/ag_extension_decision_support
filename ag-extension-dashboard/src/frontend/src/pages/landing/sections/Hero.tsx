@@ -5,8 +5,8 @@ import type { MotionValue } from 'framer-motion';
 import { GlobalConstellationVisualization } from '@/components/landing/Visuals';
 import {
   Camera, Leaf, ArrowRight, CheckCircle2,
-  Volume2, CloudRain, ShieldCheck, ChevronDown,
-  AlertCircle, Droplets, Radio, VolumeX,
+  BookOpenCheck, CloudRain, ShieldCheck, ChevronDown,
+  AlertCircle, Droplets, Radio,
 } from 'lucide-react';
 import { stagger, fadeUp, scaleIn } from '../variants';
 import { globalTelemetryNodes } from '../data';
@@ -16,11 +16,11 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
   const [activeRemedyTab, setActiveRemedyTab] = useState<'organic' | 'standard'>('organic');
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [audioLanguage, setAudioLanguage] = useState<'sw' | 'en'>('sw');
+  const [isTextSampleVisible, setIsTextSampleVisible] = useState(false);
+  const [textLanguage, setTextLanguage] = useState<'sw' | 'en'>('sw');
 
-  const toggleAudio = () => {
-    setIsPlayingAudio(prev => !prev);
+  const toggleTextSample = () => {
+    setIsTextSampleVisible(prev => !prev);
   };
 
   return (
@@ -102,7 +102,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             variants={fadeUp}
             className="text-sm sm:text-base lg:text-lg text-white/80 leading-relaxed max-w-xl mx-auto sm:mx-0 font-normal"
           >
-            Point your phone camera at any sick leaf, stem, or pest for instant diagnosis, affordable safe remedies, and rain warnings — works 100% offline in your local language.
+            Capture a photo of a sick leaf, stem, or pest and queue it offline; diagnosis and remedy guidance require an internet connection.
           </motion.p>
 
           {/* 4 Farmer Benefit Signifiers */}
@@ -132,17 +132,17 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <Radio className="w-4 h-4 text-amber-400" />
               </div>
               <div className="text-left min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white truncate">Works 100% Offline</div>
-                <div className="text-xxs sm:text-xs text-white/60 truncate">Zero cell signal required</div>
+                <div className="text-xs sm:text-sm font-bold text-white truncate">Queue Photos Offline</div>
+                <div className="text-xxs sm:text-xs text-white/60 truncate">Reconnect to get a diagnosis</div>
               </div>
             </div>
 
             <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center shrink-0">
-                <Volume2 className="w-4 h-4 text-purple-400" />
+                <BookOpenCheck className="w-4 h-4 text-purple-400" />
               </div>
               <div className="text-left min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white truncate">Audio in Local Dialect</div>
+                <div className="text-xs sm:text-sm font-bold text-white truncate">Text in Local Dialect</div>
                 <div className="text-xxs sm:text-xs text-white/60 truncate">Swahili, Luganda, Hindi +20</div>
               </div>
             </div>
@@ -160,33 +160,33 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
 
-            {/* Audio Dialect Toggle Preview */}
+            {/* Text Dialect Preview */}
             <button
               type="button"
-              onClick={toggleAudio}
+              onClick={toggleTextSample}
               className={`w-full sm:w-auto group px-6 py-3.5 text-sm sm:text-base font-semibold border rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 backdrop-blur-sm ${
-                isPlayingAudio
+                isTextSampleVisible
                   ? 'bg-amber-500/20 border-amber-400 text-amber-200 shadow-md shadow-amber-950/40'
                   : 'bg-white/[0.06] border-white/[0.12] text-white/90 hover:bg-white/[0.12] hover:text-white'
               }`}
             >
-              {isPlayingAudio ? (
+              {isTextSampleVisible ? (
                 <>
-                  <VolumeX className="w-4 h-4 text-amber-300 animate-pulse" />
-                  <span>Pause Voice Sample</span>
+                  <BookOpenCheck className="w-4 h-4 text-amber-300" />
+                  <span>Hide Text Sample</span>
                 </>
               ) : (
                 <>
-                  <Volume2 className="w-4 h-4 text-amber-400" />
-                  <span>Listen in Your Dialect</span>
+                  <BookOpenCheck className="w-4 h-4 text-amber-400" />
+                  <span>Read in Your Dialect</span>
                 </>
               )}
             </button>
           </motion.div>
 
-          {/* Live Spoken Dialect Audio Bar */}
+          {/* Text-only Dialect Sample */}
           <AnimatePresence>
-            {isPlayingAudio && (
+            {isTextSampleVisible && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -194,11 +194,10 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left max-w-xl"
               >
                 <div className="flex items-center gap-2.5 text-xs text-amber-100">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping shrink-0" />
                   <span>
-                    <strong>Speaking in {audioLanguage === 'sw' ? 'Kiswahili' : 'English'}:</strong>{' '}
+                    <strong>Text sample in {textLanguage === 'sw' ? 'Kiswahili' : 'English'}:</strong>{' '}
                     <em>
-                      {audioLanguage === 'sw'
+                      {textLanguage === 'sw'
                         ? '"Mmea wako una kiwavi wa jeshi. Changanya vijiko viwili vya mafuta ya mwarobaini..."'
                         : '"Your maize has armyworm caterpillars. Mix two tablespoons of neem oil in one bucket of clean water..."'}
                     </em>
@@ -206,10 +205,10 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 </div>
                 <button
                   type="button"
-                  onClick={() => setAudioLanguage(prev => (prev === 'sw' ? 'en' : 'sw'))}
+                  onClick={() => setTextLanguage(prev => (prev === 'sw' ? 'en' : 'sw'))}
                   className="text-xxs font-bold text-amber-300 hover:text-white bg-amber-500/20 px-2 py-1 rounded-md border border-amber-400/30 whitespace-nowrap"
                 >
-                  Switch to {audioLanguage === 'sw' ? 'English' : 'Kiswahili'}
+                  Switch text to {textLanguage === 'sw' ? 'English' : 'Kiswahili'}
                 </button>
               </motion.div>
             )}
@@ -258,7 +257,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <span>09:41</span>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-emerald-400 font-semibold">100% Offline Ready</span>
+                  <span className="text-emerald-400 font-semibold">Photo Queue Ready</span>
                 </div>
               </div>
 
@@ -274,19 +273,10 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={toggleAudio}
-                  aria-label={isPlayingAudio ? 'Mute audio advisory' : 'Play audio advisory in local language'}
-                  className={`p-1.5 rounded-lg border text-xs flex items-center gap-1 transition-colors ${
-                    isPlayingAudio
-                      ? 'bg-amber-500/30 border-amber-400 text-amber-200'
-                      : 'bg-white/5 border-white/10 text-white/70 hover:text-white'
-                  }`}
-                >
-                  <Volume2 className="w-3.5 h-3.5" />
-                  <span className="text-[9px] font-semibold">{isPlayingAudio ? 'Speaking' : 'Audio'}</span>
-                </button>
+                <span className="p-1.5 rounded-lg border border-white/10 text-xs flex items-center gap-1 text-white/70">
+                  <BookOpenCheck className="w-3.5 h-3.5" />
+                  <span className="text-[9px] font-semibold">Text Sample</span>
+                </span>
               </div>
 
               {/* Camera Leaf Viewfinder */}
@@ -320,7 +310,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
 
                 {/* Floating Location Tag in Plain Language */}
                 <div className="absolute bottom-2.5 left-3 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-[9px] font-medium text-white/90 border border-white/10">
-                  📍 Meru District • Saved 100% Offline
+                  📍 Meru District • Photo queued offline
                 </div>
               </div>
 

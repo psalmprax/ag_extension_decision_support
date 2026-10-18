@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Camera, CloudRain, TrendingUp, Volume2,
+  Camera, CloudRain, TrendingUp, BookOpenCheck,
   ArrowRight, Check, Sparkles
 } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
@@ -69,7 +69,7 @@ export function FarmerServices() {
                   <Camera className="w-7 h-7" />
                 </div>
                 <span className="text-xs font-bold font-mono uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
-                  Free &amp; 100% Offline
+                  Free • Offline photo queueing
                 </span>
               </div>
 
@@ -78,7 +78,7 @@ export function FarmerServices() {
                   Diagnose My Crop
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Point your phone camera at any spotted leaf, wilting stem, or insect pest. Get a clear diagnosis in 3 seconds with safe, step-by-step home remedies.
+                  Capture a crop photo and queue it while offline. Diagnosis and remedy guidance require an internet connection.
                 </p>
               </div>
 
@@ -99,7 +99,7 @@ export function FarmerServices() {
                   <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Runs directly on your phone with zero internet data cost</span>
+                  <span>Queued photos are sent for analysis when you reconnect</span>
                 </div>
               </div>
             </div>
@@ -193,7 +193,7 @@ export function FarmerServices() {
                   <TrendingUp className="w-7 h-7" />
                 </div>
                 <span className="text-xs font-bold font-mono uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
-                  Fair Price Protection
+                  Not Yet Available
                 </span>
               </div>
 
@@ -202,46 +202,28 @@ export function FarmerServices() {
                   Check Fair Market Prices
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Never sell your hard-earned crops below fair value. Check live wholesale and town market rates for maize, potatoes, beans, and vegetables before negotiating with buyers.
+                  Market price information is not currently available on the public platform.
                 </p>
               </div>
 
-              <div className="pt-2 space-y-2 text-xs sm:text-sm text-white/80">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                    <Check className="w-3 h-3" />
-                  </div>
-                  <span>Verified 90kg bag benchmarks across county grain hubs</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                    <Check className="w-3 h-3" />
-                  </div>
-                  <span>Historical seasonal price trends so you know when to sell</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                    <Check className="w-3 h-3" />
-                  </div>
-                  <span>Direct links to verified cooperative purchasing depots</span>
-                </div>
+              <div className="pt-2 text-xs sm:text-sm text-white/80">
+                <span>Check with local buyers or extension officers for current rates.</span>
               </div>
             </div>
 
             <div className="pt-6 mt-6 border-t border-white/[0.06]">
               <button
                 type="button"
-                onClick={() => navigate('/demo')}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-600/90 hover:bg-amber-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40 transition-all active:scale-[0.98]"
+                disabled
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-600/90 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40 cursor-not-allowed opacity-60"
               >
                 <TrendingUp className="w-4 h-4" />
-                <span>View Crop Prices</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <span>Market Prices Coming Soon</span>
               </button>
             </div>
           </motion.div>
 
-          {/* Service 4: Hear Voice Advice in Your Dialect */}
+          {/* Service 4: Read Advice in Your Dialect */}
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -252,26 +234,26 @@ export function FarmerServices() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="w-14 h-14 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 shadow-inner group-hover:scale-105 transition-transform">
-                  <Volume2 className="w-7 h-7" />
+                  <BookOpenCheck className="w-7 h-7" />
                 </div>
                 <span className="text-xs font-bold font-mono uppercase tracking-wider text-purple-400 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full">
-                  Zero Reading Required
+                  Text Preview
                 </span>
               </div>
 
               <div>
                 <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">
-                  Hear Advice in Your Dialect
+                  Read Advice in Your Dialect
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  No need to struggle with tiny text or complicated medical terms. Tap the speaker to hear clear spoken steps in Swahili, Luganda, Hausa, Hindi, and 20+ dialects.
+                  Choose a language to read a sample of clear, plain-language crop advice.
                 </p>
               </div>
 
               {/* Interactive Dialect Transcript Card */}
               <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2.5">
                 <div className="text-xs font-semibold text-purple-300 flex items-center justify-between">
-                  <span>Advice transcript preview:</span>
+                  <span>Advice text preview:</span>
                   <span className="text-xxs font-mono text-white/60">Select a language</span>
                 </div>
                 <div className="flex flex-wrap gap-2">

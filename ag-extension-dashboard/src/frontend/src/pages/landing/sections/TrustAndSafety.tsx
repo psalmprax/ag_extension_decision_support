@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   ShieldCheck, HeartHandshake, BookOpenCheck,
-  PhoneCall, Leaf, Sparkles, CheckCircle2
+  Leaf, Sparkles, CheckCircle2
 } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
 
@@ -139,24 +139,13 @@ export function TrustAndSafety() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+          <div className="flex items-center shrink-0 w-full sm:w-auto">
             <a
               href="#agent-os"
               className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>See Officer Platform</span>
-            </a>
-            <a
-              href="tel:0800000000"
-              onClick={(e) => {
-                e.preventDefault();
-                alert('Toll-free agricultural support hotline: 0800-FARM-SAFE (24/7 in Swahili & English)');
-              }}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-950/40"
-            >
-              <PhoneCall className="w-3.5 h-3.5" />
-              <span>Toll-Free Helpline</span>
             </a>
           </div>
         </motion.div>
