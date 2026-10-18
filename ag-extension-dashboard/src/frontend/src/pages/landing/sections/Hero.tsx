@@ -4,9 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { MotionValue } from 'framer-motion';
 import { GlobalConstellationVisualization } from '@/components/landing/Visuals';
 import {
-  Camera, Leaf, ArrowRight, Play, CheckCircle2,
+  Camera, Leaf, ArrowRight, CheckCircle2,
   Volume2, CloudRain, ShieldCheck, ChevronDown,
-  AlertCircle, Droplets, Radio, VolumeX, Sparkles
+  AlertCircle, Droplets, Radio, VolumeX,
 } from 'lucide-react';
 import { stagger, fadeUp, scaleIn } from '../variants';
 import { globalTelemetryNodes } from '../data';

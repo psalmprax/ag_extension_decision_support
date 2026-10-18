@@ -43,7 +43,7 @@ export function FarmerServices() {
             className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight"
           >
             Everything you need to{' '}
-            <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-amber-300 bg-clip-text text-transparent">
+            <span className="text-emerald-400">
               protect your family’s yield
             </span>
           </motion.h2>

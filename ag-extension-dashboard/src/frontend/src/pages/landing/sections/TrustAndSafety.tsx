@@ -33,7 +33,7 @@ export function TrustAndSafety() {
             className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight"
           >
             Honest, safe advice you can{' '}
-            <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-amber-300 bg-clip-text text-transparent">
+            <span className="text-emerald-400">
               trust in your soil
             </span>
           </motion.h2>
