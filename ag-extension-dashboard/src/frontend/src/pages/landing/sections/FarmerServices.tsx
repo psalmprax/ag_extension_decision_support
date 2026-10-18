@@ -3,18 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Camera, CloudRain, TrendingUp, Volume2,
-  ArrowRight, Check, Play, Pause, Sparkles
+  ArrowRight, Check, Sparkles
 } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
 
 export function FarmerServices() {
   const navigate = useNavigate();
-  const [isPlayingSample, setIsPlayingSample] = useState(false);
   const [activeDialect, setActiveDialect] = useState<'sw' | 'lg' | 'en'>('sw');
 
-  const toggleVoiceSample = (lang: 'sw' | 'lg' | 'en') => {
+  const selectDialect = (lang: 'sw' | 'lg' | 'en') => {
     setActiveDialect(lang);
-    setIsPlayingSample(true);
   };
 
   return (
@@ -270,64 +268,57 @@ export function FarmerServices() {
                 </p>
               </div>
 
-              {/* Interactive Audio Dialect Demo Card */}
+              {/* Interactive Dialect Transcript Card */}
               <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2.5">
                 <div className="text-xs font-semibold text-purple-300 flex items-center justify-between">
-                  <span>Interactive Audio Preview:</span>
-                  <span className="text-xxs font-mono text-white/60">Tap to listen</span>
+                  <span>Advice transcript preview:</span>
+                  <span className="text-xxs font-mono text-white/60">Select a language</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => toggleVoiceSample('sw')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                      activeDialect === 'sw' && isPlayingSample
+                    onClick={() => selectDialect('sw')}
+                    aria-pressed={activeDialect === 'sw'}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      activeDialect === 'sw'
                         ? 'bg-purple-600 text-white shadow-md'
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
                     }`}
                   >
-                    {activeDialect === 'sw' && isPlayingSample ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                     <span>Swahili (Kiswahili)</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => toggleVoiceSample('lg')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                      activeDialect === 'lg' && isPlayingSample
+                    onClick={() => selectDialect('lg')}
+                    aria-pressed={activeDialect === 'lg'}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      activeDialect === 'lg'
                         ? 'bg-purple-600 text-white shadow-md'
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
                     }`}
                   >
-                    {activeDialect === 'lg' && isPlayingSample ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                     <span>Luganda</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => toggleVoiceSample('en')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                      activeDialect === 'en' && isPlayingSample
+                    onClick={() => selectDialect('en')}
+                    aria-pressed={activeDialect === 'en'}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      activeDialect === 'en'
                         ? 'bg-purple-600 text-white shadow-md'
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
                     }`}
                   >
-                    {activeDialect === 'en' && isPlayingSample ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                     <span>English</span>
                   </button>
                 </div>
-                {isPlayingSample && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-2 rounded-lg bg-purple-950/40 border border-purple-500/30 text-xs text-purple-200 flex items-center gap-2"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                    <span className="italic leading-snug">
-                      {activeDialect === 'sw' && '🔊 "Nyunyizia mchanganyiko wa mwarobaini jioni..."'}
-                      {activeDialect === 'lg' && '🔊 "Fukirira eddagala ly&apos;enim ku kisaakaate..."'}
-                      {activeDialect === 'en' && '🔊 "Spray the Neem mixture into leaf whorls at dusk..."'}
-                    </span>
-                  </motion.div>
-                )}
+                <div className="p-2 rounded-lg bg-purple-950/40 border border-purple-500/30 text-xs text-purple-200">
+                  <span className="italic leading-snug">
+                    {activeDialect === 'sw' && '"Nyunyizia mchanganyiko wa mwarobaini jioni..."'}
+                    {activeDialect === 'lg' && '"Fukirira eddagala ly&apos;enim ku kisaakaate..."'}
+                    {activeDialect === 'en' && '"Spray the Neem mixture into leaf whorls at dusk..."'}
+                  </span>
+                </div>
               </div>
             </div>
 
