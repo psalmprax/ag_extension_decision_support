@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { MotionValue } from 'framer-motion';
 import { GlobalConstellationVisualization } from '@/components/landing/Visuals';
 import {
-  Camera, Leaf, ArrowRight, Play, CheckCircle2,
-  Volume2, CloudRain, ShieldCheck, ChevronDown,
+  Camera, Leaf, ArrowRight, CheckCircle2,
+  BookOpenCheck, CloudRain, ShieldCheck, ChevronDown,
   AlertCircle, Droplets, Radio,
 } from 'lucide-react';
 import { stagger, fadeUp, scaleIn } from '../variants';
@@ -16,15 +16,16 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
   const [activeRemedyTab, setActiveRemedyTab] = useState<'organic' | 'standard'>('organic');
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isTextSampleVisible, setIsTextSampleVisible] = useState(false);
+  const [textLanguage, setTextLanguage] = useState<'sw' | 'en'>('sw');
 
-  const toggleAudio = () => {
-    setIsPlayingAudio(prev => !prev);
+  const toggleTextSample = () => {
+    setIsTextSampleVisible(prev => !prev);
   };
 
   return (
     <section className="relative min-h-screen flex items-start sm:items-center pt-20 sm:pt-24 pb-12 sm:pb-20 overflow-hidden">
-      {/* Authentic Agricultural Partnership Backdrop */}
+      {/* Authentic Agricultural Partnership Backdrop with Warm Agrarian Lighting */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         <img
           src="/images/landing/officer-farmer-hero.webp"
@@ -33,17 +34,28 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
           alt="Agricultural extension officer consulting with a smallholder farmer in a maize field using a digital tablet"
           width={1920}
           height={1080}
-          className="w-full h-full object-cover object-center opacity-20 mix-blend-luminosity scale-105 filter saturate-125 transition-opacity duration-700"
+          className="w-full h-full object-cover object-center opacity-30 filter saturate-125 contrast-105 transition-opacity duration-700"
           loading="eager"
           decoding="async"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-950/90 to-slate-950" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-slate-950/60 to-slate-950" />
+        <img
+          src="/images/landing/maize-field-sunrise.webp"
+          alt="Lush green maize field glowing in morning sunlight"
+          width={1319}
+          height={860}
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-20 mix-blend-screen pointer-events-none"
+          loading="eager"
+          decoding="async"
+        />
+        {/* Soft, warm agrarian sunlit vignette overlays */}
+        <div className="absolute inset-0 bg-gradient-to-b from-stone-950/75 via-emerald-950/60 to-slate-950/95" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.2),transparent_65%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(16,185,129,0.15),transparent_70%)]" />
       </div>
 
-      {/* Grid pattern */}
+      {/* Subtle organic contour pattern */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-[0.025]"
+        className="absolute inset-0 pointer-events-none opacity-[0.02]"
         style={{
           backgroundImage:
             'linear-gradient(var(--color-outline) 1px, transparent 1px), linear-gradient(90deg, var(--color-outline) 1px, transparent 1px)',
@@ -63,11 +75,11 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
           {/* Badge */}
           <motion.div
             variants={fadeUp}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-md shadow-sm max-w-full mx-auto sm:mx-0 overflow-hidden"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-md shadow-sm max-w-full mx-auto sm:mx-0 overflow-hidden"
           >
             <Leaf className="w-4 h-4 text-emerald-400 shrink-0" />
             <span className="text-xs sm:text-sm font-semibold tracking-wide text-emerald-300">
-              Free Smart Farming &amp; Pocket Crop Doctor
+              🌾 Free Pocket Crop Doctor for Every Farmer
             </span>
           </motion.div>
 
@@ -90,7 +102,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             variants={fadeUp}
             className="text-sm sm:text-base lg:text-lg text-white/80 leading-relaxed max-w-xl mx-auto sm:mx-0 font-normal"
           >
-            Point your phone camera at any sick leaf, stem, or pest for instant 3-second diagnosis, affordable organic remedies, and rain warnings — works 100% offline in your local language.
+            Capture a photo of a sick leaf, stem, or pest and queue it offline; diagnosis and remedy guidance require an internet connection.
           </motion.p>
 
           {/* 4 Farmer Benefit Signifiers */}
@@ -120,17 +132,17 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <Radio className="w-4 h-4 text-amber-400" />
               </div>
               <div className="text-left min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white truncate">Works 100% Offline</div>
-                <div className="text-xxs sm:text-xs text-white/60 truncate">Zero cell signal required</div>
+                <div className="text-xs sm:text-sm font-bold text-white truncate">Queue Photos Offline</div>
+                <div className="text-xxs sm:text-xs text-white/60 truncate">Reconnect to get a diagnosis</div>
               </div>
             </div>
 
             <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center shrink-0">
-                <Volume2 className="w-4 h-4 text-purple-400" />
+                <BookOpenCheck className="w-4 h-4 text-purple-400" />
               </div>
               <div className="text-left min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white truncate">Audio in Local Dialect</div>
+                <div className="text-xs sm:text-sm font-bold text-white truncate">Text in Local Dialect</div>
                 <div className="text-xxs sm:text-xs text-white/60 truncate">Swahili, Luganda, Hindi +20</div>
               </div>
             </div>
@@ -144,18 +156,63 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
               className="w-full sm:w-auto relative group overflow-hidden px-8 py-3.5 text-sm sm:text-base font-bold text-white rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-400 hover:to-emerald-500 border border-emerald-400/50 shadow-[0_0_28px_rgba(16,185,129,0.4)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2.5"
             >
               <Camera className="w-5 h-5 text-emerald-100" />
-              <span>Diagnose a Crop Free</span>
+              <span>Diagnose a Crop — Free</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
+
+            {/* Text Dialect Preview */}
             <button
               type="button"
-              onClick={() => navigate('/demo')}
-              className="w-full sm:w-auto group px-7 py-3.5 text-sm sm:text-base font-semibold bg-white/[0.06] border border-white/[0.12] text-white/90 rounded-xl hover:bg-white/[0.12] hover:text-white active:scale-[0.98] transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
+              onClick={toggleTextSample}
+              className={`w-full sm:w-auto group px-6 py-3.5 text-sm sm:text-base font-semibold border rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 backdrop-blur-sm ${
+                isTextSampleVisible
+                  ? 'bg-amber-500/20 border-amber-400 text-amber-200 shadow-md shadow-amber-950/40'
+                  : 'bg-white/[0.06] border-white/[0.12] text-white/90 hover:bg-white/[0.12] hover:text-white'
+              }`}
             >
-              <Play className="w-4 h-4 text-emerald-400" />
-              <span>Try Live Demo</span>
+              {isTextSampleVisible ? (
+                <>
+                  <BookOpenCheck className="w-4 h-4 text-amber-300" />
+                  <span>Hide Text Sample</span>
+                </>
+              ) : (
+                <>
+                  <BookOpenCheck className="w-4 h-4 text-amber-400" />
+                  <span>Read in Your Dialect</span>
+                </>
+              )}
             </button>
           </motion.div>
+
+          {/* Text-only Dialect Sample */}
+          <AnimatePresence>
+            {isTextSampleVisible && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left max-w-xl"
+              >
+                <div className="flex items-center gap-2.5 text-xs text-amber-100">
+                  <span>
+                    <strong>Text sample in {textLanguage === 'sw' ? 'Kiswahili' : 'English'}:</strong>{' '}
+                    <em>
+                      {textLanguage === 'sw'
+                        ? '"Mmea wako una kiwavi wa jeshi. Changanya vijiko viwili vya mafuta ya mwarobaini..."'
+                        : '"Your maize has armyworm caterpillars. Mix two tablespoons of neem oil in one bucket of clean water..."'}
+                    </em>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTextLanguage(prev => (prev === 'sw' ? 'en' : 'sw'))}
+                  className="text-xxs font-bold text-amber-300 hover:text-white bg-amber-500/20 px-2 py-1 rounded-md border border-amber-400/30 whitespace-nowrap"
+                >
+                  Switch text to {textLanguage === 'sw' ? 'English' : 'Kiswahili'}
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Secondary Institutional Bridge for Officers & Ministries */}
           <motion.div
@@ -165,14 +222,14 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             <div className="space-y-0.5 min-w-0">
               <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                Are you an Extension Officer or Ministry?
+                Are you an Extension Officer, Cooperative, or Ministry?
               </span>
               <p className="text-xxs sm:text-xs text-white/60 leading-snug">
-                Manage thousands of farmers across districts with offline GPS visit logs and pest heatmaps.
+                Manage thousands of farmers across districts with offline GPS visit logs and regional pest heatmaps.
               </p>
             </div>
             <a
-              href="#features"
+              href="#agent-os"
               className="text-xs font-bold text-emerald-300 hover:text-emerald-200 underline whitespace-nowrap py-1"
             >
               Explore Organization Tools →
@@ -180,10 +237,10 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
           </motion.div>
         </motion.div>
 
-        {/* Right column — Plantix-Style Smartphone Leaf Scanner Mockup */}
+        {/* Right column — Plantix-Style Smartphone Leaf Scanner Mockup (Plain Language) */}
         <motion.div initial="hidden" animate="visible" variants={scaleIn} className="relative w-full max-w-full flex justify-center">
-          {/* Ambient emerald backlight */}
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/25 via-emerald-600/10 to-amber-500/15 blur-[80px] rounded-full scale-95 pointer-events-none" />
+          {/* Ambient warm harvest & emerald backlight */}
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-amber-500/10 to-emerald-600/15 blur-[80px] rounded-full scale-95 pointer-events-none" />
 
           {/* Smartphone Chassis */}
           <div className="relative w-full max-w-[370px] sm:max-w-[400px] rounded-[2.8rem] p-3.5 bg-slate-900/90 border-4 border-slate-700/60 shadow-2xl shadow-emerald-950/60 ring-1 ring-white/10 backdrop-blur-xl transition-transform duration-500 hover:scale-[1.01]">
@@ -200,7 +257,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <span>09:41</span>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-emerald-400 font-semibold">100% Offline Ready</span>
+                  <span className="text-emerald-400 font-semibold">Photo Queue Ready</span>
                 </div>
               </div>
 
@@ -216,19 +273,10 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={toggleAudio}
-                  aria-label={isPlayingAudio ? 'Mute audio advisory' : 'Play audio advisory in local language'}
-                  className={`p-1.5 rounded-lg border text-xs flex items-center gap-1 transition-colors ${
-                    isPlayingAudio
-                      ? 'bg-emerald-500/30 border-emerald-400 text-emerald-300'
-                      : 'bg-white/5 border-white/10 text-white/70 hover:text-white'
-                  }`}
-                >
-                  <Volume2 className="w-3.5 h-3.5" />
-                  <span className="text-[9px] font-semibold">{isPlayingAudio ? 'Playing' : 'Audio'}</span>
-                </button>
+                <span className="p-1.5 rounded-lg border border-white/10 text-xs flex items-center gap-1 text-white/70">
+                  <BookOpenCheck className="w-3.5 h-3.5" />
+                  <span className="text-[9px] font-semibold">Text Sample</span>
+                </span>
               </div>
 
               {/* Camera Leaf Viewfinder */}
@@ -243,42 +291,42 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 {/* Animated laser scanning line */}
                 <div className="absolute inset-x-0 top-1/2 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_12px_#34d399] animate-pulse" />
 
-                {/* Diagnostic Bounding Reticle */}
-                <div className="absolute top-8 left-10 sm:left-14 w-40 h-28 border-2 border-emerald-400/90 rounded-xl bg-emerald-500/10 flex flex-col justify-between p-2 shadow-[0_0_15px_rgba(16,185,129,0.25)]">
+                {/* Diagnostic Bounding Reticle in Plain Language */}
+                <div className="absolute top-8 left-10 sm:left-14 w-44 h-28 border-2 border-emerald-400/90 rounded-xl bg-emerald-500/10 flex flex-col justify-between p-2 shadow-[0_0_15px_rgba(16,185,129,0.25)]">
                   <div className="flex justify-between items-start">
-                    <span className="text-[9px] font-mono font-bold text-emerald-300 bg-slate-950/80 px-1.5 py-0.5 rounded border border-emerald-400/30">
-                      INFESTATION ZONE
+                    <span className="text-[9px] font-sans font-bold text-emerald-300 bg-slate-950/85 px-2 py-0.5 rounded border border-emerald-400/30 flex items-center gap-1">
+                      <span>🔍 Affected Leaf Area</span>
                     </span>
                     <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
                   </div>
                   <div className="bg-slate-950/90 backdrop-blur-md rounded-lg p-1.5 border border-emerald-400/40 text-left">
                     <div className="text-[10px] font-bold text-white flex items-center gap-1">
-                      <span>🐛 Fall Armyworm</span>
+                      <span>🐛 Fall Armyworm Caterpillar</span>
                       <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                     </div>
-                    <div className="text-[9px] text-emerald-400 font-semibold font-mono">98.4% Confidence Match</div>
+                    <div className="text-[9px] text-emerald-400 font-semibold">✅ High Certainty Match</div>
                   </div>
                 </div>
 
-                {/* Floating GPS Location Tag */}
-                <div className="absolute bottom-2.5 left-3 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-[9px] font-mono text-white/80 border border-white/10">
-                  📍 Meru District • Lat -0.046, Lng 37.655
+                {/* Floating Location Tag in Plain Language */}
+                <div className="absolute bottom-2.5 left-3 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-[9px] font-medium text-white/90 border border-white/10">
+                  📍 Meru District • Photo queued offline
                 </div>
               </div>
 
-              {/* Diagnosis & Actionable Treatment Card */}
+              {/* Diagnosis & Actionable Treatment Card in Plain Language */}
               <div className="p-4 bg-slate-900/95 border-t border-white/10 space-y-3">
                 {/* Result header */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] uppercase font-mono tracking-wider text-emerald-400 font-bold block">
-                      Immediate Action Required
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400 block">
+                      Recommended Next Step
                     </span>
-                    <h3 className="text-sm font-bold text-white">Fall Armyworm (Spodoptera)</h3>
+                    <h3 className="text-sm font-bold text-white">Fall Armyworm Caterpillar</h3>
                   </div>
                   <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
-                    Moderate Severity
+                    Moderate Problem
                   </span>
                 </div>
 
@@ -293,7 +341,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                         : 'text-white/60 hover:text-white'
                     }`}
                   >
-                    🌿 Organic Remedy
+                    🌿 Organic Recipe
                   </button>
                   <button
                     type="button"
@@ -304,21 +352,21 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                         : 'text-white/60 hover:text-white'
                     }`}
                   >
-                    🧪 Bio-Control Medicine
+                    🛡️ Safe Farm Spray
                   </button>
                 </div>
 
-                {/* Remedy Content */}
+                {/* Remedy Content in Plain Language */}
                 <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5 text-xs text-white/80 leading-relaxed">
                   {activeRemedyTab === 'organic' ? (
                     <div>
-                      <strong className="text-emerald-400 block text-[11px] mb-1">Cold-Pressed Neem Oil (5ml/L)</strong>
-                      Spray directly into the maize leaf whorls at dusk. Reapply after 5 days. Safe for bees and children.
+                      <strong className="text-emerald-400 block text-[11px] mb-1">Cold-Pressed Neem Oil (Natural Recipe)</strong>
+                      Mix 2 tablespoons of Neem oil in 1 bucket of clean water. Spray inside leaf whorls at sunset. Reapply after 5 days. Safe for bees, livestock &amp; children.
                     </div>
                   ) : (
                     <div>
-                      <strong className="text-emerald-400 block text-[11px] mb-1">Bacillus thuringiensis (Bt)</strong>
-                      Apply standard bio-insecticide early morning or late evening. Wear protective mask when spraying.
+                      <strong className="text-emerald-400 block text-[11px] mb-1">Approved Bio-Pesticide (Bt)</strong>
+                      Apply certified bio-insecticide in early morning or late evening. Wear a basic cloth face cover when spraying. Safe for soil health.
                     </div>
                   )}
                 </div>
@@ -327,7 +375,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <div className="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center gap-2.5 text-xs text-sky-200">
                   <Droplets className="w-4 h-4 text-sky-400 shrink-0" />
                   <div className="leading-tight text-[11px]">
-                    <strong>Rain Alert:</strong> 14mm rain expected in 18 hrs. Hold foliar spray until Friday morning to prevent chemical wash-off.
+                    <strong>Rain Alert:</strong> 14mm rain expected in 18 hrs. Hold foliar spray until Friday morning so the medicine doesn&apos;t wash away.
                   </div>
                 </div>
 
@@ -343,6 +391,29 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
               </div>
             </div>
           </div>
+
+          {/* Secondary Floating Real Farmer Trust Card (Real smallholder farmer in field) */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
+            className="hidden sm:flex absolute -bottom-4 -left-6 z-30 p-2.5 rounded-2xl bg-slate-900/90 border border-emerald-500/30 backdrop-blur-xl shadow-2xl items-center gap-3 max-w-[270px]"
+          >
+            <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-emerald-400/30">
+              <img
+                src="/images/landing/farmer-in-field-phone.webp"
+                alt="Real smallholder farmer using smartphone in maize field"
+                width={120}
+                height={120}
+                className="w-full h-full object-cover object-top"
+              />
+            </div>
+            <div className="text-left min-w-0">
+              <div className="flex items-center gap-1 text-[11px] font-bold text-white">
+                <span className="truncate">Amina M.</span>
+              </div>
+            </div>
+          </motion.div>
         </motion.div>
       </motion.div>
 

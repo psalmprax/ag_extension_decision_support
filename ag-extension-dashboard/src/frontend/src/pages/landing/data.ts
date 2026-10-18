@@ -30,12 +30,12 @@ export const steps = [
   {
     num: '02',
     title: 'Get 3-Second Diagnosis',
-    desc: 'Our AI Crop Doctor spots the exact disease, pest, or nutrient deficiency with 98%+ accuracy.',
+    desc: 'Our AI Crop Doctor identifies the exact disease, pest, or nutrient deficiency with clear, high-certainty advice.',
   },
   {
     num: '03',
     title: 'Apply the Cure',
-    desc: 'Follow step-by-step treatment instructions using low-cost local supplies, biocontrol, and organic remedies.',
+    desc: 'Follow step-by-step treatment instructions using low-cost local supplies, natural recipes, and safe farm sprays.',
   },
 ];
 

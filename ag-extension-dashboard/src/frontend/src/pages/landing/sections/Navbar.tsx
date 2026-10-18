@@ -20,31 +20,43 @@ export function Navbar() {
             <span className="text-lg font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">GPExts</span>
           </button>
 
-          <div className="hidden md:flex items-center gap-7">
+          <div className="hidden md:flex items-center gap-6">
             <a
-              href="#problem"
-              className="text-sm font-medium text-white/70 hover:text-white transition-colors"
+              href="#services"
+              className="text-sm font-medium text-white/80 hover:text-white transition-colors"
             >
-              Why GPExts
+              Services
             </a>
             <a
               href="#how-it-works"
-              className="text-sm font-medium text-white/70 hover:text-white transition-colors"
+              className="text-sm font-medium text-white/80 hover:text-white transition-colors"
             >
               How It Works
             </a>
             <a
-              href="#features"
-              className="text-sm font-medium text-white/70 hover:text-white transition-colors"
+              href="#problem"
+              className="text-sm font-medium text-white/80 hover:text-white transition-colors"
             >
-              For Farmers &amp; Officers
+              Why GPExts
+            </a>
+            <a
+              href="#features"
+              className="text-sm font-medium text-white/80 hover:text-white transition-colors"
+            >
+              Built for Fields
+            </a>
+            <a
+              href="#trust-safety"
+              className="text-sm font-medium text-white/80 hover:text-white transition-colors"
+            >
+              Trust &amp; Safety
             </a>
             <a
               href="#agent-os"
               className="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              Advisory Simulator
+              For Organisations
             </a>
             <a
               href="#talking-assistant"
@@ -55,7 +67,7 @@ export function Navbar() {
             </a>
             <a
               href="#faq"
-              className="text-sm font-medium text-white/70 hover:text-white transition-colors"
+              className="text-sm font-medium text-white/80 hover:text-white transition-colors"
             >
               FAQ
             </a>
@@ -101,14 +113,14 @@ export function Navbar() {
             >
               <div className="flex flex-col space-y-3">
                 {[
-                  { label: 'Why Us', href: '#problem' },
-                  { label: 'Features', href: '#features' },
-                  { label: 'Agent OS (Goal Mode)', href: '#agent-os' },
-                  { label: '3D Agro Pipeline', href: '#interactive-story' },
+                  { label: 'Four Farmer Services', href: '#services' },
                   { label: 'How It Works', href: '#how-it-works' },
-                  { label: 'Ecosystem & Soil Telemetry', href: '#capabilities' },
+                  { label: 'Why GPExts', href: '#problem' },
+                  { label: 'Built for Real Fields', href: '#features' },
+                  { label: 'Trust & Safety', href: '#trust-safety' },
+                  { label: 'Voice Advisor', href: '#talking-assistant' },
+                  { label: 'For Organisations', href: '#agent-os' },
                   { label: 'Frequently Asked Questions', href: '#faq' },
-                  { label: 'Contact', href: '#contact' },
                 ].map(item => (
                   <a
                     key={item.href}
