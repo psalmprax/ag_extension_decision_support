@@ -128,7 +128,7 @@ interface TabContentProps {
 }
 
 export function TabContent(props: TabContentProps) {
-  const { activeTab, headingClass, isOfficer, user, addNotification } = props;
+  const { activeTab, isOfficer, user, addNotification } = props;
 
   switch (activeTab) {
     case 'dashboard':

@@ -53,6 +53,7 @@ fi
 # 2. Ensure network exists
 echo "🌐 Ensuring docker network exists..."
 docker network create ag-network || true
+docker network create --driver bridge ettametta_ettametta >/dev/null 2>&1 || true
 
 # 3. Stop ONLY application containers (preserve db, redis, traefik)
 echo "🛑 Stopping application services only..."
