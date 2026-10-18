@@ -5,11 +5,13 @@ import { AgroStorytellingSection } from '@/components/landing/AgroStorytellingSe
 import { SANDBOX_PRESETS } from './landing/data';
 import { Navbar } from './landing/sections/Navbar';
 import { Hero } from './landing/sections/Hero';
+import { FarmerServices } from './landing/sections/FarmerServices';
+import { HowItWorks } from './landing/sections/HowItWorks';
 import { Problem } from './landing/sections/Problem';
 import { Features } from './landing/sections/Features';
+import { TrustAndSafety } from './landing/sections/TrustAndSafety';
 import { AgentOS } from './landing/sections/AgentOS';
 import { TalkingAssistant } from './landing/sections/TalkingAssistant';
-import { HowItWorks } from './landing/sections/HowItWorks';
 import { Demo } from './landing/sections/Demo';
 import { ROI } from './landing/sections/ROI';
 import { FAQ } from './landing/sections/FAQ';
@@ -124,19 +126,51 @@ export function LandingPage() {
       <Navbar />
 
       <main id="main-content">
+        {/* Section 1: Warm Farmer-First Welcome */}
         <Hero heroY={heroY} heroOpacity={heroOpacity} />
+
+        {/* Section 2: Four Core Everyday Services */}
+        <FarmerServices />
+
+        {/* Section 3: Simple 3-Step Process */}
         <HowItWorks />
+
+        {/* Real Farm Challenges & Direct Solutions */}
         <Problem />
+
+        {/* Section 4: Built for Real Rural Fields (Smallholders, Extension Officers, Co-ops) */}
         <Features />
-        <AgentOS
-          activePreset={activePreset}
-          setActivePreset={setActivePreset}
-          handleRunSimulation={handleRunSimulation}
-          isSimulating={isSimulating}
-          simProgress={simProgress}
-          activeChannelTab={activeChannelTab}
-          setActiveChannelTab={setActiveChannelTab}
-        />
+
+        {/* Section 5: Trust, Safety & Certified Agronomists */}
+        <TrustAndSafety />
+
+        {/* Section 6: Institutional & Enterprise Platform (Dedicated for Extension Officers & Ministries) */}
+        <div className="relative pt-10">
+          <div className="max-w-[90rem] mx-auto px-4 sm:px-6 mb-6">
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-slate-900/80 to-amber-950/30 border border-emerald-500/30 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div>
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 block mb-1">
+                  Institutional &amp; Government Operations
+                </span>
+                <h3 className="text-base sm:text-lg font-bold text-white">
+                  Autonomous Multi-Agent Extension OS for Districts &amp; Cooperatives
+                </h3>
+                <p className="text-xs sm:text-sm text-white/70">
+                  Simulate regional pest intervention campaigns, automate multi-channel farmer alerts (SMS, WhatsApp, Telegram), and dispatch extension visits.
+                </p>
+              </div>
+            </div>
+          </div>
+          <AgentOS
+            activePreset={activePreset}
+            setActivePreset={setActivePreset}
+            handleRunSimulation={handleRunSimulation}
+            isSimulating={isSimulating}
+            simProgress={simProgress}
+            activeChannelTab={activeChannelTab}
+            setActiveChannelTab={setActiveChannelTab}
+          />
+        </div>
 
         {/* ── INTERACTIVE 3D SCROLL-DRIVEN AGRO-ECOSYSTEM STORYTELLING ── */}
         <AgroStorytellingSection />

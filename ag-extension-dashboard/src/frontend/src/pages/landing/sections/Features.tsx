@@ -52,8 +52,8 @@ export function Features() {
               >
                 <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
                   <img
-                    src="/images/landing/persona-farmer.webp"
-                    alt="Smallholder farmer in maize field receiving mobile SMS advisory"
+                    src="/images/landing/farmer-inspecting-ear.webp"
+                    alt="African smallholder farmer inspecting healthy maize crop in field"
                     width={600}
                     height={450}
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
