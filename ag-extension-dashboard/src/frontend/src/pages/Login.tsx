@@ -109,7 +109,7 @@ export function Login({ onDemo }: LoginProps) {
           aria-hidden="true"
           width={1319}
           height={860}
-          className="w-full h-full object-cover object-center opacity-25 filter saturate-110 contrast-105"
+          className="w-full h-full object-cover object-center opacity-25 filter saturate-[1.1] contrast-[1.05]"
           loading="eager"
           decoding="async"
         />
