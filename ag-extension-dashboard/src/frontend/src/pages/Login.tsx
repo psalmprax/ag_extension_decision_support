@@ -100,6 +100,25 @@ export function Login({ onDemo }: LoginProps) {
       role="main"
       aria-label="Login page"
     >
+      {/* ── Warm Agrarian Background Picture & Atmosphere ── */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <img
+          src="/images/landing/maize-field-sunrise.webp"
+          alt=""
+          role="presentation"
+          aria-hidden="true"
+          width={1319}
+          height={860}
+          className="w-full h-full object-cover object-center opacity-25 filter saturate-[1.1] contrast-[1.05]"
+          loading="eager"
+          decoding="async"
+        />
+        {/* Soft, warm agrarian sunlit vignette overlays preserving contrast & readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-stone-950/80 via-slate-950/85 to-slate-950/95" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.15),transparent_65%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(16,185,129,0.12),transparent_70%)]" />
+      </div>
+
       {/* ── Ambient Glow ── */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-emerald-600/[0.12] blur-[150px]" />
