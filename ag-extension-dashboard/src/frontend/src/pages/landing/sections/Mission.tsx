@@ -4,7 +4,20 @@ import { stagger, fadeUp } from '../variants';
 
 export function Mission() {
   return (
-        <section id="mission" className="relative py-28 border-t border-white/[0.04]">
+        <section id="mission" className="relative py-28 border-t border-white/[0.04] overflow-hidden">
+          {/* Subtle Extension Field Partnership Backdrop */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+            <img
+              src="/images/landing/officer-farmer-hero.webp"
+              alt=""
+              role="presentation"
+              aria-hidden="true"
+              width={1920}
+              height={1080}
+              className="w-full h-full object-cover object-center opacity-[0.07] filter saturate-125 contrast-105 pointer-events-none"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950/85 to-slate-950" />
+          </div>
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-emerald-500/[0.04] blur-[100px] rounded-full pointer-events-none" />
 
           <motion.div

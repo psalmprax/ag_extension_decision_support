@@ -6,7 +6,6 @@ import { useAppStore, type User } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { enterDemoMode, exitDemoMode } from '@/demo';
-import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 import { AgroEcosystemCanvasScrubber } from '@/components/canvas-ui/AgroEcosystemCanvasScrubber';
 
 import { login, demoLogin } from '@/api/authService';
@@ -96,7 +95,7 @@ export function Login({ onDemo }: LoginProps) {
 
   return (
     <div
-      className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4 sm:p-6 relative overflow-hidden"
+      className="min-h-[100dvh] bg-slate-950 text-white flex items-center justify-center p-4 sm:p-6 relative overflow-y-auto overflow-x-hidden"
       role="main"
       aria-label="Login page"
     >
@@ -137,7 +136,6 @@ export function Login({ onDemo }: LoginProps) {
           <span className="sm:hidden">{t('common_back_to_home', { defaultValue: 'Back to Home' })}</span>
         </Link>
         <div className="pointer-events-auto flex items-center gap-2">
-          <LiquidToggleSwitch compact />
           <LanguageSwitcher compact />
         </div>
       </header>
@@ -185,7 +183,7 @@ export function Login({ onDemo }: LoginProps) {
               <div className="text-[11px] text-white/80 font-medium">Stratigraphy</div>
             </div>
             <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
-              <div className="text-[10px] font-mono text-purple-400 font-bold">OFFLINE USSD</div>
+              <div className="text-[10px] font-mono text-teal-400 font-bold">OFFLINE USSD</div>
               <div className="text-[11px] text-white/80 font-medium">Edge Sync</div>
             </div>
           </div>
@@ -196,30 +194,12 @@ export function Login({ onDemo }: LoginProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="lg:col-span-6 backdrop-blur-2xl bg-slate-900/90 border border-white/10 shadow-2xl rounded-xl p-7 sm:p-8 w-full relative z-10 self-stretch flex flex-col justify-between"
-          role="form"
-          aria-label="Login form"
         >
           <div>
-            {/* Back to Landing Navigation (In-Card) */}
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-emerald-400 transition-all mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 w-fit group"
-              aria-label={t('common_back_to_landing', { defaultValue: 'Back to Landing Page' })}
-            >
-              <ArrowLeft className="w-3.5 h-3.5 text-emerald-400 group-hover:-translate-x-0.5 transition-transform" />
-              <span>{t('common_back_to_landing', { defaultValue: 'Back to Landing Page' })}</span>
-            </Link>
-
-            {/* Logo and Language Switcher */}
-            <div className="flex justify-between items-start mb-6">
-              <div className="flex-1">
-                <h1 className="text-2xl font-bold tracking-tight text-white">{t('login_title')}</h1>
-                <p className="text-white/60 text-sm mt-1">{t('login_subtitle')}</p>
-              </div>
-              <div className="pt-1 flex items-center gap-2">
-                <LiquidToggleSwitch compact />
-                <LanguageSwitcher compact />
-              </div>
+            {/* Header Title */}
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold tracking-tight text-white">{t('login_title')}</h1>
+              <p className="text-white/70 text-sm mt-1">{t('login_subtitle')}</p>
             </div>
 
             {/* Demo Banner */}
@@ -240,7 +220,7 @@ export function Login({ onDemo }: LoginProps) {
             {/* Divider */}
             <div className="flex items-center gap-4 mb-6">
               <div className="flex-1 h-px bg-white/10"></div>
-              <span className="text-xs font-medium text-white/40 uppercase tracking-wider">{t('login_or')}</span>
+              <span className="text-xs font-medium text-white/70 uppercase tracking-wider">{t('login_or')}</span>
               <div className="flex-1 h-px bg-white/10"></div>
             </div>
 
@@ -297,7 +277,7 @@ export function Login({ onDemo }: LoginProps) {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors p-1"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors p-1"
                     aria-label={showPassword ? 'Hide secret' : 'Show secret'}
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -340,7 +320,7 @@ export function Login({ onDemo }: LoginProps) {
 
           {/* Footer */}
           <div className="mt-8 text-center border-t border-white/5 pt-4">
-            <p className="text-xs text-white/50">
+            <p className="text-xs text-white/70">
               {t('login_no_account')}{' '}
               <Link
                 to="/register"

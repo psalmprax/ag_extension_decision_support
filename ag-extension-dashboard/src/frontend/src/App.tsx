@@ -399,29 +399,17 @@ function App() {
           <Routes>
             <Route
               path="/login"
-              element={
-                <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-                  <Login />
-                </div>
-              }
+              element={<Login />}
             />
             <Route path="/signin" element={<Navigate to="/login" replace />} />
             <Route
               path="/register"
-              element={
-                <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-                  <Register />
-                </div>
-              }
+              element={<Register />}
             />
             <Route path="/signup" element={<Navigate to="/register" replace />} />
             <Route
               path="/forgot-password"
-              element={
-                <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-                  <ForgotPassword />
-                </div>
-              }
+              element={<ForgotPassword />}
             />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />

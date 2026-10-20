@@ -16,7 +16,21 @@ export function FarmerServices() {
   };
 
   return (
-    <section id="services" className="relative py-20 sm:py-28 border-t border-white/[0.06] bg-gradient-to-b from-slate-950 via-emerald-950/20 to-slate-950">
+    <section id="services" className="relative py-20 sm:py-28 border-t border-white/[0.06] bg-gradient-to-b from-slate-950 via-emerald-950/20 to-slate-950 overflow-hidden">
+      {/* Subtle Agricultural Crop Backdrop Layer */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <img
+          src="/images/landing/maize-field-sunrise.webp"
+          alt=""
+          role="presentation"
+          aria-hidden="true"
+          width={1319}
+          height={860}
+          className="w-full h-full object-cover object-center opacity-10 filter saturate-125 contrast-105 pointer-events-none"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950/80 to-slate-950" />
+      </div>
+
       {/* Warm ambient harvest underlay */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-amber-500/[0.035] blur-[140px] rounded-full pointer-events-none" />
 
@@ -193,7 +207,7 @@ export function FarmerServices() {
                   <TrendingUp className="w-7 h-7" />
                 </div>
                 <span className="text-xs font-bold font-mono uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
-                  Not Yet Available
+                  Live in Demo
                 </span>
               </div>
 
@@ -202,23 +216,24 @@ export function FarmerServices() {
                   Check Fair Market Prices
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Market price information is not currently available on the public platform.
+                  Real-time regional crop price tracking and fair wholesale valuation benchmarks for smallholder farmers.
                 </p>
               </div>
 
               <div className="pt-2 text-xs sm:text-sm text-white/80">
-                <span>Check with local buyers or extension officers for current rates.</span>
+                <span>Access parish-level market price intelligence and crop value indices in the platform demo.</span>
               </div>
             </div>
 
             <div className="pt-6 mt-6 border-t border-white/[0.06]">
               <button
                 type="button"
-                disabled
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-600/90 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40 cursor-not-allowed opacity-60"
+                onClick={() => navigate('/demo')}
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-600/90 hover:bg-amber-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40 transition-all active:scale-[0.98]"
               >
                 <TrendingUp className="w-4 h-4" />
-                <span>Market Prices Coming Soon</span>
+                <span>Explore Live Market Telemetry</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           </motion.div>
@@ -229,20 +244,20 @@ export function FarmerServices() {
             whileInView="visible"
             viewport={{ once: true, margin: '-60px' }}
             variants={fadeUp}
-            className="group relative rounded-2xl backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] hover:border-purple-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-purple-950/40"
+            className="group relative rounded-2xl backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] hover:border-teal-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-teal-950/40"
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="w-14 h-14 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 shadow-inner group-hover:scale-105 transition-transform">
+                <div className="w-14 h-14 rounded-2xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400 shadow-inner group-hover:scale-105 transition-transform">
                   <BookOpenCheck className="w-7 h-7" />
                 </div>
-                <span className="text-xs font-bold font-mono uppercase tracking-wider text-purple-400 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full">
-                  Text Preview
+                <span className="text-xs font-bold font-mono uppercase tracking-wider text-teal-400 bg-teal-500/10 border border-teal-500/20 px-3 py-1 rounded-full">
+                  Text & Voice
                 </span>
               </div>
 
               <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-teal-300 transition-colors">
                   Read Advice in Your Dialect
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
@@ -252,7 +267,7 @@ export function FarmerServices() {
 
               {/* Interactive Dialect Transcript Card */}
               <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2.5">
-                <div className="text-xs font-semibold text-purple-300 flex items-center justify-between">
+                <div className="text-xs font-semibold text-teal-300 flex items-center justify-between">
                   <span>Advice text preview:</span>
                   <span className="text-xxs font-mono text-white/60">Select a language</span>
                 </div>
@@ -261,9 +276,9 @@ export function FarmerServices() {
                     type="button"
                     onClick={() => selectDialect('sw')}
                     aria-pressed={activeDialect === 'sw'}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center ${
                       activeDialect === 'sw'
-                        ? 'bg-purple-600 text-white shadow-md'
+                        ? 'bg-teal-600 text-white shadow-md'
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
                     }`}
                   >
@@ -273,9 +288,9 @@ export function FarmerServices() {
                     type="button"
                     onClick={() => selectDialect('lg')}
                     aria-pressed={activeDialect === 'lg'}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center ${
                       activeDialect === 'lg'
-                        ? 'bg-purple-600 text-white shadow-md'
+                        ? 'bg-teal-600 text-white shadow-md'
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
                     }`}
                   >
@@ -285,19 +300,19 @@ export function FarmerServices() {
                     type="button"
                     onClick={() => selectDialect('en')}
                     aria-pressed={activeDialect === 'en'}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center ${
                       activeDialect === 'en'
-                        ? 'bg-purple-600 text-white shadow-md'
+                        ? 'bg-teal-600 text-white shadow-md'
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
                     }`}
                   >
                     <span>English</span>
                   </button>
                 </div>
-                <div className="p-2 rounded-lg bg-purple-950/40 border border-purple-500/30 text-xs text-purple-200">
+                <div className="p-2.5 rounded-lg bg-teal-950/40 border border-teal-500/30 text-xs text-teal-200">
                   <span className="italic leading-snug">
                     {activeDialect === 'sw' && '"Nyunyizia mchanganyiko wa mwarobaini jioni..."'}
-                    {activeDialect === 'lg' && '"Fukirira eddagala ly&apos;enim ku kisaakaate..."'}
+                    {activeDialect === 'lg' && '"Fukirira eddagala ly\'enim ku kisaakaate..."'}
                     {activeDialect === 'en' && '"Spray the Neem mixture into leaf whorls at dusk..."'}
                   </span>
                 </div>
@@ -305,14 +320,18 @@ export function FarmerServices() {
             </div>
 
             <div className="pt-6 mt-6 border-t border-white/[0.06]">
-              <a
-                href="#talking-assistant"
-                className="inline-flex w-full sm:w-auto px-6 py-3 rounded-xl bg-purple-600/90 hover:bg-purple-500 text-white font-bold text-sm items-center justify-center gap-2 shadow-lg shadow-purple-950/40 transition-all active:scale-[0.98]"
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.hash = '#talking-assistant';
+                  window.dispatchEvent(new CustomEvent('open-talking-assistant'));
+                }}
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-teal-600/90 hover:bg-teal-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-teal-950/40 transition-all active:scale-[0.98]"
               >
                 <Volume2 className="w-4 h-4" />
                 <span>Open Talking Assistant</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </a>
+              </button>
             </div>
           </motion.div>
         </div>

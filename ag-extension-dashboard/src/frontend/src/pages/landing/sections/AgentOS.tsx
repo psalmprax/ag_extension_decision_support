@@ -29,8 +29,7 @@ export function AgentOS({
             {/* Live Telemetry Ribbons */}
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-8 sm:mb-10">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
-                <span className="w-2 h-2 rounded-full bg-emerald-400 -ml-4 shrink-0" />
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                 <span>Crop Clinic: Instant Disease Response</span>
               </div>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">

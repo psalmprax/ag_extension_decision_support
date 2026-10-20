@@ -8,7 +8,21 @@ import { stagger, fadeUp } from '../variants';
 
 export function TrustAndSafety() {
   return (
-    <section id="trust-safety" className="relative py-20 sm:py-28 border-t border-white/[0.06] bg-slate-950">
+    <section id="trust-safety" className="relative py-20 sm:py-28 border-t border-white/[0.06] bg-slate-950 overflow-hidden">
+      {/* Subtle Farm Inspection Crop Backdrop */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <img
+          src="/images/landing/farmer-inspecting-ear.webp"
+          alt=""
+          role="presentation"
+          aria-hidden="true"
+          width={600}
+          height={450}
+          className="w-full h-full object-cover object-center opacity-[0.08] filter saturate-125 contrast-105 pointer-events-none"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950/85 to-slate-950" />
+      </div>
+
       {/* Subtle organic green radial glow */}
       <div className="absolute top-1/3 right-1/4 w-[600px] h-[300px] bg-emerald-600/[0.04] blur-[150px] rounded-full pointer-events-none" />
 

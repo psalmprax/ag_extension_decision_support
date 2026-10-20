@@ -77,6 +77,15 @@ export function playStageChime(stageIndex: number): void {
     osc.connect(gain);
     gain.connect(ctx.destination);
 
+    osc.onended = () => {
+      try {
+        osc.disconnect();
+        gain.disconnect();
+      } catch {
+        // Safe disconnect
+      }
+    };
+
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.22);
   } catch {
@@ -112,6 +121,15 @@ export function playScrubTick(): void {
 
     osc.connect(gain);
     gain.connect(ctx.destination);
+
+    osc.onended = () => {
+      try {
+        osc.disconnect();
+        gain.disconnect();
+      } catch {
+        // Safe disconnect
+      }
+    };
 
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.035);

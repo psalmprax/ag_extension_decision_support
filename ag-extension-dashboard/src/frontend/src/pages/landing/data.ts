@@ -74,7 +74,7 @@ export const faqItems = [
   {
     question: 'Does this app work without an active internet connection in rural fields?',
     answer:
-      'Yes, 100%! GPExts is designed from the ground up to run offline. The leaf scanner runs on-device neural vision models directly inside your phone. You can diagnose crops, check treatment guides, and record farm notes deep in the field with zero cellular signal. Everything syncs automatically whenever you return to connectivity.',
+      'Yes! GPExts is designed from the ground up for rural fields. You can capture crop photos, review previously saved remedy guides, and record detailed farm visit notes deep in the field with zero cellular signal. Queued diagnosis requests automatically upload and deliver AI remedies as soon as your device reconnects.',
   },
   {
     question: 'Do I need an expensive smartphone to use GPExts?',

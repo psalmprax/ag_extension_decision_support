@@ -2,11 +2,21 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Menu, X, Sparkles, Mic } from 'lucide-react';
-import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 
 export function Navbar() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleVoiceAdvisorClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (typeof window !== 'undefined') {
+      window.location.hash = '';
+      setTimeout(() => {
+        window.location.hash = 'talking-assistant';
+      }, 10);
+      window.dispatchEvent(new CustomEvent('open-talking-assistant'));
+    }
+  };
 
   return (
       <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/75 backdrop-blur-2xl border-b border-white/[0.06]">
@@ -60,6 +70,7 @@ export function Navbar() {
             </a>
             <a
               href="#talking-assistant"
+              onClick={handleVoiceAdvisorClick}
               className="text-sm font-medium text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1.5"
             >
               <Mic className="w-3.5 h-3.5" />
@@ -74,7 +85,6 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-3">
-            <LiquidToggleSwitch compact className="hidden sm:flex" />
             <button
               type="button"
               onClick={() => navigate('/login')}
@@ -125,7 +135,12 @@ export function Navbar() {
                   <a
                     key={item.href}
                     href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
+                    onClick={(e) => {
+                      setMobileMenuOpen(false);
+                      if (item.href === '#talking-assistant') {
+                        handleVoiceAdvisorClick(e);
+                      }
+                    }}
                     className="text-base font-medium text-white/75 hover:text-emerald-400 transition-colors py-1 flex items-center justify-between"
                   >
                     <span>{item.label}</span>
@@ -134,9 +149,6 @@ export function Navbar() {
                 ))}
               </div>
               <div className="pt-4 border-t border-white/[0.08] flex flex-col gap-2.5">
-                <div className="pb-1">
-                  <LiquidToggleSwitch className="w-full justify-between py-2" />
-                </div>
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
@@ -151,7 +163,7 @@ export function Navbar() {
                     setMobileMenuOpen(false);
                     navigate('/register');
                   }}
-                  className="relative group overflow-hidden w-full py-2.5 text-sm font-semibold text-white rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-400 hover:to-emerald-500 border border-emerald-400/50 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.55)] active:scale-[0.98] transition-all duration-300 text-center"
+                  className="relative group overflow-hidden w-full py-2.5 text-sm font-semibold text-white rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-400 hover:to-emerald-500 border border-emerald-400/50 shadow-md shadow-emerald-950/30 hover:shadow-lg hover:shadow-emerald-900/40 active:scale-[0.98] transition-all duration-300 text-center"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
                   <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent" />

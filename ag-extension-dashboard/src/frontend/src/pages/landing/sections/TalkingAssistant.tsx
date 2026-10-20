@@ -1933,11 +1933,16 @@ export function TalkingAssistant({ defaultOpen = false, className = '' }: Talkin
         setIsOpen(true);
       }
     };
+    const handleOpenEvent = () => setIsOpen(true);
     window.addEventListener('hashchange', handleHash);
+    window.addEventListener('open-talking-assistant', handleOpenEvent);
     if (window.location.hash === '#talking-assistant') {
       setIsOpen(true);
     }
-    return () => window.removeEventListener('hashchange', handleHash);
+    return () => {
+      window.removeEventListener('hashchange', handleHash);
+      window.removeEventListener('open-talking-assistant', handleOpenEvent);
+    };
   }, []);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -2052,12 +2057,20 @@ export function TalkingAssistant({ defaultOpen = false, className = '' }: Talkin
     stopSpeaking();
     cancelListening();
     setIsOpen(false);
+    if (typeof window !== 'undefined' && window.location.hash === '#talking-assistant') {
+      try {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      } catch {
+        // Ignore environments where history manipulation is restricted
+      }
+    }
   }, [cancelListening, stopSpeaking]);
 
   const handleSendMessage = useCallback(
     (textToSend?: string, overrideLang?: Language) => {
       const query = (textToSend || inputText).trim();
       if (!query || isLoading) return;
+      setActiveTab('chat');
       const lang = overrideLang ?? selectedLanguage;
 
       const userMsg: Message = {
