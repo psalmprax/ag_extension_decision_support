@@ -207,7 +207,7 @@ export function FarmerServices() {
                   <TrendingUp className="w-7 h-7" />
                 </div>
                 <span className="text-xs font-bold font-mono uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
-                  Live in Demo
+                  Not Yet Available
                 </span>
               </div>
 
@@ -216,24 +216,23 @@ export function FarmerServices() {
                   Check Fair Market Prices
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Real-time regional crop price tracking and fair wholesale valuation benchmarks for smallholder farmers.
+                  Market price information is not currently available on the public platform.
                 </p>
               </div>
 
               <div className="pt-2 text-xs sm:text-sm text-white/80">
-                <span>Access parish-level market price intelligence and crop value indices in the platform demo.</span>
+                <span>Check with local buyers or extension officers for current rates.</span>
               </div>
             </div>
 
             <div className="pt-6 mt-6 border-t border-white/[0.06]">
               <button
                 type="button"
-                onClick={() => navigate('/demo')}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-600/90 hover:bg-amber-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40 transition-all active:scale-[0.98]"
+                disabled
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-600/90 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40 cursor-not-allowed opacity-60"
               >
                 <TrendingUp className="w-4 h-4" />
-                <span>Explore Live Market Telemetry</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <span>Market Prices Coming Soon</span>
               </button>
             </div>
           </motion.div>
@@ -278,7 +277,7 @@ export function FarmerServices() {
                     aria-pressed={activeDialect === 'sw'}
                     className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center ${
                       activeDialect === 'sw'
-                        ? 'bg-teal-600 text-white shadow-md'
+                        ? 'bg-teal-700 text-white shadow-md'
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
                     }`}
                   >
@@ -290,7 +289,7 @@ export function FarmerServices() {
                     aria-pressed={activeDialect === 'lg'}
                     className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center ${
                       activeDialect === 'lg'
-                        ? 'bg-teal-600 text-white shadow-md'
+                        ? 'bg-teal-700 text-white shadow-md'
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
                     }`}
                   >
@@ -302,7 +301,7 @@ export function FarmerServices() {
                     aria-pressed={activeDialect === 'en'}
                     className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center ${
                       activeDialect === 'en'
-                        ? 'bg-teal-600 text-white shadow-md'
+                        ? 'bg-teal-700 text-white shadow-md'
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
                     }`}
                   >

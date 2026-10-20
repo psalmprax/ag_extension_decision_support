@@ -10,10 +10,7 @@ export function Navbar() {
   const handleVoiceAdvisorClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (typeof window !== 'undefined') {
-      window.location.hash = '';
-      setTimeout(() => {
-        window.location.hash = 'talking-assistant';
-      }, 10);
+      window.location.hash = 'talking-assistant';
       window.dispatchEvent(new CustomEvent('open-talking-assistant'));
     }
   };

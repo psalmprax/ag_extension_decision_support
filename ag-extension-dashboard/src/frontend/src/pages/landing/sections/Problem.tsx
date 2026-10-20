@@ -20,7 +20,7 @@ export function Problem() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950/85 to-slate-950" />
       </div>
-          <div className="max-w-[90rem] w-full mx-auto px-6">
+          <div className="relative z-10 max-w-[90rem] w-full mx-auto px-6">
             <motion.div
               initial="hidden"
               whileInView="visible"

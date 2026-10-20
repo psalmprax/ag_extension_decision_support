@@ -335,13 +335,10 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 </div>
 
                 {/* Remedy Tabs Switcher */}
-                <div role="tablist" aria-label="Remedy type" className="flex rounded-lg bg-black/40 p-0.5 border border-white/5 text-[11px] font-semibold">
+                <div role="group" aria-label="Remedy type" className="flex rounded-lg bg-black/40 p-0.5 border border-white/5 text-[11px] font-semibold">
                   <button
                     type="button"
-                    role="tab"
-                    id="tab-organic"
-                    aria-selected={activeRemedyTab === 'organic'}
-                    aria-controls="panel-remedy"
+                    aria-pressed={activeRemedyTab === 'organic'}
                     onClick={() => setActiveRemedyTab('organic')}
                     className={`flex-1 py-1.5 rounded-md text-center transition-all ${
                       activeRemedyTab === 'organic'
@@ -353,10 +350,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                   </button>
                   <button
                     type="button"
-                    role="tab"
-                    id="tab-standard"
-                    aria-selected={activeRemedyTab === 'standard'}
-                    aria-controls="panel-remedy"
+                    aria-pressed={activeRemedyTab === 'standard'}
                     onClick={() => setActiveRemedyTab('standard')}
                     className={`flex-1 py-1.5 rounded-md text-center transition-all ${
                       activeRemedyTab === 'standard'

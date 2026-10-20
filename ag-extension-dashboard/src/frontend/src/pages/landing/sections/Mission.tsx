@@ -9,12 +9,15 @@ export function Mission() {
           <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
             <img
               src="/images/landing/officer-farmer-hero.webp"
+              srcSet="/images/landing/officer-farmer-hero-640.webp 640w, /images/landing/officer-farmer-hero-1024.webp 1024w, /images/landing/officer-farmer-hero.webp 1920w"
+              sizes="(max-width: 640px) 640px, (max-width: 1100px) 1024px, 1920px"
               alt=""
               role="presentation"
               aria-hidden="true"
               width={1920}
               height={1080}
               className="w-full h-full object-cover object-center opacity-[0.07] filter saturate-125 contrast-105 pointer-events-none"
+              loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950/85 to-slate-950" />
           </div>
