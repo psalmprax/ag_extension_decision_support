@@ -30,6 +30,7 @@ structlog>=25.0.0
 # Utilities
 python-dateutil>=2.8.2
 pytz>=2026.1
+uv>=0.13.4
 
 # Testing (optional)
 pytest>=8.0.0
