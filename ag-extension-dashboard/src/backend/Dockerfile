@@ -20,8 +20,23 @@ ARG BACKEND_DIR=ag-extension-dashboard/src/backend
 COPY ${BACKEND_DIR}/package*.json ./
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
 
-ENV npm_config_fetch_retries=5 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
-RUN npm ci --omit=dev --no-audit --no-fund && npx prisma generate
+ENV npm_config_fetch_retries=5 \
+    npm_config_fetch_retry_mintimeout=20000 \
+    npm_config_fetch_retry_maxtimeout=120000 \
+    npm_config_fetch_timeout=300000 \
+    npm_config_maxsockets=5
+RUN for attempt in 1 2 3 4 5; do \
+      echo "==> [backend deps] npm ci attempt $attempt of 5..." && \
+      npm ci --omit=dev --no-audit --no-fund && break || { \
+        if [ "$attempt" -ge 5 ]; then \
+          echo "❌ [backend deps] npm ci failed after $attempt attempts" >&2; \
+          exit 1; \
+        fi; \
+        echo "⚠️ [backend deps] npm ci failed on attempt $attempt; cleaning cache and retrying in 10s..." >&2; \
+        npm cache clean --force 2>/dev/null || true; \
+        sleep 10; \
+      }; \
+    done && npx prisma generate
 
 # ============================================================
 # Stage 2: Build — install devDeps + compile TypeScript
@@ -30,13 +45,28 @@ FROM node-base AS build
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates curl ffmpeg && rm -rf /var/lib/apt/lists/*
 
-ENV npm_config_fetch_retries=5 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
+ENV npm_config_fetch_retries=5 \
+    npm_config_fetch_retry_mintimeout=20000 \
+    npm_config_fetch_retry_maxtimeout=120000 \
+    npm_config_fetch_timeout=300000 \
+    npm_config_maxsockets=5
 ARG BACKEND_DIR=ag-extension-dashboard/src/backend
 COPY ${BACKEND_DIR}/package*.json ./
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
 
 # Install ALL dependencies including devDeps
-RUN npm ci --no-audit --no-fund
+RUN for attempt in 1 2 3 4 5; do \
+      echo "==> [backend build] npm ci attempt $attempt of 5..." && \
+      npm ci --no-audit --no-fund && break || { \
+        if [ "$attempt" -ge 5 ]; then \
+          echo "❌ [backend build] npm ci failed after $attempt attempts" >&2; \
+          exit 1; \
+        fi; \
+        echo "⚠️ [backend build] npm ci failed on attempt $attempt; cleaning cache and retrying in 10s..." >&2; \
+        npm cache clean --force 2>/dev/null || true; \
+        sleep 10; \
+      }; \
+    done
 
 # Generate Prisma client
 RUN npx prisma generate
@@ -58,11 +88,26 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates curl ffmpeg && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies with devDeps for ts-node-dev
-ENV npm_config_fetch_retries=5 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
+ENV npm_config_fetch_retries=5 \
+    npm_config_fetch_retry_mintimeout=20000 \
+    npm_config_fetch_retry_maxtimeout=120000 \
+    npm_config_fetch_timeout=300000 \
+    npm_config_maxsockets=5
 ARG BACKEND_DIR=ag-extension-dashboard/src/backend
 COPY ${BACKEND_DIR}/package*.json ./
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
-RUN npm install --no-audit --no-fund
+RUN for attempt in 1 2 3 4 5; do \
+      echo "==> [backend dev] npm install attempt $attempt of 5..." && \
+      npm install --no-audit --no-fund && break || { \
+        if [ "$attempt" -ge 5 ]; then \
+          echo "❌ [backend dev] npm install failed after $attempt attempts" >&2; \
+          exit 1; \
+        fi; \
+        echo "⚠️ [backend dev] npm install failed on attempt $attempt; cleaning cache and retrying in 10s..." >&2; \
+        npm cache clean --force 2>/dev/null || true; \
+        sleep 10; \
+      }; \
+    done
 RUN npx prisma generate
 
 # Copy all source for hot-reload

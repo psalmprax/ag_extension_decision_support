@@ -5,7 +5,6 @@ import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
 import { useAppStore, type User } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 import { AgroEcosystemCanvasScrubber } from '@/components/canvas-ui/AgroEcosystemCanvasScrubber';
 import { register } from '@/api/authService';
 import { getApiErrorMessage } from '@/lib/apiError';
@@ -141,7 +140,7 @@ export function Register() {
 
   return (
     <div
-      className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4 sm:p-6 relative overflow-hidden"
+      className="min-h-[100dvh] bg-slate-950 text-white flex items-center justify-center p-4 sm:p-6 relative overflow-y-auto overflow-x-hidden"
       role="main"
       aria-label="Register page"
     >
@@ -182,7 +181,6 @@ export function Register() {
           <span className="sm:hidden">{t('common_back_to_home', { defaultValue: 'Back to Home' })}</span>
         </Link>
         <div className="pointer-events-auto flex items-center gap-2">
-          <LiquidToggleSwitch compact />
           <LanguageSwitcher compact />
         </div>
       </header>
@@ -240,28 +238,12 @@ export function Register() {
           style={{ pointerEvents: 'auto', touchAction: 'auto' }}
         >
           <div>
-            {/* Back to Landing Navigation (In-Card) */}
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-emerald-400 transition-all mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 w-fit group"
-              aria-label={t('common_back_to_landing', { defaultValue: 'Back to Landing Page' })}
-            >
-              <ArrowLeft className="w-3.5 h-3.5 text-emerald-400 group-hover:-translate-x-0.5 transition-transform" />
-              <span>{t('common_back_to_landing', { defaultValue: 'Back to Landing Page' })}</span>
-            </Link>
-
-            {/* Logo and Controls */}
-            <div className="flex justify-between items-start mb-6">
-              <div className="flex-1">
-                <h1 className="text-2xl font-bold tracking-tight text-white">
-                  {t('register_title')}
-                </h1>
-                <p className="text-white/60 text-sm mt-1">{t('register_subtitle')}</p>
-              </div>
-              <div className="pt-1 flex items-center gap-2">
-                <LiquidToggleSwitch compact />
-                <LanguageSwitcher compact />
-              </div>
+            {/* Header Title */}
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold tracking-tight text-white">
+                {t('register_title')}
+              </h1>
+              <p className="text-white/70 text-sm mt-1">{t('register_subtitle')}</p>
             </div>
 
             {/* Error Message */}
@@ -361,7 +343,7 @@ export function Register() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
                       aria-label={showPassword ? 'Hide secret' : 'Show secret'}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -390,7 +372,7 @@ export function Register() {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
                       aria-label={showConfirmPassword ? 'Hide secret' : 'Show secret'}
                     >
                       {showConfirmPassword ? (
@@ -481,7 +463,7 @@ export function Register() {
 
           {/* Footer */}
           <div className="mt-6 text-center border-t border-white/5 pt-4">
-            <p className="text-xs text-white/50">
+            <p className="text-xs text-white/70">
               {t('register_already_have_account')}{' '}
               <Link
                 to="/login"

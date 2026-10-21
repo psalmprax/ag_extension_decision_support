@@ -55,10 +55,8 @@ export function LandingPage() {
   // Global Cursor spotlight tracking
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      const rect = pageRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      mouseX.set(e.clientX - rect.left);
-      mouseY.set(e.clientY - rect.top);
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
     },
     [mouseX, mouseY]
   );
@@ -69,8 +67,17 @@ export function LandingPage() {
       onMouseMove={handleMouseMove}
       className="relative min-h-screen bg-slate-950 text-white overflow-x-hidden"
     >
-      {/* ── Global Animated Mesh Background ── */}
+      {/* ── Global Animated Mesh Background & Authentic Agricultural Atmosphere ── */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <img
+          src="/images/landing/hero-aerial.webp"
+          alt=""
+          role="presentation"
+          aria-hidden="true"
+          className="w-full h-full object-cover object-center opacity-[0.10] filter saturate-125 contrast-105 pointer-events-none mix-blend-luminosity"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-stone-950/60 via-slate-950/40 via-stone-950/70 to-slate-950/90 pointer-events-none" />
+
         <div className="mesh-orb-1 absolute top-[-10%] left-[-10%] w-[800px] h-[800px] rounded-full bg-emerald-600/[0.05] blur-[180px]" />
         <div className="mesh-orb-2 absolute top-[30%] right-[-15%] w-[700px] h-[700px] rounded-full bg-amber-500/[0.04] blur-[150px]" />
         <div className="mesh-orb-3 absolute top-[60%] left-[10%] w-[600px] h-[600px] rounded-full bg-emerald-400/[0.035] blur-[130px]" />
@@ -179,9 +186,9 @@ export function LandingPage() {
         <FAQ />
         <Mission />
         <CTA />
-        <Footer />
       </main>
 
+      <Footer />
       <TalkingAssistant />
     </div>
   );

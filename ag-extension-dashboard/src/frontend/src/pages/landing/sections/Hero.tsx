@@ -32,6 +32,8 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
           srcSet="/images/landing/officer-farmer-hero-640.webp 640w, /images/landing/officer-farmer-hero-1024.webp 1024w, /images/landing/officer-farmer-hero.webp 1920w"
           sizes="(max-width: 640px) 640px, (max-width: 1100px) 1024px, 1920px"
           alt="Agricultural extension officer consulting with a smallholder farmer in a maize field using a digital tablet"
+          role="presentation"
+          aria-hidden="true"
           width={1920}
           height={1080}
           className="w-full h-full object-cover object-center opacity-30 filter saturate-125 contrast-105 transition-opacity duration-700"
@@ -40,7 +42,9 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
         />
         <img
           src="/images/landing/maize-field-sunrise.webp"
-          alt="Lush green maize field glowing in morning sunlight"
+          alt=""
+          role="presentation"
+          aria-hidden="true"
           width={1319}
           height={860}
           className="absolute inset-0 w-full h-full object-cover object-center opacity-20 mix-blend-screen pointer-events-none"
@@ -138,12 +142,12 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             </div>
 
             <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center shrink-0">
-                <BookOpenCheck className="w-4 h-4 text-purple-400" />
+              <div className="w-8 h-8 rounded-lg bg-teal-500/15 border border-teal-500/30 flex items-center justify-center shrink-0">
+                <BookOpenCheck className="w-4 h-4 text-teal-400" />
               </div>
               <div className="text-left min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white truncate">Text in Local Dialect</div>
-                <div className="text-xxs sm:text-xs text-white/60 truncate">Swahili, Luganda, Hindi +20</div>
+                <div className="text-xs sm:text-sm font-bold text-white">Text in Local Dialect</div>
+                <div className="text-xxs sm:text-xs text-white/70">Swahili, Luganda, Hindi +20</div>
               </div>
             </div>
           </motion.div>
@@ -153,7 +157,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             <button
               type="button"
               onClick={() => navigate('/diagnosis')}
-              className="w-full sm:w-auto relative group overflow-hidden px-8 py-3.5 text-sm sm:text-base font-bold text-white rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-400 hover:to-emerald-500 border border-emerald-400/50 shadow-[0_0_28px_rgba(16,185,129,0.4)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2.5"
+              className="w-full sm:w-auto relative group overflow-hidden px-8 py-3.5 text-sm sm:text-base font-bold text-white rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-400 hover:to-emerald-500 border border-emerald-400/50 shadow-xl shadow-emerald-950/50 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2.5"
             >
               <Camera className="w-5 h-5 text-emerald-100" />
               <span>Diagnose a Crop — Free</span>
@@ -206,7 +210,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <button
                   type="button"
                   onClick={() => setTextLanguage(prev => (prev === 'sw' ? 'en' : 'sw'))}
-                  className="text-xxs font-bold text-amber-300 hover:text-white bg-amber-500/20 px-2 py-1 rounded-md border border-amber-400/30 whitespace-nowrap"
+                  className="text-xs font-semibold text-amber-300 hover:text-white bg-amber-500/20 px-3.5 py-2 min-h-[44px] inline-flex items-center rounded-md border border-amber-400/30 whitespace-nowrap transition-colors"
                 >
                   Switch text to {textLanguage === 'sw' ? 'English' : 'Kiswahili'}
                 </button>
@@ -331,9 +335,10 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 </div>
 
                 {/* Remedy Tabs Switcher */}
-                <div className="flex rounded-lg bg-black/40 p-0.5 border border-white/5 text-[11px] font-semibold">
+                <div role="group" aria-label="Remedy type" className="flex rounded-lg bg-black/40 p-0.5 border border-white/5 text-[11px] font-semibold">
                   <button
                     type="button"
+                    aria-pressed={activeRemedyTab === 'organic'}
                     onClick={() => setActiveRemedyTab('organic')}
                     className={`flex-1 py-1.5 rounded-md text-center transition-all ${
                       activeRemedyTab === 'organic'
@@ -345,6 +350,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                   </button>
                   <button
                     type="button"
+                    aria-pressed={activeRemedyTab === 'standard'}
                     onClick={() => setActiveRemedyTab('standard')}
                     className={`flex-1 py-1.5 rounded-md text-center transition-all ${
                       activeRemedyTab === 'standard'

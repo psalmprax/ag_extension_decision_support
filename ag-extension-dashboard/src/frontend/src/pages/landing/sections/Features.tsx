@@ -133,7 +133,7 @@ export function Features() {
                       The Field Extension Officer
                     </h3>
                     <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
-                      Conducts rapid digital farm visits, captures leaf photos for instant AI disease identification, and logs records offline in remote areas.
+                      Conducts rapid digital farm visits, queues leaf photos for multimodal AI diagnosis, and logs visit records securely offline in remote areas.
                     </p>
                   </div>
 

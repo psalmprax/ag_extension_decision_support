@@ -515,7 +515,11 @@ function syncCanvasDimensions(
   canvas: HTMLCanvasElement,
   container: HTMLDivElement | null
 ): { cssWidth: number; cssHeight: number; dpr: number } | null {
+  if (container && (container.clientWidth === 0 || container.clientHeight === 0)) {
+    return null;
+  }
   const rect = container ? container.getBoundingClientRect() : canvas.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) return null;
   const cssWidth = Math.round(rect.width || 600);
   const cssHeight = Math.round(rect.height || 400);
   if (!cssWidth || !cssHeight) return null;
@@ -616,6 +620,10 @@ export function AgroEcosystemCanvasScrubber({
     let lastTime = performance.now();
 
     const loop = (now: number) => {
+      if (containerRef.current && (containerRef.current.clientWidth === 0 || containerRef.current.clientHeight === 0)) {
+        frameId = requestAnimationFrame(loop);
+        return;
+      }
       const delta = (now - lastTime) * 0.001;
       lastTime = now;
       if (!isDraggingRef.current) {
@@ -718,6 +726,10 @@ export function AgroEcosystemCanvasScrubber({
   useEffect(() => {
     let animId: number;
     const loop = () => {
+      if (containerRef.current && (containerRef.current.clientWidth === 0 || containerRef.current.clientHeight === 0)) {
+        animId = requestAnimationFrame(loop);
+        return;
+      }
       render();
       animId = requestAnimationFrame(loop);
     };

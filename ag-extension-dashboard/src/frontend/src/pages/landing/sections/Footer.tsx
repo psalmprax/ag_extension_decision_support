@@ -26,7 +26,7 @@ export function Footer() {
                 />
                 <span className="text-lg font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">GPExts</span>
               </button>
-              <p className="text-xs sm:text-sm text-white/50 leading-relaxed max-w-xs mb-4 font-normal break-words">
+              <p className="text-xs sm:text-sm text-white/70 leading-relaxed max-w-xs mb-4 font-normal break-words">
                 Empowering agricultural extension officers with AI-driven decision support across
                 the Globe.
               </p>
@@ -39,14 +39,14 @@ export function Footer() {
               </a>
             </div>
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-4 sm:mb-5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white/70 mb-4 sm:mb-5">
                 Product &amp; Features
               </h4>
               <ul className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm font-normal">
                 <li>
                   <a
                     href="#features"
-                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                    className="text-white/75 hover:text-emerald-400 transition-colors"
                   >
                     Features
                   </a>
@@ -54,7 +54,7 @@ export function Footer() {
                 <li>
                   <a
                     href="#agent-os"
-                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                    className="text-white/75 hover:text-emerald-400 transition-colors"
                   >
                     Agent OS
                   </a>
@@ -62,7 +62,7 @@ export function Footer() {
                 <li>
                   <a
                     href="#how-it-works"
-                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                    className="text-white/75 hover:text-emerald-400 transition-colors"
                   >
                     How It Works
                   </a>
@@ -70,7 +70,7 @@ export function Footer() {
                 <li>
                   <a
                     href="#capabilities"
-                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                    className="text-white/75 hover:text-emerald-400 transition-colors"
                   >
                     Ecosystem &amp; Soil
                   </a>
@@ -78,7 +78,7 @@ export function Footer() {
                 <li>
                   <a
                     href="#architecture"
-                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                    className="text-white/75 hover:text-emerald-400 transition-colors"
                   >
                     Architecture
                   </a>
@@ -86,27 +86,27 @@ export function Footer() {
                 <li>
                   <a
                     href="#roi"
-                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                    className="text-white/75 hover:text-emerald-400 transition-colors"
                   >
                     Impact &amp; ROI
                   </a>
                 </li>
                 <li>
-                  <a href="#faq" className="text-white/60 hover:text-emerald-400 transition-colors">
+                  <a href="#faq" className="text-white/75 hover:text-emerald-400 transition-colors">
                     FAQ
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-4 sm:mb-5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white/70 mb-4 sm:mb-5">
                 Overview &amp; Contact
               </h4>
               <ul className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm font-normal">
                 <li>
                   <a
                     href="#problem"
-                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                    className="text-white/75 hover:text-emerald-400 transition-colors"
                   >
                     Why Us
                   </a>
@@ -114,7 +114,7 @@ export function Footer() {
                 <li>
                   <a
                     href="#mission"
-                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                    className="text-white/75 hover:text-emerald-400 transition-colors"
                   >
                     Our Mission
                   </a>
@@ -123,7 +123,7 @@ export function Footer() {
                   <button
                     type="button"
                     onClick={() => navigate('/demo')}
-                    className="text-white/60 hover:text-emerald-400 transition-colors text-left"
+                    className="text-white/75 hover:text-emerald-400 transition-colors text-left"
                   >
                     Live Interactive Demo
                   </button>
@@ -139,7 +139,7 @@ export function Footer() {
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-4 sm:mb-5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white/70 mb-4 sm:mb-5">
                 Get Started
               </h4>
               <ul className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm font-normal">
@@ -147,7 +147,7 @@ export function Footer() {
                   <button
                     type="button"
                     onClick={() => navigate('/register')}
-                    className="text-white/60 hover:text-emerald-400 transition-colors text-left"
+                    className="text-white/75 hover:text-emerald-400 transition-colors text-left"
                   >
                     Create Account
                   </button>
@@ -156,7 +156,7 @@ export function Footer() {
                   <button
                     type="button"
                     onClick={() => navigate('/login')}
-                    className="text-white/60 hover:text-emerald-400 transition-colors text-left"
+                    className="text-white/75 hover:text-emerald-400 transition-colors text-left"
                   >
                     Sign In
                   </button>
@@ -165,21 +165,21 @@ export function Footer() {
             </div>
           </div>
           <div className="max-w-[90rem] w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 border-t border-white/[0.04] flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 text-center sm:text-left">
-            <span className="text-[11px] sm:text-xs text-white/40 font-normal">
+            <span className="text-[11px] sm:text-xs text-white/70 font-normal">
               &copy; {new Date().getFullYear()} GPExts. All rights reserved.
             </span>
             <div className="flex flex-wrap justify-center sm:justify-end gap-4 sm:gap-5 text-xs">
               <button
                 type="button"
                 onClick={() => setLegalModal('privacy')}
-                className="text-white/40 hover:text-emerald-400 transition-colors cursor-pointer"
+                className="text-white/70 hover:text-emerald-400 transition-colors cursor-pointer"
               >
                 Privacy Policy
               </button>
               <button
                 type="button"
                 onClick={() => setLegalModal('terms')}
-                className="text-white/40 hover:text-emerald-400 transition-colors cursor-pointer"
+                className="text-white/70 hover:text-emerald-400 transition-colors cursor-pointer"
               >
                 Terms of Service
               </button>

@@ -10,9 +10,24 @@ RUN npm install --global npm@${NPM_VERSION} --no-audit --no-fund && npm cache cl
 FROM node-base AS deps
 WORKDIR /workspace/ag-extension-dashboard/src/frontend
 COPY ag-extension-shared /workspace/ag-extension-shared
-ENV npm_config_fetch_retries=5 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
+ENV npm_config_fetch_retries=5 \
+    npm_config_fetch_retry_mintimeout=20000 \
+    npm_config_fetch_retry_maxtimeout=120000 \
+    npm_config_fetch_timeout=300000 \
+    npm_config_maxsockets=5
 COPY ag-extension-dashboard/src/frontend/package.json ./
-RUN npm install --no-audit --no-fund
+RUN for attempt in 1 2 3 4 5; do \
+      echo "==> [frontend deps] npm install attempt $attempt of 5..." && \
+      npm install --no-audit --no-fund && break || { \
+        if [ "$attempt" -ge 5 ]; then \
+          echo "❌ [frontend deps] npm install failed after $attempt attempts" >&2; \
+          exit 1; \
+        fi; \
+        echo "⚠️ [frontend deps] npm install failed on attempt $attempt; cleaning cache and retrying in 10s..." >&2; \
+        npm cache clean --force 2>/dev/null || true; \
+        sleep 10; \
+      }; \
+    done
 
 # ============================================================
 # Stage 2: Build

@@ -5,8 +5,21 @@ import { steps } from '../data';
 
 export function HowItWorks() {
   return (
-        <section id="how-it-works" className="relative py-28 border-t border-white/[0.04]">
-          <div className="max-w-[90rem] w-full mx-auto px-6">
+        <section id="how-it-works" className="relative py-28 border-t border-white/[0.04] overflow-hidden">
+      {/* Subtle Crop Scanning Field Backdrop */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <img
+          src="/images/landing/mobile-field-touch.webp"
+          alt=""
+          role="presentation"
+          aria-hidden="true"
+          width={800}
+          height={600}
+          className="w-full h-full object-cover object-center opacity-[0.06] filter saturate-125 contrast-105 pointer-events-none"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950/85 to-slate-950" />
+      </div>
+          <div className="relative z-10 max-w-[90rem] w-full mx-auto px-6">
             <motion.div
               initial="hidden"
               whileInView="visible"
