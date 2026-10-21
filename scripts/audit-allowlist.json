@@ -86,8 +86,25 @@
     {
       "package": "@modelcontextprotocol/sdk",
       "scope": ["ag_extension_decision_support"],
-      "advisories": ["GHSA-6qxp-vccf-f47h"],
+      "advisories": [
+        "GHSA-6qxp-vccf-f47h",
+        "GHSA-22jm-h49p-29qw",
+        "GHSA-46jr-4wx8-v453",
+        "GHSA-6prh-2h8m-c8cw",
+        "GHSA-rvq5-wwqv-78pq"
+      ],
       "reason": "Transitive devDependency of @opengsd/gsd-pi used only for local developer workflows; never shipped or reachable in production runtime.",
+      "expires": "2026-12-31"
+    },
+    {
+      "package": "vite",
+      "scope": ["ag_extension_decision_support", "frontend", "ag-extension-browser-ext"],
+      "advisories": [
+        "GHSA-587h-7wmj-h5pm",
+        "GHSA-698v-4r3x-3vcv",
+        "GHSA-r825-w8mm-5pxw"
+      ],
+      "reason": "Development build tool dependency (launch-editor Windows escaping); never shipped or exposed in production runtime (static SPA served via Nginx).",
       "expires": "2026-12-31"
     },
     {
