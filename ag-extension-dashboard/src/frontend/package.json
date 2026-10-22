@@ -63,8 +63,9 @@
   "devDependencies": {
     "typescript": "^5.3.3",
     "@capacitor/cli": "^7.6.8",
-    "vite": "^6.4.3",
+    "vite": "^6.4.4",
     "@playwright/test": "^1.58.2",
+    "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^25.4.0",
