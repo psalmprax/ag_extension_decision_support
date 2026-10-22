@@ -105,7 +105,7 @@
     },
     {
       "package": "source-map-js",
-      "scope": ["ag_extension_decision_support", "backend", "frontend", "ag-extension-browser-ext"],
+      "scope": ["ag_extension_decision_support", "frontend", "ag-extension-browser-ext"],
       "advisories": ["GHSA-68fv-2mgg-jv7q"],
       "reason": "Transitive build/dev tooling dependency of magicast and postcss. Offsets parsing denial of service is not reachable by untrusted user input in production runtime.",
       "expires": "2026-12-31"
