@@ -8,6 +8,8 @@ import { auditMiddleware } from '@/middleware/auditMiddleware';
 import { revokeAllUserSessions } from '@/services/sessionService';
 import { safeError } from '@/utils/safeResponse';
 import { logger } from '@/utils/logger';
+import { passwordProblems } from '@/utils/passwordPolicy';
+import { verifyPassword } from '@/utils/password';
 
 const router = Router();
 const anyUser = authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']);
@@ -73,11 +75,44 @@ const ERASE_DELETE: Array<[string, string]> = [
 
 const SENSITIVE_COLUMNS = new Set(['password_hash', 'mfa_secret', 'mfa_backup_codes', 'reset_token', 'email_verification_token', 'token_hash', 'secret_hash', 'api_key_hash']);
 
+const changePasswordSchema = z.object({
+  body: z.object({
+    currentPassword: z.string().min(1),
+    newPassword: z.string().min(1).max(128),
+  }),
+});
+
 function stripSensitive<T extends Record<string, unknown>>(row: T): T {
   const out = { ...row };
   for (const k of Object.keys(out)) if (SENSITIVE_COLUMNS.has(k)) delete out[k];
   return out;
 }
+
+router.post('/password', anyUser, validate(changePasswordSchema), auditMiddleware('account.password_change'), async (req: AuthRequest, res: Response) => {
+  const userId = req.user!.userId;
+  const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
+  try {
+    const userRes = await query<{ password_hash: string | null; email: string }>(
+      'SELECT password_hash, email FROM users WHERE id = $1', [userId]
+    );
+    const user = userRes.rows[0];
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+    if (!user.password_hash || !(await verifyPassword(currentPassword, user.password_hash))) {
+      return res.status(401).json({ success: false, error: 'Current password is incorrect' });
+    }
+    const problems = passwordProblems(newPassword, user.email);
+    if (problems.length) {
+      return res.status(400).json({ success: false, error: `Password must meet these requirements: ${problems.join(', ')}` });
+    }
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await revokeAllUserSessions(userId);
+    await query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [passwordHash, userId]);
+    return res.json({ success: true, message: 'Password updated. Sign in again with your new password.' });
+  } catch (error) {
+    logger.error('account password change failed:', error);
+    return safeError(res, 500, 'Password change failed');
+  }
+});
 
 async function tableExists(table: string): Promise<boolean> {
   const r = await query(`SELECT to_regclass($1) AS oid`, [`public.${table}`]);

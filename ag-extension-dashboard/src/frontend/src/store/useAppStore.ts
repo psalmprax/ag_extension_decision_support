@@ -13,6 +13,7 @@ export interface User {
   email: string;
   role: 'admin' | 'regional_manager' | 'extension_officer' | 'farmer';
   region?: string;
+  phone?: string;
   planName?: string;
   isFree?: boolean;
 }

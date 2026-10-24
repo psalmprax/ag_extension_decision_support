@@ -44,6 +44,10 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
       if (farmer) handleOpenFarmerDetail(farmer);
     } else if (groupType === 'Visits') {
       React.startTransition(() => setActiveTab('visits'));
+    } else if (groupType === 'Reports') {
+      React.startTransition(() => setActiveTab('reports'));
+    } else if (groupType === 'Billing') {
+      React.startTransition(() => setActiveTab('billing'));
     } else {
       React.startTransition(() => setActiveTab('knowledge'));
       setSearchQuery(item.label);

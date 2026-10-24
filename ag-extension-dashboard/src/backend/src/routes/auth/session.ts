@@ -7,6 +7,10 @@ import { getLoginHistory, getLoginStats } from '@/services/loginHistoryService';
 import { isSessionValid } from '@/services/sessionService';
 import { setAuthCookie, clearAuthCookie, getBearerToken } from '@/middleware/authCookie';
 import { isSubscriptionActive } from '@/services/subscriptionUtils';
+import { z } from 'zod';
+import { validate } from '@/middleware/validationMiddleware';
+import { auditMiddleware } from '@/middleware/auditMiddleware';
+import { authorize } from '@/middleware/authorize';
 
 const router = Router();
 
@@ -42,6 +46,14 @@ async function requireSession(req: Request): Promise<JWTPayload | null> {
 // was offline through expiry can recover its session without re-login, provided
 // the underlying session was never revoked. Issues a fresh token + session row.
 const REFRESH_GRACE_SECONDS = 7 * 24 * 3600;
+const updateProfileSchema = z.object({
+    body: z.object({
+        firstName: z.string().trim().min(1).max(100).optional(),
+        lastName: z.string().trim().min(1).max(100).optional(),
+        phone: z.string().trim().max(40).optional(),
+        region: z.string().trim().max(120).optional(),
+    }).strict().refine(body => Object.keys(body).length > 0, 'At least one profile field is required'),
+});
 
 router.post('/refresh', async (req: Request, res: Response) => {
     try {
@@ -120,6 +132,44 @@ router.post('/logout', async (req: Request, res: Response) => {
 });
 
 // Get current user
+router.patch('/me', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), validate(updateProfileSchema), auditMiddleware('auth.profile_update'), async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const updates = req.body as { firstName?: string; lastName?: string; phone?: string; region?: string };
+    const fields: Array<[string, unknown]> = [
+        ['first_name', updates.firstName],
+        ['last_name', updates.lastName],
+        ['phone', updates.phone],
+        ['region', updates.region],
+    ].filter((entry): entry is [string, string] => typeof entry[1] === 'string');
+    const assignments = fields.map(([column], index) => `${column} = $${index + 1}`);
+    const values = fields.map(([, value]) => value);
+    try {
+        const result = await query(
+            `UPDATE users SET ${assignments.join(', ')}, updated_at = NOW()
+             WHERE id = $${values.length + 1}
+             RETURNING id, email, first_name, last_name, role, region, phone`,
+            [...values, userId]
+        );
+        const user = result.rows[0];
+        if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+        return res.json({
+            success: true,
+            data: {
+                id: user.id,
+                email: user.email,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                role: user.role,
+                region: user.region,
+                phone: user.phone,
+            },
+        });
+    } catch (error) {
+        logger.error('Profile update failed:', error);
+        return res.status(500).json({ success: false, error: 'Profile update failed' });
+    }
+});
+
 router.get('/me', async (req: Request, res: Response) => {
     const token = getBearerToken(req);
 
@@ -134,7 +184,7 @@ router.get('/me', async (req: Request, res: Response) => {
         }
 
         const result = await query(`
-            SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.region, u.is_demo,
+            SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.region, u.phone, u.is_demo,
                    sp.name as plan_name,
                    sp.price as plan_price,
                    s.status as subscription_status,
@@ -173,6 +223,7 @@ router.get('/me', async (req: Request, res: Response) => {
                 lastName: user.last_name,
                 role: user.role,
                 region: user.region,
+                phone: user.phone,
                 planName,
                 isFree,
             },

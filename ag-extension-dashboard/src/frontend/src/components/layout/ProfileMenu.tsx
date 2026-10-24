@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, LogOut } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -6,10 +6,19 @@ import { cn } from '@/lib/cn';
 import { dropdownVariants } from '@/lib/animations';
 import { useLanguage } from '@/lib/LanguageContext';
 
+const avatarEmojis: Record<string, string> = {
+  agronomist: '🌾',
+  lead_farmer: '🧑‍🌾',
+  field_officer: '🚜',
+  crop_scout: '🌱',
+  soil_expert: '🔬',
+  satellite_analyst: '🛰️',
+};
+
 interface ProfileMenuProps {
   isProfileMenuOpen: boolean;
   setIsProfileMenuOpen: (open: boolean) => void;
-  storeUser: { firstName?: string; lastName?: string; email?: string } | null;
+  storeUser: { id?: string; firstName?: string; lastName?: string; email?: string } | null;
   setShowProfileModal: (show: boolean) => void;
   handleLogout: () => void;
 }
@@ -23,6 +32,20 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
 }) => {
   const { subtextClass } = useThemeClasses();
   const { t } = useLanguage();
+  const [avatarId, setAvatarId] = useState('');
+
+  useEffect(() => {
+    const updateAvatar = () => {
+      try {
+        setAvatarId(storeUser?.id ? localStorage.getItem(`gpexts_user_avatar:${storeUser.id}`) || '' : '');
+      } catch {
+        setAvatarId('');
+      }
+    };
+    window.addEventListener('gpexts:avatar-updated', updateAvatar);
+    updateAvatar();
+    return () => window.removeEventListener('gpexts:avatar-updated', updateAvatar);
+  }, [storeUser?.id]);
 
   return (
     <div className="relative">
@@ -32,10 +55,14 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
         aria-label="Open user profile menu"
       >
         <div className="w-8 h-8 rounded-full border border-primary-400/30 overflow-hidden ring-2 ring-primary-400/10 flex items-center justify-center bg-slate-800 shrink-0">
-          <span className="text-xxs text-primary-400 font-bold">
-            {storeUser?.firstName?.[0]}
-            {storeUser?.lastName?.[0]}
-          </span>
+          {avatarEmojis[avatarId] ? (
+            <span className="text-lg" aria-label="Selected profile avatar">{avatarEmojis[avatarId]}</span>
+          ) : (
+            <span className="text-xxs text-primary-400 font-bold">
+              {storeUser?.firstName?.[0]}
+              {storeUser?.lastName?.[0]}
+            </span>
+          )}
         </div>
         <div className="hidden xl:block text-left">
           <p className="text-xs font-bold text-gray-900 dark:text-white leading-none">

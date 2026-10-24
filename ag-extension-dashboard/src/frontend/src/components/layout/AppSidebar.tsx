@@ -87,7 +87,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   <div className="flex items-center gap-3 min-w-0">
                     <item.icon className="w-5 h-5 flex-shrink-0" />
                     <span
-                      className="font-headline font-semibold tracking-wide text-xs truncate"
+                      className="font-headline font-semibold tracking-wide text-xs whitespace-normal break-words leading-tight"
                       title={t(item.labelKey || `nav_${item.id}`, { defaultValue: item.label })}
                     >
                       {t(item.labelKey || `nav_${item.id}`, { defaultValue: item.label })}
