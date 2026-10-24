@@ -22,6 +22,7 @@ const TestComponent = () => {
       <span data-testid="translation">{t('test_key')}</span>
       <span data-testid="rtl">{isRTL.toString()}</span>
       <button onClick={() => setLanguage('sw')}>Change to Swahili</button>
+      <button onClick={() => setLanguage('ar')}>Change to Arabic</button>
     </div>
   );
 };
@@ -68,6 +69,24 @@ describe('LanguageContext', () => {
     expect(screen.getByTestId('lang').textContent).toBe('sw');
     expect(screen.getByTestId('translation').textContent).toBe('Jaribio la Kiswahili');
     expect(localStorage.getItem('preferred_language')).toBe('sw');
+  });
+
+  it('sets document language and direction for the selected locale', async () => {
+    render(
+      <LanguageProvider>
+        <TestComponent />
+      </LanguageProvider>
+    );
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    await act(async () => {
+      screen.getByText('Change to Arabic').click();
+    });
+
+    expect(document.documentElement.lang).toBe('ar');
+    expect(document.documentElement.dir).toBe('rtl');
   });
 
   it('loads saved language from localStorage', async () => {

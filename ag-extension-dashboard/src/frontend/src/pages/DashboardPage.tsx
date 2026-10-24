@@ -343,8 +343,8 @@ const SupportEfficiencyCard: React.FC<{
           ].map((item, i) => (
             <div key={i} className="space-y-1.5 sm:space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-xs sm:text-sm font-bold text-slate-300">{item.name}</span>
-                <span className="text-xs font-black text-primary-400">
+                <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">{item.name}</span>
+                <span className="text-xs font-black text-primary-700 dark:text-primary-400">
                   {Math.round(item.progress)}%
                 </span>
               </div>
@@ -551,13 +551,13 @@ const DashboardMapSection: React.FC<{
             <div className="flex items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <div className="w-2 h-2 bg-primary-400 rounded-full"></div>
-                <span className="text-xxs font-bold text-slate-300 uppercase tracking-widest">
+                <span className="text-xxs font-bold text-slate-200 uppercase tracking-widest">
                   {t('table_active')}
                 </span>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <span className="text-xxs font-bold text-slate-300 uppercase tracking-widest">
+                <span className="text-xxs font-bold text-slate-200 uppercase tracking-widest">
                   {t('analytics_disease_alerts')}
                 </span>
               </div>
