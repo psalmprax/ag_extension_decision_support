@@ -10,6 +10,7 @@ import { safeError } from '@/utils/safeResponse';
 import { logger } from '@/utils/logger';
 import { passwordProblems } from '@/utils/passwordPolicy';
 import { verifyPassword } from '@/utils/password';
+import { perUserRateLimit } from '@/middleware/rateLimitMiddleware';
 
 const router = Router();
 const anyUser = authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']);
@@ -88,7 +89,7 @@ function stripSensitive<T extends Record<string, unknown>>(row: T): T {
   return out;
 }
 
-router.post('/password', anyUser, validate(changePasswordSchema), auditMiddleware('account.password_change'), async (req: AuthRequest, res: Response) => {
+router.post('/password', anyUser, perUserRateLimit, validate(changePasswordSchema), auditMiddleware('account.password_change'), async (req: AuthRequest, res: Response) => {
   const userId = req.user!.userId;
   const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
   try {

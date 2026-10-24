@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { validate } from '@/middleware/validationMiddleware';
 import { auditMiddleware } from '@/middleware/auditMiddleware';
 import { authorize } from '@/middleware/authorize';
+import { perUserRateLimit } from '@/middleware/rateLimitMiddleware';
 
 const router = Router();
 
@@ -132,7 +133,7 @@ router.post('/logout', async (req: Request, res: Response) => {
 });
 
 // Get current user
-router.patch('/me', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), validate(updateProfileSchema), auditMiddleware('auth.profile_update'), async (req: Request, res: Response) => {
+router.patch('/me', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), perUserRateLimit, validate(updateProfileSchema), auditMiddleware('auth.profile_update'), async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     const updates = req.body as { firstName?: string; lastName?: string; phone?: string; region?: string };
     const fields: Array<[string, unknown]> = [
