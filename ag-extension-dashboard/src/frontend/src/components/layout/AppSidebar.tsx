@@ -146,8 +146,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     </button>
                     <div
                       id={`sidebar-section-${section.id}`}
-                      hidden={!isExpanded}
                       className="flex flex-col gap-1"
+                      style={{ display: isExpanded ? 'flex' : 'none' }}
                     >
                       {section.items.map(item => (
                         <button

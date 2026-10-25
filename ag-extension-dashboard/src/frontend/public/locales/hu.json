@@ -216,6 +216,7 @@
     "common_save": "Mentés",
     "common_search": "Keresés",
     "common_search_farmers": "Keresés a mezőgazdák nevében vagy régiójában...",
+    "common_search_no_results": "Nincs találat",
     "common_search_placeholder": "Search system or location...",
     "common_searching": "Searching...",
     "common_select_language": "Nyelv kiválasztása",
