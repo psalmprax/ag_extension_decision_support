@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
-  User,
+  User as UserIcon,
   MapPin,
   Shield,
   Save,
@@ -313,7 +313,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         : 'text-white/80 hover:bg-white/10'
                     }`}
                   >
-                    <User className="w-3.5 h-3.5" />
+                    <UserIcon className="w-3.5 h-3.5" />
                     <span>Profile & Avatar</span>
                   </button>
                   <button
