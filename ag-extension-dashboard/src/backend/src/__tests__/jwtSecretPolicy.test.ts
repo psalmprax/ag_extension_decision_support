@@ -2,7 +2,7 @@ import { resolveJwtSecret } from '../config';
 
 describe('JWT secret policy', () => {
     it('requires an explicitly configured staging secret', () => {
-        expect(() => resolveJwtSecret('staging', undefined)).toThrow(/JWT_SECRET is required/);
+        expect(() => resolveJwtSecret('staging', '')).toThrow(/JWT_SECRET is required/);
     });
 
     it('rejects short staging secrets instead of padding them', () => {
@@ -15,7 +15,7 @@ describe('JWT secret policy', () => {
     });
 
     it('retains the development fallback only in development and test', () => {
-        expect(resolveJwtSecret('development', undefined)).toBe('dev-secret-key-for-local-only');
-        expect(resolveJwtSecret('test', undefined)).toBe('dev-secret-key-for-local-only');
+        expect(resolveJwtSecret('development', '')).toBe('dev-secret-key-for-local-only');
+        expect(resolveJwtSecret('test', '')).toBe('dev-secret-key-for-local-only');
     });
 });

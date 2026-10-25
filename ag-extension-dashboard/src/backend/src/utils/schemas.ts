@@ -179,8 +179,17 @@ const legacyVisitAliases = z.object({
   completedAt: z.string().optional(),
 });
 
-const visitInputSchema = legacyVisitAliases
-  .merge(sharedCreateVisitSchema.partial({ farmerId: true, visitType: true, status: true }));
+const visitInputSchema = z.preprocess((value: unknown) => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return value;
+  const body = value as Record<string, unknown>;
+  return {
+    ...body,
+    farmerId: body.farmerId ?? body.farmer_id,
+    visitType: body.visitType ?? body.visit_type ?? body.type,
+    scheduledAt: body.scheduledAt ?? body.scheduled_at,
+    durationMinutes: body.durationMinutes ?? body.duration,
+  };
+}, legacyVisitAliases.merge(sharedCreateVisitSchema.partial({ farmerId: true, visitType: true, status: true })));
 
 export const createVisitSchema = z.object({
   body: visitInputSchema.pipe(

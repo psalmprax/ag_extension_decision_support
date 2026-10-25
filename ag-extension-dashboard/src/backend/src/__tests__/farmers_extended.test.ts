@@ -122,7 +122,7 @@ describe('Extended Farmers API Tests', () => {
             village: 'Village C',
             farmSize: 4.0,
             crops: ['coffee'],
-            assignedOfficerId: '11111111-1111-1111-1111-111111111111'
+            assignedOfficerId: '11111111-1111-4111-8111-111111111111'
         };
 
         const response = await request(app)
@@ -132,7 +132,7 @@ describe('Extended Farmers API Tests', () => {
 
         expect(response.status).toBe(201);
         expect(response.body.success).toBe(true);
-        expect(response.body.data.assignedOfficerId).toBe('11111111-1111-1111-1111-111111111111');
+        expect(response.body.data.assignedOfficerId).toBe('11111111-1111-4111-8111-111111111111');
     });
 
     it('should return the new fields in farmer details', async () => {
