@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Language } from '@/lib/i18n';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore, type User } from '@/store/useAppStore';
 import toast from 'react-hot-toast';
 import apiClient from '@/api/client';
 import { logout } from '@/api/authService';
@@ -56,6 +56,24 @@ const DEFAULT_PREFERENCES = {
   weeklyDigest: false,
 };
 
+const getSavedProfileData = (user: User) => {
+  let parsedPrefs: Partial<typeof DEFAULT_PREFERENCES> = {};
+  let savedAvatar = 'agronomist';
+  let savedUsername = `${(user.firstName || 'user').toLowerCase()}_${(user.lastName || 'officer').toLowerCase()}`;
+  let savedPhone = '';
+  try {
+    const storedPrefs = localStorage.getItem(`gpexts_user_preferences:${user.id}`);
+    parsedPrefs = storedPrefs ? JSON.parse(storedPrefs) as Partial<typeof DEFAULT_PREFERENCES> : {};
+    savedAvatar = localStorage.getItem(`gpexts_user_avatar:${user.id}`) || savedAvatar;
+    savedUsername = localStorage.getItem(`gpexts_user_handle:${user.id}`) || savedUsername;
+    savedPhone = localStorage.getItem(`gpexts_user_phone:${user.id}`) || '';
+  } catch {
+    parsedPrefs = {};
+  }
+
+  return { parsedPrefs, savedAvatar, savedUsername, savedPhone };
+};
+
 export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
   const { t, language, setLanguage } = useLanguage();
   const { user, setUser } = useAppStore();
@@ -90,35 +108,22 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
-    if (user && isOpen) {
-      let parsedPrefs: Partial<typeof DEFAULT_PREFERENCES> = {};
-      let savedAvatar = 'agronomist';
-      let savedUsername = `${(user.firstName || 'user').toLowerCase()}_${(user.lastName || 'officer').toLowerCase()}`;
-      let savedPhone = '';
-      try {
-        const storedPrefs = localStorage.getItem(`gpexts_user_preferences:${user.id}`);
-        parsedPrefs = storedPrefs ? JSON.parse(storedPrefs) as Partial<typeof DEFAULT_PREFERENCES> : {};
-        savedAvatar = localStorage.getItem(`gpexts_user_avatar:${user.id}`) || savedAvatar;
-        savedUsername = localStorage.getItem(`gpexts_user_handle:${user.id}`) || savedUsername;
-        savedPhone = localStorage.getItem(`gpexts_user_phone:${user.id}`) || '';
-      } catch {
-        parsedPrefs = {};
-      }
+    if (!user || !isOpen) return;
+    const { parsedPrefs, savedAvatar, savedUsername, savedPhone } = getSavedProfileData(user);
 
-      setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        username: savedUsername,
-        email: user.email || '',
-        phone: user.phone || savedPhone,
-        region: user.region || 'Uasin Gishu, Kenya',
-        avatarId: savedAvatar,
-      });
+    setFormData({
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      username: savedUsername,
+      email: user.email || '',
+      phone: user.phone || savedPhone,
+      region: user.region || 'Uasin Gishu, Kenya',
+      avatarId: savedAvatar,
+    });
 
-      setPreferences({ ...DEFAULT_PREFERENCES, ...parsedPrefs });
-      setIsEditing(false);
-      setShowDeleteConfirm(false);
-    }
+    setPreferences({ ...DEFAULT_PREFERENCES, ...parsedPrefs });
+    setIsEditing(false);
+    setShowDeleteConfirm(false);
   }, [user, isOpen]);
 
   const handleSaveProfile = async () => {
