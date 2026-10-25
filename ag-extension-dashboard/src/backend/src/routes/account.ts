@@ -97,7 +97,7 @@ function stripSensitive<T extends Record<string, unknown>>(row: T): T {
   return out;
 }
 
-router.post('/password', anyUser, perUserRateLimit, passwordChangeRateLimit, validate(changePasswordSchema), auditMiddleware('account.password_change'), async (req: AuthRequest, res: Response) => {
+router.post('/password', passwordChangeRateLimit, anyUser, perUserRateLimit, validate(changePasswordSchema), auditMiddleware('account.password_change'), async (req: AuthRequest, res: Response) => {
   const userId = req.user!.userId;
   const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
   try {
