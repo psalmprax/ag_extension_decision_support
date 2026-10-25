@@ -7,6 +7,7 @@ import { config } from '../config';
 import { authorize, UserRole } from '../middleware/authorize';
 import { query } from '../services/databaseService';
 import { hashToken } from '../services/sessionService';
+import { csrfProtection } from '../middleware/authCookie';
 import usersRouter from '../routes/users';
 
 jest.mock('../services/databaseService', () => ({ getPool: jest.fn(() => ({})), query: jest.fn() }));
@@ -27,6 +28,7 @@ function token(userId: string, role: UserRole): string {
 const app = express();
 app.use(cookieParser());
 app.use(express.json());
+app.use(csrfProtection);
 app.use('/users', usersRouter);
 app.get('/protected', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), (req, res) => res.json(req.user));
 

@@ -11,9 +11,17 @@ import { z } from 'zod';
 import { validate } from '@/middleware/validationMiddleware';
 import { auditMiddleware } from '@/middleware/auditMiddleware';
 import { authorize } from '@/middleware/authorize';
-import { perUserRateLimit } from '@/middleware/rateLimitMiddleware';
+import rateLimit from 'express-rate-limit';
+import { perUserRateLimit, SharedStateStore } from '@/middleware/rateLimitMiddleware';
 
 const router = Router();
+const profileUpdateRateLimit = rateLimit({
+    store: new SharedStateStore('rl:auth:profile:'),
+    windowMs: 15 * 60 * 1000,
+    limit: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 interface JWTPayload {
     userId: string;
@@ -133,7 +141,7 @@ router.post('/logout', async (req: Request, res: Response) => {
 });
 
 // Get current user
-router.patch('/me', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), perUserRateLimit, validate(updateProfileSchema), auditMiddleware('auth.profile_update'), async (req: Request, res: Response) => {
+router.patch('/me', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), perUserRateLimit, profileUpdateRateLimit, validate(updateProfileSchema), auditMiddleware('auth.profile_update'), async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     const updates = req.body as { firstName?: string; lastName?: string; phone?: string; region?: string };
     const fields: Array<[string, unknown]> = [

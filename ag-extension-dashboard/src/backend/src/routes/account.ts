@@ -10,10 +10,18 @@ import { safeError } from '@/utils/safeResponse';
 import { logger } from '@/utils/logger';
 import { passwordProblems } from '@/utils/passwordPolicy';
 import { verifyPassword } from '@/utils/password';
-import { perUserRateLimit } from '@/middleware/rateLimitMiddleware';
+import rateLimit from 'express-rate-limit';
+import { perUserRateLimit, SharedStateStore } from '@/middleware/rateLimitMiddleware';
 
 const router = Router();
 const anyUser = authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']);
+const passwordChangeRateLimit = rateLimit({
+  store: new SharedStateStore('rl:account:password:'),
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 /**
  * Data-subject rights (GDPR Art. 15 / 17 and Kenya DPA 2019 s.26).
@@ -89,7 +97,7 @@ function stripSensitive<T extends Record<string, unknown>>(row: T): T {
   return out;
 }
 
-router.post('/password', anyUser, perUserRateLimit, validate(changePasswordSchema), auditMiddleware('account.password_change'), async (req: AuthRequest, res: Response) => {
+router.post('/password', anyUser, perUserRateLimit, passwordChangeRateLimit, validate(changePasswordSchema), auditMiddleware('account.password_change'), async (req: AuthRequest, res: Response) => {
   const userId = req.user!.userId;
   const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
   try {
