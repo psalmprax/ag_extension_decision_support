@@ -90,8 +90,13 @@ const DashboardHeader: React.FC<{
     setIsSyncing(true);
     try {
       const result = await syncQueue.processQueue();
-      if (result.failed || result.conflicts) {
-        toast.error(`${result.success} synced · ${result.failed + result.conflicts} need attention.`);
+      const remaining = syncQueue.getQueue().length;
+      const stuck = syncQueue.getStuckItems().length;
+      const retrying = remaining - stuck;
+      if (stuck) {
+        toast.error(`${result.success} synced · ${stuck} need attention${retrying ? ` · ${retrying} remain queued` : ''}.`);
+      } else if (remaining) {
+        toast(`${result.success ? `${result.success} synced · ` : ''}${remaining} change(s) remain queued for retry.`);
       } else if (result.success) {
         toast.success(`${result.success} queued change(s) synced.`);
       } else {

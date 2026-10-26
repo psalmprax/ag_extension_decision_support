@@ -9,10 +9,11 @@ import { validate } from '@/middleware/validationMiddleware';
 import { loginSchema } from '@/utils/schemas';
 import { recordLoginAttempt, resolveLocationFromHeaders } from '@/services/loginHistoryService';
 import { isAccountLocked, recordFailedLogin, resetFailedAttempts } from '@/services/lockoutService';
-import { createSession } from '@/services/sessionService';
+import { createSession, withUserSessionLock } from '@/services/sessionService';
 import { setAuthCookie } from '@/middleware/authCookie';
 import { verifyPassword } from '@/utils/password';
 import { safeError } from '@/utils/safeResponse';
+import { credentialVersion } from '@/utils/credentialVersion';
 
 const router = Router();
 
@@ -174,7 +175,12 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
         // Check if MFA is required
         if (user.mfa_enabled) {
             const tempToken = jwt.sign(
-                { userId: user.id, email: user.email, mfaPending: true },
+                {
+                    userId: user.id,
+                    email: user.email,
+                    mfaPending: true,
+                    credentialVersion: credentialVersion(user.password_hash),
+                },
                 config.jwt.secret as jwt.Secret,
                 { algorithm: 'HS256', expiresIn: '5m' }
             );
@@ -190,16 +196,6 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
             });
         }
 
-        // Record successful login
-        await recordLoginAttempt({
-            userId: user.id,
-            email: user.email,
-            status: 'success',
-            ipAddress: clientIp,
-            userAgent: req.get('user-agent'),
-            location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
-        });
-
         // Generate JWT token
         const token = jwt.sign(
             { userId: user.id, email: user.email, role: user.role },
@@ -207,10 +203,28 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
             { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
 
-        // Create active user session
-        await createSession({
+        const sessionCreated = await withUserSessionLock(user.id, async client => {
+            const current = await client.query<{ password_hash: string | null }>(
+                'SELECT password_hash FROM users WHERE id = $1 FOR UPDATE', [user.id]
+            );
+            if (current.rows[0]?.password_hash !== user.password_hash) return false;
+            await createSession({
+                userId: user.id,
+                token,
+                ipAddress: clientIp,
+                userAgent: req.get('user-agent'),
+                location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
+            }, client);
+            return true;
+        });
+        if (!sessionCreated) {
+            return res.status(401).json({ success: false, error: 'Invalid email or password' });
+        }
+
+        await recordLoginAttempt({
             userId: user.id,
-            token,
+            email: user.email,
+            status: 'success',
             ipAddress: clientIp,
             userAgent: req.get('user-agent'),
             location: resolveLocationFromHeaders(req.headers, clientIp, user.region),

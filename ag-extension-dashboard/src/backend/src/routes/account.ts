@@ -5,7 +5,7 @@ import { getPool, query } from '@/services/databaseService';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { validate } from '@/middleware/validationMiddleware';
 import { auditMiddleware } from '@/middleware/auditMiddleware';
-import { revokeAllUserSessions } from '@/services/sessionService';
+import { revokeAllUserSessions, withUserSessionLock } from '@/services/sessionService';
 import { safeError } from '@/utils/safeResponse';
 import { logger } from '@/utils/logger';
 import { passwordProblems } from '@/utils/passwordPolicy';
@@ -101,22 +101,24 @@ router.post('/password', passwordChangeRateLimit, anyUser, perUserRateLimit, val
   const userId = req.user!.userId;
   const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
   try {
-    const userRes = await query<{ password_hash: string | null; email: string }>(
-      'SELECT password_hash, email FROM users WHERE id = $1', [userId]
-    );
-    const user = userRes.rows[0];
-    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
-    if (!user.password_hash || !(await verifyPassword(currentPassword, user.password_hash))) {
-      return res.status(401).json({ success: false, error: 'Current password is incorrect' });
-    }
-    const problems = passwordProblems(newPassword, user.email);
-    if (problems.length) {
-      return res.status(400).json({ success: false, error: `Password must meet these requirements: ${problems.join(', ')}` });
-    }
-    const passwordHash = await bcrypt.hash(newPassword, 10);
-    await revokeAllUserSessions(userId);
-    await query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [passwordHash, userId]);
-    return res.json({ success: true, message: 'Password updated. Sign in again with your new password.' });
+    return await withUserSessionLock(userId, async client => {
+      const userRes = await client.query<{ password_hash: string | null; email: string }>(
+        'SELECT password_hash, email FROM users WHERE id = $1 FOR UPDATE', [userId]
+      );
+      const user = userRes.rows[0];
+      if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+      if (!user.password_hash || !(await verifyPassword(currentPassword, user.password_hash))) {
+        return res.status(400).json({ success: false, error: 'Current password is incorrect' });
+      }
+      const problems = passwordProblems(newPassword, user.email);
+      if (problems.length) {
+        return res.status(400).json({ success: false, error: `Password must meet these requirements: ${problems.join(', ')}` });
+      }
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+      await revokeAllUserSessions(userId);
+      await client.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [passwordHash, userId]);
+      return res.json({ success: true, message: 'Password updated. Sign in again with your new password.' });
+    });
   } catch (error) {
     logger.error('account password change failed:', error);
     return safeError(res, 500, 'Password change failed');
@@ -190,7 +192,7 @@ router.delete('/', anyUser, validate(deleteSchema), auditMiddleware('account.del
     if (user.password_hash) {
       const pw = (req.body as { password?: string }).password;
       if (!pw || !(await bcrypt.compare(pw, user.password_hash))) {
-        return res.status(401).json({ success: false, error: 'Password confirmation failed' });
+        return res.status(400).json({ success: false, error: 'Password confirmation failed' });
       }
     }
 

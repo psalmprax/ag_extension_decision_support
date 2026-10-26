@@ -10,6 +10,7 @@ import { isAccountLocked, recordFailedLogin, resetFailedAttempts } from '../serv
 import { recordLoginAttempt } from '../services/loginHistoryService';
 import { createSession } from '../services/sessionService';
 import { setAuthCookie } from '../middleware/authCookie';
+import { credentialVersion } from '../utils/credentialVersion';
 
 jest.mock('../config', () => ({ config: { jwt: { secret: 'challenge-test-secret', expiresIn: '1h' } } }));
 jest.mock('bcryptjs', () => ({ compare: jest.fn() }));
@@ -18,10 +19,18 @@ jest.mock('../services/mfaService', () => ({ matchTotpStep: jest.fn(), verifyAnd
 jest.mock('../services/lockoutService', () => ({
   isAccountLocked: jest.fn(), recordFailedLogin: jest.fn(), resetFailedAttempts: jest.fn(),
 }));
+const mockWithUserSessionLock = jest.fn<
+  Promise<unknown>,
+  [string, (client: { query: jest.Mock }) => Promise<unknown>]
+>();
 jest.mock('../services/loginHistoryService', () => ({
   recordLoginAttempt: jest.fn(), resolveLocationFromHeaders: jest.fn(),
 }));
-jest.mock('../services/sessionService', () => ({ createSession: jest.fn() }));
+jest.mock('../services/sessionService', () => ({
+  createSession: jest.fn(),
+  withUserSessionLock: (userId: string, callback: (client: { query: jest.Mock }) => Promise<unknown>) =>
+    mockWithUserSessionLock(userId, callback),
+}));
 jest.mock('../services/sharedState', () => ({ setWithTtl: jest.fn(), getTtl: jest.fn(), delKey: jest.fn() }));
 jest.mock('../middleware/authCookie', () => ({ setAuthCookie: jest.fn() }));
 jest.mock('../middleware/auditMiddleware', () => ({
@@ -38,9 +47,16 @@ const makeUser = () => ({
   mfa_backup_codes: ['hashed-backup'], last_totp_step: 119 as number | string | null,
 });
 let user = makeUser();
+const runWithUserSessionLock = async (_userId: string, callback: (client: { query: jest.Mock }) => Promise<unknown>) =>
+  callback({ query: jest.fn(async () => ({ rows: [{ password_hash: user.password_hash }] })) });
 
 function verifyChallenge(isBackupCode = false) {
-  const tempToken = jwt.sign({ userId: user.id, email: user.email, mfaPending: true }, 'challenge-test-secret', {
+  const tempToken = jwt.sign({
+    userId: user.id,
+    email: user.email,
+    mfaPending: true,
+    credentialVersion: credentialVersion(user.password_hash),
+  }, 'challenge-test-secret', {
     algorithm: 'HS256', expiresIn: '5m',
   });
   return request(app).post('/mfa/verify').send({ tempToken, code: '123456', isBackupCode });
@@ -48,6 +64,7 @@ function verifyChallenge(isBackupCode = false) {
 
 beforeEach(() => {
   jest.resetAllMocks();
+  mockWithUserSessionLock.mockImplementation(runWithUserSessionLock);
   user = makeUser();
   mockQuery.mockImplementation(async (sql: string) => {
     if (sql.startsWith('SELECT * FROM users')) return { rows: [user] };
@@ -98,11 +115,26 @@ describe('MFA challenge regression guards', () => {
     expect(res.status).toBe(200);
     expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining('last_totp_step < $1'), [120, user.id]);
     expect(resetFailedAttempts).toHaveBeenCalledWith(user.id);
-    expect(createSession).toHaveBeenCalledWith(expect.objectContaining({ userId: user.id, token: res.body.data.token }));
+    expect(createSession).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: user.id, token: res.body.data.token }),
+      expect.anything()
+    );
     expect(jwt.verify(res.body.data.token, 'challenge-test-secret', { algorithms: ['HS256'] })).toMatchObject({
       userId: user.id, role: user.role,
     });
     expect(setAuthCookie).toHaveBeenCalledWith(expect.anything(), res.body.data.token);
+  });
+
+  it('rejects an MFA challenge issued before a password change', async () => {
+    mockWithUserSessionLock.mockImplementation(async (_userId, callback) =>
+      callback({ query: jest.fn(async () => ({ rows: [{ password_hash: 'new-password-hash' }] })) }));
+
+    const res = await verifyChallenge();
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toContain('Password changed');
+    expect(createSession).not.toHaveBeenCalled();
+    expect(setAuthCookie).not.toHaveBeenCalled();
   });
 
   it.each([false, true])('records an invalid TOTP with the expected lockout response (locked=%s)', async locked => {

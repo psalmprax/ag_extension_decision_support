@@ -44,7 +44,7 @@ function resolveToolParameters(t: Record<string, unknown>): Record<string, unkno
         parameters = t.jsonSchema as Record<string, unknown>;
     } else if (isZodSchema(t.schema)) {
         try {
-            parameters = z.toJSONSchema(t.schema, { target: 'draft-07', reused: 'inline' }) as Record<string, unknown>;
+            parameters = z.toJSONSchema(t.schema, { target: 'draft-07', reused: 'inline', io: 'input' }) as Record<string, unknown>;
             // Strip schema metadata that is not part of tool parameters.
             delete parameters.$schema;
         } catch {

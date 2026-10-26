@@ -4,7 +4,7 @@ import { config } from '@/config';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { getLoginHistory, getLoginStats } from '@/services/loginHistoryService';
-import { isSessionValid } from '@/services/sessionService';
+import { createSession, isSessionValid, revokeToken, withUserSessionLock } from '@/services/sessionService';
 import { setAuthCookie, clearAuthCookie, getBearerToken } from '@/middleware/authCookie';
 import { isSubscriptionActive } from '@/services/subscriptionUtils';
 import { z } from 'zod';
@@ -60,7 +60,6 @@ const updateProfileSchema = z.object({
         firstName: z.string().trim().min(1).max(100).optional(),
         lastName: z.string().trim().min(1).max(100).optional(),
         phone: z.string().trim().max(40).optional(),
-        region: z.string().trim().max(120).optional(),
     }).strict().refine(body => Object.keys(body).length > 0, 'At least one profile field is required'),
 });
 
@@ -85,7 +84,6 @@ router.post('/refresh', async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'Token expired beyond refresh window; please log in again' });
         }
 
-        const { isSessionValid, createSession, revokeToken } = await import('@/services/sessionService');
         if (!(await isSessionValid(token))) {
             return res.status(401).json({ success: false, error: 'Session has been revoked' });
         }
@@ -96,17 +94,21 @@ router.post('/refresh', async (req: Request, res: Response) => {
             { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
 
-        // Rotate: the old token is retired locally and a new session row is recorded.
-        revokeToken(token);
-        try {
+        // Rotate under the account lock so a concurrent password change cannot
+        // revoke the old token and then have this request create a surviving session.
+        const sessionCreated = await withUserSessionLock(decoded.userId, async client => {
+            if (!(await isSessionValid(token))) return false;
+            revokeToken(token);
             await createSession({
                 userId: decoded.userId,
                 token: newToken,
                 ipAddress: req.ip ?? null,
                 userAgent: req.get('user-agent') ?? null,
-            });
-        } catch (sessionErr) {
-            logger.warn('Refresh: failed to record rotated session (continuing):', sessionErr);
+            }, client);
+            return true;
+        });
+        if (!sessionCreated) {
+            return res.status(401).json({ success: false, error: 'Session has been revoked' });
         }
 
         setAuthCookie(res, newToken);
@@ -143,12 +145,11 @@ router.post('/logout', async (req: Request, res: Response) => {
 // Get current user
 router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), perUserRateLimit, validate(updateProfileSchema), auditMiddleware('auth.profile_update'), async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const updates = req.body as { firstName?: string; lastName?: string; phone?: string; region?: string };
+    const updates = req.body as { firstName?: string; lastName?: string; phone?: string };
     const fields: Array<[string, unknown]> = [
         ['first_name', updates.firstName],
         ['last_name', updates.lastName],
         ['phone', updates.phone],
-        ['region', updates.region],
     ].filter((entry): entry is [string, string] => typeof entry[1] === 'string');
     const assignments = fields.map(([column], index) => `${column} = $${index + 1}`);
     const values = fields.map(([, value]) => value);

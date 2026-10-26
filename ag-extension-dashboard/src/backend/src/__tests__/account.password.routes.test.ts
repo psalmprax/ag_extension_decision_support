@@ -2,6 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { jest } from '@jest/globals';
+import bcrypt from 'bcryptjs';
 import accountRouter from '@/routes/account';
 import { query } from '@/services/databaseService';
 import { verifyPassword } from '@/utils/password';
@@ -11,7 +12,11 @@ import { revokeAllUserSessions } from '@/services/sessionService';
 jest.mock('@/services/databaseService');
 jest.mock('@/utils/password', () => ({ verifyPassword: jest.fn() }));
 jest.mock('@/utils/passwordPolicy', () => ({ passwordProblems: jest.fn() }));
-jest.mock('@/services/sessionService', () => ({ revokeAllUserSessions: jest.fn() }));
+jest.mock('@/services/sessionService', () => ({
+    revokeAllUserSessions: jest.fn(),
+    withUserSessionLock: (_userId: string, callback: (client: { query: typeof query }) => Promise<unknown>) =>
+        callback({ query: (...args: Parameters<typeof query>) => mockQuery(...args) }),
+}));
 jest.mock('@/middleware/authorize', () => ({
     authorize: () => (req: Request, _res: Response, next: NextFunction) => {
         req.user = { userId: 'user-1', email: 'user@example.com', role: 'extension_officer' };
@@ -69,9 +74,22 @@ describe('POST /api/v1/account/password', () => {
         await request(app)
             .post('/api/v1/account/password')
             .send({ currentPassword: 'wrong-password', newPassword: 'StrongPass123' })
-            .expect(401);
+            .expect(400);
 
         expect(mockQuery).toHaveBeenCalledTimes(1);
         expect(mockRevokeAllUserSessions).not.toHaveBeenCalled();
+    });
+
+    it('returns a validation error when account deletion password confirmation is incorrect', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{ password_hash: await bcrypt.hash('correct-password', 4), role: 'extension_officer', email: 'user@example.com' }],
+            rowCount: 1,
+        });
+
+        await request(app)
+            .delete('/')
+            .send({ password: 'incorrect-password', confirm: 'DELETE MY ACCOUNT' })
+            .expect(400);
+
     });
 });

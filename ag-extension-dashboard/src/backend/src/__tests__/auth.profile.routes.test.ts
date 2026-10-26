@@ -24,7 +24,7 @@ app.use('/api/auth', sessionRouter);
 describe('PATCH /api/auth/me', () => {
     beforeEach(() => jest.clearAllMocks());
 
-    it('persists only the supported profile fields for the authenticated user', async () => {
+    it('persists only editable identity and contact fields for the authenticated user', async () => {
         mockQuery.mockResolvedValueOnce({
             rows: [{
                 id: 'user-1',
@@ -40,7 +40,7 @@ describe('PATCH /api/auth/me', () => {
 
         const response = await request(app)
             .patch('/api/auth/me')
-            .send({ firstName: 'Jordan', lastName: 'Farmer', phone: '+254700000000', region: 'Nakuru' })
+            .send({ firstName: 'Jordan', lastName: 'Farmer', phone: '+254700000000' })
             .expect(200);
 
         expect(response.body.data).toMatchObject({
@@ -51,12 +51,17 @@ describe('PATCH /api/auth/me', () => {
             region: 'Nakuru',
         });
         expect(mockQuery).toHaveBeenCalledWith(
-            expect.stringContaining('UPDATE users SET first_name = $1, last_name = $2, phone = $3, region = $4'),
-            ['Jordan', 'Farmer', '+254700000000', 'Nakuru', 'user-1']
+            expect.stringContaining('UPDATE users SET first_name = $1, last_name = $2, phone = $3'),
+            ['Jordan', 'Farmer', '+254700000000', 'user-1']
         );
     });
 
-    it('rejects fields outside the self-service profile contract', async () => {
+    it('rejects authorization and other protected fields in self-service profile updates', async () => {
+        await request(app)
+            .patch('/api/auth/me')
+            .send({ region: 'another region' })
+            .expect(400);
+
         await request(app)
             .patch('/api/auth/me')
             .send({ email: 'changed@example.com', role: 'admin' })

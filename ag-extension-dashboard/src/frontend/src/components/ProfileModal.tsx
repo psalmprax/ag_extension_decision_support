@@ -133,7 +133,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
-        region: formData.region,
       });
       let personalizationSaved = true;
       try {
@@ -152,7 +151,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
-          region: formData.region,
           phone: formData.phone,
         });
       }
@@ -190,9 +188,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       });
       toast.success('Password updated. Please sign in again.');
       setPasswordState({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      setUser(null);
       await logout();
-      onClose();
+      localStorage.removeItem('user');
+      setUser(null);
+      window.location.href = '/login';
     } catch {
       toast.error('Password could not be updated. Check your current password and try again.');
     }
@@ -212,9 +211,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         },
       });
       toast.success('Account deleted. Your session has ended.');
-      setUser(null);
       await logout();
-      onClose();
+      localStorage.removeItem('user');
+      setUser(null);
+      window.location.href = '/login';
     } catch {
       toast.error('Account deletion failed. Verify your password and try again.');
     } finally {
@@ -464,9 +464,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         <div className="relative mt-1">
                           <input
                             type="text"
-                            disabled={!isEditing}
+                            disabled
                             value={formData.region}
-                            onChange={e => setFormData(prev => ({ ...prev, region: e.target.value }))}
                             className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
                           />
                           <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">

@@ -5,12 +5,13 @@ import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { recordLoginAttempt, resolveLocationFromHeaders } from '@/services/loginHistoryService';
 import { generateMfaSecret, matchTotpStep, verifyAndConsumeBackupCode, hashBackupCodes } from '@/services/mfaService';
-import { createSession } from '@/services/sessionService';
+import { createSession, withUserSessionLock } from '@/services/sessionService';
 import { setAuthCookie } from '@/middleware/authCookie';
 import { isAccountLocked, recordFailedLogin, resetFailedAttempts } from '@/services/lockoutService';
 import { setWithTtl, getTtl, delKey } from '@/services/sharedState';
 import { verifyPassword } from '@/utils/password';
 import { safeError } from '@/utils/safeResponse';
+import { credentialVersion } from '@/utils/credentialVersion';
 
 const router = Router();
 
@@ -71,7 +72,7 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'tempToken and code are required' });
         }
 
-        let decoded: { userId: string; email: string; mfaPending?: boolean };
+        let decoded: { userId: string; email: string; mfaPending?: boolean; credentialVersion?: string };
         try {
             decoded = jwt.verify(tempToken, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as typeof decoded;
         } catch {
@@ -126,16 +127,6 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
 
         await resetFailedAttempts(user.id);
 
-        // Record successful login
-        await recordLoginAttempt({
-            userId: user.id,
-            email: user.email,
-            status: 'success',
-            ipAddress: clientIp,
-            userAgent: req.get('user-agent'),
-            location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
-        });
-
         // Generate full JWT token
         const token = jwt.sign(
             { userId: user.id, email: user.email, role: user.role },
@@ -143,10 +134,31 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
             { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
 
-        // Create active user session
-        await createSession({
+        const sessionCreated = await withUserSessionLock(user.id, async client => {
+            const current = await client.query<{ password_hash: string | null }>(
+                'SELECT password_hash FROM users WHERE id = $1 FOR UPDATE', [user.id]
+            );
+            if (
+                !decoded.credentialVersion
+                || credentialVersion(current.rows[0]?.password_hash) !== decoded.credentialVersion
+            ) return false;
+            await createSession({
+                userId: user.id,
+                token,
+                ipAddress: clientIp,
+                userAgent: req.get('user-agent'),
+                location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
+            }, client);
+            return true;
+        });
+        if (!sessionCreated) {
+            return res.status(401).json({ success: false, error: 'Password changed; please sign in again' });
+        }
+
+        await recordLoginAttempt({
             userId: user.id,
-            token,
+            email: user.email,
+            status: 'success',
             ipAddress: clientIp,
             userAgent: req.get('user-agent'),
             location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
