@@ -66,6 +66,7 @@ describe('HelpCenterModal', () => {
     vi.mocked(createSupportTicket).mockRejectedValueOnce(new Error('network unavailable'));
     render(<HelpCenterModal isOpen onClose={vi.fn()} />);
 
+    fireEvent.click(screen.getByRole('button', { name: 'Report an Issue' }));
     fireEvent.change(screen.getByPlaceholderText('Brief description of your issue'), {
       target: { value: 'Map is not loading' },
     });

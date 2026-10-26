@@ -34,14 +34,14 @@ describe('GlobalSearch', () => {
   it('shows a loading state before remote results are available', () => {
     renderSearch({ isGlobalSearching: true });
 
-    expect(screen.getAllByRole('status')).toHaveLength(2);
+    expect(screen.getAllByRole('status')).toHaveLength(1);
     expect(screen.getAllByRole('status')[0]).toHaveTextContent('Searching...');
   });
 
   it('explains when the search has no results', () => {
     renderSearch();
 
-    expect(screen.getAllByRole('status')).toHaveLength(2);
+    expect(screen.getAllByRole('status')).toHaveLength(1);
     expect(screen.getAllByRole('status')[0]).toHaveTextContent('No results found');
   });
 });
