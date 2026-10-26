@@ -9,10 +9,11 @@ import { validate } from '@/middleware/validationMiddleware';
 import { loginSchema } from '@/utils/schemas';
 import { recordLoginAttempt, resolveLocationFromHeaders } from '@/services/loginHistoryService';
 import { isAccountLocked, recordFailedLogin, resetFailedAttempts } from '@/services/lockoutService';
-import { createSession } from '@/services/sessionService';
+import { createSession, withUserSessionLock } from '@/services/sessionService';
 import { setAuthCookie } from '@/middleware/authCookie';
 import { verifyPassword } from '@/utils/password';
 import { safeError } from '@/utils/safeResponse';
+import { credentialVersion } from '@/utils/credentialVersion';
 
 const router = Router();
 
@@ -50,6 +51,83 @@ async function resolveLoginPlan(user: { id: string; role: string; is_demo?: bool
         }
     }
     return { planName, isFree };
+}
+
+interface LoginUser {
+    id: string;
+    email: string;
+    password_hash: string | null;
+    region: string | null;
+    role: string;
+    first_name: string | null;
+    last_name: string | null;
+    mfa_enabled: boolean;
+    is_demo?: boolean;
+}
+
+interface LoginUserRow extends LoginUser {
+    lockout_until?: Date | string | null;
+    email_verified?: boolean | null;
+}
+
+async function completePasswordLogin(req: Request, res: Response, user: LoginUser, clientIp: string | null): Promise<void> {
+    const token = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role },
+        config.jwt.secret as jwt.Secret,
+        { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
+    );
+
+    const sessionCreated = await withUserSessionLock(user.id, async client => {
+        const current = await client.query<{ password_hash: string | null }>(
+            'SELECT password_hash FROM users WHERE id = $1 FOR UPDATE', [user.id]
+        );
+        if (current.rows[0]?.password_hash !== user.password_hash) return false;
+        await createSession({
+            userId: user.id,
+            token,
+            ipAddress: clientIp,
+            userAgent: req.get('user-agent'),
+            location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
+        }, client);
+        return true;
+    });
+    if (!sessionCreated) {
+        res.status(401).json({ success: false, error: 'Invalid email or password' });
+        return;
+    }
+
+    await recordLoginAttempt({
+        userId: user.id,
+        email: user.email,
+        status: 'success',
+        ipAddress: clientIp,
+        userAgent: req.get('user-agent'),
+        location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
+    });
+
+    const { planName, isFree } = await resolveLoginPlan({
+        id: user.id, role: user.role, is_demo: user.is_demo, email: user.email,
+    });
+
+    setAuthCookie(res, token);
+
+    res.json({
+        success: true,
+        data: {
+            token,
+            user: {
+                id: user.id,
+                email: user.email,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                role: user.role,
+                region: user.region,
+                mfaEnabled: !!user.mfa_enabled,
+                planName,
+                isFree,
+            },
+        },
+    });
 }
 
 /**
@@ -95,7 +173,7 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
         }
 
         // Get user from database
-        const result = await query('SELECT * FROM users WHERE email = $1', [email]);
+        const result = await query<LoginUserRow>('SELECT * FROM users WHERE email = $1', [email]);
         const user = result.rows[0];
 
         if (!user) {
@@ -174,7 +252,12 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
         // Check if MFA is required
         if (user.mfa_enabled) {
             const tempToken = jwt.sign(
-                { userId: user.id, email: user.email, mfaPending: true },
+                {
+                    userId: user.id,
+                    email: user.email,
+                    mfaPending: true,
+                    credentialVersion: credentialVersion(user.password_hash),
+                },
                 config.jwt.secret as jwt.Secret,
                 { algorithm: 'HS256', expiresIn: '5m' }
             );
@@ -190,58 +273,10 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
             });
         }
 
-        // Record successful login
-        await recordLoginAttempt({
-            userId: user.id,
-            email: user.email,
-            status: 'success',
-            ipAddress: clientIp,
-            userAgent: req.get('user-agent'),
-            location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
-        });
-
-        // Generate JWT token
-        const token = jwt.sign(
-            { userId: user.id, email: user.email, role: user.role },
-            config.jwt.secret as jwt.Secret,
-            { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
-        );
-
-        // Create active user session
-        await createSession({
-            userId: user.id,
-            token,
-            ipAddress: clientIp,
-            userAgent: req.get('user-agent'),
-            location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
-        });
-
-        const { planName, isFree } = await resolveLoginPlan({
-            id: user.id, role: user.role, is_demo: user.is_demo, email: user.email,
-        });
-
         // httpOnly cookie for the SPA; the body token remains for
         // mobile/extension/API clients (they never receive cookies' protection
         // and still authenticate via the Authorization header).
-        setAuthCookie(res, token);
-
-        res.json({
-            success: true,
-            data: {
-                token,
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    firstName: user.first_name,
-                    lastName: user.last_name,
-                    role: user.role,
-                    region: user.region,
-                    mfaEnabled: !!user.mfa_enabled,
-                    planName,
-                    isFree,
-                },
-            },
-        });
+        await completePasswordLogin(req, res, user, clientIp);
     } catch (error) {
         logger.error('Login error:', error);
         safeError(res, 500, 'Login failed');

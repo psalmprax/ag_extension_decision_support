@@ -63,6 +63,7 @@ services:
         required: false
     environment:
       NODE_ENV: staging
+      JWT_SECRET: ${JWT_SECRET:?Set a unique JWT_SECRET with at least 32 characters for staging}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       # Staging uses its own domain for CORS
       CORS_ORIGIN: ${CORS_ORIGIN:-https://${STAGING_DOMAIN:-staging.gpexts.com}}
@@ -94,9 +95,6 @@ services:
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
       - "traefik.http.routers.backend.tls.domains[0].main=${STAGING_DOMAIN:-staging.gpexts.com}"
-      # Router 3 — localhost/IP for local health checks (HTTP only, no TLS)
-      - "traefik.http.routers.backend-local.rule=(Host(`localhost`) || Host(`127.0.0.1`) || Host(`145.223.97.248`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
-      - "traefik.http.routers.backend-local.entrypoints=web"
       # HTTP → HTTPS redirect middleware (per-service scope)
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
 
@@ -123,9 +121,6 @@ services:
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
       - "traefik.http.routers.frontend.tls.domains[0].main=${STAGING_DOMAIN:-staging.gpexts.com}"
-      # Router 3 — localhost/IP for local dev testing (HTTP only)
-      - "traefik.http.routers.frontend-local.rule=Host(`localhost`) || Host(`127.0.0.1`) || Host(`145.223.97.248`)"
-      - "traefik.http.routers.frontend-local.entrypoints=web"
       # HTTP → HTTPS redirect middleware
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
 

@@ -174,6 +174,12 @@ describe('logout revocation', () => {
                     rowCount: 1,
                 });
             }
+            if (typeof sql === 'string' && sql.includes('FROM users WHERE id')) {
+                return Promise.resolve({
+                    rows: [{ password_hash: passwordHash }],
+                    rowCount: 1,
+                });
+            }
             if (typeof sql === 'string' && sql.includes('INSERT INTO user_sessions')) {
                 return Promise.resolve({ rows: [{ id: 'session-1' }], rowCount: 1 });
             }

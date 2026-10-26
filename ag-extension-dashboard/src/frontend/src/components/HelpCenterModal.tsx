@@ -188,16 +188,8 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
         throw new Error('Submission returned unsuccessful status');
       }
     } catch {
-      // Resilient fallback for demo mode / unauthenticated testing
-      setTicketSubmitted(true);
-      setTicketSubject('');
-      setTicketDescription('');
-      toast.success('Support ticket logged successfully!');
-      addNotification({ type: 'success', message: 'Support ticket submitted successfully' });
-      setTimeout(() => {
-        setShowTicketForm(false);
-        setTicketSubmitted(false);
-      }, 2000);
+      toast.error('Support ticket could not be submitted. Please retry when you are online.');
+      addNotification({ type: 'error', message: 'Support ticket could not be submitted.' });
     } finally {
       setTicketSubmitting(false);
     }

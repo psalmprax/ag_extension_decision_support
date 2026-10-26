@@ -34,6 +34,22 @@ describe('normalizeToolDefinitions', () => {
     expect(result?.[0].function.parameters).not.toHaveProperty('$schema');
   });
 
+  it('keeps defaulted tool arguments optional in the advertised input schema', () => {
+    const result = normalizeToolDefinitions([
+      {
+        name: 'weather',
+        schema: z.object({ location: z.string(), days: z.number().optional().default(3) }),
+      },
+      {
+        name: 'dispatch',
+        schema: z.object({ type: z.string(), priority: z.enum(['low', 'high']).default('low') }),
+      },
+    ]);
+
+    expect(result?.[0].function.parameters).toMatchObject({ required: ['location'] });
+    expect(result?.[1].function.parameters).toMatchObject({ required: ['type'] });
+  });
+
   it('uses inputSchema when no JSON or Zod schema is supplied', () => {
     const inputSchema = { type: 'object', properties: { days: { type: 'number' } } };
     const result = normalizeToolDefinitions([{ name: 'forecast', inputSchema }]);

@@ -107,11 +107,11 @@ const limiter = perUserRateLimit;
 
 // Middleware
 app.use(helmet({
-    hsts: config.nodeEnv === 'production',
+    hsts: config.nodeEnv !== 'development' && config.nodeEnv !== 'test',
     contentSecurityPolicy: {
         directives: {
             ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-            "upgrade-insecure-requests": config.nodeEnv === 'production' ? [] : null,
+            "upgrade-insecure-requests": config.nodeEnv !== 'development' && config.nodeEnv !== 'test' ? [] : null,
             "img-src": ["'self'", "data:", "https://images.unsplash.com", "https://*.ytimg.com"],
             "style-src": ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://*.openstreetmap.org", "https://fonts.googleapis.com"],
             "font-src": ["'self'", "data:", "https://unpkg.com", "https://fonts.gstatic.com"],

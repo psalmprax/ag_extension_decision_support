@@ -9,7 +9,7 @@
  *
  * Providers must also accept either a string prompt or a messages array.
  */
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { z } from 'zod';
 
 export interface OpenAIToolDefinition {
     type: 'function';
@@ -34,7 +34,7 @@ export interface ChatMessage {
     tool_calls?: NormalizedToolCall[];
 }
 
-function isZodSchema(v: unknown): v is Parameters<typeof zodToJsonSchema>[0] {
+function isZodSchema(v: unknown): v is z.ZodType {
     return !!v && typeof v === 'object' && typeof (v as any).safeParse === 'function';
 }
 
@@ -44,8 +44,8 @@ function resolveToolParameters(t: Record<string, unknown>): Record<string, unkno
         parameters = t.jsonSchema as Record<string, unknown>;
     } else if (isZodSchema(t.schema)) {
         try {
-            parameters = zodToJsonSchema(t.schema, { $refStrategy: 'none' }) as Record<string, unknown>;
-            // zod-to-json-schema wraps in a top-level with $schema; strip non-parameter keys.
+            parameters = z.toJSONSchema(t.schema, { target: 'draft-07', reused: 'inline', io: 'input' }) as Record<string, unknown>;
+            // Strip schema metadata that is not part of tool parameters.
             delete parameters.$schema;
         } catch {
             parameters = { type: 'object', properties: {} };

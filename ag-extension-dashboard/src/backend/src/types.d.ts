@@ -15,19 +15,22 @@ declare module 'pg' {
     }
 
     export interface PoolClient {
-        query(text: string, values?: unknown[]): Promise<QueryResult>;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        query<R = any>(text: string, values?: unknown[]): Promise<QueryResult<R>>;
         release(): void;
     }
 
     export class Pool {
         constructor(config?: PoolConfig | string);
-        query(text: string, values?: unknown[]): Promise<QueryResult>;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        query<R = any>(text: string, values?: unknown[]): Promise<QueryResult<R>>;
         end(): Promise<void>;
         connect(): Promise<PoolClient>;
     }
 
-    export interface QueryResult {
-        rows: unknown[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    export interface QueryResult<R = any> {
+        rows: R[];
         rowCount: number;
         fields: FieldDef[];
     }

@@ -5,12 +5,13 @@ import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { recordLoginAttempt, resolveLocationFromHeaders } from '@/services/loginHistoryService';
 import { generateMfaSecret, matchTotpStep, verifyAndConsumeBackupCode, hashBackupCodes } from '@/services/mfaService';
-import { createSession } from '@/services/sessionService';
+import { createSession, withUserSessionLock } from '@/services/sessionService';
 import { setAuthCookie } from '@/middleware/authCookie';
 import { isAccountLocked, recordFailedLogin, resetFailedAttempts } from '@/services/lockoutService';
 import { setWithTtl, getTtl, delKey } from '@/services/sharedState';
 import { verifyPassword } from '@/utils/password';
 import { safeError } from '@/utils/safeResponse';
+import { credentialVersion } from '@/utils/credentialVersion';
 
 const router = Router();
 
@@ -26,7 +27,7 @@ interface JWTPayload {
 interface MfaChallengeUser {
     id: string;
     mfa_secret: string;
-    mfa_backup_codes: Parameters<typeof verifyAndConsumeBackupCode>[2];
+    mfa_backup_codes?: Parameters<typeof verifyAndConsumeBackupCode>[2] | null;
     last_totp_step?: number | string | null;
 }
 
@@ -58,6 +59,102 @@ function mfaFailureMessage(reason: string | null, failedInfo: Awaited<ReturnType
     return `Invalid verification code. ${failedInfo.remainingAttempts} attempt(s) remaining.`;
 }
 
+interface MfaLoginUser {
+    id: string;
+    email: string;
+    region: string | null;
+    role: string;
+    first_name: string | null;
+    last_name: string | null;
+}
+
+interface MfaVerifyUserRow extends MfaLoginUser {
+    mfa_secret: string;
+    mfa_backup_codes?: Parameters<typeof verifyAndConsumeBackupCode>[2] | null;
+    last_totp_step?: number | string | null;
+    lockout_until?: Date | string | null;
+}
+
+async function completeMfaLogin(
+    req: Request,
+    res: Response,
+    user: MfaLoginUser,
+    clientIp: string | null,
+    expectedCredentialVersion?: string
+): Promise<void> {
+    const token = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role },
+        config.jwt.secret as jwt.Secret,
+        { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
+    );
+
+    const sessionCreated = await withUserSessionLock(user.id, async client => {
+        const current = await client.query<{ password_hash: string | null }>(
+            'SELECT password_hash FROM users WHERE id = $1 FOR UPDATE', [user.id]
+        );
+        if (
+            !expectedCredentialVersion
+            || credentialVersion(current.rows[0]?.password_hash) !== expectedCredentialVersion
+        ) return false;
+        await createSession({
+            userId: user.id,
+            token,
+            ipAddress: clientIp,
+            userAgent: req.get('user-agent'),
+            location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
+        }, client);
+        return true;
+    });
+    if (!sessionCreated) {
+        res.status(401).json({ success: false, error: 'Password changed; please sign in again' });
+        return;
+    }
+
+    await recordLoginAttempt({
+        userId: user.id,
+        email: user.email,
+        status: 'success',
+        ipAddress: clientIp,
+        userAgent: req.get('user-agent'),
+        location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
+    });
+
+    setAuthCookie(res, token);
+
+    let planName = 'Free';
+    try {
+        const subResult = await query(`
+            SELECT COALESCE(sp.name, 'Free') as plan_name
+            FROM subscriptions s
+            JOIN subscription_plans sp ON sp.id = s.plan_id
+            WHERE s.user_id = $1
+        `, [user.id]);
+        if (subResult.rows.length > 0) {
+            planName = subResult.rows[0].plan_name;
+        }
+    } catch {
+        // fallback
+    }
+
+    res.json({
+        success: true,
+        data: {
+            token,
+            user: {
+                id: user.id,
+                email: user.email,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                role: user.role,
+                region: user.region,
+                mfaEnabled: true,
+                planName,
+                isFree: planName.toLowerCase() === 'free',
+            },
+        },
+    });
+}
+
 /**
  * POST /api/v1/auth/mfa/verify
  * Complete 2FA login challenge with TOTP code or backup code.
@@ -71,7 +168,7 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'tempToken and code are required' });
         }
 
-        let decoded: { userId: string; email: string; mfaPending?: boolean };
+        let decoded: { userId: string; email: string; mfaPending?: boolean; credentialVersion?: string };
         try {
             decoded = jwt.verify(tempToken, config.jwt.secret as jwt.Secret, { algorithms: ['HS256'] }) as typeof decoded;
         } catch {
@@ -82,7 +179,7 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'Invalid token type for MFA challenge' });
         }
 
-        const userRes = await query('SELECT * FROM users WHERE id = $1', [decoded.userId]);
+        const userRes = await query<MfaVerifyUserRow>('SELECT * FROM users WHERE id = $1', [decoded.userId]);
         const user = userRes.rows[0];
         if (!user) {
             return res.status(404).json({ success: false, error: 'User not found' });
@@ -125,67 +222,7 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
         }
 
         await resetFailedAttempts(user.id);
-
-        // Record successful login
-        await recordLoginAttempt({
-            userId: user.id,
-            email: user.email,
-            status: 'success',
-            ipAddress: clientIp,
-            userAgent: req.get('user-agent'),
-            location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
-        });
-
-        // Generate full JWT token
-        const token = jwt.sign(
-            { userId: user.id, email: user.email, role: user.role },
-            config.jwt.secret as jwt.Secret,
-            { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
-        );
-
-        // Create active user session
-        await createSession({
-            userId: user.id,
-            token,
-            ipAddress: clientIp,
-            userAgent: req.get('user-agent'),
-            location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
-        });
-
-        setAuthCookie(res, token);
-
-        let planName = 'Free';
-        try {
-            const subResult = await query(`
-                SELECT COALESCE(sp.name, 'Free') as plan_name
-                FROM subscriptions s
-                JOIN subscription_plans sp ON sp.id = s.plan_id
-                WHERE s.user_id = $1
-            `, [user.id]);
-            if (subResult.rows.length > 0) {
-                planName = subResult.rows[0].plan_name;
-            }
-        } catch {
-            // fallback
-        }
-
-        res.json({
-            success: true,
-            data: {
-                token,
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    firstName: user.first_name,
-                    lastName: user.last_name,
-                    role: user.role,
-                    region: user.region,
-                    mfaEnabled: true,
-                    planName,
-                    isFree: planName.toLowerCase() === 'free',
-                },
-            },
-        });
+        await completeMfaLogin(req, res, user, clientIp, decoded.credentialVersion);
     } catch (error) {
         logger.error('MFA verify error:', error);
         safeError(res, 500, 'MFA verification failed');

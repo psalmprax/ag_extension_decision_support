@@ -4,7 +4,7 @@ import { agentOrchestrator } from '@/services/agentOrchestrator';
 
 const dispatchTaskSchema = z.object({
   type: z.string().describe('Task type (e.g., farmer_outreach, market_analysis, disease_diagnosis, policy_research)'),
-  payload: z.record(z.unknown()).describe('Task payload data'),
+  payload: z.record(z.string(), z.unknown()).describe('Task payload data'),
   priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium').describe('Task priority'),
   agentId: z.string().optional().describe('Preferred agent ID'),
 });

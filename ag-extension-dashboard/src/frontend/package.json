@@ -41,7 +41,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.0.0",
     "date-fns": "^3.0.6",
-    "dompurify": "^3.4.13",
+    "dompurify": "^3.4.17",
     "framer-motion": "^10.17.4",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.303.0",
@@ -58,7 +58,7 @@
     "remark-gfm": "^4.0.1",
     "socket.io-client": "^4.7.2",
     "tailwind-merge": "^3.6.0",
-    "zod": "^4.3.6"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "typescript": "^5.3.3",

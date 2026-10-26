@@ -191,9 +191,9 @@ export const useAppSearch = (
   };
 
   const computeLocalSearchResults = (query: string): SearchResult[] => {
-    const sourceFarmers = (isDemo || !farmers || farmers.length === 0) ? DEMO_FARMERS : farmers;
-    const sourceVisits = (isDemo || !visits || visits.length === 0) ? DEMO_VISITS : visits;
-    const sourceReports = (isDemo || !reports || reports.length === 0) ? DEMO_REPORTS : reports;
+    const sourceFarmers = isDemo ? DEMO_FARMERS : farmers || [];
+    const sourceVisits = isDemo ? DEMO_VISITS : visits || [];
+    const sourceReports = isDemo ? DEMO_REPORTS : reports || [];
 
     const baseResults: SearchResult[] = [];
     const farmerResults = getFarmerResultsLocal(query, sourceFarmers);
@@ -228,7 +228,18 @@ export const useAppSearch = (
     }
 
     setShowGlobalSearch(true);
-    setGlobalSearchResults(computeLocalSearchResults(query));
+    const localResults = computeLocalSearchResults(query);
+    setGlobalSearchResults(
+      isDemo
+        ? localResults.map(group => ({
+            ...group,
+            items: group.items.map(item => ({
+              ...item,
+              sublabel: item.sublabel ? `Demo data · ${item.sublabel}` : 'Demo data',
+            })),
+          }))
+        : localResults
+    );
 
     if (query.trim().length < 2) {
       setIsGlobalSearching(false);

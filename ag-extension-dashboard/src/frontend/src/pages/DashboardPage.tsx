@@ -36,6 +36,7 @@ import { LeaderboardCard } from '@/components/fieldtools/FieldIntelCards';
 import { OutbreakBanner } from '@/components/outbreaks/OutbreakBanner';
 import { OutreachDeliveryWidget } from '@/components/campaigns/OutreachDeliveryWidget';
 import { useDemoMode } from '@/demo';
+import { syncQueue } from '@/api/syncQueueService';
 
 const REGION_MAP_MAX_RETRIES = 3;
 const REGION_MAP_RETRY_BASE_DELAY_MS = 800;
@@ -63,13 +64,49 @@ const DashboardHeader: React.FC<{
   headingClass: string;
 }> = ({ userName, t, headingClass }) => {
   const [isSyncing, setIsSyncing] = React.useState(false);
+  const [isOnline, setIsOnline] = React.useState(() => typeof navigator === 'undefined' || navigator.onLine);
+  const [pendingCount, setPendingCount] = React.useState(() => syncQueue.getPendingCount());
 
-  const handleManualSync = () => {
+  useEffect(() => {
+    const updatePending = (count: number) => setPendingCount(count);
+    const setOnline = () => setIsOnline(true);
+    const setOffline = () => setIsOnline(false);
+    const unsubscribe = syncQueue.onCountChange(updatePending);
+    setPendingCount(syncQueue.getPendingCount());
+    window.addEventListener('online', setOnline);
+    window.addEventListener('offline', setOffline);
+    return () => {
+      unsubscribe();
+      window.removeEventListener('online', setOnline);
+      window.removeEventListener('offline', setOffline);
+    };
+  }, []);
+
+  const handleManualSync = async () => {
+    if (!isOnline) {
+      toast.error('Sync requires an internet connection.');
+      return;
+    }
     setIsSyncing(true);
-    setTimeout(() => {
+    try {
+      const result = await syncQueue.processQueue();
+      const remaining = syncQueue.getQueue().length;
+      const stuck = syncQueue.getStuckItems().length;
+      const retrying = remaining - stuck;
+      if (stuck) {
+        toast.error(`${result.success} synced · ${stuck} need attention${retrying ? ` · ${retrying} remain queued` : ''}.`);
+      } else if (remaining) {
+        toast(`${result.success ? `${result.success} synced · ` : ''}${remaining} change(s) remain queued for retry.`);
+      } else if (result.success) {
+        toast.success(`${result.success} queued change(s) synced.`);
+      } else {
+        toast('No pending changes to sync.');
+      }
+    } catch {
+      toast.error('Sync could not be completed. Check your connection and retry.');
+    } finally {
       setIsSyncing(false);
-      toast.success('Local telemetry & farmer records synchronized with device storage');
-    }, 600);
+    }
   };
 
   return (
@@ -83,33 +120,16 @@ const DashboardHeader: React.FC<{
         </p>
       </div>
 
-      {/* Header telemetry and pulse bar (QA #29, QA Suggestions) */}
+      {/* Browser connectivity and queued-sync status (not database activity). */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Farm health status triage */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm text-xs font-mono">
-          <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            118 Stable
-          </span>
-          <span className="text-slate-300 dark:text-slate-700">•</span>
-          <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold">
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
-            22 Watch
-          </span>
-          <span className="text-slate-300 dark:text-slate-700">•</span>
-          <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold">
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-            8 Alert
-          </span>
-        </div>
-
-        {/* Database & Offline Sync Pulse */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm text-xs">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-          <span className="font-bold text-slate-800 dark:text-slate-200 hidden sm:inline">Active Telemetry</span>
+          <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+          <span className="font-bold text-slate-800 dark:text-slate-200">
+            {isOnline ? 'Browser online' : 'Offline'} · {pendingCount} pending
+          </span>
           <button
             onClick={handleManualSync}
-            disabled={isSyncing}
+            disabled={isSyncing || !isOnline}
             className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 text-xxs font-bold uppercase transition-colors"
           >
             <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
@@ -129,8 +149,14 @@ const DashboardStats: React.FC<{
   classes: Record<string, string | boolean>;
 }> = ({ isLoading, dashboardData, isOfficer, t, classes }) => {
   if (isLoading) {
+    const hasSampleData = !dashboardData?.overview || !dashboardData?.trends;
     return (
       <>
+        {hasSampleData && (
+          <p className="col-span-full -mb-2 text-xs text-amber-800 dark:text-amber-300">
+            Illustrative sample figures — these are not live account metrics.
+          </p>
+        )}
         <CardSkeleton />
         <CardSkeleton />
         <CardSkeleton />
@@ -322,8 +348,8 @@ const SupportEfficiencyCard: React.FC<{
           ].map((item, i) => (
             <div key={i} className="space-y-1.5 sm:space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-xs sm:text-sm font-bold text-slate-300">{item.name}</span>
-                <span className="text-xs font-black text-primary-400">
+                <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">{item.name}</span>
+                <span className="text-xs font-black text-primary-700 dark:text-primary-400">
                   {Math.round(item.progress)}%
                 </span>
               </div>
@@ -530,13 +556,13 @@ const DashboardMapSection: React.FC<{
             <div className="flex items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <div className="w-2 h-2 bg-primary-400 rounded-full"></div>
-                <span className="text-xxs font-bold text-slate-300 uppercase tracking-widest">
+                <span className="text-xxs font-bold text-slate-200 uppercase tracking-widest">
                   {t('table_active')}
                 </span>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <span className="text-xxs font-bold text-slate-300 uppercase tracking-widest">
+                <span className="text-xxs font-bold text-slate-200 uppercase tracking-widest">
                   {t('analytics_disease_alerts')}
                 </span>
               </div>
@@ -640,7 +666,7 @@ const ClimateSoilIntelligenceCard: React.FC<{ cardClass: string }> = ({ cardClas
           </h3>
         </div>
         <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold">
-          Live Feed
+          Illustrative sample · not live telemetry
         </span>
       </div>
 
@@ -701,6 +727,8 @@ const DistributionPanels: React.FC<{
   ];
   const crops = dashboardData?.crops && dashboardData.crops.length > 0 ? dashboardData.crops : defaultCrops;
   const regions = dashboardData?.geography && dashboardData.geography.length > 0 ? dashboardData.geography : defaultRegions;
+  const cropsAreSample = !dashboardData?.crops?.length;
+  const regionsAreSample = !dashboardData?.geography?.length;
   const maxCropCount = Math.max(1, ...crops.map(c => c.count));
   const maxRegionCount = Math.max(1, ...regions.map(r => r.farmers));
 
@@ -712,13 +740,14 @@ const DistributionPanels: React.FC<{
           <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white">
             {t('viz_crop_planning') || 'Crop Distribution'}
           </h3>
+          {cropsAreSample && <span className="text-[10px] text-amber-700 dark:text-amber-300">Sample</span>}
         </div>
         <div className="space-y-4">
           {crops.map(crop => (
             <div key={crop.name}>
               <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs font-bold text-slate-300">{crop.name}</span>
-                <span className="text-xs font-black text-emerald-400">{crop.count}</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{crop.name}</span>
+                <span className="text-xs font-black text-emerald-700 dark:text-emerald-400">{crop.count}</span>
               </div>
               <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
                 <motion.div
@@ -739,13 +768,14 @@ const DistributionPanels: React.FC<{
           <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white">
             {t('stat_regional_distribution') || 'Regional Distribution'}
           </h3>
+          {regionsAreSample && <span className="text-[10px] text-amber-700 dark:text-amber-300">Sample</span>}
         </div>
         <div className="space-y-4">
           {regions.map(region => (
             <div key={region.region}>
               <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs font-bold text-slate-300">{region.region}</span>
-                <span className="text-xs font-black text-primary-400">{region.farmers}</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{region.region}</span>
+                <span className="text-xs font-black text-primary-700 dark:text-primary-400">{region.farmers}</span>
               </div>
               <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
                 <motion.div

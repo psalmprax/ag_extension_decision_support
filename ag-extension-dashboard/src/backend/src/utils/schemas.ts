@@ -179,18 +179,29 @@ const legacyVisitAliases = z.object({
   completedAt: z.string().optional(),
 });
 
+const visitInputSchema = z.preprocess((value: unknown) => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return value;
+  const body = value as Record<string, unknown>;
+  return {
+    ...body,
+    farmerId: body.farmerId ?? body.farmer_id,
+    visitType: body.visitType ?? body.visit_type ?? body.type,
+    scheduledAt: body.scheduledAt ?? body.scheduled_at,
+    durationMinutes: body.durationMinutes ?? body.duration,
+  };
+}, legacyVisitAliases.merge(sharedCreateVisitSchema.partial({ farmerId: true, visitType: true, status: true })));
+
 export const createVisitSchema = z.object({
-  body: legacyVisitAliases
-    .merge(sharedCreateVisitSchema.partial({ farmerId: true, visitType: true, status: true }))
-    .transform(b => ({
-      ...b,
-      farmerId: b.farmerId ?? b.farmer_id,
-      visitType: (b.visitType ?? b.visit_type ?? b.type ?? 'routine') as string,
-      scheduledAt: b.scheduledAt ?? b.scheduled_at,
-      status: b.status ?? 'scheduled',
-      durationMinutes: b.durationMinutes ?? b.duration,
-    }))
-    .pipe(
+  body: visitInputSchema.pipe(
+    z.preprocess(
+      (b: z.output<typeof visitInputSchema>) => ({
+        ...b,
+        farmerId: b.farmerId ?? b.farmer_id,
+        visitType: b.visitType ?? b.visit_type ?? b.type ?? 'routine',
+        scheduledAt: b.scheduledAt ?? b.scheduled_at,
+        status: b.status ?? 'scheduled',
+        durationMinutes: b.durationMinutes ?? b.duration,
+      }),
       z.object({
         farmerId: z.string().uuid({ message: 'farmerId is required' }),
         visitType: sharedVisitTypeSchema,
@@ -208,7 +219,8 @@ export const createVisitSchema = z.object({
         startedAt: z.string().datetime({ offset: true }).optional(),
         completedAt: z.string().datetime({ offset: true }).optional(),
       })
-    ),
+    )
+  ),
 });
 
 export const updateFarmerSchema = z.object({
@@ -304,4 +316,3 @@ export const soilDataQuerySchema = z.object({
 // Chatbot Schemas
 
 // SMS Schemas
-

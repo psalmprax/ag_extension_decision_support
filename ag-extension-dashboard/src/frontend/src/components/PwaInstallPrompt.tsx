@@ -14,8 +14,17 @@ export const PwaInstallPrompt: React.FC = () => {
   const [isIOS, setIsIOS] = useState<boolean>(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState<boolean>(false);
   const [isStandalone, setIsStandalone] = useState<boolean>(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const { radiusClass } = useThemeClasses();
+
+  useEffect(() => {
+    const handleChatVisibility = (event: Event) => {
+      setIsChatOpen((event as CustomEvent<{ open: boolean }>).detail.open);
+    };
+    window.addEventListener('gpexts:chat-visibility', handleChatVisibility);
+    return () => window.removeEventListener('gpexts:chat-visibility', handleChatVisibility);
+  }, []);
 
   useEffect(() => {
     // Check if running in standalone mode (already installed as PWA or native app)
@@ -88,7 +97,7 @@ export const PwaInstallPrompt: React.FC = () => {
     localStorage.setItem('pwa_prompt_dismissed_until', sevenDaysFromNow.toString());
   };
 
-  if (isStandalone || !showPrompt) return null;
+  if (isStandalone || !showPrompt || isChatOpen) return null;
 
   return (
     <AnimatePresence>

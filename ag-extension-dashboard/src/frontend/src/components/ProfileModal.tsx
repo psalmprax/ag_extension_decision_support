@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
-  User,
+  User as UserIcon,
   MapPin,
   Shield,
   Save,
@@ -15,12 +15,14 @@ import {
   Smartphone,
   Sparkles,
   AlertTriangle,
+  Download,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Language } from '@/lib/i18n';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore, type User } from '@/store/useAppStore';
 import toast from 'react-hot-toast';
 import apiClient from '@/api/client';
+import { logout } from '@/api/authService';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -45,6 +47,33 @@ const AVATAR_PRESETS: AvatarPreset[] = [
   { id: 'satellite_analyst', label: 'Remote Sensing', emoji: '🛰️', gradient: 'from-purple-600 to-indigo-800' },
 ];
 
+const DEFAULT_PREFERENCES = {
+  areaUnit: 'hectares',
+  tempUnit: 'celsius',
+  highContrast: false,
+  smsAlerts: true,
+  outbreakPush: true,
+  weeklyDigest: false,
+};
+
+const getSavedProfileData = (user: User) => {
+  let parsedPrefs: Partial<typeof DEFAULT_PREFERENCES> = {};
+  let savedAvatar = 'agronomist';
+  let savedUsername = `${(user.firstName || 'user').toLowerCase()}_${(user.lastName || 'officer').toLowerCase()}`;
+  let savedPhone = '';
+  try {
+    const storedPrefs = localStorage.getItem(`gpexts_user_preferences:${user.id}`);
+    parsedPrefs = storedPrefs ? JSON.parse(storedPrefs) as Partial<typeof DEFAULT_PREFERENCES> : {};
+    savedAvatar = localStorage.getItem(`gpexts_user_avatar:${user.id}`) || savedAvatar;
+    savedUsername = localStorage.getItem(`gpexts_user_handle:${user.id}`) || savedUsername;
+    savedPhone = localStorage.getItem(`gpexts_user_phone:${user.id}`) || '';
+  } catch {
+    parsedPrefs = {};
+  }
+
+  return { parsedPrefs, savedAvatar, savedUsername, savedPhone };
+};
+
 export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
   const { t, language, setLanguage } = useLanguage();
   const { user, setUser } = useAppStore();
@@ -64,14 +93,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   });
 
   // Preferences State
-  const [preferences, setPreferences] = useState({
-    areaUnit: 'hectares',
-    tempUnit: 'celsius',
-    highContrast: false,
-    smsAlerts: true,
-    outbreakPush: true,
-    weeklyDigest: false,
-  });
+  const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
 
   // Security State
   const [passwordState, setPasswordState] = useState({
@@ -79,53 +101,48 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     newPassword: '',
     confirmPassword: '',
   });
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
-    if (user && isOpen) {
-      const savedPrefs = localStorage.getItem('gpexts_user_preferences');
-      const parsedPrefs = savedPrefs ? JSON.parse(savedPrefs) : {};
+    if (!user || !isOpen) return;
+    const { parsedPrefs, savedAvatar, savedUsername, savedPhone } = getSavedProfileData(user);
 
-      const savedAvatar = localStorage.getItem('gpexts_user_avatar') || 'agronomist';
-      const savedUsername = localStorage.getItem('gpexts_user_handle') || `${(user.firstName || 'user').toLowerCase()}_${(user.lastName || 'officer').toLowerCase()}`;
-      const savedPhone = localStorage.getItem('gpexts_user_phone') || '+254 712 345 678';
+    setFormData({
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      username: savedUsername,
+      email: user.email || '',
+      phone: user.phone || savedPhone,
+      region: user.region || 'Uasin Gishu, Kenya',
+      avatarId: savedAvatar,
+    });
 
-      setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        username: savedUsername,
-        email: user.email || '',
-        phone: savedPhone,
-        region: user.region || 'Uasin Gishu, Kenya',
-        avatarId: savedAvatar,
-      });
-
-      if (savedPrefs) {
-        setPreferences(prev => ({ ...prev, ...parsedPrefs }));
-      }
-      setIsEditing(false);
-      setShowDeleteConfirm(false);
-    }
+    setPreferences({ ...DEFAULT_PREFERENCES, ...parsedPrefs });
+    setIsEditing(false);
+    setShowDeleteConfirm(false);
   }, [user, isOpen]);
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      localStorage.setItem('gpexts_user_avatar', formData.avatarId);
-      localStorage.setItem('gpexts_user_handle', formData.username);
-      localStorage.setItem('gpexts_user_phone', formData.phone);
-      localStorage.setItem('gpexts_user_preferences', JSON.stringify(preferences));
-
+      await apiClient.patch('/auth/me', {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+      });
+      let personalizationSaved = true;
       try {
-        await apiClient.patch('/users/profile', {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          region: formData.region,
-        });
-      } catch (_apiErr) {
-        // Fallback for demo or offline mode
+        localStorage.setItem(`gpexts_user_avatar:${user?.id}`, formData.avatarId);
+        localStorage.setItem(`gpexts_user_handle:${user?.id}`, formData.username);
+        localStorage.setItem(`gpexts_user_phone:${user?.id}`, formData.phone);
+        localStorage.setItem(`gpexts_user_preferences:${user?.id}`, JSON.stringify(preferences));
+        window.dispatchEvent(new Event('gpexts:avatar-updated'));
+      } catch {
+        personalizationSaved = false;
       }
 
       if (user) {
@@ -134,12 +151,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
-          region: formData.region,
+          phone: formData.phone,
         });
       }
 
       setIsEditing(false);
-      toast.success('Profile and preferences updated successfully');
+      toast.success(personalizationSaved
+        ? 'Profile and preferences updated successfully'
+        : 'Profile updated, but device preferences could not be saved.');
     } catch (error) {
       console.error('Failed to update profile:', error);
       toast.error('Failed to update profile. Please try again.');
@@ -148,22 +167,79 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     }
   };
 
-  const handlePasswordChange = (e: React.FormEvent) => {
+  const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!passwordState.currentPassword || !passwordState.newPassword) {
       toast.error('Please enter your current and new password');
       return;
     }
-    if (passwordState.newPassword.length < 8) {
-      toast.error('New password must be at least 8 characters');
+    if (passwordState.newPassword.length < 10 || !/[a-zA-Z]/.test(passwordState.newPassword) || !/\d/.test(passwordState.newPassword)) {
+      toast.error('New password must be at least 10 characters and include a letter and a number');
       return;
     }
     if (passwordState.newPassword !== passwordState.confirmPassword) {
       toast.error('New passwords do not match');
       return;
     }
-    toast.success('Password updated successfully');
-    setPasswordState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    try {
+      await apiClient.post('/account/password', {
+        currentPassword: passwordState.currentPassword,
+        newPassword: passwordState.newPassword,
+      });
+      toast.success('Password updated. Please sign in again.');
+      setPasswordState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      await logout();
+      localStorage.removeItem('user');
+      setUser(null);
+      window.location.href = '/login';
+    } catch {
+      toast.error('Password could not be updated. Check your current password and try again.');
+    }
+  };
+
+  const handleAccountDeletion = async () => {
+    if (deleteConfirmation !== 'DELETE MY ACCOUNT') {
+      toast.error('Enter DELETE MY ACCOUNT to confirm account deletion.');
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      await apiClient.delete('/account', {
+        data: {
+          confirm: deleteConfirmation,
+          ...(deletePassword ? { password: deletePassword } : {}),
+        },
+      });
+      toast.success('Account deleted. Your session has ended.');
+      await logout();
+      localStorage.removeItem('user');
+      setUser(null);
+      window.location.href = '/login';
+    } catch {
+      toast.error('Account deletion failed. Verify your password and try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleAccountExport = async () => {
+    setIsExporting(true);
+    try {
+      const response = await apiClient.get('/account/export', { responseType: 'blob' });
+      const url = URL.createObjectURL(response.data as Blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'gpexts-personal-data.json';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      toast.success('Your account data export has downloaded.');
+    } catch {
+      toast.error('Account data export failed. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const selectedAvatar = AVATAR_PRESETS.find(a => a.id === formData.avatarId) || AVATAR_PRESETS[0];
@@ -237,7 +313,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         : 'text-white/80 hover:bg-white/10'
                     }`}
                   >
-                    <User className="w-3.5 h-3.5" />
+                    <UserIcon className="w-3.5 h-3.5" />
                     <span>Profile & Avatar</span>
                   </button>
                   <button
@@ -331,7 +407,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
                       <div>
                         <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                          Officer Handle / Username
+                          Custom handle (this device)
                         </label>
                         <div className="relative mt-1">
                           <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm">@</span>
@@ -352,7 +428,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         <div className="relative mt-1">
                           <input
                             type="email"
-                            disabled={!isEditing}
+                            disabled
                             value={formData.email}
                             onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
                             className="w-full pl-3.5 pr-8 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
@@ -388,9 +464,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         <div className="relative mt-1">
                           <input
                             type="text"
-                            disabled={!isEditing}
+                            disabled
                             value={formData.region}
-                            onChange={e => setFormData(prev => ({ ...prev, region: e.target.value }))}
                             className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
                           />
                           <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
@@ -407,7 +482,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     {/* Language Preference */}
                     <div>
                       <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-2">
-                        System Interface Language
+                        System Interface Language (this device)
                       </label>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {[
@@ -493,7 +568,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     {/* Notification Toggles */}
                     <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
                       <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                        Notification Channels & Urgency
+                        Notification Preferences (stored on this device; delivery is not configured here)
                       </div>
                       {[
                         { key: 'outbreakPush' as const, label: 'Immediate Disease Outbreak Radar Alerts', desc: 'Critical alerts within 25km of your assigned farms' },
@@ -551,7 +626,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <input
                             type="password"
-                            placeholder="New password (min 8 chars)"
+                            placeholder="New password (min 10 chars, letter + number)"
                             value={passwordState.newPassword}
                             onChange={e => setPasswordState(p => ({ ...p, newPassword: e.target.value }))}
                             className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
@@ -583,26 +658,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           Two-Factor Authentication (2FA)
                         </div>
                         <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                          Require SMS verification code on login from unrecognized devices
+                          Two-factor enrollment is managed by your administrator.
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const nextVal = !twoFactorEnabled;
-                          setTwoFactorEnabled(nextVal);
-                          toast.success(nextVal ? '2FA enabled' : '2FA disabled');
-                        }}
-                        className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none shrink-0 ${
-                          twoFactorEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
-                        }`}
-                      >
-                        <span
-                          className={`block w-4 h-4 rounded-full bg-white shadow-md transform transition-transform ${
-                            twoFactorEnabled ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
+                      <span className="text-[11px] text-slate-600 dark:text-slate-300">Managed by administrator</span>
                     </div>
 
                     {/* Danger Zone */}
@@ -612,8 +671,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         <h4 className="text-xs font-bold uppercase tracking-wider">Account Data & Danger Zone</h4>
                       </div>
                       <p className="text-xs text-rose-900 dark:text-rose-200">
-                        Permanently purge your locally cached field synchronizations or request account deletion.
+                        Export your personal data or request account erasure. Erasure anonymizes your profile; some financial and audit records may be retained as required by law.
                       </p>
+                      <button
+                        type="button"
+                        onClick={() => void handleAccountExport()}
+                        disabled={isExporting}
+                        className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        {isExporting ? 'Preparing export…' : 'Download my account data'}
+                      </button>
 
                       {showDeleteConfirm ? (
                         <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-rose-300 dark:border-rose-800 space-y-2">
@@ -628,15 +696,29 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             </button>
                             <button
                               type="button"
-                              onClick={() => {
-                                toast.error('Account deletion request submitted to District Lead.');
-                                setShowDeleteConfirm(false);
-                              }}
+                              onClick={() => void handleAccountDeletion()}
+                              disabled={isDeleting}
                               className="px-3 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700"
                             >
-                              Confirm Deletion Request
+                              {isDeleting ? 'Deleting…' : 'Delete My Account'}
                             </button>
                           </div>
+                          <input
+                            type="text"
+                            aria-label="Account deletion confirmation"
+                            placeholder="Type DELETE MY ACCOUNT"
+                            value={deleteConfirmation}
+                            onChange={e => setDeleteConfirmation(e.target.value)}
+                            className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-800 rounded-lg text-xs text-slate-900 dark:text-white"
+                          />
+                          <input
+                            type="password"
+                            aria-label="Current password for account deletion"
+                            placeholder="Current password (if your account uses one)"
+                            value={deletePassword}
+                            onChange={e => setDeletePassword(e.target.value)}
+                            className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-800 rounded-lg text-xs text-slate-900 dark:text-white"
+                          />
                         </div>
                       ) : (
                         <button

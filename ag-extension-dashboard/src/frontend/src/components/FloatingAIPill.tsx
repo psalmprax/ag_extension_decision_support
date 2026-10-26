@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot,
@@ -426,6 +426,13 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
     }
     return [INITIAL_WELCOME_MESSAGE];
   });
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('gpexts:chat-visibility', { detail: { open: isOpen } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('gpexts:chat-visibility', { detail: { open: false } }));
+    };
+  }, [isOpen]);
 
   React.useEffect(() => {
     try {
@@ -911,4 +918,3 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
     </>
   );
 };
-

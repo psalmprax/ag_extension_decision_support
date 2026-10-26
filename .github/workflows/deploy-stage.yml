@@ -310,6 +310,15 @@ jobs:
               echo "✅ Added JWT_SECRET to ag-extension-dashboard/.env"
             fi
 
+            # Export the resolved JWT_SECRET from .env into the shell environment so
+            # Docker Compose interpolation does not inherit an empty string forwarded by
+            # GitHub Actions when secrets.JWT_SECRET is unset in repo settings.
+            export JWT_SECRET="$(grep -E '^JWT_SECRET=' ag-extension-dashboard/.env 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"'\'' \r\n')"
+            if [ -z "$JWT_SECRET" ] || [ "${#JWT_SECRET}" -lt 32 ]; then
+              echo "FATAL: JWT_SECRET in ag-extension-dashboard/.env is missing or shorter than 32 characters" >&2
+              exit 1
+            fi
+
             # Ensure MCP_API_TOKEN is configured in ag-extension-dashboard/.env
             if ! grep -q "^MCP_API_TOKEN=[^[:space:]]\{16,\}" ag-extension-dashboard/.env 2>/dev/null; then
               echo "🔑 Generating MCP_API_TOKEN..."
@@ -409,6 +418,7 @@ jobs:
             docker buildx rm stage-builder 2>/dev/null || true
             docker buildx create --use --driver docker-container --driver-opt "network=host" --name stage-builder --bootstrap
             export DOCKER_BUILDER=stage-builder
+            export JWT_SECRET="$(grep -E '^JWT_SECRET=' .env 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"'\'' \r\n')"
 
             docker compose \
               -f docker-compose.yml \

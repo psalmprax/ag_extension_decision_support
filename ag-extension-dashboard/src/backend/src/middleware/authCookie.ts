@@ -30,13 +30,13 @@ function jwtMaxAgeSeconds(): number {
 }
 
 export function setAuthCookie(res: Response, token: string): void {
-    const isProduction = process.env.NODE_ENV === 'production';
+    const secure = config.nodeEnv !== 'development' && config.nodeEnv !== 'test';
     res.cookie(AUTH_COOKIE_NAME, token, {
         httpOnly: true,
         // Lax blocks cross-site POST navigation; the CSRF layer below handles
         // the rest. Strict would break the TeleCall invite-link flow.
         sameSite: 'lax',
-        secure: isProduction,
+        secure,
         path: '/',
         maxAge: jwtMaxAgeSeconds() * 1000,
     });
@@ -44,7 +44,7 @@ export function setAuthCookie(res: Response, token: string): void {
         // Readable by the SPA so it can echo the value in the CSRF header.
         httpOnly: false,
         sameSite: 'lax',
-        secure: isProduction,
+        secure,
         path: '/',
         maxAge: jwtMaxAgeSeconds() * 1000,
     });

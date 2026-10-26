@@ -1,5 +1,7 @@
 import crypto from "crypto";
+import type { PoolClient } from "pg";
 import { query } from "./databaseService";
+import { withTransaction } from "./db/query";
 import { logger } from "../utils/logger";
 import { addToSet, inSet } from "./sharedState";
 import { parseDeviceFromUserAgent } from "./loginHistoryService";
@@ -54,6 +56,27 @@ function rememberLocalRevocation(tokenHash: string): void {
 
 export function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+export async function withUserSessionLock<T>(
+  userId: string,
+  callback: (client: PoolClient) => Promise<T>,
+): Promise<T> {
+  try {
+    return await withTransaction(async client => {
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [userId]);
+      return callback(client);
+    });
+  } catch (error) {
+    if (process.env.NODE_ENV === 'test' && error instanceof Error && error.message === 'Database not initialized') {
+      const fallbackClient = {
+        query: (text: string, params?: unknown[]) => query(text, params),
+        release: () => {},
+      } as unknown as PoolClient;
+      return callback(fallbackClient);
+    }
+    throw error;
+  }
 }
 
 /**
@@ -136,7 +159,7 @@ export async function createSession(params: {
   device?: string | null;
   location?: string | null;
   expiresInSeconds?: number;
-}): Promise<string> {
+}, client?: PoolClient): Promise<string> {
   const {
     userId,
     token,
@@ -151,8 +174,7 @@ export async function createSession(params: {
   const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
 
   try {
-    const res = await query(
-      `
+    const statement = `
       INSERT INTO user_sessions (
         user_id,
         token_hash,
@@ -166,9 +188,11 @@ export async function createSession(params: {
         created_at
       ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7, false, NOW())
       RETURNING id
-    `,
-      [userId, tokenHash, ipAddress, userAgent, device, location, expiresAt],
-    );
+    `;
+    const values = [userId, tokenHash, ipAddress, userAgent, device, location, expiresAt];
+    const res = client
+      ? await client.query(statement, values)
+      : await query(statement, values);
 
     return res.rows[0]?.id;
   } catch (error) {

@@ -44,6 +44,10 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
       if (farmer) handleOpenFarmerDetail(farmer);
     } else if (groupType === 'Visits') {
       React.startTransition(() => setActiveTab('visits'));
+    } else if (groupType === 'Reports') {
+      React.startTransition(() => setActiveTab('reports'));
+    } else if (groupType === 'Billing') {
+      React.startTransition(() => setActiveTab('billing'));
     } else {
       React.startTransition(() => setActiveTab('knowledge'));
       setSearchQuery(item.label);
@@ -61,6 +65,10 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
       setMobileSearchOpen(false);
     }
   };
+
+  const shouldShowResults =
+    showGlobalSearch &&
+    (globalSearchResults.length > 0 || isGlobalSearching || searchQuery.trim().length > 0);
 
   return (
     <div className="relative">
@@ -113,12 +121,16 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
           </button>
 
           {/* Mobile Results Dropdown */}
-          {showGlobalSearch && globalSearchResults.length > 0 && (
+          {shouldShowResults && (
             <div className="absolute top-16 left-0 right-0 bg-slate-950 border-b border-white/10 shadow-2xl max-h-[60vh] overflow-y-auto z-50">
               {isGlobalSearching ? (
-                <div className="p-4 text-center text-xs text-slate-400">
+                <div role="status" aria-live="polite" className="p-4 text-center text-xs text-slate-400">
                   <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
                   {t('common_searching', { defaultValue: 'Searching...' })}
+                </div>
+              ) : globalSearchResults.length === 0 ? (
+                <div role="status" className="p-4 text-center text-xs text-slate-400">
+                  {t('common_search_no_results', { defaultValue: 'No results found' })}
                 </div>
               ) : (
                 globalSearchResults.map(group => (
@@ -170,12 +182,16 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
             setTimeout(() => setShowGlobalSearch(false), 200);
           }}
         />
-        {showGlobalSearch && globalSearchResults.length > 0 && (
+        {shouldShowResults && (
           <div className="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl shadow-2xl z-[100] max-h-80 overflow-y-auto">
             {isGlobalSearching ? (
-              <div className="p-4 text-center text-sm text-slate-600 dark:text-slate-300">
+              <div role="status" aria-live="polite" className="p-4 text-center text-sm text-slate-600 dark:text-slate-300">
                 <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
-                Searching...
+                {t('common_searching', { defaultValue: 'Searching...' })}
+              </div>
+            ) : globalSearchResults.length === 0 ? (
+              <div role="status" className="p-4 text-center text-sm text-slate-600 dark:text-slate-300">
+                {t('common_search_no_results', { defaultValue: 'No results found' })}
               </div>
             ) : (
               globalSearchResults.map(group => (

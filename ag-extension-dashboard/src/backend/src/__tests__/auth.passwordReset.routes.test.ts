@@ -21,11 +21,17 @@ const revokeAllUserSessions = jest.fn().mockResolvedValue(1);
 const isSessionValid = jest.fn().mockResolvedValue(true);
 const createSession = jest.fn().mockResolvedValue('sess');
 const revokeToken = jest.fn();
+const mockWithUserSessionLock = jest.fn<
+  Promise<unknown>,
+  [string, (client: { query: jest.Mock }) => Promise<unknown>]
+>(async (_userId, callback) => callback({ query: jest.fn().mockResolvedValue({ rows: [] }) }));
 jest.mock('@/services/sessionService', () => ({
   revokeAllUserSessions: (...a: unknown[]) => revokeAllUserSessions(...a),
   isSessionValid: (...a: unknown[]) => isSessionValid(...a),
   createSession: (...a: unknown[]) => createSession(...a),
   revokeToken: (...a: unknown[]) => revokeToken(...a),
+  withUserSessionLock: (userId: string, callback: (client: { query: jest.Mock }) => Promise<unknown>) =>
+    mockWithUserSessionLock(userId, callback),
   hashToken: (t: string) => crypto.createHash('sha256').update(t).digest('hex'),
 }));
 

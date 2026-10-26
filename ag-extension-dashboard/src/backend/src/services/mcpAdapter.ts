@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { toolRegistry, toolMap } from '@/tools/registry';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 import { logger } from '@/utils/logger';
@@ -45,48 +45,17 @@ class MCPAdapter {
     return MCPAdapter.instance;
   }
 
-  private processSchemaShape(shape: Record<string, any> | null, properties: Record<string, unknown>, required: string[], toolName: string): void {
-    if (shape && typeof shape === 'object') {
-      for (const [key, value] of Object.entries(shape)) {
-        try {
-          const zodDef = (value as Record<string, any>)?._def;
-          const fieldType = this.getZodType(zodDef);
-          const description = zodDef?.description || '';
-
-          properties[key] = {
-            type: fieldType,
-            description: description,
-          };
-
-          const isOptional = this.isFieldOptional(zodDef);
-          if (!isOptional) {
-            required.push(key);
-          }
-        } catch (fieldError) {
-          console.error(`Tool ${toolName}, field ${key}: Error processing field:`, fieldError);
-        }
-      }
-    }
-  }
-
   convertToMCPTools(): MCPTool[] {
     return toolRegistry.map(tool => {
-      const zodSchema = tool.schema;
-      const properties: Record<string, unknown> = {};
-      const required: string[] = [];
-
-      let shape: Record<string, any> | null = null;
+      let properties: Record<string, unknown> = {};
+      let required: string[] = [];
 
       try {
-        if (zodSchema && zodSchema._def && zodSchema._def.shape) {
-          if (typeof zodSchema._def.shape === 'function') {
-            shape = zodSchema._def.shape();
-          } else {
-            shape = zodSchema._def.shape;
-          }
+        const schema = z.toJSONSchema(tool.schema, { target: 'draft-07', io: 'input' });
+        if (schema.type === 'object') {
+          properties = schema.properties ?? {};
+          required = schema.required ?? [];
         }
-
-        this.processSchemaShape(shape, properties, required, tool.name);
       } catch (error) {
         console.error(`Tool ${tool.name}: Error extracting schema:`, error);
       }
@@ -130,41 +99,6 @@ class MCPAdapter {
         }],
         isError: true,
       };
-    }
-  }
-
-  private isFieldOptional(zodDef: Record<string, any> | null | undefined): boolean {
-    if (!zodDef) return false;
-
-    const typeName = zodDef.typeName;
-
-    // Direct optional types
-    if (typeName === 'ZodOptional') return true;
-
-    // Default values make fields effectively optional
-    if (typeName === 'ZodDefault') return true;
-
-    // Check if the field has isOptional property (for some Zod versions)
-    if (zodDef.isOptional === true) return true;
-
-    // If it's a direct type (ZodString, ZodNumber, etc.) without optional wrapper, it's required
-    // Only mark as optional if explicitly wrapped
-    return false;
-  }
-
-  private getZodType(zodDef: Record<string, any> | null | undefined): string {
-    if (!zodDef) return 'string';
-    const typeName = zodDef.typeName;
-    switch (typeName) {
-      case 'ZodString': return 'string';
-      case 'ZodNumber': return 'number';
-      case 'ZodBoolean': return 'boolean';
-      case 'ZodArray': return 'array';
-      case 'ZodObject': return 'object';
-      case 'ZodEnum': return 'string';
-      case 'ZodOptional': return this.getZodType(zodDef.innerType?._def);
-      case 'ZodDefault': return this.getZodType(zodDef.innerType?._def);
-      default: return 'string';
     }
   }
 }
