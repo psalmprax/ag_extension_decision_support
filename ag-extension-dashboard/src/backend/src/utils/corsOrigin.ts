@@ -13,6 +13,8 @@ export interface CorsOriginOptions {
  * `*.gpexts.com` — a blanket `*.gpexts.com` default previously granted
  * credentialed CORS to ANY subdomain (subdomain takeover or a compromised
  * sibling = full credentialed API access). Exact origins still match exactly.
+ * Only local development and test environments bypass the allowlist; staging
+ * is deployed and must use the same explicit origin policy as production.
  */
 /**
  * Single opt-in wildcard entry (`*.gpexts.com`) against one origin.
@@ -66,8 +68,7 @@ function matchesApexOrWww(origin: string, allowedOrigin: string): boolean {
 
 export const isOriginAllowed = (origin: string | undefined, options: CorsOriginOptions): boolean => {
     if (!origin) return true;
-    if (options.nodeEnv !== 'production') return true;
-    if (options.allowedOrigins.includes('*')) return true;
+    if (options.nodeEnv === 'development' || options.nodeEnv === 'test') return true;
     if (options.allowedOrigins.includes(origin)) return true;
 
     // Direct www <-> apex domain pairing (e.g. www.gpexts.com <-> gpexts.com)

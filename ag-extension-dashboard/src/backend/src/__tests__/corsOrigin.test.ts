@@ -1,6 +1,7 @@
 import { isOriginAllowed } from '../utils/corsOrigin';
 
 const PROD = { nodeEnv: 'production', allowedOrigins: ['https://app.gpexts.com'] };
+const STAGING = { nodeEnv: 'staging', allowedOrigins: ['https://staging.gpexts.com'] };
 // Opt-in wildcard suffix form: `*.gpexts.com` grants credentialed CORS to
 // subdomains deliberately; an exact origin list no longer implies it.
 const PROD_WILDCARD = { nodeEnv: 'production', allowedOrigins: ['https://app.gpexts.com', '*.gpexts.com'] };
@@ -64,8 +65,20 @@ describe('corsOrigin policy', () => {
         expect(isOriginAllowed('moz-extension://abcdefghijklmnop', prodExt)).toBe(false);
     });
 
-    it('allows all origins outside production (dev/staging convenience)', () => {
+    it('allows all origins only in local development and test', () => {
         expect(isOriginAllowed('http://localhost:5173', DEV)).toBe(true);
         expect(isOriginAllowed('https://evil.example.com', DEV)).toBe(true);
+        expect(isOriginAllowed('https://evil.example.com', { ...DEV, nodeEnv: 'test' })).toBe(true);
+    });
+
+    it('restricts staging to explicitly configured origins', () => {
+        expect(isOriginAllowed('https://staging.gpexts.com', STAGING)).toBe(true);
+        expect(isOriginAllowed('https://evil.example.com', STAGING)).toBe(false);
+        expect(isOriginAllowed('http://staging.gpexts.com', STAGING)).toBe(false);
+        expect(isOriginAllowed('http://localhost:5173', { ...STAGING, allowedOrigins: [] })).toBe(false);
+    });
+
+    it('does not allow a wildcard origin with credentials', () => {
+        expect(isOriginAllowed('https://evil.example.com', { ...PROD, allowedOrigins: ['*'] })).toBe(false);
     });
 });

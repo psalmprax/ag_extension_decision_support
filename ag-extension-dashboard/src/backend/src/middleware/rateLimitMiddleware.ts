@@ -10,7 +10,7 @@ import { incrWindow, resetWindow } from '@/services/sharedState';
  * fallback). Without this the default MemoryStore gives every replica its own
  * counter, multiplying the effective limit by the replica count.
  */
-class SharedStateStore implements Store {
+export class SharedStateStore implements Store {
     private windowMs = 60_000;
     // `prefix` is part of the Store interface (public), so it must not be private here.
     prefix: string;
@@ -106,4 +106,3 @@ export const perUserRateLimit = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 });
-

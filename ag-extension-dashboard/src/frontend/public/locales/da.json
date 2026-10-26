@@ -216,6 +216,7 @@
     "common_save": "Gem",
     "common_search": "Søg",
     "common_search_farmers": "Søg bønder efter navn eller region...",
+    "common_search_no_results": "Ingen resultater fundet",
     "common_search_placeholder": "Search system or location...",
     "common_searching": "Searching...",
     "common_select_language": "Vælg sprog",

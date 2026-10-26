@@ -61,4 +61,22 @@ describe('HelpCenterModal', () => {
       });
     });
   });
+
+  it('does not report success when support ticket submission fails', async () => {
+    vi.mocked(createSupportTicket).mockRejectedValueOnce(new Error('network unavailable'));
+    render(<HelpCenterModal isOpen onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Report an Issue' }));
+    fireEvent.change(screen.getByPlaceholderText('Brief description of your issue'), {
+      target: { value: 'Map is not loading' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Describe your issue in detail...'), {
+      target: { value: 'The map stays blank after signing in.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Submit Ticket' }));
+
+    await waitFor(() => expect(createSupportTicket).toHaveBeenCalled());
+    expect(screen.queryByText('Ticket Submitted')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Submit Ticket' })).toBeInTheDocument();
+  });
 });

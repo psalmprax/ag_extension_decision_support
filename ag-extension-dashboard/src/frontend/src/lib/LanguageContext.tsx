@@ -111,6 +111,11 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 
   const isRTL = RTL_LANGUAGES.includes(language);
 
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+  }, [language, isRTL]);
+
   // Provide a default value during loading
   if (!isLoaded) {
     return (

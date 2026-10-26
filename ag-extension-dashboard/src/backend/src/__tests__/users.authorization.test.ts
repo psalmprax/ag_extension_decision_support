@@ -25,10 +25,9 @@ function token(userId: string, role: UserRole): string {
 }
 
 const app = express();
-app.use(cookieParser());
 app.use(express.json());
 app.use('/users', usersRouter);
-app.get('/protected', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), (req, res) => res.json(req.user));
+app.get('/protected', cookieParser(), authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), (req, res) => res.json(req.user));
 
 function revokeUserSessions(userId: unknown) {
   if (revocationFails) throw new Error('Session update unavailable');

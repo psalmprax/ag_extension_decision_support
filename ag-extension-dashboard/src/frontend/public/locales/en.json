@@ -216,6 +216,7 @@
     "common_save": "Save",
     "common_search": "Search",
     "common_search_farmers": "Search farmers by name or region...",
+    "common_search_no_results": "No results found",
     "common_search_placeholder": "Search system or location...",
     "common_searching": "Searching...",
     "common_select_language": "Select Language",

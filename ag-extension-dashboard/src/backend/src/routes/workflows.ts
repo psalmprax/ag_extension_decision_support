@@ -46,7 +46,7 @@ const createWorkflowSchema = z.object({
   description: z.string().optional().default(''),
   category: z.string().optional().default('general'),
   status: z.enum(['draft', 'published']).optional().default('draft'),
-  stepsJson: z.union([z.array(z.record(z.any())), z.record(z.any())]).default([]),
+  stepsJson: z.union([z.array(z.record(z.string(), z.any())), z.record(z.string(), z.any())]).default([]),
 });
 
 const updateWorkflowSchema = z.object({
@@ -54,7 +54,7 @@ const updateWorkflowSchema = z.object({
   description: z.string().optional(),
   category: z.string().optional(),
   status: z.enum(['draft', 'published', 'archived']).optional(),
-  stepsJson: z.union([z.array(z.record(z.any())), z.record(z.any())]).optional(),
+  stepsJson: z.union([z.array(z.record(z.string(), z.any())), z.record(z.string(), z.any())]).optional(),
 });
 
 /**

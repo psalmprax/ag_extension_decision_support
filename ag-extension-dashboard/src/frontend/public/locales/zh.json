@@ -216,6 +216,7 @@
     "common_save": "保存",
     "common_search": "搜索",
     "common_search_farmers": "按姓名或地区搜索农户...",
+    "common_search_no_results": "未找到结果",
     "common_search_placeholder": "搜索系统或位置...",
     "common_searching": "正在寻找...",
     "common_select_language": "选择语言",

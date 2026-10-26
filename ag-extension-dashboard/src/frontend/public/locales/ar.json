@@ -216,6 +216,7 @@
     "common_save": "حفظ",
     "common_search": "بحث",
     "common_search_farmers": "بحث عن مزارعين حسب الاسم أو المنطقة...",
+    "common_search_no_results": "لم يتم العثور على نتائج",
     "common_search_placeholder": "نظام البحث أو الموقع...",
     "common_searching": "جارٍ البحث...",
     "common_select_language": "اختر اللغة",

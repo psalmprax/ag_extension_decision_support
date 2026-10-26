@@ -216,6 +216,7 @@
     "common_save": "Сохранить",
     "common_search": "Поиск",
     "common_search_farmers": "Поиск фермеров по имени или региону...",
+    "common_search_no_results": "Результаты не найдены",
     "common_search_placeholder": "Search system or location...",
     "common_searching": "Searching...",
     "common_select_language": "Выберите язык",

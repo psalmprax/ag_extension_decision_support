@@ -90,28 +90,34 @@ export function FarmerMap({
 
   const farmers = useMemo(
     () => {
-      if (propFarmers && propFarmers.length > 0) return propFarmers;
-      return DEFAULT_DEMO_MAP_FARMERS;
+      if (propFarmers) return propFarmers;
+      return isDemo ? DEFAULT_DEMO_MAP_FARMERS : [];
     },
-    [propFarmers]
+    [propFarmers, isDemo]
   );
 
   useEffect(() => {
-    if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
-      if ('permissions' in navigator) {
-        navigator.permissions.query({ name: 'geolocation' }).then(result => {
-          if (result.state === 'granted') {
-            navigator.geolocation.getCurrentPosition(
-              pos => {
-                applyGpsLocation(pos.coords.latitude, pos.coords.longitude, 'GPS position synchronized.');
-              },
-              () => {},
-              { timeout: 5000, maximumAge: 60000 }
-            );
-          }
-        }).catch(() => {});
-      }
-    }
+    if (!('geolocation' in navigator) || !('permissions' in navigator)) return;
+    let permissionStatus: PermissionStatus | undefined;
+    let cancelled = false;
+    const updateLocationIfGranted = () => {
+      if (permissionStatus?.state !== 'granted' || cancelled) return;
+      navigator.geolocation.getCurrentPosition(
+        pos => applyGpsLocation(pos.coords.latitude, pos.coords.longitude, 'GPS position synchronized.'),
+        () => {},
+        { timeout: 5000, maximumAge: 60000 }
+      );
+    };
+    navigator.permissions.query({ name: 'geolocation' }).then(result => {
+      if (cancelled) return;
+      permissionStatus = result;
+      result.addEventListener('change', updateLocationIfGranted);
+      updateLocationIfGranted();
+    }).catch(() => {});
+    return () => {
+      cancelled = true;
+      permissionStatus?.removeEventListener('change', updateLocationIfGranted);
+    };
   }, []);
 
   // Compute stats from farmer data
@@ -446,6 +452,12 @@ export function FarmerMap({
           <span className="hidden sm:inline">Expand</span>
         </button>
       </div>
+
+      {isDemo && (
+        <div className="absolute bottom-3 left-3 z-[400] rounded-lg bg-slate-950/85 px-2.5 py-1.5 text-[10px] font-semibold text-amber-200 border border-amber-400/30">
+          Sample demo locations
+        </div>
+      )}
 
       {mapContent}
 

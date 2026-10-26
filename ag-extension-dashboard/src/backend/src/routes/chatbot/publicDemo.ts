@@ -432,7 +432,7 @@ router.post(
         success: true,
         data: {
           text,
-          source: 'GP-Ext Autonomous Agronomic Engine (Groq LLaMA 3.3)',
+          source: 'GP-Ext AI-assisted agronomy guidance',
           citations: rag.citations,
           entitySlots: currentSlots,
         },

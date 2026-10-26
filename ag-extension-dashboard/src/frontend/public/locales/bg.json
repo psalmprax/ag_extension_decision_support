@@ -216,6 +216,7 @@
     "common_save": "Запази",
     "common_search": "Търси",
     "common_search_farmers": "Търси селскостопански работници по име или регион...",
+    "common_search_no_results": "Няма намерени резултати",
     "common_search_placeholder": "Search system or location...",
     "common_searching": "Searching...",
     "common_select_language": "Изберете език",

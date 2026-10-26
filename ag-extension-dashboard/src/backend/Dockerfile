@@ -3,7 +3,12 @@
 FROM node:22-slim AS node-base
 RUN apt-get update && apt-get install -y --no-install-recommends libpcre2-8-0 perl-base && rm -rf /var/lib/apt/lists/*
 ARG NPM_VERSION=11.19.1
-RUN npm install --global npm@${NPM_VERSION} --no-audit --no-fund && npm cache clean --force
+RUN npm install --global npm@${NPM_VERSION} --no-audit --no-fund \
+    && npm install --global undici@6.29.1 --no-audit --no-fund \
+    && NPM_ROOT="$(npm root -g)" \
+    && rm -rf "${NPM_ROOT}/npm/node_modules/undici" \
+    && mv "${NPM_ROOT}/undici" "${NPM_ROOT}/npm/node_modules/undici" \
+    && npm cache clean --force
 
 # ============================================================
 # Stage 1: Dependencies — install production dependencies

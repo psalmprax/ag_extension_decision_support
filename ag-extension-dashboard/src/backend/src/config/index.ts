@@ -66,26 +66,21 @@ const MIN_JWT_SECRET_LENGTH = 32;
 /**
  * Resolve the JWT signing secret, failing closed on deployed hosts.
  *
- * A missing/empty JWT_SECRET previously degraded to the public dev placeholder on
- * any non-production NODE_ENV (e.g. `staging`), which silently lets anyone who has
- * read this repository mint valid tokens for the staging deployment. Only
- * development/test may fall back; staging and production must supply a real secret.
+ * Only local development/test may fall back to the public development secret.
+ * Every deployed environment must provide a sufficiently long, unique secret.
  */
-function resolveJwtSecret(): string {
-    const value = (process.env.JWT_SECRET || '').trim();
-    if (!isDeployedEnv) return value || DEV_JWT_SECRET;
+export function resolveJwtSecret(
+    environment: string = nodeEnv,
+    configuredSecret: string | undefined = process.env.JWT_SECRET
+): string {
+    const value = (configuredSecret || '').trim();
+    if (environment === 'development' || environment === 'test') return value || DEV_JWT_SECRET;
     if (!value) {
-        if (nodeEnv === 'staging') {
-            return 'staging_jwt_secret_fallback_key_32_characters_minimum!';
-        }
-        throw new Error(`JWT_SECRET is required when NODE_ENV=${nodeEnv} (generate with: openssl rand -base64 48)`);
+        throw new Error(`JWT_SECRET is required when NODE_ENV=${environment} (generate with: openssl rand -base64 48)`);
     }
     if (value.length < MIN_JWT_SECRET_LENGTH) {
-        if (nodeEnv === 'staging') {
-            return value.padEnd(MIN_JWT_SECRET_LENGTH, '0');
-        }
         throw new Error(
-            `JWT_SECRET must be at least ${MIN_JWT_SECRET_LENGTH} characters when NODE_ENV=${nodeEnv} ` +
+            `JWT_SECRET must be at least ${MIN_JWT_SECRET_LENGTH} characters when NODE_ENV=${environment} ` +
             `(got ${value.length}); generate with: openssl rand -base64 48`
         );
     }
@@ -221,7 +216,7 @@ export const config: AppConfig = {
     },
 
     cors: {
-        origin: getEnv('CORS_ORIGIN', 'http://localhost:5173'),
+        origin: getEnv('CORS_ORIGIN', isDeployedEnv ? '' : 'http://localhost:5173'),
     },
 
     demo: resolveDemoConfig(),
