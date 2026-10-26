@@ -66,6 +66,10 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
     }
   };
 
+  const shouldShowResults =
+    showGlobalSearch &&
+    (globalSearchResults.length > 0 || isGlobalSearching || searchQuery.trim().length > 0);
+
   return (
     <div className="relative">
       {/* Mobile Search Icon Trigger */}
@@ -117,7 +121,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
           </button>
 
           {/* Mobile Results Dropdown */}
-          {showGlobalSearch && (globalSearchResults.length > 0 || isGlobalSearching) && (
+          {shouldShowResults && (
             <div className="absolute top-16 left-0 right-0 bg-slate-950 border-b border-white/10 shadow-2xl max-h-[60vh] overflow-y-auto z-50">
               {isGlobalSearching ? (
                 <div role="status" aria-live="polite" className="p-4 text-center text-xs text-slate-400">
@@ -178,7 +182,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
             setTimeout(() => setShowGlobalSearch(false), 200);
           }}
         />
-        {showGlobalSearch && (globalSearchResults.length > 0 || isGlobalSearching) && (
+        {shouldShowResults && (
           <div className="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl shadow-2xl z-[100] max-h-80 overflow-y-auto">
             {isGlobalSearching ? (
               <div role="status" aria-live="polite" className="p-4 text-center text-sm text-slate-600 dark:text-slate-300">
