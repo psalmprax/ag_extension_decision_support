@@ -96,6 +96,7 @@ describe('Auth Routes', () => {
                     rowCount: 1,
                 })
                 .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // lockout query
+                .mockResolvedValueOnce({ rows: [{ password_hash: '$2a$10$hash' }], rowCount: 1 }) // password re-check under session lock
                 .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // login history
                 .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // subscription query
 

@@ -87,7 +87,7 @@ describe('POST /api/v1/account/password', () => {
         });
 
         await request(app)
-            .delete('/')
+            .delete('/api/v1/account')
             .send({ password: 'incorrect-password', confirm: 'DELETE MY ACCOUNT' })
             .expect(400);
 

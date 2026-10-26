@@ -27,7 +27,7 @@ interface JWTPayload {
 interface MfaChallengeUser {
     id: string;
     mfa_secret: string;
-    mfa_backup_codes: Parameters<typeof verifyAndConsumeBackupCode>[2];
+    mfa_backup_codes?: Parameters<typeof verifyAndConsumeBackupCode>[2] | null;
     last_totp_step?: number | string | null;
 }
 
@@ -66,6 +66,13 @@ interface MfaLoginUser {
     role: string;
     first_name: string | null;
     last_name: string | null;
+}
+
+interface MfaVerifyUserRow extends MfaLoginUser {
+    mfa_secret: string;
+    mfa_backup_codes?: Parameters<typeof verifyAndConsumeBackupCode>[2] | null;
+    last_totp_step?: number | string | null;
+    lockout_until?: Date | string | null;
 }
 
 async function completeMfaLogin(
@@ -172,7 +179,7 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'Invalid token type for MFA challenge' });
         }
 
-        const userRes = await query('SELECT * FROM users WHERE id = $1', [decoded.userId]);
+        const userRes = await query<MfaVerifyUserRow>('SELECT * FROM users WHERE id = $1', [decoded.userId]);
         const user = userRes.rows[0];
         if (!user) {
             return res.status(404).json({ success: false, error: 'User not found' });

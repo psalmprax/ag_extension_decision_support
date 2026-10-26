@@ -65,6 +65,11 @@ interface LoginUser {
     is_demo?: boolean;
 }
 
+interface LoginUserRow extends LoginUser {
+    lockout_until?: Date | string | null;
+    email_verified?: boolean | null;
+}
+
 async function completePasswordLogin(req: Request, res: Response, user: LoginUser, clientIp: string | null): Promise<void> {
     const token = jwt.sign(
         { userId: user.id, email: user.email, role: user.role },
@@ -168,7 +173,7 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
         }
 
         // Get user from database
-        const result = await query('SELECT * FROM users WHERE email = $1', [email]);
+        const result = await query<LoginUserRow>('SELECT * FROM users WHERE email = $1', [email]);
         const user = result.rows[0];
 
         if (!user) {
