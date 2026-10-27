@@ -62,7 +62,7 @@ export function CTA() {
               </button>
               <button
                 onClick={() => navigate('/demo')}
-                className="w-full sm:w-auto px-7 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-semibold bg-white/[0.04] border border-white/[0.06] text-white/70 rounded-xl hover:bg-white/[0.08] hover:text-white active:scale-[0.98] transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
+                className="w-full sm:w-auto px-7 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-semibold bg-white/[0.06] border border-white/10 text-slate-200 rounded-xl hover:bg-white/[0.12] hover:text-white active:scale-[0.98] transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
               >
                 Try Live Demo
               </button>

@@ -9,7 +9,7 @@ export function Footer() {
 
   return (
     <>
-        <footer id="contact" className="border-t border-white/[0.04] pt-12 sm:pt-16 pb-8">
+        <footer id="contact" className="border-t border-white/10 pt-12 sm:pt-16 pb-8 bg-slate-950/70 backdrop-blur-sm relative z-10">
           <div className="max-w-[90rem] w-full mx-auto px-4 sm:px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr] gap-8 sm:gap-10 pb-8 sm:pb-10">
             <div>
               <button
@@ -26,27 +26,27 @@ export function Footer() {
                 />
                 <span className="text-lg font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">GPExts</span>
               </button>
-              <p className="text-xs sm:text-sm text-white/70 leading-relaxed max-w-xs mb-4 font-normal break-words">
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-xs mb-4 font-normal break-words">
                 Empowering agricultural extension officers with AI-driven decision support across
                 the Globe.
               </p>
               <a
                 href="mailto:info@gpfed.com"
-                className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400 hover:text-emerald-300 active:scale-[0.98] transition-colors bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2 rounded-xl"
+                className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-300 hover:text-emerald-200 active:scale-[0.98] transition-colors bg-emerald-500/15 border border-emerald-500/30 px-3.5 py-2 rounded-xl"
               >
                 <Mail className="w-4 h-4" />
                 info@gpfed.com
               </a>
             </div>
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white/70 mb-4 sm:mb-5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-100 mb-4 sm:mb-5">
                 Product &amp; Features
               </h4>
               <ul className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm font-normal">
                 <li>
                   <a
                     href="#features"
-                    className="text-white/75 hover:text-emerald-400 transition-colors"
+                    className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
                     Features
                   </a>
@@ -54,7 +54,7 @@ export function Footer() {
                 <li>
                   <a
                     href="#agent-os"
-                    className="text-white/75 hover:text-emerald-400 transition-colors"
+                    className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
                     Agent OS
                   </a>
@@ -62,7 +62,7 @@ export function Footer() {
                 <li>
                   <a
                     href="#how-it-works"
-                    className="text-white/75 hover:text-emerald-400 transition-colors"
+                    className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
                     How It Works
                   </a>
@@ -70,7 +70,7 @@ export function Footer() {
                 <li>
                   <a
                     href="#capabilities"
-                    className="text-white/75 hover:text-emerald-400 transition-colors"
+                    className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
                     Ecosystem &amp; Soil
                   </a>
@@ -78,7 +78,7 @@ export function Footer() {
                 <li>
                   <a
                     href="#architecture"
-                    className="text-white/75 hover:text-emerald-400 transition-colors"
+                    className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
                     Architecture
                   </a>
@@ -86,27 +86,27 @@ export function Footer() {
                 <li>
                   <a
                     href="#roi"
-                    className="text-white/75 hover:text-emerald-400 transition-colors"
+                    className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
                     Impact &amp; ROI
                   </a>
                 </li>
                 <li>
-                  <a href="#faq" className="text-white/75 hover:text-emerald-400 transition-colors">
+                  <a href="#faq" className="text-slate-300 hover:text-emerald-300 font-medium transition-colors">
                     FAQ
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white/70 mb-4 sm:mb-5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-100 mb-4 sm:mb-5">
                 Overview &amp; Contact
               </h4>
               <ul className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm font-normal">
                 <li>
                   <a
                     href="#problem"
-                    className="text-white/75 hover:text-emerald-400 transition-colors"
+                    className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
                     Why Us
                   </a>
@@ -114,7 +114,7 @@ export function Footer() {
                 <li>
                   <a
                     href="#mission"
-                    className="text-white/75 hover:text-emerald-400 transition-colors"
+                    className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
                     Our Mission
                   </a>
@@ -123,7 +123,7 @@ export function Footer() {
                   <button
                     type="button"
                     onClick={() => navigate('/demo')}
-                    className="text-white/75 hover:text-emerald-400 transition-colors text-left"
+                    className="text-slate-300 hover:text-emerald-300 font-medium transition-colors text-left"
                   >
                     Live Interactive Demo
                   </button>
@@ -131,7 +131,7 @@ export function Footer() {
                 <li>
                   <a
                     href="mailto:info@gpfed.com"
-                    className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium"
+                    className="text-emerald-300 hover:text-emerald-200 transition-colors font-semibold"
                   >
                     info@gpfed.com
                   </a>
@@ -139,7 +139,7 @@ export function Footer() {
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white/70 mb-4 sm:mb-5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-100 mb-4 sm:mb-5">
                 Get Started
               </h4>
               <ul className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm font-normal">
@@ -147,7 +147,7 @@ export function Footer() {
                   <button
                     type="button"
                     onClick={() => navigate('/register')}
-                    className="text-white/75 hover:text-emerald-400 transition-colors text-left"
+                    className="text-slate-300 hover:text-emerald-300 font-medium transition-colors text-left"
                   >
                     Create Account
                   </button>
@@ -156,7 +156,7 @@ export function Footer() {
                   <button
                     type="button"
                     onClick={() => navigate('/login')}
-                    className="text-white/75 hover:text-emerald-400 transition-colors text-left"
+                    className="text-slate-300 hover:text-emerald-300 font-medium transition-colors text-left"
                   >
                     Sign In
                   </button>
@@ -164,22 +164,22 @@ export function Footer() {
               </ul>
             </div>
           </div>
-          <div className="max-w-[90rem] w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 border-t border-white/[0.04] flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 text-center sm:text-left">
-            <span className="text-[11px] sm:text-xs text-white/70 font-normal">
+          <div className="max-w-[90rem] w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 text-center sm:text-left">
+            <span className="text-xs sm:text-sm text-slate-300 font-normal">
               &copy; {new Date().getFullYear()} GPExts. All rights reserved.
             </span>
-            <div className="flex flex-wrap justify-center sm:justify-end gap-4 sm:gap-5 text-xs">
+            <div className="flex flex-wrap justify-center sm:justify-end gap-4 sm:gap-5 text-xs sm:text-sm">
               <button
                 type="button"
                 onClick={() => setLegalModal('privacy')}
-                className="text-white/70 hover:text-emerald-400 transition-colors cursor-pointer"
+                className="text-slate-300 hover:text-emerald-300 transition-colors cursor-pointer font-medium"
               >
                 Privacy Policy
               </button>
               <button
                 type="button"
                 onClick={() => setLegalModal('terms')}
-                className="text-white/70 hover:text-emerald-400 transition-colors cursor-pointer"
+                className="text-slate-300 hover:text-emerald-300 transition-colors cursor-pointer font-medium"
               >
                 Terms of Service
               </button>
@@ -224,7 +224,7 @@ export function Footer() {
                 </div>
 
                 {legalModal === 'privacy' ? (
-                  <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-white/70 leading-relaxed font-normal break-words">
+                  <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-slate-200 leading-relaxed font-normal break-words">
                     <p>
                       <strong className="text-white">1. Data Ownership &amp; OCAP Compliance:</strong> Your organization retains 100% legal ownership and control of all farmer registries, field visit logs, geospatial coordinates, and diagnostic imagery. GPExts strictly adheres to the OCAP (Ownership, Control, Access, and Possession) principles.
                     </p>
@@ -242,7 +242,7 @@ export function Footer() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-white/70 leading-relaxed font-normal break-words">
+                  <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-slate-200 leading-relaxed font-normal break-words">
                     <p>
                       <strong className="text-white">1. Purpose &amp; Agricultural Decision Support:</strong> GPExts provides agronomic insights, soil recommendations, and disease diagnostics for agricultural extension officers and institutions. Recommendations are designed to support, not replace, certified agronomic judgment.
                     </p>
