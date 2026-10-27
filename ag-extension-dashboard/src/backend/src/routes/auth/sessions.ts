@@ -57,7 +57,7 @@ router.get('/sessions', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Failed to fetch sessions:', error);
-        res.status(401).json({ success: false, error: 'Invalid token' });
+        res.status(500).json({ success: false, error: 'Failed to fetch sessions' });
     }
 });
 

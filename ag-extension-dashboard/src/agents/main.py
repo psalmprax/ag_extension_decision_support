@@ -141,7 +141,7 @@ class RedisSessionManager:
             payload = json.dumps(data, default=str)
             async with self._client.pipeline(transaction=True) as pipe:
                 pipe.setex(key, self._ttl, payload)
-                score = datetime.utcnow().timestamp()
+                score = datetime.now(timezone.utc).timestamp()
                 pipe.zadd("agent:sessions:index", {key: score})
                 # Keep index bounded — retain last 1000 sessions
                 pipe.zremrangebyrank("agent:sessions:index", 0, -1001)
@@ -425,7 +425,7 @@ class AIProcessingService:
             recommendations=recommendations[:5] if recommendations else ["No specific recommendations could be extracted from the model output — request a targeted analysis with farm data."],
             risk_level=risk_level,
             confidence=confidence,
-            generated_at=datetime.utcnow().isoformat(),
+            generated_at=datetime.now(timezone.utc).isoformat(),
             data_sources=["ai_interpretation_general_context_no_farm_data"]
         )
 
@@ -451,7 +451,7 @@ class AIProcessingService:
             ],
             risk_level="unknown",
             confidence=0.0,
-            generated_at=datetime.utcnow().isoformat(),
+            generated_at=datetime.now(timezone.utc).isoformat(),
             data_sources=["fallback_stub"]
         )
 
@@ -477,7 +477,7 @@ class OutreachService:
                     "channel": channel,
                     "message": message,
                     "priority": priority,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
 
                 # Persist the channel-appropriate contact so the consumer
@@ -536,10 +536,10 @@ class ReportService:
             })
 
         report = {
-            "id": f"report-{datetime.utcnow().timestamp()}",
+            "id": f"report-{datetime.now(timezone.utc).timestamp()}",
             "region": region,
             "period": period,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "generated_by": "agent-zero",
             "sections": report_sections,
             "status": "generated_without_live_data" if fallback_used else "completed",
@@ -612,7 +612,7 @@ async def health_check():
 @app.post("/api/execute")
 async def execute_task(request: TaskRequest, current_user: dict = Depends(verify_token)):
     """Execute a general task using Agent Zero"""
-    task_id = f"task-{datetime.utcnow().timestamp():.0f}-{request.task_type.value}"
+    task_id = f"task-{datetime.now(timezone.utc).timestamp():.0f}-{request.task_type.value}"
     logger.info(f"Executing task {task_id}: {request.task_type} for user: {current_user.get('user_id')}")
 
     try:
@@ -647,7 +647,7 @@ async def execute_task(request: TaskRequest, current_user: dict = Depends(verify
             "parameters": request.parameters,
             "result": serialized,
             "status": "completed",
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
         await redis_sessions.save_session(task_id, session)
         # Webhook callback when caller supplied callback URL
@@ -697,13 +697,13 @@ async def schedule_outreach(request: OutreachRequest, current_user: dict = Depen
             request.priority
         )
         # Persist outreach session
-        task_id = f"outreach-{datetime.utcnow().timestamp():.0f}"
+        task_id = f"outreach-{datetime.now(timezone.utc).timestamp():.0f}"
         await redis_sessions.save_session(task_id, {
             "task_id": task_id, "task_type": "outreach",
             "user_id": current_user.get("user_id"),
             "channel": request.channel, "farmers_count": len(request.farmers),
             "result": result, "status": "completed",
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         })
         return result
     except Exception as e:

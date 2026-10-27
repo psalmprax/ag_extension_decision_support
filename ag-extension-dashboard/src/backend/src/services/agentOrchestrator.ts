@@ -259,10 +259,11 @@ class AgentOrchestrator {
 
   async dispatchTask(task: Omit<AgentTask, 'id' | 'status' | 'createdAt' | 'retryCount'>): Promise<AgentTask> {
     await this.ensurePersistenceLoaded();
-    if (typeof crypto === 'undefined' || !crypto.getRandomValues) {
-        throw new Error('crypto.getRandomValues is required for task ID generation');
-    }
-    const randomPart = crypto.getRandomValues(new Uint32Array(1))[0].toString(36).substring(2, 8);
+    const randomPart = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function'
+      ? Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, '0')).join('')
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const taskId = `task_${Date.now()}_${randomPart}`;
     const fullTask: AgentTask = {
       ...task,

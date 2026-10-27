@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 import os
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from tools.slop_cleaner import clean_slop
 
@@ -38,6 +38,11 @@ async def lifespan(app: FastAPI):
     yield
     logger.info("Shutting down Crew AI Service")
     db.close()
+    if _redis_client:
+        try:
+            await _redis_client.aclose()
+        except Exception:
+            pass
 
 
 app = FastAPI(title="Crew AI Service", version="2.0.0", lifespan=lifespan)
@@ -281,6 +286,22 @@ except ImportError:
     REDIS_URL = ""
     _redis_client = None
 
+
+async def get_redis_client():
+    global _redis_client
+    if _redis_client is None and redis_asyncio and REDIS_URL:
+        try:
+            _redis_client = redis_asyncio.from_url(
+                REDIS_URL,
+                socket_connect_timeout=3,
+                socket_timeout=3,
+                decode_responses=True,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to initialize Redis client: {e}")
+            _redis_client = None
+    return _redis_client
+
 class DatabaseManager:
     """Pooled database manager for PostgreSQL (ThreadedConnectionPool)"""
 
@@ -492,7 +513,7 @@ class MultiAgentService:
     @staticmethod
     async def run_analysis_workflow(request: AnalysisRequest) -> MultiAgentResult:
         """Run a complete multi-agent analysis workflow"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         
         if CREW_AI_AVAILABLE and AgentFactory.get_llm():
             return await MultiAgentService._run_crew_analysis(request, start_time)
@@ -555,7 +576,7 @@ class MultiAgentService:
                 "analysis_type": request.analysis_type.value
             })
             
-            processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+            processing_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
             
             return MultiAgentService._parse_crew_result(
                 request.region, request.analysis_type.value, result.raw, processing_time
@@ -603,7 +624,7 @@ Consider:
             )
             
             analysis_text = response.choices[0].message.content
-            processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+            processing_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
             
             return MultiAgentService._parse_analysis_text(
                 request.region, request.analysis_type.value, analysis_text, processing_time
@@ -673,7 +694,7 @@ Consider:
             risk_assessment=risks,
             confidence=confidence,
             data_sources=data_sources,
-            generated_at=datetime.utcnow().isoformat(),
+            generated_at=datetime.now(timezone.utc).isoformat(),
             processing_time_ms=int(processing_time)
         )
     
@@ -732,14 +753,14 @@ Consider:
             risk_assessment=risks,
             confidence=confidence,
             data_sources=data_sources,
-            generated_at=datetime.utcnow().isoformat(),
+            generated_at=datetime.now(timezone.utc).isoformat(),
             processing_time_ms=int(processing_time)
         )
     
     @staticmethod
     def _get_fallback_analysis(request: AnalysisRequest, start_time: datetime) -> MultiAgentResult:
         """Fallback analysis when AI is unavailable — clearly marked, no invented data"""
-        processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        processing_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
 
         return MultiAgentResult(
             status="fallback",
@@ -756,7 +777,7 @@ Consider:
             risk_assessment={},
             confidence=0.0,
             data_sources=["fallback_stub"],
-            generated_at=datetime.utcnow().isoformat(),
+            generated_at=datetime.now(timezone.utc).isoformat(),
             processing_time_ms=int(processing_time)
         )
 
@@ -768,7 +789,7 @@ class ResearchService:
     @staticmethod
     async def conduct_research(request: ResearchRequest) -> Dict[str, Any]:
         """Conduct research on a specific topic"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         
         if CREW_AI_AVAILABLE and AgentFactory.get_llm():
             try:
@@ -788,14 +809,14 @@ class ResearchService:
                 
                 import asyncio
                 result = await asyncio.to_thread(crew.kickoff)
-                processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+                processing_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
                 
                 return {
                     "status": "success",
                     "topic": request.topic,
                     "depth": request.depth.value,
                     "findings": clean_slop(result.raw),
-                    "generated_at": datetime.utcnow().isoformat(),
+                    "generated_at": datetime.now(timezone.utc).isoformat(),
                     "processing_time_ms": int(processing_time)
                 }
                 
@@ -815,14 +836,14 @@ class ResearchService:
                     max_tokens=2000
                 )
                 
-                processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+                processing_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
                 
                 return {
                     "status": "success",
                     "topic": request.topic,
                     "depth": request.depth.value,
                     "findings": clean_slop(response.choices[0].message.content),
-                    "generated_at": datetime.utcnow().isoformat(),
+                    "generated_at": datetime.now(timezone.utc).isoformat(),
                     "processing_time_ms": int(processing_time)
                 }
                 
@@ -830,13 +851,13 @@ class ResearchService:
                 logger.error(f"Direct research failed: {e}")
         
         # Complete fallback — explicit unavailable state, no invented content
-        processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        processing_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
         return {
             "status": "fallback",
             "topic": request.topic,
             "depth": request.depth.value,
             "findings": f"[UNAVAILABLE] Research on {request.topic} could not be generated: AI services (CrewAI and OpenAI) are unavailable. No research was conducted and no content was invented. Retry when the AI provider is available.",
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "processing_time_ms": int(processing_time)
         }
 
@@ -848,7 +869,7 @@ class ReportGenerationService:
     @staticmethod
     async def generate_report(request: ReportRequest) -> Dict[str, Any]:
         """Generate a comprehensive report"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         
         sections = request.sections or ["Executive Summary", "Weather Analysis", "Crop Status", "Market Analysis", "Recommendations"]
         
@@ -863,13 +884,13 @@ class ReportGenerationService:
                 "content": section_content
             })
         
-        processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        processing_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
         
         report = {
-            "id": f"report-{datetime.utcnow().timestamp()}",
+            "id": f"report-{datetime.now(timezone.utc).timestamp()}",
             "region": request.region,
             "period": request.period,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "generated_by": "crew-ai-service",
             "format": request.format,
             "sections": report_sections,
@@ -934,16 +955,17 @@ async def health_check():
     redis_ok = False
     if redis_asyncio and REDIS_URL:
         try:
-            import redis as _r
-            _r.Redis.from_url(REDIS_URL).ping()
-            redis_ok = True
+            client = await get_redis_client()
+            if client:
+                await client.ping()
+                redis_ok = True
         except Exception:
             redis_ok = False
     return {
         "status": "healthy",
         "service": "crew-ai",
         "version": "2.0.0",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "dependencies": {
             "crewai": "available" if CREW_AI_AVAILABLE else "not_available",
             "openai": "configured" if openai_client else "not_configured",

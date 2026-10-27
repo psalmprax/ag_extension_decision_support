@@ -97,10 +97,13 @@ export function errorHandler(
     _next: NextFunction
 ): void {
     // Generate request ID for tracking
-    if (typeof crypto === 'undefined' || !crypto.getRandomValues) {
-        throw new Error('crypto.getRandomValues is required for request ID generation');
-    }
-    const requestId = req.headers['x-request-id'] as string || `req-${Date.now()}-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36).substring(2, 9)}`;
+    const requestId = (req.headers['x-request-id'] as string) || (
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `req-${Date.now()}-${typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function'
+                ? Array.from(crypto.getRandomValues(new Uint8Array(6)), b => b.toString(16).padStart(2, '0')).join('')
+                : Math.random().toString(36).slice(2, 10)}`
+    );
 
     // Log error with context
     logger.error('Error occurred:', {

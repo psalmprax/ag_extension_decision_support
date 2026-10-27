@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 # Configure logging
@@ -130,7 +130,7 @@ async def health_check():
         "status": "healthy",
         "service": "openclaw",
         "version": "1.0.0",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "dependencies": {
             "gateway": "configured" if OPENCLAW_GATEWAY_URL else "not_configured",
         },
@@ -140,7 +140,7 @@ async def health_check():
 @app.post("/api/execute")
 async def execute_task(request: TaskRequest, current_user: dict = Depends(verify_token)):
     """Execute a task by forwarding it to the configured OpenClaw gateway."""
-    task_id = f"task-{datetime.utcnow().timestamp():.0f}-openclaw-{request.task_type.value}"
+    task_id = f"task-{datetime.now(timezone.utc).timestamp():.0f}-openclaw-{request.task_type.value}"
     gateway_url = _require_gateway()
     logger.info(f"Executing task {task_id} via OpenClaw gateway for user: {current_user.get('user_id')}")
 

@@ -238,8 +238,9 @@ router.get('/me', async (req: Request, res: Response) => {
                 isFree,
             },
         });
-    } catch {
-        res.status(401).json({ success: false, error: 'Invalid token' });
+    } catch (error) {
+        logger.error('Failed to get user profile (/me):', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
 
@@ -278,7 +279,7 @@ router.get('/login-history', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Failed to get login history:', error);
-        res.status(401).json({ success: false, error: 'Invalid token or request failed' });
+        res.status(500).json({ success: false, error: 'Failed to retrieve login history' });
     }
 });
 
@@ -309,7 +310,7 @@ router.get('/login-stats', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Failed to get login stats:', error);
-        res.status(401).json({ success: false, error: 'Invalid token or request failed' });
+        res.status(500).json({ success: false, error: 'Failed to retrieve login stats' });
     }
 });
 

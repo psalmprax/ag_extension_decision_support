@@ -304,9 +304,11 @@ export default defineBackground(() => {
 
     const storeOfflineAttachment = async (input: { file: Blob; farmerId: string }): Promise<string> => {
         if (!db) await initDB();
-        const randomPart = typeof crypto !== 'undefined' && crypto.getRandomValues
-            ? crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(2, 10)
-            : Math.random().toString(36).slice(2, 10);
+        const randomPart = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function'
+            ? Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, '0')).join('')
+            : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
         const id = `attachment-${Date.now()}-${randomPart}`;
         const encryptedFarmerId = await encryptString(input.farmerId);
         const attachment: OfflineAttachment = { id, file: input.file, farmerId: input.farmerId, sizeBytes: input.file.size, createdAt: Date.now(), encryptedFarmerId };
@@ -477,9 +479,11 @@ export default defineBackground(() => {
     const queueRequest = async (request: Omit<QueuedRequest, 'id' | 'idempotencyKey' | 'timestamp' | 'retries' | 'state'> & { idempotencyKey?: string }): Promise<void> => {
         if (!db) await initDB();
 
-        const randomPart = typeof crypto !== 'undefined' && crypto.getRandomValues
-            ? crypto.getRandomValues(new Uint32Array(1))[0].toString(36).substring(2, 11)
-            : Math.random().toString(36).substring(2, 11);
+        const randomPart = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function'
+            ? Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, '0')).join('')
+            : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
         const id = `${Date.now()}-${randomPart}`;
         const queuedRequest: QueuedRequest = {
             ...request,
