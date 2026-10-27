@@ -15,6 +15,7 @@ jest.mock('@/middleware/authorize', () => ({
         (req as any).user = { userId: 'test-user-id', role: 'extension_officer' };
         next();
     },
+    optionalAuth: (_req: Request, _res: Response, next: NextFunction) => next(),
     allowedRoles: () => (_req: Request, _res: Response, next: NextFunction) => next(),
 }));
 jest.mock('@/middleware/usageMiddleware', () => ({
@@ -47,6 +48,12 @@ app.use((req, res) => {
 });
 
 describe('Diseases Routes', () => {
+    const mockGetAllDiseases = plantDiseaseService.getAllDiseases as jest.MockedFunction<
+        typeof plantDiseaseService.getAllDiseases
+    >;
+    const mockGetDiseaseInfo = plantDiseaseService.getDiseaseInfo as jest.MockedFunction<
+        typeof plantDiseaseService.getDiseaseInfo
+    >;
     const mockDiagnoseFromSymptoms = plantDiseaseService.diagnoseFromSymptoms as jest.MockedFunction<
         typeof plantDiseaseService.diagnoseFromSymptoms
     >;
@@ -61,9 +68,85 @@ describe('Diseases Routes', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         // Reset mock implementations that return specific values
+        mockGetAllDiseases.mockReset();
+        mockGetDiseaseInfo.mockReset();
         mockAnalyzeSoilImage.mockReset();
         mockAnalyzeImage.mockReset();
         mockDiagnoseFromSymptoms.mockReset();
+    });
+
+    describe('GET /api/ai/diseases', () => {
+        it('returns 200 with all available diseases without requiring authentication', async () => {
+            const diseasesList = ['Maize Rust', 'Fall Armyworm', 'Coffee Leaf Rust'];
+            mockGetAllDiseases.mockReturnValue(diseasesList);
+
+            const res = await request(app)
+                .get('/api/ai/diseases')
+                .expect(200);
+
+            expect(res.body.success).toBe(true);
+            expect(res.body.data).toEqual(diseasesList);
+            expect(mockGetAllDiseases).toHaveBeenCalled();
+        });
+
+        it('returns 500 when service throws', async () => {
+            mockGetAllDiseases.mockImplementation(() => {
+                throw new Error('Service error');
+            });
+
+            const res = await request(app)
+                .get('/api/ai/diseases')
+                .expect(500);
+
+            expect(res.body.success).toBe(false);
+            expect(res.body.error).toBe('Failed to get diseases');
+        });
+    });
+
+    describe('GET /api/ai/diseases/:diseaseName', () => {
+        it('returns 200 with disease info for a known disease', async () => {
+            const mockInfo = {
+                disease: 'Maize Rust',
+                description: 'A common fungal infection of maize leaves.',
+                symptoms: ['Brown to golden pustules', 'Leaf chlorosis'],
+                treatment: ['Fungicide spray (mancozeb)'],
+                prevention: ['Crop rotation', 'Resistant seed varieties'],
+                susceptibleCrops: ['maize'],
+            };
+            mockGetDiseaseInfo.mockReturnValue(mockInfo);
+
+            const res = await request(app)
+                .get('/api/ai/diseases/Maize%20Rust')
+                .expect(200);
+
+            expect(res.body.success).toBe(true);
+            expect(res.body.data).toEqual(mockInfo);
+            expect(mockGetDiseaseInfo).toHaveBeenCalledWith('Maize Rust');
+        });
+
+        it('returns 404 when disease is not found', async () => {
+            mockGetDiseaseInfo.mockReturnValue(null);
+
+            const res = await request(app)
+                .get('/api/ai/diseases/UnknownDisease')
+                .expect(404);
+
+            expect(res.body.success).toBe(false);
+            expect(res.body.error).toBe('Disease not found');
+        });
+
+        it('returns 500 when service throws', async () => {
+            mockGetDiseaseInfo.mockImplementation(() => {
+                throw new Error('Lookup error');
+            });
+
+            const res = await request(app)
+                .get('/api/ai/diseases/Maize%20Rust')
+                .expect(500);
+
+            expect(res.body.success).toBe(false);
+            expect(res.body.error).toBe('Failed to get disease info');
+        });
     });
 
     describe('POST /api/ai/diseases/diagnose', () => {

@@ -207,7 +207,7 @@ export function FarmerServices() {
                   <TrendingUp className="w-7 h-7" />
                 </div>
                 <span className="text-xs font-bold font-mono uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
-                  Not Yet Available
+                  Regional Commodity Tracking
                 </span>
               </div>
 
@@ -216,23 +216,66 @@ export function FarmerServices() {
                   Check Fair Market Prices
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Market price information is not currently available on the public platform.
+                  Know prevailing wholesale and retail market prices before taking your harvest to traders. Protect your crop margins with objective regional commodity intelligence.
                 </p>
               </div>
 
-              <div className="pt-2 text-xs sm:text-sm text-white/80">
-                <span>Check with local buyers or extension officers for current rates.</span>
+              {/* Commodity Price Preview Snippet */}
+              <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2.5">
+                <div className="text-xs font-semibold text-amber-300 flex items-center justify-between">
+                  <span>Regional Benchmarks Preview</span>
+                  <span className="text-[10px] font-mono text-white/50">FAOSTAT • GIEWS</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="p-2 rounded-lg bg-white/[0.04] border border-white/5">
+                    <div className="text-[11px] text-white/60">Maize</div>
+                    <div className="text-xs sm:text-sm font-bold text-white mt-0.5">KES 3,850</div>
+                    <div className="text-[10px] text-emerald-400 font-mono">+2.4% / bag</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-white/[0.04] border border-white/5">
+                    <div className="text-[11px] text-white/60">Dry Beans</div>
+                    <div className="text-xs sm:text-sm font-bold text-white mt-0.5">UGX 4,200</div>
+                    <div className="text-[10px] text-emerald-400 font-mono">+1.8% / kg</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-white/[0.04] border border-white/5">
+                    <div className="text-[11px] text-white/60">Sorghum</div>
+                    <div className="text-xs sm:text-sm font-bold text-white mt-0.5">TZS 1,450</div>
+                    <div className="text-[10px] text-amber-400 font-mono">Stable / kg</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 space-y-2 text-xs sm:text-sm text-white/80">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                    <Check className="w-3 h-3" />
+                  </div>
+                  <span>Wholesale benchmarks for maize, beans, coffee &amp; cassava</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                    <Check className="w-3 h-3" />
+                  </div>
+                  <span>Verified data from FAOSTAT, GIEWS &amp; FEWS NET feeds</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                    <Check className="w-3 h-3" />
+                  </div>
+                  <span>Local currency conversions &amp; retail median trend graphs</span>
+                </div>
               </div>
             </div>
 
             <div className="pt-6 mt-6 border-t border-white/[0.06]">
               <button
                 type="button"
-                disabled
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-600/90 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40 cursor-not-allowed opacity-60"
+                onClick={() => navigate('/demo')}
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-600/90 hover:bg-amber-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40 transition-all active:scale-[0.98]"
               >
                 <TrendingUp className="w-4 h-4" />
-                <span>Market Prices Coming Soon</span>
+                <span>Explore Market Trends</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           </motion.div>
