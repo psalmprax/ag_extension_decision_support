@@ -9,7 +9,7 @@
 
 ## HIGH Severity (Production-Blocking)
 
-### 1. `routes/ai.ts:457-461` — Agent execute/stop endpoints return 501
+### 1. [FIXED] `routes/ai.ts:457-461` — Agent execute/stop endpoints return 501
 **Feature:** AI Agent control plane (`POST /api/ai/execute`, `POST /api/ai/stop/:agentId`)  
 **What's incomplete:** Both endpoints return HTTP 501 with error code `AGENT_EXECUTION_NOT_WIRED` / `AGENT_STOP_NOT_WIRED` when orchestrator dispatch fails. The fallback is silent — callers get "not configured" without knowing why.  
 **Evidence:** 
@@ -21,7 +21,8 @@ res.status(501).json({
 });
 ```
 
-### 2. `services/aiProvider/types.ts:197-230` — BaseAIProvider has 9 unimplemented abstract methods
+### 2. [FIXED] `services/aiProvider/types.ts:197-230` — BaseAIProvider has 9 unimplemented abstract methods
+**Status:** Resolved. No `Method not implemented` stubs remain in `types.ts`.
 **Feature:** AI Provider abstraction layer  
 **What's incomplete:** `generateText`, `streamText`, `createEmbedding`, `createBatchEmbeddings`, `speechToText`, `textToSpeech`, `analyzeWithReasoning`, `classify`, `analyzeImage` all throw `Error('Method not implemented')`. Providers must override every method; no default implementations exist.  
 **Evidence:**
@@ -32,7 +33,8 @@ async generateText(_messages: any[], _options?: TextGenerationOptions): Promise<
 // ... 8 more methods identical
 ```
 
-### 3. `workers/advisoryWorker.ts:20` — Advisory scheduler disabled by default
+### 3. [FIXED] `workers/advisoryWorker.ts:20` — Advisory scheduler disabled by default
+**Status:** Resolved. The worker runs unless `ADVISORY_ENGINE_ENABLED=false`.
 **Feature:** Daily agricultural advisory cycle (pest/disease/weather alerts)  
 **What's incomplete:** Worker only starts if `ADVISORY_ENGINE_ENABLED=true` env var set. Default is disabled — no advisories sent in production unless explicitly enabled.  
 **Evidence:**
@@ -43,7 +45,8 @@ if (process.env.ADVISORY_ENGINE_ENABLED !== 'true') {
 }
 ```
 
-### 4. `workers/ingestionWorker.ts:60,128` — Knowledge ingestion worker disabled by config
+### 4. [FIXED] `workers/ingestionWorker.ts:60,128` — Knowledge ingestion worker disabled by config
+**Status:** Resolved in the current code; the ingestion worker is no longer gated off by default.
 **Feature:** Automated scraping of CABI, FAO, IITA, FEWS NET, AfricaRice for knowledge base  
 **What's incomplete:** `config.ingestion.enabled` defaults to `true` in code but requires `INGESTION_ENABLED=true` env. Worker logs "disabled in configurations" and exits silently. No ingestion runs unless configured.  
 **Evidence:**
@@ -54,12 +57,13 @@ if (!config.ingestion.enabled) {
 }
 ```
 
-### 5. `services/verificationFraudService.ts:305` — OTP generation uses `Math.random()`
+### 5. [FIXED] `services/verificationFraudService.ts:305` — OTP generation uses `Math.random()`
+**Status:** Resolved. The OTP now uses `crypto.randomInt`; no `Math.random` remains in this file.
 **Feature:** One-time password for farmer verification  
 **What's incomplete:** `const otp = Math.floor(100000 + Math.random() * 900000).toString();` — not cryptographically secure. Predictable in Node.js if seed known.  
 **Evidence:** Line 305 uses `Math.random()` for 6-digit OTP.
 
-### 6. `services/weatherService.ts:250-257` — Hardcoded mock weather returned when no API key
+### 6. [FIXED] `services/weatherService.ts:250-257` — Hardcoded mock weather returned when no API key
 **Feature:** Historical weather for parametric insurance auditing  
 **What's incomplete:** Returns fixed values (22°C avg, 27°C max, 15°C min, 0mm precip) labeled "Offline / no-key mock estimate" — callers cannot distinguish mock from real data. No `dataStatus` field.  
 **Evidence:**
@@ -73,7 +77,7 @@ if (!apiKey) {
 
 ## MEDIUM Severity (Deceptive/Incomplete Behavior)
 
-### 7. `services/paymentAnalyticsService.ts:161` — `hasHistory` hardcoded `false` with TODO
+### 7. [FIXED] `services/paymentAnalyticsService.ts` — `hasHistory` hardcoded `false`; expansion/contraction now computed from `subscription_change_events`
 **Feature:** Revenue metrics (MRR, ARR, expansion/contraction revenue)  
 **What's incomplete:** Expansion/contraction revenue always returns `null` with meta `"unavailable — subscription_change_events not yet collected"`. Table doesn't exist; metric is permanently stubbed.  
 **Evidence:**
@@ -91,7 +95,8 @@ expansionRevenue: hasHistory ? 0 : null as unknown as number,
 // Identify at-risk customers (simplified - customers with failed payments)
 ```
 
-### 9. `services/crossBorderTradeService.ts:88-91` — DEMO freight & border fees hardcoded
+### 9. [FIXED] `services/crossBorderTradeService.ts:88-91`
+**Status:** Resolved. The hardcoded 650 km distance and $18.50 border fee are gone; values are config-driven and labeled. — DEMO freight & border fees hardcoded
 **Feature:** Cross-border arbitrage opportunity detection  
 **What's incomplete:** Distance fixed at 650km, freight at $0.075/km, border fees at $18.50/ton. Comment: "DEMO per-ton SPS + bond estimate (not tariff schedule)". No OSRM/HERE routing integration.  
 **Evidence:**
@@ -101,7 +106,8 @@ const freightCost = +(distanceKm * 0.075).toFixed(2);
 const borderFees = 18.5; // DEMO per-ton SPS + bond estimate (not tariff schedule)
 ```
 
-### 10. `services/traceabilityPassportService.ts:111,114,131` — DEMO GTIN, unsalted hash, estimated carbon
+### 10. [PARTIAL] `services/traceabilityPassportService.ts:111,114,131`
+**Status:** The hardcoded GTIN is removed. The 0.85 carbon default remains but is labeled as an illustrative estimate. The unsalted hash has not been checked in this pass. — DEMO GTIN, unsalted hash, estimated carbon
 **Feature:** GS1 Digital Link passport for commodity traceability  
 **What's incomplete:** 
 - GTIN hardcoded to `'06164000189214'` with comment "replace with tenant-registered value before production use"
@@ -109,7 +115,7 @@ const borderFees = 18.5; // DEMO per-ton SPS + bond estimate (not tariff schedul
 - Carbon footprint hardcoded to `0.85` with comment "ESTIMATED — requires lifecycle assessment, not measured"  
 **Evidence:** Lines 111, 114, 131.
 
-### 11. `services/mechanizationFleetService.ts:42-55` — DEMO equipment catalog returned as live data
+### 11. [DISCLOSED] `services/mechanizationFleetService.ts:42-55` — DEMO equipment catalog returned as live data
 **Feature:** Farm machinery rental marketplace  
 **What's incomplete:** Returns hardcoded `[DEMO] Massey Ferguson 375` and `[DEMO] DJI Agras T30` entries. No DB backing; presented as real equipment listings.  
 **Evidence:**
@@ -118,7 +124,7 @@ modelName: '[DEMO] Massey Ferguson 375 (75 HP with Disc Plow)',
 ownerName: '[DEMO] Peter Kiprono',
 ```
 
-### 12. `services/pestSwarmRadarService.ts:120-131` — DEMO county list & advisory actions
+### 12. [FIXED] `services/pestSwarmRadarService.ts:120-131` — DEMO county list & advisory actions
 **Feature:** Pest swarm trajectory forecasting & advisory dispatch  
 **What's incomplete:** County list "illustrative"; advisory actions prefixed `[DEMO]` with comments "requires dispatch integration", "verify stock before mobilizing", "requires ministry integration". Returns actionable-looking output that does nothing.  
 **Evidence:**
@@ -127,12 +133,12 @@ ownerName: '[DEMO] Peter Kiprono',
 '[DEMO] Pre-position biopesticide — verify stock before mobilizing',
 ```
 
-### 13. `routes/ai.ts:433` — Fire-and-forget worker kick loses errors
+### 13. [FIXED] `routes/ai.ts:433` — Fire-and-forget worker kick loses errors
 **Feature:** Agent task dispatch triggers background worker  
 **What's incomplete:** `agentOrchestrator.executeNext().catch(() => {});` — errors swallowed completely. If worker fails, task stays queued but caller gets success.  
 **Evidence:** Line 433.
 
-### 14. `services/aiProvider/providers/huggingface.ts:54` & `nvidia.ts:54` — Silent catch returns `isConfigured()`
+### 14. [FIXED] `services/aiProvider/providers/huggingface.ts:54` & `nvidia.ts:54` — Silent catch returns `isConfigured()`
 **Feature:** Provider health check  
 **What's incomplete:** `catch { return this.isConfigured(); }` — on network error, returns configured status instead of `false`. Health check lies about availability.  
 **Evidence:**
@@ -140,12 +146,12 @@ ownerName: '[DEMO] Peter Kiprono',
 } catch { return this.isConfigured(); }
 ```
 
-### 15. `services/soilGridsService.ts:116` — Silent catch returns `false`
+### 15. [FIXED] `services/soilGridsService.ts:116` — Silent catch returns `false`
 **Feature:** SoilGrids API availability probe  
 **What's incomplete:** `catch { return false; }` — no logging, no error classification. Caller can't distinguish "service down" from "network blip" from "invalid coords".  
 **Evidence:** Line 116.
 
-### 16. `agents/main.py:414,544` & `crew_main.py:612` — `fallback_stub` data source & `[UNAVAILABLE]` placeholders
+### 16. [FIXED] `agents/main.py:414,544` & `crew_main.py:612` — `fallback_stub` data source & `[UNAVAILABLE]` placeholders
 **Feature:** Agent Zero & Crew AI report generation  
 **What's incomplete:** When AI unavailable, returns sections like `"[UNAVAILABLE] Live data for {region} is currently unavailable. This is a placeholder summary..."` with `data_sources=["fallback_stub"]`. Callers may treat as real analysis.  
 **Evidence:** 
@@ -154,7 +160,7 @@ data_sources=["fallback_stub"],
 "Executive Summary": f"[UNAVAILABLE] Live data for {region} is currently unavailable. This is a placeholder summary..."
 ```
 
-### 17. `services/bulkOperationsService.ts:48` & `agentTelemetry.ts:144` — `Math.random()` for ID generation
+### 17. [FIXED] `services/bulkOperationsService.ts:48` & `agentTelemetry.ts:144` — `Math.random()` for ID generation
 **Feature:** Bulk operation IDs & telemetry event IDs  
 **What's incomplete:** `Math.random().toString(36).substr(2, 9)` — collision risk under load, not cryptographically unique. Use `crypto.randomUUID()` or ULID.  
 **Evidence:**

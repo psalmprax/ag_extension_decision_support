@@ -453,6 +453,8 @@ model SubscriptionPlan {
   vouchers      Voucher[]
   transactionSubmissions TransactionSubmission[]
   pendingPaypalPayments PendingPaypalPayment[]
+  changeEventsFrom SubscriptionChangeEvent[] @relation("ChangeEventFromPlan")
+  changeEventsTo   SubscriptionChangeEvent[] @relation("ChangeEventToPlan")
 
   @@map("subscription_plans")
 }
@@ -473,8 +475,25 @@ model Subscription {
   plan              SubscriptionPlan @relation(fields: [planId], references: [id])
   payments          Payment[]
   usage             Usage?
+  changeEvents      SubscriptionChangeEvent[]
 
   @@map("subscriptions")
+}
+
+model SubscriptionChangeEvent {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subscriptionId String           @map("subscription_id") @db.Uuid
+  fromPlanId     String           @map("from_plan_id") @db.Uuid
+  toPlanId       String           @map("to_plan_id") @db.Uuid
+  fromPrice      Decimal          @map("from_price") @db.Decimal(10, 2)
+  toPrice        Decimal          @map("to_price") @db.Decimal(10, 2)
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  subscription   Subscription     @relation(fields: [subscriptionId], references: [id])
+  fromPlan       SubscriptionPlan @relation("ChangeEventFromPlan", fields: [fromPlanId], references: [id])
+  toPlan         SubscriptionPlan @relation("ChangeEventToPlan", fields: [toPlanId], references: [id])
+
+  @@index([createdAt])
+  @@map("subscription_change_events")
 }
 
 model Payment {

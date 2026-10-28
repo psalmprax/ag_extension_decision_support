@@ -122,6 +122,9 @@ export class SoilGridsService {
         try {
             await axios.get(`${SOILGRIDS_BASE}?lon=36.8&lat=-1.28&property=phh2o&depth=0-5cm&value=mean`, { timeout: 5000 });
             return true;
-        } catch { return false; }
+        } catch (err) {
+            logger.warn('SoilGrids availability probe failed:', err instanceof Error ? err.message : err);
+            return false;
+        }
     }
 }

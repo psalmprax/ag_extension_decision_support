@@ -437,17 +437,14 @@ class AIProcessingService:
             data_type=data_type,
             time_period=time_period,
             summary={
-                "analysis": f"[FALLBACK] Analysis for {region} focusing on {data_type} over {time_period}. AI provider unavailable.",
-                "total_farmers": 0,
-                "avg_yield": "N/A",
-                "weather_impact": "unknown"
+                "analysis": f"[UNAVAILABLE] Analysis for {region} focusing on {data_type} over {time_period} could not be generated because the AI provider is unavailable. No live data was consulted.",
+                "total_farmers": None,
+                "avg_yield": None,
+                "weather_impact": None
             },
             recommendations=[
-                "Monitor local weather forecasts",
-                "Check soil conditions regularly",
-                "Review current market prices",
-                "Plan for upcoming planting season",
-                "Consider crop rotation strategies"
+                "Retry when the AI provider is available",
+                "Consult your local extension officer for region-specific guidance"
             ],
             risk_level="unknown",
             confidence=0.0,

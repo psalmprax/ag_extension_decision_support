@@ -177,18 +177,31 @@ class PaymentAnalyticsService {
                 ? churnedSubscriptionRevenue
                 : Math.max(0, previousTotalRevenue - totalRevenue);
 
-            // Expansion/contraction require subscription item history; returns null when change events table is not yet populated
-            const hasHistory = false;
+            // Expansion/contraction come from recorded plan changes in the period.
+            const changeEvents = await this.prisma.subscriptionChangeEvent.findMany({
+                where: { createdAt: { gte: startDate, lte: now } },
+                select: { fromPrice: true, toPrice: true }
+            });
+            const expansionRevenue = changeEvents.reduce(
+                (total, e) => total + Math.max(0, Number(e.toPrice) - Number(e.fromPrice)), 0
+            );
+            const contractionRevenue = changeEvents.reduce(
+                (total, e) => total + Math.max(0, Number(e.fromPrice) - Number(e.toPrice)), 0
+            );
+            const firstChange = await this.prisma.subscriptionChangeEvent.aggregate({
+                _min: { createdAt: true }
+            });
+
             return {
                 mrr,
                 arr,
                 totalRevenue,
                 newRevenue,
-                expansionRevenue: hasHistory ? 0 : null as unknown as number,
-                contractionRevenue: hasHistory ? 0 : null as unknown as number,
+                expansionRevenue,
+                contractionRevenue,
                 churnedRevenue,
                 netRevenueChange,
-                _meta: hasHistory ? undefined : { expansionRevenue: 'unavailable — subscription_change_events not yet collected', contractionRevenue: 'unavailable — subscription_change_events not yet collected' },
+                _meta: { changeTrackingSince: firstChange._min.createdAt },
             } as unknown as typeof mrr extends never ? never : ReturnType<typeof Object>;
         } catch (error) {
             logger.error('Failed to get revenue metrics:', error);

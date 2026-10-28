@@ -369,10 +369,22 @@ router.post('/switch', authorize(['admin', 'extension_officer', 'farmer']), asyn
                 const plans = await paymentService.getPricingPlans();
                 const newPlan = plans.find(p => p.id === priceId);
                 if (newPlan) {
+                    const targetPlan = await prisma.subscriptionPlan.findFirst({ where: { stripePriceId: priceId } });
                     await prisma.subscription.update({
                         where: { userId },
                         data: { planId: newPlan.id, status: 'active' }
                     });
+                    if (targetPlan && currentSubscription.plan) {
+                        await prisma.subscriptionChangeEvent.create({
+                            data: {
+                                subscriptionId: currentSubscription.id,
+                                fromPlanId: currentSubscription.plan.id,
+                                toPlanId: targetPlan.id,
+                                fromPrice: currentSubscription.plan.price,
+                                toPrice: targetPlan.price,
+                            }
+                        });
+                    }
                 }
                 res.json({ success: true, message: 'Subscription plan switched successfully' });
             } else {
