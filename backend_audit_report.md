@@ -86,7 +86,8 @@ const hasHistory = false; // TODO: populate from subscription_change_events tabl
 expansionRevenue: hasHistory ? 0 : null as unknown as number,
 ```
 
-### 8. `services/paymentAnalyticsService.ts:230,387` — LTV and churn prediction simplified
+### 8. [PARTIAL] `services/paymentAnalyticsService.ts:230,387` — LTV and churn prediction simplified
+**Status:** LTV is now the standard SaaS forward-looking formula (ARPU / churn rate) rather than ARPU alone. Churn prediction is still derived from recent cancellations only — engagement, support and usage signals are not ingested, and churn reasons require a `cancellation_feedback` table that does not exist yet.
 **Feature:** Customer lifetime value & churn prediction  
 **What's incomplete:** LTV = total revenue / total customers (no discounting, no cohort modeling). Churn prediction = customers with failed payments only (ignores engagement, support tickets, usage).  
 **Evidence:**
@@ -106,8 +107,8 @@ const freightCost = +(distanceKm * 0.075).toFixed(2);
 const borderFees = 18.5; // DEMO per-ton SPS + bond estimate (not tariff schedule)
 ```
 
-### 10. [PARTIAL] `services/traceabilityPassportService.ts:111,114,131`
-**Status:** The hardcoded GTIN is removed. The 0.85 carbon default remains but is labeled as an illustrative estimate. The unsalted hash has not been checked in this pass. — DEMO GTIN, unsalted hash, estimated carbon
+### 10. [FIXED] `services/traceabilityPassportService.ts:111,114,131` — DEMO GTIN, unsalted hash, estimated carbon
+**Status:** Resolved. The GTIN is derived from the batch payload (GS1 check digit applied) unless a tenant-registered value is supplied. `digitalSignatureHash` is an HMAC-SHA256 when `PASSPORT_SIGNING_SECRET` is set and is disclosed as an unkeyed display hash otherwise. The 0.85 carbon default is flagged as an illustrative estimate. The same hardcoded-secret pattern in `services/regulatoryProvenanceService.ts` (a literal `REGULATORY_AUTHORITY_ROOT_SECRET_2026` used to sign and verify recommendation provenance) was also removed: signing now uses `REGULATORY_SIGNING_SECRET`, falls back to a disclosed unkeyed digest when unset, and `auditReconstruct` reports `signatureAttestation` accordingly.
 **Feature:** GS1 Digital Link passport for commodity traceability  
 **What's incomplete:** 
 - GTIN hardcoded to `'06164000189214'` with comment "replace with tenant-registered value before production use"

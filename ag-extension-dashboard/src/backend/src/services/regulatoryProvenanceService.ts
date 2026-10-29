@@ -118,9 +118,11 @@ export interface RecommendationProvenance {
   engineVersion: string;
   recommendationIntegrityHash: string;
   digitalSignatureEnvelope?: {
-    algorithm: 'HMAC-SHA256';
+    algorithm: 'HMAC-SHA256' | 'SHA-256';
     signature: string;
     signedBy: string;
+    /** True when signed with REGULATORY_SIGNING_SECRET; false means an unkeyed digest, not a non-repudiation attestation. */
+    keyed: boolean;
   };
   offlineContext?: {
     isOffline: boolean;
@@ -161,9 +163,26 @@ export interface AuditReconstruction {
   matchedRule?: RegulatoryRule;
   integrityCheck: 'INTACT' | 'CORRUPTED' | 'HASH_MISMATCH' | 'RECORD_NOT_FOUND';
   discrepancies: string[];
+  /** How the stored signature was produced; unkeyed digests only detect accidental corruption. */
+  signatureAttestation?: 'keyed_hmac' | 'unkeyed_digest';
 }
 
 const ENGINE_VERSION = 'regulatory-provenance-v2.0';
+const SIGNING_SECRET_ENV = 'REGULATORY_SIGNING_SECRET';
+
+/**
+ * Signs a recommendation hash. An HMAC when REGULATORY_SIGNING_SECRET is provisioned,
+ * otherwise an unkeyed digest that only detects corruption (never reported as attested).
+ */
+function computeSignature(hash: string): { signature: string; keyed: boolean } {
+  const secret = process.env[SIGNING_SECRET_ENV];
+  if (secret) {
+    return { signature: crypto.createHmac('sha256', secret).update(hash).digest('hex'), keyed: true };
+  }
+  logger.warn(`${SIGNING_SECRET_ENV} is not set: recommendation signatures are unkeyed digests and do not attest signer identity.`);
+  return { signature: crypto.createHash('sha256').update(hash).digest('hex'), keyed: false };
+}
+
 const OFFLINE_MAX_STALENESS_DAYS = 90;
 
 export class RegulatoryProvenanceService {
@@ -628,19 +647,16 @@ export class RegulatoryProvenanceService {
 
     const recommendationIntegrityHash = this.calculateRecommendationIntegrityHash(provenanceBase);
 
-    // Mock HMAC signature envelope demonstrating cryptographic signer non-repudiation
-    const digitalSignature = crypto
-      .createHmac('sha256', 'REGULATORY_AUTHORITY_ROOT_SECRET_2026')
-      .update(recommendationIntegrityHash)
-      .digest('hex');
+    const { signature: digitalSignature, keyed: signatureKeyed } = computeSignature(recommendationIntegrityHash);
 
     const fullProvenance: RecommendationProvenance = {
       ...provenanceBase,
       recommendationIntegrityHash,
       digitalSignatureEnvelope: {
-        algorithm: 'HMAC-SHA256',
+        algorithm: signatureKeyed ? 'HMAC-SHA256' : 'SHA-256',
         signature: digitalSignature,
         signedBy: `${selectedRule.authorityId}:AUTHORIZATION_KEY_V1`,
+        keyed: signatureKeyed,
       },
     };
 
@@ -688,10 +704,7 @@ export class RegulatoryProvenanceService {
 
     // Verify digital signature envelope
     if (storedProvenance.digitalSignatureEnvelope) {
-      const expectedSig = crypto
-        .createHmac('sha256', 'REGULATORY_AUTHORITY_ROOT_SECRET_2026')
-        .update(storedProvenance.recommendationIntegrityHash)
-        .digest('hex');
+      const { signature: expectedSig } = computeSignature(storedProvenance.recommendationIntegrityHash);
 
       if (expectedSig !== storedProvenance.digitalSignatureEnvelope.signature) {
         discrepancies.push('Digital signature verification failed! Signature envelope has been tampered with.');
@@ -718,6 +731,9 @@ export class RegulatoryProvenanceService {
       matchedRule,
       integrityCheck: verified ? 'INTACT' : 'CORRUPTED',
       discrepancies,
+      signatureAttestation: storedProvenance.digitalSignatureEnvelope
+        ? storedProvenance.digitalSignatureEnvelope.keyed ? 'keyed_hmac' : 'unkeyed_digest'
+        : undefined,
     };
   }
 
