@@ -404,20 +404,20 @@ async function preflightPlanSwitch(
 
 /** Mirrors an immediate switch locally and records the change for revenue analytics. */
 async function syncPlanSwitchLocally(subscription: SubscriptionRecordWithPlan, priceId: string): Promise<void> {
-    const plans = await paymentService.getPricingPlans();
-    const newPlan = plans.find(p => p.id === priceId);
-    if (!newPlan) {
+    // subscription_plans.id is a UUID, while the gateway identifies plans by price id;
+    // mapping through stripePriceId keeps the FK valid.
+    const targetPlan = await prisma.subscriptionPlan.findFirst({ where: { stripePriceId: priceId } });
+    if (!targetPlan) {
         logger.warn(`Plan switch to ${priceId} succeeded in the gateway but the plan is not in the local catalog; local mirror not updated`);
         return;
     }
 
     await prisma.subscription.update({
         where: { id: subscription.id },
-        data: { planId: newPlan.id, status: 'active' },
+        data: { planId: targetPlan.id, status: 'active' },
     });
 
-    const targetPlan = await prisma.subscriptionPlan.findFirst({ where: { stripePriceId: priceId } });
-    if (!targetPlan || !subscription.plan) return;
+    if (!subscription.plan) return;
 
     await prisma.subscriptionChangeEvent.create({
         data: {
@@ -439,14 +439,18 @@ router.post('/switch', authorize(['admin', 'extension_officer', 'farmer']), asyn
         }
 
         const { subscription, forceSchedule } = preflight;
-        const success = await paymentService.switchSubscription(
+        const switchResult = await paymentService.switchSubscription(
             subscription.stripeSubscriptionId!,
             priceId,
             forceSchedule
         );
 
-        if (!success) {
-            return safeError(res, 500, 'Failed to switch plan');
+        if (!switchResult.success) {
+            return res.status(errorStatusMap[switchResult.errorCode as string] || 402).json({
+                success: false,
+                errorCode: switchResult.errorCode,
+                message: switchResult.message,
+            });
         }
 
         if (forceSchedule) {
