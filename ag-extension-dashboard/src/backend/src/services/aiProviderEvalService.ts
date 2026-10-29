@@ -1,4 +1,3 @@
-// fallow-ignore-file unused-file
 /**
  * AI provider eval harness — detects quality drift across the fallback cascade.
  *

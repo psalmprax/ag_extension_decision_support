@@ -4,7 +4,6 @@ import { logger } from '../utils/logger';
 
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
-// fallow-ignore-next-line unused-export
 export function base32Encode(buffer: Buffer): string {
   let bits = 0;
   let value = 0;
@@ -27,7 +26,6 @@ export function base32Encode(buffer: Buffer): string {
   return output;
 }
 
-// fallow-ignore-next-line unused-export
 export function base32Decode(input: string): Buffer {
   const cleanInput = input.toUpperCase().replace(/=+$/, '').replace(/\s+/g, '');
   if (cleanInput.length === 0) throw new Error('Invalid Base32 secret: empty input');
@@ -52,7 +50,6 @@ export function base32Decode(input: string): Buffer {
   return Buffer.from(bytes);
 }
 
-// fallow-ignore-next-line unused-export
 export function generateBackupCodes(count: number = 8): string[] {
   const codes: string[] = [];
   for (let i = 0; i < count; i++) {
@@ -76,7 +73,6 @@ export function generateMfaSecret(
   return { secret, otpauthUrl, backupCodes };
 }
 
-// fallow-ignore-next-line unused-export
 export function generateTotpCode(secret: string, timeStep: number = 30, timestampMs: number = Date.now()): string {
   const key = base32Decode(secret);
   // Fail closed on weak/malformed secrets: RFC 4226 recommends >= 128-bit shared secrets.

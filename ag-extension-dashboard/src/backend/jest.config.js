@@ -6,7 +6,6 @@ module.exports = {
   moduleDirectories: ['node_modules', '<rootDir>/node_modules'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
-    '^zod$': '<rootDir>/node_modules/zod',
   },
   transform: {
     '^.+\\.tsx?$': [

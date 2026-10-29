@@ -88,6 +88,9 @@ async function main() {
   // Batch processor default schedule delay is 5s; give it one full cycle.
   await new Promise(resolve => setTimeout(resolve, 7000));
 
+  // Flush while the collector is still listening, then stop it so its batch timer
+  // cannot keep the process alive after the check.
+  await telemetry.shutdownTelemetry();
   collector.close();
 
   if (received.length === 0) fail('collector received no OTLP export');

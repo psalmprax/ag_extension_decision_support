@@ -1,4 +1,5 @@
 import express, { Router } from 'express';
+import type { Prisma } from '@prisma/client';
 import { isSubscriptionActive } from '../../services/subscriptionUtils';
 import { paymentService } from '../../services/paymentService';
 import { getPrisma } from '../../services/prismaService';
@@ -367,66 +368,93 @@ router.post('/portal', authorize(['admin', 'extension_officer', 'farmer']), asyn
  *     summary: Switch to a different subscription plan
  *     tags: [Billing]
  */
+type SubscriptionRecordWithPlan = Prisma.SubscriptionGetPayload<{ include: { plan: true } }>;
+
+type SwitchPreflight =
+    | { ok: false; status: number; message: string }
+    | { ok: true; subscription: SubscriptionRecordWithPlan; forceSchedule: boolean };
+
+/** Validates a plan-switch request against the caller's current subscription. */
+async function preflightPlanSwitch(
+    userId: string,
+    priceId: unknown,
+    billingCycle: unknown
+): Promise<SwitchPreflight> {
+    if (typeof priceId !== 'string' || !priceId) {
+        return { ok: false, status: 400, message: 'Price ID is required' };
+    }
+
+    const subscription = await prisma.subscription.findUnique({
+        where: { userId },
+        include: { plan: true },
+    });
+
+    if (!subscription || !isSubscriptionActive(subscription)) {
+        return { ok: false, status: 400, message: 'No active subscription found.' };
+    }
+    if (subscription.plan?.stripePriceId === priceId && billingCycle !== 'next') {
+        return { ok: false, status: 400, message: 'Already on this plan' };
+    }
+    if (!subscription.stripeSubscriptionId) {
+        return { ok: false, status: 400, message: 'No Stripe subscription ID found.' };
+    }
+
+    return { ok: true, subscription, forceSchedule: billingCycle === 'next' };
+}
+
+/** Mirrors an immediate switch locally and records the change for revenue analytics. */
+async function syncPlanSwitchLocally(subscription: SubscriptionRecordWithPlan, priceId: string): Promise<void> {
+    const plans = await paymentService.getPricingPlans();
+    const newPlan = plans.find(p => p.id === priceId);
+    if (!newPlan) {
+        logger.warn(`Plan switch to ${priceId} succeeded in the gateway but the plan is not in the local catalog; local mirror not updated`);
+        return;
+    }
+
+    await prisma.subscription.update({
+        where: { id: subscription.id },
+        data: { planId: newPlan.id, status: 'active' },
+    });
+
+    const targetPlan = await prisma.subscriptionPlan.findFirst({ where: { stripePriceId: priceId } });
+    if (!targetPlan || !subscription.plan) return;
+
+    await prisma.subscriptionChangeEvent.create({
+        data: {
+            subscriptionId: subscription.id,
+            fromPlanId: subscription.plan.id,
+            toPlanId: targetPlan.id,
+            fromPrice: subscription.plan.price,
+            toPrice: targetPlan.price,
+        },
+    });
+}
+
 router.post('/switch', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
-        const { priceId, billingCycle } = req.body;
-        const userId = req.user!.userId;
-
-        if (!priceId) return res.status(400).json({ success: false, message: 'Price ID is required' });
-
-        const currentSubscription = await prisma.subscription.findUnique({
-            where: { userId },
-            include: { plan: true }
-        });
-
-        if (!currentSubscription || !isSubscriptionActive(currentSubscription)) {
-            return res.status(400).json({ success: false, message: 'No active subscription found.' });
+        const { priceId, billingCycle } = req.body ?? {};
+        const preflight = await preflightPlanSwitch(req.user!.userId, priceId, billingCycle);
+        if (!preflight.ok) {
+            return res.status(preflight.status).json({ success: false, message: preflight.message });
         }
 
-        if (currentSubscription.plan?.stripePriceId === priceId && billingCycle !== 'next') {
-            return res.status(400).json({ success: false, message: 'Already on this plan' });
-        }
-
-        if (!currentSubscription.stripeSubscriptionId) {
-            return res.status(400).json({ success: false, message: 'No Stripe subscription ID found.' });
-        }
-
-        const forceSchedule = billingCycle === 'next';
+        const { subscription, forceSchedule } = preflight;
         const success = await paymentService.switchSubscription(
-            currentSubscription.stripeSubscriptionId,
+            subscription.stripeSubscriptionId!,
             priceId,
             forceSchedule
         );
 
-        if (success) {
-            if (!forceSchedule) {
-                const plans = await paymentService.getPricingPlans();
-                const newPlan = plans.find(p => p.id === priceId);
-                if (newPlan) {
-                    const targetPlan = await prisma.subscriptionPlan.findFirst({ where: { stripePriceId: priceId } });
-                    await prisma.subscription.update({
-                        where: { userId },
-                        data: { planId: newPlan.id, status: 'active' }
-                    });
-                    if (targetPlan && currentSubscription.plan) {
-                        await prisma.subscriptionChangeEvent.create({
-                            data: {
-                                subscriptionId: currentSubscription.id,
-                                fromPlanId: currentSubscription.plan.id,
-                                toPlanId: targetPlan.id,
-                                fromPrice: currentSubscription.plan.price,
-                                toPrice: targetPlan.price,
-                            }
-                        });
-                    }
-                }
-                res.json({ success: true, message: 'Subscription plan switched successfully' });
-            } else {
-                res.json({ success: true, message: 'Subscription plan switch scheduled' });
-            }
-        } else {
-            safeError(res, 500, 'Failed to switch plan');
+        if (!success) {
+            return safeError(res, 500, 'Failed to switch plan');
         }
+
+        if (forceSchedule) {
+            return res.json({ success: true, message: 'Subscription plan switch scheduled' });
+        }
+
+        await syncPlanSwitchLocally(subscription, priceId);
+        return res.json({ success: true, message: 'Subscription plan switched successfully' });
     } catch (error) {
         logger.error('Failed to switch subscription:', error);
         safeError(res, 500, 'Internal server error');

@@ -69,7 +69,6 @@
     "prisma": "6.19.3",
     "redis": "^5.0.0",
     "socket.io": "^4.7.2",
-    "socket.io-client": "^4.7.2",
     "stripe": "^20.4.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",

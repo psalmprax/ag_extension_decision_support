@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { ThemeName } from '@/theme';
 import * as farmerService from '@/api/farmerService';
 import * as visitService from '@/api/visitService';
+import { randomId } from '@/lib/randomId';
 import { toast } from 'react-hot-toast';
 
 // Types
@@ -368,11 +369,7 @@ export const useAppStore = create<AppState>()(
       },
 
       addNotification: notification => {
-        const id =
-          typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID()
-            : Math.random().toString(36).substring(2, 15) +
-              Math.random().toString(36).substring(2, 15);
+        const id = randomId();
 
         set(state => ({
           notifications: [

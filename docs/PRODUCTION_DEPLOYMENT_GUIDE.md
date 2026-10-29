@@ -812,10 +812,12 @@ docker-compose rm backend_old
 
 ## 📞 **Support Contacts**
 
-- **Technical Support**: dev@yourdomain.com
-- **User Support**: support@yourdomain.com
-- **Security Issues**: security@yourdomain.com
-- **Emergency**: +1-XXX-XXX-XXXX
+Replace these with your own before go-live; the addresses below are templates, not active inboxes.
+
+- **Technical Support**: `dev@yourdomain.com`
+- **User Support**: `support@yourdomain.com`
+- **Security Issues**: `security@yourdomain.com`
+- **Emergency / on-call**: your rotation's escalation number
 
 ---
 

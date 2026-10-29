@@ -2,6 +2,7 @@ import { logger } from '@/utils/logger';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 import { query } from '@/services/databaseService';
 import { runIfLeader } from '@/services/leaderElection';
+import { randomId } from '@/utils/randomId';
 import os from 'os';
 
 export interface AgentTask {
@@ -259,12 +260,7 @@ class AgentOrchestrator {
 
   async dispatchTask(task: Omit<AgentTask, 'id' | 'status' | 'createdAt' | 'retryCount'>): Promise<AgentTask> {
     await this.ensurePersistenceLoaded();
-    const randomPart = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function'
-      ? Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, '0')).join('')
-      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-    const taskId = `task_${Date.now()}_${randomPart}`;
+    const taskId = randomId('task_');
     const fullTask: AgentTask = {
       ...task,
       id: taskId,

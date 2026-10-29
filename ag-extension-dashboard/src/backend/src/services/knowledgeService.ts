@@ -69,7 +69,6 @@ export class KnowledgeService {
      * Wrapped in a 10-second timeout so a slow AI provider doesn't block the RAG pipeline.
      * Covered by knowledgeService.test.ts (test files are not fallow entry points).
      */
-    // fallow-ignore-next-line unused-class-member
     static async categorizeQuery(queryText: string, options?: ReasonOptions): Promise<string[]> {
         return runCategorizeQuery(queryText, options);
     }

@@ -1,5 +1,6 @@
 import apiClient from './client';
 import { resolveOfflineConflict, type FieldConflict } from '@/services/offlineConflictResolver';
+import { randomId } from '@/lib/randomId';
 
 export type SyncState = 'pending' | 'failed' | 'conflict';
 
@@ -229,10 +230,7 @@ class SyncQueueService {
   }
 
   enqueue(item: Omit<SyncQueueItem, 'id' | 'idempotencyKey' | 'timestamp' | 'retryCount' | 'state'> & { idempotencyKey?: string }): string {
-    const id =
-      typeof crypto !== 'undefined' && crypto.randomUUID
-        ? `sync_${crypto.randomUUID()}`
-        : `sync_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const id = randomId('sync_');
     const queueItem: SyncQueueItem = {
       ...item,
       id,

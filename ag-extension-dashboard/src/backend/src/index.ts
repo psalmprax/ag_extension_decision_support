@@ -364,6 +364,15 @@ async function stopIntervalWorkers() {
     } catch { /* monitoring may not have started */ }
 }
 
+async function flushTelemetry(): Promise<void> {
+    try {
+        const { shutdownTelemetry } = await import('./utils/telemetry');
+        await withTimeout(shutdownTelemetry(), 'telemetry.shutdown');
+    } catch (error) {
+        logger.warn('Telemetry shutdown failed:', error instanceof Error ? error.message : error);
+    }
+}
+
 async function gracefulShutdown(signal: string) {
     logger.info(`Received ${signal}, starting graceful shutdown...`);
 
@@ -417,6 +426,9 @@ async function gracefulShutdown(signal: string) {
         await withTimeout(closeCache(), 'cache.close');
         logger.info('Cache connection closed');
     } catch { /* cache may not have been initialized */ }
+
+    // 6. Flush remaining telemetry spans last, once the work they describe is done.
+    await flushTelemetry();
 
     process.exit(0);
 }

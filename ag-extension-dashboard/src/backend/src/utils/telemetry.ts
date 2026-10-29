@@ -31,7 +31,6 @@ const sdk = new NodeSDK({
 });
 
 let startup: Promise<void> | null = null;
-let shutdownHookRegistered = false;
 
 /**
  * Starts the SDK once. The returned promise settles when the global tracer
@@ -50,16 +49,21 @@ export const initTelemetry = (): Promise<void> => {
     }
   })();
   startup = ready;
-
-  if (!shutdownHookRegistered) {
-    shutdownHookRegistered = true;
-    process.on('SIGTERM', () => {
-      sdk.shutdown()
-        .then(() => logger.info('OpenTelemetry SDK shut down successfully'))
-        .catch((error) => logger.error('Error shutting down OpenTelemetry SDK', error))
-        .finally(() => process.exit(0));
-    });
-  }
-
   return ready;
 };
+
+/**
+ * Flushes pending spans and stops the SDK. Called from the application's own
+ * graceful-shutdown sequence — telemetry must not install a SIGTERM handler that
+ * exits the process before the HTTP server, database and queues are drained.
+ */
+export async function shutdownTelemetry(): Promise<void> {
+  if (!startup) return;
+  await startup;
+  try {
+    await sdk.shutdown();
+    logger.info('OpenTelemetry SDK shut down successfully');
+  } catch (error) {
+    logger.error('Error shutting down OpenTelemetry SDK', error);
+  }
+}

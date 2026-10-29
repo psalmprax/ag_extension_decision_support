@@ -57,4 +57,11 @@ describe('Payment analytics: churn reasons', () => {
         expect(result.churnReasons).toEqual([]);
         expect(result.churnReasonCoverage).toEqual({ recorded: 0, cancellationsLast30Days: 3 });
     });
+
+    it('propagates a query failure instead of reporting zero churn', async () => {
+        mockPrisma.subscription.count.mockResolvedValue(0);
+        mockPrisma.cancellationFeedback.groupBy.mockRejectedValue(new Error('relation does not exist'));
+
+        await expect(paymentAnalyticsService.getChurnPrediction()).rejects.toThrow('relation does not exist');
+    });
 });

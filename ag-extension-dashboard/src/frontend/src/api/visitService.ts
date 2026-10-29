@@ -1,5 +1,6 @@
 import apiClient from './client';
 import { syncQueue } from './syncQueueService';
+import { randomId } from '@/lib/randomId';
 
 export interface Visit {
   id: string;
@@ -52,9 +53,7 @@ export const fetchSynthesis = async (
 type VisitMutationResponse = { success: boolean; data: Visit; queued?: boolean };
 
 function createMutationKey(): string {
-  return typeof crypto !== 'undefined' && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `visit_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  return randomId('visit_');
 }
 
 function isNetworkFailure(error: unknown): boolean {

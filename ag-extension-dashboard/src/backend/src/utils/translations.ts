@@ -1,3 +1,5 @@
+import { logger } from './logger';
+
 // Embedded translations for backend use (subset of frontend translations)
 const embeddedTranslations: Record<string, string> = {
   "email_template_farmer_visit_confirmation_subject": "Farm Visit Confirmed - {{farmerName}} on {{visitDate}}",
@@ -15,7 +17,7 @@ const embeddedTranslations: Record<string, string> = {
 const translations: Record<string, string> = { ...embeddedTranslations };
 
 export function loadTranslations(): void {
-  console.log(`✅ Loaded ${Object.keys(translations).length} embedded translations`);
+  logger.info(`Loaded ${Object.keys(translations).length} embedded translations`);
 }
 
 export function t(key: string, defaultValue?: string): string {

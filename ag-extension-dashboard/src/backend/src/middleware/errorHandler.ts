@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '@/utils/logger';
+import { randomId } from '@/utils/randomId';
 
 export interface ErrorDetails {
     [key: string]: unknown;
@@ -97,13 +98,7 @@ export function errorHandler(
     _next: NextFunction
 ): void {
     // Generate request ID for tracking
-    const requestId = (req.headers['x-request-id'] as string) || (
-        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-            ? crypto.randomUUID()
-            : `req-${Date.now()}-${typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function'
-                ? Array.from(crypto.getRandomValues(new Uint8Array(6)), b => b.toString(16).padStart(2, '0')).join('')
-                : Math.random().toString(36).slice(2, 10)}`
-    );
+    const requestId = (req.headers['x-request-id'] as string) || randomId('req-');
 
     // Log error with context
     logger.error('Error occurred:', {

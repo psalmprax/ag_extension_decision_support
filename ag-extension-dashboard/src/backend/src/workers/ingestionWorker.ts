@@ -57,7 +57,6 @@ function slugify(text: string): string {
 /**
  * Runs the batch ingestion process
  */
-// fallow-ignore-next-line unused-export
 export async function runBatchIngestion(): Promise<void> {
     if (process.env.INGESTION_ENABLED === 'false') {
         logger.info('Batch Ingestion is disabled via INGESTION_ENABLED=false.');
@@ -141,7 +140,6 @@ function startIngestionWorker(): void {
 }
 
 /** Stop ingestion timers (leadership release is handled by stopAll). */
-// fallow-ignore-next-line unused-export
 export function stopIngestionWorker(): void {
     if (ingestionTimer) {
         clearInterval(ingestionTimer);

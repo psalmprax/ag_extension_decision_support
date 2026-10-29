@@ -458,13 +458,10 @@ class PaymentAnalyticsService {
                 churnReasonCoverage: { recorded, cancellationsLast30Days: recentCancellations }
             };
         } catch (error) {
+            // Propagate: a zeros payload would render as "no churn, no reasons" and
+            // hide a database failure behind plausible-looking charts.
             logger.error('Failed to get churn prediction:', error);
-            return {
-                predictedChurnRate: 0,
-                atRiskCustomers: 0,
-                churnReasons: [],
-                churnReasonCoverage: { recorded: 0, cancellationsLast30Days: 0 }
-            };
+            throw error;
         }
     }
 

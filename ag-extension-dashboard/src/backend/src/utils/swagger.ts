@@ -3,7 +3,7 @@ import swaggerUi from 'swagger-ui-express';
 import { Application } from 'express';
 import path from 'path';
 import { config } from '@/config';
-import { logger } from '@/utils/logger';
+import { logger } from './logger';
 
 const options: swaggerJsdoc.Options = {
     definition: {
@@ -89,8 +89,8 @@ export function setupSwagger(app: Application): void {
             });
         }
         app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
-        console.log('Swagger API documentation available at /api-docs');
+        logger.info('Swagger API documentation available at /api-docs');
     } catch (err) {
-        console.warn('Swagger setup skipped:', err);
+        logger.warn('Swagger setup skipped:', err);
     }
 }

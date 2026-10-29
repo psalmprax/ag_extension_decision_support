@@ -286,6 +286,11 @@ export function useBillingActions() {
 
   const handleSubmitTransaction = async (): Promise<void> => {
     if (!mobilePayData.transactionId || !mobilePayData.planId || !mobilePayData.amount) return;
+    const amount = Number.parseFloat(mobilePayData.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setFormMessage({ type: 'error', text: 'Enter the amount you paid as a number greater than zero.' });
+      return;
+    }
     setActionLoading('mobile-pay');
     setFormMessage(null);
     try {
@@ -293,7 +298,7 @@ export function useBillingActions() {
         planId: mobilePayData.planId,
         method: mobilePayData.method,
         transactionId: mobilePayData.transactionId,
-        amount: parseFloat(mobilePayData.amount),
+        amount,
       });
       if (res.success) {
         setFormMessage({
@@ -504,6 +509,8 @@ export function useBillingActions() {
           if (response.success) {
             toast.success(response.message || 'Payment method removed');
             fetchData();
+          } else {
+            toast.error(response.error || response.message || 'Failed to remove payment method');
           }
         } catch (error) {
           console.error('Failed to delete payment method:', error);
@@ -556,6 +563,8 @@ export function useBillingActions() {
           paypalClientId: '',
           paypalSecret: '',
         });
+      } else {
+        toast.error(response.error || response.message || 'Credentials update was rejected by the server');
       }
     } catch (error) {
       console.error('Failed to update credentials:', error);
