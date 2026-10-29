@@ -5,6 +5,11 @@ import { getPrisma } from '../../services/prismaService';
 import { logger } from '../../utils/logger';
 import { authorize, AuthRequest } from '../../middleware/authorize';
 import { usageService, FREE_TIER_LIMITS } from '../../services/usageService';
+import {
+    CANCELLATION_REASONS,
+    cancellationFeedbackService,
+    isCancellationReason,
+} from '../../services/cancellationFeedbackService';
 import { safeError } from '@/utils/safeResponse';
 
 // Route-level subscription writes are local mirrors / complementary writes only.
@@ -263,6 +268,21 @@ router.post('/subscribe', authorize(['admin', 'extension_officer', 'farmer']), a
 router.post('/cancel', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const userId = req.user!.userId;
+        const { reason, comment } = req.body ?? {};
+
+        // An optional reason is validated before the gateway is touched: an unknown
+        // value would otherwise leave an unusable row behind a successful cancel.
+        if (reason !== undefined && !isCancellationReason(reason)) {
+            return res.status(400).json({
+                success: false,
+                errorCode: 'INVALID_CANCELLATION_REASON',
+                message: `reason must be one of: ${CANCELLATION_REASONS.join(', ')}`,
+            });
+        }
+        if (comment !== undefined && typeof comment !== 'string') {
+            return res.status(400).json({ success: false, message: 'comment must be a string' });
+        }
+
         const subscription = await prisma.subscription.findUnique({ where: { userId } });
 
         if (!subscription || !subscription.stripeSubscriptionId) {
@@ -276,7 +296,21 @@ router.post('/cancel', authorize(['admin', 'extension_officer', 'farmer']), asyn
                 where: { userId },
                 data: { cancelAtPeriodEnd: true }
             });
-            res.json({ success: true, message: 'Subscription will be canceled at the end of the period' });
+
+            const feedbackRecorded = reason
+                ? await cancellationFeedbackService.record({
+                    subscriptionId: subscription.id,
+                    userId,
+                    reason,
+                    comment: typeof comment === 'string' ? comment : null,
+                })
+                : false;
+
+            res.json({
+                success: true,
+                message: 'Subscription will be canceled at the end of the period',
+                feedbackRecorded,
+            });
         } else {
             safeError(res, 500, 'Failed to cancel subscription');
         }

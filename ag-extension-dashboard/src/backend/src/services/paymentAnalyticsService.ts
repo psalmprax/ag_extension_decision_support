@@ -42,11 +42,17 @@ export interface PaymentMethodAnalytics {
 export interface ChurnPrediction {
     predictedChurnRate: number;
     atRiskCustomers: number;
+    /** Self-reported reasons, share of the *recorded* feedback (not of all cancellations). */
     churnReasons: Array<{
         reason: string;
         count: number;
         percentage: number;
     }>;
+    /** Coverage lets callers see how much of the churn the reasons actually explain. */
+    churnReasonCoverage: {
+        recorded: number;
+        cancellationsLast30Days: number;
+    };
 }
 
 export interface CohortAnalysis {
@@ -404,11 +410,12 @@ class PaymentAnalyticsService {
     async getChurnPrediction(): Promise<ChurnPrediction> {
         try {
             // Simplified churn prediction based on cancellation patterns
+            const windowStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Last 30 days
             const recentCancellations = await this.prisma.subscription.count({
                 where: {
                     status: 'canceled',
                     updatedAt: {
-                        gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
+                        gte: windowStart
                     }
                 }
             });
@@ -427,20 +434,36 @@ class PaymentAnalyticsService {
                 }
             });
 
-            // Churn reasons — requires cancellation_feedback table; empty until that table exists
-            const churnReasons: { reason: string; count: number; percentage: number }[] = [];
+            // Churn reasons come only from self-reported cancellation feedback; they
+            // are not inferred from behaviour, and coverage says how much of the churn
+            // they account for.
+            const feedbackGroups = await this.prisma.cancellationFeedback.groupBy({
+                by: ['reason'],
+                where: { createdAt: { gte: windowStart } },
+                _count: { _all: true }
+            });
+            const recorded = feedbackGroups.reduce((total, group) => total + group._count._all, 0);
+            const churnReasons = feedbackGroups
+                .map(group => ({
+                    reason: group.reason,
+                    count: group._count._all,
+                    percentage: recorded > 0 ? (group._count._all / recorded) * 100 : 0
+                }))
+                .sort((a, b) => b.count - a.count);
 
             return {
                 predictedChurnRate,
                 atRiskCustomers,
-                churnReasons
+                churnReasons,
+                churnReasonCoverage: { recorded, cancellationsLast30Days: recentCancellations }
             };
         } catch (error) {
             logger.error('Failed to get churn prediction:', error);
             return {
                 predictedChurnRate: 0,
                 atRiskCustomers: 0,
-                churnReasons: []
+                churnReasons: [],
+                churnReasonCoverage: { recorded: 0, cancellationsLast30Days: 0 }
             };
         }
     }

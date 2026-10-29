@@ -75,6 +75,7 @@ model User {
   failedLoginAttempts Int          @default(0) @map("failed_login_attempts")
   lockoutUntil  DateTime?          @map("lockout_until") @db.Timestamp(6)
   sessions      UserSession[]
+  cancellationFeedback CancellationFeedback[]
   tenantId       String?            @map("tenant_id") @db.Uuid
   tenant         Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   tenantMemberships TenantMembership[]
@@ -476,6 +477,7 @@ model Subscription {
   payments          Payment[]
   usage             Usage?
   changeEvents      SubscriptionChangeEvent[]
+  cancellationFeedback CancellationFeedback?
 
   @@map("subscriptions")
 }
@@ -494,6 +496,24 @@ model SubscriptionChangeEvent {
 
   @@index([createdAt])
   @@map("subscription_change_events")
+}
+
+/// Self-reported reason a subscriber gave when cancelling. One row per subscription:
+/// re-cancelling updates the row rather than double-counting the same customer.
+model CancellationFeedback {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subscriptionId String       @unique @map("subscription_id") @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  reason         String       @db.VarChar(50)
+  comment        String?
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime     @default(now()) @map("updated_at") @db.Timestamp(6)
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+  @@index([reason])
+  @@map("cancellation_feedback")
 }
 
 model Payment {
