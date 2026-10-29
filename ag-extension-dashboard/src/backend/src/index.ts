@@ -1,5 +1,6 @@
 import { initTelemetry } from './utils/telemetry';
-initTelemetry();
+// Startup is asynchronous and already reports its own failures; do not block boot on it.
+void initTelemetry();
 
 import { createServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
