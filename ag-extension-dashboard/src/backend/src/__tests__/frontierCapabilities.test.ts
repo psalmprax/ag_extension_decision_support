@@ -1,6 +1,6 @@
 import { calculateVpdKPa, evaluateSmartIrrigation, type SoilProbeTelemetry } from '../services/iotTelemetryService';
 import { verifyEudrDeforestationCompliance, generateFarmToForkPassport } from '../services/traceabilityPassportService';
-import { findAvailableEquipment, planDroneSprayMission } from '../services/mechanizationFleetService';
+import { findAvailableEquipment, planDroneSprayMission, registerEquipment } from '../services/mechanizationFleetService';
 import { clusterPestSightings, forecastSwarmTrajectory, type PestSightingReport } from '../services/pestSwarmRadarService';
 import { findCrossBorderArbitrage } from '../services/crossBorderTradeService';
 
@@ -11,6 +11,17 @@ jest.mock('../utils/logger', () => ({
     error: jest.fn(),
     debug: jest.fn(),
   },
+}));
+
+const mockAssetFindMany = jest.fn();
+const mockAssetCreate = jest.fn();
+jest.mock('../services/prismaService', () => ({
+  getPrisma: () => ({
+    mechanizationAsset: {
+      findMany: mockAssetFindMany,
+      create: mockAssetCreate,
+    },
+  }),
 }));
 
 describe('Frontier Agricultural Capabilities (IoT, EUDR, Drone Fleet, Swarm Radar, Cross-Border Trade)', () => {
@@ -97,12 +108,73 @@ describe('Frontier Agricultural Capabilities (IoT, EUDR, Drone Fleet, Swarm Rada
   });
 
   describe('Shared Mechanization & Agricultural Drone Fleet Dispatcher', () => {
-    it('searches for available tractor and drone mechanization assets', () => {
-      const { equipment } = findAvailableEquipment({ county: 'Nakuru' });
-      expect(equipment.length).toBeGreaterThan(0);
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('searches the registry for available tractor and drone assets', async () => {
+      mockAssetFindMany.mockResolvedValue([
+        {
+          id: 'asset-1', assetType: 'tractor_75hp', modelName: 'Massey Ferguson 375',
+          ownerName: 'Njoro Machinery Co-op', ownerPhone: '+254711000111', county: 'Nakuru',
+          subCounty: 'Njoro', ratePerUnitKes: 2800, rateUnit: 'per_acre',
+          isAvailable: true, isVerified: true,
+        },
+        {
+          id: 'asset-2', assetType: 'spraying_drone_t30', modelName: 'DJI Agras T30',
+          ownerName: 'Rongai Drone Services', ownerPhone: '+254722000222', county: 'Nakuru',
+          subCounty: 'Rongai', ratePerUnitKes: 1200, rateUnit: 'per_acre',
+          isAvailable: true, isVerified: false,
+        },
+      ]);
+
+      const { equipment, provenance } = await findAvailableEquipment({ county: 'Nakuru' });
+
+      expect(mockAssetFindMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: { county: { equals: 'Nakuru', mode: 'insensitive' }, isAvailable: true },
+      }));
+      expect(equipment).toHaveLength(2);
       expect(equipment.some(e => e.assetType === 'spraying_drone_t30')).toBe(true);
-      // Demo directory must be disclosed as such
-      expect(findAvailableEquipment({ county: 'Nakuru' }).provenance.kind).toBe('demo_reference_data');
+      expect(provenance.kind).toBe('tenant_registry');
+      expect(provenance.demoData).toBe(false);
+    });
+
+    it('returns an empty list with disclosed provenance when the registry has no match', async () => {
+      mockAssetFindMany.mockResolvedValue([]);
+
+      const { equipment, provenance } = await findAvailableEquipment({ county: 'Turkana' });
+
+      expect(equipment).toEqual([]);
+      expect(provenance.kind).toBe('tenant_registry');
+      expect(provenance.demoData).toBe(false);
+      expect(provenance.note).toContain('No available equipment');
+    });
+
+    it('registers equipment as unavailable for verification until confirmed', async () => {
+      mockAssetCreate.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
+        id: 'asset-3', ...data,
+      }));
+
+      const asset = await registerEquipment({
+        assetType: 'combine_harvester',
+        modelName: '  Claas Dominator 130  ',
+        ownerName: 'Nakuru Grain Growers',
+        ownerPhone: '+254733000333',
+        county: 'Nakuru',
+        subCounty: 'Gilgil',
+        ratePerUnitKes: 9500,
+        rateUnit: 'per_day',
+      });
+
+      expect(mockAssetCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          modelName: 'Claas Dominator 130',
+          isAvailable: true,
+          isVerified: false,
+        }),
+      });
+      expect(asset.id).toBe('asset-3');
+      expect(asset.rateUnit).toBe('per_day');
     });
 
     it('plans ULV drone spraying missions across smallholder cluster blocks', () => {

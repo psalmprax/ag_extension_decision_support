@@ -11,6 +11,8 @@
  *    (pure math over request payloads). No fabricated data.
  *  - deterministic_estimation: uses fixed agronomic coefficients or constants
  *    (yields, costs, rates). Estimates, not measurements.
+ *  - tenant_registry: records come from an operator-maintained database table
+ *    (registered assets, onboarded dealers), not a live feed.
  *  - demo_reference_data: returned records come from an in-code static
  *    directory, not a live database or registry.
  *  - unavailable: the real data source is not integrated yet.
@@ -19,6 +21,7 @@
 export type ProvenanceKind =
   | 'computed_from_supplied_inputs'
   | 'deterministic_estimation'
+  | 'tenant_registry'
   | 'demo_reference_data'
   | 'unavailable';
 

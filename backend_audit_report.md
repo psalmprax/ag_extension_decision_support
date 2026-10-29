@@ -116,14 +116,9 @@ const borderFees = 18.5; // DEMO per-ton SPS + bond estimate (not tariff schedul
 - Carbon footprint hardcoded to `0.85` with comment "ESTIMATED — requires lifecycle assessment, not measured"  
 **Evidence:** Lines 111, 114, 131.
 
-### 11. [DISCLOSED] `services/mechanizationFleetService.ts:42-55` — DEMO equipment catalog returned as live data
-**Feature:** Farm machinery rental marketplace  
-**What's incomplete:** Returns hardcoded `[DEMO] Massey Ferguson 375` and `[DEMO] DJI Agras T30` entries. No DB backing; presented as real equipment listings.  
-**Evidence:**
-```typescript
-modelName: '[DEMO] Massey Ferguson 375 (75 HP with Disc Plow)',
-ownerName: '[DEMO] Peter Kiprono',
-```
+### 11. [FIXED] `services/mechanizationFleetService.ts` — DEMO equipment catalog replaced by a database-backed registry
+**Status:** Resolved. The in-code directory is gone. Equipment lives in `mechanization_assets` (migration `20261029120000_add_mechanization_assets`), is registered through the admin-only `POST /api/pillars/mechanization/assets`, and search reads the table with `tenant_registry` provenance. An empty registry returns an empty list, never demo rows. Availability and verification are recorded flags, disclosed as operator-maintained rather than live telematics.
+**Feature:** Farm machinery rental marketplace
 
 ### 12. [FIXED] `services/pestSwarmRadarService.ts:120-131` — DEMO county list & advisory actions
 **Feature:** Pest swarm trajectory forecasting & advisory dispatch  

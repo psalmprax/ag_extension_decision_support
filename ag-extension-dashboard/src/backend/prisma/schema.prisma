@@ -516,6 +516,28 @@ model CancellationFeedback {
   @@map("cancellation_feedback")
 }
 
+/// Mechanization equipment registered by owners or tenant administrators.
+/// Availability is an operator-maintained flag, not live telematics.
+model MechanizationAsset {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assetType      String   @map("asset_type") @db.VarChar(50)
+  modelName      String   @map("model_name") @db.VarChar(200)
+  ownerName      String   @map("owner_name") @db.VarChar(200)
+  ownerPhone     String   @map("owner_phone") @db.VarChar(30)
+  county         String   @db.VarChar(100)
+  subCounty      String   @map("sub_county") @db.VarChar(100)
+  ratePerUnitKes Int      @map("rate_per_unit_kes")
+  rateUnit       String   @map("rate_unit") @db.VarChar(20)
+  isAvailable    Boolean  @default(true) @map("is_available")
+  isVerified     Boolean  @default(false) @map("is_verified")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@index([county, assetType])
+  @@index([isAvailable])
+  @@map("mechanization_assets")
+}
+
 model Payment {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   subscriptionId String   @map("subscription_id") @db.Uuid

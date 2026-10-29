@@ -1,25 +1,55 @@
 /**
- * Shared mechanization fleet directory and drone-mission planner — wired via
+ * Mechanization fleet registry and drone-mission planner — wired via
  * POST /api/pillars/mechanization/*.
  *
- * The equipment directory is in-code demo data clearly labeled '[DEMO]' at the record
- * level; mission planning is deterministic math over caller inputs. Disclosed per
- * response via the `provenance` block.
+ * Equipment records live in the `mechanization_assets` table and are registered
+ * explicitly by owners or tenant administrators. Availability is an
+ * operator-maintained flag, not live telematics, and each response says so via
+ * its `provenance` block. Mission planning is deterministic math over caller
+ * inputs.
  */
 import { logger } from '../utils/logger';
+import { getPrisma } from './prismaService';
 import { pillarProvenance } from './provenance';
+
+export const MECHANIZATION_ASSET_TYPES = [
+  'tractor_75hp',
+  'solar_water_pump',
+  'combine_harvester',
+  'spraying_drone_t30',
+] as const;
+
+export type MechanizationAssetType = typeof MECHANIZATION_ASSET_TYPES[number];
+
+export const MECHANIZATION_RATE_UNITS = ['per_acre', 'per_day', 'per_hour'] as const;
+
+export type MechanizationRateUnit = typeof MECHANIZATION_RATE_UNITS[number];
 
 export interface MechanizationAsset {
   id: string;
-  assetType: 'tractor_75hp' | 'solar_water_pump' | 'combine_harvester' | 'spraying_drone_t30';
+  assetType: MechanizationAssetType;
   modelName: string;
   ownerName: string;
   ownerPhone: string;
   county: string;
   subCounty: string;
   ratePerUnitKes: number;
-  rateUnit: 'per_acre' | 'per_day' | 'per_hour';
+  rateUnit: MechanizationRateUnit;
   isAvailable: boolean;
+  isVerified: boolean;
+}
+
+export interface RegisterEquipmentInput {
+  assetType: MechanizationAssetType;
+  modelName: string;
+  ownerName: string;
+  ownerPhone: string;
+  county: string;
+  subCounty: string;
+  ratePerUnitKes: number;
+  rateUnit: MechanizationRateUnit;
+  isAvailable?: boolean;
+  isVerified?: boolean;
 }
 
 export interface DroneSprayMissionPlan {
@@ -40,60 +70,96 @@ export interface DroneSprayMissionPlan {
   provenance: ReturnType<typeof pillarProvenance>;
 }
 
-const REGISTERED_EQUIPMENT: MechanizationAsset[] = [
-  {
-    id: 'asset-trac-01',
-    assetType: 'tractor_75hp',
-    modelName: '[DEMO] Massey Ferguson 375 (75 HP with Disc Plow)',
-    ownerName: '[DEMO] Peter Kiprono',
-    ownerPhone: '+254711334455',
-    county: 'Nakuru',
-    subCounty: 'Njoro',
-    ratePerUnitKes: 2800,
-    rateUnit: 'per_acre',
-    isAvailable: true,
-  },
-  {
-    id: 'asset-drone-02',
-    assetType: 'spraying_drone_t30',
-    modelName: '[DEMO] DJI Agras T30 (30L Tank, 16 Spouts)',
-    ownerName: '[DEMO] Equator Drone Agro Services',
-    ownerPhone: '+254722556677',
-    county: 'Nakuru',
-    subCounty: 'Rongai',
-    ratePerUnitKes: 1200,
-    rateUnit: 'per_acre',
-    isAvailable: true,
-  },
-];
-
 export interface EquipmentSearchResult {
   equipment: MechanizationAsset[];
   provenance: ReturnType<typeof pillarProvenance>;
 }
 
-export function findAvailableEquipment(params: {
-  county: string;
-  assetType?: MechanizationAsset['assetType'];
-}): EquipmentSearchResult {
-  const { county, assetType } = params;
-  logger.info(`Searching mechanization equipment in ${county} (type=${assetType || 'all'})`);
+/** Adds one asset to the registry. Callers must be authorized administrators. */
+export async function registerEquipment(input: RegisterEquipmentInput): Promise<MechanizationAsset> {
+  const record = await getPrisma().mechanizationAsset.create({
+    data: {
+      assetType: input.assetType,
+      modelName: input.modelName.trim(),
+      ownerName: input.ownerName.trim(),
+      ownerPhone: input.ownerPhone.trim(),
+      county: input.county.trim(),
+      subCounty: input.subCounty.trim(),
+      ratePerUnitKes: input.ratePerUnitKes,
+      rateUnit: input.rateUnit,
+      isAvailable: input.isAvailable ?? true,
+      isVerified: input.isVerified ?? false,
+    },
+  });
 
-  const equipment = REGISTERED_EQUIPMENT.filter(
-    item =>
-      item.county.toLowerCase() === county.toLowerCase() &&
-      item.isAvailable &&
-      (!assetType || item.assetType === assetType)
-  );
+  logger.info(`Registered mechanization asset ${record.id} (${record.assetType}) in ${record.county}`);
+  return toAsset(record);
+}
+
+/**
+ * Lists available assets in a county from the registry. Returns an empty list —
+ * with provenance saying so — when nothing has been registered for that county;
+ * it never substitutes demo records.
+ */
+export async function findAvailableEquipment(params: {
+  county: string;
+  assetType?: MechanizationAssetType;
+}): Promise<EquipmentSearchResult> {
+  const { county, assetType } = params;
+  logger.info(`Searching mechanization registry in ${county} (type=${assetType || 'all'})`);
+
+  const records = await getPrisma().mechanizationAsset.findMany({
+    where: {
+      county: { equals: county.trim(), mode: 'insensitive' },
+      isAvailable: true,
+      ...(assetType ? { assetType } : {}),
+    },
+    orderBy: [{ isVerified: 'desc' }, { ratePerUnitKes: 'asc' }],
+  });
 
   return {
-    equipment,
+    equipment: records.map(toAsset),
     provenance: pillarProvenance(
-      'demo_reference_data',
-      'Equipment records come from an in-code demo directory (records are prefixed [DEMO]); availability is static, not live tracking.',
-      ['Demo directory holds 2 Nakuru assets (1 tractor, 1 drone)'],
-      true
+      'tenant_registry',
+      records.length > 0
+        ? 'Equipment comes from the operator-maintained mechanization_assets registry. Availability and verification are recorded flags, not live telematics.'
+        : `No available equipment is registered for ${county}${assetType ? ` (${assetType})` : ''}. The registry holds only records an administrator has added.`,
+      [
+        'Availability flag is maintained by the registry operator',
+        'isVerified is false until an administrator confirms ownership documents',
+      ],
+      false
     ),
+  };
+}
+
+type MechanizationAssetRecord = {
+  id: string;
+  assetType: string;
+  modelName: string;
+  ownerName: string;
+  ownerPhone: string;
+  county: string;
+  subCounty: string;
+  ratePerUnitKes: number;
+  rateUnit: string;
+  isAvailable: boolean;
+  isVerified: boolean;
+};
+
+function toAsset(record: MechanizationAssetRecord): MechanizationAsset {
+  return {
+    id: record.id,
+    assetType: record.assetType as MechanizationAssetType,
+    modelName: record.modelName,
+    ownerName: record.ownerName,
+    ownerPhone: record.ownerPhone,
+    county: record.county,
+    subCounty: record.subCounty,
+    ratePerUnitKes: record.ratePerUnitKes,
+    rateUnit: record.rateUnit as MechanizationRateUnit,
+    isAvailable: record.isAvailable,
+    isVerified: record.isVerified,
   };
 }
 
