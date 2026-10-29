@@ -28,6 +28,8 @@ import { PlanCard } from './billing/PlanCard';
 import { PaymentMethods } from './billing/PaymentMethods';
 import { Invoices } from './billing/Invoices';
 import { AccessAndCostMatrix } from './billing/AccessAndCostMatrix';
+import { ChurnReasons } from './billing/ChurnReasons';
+import { CancelSubscriptionModal } from './billing/CancelSubscriptionModal';
 import { LiquidToggleSwitch } from './canvasui/LiquidToggleSwitch';
 import { triggerHaptic } from '@/lib/haptics';
 
@@ -487,6 +489,7 @@ export const BillingDashboard: React.FC = () => {
   const billing = useBillingActions();
   const [isAnnual, setIsAnnual] = useState(false);
   const [activeTab, setActiveTab] = useState<'plans' | 'usage' | 'payments' | 'invoices' | 'admin'>('plans');
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   if (billing.loading) {
     return (
@@ -652,6 +655,28 @@ export const BillingDashboard: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {billing.subscription && !billing.subscription.cancelAtPeriodEnd && (
+          <div className="mt-4 pt-4 border-t border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <p className="text-xxs text-white/50">
+              Cancelling keeps your plan active until the period ends.
+            </p>
+            <button
+              onClick={() => {
+                triggerHaptic('light');
+                setShowCancelModal(true);
+              }}
+              className="text-xxs font-bold uppercase tracking-wider text-rose-300 hover:text-rose-200 transition-colors self-start sm:self-auto"
+            >
+              Cancel subscription
+            </button>
+          </div>
+        )}
+        {billing.subscription?.cancelAtPeriodEnd && (
+          <p className="mt-4 pt-4 border-t border-white/5 text-xxs text-amber-300">
+            This subscription is set to end at the close of the current period.
+          </p>
+        )}
       </section>
 
       {/* ── Tab Content Views ── */}
@@ -762,9 +787,23 @@ export const BillingDashboard: React.FC = () => {
         )}
 
         {activeTab === 'admin' && billing.user?.role === 'admin' && (
-          <AdminVaultSection billing={billing} />
+          <div className="space-y-6">
+            <ChurnReasons />
+            <AdminVaultSection billing={billing} />
+          </div>
         )}
       </AnimatePresence>
+
+      <CancelSubscriptionModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        loading={billing.actionLoading === 'cancel'}
+        onConfirm={async (reason, comment) => {
+          const done = await billing.handleCancelSubscription(reason, comment);
+          if (done) setShowCancelModal(false);
+          return done;
+        }}
+      />
 
       {/* ── Rejection Modal ── */}
       <BaseModal

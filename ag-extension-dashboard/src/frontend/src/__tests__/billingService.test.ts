@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { AxiosError } from 'axios';
 
 vi.mock('@/api/client', () => ({
   default: {
@@ -17,6 +18,8 @@ import {
   addPaymentMethod,
   deletePaymentMethod,
   redeemVoucher,
+  fetchChurnAnalytics,
+  cancelSubscription,
 } from '@/api/billingService';
 
 const mockGet = vi.mocked(apiClient.get);
@@ -85,6 +88,61 @@ describe('billingService', () => {
       await deletePaymentMethod('pm-1');
 
       expect(mockDelete).toHaveBeenCalledWith('/billing/payment-methods/pm-1');
+    });
+  });
+
+  describe('fetchChurnAnalytics', () => {
+    it('returns the churn reasons and their coverage', async () => {
+      mockGet.mockResolvedValue({
+        data: {
+          success: true,
+          data: {
+            predictedChurnRate: 12,
+            atRiskCustomers: 1,
+            churnReasons: [{ reason: 'too_expensive', count: 3, percentage: 60 }],
+            churnReasonCoverage: { recorded: 5, cancellationsLast30Days: 9 },
+          },
+        },
+      });
+
+      const result = await fetchChurnAnalytics();
+
+      expect(mockGet).toHaveBeenCalledWith('/billing/analytics/churn');
+      expect(result.data?.churnReasons[0].reason).toBe('too_expensive');
+      expect(result.data?.churnReasonCoverage.recorded).toBe(5);
+    });
+
+    it('surfaces the server error message', async () => {
+      const forbidden = Object.assign(new AxiosError('Request failed with status code 403'), {
+        response: { data: { error: 'Admin only' }, status: 403 },
+      });
+      mockGet.mockRejectedValue(forbidden);
+
+      const result = await fetchChurnAnalytics();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Admin only');
+    });
+  });
+
+  describe('cancelSubscription', () => {
+    it('sends the reason and comment when both are provided', async () => {
+      mockPost.mockResolvedValue({ data: { success: true, feedbackRecorded: true } });
+
+      await cancelSubscription('too_expensive', 'budget cut');
+
+      expect(mockPost).toHaveBeenCalledWith('/billing/cancel', {
+        reason: 'too_expensive',
+        comment: 'budget cut',
+      });
+    });
+
+    it('omits empty optional fields', async () => {
+      mockPost.mockResolvedValue({ data: { success: true } });
+
+      await cancelSubscription(undefined, '   ');
+
+      expect(mockPost).toHaveBeenCalledWith('/billing/cancel', {});
     });
   });
 

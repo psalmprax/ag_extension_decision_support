@@ -10,6 +10,7 @@ import {
   createPortalSession,
   fetchInvoices,
   switchSubscription,
+  cancelSubscription,
   fetchPaymentMethods,
   addPaymentMethod,
   deletePaymentMethod,
@@ -424,6 +425,28 @@ export function useBillingActions() {
     }
   };
 
+  const handleCancelSubscription = async (reason?: string, comment?: string): Promise<boolean> => {
+    setActionLoading('cancel');
+    try {
+      const response = await cancelSubscription(reason, comment);
+      if (response?.success) {
+        toast.success(
+          response.message || 'Subscription will be cancelled at the end of the current period'
+        );
+        fetchData();
+        return true;
+      }
+      toast.error(response?.message || response?.error || 'Failed to cancel subscription');
+      return false;
+    } catch (error: unknown) {
+      if (import.meta.env.DEV) console.error('Cancel subscription failed:', error);
+      toast.error('Failed to cancel subscription. Please try again.');
+      return false;
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handlePortal = async () => {
     setActionLoading('portal');
     try {
@@ -584,6 +607,7 @@ export function useBillingActions() {
     handleGenerateVouchers,
     handleSubscribe,
     handleSwitch,
+    handleCancelSubscription,
     handlePortal,
     handleAddMethod,
     handleDeleteMethod,

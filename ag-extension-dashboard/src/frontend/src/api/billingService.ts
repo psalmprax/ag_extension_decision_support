@@ -49,6 +49,47 @@ export const fetchPlanQuotas = async (): Promise<{ success: boolean; data?: Plan
   }
 };
 
+export interface ChurnAnalytics {
+  predictedChurnRate: number;
+  atRiskCustomers: number;
+  churnReasons: Array<{ reason: string; count: number; percentage: number }>;
+  churnReasonCoverage: { recorded: number; cancellationsLast30Days: number };
+}
+
+/** Self-reported cancellation reasons. Admin only on the server. */
+export const fetchChurnAnalytics = async (): Promise<{
+  success: boolean;
+  data?: ChurnAnalytics;
+  error?: string;
+}> => {
+  try {
+    const { data } = await apiClient.get('/billing/analytics/churn');
+    return data;
+  } catch (err: unknown) {
+    const body = isAxiosError(err) ? err.response?.data : null;
+    return { success: false, error: body?.error || 'Failed to load churn analytics' };
+  }
+};
+
+/** Cancels at period end; an optional reason feeds churn reporting. */
+export const cancelSubscription = async (reason?: string, comment?: string) => {
+  try {
+    const { data } = await apiClient.post('/billing/cancel', {
+      ...(reason ? { reason } : {}),
+      ...(comment && comment.trim() ? { comment } : {}),
+    });
+    return data;
+  } catch (err: unknown) {
+    const body = isAxiosError(err) ? err.response?.data : null;
+    return (
+      body || {
+        success: false,
+        error: 'Failed to cancel subscription',
+      }
+    );
+  }
+};
+
 export const fetchSubscription = async () => {
   try {
     const { data } = await apiClient.get('/billing/subscription');
