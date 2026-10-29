@@ -21,6 +21,7 @@ It is written against the application as shipped in this repository. Where a cap
 - Text you type is shown as `example input`.
 - Notes beginning with "Offline" describe behaviour when the device has no connection.
 - A "provenance" note explains where a number or recommendation came from. The platform labels data status rather than hiding it, so read those labels before quoting figures.
+- Figures with numbered pins: the number in the image matches the numbered list directly below it. Figures 1 and 2 are captured from the running application. Figure 3 is a schematic of a signed-in screen, because those screens require a seeded account; it is labelled as a map wherever it is used.
 
 ## What the platform is, in one page
 
@@ -51,6 +52,16 @@ A dedicated Android and iOS build of the dashboard also exists in this repositor
 
 ## Create an account
 
+![Figure 1. The registration screen, with the numbered controls used in the steps below.](docs/manual/figures/register.png)
+
+1. **First name** - enter the officer or farmer's given name.
+2. **Email** - the address that receives verification and password-reset mail.
+3. **Password** - at least eight characters; the eye icon reveals what you typed.
+4. **Role** - the role requested at registration; administrators can adjust it later.
+5. **Create Account** - submits the form. Nothing is usable until the email is verified.
+
+To register:
+
 1. Open the platform URL and select **Create account** (or go to `/register`).
 2. Enter your first name, last name, email address, phone number and a password.
 3. Choose your role. Self-registration offers the field roles; administrative roles are assigned by an administrator afterwards.
@@ -60,6 +71,16 @@ A dedicated Android and iOS build of the dashboard also exists in this repositor
 **Password rules.** Use at least eight characters with a mix of letters and numbers. A password that fails the server policy is rejected with a message describing the failing rule; nothing is saved.
 
 ## Sign in
+
+![Figure 2. The sign-in screen: 1 email, 2 password, 3 sign in, 4 password recovery, 5 registration.](docs/manual/figures/login.png)
+
+1. **Email address** - the verified address on the account.
+2. **Password** - masked by default; the eye icon reveals it on a private device.
+3. **Sign In** - authenticates and loads the dashboard for your role.
+4. **Forgot password** - starts the reset flow described below.
+5. **Create account** - opens registration for a new user.
+
+To sign in:
 
 1. Go to `/login`.
 2. Enter email and password, then **Sign in**.
@@ -124,6 +145,16 @@ Once installed, previously loaded screens, draft visits, field registrations and
 # Dashboard
 
 The dashboard is the first screen after sign-in and answers one question: what needs attention today?
+
+![Figure 3. Dashboard layout map (schematic): 1 sidebar, 2 global search, 3 metric cards, 4 performance chart, 5 farmer map, 6 recent activity, 7 alerts.](docs/manual/figures/dashboard-layout-map.png)
+
+1. **Sidebar** - the four navigation sections. The current item is highlighted; the mobile build moves the same destinations to the bottom bar.
+2. **Global search** - finds farmers, visits and reports by name or identifier.
+3. **Metric cards** - portfolio size, visits in the period, open follow-ups and resolution rate. Each card opens the filtered list behind the number.
+4. **Performance chart** - visit volume and completion trend; change the period with the selector.
+5. **Farmer map** - registered locations; select a marker to open the farmer summary.
+6. **Recent activity** - the latest visits, diagnoses and advisories, newest first.
+7. **Alerts** - weather, pest and follow-up reminders awaiting action.
 
 ## Officer dashboard
 

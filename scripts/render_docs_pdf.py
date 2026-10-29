@@ -28,6 +28,7 @@ from reportlab.platypus import (
     BaseDocTemplate,
     Flowable,
     Frame,
+    Image,
     KeepTogether,
     PageBreak,
     PageTemplate,
@@ -100,6 +101,10 @@ def build_styles():
             "CellHead", parent=styles["BodyText"], fontName="Helvetica-Bold",
             fontSize=8.6, leading=11.4, textColor=colors.white,
         ),
+        "caption": ParagraphStyle(
+            "Caption", parent=styles["BodyText"], fontName="Helvetica-Oblique",
+            fontSize=8.4, leading=11.5, textColor=MUTED, alignment=TA_CENTER,
+        ),
         "quote": ParagraphStyle(
             "Quote", parent=styles["BodyText"], fontName="Helvetica-Oblique",
             fontSize=9.4, leading=13.4, textColor=INK,
@@ -123,6 +128,7 @@ INLINE_CODE = re.compile(r"`([^`]+)`")
 BOLD = re.compile(r"\*\*([^*]+)\*\*")
 ITALIC = re.compile(r"(?<!\*)\*([^*\n]+)\*(?!\*)")
 LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+FIGURE = re.compile(r"^!\[([^\]]*)\]\(([^)]+)\)$")
 
 
 def inline(text: str) -> str:
@@ -158,6 +164,14 @@ def parse_blocks(md: str):
     while i < len(lines):
         line = lines[i]
         stripped = line.strip()
+
+        figure = FIGURE.match(stripped)
+        if figure:
+            if paragraph:
+                add("p", " ".join(paragraph)); paragraph = []
+            add("figure", (figure.group(1), figure.group(2)))
+            i += 1
+            continue
 
         if stripped.startswith("```"):
             if paragraph:
@@ -323,7 +337,17 @@ def table_flowable(header: list[str], rows: list[list[str]], styles):
     return [table, Spacer(1, 5 * mm)]
 
 
-def build_story(blocks, styles) -> list:
+def resolve_image(src: str, md_path: Path | None) -> Path | None:
+    candidates = [Path(src)]
+    if md_path is not None:
+        candidates.append(md_path.parent / src)
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def build_story(blocks, styles, md_path: Path | None = None) -> list:
     story: list = []
     for kind, payload in blocks:
         if kind == "h1":
@@ -382,6 +406,24 @@ def build_story(blocks, styles) -> list:
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
             ]))
             story.append(KeepTogether([box, Spacer(1, 4 * mm)]))
+        elif kind == "figure":
+            caption, src = payload
+            resolved = resolve_image(src, md_path)
+            if resolved is None:
+                story.append(Paragraph(f"[missing figure: {html.escape(src)}]", styles["body"]))
+                continue
+            max_w = PAGE_W - 2 * MARGIN_X
+            img = Image(str(resolved))
+            scale = min(max_w / img.imageWidth, (150 * mm) / img.imageHeight, 1.0)
+            img.drawWidth = img.imageWidth * scale
+            img.drawHeight = img.imageHeight * scale
+            img.hAlign = "CENTER"
+            parts = [img]
+            if caption:
+                parts.append(Spacer(1, 2.5 * mm))
+                parts.append(Paragraph(inline(caption), styles["caption"]))
+            parts.append(Spacer(1, 5 * mm))
+            story.append(KeepTogether(parts))
         elif kind == "rule":
             story.append(Spacer(1, 2 * mm))
             story.append(Table([[""]], colWidths=[PAGE_W - 2 * MARGIN_X], rowHeights=[0.6], style=TableStyle([
@@ -424,7 +466,7 @@ def render(md_path: Path, pdf_path: Path, title: str, subtitle: str, version: st
     toc = TableOfContents()
     toc.levelStyles = [styles["toc1"], styles["toc2"]]
     story.append(toc)
-    story.extend(build_story(blocks, styles))
+    story.extend(build_story(blocks, styles, md_path))
 
     doc.multiBuild(story)
 
