@@ -174,12 +174,17 @@ const SIGNING_SECRET_ENV = 'REGULATORY_SIGNING_SECRET';
  * Signs a recommendation hash. An HMAC when REGULATORY_SIGNING_SECRET is provisioned,
  * otherwise an unkeyed digest that only detects corruption (never reported as attested).
  */
+let warnedMissingSigningSecret = false;
+
 function computeSignature(hash: string): { signature: string; keyed: boolean } {
   const secret = process.env[SIGNING_SECRET_ENV];
   if (secret) {
     return { signature: crypto.createHmac('sha256', secret).update(hash).digest('hex'), keyed: true };
   }
-  logger.warn(`${SIGNING_SECRET_ENV} is not set: recommendation signatures are unkeyed digests and do not attest signer identity.`);
+  if (!warnedMissingSigningSecret) {
+    warnedMissingSigningSecret = true;
+    logger.warn(`${SIGNING_SECRET_ENV} is not set: recommendation signatures are unkeyed digests and do not attest signer identity.`);
+  }
   return { signature: crypto.createHash('sha256').update(hash).digest('hex'), keyed: false };
 }
 
