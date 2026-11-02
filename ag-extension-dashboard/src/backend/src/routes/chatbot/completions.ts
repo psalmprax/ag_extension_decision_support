@@ -215,7 +215,12 @@ const runAssistantTurn = async (systemPrompt: string, message: string, tools: Ch
     });
   }
 
-  return { text: assistantText || 'I am sorry, I could not generate a response.', usedToolNames: [...new Set(usedToolNames)] };
+  return {
+    text:
+      assistantText ||
+      'No diagnostic recommendation could be generated from the available inputs. Please verify field observations, crop symptoms, or soil parameters and resubmit.',
+    usedToolNames: [...new Set(usedToolNames)],
+  };
 };
 
 // Request contract = shared `chatCompletionSchema` (camelCase) + legacy `conversation_id`.

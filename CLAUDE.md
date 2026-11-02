@@ -60,7 +60,12 @@ To maintain Git hygiene and repository integrity, you MUST follow this branching
 - **Strict Error Handling**: Never use empty catch blocks. Always log errors properly on the backend or display friendly toasts/UI fallbacks on the frontend.
 - **Security Gates**: Sanitise raw user inputs before rendering. Keep all secrets and configurations in environment variables.
 - **TypeScript/Type Strictness**: Define proper types and interfaces for all models and payloads. Avoid `any` or lazy casting.
-- **Avoid AI Slop & Verbosity**: Avoid AI writing patterns, excessive comments, boilerplate, or over-explanations. Code and logs must remain concise, direct, and professional.
+- **Unslop Design Standard (Quiet Chrome, Rich Content)**: Strictly adhere to the [Unslop](.agents/skills/unslop/SKILL.md) principles across all UI components and prose:
+  - *Quiet Chrome*: Neutral surfaces (`slate`/`graphite`) with crisp 6–10% opacity hairline borders. No neon/purple gradients, radial color glow blobs behind cards, or gradient text. Depth comes from surface steps, not dramatic colored shadows.
+  - *Rich Domain Content*: Richness belongs strictly to the agronomic content (satellite heatmaps, soil moisture layers, yield charts, outbreak clusters), never the decorative chrome.
+  - *Typography & Scale*: Strict 4px spacing scale. Use sentence case for all titles, buttons, and navigation (no all-caps tracked labels). Limit to two font weights (400 and 500; 600 reserved for rare emphasis). Use tabular mono figures for agronomic metrics, hectares, and percentages.
+  - *Icons & Signifiers*: Single line icon set (Lucide) at 16–18px / 1.5 stroke. No decorative emoji icons, emoji badges, or generic `✨ Sparkle` badges on AI features.
+  - *Direct Agronomic Copy*: Zero AI hype words (*"supercharge", "revolutionary", "seamless magic", "game-changing"*). Use concrete, verifiable agronomic statements and explicit comparative metrics (`+14% yield vs prior season`).
 - **No Code Deduplication**: Rigorously enforce the DRY (Don't Repeat Yourself) principle. Extract duplicate code block sequences, components, and configuration helpers into shared modules.
 - **Diagnostics & Tooling**: Run local auditing tools such as `gsd` and `fallow` to trace unused code, dependencies, and verify project health. Always read and verify against the diagnostic guides inside `.claude/skills/` before altering subsystems.
 

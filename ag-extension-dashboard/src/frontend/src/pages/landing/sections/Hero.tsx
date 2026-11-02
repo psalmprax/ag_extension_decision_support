@@ -53,8 +53,6 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
         />
         {/* Soft, warm agrarian sunlit vignette overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-stone-950/75 via-emerald-950/60 to-slate-950/95" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.2),transparent_65%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(16,185,129,0.15),transparent_70%)]" />
       </div>
 
       {/* Subtle organic contour pattern */}
@@ -83,7 +81,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
           >
             <Leaf className="w-4 h-4 text-emerald-400 shrink-0" />
             <span className="text-xs sm:text-sm font-semibold tracking-wide text-emerald-300">
-              🌾 Free Pocket Crop Doctor for Every Farmer
+              Free Pocket Crop Doctor for Every Farmer
             </span>
           </motion.div>
 
@@ -96,7 +94,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             <br />
             Protect Your Harvest.
             <br />
-            <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-amber-300 bg-clip-text text-transparent">
+            <span className="text-emerald-400">
               Grow With Confidence.
             </span>
           </motion.h1>
@@ -157,7 +155,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             <button
               type="button"
               onClick={() => navigate('/diagnosis')}
-              className="w-full sm:w-auto relative group overflow-hidden px-8 py-3.5 text-sm sm:text-base font-bold text-white rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-400 hover:to-emerald-500 border border-emerald-400/50 shadow-xl shadow-emerald-950/50 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2.5"
+              className="w-full sm:w-auto relative group overflow-hidden px-8 py-3.5 text-sm sm:text-base font-semibold text-white rounded-xl bg-emerald-600 hover:bg-emerald-500 border border-emerald-500 shadow-sm active:scale-[0.98] transition-colors flex items-center justify-center gap-2.5"
             >
               <Camera className="w-5 h-5 text-emerald-100" />
               <span>Diagnose a Crop — Free</span>
@@ -243,11 +241,8 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
 
         {/* Right column — Plantix-Style Smartphone Leaf Scanner Mockup (Plain Language) */}
         <motion.div initial="hidden" animate="visible" variants={scaleIn} className="relative w-full max-w-full flex justify-center">
-          {/* Ambient warm harvest & emerald backlight */}
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-amber-500/10 to-emerald-600/15 blur-[80px] rounded-full scale-95 pointer-events-none" />
-
           {/* Smartphone Chassis */}
-          <div className="relative w-full max-w-[370px] sm:max-w-[400px] rounded-[2.8rem] p-3.5 bg-slate-900/90 border-4 border-slate-700/60 shadow-2xl shadow-emerald-950/60 ring-1 ring-white/10 backdrop-blur-xl transition-transform duration-500 hover:scale-[1.01]">
+          <div className="relative w-full max-w-[370px] sm:max-w-[400px] rounded-[2.8rem] p-3.5 bg-slate-900/90 border-4 border-slate-700/60 shadow-2xl ring-1 ring-white/10 backdrop-blur-xl transition-transform duration-500 hover:scale-[1.01]">
             {/* Top speaker & camera bezel */}
             <div className="w-28 h-4 bg-slate-950 rounded-full mx-auto mb-2 flex items-center justify-center gap-2">
               <div className="w-2 h-2 rounded-full bg-slate-800" />
@@ -260,7 +255,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
               <div className="flex justify-between items-center px-5 pt-2 pb-1.5 text-[10px] text-white/60 font-mono bg-slate-950/90 border-b border-white/5">
                 <span>09:41</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
                   <span className="text-emerald-400 font-semibold">Photo Queue Ready</span>
                 </div>
               </div>

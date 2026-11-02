@@ -84,25 +84,9 @@ export const BaseModal: React.FC<BaseModalProps> = ({
                 : { opacity: 0, scale: 0.95, y: 15 }
             }
             transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-            className={`relative w-full ${maxWidth} max-h-[92dvh] sm:max-h-[85vh] bg-slate-950/95 dark:bg-slate-950/95 overflow-hidden flex flex-col backdrop-blur-2xl ${
-              isBase
-                ? 'border-t sm:border border-blue-500/30 ring-1 ring-blue-500/20 rounded-t-[28px] sm:rounded-2xl rounded-b-none sm:rounded-b-2xl shadow-[0_-10px_40px_rgba(0,82,255,0.15)] sm:shadow-2xl pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-0'
-                : 'border border-emerald-500/30 rounded-xl shadow-2xl'
-            }`}
+            className={`relative w-full ${maxWidth} max-h-[92dvh] sm:max-h-[85vh] bg-slate-950/95 dark:bg-slate-950/95 overflow-hidden flex flex-col backdrop-blur-2xl border border-white/[0.08] rounded-t-[24px] sm:rounded-xl shadow-2xl pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-0`}
             style={!isBase ? { borderRadius: 'var(--radius-card, 0.75rem)' } : undefined}
           >
-            {/* KnockKnock Ambient Mesh Gradient Orb */}
-            <div
-              className={`absolute -top-24 -right-24 w-72 h-72 rounded-full blur-[90px] pointer-events-none ${
-                isBase ? 'bg-blue-600/15' : 'bg-emerald-500/15'
-              }`}
-            />
-            <div
-              className={`absolute -bottom-24 -left-24 w-72 h-72 rounded-full blur-[90px] pointer-events-none ${
-                isBase ? 'bg-indigo-600/10' : 'bg-teal-500/10'
-              }`}
-            />
-
             {/* Drag Handle on Mobile for Variant B */}
             {isBase && (
               <div
@@ -128,23 +112,19 @@ export const BaseModal: React.FC<BaseModalProps> = ({
                     <div
                       className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${
                         isBase && iconBg.includes('emerald')
-                          ? 'bg-blue-500/15 border border-blue-500/30 text-blue-400'
+                          ? 'bg-slate-800 border border-white/[0.08] text-slate-300'
                           : iconBg
-                      } flex items-center justify-center shadow-inner shrink-0`}
+                      } flex items-center justify-center shrink-0`}
                     >
                       {icon}
                     </div>
                   )}
                   <div>
-                    <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight leading-tight">
+                    <h3 className="text-lg sm:text-xl font-medium text-white tracking-tight leading-tight">
                       {title}
                     </h3>
                     {subtitle && (
-                      <p
-                        className={`text-xxs font-black uppercase tracking-widest mt-0.5 ${
-                          isBase ? 'text-blue-400' : 'text-emerald-400'
-                        }`}
-                      >
+                      <p className="text-xs font-medium text-slate-400 mt-0.5">
                         {subtitle}
                       </p>
                     )}

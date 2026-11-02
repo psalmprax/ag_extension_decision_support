@@ -6,7 +6,7 @@ import {
   Layers,
   Droplets,
   Target,
-  Sparkles,
+  ArrowRight,
   ChevronDown,
   ChevronUp,
   SlidersHorizontal,
@@ -159,27 +159,24 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -8 }}
+      initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      className={`rounded-xl border border-emerald-500/30 bg-gradient-to-b from-white/95 via-slate-50/90 to-slate-100/95 dark:from-slate-900/95 dark:via-slate-900/90 dark:to-slate-950/95 shadow-sm dark:shadow-xl backdrop-blur-md overflow-hidden ${
+      exit={{ opacity: 0, y: -4 }}
+      className={`rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-slate-900 shadow-sm overflow-hidden ${
         compact ? 'p-3 text-xs' : 'p-4'
       }`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 pb-3 border-b border-emerald-500/20">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-            <SlidersHorizontal className="w-4 h-4" />
+      <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0">
+            <SlidersHorizontal className="w-3.5 h-3.5" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-slate-900 dark:text-white tracking-wide flex items-center gap-1.5">
-              Agronomic Precision Intake
-              <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 font-normal">
-                Phase 2
-              </span>
+            <h4 className="text-xs font-medium text-slate-900 dark:text-slate-100">
+              Agronomic precision intake
             </h4>
-            <p className="text-[11px] text-slate-600 dark:text-slate-400">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
               Select your farm profile to get exact planting windows, frost dates, and tested cultivars.
             </p>
           </div>
@@ -187,7 +184,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
 
         <button
           onClick={() => setIsExpanded(prev => !prev)}
-          className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+          className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
           aria-label={isExpanded ? 'Collapse intake form' : 'Expand intake form'}
         >
           {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -205,17 +202,17 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
             {/* 1. Growing Zone / Location */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                  <Compass className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  1. Growing Zone / Climate Band:
+                <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <Compass className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                  1. Growing zone / climate band:
                 </label>
                 <button
                   onClick={handleAutoGPS}
                   disabled={isLocating}
-                  className="text-[10px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 flex items-center gap-1 font-medium underline"
+                  className="text-[10px] text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1 font-medium transition-colors"
                 >
-                  <MapPin className="w-3 h-3" />
-                  {isLocating ? 'Acquiring GPS...' : 'Auto-Detect GPS'}
+                  <MapPin className="w-3 h-3 text-slate-400" />
+                  {isLocating ? 'Acquiring GPS...' : 'Auto-detect GPS'}
                 </button>
               </div>
 
@@ -226,10 +223,10 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
                     <button
                       key={zone.id}
                       onClick={() => setSelectedZone(zone.label)}
-                      className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all font-medium ${
+                      className={`text-[11px] px-2.5 py-1 rounded-md border transition-colors font-medium ${
                         active
-                          ? 'bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:border-emerald-400 dark:text-emerald-300 shadow-sm'
-                          : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200 dark:bg-slate-800/60 dark:border-slate-700/60 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
+                          ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:border-white dark:text-slate-950 shadow-sm'
+                          : 'bg-slate-100 border-slate-200/80 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:bg-slate-800/60 dark:border-white/[0.06] dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
                       }`}
                     >
                       {zone.short}
@@ -239,17 +236,17 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
               </div>
 
               {customLocation && (
-                <div className="mt-1 text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-mono">
-                  <MapPin className="w-2.5 h-2.5" /> Selected GPS: {customLocation}
+                <div className="mt-1 text-[10px] text-slate-600 dark:text-slate-400 flex items-center gap-1 font-mono">
+                  <MapPin className="w-2.5 h-2.5 text-slate-400" /> Selected GPS: {customLocation}
                 </div>
               )}
             </div>
 
             {/* 2. Soil Texture & Drainage */}
             <div>
-              <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1 mb-1.5">
-                <Layers className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-                2. Soil Texture & Condition:
+              <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1 mb-1.5">
+                <Layers className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                2. Soil texture & condition:
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {SOIL_TYPES.map(soil => {
@@ -258,10 +255,10 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
                     <button
                       key={soil.id}
                       onClick={() => setSelectedSoil(soil.label)}
-                      className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all font-medium ${
+                      className={`text-[11px] px-2.5 py-1 rounded-md border transition-colors font-medium ${
                         active
-                          ? 'bg-amber-500/20 border-amber-500 text-amber-800 dark:border-amber-400 dark:text-amber-300 shadow-sm'
-                          : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200 dark:bg-slate-800/60 dark:border-slate-700/60 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
+                          ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:border-white dark:text-slate-950 shadow-sm'
+                          : 'bg-slate-100 border-slate-200/80 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:bg-slate-800/60 dark:border-white/[0.06] dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
                       }`}
                     >
                       {soil.label}
@@ -274,9 +271,9 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
             {/* 3. Water Management & Production Goal */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div>
-                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1 mb-1.5">
-                  <Droplets className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-                  3. Water Supply:
+                <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1 mb-1.5">
+                  <Droplets className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                  3. Water supply:
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                   {IRRIGATION_TYPES.map(irr => {
@@ -285,10 +282,10 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
                       <button
                         key={irr.id}
                         onClick={() => setSelectedIrrigation(irr.label)}
-                        className={`text-[10px] px-2 py-1 rounded-md border transition-all font-medium ${
+                        className={`text-[10px] px-2 py-1 rounded-md border transition-colors font-medium ${
                           active
-                            ? 'bg-cyan-500/20 border-cyan-500 text-cyan-800 dark:border-cyan-400 dark:text-cyan-300'
-                            : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 dark:bg-slate-800/60 dark:border-slate-700/60 dark:text-slate-400 dark:hover:text-slate-200'
+                            ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:border-white dark:text-slate-950 shadow-sm'
+                            : 'bg-slate-100 border-slate-200/80 text-slate-600 hover:text-slate-900 dark:bg-slate-800/60 dark:border-white/[0.06] dark:text-slate-400 dark:hover:text-slate-200'
                         }`}
                       >
                         {irr.label}
@@ -299,9 +296,9 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1 mb-1.5">
-                  <Target className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                  4. Goal:
+                <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1 mb-1.5">
+                  <Target className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                  4. Production goal:
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                   {PRODUCTION_GOALS.map(goal => {
@@ -310,10 +307,10 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
                       <button
                         key={goal.id}
                         onClick={() => setSelectedGoal(goal.label)}
-                        className={`text-[10px] px-2 py-1 rounded-md border transition-all font-medium ${
+                        className={`text-[10px] px-2 py-1 rounded-md border transition-colors font-medium ${
                           active
-                            ? 'bg-purple-500/20 border-purple-500 text-purple-800 dark:border-purple-400 dark:text-purple-300'
-                            : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 dark:bg-slate-800/60 dark:border-slate-700/60 dark:text-slate-400 dark:hover:text-slate-200'
+                            ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:border-white dark:text-slate-950 shadow-sm'
+                            : 'bg-slate-100 border-slate-200/80 text-slate-600 hover:text-slate-900 dark:bg-slate-800/60 dark:border-white/[0.06] dark:text-slate-400 dark:hover:text-slate-200'
                         }`}
                       >
                         {goal.label}
@@ -325,7 +322,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
             </div>
 
             {/* Action Bar */}
-            <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-200 dark:border-slate-800">
+            <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-white/[0.06]">
               {onBypass && (
                 <button
                   onClick={onBypass}
@@ -337,9 +334,9 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
               <div className="flex-1" />
               <button
                 onClick={handleApply}
-                className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="px-3.5 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center gap-1.5 transition-colors active:scale-[0.98]"
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <ArrowRight className="w-3.5 h-3.5" />
                 Generate Precision Advice
               </button>
             </div>

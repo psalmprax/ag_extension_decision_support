@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Brain,
-  Sparkles,
   Send,
   Mic,
   MicOff,
@@ -165,11 +164,7 @@ export const AlphaAI: React.FC = () => {
     {
       id: 'welcome-msg',
       sender: 'assistant',
-      text: `👋 **Welcome to Ag-Extension AI Co-Pilot Studio.**
-
-I synthesize live **NASA POWER agroclimatology**, **SoilGrids v2 soil properties**, and **RAG agronomic research** into actionable field advisories and real-time interactive spatial canvas models.
-
-Select a quick agronomic scenario below, ask a custom field question, or upload leaf symptoms to begin.`,
+      text: `**Agronomic Decision Support Co-Pilot**\n\nSynthesizing live **NASA POWER agroclimatology**, **SoilGrids v2 soil properties**, and **RAG agronomic research** into actionable field advisories and real-time interactive spatial canvas models.\n\nSelect a scenario below, enter field query parameters, or upload leaf symptoms to begin.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       canvasTrigger: 'soil_heatmap',
       canvasLabel: 'Interactive Soil Nutrient Grid',
@@ -400,17 +395,16 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
           {/* Left: Branding & Model Badge */}
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 via-teal-500/20 to-cyan-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-lg shadow-emerald-950/40">
-              <Brain className="w-6 h-6 animate-pulse" />
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <Brain className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
                   AI Agronomic Co-Pilot
                 </h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-black tracking-wider uppercase bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                  <Sparkles className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                  AG-AGRONOMIST 4.5 PRO
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                  Ag-Agronomist 4.5 Pro
                 </span>
               </div>
               <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
@@ -472,8 +466,8 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                 {isRecordingVoice && (
                   <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
                     <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
-                      <span className="font-mono text-xxs font-bold uppercase tracking-wider">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+                      <span className="font-mono text-xs font-medium">
                         Recording Voice Audio... Speak prompt
                       </span>
                     </div>
@@ -563,9 +557,9 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                     <button
                       key={tab.id}
                       onClick={() => setActiveCanvasView(tab.id)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap ${
                         isActive
-                          ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-md shadow-emerald-950/50'
+                          ? 'bg-emerald-600 text-white shadow-sm'
                           : 'text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
@@ -578,9 +572,9 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
 
               {/* Status Pill */}
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-md text-xxs font-mono uppercase bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
-                  GPU Interactive
+                <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+                  Interactive Canvas
                 </span>
               </div>
             </div>
@@ -625,7 +619,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
 
                   <button
                     onClick={handleDispatchSms}
-                    className="px-4 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all flex items-center gap-1.5"
+                    className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
                   >
                     <Share2 className="w-3.5 h-3.5" />
                     <span>Dispatch Advisory SMS</span>

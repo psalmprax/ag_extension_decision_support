@@ -5,7 +5,7 @@ import {
   Layers,
   Search,
   Radio,
-  Sparkles,
+  WifiOff,
 } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -84,18 +84,18 @@ export function DiseaseDiagnosis() {
   return (
     <div className="space-y-6">
         {/* Header & Live Status Telemetry Bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 rounded-2xl bg-white/95 dark:bg-slate-950/80 border border-slate-200 dark:border-emerald-500/20 backdrop-blur-2xl shadow-sm dark:shadow-xl shadow-emerald-950/30">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 rounded-2xl bg-white/95 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 backdrop-blur-2xl shadow-sm dark:shadow-xl">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 dark:border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
-                <Radio className="w-3 h-3 animate-pulse text-emerald-600 dark:text-emerald-400" />
-                CROP DOCTOR &amp; PATHOLOGY
+              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 dark:border-emerald-500/30 text-xs font-medium">
+                <Radio className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                Crop Doctor &amp; Pathology
               </span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                INSTANT ON-DEVICE LEAF DIAGNOSIS
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                Instant on-device leaf diagnosis
               </span>
             </div>
-            <h1 className={`text-2xl font-black text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
+            <h1 className={`text-2xl font-semibold text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
               Crop Doctor &amp; Plant Pathology Clinic
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-xs mt-1">
@@ -107,41 +107,41 @@ export function DiseaseDiagnosis() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowScannerModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/40 transition-all cursor-pointer active:scale-95"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium shadow-sm transition-colors cursor-pointer"
             >
               <Camera className="w-4 h-4" />
               <span>Camera Scan Leaf</span>
             </button>
-            <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
-              <Sparkles className="w-3.5 h-3.5" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium">
+              <WifiOff className="w-3.5 h-3.5 text-slate-400" />
               <span>Offline Ready</span>
             </span>
           </div>
         </div>
 
-        {/* Diagnostic Tabs (KnockKnock 4px Precision Bar) */}
-        <div className="p-1 rounded-[4px] bg-slate-100 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 backdrop-blur-2xl shadow-sm dark:shadow-lg">
+        {/* Diagnostic Tabs */}
+        <div className="p-1 rounded-lg bg-slate-100 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 backdrop-blur-2xl shadow-sm dark:shadow-lg">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
             {[
-              { id: 'image', label: 'Leaf Image Analysis', icon: Camera, badge: 'VISION' },
-              { id: 'symptoms', label: 'Symptom Inference', icon: Activity, badge: 'EXPERT' },
-              { id: 'soil', label: 'Soil Diagnostics', icon: Layers, badge: 'CHEMISTRY' },
+              { id: 'image', label: 'Leaf Image Analysis', icon: Camera, badge: 'Vision' },
+              { id: 'symptoms', label: 'Symptom Inference', icon: Activity, badge: 'Expert' },
+              { id: 'soil', label: 'Soil Diagnostics', icon: Layers, badge: 'Chemistry' },
               { id: 'library', label: 'Pathology Library', icon: Search, badge: 'FAO DB' },
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as 'symptoms' | 'image' | 'soil' | 'library')}
-                className={`py-2.5 px-3 rounded-[3px] font-bold text-xs flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
+                className={`py-2.5 px-3 rounded-md font-medium text-xs flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-colors ${
                   activeTab === tab.id
-                    ? 'bg-white dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-slate-200 dark:border-emerald-500/40 shadow-sm dark:shadow-md'
+                    ? 'bg-white dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-slate-200 dark:border-emerald-500/40 shadow-sm'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-900'
                 }`}
               >
                 <div className="flex items-center gap-1.5">
                   <tab.icon className="w-3.5 h-3.5" />
-                  <span className="uppercase tracking-wider">{tab.label}</span>
+                  <span>{tab.label}</span>
                 </div>
-                <span className="text-[8px] font-mono font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest px-1 py-0.2 rounded bg-slate-200/80 dark:bg-slate-950/60 border border-slate-300/60 dark:border-white/5">
+                <span className="text-[10px] font-mono text-slate-500 px-1.5 py-0.5 rounded bg-slate-200/80 dark:bg-slate-900 border border-slate-300/60 dark:border-white/5">
                   {tab.badge}
                 </span>
               </button>

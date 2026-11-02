@@ -18,7 +18,7 @@ export function Features() {
             >
               <motion.div
                 variants={fadeUp}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-[0.2em] mb-4"
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium mb-4"
               >
                 <Users className="w-3.5 h-3.5" />
                 Who We Empower
@@ -28,7 +28,7 @@ export function Features() {
                 className="text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight text-white mb-4"
               >
                 Built for the real field.{' '}
-                <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-amber-300 bg-clip-text text-transparent">
+                <span className="text-emerald-400">
                   Grounded in rural realities.
                 </span>
               </motion.h2>
@@ -48,7 +48,7 @@ export function Features() {
                 whileInView="visible"
                 viewport={{ once: true, margin: '-60px' }}
                 variants={fadeUp}
-                className="group relative rounded-xl backdrop-blur-xl bg-slate-900/80 border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl hover:shadow-emerald-950/40"
+                className="group relative rounded-xl backdrop-blur-xl bg-slate-900/80 border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl"
               >
                 <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
                   <img
@@ -60,7 +60,7 @@ export function Features() {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-950/80 backdrop-blur-md border border-amber-500/30 text-amber-300 text-xxs font-bold uppercase tracking-wider">
+                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-950/80 backdrop-blur-md border border-amber-500/30 text-amber-300 text-xxs font-medium">
                     <MessageSquare className="w-3 h-3 text-amber-400" />
                     Direct Farmer Advisory
                   </div>
@@ -116,7 +116,7 @@ export function Features() {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-950/80 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-xxs font-bold uppercase tracking-wider">
+                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-950/80 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-xxs font-medium">
                     <Smartphone className="w-3 h-3 text-emerald-400" />
                     Field-Ready Mobile PWA
                   </div>
@@ -160,7 +160,7 @@ export function Features() {
                 whileInView="visible"
                 viewport={{ once: true, margin: '-60px' }}
                 variants={fadeUp}
-                className="group relative rounded-xl backdrop-blur-xl bg-slate-900/80 border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl hover:shadow-emerald-950/40"
+                className="group relative rounded-xl backdrop-blur-xl bg-slate-900/80 border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl"
               >
                 <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
                   <img
@@ -172,7 +172,7 @@ export function Features() {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-950/80 backdrop-blur-md border border-cyan-500/30 text-cyan-300 text-xxs font-bold uppercase tracking-wider">
+                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-950/80 backdrop-blur-md border border-cyan-500/30 text-cyan-300 text-xxs font-medium">
                     <BarChart3 className="w-3 h-3 text-cyan-400" />
                     Macro Yield &amp; Supply Intelligence
                   </div>

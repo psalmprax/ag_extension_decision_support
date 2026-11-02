@@ -72,7 +72,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const { t } = useLanguage();
 
   const headerClass = cn(
-    'fixed top-0 w-full z-50 flex justify-between items-center px-3 sm:px-6 h-16 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-[0_4px_30px_var(--color-outline)] dark:shadow-[0_4px_30px_var(--color-outline)]',
+    'fixed top-0 w-full z-50 flex justify-between items-center px-3 sm:px-6 h-16 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-xs',
     'bg-white/95 dark:bg-slate-950/90'
   );
 
@@ -101,30 +101,30 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <button
             type="button"
             onClick={() => React.startTransition(() => setActiveTab('disease_diagnosis'))}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/25 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/[0.08] text-xs font-medium transition-colors cursor-pointer"
             title={t('header_edge_ai_tooltip', { defaultValue: 'Instant Edge AI Plant Disease Scanner' })}
           >
-            <Leaf className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <Leaf className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
             <span>{t('header_instant_ai_scan', { defaultValue: 'Instant AI Scan' })}</span>
           </button>
 
           <button
             type="button"
             onClick={() => React.startTransition(() => setActiveTab('telemetry'))}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-500/10 dark:hover:bg-sky-500/20 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-500/25 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/[0.08] text-xs font-medium transition-colors cursor-pointer"
             title={t('header_radar_tooltip', { defaultValue: 'Live Geospatial Weather & Soil Telemetry' })}
           >
-            <Activity className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+            <Activity className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
             <span>{t('header_live_field_radar', { defaultValue: 'Live Field Radar' })}</span>
           </button>
 
           <button
             type="button"
             onClick={() => React.startTransition(() => setActiveTab('sms'))}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-500/10 dark:hover:bg-purple-500/20 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-500/25 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/[0.08] text-xs font-medium transition-colors cursor-pointer"
             title={t('header_bot_tooltip', { defaultValue: 'Interactive SMS & USSD Bot Sandbox' })}
           >
-            <Send className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+            <Send className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
             <span>{t('header_test_sms_bot', { defaultValue: 'Test SMS Bot' })}</span>
           </button>
         </div>
@@ -177,7 +177,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           >
             <Bell className="w-4 h-4 sm:w-6 sm:h-6" />
             {apiUnreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-2 h-2 bg-primary-400 rounded-full animate-pulse"></span>
+              <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-2 h-2 bg-emerald-500 rounded-full"></span>
             )}
           </button>
           <button

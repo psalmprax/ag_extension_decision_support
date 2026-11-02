@@ -10,6 +10,12 @@ import {
   Save,
   ShieldCheck,
   Download,
+  Sprout,
+  Bug,
+  Camera,
+  Scale,
+  FlaskConical,
+  AlertCircle,
 } from 'lucide-react';
 import apiClient from '@/api/client';
 
@@ -17,9 +23,26 @@ interface WorkflowStep {
   id: string;
   type: 'crop_select' | 'soil_test' | 'pest_scout' | 'photo_leaf' | 'dosage_advisory' | 'text_input';
   title: string;
-  icon: string;
+  icon?: string;
   condition?: string;
   config: Record<string, string | number | boolean>;
+}
+
+function renderStepIcon(type: WorkflowStep['type']) {
+  switch (type) {
+    case 'crop_select':
+      return <Sprout className="w-4 h-4 text-emerald-400" />;
+    case 'soil_test':
+      return <FlaskConical className="w-4 h-4 text-cyan-400" />;
+    case 'pest_scout':
+      return <Bug className="w-4 h-4 text-amber-400" />;
+    case 'photo_leaf':
+      return <Camera className="w-4 h-4 text-violet-400" />;
+    case 'dosage_advisory':
+      return <Scale className="w-4 h-4 text-emerald-400" />;
+    default:
+      return <Layers className="w-4 h-4 text-slate-400" />;
+  }
 }
 
 const DEFAULT_TEMPLATES: Record<string, { title: string; category: string; description: string; steps: WorkflowStep[] }> = {
@@ -32,14 +55,12 @@ const DEFAULT_TEMPLATES: Record<string, { title: string; category: string; descr
         id: 'step-crop',
         type: 'crop_select',
         title: 'Crop & Phenology Phase',
-        icon: '🌽',
         config: { crop: 'Maize', stage: 'V4 - Early Whorl' },
       },
       {
         id: 'step-pest',
         type: 'pest_scout',
         title: 'Fall Armyworm Severity Assessment',
-        icon: '🐛',
         condition: 'Crop == "Maize"',
         config: { threshold: 30, action: 'Trigger Neem Bio-Dosage' },
       },
@@ -47,7 +68,6 @@ const DEFAULT_TEMPLATES: Record<string, { title: string; category: string; descr
         id: 'step-photo',
         type: 'photo_leaf',
         title: 'Leaf Funnel Photo Scan',
-        icon: '📷',
         condition: 'Severity > 20%',
         config: { model: 'MobileNetV3-Agro-Edge', gpsTag: true },
       },
@@ -55,7 +75,6 @@ const DEFAULT_TEMPLATES: Record<string, { title: string; category: string; descr
         id: 'step-dosage',
         type: 'dosage_advisory',
         title: 'Precision Bio-Dosage Calculator',
-        icon: '⚖️',
         config: { rateLitersPerAcre: 0.4, waterPerAcreLiters: 133 },
       },
     ],
@@ -69,21 +88,18 @@ const DEFAULT_TEMPLATES: Record<string, { title: string; category: string; descr
         id: 'step-soil',
         type: 'soil_test',
         title: 'Soil pH Sensor Input',
-        icon: '🧪',
         config: { baselinePh: 4.8, targetPh: 6.5 },
       },
       {
         id: 'step-crop-remediation',
         type: 'crop_select',
         title: 'Target Cereal Crop',
-        icon: '🌾',
         config: { crop: 'Wheat / Cereal', stage: 'Pre-Planting' },
       },
       {
         id: 'step-lime-calc',
         type: 'dosage_advisory',
         title: 'Agricultural Lime Rate Formula',
-        icon: '⚖️',
         condition: 'pH < 5.5',
         config: { ratePerHectareMin: 2.0, ratePerHectareMax: 2.5 },
       },
@@ -94,7 +110,7 @@ const DEFAULT_TEMPLATES: Record<string, { title: string; category: string; descr
 interface PaletteItem {
   type: WorkflowStep['type'];
   title: string;
-  icon: string;
+  icon?: string;
   description: string;
   defaultConfig: Record<string, string | number | boolean>;
 }
@@ -103,35 +119,30 @@ const PALETTE_ITEMS: PaletteItem[] = [
   {
     type: 'crop_select',
     title: 'Crop & Phenology',
-    icon: '🌽',
     description: 'Crop species, variety, and growth stage selector.',
     defaultConfig: { crop: 'Maize', stage: 'V4 - Early Whorl' },
   },
   {
     type: 'soil_test',
     title: 'Soil Chemistry & pH',
-    icon: '🧪',
     description: 'pH sensor input, texture class & ISRIC telemetry.',
     defaultConfig: { baselinePh: 5.5, targetPh: 6.5 },
   },
   {
     type: 'pest_scout',
     title: 'Pest & Disease Rater',
-    icon: '🐛',
     description: 'Severity slider (1-100%) and threshold alert.',
     defaultConfig: { threshold: 30, action: 'Flag Outbreak Alert' },
   },
   {
     type: 'photo_leaf',
     title: 'Camera Diagnostic',
-    icon: '📷',
     description: 'Offline MobileNet leaf photo scan & GPS tag.',
     defaultConfig: { model: 'MobileNetV3-Agro-Edge', gpsTag: true },
   },
   {
     type: 'dosage_advisory',
     title: 'Bio-Dosage Calculator',
-    icon: '⚖️',
     description: 'Dynamic Neem oil or Lime dosage per acreage.',
     defaultConfig: { rateLitersPerAcre: 0.4, waterPerAcreLiters: 133 },
   },
@@ -163,14 +174,16 @@ function StepCard({
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition shadow-lg relative group">
+    <div className="p-4 rounded-xl bg-slate-900 border border-white/[0.08] hover:border-white/[0.14] transition-colors shadow-sm relative group">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <span className="w-6 h-6 rounded-md bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">
+          <span className="w-5 h-5 rounded bg-slate-800 flex items-center justify-center text-[11px] font-mono text-slate-400">
             {index + 1}
           </span>
-          <span className="text-base">{step.icon}</span>
-          <h4 className="text-xs font-semibold text-white">{step.title}</h4>
+          <span className="w-6 h-6 rounded-md bg-slate-800 border border-white/[0.06] flex items-center justify-center shrink-0">
+            {renderStepIcon(step.type)}
+          </span>
+          <h4 className="text-xs font-medium text-slate-100">{step.title}</h4>
         </div>
 
         <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition">
@@ -204,15 +217,15 @@ function StepCard({
       </div>
 
       {step.condition && !isEditingCondition && (
-        <div className="mt-2.5 flex items-center justify-between gap-2 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/25 text-[11px] text-amber-300">
-          <div className="flex items-center gap-1.5">
-            <span className="font-mono font-bold text-amber-400">IF:</span>
+        <div className="mt-2.5 flex items-center justify-between gap-2 px-2.5 py-1 rounded-md bg-slate-800/80 border border-white/[0.08] text-[11px] text-slate-300">
+          <div className="flex items-center gap-1.5 font-mono">
+            <span className="font-medium text-amber-400">IF:</span>
             <span>{step.condition}</span>
           </div>
           <button
             type="button"
             onClick={() => setIsEditingCondition(true)}
-            className="text-[10px] text-amber-400 hover:underline"
+            className="text-[10px] text-slate-400 hover:text-white transition-colors"
           >
             Edit
           </button>
@@ -220,18 +233,18 @@ function StepCard({
       )}
 
       {isEditingCondition && (
-        <div className="mt-2.5 p-2 rounded-lg bg-slate-950 border border-amber-500/30 flex items-center gap-2">
+        <div className="mt-2.5 p-2 rounded-lg bg-slate-950 border border-white/[0.12] flex items-center gap-2">
           <input
             type="text"
             value={condInput}
             onChange={(e) => setCondInput(e.target.value)}
             placeholder="e.g. Crop == 'Maize' or pH < 5.5"
-            className="w-full px-2 py-1 text-xs bg-slate-900 border border-slate-700 rounded text-white focus:outline-none focus:border-amber-400"
+            className="w-full px-2 py-1 text-xs bg-slate-900 border border-slate-700 rounded text-white focus:outline-none focus:border-emerald-500 font-mono"
           />
           <button
             type="button"
             onClick={handleSaveCondition}
-            className="px-2 py-1 text-xs rounded bg-amber-500 text-slate-950 font-bold"
+            className="px-2.5 py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/[0.08] font-medium transition-colors"
           >
             Save
           </button>
@@ -242,35 +255,35 @@ function StepCard({
         <button
           type="button"
           onClick={() => setIsEditingCondition(true)}
-          className="mt-2 text-[11px] text-slate-500 hover:text-slate-300 inline-flex items-center gap-1"
+          className="mt-2 text-[11px] text-slate-500 hover:text-slate-300 inline-flex items-center gap-1 transition-colors"
         >
           <span>+ Add conditional logic</span>
         </button>
       )}
 
-      <div className="mt-3 p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80 text-xs text-slate-300">
+      <div className="mt-3 p-2.5 rounded-lg bg-slate-950 border border-white/[0.06] text-xs text-slate-300">
         {step.type === 'crop_select' && (
           <div className="grid grid-cols-2 gap-2 text-[11px]">
             <div>
-              <span className="text-slate-500 block text-[10px] uppercase">Default Crop</span>
+              <span className="text-slate-500 block text-[10px]">Default crop</span>
               <span className="font-medium text-emerald-400">{String(step.config.crop || 'Maize')}</span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[10px] uppercase">Growth Stage</span>
-              <span className="font-medium text-white">{String(step.config.stage || 'Vegetative')}</span>
+              <span className="text-slate-500 block text-[10px]">Growth stage</span>
+              <span className="font-medium text-slate-200">{String(step.config.stage || 'Vegetative')}</span>
             </div>
           </div>
         )}
         {step.type === 'soil_test' && (
           <div className="flex items-center justify-between text-[11px]">
-            <span className="text-slate-400">Target Acidity Threshold:</span>
+            <span className="text-slate-400">Target acidity threshold:</span>
             <span className="font-mono text-cyan-400">pH {String(step.config.targetPh || '6.5')}</span>
           </div>
         )}
         {step.type === 'pest_scout' && (
           <div className="flex items-center justify-between text-[11px]">
-            <span className="text-slate-400">Severity Threshold:</span>
-            <span className="font-semibold text-amber-400">{String(step.config.threshold || '30')}%</span>
+            <span className="text-slate-400">Severity threshold:</span>
+            <span className="font-mono text-amber-400">{String(step.config.threshold || '30')}%</span>
           </div>
         )}
         {step.type === 'dosage_advisory' && (
@@ -279,8 +292,8 @@ function StepCard({
           </div>
         )}
         {step.type === 'photo_leaf' && (
-          <div className="flex items-center gap-1.5 text-[11px] text-violet-300">
-            <span>Edge AI Diagnostic Engine: MobileNetV3</span>
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+            <span>Edge diagnostic: MobileNetV3</span>
           </div>
         )}
       </div>
@@ -298,16 +311,16 @@ function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
   const isLimeVisible = soilPh < 5.5;
 
   return (
-    <div className="w-full max-w-[280px] aspect-[9/18] rounded-[36px] border-4 border-slate-700 bg-slate-950 shadow-2xl p-3 flex flex-col relative overflow-hidden">
+    <div className="w-full max-w-[280px] aspect-[9/18] rounded-[28px] border-2 border-slate-700 bg-slate-950 shadow-xl p-3 flex flex-col relative overflow-hidden">
       <div className="w-20 h-4 bg-slate-800 rounded-full mx-auto mb-2 shrink-0 flex items-center justify-center">
         <div className="w-2 h-2 rounded-full bg-slate-900" />
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-2.5 text-[11px] pr-1">
-        <div className="pb-2 border-b border-slate-800">
-          <div className="text-white font-bold text-[12px] flex items-center justify-between">
+        <div className="pb-2 border-b border-white/[0.06]">
+          <div className="text-white font-medium text-[12px] flex items-center justify-between">
             <span>Field Scouting PWA</span>
-            <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
+            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-white/[0.08]">
               OFFLINE
             </span>
           </div>
@@ -317,9 +330,9 @@ function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
         {steps.map((step, idx) => {
           if (step.type === 'crop_select') {
             return (
-              <div key={step.id} className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+              <div key={step.id} className="p-2 rounded-lg bg-slate-900 border border-white/[0.06]">
                 <label className="text-[10px] text-slate-400 block mb-1">
-                  Step {idx + 1}: Select Crop
+                  Step {idx + 1}: Select crop
                 </label>
                 <select
                   value={selectedCrop}
@@ -337,10 +350,10 @@ function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
           if (step.type === 'pest_scout') {
             if (!isArmywormVisible) return null;
             return (
-              <div key={step.id} className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+              <div key={step.id} className="p-2 rounded-lg bg-slate-900 border border-white/[0.06]">
                 <div className="flex justify-between items-center mb-1">
                   <label className="text-[10px] text-slate-400">Step {idx + 1}: Infestation</label>
-                  <span className="text-amber-400 font-bold text-[10px]">{severity}%</span>
+                  <span className="text-amber-400 font-mono text-[10px]">{severity}%</span>
                 </div>
                 <input
                   type="range"
@@ -351,8 +364,9 @@ function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
                   className="w-full accent-emerald-500 h-1 bg-slate-800 rounded"
                 />
                 {severity >= 30 && (
-                  <div className="mt-1 text-[9px] text-amber-300 font-medium">
-                    ⚠️ Threshold exceeded: Action required!
+                  <div className="mt-1 text-[9px] text-amber-300 font-medium flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 text-amber-400 shrink-0" />
+                    <span>Threshold exceeded: Action required!</span>
                   </div>
                 )}
               </div>
@@ -361,10 +375,10 @@ function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
 
           if (step.type === 'soil_test') {
             return (
-              <div key={step.id} className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+              <div key={step.id} className="p-2 rounded-lg bg-slate-900 border border-white/[0.06]">
                 <div className="flex justify-between items-center mb-1">
                   <label className="text-[10px] text-slate-400">Step {idx + 1}: Soil pH</label>
-                  <span className="text-cyan-400 font-bold text-[10px]">{soilPh.toFixed(1)}</span>
+                  <span className="text-cyan-400 font-mono text-[10px]">{soilPh.toFixed(1)}</span>
                 </div>
                 <input
                   type="range"
@@ -381,11 +395,11 @@ function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
 
           if (step.type === 'photo_leaf') {
             return (
-              <div key={step.id} className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                <label className="text-[10px] text-slate-400 block mb-1">Step {idx + 1}: Leaf Diagnostic</label>
+              <div key={step.id} className="p-2 rounded-lg bg-slate-900 border border-white/[0.06]">
+                <label className="text-[10px] text-slate-400 block mb-1">Step {idx + 1}: Leaf diagnostic</label>
                 <div className="p-2 rounded bg-slate-950 border border-dashed border-slate-700 flex flex-col items-center text-center">
-                  <span className="text-sm">📸</span>
-                  <span className="text-[9px] text-slate-400 mt-1">Tap to scan whorl with camera</span>
+                  <Camera className="w-4 h-4 text-slate-400 mb-0.5" />
+                  <span className="text-[9px] text-slate-400">Tap to scan whorl with camera</span>
                 </div>
               </div>
             );
@@ -396,11 +410,11 @@ function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
             if (isLime && !isLimeVisible) return null;
 
             return (
-              <div key={step.id} className="p-2 rounded-lg bg-emerald-950/40 border border-emerald-500/30">
-                <label className="text-[10px] text-emerald-400 font-semibold block mb-0.5">
-                  Step {idx + 1}: Automated Recommendation
+              <div key={step.id} className="p-2 rounded-lg bg-slate-900 border border-white/[0.08]">
+                <label className="text-[10px] text-emerald-400 font-medium block mb-0.5">
+                  Step {idx + 1}: Automated recommendation
                 </label>
-                <p className="text-[10px] text-emerald-200 leading-snug">
+                <p className="text-[10px] text-slate-300 leading-snug">
                   {isLime
                     ? 'Apply 2.2 tonnes/ha calcitic lime incorporated into top 15cm.'
                     : 'Mix 1.2L cold-pressed Neem oil across 3 acres at dusk.'}
@@ -415,9 +429,9 @@ function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
         <button
           type="button"
           onClick={() => setSubmitted(true)}
-          className="w-full py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition"
+          className="w-full py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs shadow-sm transition-colors"
         >
-          {submitted ? '✓ Saved to Offline Cache' : 'Record Field Diagnostic'}
+          {submitted ? '✓ Saved to offline cache' : 'Record field diagnostic'}
         </button>
       </div>
 
@@ -573,10 +587,10 @@ export function AdvisoryStudioPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-500 selection:text-slate-950">
-      <header className="h-16 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md px-6 flex items-center justify-between z-20 shrink-0">
+      <header className="h-16 border-b border-white/[0.06] bg-slate-900/90 backdrop-blur-md px-6 flex items-center justify-between z-20 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-slate-950 font-bold shadow-lg shadow-emerald-500/20 text-lg">
-            🌱
+          <div className="w-8 h-8 rounded-md bg-slate-900 border border-white/[0.08] flex items-center justify-center text-slate-300">
+            <Layers className="w-4 h-4 text-emerald-400" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -584,20 +598,20 @@ export function AdvisoryStudioPage() {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="font-bold text-sm bg-transparent border-b border-transparent hover:border-slate-700 focus:border-emerald-400 focus:outline-none text-white transition px-1"
+                className="font-medium text-sm bg-transparent border-b border-transparent hover:border-slate-700 focus:border-emerald-400 focus:outline-none text-white transition px-1"
               />
-              <span className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              <span className="px-2 py-0.5 text-[10px] font-mono rounded bg-slate-800 text-slate-300 border border-white/[0.08]">
                 v{version} • {status}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 px-1">Visual No-Code Agronomic Protocol & Form Studio</p>
+            <p className="text-[11px] text-slate-400 px-1">Visual no-code agronomic protocol & form studio</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5">
           <select
             onChange={(e) => handleSelectTemplate(e.target.value)}
-            className="px-2.5 py-1.5 text-xs rounded-lg bg-slate-800 border border-slate-700 text-slate-300 focus:outline-none focus:border-emerald-500"
+            className="px-2.5 py-1.5 text-xs rounded-md bg-slate-800 border border-white/[0.08] text-slate-300 focus:outline-none focus:border-emerald-500"
           >
             <option value="maize_armyworm">Template: Maize Fall Armyworm</option>
             <option value="soil_lime">Template: Soil pH & Lime</option>
@@ -606,7 +620,7 @@ export function AdvisoryStudioPage() {
           <button
             type="button"
             onClick={handleExportJson}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5"
+            className="px-3 py-1.5 text-xs font-medium rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/[0.08] transition flex items-center gap-1.5"
             title="Export workflow schema JSON"
           >
             <Download className="w-3.5 h-3.5" />
@@ -617,7 +631,7 @@ export function AdvisoryStudioPage() {
             type="button"
             disabled={isSaving}
             onClick={handleSaveDraft}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 disabled:opacity-50"
+            className="px-3 py-1.5 text-xs font-medium rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/[0.08] transition flex items-center gap-1.5 disabled:opacity-50"
           >
             <Save className="w-3.5 h-3.5" />
             <span>{isSaving ? 'Saving...' : 'Save Draft'}</span>
@@ -627,7 +641,7 @@ export function AdvisoryStudioPage() {
             type="button"
             disabled={isSaving}
             onClick={handlePublish}
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-medium transition shadow-md shadow-emerald-500/20 flex items-center gap-1.5 disabled:opacity-50"
+            className="px-3.5 py-1.5 text-xs font-medium rounded-md bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-sm flex items-center gap-1.5 disabled:opacity-50"
           >
             <CheckCircle className="w-3.5 h-3.5" />
             <span>Publish to Field PWA</span>
@@ -636,26 +650,27 @@ export function AdvisoryStudioPage() {
       </header>
 
       {saveSuccess && (
-        <div className="bg-emerald-500/10 border-b border-emerald-500/30 px-6 py-2 flex items-center justify-between text-xs text-emerald-300 font-medium">
+        <div className="bg-slate-900 border-b border-emerald-500/30 px-6 py-2 flex items-center justify-between text-xs text-emerald-300 font-normal">
           <span>✓ Workflow schema synchronized and ready for offline deployment.</span>
-          <button type="button" onClick={() => setSaveSuccess(false)} className="text-emerald-400">
+          <button type="button" onClick={() => setSaveSuccess(false)} className="text-slate-400 hover:text-white">
             ✕
           </button>
         </div>
       )}
 
       {errorMsg && (
-        <div className="bg-rose-500/10 border-b border-rose-500/30 px-6 py-2 text-xs text-rose-300 font-medium">
-          ⚠️ {errorMsg}
+        <div className="bg-slate-900 border-b border-rose-500/30 px-6 py-2 text-xs text-rose-300 font-normal flex items-center gap-1.5">
+          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+          <span>{errorMsg}</span>
         </div>
       )}
 
       <div className="flex-1 flex overflow-hidden">
-        <aside className="w-72 border-r border-slate-800 bg-slate-900/60 p-5 flex flex-col gap-4 shrink-0 overflow-y-auto">
+        <aside className="w-72 border-r border-white/[0.06] bg-slate-900/60 p-5 flex flex-col gap-4 shrink-0 overflow-y-auto">
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Agronomic Blocks</span>
+            <h3 className="text-xs font-medium text-slate-400 mb-1 flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-slate-400" />
+              <span>Agronomic blocks</span>
             </h3>
             <p className="text-[11px] text-slate-500 mb-3">Click block to insert into workflow canvas</p>
 
@@ -665,11 +680,13 @@ export function AdvisoryStudioPage() {
                   key={item.type}
                   type="button"
                   onClick={() => handleAddBlock(item)}
-                  className="w-full text-left p-3 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-emerald-500/40 transition group"
+                  className="w-full text-left p-2.5 rounded-lg bg-slate-900/60 hover:bg-slate-800/80 border border-white/[0.06] hover:border-white/[0.12] transition-colors group"
                 >
                   <div className="flex items-center gap-2.5 mb-1">
-                    <span className="p-1 rounded bg-slate-900 text-base">{item.icon}</span>
-                    <span className="text-xs font-semibold text-slate-200 group-hover:text-white">
+                    <span className="w-6 h-6 rounded-md bg-slate-800 border border-white/[0.06] flex items-center justify-center shrink-0">
+                      {renderStepIcon(item.type)}
+                    </span>
+                    <span className="text-xs font-medium text-slate-200 group-hover:text-white">
                       {item.title}
                     </span>
                   </div>
@@ -679,11 +696,11 @@ export function AdvisoryStudioPage() {
             </div>
           </div>
 
-          <div className="mt-auto pt-4 border-t border-slate-800">
-            <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-800/30 text-[11px] text-emerald-300 flex items-start gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+          <div className="mt-auto pt-4 border-t border-white/[0.06]">
+            <div className="p-3 rounded-lg bg-slate-900 border border-white/[0.06] text-[11px] text-slate-400 flex items-start gap-2">
+              <ShieldCheck className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
               <span>
-                Zero-Code Logic: Conditional branching evaluates locally in browser and field SQLite/IndexedDB.
+                Zero-code logic: Conditional branching evaluates locally in browser and field SQLite/IndexedDB.
               </span>
             </div>
           </div>
@@ -693,21 +710,21 @@ export function AdvisoryStudioPage() {
           <div className="w-full max-w-2xl">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold tracking-tight text-slate-200">Protocol Decision Canvas</h2>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                <h2 className="text-sm font-medium text-slate-200">Protocol decision canvas</h2>
+                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-white/[0.08] font-mono">
                   {steps.length} Steps
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setSteps([])}
-                className="text-xs text-rose-400 hover:text-rose-300 transition"
+                className="text-xs text-slate-400 hover:text-rose-400 transition-colors"
               >
                 Clear Canvas
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {steps.map((step, idx) => (
                 <StepCard
                   key={step.id}
@@ -726,7 +743,7 @@ export function AdvisoryStudioPage() {
               <button
                 type="button"
                 onClick={() => handleAddBlock(PALETTE_ITEMS[0]!)}
-                className="px-4 py-2.5 rounded-xl bg-slate-900 border border-dashed border-slate-700 hover:border-emerald-500 text-slate-400 hover:text-emerald-400 text-xs font-medium transition flex items-center gap-2"
+                className="px-4 py-2 rounded-lg bg-slate-900 border border-dashed border-slate-700 hover:border-slate-500 text-slate-400 hover:text-slate-200 text-xs font-medium transition flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Step to Protocol</span>
@@ -735,20 +752,20 @@ export function AdvisoryStudioPage() {
           </div>
         </main>
 
-        <aside className="w-84 border-l border-slate-800 bg-slate-900/60 p-5 flex flex-col items-center shrink-0 overflow-y-auto">
+        <aside className="w-84 border-l border-white/[0.06] bg-slate-900/60 p-5 flex flex-col items-center shrink-0 overflow-y-auto">
           <div className="w-full flex items-center justify-between mb-4">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
-              <Smartphone className="w-4 h-4 text-emerald-400" />
+            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-300">
+              <Smartphone className="w-4 h-4 text-slate-400" />
               <span>Mobile PWA Preview</span>
             </div>
-            <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              Live Preview
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-white/[0.08]">
+              Offline ready
             </span>
           </div>
 
           <PhoneSimulator steps={steps} />
 
-          <div className="mt-4 w-full p-3 rounded-xl bg-slate-800/70 border border-slate-700 text-slate-400 text-[11px] text-center">
+          <div className="mt-4 w-full p-2.5 rounded-lg bg-slate-900 border border-white/[0.06] text-slate-400 text-[11px] text-center">
             Rule updates on canvas reflect immediately in field officer device preview.
           </div>
         </aside>

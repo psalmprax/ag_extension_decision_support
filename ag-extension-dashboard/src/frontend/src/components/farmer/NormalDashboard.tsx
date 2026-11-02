@@ -62,8 +62,8 @@ function renderVegetationCard(
           <Sprout className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">
-            Vegetation Health
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Vegetation health
           </h3>
           <p className="text-xxs text-gray-400 dark:text-gray-500">14-day agroclimatology proxy</p>
         </div>
@@ -76,17 +76,17 @@ function renderVegetationCard(
       ) : isError || !veg ? (
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <CloudOff className="w-8 h-8 text-gray-300 dark:text-gray-600 mb-3" />
-          <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+          <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
             Vegetation data unavailable
           </p>
         </div>
       ) : (
         <>
           <div className="flex items-baseline gap-2 mb-5">
-            <span className={`text-3xl font-black ${veg.color}`}>
+            <span className={`text-3xl font-semibold ${veg.color}`}>
               {ndvi!.toFixed(2)}
             </span>
-            <span className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{veg.label}</span>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{veg.label}</span>
           </div>
 
           <div className="flex items-end gap-0.5 h-14 mb-2">
@@ -106,13 +106,9 @@ function renderVegetationCard(
 
           <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
             <span className="text-xxs text-gray-400 dark:text-gray-500 capitalize">{data?.reason || ''}</span>
-            <motion.span
-              className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-              animate={{ opacity: [0.6, 1, 0.6] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
+            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
               {data?.dataStatus === 'live' ? 'NASA POWER' : data?.dataStatus?.toUpperCase()}
-            </motion.span>
+            </span>
           </div>
         </>
       )}
@@ -130,8 +126,8 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
           <Globe className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">
-            Global Benchmarks
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Global benchmarks
           </h3>
           <p className="text-xxs text-gray-400 dark:text-gray-500">Maize · USDA PSD data</p>
         </div>
@@ -142,7 +138,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
           <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
         </div>
       ) : !metrics ? (
-        <div className="text-center py-10 text-gray-500 text-xs font-bold uppercase tracking-widest">
+        <div className="text-center py-10 text-gray-500 text-xs font-medium">
           <Globe className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
           No benchmark data available
         </div>
@@ -150,24 +146,24 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
         <div className="space-y-4">
           {metrics.production != null && (
             <div className="p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800">
-              <div className="text-xxs text-gray-400 dark:text-gray-500 uppercase font-bold mb-1 tracking-wider">Global Production</div>
-              <div className="text-xl font-black text-gray-900 dark:text-white">
+              <div className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-1">Global production</div>
+              <div className="text-xl font-semibold text-gray-900 dark:text-white">
                 {(Number(metrics.production) / 1_000_000).toFixed(1)}M {metrics.unit}
               </div>
             </div>
           )}
           {metrics.yield != null && (
             <div className="p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800">
-              <div className="text-xxs text-gray-400 dark:text-gray-500 uppercase font-bold mb-1 tracking-wider">Average Yield</div>
-              <div className="text-xl font-black text-primary-600 dark:text-primary-400">
+              <div className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-1">Average yield</div>
+              <div className="text-xl font-semibold text-primary-600 dark:text-primary-400">
                 {Number(metrics.yield).toFixed(1)} {metrics.unit.replace('tonnes', 't/ha')}
               </div>
             </div>
           )}
           {metrics.exports != null && (
             <div className="p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800">
-              <div className="text-xxs text-gray-400 dark:text-gray-500 uppercase font-bold mb-1 tracking-wider">Global Exports</div>
-              <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">
+              <div className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-1">Global exports</div>
+              <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
                 {(Number(metrics.exports) / 1_000_000).toFixed(1)}M tonnes
               </div>
             </div>
@@ -232,7 +228,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
   return (
     <div className="space-y-8 animate-fade-in">
       <header>
-        <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white tracking-tight">
           {t('farmer_greeting').replace('{name}', user?.firstName || 'Farmer')}
         </h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('farmer_overview')}</p>
@@ -245,7 +241,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="p-6 bg-theme-bg-card dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 hover:shadow-xl transition-all group cursor-context-menu"
+            className="p-6 bg-theme-bg-card dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 hover:shadow-md transition-shadow group cursor-context-menu"
             onContextMenu={e => {
               e.preventDefault();
               showContextMenu({
@@ -258,15 +254,15 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
           >
             <div className="flex items-start justify-between">
               <div className="space-y-1.5">
-                <p className="text-xxs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   {stat.title}
                 </p>
-                <p className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
+                <p className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight">
                   {stat.value}
                 </p>
               </div>
               <div
-                className={`p-3 ${stat.bg} dark:bg-opacity-10 rounded-xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}
+                className={`p-3 ${stat.bg} dark:bg-opacity-10 rounded-xl transition-transform`}
               >
                 <stat.icon className={`w-5 h-5 ${stat.color}`} />
               </div>
@@ -277,10 +273,10 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-theme-bg-card dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <h3 className="text-lg font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tight">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
             {t('farmer_market_prices')}
             {prices && prices.length > 0 && (
-              <span className={`ml-2 px-2 py-0.5 rounded text-xs font-bold uppercase align-middle ${DATA_STATUS_COLORS[prices[0].dataStatus]}`}>
+              <span className={`ml-2 px-2 py-0.5 rounded text-xs font-medium align-middle ${DATA_STATUS_COLORS[prices[0].dataStatus]}`}>
                 {DATA_STATUS_LABELS[prices[0].dataStatus]}
               </span>
             )}
@@ -296,11 +292,11 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
                   key={i}
                   className="flex items-center justify-between p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800 transition-colors hover:border-primary-500/30"
                 >
-                  <span className="font-bold text-gray-700 dark:text-gray-300">{item.crop}</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">{item.crop}</span>
                   <div className="text-right">
-                    <p className="font-black text-gray-900 dark:text-white">{item.price}</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{item.price}</p>
                     <p
-                      className={`text-xxs font-bold ${String(item.trend || '').startsWith('+') ? 'text-emerald-500' : 'text-rose-500'} uppercase tracking-widest`}
+                      className={`text-xs font-mono font-medium ${String(item.trend || '').startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}`}
                     >
                       {item.trend}
                     </p>
@@ -308,28 +304,27 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
                 </div>
               ))
             ) : (
-              <div className="text-center py-10 text-gray-500 text-xs font-bold uppercase tracking-widest">
+              <div className="text-center py-10 text-gray-500 text-xs font-medium">
                 No price data available
               </div>
             )}
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-primary-600 to-primary-800 p-10 rounded-xl shadow-2xl shadow-primary-500/20 text-white relative overflow-hidden group">
-          <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="bg-slate-900 border border-white/[0.08] p-8 rounded-xl shadow-sm text-white relative overflow-hidden group">
           <div className="relative z-10">
-            <h3 className="text-2xl font-black mb-3 tracking-tight">{t('farmer_ask_ai')}</h3>
-            <p className="text-primary-100 mb-8 font-medium text-lg leading-relaxed max-w-sm">
+            <h3 className="text-xl font-semibold mb-2 tracking-tight">{t('farmer_ask_ai')}</h3>
+            <p className="text-slate-300 mb-6 font-normal text-sm leading-relaxed max-w-sm">
               {t('farmer_ai_description')}
             </p>
             <button
               onClick={() => setActiveTab('aiassistant')}
-              className="px-8 py-3 bg-white text-primary-700 font-bold rounded-xl hover:bg-primary-50 transition-all shadow-xl active:scale-95"
+              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs rounded-lg transition-colors active:scale-95"
             >
               {t('farmer_start_chat')}
             </button>
           </div>
-          <MessageSquare className="absolute -bottom-8 -right-8 w-48 h-48 text-white/10 group-hover:rotate-12 transition-transform duration-700" />
+          <MessageSquare className="absolute -bottom-8 -right-8 w-40 h-40 text-white/5 transition-transform" />
         </div>
       </div>
 
