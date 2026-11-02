@@ -37,7 +37,7 @@ function getDefaultArgs(tool: MCPTool): Record<string, unknown> {
   return defaults;
 }
 
-export function MCPTools() {
+function MCPTools() {
   const { t } = useLanguage();
   const { headingClass, radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();

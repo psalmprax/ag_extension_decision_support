@@ -27,7 +27,7 @@ import {
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 import { RagKnowledgeGraphCanvas } from '@/components/canvas-ui/RagKnowledgeGraphCanvas';
 
-export function Memory() {
+function Memory() {
   const { t } = useLanguage();
   const { addNotification } = useAppStore();
 

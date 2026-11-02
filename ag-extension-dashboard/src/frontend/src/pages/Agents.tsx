@@ -31,7 +31,7 @@ import { CH_COLORS } from '@/lib/colors';
 import { ChartTooltip } from '@/components/charts/ChartTooltip';
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 
-export function Agents() {
+function Agents() {
   const { t } = useLanguage();
   const { headingClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();

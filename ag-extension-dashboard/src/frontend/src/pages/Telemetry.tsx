@@ -29,7 +29,7 @@ import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 import { SoilNutrientHeatmapCanvas } from '@/components/canvas-ui/SoilNutrientHeatmapCanvas';
 import { LiveSparklineCanvas } from '@/components/canvas-ui/LiveSparklineCanvas';
 
-export function Telemetry() {
+function Telemetry() {
   const { t } = useLanguage();
   const { headingClass, radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();

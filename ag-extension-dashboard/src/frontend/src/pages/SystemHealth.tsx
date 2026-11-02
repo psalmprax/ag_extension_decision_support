@@ -562,7 +562,7 @@ function useSystemHealthData(
   return { healthChecks, recoveryLog, isLoading, isRefreshing, overallHealth, reload: loadData };
 }
 
-export function SystemHealth() {
+function SystemHealth() {
   const { t } = useLanguage();
   const { addNotification } = useAppStore();
   const { healthChecks, recoveryLog, isLoading, isRefreshing, overallHealth, reload } =
