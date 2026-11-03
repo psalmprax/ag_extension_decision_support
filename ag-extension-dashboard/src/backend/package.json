@@ -118,7 +118,7 @@
     "node": ">=22.0.0"
   },
   "overrides": {
-    "follow-redirects": "^1.16.1",
+    "follow-redirects": "^1.16.2",
     "@grpc/grpc-js": "^1.14.4",
     "@opentelemetry/core": "^3.0.0",
     "@opentelemetry/propagator-jaeger": "^3.0.0",
