@@ -423,7 +423,9 @@ class PaymentService {
         }
 
         try {
-            await this.stripe.subscriptions.cancel(subscriptionId);
+            await this.stripe.subscriptions.update(subscriptionId, {
+                cancel_at_period_end: true,
+            });
             return true;
         } catch (error) {
             logger.error('Failed to cancel subscription:', error);
@@ -500,6 +502,10 @@ class PaymentService {
                 });
                 logger.info(`Scheduled subscription change for ${subscriptionId} to ${newPriceId} at ${(subscription as unknown as StripeSubscription).current_period_end}`);
             } else {
+                if (subscription.items.data[0].price.id === newPriceId) {
+                    return { success: true, message: 'Plan is already switched' };
+                }
+
                 // Immediate switch
                 await this.stripe.subscriptions.update(subscriptionId, {
                     items: [
@@ -692,13 +698,42 @@ class PaymentService {
                     });
 
                     if (plan) {
-                        await prisma.subscription.updateMany({
-                            where: { stripeSubscriptionId },
-                            data: {
-                                planId: plan.id,
-                                status: subscription.status as string,
-                                currentPeriodEnd: new Date((subscription as unknown as StripeSubscription).current_period_end * 1000),
-                                cancelAtPeriodEnd: subscription.cancel_at_period_end as boolean,
+                        const updateData = {
+                            planId: plan.id,
+                            status: subscription.status as string,
+                            currentPeriodEnd: new Date((subscription as unknown as StripeSubscription).current_period_end * 1000),
+                            cancelAtPeriodEnd: subscription.cancel_at_period_end as boolean,
+                        };
+
+                        await prisma.$transaction(async tx => {
+                            const current = await tx.subscription.findFirst({
+                                where: { stripeSubscriptionId },
+                                include: { plan: true },
+                            });
+
+                            if (!current) {
+                                await tx.subscription.updateMany({
+                                    where: { stripeSubscriptionId },
+                                    data: updateData,
+                                });
+                                return;
+                            }
+
+                            const updated = await tx.subscription.updateMany({
+                                where: { id: current.id, planId: current.planId },
+                                data: updateData,
+                            });
+
+                            if (updated.count > 0 && current.planId !== plan.id && current.plan) {
+                                await tx.subscriptionChangeEvent.create({
+                                    data: {
+                                        subscriptionId: current.id,
+                                        fromPlanId: current.plan.id,
+                                        toPlanId: plan.id,
+                                        fromPrice: current.plan.price,
+                                        toPrice: plan.price,
+                                    },
+                                });
                             }
                         });
                         logger.info(`Subscription ${stripeSubscriptionId} updated to plan ${plan.name}`);
@@ -929,4 +964,3 @@ class PaymentService {
 }
 
 export const paymentService = new PaymentService();
-

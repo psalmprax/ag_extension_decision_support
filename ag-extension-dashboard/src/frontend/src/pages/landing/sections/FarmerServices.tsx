@@ -216,15 +216,15 @@ export function FarmerServices() {
                   Check Fair Market Prices
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Know prevailing wholesale and retail market prices before taking your harvest to traders. Protect your crop margins with objective regional commodity intelligence.
+                  Preview how regional commodity prices could be shown. The figures below are illustrative demo data, not current market observations.
                 </p>
               </div>
 
               {/* Commodity Price Preview Snippet */}
               <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2.5">
                 <div className="text-xs font-semibold text-amber-300 flex items-center justify-between">
-                  <span>Regional Benchmarks Preview</span>
-                  <span className="text-[10px] font-mono text-white/50">FAOSTAT • GIEWS</span>
+                  <span>Illustrative demo data</span>
+                  <span className="text-[10px] font-mono text-white/50">Not live prices</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="p-2 rounded-lg bg-white/[0.04] border border-white/5">
@@ -250,13 +250,13 @@ export function FarmerServices() {
                   <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Wholesale benchmarks for maize, beans, coffee &amp; cassava</span>
+                  <span>Example prices for maize, beans &amp; sorghum</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Verified data from FAOSTAT, GIEWS &amp; FEWS NET feeds</span>
+                  <span>No live market feed is connected to this preview</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
@@ -274,7 +274,7 @@ export function FarmerServices() {
                 className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-600/90 hover:bg-amber-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40 transition-all active:scale-[0.98]"
               >
                 <TrendingUp className="w-4 h-4" />
-                <span>Explore Market Trends</span>
+                <span>Open market demo</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>

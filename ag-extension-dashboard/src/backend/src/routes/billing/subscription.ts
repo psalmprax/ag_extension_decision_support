@@ -283,6 +283,12 @@ router.post('/cancel', authorize(['admin', 'extension_officer', 'farmer']), asyn
         if (comment !== undefined && typeof comment !== 'string') {
             return res.status(400).json({ success: false, message: 'comment must be a string' });
         }
+        if (typeof comment === 'string' && comment.trim() && !reason) {
+            return res.status(400).json({
+                success: false,
+                message: 'Select a cancellation reason before submitting a comment',
+            });
+        }
 
         const subscription = await prisma.subscription.findUnique({ where: { userId } });
 
@@ -412,21 +418,26 @@ async function syncPlanSwitchLocally(subscription: SubscriptionRecordWithPlan, p
         return;
     }
 
-    await prisma.subscription.update({
-        where: { id: subscription.id },
-        data: { planId: targetPlan.id, status: 'active' },
-    });
+    await prisma.$transaction(async tx => {
+        const updated = await tx.subscription.updateMany({
+            where: {
+                id: subscription.id,
+                ...(subscription.plan ? { planId: subscription.plan.id } : {}),
+            },
+            data: { planId: targetPlan.id, status: 'active' },
+        });
 
-    if (!subscription.plan) return;
+        if (updated.count === 0 || !subscription.plan || subscription.plan.id === targetPlan.id) return;
 
-    await prisma.subscriptionChangeEvent.create({
-        data: {
-            subscriptionId: subscription.id,
-            fromPlanId: subscription.plan.id,
-            toPlanId: targetPlan.id,
-            fromPrice: subscription.plan.price,
-            toPrice: targetPlan.price,
-        },
+        await tx.subscriptionChangeEvent.create({
+            data: {
+                subscriptionId: subscription.id,
+                fromPlanId: subscription.plan.id,
+                toPlanId: targetPlan.id,
+                fromPrice: subscription.plan.price,
+                toPrice: targetPlan.price,
+            },
+        });
     });
 }
 

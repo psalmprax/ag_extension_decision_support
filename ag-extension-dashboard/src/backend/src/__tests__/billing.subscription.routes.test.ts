@@ -45,12 +45,17 @@ jest.mock('@/services/cancellationFeedbackService', () => ({
 }));
 
 jest.mock('@/services/prismaService', () => {
+    const txClient = {
+        subscription: { updateMany: jest.fn() },
+        subscriptionChangeEvent: { create: jest.fn() },
+    };
     const prisma = {
         subscription: { findUnique: jest.fn(), update: jest.fn() },
         subscriptionPlan: { findFirst: jest.fn() },
         subscriptionChangeEvent: { create: jest.fn() },
+        $transaction: jest.fn(async (callback: (tx: typeof txClient) => Promise<unknown>) => callback(txClient)),
     };
-    return { getPrisma: () => prisma, __mockPrisma: prisma };
+    return { getPrisma: () => prisma, __mockPrisma: prisma, __mockTxClient: txClient };
 });
 
 type AsyncMock = jest.MockedFunction<(...args: unknown[]) => Promise<unknown>>;
@@ -60,8 +65,15 @@ const mockPrisma = (jest.requireMock('@/services/prismaService') as {
         subscription: { findUnique: AsyncMock; update: AsyncMock };
         subscriptionPlan: { findFirst: AsyncMock };
         subscriptionChangeEvent: { create: AsyncMock };
+        $transaction: AsyncMock;
     };
 }).__mockPrisma;
+const mockTxClient = (jest.requireMock('@/services/prismaService') as {
+    __mockTxClient: {
+        subscription: { updateMany: AsyncMock };
+        subscriptionChangeEvent: { create: AsyncMock };
+    };
+}).__mockTxClient;
 
 const mockCancel = paymentService.cancelSubscription as jest.MockedFunction<typeof paymentService.cancelSubscription>;
 const mockSwitch = paymentService.switchSubscription as jest.MockedFunction<typeof paymentService.switchSubscription>;
@@ -98,6 +110,8 @@ describe('POST /api/v1/billing/cancel', () => {
         mockRecord.mockResolvedValue(true);
         mockPrisma.subscription.findUnique.mockResolvedValue(activeSubscription);
         mockPrisma.subscription.update.mockResolvedValue({});
+        mockTxClient.subscription.updateMany.mockResolvedValue({ count: 1 });
+        mockTxClient.subscriptionChangeEvent.create.mockResolvedValue({});
     });
 
     it('cancels at period end and records the supplied reason', async () => {
@@ -156,6 +170,17 @@ describe('POST /api/v1/billing/cancel', () => {
         expect(response.body).toMatchObject({ success: true, feedbackRecorded: false });
         expect(mockPrisma.subscription.update).toHaveBeenCalled();
     });
+
+    it('rejects a comment without a selected reason', async () => {
+        const response = await request(app)
+            .post('/api/v1/billing/cancel')
+            .send({ comment: 'Please add offline support' })
+            .expect(400);
+
+        expect(response.body.message).toContain('Select a cancellation reason');
+        expect(mockCancel).not.toHaveBeenCalled();
+        expect(mockRecord).not.toHaveBeenCalled();
+    });
 });
 
 describe('POST /api/v1/billing/switch', () => {
@@ -181,11 +206,12 @@ describe('POST /api/v1/billing/switch', () => {
 
         expect(response.body.message).toContain('switched successfully');
         expect(mockSwitch).toHaveBeenCalledWith('sub_stripe_1', 'price_new', false);
-        expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
-            where: { id: 'sub-1' },
+        expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+        expect(mockTxClient.subscription.updateMany).toHaveBeenCalledWith({
+            where: { id: 'sub-1', planId: 'plan-old' },
             data: { planId: 'plan-new', status: 'active' },
         });
-        expect(mockPrisma.subscriptionChangeEvent.create).toHaveBeenCalledWith({
+        expect(mockTxClient.subscriptionChangeEvent.create).toHaveBeenCalledWith({
             data: {
                 subscriptionId: 'sub-1',
                 fromPlanId: 'plan-old',
@@ -194,6 +220,26 @@ describe('POST /api/v1/billing/switch', () => {
                 toPrice: 3500,
             },
         });
+    });
+
+    it('retries local reconciliation after the gateway switch succeeds but event recording fails', async () => {
+        mockTxClient.subscriptionChangeEvent.create
+            .mockRejectedValueOnce(new Error('temporary database failure'))
+            .mockResolvedValue({});
+
+        await request(app)
+            .post('/api/v1/billing/switch')
+            .send({ priceId: 'price_new' })
+            .expect(500);
+
+        const retry = await request(app)
+            .post('/api/v1/billing/switch')
+            .send({ priceId: 'price_new' })
+            .expect(200);
+
+        expect(retry.body.message).toContain('switched successfully');
+        expect(mockSwitch).toHaveBeenCalledTimes(2);
+        expect(mockPrisma.$transaction).toHaveBeenCalledTimes(2);
     });
 
     it('schedules a next-cycle switch without touching local plan state', async () => {
@@ -258,7 +304,7 @@ describe('POST /api/v1/billing/switch', () => {
 
         expect(response.body.message).toContain('switched successfully');
         expect(mockSwitch).toHaveBeenCalledWith('sub_stripe_1', 'price_unknown', false);
-        expect(mockPrisma.subscription.update).not.toHaveBeenCalled();
-        expect(mockPrisma.subscriptionChangeEvent.create).not.toHaveBeenCalled();
+        expect(mockTxClient.subscription.updateMany).not.toHaveBeenCalled();
+        expect(mockTxClient.subscriptionChangeEvent.create).not.toHaveBeenCalled();
     });
 });

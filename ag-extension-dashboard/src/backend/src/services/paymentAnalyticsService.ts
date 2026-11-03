@@ -439,7 +439,14 @@ class PaymentAnalyticsService {
             // they account for.
             const feedbackGroups = await this.prisma.cancellationFeedback.groupBy({
                 by: ['reason'],
-                where: { createdAt: { gte: windowStart } },
+                where: {
+                    subscription: {
+                        is: {
+                            status: 'canceled',
+                            updatedAt: { gte: windowStart },
+                        },
+                    },
+                },
                 _count: { _all: true }
             });
             const recorded = feedbackGroups.reduce((total, group) => total + group._count._all, 0);

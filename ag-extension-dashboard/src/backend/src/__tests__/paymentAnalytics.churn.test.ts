@@ -30,7 +30,14 @@ describe('Payment analytics: churn reasons', () => {
         expect(mockPrisma.cancellationFeedback.groupBy).toHaveBeenCalledWith(
             expect.objectContaining({
                 by: ['reason'],
-                where: { createdAt: { gte: expect.any(Date) } },
+                where: {
+                    subscription: {
+                        is: {
+                            status: 'canceled',
+                            updatedAt: { gte: expect.any(Date) },
+                        },
+                    },
+                },
                 _count: { _all: true },
             })
         );

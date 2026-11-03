@@ -112,8 +112,13 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
             placeholder="What would have made the platform worth keeping?"
             value={comment}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setComment(event.target.value)}
-            disabled={loading}
+            disabled={loading || !reason}
           />
+          {!reason && (
+            <p className="text-xxs text-white/40 ml-1">
+              Select a reason before adding an optional comment.
+            </p>
+          )}
           <p className="text-xxs text-white/40 ml-1">{comment.length}/1000</p>
         </div>
       </div>

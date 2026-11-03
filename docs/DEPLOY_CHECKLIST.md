@@ -91,13 +91,13 @@ docker compose ps
 
 ```bash
 # 1. Liveness — process is up at all
-curl -fsS http://localhost:3000/health/live
+docker compose exec -T backend node -e "fetch('http://localhost:3001/health/live').then(async r => { console.log(await r.text()); if (!r.ok) process.exitCode = 1; }).catch(e => { console.error(e); process.exitCode = 1; })"
 
 # 2. Readiness — DB and cache are reachable (503 means "not ready", not "broken")
-curl -fsS http://localhost:3000/health/ready
+docker compose exec -T backend node -e "fetch('http://localhost:3001/health/ready').then(async r => { console.log(await r.text()); if (!r.ok) process.exitCode = 1; }).catch(e => { console.error(e); process.exitCode = 1; })"
 
 # 3. Full health — includes AI provider status and dependency detail
-curl -fsS http://localhost:3000/api/health
+docker compose exec -T backend node -e "fetch('http://localhost:3001/api/health').then(async r => { console.log(await r.text()); if (!r.ok) process.exitCode = 1; }).catch(e => { console.error(e); process.exitCode = 1; })"
 
 # 4. Public URL through the proxy (what users actually hit)
 node scripts/smoke-probe.cjs 60 https://<public-host>/api/health
@@ -154,21 +154,7 @@ docker compose build backend
 docker compose up -d --no-build
 ```
 
-**Schema rollback** (only if the tables themselves are the problem — this deletes any captured feedback):
-
-```sql
-BEGIN;
-DROP TABLE IF EXISTS cancellation_feedback;
-DROP TABLE IF EXISTS subscription_change_events;
-COMMIT;
-```
-
-Then mark the migrations as rolled back so the next deploy does not skip them:
-
-```bash
-npx prisma migrate resolve --rolled-back 20260920120000_add_cancellation_feedback
-npx prisma migrate resolve --rolled-back 20260915120000_add_subscription_change_events
-```
+**Schema rollback:** Do not drop these tables and then run `prisma migrate resolve --rolled-back` on successfully applied migrations. Prisma only accepts that option for failed migrations, and the next deploy would still treat these migrations as applied. If the schema itself must be reversed, restore a verified database backup or deploy a new forward migration.
 
 - [ ] After any rollback, re-run section 5 and record the results.
 
