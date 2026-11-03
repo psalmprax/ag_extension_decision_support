@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import type { PrismaClient } from '@prisma/client';
 import paypal from 'paypal-rest-sdk';
 import axios from 'axios';
 
@@ -690,54 +691,7 @@ class PaymentService {
 
                 case 'customer.subscription.updated': {
                     const subscription = event.data.object as Stripe.Subscription;
-                    const stripeSubscriptionId = subscription.id;
-                    const priceId = subscription.items.data[0].price.id;
-
-                    const plan = await prisma.subscriptionPlan.findFirst({
-                        where: { stripePriceId: priceId }
-                    });
-
-                    if (plan) {
-                        const updateData = {
-                            planId: plan.id,
-                            status: subscription.status as string,
-                            currentPeriodEnd: new Date((subscription as unknown as StripeSubscription).current_period_end * 1000),
-                            cancelAtPeriodEnd: subscription.cancel_at_period_end as boolean,
-                        };
-
-                        await prisma.$transaction(async tx => {
-                            const current = await tx.subscription.findFirst({
-                                where: { stripeSubscriptionId },
-                                include: { plan: true },
-                            });
-
-                            if (!current) {
-                                await tx.subscription.updateMany({
-                                    where: { stripeSubscriptionId },
-                                    data: updateData,
-                                });
-                                return;
-                            }
-
-                            const updated = await tx.subscription.updateMany({
-                                where: { id: current.id, planId: current.planId },
-                                data: updateData,
-                            });
-
-                            if (updated.count > 0 && current.planId !== plan.id && current.plan) {
-                                await tx.subscriptionChangeEvent.create({
-                                    data: {
-                                        subscriptionId: current.id,
-                                        fromPlanId: current.plan.id,
-                                        toPlanId: plan.id,
-                                        fromPrice: current.plan.price,
-                                        toPrice: plan.price,
-                                    },
-                                });
-                            }
-                        });
-                        logger.info(`Subscription ${stripeSubscriptionId} updated to plan ${plan.name}`);
-                    }
+                    await this.handleSubscriptionUpdated(prisma, subscription);
                     break;
                 }
             }
@@ -746,6 +700,56 @@ class PaymentService {
             logger.error('Error handling Stripe webhook:', error);
             return false;
         }
+    }
+
+    private async handleSubscriptionUpdated(prisma: PrismaClient, subscription: Stripe.Subscription): Promise<void> {
+        const stripeSubscriptionId = subscription.id;
+        const priceId = subscription.items.data[0].price.id;
+        const plan = await prisma.subscriptionPlan.findFirst({
+            where: { stripePriceId: priceId }
+        });
+
+        if (!plan) return;
+
+        const updateData = {
+            planId: plan.id,
+            status: subscription.status as string,
+            currentPeriodEnd: new Date((subscription as unknown as StripeSubscription).current_period_end * 1000),
+            cancelAtPeriodEnd: subscription.cancel_at_period_end as boolean,
+        };
+
+        await prisma.$transaction(async tx => {
+            const current = await tx.subscription.findFirst({
+                where: { stripeSubscriptionId },
+                include: { plan: true },
+            });
+
+            if (!current) {
+                await tx.subscription.updateMany({
+                    where: { stripeSubscriptionId },
+                    data: updateData,
+                });
+                return;
+            }
+
+            const updated = await tx.subscription.updateMany({
+                where: { id: current.id, planId: current.planId },
+                data: updateData,
+            });
+
+            if (updated.count > 0 && current.planId !== plan.id && current.plan) {
+                await tx.subscriptionChangeEvent.create({
+                    data: {
+                        subscriptionId: current.id,
+                        fromPlanId: current.plan.id,
+                        toPlanId: plan.id,
+                        fromPrice: current.plan.price,
+                        toPrice: plan.price,
+                    },
+                });
+            }
+        });
+        logger.info(`Subscription ${stripeSubscriptionId} updated to plan ${plan.name}`);
     }
 
     // Create billing portal session
