@@ -30,26 +30,44 @@ const errorStatusMap: Record<string, number> = {
     'ALREADY_SUBSCRIBED': 400
 };
 
-function validateCancellationFeedback(reason: unknown, comment: unknown):
+type CancellationInputValidation =
     | { valid: true; reason?: CancellationReason; comment?: string }
-    | { valid: false; errorCode?: string; message: string } {
+    | { valid: false; status: number; response: { success: false; errorCode?: string; message: string } };
+
+function validateCancellationInput(reason: unknown, comment: unknown): CancellationInputValidation {
     if (reason !== undefined && !isCancellationReason(reason)) {
         return {
             valid: false,
-            errorCode: 'INVALID_CANCELLATION_REASON',
-            message: `reason must be one of: ${CANCELLATION_REASONS.join(', ')}`,
+            status: 400,
+            response: {
+                success: false,
+                errorCode: 'INVALID_CANCELLATION_REASON',
+                message: `reason must be one of: ${CANCELLATION_REASONS.join(', ')}`,
+            },
         };
     }
     if (comment !== undefined && typeof comment !== 'string') {
-        return { valid: false, message: 'comment must be a string' };
+        return {
+            valid: false,
+            status: 400,
+            response: { success: false, message: 'comment must be a string' },
+        };
     }
     if (typeof comment === 'string' && comment.trim() && !reason) {
-        return { valid: false, message: 'Select a cancellation reason before submitting a comment' };
+        return {
+            valid: false,
+            status: 400,
+            response: {
+                success: false,
+                message: 'Select a cancellation reason before submitting a comment',
+            },
+        };
     }
+
     return {
         valid: true,
-        reason: reason as CancellationReason | undefined,
-        comment: comment as string | undefined,
+        reason: isCancellationReason(reason) ? reason : undefined,
+        comment: typeof comment === 'string' ? comment : undefined,
     };
 }
 
@@ -293,19 +311,11 @@ router.post('/subscribe', authorize(['admin', 'extension_officer', 'farmer']), a
 router.post('/cancel', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const userId = req.user!.userId;
-        const { reason: rawReason, comment: rawComment } = req.body ?? {};
-
-        // An optional reason is validated before the gateway is touched: an unknown
-        // value would otherwise leave an unusable row behind a successful cancel.
-        const feedback = validateCancellationFeedback(rawReason, rawComment);
-        if (!feedback.valid) {
-            return res.status(400).json({
-                success: false,
-                ...(feedback.errorCode ? { errorCode: feedback.errorCode } : {}),
-                message: feedback.message,
-            });
+        const { reason, comment } = req.body ?? {};
+        const cancellationInput = validateCancellationInput(reason, comment);
+        if (!cancellationInput.valid) {
+            return res.status(cancellationInput.status).json(cancellationInput.response);
         }
-        const { reason, comment } = feedback;
 
         const subscription = await prisma.subscription.findUnique({ where: { userId } });
 
@@ -321,12 +331,12 @@ router.post('/cancel', authorize(['admin', 'extension_officer', 'farmer']), asyn
                 data: { cancelAtPeriodEnd: true }
             });
 
-            const feedbackRecorded = reason
+            const feedbackRecorded = cancellationInput.reason
                 ? await cancellationFeedbackService.record({
                     subscriptionId: subscription.id,
                     userId,
-                    reason,
-                    comment: typeof comment === 'string' ? comment : null,
+                    reason: cancellationInput.reason,
+                    comment: cancellationInput.comment ?? null,
                 })
                 : false;
 

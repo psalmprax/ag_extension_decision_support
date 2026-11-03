@@ -602,113 +602,72 @@ class PaymentService {
         }
     }
 
-    // Handle Stripe webhooks
-    async handleWebhook(event: Stripe.Event): Promise<boolean> {
-        const prisma = (await import('./prismaService')).getPrisma();
+    private async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, prisma: PrismaClient): Promise<void> {
+        const userId = session.metadata?.userId;
+        const stripeSubscriptionId = session.subscription as string;
+        if (!userId || !stripeSubscriptionId) return;
 
-        try {
-            switch (event.type) {
-                case 'checkout.session.completed': {
-                    const session = event.data.object as Stripe.Checkout.Session;
-                    const userId = session.metadata?.userId;
-                    const stripeSubscriptionId = session.subscription as string;
+        const subscription = await this.stripe!.subscriptions.retrieve(stripeSubscriptionId);
+        const priceId = subscription.items.data[0].price.id;
+        const plan = await prisma.subscriptionPlan.findFirst({ where: { stripePriceId: priceId } });
+        if (!plan) return;
 
-                    if (!userId || !stripeSubscriptionId) break;
-
-                    const subscription = await this.stripe!.subscriptions.retrieve(stripeSubscriptionId);
-                    const priceId = subscription.items.data[0].price.id;
-
-                    const plan = await prisma.subscriptionPlan.findFirst({
-                        where: { stripePriceId: priceId }
-                    });
-
-                    if (plan) {
-                        await prisma.subscription.upsert({
-                            where: { userId },
-                            update: {
-                                planId: plan.id,
-                                stripeSubscriptionId,
-                                status: subscription.status as string,
-                                currentPeriodStart: new Date((subscription as unknown as StripeSubscription).current_period_start * 1000),
-                                currentPeriodEnd: new Date((subscription as unknown as StripeSubscription).current_period_end * 1000),
-                                cancelAtPeriodEnd: subscription.cancel_at_period_end as boolean,
-                            },
-                            create: {
-                                userId,
-                                planId: plan.id,
-                                stripeSubscriptionId,
-                                status: subscription.status as string,
-                                currentPeriodStart: new Date((subscription as unknown as StripeSubscription).current_period_start * 1000),
-                                currentPeriodEnd: new Date((subscription as unknown as StripeSubscription).current_period_end * 1000),
-                            }
-                        });
-                        logger.info(`Subscription created/updated for user ${userId} via checkout`);
-                    }
-                    break;
-                }
-
-                case 'invoice.paid': {
-                    const invoice = event.data.object as Stripe.Invoice;
-                    const stripeSubscriptionId = (invoice as Stripe.Invoice & { subscription?: string | null }).subscription ?? null;
-
-                    if (stripeSubscriptionId) {
-                        const subscription = await this.stripe!.subscriptions.retrieve(stripeSubscriptionId);
-
-                        await prisma.subscription.updateMany({
-                            where: { stripeSubscriptionId },
-                            data: {
-                                status: 'active',
-                                currentPeriodStart: new Date((subscription as unknown as StripeSubscription).current_period_start * 1000),
-                                currentPeriodEnd: new Date((subscription as unknown as StripeSubscription).current_period_end * 1000),
-                            }
-                        });
-
-                        // Reset usage for the new period
-                        const subRecord = await prisma.subscription.findFirst({
-                            where: { stripeSubscriptionId }
-                        });
-                        if (subRecord) {
-                            const { usageService } = await import('./usageService');
-                            await usageService.resetUsage(subRecord.id);
-                        }
-
-                        logger.info(`Invoice paid and usage reset for subscription ${stripeSubscriptionId}`);
-                    }
-                    break;
-                }
-
-                case 'customer.subscription.deleted': {
-                    const subscription = event.data.object as Stripe.Subscription;
-                    const stripeSubscriptionId = subscription.id;
-
-                    await prisma.subscription.updateMany({
-                        where: { stripeSubscriptionId },
-                        data: { status: 'canceled' }
-                    });
-                    logger.info(`Subscription ${stripeSubscriptionId} marked as canceled`);
-                    break;
-                }
-
-                case 'customer.subscription.updated': {
-                    const subscription = event.data.object as Stripe.Subscription;
-                    await this.handleSubscriptionUpdated(prisma, subscription);
-                    break;
-                }
+        await prisma.subscription.upsert({
+            where: { userId },
+            update: {
+                planId: plan.id,
+                stripeSubscriptionId,
+                status: subscription.status as string,
+                currentPeriodStart: new Date((subscription as unknown as StripeSubscription).current_period_start * 1000),
+                currentPeriodEnd: new Date((subscription as unknown as StripeSubscription).current_period_end * 1000),
+                cancelAtPeriodEnd: subscription.cancel_at_period_end as boolean,
+            },
+            create: {
+                userId,
+                planId: plan.id,
+                stripeSubscriptionId,
+                status: subscription.status as string,
+                currentPeriodStart: new Date((subscription as unknown as StripeSubscription).current_period_start * 1000),
+                currentPeriodEnd: new Date((subscription as unknown as StripeSubscription).current_period_end * 1000),
             }
-            return true;
-        } catch (error) {
-            logger.error('Error handling Stripe webhook:', error);
-            return false;
-        }
+        });
+        logger.info(`Subscription created/updated for user ${userId} via checkout`);
     }
 
-    private async handleSubscriptionUpdated(prisma: PrismaClient, subscription: Stripe.Subscription): Promise<void> {
-        const stripeSubscriptionId = subscription.id;
-        const priceId = subscription.items.data[0].price.id;
-        const plan = await prisma.subscriptionPlan.findFirst({
-            where: { stripePriceId: priceId }
+    private async handleInvoicePaid(invoice: Stripe.Invoice, prisma: PrismaClient): Promise<void> {
+        const stripeSubscriptionId = (invoice as Stripe.Invoice & { subscription?: string | null }).subscription ?? null;
+        if (!stripeSubscriptionId) return;
+
+        const subscription = await this.stripe!.subscriptions.retrieve(stripeSubscriptionId);
+        await prisma.subscription.updateMany({
+            where: { stripeSubscriptionId },
+            data: {
+                status: 'active',
+                currentPeriodStart: new Date((subscription as unknown as StripeSubscription).current_period_start * 1000),
+                currentPeriodEnd: new Date((subscription as unknown as StripeSubscription).current_period_end * 1000),
+            }
         });
 
+        const subRecord = await prisma.subscription.findFirst({ where: { stripeSubscriptionId } });
+        if (subRecord) {
+            const { usageService } = await import('./usageService');
+            await usageService.resetUsage(subRecord.id);
+        }
+        logger.info(`Invoice paid and usage reset for subscription ${stripeSubscriptionId}`);
+    }
+
+    private async handleSubscriptionDeleted(subscription: Stripe.Subscription, prisma: PrismaClient): Promise<void> {
+        await prisma.subscription.updateMany({
+            where: { stripeSubscriptionId: subscription.id },
+            data: { status: 'canceled' }
+        });
+        logger.info(`Subscription ${subscription.id} marked as canceled`);
+    }
+
+    private async handleSubscriptionUpdated(subscription: Stripe.Subscription, prisma: PrismaClient): Promise<void> {
+        const stripeSubscriptionId = subscription.id;
+        const priceId = subscription.items.data[0].price.id;
+        const plan = await prisma.subscriptionPlan.findFirst({ where: { stripePriceId: priceId } });
         if (!plan) return;
 
         const updateData = {
@@ -723,12 +682,8 @@ class PaymentService {
                 where: { stripeSubscriptionId },
                 include: { plan: true },
             });
-
             if (!current) {
-                await tx.subscription.updateMany({
-                    where: { stripeSubscriptionId },
-                    data: updateData,
-                });
+                await tx.subscription.updateMany({ where: { stripeSubscriptionId }, data: updateData });
                 return;
             }
 
@@ -736,20 +691,45 @@ class PaymentService {
                 where: { id: current.id, planId: current.planId },
                 data: updateData,
             });
+            if (updated.count === 0 || current.planId === plan.id || !current.plan) return;
 
-            if (updated.count > 0 && current.planId !== plan.id && current.plan) {
-                await tx.subscriptionChangeEvent.create({
-                    data: {
-                        subscriptionId: current.id,
-                        fromPlanId: current.plan.id,
-                        toPlanId: plan.id,
-                        fromPrice: current.plan.price,
-                        toPrice: plan.price,
-                    },
-                });
-            }
+            await tx.subscriptionChangeEvent.create({
+                data: {
+                    subscriptionId: current.id,
+                    fromPlanId: current.plan.id,
+                    toPlanId: plan.id,
+                    fromPrice: current.plan.price,
+                    toPrice: plan.price,
+                },
+            });
         });
         logger.info(`Subscription ${stripeSubscriptionId} updated to plan ${plan.name}`);
+    }
+
+    // Handle Stripe webhooks
+    async handleWebhook(event: Stripe.Event): Promise<boolean> {
+        const prisma = (await import('./prismaService')).getPrisma();
+
+        try {
+            switch (event.type) {
+                case 'checkout.session.completed':
+                    await this.handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session, prisma);
+                    break;
+                case 'invoice.paid':
+                    await this.handleInvoicePaid(event.data.object as Stripe.Invoice, prisma);
+                    break;
+                case 'customer.subscription.deleted':
+                    await this.handleSubscriptionDeleted(event.data.object as Stripe.Subscription, prisma);
+                    break;
+                case 'customer.subscription.updated':
+                    await this.handleSubscriptionUpdated(event.data.object as Stripe.Subscription, prisma);
+                    break;
+            }
+            return true;
+        } catch (error) {
+            logger.error('Error handling Stripe webhook:', error);
+            return false;
+        }
     }
 
     // Create billing portal session
