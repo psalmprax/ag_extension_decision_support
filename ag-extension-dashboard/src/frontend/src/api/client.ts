@@ -14,6 +14,9 @@ const RETRY_BACKOFF = 2; // Exponential backoff multiplier
  * echoes it in the x-csrf-token header on mutating requests.
  */
 export function getCsrfToken(): string | null {
+  if (typeof document === 'undefined' || typeof document.cookie !== 'string') {
+    return null;
+  }
   const match = document.cookie
     .split(';')
     .map(c => c.trim())

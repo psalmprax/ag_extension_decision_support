@@ -242,7 +242,6 @@ export class WeatherService {
    * Fetch historical weather for parametric insurance claim auditing (WeatherAPI.com /history.json)
    * `dataStatus` lets callers distinguish measured observations from the offline no-key mock.
    */
-  // fallow-ignore-next-line unused-class-member
   static async getHistoricalWeather(location: string, date: string): Promise<{ date: string; avgTempC: number; maxTempC: number; minTempC: number; totalPrecipMm: number; dataStatus: 'live' | 'mock_estimate'; source: string }> {
     const apiKey = this.getWeatherApiKey();
     const baseUrl = this.getWeatherApiUrl();

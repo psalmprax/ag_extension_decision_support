@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { ThemeName } from '@/theme';
 import * as farmerService from '@/api/farmerService';
 import * as visitService from '@/api/visitService';
+import { randomId } from '@/lib/randomId';
 import { toast } from 'react-hot-toast';
 
 // Types
@@ -54,7 +55,40 @@ export interface Notification {
 }
 
 // App Store
-localStorage.removeItem('ag-liquid-effect');
+if (typeof localStorage !== 'undefined') {
+  try {
+    localStorage.removeItem('ag-liquid-effect');
+  } catch {
+    // Ignore storage errors in restricted contexts
+  }
+}
+
+const getInitialThemeName = (): ThemeName => {
+  if (typeof localStorage === 'undefined') return 'forest';
+  try {
+    return (localStorage.getItem('ag-theme-name') as ThemeName) || 'forest';
+  } catch {
+    return 'forest';
+  }
+};
+
+const getInitialDarkMode = (): boolean => {
+  if (typeof localStorage === 'undefined') return false;
+  try {
+    return localStorage.getItem('theme') === 'dark';
+  } catch {
+    return false;
+  }
+};
+
+const safeSetLocalStorage = (key: string, value: string): void => {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage write failures in restricted contexts
+  }
+};
 
 export interface AppState {
   // User
@@ -155,8 +189,8 @@ export const useAppStore = create<AppState>()(
       user: null,
       isDemo: false,
       sidebarOpen: true,
-      themeName: (localStorage.getItem('ag-theme-name') as ThemeName) || 'forest',
-      darkMode: localStorage.getItem('theme') === 'dark',
+      themeName: getInitialThemeName(),
+      darkMode: getInitialDarkMode(),
       activeTab: 'dashboard',
       preferredAudioLanguage: 'sw',
       farmers: [],
@@ -183,18 +217,18 @@ export const useAppStore = create<AppState>()(
       toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
 
       setThemeName: themeName => {
-        localStorage.setItem('ag-theme-name', themeName);
+        safeSetLocalStorage('ag-theme-name', themeName);
         set({ themeName });
       },
 
       setDarkMode: darkMode => {
-        localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+        safeSetLocalStorage('theme', darkMode ? 'dark' : 'light');
         set({ darkMode });
       },
       toggleDarkMode: () =>
         set(state => {
           const next = !state.darkMode;
-          localStorage.setItem('theme', next ? 'dark' : 'light');
+          safeSetLocalStorage('theme', next ? 'dark' : 'light');
           return { darkMode: next };
         }),
 
@@ -335,11 +369,7 @@ export const useAppStore = create<AppState>()(
       },
 
       addNotification: notification => {
-        const id =
-          typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID()
-            : Math.random().toString(36).substring(2, 15) +
-              Math.random().toString(36).substring(2, 15);
+        const id = randomId();
 
         set(state => ({
           notifications: [

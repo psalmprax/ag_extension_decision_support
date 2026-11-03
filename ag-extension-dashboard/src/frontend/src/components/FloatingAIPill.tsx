@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot,
-  Sparkles,
   X,
   Camera,
   Mic,
@@ -163,10 +162,10 @@ const AIAgronomistScanTab: React.FC<ScanTabProps> = ({
         </div>
       ) : (
         <>
-          <div className="w-12 h-12 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto mb-2">
-            <Camera className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-md bg-slate-800 border border-white/[0.08] flex items-center justify-center text-slate-300 mx-auto mb-2">
+            <Camera className="w-5 h-5" />
           </div>
-          <h4 className="text-xs font-bold text-white mb-1">Upload or Capture Leaf Photo</h4>
+          <h4 className="text-xs font-medium text-white mb-1">Upload or Capture Leaf Photo</h4>
           <p className="text-[11px] text-slate-400 mb-3">
             Neural vision analyzes fungal lesions, pest bites, and nutrient deficiencies.
           </p>
@@ -176,7 +175,7 @@ const AIAgronomistScanTab: React.FC<ScanTabProps> = ({
       <button
         type="button"
         disabled={isScanning}
-        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded text-xs font-bold transition-all shadow-md shadow-emerald-950 flex items-center gap-2 mx-auto"
+        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded text-xs font-medium transition-colors shadow-sm flex items-center gap-2 mx-auto"
       >
         {isScanning ? (
           <>
@@ -196,9 +195,9 @@ const AIAgronomistScanTab: React.FC<ScanTabProps> = ({
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="p-4 rounded bg-slate-900 border border-emerald-500/40 shadow-lg space-y-3"
+        className="p-4 rounded bg-slate-900 border border-white/[0.08] shadow-sm space-y-3"
       >
-        <div className="flex items-center justify-between text-xs font-bold text-emerald-400">
+        <div className="flex items-center justify-between text-xs font-medium text-emerald-400">
           <div className="flex items-center gap-1.5">
             <Leaf className="w-3.5 h-3.5" />
             Pathology Diagnosis & Prescriptions
@@ -207,7 +206,7 @@ const AIAgronomistScanTab: React.FC<ScanTabProps> = ({
             text={scanAnalysis}
             size="xs"
             variant="ghost"
-            className="text-emerald-400 hover:bg-emerald-500/20"
+            className="text-emerald-400 hover:bg-slate-800"
           />
         </div>
         <div className="text-xs text-slate-200 bg-slate-950 p-3 rounded border border-slate-800 leading-relaxed whitespace-pre-wrap">
@@ -216,7 +215,7 @@ const AIAgronomistScanTab: React.FC<ScanTabProps> = ({
         {onNavigateToDiagnosis && (
           <button
             onClick={onNavigateToDiagnosis}
-            className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-bold transition-colors flex items-center justify-center gap-1"
+            className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1"
           >
             <span>Open Comprehensive Crop Diagnostics</span>
             <ArrowRight className="w-3 h-3" />
@@ -252,16 +251,16 @@ const AIAgronomistVoiceTab: React.FC<VoiceTabProps> = ({
         type="button"
         onClick={onToggleRecording}
         disabled={isTranscribing}
-        className={`w-16 h-16 rounded flex items-center justify-center transition-all shadow-xl ${
+        className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-md ${
           isRecording
             ? 'bg-rose-600 text-white animate-pulse ring-4 ring-rose-500/20'
-            : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/40'
+            : 'bg-emerald-600 hover:bg-emerald-500 text-white'
         }`}
       >
-        {isRecording ? <Square className="w-6 h-6 fill-white" /> : <Mic className="w-7 h-7" />}
+        {isRecording ? <Square className="w-5 h-5 fill-white" /> : <Mic className="w-6 h-6" />}
       </button>
 
-      <p className="text-xs font-bold text-white mt-4">
+      <p className="text-xs font-medium text-white mt-4">
         {isRecording
           ? `Recording Field Memo (${formatDuration(recordingDuration)})...`
           : isTranscribing
@@ -274,7 +273,7 @@ const AIAgronomistVoiceTab: React.FC<VoiceTabProps> = ({
     </div>
 
     {interimText && isRecording && (
-      <div className="p-3 rounded bg-slate-900 border border-emerald-500/20 text-xs text-emerald-300 italic">
+      <div className="p-3 rounded bg-slate-900 border border-white/[0.08] text-xs text-emerald-300 italic">
         "{interimText}..."
       </div>
     )}
@@ -285,7 +284,7 @@ const AIAgronomistVoiceTab: React.FC<VoiceTabProps> = ({
         animate={{ opacity: 1, y: 0 }}
         className="p-4 rounded bg-slate-900 border border-slate-800 text-left space-y-2"
       >
-        <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-400">
           <Volume2 className="w-3.5 h-3.5" />
           AI Voice Transcription
         </div>
@@ -294,7 +293,7 @@ const AIAgronomistVoiceTab: React.FC<VoiceTabProps> = ({
         </p>
         <button
           onClick={onInsertVoiceToChat}
-          className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded transition-colors flex items-center justify-center gap-1.5"
+          className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs rounded transition-colors flex items-center justify-center gap-1.5"
         >
           <span>Query AI Agronomist with Voice Note</span>
           <ArrowRight className="w-3 h-3" />
@@ -310,17 +309,17 @@ interface TelecallTabProps {
 
 const AIAgronomistTelecallTab: React.FC<TelecallTabProps> = ({ onStartCall }) => (
   <div className="space-y-4 text-center p-2">
-    <div className="p-5 rounded bg-slate-900 border border-emerald-500/30 space-y-3">
-      <div className="w-12 h-12 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto">
-        <Video className="w-6 h-6" />
+    <div className="p-5 rounded bg-slate-900 border border-white/[0.08] space-y-3">
+      <div className="w-10 h-10 rounded-md bg-slate-800 border border-white/[0.08] flex items-center justify-center text-slate-300 mx-auto">
+        <Video className="w-5 h-5" />
       </div>
-      <h4 className="text-xs font-bold text-white">Instant Tele-Agronomy Call</h4>
+      <h4 className="text-xs font-medium text-white">Instant Tele-Agronomy Call</h4>
       <p className="text-[11px] text-slate-400">
         Start a secure WebRTC video call, then copy the invite link and share it with the farmer to join from their phone.
       </p>
       <button
         onClick={onStartCall}
-        className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded transition-all shadow-md shadow-emerald-950 flex items-center justify-center gap-1.5"
+        className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs rounded transition-colors shadow-sm flex items-center justify-center gap-1.5"
       >
         <Video className="w-3.5 h-3.5" />
         <span>Start Tele-Agronomy Call</span>
@@ -600,31 +599,31 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
       <AnimatePresence>
         {!isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            initial={{ opacity: 0, scale: 0.9, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            exit={{ opacity: 0, scale: 0.9, y: 16 }}
             className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-3 md:bottom-6 md:right-6 z-[1000] flex items-center gap-2"
           >
             <button
               onClick={() => setIsOpen(true)}
-              className="group flex items-center gap-2.5 sm:gap-3 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl bg-slate-950/90 hover:bg-slate-900 border border-emerald-500/40 hover:border-emerald-400 text-white shadow-2xl backdrop-blur-xl transition-all hover:scale-105 active:scale-95 shadow-emerald-950/60"
+              className="group flex items-center gap-2.5 sm:gap-3 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl bg-slate-900/95 hover:bg-slate-800/90 border border-white/[0.08] hover:border-white/[0.16] text-white shadow-xl backdrop-blur-md transition-colors active:scale-[0.98]"
               aria-label="Open AI Agronomist"
             >
               <div className="relative">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400">
+                <div className="w-8 h-8 rounded-md bg-slate-800 border border-white/[0.08] flex items-center justify-center text-slate-300">
                   <Bot className="w-4 h-4" />
                 </div>
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-slate-950 animate-pulse" />
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-slate-950" />
               </div>
 
               <div className="text-left pr-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold tracking-wide text-white">AI Agronomist</span>
-                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <span className="text-xs font-medium text-white">AI Agronomist</span>
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-emerald-950/60 text-emerald-300 border border-emerald-800/40">
                     ONLINE
                   </span>
                 </div>
-                <span className="text-[10px] text-slate-400 font-medium hidden sm:block">Live Chat, Leaf Scan & Voice STT</span>
+                <span className="text-[10px] text-slate-400 font-normal hidden sm:block">Live chat, leaf scan & voice memo</span>
               </div>
             </button>
           </motion.div>
@@ -635,23 +634,22 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 30 }}
+            initial={{ opacity: 0, scale: 0.98, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 30 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 260 }}
-            className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-2 sm:right-6 md:bottom-6 md:right-6 z-[1100] w-[calc(100vw-1rem)] sm:w-[440px] max-w-[440px] max-h-[calc(100dvh-6rem)] h-[calc(100dvh-6rem)] md:max-h-[85vh] md:h-[85vh] bg-slate-950/95 border border-emerald-500/30 rounded-xl shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden text-slate-100 shadow-emerald-950/80"
+            exit={{ opacity: 0, scale: 0.98, y: 20 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-2 sm:right-6 md:bottom-6 md:right-6 z-[1100] w-[calc(100vw-1rem)] sm:w-[440px] max-w-[440px] max-h-[calc(100dvh-6rem)] h-[calc(100dvh-6rem)] md:max-h-[85vh] md:h-[85vh] bg-slate-950 border border-white/[0.08] rounded-xl shadow-2xl backdrop-blur-xl flex flex-col overflow-hidden text-slate-100"
           >
             {/* Drawer Header */}
-            <div className="p-4 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md flex items-center justify-between">
+            <div className="p-4 border-b border-white/[0.06] bg-slate-900/60 backdrop-blur-md flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-inner">
-                  <Bot className="w-5 h-5" />
+                <div className="w-8 h-8 rounded-md bg-slate-800 border border-white/[0.08] flex items-center justify-center text-slate-300">
+                  <Bot className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-white tracking-wide">AI Agronomist</h3>
-                    <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
-                      <Sparkles className="w-2.5 h-2.5" />
+                    <h3 className="text-sm font-medium text-white">AI Agronomist</h3>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-white/[0.08] font-mono">
                       GPExts Intelligence
                     </span>
                   </div>
@@ -665,7 +663,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                   onClick={handleResetChat}
                   title="Reset conversation history"
                   aria-label="Reset conversation history"
-                  className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-emerald-400 transition-colors"
+                  className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
                 >
                   <RotateCcw className="w-4 h-4" />
                 </button>
@@ -673,7 +671,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                   <button
                     onClick={onOpenUSSDSandbox}
                     title="Launch USSD Simulator"
-                    className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-emerald-400 transition-colors"
+                    className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
                   >
                     <Smartphone className="w-4 h-4" />
                   </button>
@@ -688,12 +686,12 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
             </div>
 
             {/* Multimodal Mode Switcher Tabs */}
-            <div className="px-3 py-2 bg-slate-900/40 border-b border-slate-800/60 flex items-center justify-around text-xs">
+            <div className="px-3 py-2 bg-slate-900/30 border-b border-white/[0.06] flex items-center justify-around text-xs">
               <button
                 onClick={() => setActiveTab('chat')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-medium transition-colors ${
                   activeTab === 'chat'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                    ? 'bg-slate-800 text-white border border-white/[0.08]'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -702,9 +700,9 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
               </button>
               <button
                 onClick={() => setActiveTab('scan')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-medium transition-colors ${
                   activeTab === 'scan'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                    ? 'bg-slate-800 text-white border border-white/[0.08]'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -713,9 +711,9 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
               </button>
               <button
                 onClick={() => setActiveTab('voice')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-medium transition-colors ${
                   activeTab === 'voice'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                    ? 'bg-slate-800 text-white border border-white/[0.08]'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -724,9 +722,9 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
               </button>
               <button
                 onClick={() => setActiveTab('telecall')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-medium transition-colors ${
                   activeTab === 'telecall'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                    ? 'bg-slate-800 text-white border border-white/[0.08]'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -857,7 +855,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                     <button
                       type="submit"
                       disabled={isLoadingAi || !chatInput.trim()}
-                      className="p-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded transition-all shadow-md shadow-emerald-950"
+                      className="p-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded transition-colors shadow-sm"
                     >
                       {isLoadingAi ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     </button>
@@ -871,13 +869,13 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
 
       {showVideoCall && (
         <div className="fixed inset-0 z-[1400] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-slate-950 border border-emerald-500/40 rounded-xl shadow-2xl">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-slate-950 border border-slate-800 rounded-xl shadow-2xl">
             <div className="flex justify-between items-center px-5 py-3 border-b border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                <div className="w-8 h-8 rounded-md bg-slate-800 border border-white/[0.08] flex items-center justify-center text-slate-300">
                   <Video className="w-4 h-4" />
                 </div>
-                <h4 className="font-bold text-sm text-white">Tele-Agronomy Video Consultation</h4>
+                <h4 className="font-medium text-sm text-white">Tele-Agronomy Video Consultation</h4>
               </div>
               <button
                 onClick={() => {

@@ -42,11 +42,17 @@ export interface PaymentMethodAnalytics {
 export interface ChurnPrediction {
     predictedChurnRate: number;
     atRiskCustomers: number;
+    /** Self-reported reasons, share of the *recorded* feedback (not of all cancellations). */
     churnReasons: Array<{
         reason: string;
         count: number;
         percentage: number;
     }>;
+    /** Coverage lets callers see how much of the churn the reasons actually explain. */
+    churnReasonCoverage: {
+        recorded: number;
+        cancellationsLast30Days: number;
+    };
 }
 
 export interface CohortAnalysis {
@@ -177,18 +183,31 @@ class PaymentAnalyticsService {
                 ? churnedSubscriptionRevenue
                 : Math.max(0, previousTotalRevenue - totalRevenue);
 
-            // Expansion/contraction require subscription item history; returns null when change events table is not yet populated
-            const hasHistory = false;
+            // Expansion/contraction come from recorded plan changes in the period.
+            const changeEvents = await this.prisma.subscriptionChangeEvent.findMany({
+                where: { createdAt: { gte: startDate, lte: now } },
+                select: { fromPrice: true, toPrice: true }
+            });
+            const expansionRevenue = changeEvents.reduce(
+                (total, e) => total + Math.max(0, Number(e.toPrice) - Number(e.fromPrice)), 0
+            );
+            const contractionRevenue = changeEvents.reduce(
+                (total, e) => total + Math.max(0, Number(e.fromPrice) - Number(e.toPrice)), 0
+            );
+            const firstChange = await this.prisma.subscriptionChangeEvent.aggregate({
+                _min: { createdAt: true }
+            });
+
             return {
                 mrr,
                 arr,
                 totalRevenue,
                 newRevenue,
-                expansionRevenue: hasHistory ? 0 : null as unknown as number,
-                contractionRevenue: hasHistory ? 0 : null as unknown as number,
+                expansionRevenue,
+                contractionRevenue,
                 churnedRevenue,
                 netRevenueChange,
-                _meta: hasHistory ? undefined : { expansionRevenue: 'unavailable — subscription_change_events not yet collected', contractionRevenue: 'unavailable — subscription_change_events not yet collected' },
+                _meta: { changeTrackingSince: firstChange._min.createdAt },
             } as unknown as typeof mrr extends never ? never : ReturnType<typeof Object>;
         } catch (error) {
             logger.error('Failed to get revenue metrics:', error);
@@ -391,11 +410,12 @@ class PaymentAnalyticsService {
     async getChurnPrediction(): Promise<ChurnPrediction> {
         try {
             // Simplified churn prediction based on cancellation patterns
+            const windowStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Last 30 days
             const recentCancellations = await this.prisma.subscription.count({
                 where: {
                     status: 'canceled',
                     updatedAt: {
-                        gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
+                        gte: windowStart
                     }
                 }
             });
@@ -414,21 +434,41 @@ class PaymentAnalyticsService {
                 }
             });
 
-            // Churn reasons — requires cancellation_feedback table; empty until that table exists
-            const churnReasons: { reason: string; count: number; percentage: number }[] = [];
+            // Churn reasons come only from self-reported cancellation feedback; they
+            // are not inferred from behaviour, and coverage says how much of the churn
+            // they account for.
+            const feedbackGroups = await this.prisma.cancellationFeedback.groupBy({
+                by: ['reason'],
+                where: {
+                    subscription: {
+                        is: {
+                            status: 'canceled',
+                            updatedAt: { gte: windowStart },
+                        },
+                    },
+                },
+                _count: { _all: true }
+            });
+            const recorded = feedbackGroups.reduce((total, group) => total + group._count._all, 0);
+            const churnReasons = feedbackGroups
+                .map(group => ({
+                    reason: group.reason,
+                    count: group._count._all,
+                    percentage: recorded > 0 ? (group._count._all / recorded) * 100 : 0
+                }))
+                .sort((a, b) => b.count - a.count);
 
             return {
                 predictedChurnRate,
                 atRiskCustomers,
-                churnReasons
+                churnReasons,
+                churnReasonCoverage: { recorded, cancellationsLast30Days: recentCancellations }
             };
         } catch (error) {
+            // Propagate: a zeros payload would render as "no churn, no reasons" and
+            // hide a database failure behind plausible-looking charts.
             logger.error('Failed to get churn prediction:', error);
-            return {
-                predictedChurnRate: 0,
-                atRiskCustomers: 0,
-                churnReasons: []
-            };
+            throw error;
         }
     }
 

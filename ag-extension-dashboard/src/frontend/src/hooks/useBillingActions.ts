@@ -10,6 +10,7 @@ import {
   createPortalSession,
   fetchInvoices,
   switchSubscription,
+  cancelSubscription,
   fetchPaymentMethods,
   addPaymentMethod,
   deletePaymentMethod,
@@ -285,6 +286,11 @@ export function useBillingActions() {
 
   const handleSubmitTransaction = async (): Promise<void> => {
     if (!mobilePayData.transactionId || !mobilePayData.planId || !mobilePayData.amount) return;
+    const amount = Number.parseFloat(mobilePayData.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setFormMessage({ type: 'error', text: 'Enter the amount you paid as a number greater than zero.' });
+      return;
+    }
     setActionLoading('mobile-pay');
     setFormMessage(null);
     try {
@@ -292,7 +298,7 @@ export function useBillingActions() {
         planId: mobilePayData.planId,
         method: mobilePayData.method,
         transactionId: mobilePayData.transactionId,
-        amount: parseFloat(mobilePayData.amount),
+        amount,
       });
       if (res.success) {
         setFormMessage({
@@ -424,6 +430,28 @@ export function useBillingActions() {
     }
   };
 
+  const handleCancelSubscription = async (reason?: string, comment?: string): Promise<boolean> => {
+    setActionLoading('cancel');
+    try {
+      const response = await cancelSubscription(reason, comment);
+      if (response?.success) {
+        toast.success(
+          response.message || 'Subscription will be cancelled at the end of the current period'
+        );
+        fetchData();
+        return true;
+      }
+      toast.error(response?.message || response?.error || 'Failed to cancel subscription');
+      return false;
+    } catch (error: unknown) {
+      if (import.meta.env.DEV) console.error('Cancel subscription failed:', error);
+      toast.error('Failed to cancel subscription. Please try again.');
+      return false;
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handlePortal = async () => {
     setActionLoading('portal');
     try {
@@ -481,6 +509,8 @@ export function useBillingActions() {
           if (response.success) {
             toast.success(response.message || 'Payment method removed');
             fetchData();
+          } else {
+            toast.error(response.error || response.message || 'Failed to remove payment method');
           }
         } catch (error) {
           console.error('Failed to delete payment method:', error);
@@ -533,6 +563,8 @@ export function useBillingActions() {
           paypalClientId: '',
           paypalSecret: '',
         });
+      } else {
+        toast.error(response.error || response.message || 'Credentials update was rejected by the server');
       }
     } catch (error) {
       console.error('Failed to update credentials:', error);
@@ -584,6 +616,7 @@ export function useBillingActions() {
     handleGenerateVouchers,
     handleSubscribe,
     handleSwitch,
+    handleCancelSubscription,
     handlePortal,
     handleAddMethod,
     handleDeleteMethod,

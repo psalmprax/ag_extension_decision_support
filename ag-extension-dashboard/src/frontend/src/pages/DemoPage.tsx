@@ -6,7 +6,6 @@ import {
   Smartphone,
   Database,
   ArrowLeft,
-  Sparkles,
   RefreshCw,
   Layers,
   Play,
@@ -14,6 +13,8 @@ import {
   CheckCircle,
   MapPin,
   Radio,
+  Zap,
+  Bot,
 } from 'lucide-react';
 import { CanvasUiLab } from '@/components/canvas-ui/CanvasUiLab';
 import { UssdGatewayTester } from '@/components/telecom/UssdGatewayTester';
@@ -162,7 +163,7 @@ export function DemoPage({
         {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 mb-4">
-            <Sparkles className="w-4 h-4 text-emerald-400" />
+            <Layers className="w-4 h-4 text-emerald-400" />
             <span className="text-xs font-semibold text-emerald-400">Interactive Sandbox</span>
           </div>
           <h1 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">Experience GPExts</h1>
@@ -177,7 +178,7 @@ export function DemoPage({
           {[
             {
               key: 'scrubber' as const,
-              icon: Sparkles,
+              icon: Layers,
               label: '3D Agro Scrubber',
               color: 'text-emerald-400',
             },
@@ -250,7 +251,7 @@ export function DemoPage({
 
               <div className="p-5 rounded-xl bg-black/40 border border-white/5 min-h-[200px]">
                 <div className="flex items-center gap-2 border-b border-white/5 pb-3 mb-4">
-                  <Sparkles className="w-4 h-4 text-purple-400 animate-spin-slow" />
+                  <Bot className="w-4 h-4 text-purple-400" />
                   <span className="text-xs font-bold font-mono text-stone-400">
                     RAG v2 Assistant Response
                   </span>
@@ -357,7 +358,7 @@ export function DemoPage({
                       </>
                     ) : (
                       <>
-                        <Sparkles className="w-4 h-4 text-purple-400" /> Synthesize to Dashboard
+                        <Zap className="w-4 h-4 text-purple-400" /> Synthesize to Dashboard
                       </>
                     )}
                   </button>
@@ -450,7 +451,7 @@ export function DemoPage({
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/5">
                 <div>
                   <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-emerald-400" />
+                    <Layers className="w-4 h-4 text-emerald-400" />
                     Interactive 3D Agro-Intelligence Scrubber
                   </h2>
                   <p className="text-xs text-stone-400 mt-1">
@@ -458,8 +459,8 @@ export function DemoPage({
                   </p>
                 </div>
                 <div className="flex items-center gap-2 font-mono text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/20">
-                  <Activity className="w-3.5 h-3.5 animate-pulse" />
-                  <span>60 FPS PROCEDURAL CANVAS</span>
+                  <Activity className="w-3.5 h-3.5" />
+                  <span>60 FPS Procedural Canvas</span>
                 </div>
               </div>
 

@@ -141,16 +141,6 @@ async function handleAgentControl(
         }
     }
 
-    const unavailableCode = {
-        execute: 'AGENT_EXECUTION_NOT_WIRED',
-        stop: 'AGENT_STOP_NOT_WIRED',
-    } as const;
-    const controlName = { execute: 'task dispatch', stop: 'stop control' }[control];
-    res.status(501).json({
-        success: false,
-        errorCode: unavailableCode[control],
-        error: `${config.name} is reachable, but ${controlName} is not configured for this control plane.`,
-    });
 }
 
 /**

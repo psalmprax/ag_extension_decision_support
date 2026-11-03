@@ -9,7 +9,6 @@ import {
   MapPin,
   MessageSquare,
   RefreshCw,
-  Sparkles,
   Users,
   Sprout,
   Droplets,
@@ -62,7 +61,7 @@ const DashboardHeader: React.FC<{
   userName?: string;
   t: (key: string, options?: { defaultValue?: string } & Record<string, unknown>) => string;
   headingClass: string;
-}> = ({ userName, t, headingClass }) => {
+}> = ({ userName: _userName, t, headingClass }) => {
   const [isSyncing, setIsSyncing] = React.useState(false);
   const [isOnline, setIsOnline] = React.useState(() => typeof navigator === 'undefined' || navigator.onLine);
   const [pendingCount, setPendingCount] = React.useState(() => syncQueue.getPendingCount());
@@ -112,11 +111,11 @@ const DashboardHeader: React.FC<{
   return (
     <div className="mb-6 sm:mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h1 className={`text-2xl sm:text-4xl font-black tracking-tight font-headline mb-1 sm:mb-2 ${headingClass}`}>
+        <h1 className={`text-2xl sm:text-3xl font-semibold tracking-tight font-headline mb-1 sm:mb-2 ${headingClass}`}>
           {t('dashboard_operations_title', { defaultValue: 'Operations Dashboard' })}
         </h1>
         <p className="text-slate-500 dark:text-slate-400 font-headline font-medium text-xs sm:text-base">
-          {t('dashboard_welcome', { defaultValue: 'Welcome back, {name}! Here is your overview.' }).replace('{name}', userName || 'Extension Officer')}
+          {t('dashboard_welcome', { defaultValue: 'Operations overview · 2026 Season' })}
         </p>
       </div>
 
@@ -124,13 +123,13 @@ const DashboardHeader: React.FC<{
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm text-xs">
           <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-          <span className="font-bold text-slate-800 dark:text-slate-200">
+          <span className="font-semibold text-slate-800 dark:text-slate-200">
             {isOnline ? 'Browser online' : 'Offline'} · {pendingCount} pending
           </span>
           <button
             onClick={handleManualSync}
             disabled={isSyncing || !isOnline}
-            className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 text-xxs font-bold uppercase transition-colors"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 text-xs font-medium transition-colors"
           >
             <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
             <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
@@ -211,7 +210,7 @@ const DashboardStats: React.FC<{
             : `${overview.avgSatisfaction}/5`
         }
         change={isOfficer ? undefined : trends.satisfactionChange}
-        icon={isOfficer ? MessageSquare : Sparkles}
+        icon={isOfficer ? MessageSquare : BarChart3}
         delay={0.15}
         {...classes}
       />
@@ -254,15 +253,15 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
   return (
     <div className={`${cardClass} p-4 sm:p-6`}>
       <div className="flex items-center gap-3 mb-4 sm:mb-6">
-        <div className={`w-2 h-2 rounded-full animate-ping ${health?.status === 'healthy' ? 'bg-emerald-400' : 'bg-amber-400'}`}></div>
-        <h3 className="text-xs sm:text-sm font-headline font-bold text-gray-900 dark:text-white uppercase tracking-widest">
-          {t('dashboard_active_pulse', { defaultValue: 'Active Pulse' })}
+        <div className={`w-2 h-2 rounded-full ${health?.status === 'healthy' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+        <h3 className="text-xs sm:text-sm font-headline font-semibold text-gray-900 dark:text-white">
+          {t('dashboard_active_pulse', { defaultValue: 'System Health' })}
         </h3>
       </div>
       <div className="space-y-3 sm:space-y-4">
         {isError ? (
           <div className="flex items-center justify-center py-6">
-            <p className="text-xxs text-slate-500 uppercase tracking-wide">
+            <p className="text-xs text-slate-500">
               {t('dashboard_pulse_unavailable', { defaultValue: 'Health status unavailable — retrying' })}
             </p>
           </div>
@@ -294,12 +293,12 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
                 className="flex justify-between items-center border-b border-white/5 pb-2.5 sm:pb-3 last:border-0 last:pb-0"
               >
                 <div>
-                  <p className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight">
+                  <p className="text-xs font-medium text-gray-900 dark:text-white">
                     {item.label}
                   </p>
                   <p className="text-xxs text-slate-500">{health?.environment || ''}</p>
                 </div>
-                <span className={`text-xxs font-black uppercase ${item.ok ? 'text-emerald-400' : 'text-amber-400'}`}>{item.status}</span>
+                <span className={`text-xxs font-semibold uppercase ${item.ok ? 'text-emerald-400' : 'text-amber-400'}`}>{item.status}</span>
               </div>
             ))}
           </>
@@ -329,7 +328,7 @@ const SupportEfficiencyCard: React.FC<{
 
   return (
     <div className={`${cardClass} p-4 sm:p-6 lg:p-8`}>
-      <h3 className="text-base sm:text-lg font-headline font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
+      <h3 className="text-base sm:text-lg font-headline font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">
         {t('analytics_support_efficiency')}
       </h3>
       {performanceData ? (
@@ -338,18 +337,18 @@ const SupportEfficiencyCard: React.FC<{
             {
               name: t('analytics_resolution_rate'),
               progress: resolutionRate,
-              color: 'bg-primary-400',
+              color: 'bg-primary-500',
             },
             {
               name: t('analytics_satisfaction_score'),
               progress: satisfactionProgress,
-              color: 'bg-purple-500',
+              color: 'bg-slate-500',
             },
           ].map((item, i) => (
             <div key={i} className="space-y-1.5 sm:space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">{item.name}</span>
-                <span className="text-xs font-black text-primary-700 dark:text-primary-400">
+                <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">{item.name}</span>
+                <span className="text-xs font-semibold tabular-nums text-primary-700 dark:text-primary-400">
                   {Math.round(item.progress)}%
                 </span>
               </div>
@@ -358,7 +357,7 @@ const SupportEfficiencyCard: React.FC<{
                   initial={{ width: 0 }}
                   animate={{ width: `${item.progress}%` }}
                   transition={{ duration: 1, delay: i * 0.1 }}
-                  className={`h-full ${item.color} rounded-full shadow-[0_0_10px_var(--color-outline)]`}
+                  className={`h-full ${item.color} rounded-full`}
                 />
               </div>
             </div>
@@ -562,14 +561,14 @@ const DashboardMapSection: React.FC<{
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <span className="text-xxs font-bold text-slate-200 uppercase tracking-widest">
+                <span className="text-xs font-medium text-slate-200">
                   {t('analytics_disease_alerts')}
                 </span>
               </div>
             </div>
             <button
               onClick={() => setIsMapExpanded(true)}
-              className={`text-xxs font-black text-primary-400 uppercase bg-primary-400/10 px-2.5 sm:px-3 py-1 ${radiusClass} border border-primary-400/20 hover:bg-primary-400/20 transition-colors active:scale-95`}
+              className={`text-xs font-medium text-primary-400 bg-primary-400/10 px-2.5 sm:px-3 py-1 ${radiusClass} border border-primary-400/20 hover:bg-primary-400/20 transition-colors active:scale-95`}
             >
               {t('viz_detail_view')}
             </button>
@@ -746,8 +745,8 @@ const DistributionPanels: React.FC<{
           {crops.map(crop => (
             <div key={crop.name}>
               <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{crop.name}</span>
-                <span className="text-xs font-black text-emerald-700 dark:text-emerald-400">{crop.count}</span>
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{crop.name}</span>
+                <span className="text-xs font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">{crop.count}</span>
               </div>
               <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
                 <motion.div
@@ -765,7 +764,7 @@ const DistributionPanels: React.FC<{
       <div className={cardClass}>
         <div className="flex items-center gap-2 mb-6">
           <Users className="w-5 h-5 text-primary-400" />
-          <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-headline font-semibold text-gray-900 dark:text-white">
             {t('stat_regional_distribution') || 'Regional Distribution'}
           </h3>
           {regionsAreSample && <span className="text-[10px] text-amber-700 dark:text-amber-300">Sample</span>}
@@ -774,8 +773,8 @@ const DistributionPanels: React.FC<{
           {regions.map(region => (
             <div key={region.region}>
               <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{region.region}</span>
-                <span className="text-xs font-black text-primary-700 dark:text-primary-400">{region.farmers}</span>
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{region.region}</span>
+                <span className="text-xs font-semibold tabular-nums text-primary-700 dark:text-primary-400">{region.farmers}</span>
               </div>
               <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
                 <motion.div
@@ -802,7 +801,7 @@ const MapFallbackEmptyState: React.FC<{
       <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
         <AlertCircle className="w-8 h-8 text-amber-600 dark:text-amber-400" />
       </div>
-      <h3 className="text-lg font-black text-gray-900 dark:text-white mb-2 uppercase tracking-wide">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
         {t('map_fallback_title') || 'Unable to Load Distribution'}
       </h3>
       <p className="text-xs text-gray-500 dark:text-gray-400 font-medium leading-relaxed mb-6">
@@ -811,7 +810,7 @@ const MapFallbackEmptyState: React.FC<{
       </p>
       <button
         onClick={onRetry}
-        className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xxs font-black uppercase tracking-widest transition-all flex items-center gap-2 mx-auto"
+        className="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-medium transition-all flex items-center gap-2 mx-auto"
       >
         <RefreshCw className="w-3.5 h-3.5" />
         {t('action_try_again') || 'Try Again'}

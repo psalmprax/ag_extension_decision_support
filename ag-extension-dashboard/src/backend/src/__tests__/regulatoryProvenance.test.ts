@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import {
   regulatoryProvenanceService,
   RegulatoryRule,
@@ -507,6 +508,56 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
       expect(bannedGuardResult.safe).toBe(false);
       expect(bannedGuardResult.hazardLevel).toBe('critical_hazard');
       expect(bannedGuardResult.violations.some(v => v.includes('PROHIBITED SUBSTANCE'))).toBe(true);
+    });
+
+    describe('25. Signature keying', () => {
+      const originalSecret = process.env.REGULATORY_SIGNING_SECRET;
+
+      afterEach(() => {
+        if (originalSecret === undefined) delete process.env.REGULATORY_SIGNING_SECRET;
+        else process.env.REGULATORY_SIGNING_SECRET = originalSecret;
+      });
+
+      it('25a. Without a signing secret, the envelope is disclosed as an unkeyed digest', () => {
+        delete process.env.REGULATORY_SIGNING_SECRET;
+        const decision = regulatoryProvenanceService.evaluateRecommendation(createCompliantRequest());
+
+        expect(decision.provenance?.digitalSignatureEnvelope).toMatchObject({
+          algorithm: 'SHA-256',
+          keyed: false,
+        });
+        const reconstruction = regulatoryProvenanceService.auditReconstruct(
+          decision.provenance!.recommendationIntegrityHash
+        );
+        expect(reconstruction.signatureAttestation).toBe('unkeyed_digest');
+      });
+
+      it('25b. With a signing secret, the envelope is a keyed HMAC and verifies', () => {
+        delete process.env.REGULATORY_SIGNING_SECRET;
+        const unkeyed = regulatoryProvenanceService.evaluateRecommendation(createCompliantRequest());
+
+        process.env.REGULATORY_SIGNING_SECRET = 'test-regulatory-signing-secret';
+        const keyed = regulatoryProvenanceService.evaluateRecommendation(createCompliantRequest());
+
+        expect(keyed.provenance?.digitalSignatureEnvelope).toMatchObject({
+          algorithm: 'HMAC-SHA256',
+          keyed: true,
+        });
+        const expectedHmac = crypto
+          .createHmac('sha256', 'test-regulatory-signing-secret')
+          .update(keyed.provenance!.recommendationIntegrityHash)
+          .digest('hex');
+        expect(keyed.provenance!.digitalSignatureEnvelope!.signature).toBe(expectedHmac);
+        expect(keyed.provenance!.digitalSignatureEnvelope!.signature).not.toBe(
+          unkeyed.provenance!.digitalSignatureEnvelope!.signature
+        );
+
+        const reconstruction = regulatoryProvenanceService.auditReconstruct(
+          keyed.provenance!.recommendationIntegrityHash
+        );
+        expect(reconstruction.verified).toBe(true);
+        expect(reconstruction.signatureAttestation).toBe('keyed_hmac');
+      });
     });
   });
 });

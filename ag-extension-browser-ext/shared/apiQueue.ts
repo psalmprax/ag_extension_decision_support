@@ -174,7 +174,8 @@ class APIQueueService {
             if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
                 idempotencyKey = crypto.randomUUID();
             } else if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
-                idempotencyKey = `ext_${Date.now()}_${crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(2, 10)}`;
+                const hex = Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(16).padStart(2, '0')).join('');
+                idempotencyKey = `ext_${Date.now()}_${hex}`;
             } else {
                 throw new Error('Secure crypto API is unavailable for idempotency key generation');
             }

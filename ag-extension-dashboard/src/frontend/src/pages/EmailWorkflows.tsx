@@ -25,7 +25,7 @@ import { EmailWorkflowsPreviewModal } from '@/components/email-workflows/Preview
 import { EmailWorkflowsEditModal } from '@/components/email-workflows/EditModal';
 import type { EditForm } from '@/types/emailWorkflows';
 
-export function EmailWorkflows() {
+function EmailWorkflows() {
   const { t } = useLanguage();
   const { headingClass, radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();

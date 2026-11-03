@@ -70,7 +70,7 @@ const HistoryTabContent = ({
   <section className="space-y-6">
     <div className="flex items-center justify-between">
       <h3
-        className={`text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2 text-gray-400`}
+        className={`text-sm font-semibold flex items-center gap-2 text-gray-400`}
       >
         <History className={`w-4 h-4 text-primary-500`} />
         Recent Interactions
@@ -90,13 +90,13 @@ const HistoryTabContent = ({
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center gap-2">
                 <span
-                  className={`px-2 py-0.5 rounded text-xs font-black uppercase tracking-widest ${getLogTypeColor(log.type as string)}`}
+                  className={`px-2 py-0.5 rounded text-xs font-medium ${getLogTypeColor(log.type as string)}`}
                 >
                   {log.type as string}
                 </span>
                 <span className="text-xxs text-gray-400">{log.date as string}</span>
               </div>
-              <span className="text-xs font-black uppercase tracking-widest text-emerald-500">
+              <span className="text-xs font-medium text-emerald-500">
                 {log.status as string}
               </span>
             </div>
@@ -106,7 +106,7 @@ const HistoryTabContent = ({
           </div>
         ))
       ) : (
-        <div className="text-center py-10 text-gray-500 uppercase text-xxs font-bold tracking-widest">
+        <div className="text-center py-10 text-gray-500 text-xs font-normal">
           No interaction history found
         </div>
       )}
@@ -133,7 +133,7 @@ const CropsSection = ({
     className={`p-6 ${radiusClass} border shadow-sm bg-theme-bg-card dark:bg-gray-800/80 border-gray-100 dark:border-gray-700`}
   >
     <h3
-      className={`text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-gray-400`}
+      className={`text-xs font-semibold mb-4 flex items-center gap-2 text-gray-400`}
     >
       <Sprout className={`w-4 h-4 text-green-500`} />
       {t('table_crops')}
@@ -213,12 +213,12 @@ const VitalStatsSection = ({
     className={`p-6 ${radiusClass} border shadow-sm bg-theme-bg-card dark:bg-gray-800/80 border-gray-100 dark:border-gray-700`}
   >
     <h3
-      className={`text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-gray-400`}
+      className={`text-xs font-semibold mb-4 flex items-center gap-2 text-gray-400`}
     >
       <Activity className={`w-4 h-4 text-secondary-500`} />
       {t('farmer_vital_score')}
     </h3>
-    <div className={`text-3xl font-black leading-none text-gray-900 dark:text-white`}>
+    <div className={`text-3xl font-semibold tabular-nums leading-none text-gray-900 dark:text-white`}>
       {farmer.vitalScore || 0}
       <span className="text-sm text-gray-400">/100</span>
     </div>
@@ -230,7 +230,7 @@ const VitalStatsSection = ({
     </div>
     {isEditing && (
       <div className="mt-4">
-        <label className="text-xxs font-black uppercase tracking-widest text-gray-400 block mb-1">
+        <label className="text-xs font-medium text-gray-400 block mb-1">
           Status
         </label>
         <Select
@@ -282,29 +282,25 @@ const OverviewTabContent = ({
           id: 'chat',
           icon: MessageSquare,
           label: t('action_chat') || 'Chat',
-          badge: 'ADVISORY',
-          color: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
+          color: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
         },
         {
           id: 'sms',
           icon: Mail,
           label: t('action_sms') || 'SMS',
-          badge: 'TWILIO',
-          color: 'bg-sky-500/15 border-sky-500/30 text-sky-400',
+          color: 'bg-sky-500/10 border-sky-500/20 text-sky-400',
         },
         {
           id: 'call',
           icon: Phone,
           label: t('action_call') || 'Call',
-          badge: 'GSM DIAL',
-          color: 'bg-teal-500/15 border-teal-500/30 text-teal-400',
+          color: 'bg-teal-500/10 border-teal-500/20 text-teal-400',
         },
         {
           id: 'video',
           icon: Video,
           label: t('action_video') || 'Video',
-          badge: 'WEBRTC',
-          color: 'bg-purple-500/15 border-purple-500/30 text-purple-400',
+          color: 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400',
         },
       ].map(action => (
         <button
@@ -321,17 +317,14 @@ const OverviewTabContent = ({
               }) => void
             )({ x: e.clientX, y: e.clientY, entityType: 'farmer', entityId: farmer.id });
           }}
-          className="flex flex-col items-center p-3 rounded-[4px] bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 transition-all hover:scale-105 active:scale-95 group shadow-lg shadow-black/40 text-center"
+          className="flex flex-col items-center p-3 rounded-lg bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 hover:border-slate-700 transition-colors group text-center"
         >
           <div
-            className={`w-10 h-10 rounded-[4px] border ${action.color} flex items-center justify-center mb-2 shadow-inner transition-transform group-hover:scale-110`}
+            className={`w-10 h-10 rounded-md border ${action.color} flex items-center justify-center mb-2`}
           >
             <action.icon className="w-5 h-5" />
           </div>
-          <span className="text-xs font-black text-white tracking-wide">{action.label}</span>
-          <span className="text-[8px] font-mono font-bold text-slate-500 mt-0.5 uppercase tracking-wider">
-            {action.badge}
-          </span>
+          <span className="text-xs font-medium text-slate-200">{action.label}</span>
         </button>
       ))}
     </div>
@@ -624,7 +617,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed right-0 top-0 bottom-0 w-full max-w-xl z-[70] shadow-2xl shadow-emerald-950/80 overflow-hidden flex flex-col bg-slate-950/95 backdrop-blur-2xl border-l border-emerald-500/30 text-slate-100"
+            className="fixed right-0 top-0 bottom-0 w-full max-w-xl z-[70] shadow-2xl overflow-hidden flex flex-col bg-slate-950/95 backdrop-blur-2xl border-l border-slate-800 text-slate-100"
             onClick={() => onFarmerClick?.(farmer)}
           >
             {/* Header Section */}
@@ -653,9 +646,9 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as 'overview' | 'history' | 'insights')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-xs font-black uppercase tracking-wider transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm shadow-emerald-950'
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm'
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >

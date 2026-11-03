@@ -1,10 +1,17 @@
 import express, { Router } from 'express';
+import type { Prisma } from '@prisma/client';
 import { isSubscriptionActive } from '../../services/subscriptionUtils';
 import { paymentService } from '../../services/paymentService';
 import { getPrisma } from '../../services/prismaService';
 import { logger } from '../../utils/logger';
 import { authorize, AuthRequest } from '../../middleware/authorize';
 import { usageService, FREE_TIER_LIMITS } from '../../services/usageService';
+import {
+    CANCELLATION_REASONS,
+    cancellationFeedbackService,
+    isCancellationReason,
+    type CancellationReason,
+} from '../../services/cancellationFeedbackService';
 import { safeError } from '@/utils/safeResponse';
 
 // Route-level subscription writes are local mirrors / complementary writes only.
@@ -22,6 +29,47 @@ const errorStatusMap: Record<string, number> = {
     'ACTIVE_SUBSCRIPTION_EXISTS': 409,
     'ALREADY_SUBSCRIBED': 400
 };
+
+type CancellationInputValidation =
+    | { valid: true; reason?: CancellationReason; comment?: string }
+    | { valid: false; status: number; response: { success: false; errorCode?: string; message: string } };
+
+function validateCancellationInput(reason: unknown, comment: unknown): CancellationInputValidation {
+    if (reason !== undefined && !isCancellationReason(reason)) {
+        return {
+            valid: false,
+            status: 400,
+            response: {
+                success: false,
+                errorCode: 'INVALID_CANCELLATION_REASON',
+                message: `reason must be one of: ${CANCELLATION_REASONS.join(', ')}`,
+            },
+        };
+    }
+    if (comment !== undefined && typeof comment !== 'string') {
+        return {
+            valid: false,
+            status: 400,
+            response: { success: false, message: 'comment must be a string' },
+        };
+    }
+    if (typeof comment === 'string' && comment.trim() && !reason) {
+        return {
+            valid: false,
+            status: 400,
+            response: {
+                success: false,
+                message: 'Select a cancellation reason before submitting a comment',
+            },
+        };
+    }
+
+    return {
+        valid: true,
+        reason: isCancellationReason(reason) ? reason : undefined,
+        comment: typeof comment === 'string' ? comment : undefined,
+    };
+}
 
 /**
  * @swagger
@@ -263,6 +311,12 @@ router.post('/subscribe', authorize(['admin', 'extension_officer', 'farmer']), a
 router.post('/cancel', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const userId = req.user!.userId;
+        const { reason, comment } = req.body ?? {};
+        const cancellationInput = validateCancellationInput(reason, comment);
+        if (!cancellationInput.valid) {
+            return res.status(cancellationInput.status).json(cancellationInput.response);
+        }
+
         const subscription = await prisma.subscription.findUnique({ where: { userId } });
 
         if (!subscription || !subscription.stripeSubscriptionId) {
@@ -276,7 +330,21 @@ router.post('/cancel', authorize(['admin', 'extension_officer', 'farmer']), asyn
                 where: { userId },
                 data: { cancelAtPeriodEnd: true }
             });
-            res.json({ success: true, message: 'Subscription will be canceled at the end of the period' });
+
+            const feedbackRecorded = cancellationInput.reason
+                ? await cancellationFeedbackService.record({
+                    subscriptionId: subscription.id,
+                    userId,
+                    reason: cancellationInput.reason,
+                    comment: cancellationInput.comment ?? null,
+                })
+                : false;
+
+            res.json({
+                success: true,
+                message: 'Subscription will be canceled at the end of the period',
+                feedbackRecorded,
+            });
         } else {
             safeError(res, 500, 'Failed to cancel subscription');
         }
@@ -333,54 +401,102 @@ router.post('/portal', authorize(['admin', 'extension_officer', 'farmer']), asyn
  *     summary: Switch to a different subscription plan
  *     tags: [Billing]
  */
-router.post('/switch', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
-    try {
-        const { priceId, billingCycle } = req.body;
-        const userId = req.user!.userId;
+type SubscriptionRecordWithPlan = Prisma.SubscriptionGetPayload<{ include: { plan: true } }>;
 
-        if (!priceId) return res.status(400).json({ success: false, message: 'Price ID is required' });
+type SwitchPreflight =
+    | { ok: false; status: number; message: string }
+    | { ok: true; subscription: SubscriptionRecordWithPlan; forceSchedule: boolean };
 
-        const currentSubscription = await prisma.subscription.findUnique({
-            where: { userId },
-            include: { plan: true }
+/** Validates a plan-switch request against the caller's current subscription. */
+async function preflightPlanSwitch(
+    userId: string,
+    priceId: unknown,
+    billingCycle: unknown
+): Promise<SwitchPreflight> {
+    if (typeof priceId !== 'string' || !priceId) {
+        return { ok: false, status: 400, message: 'Price ID is required' };
+    }
+
+    const subscription = await prisma.subscription.findUnique({
+        where: { userId },
+        include: { plan: true },
+    });
+
+    if (!subscription || !isSubscriptionActive(subscription)) {
+        return { ok: false, status: 400, message: 'No active subscription found.' };
+    }
+    if (subscription.plan?.stripePriceId === priceId && billingCycle !== 'next') {
+        return { ok: false, status: 400, message: 'Already on this plan' };
+    }
+    if (!subscription.stripeSubscriptionId) {
+        return { ok: false, status: 400, message: 'No Stripe subscription ID found.' };
+    }
+
+    return { ok: true, subscription, forceSchedule: billingCycle === 'next' };
+}
+
+/** Mirrors an immediate switch locally and records the change for revenue analytics. */
+async function syncPlanSwitchLocally(subscription: SubscriptionRecordWithPlan, priceId: string): Promise<void> {
+    // subscription_plans.id is a UUID, while the gateway identifies plans by price id;
+    // mapping through stripePriceId keeps the FK valid.
+    const targetPlan = await prisma.subscriptionPlan.findFirst({ where: { stripePriceId: priceId } });
+    if (!targetPlan) {
+        logger.warn(`Plan switch to ${priceId} succeeded in the gateway but the plan is not in the local catalog; local mirror not updated`);
+        return;
+    }
+
+    await prisma.$transaction(async tx => {
+        const updated = await tx.subscription.updateMany({
+            where: {
+                id: subscription.id,
+                ...(subscription.plan ? { planId: subscription.plan.id } : {}),
+            },
+            data: { planId: targetPlan.id, status: 'active' },
         });
 
-        if (!currentSubscription || !isSubscriptionActive(currentSubscription)) {
-            return res.status(400).json({ success: false, message: 'No active subscription found.' });
+        if (updated.count === 0 || !subscription.plan || subscription.plan.id === targetPlan.id) return;
+
+        await tx.subscriptionChangeEvent.create({
+            data: {
+                subscriptionId: subscription.id,
+                fromPlanId: subscription.plan.id,
+                toPlanId: targetPlan.id,
+                fromPrice: subscription.plan.price,
+                toPrice: targetPlan.price,
+            },
+        });
+    });
+}
+
+router.post('/switch', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
+    try {
+        const { priceId, billingCycle } = req.body ?? {};
+        const preflight = await preflightPlanSwitch(req.user!.userId, priceId, billingCycle);
+        if (!preflight.ok) {
+            return res.status(preflight.status).json({ success: false, message: preflight.message });
         }
 
-        if (currentSubscription.plan?.stripePriceId === priceId && billingCycle !== 'next') {
-            return res.status(400).json({ success: false, message: 'Already on this plan' });
-        }
-
-        if (!currentSubscription.stripeSubscriptionId) {
-            return res.status(400).json({ success: false, message: 'No Stripe subscription ID found.' });
-        }
-
-        const forceSchedule = billingCycle === 'next';
-        const success = await paymentService.switchSubscription(
-            currentSubscription.stripeSubscriptionId,
+        const { subscription, forceSchedule } = preflight;
+        const switchResult = await paymentService.switchSubscription(
+            subscription.stripeSubscriptionId!,
             priceId,
             forceSchedule
         );
 
-        if (success) {
-            if (!forceSchedule) {
-                const plans = await paymentService.getPricingPlans();
-                const newPlan = plans.find(p => p.id === priceId);
-                if (newPlan) {
-                    await prisma.subscription.update({
-                        where: { userId },
-                        data: { planId: newPlan.id, status: 'active' }
-                    });
-                }
-                res.json({ success: true, message: 'Subscription plan switched successfully' });
-            } else {
-                res.json({ success: true, message: 'Subscription plan switch scheduled' });
-            }
-        } else {
-            safeError(res, 500, 'Failed to switch plan');
+        if (!switchResult.success) {
+            return res.status(errorStatusMap[switchResult.errorCode as string] || 402).json({
+                success: false,
+                errorCode: switchResult.errorCode,
+                message: switchResult.message,
+            });
         }
+
+        if (forceSchedule) {
+            return res.json({ success: true, message: 'Subscription plan switch scheduled' });
+        }
+
+        await syncPlanSwitchLocally(subscription, priceId);
+        return res.json({ success: true, message: 'Subscription plan switched successfully' });
     } catch (error) {
         logger.error('Failed to switch subscription:', error);
         safeError(res, 500, 'Internal server error');

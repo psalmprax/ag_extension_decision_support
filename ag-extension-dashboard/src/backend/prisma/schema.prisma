@@ -75,6 +75,7 @@ model User {
   failedLoginAttempts Int          @default(0) @map("failed_login_attempts")
   lockoutUntil  DateTime?          @map("lockout_until") @db.Timestamp(6)
   sessions      UserSession[]
+  cancellationFeedback CancellationFeedback[]
   tenantId       String?            @map("tenant_id") @db.Uuid
   tenant         Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   tenantMemberships TenantMembership[]
@@ -453,6 +454,8 @@ model SubscriptionPlan {
   vouchers      Voucher[]
   transactionSubmissions TransactionSubmission[]
   pendingPaypalPayments PendingPaypalPayment[]
+  changeEventsFrom SubscriptionChangeEvent[] @relation("ChangeEventFromPlan")
+  changeEventsTo   SubscriptionChangeEvent[] @relation("ChangeEventToPlan")
 
   @@map("subscription_plans")
 }
@@ -473,8 +476,66 @@ model Subscription {
   plan              SubscriptionPlan @relation(fields: [planId], references: [id])
   payments          Payment[]
   usage             Usage?
+  changeEvents      SubscriptionChangeEvent[]
+  cancellationFeedback CancellationFeedback?
 
   @@map("subscriptions")
+}
+
+model SubscriptionChangeEvent {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subscriptionId String           @map("subscription_id") @db.Uuid
+  fromPlanId     String           @map("from_plan_id") @db.Uuid
+  toPlanId       String           @map("to_plan_id") @db.Uuid
+  fromPrice      Decimal          @map("from_price") @db.Decimal(10, 2)
+  toPrice        Decimal          @map("to_price") @db.Decimal(10, 2)
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  subscription   Subscription     @relation(fields: [subscriptionId], references: [id])
+  fromPlan       SubscriptionPlan @relation("ChangeEventFromPlan", fields: [fromPlanId], references: [id])
+  toPlan         SubscriptionPlan @relation("ChangeEventToPlan", fields: [toPlanId], references: [id])
+
+  @@index([createdAt])
+  @@map("subscription_change_events")
+}
+
+/// Self-reported reason a subscriber gave when cancelling. One row per subscription:
+/// re-cancelling updates the row rather than double-counting the same customer.
+model CancellationFeedback {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subscriptionId String       @unique @map("subscription_id") @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  reason         String       @db.VarChar(50)
+  comment        String?
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime     @default(now()) @map("updated_at") @db.Timestamp(6)
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+  @@index([reason])
+  @@map("cancellation_feedback")
+}
+
+/// Mechanization equipment registered by owners or tenant administrators.
+/// Availability is an operator-maintained flag, not live telematics.
+model MechanizationAsset {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assetType      String   @map("asset_type") @db.VarChar(50)
+  modelName      String   @map("model_name") @db.VarChar(200)
+  ownerName      String   @map("owner_name") @db.VarChar(200)
+  ownerPhone     String   @map("owner_phone") @db.VarChar(30)
+  county         String   @db.VarChar(100)
+  subCounty      String   @map("sub_county") @db.VarChar(100)
+  ratePerUnitKes Int      @map("rate_per_unit_kes")
+  rateUnit       String   @map("rate_unit") @db.VarChar(20)
+  isAvailable    Boolean  @default(true) @map("is_available")
+  isVerified     Boolean  @default(false) @map("is_verified")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@index([county, assetType])
+  @@index([isAvailable])
+  @@map("mechanization_assets")
 }
 
 model Payment {

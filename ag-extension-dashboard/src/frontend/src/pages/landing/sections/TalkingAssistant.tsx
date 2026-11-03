@@ -6,7 +6,6 @@ import {
   Volume2,
   VolumeX,
   Send,
-  Sparkles,
   Globe,
   Bot,
   User,
@@ -15,6 +14,10 @@ import {
   ChevronRight,
   ChevronDown,
   Loader2,
+  Leaf,
+  Zap,
+  Activity,
+  HelpCircle,
 } from 'lucide-react';
 import apiClient from '@/api/client';
 import { EncryptedStorageService } from '@/services/encryptedStorageService';
@@ -67,7 +70,6 @@ interface Message {
 }
 
 interface SampleQuestion {
-  icon: string;
   label: string;
   text: string;
   lang: Language;
@@ -95,49 +97,41 @@ interface WindowWithSpeech extends Window {
 
 const SAMPLE_QUESTIONS: SampleQuestion[] = [
   {
-    icon: '🌽',
     label: 'Fall Armyworm bio-control',
     text: 'What is the recommended bio-control treatment for Fall Armyworm in maize?',
     lang: 'en',
   },
   {
-    icon: '🧪',
     label: 'Acidic Soil Remediation',
     text: 'How should I remediate acidic soil with pH 4.8 for cereal production?',
     lang: 'en',
   },
   {
-    icon: '🌾',
     label: 'Ugonjwa wa Nyanya (Swahili)',
     text: 'Nini tiba bora ya ugonjwa wa ukungu kwenye mimea ya nyanya?',
     lang: 'sw',
   },
   {
-    icon: '🐛',
     label: 'Chenille Légionnaire (Français)',
     text: "Quel est le traitement biologique recommandé contre la légionnaire d'automne?",
     lang: 'fr',
   },
   {
-    icon: '🌱',
     label: 'Manejo de Suelos (Español)',
     text: '¿Cómo debo corregir un suelo ácido con pH 4.8 para maíz?',
     lang: 'es',
   },
   {
-    icon: '☕',
     label: 'Ferrugem do Café (Português)',
     text: 'Quais são as melhores práticas para controlar a ferrugem das folhas do café?',
     lang: 'pt',
   },
   {
-    icon: '🌿',
     label: 'Ukuvikelwa Kwezitshalo (isiZulu)',
     text: 'Yiziphi izindlela zokulawula izilokazane emmbileni?',
     lang: 'zu',
   },
   {
-    icon: '🌦️',
     label: 'Satellite Weather',
     text: 'How does the NASA POWER satellite stream predict drought anomalies?',
     lang: 'en',
@@ -667,7 +661,7 @@ const PERSONA_CONFIGS: Record<VoicePersona, PersonaConfig> = {
   amani: {
     id: 'amani',
     label: 'Amani',
-    avatar: '🌿',
+    avatar: 'Amani',
     role: 'Warm Field Agronomist',
     desc: 'Empathetic, warm, encouraging cadence',
     prosody: { rate: 0.94, pitch: 1.04 },
@@ -683,7 +677,7 @@ const PERSONA_CONFIGS: Record<VoicePersona, PersonaConfig> = {
   baraka: {
     id: 'baraka',
     label: 'Baraka',
-    avatar: '⚡',
+    avatar: 'Baraka',
     role: 'Dynamic Extension Lead',
     desc: 'Resonant, confident, clear cadence',
     prosody: { rate: 0.98, pitch: 0.98 },
@@ -699,7 +693,7 @@ const PERSONA_CONFIGS: Record<VoicePersona, PersonaConfig> = {
   zawadi: {
     id: 'zawadi',
     label: 'Zawadi',
-    avatar: '🔬',
+    avatar: 'Zawadi',
     role: 'Diagnostic Specialist',
     desc: 'Methodical, diagnostic, articulate cadence',
     prosody: { rate: 0.92, pitch: 1.00 },
@@ -1558,26 +1552,26 @@ interface PersonaSelectorProps {
 }
 
 function PersonaSelector({ selectedPersona, onSelectPersona }: PersonaSelectorProps) {
-  const personas: Array<{ id: VoicePersona; label: string; icon: string; desc: string }> = [
-    { id: 'amani', label: 'Amani', icon: '🌿', desc: 'Warm Field Agronomist' },
-    { id: 'baraka', label: 'Baraka', icon: '⚡', desc: 'Dynamic Extension Lead' },
-    { id: 'zawadi', label: 'Zawadi', icon: '🔬', desc: 'Diagnostic Specialist' },
+  const personas: Array<{ id: VoicePersona; label: string; icon: React.ElementType; desc: string }> = [
+    { id: 'amani', label: 'Amani', icon: Leaf, desc: 'Warm Field Agronomist' },
+    { id: 'baraka', label: 'Baraka', icon: Zap, desc: 'Dynamic Extension Lead' },
+    { id: 'zawadi', label: 'Zawadi', icon: Activity, desc: 'Diagnostic Specialist' },
   ];
 
   return (
     <div className="w-full my-2">
       <div className="flex items-center justify-between mb-1.5 px-0.5">
-        <span className="text-[11px] font-semibold tracking-wider uppercase text-white/50">
+        <span className="text-[11px] font-medium tracking-wider uppercase text-white/50">
           Voice Persona
         </span>
-        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-          <Sparkles className="w-2.5 h-2.5" />
+        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
           HD Neural
         </span>
       </div>
       <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.08]">
         {personas.map((p) => {
           const isSelected = selectedPersona === p.id;
+          const Icon = p.icon;
           return (
             <button
               key={p.id}
@@ -1591,8 +1585,8 @@ function PersonaSelector({ selectedPersona, onSelectPersona }: PersonaSelectorPr
               title={p.desc}
               aria-pressed={isSelected}
             >
-              <span className="text-sm leading-none mb-1">{p.icon}</span>
-              <span className="text-[11px] font-semibold leading-tight">{p.label}</span>
+              <Icon className="w-3.5 h-3.5 mb-1 text-emerald-400" />
+              <span className="text-[11px] font-medium leading-tight">{p.label}</span>
             </button>
           );
         })}
@@ -1681,7 +1675,7 @@ function ActiveContextBanner({ slots, onClear }: ActiveContextBannerProps) {
         )}
         {slots.location_climate && (
           <span className="px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/25">
-            📍 {slots.location_climate}
+            {slots.location_climate}
           </span>
         )}
       </div>
@@ -1707,10 +1701,10 @@ function HandoffCard({ onHandoff }: HandoffCardProps) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mb-4 p-3 rounded-lg bg-gradient-to-r from-emerald-900/40 via-slate-900/80 to-teal-900/40 border border-emerald-500/30 flex flex-col items-start gap-3 shadow-lg"
+      className="mb-4 p-3 rounded-lg bg-slate-900 border border-slate-800 flex flex-col items-start gap-3 shadow-sm"
     >
       <div className="flex items-center gap-2.5">
-        <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+        <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
           <ShieldCheck className="w-4 h-4" />
         </div>
         <div className="text-xs">
@@ -1723,7 +1717,7 @@ function HandoffCard({ onHandoff }: HandoffCardProps) {
       <button
         type="button"
         onClick={onHandoff}
-        className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-all flex items-center gap-1 shrink-0 shadow-md"
+        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs transition-colors flex items-center gap-1 shrink-0 shadow-sm"
       >
         <span>Sign up free</span>
         <ChevronRight className="w-3.5 h-3.5" />
@@ -1793,7 +1787,7 @@ function QuestionChips({ onSelect, expanded }: QuestionChipsProps) {
   return (
     <details open={expanded} className="mt-4 mb-2">
       <summary className="min-h-[44px] cursor-pointer text-xs font-semibold text-white/70 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400">
-        <Sparkles className="w-3 h-3 text-emerald-400" />
+        <HelpCircle className="w-3.5 h-3.5 text-emerald-400" />
         <span>Suggested questions</span>
         <ChevronDown className="ml-auto h-4 w-4" aria-hidden="true" />
       </summary>
@@ -1805,7 +1799,6 @@ function QuestionChips({ onSelect, expanded }: QuestionChipsProps) {
             onClick={() => onSelect(item)}
             className="px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-emerald-500/10 border border-white/[0.08] hover:border-emerald-500/30 text-xs text-white/75 hover:text-white transition-all text-left flex items-center gap-1.5 group"
           >
-            <span>{item.icon}</span>
             <span className="group-hover:text-emerald-300">{item.label}</span>
           </button>
         ))}

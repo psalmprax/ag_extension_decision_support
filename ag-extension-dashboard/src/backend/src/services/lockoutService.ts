@@ -1,9 +1,7 @@
 import { query } from './databaseService';
 import { logger } from '../utils/logger';
 
-// fallow-ignore-next-line unused-export
 export const MAX_FAILED_ATTEMPTS = 5;
-// fallow-ignore-next-line unused-export
 export const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 export interface LockoutCheckResult {

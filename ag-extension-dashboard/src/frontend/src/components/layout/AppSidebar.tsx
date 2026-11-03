@@ -136,7 +136,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                       onClick={() =>
                         setExpandedSections(current => ({ ...current, [section.id]: !current[section.id] }))
                       }
-                      className="flex w-full items-center justify-between px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                      className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400"
                     >
                       <span>{sectionLabel}</span>
                       <ChevronDown
@@ -154,10 +154,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                           key={item.id}
                           onClick={() => handleNavClick(item.id)}
                           className={cn(
-                            'flex items-center justify-between px-4 py-3 min-h-[48px] transition-all duration-200 text-left group',
-                            'rounded-xl hover:scale-[1.02] active:scale-[0.98]',
+                            'flex items-center justify-between px-4 py-3 min-h-[48px] transition-colors text-left group',
+                            'rounded-lg',
                             activeTab === item.id
-                              ? 'bg-primary-600/10 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400 shadow-[inset_0_0_15px_var(--color-outline)]'
+                              ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-medium border-l-2 border-emerald-500'
                               : cn(
                                   subtextClass,
                                   'hover:bg-slate-100 dark:hover:bg-white/5 hover:text-primary-600 dark:hover:text-primary-200'
@@ -167,7 +167,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                           <div className="flex items-center gap-3 min-w-0">
                             <item.icon className="w-5 h-5 flex-shrink-0" />
                             <span
-                              className="font-headline font-semibold tracking-wide text-xs whitespace-normal break-words leading-tight"
+                              className="font-medium text-xs whitespace-normal break-words leading-tight"
                               title={t(item.labelKey || `nav_${item.id}`, { defaultValue: item.label })}
                             >
                               {t(item.labelKey || `nav_${item.id}`, { defaultValue: item.label })}
@@ -184,7 +184,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           <div className="mt-auto flex flex-col gap-2 pt-4 border-t border-gray-200 dark:border-white/5">
             {/* Mobile-visible Language, Theme & A/B Experiment controls */}
             <div className="lg:hidden flex flex-col gap-2 pb-2 border-b border-gray-100 dark:border-white/5">
-              <span className="text-[10px] font-mono uppercase font-bold tracking-wider text-slate-400">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 {t('common_preferences', { defaultValue: 'Preferences' })}
               </span>
               <div className="flex items-center justify-between gap-2">
@@ -199,7 +199,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             <button
               type="button"
               onClick={() => setShowHelpCenter(true)}
-              className="flex items-center gap-3 px-4 py-2.5 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 text-xs uppercase font-bold tracking-widest rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+              className="flex items-center gap-3 px-4 py-2.5 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
             >
               <HelpCircle className="w-4 h-4" />
               {t('nav_support', { defaultValue: 'Support' })}

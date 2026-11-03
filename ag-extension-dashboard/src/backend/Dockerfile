@@ -141,6 +141,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package*.json ./
 COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 ARG BACKEND_DIR=ag-extension-dashboard/src/backend
 COPY ${BACKEND_DIR}/docker-entrypoint.sh ./docker-entrypoint.sh
 

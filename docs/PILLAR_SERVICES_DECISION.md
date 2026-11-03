@@ -11,7 +11,7 @@ The following services exist only in test files (`__tests__/advancedPillars*.tes
 1. `traceabilityPassportService` — EUDR/GS1 passports (hardcoded GTIN, fake compliance)
 2. `pestSwarmRadarService` — DBSCAN clustering (greedy neighbor merge, hardcoded counties)
 3. `crossBorderTradeService` — Regional arbitrage (3 hardcoded markets, 650km all pairs)
-4. `mechanizationFleetService` — Drone/tractor marketplace (2 hardcoded entries)
+4. `mechanizationFleetService` — Drone/tractor marketplace (2 hardcoded entries) — **updated 2026-10-29:** now backed by the `mechanization_assets` registry table and wired through `POST /api/pillars/mechanization/search` and the admin-only `POST /api/pillars/mechanization/assets`; the demo directory is gone.
 5. `satelliteNdviService` — NDVI analysis (pure math on caller-supplied pixels)
 6. `agriCreditInsuranceService` — Parametric insurance (fake verification source string)
 7. `inputSupplierService` — Anti-counterfeit (5-item fake regulator registry)

@@ -29,11 +29,9 @@ const SpecialCenterButton: React.FC<{
 }> = ({ item, isActive, isLocked, isBase, onClick }) => {
   const Icon = item.icon;
   const activeBg = isBase
-    ? 'bg-gradient-to-tr from-blue-600 via-indigo-600 to-emerald-500 shadow-blue-500/40 scale-105 ring-2 ring-blue-400/50'
-    : 'bg-gradient-to-tr from-emerald-500 to-teal-400 shadow-emerald-500/40 scale-105 ring-2 ring-emerald-400/50';
-  const inactiveBg = isBase
-    ? 'bg-gradient-to-tr from-blue-600 to-blue-700 shadow-blue-900/40 hover:scale-105 active:scale-95'
-    : 'bg-gradient-to-tr from-emerald-600 to-emerald-500 shadow-emerald-900/30 hover:scale-105 active:scale-95';
+    ? 'bg-blue-600 shadow-sm ring-1 ring-blue-500'
+    : 'bg-emerald-600 shadow-sm ring-1 ring-emerald-500';
+  const inactiveBg = 'bg-slate-800 hover:bg-slate-700 text-slate-300';
   const bgClass = isActive ? activeBg : inactiveBg;
   const textColor = isActive ? (isBase ? 'text-blue-400' : 'text-emerald-400') : 'text-slate-400';
 
@@ -46,16 +44,16 @@ const SpecialCenterButton: React.FC<{
       aria-label={item.label}
     >
       <div
-        className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg transition-all duration-200 ${bgClass}`}
+        className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md transition-all duration-200 ${bgClass}`}
       >
         <Icon className="w-5 h-5" />
         {isLocked && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-xs font-black shadow">
+          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-xs font-semibold shadow">
             <Lock className="w-2.5 h-2.5" />
           </span>
         )}
       </div>
-      <span className={`text-xs font-bold mt-1 tracking-tight ${textColor}`}>
+      <span className={`text-xs font-medium mt-1 tracking-tight ${textColor}`}>
         {item.label}
       </span>
     </button>
@@ -70,10 +68,10 @@ const StandardNavButton: React.FC<{
 }> = ({ item, isActive, isBase, onClick }) => {
   const Icon = item.icon;
   const baseStyle = isActive
-    ? 'bg-white/[0.08] text-white font-bold border border-white/10 shadow-sm'
+    ? 'bg-white/[0.08] text-white font-medium border border-white/10 shadow-sm'
     : 'text-slate-400 hover:text-slate-200 active:scale-90 transition-transform duration-150';
   const classicStyle = isActive
-    ? 'text-emerald-400 font-bold'
+    ? 'text-emerald-400 font-medium'
     : 'text-slate-400 hover:text-slate-200 active:scale-95';
 
   return (
@@ -88,7 +86,7 @@ const StandardNavButton: React.FC<{
         {isActive && (
           <span
             className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
-              isBase ? 'bg-blue-400 shadow-[0_0_6px_#38bdf8]' : 'bg-emerald-400'
+              isBase ? 'bg-blue-400' : 'bg-emerald-400'
             }`}
           />
         )}

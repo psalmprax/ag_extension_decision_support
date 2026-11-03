@@ -92,7 +92,6 @@ async function fetchWithTimeout(url: string, timeoutMs = FETCH_TIMEOUT_MS): Prom
 }
 
 // Directly unit-tested in wfpService.test.ts (test files are not entry points).
-// fallow-ignore-next-line unused-export
 export async function resolveCsvUrl(country: string): Promise<string | null> {
     const slug = WFP_DATASETS[country];
     if (!slug) return null;
@@ -114,7 +113,6 @@ export async function resolveCsvUrl(country: string): Promise<string | null> {
 
 /** Minimal CSV parser (handles quoted fields + CRLF); WFP files are flat. */
 // Directly unit-tested in wfpService.test.ts (test files are not entry points).
-// fallow-ignore-next-line unused-export
 export function parseCsv(text: string): string[][] {
     const rows: string[][] = [];
     let row: string[] = [];
@@ -165,7 +163,6 @@ function pushRow(rows: string[][], row: string[], field: string): void {
  * excluded from per-kg medians rather than converted dishonestly.
  */
 // Directly unit-tested in wfpService.test.ts (test files are not entry points).
-// fallow-ignore-next-line unused-export
 export function kgDivisor(unit: string): number | null {
     const m = unit.trim().match(/^([\d.]+)?\s*(kg|g)\s*$/i);
     if (!m) return null;
@@ -294,7 +291,6 @@ export async function getWfpSnapshot(country: string): Promise<{ country: string
 }
 
 // Directly unit-tested in wfpService.test.ts (test files are not entry points).
-// fallow-ignore-next-line unused-export
 export function clearWfpCaches(): void {
     urlCache.clear();
     dataCache.clear();

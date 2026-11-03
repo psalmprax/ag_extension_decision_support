@@ -29,7 +29,6 @@ type KeywordRow = {
 export type KeywordFilters = { category?: string; crop?: string };
 
 // Directly unit-tested in vectorHelpers.test.ts (test files are not entry points).
-// fallow-ignore-next-line unused-export
 export function extractKeywordTerms(normalizedQuery: string): string[] {
     return normalizedQuery
         .replace(/[^a-zA-Z0-9\s]/g, ' ')
@@ -39,7 +38,6 @@ export function extractKeywordTerms(normalizedQuery: string): string[] {
 }
 
 // Directly unit-tested in vectorHelpers.test.ts (test files are not entry points).
-// fallow-ignore-next-line unused-export
 export function applyKeywordFilters(
     params: Array<string | number>,
     where: string[],
@@ -56,7 +54,6 @@ export function applyKeywordFilters(
 }
 
 // Directly unit-tested in vectorHelpers.test.ts (test files are not entry points).
-// fallow-ignore-next-line unused-export
 export function mapKeywordRows(rows: unknown[]): SearchResult[] {
     return (rows as KeywordRow[]).map((row) => ({
         id: row.id,
@@ -73,7 +70,6 @@ export function mapKeywordRows(rows: unknown[]): SearchResult[] {
 }
 
 // Directly unit-tested in vectorHelpers.test.ts (test files are not entry points).
-// fallow-ignore-next-line unused-export
 export async function searchByTsQuery(
     tsQuery: string,
     limit: number,

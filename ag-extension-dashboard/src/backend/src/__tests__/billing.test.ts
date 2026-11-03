@@ -3,6 +3,7 @@ import app from '../app';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { paymentService } from '../services/paymentService';
+import { getPrisma } from '../services/prismaService';
 
 // Mock all services to avoid real DB/Cache connections
 jest.mock('../services/databaseService', () => ({
@@ -93,8 +94,8 @@ jest.mock('../services/paymentService', () => ({
     }
 }));
 
-jest.mock('../services/prismaService', () => ({
-    getPrisma: jest.fn(() => ({
+jest.mock('../services/prismaService', () => {
+    const prisma = {
         systemConfig: {
             findUnique: jest.fn().mockResolvedValue(null),
             upsert: jest.fn().mockResolvedValue({})
@@ -110,9 +111,13 @@ jest.mock('../services/prismaService', () => ({
         },
         user: {
             findUnique: jest.fn().mockResolvedValue({ id: '1', email: 'test@example.com' })
+        },
+        cancellationFeedback: {
+            upsert: jest.fn().mockResolvedValue({})
         }
-    }))
-}));
+    };
+    return { getPrisma: jest.fn(() => prisma) };
+});
 
 jest.mock('../services/vectorService', () => ({
     vectorService: {
@@ -220,6 +225,65 @@ describe('Billing API Integration Tests', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
+        });
+    });
+
+    describe('POST /api/billing/cancel', () => {
+        const prisma = getPrisma() as unknown as {
+            subscription: { findUnique: jest.Mock; update: jest.Mock };
+            cancellationFeedback: { upsert: jest.Mock };
+        };
+
+        beforeEach(() => {
+            jest.clearAllMocks();
+            prisma.subscription.findUnique.mockResolvedValue({
+                id: 'sub-1',
+                userId: '1',
+                stripeSubscriptionId: 'sub_stripe_1',
+            });
+        });
+
+        it('records the self-reported reason against the subscription', async () => {
+            const response = await request(app)
+                .post('/api/billing/cancel')
+                .set('Authorization', `Bearer ${token}`)
+                .send({ reason: 'too_expensive', comment: '  budget cut  ' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.feedbackRecorded).toBe(true);
+            expect(prisma.cancellationFeedback.upsert).toHaveBeenCalledWith({
+                where: { subscriptionId: 'sub-1' },
+                create: {
+                    subscriptionId: 'sub-1',
+                    userId: '1',
+                    reason: 'too_expensive',
+                    comment: 'budget cut',
+                },
+                update: { reason: 'too_expensive', comment: 'budget cut' },
+            });
+        });
+
+        it('rejects an unknown reason without cancelling', async () => {
+            const response = await request(app)
+                .post('/api/billing/cancel')
+                .set('Authorization', `Bearer ${token}`)
+                .send({ reason: 'because' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.errorCode).toBe('INVALID_CANCELLATION_REASON');
+            expect(paymentService.cancelSubscription).not.toHaveBeenCalled();
+            expect(prisma.cancellationFeedback.upsert).not.toHaveBeenCalled();
+        });
+
+        it('still cancels when no reason is supplied', async () => {
+            const response = await request(app)
+                .post('/api/billing/cancel')
+                .set('Authorization', `Bearer ${token}`)
+                .send({});
+
+            expect(response.status).toBe(200);
+            expect(response.body.feedbackRecorded).toBe(false);
+            expect(prisma.cancellationFeedback.upsert).not.toHaveBeenCalled();
         });
     });
 

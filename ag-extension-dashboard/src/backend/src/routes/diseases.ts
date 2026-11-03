@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authorize, AuthRequest } from '@/middleware/authorize';
+import { authorize, optionalAuth, AuthRequest } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { plantDiseaseService, type DiseaseDiagnosis, type PlantImageAnalysis } from '@/services/plantDiseaseService';
 import { MAX_UPLOAD_BYTES } from '@/services/uploadService';
@@ -12,11 +12,11 @@ import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
 
 const router = Router();
 
-// Apply authorization
+// Apply authorization for inference routes
 const allowedRoles = authorize(['extension_officer', 'admin', 'farmer']);
 
-// Get all available diseases
-router.get('/', allowedRoles, async (req: Request, res: Response) => {
+// Get all available diseases (public reference library)
+router.get('/', optionalAuth, async (_req: Request, res: Response) => {
     try {
         const diseases = plantDiseaseService.getAllDiseases();
         res.json({ success: true, data: diseases });
@@ -26,8 +26,8 @@ router.get('/', allowedRoles, async (req: Request, res: Response) => {
     }
 });
 
-// Get specific disease information
-router.get('/:diseaseName', allowedRoles, async (req: Request, res: Response) => {
+// Get specific disease information (public reference library)
+router.get('/:diseaseName', optionalAuth, async (req: Request, res: Response) => {
     try {
         const { diseaseName } = req.params;
         const diseaseInfo = plantDiseaseService.getDiseaseInfo(diseaseName);

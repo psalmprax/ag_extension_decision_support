@@ -29,11 +29,8 @@ import { logger } from '@/utils/logger';
 // Public worker-coordination API: constants and accessors consumed by
 // interval workers and operational tooling. Suppressions below follow the
 // repo's unused-export convention for intentional public API.
-// fallow-ignore-next-line unused-export
 export const LEASE_KEY_PREFIX = 'ag:leader:';
-// fallow-ignore-next-line unused-export
 export const LEASE_TTL_MS = 30_000;
-// fallow-ignore-next-line unused-export
 export const RENEW_INTERVAL_MS = 10_000;
 
 interface Lease {
@@ -185,7 +182,6 @@ async function runLeaderTask<T>(name: string, fn: () => Promise<T> | T): Promise
 }
 
 /** True when this replica currently holds the lease for `name`. */
-// fallow-ignore-next-line unused-export
 export function isLeader(name: string): boolean {
     if (!redisAvailable()) return statelessModeEnabled();
     const lease = leases.get(name);
@@ -193,14 +189,12 @@ export function isLeader(name: string): boolean {
 }
 
 /** Current fencing token for `name`, or null when not leading. */
-// fallow-ignore-next-line unused-export
 export function getToken(name: string): string | null {
     const lease = leases.get(name);
     return lease && lease.token ? lease.token : null;
 }
 
 /** Release a single lease (best-effort fenced DEL) and stop its renewal timer. */
-// fallow-ignore-next-line unused-export
 export async function release(name: string): Promise<void> {
     const lease = leases.get(name);
     if (!lease) return;
@@ -218,7 +212,6 @@ export async function release(name: string): Promise<void> {
 }
 
 /** Release every lease held by this replica — called during graceful shutdown. */
-// fallow-ignore-next-line unused-export
 export async function stopAll(): Promise<void> {
     const names = Array.from(leases.keys());
     await Promise.all(names.map(n => release(n)));
@@ -226,7 +219,6 @@ export async function stopAll(): Promise<void> {
 }
 
 /** Test helper: drop all local lease state without touching Redis. */
-// fallow-ignore-next-line unused-export
 export function resetForTests(): void {
     for (const lease of leases.values()) {
         if (lease.timer) clearInterval(lease.timer);
