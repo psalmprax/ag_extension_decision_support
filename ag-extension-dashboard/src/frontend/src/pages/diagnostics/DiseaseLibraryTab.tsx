@@ -21,7 +21,7 @@ export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onVi
         <div>
           <div className="flex items-center gap-2 mb-1">
             <BookOpen className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-xs font-black text-white uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-white">
               Pathology Encyclopedia & Protocols
             </h3>
           </div>
@@ -61,8 +61,8 @@ export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onVi
                   <h4 className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors truncate">
                     {disease}
                   </h4>
-                  <span className="text-[9px] font-mono text-slate-500 uppercase tracking-wider">
-                    VERIFIED PROTOCOL
+                  <span className="text-[10px] font-mono text-slate-500 font-medium">
+                    Verified Protocol
                   </span>
                 </div>
               </div>
@@ -72,7 +72,7 @@ export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onVi
 
           {filteredDiseases.length === 0 && (
             <div className="col-span-full text-center py-12 text-slate-500">
-              <p className="text-xs font-bold uppercase tracking-wider">No matching pathology dossiers</p>
+              <p className="text-xs font-medium text-slate-400">No matching pathology dossiers</p>
               <p className="text-[10px] font-mono mt-1">Try a different crop or disease keyword</p>
             </div>
           )}

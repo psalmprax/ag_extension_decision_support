@@ -60,10 +60,10 @@ const IsometricFarmOverview: React.FC<IsometricFarmOverviewProps> = ({
       <div className="absolute inset-0 cyber-grid-premium opacity-20 group-hover:opacity-40 transition-opacity duration-1000" />
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-4xl font-black text-white/20 uppercase tracking-[0.5em] mb-4">
+          <p className="text-2xl font-semibold text-white/40 tracking-normal mb-3">
             {crops.length > 0 ? crops[0] : 'Farm'} Sector
           </p>
-          <p className="text-xs font-bold text-primary-400/40 uppercase tracking-widest">
+          <p className="text-xs font-medium text-slate-400">
             {farmSize > 0
               ? `Spatial Analysis: ${farmSize} Hectares Verified`
               : 'Awaiting Spatial Data Stream...'}
@@ -71,17 +71,17 @@ const IsometricFarmOverview: React.FC<IsometricFarmOverviewProps> = ({
           {satelliteData && (
             <div className="mt-4 space-y-1">
               {satelliteData.ndvi !== undefined && (
-                <p className={`text-xs font-bold ${ndviColor}`}>
+                <p className={`text-xs font-medium font-mono tabular-nums ${ndviColor}`}>
                   NDVI: {satelliteData.ndvi.toFixed(2)}
                 </p>
               )}
               {satelliteData.soilMoisture !== undefined && (
-                <p className="text-xs font-bold text-blue-400/60">
+                <p className="text-xs font-medium font-mono tabular-nums text-blue-400/60">
                   Soil Moisture: {satelliteData.soilMoisture.toFixed(1)}%
                 </p>
               )}
               {satelliteData.lastUpdated && (
-                <p className="text-xs font-bold text-white/20">
+                <p className="text-xs font-medium font-mono tabular-nums text-white/40">
                   Updated: {new Date(satelliteData.lastUpdated).toLocaleDateString()}
                 </p>
               )}
@@ -94,16 +94,13 @@ const IsometricFarmOverview: React.FC<IsometricFarmOverviewProps> = ({
         Array.from({ length: Math.min(Math.ceil(farmSize), 5) }).map((_, i) => (
           <div
             key={i}
-            className="absolute w-2 h-2 bg-emerald-500/40 rounded-full blur-sm animate-pulse"
+            className="absolute w-1.5 h-1.5 bg-emerald-400/40 rounded-full"
             style={{
               top: `${20 + ((i * 13) % 60)}%`,
               left: `${20 + ((i * 17) % 60)}%`,
-              animationDelay: `${i * 300}ms`,
             }}
           />
         ))}
-      <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-primary-500/10 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-secondary-500/10 rounded-full blur-3xl animate-pulse delay-700" />
     </div>
   );
 };

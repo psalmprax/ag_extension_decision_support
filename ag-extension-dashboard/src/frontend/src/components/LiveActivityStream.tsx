@@ -167,9 +167,9 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
       animate={{ opacity: 1, y: 0 }}
       className={`p-4 rounded-xl border transition-all relative overflow-hidden backdrop-blur-md ${
         activity.isClaimed
-          ? 'bg-emerald-950/20 border-emerald-500/40 shadow-lg shadow-emerald-950/30'
+          ? 'bg-emerald-950/20 border-emerald-500/40 shadow-sm'
           : isCritical
-          ? 'bg-slate-900/90 border-rose-500/30 hover:border-rose-500/50 shadow-md shadow-rose-950/20'
+          ? 'bg-slate-900/90 border-rose-500/30 hover:border-rose-500/50 shadow-sm'
           : 'bg-slate-900/80 border-slate-800/80 hover:border-slate-700'
       }`}
     >
@@ -230,7 +230,7 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
 {!activity.isClaimed ? (
             <button
               onClick={() => onClaim(activity.id)}
-              className="px-2.5 sm:px-3 py-1 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-950 shrink-0"
+              className="px-2.5 sm:px-3 py-1 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 shadow-sm shrink-0"
             >
               <UserCheck className="w-3.5 h-3.5" />
               {t('activity_claim')}

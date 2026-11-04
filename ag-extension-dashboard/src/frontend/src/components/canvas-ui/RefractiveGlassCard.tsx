@@ -13,7 +13,7 @@ export const RefractiveGlassCard: React.FC<RefractiveGlassCardProps> = ({
   children,
   className = '',
   intensity = 15,
-  highlightColor = 'rgba(16, 185, 129, 0.15)',
+  highlightColor = 'rgba(255, 255, 255, 0.08)',
   onClick,
 }) => {
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -62,8 +62,8 @@ export const RefractiveGlassCard: React.FC<RefractiveGlassCardProps> = ({
         transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
         transition: isHovered ? 'transform 0.1s ease-out' : 'transform 0.5s ease-out',
       }}
-      className={`relative overflow-hidden rounded-xl bg-white/[0.04] dark:bg-black/30 border border-white/10 backdrop-blur-xl shadow-xl transition-shadow duration-300 ${
-        isHovered ? 'shadow-emerald-950/40 border-emerald-500/30' : ''
+      className={`relative overflow-hidden rounded-xl bg-white/[0.04] dark:bg-black/30 border border-white/[0.08] backdrop-blur-xl shadow-sm transition-colors duration-200 ${
+        isHovered ? 'border-white/20 bg-white/[0.06]' : ''
       } ${className}`}
     >
       {/* Specular Glare / Refractive Light Layer */}

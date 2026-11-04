@@ -231,7 +231,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed right-0 top-0 bottom-0 w-full max-w-sm bg-slate-950/95 border-l border-emerald-500/30 shadow-2xl shadow-emerald-950/60 z-[70] flex flex-col backdrop-blur-2xl text-slate-100"
+            className="fixed right-0 top-0 bottom-0 w-full max-w-sm bg-slate-950/95 border-l border-white/10 shadow-xl z-[70] flex flex-col backdrop-blur-2xl text-slate-100"
           >
             {/* Header */}
             <div className="p-4 border-b border-slate-800/80 bg-slate-900/60 flex items-center justify-between">
@@ -241,12 +241,12 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xs font-black tracking-wide text-white uppercase">
+                    <h2 className="text-xs font-semibold tracking-wide text-white">
                       {t('nav_notifications') || 'Notifications'}
                     </h2>
-                    <span className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-[3px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono font-bold">
-                      <Radio className="w-2.5 h-2.5 animate-pulse" />
-                      LIVE
+                    <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-[3px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-mono font-medium">
+                      <Radio className="w-2.5 h-2.5" />
+                      Live
                     </span>
                   </div>
                   <p className="text-[10px] font-mono text-slate-400">

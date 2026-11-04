@@ -326,9 +326,9 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
               triggerHaptic('light');
               setActiveTab('matrix');
             }}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 border ${
               activeTab === 'matrix'
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm shadow-emerald-950/40'
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
                 : 'bg-white/[0.02] text-white/50 border-white/5 hover:border-white/15 hover:text-white'
             }`}
           >
@@ -340,9 +340,9 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
               triggerHaptic('light');
               setActiveTab('costs');
             }}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 border ${
               activeTab === 'costs'
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm shadow-emerald-950/40'
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
                 : 'bg-white/[0.02] text-white/50 border-white/5 hover:border-white/15 hover:text-white'
             }`}
           >
@@ -354,9 +354,9 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
               triggerHaptic('light');
               setActiveTab('calculator');
             }}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 border ${
               activeTab === 'calculator'
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm shadow-emerald-950/40'
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
                 : 'bg-white/[0.02] text-white/50 border-white/5 hover:border-white/15 hover:text-white'
             }`}
           >
@@ -510,7 +510,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                         <Icon className="w-5 h-5" />
                       </div>
                       <div className="text-right">
-                        <span className="text-2xl font-bold text-white font-mono">
+                        <span className="text-2xl font-semibold text-white font-mono tabular-nums">
                           ${svc.rate.toFixed(3)}
                         </span>
                         <span className="text-xxs text-white/50 block font-mono">{svc.unit}</span>

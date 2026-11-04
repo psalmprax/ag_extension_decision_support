@@ -26,7 +26,7 @@ export const FarmerYieldChart: React.FC<FarmerYieldChartProps> = ({ farmer, radi
   return (
     <section>
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2 text-gray-400">
+        <h3 className="text-sm font-medium flex items-center gap-2 text-slate-400">
           <TrendingUp className="w-4 h-4 text-primary-500" />
           {t('viz_yield_trends')}
         </h3>

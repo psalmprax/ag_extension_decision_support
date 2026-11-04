@@ -145,7 +145,7 @@ export const InlineVisitBookingCard: React.FC<InlineVisitBookingCardProps> = ({
               type="button"
               onClick={handleConfirm}
               disabled={isBooking}
-              className="w-full sm:w-auto justify-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-emerald-950 flex items-center gap-1.5"
+              className="w-full sm:w-auto justify-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-lg text-xs font-medium transition-all shadow-sm flex items-center gap-1.5"
             >
               {isBooking ? (
                 <>

@@ -27,7 +27,7 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
     >
       <div className="flex flex-wrap justify-between items-center gap-4 pb-6 border-b border-white/10 relative z-10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 text-emerald-400">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-sm text-emerald-400">
             <Receipt className="w-6 h-6" />
           </div>
           <div>
@@ -55,7 +55,7 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
               ].map(h => (
                 <th
                   key={h}
-                  className="px-6 py-4 text-xxs font-bold uppercase tracking-wider text-white/60"
+                  className="px-6 py-4 text-xs font-medium text-slate-400"
                 >
                   {t(h)}
                 </th>
@@ -72,12 +72,12 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2.5">
                       <Clock className="w-4 h-4 text-emerald-400" />
-                      <span className="text-xs font-mono text-white/80">
+                      <span className="text-xs font-mono tabular-nums text-white/80">
                         {new Date(invoice.created * 1000).toLocaleDateString()}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-xs font-bold text-white font-mono">
+                  <td className="px-6 py-4 text-xs font-medium text-white font-mono tabular-nums">
                     {(invoice.amount_paid / 100).toLocaleString('en-US', {
                       style: 'currency',
                       currency: invoice.currency,
@@ -88,8 +88,8 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
                       <div
                         className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
                           invoice.status === 'paid'
-                            ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse'
-                            : 'bg-yellow-400'
+                            ? 'bg-emerald-400'
+                            : 'bg-amber-400'
                         }`}
                       />
                       {invoice.status === 'paid' ? t('billing_status_paid') || 'PAID' : invoice.status}
@@ -102,13 +102,13 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
                         target="_blank"
                         rel="noreferrer"
                         onClick={() => triggerHaptic('light')}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/10 text-white border border-white/10 text-xxs font-bold uppercase tracking-wider transition-all"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/10 text-white border border-white/10 text-xs font-medium transition-all"
                       >
                         <Download className="w-3.5 h-3.5 text-emerald-400" />
                         <span>PDF</span>
                       </a>
                     ) : (
-                      <span className="text-xxs text-white/40 uppercase tracking-widest italic">
+                      <span className="text-xs text-white/40 italic">
                         {t('billing_no_pdf') || 'Unavailable'}
                       </span>
                     )}
@@ -119,7 +119,7 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
               <tr>
                 <td
                   colSpan={4}
-                  className="px-6 py-12 text-center text-xs text-white/40 font-semibold uppercase tracking-widest italic"
+                  className="px-6 py-12 text-center text-xs text-slate-400 font-medium italic"
                 >
                   <div className="flex flex-col items-center justify-center gap-2">
                     <FileText className="w-8 h-8 text-white/20" />

@@ -57,7 +57,7 @@ export const FarmerDetailHeader: React.FC<FarmerDetailHeaderProps> = ({
           onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
           className={`p-2 rounded-[4px] text-white transition-all backdrop-blur-md ${
             isEditing
-              ? 'bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-950'
+              ? 'bg-emerald-600 hover:bg-emerald-500 shadow-sm'
               : 'bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 text-slate-300 hover:text-white'
           }`}
           title={isEditing ? 'Save Changes' : 'Edit Farmer'}
@@ -97,9 +97,9 @@ export const FarmerDetailHeader: React.FC<FarmerDetailHeaderProps> = ({
       {/* Main Profile Info */}
       <div className="absolute bottom-0 left-0 right-0 p-6 pt-12 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent">
         <div className="flex items-end gap-5">
-          {/* Avatar Box with Glowing Rim */}
-          <div className="w-20 h-20 rounded-[4px] p-0.5 shadow-2xl bg-gradient-to-br from-emerald-500 to-slate-800 shrink-0">
-            <div className="w-full h-full rounded-[3px] flex items-center justify-center font-black text-2xl bg-slate-900 text-emerald-400 border border-emerald-500/30">
+          {/* Avatar Box */}
+          <div className="w-20 h-20 rounded-[4px] p-0.5 bg-slate-800 border border-white/10 shrink-0">
+            <div className="w-full h-full rounded-[3px] flex items-center justify-center font-semibold text-xl bg-slate-900 text-emerald-400 border border-emerald-500/30">
               {farmer.firstName?.[0]}
               {farmer.lastName?.[0]}
             </div>
@@ -107,12 +107,12 @@ export const FarmerDetailHeader: React.FC<FarmerDetailHeaderProps> = ({
 
           <div className="mb-1 flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-[3px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono font-bold">
-                <Radio className="w-2.5 h-2.5 animate-pulse" />
-                SMALLHOLDER PROFILE
+              <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-[3px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-mono font-medium">
+                <Radio className="w-2.5 h-2.5" />
+                Smallholder Profile
               </span>
             </div>
-            <h2 className="text-2xl font-extrabold text-white tracking-tight leading-tight truncate">
+            <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-tight leading-tight truncate">
               {farmer.firstName} {farmer.lastName}
             </h2>
 
@@ -143,7 +143,7 @@ export const FarmerDetailHeader: React.FC<FarmerDetailHeaderProps> = ({
                     className="bg-slate-950 border-slate-700 text-white !h-5 !px-1.5 !py-0 !text-xxs !rounded !w-14"
                   />
                 ) : (
-                  <span className="text-[11px] font-mono">{farmer.farmSize || 0} Ha</span>
+                  <span className="text-[11px] font-mono tabular-nums">{farmer.farmSize || 0} Ha</span>
                 )}
               </div>
 
@@ -158,7 +158,7 @@ export const FarmerDetailHeader: React.FC<FarmerDetailHeaderProps> = ({
                     placeholder="Phone"
                   />
                 ) : (
-                  <span className="text-[11px] font-mono">{farmer.phone || 'No phone'}</span>
+                  <span className="text-[11px] font-mono tabular-nums">{farmer.phone || 'No phone'}</span>
                 )}
               </div>
 

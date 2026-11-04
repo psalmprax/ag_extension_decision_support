@@ -68,7 +68,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
     >
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6 relative z-10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 text-emerald-400">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-sm text-emerald-400">
             <CardIcon className="w-6 h-6" />
           </div>
           <div>
@@ -89,7 +89,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             onAddMethod();
           }}
           disabled={actionLoading === 'add-pm'}
-          className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all flex items-center gap-2"
+          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg shadow-sm transition-all flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           <span>{t('billing_add_method') || 'Add Credit Card'}</span>
@@ -122,7 +122,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                 triggerHaptic('light');
                 setShowMobilePayForm(!showMobilePayForm);
               }}
-              className="px-3.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-600 hover:text-white text-xxs font-bold uppercase tracking-wider transition-all"
+              className="px-3.5 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-600 hover:text-white text-xs font-medium transition-all"
             >
               {showMobilePayForm ? 'Hide' : t('action_pay_mobile') || 'Express Pay'}
             </button>
@@ -181,7 +181,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                     triggerHaptic('medium');
                     handleSubmitTransaction();
                   }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition-all shrink-0"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs rounded-lg shadow-sm transition-all shrink-0"
                 >
                   Confirm Payment
                 </button>
@@ -222,7 +222,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                 triggerHaptic('light');
                 setShowVoucherForm(!showVoucherForm);
               }}
-              className="px-3.5 py-1.5 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600 hover:text-white text-xxs font-bold uppercase tracking-wider transition-all"
+              className="px-3.5 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600 hover:text-white text-xs font-medium transition-all"
             >
               {showVoucherForm ? 'Hide' : t('action_redeem') || 'Redeem'}
             </button>
@@ -244,7 +244,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                     triggerHaptic('medium');
                     handleRedeemVoucher();
                   }}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md transition-all shrink-0"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs rounded-lg shadow-sm transition-all shrink-0"
                 >
                   Activate Token
                 </button>
@@ -268,15 +268,15 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             >
               <div className="flex items-center gap-3.5">
                 <div
-                  className="w-12 h-8 bg-white/[0.05] border border-white/10 rounded-lg flex items-center justify-center text-xs font-bold text-white uppercase tracking-tighter"
+                  className="w-12 h-8 bg-white/[0.05] border border-white/10 rounded-lg flex items-center justify-center text-xs font-medium text-white"
                 >
                   {pm.card?.brand || 'Card'}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-white tracking-tight">
+                  <p className="text-sm font-medium text-white tracking-tight font-mono tabular-nums">
                     •••• •••• •••• {pm.card?.last4}
                   </p>
-                  <p className="text-xxs text-white/50">
+                  <p className="text-xxs text-white/50 font-mono tabular-nums">
                     {t('billing_expires').replace(
                       '{date}',
                       `${pm.card?.exp_month}/${pm.card?.exp_year}`
@@ -333,7 +333,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             onPayPalSubscription('price_pro_monthly');
           }}
           disabled={actionLoading === 'paypal-price_pro_monthly'}
-          className="px-4 py-2 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600 hover:text-white text-xs font-bold transition-all flex items-center gap-2"
+          className="px-4 py-2 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600 hover:text-white text-xs font-medium transition-all flex items-center gap-2"
         >
           <Globe className="w-4 h-4" />
           <span>{t('billing_subscribe_paypal') || 'PayPal Checkout'}</span>

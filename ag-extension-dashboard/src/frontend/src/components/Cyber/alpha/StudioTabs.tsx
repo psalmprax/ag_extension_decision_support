@@ -50,9 +50,9 @@ export const StudioTabSwitcher: React.FC<{
   <div className="flex items-center bg-slate-100 dark:bg-white/[0.04] p-1 rounded-xl border border-slate-200 dark:border-white/10">
     <button
       onClick={() => onSelect('copilot')}
-      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
         active === 'copilot'
-          ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-md shadow-emerald-950/40'
+          ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-sm'
           : 'text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white'
       }`}
     >
@@ -61,9 +61,9 @@ export const StudioTabSwitcher: React.FC<{
     </button>
     <button
       onClick={() => onSelect('agent_ops')}
-      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
         active === 'agent_ops'
-          ? 'bg-purple-600 text-white shadow-md shadow-purple-950/40'
+          ? 'bg-purple-600 text-white shadow-sm'
           : 'text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white'
       }`}
     >
@@ -76,7 +76,7 @@ export const StudioTabSwitcher: React.FC<{
 /** Header strip shared by every canvas workbench panel. */
 const CanvasPanelHeader: React.FC<{ icon: React.ReactNode; title: string; hint: string; hintClass: string }> = ({ icon, title, hint, hintClass }) => (
   <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 dark:border-white/5">
-    <span className="font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">{icon}{title}</span>
+    <span className="font-medium text-slate-900 dark:text-white flex items-center gap-1.5">{icon}{title}</span>
     <span className={`text-xxs font-mono ${hintClass}`}>{hint}</span>
   </div>
 );
@@ -125,13 +125,13 @@ export const CanvasWorkbench: React.FC<{
           >
             <div>
               <strong className="text-slate-900 dark:text-white">{selectedProbeResult.label}:</strong>{' '}
-              <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">
+              <span className="font-mono text-emerald-700 dark:text-emerald-400 font-semibold tabular-nums">
                 {selectedProbeResult.value} {selectedProbeResult.unit}
               </span>
               <p className="text-xxs text-slate-600 dark:text-white/60 mt-0.5">{selectedProbeResult.recommendation}</p>
             </div>
             <span
-              className={`px-2 py-0.5 rounded text-xxs font-bold uppercase ${
+              className={`px-2 py-0.5 rounded text-xxs font-medium ${
                 selectedProbeResult.status === 'optimal'
                   ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
                   : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
@@ -170,14 +170,14 @@ export const CanvasWorkbench: React.FC<{
             className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between text-xs"
           >
             <div>
-              <strong className="text-rose-300">{selectedLesionZone.label}</strong>
+              <strong className="text-rose-300 font-medium">{selectedLesionZone.label}</strong>
               <p className="text-xxs text-white/60 mt-0.5">
-                Confidence: {(selectedLesionZone.confidence * 100).toFixed(1)}% • Severity: {selectedLesionZone.severity}
+                Confidence: <span className="font-mono tabular-nums">{(selectedLesionZone.confidence * 100).toFixed(1)}%</span> • Severity: {selectedLesionZone.severity}
               </p>
             </div>
             <button
               onClick={onDispatchSms}
-              className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xxs font-bold shadow transition-all"
+              className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xxs font-medium shadow-sm transition-all"
             >
               Dispatch Alert
             </button>
@@ -222,8 +222,8 @@ export const CanvasWorkbench: React.FC<{
             className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs"
           >
             <div className="flex items-center justify-between mb-1">
-              <strong className="text-purple-300 font-bold">{selectedGraphNode.label}</strong>
-              <span className="text-xxs font-mono text-white/40 uppercase">Category: {selectedGraphNode.category}</span>
+              <strong className="text-purple-300 font-medium">{selectedGraphNode.label}</strong>
+              <span className="text-xxs font-mono text-white/40">Category: {selectedGraphNode.category}</span>
             </div>
             <p className="text-xxs text-white/70 leading-relaxed">{selectedGraphNode.snippet}</p>
           </motion.div>

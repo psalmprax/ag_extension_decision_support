@@ -11,8 +11,8 @@ interface LuminousForceFieldProps {
 export const LuminousForceField: React.FC<LuminousForceFieldProps> = ({
   children,
   className = '',
-  glowColor = '#10b981',
-  borderWidth = 2,
+  glowColor = 'rgba(148, 163, 184, 0.20)',
+  borderWidth = 1,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -40,7 +40,7 @@ export const LuminousForceField: React.FC<LuminousForceFieldProps> = ({
         className="pointer-events-none absolute -inset-px transition-opacity duration-300 rounded-xl"
         style={{
           opacity: isHovered ? 1 : 0,
-          background: `radial-gradient(350px circle at ${mousePos.x}px ${mousePos.y}px, ${glowColor}60, transparent 70%)`,
+          background: `radial-gradient(350px circle at ${mousePos.x}px ${mousePos.y}px, rgba(255, 255, 255, 0.06), transparent 50%)`,
         }}
       />
 

@@ -45,36 +45,38 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
 
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-6">
-            <div className="p-3.5 bg-emerald-500/15 rounded-xl backdrop-blur-xl border border-emerald-500/30 shadow-lg shadow-emerald-950/40 text-emerald-400">
+            <div className="p-3.5 bg-emerald-500/15 rounded-xl backdrop-blur-xl border border-emerald-500/30 shadow-sm text-emerald-400">
               <ShieldCheck className="w-7 h-7" />
             </div>
             <div className="flex flex-col items-end">
-              <span className="text-xxs font-black uppercase tracking-widest text-emerald-400 mb-1">
-                {t('billing_status_label') || 'AGRONOMIST SEAT'}
+              <span className="text-xxs font-medium text-emerald-400 mb-1">
+                {t('billing_status_label') || 'Agronomist Seat'}
               </span>
               <Badge variant="success" size="sm">
-                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse mr-1" />
-                {t('billing_status_active') || 'ACTIVE LICENSE'}
+                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full mr-1" />
+                {t('billing_status_active') || 'Active License'}
               </Badge>
             </div>
           </div>
 
           <span
             id="subscription-status-title"
-            className="text-xxs font-black uppercase tracking-widest text-slate-400 mb-2 block"
+            className="text-xs font-medium text-slate-400 mb-2 block"
           >
             {t('billing_current_plan') || 'Current Plan'}
           </span>
-          <h2 className="text-3xl font-black text-white leading-none tracking-tighter mb-4 group-hover:text-emerald-400 transition-colors duration-300">
+          <h2 className="text-2xl sm:text-3xl font-semibold text-white leading-tight tracking-tight mb-4 group-hover:text-emerald-400 transition-colors duration-300">
             {subscription?.plan?.name ?? 'N/A'}
           </h2>
           <div className="flex items-center gap-2.5 text-slate-400 font-mono text-xs p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
             <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>
               {t('billing_renews_on') || 'Renews on'}{' '}
-              {subscription?.currentPeriodEnd
-                ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
-                : 'N/A'}
+              <span className="tabular-nums">
+                {subscription?.currentPeriodEnd
+                  ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
+                  : 'N/A'}
+              </span>
             </span>
           </div>
         </div>
@@ -86,14 +88,14 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
               onPortal();
             }}
             disabled={actionLoading === 'portal'}
-            className={`w-full h-14 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-white ${radiusClass} font-black uppercase tracking-widest text-xs transition-all duration-300 flex items-center justify-center gap-2.5 shadow-xl active:scale-[0.98] disabled:opacity-50 group/btn`}
+            className={`w-full h-12 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-white ${radiusClass} font-medium text-xs transition-all duration-200 flex items-center justify-center gap-2.5 shadow-sm active:scale-[0.98] disabled:opacity-50 group/btn`}
           >
             {actionLoading === 'portal' ? (
-              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
             ) : (
               <ExternalLink className="w-4 h-4 text-emerald-400 group-hover/btn:translate-x-0.5 transition-transform" />
             )}
-            <span>{t('billing_manage_subscription') || 'MANAGE SUBSCRIPTION'}</span>
+            <span>{t('billing_manage_subscription') || 'Manage Subscription'}</span>
           </button>
         </div>
       </motion.section>

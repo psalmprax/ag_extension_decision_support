@@ -23,7 +23,7 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
 
   return (
     <section>
-      <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-6 flex items-center gap-2 text-gray-400">
+      <h3 className="text-sm font-medium mb-6 flex items-center gap-2 text-slate-400">
         <Clock className="w-4 h-4 text-purple-500" />
         {t('nav_visits')}
       </h3>
@@ -37,8 +37,8 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
                 />
               )}
               <div
-                className={`absolute left-0 top-1.5 w-6 h-6 rounded-full border-4 shadow-md border-white dark:border-gray-900
-                             ${visit.status === 'completed' ? (isCyber ? 'bg-primary-500 neon-glow-primary' : 'bg-primary-500') : 'bg-accent-500'}`}
+                className={`absolute left-0 top-1.5 w-6 h-6 rounded-full border-4 shadow-sm border-white dark:border-gray-900
+                             ${visit.status === 'completed' ? 'bg-primary-500' : 'bg-accent-500'}`}
               />
 
               <div
@@ -49,7 +49,7 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
                 }`}
               >
                 <div className="flex justify-between items-start mb-1">
-                  <span className="text-xs font-black uppercase tracking-tight text-gray-900 dark:text-white">
+                  <span className="text-xs font-medium text-gray-900 dark:text-white">
                     {visit.visit_type}
                   </span>
                   <span className="text-xxs font-bold text-gray-400">

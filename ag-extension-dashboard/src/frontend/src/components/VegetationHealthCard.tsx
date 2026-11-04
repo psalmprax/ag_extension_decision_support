@@ -1,6 +1,5 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import { Sprout, Loader2, CloudOff } from 'lucide-react';
 import { fetchNDVITimeSeries, NDVIPoint } from '@/api/agriDataService';
 import { useAppStore } from '@/store/useAppStore';
@@ -60,7 +59,7 @@ export const VegetationHealthCard: React.FC<VegetationHealthCardProps> = ({ card
           <Sprout className="w-4 h-4" />
         </div>
         <div>
-          <h3 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+          <h3 className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
             {t('veg_health_title', { defaultValue: 'Regional Vegetation Health (estimated)' })}
           </h3>
           <p className="text-xxs text-slate-400">
@@ -76,17 +75,17 @@ export const VegetationHealthCard: React.FC<VegetationHealthCardProps> = ({ card
       ) : isError || !veg ? (
         <div className="flex flex-col items-center justify-center py-6 text-center">
           <CloudOff className="w-6 h-6 text-slate-400 mb-2" />
-          <p className="text-xxs text-slate-400 font-bold uppercase">
+          <p className="text-xs text-slate-400 font-medium">
             {t('veg_health_unavailable', { defaultValue: 'Vegetation data unavailable' })}
           </p>
         </div>
       ) : (
         <>
           <div className="flex items-baseline gap-2 mb-4">
-            <span className={`text-2xl font-black ${veg.color}`}>
+            <span className={`text-2xl font-semibold font-mono tabular-nums ${veg.color}`}>
               {latestNdvi!.toFixed(2)}
             </span>
-            <span className="text-xs font-bold text-slate-400 uppercase">{veg.label}</span>
+            <span className="text-xs font-medium text-slate-400">{veg.label}</span>
           </div>
 
           <div className="flex items-end gap-0.5 h-16 mb-2">
@@ -102,22 +101,18 @@ export const VegetationHealthCard: React.FC<VegetationHealthCardProps> = ({ card
             ))}
           </div>
 
-          <div className="flex justify-between text-xxs text-slate-500 font-mono">
+          <div className="flex justify-between text-xxs text-slate-500 font-mono tabular-nums">
             <span>{points[0]?.date.slice(5) || ''}</span>
             <span>{points[points.length - 1]?.date.slice(5) || ''}</span>
           </div>
 
           <div className="mt-3 pt-3 border-t border-slate-800/60 flex items-center justify-between">
             <span className="text-xxs text-slate-400 capitalize">{data?.reason || ''}</span>
-            <motion.span
-              className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-              animate={{ opacity: [0.6, 1, 0.6] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               {data?.dataStatus === 'estimated'
-                ? t('veg_health_estimated_proxy', { defaultValue: 'ESTIMATED PROXY' })
-                : data?.dataStatus?.toUpperCase()}
-            </motion.span>
+                ? t('veg_health_estimated_proxy', { defaultValue: 'Estimated Proxy' })
+                : data?.dataStatus}
+            </span>
           </div>
         </>
       )}
