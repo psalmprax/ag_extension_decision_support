@@ -11,7 +11,6 @@ import {
   Maximize,
   Activity,
   Lock,
-  Sparkles,
   Layers,
   Globe,
   Radio,
@@ -19,6 +18,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Compass,
+  Sprout,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -43,7 +43,6 @@ const COMMON_CROPS = [
 const ONBOARDING_PRESETS = [
   {
     name: 'Smallholder Maize',
-    icon: '🌽',
     crops: ['Maize', 'Beans'],
     location: 'Nakuru, Rift Valley',
     farmSize: 2.5,
@@ -54,7 +53,6 @@ const ONBOARDING_PRESETS = [
   },
   {
     name: 'Highland Coffee & Tea',
-    icon: '☕',
     crops: ['Coffee', 'Tea'],
     location: 'Kiambu, Central',
     farmSize: 4.8,
@@ -65,7 +63,6 @@ const ONBOARDING_PRESETS = [
   },
   {
     name: 'Irrigation Rice Co-op',
-    icon: '🌾',
     crops: ['Rice', 'Tomato'],
     location: 'Mwea, Kirinyaga',
     farmSize: 12.0,
@@ -212,12 +209,12 @@ export const FarmerRegistrationForm: React.FC = () => {
   if (isDemo) {
     return (
       <div className="max-w-3xl mx-auto p-8 backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl shadow-2xl text-center relative overflow-hidden">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-          <Lock className="w-8 h-8 text-amber-400" />
+        <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+          <Lock className="w-6 h-6 text-amber-400" />
         </div>
-        <h2 className="text-2xl font-bold tracking-tight text-white mb-2">Register Client</h2>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold mb-3">
-          <Sparkles className="w-3.5 h-3.5" />
+        <h2 className="text-xl font-bold tracking-tight text-white mb-2">Register Client</h2>
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-medium mb-3">
+          <Layers className="w-3.5 h-3.5" />
           <span>Interactive Preview Mode</span>
         </div>
         <p className="text-slate-400 text-sm max-w-md mx-auto">
@@ -242,17 +239,17 @@ export const FarmerRegistrationForm: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* ── Top Bento Banner: Fast-Fill Presets & Node Telemetry ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-sm relative overflow-hidden">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
-              <UserPlus className="w-6 h-6 text-emerald-400" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+              <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold tracking-tight text-white">Register Client</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                  <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Register Client</h1>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                  <Radio className="w-2.5 h-2.5 text-emerald-400" />
                   Edge Intake Node
                 </span>
               </div>
@@ -264,15 +261,15 @@ export const FarmerRegistrationForm: React.FC = () => {
 
           {/* Quick-Fill Agronomic Presets */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xxs font-semibold text-white/40 uppercase tracking-wider">Quick Fill:</span>
+            <span className="text-xs font-medium text-white/50">Quick fill:</span>
             {ONBOARDING_PRESETS.map(p => (
               <button
                 key={p.name}
                 type="button"
                 onClick={() => applyPreset(p)}
-                className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/30 text-xs text-white/80 hover:text-white transition-all flex items-center gap-1.5 shadow-sm"
+                className="px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/30 text-xs text-white/80 hover:text-white transition-colors flex items-center gap-1.5"
               >
-                <span>{p.icon}</span>
+                <Sprout className="w-3.5 h-3.5 text-emerald-400" />
                 <span className="font-medium">{p.name}</span>
               </button>
             ))}
@@ -297,18 +294,18 @@ export const FarmerRegistrationForm: React.FC = () => {
           <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 space-y-5 shadow-lg">
             <div className="flex items-center gap-2.5 pb-2 border-b border-white/5">
               <UserPlus className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-sm font-bold uppercase tracking-wider text-white">Identity & Communication Profile</h2>
+              <h2 className="text-sm font-semibold text-white">Identity & communication profile</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-white/70 uppercase tracking-wide">
+                <label className="block text-xs font-medium text-white/70">
                   {t('farmer_register_first_name') || 'First Name'} *
                 </label>
                 <input
                   {...register('firstName')}
                   placeholder="e.g. Samuel"
-                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none text-sm"
+                  className="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm"
                 />
                 {errors.firstName && (
                   <p className="text-xs text-rose-400 flex items-center gap-1">
@@ -318,13 +315,13 @@ export const FarmerRegistrationForm: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-white/70 uppercase tracking-wide">
+                <label className="block text-xs font-medium text-white/70">
                   {t('farmer_register_last_name') || 'Last Name'} *
                 </label>
                 <input
                   {...register('lastName')}
                   placeholder="e.g. Kiprono"
-                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none text-sm"
+                  className="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm"
                 />
                 {errors.lastName && (
                   <p className="text-xs text-rose-400 flex items-center gap-1">
@@ -336,7 +333,7 @@ export const FarmerRegistrationForm: React.FC = () => {
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-semibold text-white/70 uppercase tracking-wide">
+                <label className="block text-xs font-medium text-white/70">
                   {t('farmer_register_phone') || 'Mobile Phone (E.164)'} *
                 </label>
                 <div className="flex items-center gap-1.5 text-xxs text-white/40">
@@ -350,7 +347,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                 <input
                   {...register('phone')}
                   placeholder="+254 712 345 678"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none text-sm font-mono"
+                  className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm font-mono tabular-nums"
                 />
               </div>
               {errors.phone && (
@@ -362,7 +359,7 @@ export const FarmerRegistrationForm: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-white/70 uppercase tracking-wide">
+                <label className="block text-xs font-medium text-white/70">
                   {t('farmer_register_location') || 'District / Region'} *
                 </label>
                 <div className="relative">
@@ -370,7 +367,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                   <input
                     {...register('location')}
                     placeholder="e.g. Nakuru, Rongai"
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none text-sm"
+                    className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm"
                   />
                 </div>
                 {errors.location && (
@@ -381,14 +378,14 @@ export const FarmerRegistrationForm: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-white/70 uppercase tracking-wide">
+                <label className="block text-xs font-medium text-white/70">
                   {t('farmers_language') || 'Advisory Language'}
                 </label>
                 <div className="relative">
                   <Globe className="w-4 h-4 text-white/40 absolute left-4 top-1/2 -translate-y-1/2" />
                   <select
                     {...register('languagePreference')}
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-white/10 bg-slate-900 text-white focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none text-sm"
+                    className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-white/10 bg-slate-900 text-white focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm"
                   >
                     <option value="en">English (en)</option>
                     <option value="sw">Kiswahili (sw)</option>
@@ -404,16 +401,16 @@ export const FarmerRegistrationForm: React.FC = () => {
           </div>
 
           {/* Card 2: Agronomic Portfolio & Land Parcel */}
-          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 space-y-5 shadow-lg">
+          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 space-y-5 shadow-sm">
             <div className="flex items-center gap-2.5 pb-2 border-b border-white/5">
               <Layers className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-sm font-bold uppercase tracking-wider text-white">Agronomic Portfolio & Parcel</h2>
+              <h2 className="text-sm font-semibold text-white">Agronomic portfolio & parcel</h2>
             </div>
 
             {/* Multi-Crop Tag Chips */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-semibold text-white/70 uppercase tracking-wide">
+                <label className="block text-xs font-medium text-white/70">
                   Cultivated Crops ({selectedCrops.length} selected)
                 </label>
                 <span className="text-xxs text-white/40">Click chips to toggle</span>
@@ -427,9 +424,9 @@ export const FarmerRegistrationForm: React.FC = () => {
                       key={crop}
                       type="button"
                       onClick={() => toggleCrop(crop)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 border ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 border ${
                         isSelected
-                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm shadow-emerald-950/30'
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                           : 'bg-white/[0.03] text-white/60 border-white/5 hover:border-white/15 hover:text-white'
                       }`}
                     >
@@ -447,7 +444,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                   value={customCropInput}
                   onChange={e => setCustomCropInput(e.target.value)}
                   placeholder="Add custom crop..."
-                  className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-white/10 bg-white/[0.02] text-white placeholder-white/30 focus:ring-1 focus:ring-emerald-400 outline-none"
+                  className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-white/10 bg-white/[0.02] text-white placeholder-white/30 focus:ring-1 focus:ring-emerald-400 outline-none"
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -458,7 +455,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                 <button
                   type="button"
                   onClick={addCustomCrop}
-                  className="px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-emerald-500/20 border border-white/10 text-xs font-semibold text-white flex items-center gap-1 transition-colors"
+                  className="px-3 py-1.5 rounded-lg bg-white/[0.05] hover:bg-emerald-500/20 border border-white/10 text-xs font-medium text-white flex items-center gap-1 transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Add</span>
@@ -469,7 +466,7 @@ export const FarmerRegistrationForm: React.FC = () => {
             {/* Farm Size */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-semibold text-white/70 uppercase tracking-wide">
+                <label className="block text-xs font-medium text-white/70">
                   {t('farmer_register_farm_size') || 'Estimated Land Holding'}
                 </label>
                 <div className="flex items-center gap-1.5">
@@ -478,7 +475,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                       key={sz}
                       type="button"
                       onClick={() => setValue('farmSize', parseFloat(sz), { shouldValidate: true })}
-                      className="px-2 py-0.5 rounded-lg text-xxs font-mono bg-white/[0.04] hover:bg-emerald-500/15 border border-white/5 text-white/60 hover:text-emerald-300 transition-colors"
+                      className="px-2 py-0.5 rounded-md text-xxs font-mono tabular-nums bg-white/[0.04] hover:bg-emerald-500/15 border border-white/5 text-white/60 hover:text-emerald-300 transition-colors"
                     >
                       {sz} ha
                     </button>
@@ -492,9 +489,9 @@ export const FarmerRegistrationForm: React.FC = () => {
                   step="0.1"
                   {...register('farmSize', { valueAsNumber: true })}
                   placeholder="2.5"
-                  className="w-full pl-11 pr-16 py-3 rounded-xl border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none text-sm font-mono"
+                  className="w-full pl-11 pr-16 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm font-mono tabular-nums"
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-white/40 uppercase">
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-white/40">
                   Hectares
                 </span>
               </div>
@@ -507,11 +504,11 @@ export const FarmerRegistrationForm: React.FC = () => {
           </div>
 
           {/* Card 3: Geolocation Coordinates & NASA POWER Radar */}
-          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 space-y-5 shadow-lg">
+          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 space-y-5 shadow-sm">
             <div className="flex items-center justify-between pb-2 border-b border-white/5">
               <div className="flex items-center gap-2.5">
                 <Compass className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+                <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
                   Geospatial Telemetry
                   <InfoPromptIcon
                     title="GPS & Earth Observation"
@@ -525,7 +522,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                 type="button"
                 onClick={handleDetectLocation}
                 disabled={isDetectingGps}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-semibold text-emerald-300 transition-all shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-medium text-emerald-300 transition-colors"
               >
                 <Compass className={`w-3.5 h-3.5 ${isDetectingGps ? 'animate-spin' : ''}`} />
                 <span>{isDetectingGps ? 'Detecting...' : 'Detect GPS'}</span>
@@ -534,7 +531,7 @@ export const FarmerRegistrationForm: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-white/70 uppercase tracking-wide">
+                <label className="block text-xs font-medium text-white/70">
                   Latitude
                 </label>
                 <input
@@ -542,12 +539,12 @@ export const FarmerRegistrationForm: React.FC = () => {
                   step="0.000001"
                   {...register('latitude', { valueAsNumber: true })}
                   placeholder="-0.303099"
-                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-2 focus:ring-emerald-400 outline-none text-sm font-mono"
+                  className="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 outline-none text-sm font-mono tabular-nums"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-white/70 uppercase tracking-wide">
+                <label className="block text-xs font-medium text-white/70">
                   Longitude
                 </label>
                 <input
@@ -555,7 +552,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                   step="0.000001"
                   {...register('longitude', { valueAsNumber: true })}
                   placeholder="36.080025"
-                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-2 focus:ring-emerald-400 outline-none text-sm font-mono"
+                  className="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 outline-none text-sm font-mono tabular-nums"
                 />
               </div>
             </div>
@@ -564,8 +561,8 @@ export const FarmerRegistrationForm: React.FC = () => {
             {currentLatitude && currentLongitude ? (
               <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 space-y-2">
                 <div className="flex items-center justify-between text-xxs">
-                  <span className="font-semibold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Radio className="w-3 h-3 animate-pulse text-emerald-400" />
+                  <span className="font-medium text-emerald-400 flex items-center gap-1.5">
+                    <Radio className="w-3 h-3 text-emerald-400" />
                     Auto-Linked Earth Observation
                   </span>
                   <span className="text-white/40 font-mono">NASA POWER / SoilGrids</span>
@@ -573,15 +570,15 @@ export const FarmerRegistrationForm: React.FC = () => {
                 <div className="grid grid-cols-3 gap-2 text-center text-xs">
                   <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
                     <div className="text-xxs text-white/40">Estimated pH</div>
-                    <div className="font-bold text-white mt-0.5">6.2 (Optimal)</div>
+                    <div className="font-semibold text-white mt-0.5 tabular-nums">6.2 (Optimal)</div>
                   </div>
                   <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
                     <div className="text-xxs text-white/40">Rainfall Risk</div>
-                    <div className="font-bold text-emerald-400 mt-0.5">Low (+18mm)</div>
+                    <div className="font-semibold text-emerald-400 mt-0.5 tabular-nums">Low (+18mm)</div>
                   </div>
                   <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
                     <div className="text-xxs text-white/40">Solar Rad</div>
-                    <div className="font-bold text-amber-300 mt-0.5">21.4 MJ/m²</div>
+                    <div className="font-semibold text-amber-300 mt-0.5 tabular-nums">21.4 MJ/m²</div>
                   </div>
                 </div>
               </div>
@@ -593,11 +590,11 @@ export const FarmerRegistrationForm: React.FC = () => {
           </div>
 
           {/* Card 4: Initial Vital Score & Agronomic Health Tier */}
-          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 space-y-5 shadow-lg">
+          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 space-y-5 shadow-sm">
             <div className="flex items-center justify-between pb-2 border-b border-white/5">
               <div className="flex items-center gap-2.5">
                 <Activity className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+                <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
                   Vital Score Baseline
                   <InfoPromptIcon
                     title="Vital Score Health Index"
@@ -607,7 +604,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                   />
                 </h2>
               </div>
-              <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold border ${getVitalScoreColor(currentVitalScore)}`}>
+              <span className={`px-2.5 py-0.5 rounded-md text-xs font-medium border tabular-nums ${getVitalScoreColor(currentVitalScore)}`}>
                 {currentVitalScore}/100 • {getVitalScoreLabel(currentVitalScore)}
               </span>
             </div>
@@ -629,18 +626,18 @@ export const FarmerRegistrationForm: React.FC = () => {
             </div>
 
             <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 text-xs text-white/70 space-y-1">
-              <div className="font-semibold text-white">Dynamic Workflow Dispatch:</div>
+              <div className="font-medium text-white">Dynamic Workflow Dispatch:</div>
               <p className="text-xxs leading-relaxed text-white/50">
-                Farmers registered with a Vital Score below <strong className="text-rose-400">65</strong> are instantly queued for priority on-site field visits and flagged in the extension officer dispatch roster.
+                Farmers registered with a Vital Score below <strong className="text-rose-400 tabular-nums">65</strong> are instantly queued for priority on-site field visits and flagged in the extension officer dispatch roster.
               </p>
             </div>
           </div>
         </div>
 
         {/* ── Floating Submit Action Bar ── */}
-        <div className="backdrop-blur-xl bg-slate-900/80 border border-white/10 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl">
+        <div className="backdrop-blur-xl bg-slate-900/80 border border-white/10 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
           <div className="flex items-center gap-2 text-xs text-white/60">
-            <Sparkles className="w-4 h-4 text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             <span>Ready to activate real-time advisory profile & automated onboarding sync.</span>
           </div>
 
@@ -651,7 +648,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                 reset();
                 setSelectedCrops(['Maize']);
               }}
-              className="px-5 py-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] text-xs font-semibold text-white/70 hover:text-white transition-colors border border-white/10"
+              className="px-4 py-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] text-xs font-medium text-white/70 hover:text-white transition-colors border border-white/10"
             >
               Reset Form
             </button>
@@ -659,7 +656,7 @@ export const FarmerRegistrationForm: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 sm:flex-initial px-8 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-xl shadow-emerald-950/50 flex items-center justify-center gap-2 text-sm"
+              className="flex-1 sm:flex-initial px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
             >
               <UserPlus className="w-4 h-4" />
               <span>{isLoading ? 'Enrolling Client...' : 'Enroll Farmer Client'}</span>

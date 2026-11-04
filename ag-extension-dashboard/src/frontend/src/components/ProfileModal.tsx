@@ -13,7 +13,7 @@ import {
   Trash2,
   Check,
   Smartphone,
-  Sparkles,
+  UserCheck,
   AlertTriangle,
   Download,
 } from 'lucide-react';
@@ -279,13 +279,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       {selectedAvatar.emoji}
                     </div>
                     <span className="absolute -bottom-1 -right-1 p-1 bg-white text-slate-950 rounded-full shadow-md text-[10px]">
-                      <Sparkles className="w-3 h-3 text-emerald-600" />
+                      <UserCheck className="w-3 h-3 text-emerald-600" />
                     </span>
                   </div>
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h2 className="text-xl sm:text-2xl font-black truncate tracking-tight">
+                      <h2 className="text-xl sm:text-2xl font-semibold truncate tracking-tight">
                         {formData.firstName || user.firstName} {formData.lastName || user.lastName}
                       </h2>
                     </div>
@@ -347,7 +347,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   <div className="space-y-6">
                     {/* Avatar Picker (QA #23) */}
                     <div>
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-2">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block mb-2">
                         Select Field Avatar Persona
                       </label>
                       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
@@ -380,7 +380,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     {/* Inputs */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                           {t('common_first_name') || 'First Name'}
                         </label>
                         <input
@@ -393,7 +393,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                           {t('common_last_name') || 'Last Name'}
                         </label>
                         <input
@@ -406,7 +406,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                           Custom handle (this device)
                         </label>
                         <div className="relative mt-1">
@@ -422,7 +422,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                           Email Address
                         </label>
                         <div className="relative mt-1">
@@ -440,7 +440,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                           Field Mobile Number (SMS Bot Link)
                         </label>
                         <div className="relative mt-1">
@@ -458,7 +458,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                           {t('common_region') || 'Assigned District / Region'}
                         </label>
                         <div className="relative mt-1">
@@ -481,7 +481,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   <div className="space-y-6">
                     {/* Language Preference */}
                     <div>
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-2">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block mb-2">
                         System Interface Language (this device)
                       </label>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -518,7 +518,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     {/* Measurement Units */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
+                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block">
                           Land Area Measurement
                         </label>
                         <div className="flex gap-2">
@@ -540,7 +540,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
 
                       <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
+                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block">
                           Temperature Scale
                         </label>
                         <div className="flex gap-2">
@@ -567,7 +567,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
                     {/* Notification Toggles */}
                     <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
-                      <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                      <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
                         Notification Preferences (stored on this device; delivery is not configured here)
                       </div>
                       {[
@@ -610,7 +610,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <form onSubmit={handlePasswordChange} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
                       <div className="flex items-center gap-2 mb-2">
                         <KeyRound className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                        <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                           Change Account Password
                         </h4>
                       </div>
@@ -668,7 +668,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <div className="p-4 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/20 space-y-3">
                       <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
                         <AlertTriangle className="w-4 h-4" />
-                        <h4 className="text-xs font-bold uppercase tracking-wider">Account Data & Danger Zone</h4>
+                        <h4 className="text-xs font-semibold">Account Data & Danger Zone</h4>
                       </div>
                       <p className="text-xs text-rose-900 dark:text-rose-200">
                         Export your personal data or request account erasure. Erasure anonymizes your profile; some financial and audit records may be retained as required by law.

@@ -125,7 +125,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
         {isRecording && (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-50 dark:bg-rose-950/40 border-b border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs font-mono">
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-rose-500" />
             <span>Listening for agronomic inquiry... Speak now</span>
             <div className="flex items-center gap-0.5 ml-auto">
               {[4, 12, 8, 16, 10, 14, 6].map((h, i) => (
@@ -167,7 +167,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                 !isSpeechSupported
                   ? 'opacity-30 cursor-not-allowed border-transparent text-slate-400 dark:text-white/30'
                   : isRecording
-                  ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/40 animate-pulse'
+                  ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/40'
                   : 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white border-transparent hover:border-slate-200 dark:hover:border-white/10'
               }`}
               title={

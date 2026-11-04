@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, X, Send, AlertCircle, Sparkles } from 'lucide-react';
+import { Mail, X, Send, AlertCircle, MessageSquare } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 
 interface BulkSmsModalProps {
@@ -65,10 +65,10 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
                     <Mail className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                       Bulk SMS Composer
                     </h3>
-                    <p className="text-xs font-bold text-primary-600 uppercase tracking-widest">
+                    <p className="text-xs font-medium text-primary-600 dark:text-primary-400 font-mono tabular-nums">
                       Sending to {selectedCount} farmers
                     </p>
                   </div>
@@ -84,8 +84,8 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
 
             <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
               <div className="space-y-3">
-                <label className="text-xxs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                  <Sparkles className="w-3 h-3" />
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                  <MessageSquare className="w-3.5 h-3.5" />
                   Quick Templates
                 </label>
                 <div className="grid grid-cols-1 gap-2">
@@ -106,11 +106,11 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <label className="text-xxs font-black uppercase tracking-widest text-gray-500">
+                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     Custom Message
                   </label>
                   <span
-                    className={`text-xxs font-black tracking-widest ${message.length > 160 ? 'text-amber-500' : 'text-gray-400'}`}
+                    className={`text-xs font-mono tabular-nums ${message.length > 160 ? 'text-amber-500' : 'text-gray-400'}`}
                   >
                     {message.length} / 160 chars
                   </span>
@@ -119,12 +119,12 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
                   value={message}
                   onChange={e => setMessage(e.target.value)}
                   placeholder="Type your message here..."
-                  className="w-full h-32 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all resize-none dark:text-white"
+                  className="w-full h-32 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl p-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500/30 focus:border-primary-500 transition-all resize-none dark:text-white"
                 />
                 {message.length > 160 && (
                   <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800">
                     <AlertCircle className="w-4 h-4 text-amber-600" />
-                    <p className="text-xxs font-bold text-amber-700 dark:text-amber-400 leading-tight">
+                    <p className="text-xs text-amber-700 dark:text-amber-400 leading-tight">
                       Warning: Messages over 160 characters may be split into multiple SMS.
                     </p>
                   </div>
@@ -135,21 +135,21 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
             <div className="p-6 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-700 flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-black text-xs uppercase tracking-widest rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 transition-all"
+                className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-xs rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 {t('nav_cancel') || 'Cancel'}
               </button>
               <button
                 onClick={handleSend}
                 disabled={!message.trim() || isLoading}
-                className="flex-[2] px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-primary-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-[2] px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium text-xs rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <Send className="w-4 h-4" />
                 )}
-                {isLoading ? 'SENDING...' : `SEND TO ${selectedCount} FARMERS`}
+                <span>{isLoading ? 'Sending...' : `Send to ${selectedCount} farmers`}</span>
               </button>
             </div>
           </motion.div>

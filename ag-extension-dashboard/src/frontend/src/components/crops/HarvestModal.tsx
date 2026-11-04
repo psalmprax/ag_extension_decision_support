@@ -61,14 +61,14 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
                 Status Result
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
                   onClick={() => setHarvestForm(prev => ({ ...prev, status: 'harvested' }))}
-                  className={`py-3 text-sm font-bold uppercase rounded-xl border transition-all ${
+                  className={`py-2.5 text-xs font-medium rounded-lg border transition-colors ${
                     harvestForm.status === 'harvested'
                       ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
                       : 'bg-slate-950 text-slate-400 border-white/5'
@@ -79,7 +79,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setHarvestForm(prev => ({ ...prev, status: 'failed' }))}
-                  className={`py-3 text-sm font-bold uppercase rounded-xl border transition-all ${
+                  className={`py-2.5 text-xs font-medium rounded-lg border transition-colors ${
                     harvestForm.status === 'failed'
                       ? 'bg-red-500/10 text-red-400 border-red-500'
                       : 'bg-slate-950 text-slate-400 border-white/5'
@@ -92,7 +92,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-400 mb-1">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
                   Harvest Date
                 </label>
                 <input
@@ -105,7 +105,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-400 mb-1">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
                   Yield (Kilograms)
                 </label>
                 <input
@@ -120,7 +120,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
                 Harvest Notes / Remarks
               </label>
               <textarea

@@ -101,33 +101,33 @@ const SoilUploadSection: React.FC<{
 
           {soilImagePreview ? (
             <div className="space-y-3 relative z-10">
-              <div className="relative max-w-xs mx-auto rounded-[3px] overflow-hidden border border-emerald-500/40 shadow-lg shadow-emerald-950/60">
+              <div className="relative max-w-xs mx-auto rounded-md overflow-hidden border border-emerald-500/40">
                 <img src={soilImagePreview} alt="Soil Specimen" className="w-full h-40 object-cover" />
                 {isAnalyzing && (
                   <div className="absolute inset-0 bg-emerald-500/20 backdrop-blur-[1px] flex items-center justify-center">
-                    <div className="w-full h-0.5 bg-emerald-400 shadow-[0_0_8px_#10b981] animate-pulse" />
+                    <div className="w-full h-0.5 bg-emerald-500/50" />
                   </div>
                 )}
               </div>
               <button
                 type="button"
                 onClick={onRemoveImage}
-                className="text-[11px] font-mono text-rose-400 hover:text-rose-300 underline uppercase tracking-wider"
+                className="text-xs font-mono text-rose-400 hover:text-rose-300 underline"
               >
                 [ Clear & Retake ]
               </button>
             </div>
           ) : (
             <div className="space-y-3 py-3">
-              <div className="w-11 h-11 mx-auto rounded-[4px] bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/40 transition-colors">
+              <div className="w-11 h-11 mx-auto rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/40 transition-colors">
                 <Upload className="w-5 h-5" />
               </div>
               <div>
                 <label htmlFor="soil-upload" className="cursor-pointer">
-                  <span className="text-xs font-bold text-emerald-400 hover:text-emerald-300 uppercase tracking-wider">
+                  <span className="text-xs font-medium text-emerald-400 hover:text-emerald-300">
                     Upload Soil Profile Photo
                   </span>
-                  <p className="text-[10px] font-mono text-slate-500 mt-1">
+                  <p className="text-xxs font-mono text-slate-500 mt-1">
                     Direct topsoil or clod close-up (Max 10MB)
                   </p>
                 </label>
@@ -151,7 +151,7 @@ const SoilUploadSection: React.FC<{
     <button
       onClick={onAnalyze}
       disabled={!selectedSoilImage || isAnalyzing}
-      className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-[4px] shadow-lg shadow-emerald-950/60 uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors active:scale-[0.98]"
     >
       {isAnalyzing ? (
         <>
@@ -612,8 +612,9 @@ export function SoilDiagnosticsTab({
                     <span className="text-slate-400">CEC</span>
                     <span className="text-white">{(soilProfile.baseline as { cecCmolPerKg: number | null }).cecCmolPerKg ?? '—'} cmol/kg</span>
                   </div>
-                  <p className="text-[9px] text-amber-400/80 leading-tight pt-1 border-t border-slate-800">
-                    ⚠️ Satellite estimate for this area — not a lab test.
+                  <p className="text-[10px] text-amber-400/80 leading-tight pt-1 border-t border-slate-800 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 shrink-0" />
+                    <span>Satellite estimate for this area — not a lab test.</span>
                   </p>
                 </div>
               ) : soilProfile.location ? (
@@ -624,8 +625,8 @@ export function SoilDiagnosticsTab({
             </div>
 
             {/* Live Moisture */}
-            <div className="p-3 rounded-[3px] bg-slate-950 border border-slate-800">
-              <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 uppercase tracking-wider mb-1">
+            <div className="p-3 rounded-lg bg-slate-950 border border-slate-800">
+              <div className="flex items-center gap-1.5 text-xxs font-mono text-emerald-400 mb-1">
                 <Droplet className="w-3 h-3" /> Open-Meteo Soil Moisture
               </div>
               {soilProfile.moisture && (soilProfile.moisture as { soilMoisture: { avgTop9cm: number | null } }).soilMoisture ? (
@@ -642,8 +643,9 @@ export function SoilDiagnosticsTab({
                     <span className="text-slate-400">3–9 cm</span>
                     <span className="text-white">{(soilProfile.moisture as { soilMoisture: Record<string, number | null> }).soilMoisture['3-9cm'] ?? '—'}</span>
                   </div>
-                  <p className="text-[9px] text-amber-400/80 leading-tight pt-1 border-t border-slate-800">
-                    ⚠️ Modeled ERA5/ECMWF estimate — not a field probe.
+                  <p className="text-[10px] text-amber-400/80 leading-tight pt-1 border-t border-slate-800 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 shrink-0" />
+                    <span>Modeled ERA5/ECMWF estimate — not a field probe.</span>
                   </p>
                 </div>
               ) : soilProfile.location ? (

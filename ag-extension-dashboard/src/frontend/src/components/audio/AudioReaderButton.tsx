@@ -269,7 +269,7 @@ export const AudioReaderButton: React.FC<AudioReaderButtonProps> = ({
       ) : isPlaying ? (
         <span className="relative flex items-center justify-center">
           <VolumeX className={`${iconSizes}`} />
-          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-amber-400 rounded-full animate-ping" />
+          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-amber-400 rounded-full" />
         </span>
       ) : (
         <Volume2 className={`${iconSizes}`} />

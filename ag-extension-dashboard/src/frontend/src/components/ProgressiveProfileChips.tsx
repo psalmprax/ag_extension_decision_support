@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, Clock3, Sparkles } from 'lucide-react';
+import { CheckCircle2, Clock3, FileText } from 'lucide-react';
 
 export interface ProfileParameter {
   key: string;
@@ -27,12 +27,12 @@ export const ProgressiveProfileChips: React.FC<ProgressiveProfileChipsProps> = (
     <div className={`p-3 rounded bg-slate-950/70 border border-slate-800 space-y-2.5 backdrop-blur-md ${className}`}>
       {/* Top Completion Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
-          <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
+          <FileText className="w-3.5 h-3.5 text-emerald-400" />
           <span>{title}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono font-bold text-emerald-400">
+          <span className="text-xs font-mono tabular-nums font-medium text-emerald-400">
             {completedCount}/{totalCount} ({percentage}%)
           </span>
           <div className="w-12 h-1.5 bg-slate-800 rounded-sm overflow-hidden">

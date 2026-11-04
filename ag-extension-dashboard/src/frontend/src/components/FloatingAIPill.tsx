@@ -334,7 +334,7 @@ function getAgronomicFallbackAnswer(query: string): string {
   if (q.includes('maize') && (q.includes('plant') || q.includes('when') || q.includes('calendar') || q.includes('nigeria') || q.includes('kenya'))) {
     if (q.includes('nigeria')) {
       return (
-        "🌽 **Maize Planting Windows for Nigeria:**\n\n" +
+        "**Maize Planting Windows for Nigeria:**\n\n" +
         "• **Southern Rainforest & Forest Zone (Lagos, Ogun, Edo, Delta, Oyo, etc.):**\n" +
         "  - Early Season: Late March to Mid-April (as early rains stabilize).\n" +
         "  - Late Season: Early to Mid-August.\n\n" +
@@ -349,7 +349,7 @@ function getAgronomicFallbackAnswer(query: string): string {
       );
     }
     return (
-      "🌽 **Maize Planting Guidelines & Windows:**\n\n" +
+      "**Maize Planting Guidelines & Windows:**\n\n" +
       "• **East Africa / Kenya (Long Rains):** Mid-March to Mid-April with onset of main rains.\n" +
       "• **Short Rains:** October to early November for fast-maturing highland/dryland varieties.\n" +
       "• **Seedbed Preparation:** Well-tilled, weed-free soil with pH 5.8–6.8.\n" +
@@ -359,7 +359,7 @@ function getAgronomicFallbackAnswer(query: string): string {
 
   if (q.includes('potato') || q.includes('blight')) {
     return (
-      "🥔 **Potato Late Blight (*Phytophthora infestans*) Protocol:**\n\n" +
+      "**Potato Late Blight (*Phytophthora infestans*) Protocol:**\n\n" +
       "1. **Sanitation:** Rogue out and burn voluntary host plants and infected tuber cull piles.\n" +
       "2. **Preventative Spray:** Apply protective contact fungicides (Mancozeb 80 WP at 2.5 g/L or Chlorothalonil) before continuous rain spells or fog.\n" +
       "3. **Curative Spray:** At first sight of water-soaked spots, rotate systemic fungicides (Metalaxyl + Mancozeb or Cymoxanil). Avoid back-to-back single-mode systemic applications to prevent fungicide resistance.\n" +
@@ -369,7 +369,7 @@ function getAgronomicFallbackAnswer(query: string): string {
 
   if (q.includes('stem borer') || q.includes('fall armyworm') || q.includes('armyworm')) {
     return (
-      "🐛 **Stem Borer & Fall Armyworm Integrated Management:**\n\n" +
+      "**Stem Borer & Fall Armyworm Integrated Management:**\n\n" +
       "1. **Push-Pull Strategy:** Intercrop maize with silverleaf desmodium (repels moths) and plant Napier grass or Brachiaria around border edges (traps moths).\n" +
       "2. **Scouting:** Check 20 plants across 5 points in a W-pattern. Look for 'window-pane' feeding patches and moist frass in the central whorl.\n" +
       "3. **Targeted Treatment:** Apply fine sand mixed with wood ash or bio-pesticides (*Bacillus thuringiensis* / Neem seed extract) directly into the whorl. For heavy infestations, apply Chlorantraniliprole or Emamectin Benzoate early in the morning or late evening."
@@ -378,7 +378,7 @@ function getAgronomicFallbackAnswer(query: string): string {
 
   if (q.includes('soil') && (q.includes('ph') || q.includes('acid') || q.includes('lime'))) {
     return (
-      "🌱 **Soil Acidity & pH Amendment Guide:**\n\n" +
+      "**Soil Acidity & pH Amendment Guide:**\n\n" +
       "1. **Lime Application:** For soils below pH 5.5, apply Agricultural Calcitic or Dolomitic Lime at 1.5–2.5 tons/hectare. Broadcast evenly and incorporate into the top 15 cm at least 4 weeks before planting.\n" +
       "2. **Organic Buffering:** Incorporate well-decomposed manure or compost to enhance soil cation exchange capacity (CEC) and reduce aluminum toxicity.\n" +
       "3. **Fertilizer Choice:** Avoid ammonium sulfate fertilizers that acidify soil; substitute with Calcium Ammonium Nitrate (CAN) or coated slow-release urea."
@@ -386,7 +386,7 @@ function getAgronomicFallbackAnswer(query: string): string {
   }
 
   return (
-    "🌿 **Agronomic Advisory:**\n\n" +
+    "**Agronomic Advisory:**\n\n" +
     `Regarding "${query}":\n` +
     "• Ensure balanced soil moisture and inspect foliage for early foliar lesions or chlorosis.\n" +
     "• Adhere to regional recommended planting density and certified seed spacing.\n" +

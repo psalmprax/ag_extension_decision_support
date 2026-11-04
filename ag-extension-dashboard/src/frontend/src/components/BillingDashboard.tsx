@@ -5,7 +5,7 @@ import {
   Settings,
   Shield,
   Ticket,
-  Sparkles,
+  Layers,
   Activity,
   Receipt,
   CheckCircle2,
@@ -58,8 +58,8 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
           <Settings className="w-32 h-32 text-indigo-400" />
         </div>
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center shadow-lg shadow-indigo-950/40">
-            <Shield className="w-6 h-6 text-indigo-400" />
+          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center">
+            <Shield className="w-5 h-5 text-indigo-400" />
           </div>
           <div>
             <h3
@@ -177,8 +177,8 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
       {/* Admin Mobile Money Verification Queue */}
       <section className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl overflow-hidden">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 flex items-center justify-center shadow-lg shadow-amber-950/40">
-            <AlertCircle className="w-6 h-6 text-amber-400" />
+          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center">
+            <AlertCircle className="w-5 h-5 text-amber-400" />
           </div>
           <div>
             <h3 className="text-xl font-bold tracking-tight text-white">
@@ -264,11 +264,11 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
       {/* Admin Voucher Generator */}
       <section className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl overflow-hidden">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center shadow-lg shadow-purple-950/40">
-            <Ticket className="w-6 h-6 text-purple-400" />
+          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center">
+            <Ticket className="w-5 h-5 text-purple-400" />
           </div>
           <div>
-            <h3 className="text-xl font-bold tracking-tight text-white">
+            <h3 className="text-xl font-semibold tracking-tight text-white">
               {t('billing_admin_vouchers') || 'AgriVoucher Minting Engine'}
             </h3>
             <p className="text-xs text-white/60 mt-0.5">
@@ -278,7 +278,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div>
-            <label className="text-xxs font-bold text-white/60 uppercase tracking-widest mb-1.5 block ml-1">
+            <label className="text-xs font-medium text-slate-400 mb-1.5 block">
               Target Tier
             </label>
             <Select
@@ -287,15 +287,15 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
                 billing.setVoucherBatch({ ...billing.voucherBatch, planId: e.target.value })
               }
               options={[
-                { value: 'price_pro_monthly', label: 'PRO OFFICER (Monthly)' },
-                { value: 'price_pro_yearly', label: 'PRO OFFICER (Yearly)' },
-                { value: 'price_enterprise_monthly', label: 'ENTERPRISE COOPERATIVE' },
+                { value: 'price_pro_monthly', label: 'Pro Officer (Monthly)' },
+                { value: 'price_pro_yearly', label: 'Pro Officer (Yearly)' },
+                { value: 'price_enterprise_monthly', label: 'Enterprise Cooperative' },
               ]}
-              className="font-bold uppercase tracking-wider bg-slate-900 border-white/10 text-white rounded-xl text-xs"
+              className="font-medium bg-slate-900 border-white/10 text-white rounded-xl text-xs"
             />
           </div>
           <div>
-            <label className="text-xxs font-bold text-white/60 uppercase tracking-widest mb-1.5 block ml-1">
+            <label className="text-xs font-medium text-slate-400 mb-1.5 block">
               {t('billing_admin_batch_count') || 'Tokens Count'}
             </label>
             <Input
@@ -311,7 +311,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
             />
           </div>
           <div>
-            <label className="text-xxs font-bold text-white/60 uppercase tracking-widest mb-1.5 block ml-1">
+            <label className="text-xs font-medium text-slate-400 mb-1.5 block">
               {t('billing_admin_expiry_days') || 'Expiry (Days)'}
             </label>
             <Input
@@ -333,7 +333,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
             billing.handleGenerateVouchers();
           }}
           disabled={billing.actionLoading === 'generate-vouchers'}
-          className="w-full py-3 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-purple-950/40 transition-all flex items-center justify-center gap-2"
+          className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-xl border border-white/10 transition-colors flex items-center justify-center gap-2"
         >
           {t('billing_admin_generate_vouchers') || 'Mint Batch Vouchers'}
         </button>
@@ -368,37 +368,37 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
   const { t } = useLanguage();
 
   return (
-    <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
+    <div className="bg-slate-900/90 border border-white/10 rounded-xl p-4 sm:p-6 shadow-sm relative overflow-hidden">
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 shrink-0">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
             <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
           </div>
           <div>
             <div className="flex items-center gap-2 sm:gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Billing & Subscriptions</h1>
-              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">Billing & Subscriptions</h1>
+              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <Radio className="w-2.5 h-2.5 text-emerald-400" />
                 Commerce Radar
               </span>
             </div>
-            <p className="text-xs text-white/60 mt-0.5">
+            <p className="text-xs text-slate-400 mt-0.5">
               {t('billing_subtitle') || 'Manage individual farmer quotas, cooperative multi-county extension officer pools, and automated billing methods.'}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
-          {/* Telemetry Stat Chips matching VisitsPage */}
+          {/* Telemetry Stat Chips */}
           <div className="flex items-center gap-2 overflow-x-auto">
             <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white/80 font-mono whitespace-nowrap">
-              Tier: <strong className="text-white">{currentPlanName}</strong>
+              Tier: <strong className="text-white font-medium">{currentPlanName}</strong>
             </span>
             <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 font-mono whitespace-nowrap">
-              Status: <strong>{isProActive ? 'Active' : 'Starter'}</strong>
+              Status: <strong className="font-medium">{isProActive ? 'Active' : 'Starter'}</strong>
             </span>
             <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 font-mono whitespace-nowrap">
-              Billing: <strong>{isAnnual ? 'Annual (-20%)' : 'Monthly'}</strong>
+              Billing: <strong className="font-medium">{isAnnual ? 'Annual (-20%)' : 'Monthly'}</strong>
             </span>
           </div>
 
@@ -408,7 +408,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
               void onPortal();
             }}
             disabled={actionLoading === 'portal'}
-            className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 active:scale-95"
+            className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
           >
             {actionLoading === 'portal' ? (
               <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -420,11 +420,11 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
         </div>
       </div>
 
-      {/* Status Filter / Navigation Tabs matching VisitsPage */}
+      {/* Status Filter / Navigation Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-white/5">
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {[
-            { id: 'plans', label: 'Plans & Pricing', icon: Sparkles },
+            { id: 'plans', label: 'Plans & Pricing', icon: Layers },
             { id: 'usage', label: 'Quota & Telemetry', icon: Activity },
             { id: 'payments', label: 'Payment Rails', icon: CreditCard },
             { id: 'invoices', label: 'Invoices & Receipts', icon: Receipt },
@@ -436,10 +436,10 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
                 triggerHaptic('light');
                 setActiveTab(tab.id as 'plans' | 'usage' | 'payments' | 'invoices' | 'admin');
               }}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 border whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm shadow-emerald-950/40'
-                  : 'bg-white/[0.02] text-white/50 border-white/5 hover:border-white/15 hover:text-white'
+                  ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                  : 'bg-white/[0.02] text-slate-400 border-white/5 hover:border-white/10 hover:text-white'
               }`}
             >
               <tab.icon className="w-3.5 h-3.5" />
@@ -502,10 +502,10 @@ export const BillingDashboard: React.FC = () => {
           <div className="absolute inset-0 border-4 border-emerald-500/20 rounded-full"></div>
           <div className="absolute inset-0 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <CreditCard className="w-8 h-8 text-emerald-400 animate-pulse" />
+            <CreditCard className="w-7 h-7 text-emerald-400" />
           </div>
         </div>
-        <p className="mt-6 text-slate-400 font-black uppercase tracking-widest text-xxs animate-pulse">
+        <p className="mt-4 text-slate-400 font-medium text-xs">
           {t('billing_syncing') || 'Synchronizing Billing Rails...'}
         </p>
       </div>

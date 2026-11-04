@@ -32,22 +32,22 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     danger: {
       icon: AlertTriangle,
       iconBg: 'bg-rose-500/15 border border-rose-500/30 text-rose-400',
-      confirmBg: 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-950/50',
+      confirmBg: 'bg-rose-600 hover:bg-rose-500 text-white',
     },
     warning: {
       icon: AlertCircle,
       iconBg: 'bg-amber-500/15 border border-amber-500/30 text-amber-400',
-      confirmBg: 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-950/50',
+      confirmBg: 'bg-amber-600 hover:bg-amber-500 text-white',
     },
     info: {
       icon: Info,
       iconBg: 'bg-indigo-500/15 border border-indigo-500/30 text-indigo-400',
-      confirmBg: 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-950/50',
+      confirmBg: 'bg-indigo-600 hover:bg-indigo-500 text-white',
     },
     success: {
       icon: CheckCircle,
       iconBg: 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400',
-      confirmBg: 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-950/50',
+      confirmBg: 'bg-emerald-600 hover:bg-emerald-500 text-white',
     },
   };
 
@@ -62,7 +62,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           onClose();
         }}
         disabled={isLoading}
-        className={`flex-1 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 ${radiusClass} font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 active:scale-[0.98]`}
+        className={`flex-1 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 ${radiusClass} font-medium text-xs transition-colors disabled:opacity-50`}
       >
         {cancelText}
       </button>
@@ -72,7 +72,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           onConfirm();
         }}
         disabled={isLoading}
-        className={`flex-1 px-4 py-3 ${config.confirmBg} ${radiusClass} font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg active:scale-[0.98]`}
+        className={`flex-1 px-4 py-2.5 ${config.confirmBg} ${radiusClass} font-medium text-xs transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm`}
       >
         {isLoading ? (
           <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

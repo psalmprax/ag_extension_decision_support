@@ -72,14 +72,14 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
       <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
+            <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center">
               <Users className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Client Portfolio</h1>
+                <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Client Portfolio</h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                  <Radio className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
+                  <Radio className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
                   Telemetry Mesh Active
                 </span>
               </div>
@@ -91,23 +91,23 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
 
           {/* Quick Telemetry Metric Badges */}
           <div className="grid grid-cols-3 sm:flex items-center gap-2 w-full lg:w-auto">
-            <div className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-              <span className="text-xxs font-semibold text-slate-500 dark:text-white/40 uppercase block">Total Clients</span>
-              <strong className="text-sm font-bold text-slate-900 dark:text-white font-mono">{effectiveFarmers.length}</strong>
+            <div className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] text-xs text-center sm:text-left">
+              <span className="text-xxs font-medium text-slate-500 dark:text-white/40 block">Total Clients</span>
+              <strong className="text-sm font-semibold text-slate-900 dark:text-white font-mono tabular-nums">{effectiveFarmers.length}</strong>
             </div>
-            <div className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-              <span className="text-xxs font-semibold text-slate-500 dark:text-white/40 uppercase block">Total Land</span>
-              <strong className="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">{(Number(totalLandHa) || 0).toFixed(1)} ha</strong>
+            <div className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] text-xs text-center sm:text-left">
+              <span className="text-xxs font-medium text-slate-500 dark:text-white/40 block">Total Land</span>
+              <strong className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">{(Number(totalLandHa) || 0).toFixed(1)} ha</strong>
             </div>
-            <div className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-              <span className="text-xxs font-semibold text-slate-500 dark:text-white/40 uppercase block">Selected</span>
-              <strong className="text-sm font-bold text-purple-600 dark:text-purple-400 font-mono">{selectedFarmers.size}</strong>
+            <div className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] text-xs text-center sm:text-left">
+              <span className="text-xxs font-medium text-slate-500 dark:text-white/40 block">Selected</span>
+              <strong className="text-sm font-semibold text-slate-700 dark:text-slate-300 font-mono tabular-nums">{selectedFarmers.size}</strong>
             </div>
           </div>
         </div>
 
         {/* Search & Bulk Select Controls */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 mt-5 border-t border-slate-200/80 dark:border-white/5">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 mt-5 border-t border-slate-200/80 dark:border-white/[0.06]">
           <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 text-slate-400 dark:text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -115,14 +115,14 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search by name, region, crop..."
-              className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:ring-1 focus:ring-emerald-500 dark:focus:ring-emerald-400 outline-none"
+              className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:ring-1 focus:ring-emerald-500 dark:focus:ring-emerald-400 outline-none"
             />
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
             <button
               onClick={toggleSelectAll}
-              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 hover:text-slate-900 dark:text-white/80 dark:hover:text-white transition-colors"
+              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-xs font-medium text-slate-700 hover:text-slate-900 dark:text-white/80 dark:hover:text-white transition-colors"
             >
               {selectedFarmers.size === filteredFarmers.length && filteredFarmers.length > 0
                 ? 'Deselect All'
@@ -130,7 +130,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
             </button>
             <button
               onClick={handleBulkExport}
-              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-50 dark:bg-white/[0.04] dark:hover:bg-emerald-500/15 border border-slate-200 hover:border-emerald-300 dark:border-white/10 dark:hover:border-emerald-500/30 text-xs font-semibold text-slate-700 hover:text-emerald-700 dark:text-white/80 dark:hover:text-emerald-300 transition-colors flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-50 dark:bg-white/[0.04] dark:hover:bg-emerald-500/15 border border-slate-200 hover:border-emerald-300 dark:border-white/[0.08] dark:hover:border-emerald-500/30 text-xs font-medium text-slate-700 hover:text-emerald-700 dark:text-white/80 dark:hover:text-emerald-300 transition-colors flex items-center gap-1.5"
             >
               <FileText className="w-3.5 h-3.5" />
               <span>Export CSV</span>
@@ -153,12 +153,12 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-5 backdrop-blur-xl bg-white dark:bg-slate-900/80 border border-purple-500/30 rounded-xl shadow-xl dark:shadow-2xl space-y-3"
+          className="p-5 backdrop-blur-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-sm space-y-3"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Send className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+              <Send className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
                 Multi-Channel Broadcast to {selectedFarmers.size} Client{selectedFarmers.size !== 1 ? 's' : ''}
               </h4>
             </div>
@@ -174,13 +174,13 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
             onChange={e => setBulkSmsMessage(e.target.value)}
             placeholder="Type advisory alert message... (e.g. Warning: Heavy rain forecast over next 48 hours. Ensure field drainage channels are cleared.)"
             rows={3}
-            className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:ring-1 focus:ring-purple-400 outline-none text-xs resize-none"
+            className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:ring-1 focus:ring-emerald-500/40 outline-none text-xs resize-none"
           />
           <div className="flex items-center justify-between pt-1">
-            <span className="text-xxs text-slate-500 dark:text-white/40 font-mono">{bulkSmsMessage.length} characters</span>
+            <span className="text-xxs text-slate-500 dark:text-white/40 font-mono tabular-nums">{bulkSmsMessage.length} characters</span>
             <button
               onClick={handleBulkSMS}
-              className="px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-purple-950/40 transition-all flex items-center gap-2"
+              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-xl transition-colors flex items-center gap-2"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Dispatch to {selectedFarmers.size} Farmer{selectedFarmers.size !== 1 ? 's' : ''}</span>
@@ -191,12 +191,12 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
 
       {/* ── Farmer Bento Grid ── */}
       {filteredFarmers.length === 0 ? (
-        <div className="p-12 text-center backdrop-blur-xl bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-white/10 rounded-xl space-y-4 shadow-sm">
-          <div className="w-16 h-16 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/40">
+        <div className="p-12 text-center backdrop-blur-xl bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-white/[0.08] rounded-xl space-y-4 shadow-sm">
+          <div className="w-16 h-16 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 flex items-center justify-center mx-auto">
             <Users className="w-8 h-8 opacity-70" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">No Client Records Found</h3>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">No Client Records Found</h3>
             <p className="text-xs text-slate-600 dark:text-white/50 max-w-sm mx-auto">
               {searchQuery
                 ? `No farmers found matching "${searchQuery}". Try clearing search keywords.`
@@ -219,20 +219,20 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
                   transition={{ duration: 0.3, delay: Math.min(idx * 0.03, 0.3) }}
                   key={farmer.id}
                   onClick={() => handleOpenFarmerDetail(farmer)}
-                  className={`backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border rounded-xl p-5 shadow-sm hover:shadow-xl dark:shadow-none transition-all duration-300 relative group flex flex-col justify-between cursor-pointer ${
+                  className={`backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200 relative group flex flex-col justify-between cursor-pointer ${
                     isSelected
-                      ? 'border-emerald-500/60 ring-1 ring-emerald-500/40 shadow-emerald-950/30'
-                      : 'border-slate-200 dark:border-white/10 hover:border-emerald-500/40 hover:-translate-y-1'
+                      ? 'border-emerald-500/60 ring-1 ring-emerald-500/40'
+                      : 'border-slate-200 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/20'
                   }`}
                 >
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-300 font-bold text-base shadow-inner">
+                        <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center text-emerald-700 dark:text-emerald-300 font-semibold text-base">
                           {farmer.firstName?.[0] || 'F'}
                         </div>
                         <div>
-                          <h3 className="font-bold text-slate-900 dark:text-white text-base leading-tight truncate max-w-[140px]">
+                          <h3 className="font-semibold text-slate-900 dark:text-white text-base leading-tight truncate max-w-[140px]">
                             {farmer.firstName} {farmer.lastName}
                           </h3>
                           <span className="text-xxs font-mono text-slate-500 dark:text-white/40">
@@ -258,18 +258,18 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
                     {/* Telemetry Details */}
                     <div className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 text-xs">
                       <div className="space-y-0.5">
-                        <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase tracking-wider block">
+                        <span className="text-xxs font-medium text-slate-500 dark:text-white/40 block">
                           Location
                         </span>
-                        <p className="font-semibold text-slate-800 dark:text-white/90 truncate">
+                        <p className="font-medium text-slate-800 dark:text-white/90 truncate">
                           {farmer.district || farmer.region || farmer.village || '—'}
                         </p>
                       </div>
                       <div className="space-y-0.5">
-                        <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase tracking-wider block">
+                        <span className="text-xxs font-medium text-slate-500 dark:text-white/40 block">
                           Land Holding
                         </span>
-                        <p className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                        <p className="font-semibold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">
                           {farmer.farmSize || 0} ha
                         </p>
                       </div>
@@ -295,16 +295,16 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
                   {/* Card Footer: Protocol badges & detail arrow */}
                   <div className="mt-4 pt-3 border-t border-slate-200/80 dark:border-white/5 flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xxs text-slate-500 dark:text-white/50">
-                      <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 text-slate-700 dark:text-white/70">
+                      <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 text-slate-700 dark:text-white/70 font-medium">
                         SMS
                       </span>
                       {farmer.phone && (
-                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 font-medium">
                           Active
                         </span>
                       )}
                     </div>
-                    <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/[0.03] group-hover:bg-emerald-500/20 text-slate-500 group-hover:text-emerald-600 dark:text-white/50 dark:group-hover:text-emerald-300 flex items-center justify-center transition-colors">
+                    <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/[0.03] group-hover:bg-slate-200 dark:group-hover:bg-white/[0.08] text-slate-500 dark:text-white/50 flex items-center justify-center transition-colors">
                       <ChevronRight className="w-3.5 h-3.5" />
                     </div>
                   </div>
@@ -322,18 +322,18 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 30 }}
-            className="fixed bottom-[calc(8.25rem+env(safe-area-inset-bottom))] md:bottom-8 left-1/2 -translate-x-1/2 z-[1050] backdrop-blur-2xl bg-slate-900/95 border border-emerald-500/40 shadow-2xl shadow-emerald-950/60 rounded-xl px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between sm:justify-start gap-2 sm:gap-4 flex-wrap w-[calc(100%-1.5rem)] max-w-xl md:w-auto"
+            className="fixed bottom-[calc(8.25rem+env(safe-area-inset-bottom))] md:bottom-8 left-1/2 -translate-x-1/2 z-[1050] backdrop-blur-xl bg-slate-900/95 border border-slate-700/80 dark:border-white/10 shadow-xl rounded-xl px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between sm:justify-start gap-2 sm:gap-4 flex-wrap w-[calc(100%-1.5rem)] max-w-xl md:w-auto"
           >
             <div className="flex items-center gap-2 pr-2 border-r border-white/10 text-xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <strong className="text-white font-mono">{selectedFarmers.size}</strong>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <strong className="text-white font-mono tabular-nums">{selectedFarmers.size}</strong>
               <span className="text-white/70">{t('common_selected', { defaultValue: 'selected' })}</span>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
               <button
                 onClick={() => setShowBulkSmsComposer(!showBulkSmsComposer)}
-                className="px-3 sm:px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5"
+                className="px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>{t('portfolio_broadcast_alert', { defaultValue: 'Broadcast Alert' })}</span>
@@ -341,7 +341,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
 
               <button
                 onClick={handleBulkExport}
-                className="px-3 sm:px-4 py-2 bg-white/[0.08] hover:bg-white/[0.12] text-white text-xs font-bold rounded-xl border border-white/10 transition-colors flex items-center gap-1.5"
+                className="px-3 sm:px-4 py-2 bg-white/[0.08] hover:bg-white/[0.12] text-white text-xs font-medium rounded-lg border border-white/10 transition-colors flex items-center gap-1.5"
               >
                 <FileText className="w-3.5 h-3.5" />
                 <span>{t('portfolio_export_csv', { defaultValue: 'Export CSV' })}</span>
@@ -349,7 +349,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
 
               <button
                 onClick={handleBulkDelete}
-                className="px-3 sm:px-4 py-2 bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5"
+                className="px-3 sm:px-4 py-2 bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>{t('common_delete', { defaultValue: 'Delete' })}</span>
@@ -357,7 +357,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
 
               <button
                 onClick={() => setSelectedFarmers(new Set())}
-                className="px-2.5 sm:px-3 py-2 text-white/50 hover:text-white text-xs font-semibold transition-colors"
+                className="px-2.5 sm:px-3 py-2 text-white/50 hover:text-white text-xs font-medium transition-colors"
               >
                 {t('common_clear', { defaultValue: 'Clear' })}
               </button>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Radio } from 'lucide-react';
+import { LayoutDashboard, Radio } from 'lucide-react';
 import type { CanvasViewType } from './rules';
 import type { ChatMessageItem } from './response';
 
@@ -32,7 +32,7 @@ export const MessageStream: React.FC<MessageStreamProps> = ({ messages, isProces
           <div
             className={`max-w-[92%] rounded-xl p-4 text-xs leading-relaxed ${
               msg.sender === 'user'
-                ? 'bg-emerald-600 text-white rounded-tr-none shadow-md shadow-emerald-950/40'
+                ? 'bg-emerald-600 text-white rounded-tr-none shadow-sm'
                 : 'bg-slate-50 border border-slate-200 text-slate-800 dark:bg-white/[0.04] dark:border-white/10 dark:text-white/90 rounded-tl-none space-y-3'
             }`}
           >
@@ -45,9 +45,9 @@ export const MessageStream: React.FC<MessageStreamProps> = ({ messages, isProces
               <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2">
                 <button
                   onClick={() => msg.canvasTrigger && onSelectCanvas(msg.canvasTrigger)}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xxs font-bold flex items-center gap-1.5 transition-colors"
+                  className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-300 text-xs font-medium flex items-center gap-1.5 transition-colors"
                 >
-                  <Sparkles className="w-3 h-3 text-emerald-400" />
+                  <LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />
                   <span>View {msg.canvasLabel || 'Interactive Canvas'} →</span>
                 </button>
               </div>

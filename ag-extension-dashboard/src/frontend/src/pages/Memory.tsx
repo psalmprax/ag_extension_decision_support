@@ -9,7 +9,7 @@ import {
   RefreshCw,
   Filter,
   Radio,
-  Sparkles,
+  Database,
   X,
   Layers,
 } from 'lucide-react';
@@ -148,14 +148,14 @@ function Memory() {
       <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-500/30 flex items-center justify-center shadow-lg shadow-purple-950/40">
-              <Brain className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center">
+              <Brain className="w-5 h-5 text-indigo-400" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Agent Memory & Knowledge Engine</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
-                  <Radio className="w-2.5 h-2.5 text-purple-600 dark:text-purple-400 animate-pulse" />
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Agent Memory & Knowledge Engine</h1>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20">
+                  <Radio className="w-2.5 h-2.5 text-indigo-600 dark:text-indigo-400" />
                   RAG Vector Store Synced
                 </span>
               </div>
@@ -169,16 +169,16 @@ function Memory() {
             {/* KPI Telemetry Chips */}
             <div className="grid grid-cols-3 sm:flex items-center gap-2 w-full sm:w-auto">
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xxs font-semibold text-slate-500 dark:text-white/40 uppercase block">Vectors</span>
-                <strong className="text-sm font-bold text-slate-900 dark:text-white font-mono">{memories.length}</strong>
+                <span className="text-xs text-slate-500 dark:text-white/40 block">Vectors</span>
+                <strong className="text-sm font-semibold text-slate-900 dark:text-white font-mono tabular-nums">{memories.length}</strong>
               </div>
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xxs font-semibold text-slate-500 dark:text-white/40 uppercase block">Categories</span>
-                <strong className="text-sm font-bold text-purple-600 dark:text-purple-400 font-mono">{categories.length}</strong>
+                <span className="text-xs text-slate-500 dark:text-white/40 block">Categories</span>
+                <strong className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 font-mono tabular-nums">{categories.length}</strong>
               </div>
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xxs font-semibold text-slate-500 dark:text-white/40 uppercase block">Mean Score</span>
-                <strong className="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">{avgImportanceScore.toFixed(0)}%</strong>
+                <span className="text-xs text-slate-500 dark:text-white/40 block">Mean Score</span>
+                <strong className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">{avgImportanceScore.toFixed(0)}%</strong>
               </div>
             </div>
 
@@ -189,10 +189,10 @@ function Memory() {
                   setNewMemory({ category: '', key: '', value: '', importance: 0.5 });
                   setShowAddModal(true);
                 }}
-                className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-purple-950/40 transition-all flex items-center gap-2"
+                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-xl border border-white/10 transition-colors flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
-                <span>Inject Memory</span>
+                <span>Add Memory</span>
               </button>
               <button
                 onClick={() => reload()}
@@ -240,10 +240,10 @@ function Memory() {
       <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl space-y-4">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Dynamic RAG Semantic Mesh</h3>
+            <Database className="w-4 h-4 text-indigo-500" />
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Dynamic RAG Semantic Mesh</h3>
           </div>
-          <span className="px-2.5 py-1 rounded-md text-xxs font-mono uppercase bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/20">
+          <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20">
             Real-Time Impulse Graph
           </span>
         </div>
@@ -314,11 +314,11 @@ function Memory() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1.5">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-bold uppercase tracking-wider bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium capitalize bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20">
                       <Tag className="w-2.5 h-2.5" />
                       {memory.category}
                     </span>
-                    <h4 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
+                    <h4 className="font-semibold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
                       {memory.key}
                     </h4>
                   </div>
@@ -326,14 +326,14 @@ function Memory() {
                   <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => handleEditMemory(memory)}
-                      className="p-1.5 text-slate-400 dark:text-white/40 hover:text-purple-600 dark:hover:text-purple-300 rounded-lg hover:bg-slate-200 dark:hover:bg-white/5 transition-all"
+                      className="p-1.5 text-slate-400 dark:text-white/40 hover:text-indigo-600 dark:hover:text-indigo-300 rounded-lg hover:bg-slate-200 dark:hover:bg-white/5 transition-colors"
                       title="Edit Memory"
                     >
                       <Edit className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleDeleteMemory(memory.category, memory.key)}
-                      className="p-1.5 text-slate-400 dark:text-white/40 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-200 dark:hover:bg-white/5 transition-all"
+                      className="p-1.5 text-slate-400 dark:text-white/40 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-200 dark:hover:bg-white/5 transition-colors"
                       title="Delete Memory"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -347,14 +347,14 @@ function Memory() {
 
                 {/* Importance Bar & Telemetry */}
                 <div className="space-y-1.5 pt-1">
-                  <div className="flex justify-between text-xxs font-mono text-slate-500 dark:text-white/40">
+                  <div className="flex justify-between text-xs font-mono tabular-nums text-slate-500 dark:text-white/40">
                     <span>Importance: {((memory.importance || 0.5) * 100).toFixed(0)}%</span>
                     <span>Accesses: {memory.accessCount || 0}</span>
                     <span>{new Date(memory.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div className="w-full bg-slate-200 dark:bg-white/5 rounded-full h-1.5 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-purple-500 to-indigo-400 h-full rounded-full transition-all duration-500"
+                      className="bg-emerald-600 dark:bg-emerald-500 h-full rounded-full transition-all duration-500"
                       style={{ width: `${(memory.importance || 0.5) * 100}%` }}
                     />
                   </div>
@@ -368,8 +368,8 @@ function Memory() {
       {/* ── Category Cluster Summary ── */}
       {memorySummary.length > 0 && (
         <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <Layers className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             Category Vector Distribution & Cluster Strength
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -379,9 +379,9 @@ function Memory() {
                 className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between"
               >
                 <div>
-                  <h4 className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-wider">{category.category}</h4>
-                  <p className="text-xxs font-mono text-slate-500 dark:text-white/40 mt-0.5">
-                    Mean Recall: {(category.avgImportance * 100).toFixed(0)}%
+                  <h4 className="font-medium text-xs text-slate-900 dark:text-white">{category.category}</h4>
+                  <p className="text-xs font-mono tabular-nums text-slate-500 dark:text-white/40 mt-0.5">
+                    Mean recall: {(category.avgImportance * 100).toFixed(0)}%
                   </p>
                 </div>
                 <span className="text-lg font-mono font-bold text-purple-600 dark:text-purple-400">{category.count}</span>
@@ -436,42 +436,42 @@ function Memory() {
 
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-xxs font-bold uppercase tracking-wider text-slate-500 dark:text-white/60">Category *</label>
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Category *</label>
                   <input
                     type="text"
                     value={newMemory.category}
                     onChange={e => setNewMemory({ ...newMemory, category: e.target.value })}
                     placeholder="e.g. soil_ph, crop_rotation, pest_protocol"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 text-xs outline-none focus:ring-1 focus:ring-purple-400"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xxs font-bold uppercase tracking-wider text-slate-500 dark:text-white/60">Vector Key *</label>
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Vector Key *</label>
                   <input
                     type="text"
                     value={newMemory.key}
                     onChange={e => setNewMemory({ ...newMemory, key: e.target.value })}
                     placeholder="e.g. maize_nitrogen_deficiency_remedy"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 text-xs outline-none focus:ring-1 focus:ring-purple-400"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xxs font-bold uppercase tracking-wider text-slate-500 dark:text-white/60">Knowledge Value / Fact *</label>
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Knowledge Value / Fact *</label>
                   <textarea
                     rows={4}
                     value={newMemory.value}
                     onChange={e => setNewMemory({ ...newMemory, value: e.target.value })}
                     placeholder="Provide the exact agronomic guidance, fertilizer ratio, or disease symptom description..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 text-xs outline-none focus:ring-1 focus:ring-purple-400 resize-none font-mono"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 text-xs outline-none focus:ring-1 focus:ring-emerald-400 resize-none font-mono"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex justify-between text-xxs font-bold uppercase tracking-wider text-slate-500 dark:text-white/60">
+                  <div className="flex justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
                     <span>Recall Importance Weight</span>
-                    <span className="text-purple-600 dark:text-purple-400 font-mono font-bold">{(newMemory.importance * 100).toFixed(0)}%</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-mono font-medium">{(newMemory.importance * 100).toFixed(0)}%</span>
                   </div>
                   <input
                     type="range"
@@ -480,7 +480,7 @@ function Memory() {
                     step="0.05"
                     value={newMemory.importance}
                     onChange={e => setNewMemory({ ...newMemory, importance: parseFloat(e.target.value) })}
-                    className="w-full accent-purple-500"
+                    className="w-full accent-emerald-500"
                   />
                 </div>
 
@@ -491,16 +491,16 @@ function Memory() {
                       setShowAddModal(false);
                       setEditingMemory(null);
                     }}
-                    className="px-4 py-2 text-xs font-semibold text-slate-500 dark:text-white/60 hover:text-slate-800 dark:hover:text-white transition-colors"
+                    className="px-4 py-2 text-xs font-medium text-slate-500 dark:text-white/60 hover:text-slate-800 dark:hover:text-white transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={handleAddMemory}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs transition-all shadow-lg shadow-purple-950/40"
+                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs transition-colors"
                   >
-                    {editingMemory ? 'Update Vector' : 'Inject Vector'}
+                    {editingMemory ? 'Update Vector' : 'Save Vector'}
                   </button>
                 </div>
               </div>

@@ -64,7 +64,7 @@ function DnsSection({ dns }: { dns?: Record<string, Record<string, unknown>> }) 
   if (!dns) return null;
   return (
     <div className="mb-4">
-      <h4 className="text-xxs font-bold text-slate-500 dark:text-white/50 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+      <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1.5">
         <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> DNS Resolution & Edge Routing
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -97,7 +97,7 @@ function PortsSection({ ports }: { ports?: Array<Record<string, unknown>> }) {
   if (!ports) return null;
   return (
     <div className="mb-4">
-      <h4 className="text-xxs font-bold text-slate-500 dark:text-white/50 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+      <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1.5">
         <Terminal className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Port Connectivity & Sockets
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
@@ -127,7 +127,7 @@ function TraefikSection({ traefik }: { traefik?: Record<string, unknown> }) {
   const frontendOk = traefik.frontend_via_traefik === 'reachable';
   return (
     <div className="mb-4">
-      <h4 className="text-xxs font-bold text-slate-500 dark:text-white/50 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+      <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1.5">
         <Cpu className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Reverse Proxy Ingress (Traefik)
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -170,7 +170,7 @@ function ContainerNetworkSection({
   if (!container_network) return null;
   return (
     <div className="mb-4">
-      <h4 className="text-xxs font-bold text-slate-500 dark:text-white/50 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+      <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1.5">
         <Server className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Container Mesh Topology
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
@@ -206,7 +206,7 @@ function SslSection({ ssl }: { ssl?: Record<string, unknown> }) {
   const errorText = String(ssl.error ?? 'Not available (HTTPS not configured)');
   return (
     <div className="mb-4">
-      <h4 className="text-xxs font-bold text-slate-500 dark:text-white/50 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+      <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1.5">
         <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> TLS / SSL Certificate Status
       </h4>
       <div
@@ -244,7 +244,7 @@ function DeploymentSection({ deployment }: { deployment?: Record<string, unknown
   const acmeOk = Boolean(deployment.acme_email_configured);
   return (
     <div className="mb-4">
-      <h4 className="text-xxs font-bold text-slate-500 dark:text-white/50 mb-2 uppercase tracking-wider">
+      <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
         Deployment Runtime Specs
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -379,9 +379,9 @@ function ComponentHealthCard({
           <div>
             <h4 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">{check.component}</h4>
             <div
-              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xxs font-bold uppercase tracking-wider border mt-1 ${style.pill}`}
+              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium capitalize border mt-1 ${style.pill}`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${style.dot} animate-pulse`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
               {check.status}
             </div>
           </div>
@@ -629,14 +629,14 @@ function SystemHealth() {
       <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
-              <Activity className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+              <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">SRE & Self-Healing Telemetry</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                  <Radio className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">SRE & Self-Healing Telemetry</h1>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                  <Radio className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
                   Cluster Online
                 </span>
               </div>
@@ -650,7 +650,7 @@ function SystemHealth() {
             <button
               onClick={handleRunDiagnostics}
               disabled={isRunningDiagnostics}
-              className="px-4 py-2.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 text-xs font-bold rounded-xl shadow-lg shadow-amber-950/40 transition-all flex items-center gap-2 disabled:opacity-50"
+              className="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
             >
               <Activity className={`w-4 h-4 ${isRunningDiagnostics ? 'animate-spin' : ''}`} />
               <span>{isRunningDiagnostics ? 'Running Scan...' : 'Deep Diagnostic'}</span>
@@ -658,7 +658,7 @@ function SystemHealth() {
             <button
               onClick={() => reload(true)}
               disabled={isRefreshing}
-              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] dark:text-white border border-slate-200 dark:border-white/10 text-xs font-bold rounded-xl transition-all flex items-center gap-2 disabled:opacity-50"
+              className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] dark:text-white border border-slate-200 dark:border-white/10 text-xs font-medium rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
@@ -702,12 +702,12 @@ function SystemHealth() {
       {/* ── Component Health Radar Grid ── */}
       <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl space-y-6">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Server className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             Core Infrastructure Nodes ({healthChecks.length})
           </h3>
           <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
             Active Mesh
           </span>
         </div>

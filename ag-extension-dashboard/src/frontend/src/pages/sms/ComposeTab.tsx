@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Send, CheckCircle, XCircle, Loader2, Plus, Sparkles } from 'lucide-react';
+import { Send, CheckCircle, XCircle, Loader2, Plus, Languages } from 'lucide-react';
 import { useLanguage } from '../../lib/LanguageContext';
 
 export function SMSComposerComposeTab({
@@ -86,12 +86,12 @@ export function SMSComposerComposeTab({
               <button
                 onClick={handleTranslate}
                 disabled={isTranslating || !message}
-                className="flex items-center gap-1.5 px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg text-xxs font-bold uppercase tracking-wider hover:bg-primary-100 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg text-xs font-medium hover:bg-primary-100 transition-colors disabled:opacity-50"
               >
                 {isTranslating ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <Sparkles className="w-3 h-3" />
+                  <Languages className="w-3.5 h-3.5" />
                 )}
                 {t('common_translate') || 'Translate'}
               </button>

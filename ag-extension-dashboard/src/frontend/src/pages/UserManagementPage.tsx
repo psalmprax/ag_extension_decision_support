@@ -213,14 +213,14 @@ export function UserManagementPage() {
       <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
-              <Users className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+              <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{t('users_directory_title', 'Staff & Officer Directory')}</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                  <Radio className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">{t('users_directory_title', 'Staff & Officer Directory')}</h1>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                  <Radio className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
                   {t('users_rbac_active', 'RBAC Active')}
                 </span>
               </div>
@@ -234,26 +234,26 @@ export function UserManagementPage() {
             {/* KPI Telemetry Chips */}
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:flex items-center gap-2 w-full sm:w-auto">
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xxs font-semibold text-slate-500 dark:text-white/40 uppercase block">{t('users_stat_total_staff', 'Total Staff')}</span>
-                <strong className="text-sm font-bold text-slate-900 dark:text-white font-mono">{usersList.length}</strong>
+                <span className="text-xs text-slate-500 dark:text-white/40 block">{t('users_stat_total_staff', 'Total Staff')}</span>
+                <strong className="text-sm font-semibold text-slate-900 dark:text-white font-mono tabular-nums">{usersList.length}</strong>
               </div>
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xxs font-semibold text-slate-500 dark:text-white/40 uppercase block">{t('users_stat_officers', 'Officers')}</span>
-                <strong className="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">{officersCount}</strong>
+                <span className="text-xs text-slate-500 dark:text-white/40 block">{t('users_stat_officers', 'Officers')}</span>
+                <strong className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">{officersCount}</strong>
               </div>
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xxs font-semibold text-slate-500 dark:text-white/40 uppercase block">{t('users_stat_countries', 'Countries')}</span>
-                <strong className="text-sm font-bold text-sky-600 dark:text-sky-400 font-mono">{uniqueCountries}</strong>
+                <span className="text-xs text-slate-500 dark:text-white/40 block">{t('users_stat_countries', 'Countries')}</span>
+                <strong className="text-sm font-semibold text-sky-600 dark:text-sky-400 font-mono tabular-nums">{uniqueCountries}</strong>
               </div>
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xxs font-semibold text-slate-500 dark:text-white/40 uppercase block">{t('users_stat_regions', 'Regions')}</span>
-                <strong className="text-sm font-bold text-purple-600 dark:text-purple-400 font-mono">{uniqueRegions}</strong>
+                <span className="text-xs text-slate-500 dark:text-white/40 block">{t('users_stat_regions', 'Regions')}</span>
+                <strong className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 font-mono tabular-nums">{uniqueRegions}</strong>
               </div>
             </div>
 
             <button
               onClick={() => setShowCreateModal(true)}
-              className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
             >
               <UserPlus className="w-4 h-4" />
               <span>{t('users_btn_create_user', 'Create User')}</span>
@@ -332,16 +332,16 @@ export function UserManagementPage() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500/30 to-teal-500/30 border border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-300 font-bold text-sm shadow-md">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-200 font-medium text-xs">
                       {(user.firstName?.[0] || '?').toUpperCase()}
                       {(user.lastName?.[0] || '').toUpperCase()}
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
+                      <h3 className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
                         {user.firstName} {user.lastName}
                       </h3>
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xxs font-bold uppercase tracking-wider border mt-1 ${roleBadge.color}`}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium capitalize border mt-1 ${roleBadge.color}`}
                       >
                         <Shield className="w-2.5 h-2.5" />
                         {t(roleBadge.labelKey, roleBadge.label)}
@@ -442,60 +442,60 @@ export function UserManagementPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">{t('users_form_first_name', 'First Name *')}</label>
+                    <label className="text-xs font-medium text-white/70">{t('users_form_first_name', 'First Name *')}</label>
                     <input
                       type="text"
                       required
                       value={formData.firstName}
                       onChange={e => setFormData({ ...formData, firstName: e.target.value })}
                       placeholder="e.g. Kiprono"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                      className="w-full px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">{t('users_form_last_name', 'Last Name *')}</label>
+                    <label className="text-xs font-medium text-white/70">{t('users_form_last_name', 'Last Name *')}</label>
                     <input
                       type="text"
                       required
                       value={formData.lastName}
                       onChange={e => setFormData({ ...formData, lastName: e.target.value })}
                       placeholder="e.g. Rotich"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                      className="w-full px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xxs font-bold uppercase tracking-wider text-white/60">{t('users_form_work_email', 'Work Email *')}</label>
+                  <label className="text-xs font-medium text-white/70">{t('users_form_work_email', 'Work Email *')}</label>
                   <input
                     type="email"
                     required
                     value={formData.email}
                     onChange={e => setFormData({ ...formData, email: e.target.value })}
                     placeholder="officer@extension.gov"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                    className="w-full px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xxs font-bold uppercase tracking-wider text-white/60">{t('users_form_password', 'Password *')}</label>
+                  <label className="text-xs font-medium text-white/70">{t('users_form_password', 'Password *')}</label>
                   <input
                     type="password"
                     required
                     value={formData.password}
                     onChange={e => setFormData({ ...formData, password: e.target.value })}
                     placeholder="••••••••••••"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                    className="w-full px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">{t('users_form_role', 'System Role')}</label>
+                    <label className="text-xs font-medium text-white/70">{t('users_form_role', 'System Role')}</label>
                     <select
                       value={formData.role}
                       onChange={e => setFormData({ ...formData, role: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-slate-900 text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                      className="w-full px-3 py-2 rounded-lg border border-white/10 bg-slate-900 text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                     >
                       {ROLES.map(r => (
                         <option key={r.value} value={r.value}>
@@ -505,31 +505,31 @@ export function UserManagementPage() {
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">{t('users_form_phone', 'Phone Number')}</label>
+                    <label className="text-xs font-medium text-white/70">{t('users_form_phone', 'Phone Number')}</label>
                     <input
                       type="tel"
                       value={formData.phone}
                       onChange={e => setFormData({ ...formData, phone: e.target.value })}
                       placeholder="+254 712 345 678"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                      className="w-full px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">{t('users_form_country', 'Country *')}</label>
+                    <label className="text-xs font-medium text-white/70">{t('users_form_country', 'Country *')}</label>
                     <select
                       required
                       value={formData.country}
                       onChange={e => handleCountryChange(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-slate-900 text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer"
+                      className="w-full px-3 py-2 rounded-lg border border-white/10 bg-slate-900 text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer"
                     >
                       {CONTINENT_ORDER.map(continent => {
                         const countries = SUPPORTED_COUNTRIES.filter(c => c.continent === continent);
                         if (countries.length === 0) return null;
                         return (
-                          <optgroup key={continent} label={continent} className="bg-slate-900 text-emerald-400 font-bold">
+                          <optgroup key={continent} label={continent} className="bg-slate-900 text-emerald-400 font-medium">
                             {countries.map(c => (
                               <option key={c.name} value={c.name} className="bg-slate-900 text-white font-normal">
                                 {c.flag} {c.name}
@@ -541,7 +541,7 @@ export function UserManagementPage() {
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xxs font-bold uppercase tracking-wider text-white/60">
+                    <label className="text-xs font-medium text-white/70">
                       {t('users_form_region', 'Assigned Region / Territory')}
                     </label>
                     <div className="relative">
@@ -551,7 +551,7 @@ export function UserManagementPage() {
                         value={formData.region}
                         onChange={e => setFormData({ ...formData, region: e.target.value })}
                         placeholder={availableRegions.length > 0 ? `e.g. ${availableRegions[0]}` : t('users_form_region_placeholder', 'e.g. District / Province')}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                        className="w-full px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                       />
                       <datalist id="user-region-suggestions">
                         {availableRegions.map(reg => (
@@ -566,14 +566,14 @@ export function UserManagementPage() {
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="px-4 py-2 text-xs font-semibold text-white/60 hover:text-white transition-colors"
+                    className="px-4 py-2 text-xs font-medium text-white/60 hover:text-white transition-colors"
                   >
                     {t('common_cancel', 'Cancel')}
                   </button>
                   <button
                     type="submit"
                     disabled={createUser.isPending}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-emerald-950/40 disabled:opacity-50"
+                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center gap-2 transition-colors disabled:opacity-50"
                   >
                     {createUser.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                     <span>{createUser.isPending ? t('users_btn_registering', 'Registering...') : t('users_btn_create_account', 'Create Account')}</span>
@@ -626,16 +626,16 @@ export function UserManagementPage() {
               {/* Telemetry Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-xxs font-bold text-white/40 uppercase tracking-wider block">{t('users_history_total_logins', 'Total Logins')}</span>
-                  <strong className="text-base font-bold text-white font-mono">{loginStatsData?.totalLogins ?? 0}</strong>
+                  <span className="text-xs text-white/50 block">{t('users_history_total_logins', 'Total Logins')}</span>
+                  <strong className="text-sm font-semibold text-white font-mono tabular-nums">{loginStatsData?.totalLogins ?? 0}</strong>
                 </div>
                 <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-xxs font-bold text-white/40 uppercase tracking-wider block">{t('users_history_failed_24h', 'Failed (24h)')}</span>
-                  <strong className="text-base font-bold text-rose-400 font-mono">{loginStatsData?.failedAttempts24h ?? 0}</strong>
+                  <span className="text-xs text-white/50 block">{t('users_history_failed_24h', 'Failed (24h)')}</span>
+                  <strong className="text-sm font-semibold text-rose-400 font-mono tabular-nums">{loginStatsData?.failedAttempts24h ?? 0}</strong>
                 </div>
                 <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-xxs font-bold text-white/40 uppercase tracking-wider block">{t('users_history_last_ip', 'Last IP')}</span>
-                  <strong className="text-xs font-bold text-emerald-400 font-mono truncate block">{loginStatsData?.lastLoginIp || '—'}</strong>
+                  <span className="text-xs text-white/50 block">{t('users_history_last_ip', 'Last IP')}</span>
+                  <strong className="text-xs font-semibold text-emerald-400 font-mono tabular-nums truncate block">{loginStatsData?.lastLoginIp || '—'}</strong>
                 </div>
               </div>
 
@@ -643,7 +643,7 @@ export function UserManagementPage() {
               <div className="max-h-[300px] overflow-y-auto rounded-xl border border-white/10 bg-slate-950/60 divide-y divide-white/5">
                 {isLoadingHistory ? (
                   <div className="p-12 text-center text-white/50 text-xs flex items-center justify-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+                    <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
                     <span>{t('users_history_loading', 'Loading access history...')}</span>
                   </div>
                 ) : !loginHistoryData?.items || loginHistoryData.items.length === 0 ? (
@@ -656,7 +656,7 @@ export function UserManagementPage() {
                     <div key={entry.id} className="p-3.5 flex items-center justify-between gap-4 text-xs hover:bg-white/[0.02] transition-colors">
                       <div className="flex items-center gap-3">
                         <span
-                          className={`px-2 py-0.5 rounded-md text-xxs font-bold uppercase tracking-wider border ${
+                          className={`px-2 py-0.5 rounded-md text-xs font-medium capitalize border ${
                             entry.status === 'success'
                               ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
                               : 'bg-rose-500/15 text-rose-300 border-rose-500/30'

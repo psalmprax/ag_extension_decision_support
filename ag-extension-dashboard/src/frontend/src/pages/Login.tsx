@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, Sparkles, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Loader2, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { useAppStore, type User } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
@@ -162,7 +162,7 @@ export function Login({ onDemo }: LoginProps) {
               </div>
             </div>
             <span className="flex items-center gap-1.5 text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-md">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               LIVE TELEMETRY
             </span>
           </div>
@@ -205,7 +205,7 @@ export function Login({ onDemo }: LoginProps) {
             {/* Demo Banner */}
             <div className="mb-6 p-3.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 backdrop-blur-sm flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs text-emerald-300">
-                <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 animate-pulse" />
+                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>{t('login_want_explore')}</span>
               </div>
               <button
@@ -220,7 +220,7 @@ export function Login({ onDemo }: LoginProps) {
             {/* Divider */}
             <div className="flex items-center gap-4 mb-6">
               <div className="flex-1 h-px bg-white/10"></div>
-              <span className="text-xs font-medium text-white/70 uppercase tracking-wider">{t('login_or')}</span>
+              <span className="text-xs font-medium text-white/70">{t('login_or')}</span>
               <div className="flex-1 h-px bg-white/10"></div>
             </div>
 
@@ -240,7 +240,7 @@ export function Login({ onDemo }: LoginProps) {
               <div>
                 <label
                   htmlFor="login-email"
-                  className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide"
+                  className="block text-xs font-medium text-white/70 mb-1.5"
                 >
                   {t('login_email')}
                 </label>
@@ -259,7 +259,7 @@ export function Login({ onDemo }: LoginProps) {
               <div>
                 <label
                   htmlFor="login-password"
-                  className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide"
+                  className="block text-xs font-medium text-white/70 mb-1.5"
                 >
                   {t('login_password')}
                 </label>

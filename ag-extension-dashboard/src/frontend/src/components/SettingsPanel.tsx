@@ -117,7 +117,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 {/* Appearance */}
                 <div className="space-y-3">
-                  <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
                     <Palette className="w-4 h-4" />
                     {t('settings_appearance') || 'Appearance'}
                   </h3>
@@ -189,14 +189,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
                     <Map className="w-4 h-4" />
                     Offline maps
                   </h3>
                   <OfflineMapsSection />
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
                     <Bell className="w-4 h-4" />
                     {t('settings_notifications') || 'Notifications'}
                   </h3>
@@ -249,7 +249,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                 {/* Organization */}
                 {organization && (
                   <div className="space-y-3">
-                    <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
                       <Globe className="w-4 h-4" />
                       Organization & Region
                     </h3>
@@ -286,7 +286,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
 
                 {/* Communication Gateways & Onboarding */}
                 <div className="space-y-3">
-                  <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
                     <MessageSquare className="w-4 h-4 text-emerald-500" />
                     <span>Communication Gateways & Onboarding</span>
                   </h3>
@@ -307,7 +307,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
 
                 {/* Data & Storage */}
                 <div className="space-y-3">
-                  <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                  <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     {t('settings_data') || 'Data & Storage'}
                   </h3>
                   <button

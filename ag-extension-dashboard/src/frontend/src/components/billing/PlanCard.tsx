@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { CheckCircle, Shield, Zap, ArrowRight, Sparkles } from 'lucide-react';
+import { CheckCircle, Shield, Zap, ArrowRight, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/lib/LanguageContext';
 import { triggerHaptic } from '@/lib/haptics';
@@ -78,14 +78,14 @@ export const PlanCard: React.FC<PlanCardProps> = ({
       />
 
       {isPro && (
-        <div className="mb-4 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 w-fit">
-          <Sparkles className="w-3 h-3 text-emerald-400 animate-pulse" />
+        <div className="mb-4 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 w-fit">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
           <span>{t('plan_badge_officer') || 'Recommended for Extension Officers & Cooperatives'}</span>
         </div>
       )}
       {plan.id === 'price_free' && (
-        <div className="mb-4 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-white/[0.03] text-white/70 border border-white/10 w-fit">
-          <Zap className="w-3 h-3 text-amber-400" />
+        <div className="mb-4 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-white/[0.03] text-white/70 border border-white/10 w-fit">
+          <Zap className="w-3.5 h-3.5 text-amber-400" />
           <span>{t('plan_badge_farmer') || 'Ideal for Individual Smallholder Farmers'}</span>
         </div>
       )}
@@ -93,16 +93,16 @@ export const PlanCard: React.FC<PlanCardProps> = ({
       <div className="relative z-10">
         <div className="flex justify-between items-start mb-6">
           <div className="space-y-1">
-            <h3 className="text-2xl font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">
+            <h3 className="text-xl font-semibold tracking-tight text-white group-hover:text-emerald-300 transition-colors">
               {plan.name}
             </h3>
-            <p className="text-xxs font-bold text-emerald-400 uppercase tracking-widest">
-              {t('plan_tier_operational') || 'OPERATIONAL TIER'}
+            <p className="text-xs font-medium text-emerald-400">
+              {t('plan_tier_operational') || 'Operational Tier'}
             </p>
           </div>
           <div className="flex flex-col items-end">
             <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-bold text-white font-mono tracking-tight">
+              <span className="text-2xl font-semibold text-white font-mono tabular-nums tracking-tight">
                 ${displayPrice}
               </span>
               <span className="text-white/60 font-medium text-xs">
@@ -110,7 +110,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               </span>
             </div>
             {isAnnual && baseMonthly > 0 && (
-              <span className="text-xxs text-emerald-400 font-mono mt-0.5">
+              <span className="text-xs text-emerald-400 font-mono tabular-nums mt-0.5">
                 Billed ${annualTotal}/yr (20% saved)
               </span>
             )}
@@ -137,11 +137,11 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           onSelect(plan.id);
         }}
         disabled={isCurrentPlan || actionLoading !== null}
-        className={`relative z-10 w-full py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg ${
+        className={`relative z-10 w-full py-2.5 rounded-xl text-xs font-medium transition-colors flex items-center justify-center gap-2 ${
           isCurrentPlan
             ? 'bg-white/[0.03] border border-white/10 text-white/40 cursor-default'
             : isPro
-            ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-emerald-950/40'
+            ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
             : 'bg-white/[0.05] hover:bg-white/10 text-white border border-white/10'
         }`}
       >
@@ -150,7 +150,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
         ) : isCurrentPlan ? (
           <span className="flex items-center gap-2 text-emerald-400">
             <Shield className="w-4 h-4" />
-            <span>{t('billing_status_active') || 'CURRENT PLAN'}</span>
+            <span>{t('billing_status_active') || 'Current plan'}</span>
           </span>
         ) : (
           <>

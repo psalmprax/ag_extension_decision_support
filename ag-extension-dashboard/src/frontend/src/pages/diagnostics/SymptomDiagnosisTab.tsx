@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Loader2, Leaf, X, Plus, ShieldAlert, Sparkles, Activity } from 'lucide-react';
+import { Search, Loader2, Leaf, X, Plus, ShieldAlert, Activity, FileCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { diagnoseFromSymptoms, type DiseaseDiagnosis } from '../../api/diseaseService';
 
@@ -46,20 +46,20 @@ const SymptomInputPanel: React.FC<{
   onDiagnose,
   isDiagnosing,
 }) => (
-  <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 space-y-4">
+  <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 space-y-4">
     <div className="flex items-center justify-between">
-      <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+      <h3 className="text-xs font-semibold text-white flex items-center gap-2">
         <Activity className="w-4 h-4 text-emerald-400" />
         Symptom Observation Panel
       </h3>
-      <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-[3px] border border-emerald-500/30">
-        EXPERT INFERENCE
+      <span className="text-xxs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+        Expert Inference
       </span>
     </div>
 
     <div className="space-y-3">
       <div>
-        <label className="block text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-1">
+        <label className="block text-xs font-medium text-slate-400 mb-1">
           Target Crop Type
         </label>
         <input
@@ -67,12 +67,12 @@ const SymptomInputPanel: React.FC<{
           value={cropType}
           onChange={e => setCropType(e.target.value)}
           placeholder="e.g. Maize, Tomato, Coffee, Cassava"
-          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 font-mono transition-all"
+          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-md text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 font-mono transition-colors"
         />
       </div>
 
       <div>
-        <label className="block text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-1">
+        <label className="block text-xs font-medium text-slate-400 mb-1">
           Add Observed Symptoms
         </label>
         <div className="flex gap-2">
@@ -86,12 +86,12 @@ const SymptomInputPanel: React.FC<{
               }
             }}
             placeholder="Type custom symptom and press Add or Enter..."
-            className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 font-mono transition-all"
+            className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-md text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 font-mono transition-colors"
           />
           <button
             type="button"
             onClick={() => currentSymptom.trim() && onAddSymptom(currentSymptom.trim())}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-[3px] text-xs font-bold uppercase transition-all shadow-md shadow-emerald-950/40"
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs font-medium transition-colors"
           >
             <Plus className="w-3.5 h-3.5 inline mr-1" />
             Add
@@ -101,7 +101,7 @@ const SymptomInputPanel: React.FC<{
 
       {/* Preset Symptom Chips */}
       <div>
-        <p className="text-[10px] font-mono text-slate-500 uppercase mb-1.5">
+        <p className="text-xs font-medium text-slate-400 mb-1.5">
           Quick Preset Selectors:
         </p>
         <div className="flex flex-wrap gap-1.5">
@@ -112,9 +112,9 @@ const SymptomInputPanel: React.FC<{
                 key={preset}
                 type="button"
                 onClick={() => (isSelected ? onRemoveSymptom(preset) : onAddSymptom(preset))}
-                className={`text-[10px] font-mono px-2 py-1 rounded-[3px] border transition-all ${
+                className={`text-xs font-mono px-2.5 py-1 rounded border transition-colors ${
                   isSelected
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-sm'
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
                     : 'bg-slate-950/60 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
                 }`}
               >
@@ -129,14 +129,14 @@ const SymptomInputPanel: React.FC<{
       {/* Selected Symptoms Tag Cloud */}
       {symptoms.length > 0 && (
         <div className="pt-2 border-t border-slate-800">
-          <p className="text-[10px] font-mono text-slate-400 uppercase mb-1.5">
+          <p className="text-xs font-medium text-slate-400 mb-1.5">
             Active Symptom Registry ({symptoms.length}):
           </p>
           <div className="flex flex-wrap gap-1.5">
             {symptoms.map(symptom => (
               <span
                 key={symptom}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-slate-950 border border-emerald-500/30 text-emerald-300 text-xs font-mono"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-950 border border-emerald-500/30 text-emerald-300 text-xs font-mono"
               >
                 <span>{symptom}</span>
                 <button
@@ -156,7 +156,7 @@ const SymptomInputPanel: React.FC<{
     <button
       onClick={onDiagnose}
       disabled={symptoms.length === 0 || isDiagnosing}
-      className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-[4px] shadow-lg shadow-emerald-950/60 uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors active:scale-[0.98]"
     >
       {isDiagnosing ? (
         <>
@@ -181,15 +181,15 @@ const SymptomResultCard: React.FC<{
   <motion.div
     initial={{ opacity: 0, y: 8 }}
     animate={{ opacity: 1, y: 0 }}
-    className="p-4 rounded-[4px] bg-slate-950 border border-slate-800 hover:border-slate-700 transition-all space-y-2.5"
+    className="p-4 rounded-lg bg-slate-950 border border-slate-800 hover:border-slate-700 transition-colors space-y-2.5"
   >
     <div className="flex items-center justify-between">
-      <h4 className="text-xs font-black text-white uppercase tracking-wide">
+      <h4 className="text-xs font-semibold text-white">
         {result.reviewStatus === 'needs_expert_review' ? 'Probable: ' : ''}
         {result.disease}
       </h4>
       <span
-        className={`px-2 py-0.5 rounded-[3px] text-[10px] font-mono font-bold uppercase ${getSeverityColor(
+        className={`px-2 py-0.5 rounded text-xs font-medium capitalize ${getSeverityColor(
           result.severity
         )}`}
       >
@@ -198,17 +198,17 @@ const SymptomResultCard: React.FC<{
     </div>
 
     <div className="flex items-center justify-between text-xs font-mono">
-      <span className="text-emerald-400 font-bold">
+      <span className="text-emerald-400 font-medium tabular-nums">
         Confidence: {(result.confidence * 100).toFixed(1)}%
       </span>
-      <span className="text-slate-500 text-[10px]">
+      <span className="text-slate-500 text-xxs">
         {result.reviewStatus === 'needs_expert_review' ? 'Needs Review' : 'Verified Evidence'}
       </span>
     </div>
 
     <p className="text-xs text-slate-300 leading-relaxed">{result.description}</p>
 
-    <div className="p-2 rounded-[3px] bg-slate-900/60 border border-white/5 text-[10px] font-mono text-amber-300 flex items-start gap-1.5">
+    <div className="p-2 rounded bg-slate-900/60 border border-white/5 text-xs font-mono text-amber-300 flex items-start gap-1.5">
       <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
       <span>{result.safetyNotice}</span>
     </div>
@@ -216,9 +216,9 @@ const SymptomResultCard: React.FC<{
     <div className="pt-2 border-t border-slate-800 flex justify-end">
       <button
         onClick={() => onViewDiseaseInfo(result.disease)}
-        className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 uppercase tracking-wider flex items-center gap-1"
+        className="text-xs font-medium text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
       >
-        <span>View Treatment Protocol</span>
+        <span>View treatment protocol</span>
         <span>&rarr;</span>
       </button>
     </div>
@@ -292,14 +292,14 @@ export function SymptomDiagnosisTab({
       />
 
       {/* Results Section */}
-      <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-4">
+      <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-4">
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-xs font-semibold text-white flex items-center gap-2">
+              <FileCheck className="w-4 h-4 text-emerald-400" />
               Ranked Pathology Differentials
             </h3>
-            <span className="text-[10px] font-mono text-slate-400">
+            <span className="text-xxs font-mono text-slate-400 tabular-nums">
               {diagnosis.length} Matches Found
             </span>
           </div>
@@ -318,10 +318,10 @@ export function SymptomDiagnosisTab({
           ) : (
             <div className="py-12 text-center text-slate-500 space-y-2">
               <Leaf className="w-10 h-10 mx-auto opacity-30 text-emerald-400" />
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Awaiting Symptom Input
+              <p className="text-xs font-medium text-slate-400">
+                Awaiting symptom input
               </p>
-              <p className="text-[11px] font-mono text-slate-500">
+              <p className="text-xs font-mono text-slate-500">
                 Select preset chips or type custom symptoms on the left to run inference.
               </p>
             </div>

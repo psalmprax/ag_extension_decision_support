@@ -207,7 +207,7 @@ export function Register() {
               </div>
             </div>
             <span className="flex items-center gap-1.5 text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               LIVE
             </span>
           </div>
@@ -263,7 +263,7 @@ export function Register() {
                 <div>
                   <label
                     htmlFor="reg-firstName"
-                    className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide"
+                    className="block text-xs font-medium text-white/70 mb-1.5"
                   >
                     {t('register_first_name_label')}
                   </label>
@@ -282,7 +282,7 @@ export function Register() {
                 <div>
                   <label
                     htmlFor="reg-lastName"
-                    className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide"
+                    className="block text-xs font-medium text-white/70 mb-1.5"
                   >
                     {t('register_last_name_label')}
                   </label>
@@ -303,7 +303,7 @@ export function Register() {
               <div>
                 <label
                   htmlFor="reg-email"
-                  className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide"
+                  className="block text-xs font-medium text-white/70 mb-1.5"
                 >
                   {t('register_email_label')}
                 </label>
@@ -324,7 +324,7 @@ export function Register() {
                 <div>
                   <label
                     htmlFor="reg-password"
-                    className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide"
+                    className="block text-xs font-medium text-white/70 mb-1.5"
                   >
                     {t('register_password_label')}
                   </label>
@@ -353,7 +353,7 @@ export function Register() {
                 <div>
                   <label
                     htmlFor="reg-confirmPassword"
-                    className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide"
+                    className="block text-xs font-medium text-white/70 mb-1.5"
                   >
                     {t('register_confirm_password_label')}
                   </label>
@@ -389,7 +389,7 @@ export function Register() {
                 <div>
                   <label
                     htmlFor="reg-phone"
-                    className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide"
+                    className="block text-xs font-medium text-white/70 mb-1.5"
                   >
                     {t('register_phone_label')}
                   </label>
@@ -407,7 +407,7 @@ export function Register() {
                 <div>
                   <label
                     htmlFor="reg-organization"
-                    className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide"
+                    className="block text-xs font-medium text-white/70 mb-1.5"
                   >
                     {t('register_organization_label')}
                   </label>
@@ -427,7 +427,7 @@ export function Register() {
               <div>
                 <label
                   htmlFor="reg-role"
-                  className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide"
+                  className="block text-xs font-medium text-white/70 mb-1.5"
                 >
                   {t('register_role_label')}
                 </label>

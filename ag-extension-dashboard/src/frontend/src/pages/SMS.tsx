@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Sparkles, MapPin, AlertTriangle } from 'lucide-react';
+import { MessageSquare, MapPin, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAppStore } from '../store/useAppStore';
 import { fetchSMSHistory, sendSMS, sendBulkSMS, translateMessage } from '../api/smsService';
@@ -30,7 +30,7 @@ export function SMSPage() {
       id: '1',
       title: t('sms_template_greeting'),
       content: 'Hello, this is your GPExts officer. How is your crop doing?',
-      icon: Sparkles,
+      icon: MessageSquare,
       color: 'bg-amber-100 text-amber-600',
     },
     {

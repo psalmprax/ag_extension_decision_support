@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Sparkles, Play, Pause, RotateCcw, Volume2, VolumeX } from 'lucide-react';
+import { Activity, Play, Pause, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { playStageChime, playScrubTick, isAudioEnabled, setAudioMuted } from '@/lib/audioHaptics';
 import { AGRO_STAGES, type AgroStageMeta } from './agroStages';
 
@@ -769,8 +769,8 @@ export function AgroEcosystemCanvasScrubber({
         </div>
 
         <div className="hidden sm:flex items-center gap-2 bg-slate-900/80 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl font-mono text-[11px] text-emerald-400">
-          <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-          <span>{(activeProgress * 100).toFixed(0)}% SYNCHRONIZED</span>
+          <Activity className="w-3.5 h-3.5" />
+          <span>{(activeProgress * 100).toFixed(0)}% Synchronized</span>
         </div>
       </div>
 

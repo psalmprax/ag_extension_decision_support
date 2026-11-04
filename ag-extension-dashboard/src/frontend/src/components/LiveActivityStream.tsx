@@ -54,14 +54,14 @@ interface LiveActivityStreamProps {
 function getScoreBadge(score: number) {
   if (score >= 70) {
     return (
-      <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-black bg-rose-500/10 text-rose-400 border border-rose-500/30 animate-pulse">
+      <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium font-mono tabular-nums bg-rose-500/10 text-rose-400 border border-rose-500/20">
         <Flame className="w-3 h-3 text-rose-400" />
         {score}/100
       </span>
     );
   }
   return (
-    <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+    <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium font-mono tabular-nums bg-amber-500/10 text-amber-400 border border-amber-500/20">
       <Flame className="w-3 h-3 text-amber-400" />
       {score}/100
     </span>
@@ -200,11 +200,11 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
       </div>
 
       {activity.isClaimed && (
-        <div className="my-2.5 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2 text-emerald-300 font-bold">
+        <div className="my-2.5 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 text-emerald-300 font-medium">
             <UserCheck className="w-4 h-4 text-emerald-400" />
             <span>{activity.claimedBy}</span>
-            <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded uppercase tracking-wider">LIVE</span>
+            <span className="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded font-medium">Live</span>
           </div>
           <button onClick={() => onRelease(activity.id)} className="text-[11px] text-slate-400 hover:text-rose-400 underline font-medium transition-colors">
             {t('activity_release')}
@@ -521,17 +521,17 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
     <div className={`space-y-4 ${cardClass} p-4 sm:p-6`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-            <Activity className="w-4 h-4 animate-pulse" />
+          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+            <Activity className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-sm sm:text-base text-gray-900 dark:text-white tracking-wide">
+              <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white tracking-wide">
                 {t('activity_stream_title')}
               </h3>
-              <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border ${hasData ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
-                <Radio className={`w-2.5 h-2.5 ${hasData ? 'animate-ping text-emerald-400' : 'text-amber-400'}`} />
-                {hasData ? 'LIVE' : 'IDLE'}
+              <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium border ${hasData ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
+                <Radio className={`w-2.5 h-2.5 ${hasData ? 'text-emerald-400' : 'text-amber-400'}`} />
+                {hasData ? 'Live' : 'Idle'}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -557,11 +557,11 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <AlertTriangle className="w-8 h-8 text-amber-400 mb-2" />
-            <p className="text-sm font-bold text-amber-400 uppercase tracking-wider">Feed unavailable</p>
+            <p className="text-sm font-semibold text-amber-400">Feed unavailable</p>
             <p className="text-xs text-slate-500 mt-1">{error}</p>
             <button
               onClick={fetchActivities}
-              className="mt-3 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold text-slate-200 transition-colors"
+              className="mt-3 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-medium text-slate-200 transition-colors"
             >
               Retry
             </button>
@@ -569,7 +569,7 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Activity className="w-8 h-8 text-slate-500 mb-2" />
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">Awaiting events</p>
+            <p className="text-sm font-semibold text-slate-400">Awaiting events</p>
             <p className="text-xs text-slate-500 mt-1">
               Real farmer SMS, USSD, and app activity will appear here automatically as it arrives.
             </p>
