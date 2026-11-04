@@ -352,30 +352,51 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
     });
 
     it('20. Offline dataset policy: Stale > 90 days rejected, fresh offline permitted with flags', () => {
-      // 1. Fresh offline (10 days old)
-      const freshOfflineReq = createCompliantRequest({
-        clientOfflineContext: {
-          isOffline: true,
-          cachedDatasetVersion: 'REG-2026.09-REV1',
-          cachedDatasetTimestamp: '2026-08-05T00:00:00Z', // 10 days before advice
-        },
-      });
-      const freshDecision = regulatoryProvenanceService.evaluateRecommendation(freshOfflineReq);
-      expect(freshDecision.status).toBe('RESTRICTED_OFFLINE_APPROVAL');
-      expect(freshDecision.provenance?.offlineContext?.isOffline).toBe(true);
-      expect(freshDecision.warnings.some(w => w.includes('Offline regulatory dataset used'))).toBe(true);
+      const dateNowSpy = jest
+        .spyOn(Date, 'now')
+        .mockReturnValue(new Date(BASELINE_TIMESTAMP).getTime());
+      try {
+        // 1. Fresh offline (10 days old)
+        const freshOfflineReq = createCompliantRequest({
+          clientOfflineContext: {
+            isOffline: true,
+            cachedDatasetVersion: 'REG-2026.09-REV1',
+            cachedDatasetTimestamp: '2026-08-05T00:00:00Z', // 10 days before advice
+          },
+        });
+        const freshDecision = regulatoryProvenanceService.evaluateRecommendation(freshOfflineReq);
+        expect(freshDecision.status).toBe('RESTRICTED_OFFLINE_APPROVAL');
+        expect(freshDecision.provenance?.offlineContext?.isOffline).toBe(true);
+        expect(freshDecision.warnings.some(w => w.includes('Offline regulatory dataset used'))).toBe(true);
 
-      // 2. Excessively stale offline (120 days old)
-      const staleOfflineReq = createCompliantRequest({
-        clientOfflineContext: {
-          isOffline: true,
-          cachedDatasetVersion: 'REG-2026.09-REV1',
-          cachedDatasetTimestamp: '2026-04-01T00:00:00Z', // > 90 days
-        },
-      });
-      const staleDecision = regulatoryProvenanceService.evaluateRecommendation(staleOfflineReq);
-      expect(staleDecision.status).toBe('HARD_REJECTION');
-      expect(staleDecision.reasonCode).toBe('OFFLINE_DATASET_STALE_EXPIRED');
+        // 2. Excessively stale offline (120 days old)
+        const staleOfflineReq = createCompliantRequest({
+          clientOfflineContext: {
+            isOffline: true,
+            cachedDatasetVersion: 'REG-2026.09-REV1',
+            cachedDatasetTimestamp: '2026-04-01T00:00:00Z', // > 90 days
+          },
+        });
+        const staleDecision = regulatoryProvenanceService.evaluateRecommendation(staleOfflineReq);
+        expect(staleDecision.status).toBe('HARD_REJECTION');
+        expect(staleDecision.reasonCode).toBe('OFFLINE_DATASET_STALE_EXPIRED');
+
+        dateNowSpy.mockReturnValue(new Date('2026-11-04T00:00:00Z').getTime());
+        const backdatedAdviceReq = createCompliantRequest({
+          adviceTimestamp: BASELINE_TIMESTAMP,
+          clientOfflineContext: {
+            isOffline: true,
+            cachedDatasetVersion: 'REG-2026.09-REV1',
+            cachedDatasetTimestamp: '2026-08-05T00:00:00Z',
+          },
+        });
+        const backdatedAdviceDecision =
+          regulatoryProvenanceService.evaluateRecommendation(backdatedAdviceReq);
+        expect(backdatedAdviceDecision.status).toBe('HARD_REJECTION');
+        expect(backdatedAdviceDecision.reasonCode).toBe('OFFLINE_DATASET_STALE_EXPIRED');
+      } finally {
+        dateNowSpy.mockRestore();
+      }
     });
 
     it('21. Advice timestamp integrity -> Hash incorporates precise timestamp', () => {

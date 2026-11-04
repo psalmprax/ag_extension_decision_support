@@ -240,7 +240,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         <button
           onClick={handleGenerateReport}
           disabled={isGeneratingReport}
-          className={`w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 whitespace-nowrap ${btnClass}`}
+          className={`w-full sm:w-auto px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-xs rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 whitespace-nowrap ${btnClass}`}
         >
           {isGeneratingReport ? (
             <Loader2 className="w-4 h-4 animate-spin text-white" />

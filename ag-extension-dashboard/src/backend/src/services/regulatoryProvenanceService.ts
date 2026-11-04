@@ -285,8 +285,7 @@ export class RegulatoryProvenanceService {
     if (req.clientOfflineContext?.isOffline) {
       const cachedTimestamp = req.clientOfflineContext.cachedDatasetTimestamp;
       const cachedTime = cachedTimestamp ? new Date(cachedTimestamp).getTime() : NaN;
-      const referenceTime = new Date(adviceTimestamp).getTime();
-      const evalTime = isNaN(referenceTime) || referenceTime <= 0 ? Date.now() : referenceTime;
+      const evalTime = Date.now();
 
       if (isNaN(cachedTime) || cachedTime <= 0) {
         return this.createRejection(

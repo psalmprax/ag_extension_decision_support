@@ -332,7 +332,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
           </div>
           <button
             onClick={() => setShowVisitModal(true)}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-medium transition-colors inline-flex items-center gap-2"
+            className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-medium transition-colors inline-flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span>Schedule Field Visit</span>

@@ -650,7 +650,7 @@ function SystemHealth() {
             <button
               onClick={handleRunDiagnostics}
               disabled={isRunningDiagnostics}
-              className="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
+              className="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-slate-950 text-xs font-medium rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
             >
               <Activity className={`w-4 h-4 ${isRunningDiagnostics ? 'animate-spin' : ''}`} />
               <span>{isRunningDiagnostics ? 'Running Scan...' : 'Deep Diagnostic'}</span>

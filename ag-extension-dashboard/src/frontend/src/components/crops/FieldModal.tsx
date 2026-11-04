@@ -61,7 +61,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
                 Sector Name
               </label>
               <input
@@ -75,7 +75,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
                   Area (Hectares)
                 </label>
                 <input
@@ -90,7 +90,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
                   Soil Type
                 </label>
                 <input
@@ -105,7 +105,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
                   Soil pH
                 </label>
                 <input
@@ -118,7 +118,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
                   Latitude
                 </label>
                 <input
@@ -131,7 +131,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
                   Longitude
                 </label>
                 <input

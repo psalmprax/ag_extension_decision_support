@@ -61,7 +61,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
                 Crop Name / Type
               </label>
               <input
@@ -74,7 +74,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
                 Crop Variety
               </label>
               <input
@@ -88,7 +88,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
                   Planting Date
                 </label>
                 <input
@@ -101,7 +101,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
                   Est. Harvest Date
                 </label>
                 <input
@@ -116,7 +116,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
                 Notes / Recommendations
               </label>
               <textarea

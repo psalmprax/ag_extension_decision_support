@@ -61,7 +61,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
                 Status Result
               </label>
               <div className="grid grid-cols-2 gap-4">
@@ -92,7 +92,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
                   Harvest Date
                 </label>
                 <input
@@ -105,7 +105,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
                   Yield (Kilograms)
                 </label>
                 <input
@@ -120,7 +120,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
                 Harvest Notes / Remarks
               </label>
               <textarea
