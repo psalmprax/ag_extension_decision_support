@@ -5,7 +5,7 @@ import {
   Clock,
   Download,
   Loader2,
-  Sparkles,
+  FilePlus,
   CheckCircle2,
   ShieldCheck,
   Layers,
@@ -89,9 +89,9 @@ function ReportCard({
 
   return (
     <motion.div
-      whileHover={{ y: -3 }}
+      whileHover={{ y: -2 }}
       transition={{ duration: 0.2 }}
-      className="group relative p-6 rounded-xl backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm hover:border-emerald-500/30 hover:bg-slate-50/50 dark:hover:bg-slate-900/80 hover:shadow-xl hover:shadow-emerald-950/20 transition-all cursor-pointer flex flex-col justify-between"
+      className="group relative p-6 rounded-xl backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm hover:border-emerald-500/30 hover:bg-slate-50/50 dark:hover:bg-slate-900/80 hover:shadow-md transition-colors cursor-pointer flex flex-col justify-between"
       onClick={handleOpenReport}
     >
       <div className="space-y-4">
@@ -103,7 +103,7 @@ function ReportCard({
 
           <div className="flex items-center gap-2">
             <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${
                 isReady
                   ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
                   : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
@@ -111,7 +111,7 @@ function ReportCard({
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
-                  isReady ? 'bg-emerald-500 dark:bg-emerald-400 animate-pulse' : 'bg-amber-500 dark:bg-amber-400'
+                  isReady ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-amber-500 dark:bg-amber-400'
                 }`}
               />
               {report.status || 'Ready'}
@@ -224,12 +224,12 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-            <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span className="text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400">
               Agronomic Audit & Analytics
             </span>
           </div>
-          <h1 className={`text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
+          <h1 className={`text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
             Data Reports
           </h1>
           <p className="text-slate-600 dark:text-white/60 text-sm mt-1">
@@ -240,12 +240,12 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         <button
           onClick={handleGenerateReport}
           disabled={isGeneratingReport}
-          className={`w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-bold text-sm shadow-xl shadow-emerald-950/40 ${btnClass} transition-all flex items-center justify-center gap-2 disabled:opacity-50 whitespace-nowrap`}
+          className={`w-full sm:w-auto px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-xs rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 whitespace-nowrap ${btnClass}`}
         >
           {isGeneratingReport ? (
-            <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+            <Loader2 className="w-4 h-4 animate-spin text-white" />
           ) : (
-            <Sparkles className="w-4 h-4 text-slate-950" />
+            <FilePlus className="w-4 h-4 text-white" />
           )}
           {isGeneratingReport
             ? t('reports_generating') || 'Synthesizing...'
@@ -361,7 +361,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-5xl max-h-[90vh] backdrop-blur-2xl bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-white/[0.12] rounded-xl shadow-2xl shadow-emerald-950/50 overflow-hidden flex flex-col z-10"
+              className="relative w-full max-w-5xl max-h-[90vh] backdrop-blur-xl bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-white/[0.12] rounded-xl shadow-xl overflow-hidden flex flex-col z-10"
             >
               {/* Modal Header */}
               <div className="p-6 border-b border-slate-200 dark:border-white/[0.08] flex items-center justify-between">

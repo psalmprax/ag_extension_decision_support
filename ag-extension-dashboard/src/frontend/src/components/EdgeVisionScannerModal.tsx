@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Camera,
   Layers,
-  Sparkles,
+  Eye,
   CheckCircle,
   MapPin,
   Loader2,
@@ -143,7 +143,7 @@ const ModeSwitcher: React.FC<{
       type="button"
       disabled={disabled}
       onClick={() => onSelect('crop')}
-      className={`py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+      className={`py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition-all ${
         mode === 'crop'
           ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
           : 'text-slate-400 hover:text-white'
@@ -156,7 +156,7 @@ const ModeSwitcher: React.FC<{
       type="button"
       disabled={disabled}
       onClick={() => onSelect('soil')}
-      className={`py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+      className={`py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition-all ${
         mode === 'soil'
           ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
           : 'text-slate-400 hover:text-white'
@@ -254,7 +254,7 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
     {/* Cultural & Chemical Action Drawer */}
     <div className="space-y-2 pt-2 text-xs border-t border-white/10">
       <div>
-        <span className="font-bold text-emerald-400 uppercase tracking-wider font-mono text-[10px]">
+        <span className="font-medium text-emerald-400 font-mono text-xs">
           Cultural Management:
         </span>
         <ul className="list-disc pl-4 text-slate-300 space-y-0.5 mt-0.5">
@@ -265,7 +265,7 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
       </div>
 
       <div>
-        <span className="font-bold text-indigo-400 uppercase tracking-wider font-mono text-[10px]">
+        <span className="font-medium text-indigo-400 font-mono text-xs">
           Chemical Threshold:
         </span>
         <p className="text-slate-300 mt-0.5">
@@ -319,7 +319,7 @@ const SoilDiagnosticHUD: React.FC<{ result: OfflineSoilDiagnosisResult }> = ({ r
 
     {/* Agronomic Soil Management Guidance */}
     <div className="space-y-1.5 pt-2 text-xs border-t border-white/10">
-      <span className="font-bold text-amber-400 uppercase tracking-wider font-mono text-[10px]">
+      <span className="font-medium text-amber-400 font-mono text-xs">
         Agronomic Field Guidance:
       </span>
       <ul className="list-disc pl-4 text-slate-300 space-y-1">
@@ -341,7 +341,7 @@ const VerifiedCloudCard: React.FC<{
     <div className="p-4 rounded-xl bg-emerald-950/30 border border-emerald-500/40 space-y-2">
       <div className="flex items-center gap-2 text-emerald-400">
         <ShieldCheck className="w-4 h-4" />
-        <span className="text-xs font-bold font-mono uppercase tracking-wider">
+        <span className="text-xs font-medium font-mono">
           Cloud AI Multimodal Verification Confirmed
         </span>
       </div>
@@ -537,7 +537,7 @@ const EngineTelemetry: React.FC<{
   return (
     <div className="flex justify-between items-center bg-slate-900/90 p-3 rounded-xl border border-white/10">
       <div className="flex items-center gap-2">
-        <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_#34d399]" />
+        <span className="w-2 h-2 bg-emerald-400 rounded-full" />
         <span className="text-xs font-bold text-white font-mono">{title}</span>
       </div>
       <span className="text-[11px] text-slate-400 font-mono">{subtitle}</span>
@@ -950,7 +950,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                 type="button"
                 disabled={isVerifying}
                 onClick={handleVerifyWithCloud}
-                className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 disabled:opacity-50"
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-xl transition flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
               >
                 {isVerifying ? (
                   <>
@@ -959,7 +959,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" />
+                    <Eye className="w-4 h-4" />
                     <span>Verify with Multimodal AI (Cloud)</span>
                   </>
                 )}
@@ -969,7 +969,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                 type="button"
                 disabled={loggedToMap}
                 onClick={handlePlotOnWorldMonitor}
-                className={`w-full py-2.5 border text-xs font-bold uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2 ${
+                className={`w-full py-2.5 border text-xs font-medium rounded-xl transition flex items-center justify-center gap-2 ${
                   loggedToMap
                     ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
                     : 'border-white/10 hover:bg-white/5 text-slate-300'
@@ -991,7 +991,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
               <button
                 type="button"
                 onClick={handleShareReport}
-                className="w-full py-2.5 border border-white/10 hover:bg-white/5 text-xs font-bold uppercase tracking-wider text-slate-300 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                className="w-full py-2.5 border border-white/10 hover:bg-white/5 text-xs font-medium text-slate-300 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
               >
                 <Copy className="w-3.5 h-3.5 text-blue-400" />
                 <span>Copy Finding Summary</span>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Zap } from 'lucide-react';
+import { Plus, BarChart2 } from 'lucide-react';
 import { useLanguage } from '../../lib/LanguageContext';
 import type { SMSMessage } from './types';
 import { QuotaSummary, MessageStats, TemplateList } from './widgets';
@@ -31,15 +31,13 @@ export function SMSRightPanel({
 
   return (
     <div className="w-full lg:w-1/4 space-y-4 overflow-y-auto pr-1">
-      {/* GLASS DASHBOARD CARD */}
+      {/* DELIVERY & QUOTA CARD */}
       <div
-        className="relative overflow-hidden backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm dark:shadow-xl space-y-5"
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-5"
       >
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
-
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-            <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <BarChart2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             {t('sms_quota_title') || 'Delivery & Quota'}
           </h3>
           <button
@@ -58,10 +56,10 @@ export function SMSRightPanel({
 
       {/* TEMPLATES CARD */}
       <div
-        className={`bg-white dark:bg-slate-900 ${radiusClass} border border-slate-200 dark:border-slate-800 p-6 flex flex-col shadow-sm`}
+        className={`bg-white dark:bg-slate-900 ${radiusClass} border border-slate-200 dark:border-white/10 p-5 flex flex-col shadow-sm`}
       >
-        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-          <Plus className="w-4 h-4" />
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+          <Plus className="w-4 h-4 text-slate-500" />
           {t('sms_template_title')}
         </h3>
         <TemplateList templates={templates} applyTemplate={applyTemplate} radiusClass={radiusClass} />

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   Check,
   X,
-  Sparkles,
+  ShieldCheck,
   Shield,
   MessageSquare,
   Bot,
@@ -306,8 +306,8 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
       <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-              <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <Radio className="w-2.5 h-2.5 text-emerald-400" />
               Transparent Unit Rates
             </span>
           </div>
@@ -377,35 +377,35 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-white/10 bg-white/[0.03]">
-                  <th className="p-4 md:p-5 text-xxs font-bold text-white/60 uppercase tracking-wider w-[40%]">
+                  <th className="p-4 md:p-5 text-xs font-medium text-white/70 w-[40%]">
                     Platform Capability / Service
                   </th>
-                  <th className="p-4 md:p-5 text-xxs font-bold text-center uppercase tracking-wider w-[20%] text-white/60">
+                  <th className="p-4 md:p-5 text-xs font-medium text-center w-[20%] text-white/70">
                     <div className="flex flex-col items-center gap-1">
                       <span>Free Starter</span>
-                      <span className="text-xxs px-2.5 py-0.5 rounded-md bg-white/[0.05] text-white/80 font-mono">
+                      <span className="text-xs px-2.5 py-0.5 rounded-md bg-white/[0.05] text-white/80 font-mono">
                         $0 / month
                       </span>
                     </div>
                   </th>
-                  <th className="p-4 md:p-5 text-xxs font-bold text-center uppercase tracking-wider w-[20%] text-emerald-300 bg-emerald-500/10 border-x border-emerald-500/20">
+                  <th className="p-4 md:p-5 text-xs font-medium text-center w-[20%] text-emerald-300 bg-emerald-500/10 border-x border-emerald-500/20">
                     <div className="flex flex-col items-center gap-1">
                       <div className="flex items-center gap-1">
-                        <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                         <span>{t('billing_matrix_tier_pro')}</span>
                       </div>
-                      <span className="text-xxs px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold font-mono">
+                      <span className="text-xs px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium font-mono">
                         $29 / month
                       </span>
                     </div>
                   </th>
-                  <th className="p-4 md:p-5 text-xxs font-bold text-center uppercase tracking-wider w-[20%] text-purple-300">
+                  <th className="p-4 md:p-5 text-xs font-medium text-center w-[20%] text-purple-300">
                     <div className="flex flex-col items-center gap-1">
                       <div className="flex items-center gap-1">
                         <Building2 className="w-3.5 h-3.5 text-purple-400" />
                         <span>{t('billing_matrix_tier_enterprise')}</span>
                       </div>
-                      <span className="text-xxs px-2.5 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold">
+                      <span className="text-xs px-2.5 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30 font-medium">
                         Custom Tier
                       </span>
                     </div>
@@ -473,9 +473,9 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                   triggerHaptic('medium');
                   onSelectPlan('price_pro_monthly');
                 }}
-                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white transition-all shadow-lg shadow-emerald-950/40 flex items-center gap-2 active:scale-95"
+                className="px-4 py-2 text-xs font-medium rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-colors flex items-center gap-2"
               >
-                <Sparkles className="w-4 h-4" />
+                <ShieldCheck className="w-4 h-4" />
                 <span>{t('billing_matrix_upgrade_pro')}</span>
               </button>
             )}
@@ -563,7 +563,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
               <a
                 href="mailto:info@gpfed.com?subject=Enterprise%20Volume%20Inquiry"
                 onClick={() => triggerHaptic('light')}
-                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white transition-all whitespace-nowrap shadow-lg shadow-emerald-950/40"
+                className="px-4 py-2 text-xs font-medium rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-colors whitespace-nowrap"
               >
                 Inquire for Enterprise Rates
               </a>
@@ -710,16 +710,16 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
           <div className="lg:col-span-5 space-y-6">
             <div className="p-6 rounded-xl border border-emerald-500/30 bg-slate-900/60 backdrop-blur-xl shadow-xl space-y-6 relative overflow-hidden">
               <div className="relative z-10">
-                <span className="text-xxs font-bold uppercase tracking-widest text-emerald-400">
+                <span className="text-xs font-medium text-emerald-400">
                   {t('billing_matrix_fit_title')}
                 </span>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-4xl font-bold text-white font-mono tracking-tight">
+                  <span className="text-3xl font-semibold text-white font-mono tabular-nums tracking-tight">
                     ${proCost.base.toFixed(2)}
                   </span>
-                  <span className="text-xs text-white/60 font-semibold">{t('billing_matrix_fit_flat')}</span>
+                  <span className="text-xs text-white/60 font-medium">{t('billing_matrix_fit_flat')}</span>
                 </div>
-                <p className="text-xxs text-white/50 mt-2 leading-relaxed">
+                <p className="text-xs text-white/50 mt-2 leading-relaxed">
                   {t('billing_matrix_fit_note')}
                   {quotaSource === 'unavailable' && <span className="block text-amber-300 mt-1">{t('billing_matrix_fit_unavailable')}</span>}
                 </p>
@@ -729,17 +729,17 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 {quotaFit.map(q => (
                   <div key={q.label} className="flex justify-between items-center text-white/80">
                     <span>{q.label}: {q.used.toLocaleString()} / {q.limit.toLocaleString()}</span>
-                    <span className={`font-mono font-bold ${q.fits ? 'text-emerald-400' : 'text-amber-300'}`}>
+                    <span className={`font-mono font-medium ${q.fits ? 'text-emerald-400' : 'text-amber-300'}`}>
                       {q.fits ? t('billing_matrix_within_quota') : t('billing_matrix_over_quota', { count: q.over.toLocaleString() })}
                     </span>
                   </div>
                 ))}
 
-                <div className="pt-3 border-t border-white/10 flex justify-between items-center font-bold text-xs">
-                  <span className="text-emerald-400 uppercase tracking-wider text-xxs">
+                <div className="pt-3 border-t border-white/10 flex justify-between items-center font-medium text-xs">
+                  <span className="text-emerald-400 text-xs">
                     {t('billing_matrix_verdict')}
                   </span>
-                  <span className={`font-mono text-sm font-bold ${quotaFit.length === 0 ? 'text-white/40' : fitsPro ? 'text-emerald-400' : 'text-amber-300'}`}>
+                  <span className={`font-mono text-xs font-medium ${quotaFit.length === 0 ? 'text-white/40' : fitsPro ? 'text-emerald-400' : 'text-amber-300'}`}>
                     {quotaFit.length === 0 ? t('billing_matrix_verdict_unknown') : fitsPro ? t('billing_matrix_verdict_fits') : t('billing_matrix_verdict_exceeds')}
                   </span>
                 </div>
@@ -751,9 +751,9 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                     triggerHaptic('medium');
                     onSelectPlan('price_pro_monthly');
                   }}
-                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 relative z-10 active:scale-95"
+                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs transition-colors flex items-center justify-center gap-2 relative z-10"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <ShieldCheck className="w-4 h-4" />
                   <span>{t('billing_matrix_select_pro')}</span>
                 </button>
               )}

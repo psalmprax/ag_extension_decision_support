@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Sparkles,
+  MessageSquare,
   RefreshCw,
   Send,
   User,
@@ -25,8 +25,8 @@ export const SimulatorTab: React.FC<SimulatorTabProps> = ({
   return (
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/30">
-        <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm mb-1">
-          <Sparkles className="w-4 h-4" />
+        <div className="flex items-center gap-2 text-emerald-400 font-medium text-sm mb-1">
+          <MessageSquare className="w-4 h-4" />
           <span>How Multi-Channel Self-Enrollment Works</span>
         </div>
         <p className="text-xs text-slate-300 leading-relaxed">

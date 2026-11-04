@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ListChecks, Sparkles, Check } from 'lucide-react';
+import { ListChecks, FileText, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fieldIntelService, PlanMilestone } from '@/api/fieldIntelService';
 
@@ -39,7 +39,7 @@ export function FarmPlanSection({ cropCycleId }: { cropCycleId: string }) {
             <button
                 onClick={() => setExpanded(e => !e)}
                 aria-expanded={expanded}
-                className="flex items-center gap-2 text-xs font-bold text-emerald-400 hover:text-emerald-300"
+                className="flex items-center gap-2 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-500"
             >
                 <ListChecks className="w-4 h-4" />
                 Season Plan
@@ -53,9 +53,9 @@ export function FarmPlanSection({ cropCycleId }: { cropCycleId: string }) {
                         <button
                             onClick={() => generate.mutate()}
                             disabled={generate.isPending}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 disabled:opacity-50"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
                         >
-                            <Sparkles className="w-3.5 h-3.5" />
+                            <FileText className="w-3.5 h-3.5" />
                             {generate.isPending ? 'Generating…' : 'Generate season plan'}
                         </button>
                     )}

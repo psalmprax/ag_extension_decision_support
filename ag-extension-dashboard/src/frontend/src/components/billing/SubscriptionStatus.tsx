@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, ExternalLink, TrendingUp, ShieldCheck, Sparkles } from 'lucide-react';
+import { Clock, ExternalLink, TrendingUp, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -108,27 +108,23 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
     >
       <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-[90px]" />
       <div className="relative z-10">
-        <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30 w-fit mb-6 text-emerald-400">
-          <TrendingUp className="w-8 h-8" />
+        <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 w-fit mb-4 text-emerald-400">
+          <TrendingUp className="w-6 h-6" />
         </div>
-        <h3 className="text-3xl font-black text-white leading-tight tracking-tighter mb-4">
+        <h3 className="text-xl sm:text-2xl font-semibold text-white leading-tight tracking-tight mb-3">
           {t('billing_promo_title') || 'Scale Your Agricultural Reach'}
         </h3>
-        <p className="text-slate-400 font-medium text-xs leading-relaxed">
-          {t('billing_promo_desc') || 'Unlock AI automated agronomic triage, multi-channel SMS broadcasts, and satellite NDVI maps.'}
+        <p className="text-slate-400 font-normal text-xs leading-relaxed">
+          {t('billing_promo_desc') || 'Unlock automated agronomic triage, multi-channel SMS broadcasts, and satellite NDVI maps.'}
         </p>
       </div>
       <div className="relative z-10 p-4 bg-slate-900/80 rounded-xl border border-slate-800">
-        <div className="flex items-center gap-2 text-emerald-400 font-black text-xxs uppercase tracking-widest mb-2">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>{t('billing_instant_activation') || 'INSTANT COOPERATIVE ACTIVATION'}</span>
+        <div className="flex items-center gap-2 text-emerald-400 font-medium text-xs mb-2">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>{t('billing_instant_activation') || 'Instant Cooperative Activation'}</span>
         </div>
         <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
-          <motion.div
-            animate={{ x: ['-100%', '400%'] }}
-            transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-            className="w-1/4 h-full bg-emerald-500 rounded-full"
-          />
+          <div className="w-full h-full bg-emerald-500/60 rounded-full" />
         </div>
       </div>
     </motion.section>

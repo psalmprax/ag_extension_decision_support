@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, ChevronRight, Cpu, Loader2, Play, RefreshCcw, Sparkles, Square, Terminal, Workflow, Zap } from 'lucide-react';
+import { Bot, ChevronRight, Cpu, Loader2, Play, RefreshCcw, Square, Terminal, Workflow, Zap } from 'lucide-react';
 import type { AgentData, AutonomousScenario } from './useAgentOpsController';
 
 interface AgentOpsViewProps {
@@ -53,9 +53,9 @@ export const AgentOpsView: React.FC<AgentOpsViewProps> = ({
     <section className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-xl p-5 sm:p-6 shadow-2xl">
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400"><Bot className="w-6 h-6 animate-pulse" /></div>
+          <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400"><Bot className="w-6 h-6" /></div>
           <div>
-            <div className="flex items-center gap-2.5"><h1 className="text-xl sm:text-2xl font-bold text-white">Agent Fleet Command</h1><span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-black uppercase bg-purple-500/10 text-purple-300 border border-purple-500/20"><Sparkles className="w-2.5 h-2.5" /> LIVE REGISTRY</span></div>
+            <div className="flex items-center gap-2.5"><h1 className="text-xl sm:text-2xl font-bold text-white">Agent Fleet Command</h1><span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20"><Cpu className="w-3 h-3 text-purple-400" /> Live Registry</span></div>
             <p className="text-xs text-white/60 mt-0.5">Autonomous multi-agent orchestration mesh for agricultural decision support.</p>
           </div>
         </div>
@@ -71,7 +71,7 @@ export const AgentOpsView: React.FC<AgentOpsViewProps> = ({
     </section>
 
     <section className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-xl p-5 shadow-xl space-y-3">
-      <div className="flex items-center justify-between"><span className="text-xxs font-mono font-bold tracking-widest text-purple-400 uppercase">Instant Autonomous Dispatches</span><span className="text-[10px] font-mono text-amber-300/80">Illustrative previews — no live task is created</span></div>
+      <div className="flex items-center justify-between"><span className="text-xs font-medium text-purple-400">Instant Autonomous Dispatches</span><span className="text-[10px] font-mono text-amber-300/80">Illustrative previews — no live task is created</span></div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {scenarios.map(scenario => <button type="button" key={scenario.id} onClick={() => handleRunScenario(scenario)} disabled={isExecuting} className="p-3.5 rounded-xl bg-slate-950/60 hover:bg-purple-500/10 border border-white/5 text-left disabled:opacity-50"><div className="flex items-center justify-between mb-1.5"><span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300">{scenario.tag}</span><Zap className="w-3 h-3 text-purple-400" /></div><h4 className="text-xs font-bold text-white line-clamp-1">{scenario.title}</h4><p className="text-[11px] text-white/50 line-clamp-2 mt-1">{scenario.desc}</p><span className="text-[10px] text-purple-400 flex items-center gap-1 font-mono pt-2">Dispatch Pipeline <ChevronRight className="w-3 h-3" /></span></button>)}
       </div>

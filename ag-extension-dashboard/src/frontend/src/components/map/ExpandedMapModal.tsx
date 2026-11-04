@@ -166,7 +166,7 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
             </div>
           </div>
           <div
-            className="flex items-center gap-2 text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border"
+            className="flex items-center gap-2 text-xs font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border"
             style={{
               color: theme.primary[600],
               backgroundColor: themeName === 'cyber' ? 'var(--color-outline)' : `${theme.primary[50]}`,
@@ -174,7 +174,7 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
             }}
           >
             <div
-              className="w-2 h-2 rounded-full animate-ping"
+              className="w-2 h-2 rounded-full"
               style={{ backgroundColor: theme.primary[500] }}
             />
             <span className={themeName === 'cyber' ? 'text-primary-300' : ''}>System Online</span>

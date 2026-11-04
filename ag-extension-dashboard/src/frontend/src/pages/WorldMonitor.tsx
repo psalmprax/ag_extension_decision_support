@@ -52,57 +52,57 @@ const WorldMonitor: React.FC = () => {
   if (!isOfficer) {
     return (
       <div className="max-w-3xl mx-auto p-8 text-center space-y-3">
-        <Globe className="w-10 h-10 text-white/20 mx-auto" />
-        <h2 className="text-lg font-bold text-white">Officer Globe</h2>
-        <p className="text-sm text-white/60">WorldMonitor is available for extension officers and admins on desktop. Farmers use the lightweight Leaflet map in the dashboard.</p>
+        <Globe className="w-10 h-10 text-slate-400 dark:text-white/20 mx-auto" />
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Officer Globe</h2>
+        <p className="text-sm text-slate-500 dark:text-white/60">WorldMonitor is available for extension officers and admins on desktop. Farmers use the lightweight Leaflet map in the dashboard.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-slate-900/70 border border-white/10">
-        <div className="flex items-center gap-2">
-          <Globe className="w-5 h-5 text-cyan-400" />
-          <h1 className="text-base font-bold text-white">WorldMonitor — Live Spatial GIS</h1>
-          <span className="px-2 py-0.5 rounded text-xxs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">LIVE SPATIAL GIS</span>
-          {isDemo && <span className="px-2 py-0.5 rounded text-xxs font-mono bg-amber-500/15 text-amber-300 border border-amber-500/20">Demo filters</span>}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-white/10">
+        <div className="flex items-center gap-2.5">
+          <Globe className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+          <h1 className="text-base font-semibold text-slate-900 dark:text-white">WorldMonitor — Live Spatial GIS</h1>
+          <span className="px-2 py-0.5 rounded text-xs font-medium bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/20">Live GIS</span>
+          {isDemo && <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">Demo filters</span>}
         </div>
         <div className="flex items-center gap-2">
-          <input placeholder="Region" value={filters.region || ''} onChange={e => setFilters(s => ({ ...s, region: e.target.value || undefined }))} className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs w-28" />
-          <input placeholder="Crop" value={filters.crop || ''} onChange={e => setFilters(s => ({ ...s, crop: e.target.value || undefined }))} className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs w-28" />
-          <input placeholder="County" value={filters.county || ''} onChange={e => setFilters(s => ({ ...s, county: e.target.value || undefined }))} className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs w-28" />
-          <button onClick={() => fetchLayers()} disabled={loading} className="px-4 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold disabled:opacity-50">Apply</button>
+          <input placeholder="Region" value={filters.region || ''} onChange={e => setFilters(s => ({ ...s, region: e.target.value || undefined }))} className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs w-28 placeholder:text-slate-400 focus:outline-none focus:border-cyan-500" />
+          <input placeholder="Crop" value={filters.crop || ''} onChange={e => setFilters(s => ({ ...s, crop: e.target.value || undefined }))} className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs w-28 placeholder:text-slate-400 focus:outline-none focus:border-cyan-500" />
+          <input placeholder="County" value={filters.county || ''} onChange={e => setFilters(s => ({ ...s, county: e.target.value || undefined }))} className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs w-28 placeholder:text-slate-400 focus:outline-none focus:border-cyan-500" />
+          <button onClick={() => fetchLayers()} disabled={loading} className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium disabled:opacity-50 transition-colors">Apply</button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="p-3 rounded-xl bg-slate-900/60 border border-white/10 flex items-center gap-2">
-          <Satellite className="w-4 h-4 text-cyan-400" />
-          <div><div className="text-xxs font-mono text-white/50">SATELLITE ORBIT</div><div className="text-xs font-bold text-white">{data ? 'Stub — Kepler deterministic' : '—'}</div></div>
+        <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
+          <Satellite className="w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
+          <div><div className="text-xs text-slate-500 dark:text-white/50">Satellite orbit</div><div className="text-xs font-medium text-slate-900 dark:text-white">{data ? 'Stub — Kepler deterministic' : '—'}</div></div>
         </div>
-        <div className="p-3 rounded-xl bg-slate-900/60 border border-white/10 flex items-center gap-2">
-          <Layers className="w-4 h-4 text-emerald-400" />
-          <div><div className="text-xxs font-mono text-white/50">NDVI STRESS</div><div className="text-xs font-bold text-white">{data?.ndviPoints?.length ?? 0} points (30d)</div></div>
+        <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
+          <Layers className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <div><div className="text-xs text-slate-500 dark:text-white/50">NDVI stress</div><div className="text-xs font-medium font-mono tabular-nums text-slate-900 dark:text-white">{data?.ndviPoints?.length ?? 0} points (30d)</div></div>
         </div>
-        <div className="p-3 rounded-xl bg-slate-900/60 border border-white/10 flex items-center gap-2">
-          <Droplets className="w-4 h-4 text-amber-400" />
-          <div><div className="text-xxs font-mono text-white/50">SOILGRIDS HORIZON</div><div className="text-xs font-bold text-white">{data?.soilHorizon ? `${data.soilHorizon.baseline?.ph ?? '—'} pH` : '—'}</div></div>
+        <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
+          <Droplets className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+          <div><div className="text-xs text-slate-500 dark:text-white/50">SoilGrids horizon</div><div className="text-xs font-medium font-mono tabular-nums text-slate-900 dark:text-white">{data?.soilHorizon ? `${data.soilHorizon.baseline?.ph ?? '—'} pH` : '—'}</div></div>
         </div>
-        <div className="p-3 rounded-xl bg-slate-900/60 border border-white/10 flex items-center gap-2">
-          <Bug className="w-4 h-4 text-rose-400" />
-          <div><div className="text-xxs font-mono text-white/50">PEST SWARM</div><div className="text-xs font-bold text-white">{data?.pestSwarm?.clusters?.length ?? 0} clusters</div></div>
+        <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
+          <Bug className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+          <div><div className="text-xs text-slate-500 dark:text-white/50">Pest swarm</div><div className="text-xs font-medium font-mono tabular-nums text-slate-900 dark:text-white">{data?.pestSwarm?.clusters?.length ?? 0} clusters</div></div>
         </div>
       </div>
 
-      {error && <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</div>}
+      {error && <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</div>}
 
-      <div className="rounded-xl overflow-hidden border border-white/10 bg-slate-950 h-[520px] relative">
+      <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-950 h-[520px] relative">
         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
           <Globe className="w-10 h-10 text-white/20 mb-2" />
-          <p className="text-sm font-bold text-white">Spatial Layer Status</p>
+          <p className="text-sm font-semibold text-white">Spatial Layer Status</p>
           <p className="text-xs text-white/50 mt-1 max-w-md">4 live layers (farmers, NDVI 30d, SoilGrids 250m centroid, pest swarm) filtered by region/crop/county. Globe canvas is officer-desktop only to keep the farmer PWA lightweight.</p>
-          <div className="mt-4 grid grid-cols-2 gap-2 text-left text-xs font-mono w-full max-w-2xl">
+          <div className="mt-4 grid grid-cols-2 gap-2 text-left text-xs font-mono tabular-nums w-full max-w-2xl">
             <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-emerald-400">Farmers:</span> {data?.farmers?.length ?? 0}</div>
             <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-amber-400">Soil centroid:</span> {data?.soilHorizon ? `${Number(data.soilHorizon.centroid.lat).toFixed(2)}, ${Number(data.soilHorizon.centroid.lon).toFixed(2)}` : '—'}</div>
             <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-rose-400">Swarm clusters:</span> {data?.pestSwarm?.clusters?.map(c => c.clusterId.slice(0, 8)).join(', ') || '—'}</div>
@@ -111,7 +111,7 @@ const WorldMonitor: React.FC = () => {
         </div>
       </div>
 
-      <p className="text-[10px] text-white/40 text-center">Live GIS: farmers + NDVI (diagnosis_events 30d) + SoilGrids horizon + pest swarm (14d). Satellite orbit is deterministic stub — replace with Celestrak TLE when promoted.</p>
+      <p className="text-[10px] text-slate-400 dark:text-white/40 text-center">Live GIS: farmers + NDVI (diagnosis_events 30d) + SoilGrids horizon + pest swarm (14d). Satellite orbit is deterministic stub — replace with Celestrak TLE when promoted.</p>
     </div>
   );
 };

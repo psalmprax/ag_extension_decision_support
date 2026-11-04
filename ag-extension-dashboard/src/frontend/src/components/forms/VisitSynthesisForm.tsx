@@ -6,7 +6,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useDemoMode, DEMO_FARMERS } from '@/demo';
 import { useFieldVoiceRecorder } from '@/hooks/useFieldVoiceRecorder';
 import {
-  Sparkles,
+  FileCheck,
   Loader2,
   FileText,
   CheckCircle2,
@@ -36,17 +36,14 @@ import { AntiFraudVerificationBadge } from '@/components/AntiFraudVerificationBa
 const FIELD_PRESETS = [
   {
     title: 'Fall Armyworm Infestation',
-    icon: '🐛',
     text: 'Inspected 3-hectare maize plot. Severe whorl damage observed on 35% of crops at V4 vegetative stage. Characteristic windowpane feeding signs and sawdust-like frass detected. Recommended immediate biological spraying (Emamectin benzoate) and pheromone trap deployment.',
   },
   {
     title: 'Late Blight & Soil Acidity',
-    icon: '🍂',
     text: 'Visited potato field in highland parcel. Water-soaked dark lesions on lower leaves with white fungal growth on undersides. Soil pH tested at 5.2 (acidic). Prescribed copper hydroxide fungicide application and agricultural lime top-dressing.',
   },
   {
     title: 'Moisture Stress & Stunting',
-    icon: '💧',
     text: 'Field inspection of smallholder sorghum plot. Crops showing marked wilting and nitrogen deficiency yellowing due to 18-day dry spell. Advised organic mulching to conserve root zone moisture and scheduled foliar fertilizer application once rains resume.',
   },
 ];
@@ -151,13 +148,13 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <UserCheck className="w-4 h-4 text-purple-400" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-white">
-            Target Farmer Parcel
+          <UserCheck className="w-4 h-4 text-emerald-400" />
+          <h2 className="text-xs font-medium text-white">
+            Target farmer parcel
           </h2>
         </div>
         {selectedFarmer && (
-          <span className="text-xxs text-emerald-400 font-semibold flex items-center gap-1">
+          <span className="text-xxs text-emerald-400 font-medium flex items-center gap-1">
             <Check className="w-3 h-3" /> Farmer Linked
           </span>
         )}
@@ -166,11 +163,11 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
       <div className="relative">
         <div
           onClick={onToggleDropdown}
-          className="w-full p-3.5 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.05] cursor-pointer flex items-center justify-between transition-all"
+          className="w-full p-3 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.05] cursor-pointer flex items-center justify-between transition-colors"
         >
           {selectedFarmer ? (
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 font-bold text-xs">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-medium text-xs">
                 {selectedFarmer.firstName?.[0]}
                 {selectedFarmer.lastName?.[0]}
               </div>
@@ -261,50 +258,50 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
       className="grid grid-cols-1 md:grid-cols-2 gap-6"
     >
       {/* Bento Card 1: Diagnostic Summary & Pathology */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl space-y-5 flex flex-col justify-between">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-sm space-y-5 flex flex-col justify-between">
         <div className="space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-white/5">
             <div className="flex items-center gap-2">
               <Leaf className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white">
-                Diagnostic Executive Summary
+              <h3 className="text-sm font-semibold text-white">
+                Diagnostic executive summary
               </h3>
             </div>
-            <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold uppercase border ${getStatusBadgeClass(result.cropHealthStatus)}`}>
+            <span className={`px-2 py-0.5 rounded text-xs font-medium border ${getStatusBadgeClass(result.cropHealthStatus)}`}>
               {result.cropHealthStatus}
             </span>
           </div>
 
-          <p className="text-sm text-white/80 leading-relaxed font-normal p-3.5 rounded-xl bg-white/[0.02] border border-white/5">
+          <p className="text-sm text-white/80 leading-relaxed font-normal p-3.5 rounded-lg bg-white/[0.02] border border-white/5">
             {result.summary}
           </p>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-              <span className="text-xxs font-bold text-white/40 uppercase tracking-wider">
-                Follow-up Required
+            <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 space-y-1">
+              <span className="text-xs font-medium text-white/50">
+                Follow-up required
               </span>
-              <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                <div className={`w-2 h-2 rounded-full ${result.followUpRequired ? 'bg-rose-400 animate-pulse' : 'bg-emerald-400'}`} />
+              <div className="text-sm font-medium text-white flex items-center gap-1.5">
+                <div className={`w-2 h-2 rounded-full ${result.followUpRequired ? 'bg-rose-400' : 'bg-emerald-400'}`} />
                 <span>{result.followUpRequired ? 'Yes (Urgent)' : 'No (Routine)'}</span>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-              <span className="text-xxs font-bold text-white/40 uppercase tracking-wider">
-                Next Field Visit Hint
+            <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 space-y-1">
+              <span className="text-xs font-medium text-white/50">
+                Next visit hint
               </span>
-              <div className="text-sm font-bold text-purple-300 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-purple-400" />
+              <div className="text-sm font-medium text-slate-300 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-slate-400" />
                 <span>{result.nextVisitDateHint || '7–10 days'}</span>
               </div>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-1">
-            <span className="text-xxs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1">
+          <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-1">
+            <span className="text-xs font-medium text-amber-300 flex items-center gap-1">
               <AlertCircle className="w-3 h-3" />
-              Pest & Disease Stress Index
+              Pest & disease stress index
             </span>
             <p className="text-xs font-medium text-amber-200/90">{result.pestIssues}</p>
           </div>
@@ -312,18 +309,18 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
       </div>
 
       {/* Bento Card 2: Key Observations & Action Itinerary */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl space-y-5 flex flex-col justify-between">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-sm space-y-5 flex flex-col justify-between">
         <div className="space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-white/5">
             <Layers className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white">
-              Observations & Recommendations
+            <h3 className="text-sm font-semibold text-white">
+              Observations & recommendations
             </h3>
           </div>
 
           <div>
-            <h4 className="text-xxs font-bold text-white/40 uppercase tracking-wider mb-2">
-              Key Agronomic Observations
+            <h4 className="text-xs font-medium text-white/50 mb-2">
+              Key agronomic observations
             </h4>
             <ul className="space-y-1.5">
               {result.keyObservations.map((obs, i) => (
@@ -336,8 +333,8 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
           </div>
 
           <div>
-            <h4 className="text-xxs font-bold text-white/40 uppercase tracking-wider mb-2">
-              Prescribed Treatment Protocol
+            <h4 className="text-xs font-medium text-white/50 mb-2">
+              Prescribed treatment protocol
             </h4>
             <ul className="space-y-1.5">
               {result.recommendedActions.map((action, i) => (
@@ -358,7 +355,7 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
           <button
             onClick={onSaveRecords}
             disabled={isSaving || !selectedFarmer}
-            className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all flex items-center gap-2 disabled:opacity-50"
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
           >
             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
             <span>{isSaving ? 'Logging Visit...' : 'Save Visit Synthesis'}</span>
@@ -513,17 +510,17 @@ export const VisitSynthesisForm: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* ── Header Telemetry & Preset Hub ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-sm relative overflow-hidden">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-500/30 flex items-center justify-center shadow-lg shadow-purple-950/40">
-              <Sparkles className="w-6 h-6 text-purple-400" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+              <FileCheck className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold tracking-tight text-white">Visit Synthesis</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20">
-                  <Radio className="w-2.5 h-2.5 text-purple-400 animate-pulse" />
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Visit Synthesis</h1>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                  <Radio className="w-2.5 h-2.5 text-emerald-400" />
                   AI Field Copilot Active
                 </span>
               </div>
@@ -535,7 +532,7 @@ export const VisitSynthesisForm: React.FC = () => {
 
           {/* Quick-Preset Chips */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xxs font-semibold text-white/40 uppercase tracking-wider">Presets:</span>
+            <span className="text-xs font-medium text-white/50">Presets:</span>
             {FIELD_PRESETS.map(p => (
               <button
                 key={p.title}
@@ -544,9 +541,8 @@ export const VisitSynthesisForm: React.FC = () => {
                   setNotes(p.text);
                   toast.success(`Observation "${p.title}" loaded!`);
                 }}
-                className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-purple-500/15 border border-white/10 hover:border-purple-500/30 text-xs text-white/80 hover:text-white transition-all flex items-center gap-1.5 shadow-sm"
+                className="px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/30 text-xs text-white/80 hover:text-white transition-colors flex items-center gap-1.5"
               >
-                <span>{p.icon}</span>
                 <span className="font-medium">{p.title}</span>
               </button>
             ))}
@@ -572,12 +568,12 @@ export const VisitSynthesisForm: React.FC = () => {
       />
 
       {/* ── Input Terminal Card ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl space-y-4">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-sm space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/5">
           <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-purple-400" />
-            <h2 className="text-sm font-bold uppercase tracking-wider text-white">
-              Field Observation Notes
+            <FileText className="w-4 h-4 text-emerald-400" />
+            <h2 className="text-sm font-semibold text-white">
+              Field observation notes
             </h2>
           </div>
 
@@ -595,10 +591,10 @@ export const VisitSynthesisForm: React.FC = () => {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isRecording || isTranscribing}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white/70 hover:text-white border border-white/10 transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-white/[0.04] hover:bg-white/[0.08] text-white/70 hover:text-white border border-white/10 transition-colors disabled:opacity-50"
               title="Upload field voice note (.mp3, .wav, .m4a, .ogg, .webm)"
             >
-              <UploadCloud className="w-3.5 h-3.5 text-indigo-400" />
+              <UploadCloud className="w-3.5 h-3.5 text-slate-400" />
               <span>{isTranscribing ? 'Transcribing...' : 'Upload Voice Memo'}</span>
             </button>
 
@@ -606,13 +602,13 @@ export const VisitSynthesisForm: React.FC = () => {
               type="button"
               onClick={toggleRecording}
               disabled={isTranscribing}
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold transition-all border ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors border ${
                 isRecording
-                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse'
-                  : 'bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 border-purple-500/30'
+                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                  : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 hover:text-emerald-200 border-emerald-500/30'
               }`}
             >
-              {isRecording ? <Square className="w-3.5 h-3.5 text-rose-400 fill-rose-400" /> : <Mic className="w-3.5 h-3.5 text-purple-400" />}
+              {isRecording ? <Square className="w-3.5 h-3.5 text-rose-400 fill-rose-400" /> : <Mic className="w-3.5 h-3.5 text-emerald-400" />}
               <span>{isRecording ? `Stop Recording (${formatSecondsToMMSS(recordingDuration)})` : `Live Dictate (${SPEECH_LANG_MAP[language]?.slice(0, 2).toUpperCase() || 'EN'})`}</span>
             </button>
           </div>
@@ -620,14 +616,14 @@ export const VisitSynthesisForm: React.FC = () => {
 
         {/* Live Audio Streaming Feedback */}
         {isRecording && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between text-xs text-rose-300 animate-pulse">
+          <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-between text-xs text-rose-300">
             <div className="flex items-center gap-2">
               <AudioLines className="w-4 h-4 text-rose-400" />
               <span>
                 {interimText ? `"${interimText}..."` : 'Listening for field observations (Noise suppression active)...'}
               </span>
             </div>
-            <span className="font-mono font-bold text-xs">{formatSecondsToMMSS(recordingDuration)}</span>
+            <span className="font-mono font-medium tabular-nums text-xs">{formatSecondsToMMSS(recordingDuration)}</span>
           </div>
         )}
 
@@ -636,7 +632,7 @@ export const VisitSynthesisForm: React.FC = () => {
             value={notes}
             onChange={e => setNotes(e.target.value)}
             placeholder="Type, live dictate, or upload field voice notes... (e.g. Inspected 2-acre plot in Rongai. Severe leaf yellowing with late blight lesions on lower leaves, soil moisture depleted, advised copper fungicide spraying and scheduled follow-up inspection in 10 days)"
-            className="w-full min-h-[160px] p-4 rounded-xl border border-white/10 bg-white/[0.02] text-white placeholder-white/25 focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all resize-none text-sm leading-relaxed"
+            className="w-full min-h-[160px] p-4 rounded-lg border border-white/10 bg-white/[0.02] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent outline-none transition-colors resize-none text-sm leading-relaxed"
           />
         </div>
 
@@ -647,7 +643,7 @@ export const VisitSynthesisForm: React.FC = () => {
           <button
             onClick={handleSynthesize}
             disabled={isProcessing || notes.trim().length < 10}
-            className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 text-white font-bold rounded-xl shadow-xl shadow-purple-950/40 transition-all flex items-center justify-center gap-2 text-sm"
+            className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
           >
             {isProcessing ? (
               <>
@@ -656,7 +652,7 @@ export const VisitSynthesisForm: React.FC = () => {
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4" />
+                <FileCheck className="w-4 h-4" />
                 <span>Synthesize Agronomic Report</span>
               </>
             )}

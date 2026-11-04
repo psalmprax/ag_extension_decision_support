@@ -4,12 +4,14 @@ import {
   X,
   Zap,
   Target,
-  Sparkles,
+  Layers,
   CheckCircle2,
   RefreshCw,
   BookOpen,
   History,
   Award,
+  MapPin,
+  Sprout,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -314,8 +316,8 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
               <div className="space-y-6">
                 {/* 1-Click Goal Presets */}
                 <div>
-                  <div className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <div className="text-xs font-medium text-slate-300 mb-2 flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-amber-400" />
                     <span>Quick Goal Presets</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
@@ -416,7 +418,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                     <button
                       onClick={handleExecuteCampaign}
                       disabled={isExecuting}
-                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-emerald-600 hover:from-amber-500 hover:to-emerald-500 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-amber-900/30 disabled:opacity-50"
+                      className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
                     >
                       {isExecuting ? (
                         <RefreshCw className="w-4 h-4 animate-spin" />
@@ -490,8 +492,8 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
 
                 {/* Synthesis Form */}
                 <form onSubmit={handleSynthesizeSkill} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
-                  <div className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" />
+                  <div className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5" />
                     <span>Synthesize New Regional Skill Card</span>
                   </div>
 
@@ -556,9 +558,9 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                     <button
                       type="submit"
                       disabled={isSynthesizing}
-                      className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-md shadow-amber-900/20 disabled:opacity-50"
+                      className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
                     >
-                      {isSynthesizing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                      {isSynthesizing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                       <span>Synthesize & Store Skill</span>
                     </button>
                   </div>
@@ -575,15 +577,15 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                     skills.map(skill => (
                       <div key={skill.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-xs text-white">{skill.title}</span>
+                          <span className="font-semibold text-xs text-white">{skill.title}</span>
                           <span className="text-xxs px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 font-mono">
                             {Math.round(skill.confidence_score * 100)}% Conf
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-xxs text-slate-400">
-                          <span>📍 {skill.region}</span>
+                        <div className="flex items-center gap-3 text-xxs text-slate-400">
+                          <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-slate-500" /> {skill.region}</span>
                           <span>•</span>
-                          <span>🌱 {skill.crop}</span>
+                          <span className="flex items-center gap-1"><Sprout className="w-3 h-3 text-emerald-500" /> {skill.crop}</span>
                           <span>•</span>
                           <span>Source: {skill.source_type}</span>
                         </div>

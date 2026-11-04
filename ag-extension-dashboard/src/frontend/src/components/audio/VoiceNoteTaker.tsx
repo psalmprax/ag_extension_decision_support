@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, RotateCcw, Check, Sparkles, Languages } from 'lucide-react';
+import { Mic, Square, RotateCcw, Check, FileText, Languages } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useFieldVoiceRecorder } from '@/hooks/useFieldVoiceRecorder';
@@ -147,7 +147,7 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
                 exit={{ opacity: 0, y: -4 }}
                 className="absolute right-0 mt-1 w-44 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl z-50 py-1 max-h-56 overflow-y-auto"
               >
-                <div className="px-2.5 py-1 text-3xs font-bold uppercase tracking-wider text-slate-400">
+                <div className="px-2.5 py-1 text-xs font-medium text-slate-400">
                   Select Spoken Language
                 </div>
                 {SUPPORTED_VOICE_LANGUAGES.map(lang => (
@@ -183,8 +183,8 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
             compact ? 'w-14 h-14' : 'w-20 h-20'
           } ${
             isRecording
-              ? 'bg-rose-600 text-white ring-8 ring-rose-500/20 animate-pulse'
-              : 'bg-emerald-600 hover:bg-emerald-500 text-white ring-4 ring-emerald-500/10 shadow-emerald-950/20'
+              ? 'bg-rose-600 text-white ring-4 ring-rose-500/20'
+              : 'bg-emerald-600 hover:bg-emerald-500 text-white ring-2 ring-emerald-500/10 shadow-sm'
           }`}
         >
           {isRecording ? (
@@ -225,8 +225,8 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
       {transcript ? (
         <div className="mt-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 space-y-2.5">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 text-xxs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-              <Sparkles className="w-3 h-3" />
+            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              <FileText className="w-3.5 h-3.5" />
               <span>Transcribed Note ({activeLangObj.name})</span>
             </div>
 

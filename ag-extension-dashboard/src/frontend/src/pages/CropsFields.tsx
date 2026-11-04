@@ -358,17 +358,17 @@ export function CropsFields() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* ── Top Bento Header: Fields & Geospatial Parcels ── */}
-      <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-4 sm:p-6 shadow-sm dark:shadow-xl relative overflow-hidden">
+      <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-4 sm:p-6 shadow-sm relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
               <Map className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
               <div className="flex items-center gap-2 sm:gap-2.5">
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Fields & Geospatial Parcels</h1>
-                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                  <Sprout className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
+                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                  <Sprout className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
                   Growth Cycles Active
                 </span>
               </div>
@@ -401,7 +401,7 @@ export function CropsFields() {
             <button
               onClick={handleOpenAddField}
               disabled={!isFarmer && !selectedFarmerId}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all active:scale-95 disabled:opacity-50"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg transition-colors active:scale-95 disabled:opacity-50"
             >
               <Plus className="w-4 h-4" />
               <span>Add Field Sector</span>
@@ -412,44 +412,44 @@ export function CropsFields() {
 
       {/* ── Statistics Bento Row ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-blue-500/20 rounded-xl p-5 shadow-sm dark:shadow-lg space-y-3">
+        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xxs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Total Sectors</span>
-            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Sectors</span>
+            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
               <Map className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-3xl font-black text-slate-900 dark:text-white font-mono">{totalFieldsCount}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white font-mono tabular-nums">{totalFieldsCount}</p>
         </div>
 
-        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-emerald-500/20 rounded-xl p-5 shadow-sm dark:shadow-lg space-y-3">
+        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xxs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Total Cultivated Area</span>
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Cultivated Area</span>
+            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               <Sliders className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-mono">{(Number(totalAreaHectares) || 0).toFixed(1)} ha</p>
+          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">{(Number(totalAreaHectares) || 0).toFixed(1)} ha</p>
         </div>
 
-        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-teal-500/20 rounded-xl p-5 shadow-sm dark:shadow-lg space-y-3">
+        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xxs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider">Active Timelines</span>
-            <div className="p-2 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Active Timelines</span>
+            <div className="p-2 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
               <Sprout className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-3xl font-black text-teal-600 dark:text-teal-300 font-mono">{activeCycles.length}</p>
+          <p className="text-2xl font-bold text-teal-600 dark:text-teal-300 font-mono tabular-nums">{activeCycles.length}</p>
         </div>
 
-        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-purple-500/20 rounded-xl p-5 shadow-sm dark:shadow-lg space-y-3">
+        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xxs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Harvested Yield</span>
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Harvested Yield</span>
+            <div className="p-2 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-3xl font-black text-purple-600 dark:text-purple-300 font-mono">{((Number(totalYieldKg) || 0) / 1000).toFixed(1)} tons</p>
+          <p className="text-2xl font-bold text-purple-600 dark:text-purple-300 font-mono tabular-nums">{((Number(totalYieldKg) || 0) / 1000).toFixed(1)} tons</p>
         </div>
       </div>
 
@@ -465,7 +465,7 @@ export function CropsFields() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as 'overview' | 'cycles')}
-              className={`flex items-center gap-2 pb-4 font-bold text-sm tracking-wide transition-all border-b-2 uppercase ${
+              className={`flex items-center gap-2 pb-3 font-medium text-sm transition-colors border-b-2 ${
                 isActive
                   ? 'text-primary-600 dark:text-primary-400 border-primary-500'
                   : 'text-slate-500 border-transparent hover:text-slate-700 dark:hover:text-slate-300'

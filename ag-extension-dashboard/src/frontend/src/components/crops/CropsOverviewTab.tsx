@@ -81,34 +81,34 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
 
                   <div className="grid grid-cols-2 gap-4 mb-6 bg-slate-50 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-200 dark:border-white/5">
                     <div>
-                      <span className="text-xxs font-black uppercase tracking-wider text-slate-500">
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         Area size
                       </span>
-                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-0.5 tabular-nums">
                         {field.areaHectares} Hectares
                       </p>
                     </div>
                     <div>
-                      <span className="text-xxs font-black uppercase tracking-wider text-slate-500">
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         Soil type
                       </span>
-                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5 capitalize">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-0.5 capitalize">
                         {field.soilType || 'Unspecified'}
                       </p>
                     </div>
                     <div>
-                      <span className="text-xxs font-black uppercase tracking-wider text-slate-500">
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         Soil pH
                       </span>
-                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-0.5 tabular-nums">
                         {field.soilPh ? `${Number(field.soilPh).toFixed(1)} pH` : 'Not Measured'}
                       </p>
                     </div>
                     <div>
-                      <span className="text-xxs font-black uppercase tracking-wider text-slate-500">
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         Coordinates
                       </span>
-                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-0.5 truncate font-mono text-xs tabular-nums">
                         {field.latitude && field.longitude
                           ? `${Number(field.latitude).toFixed(4)}, ${Number(field.longitude).toFixed(4)}`
                           : 'No GPS Set'}
@@ -122,7 +122,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                         <Sprout className="w-5 h-5 text-primary-600 dark:text-primary-400 shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-black text-primary-600 dark:text-primary-400 uppercase tracking-wider">
+                            <span className="text-xs font-medium text-primary-600 dark:text-primary-400">
                               Growing
                             </span>
                             <span className="text-xxs font-medium text-slate-500 dark:text-slate-400">

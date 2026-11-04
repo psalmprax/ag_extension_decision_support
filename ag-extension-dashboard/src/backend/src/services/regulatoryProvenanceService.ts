@@ -285,7 +285,7 @@ export class RegulatoryProvenanceService {
     if (req.clientOfflineContext?.isOffline) {
       const cachedTimestamp = req.clientOfflineContext.cachedDatasetTimestamp;
       const cachedTime = cachedTimestamp ? new Date(cachedTimestamp).getTime() : NaN;
-      const currentTime = Date.now();
+      const evalTime = Date.now();
 
       if (isNaN(cachedTime) || cachedTime <= 0) {
         return this.createRejection(
@@ -296,7 +296,7 @@ export class RegulatoryProvenanceService {
         );
       }
 
-      datasetAgeDays = Math.max(0, Math.floor((currentTime - cachedTime) / (1000 * 60 * 60 * 24)));
+      datasetAgeDays = Math.max(0, Math.floor((evalTime - cachedTime) / (1000 * 60 * 60 * 24)));
 
       if (datasetAgeDays > OFFLINE_MAX_STALENESS_DAYS) {
         return this.createRejection(

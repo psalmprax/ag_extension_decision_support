@@ -322,7 +322,7 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
         ))}
         {remoteStreams.size === 0 && (
           <div className="relative bg-gray-800/80 border border-dashed border-gray-700/80 rounded-lg overflow-hidden aspect-video w-full flex flex-col items-center justify-center p-6 text-center shadow-inner">
-            <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-3 animate-pulse">
+            <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-3">
               <Users className="w-7 h-7" />
             </div>
             <p className="text-white font-semibold text-sm sm:text-base">
@@ -334,7 +334,7 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
                 : 'Waiting for the host or other participants to join...'}
             </p>
             <div className="mt-3.5 inline-flex items-center gap-1.5 px-3 py-1 bg-gray-900/80 rounded-md text-xxs font-mono text-gray-300 border border-gray-700/80 shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               Room: {roomId}
             </div>
           </div>
@@ -421,7 +421,7 @@ function RemoteVideo({ stream, peerId }: { stream: MediaStream; peerId: string }
         className="w-full h-full object-cover"
       />
       <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 shadow">
-        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+        <span className="w-2 h-2 rounded-full bg-emerald-400" />
         <span>{peerId.slice(0, 8)}</span>
       </div>
     </div>

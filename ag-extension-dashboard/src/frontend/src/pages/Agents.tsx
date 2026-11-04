@@ -8,7 +8,7 @@ import {
   RefreshCw,
   Send,
   Zap,
-  Sparkles,
+  Cpu,
   Radio,
   ArrowRight,
   ShieldCheck,
@@ -137,12 +137,12 @@ function Agents() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-400">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
               Autonomous Mesh Fleet
             </span>
           </div>
-          <h1 className={`text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
+          <h1 className={`text-2xl font-semibold text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
             Agent Orchestration
           </h1>
           <p className="text-slate-600 dark:text-white/60 text-sm mt-1">
@@ -152,16 +152,16 @@ function Agents() {
 
         <div className="flex items-center gap-3">
           {agents.length > 0 && (
-            <div className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-mono">
+            <div className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-mono">
               <Radio className="w-3.5 h-3.5" />
-              <span>{agents.filter(a => a.health === 'healthy').length}/{agents.length} NODES HEALTHY</span>
+              <span>{agents.filter(a => a.health === 'healthy').length}/{agents.length} nodes healthy</span>
             </div>
           )}
 
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.1] text-slate-800 dark:text-white hover:border-emerald-500/40 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold transition-all disabled:opacity-50 shadow-sm ${btnClass}`}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.1] text-slate-800 dark:text-white hover:border-slate-300 dark:hover:border-white/20 text-xs font-medium transition-colors disabled:opacity-50 shadow-sm ${btnClass}`}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-600 dark:text-emerald-400' : ''}`} />
             <span>Refresh</span>
@@ -172,47 +172,47 @@ function Agents() {
       {/* Queue Stats Bento Strip */}
       {queueStatus && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+          <div className="p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-medium">
               <Clock className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
               <span>Queued Tasks</span>
             </div>
-            <div className="text-xl font-bold text-amber-600 dark:text-amber-400 flex items-baseline gap-2">
+            <div className="text-xl font-semibold font-mono tabular-nums text-amber-600 dark:text-amber-400 flex items-baseline gap-2">
               {queueStatus.queued}
-              <span className="text-xxs font-normal text-slate-400 dark:text-white/40">In Buffer</span>
+              <span className="text-xs font-normal text-slate-400">In buffer</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+          <div className="p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-medium">
               <Activity className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" />
               <span>Active Workers</span>
             </div>
-            <div className="text-xl font-bold text-sky-600 dark:text-sky-400 flex items-baseline gap-2">
+            <div className="text-xl font-semibold font-mono tabular-nums text-sky-600 dark:text-sky-400 flex items-baseline gap-2">
               {queueStatus.active}
-              <span className="text-xxs font-normal text-slate-400 dark:text-white/40">Executing</span>
+              <span className="text-xs font-normal text-slate-400">Executing</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+          <div className="p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-medium">
               <CheckCircle className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
               <span>Completed Total</span>
             </div>
-            <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 flex items-baseline gap-2">
+            <div className="text-xl font-semibold font-mono tabular-nums text-emerald-600 dark:text-emerald-400 flex items-baseline gap-2">
               {queueStatus.completed}
-              <span className="text-xxs font-normal text-emerald-600 dark:text-emerald-400/80">98.5% Pass</span>
+              <span className="text-xs font-normal text-emerald-600 dark:text-emerald-400/80">98.5% pass</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+          <div className="p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-medium">
               <XCircle className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" />
               <span>Failed / Retried</span>
             </div>
-            <div className="text-xl font-bold text-rose-600 dark:text-rose-400 flex items-baseline gap-2">
+            <div className="text-xl font-semibold font-mono tabular-nums text-rose-600 dark:text-rose-400 flex items-baseline gap-2">
               {queueStatus.failed}
-              <span className="text-xxs font-normal text-slate-400 dark:text-white/40">Auto-Handed Off</span>
+              <span className="text-xs font-normal text-slate-400">Auto-handed off</span>
             </div>
           </div>
         </div>
@@ -260,7 +260,7 @@ function Agents() {
                     </div>
 
                     <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold font-mono uppercase tracking-wider ${
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium font-mono capitalize ${
                         isHealthy
                           ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
                           : isDegraded
@@ -270,7 +270,7 @@ function Agents() {
                     >
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${
-                          isHealthy ? 'bg-emerald-500 dark:bg-emerald-400 animate-ping' : 'bg-amber-500 dark:bg-amber-400'
+                          isHealthy ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-amber-500 dark:bg-amber-400'
                         }`}
                       />
                       {agent.health}
@@ -279,15 +279,15 @@ function Agents() {
 
                   {/* Load Progress Bar */}
                   <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] space-y-2">
-                    <div className="flex justify-between text-xxs font-mono">
-                      <span className="text-slate-600 dark:text-white/50 uppercase">Concurrency Load</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                    <div className="flex justify-between text-xs font-mono">
+                      <span className="text-slate-600 dark:text-white/50">Concurrency load</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium font-mono tabular-nums">
                         {agent.currentLoad} / {agent.maxConcurrentTasks} ({loadPercent}%)
                       </span>
                     </div>
                     <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-emerald-500 to-amber-400 h-full rounded-full transition-all duration-500"
+                        className="bg-emerald-600 dark:bg-emerald-500 h-full rounded-full transition-all duration-500"
                         style={{ width: `${loadPercent}%` }}
                       />
                     </div>
@@ -295,12 +295,12 @@ function Agents() {
 
                   {/* Capabilities Chips */}
                   <div className="space-y-1.5">
-                    <div className="text-[10px] font-mono uppercase text-slate-500 dark:text-white/40">Capabilities</div>
+                    <div className="text-xs text-slate-500 dark:text-white/40">Capabilities</div>
                     <div className="flex flex-wrap gap-1.5">
                       {agent.capabilities.map(cap => (
                         <span
                           key={cap}
-                          className="px-2 py-0.5 rounded-lg text-[10px] font-mono bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-white/70 border border-slate-200 dark:border-white/[0.06]"
+                          className="px-2 py-0.5 rounded-lg text-xs font-mono bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-white/70 border border-slate-200 dark:border-white/[0.06]"
                         >
                           {cap}
                         </span>
@@ -311,13 +311,13 @@ function Agents() {
 
                 {/* Dispatch Trigger Button */}
                 <div className="pt-4 border-t border-slate-200 dark:border-white/[0.06] space-y-2">
-                  <div className="text-[9px] font-mono text-slate-400 dark:text-white/30 truncate">
-                    HEARTBEAT: {new Date(agent.lastHeartbeat).toLocaleTimeString()}
+                  <div className="text-xs font-mono tabular-nums text-slate-400 dark:text-white/30 truncate">
+                    Heartbeat: {new Date(agent.lastHeartbeat).toLocaleTimeString()}
                   </div>
                   <button
                     onClick={() => handleDispatch(agent.agentId)}
                     disabled={isDispatching === agent.agentId || agent.health === 'offline'}
-                    className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-bold text-xs flex items-center justify-center gap-2 transition-all disabled:opacity-40"
+                    className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-medium text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-40"
                   >
                     {isDispatching === agent.agentId ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -336,13 +336,13 @@ function Agents() {
       {/* Analytics & Handoff Logs Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Task Queue Distribution */}
-        <div className="p-6 rounded-xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-4">
+        <div className="p-6 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <Cpu className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>Queue Status Telemetry</span>
             </h3>
-            <span className="text-xxs font-mono text-slate-500 dark:text-white/40">REAL-TIME DENSITY</span>
+            <span className="text-xs font-mono text-slate-500 dark:text-white/40">Real-time density</span>
           </div>
 
           <ResponsiveContainer width="100%" height={240}>

@@ -76,10 +76,10 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
                     <RefreshCw className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                       Bulk Update Farmers
                     </h3>
-                    <p className="text-xs font-bold text-amber-600 uppercase tracking-widest">
+                    <p className="text-xs font-medium text-amber-600 dark:text-amber-400 font-mono tabular-nums">
                       Updating {selectedCount} farmers
                     </p>
                   </div>
@@ -104,8 +104,8 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
 
               {/* Region */}
               <div className="space-y-2">
-                <label className="text-xxs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                  <MapPin className="w-3 h-3" />
+                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5" />
                   Region
                 </label>
                 <select
@@ -126,8 +126,8 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
 
               {/* Language */}
               <div className="space-y-2">
-                <label className="text-xxs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                  <Languages className="w-3 h-3" />
+                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                  <Languages className="w-3.5 h-3.5" />
                   Language Preference
                 </label>
                 <select
@@ -146,8 +146,8 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
 
               {/* Crops */}
               <div className="space-y-2">
-                <label className="text-xxs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                  <Sprout className="w-3 h-3" />
+                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                  <Sprout className="w-3.5 h-3.5" />
                   Crop Types (Overrides existing)
                 </label>
                 <form onSubmit={handleAddCrop} className="flex gap-2">
@@ -160,7 +160,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
                   />
                   <button
                     type="submit"
-                    className="px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold hover:bg-gray-200 transition-all"
+                    className="px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-medium hover:bg-gray-200 transition-all"
                   >
                     Add
                   </button>
@@ -169,7 +169,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
                   {updates.crops.map(crop => (
                     <div
                       key={crop}
-                      className="flex items-center gap-2 px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-md text-xs font-bold"
+                      className="flex items-center gap-2 px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-md text-xs font-medium"
                     >
                       {crop}
                       <button
@@ -187,7 +187,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
             <div className="p-6 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-700 flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-black text-xs uppercase tracking-widest rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 transition-all"
+                className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-xs rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 {t('nav_cancel') || 'Cancel'}
               </button>
@@ -197,14 +197,14 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
                   (!updates.region && !updates.languagePreference && updates.crops.length === 0) ||
                   isLoading
                 }
-                className="flex-[2] px-4 py-3 bg-amber-600 hover:bg-amber-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-amber-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-[2] px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <Save className="w-4 h-4" />
                 )}
-                {isLoading ? 'UPDATING...' : `UPDATE ${selectedCount} FARMERS`}
+                <span>{isLoading ? 'Updating...' : `Update ${selectedCount} farmers`}</span>
               </button>
             </div>
           </motion.div>

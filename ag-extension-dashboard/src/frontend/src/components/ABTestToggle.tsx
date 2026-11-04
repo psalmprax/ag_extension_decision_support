@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Layout, Layers } from 'lucide-react';
+import { Sliders, Layout, Layers } from 'lucide-react';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
 import { triggerHaptic } from '@/lib/haptics';
 import toast from 'react-hot-toast';
@@ -60,15 +60,15 @@ export const ABTestToggle: React.FC<ABTestToggleProps> = ({
 
         <button
           onClick={() => handleSelect('base')}
-          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xxs font-bold uppercase tracking-wider transition-all duration-200 ${
+          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
             isBase
-              ? 'bg-blue-600/30 text-blue-300 border border-blue-500/40 shadow-sm shadow-blue-950/40'
+              ? 'bg-blue-600/30 text-blue-300 border border-blue-500/40 shadow-sm'
               : 'text-slate-400 hover:text-slate-200'
           }`}
           title="Base App Modern Variant"
           aria-pressed={isBase}
         >
-          <Sparkles className="w-3 h-3 text-blue-400" />
+          <Sliders className="w-3 h-3 text-blue-400" />
           <span>B</span>
         </button>
       </div>
@@ -115,13 +115,13 @@ export const ABTestToggle: React.FC<ABTestToggleProps> = ({
 
         <button
           onClick={() => handleSelect('base')}
-          className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
+          className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
             isBase
-              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-950/50 border border-blue-400/30'
+              ? 'bg-blue-600 text-white shadow-sm border border-blue-400/30'
               : 'text-slate-400 hover:text-white'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5 text-blue-300" />
+          <Sliders className="w-3.5 h-3.5 text-blue-200" />
           <span>{t('ab_option_base', { defaultValue: 'Base App (B)' })}</span>
         </button>
       </div>

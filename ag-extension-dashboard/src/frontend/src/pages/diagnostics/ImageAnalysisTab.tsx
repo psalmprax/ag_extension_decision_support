@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, FileImage, Loader2, CheckCircle, CloudOff, ShieldAlert, Sparkles } from 'lucide-react';
+import { Camera, FileImage, Loader2, CheckCircle, CloudOff, ShieldAlert, Check } from 'lucide-react';
 import {
   analyzePlantImage,
   type DiagnosticProvenance,
@@ -48,21 +48,21 @@ const ImageUploadViewfinder: React.FC<{
   onAnalyze,
   isAnalyzing,
 }) => (
-  <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-4">
+  <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-4">
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+        <h3 className="text-xs font-semibold text-white flex items-center gap-2">
           <Camera className="w-4 h-4 text-emerald-400" />
           Field Specimen Viewfinder
         </h3>
-        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-[3px] border border-emerald-500/30">
-          NEURAL SENSOR
+        <span className="text-xxs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+          Neural Sensor
         </span>
       </div>
 
       <div className="space-y-3">
         <div>
-          <label className="block text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-1">
+          <label className="block text-xs font-medium text-slate-400 mb-1">
             Target Crop (Optional Context)
           </label>
           <input
@@ -70,47 +70,41 @@ const ImageUploadViewfinder: React.FC<{
             value={cropType}
             onChange={e => setCropType(e.target.value)}
             placeholder="e.g. Coffee, Maize, Tomato, Cassava"
-            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/40 font-mono transition-all"
+            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-md text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/40 font-mono transition-colors"
           />
         </div>
 
         {/* Viewfinder Dropzone */}
-        <div className="relative rounded-[4px] border-2 border-dashed border-slate-700/80 hover:border-emerald-500/60 bg-slate-950/80 p-5 text-center transition-all group overflow-hidden">
-          {/* Corner Reticles */}
-          <div className="absolute top-1.5 left-1.5 w-3 h-3 border-t-2 border-l-2 border-emerald-400/80" />
-          <div className="absolute top-1.5 right-1.5 w-3 h-3 border-t-2 border-r-2 border-emerald-400/80" />
-          <div className="absolute bottom-1.5 left-1.5 w-3 h-3 border-b-2 border-l-2 border-emerald-400/80" />
-          <div className="absolute bottom-1.5 right-1.5 w-3 h-3 border-b-2 border-r-2 border-emerald-400/80" />
-
+        <div className="relative rounded-lg border-2 border-dashed border-slate-700/80 hover:border-emerald-500/60 bg-slate-950/80 p-5 text-center transition-colors group overflow-hidden">
           {imagePreview ? (
             <div className="space-y-3 relative z-10">
-              <div className="relative max-w-xs mx-auto rounded-[3px] overflow-hidden border border-emerald-500/40 shadow-lg shadow-emerald-950/60">
+              <div className="relative max-w-xs mx-auto rounded-md overflow-hidden border border-emerald-500/40">
                 <img src={imagePreview} alt="Specimen" className="w-full h-44 object-cover" />
                 {isAnalyzing && (
                   <div className="absolute inset-0 bg-emerald-500/20 backdrop-blur-[1px] flex items-center justify-center">
-                    <div className="w-full h-0.5 bg-emerald-400 shadow-[0_0_8px_#10b981] animate-pulse" />
+                    <div className="w-full h-0.5 bg-emerald-500/50" />
                   </div>
                 )}
               </div>
               <button
                 type="button"
                 onClick={onRemoveImage}
-                className="text-[11px] font-mono text-rose-400 hover:text-rose-300 underline uppercase tracking-wider"
+                className="text-xs font-mono text-rose-400 hover:text-rose-300 underline"
               >
                 [ Clear & Retake ]
               </button>
             </div>
           ) : (
             <div className="space-y-3 py-4">
-              <div className="w-12 h-12 mx-auto rounded-[4px] bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/40 transition-colors">
+              <div className="w-12 h-12 mx-auto rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/40 transition-colors">
                 <FileImage className="w-6 h-6" />
               </div>
               <div>
                 <label htmlFor="image-upload" className="cursor-pointer">
-                  <span className="text-xs font-bold text-emerald-400 hover:text-emerald-300 uppercase tracking-wider">
+                  <span className="text-xs font-medium text-emerald-400 hover:text-emerald-300">
                     Capture or Upload Leaf Photo
                   </span>
-                  <p className="text-[10px] font-mono text-slate-500 mt-1">
+                  <p className="text-xxs font-mono text-slate-500 mt-1">
                     Drag & Drop JPG, PNG (Max 10MB)
                   </p>
                 </label>
@@ -134,7 +128,7 @@ const ImageUploadViewfinder: React.FC<{
     <button
       onClick={onAnalyze}
       disabled={!selectedImage || isAnalyzing}
-      className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-[4px] shadow-lg shadow-emerald-950/60 uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors active:scale-[0.98]"
     >
       {isAnalyzing ? (
         <>
@@ -178,17 +172,17 @@ export const AnalysisResultsHUD: React.FC<{
 
   if (!imageAnalysis) {
     return (
-      <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 flex flex-col justify-center space-y-4">
+      <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 flex flex-col justify-center space-y-4">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-black text-slate-400 uppercase tracking-wider">
+          <span className="text-xs font-medium text-slate-400">
             Neural Attention Map & Loupe
           </span>
-          <span className="text-[10px] font-mono text-slate-500">STANDBY MODE</span>
+          <span className="text-xxs font-mono text-slate-500">Standby</span>
         </div>
-        <div className="rounded-[4px] overflow-hidden border border-slate-800 bg-slate-950">
+        <div className="rounded-lg overflow-hidden border border-slate-800 bg-slate-950">
           <DiseaseSaliencyCanvas />
         </div>
-        <p className="text-[11px] font-mono text-center text-slate-500">
+        <p className="text-xs font-mono text-center text-slate-500">
           Upload a specimen photo on the left to trigger deep leaf pathology scanning.
         </p>
       </div>
@@ -196,11 +190,11 @@ export const AnalysisResultsHUD: React.FC<{
   }
 
   return (
-    <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 space-y-4">
+    <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 space-y-4">
       {/* Specimen Photo Review */}
-      <div className="rounded-[4px] p-2 bg-slate-950 border border-slate-800">
+      <div className="rounded-lg p-2 bg-slate-950 border border-slate-800">
         <div className="px-2 py-1 mb-2 border-b border-slate-800">
-          <span className="text-[11px] font-mono font-bold text-slate-300 uppercase">
+          <span className="text-xs font-medium text-slate-300">
             Specimen Photo Review
           </span>
         </div>
@@ -208,15 +202,15 @@ export const AnalysisResultsHUD: React.FC<{
       </div>
 
       {/* Health Metric Banner */}
-      <div className="p-3.5 rounded-[4px] bg-slate-950 border border-emerald-500/30 flex items-center justify-between">
+      <div className="p-3.5 rounded-lg bg-slate-950 border border-emerald-500/30 flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-emerald-400" />
-            <h4 className="text-xs font-black text-white uppercase tracking-wider">
-              Health Status: {imageAnalysis.overallHealth}
+            <h4 className="text-xs font-semibold text-white">
+              Health status: {imageAnalysis.overallHealth}
             </h4>
           </div>
-          <p className="text-[10px] font-mono text-slate-400 mt-1">
+          <p className="text-xxs font-mono text-slate-400 mt-1">
             Source: {imageAnalysis.provenance.source}
             {imageAnalysis.provenance.provider &&
             !imageAnalysis.provenance.source.toLowerCase().includes(imageAnalysis.provenance.provider.toLowerCase())
@@ -225,43 +219,43 @@ export const AnalysisResultsHUD: React.FC<{
           </p>
         </div>
         <div className="text-right">
-          <span className="text-xl font-mono font-black text-emerald-400">
+          <span className="text-xl font-mono font-bold text-emerald-400 tabular-nums">
             {(imageAnalysis.confidence * 100).toFixed(1)}%
           </span>
-          <p className="text-[9px] font-mono uppercase text-slate-500">CONFIDENCE</p>
+          <p className="text-xxs font-mono text-slate-500">Confidence</p>
         </div>
       </div>
 
       {/* Detected Pathogens */}
       {imageAnalysis.diseases.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-xs font-black text-white uppercase tracking-wider">
-            Detected Pathological Matches
+          <h4 className="text-xs font-semibold text-white">
+            Detected pathological matches
           </h4>
           <div className="space-y-2">
             {imageAnalysis.diseases.map(disease => (
               <div
                 key={disease.disease}
-                className="p-3 rounded-[4px] bg-slate-950 border border-slate-800 hover:border-slate-700 transition-colors"
+                className="p-3 rounded-lg bg-slate-950 border border-slate-800 hover:border-slate-700 transition-colors"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <h5 className="text-xs font-bold text-white">
+                  <h5 className="text-xs font-medium text-white">
                     {disease.reviewStatus === 'needs_expert_review' ? 'Probable Match: ' : ''}
                     {disease.disease}
                   </h5>
                   <span
-                    className={`px-2 py-0.5 rounded-[3px] text-[10px] font-mono font-bold uppercase ${getSeverityColor(
+                    className={`px-2 py-0.5 rounded text-xs font-medium capitalize ${getSeverityColor(
                       disease.severity
                     )}`}
                   >
                     {disease.severity}
                   </span>
                 </div>
-                <p className="text-[11px] font-mono text-emerald-400">
+                <p className="text-xs font-mono text-emerald-400 tabular-nums">
                   Confidence: {(disease.confidence * 100).toFixed(1)}%
                 </p>
-                <p className="mt-1 text-[10px] text-amber-300 font-mono flex items-start gap-1">
-                  <ShieldAlert className="w-3 h-3 text-amber-400 shrink-0 mt-0.5" />
+                <p className="mt-1 text-xs text-amber-300 font-mono flex items-start gap-1">
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                   {disease.safetyNotice}
                 </p>
               </div>
@@ -273,16 +267,16 @@ export const AnalysisResultsHUD: React.FC<{
       {/* Prescribed Actions */}
       {imageAnalysis.recommendations.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-xs font-black text-white uppercase tracking-wider">
-            Immediate Agronomic Interventions
+          <h4 className="text-xs font-semibold text-white">
+            Immediate agronomic interventions
           </h4>
           <div className="grid grid-cols-1 gap-1.5">
             {imageAnalysis.recommendations.map((rec, index) => (
               <div
                 key={index}
-                className="p-2 rounded-[3px] bg-slate-950 border border-slate-800 text-xs text-slate-300 flex items-start gap-2"
+                className="p-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300 flex items-start gap-2"
               >
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                 <span>{rec}</span>
               </div>
             ))}
