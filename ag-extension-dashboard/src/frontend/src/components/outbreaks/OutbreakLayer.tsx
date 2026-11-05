@@ -168,12 +168,12 @@ export function OutbreakLayer() {
               }}
             >
               <Popup>
-                <div className="text-xs space-y-1 font-mono">
-                  <p className="font-bold text-amber-300 uppercase tracking-wider">
+                <div className="text-xs space-y-1 font-mono tabular-nums">
+                  <p className="font-medium text-amber-300">
                     Spore Dispersal Cone (CE-002)
                   </p>
                   <p className="text-slate-200">
-                    Risk: <span className="font-bold">{activeProjection.projection.riskLevel}</span> (Viability: {Math.round(activeProjection.projection.viabilityScore * 100)}%)
+                    Risk: <span className="font-medium">{activeProjection.projection.riskLevel}</span> (Viability: {Math.round(activeProjection.projection.viabilityScore * 100)}%)
                   </p>
                   <p className="text-slate-300 text-[11px]">
                     Distance: {activeProjection.projection.dispersionDistanceKm.toFixed(1)} km · Aperture: {activeProjection.projection.apertureDegrees}°

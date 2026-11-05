@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Sparkles,
   Layers,
   Compass,
   Zap,
@@ -46,7 +45,7 @@ export const CanvasUiLab: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-white/[0.03] border border-white/10">
         <div>
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-emerald-400" />
+            <Layers className="w-4 h-4 text-emerald-400" />
             Canvas UI & Shader Effects Lab (Test Environment)
           </h3>
           <p className="text-xs text-stone-400 mt-0.5">
@@ -65,7 +64,7 @@ export const CanvasUiLab: React.FC = () => {
             { id: 'soil_heatmap' as const, label: 'Soil Heatmap', icon: Droplets },
             { id: 'disease_saliency' as const, label: 'Saliency Loupe', icon: Eye },
             { id: 'rag_graph' as const, label: 'RAG Graph', icon: Network },
-            { id: 'particle_reveal' as const, label: 'Particle Reveal', icon: Sparkles },
+            { id: 'particle_reveal' as const, label: 'Particle Reveal', icon: Droplets },
             { id: 'canvasui_liquid' as const, label: 'WebGL Liquid', icon: Droplets },
             { id: 'sequence_scrubber' as const, label: 'Frame Scrubber', icon: Sliders },
           ].map(effect => (
@@ -74,7 +73,7 @@ export const CanvasUiLab: React.FC = () => {
               onClick={() => setSelectedEffect(effect.id)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 selectedEffect === effect.id
-                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'
+                  ? 'bg-slate-800 text-emerald-300 border border-emerald-500/30 shadow-sm'
                   : 'text-stone-400 hover:text-white'
               }`}
             >
@@ -91,7 +90,7 @@ export const CanvasUiLab: React.FC = () => {
           <div className="relative w-full h-full min-h-[320px] flex flex-col items-center justify-center text-center">
             <LiquidCanvas color={fluidColor} secondaryColor="#0d9488" opacity={0.7} />
             <div className="relative z-10 max-w-md p-6 rounded-xl bg-black/50 border border-white/10 backdrop-blur-md">
-              <span className="px-2.5 py-1 rounded-md text-xxs font-mono uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mb-2 inline-block">
+              <span className="px-2.5 py-1 rounded-md text-xxs font-mono bg-white/[0.04] text-slate-300 border border-white/10 mb-2 inline-block">
                 Move Cursor / Touch Screen
               </span>
               <h4 className="text-xl font-bold text-white mb-2">Organic Liquid Canopy</h4>
@@ -123,7 +122,7 @@ export const CanvasUiLab: React.FC = () => {
             <RefractiveGlassCard intensity={tiltIntensity} className="p-8">
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <span className="text-xxs font-mono uppercase text-emerald-400 tracking-wider">
+                  <span className="text-xxs font-mono text-slate-400">
                     3D Perspective Tilt & Specular Glare
                   </span>
                   <h4 className="text-2xl font-bold text-white mt-1">
@@ -189,11 +188,11 @@ export const CanvasUiLab: React.FC = () => {
             <LuminousForceField glowColor="#10b981">
               <div className="p-8">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="px-2.5 py-1 rounded-md text-xxs font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <span className="px-2.5 py-1 rounded-md text-xxs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                     Extension Field Protocol
                   </span>
-                  <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                    VERIFIED
+                  <span className="text-xs font-mono font-medium text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    Verified
                   </span>
                 </div>
                 <h4 className="text-xl font-bold text-white mb-2">Extension Officer Protocol</h4>
@@ -216,7 +215,7 @@ export const CanvasUiLab: React.FC = () => {
                 <button
                   type="button"
                   aria-label="Inspect Protocol Details"
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 cursor-pointer"
+                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs border border-white/10 shadow-sm transition-colors cursor-pointer"
                 >
                   Inspect Protocol Details
                 </button>
@@ -251,8 +250,8 @@ export const CanvasUiLab: React.FC = () => {
           <div className="w-full max-w-xl">
             <ParticleReveal background="#0c0a09" className="rounded-xl">
               <div className="p-8 rounded-xl bg-stone-900/80 border border-white/10">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xxs font-mono uppercase mb-3">
-                  <Sparkles className="w-3.5 h-3.5" />
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xxs font-mono mb-3">
+                  <Sliders className="w-3.5 h-3.5" />
                   canvasui.dev · Particle Reveal
                 </div>
                 <h4 className="text-xl font-bold text-white mb-2">

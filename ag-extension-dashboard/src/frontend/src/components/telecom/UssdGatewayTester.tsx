@@ -288,7 +288,7 @@ export const UssdGatewayTester: React.FC = () => {
             <button
               type="submit"
               disabled={isSendingSms}
-              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-900/25"
+              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center justify-center gap-2 cursor-pointer border border-white/10 shadow-sm"
             >
               <Send className="w-3.5 h-3.5" />
               {isSendingSms ? 'Transmitting via Telecom Gateway...' : 'Send Live SMS Advisory'}
@@ -297,7 +297,7 @@ export const UssdGatewayTester: React.FC = () => {
 
           {/* SMS Logs */}
           <div className="p-6 rounded-xl bg-black/40 border border-white/10 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-stone-400">
+            <h4 className="text-xs font-medium text-stone-400">
               Dispatched SMS Outbox
             </h4>
             <div className="space-y-2.5 max-h-[260px] overflow-y-auto">
@@ -306,8 +306,8 @@ export const UssdGatewayTester: React.FC = () => {
                   key={log.id}
                   className="p-3 rounded-xl bg-slate-900/80 border border-white/5 space-y-1"
                 >
-                  <div className="flex items-center justify-between text-xxs font-mono text-stone-400">
-                    <span className="text-emerald-400 font-bold">{log.phone}</span>
+                  <div className="flex items-center justify-between text-xxs font-mono tabular-nums text-stone-400">
+                    <span className="text-emerald-400 font-medium">{log.phone}</span>
                     <span className="flex items-center gap-1 text-emerald-400">
                       <CheckCircle2 className="w-3 h-3" /> {log.status}
                     </span>

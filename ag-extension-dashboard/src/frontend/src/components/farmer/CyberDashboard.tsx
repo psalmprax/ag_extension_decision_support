@@ -33,25 +33,25 @@ const getTempTrend = (temp: unknown): string => {
 
 const getDashboardMetrics = (stats: Record<string, unknown> | null | undefined) => [
   {
-    label: 'SOIL MOISTURE',
+    label: 'Soil Moisture',
     value: (stats?.soilMoisture as string | undefined) ?? '\u2014',
     icon: Zap,
     trend: getSoilTrend(stats?.soilMoisture),
   },
   {
-    label: 'AVG TEMP',
+    label: 'Average Temperature',
     value: (stats?.avgTemp as string | undefined) ?? '\u2014',
     icon: TrendingUp,
     trend: getTempTrend(stats?.avgTemp),
   },
   {
-    label: 'PH LEVEL',
+    label: 'pH Level',
     value: (stats?.phLevel as string | undefined) ?? '\u2014',
     icon: LineChart,
     trend: getPhTrend(stats?.phLevel),
   },
   {
-    label: 'AI CONFIDENCE',
+    label: 'AI Confidence',
     value: (stats?.aiConfidence as string | undefined) ?? '\u2014',
     icon: ShieldAlert,
     trend: getAiTrend(stats?.aiConfidence),
@@ -69,18 +69,18 @@ export const CyberDashboard: React.FC<CyberDashboardProps> = ({ farmerStats }) =
     <div className="space-y-8 animate-fade-in">
       <header className="flex justify-between items-end">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tighter text-glow uppercase">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-white tracking-tight">
             {t('farmer_greeting').replace('{name}', user?.firstName || 'Farmer')}
           </h1>
-          <p className="text-primary-300/60 mt-1 font-bold uppercase tracking-widest text-xs">
+          <p className="text-slate-400 mt-1 font-medium text-xs">
             {t('farmer_overview')}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-xxs font-black text-primary-300/40 uppercase tracking-[0.3em]">
+          <p className="text-xxs font-medium text-slate-400">
             System Status: {farmerStats ? 'Telemetry available' : 'Awaiting telemetry'}
           </p>
-          <p className="text-sm font-bold text-white tabular-nums mt-1">
+          <p className="text-sm font-medium font-mono tabular-nums text-white mt-1">
             {new Date().toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'short',
@@ -126,11 +126,11 @@ export const CyberDashboard: React.FC<CyberDashboardProps> = ({ farmerStats }) =
             }
             indicators={[
               {
-                label: 'SOIL_ANALYSIS',
+                label: 'Soil Analysis',
                 status: farmerStats?.['soilMoisture'] ? 'online' : 'warning',
               },
-              { label: 'AI_AGENT', status: farmerStats?.['aiConfidence'] ? 'stable' : 'online' },
-              { label: 'PERSISTENCE', status: farmerStats ? 'online' : 'warning' },
+              { label: 'AI Advisory', status: farmerStats?.['aiConfidence'] ? 'stable' : 'online' },
+              { label: 'Persistence', status: farmerStats ? 'online' : 'warning' },
             ]}
           />
         </div>
@@ -153,14 +153,14 @@ export const CyberDashboard: React.FC<CyberDashboardProps> = ({ farmerStats }) =
           >
             <div className="flex justify-between items-start mb-4">
               <stat.icon className="w-5 h-5 text-primary-400 opacity-60 group-hover:opacity-100 transition-opacity" />
-              <span className="text-xxs font-bold text-primary-300/40 tracking-widest leading-none mt-1">
+              <span className="text-xxs font-medium text-slate-400 leading-none mt-1">
                 {stat.trend}
               </span>
             </div>
-            <p className="text-xxs font-black text-primary-300/40 uppercase tracking-widest leading-none mb-1">
+            <p className="text-xxs font-medium text-slate-400 leading-none mb-1">
               {stat.label}
             </p>
-            <p className="text-2xl font-black text-white tabular-nums tracking-tighter">
+            <p className="text-2xl font-semibold text-white font-mono tabular-nums tracking-tight">
               {stat.value}
             </p>
           </div>

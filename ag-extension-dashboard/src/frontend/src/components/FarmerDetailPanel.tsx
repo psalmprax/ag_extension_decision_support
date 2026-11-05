@@ -698,7 +698,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                   <Clock className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                  <p className="text-[10px] font-mono font-medium text-slate-400">
                     {t('visit_next_scheduled') || 'Next Scheduled'}
                   </p>
                   <p className="text-xs font-bold text-white truncate">
@@ -717,15 +717,15 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                   variant="secondary"
                   loading={isRefreshingPriority}
                   onClick={handleRefreshPriority}
-                  className="font-bold text-xs !rounded-[4px] !bg-slate-800 !hover:bg-slate-700 !text-slate-200 !border-slate-700"
+                  className="font-medium text-xs !rounded-[4px] !bg-slate-800 !hover:bg-slate-700 !text-slate-200 !border-slate-700"
                 >
                   <Activity className="w-3.5 h-3.5" />
-                  REFRESH
+                  Refresh
                 </Button>
                 <Button
                   loading={isSynthesizing}
                   onClick={handleStartSynthesis}
-                  className="font-bold text-xs !rounded-[4px] !bg-emerald-600 !hover:bg-emerald-500 !text-white shadow-md shadow-emerald-950"
+                  className="font-medium text-xs !rounded-[4px] !bg-emerald-600 !hover:bg-emerald-500 !text-white border border-white/10 shadow-sm"
                 >
                   {t('action_start_synthesis') || 'Start Synthesis'}
                   <ChevronRight className="w-3.5 h-3.5" />

@@ -116,7 +116,7 @@ const RetailSnapshotSection: React.FC<{ rows: PriceChartRow[]; country?: string 
   return (
     <div className="pt-2 space-y-2">
       <div>
-        <p className="text-xs font-bold text-white uppercase tracking-wider">
+        <p className="text-xs font-medium text-white">
           Retail Snapshot{country ? ` — ${country}` : ''} ({sourceTag})
         </p>
         <p className="text-xxs text-white/40 mt-0.5">
@@ -142,12 +142,12 @@ const PriceSummaryGrid: React.FC<{ rows: PriceChartRow[] }> = ({ rows }) => (
         className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:border-primary-500/20 transition-colors"
       >
         <div className="min-w-0 pr-2">
-          <p className="text-xs font-bold text-white truncate">{row.crop}</p>
+          <p className="text-xs font-medium text-white truncate">{row.crop}</p>
           <p className="text-xxs text-white/30 font-mono mt-0.5">{SOURCE_LABELS[row.source] || row.source}</p>
         </div>
         <div className="text-right shrink-0">
-          <p className="text-sm font-black text-white tabular-nums">{row.formattedPrice}</p>
-          <p className={`text-xxs font-bold tabular-nums ${row.trendPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+          <p className="text-sm font-semibold font-mono tabular-nums text-white">{row.formattedPrice}</p>
+          <p className={`text-xxs font-medium font-mono tabular-nums ${row.trendPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
             {row.trendPct >= 0 ? '+' : ''}{row.trendPct.toFixed(1)}%
           </p>
         </div>
@@ -174,7 +174,7 @@ const PriceHistorySection: React.FC = () => {
           <History className="w-3.5 h-3.5" />
         </div>
         <div>
-          <h4 className="text-sm font-bold text-white uppercase tracking-wider">30-Day Price History</h4>
+          <h4 className="text-sm font-medium text-white">30-Day Price History</h4>
           <p className="text-xxs text-white/40">
             Local-currency snapshots — daily movement reflects FX conversion of FAOSTAT/GIEWS baselines.
           </p>
@@ -188,7 +188,7 @@ const PriceHistorySection: React.FC = () => {
       ) : !hasHistory ? (
         <div className="flex flex-col items-center justify-center py-10 text-center">
           <History className="w-8 h-8 text-white/20 mb-2" />
-          <p className="text-xs font-bold text-white/40 uppercase tracking-wider">History building</p>
+          <p className="text-xs font-medium text-slate-400">History building</p>
           <p className="text-xxs text-white/30 mt-1">
             Snapshots appear after the first few daily fetches (live data only — estimates are excluded).
           </p>
@@ -237,7 +237,7 @@ const PriceHistorySection: React.FC = () => {
                 />
                 {s.crop}
                 {s.dataStatus === 'live' && (
-                  <span className="text-emerald-400 font-bold uppercase">· live</span>
+                  <span className="text-emerald-400 font-medium font-mono text-xxs">· live</span>
                 )}
               </span>
             ))}
@@ -304,7 +304,7 @@ export const MarketPriceTrendCard: React.FC = () => {
             <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
               <Truck className="w-4 h-4" />
             </div>
-            <h3 className="text-base font-bold text-white uppercase tracking-wider">
+            <h3 className="text-base font-semibold text-white">
               Commodity Market Prices
             </h3>
           </div>
@@ -322,12 +322,12 @@ export const MarketPriceTrendCard: React.FC = () => {
             </span>
           )}
           {metadata?.dataStatus && (
-            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase border ${DATA_STATUS_STYLE[metadata.dataStatus]}`}>
+            <span className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${DATA_STATUS_STYLE[metadata.dataStatus]}`}>
               {metadata.dataStatus}
             </span>
           )}
           {metadata?.exchangeRateSource && (
-            <span className="px-2 py-1 rounded-lg bg-white/[0.03] border border-white/5 text-xxs text-white/40 font-mono uppercase">
+            <span className="px-2 py-1 rounded-lg bg-white/[0.03] border border-white/5 text-xxs text-white/40 font-mono">
               FX: {metadata.exchangeRateSource}
             </span>
           )}
@@ -342,13 +342,13 @@ export const MarketPriceTrendCard: React.FC = () => {
       ) : isError ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Database className="w-10 h-10 text-white/20 mb-3" />
-          <p className="text-sm font-bold text-white/40 uppercase tracking-wider">Market data unavailable</p>
+          <p className="text-sm font-medium text-slate-400">Market data unavailable</p>
           <p className="text-xs text-white/30 mt-1">FAOSTAT, GIEWS, and USDA APIs are unreachable. Retrying automatically.</p>
         </div>
       ) : chartData.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Truck className="w-10 h-10 text-white/20 mb-3" />
-          <p className="text-sm font-bold text-white/40 uppercase tracking-wider">No price data yet</p>
+          <p className="text-sm font-medium text-slate-400">No price data yet</p>
           <p className="text-xs text-white/30 mt-1">Market data will appear once FAOSTAT producer prices are available.</p>
         </div>
       ) : (

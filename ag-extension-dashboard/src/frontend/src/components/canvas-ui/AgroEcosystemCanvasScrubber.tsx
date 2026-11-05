@@ -761,14 +761,14 @@ export function AgroEcosystemCanvasScrubber({
             <IconComponent className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-[10px] font-mono font-semibold tracking-widest text-white/50">
+            <div className="text-[10px] font-mono font-medium text-white/50">
               {activeStageMeta.badge}
             </div>
             <div className="text-xs font-bold text-white tracking-tight">{activeStageMeta.title}</div>
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 bg-slate-900/80 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl font-mono text-[11px] text-emerald-400">
+        <div className="hidden sm:flex items-center gap-2 bg-slate-900/80 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl font-mono tabular-nums text-[11px] text-emerald-400">
           <Activity className="w-3.5 h-3.5" />
           <span>{(activeProgress * 100).toFixed(0)}% Synchronized</span>
         </div>
@@ -777,8 +777,8 @@ export function AgroEcosystemCanvasScrubber({
       {showControls && (
         <div className="absolute bottom-4 left-4 right-4 bg-slate-900/90 backdrop-blur-md border border-white/10 p-3 rounded-xl flex flex-col gap-2 shadow-xl z-20">
           <div className="flex items-center justify-between text-xs text-white/70">
-            <span className="font-mono text-[11px] text-emerald-400 font-semibold">
-              SCROLL // SCRUB TIMELINE
+            <span className="font-mono text-[11px] text-emerald-400 font-medium">
+              Scrub timeline
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -848,7 +848,7 @@ export function AgroEcosystemCanvasScrubber({
                   }}
                   className={`text-[10px] font-mono py-1 px-1.5 rounded-lg border transition-all text-center truncate cursor-pointer ${
                     isActive
-                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 font-bold shadow-sm shadow-emerald-950'
+                      ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-medium'
                       : 'bg-slate-800/40 border-white/[0.06] text-white/40 hover:text-white/80 hover:bg-slate-800'
                   }`}
                 >

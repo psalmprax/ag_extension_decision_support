@@ -15,11 +15,11 @@ const getStatusColor = (status: string) => {
   switch (status) {
     case 'online':
     case 'stable':
-      return 'bg-status-success shadow-glow-success animate-pulse';
+      return 'bg-emerald-500';
     case 'warning':
-      return 'bg-status-warning shadow-glow-warning';
+      return 'bg-amber-500';
     case 'error':
-      return 'bg-status-error shadow-glow-error animate-pulse';
+      return 'bg-rose-500';
     default:
       return 'bg-white/20';
   }
@@ -104,16 +104,16 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({
   );
 
   return (
-    <div className="glass-premium p-8 rounded-xl border-white/5 h-full flex flex-col justify-between">
+    <div className="glass-premium p-8 rounded-xl border border-white/5 h-full flex flex-col justify-between">
       <div>
-        <h3 className="text-xs font-black text-primary-300/40 uppercase tracking-[0.3em] mb-8">
-          SYSTEM HEALTH
+        <h3 className="text-xs font-medium text-slate-400 mb-6">
+          System Health
         </h3>
         <div className="space-y-4">
           {indicators.map((indicator, idx) => (
             <div key={idx} className="flex items-center gap-4">
               <div className={`w-2 h-2 rounded-full ${getStatusColor(indicator.status)}`} />
-              <span className="text-xs font-bold text-white/60">{indicator.label}</span>
+              <span className="text-xs font-medium text-white/70">{indicator.label}</span>
             </div>
           ))}
         </div>
@@ -121,16 +121,16 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({
       <div className="pt-8 border-t border-white/5 mt-8">
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-xxs font-black text-primary-300/20 uppercase tracking-widest mb-1">
+            <p className="text-xxs font-medium text-slate-400 mb-1">
               Health Score
             </p>
-            <p className="text-4xl font-black text-white tabular-nums tracking-tighter">
+            <p className="text-3xl font-semibold text-white tabular-nums tracking-normal">
               {healthScore !== undefined ? healthScore : '—'}
             </p>
-            {uptime && <p className="text-xxs font-bold text-white/30 mt-1">Uptime: {uptime}</p>}
+            {uptime && <p className="text-xxs font-mono tabular-nums text-white/40 mt-1">Uptime: {uptime}</p>}
           </div>
-          <div className="w-16 h-16 rounded-xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20">
-            <span className="text-primary-400 font-black text-xl">
+          <div className="w-14 h-14 rounded-xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20">
+            <span className="text-primary-400 font-semibold text-lg font-mono">
               {getHealthGrade(healthScore)}
             </span>
           </div>

@@ -111,8 +111,8 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
         className={`relative overflow-hidden ${compact ? '' : 'p-6 bg-slate-900/60 border border-white/10 rounded-xl shadow-xl backdrop-blur-xl'}`}
       >
         <div className="relative z-10 flex flex-col items-center text-center py-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center mb-3 shadow-lg shadow-emerald-950/40 text-emerald-400">
-            <Activity className="w-6 h-6 animate-pulse" />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center mb-3 shadow-sm text-emerald-400">
+            <Activity className="w-6 h-6" />
           </div>
           <h4 className="text-sm font-bold text-white mb-1">
             {t('usage_init_title') || 'Realtime Quota Telemetry'}
@@ -208,7 +208,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
                 <AlertCircle className="w-4 h-4" />
               </div>
               <div className="relative z-10">
-                <h5 className="text-xxs font-bold text-rose-400 uppercase tracking-widest mb-0.5">
+                <h5 className="text-xs font-medium text-rose-400 mb-0.5">
                   {t('usage_critical_threshold') || 'Quota Warning'}
                 </h5>
                 <p className="text-xs text-white/70 leading-relaxed">

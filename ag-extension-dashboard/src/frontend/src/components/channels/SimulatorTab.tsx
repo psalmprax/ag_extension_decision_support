@@ -24,7 +24,7 @@ export const SimulatorTab: React.FC<SimulatorTabProps> = ({
 }) => {
   return (
     <div className="space-y-6">
-      <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/30">
+      <div className="p-4 rounded-xl bg-slate-900/60 border border-white/[0.08]">
         <div className="flex items-center gap-2 text-emerald-400 font-medium text-sm mb-1">
           <MessageSquare className="w-4 h-4" />
           <span>How Multi-Channel Self-Enrollment Works</span>
@@ -39,8 +39,8 @@ export const SimulatorTab: React.FC<SimulatorTabProps> = ({
       <div className="rounded-xl bg-slate-950 border border-slate-800 overflow-hidden flex flex-col h-80">
         <div className="px-4 py-2.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="text-xs font-bold text-slate-300">Live Conversational Simulation</span>
+            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+            <span className="text-xs font-medium text-slate-300">Live Conversational Simulation</span>
           </div>
           <button
             onClick={onResetSimulator}

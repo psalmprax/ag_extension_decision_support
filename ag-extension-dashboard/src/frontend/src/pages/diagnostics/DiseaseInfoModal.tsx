@@ -21,7 +21,7 @@ export function DiseaseInfoModal({
 
   return (
     <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-950/95 border border-emerald-500/30 rounded-[4px] max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl shadow-emerald-950/60 backdrop-blur-2xl text-slate-100">
+      <div className="bg-slate-950/95 border border-white/10 rounded-[4px] max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-xl backdrop-blur-2xl text-slate-100">
         <div className="p-5 space-y-4">
           {/* Header */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -30,10 +30,10 @@ export function DiseaseInfoModal({
                 <Leaf className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
-                  PATHOLOGY PROTOCOL DOSSIER
+                <span className="text-[10px] font-mono text-emerald-400 font-medium">
+                  Pathology Protocol Dossier
                 </span>
-                <h3 className="text-sm font-black text-white uppercase tracking-wide">
+                <h3 className="text-sm font-semibold text-white">
                   {selectedDisease}
                 </h3>
               </div>
@@ -54,7 +54,7 @@ export function DiseaseInfoModal({
             <div className="space-y-3.5">
               {/* Description Pod */}
               <div className="p-3.5 rounded-[4px] bg-slate-900/80 border border-slate-800 space-y-1">
-                <h4 className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                <h4 className="text-xs font-mono font-medium text-slate-400">
                   Agronomic Pathology Summary
                 </h4>
                 <p className="text-xs text-slate-200 leading-relaxed">{diseaseInfo.description}</p>
@@ -62,7 +62,7 @@ export function DiseaseInfoModal({
 
               {/* Symptoms Pod */}
               <div className="p-3.5 rounded-[4px] bg-slate-900/80 border border-slate-800 space-y-2">
-                <h4 className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <h4 className="text-xs font-mono font-medium text-slate-400 flex items-center gap-1.5">
                   <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
                   Key Identifying Symptoms
                 </h4>
@@ -126,7 +126,7 @@ export function DiseaseInfoModal({
           <div className="pt-3 border-t border-slate-800 flex justify-end">
             <button
               onClick={() => setSelectedDisease(null)}
-              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-[3px] uppercase tracking-wider transition-colors"
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-medium rounded-[3px] transition-colors"
             >
               Dismiss
             </button>

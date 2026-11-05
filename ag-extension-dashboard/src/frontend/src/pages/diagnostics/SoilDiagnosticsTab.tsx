@@ -55,7 +55,7 @@ const SoilUploadSection: React.FC<{
   <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-4">
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+        <h3 className="text-xs font-semibold text-white flex items-center gap-2">
           <FlaskConical className="w-4 h-4 text-emerald-400" />
           Soil Chemistry & Texture Sample
         </h3>
@@ -66,7 +66,7 @@ const SoilUploadSection: React.FC<{
 
       <div className="space-y-3">
         <div>
-          <label className="block text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-1">
+          <label className="block text-[11px] font-mono font-medium text-slate-400 mb-1">
             Target Crop Context
           </label>
           <input
@@ -79,7 +79,7 @@ const SoilUploadSection: React.FC<{
         </div>
 
         <div>
-          <label className="block text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-1">
+          <label className="block text-[11px] font-mono font-medium text-slate-400 mb-1">
             Field Observation Notes
           </label>
           <textarea
@@ -182,9 +182,9 @@ const SoilNpkGrid: React.FC<{ npk: SoilAnalysisResult['npkDeficiencies'] }> = ({
 
   return (
     <div>
-      <h4 className="text-xs font-black text-white uppercase tracking-wider mb-2">
+      <h3 className="text-xs font-semibold text-white mb-2">
         Nutrient Balance Matrix (NPK)
-      </h4>
+      </h3>
       <div className="grid grid-cols-3 gap-2.5">
         <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800 text-center">
           <div className="w-7 h-7 rounded-[3px] bg-rose-500/15 border border-rose-500/30 flex items-center justify-center mx-auto mb-1 text-rose-400 font-bold font-mono text-xs">
@@ -230,7 +230,7 @@ const SoilResultsHUD: React.FC<{
       <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 flex flex-col justify-center space-y-4 text-center">
         <div className="py-12 text-slate-500 space-y-2">
           <FlaskConical className="w-10 h-10 mx-auto opacity-30 text-emerald-400" />
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+          <p className="text-xs font-medium text-slate-400">
             Awaiting Soil Sample
           </p>
           <p className="text-[11px] font-mono text-slate-500 max-w-xs mx-auto">
@@ -248,12 +248,12 @@ const SoilResultsHUD: React.FC<{
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-emerald-400" />
-            <h4 className="text-xs font-black text-white uppercase tracking-wider">
+            <h4 className="text-xs font-semibold text-white">
               Agronomic Soil Index
             </h4>
           </div>
-          <span className="text-[10px] font-mono text-emerald-400 font-bold">
-            CONFIDENCE: {(soilAnalysis.confidence * 100).toFixed(1)}%
+          <span className="text-[10px] font-mono tabular-nums text-emerald-400 font-medium">
+            Confidence: {(soilAnalysis.confidence * 100).toFixed(1)}%
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -263,7 +263,7 @@ const SoilResultsHUD: React.FC<{
               style={{ width: `${soilAnalysis.overallHealthScore ?? 0}%` }}
             />
           </div>
-          <span className="text-lg font-mono font-black text-emerald-400">
+          <span className="text-lg font-mono font-semibold tabular-nums text-emerald-400">
             {soilAnalysis.overallHealthScore ?? 'N/A'}/100
           </span>
         </div>
@@ -312,7 +312,7 @@ const SoilResultsHUD: React.FC<{
       {/* Suitable Crops */}
       {soilAnalysis.cropSuitability.length > 0 && (
         <div>
-          <h4 className="text-xs font-black text-white uppercase tracking-wider mb-1.5">
+          <h4 className="text-xs font-semibold text-white mb-1.5">
             Optimal Crop Suitability
           </h4>
           <div className="flex flex-wrap gap-1.5">
@@ -333,7 +333,7 @@ const SoilResultsHUD: React.FC<{
         <button
           onClick={onExport}
           disabled={!soilAnalysis || isExporting}
-          className="w-full py-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 text-slate-300 text-xs font-bold rounded-[3px] transition-all flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full py-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 text-slate-300 text-xs font-medium rounded-[3px] transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
           <span>{isExporting ? 'Generating PDF...' : 'Export Soil Report (PDF)'}</span>
@@ -534,10 +534,10 @@ export function SoilDiagnosticsTab({
       {/* Farmer Soil Context — Real Data Provenance */}
       <div className="p-4 rounded-[4px] bg-slate-900/80 border border-slate-800">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-          <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-xs font-semibold text-white flex items-center gap-2">
             <Database className="w-4 h-4 text-sky-400" />
             Field Soil Context
-            <span className="px-1.5 py-0.5 rounded-[2px] text-[9px] font-mono bg-sky-500/10 text-sky-300 border border-sky-500/20">LIVE</span>
+            <span className="px-1.5 py-0.5 rounded-[2px] text-[9px] font-mono bg-sky-500/10 text-sky-300 border border-sky-500/20">Live</span>
           </h3>
           <div className="flex flex-wrap items-center gap-2">
             <select
@@ -591,7 +591,7 @@ export function SoilDiagnosticsTab({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* SoilGrids Baseline */}
             <div className="p-3 rounded-[3px] bg-slate-950 border border-slate-800">
-              <div className="flex items-center gap-1.5 text-[10px] font-mono text-sky-400 uppercase tracking-wider mb-1">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-sky-400 mb-1">
                 <MapPin className="w-3 h-3" /> ISRIC SoilGrids 250m
               </div>
               {soilProfile.baseline && (soilProfile.baseline as { ph?: number | null }).ph !== undefined ? (
@@ -657,7 +657,7 @@ export function SoilDiagnosticsTab({
 
             {/* Lab History */}
             <div className="p-3 rounded-[3px] bg-slate-950 border border-slate-800">
-              <div className="flex items-center gap-1.5 text-[10px] font-mono text-amber-400 uppercase tracking-wider mb-1">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-amber-400 mb-1">
                 <Beaker className="w-3 h-3" /> Soil Lab History
               </div>
               {soilProfile.labResults.length > 0 ? (
@@ -695,7 +695,7 @@ export function SoilDiagnosticsTab({
         }
         return (
           <div className="p-4 rounded-[4px] bg-slate-900/80 border border-slate-800">
-            <h4 className="text-xs font-black text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+            <h4 className="text-xs font-semibold text-white mb-3 flex items-center gap-2">
               <Layers className="w-3.5 h-3.5 text-emerald-400" />
               Field Map — {hasLive ? 'Live Estimate' : 'Sample Map'}
               <span className={`ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded border ${hasLive ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-300 bg-amber-500/10 border-amber-500/20'}`}>
