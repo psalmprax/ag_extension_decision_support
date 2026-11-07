@@ -78,6 +78,47 @@ function tokenFor(userId: string, role: string, email = `${userId}@test.dev`): s
     );
 }
 
+function ownsFarmerConversation(ownershipParam: string): boolean {
+    return ownershipParam === FARMER_RECORD_ID || ownershipParam === FARMER_USER_ID;
+}
+
+function getFarmerQueryResult(sql: string) {
+    if (sql.includes('FROM farmers WHERE user_id')) {
+        return { rows: [{ id: FARMER_RECORD_ID }], rowCount: 1 };
+    }
+    return null;
+}
+
+function getConversationQueryResult(sql: string, ownershipParam: string) {
+    if (sql.includes('FROM chat_conversations cv') && sql.includes('LEFT JOIN farmers')) {
+        const ownsIt = ownsFarmerConversation(ownershipParam);
+        return {
+            rows: ownsIt
+                ? [{ farmer_id: FARMER_RECORD_ID, officer_id: OFFICER_ID, region: 'North' }]
+                : [],
+            rowCount: ownsIt ? 1 : 0,
+        };
+    }
+    if (sql.includes('FROM chat_conversations cv') && sql.includes('cv.id = $1')) {
+        const ownsIt = ownsFarmerConversation(ownershipParam);
+        return { rows: ownsIt ? [{ id: CONVERSATION_ID }] : [], rowCount: ownsIt ? 1 : 0 };
+    }
+    return null;
+}
+
+function getMessageQueryResult(sql: string, ownershipParam: string) {
+    if (sql.includes('FROM chat_messages m') && sql.includes('JOIN chat_conversations cv')) {
+        const ownsIt = ownsFarmerConversation(ownershipParam);
+        return {
+            rows: ownsIt
+                ? [{ role: 'user', content: 'my earlier question about maize' }]
+                : [],
+            rowCount: ownsIt ? 1 : 0,
+        };
+    }
+    return null;
+}
+
 /**
  * Mock the DB layer for POST /api/chatbot/completions issued by a farmer.
  * The ownership join in loadHistoryBlock filters on
@@ -89,35 +130,11 @@ function mockFarmerCompletionsDb(opts: { ownershipParam: string }) {
     mockQuery.mockImplementation((sql: string) => {
         if (typeof sql !== 'string') return Promise.resolve({ rows: [], rowCount: 0 });
 
-        if (sql.includes('FROM farmers WHERE user_id')) {
-            return Promise.resolve({ rows: [{ id: FARMER_RECORD_ID }], rowCount: 1 });
-        }
-        if (sql.includes('FROM chat_conversations cv') && sql.includes('LEFT JOIN farmers')) {
-            const ownsIt = opts.ownershipParam === FARMER_RECORD_ID || opts.ownershipParam === FARMER_USER_ID;
-            return Promise.resolve({
-                rows: ownsIt
-                    ? [{ farmer_id: FARMER_RECORD_ID, officer_id: OFFICER_ID, region: 'North' }]
-                    : [],
-                rowCount: ownsIt ? 1 : 0,
-            });
-        }
-        if (sql.includes('FROM chat_conversations cv') && sql.includes('cv.id = $1')) {
-            const ownsIt = opts.ownershipParam === FARMER_RECORD_ID || opts.ownershipParam === FARMER_USER_ID;
-            return Promise.resolve({ rows: ownsIt ? [{ id: CONVERSATION_ID }] : [], rowCount: ownsIt ? 1 : 0 });
-        }
-        if (sql.includes('FROM chat_messages m') && sql.includes('JOIN chat_conversations cv')) {
-            // $2 is the ownership param. Foreign conversations yield zero rows.
-            const ownsIt = opts.ownershipParam === FARMER_RECORD_ID || opts.ownershipParam === FARMER_USER_ID;
-            return Promise.resolve({
-                rows: ownsIt
-                    ? [{ role: 'user', content: 'my earlier question about maize' }]
-                    : [],
-                rowCount: ownsIt ? 1 : 0,
-            });
-        }
-        if (sql.includes('INSERT INTO chat_messages')) {
-            return Promise.resolve({ rows: [], rowCount: 1 });
-        }
+        const result = getFarmerQueryResult(sql)
+            ?? getConversationQueryResult(sql, opts.ownershipParam)
+            ?? getMessageQueryResult(sql, opts.ownershipParam);
+        if (result) return Promise.resolve(result);
+        if (sql.includes('INSERT INTO chat_messages')) return Promise.resolve({ rows: [], rowCount: 1 });
         return Promise.resolve({ rows: [], rowCount: 0 });
     });
 }

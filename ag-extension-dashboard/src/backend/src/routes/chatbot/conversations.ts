@@ -155,50 +155,55 @@ interface ConversationBody {
   language?: string;
 }
 
-const resolveParticipants = async (user: AuthenticatedRequestUser, body: ConversationBody) => {
-  let targetFarmerId = body.farmer_id ?? body.farmerId ?? null;
-  let targetOfficerId = body.officer_id ?? body.officerId ?? null;
+const resolveFarmerParticipants = async (user: AuthenticatedRequestUser) => {
+  // A farmer may only converse with their OWN extension officer — never pick
+  // an arbitrary officer or farmer (both are forced to the farmer's record).
+  const targetFarmerId = (await resolveFarmerId(user.userId)) ?? user.userId;
+  const { rows } = await query<{ assigned_officer_id: string }>(
+    `SELECT assigned_officer_id FROM farmers WHERE id = $1 LIMIT 1`,
+    [targetFarmerId]
+  );
+  return { targetFarmerId, targetOfficerId: rows[0]?.assigned_officer_id ?? null };
+};
 
-  if (user.role === 'farmer') {
-    // A farmer may only converse with their OWN extension officer — never pick
-    // an arbitrary officer or farmer (both are forced to the farmer's record).
-    targetFarmerId = (await resolveFarmerId(user.userId)) ?? user.userId;
-    const { rows: fRows } = await query<{ assigned_officer_id: string }>(
+const resolveOfficerParticipants = async (user: AuthenticatedRequestUser, targetFarmerId: string | null) => {
+  if (targetFarmerId) {
+    // Officers may only open conversations with farmers assigned to them.
+    const { rows } = await query<{ assigned_officer_id: string | null }>(
       `SELECT assigned_officer_id FROM farmers WHERE id = $1 LIMIT 1`,
       [targetFarmerId]
     );
-    targetOfficerId = fRows[0]?.assigned_officer_id ?? null;
-  } else if (user.role === 'extension_officer') {
-    targetOfficerId = user.userId;
-    if (targetFarmerId) {
-      // Officers may only open conversations with farmers assigned to them.
-      const { rows: fRows } = await query<{ assigned_officer_id: string | null }>(
-        `SELECT assigned_officer_id FROM farmers WHERE id = $1 LIMIT 1`,
-        [targetFarmerId]
-      );
-      if (!fRows[0] || fRows[0].assigned_officer_id !== user.userId) {
-        throw new MessageAccessError('You can only message farmers assigned to you.');
-      }
+    if (!rows[0] || rows[0].assigned_officer_id !== user.userId) {
+      throw new MessageAccessError('You can only message farmers assigned to you.');
     }
-  } else if (user.role === 'regional_manager') {
-    if (!targetFarmerId) {
-      throw new MessageAccessError('A farmer in your region is required.');
-    }
-    const region = await resolvePrincipalRegion(user.userId);
-    const { rows: fRows } = await query<{ region: string | null; assigned_officer_id: string | null }>(
-      `SELECT region, assigned_officer_id FROM farmers WHERE id = $1 LIMIT 1`,
-      [targetFarmerId]
-    );
-    const farmer = fRows[0];
-    if (!region || !farmer || farmer.region !== region) {
-      throw new MessageAccessError('You can only create conversations within your region.');
-    }
-    targetOfficerId = farmer.assigned_officer_id ?? user.userId;
-  } else {
-    targetOfficerId = targetOfficerId ?? user.userId;
   }
+  return { targetFarmerId, targetOfficerId: user.userId };
+};
 
-  return { targetFarmerId, targetOfficerId };
+const resolveManagerParticipants = async (user: AuthenticatedRequestUser, targetFarmerId: string | null) => {
+  if (!targetFarmerId) {
+    throw new MessageAccessError('A farmer in your region is required.');
+  }
+  const region = await resolvePrincipalRegion(user.userId);
+  const { rows } = await query<{ region: string | null; assigned_officer_id: string | null }>(
+    `SELECT region, assigned_officer_id FROM farmers WHERE id = $1 LIMIT 1`,
+    [targetFarmerId]
+  );
+  const farmer = rows[0];
+  if (!region || !farmer || farmer.region !== region) {
+    throw new MessageAccessError('You can only create conversations within your region.');
+  }
+  return { targetFarmerId, targetOfficerId: farmer.assigned_officer_id ?? user.userId };
+};
+
+const resolveParticipants = async (user: AuthenticatedRequestUser, body: ConversationBody) => {
+  const targetFarmerId = body.farmer_id ?? body.farmerId ?? null;
+  const targetOfficerId = body.officer_id ?? body.officerId ?? null;
+
+  if (user.role === 'farmer') return resolveFarmerParticipants(user);
+  if (user.role === 'extension_officer') return resolveOfficerParticipants(user, targetFarmerId);
+  if (user.role === 'regional_manager') return resolveManagerParticipants(user, targetFarmerId);
+  return { targetFarmerId, targetOfficerId: targetOfficerId ?? user.userId };
 };
 
 const findExistingConversation = async (farmerId: string, officerId: string) => {
