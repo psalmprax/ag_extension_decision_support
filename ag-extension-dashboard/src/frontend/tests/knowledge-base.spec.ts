@@ -88,7 +88,10 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
         body: JSON.stringify({
           success: true,
           data: {
-            answer: 'Action threshold for Fall Armyworm on maize: Apply Bacillus thuringiensis (Bt) or Spinetoram when 20% of whorls in vegetative stage show leaf skeletonization.',
+            answer:
+              '### Verified Agro-RAG Synthesis: Fall Armyworm IPM\n\n' +
+              '**Action Thresholds:** Apply Bacillus thuringiensis (Bt) or Spinetoram when 20% of whorls in vegetative stage show leaf skeletonization.\n\n' +
+              '**Biological & Cultural Controls:** Monitor maize whorls and use locally approved biological controls.',
             contextUsed: [
               {
                 content: 'FAO Integrated Pest Management Guidelines for Spodoptera frugiperda in Sub-Saharan Africa.',
@@ -149,7 +152,7 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
     await expect(page.getByText('Biological & Cultural Controls', { exact: false })).toBeVisible();
   });
 
-  test('gracefully renders fallback benchmark result when backend returns 502/error', async ({
+  test('renders an honest no-answer state when backend returns 502/error', async ({
     page,
   }) => {
     await mockDemoBackend(page);
@@ -182,9 +185,10 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
       await page.locator('button:has-text("Search RAG")').click();
     }
 
-    // Verify that instead of a blank page, the fallback synthesis is rendered
-    await expect(page.getByText('Grounded Synthesis Completed')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Verified Agro-RAG Synthesis', { exact: false })).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('Action Thresholds', { exact: false })).toBeVisible();
+    // A failed request must not be presented as a grounded or fabricated answer.
+    await expect(page.getByText('Search Failed — No Answer Generated')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('The knowledge search failed, so no answer was produced', { exact: false }))
+      .toBeVisible();
+    await expect(page.getByText('Verified Agro-RAG Synthesis', { exact: false })).toHaveCount(0);
   });
 });
