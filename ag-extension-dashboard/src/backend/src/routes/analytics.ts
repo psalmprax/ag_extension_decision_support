@@ -12,6 +12,12 @@ const PERCENTAGE_MULTIPLIER = 100;
 
 // Apply authentication to all analytics routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
+router.use((req: Request, res: Response, next) => {
+    if (req.user?.isDemo) {
+        return res.status(403).json({ success: false, error: 'Live analytics are unavailable in demo mode.' });
+    }
+    next();
+});
 
 // Helper to safely execute database queries with fallback
 async function getFromDB(sql: string, params: unknown[] = []): Promise<Record<string, unknown>[]> {
@@ -45,10 +51,13 @@ async function getSafeAnalyticsTenantId(req: Request): Promise<string | null> {
 }
 
 function tenantPredicate(tenantId: string | null, alias: string): string {
-    if (!tenantId) return '';
+    const liveOnly = alias === 'f' || alias === 'u'
+        ? ` AND COALESCE(${alias}.is_demo, false) = false`
+        : ` AND EXISTS (SELECT 1 FROM farmers live_f WHERE live_f.id = ${alias}.farmer_id AND COALESCE(live_f.is_demo, false) = false)`;
+    if (!tenantId) return liveOnly;
     if (!/^[0-9a-f-]{36}$/i.test(tenantId)) return ' AND 1 = 0';
-    if (alias === 'f' || alias === 'u') return ` AND ${alias}.tenant_id = '${tenantId}'`;
-    return ` AND EXISTS (SELECT 1 FROM farmers scoped_f WHERE scoped_f.id = ${alias}.farmer_id AND scoped_f.tenant_id = '${tenantId}')`;
+    if (alias === 'f' || alias === 'u') return `${liveOnly} AND ${alias}.tenant_id = '${tenantId}'`;
+    return `${liveOnly} AND EXISTS (SELECT 1 FROM farmers scoped_f WHERE scoped_f.id = ${alias}.farmer_id AND scoped_f.tenant_id = '${tenantId}')`;
 }
 
 interface UserScope {
@@ -60,10 +69,7 @@ interface UserScope {
 }
 
 function tenantFilter(user: UserScope, alias: string): string {
-    if (!user.tenantId) return '';
-    if (!/^[0-9a-f-]{36}$/i.test(user.tenantId)) return ' AND 1 = 0';
-    if (alias === 'f') return ` AND f.tenant_id = '${user.tenantId}'`;
-    return ` AND EXISTS (SELECT 1 FROM farmers scoped_f WHERE scoped_f.id = ${alias}.farmer_id AND scoped_f.tenant_id = '${user.tenantId}')`;
+    return tenantPredicate(user.tenantId, alias);
 }
 
 function buildScopeFilter(user: UserScope, column = 'assigned_officer_id', alias = 'f'): { whereClause: string; params: unknown[] } {
@@ -81,7 +87,7 @@ function buildScopeFilter(user: UserScope, column = 'assigned_officer_id', alias
 }
 
 function buildCacheKey(user: UserScope): string {
-    const tenant = user.tenantId || 'legacy';
+    const tenant = `live-v2:${user.tenantId || 'legacy'}`;
     if (user.isOfficer) return `analytics:dashboard:${tenant}:${user.officerId}`;
     if (user.isManager) return `analytics:dashboard:${tenant}:region:${user.managerRegion || 'unknown'}`;
     return `analytics:dashboard:${tenant}:global`;
@@ -371,7 +377,7 @@ router.get('/performance', async (req: Request, res: Response) => {
         const conversationTenant = tenantPredicate(tenantId, 'c');
         const days = period === 'week' ? 7 : period === 'month' ? 30 : 90;
 
-        const cacheKey = `analytics:performance:${tenantId || 'legacy'}:${period}:${officerId || 'all'}:${region || 'all'}`;
+        const cacheKey = `analytics:performance:live-v2:${tenantId || 'legacy'}:${period}:${officerId || 'all'}:${region || 'all'}`;
         const cached = await cacheGet(cacheKey);
         if (cached) {
             return res.json(JSON.parse(cached));
@@ -436,8 +442,8 @@ router.get('/performance', async (req: Request, res: Response) => {
                        COUNT(c.id) as queries,
                        AVG(c.satisfaction_score) as satisfaction
                 FROM users u
-                LEFT JOIN visits v ON v.officer_id = u.id AND v.status = 'completed' AND v.created_at > NOW() - INTERVAL '${days} days'
-                LEFT JOIN chat_conversations c ON c.officer_id = u.id AND c.created_at > NOW() - INTERVAL '${days} days'
+                LEFT JOIN visits v ON v.officer_id = u.id AND v.status = 'completed' AND v.created_at > NOW() - INTERVAL '${days} days'${visitTenant}
+                LEFT JOIN chat_conversations c ON c.officer_id = u.id AND c.created_at > NOW() - INTERVAL '${days} days'${conversationTenant}
                 WHERE u.role = 'extension_officer' AND u.is_active = true AND COALESCE(u.is_demo, false) = false${tenantPredicate(tenantId, 'u')}
                 GROUP BY u.id, u.first_name, u.last_name
                 ORDER BY visits DESC

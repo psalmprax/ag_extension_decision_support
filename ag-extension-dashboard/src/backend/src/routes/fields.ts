@@ -12,6 +12,13 @@ import { UUID_REGEX } from '@/utils/uuid';
 const router = Router();
 
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
+router.use((req: Request, res: Response, next) => {
+    if (req.user?.isDemo && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+        logger.warn('Demo field mutation rejected', { method: req.method });
+        return res.status(403).json({ success: false, error: 'Demo fields are read-only; changes are not saved.' });
+    }
+    next();
+});
 
 interface FieldUser {
     userId?: string;

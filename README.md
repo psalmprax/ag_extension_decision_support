@@ -58,6 +58,13 @@ ag-extension-shared/           # Shared zod schemas — frontend/backend API con
 
 ## Advisory quality and country-specific safeguards
 
+Demo farmer IDs (`demo-farmer-*`) identify static frontend fixtures, not live
+database records. Reusing those IDs across demo visitors does not identify a
+real farmer. Demo field/crop-cycle API mutations are rejected server-side;
+live analytics reject demo sessions and exclude seeded demo farmers and their
+visits/conversations. The demo dashboard and farmer list both use 12 fixtures.
+Live counts depend on authorized database records, not that static dataset.
+
 Knowledge answers, dashboard chat and the landing demo use one advisory policy:
 plain-language explanations, explicit uncertainty, country-aware evidence and
 locally applicable guidance. The same safeguards apply in every supported country;
