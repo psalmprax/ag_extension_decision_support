@@ -1,11 +1,12 @@
 import { Router, Request, Response } from 'express';
-import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
+import { getAudioMimeType, transcribeVoiceNote, synthesizeVoiceAdvisory } from '@/services/voiceAudioService';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
+const MAX_AUDIO_BASE64_LENGTH = 16 * 1024 * 1024;
 
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
@@ -14,17 +15,30 @@ router.post('/speech-to-text', checkUsageLimit('speech'), async (req: Request, r
     try {
         const { audio, language = 'en' } = req.body;
 
-        if (!audio) {
+        if (typeof audio !== 'string' || !audio) {
             return res.status(400).json({ success: false, error: 'Audio data is required' });
         }
+        if (audio.length > MAX_AUDIO_BASE64_LENGTH) {
+            return res.status(413).json({ success: false, error: 'Audio payload exceeds maximum size limit.' });
+        }
 
-        // Use AI provider for speech recognition
-        const provider = await AIProviderFactory.getProvider();
-        const result = await provider.speechToText(Buffer.from(audio, 'base64'), { language });
+        const base64Audio = audio.includes('base64,') ? audio.split('base64,')[1] : audio;
+        const audioBuffer = Buffer.from(base64Audio, 'base64');
+        if (audioBuffer.length === 0) {
+            return res.status(400).json({ success: false, error: 'Invalid audio payload.' });
+        }
+        const result = await transcribeVoiceNote({
+            audioBuffer,
+            mimeType: getAudioMimeType(audio),
+            languageHint: language,
+        });
 
         res.json({
             success: true,
-            data: result,
+            data: {
+                text: result.transcription,
+                language: result.detectedLanguage,
+            },
         });
     } catch (error) {
         logger.error('Speech to text error:', error);
@@ -41,14 +55,19 @@ router.post('/text-to-speech', checkUsageLimit('speech'), async (req: Request, r
             return res.status(400).json({ success: false, error: 'Text is required' });
         }
 
-        const provider = await AIProviderFactory.getProvider();
-        const result = await provider.textToSpeech(text, { language, voice });
+        const result = await synthesizeVoiceAdvisory({
+            text,
+            language: language === 'sw' ? 'sw' : 'en',
+        });
+        if (!result.audioBase64) {
+            return res.status(503).json({ success: false, error: 'Speech synthesis unavailable' });
+        }
 
         res.json({
             success: true,
             data: {
-                audioUrl: result.audio.toString('base64'),
-                format: result.format,
+                audioUrl: result.audioBase64,
+                format: 'audio/mp3',
             },
         });
     } catch (error) {

@@ -1,6 +1,8 @@
 /** Shared lightweight types for the knowledge pipeline (no runtime code). */
 import type { ReasoningResult } from '@/services/aiProvider/aiProvider';
 import type { SearchResult } from '@/services/vectorService';
+import type { validateAdvisoryCitations } from './advisoryPolicy';
+import type { AgronomicBoundaryCheck } from '@/services/security/agronomicSafetyGuard';
 
 export interface KnowledgeAttachment {
     type: 'image' | 'file' | 'audio';
@@ -10,6 +12,10 @@ export interface KnowledgeAttachment {
 
 export interface ReasonOptions {
     preferredProvider?: string;
+    country?: string;
+    region?: string;
+    language?: string;
+    allowTools?: boolean;
 }
 
 export interface AskOptions extends ReasonOptions {
@@ -20,7 +26,12 @@ export interface AskOptions extends ReasonOptions {
 export type AnswerVisuals = NonNullable<ReasoningResult['visuals']>;
 
 /** Final answer payload returned by askQuestion (and its fallback paths). */
-export type FinalAnswer = ReasoningResult & { cached: boolean; contextUsed: SearchResult[] };
+export type FinalAnswer = ReasoningResult & {
+    cached: boolean;
+    contextUsed: SearchResult[];
+    advisoryQuality?: ReturnType<typeof validateAdvisoryCitations>['evidence'];
+    safety?: AgronomicBoundaryCheck;
+};
 
 /** Cache-layer answer payload (before `cached` flag is attached). */
 export interface CachedAnswer {

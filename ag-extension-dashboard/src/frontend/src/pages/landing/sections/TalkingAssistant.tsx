@@ -138,62 +138,6 @@ const SAMPLE_QUESTIONS: SampleQuestion[] = [
   },
 ];
 
-const PRESET_ANSWERS: Record<
-  string,
-  { en: { text: string; source: string }; sw: { text: string; source: string } }
-> = {
-  armyworm: {
-    en: {
-      text: 'For early instar Fall Armyworm in maize, scout leaf whorls at dawn or dusk. Apply botanical bio-control using cold-pressed Neem oil (Azadirachtin 0.03% EC at 3ml/L) or alternate with Bacillus thuringiensis (Bt subsp. kurstaki). Apply spray nozzles directly into the central funnel during low wind conditions to maximize larval contact and protect beneficial parasitoids.',
-      source: 'FAO Fall Armyworm Management Guide & CABI Biopesticide Manual',
-    },
-    sw: {
-      text: 'Kwa funza wa vunguvungu (Fall Armyworm) kwenye mahindi, kagua mashina asubuhi au jioni. Tumia dawa ya asili ya mafuta ya mwarobaini (Neem oil mililita 3 kwa lita moja ya maji) au Bacillus thuringiensis. Nyunyizia moja kwa moja ndani ya funeli ya mmea ili kuua funza bila kudhuru wadudu rafiki.',
-      source: 'Mwongozo wa FAO na Taasisi ya Utafiti wa Kilimo',
-    },
-  },
-  soil: {
-    en: {
-      text: 'At pH 4.8, soils suffer from severe aluminum and iron toxicity while phosphorus and magnesium fixation occurs. Apply agricultural calcitic or dolomitic lime at 2.0 to 2.5 tonnes per hectare, incorporated into the top 15cm of soil 30 days prior to planting. Complement with organic compost or biochar to buffer soil cation exchange capacity (CEC).',
-      source: 'SoilGrids ISRIC Global Soil Data & Regional Agronomic Norms',
-    },
-    sw: {
-      text: 'Kiwango cha tindikali cha pH 4.8 kinazuia mizizi kufyonza fosforasi na magnesiamu. Weka chokaa ya kilimo (agricultural lime) tani 2 hadi 2.5 kwa hekta moja, ikichanganywa na udongo siku 30 kabla ya kupanda. Ongeza mbolea ya samadi ili kuongeza rutuba na uwezo wa udongo.',
-      source: 'ISRIC SoilGrids na Miongozo ya Udongo ya Afrika Mashariki',
-    },
-  },
-  weather: {
-    en: {
-      text: 'The platform ingests NASA POWER satellite telemetry via solar irradiance, surface air temperatures, and relative humidity coefficients. By calculating 14-day rolling Standardized Precipitation Evapotranspiration Indices (SPEI), autonomous agents forecast drought stress windows and issue preventive irrigation or soil mulching advisories to farmers.',
-      source: 'NASA POWER Satellite Observations & FAO Evapotranspiration Model',
-    },
-    sw: {
-      text: 'Mfumo unapokea data kutoka satelaiti ya NASA POWER inayopima jua, unyevu wa hewa, na upepo. Mawakala wa kijasusi wanachambua uwezekano wa ukame na kutuma ujumbe mfupi wa tahadhari kwa wakulima ili kuhifadhi unyevu kwa matandazo ya majani (mulching).',
-      source: 'Satelaiti ya NASA POWER & Mfumo wa Tahadhari wa GP-Ext',
-    },
-  },
-  security: {
-    en: {
-      text: 'Field officers store farmer records in local encrypted IndexedDB using AES-256-GCM. When cell reception drops, queries and photos queue securely with cryptographic timestamps. If a field device is lost or stolen, administrators dispatch a remote wipe signal from the dashboard that purges all local offline cache, tokens, and IndexedDB stores upon next connection.',
-      source: 'GP-Ext Defense-in-Depth Cyber Architecture (SOC 2 / GDPR Compliant)',
-    },
-    sw: {
-      text: 'Maafisa ugani wanarekodi taarifa za wakulima kwa njia fiche ya AES-256 bila kuhitaji intaneti. Kifaa kikipotea au kuibiwa, msimamizi anaweza kutuma amri ya mbali (Remote Wipe) kufuta data zote za wakulima mara moja ili kulinda usiri wao.',
-      source: 'Usalama wa Data na Sheria ya Kulinda Taarifa za Wakulima',
-    },
-  },
-  default: {
-    en: {
-      text: 'Our AI Agronomic Engine combines satellite weather telemetry, local soil chemistry mapping, and verified FAO extension guidelines to generate actionable recommendations. You can ask about crop diseases, planting calendars, fertilizer dosing, or platform security.',
-      source: 'GP-Ext Autonomous Decision Support Engine',
-    },
-    sw: {
-      text: 'Msaidizi wetu wa sauti anakusaidia kupata majibu sahihi kuhusu afya ya mimea, hali ya hewa, utunzaji wa udongo, na usalama wa mazao kwa lugha ya Kiswahili na Kiingereza.',
-      source: 'Injini ya Ushauri wa Kilimo ya GP-Ext',
-    },
-  },
-};
-
 const CROP_MATCHERS: Array<{ name: string; regex: RegExp }> = [
   { name: 'Maize', regex: /\b(maize|mahindi|corn)\b/i },
   { name: 'Cassava', regex: /\b(cassava|mhogo|mihogo)\b/i },
@@ -256,7 +200,7 @@ function extractLocationSlot(text: string): string | null {
 
 function extractSoilSlot(text: string): string | null {
   const phMatch = text.match(/pH\s*(\d+(?:\.\d+)?)/i);
-  if (phMatch) return `Acidic pH ${phMatch[1]}`;
+  if (phMatch) return `Soil pH ${phMatch[1]}`;
   const lower = text.toLowerCase();
   if (lower.includes('sandy loam') || lower.includes('kichanga')) return 'Sandy Loam';
   if (lower.includes('clay') || lower.includes('mfinyanzi')) return 'Clay';
@@ -272,144 +216,6 @@ function extractSlots(text: string, current: AgronomicEntitySlots): AgronomicEnt
     location_climate: extractLocationSlot(text) ?? current.location_climate ?? null,
     soil_profile: extractSoilSlot(text) ?? current.soil_profile ?? null,
   };
-}
-
-interface LocalTurnResult {
-  isMatch: boolean;
-  text: string;
-  source: string;
-  updatedSlots: AgronomicEntitySlots;
-}
-
-function resolveArmywormDosage(
-  slots: AgronomicEntitySlots,
-  language: Language
-): LocalTurnResult {
-  const acresMatch = slots.field_size?.match(/(\d+(?:\.\d+)?)\s*acre/i);
-  const acres = acresMatch ? parseFloat(acresMatch[1] ?? '3') : 3;
-  const liters = (acres * 0.4).toFixed(1);
-  const waterLiters = Math.round(acres * 133.3);
-
-  if (language === 'sw') {
-    return {
-      isMatch: true,
-      text: `Kwa ekari ${acres} za mahindi, changanya lita ${liters} za mafuta ya mwarobaini (Neem oil mililita 3 kwa lita ya maji katika lita ${waterLiters} za maji) na unyunyize moja kwa moja kwenye funeli za mahindi.`,
-      source: 'FAO Fall Armyworm Management Guide & Dosage Calculations',
-      updatedSlots: slots,
-    };
-  }
-
-  return {
-    isMatch: true,
-    text: `For ${acres} acres of maize, mix ${liters} liters of Neem oil (at 3ml/L water rate across ${waterLiters}L total spray volume) applied directly into the central leaf whorls.`,
-    source: 'FAO Fall Armyworm Management Guide & Dosage Calculations',
-    updatedSlots: slots,
-  };
-}
-
-function resolveLimeDosage(
-  slots: AgronomicEntitySlots,
-  language: Language
-): LocalTurnResult {
-  const haMatch = slots.field_size?.match(/(\d+(?:\.\d+)?)\s*hectare/i);
-  const ha = haMatch ? parseFloat(haMatch[1] ?? '1') : 1;
-  const minTonnes = (ha * 2.0).toFixed(1);
-  const maxTonnes = (ha * 2.5).toFixed(1);
-
-  if (language === 'sw') {
-    return {
-      isMatch: true,
-      text: `Kwa hekta ${ha} za udongo wenye tindikali, weka tani ${minTonnes} hadi ${maxTonnes} za chokaa ya kilimo ikichanganywa na udongo wa juu siku 30 kabla ya kupanda.`,
-      source: 'ISRIC SoilGrids & Lime Requirement Advisory',
-      updatedSlots: slots,
-    };
-  }
-
-  return {
-    isMatch: true,
-    text: `For ${ha} hectare(s) of acidic soil, apply ${minTonnes} to ${maxTonnes} tonnes of agricultural calcitic or dolomitic lime incorporated into the top 15cm of soil 30 days prior to planting.`,
-    source: 'ISRIC SoilGrids & Lime Requirement Advisory',
-    updatedSlots: slots,
-  };
-}
-
-const DOSAGE_REGEX = /\b(dosage|rate|how much|kipimo|lita|dose)\b/i;
-const ARMYWORM_REGEX = /\b(armyworm|funza|caterpillar|wadudu)\b/i;
-const LIME_REGEX = /\b(lime|chokaa|acidic|acid|tindikali)\b/i;
-const SOIL_REGEX = /\b(soil|udongo|ph)\b/i;
-const WEATHER_REGEX = /\b(weather|satellite|nasa|rain|ukame|hewa)\b/i;
-const SECURITY_REGEX = /\b(offline|wipe|security|hack|salama|siri)\b/i;
-const LIME_AREA_REGEX = /\b(hectare|hectares|ha|hekta|acre|acres|ekari)\b/i;
-const ARMYWORM_AREA_REGEX = /\b(acre|acres|ekari)\b/i;
-
-function isLimeFollowUp(q: string, slots: AgronomicEntitySlots): boolean {
-  const hasLimeContext = LIME_REGEX.test(q) || Boolean(slots.soil_profile?.toLowerCase().includes('acid'));
-  const hasDosageOrArea = DOSAGE_REGEX.test(q) || LIME_AREA_REGEX.test(q);
-  return hasLimeContext && hasDosageOrArea;
-}
-
-function isArmywormFollowUp(q: string, slots: AgronomicEntitySlots): boolean {
-  // If query is specifically about lime or soil remediation, do not hijack with maize context
-  if (LIME_REGEX.test(q) || SOIL_REGEX.test(q)) {
-    return false;
-  }
-  const hasPestContext = slots.pest_disease === 'Fall Armyworm' || slots.crop === 'Maize';
-  const hasDosageOrArea = DOSAGE_REGEX.test(q) || ARMYWORM_AREA_REGEX.test(q);
-  return hasPestContext && hasDosageOrArea;
-}
-
-function resolveLocalAgronomicTurn(
-  query: string,
-  slots: AgronomicEntitySlots,
-  language: Language
-): LocalTurnResult {
-  // For languages outside en/sw, dispatch directly to public demo API endpoint with full LLM citations
-  if (language !== 'en' && language !== 'sw') {
-    return { isMatch: false, text: '', source: '', updatedSlots: slots };
-  }
-
-  // 1. Check Lime/Soil Remediation follow-up first
-  if (isLimeFollowUp(query, slots)) {
-    return resolveLimeDosage(slots, language);
-  }
-
-  // 2. Check Fall Armyworm bio-control follow-up second
-  if (isArmywormFollowUp(query, slots)) {
-    return resolveArmywormDosage(slots, language);
-  }
-
-  // 3. Preset topics
-  if (ARMYWORM_REGEX.test(query)) {
-    const res = PRESET_ANSWERS.armyworm[language];
-    return {
-      isMatch: true,
-      text: res.text,
-      source: res.source,
-      updatedSlots: { ...slots, crop: 'Maize', pest_disease: 'Fall Armyworm' },
-    };
-  }
-
-  if (LIME_REGEX.test(query) || SOIL_REGEX.test(query)) {
-    const res = PRESET_ANSWERS.soil[language];
-    return {
-      isMatch: true,
-      text: res.text,
-      source: res.source,
-      updatedSlots: { ...slots, soil_profile: slots.soil_profile ?? 'Acidic pH 4.8' },
-    };
-  }
-
-  if (WEATHER_REGEX.test(query)) {
-    const res = PRESET_ANSWERS.weather[language];
-    return { isMatch: true, text: res.text, source: res.source, updatedSlots: slots };
-  }
-
-  if (SECURITY_REGEX.test(query)) {
-    const res = PRESET_ANSWERS.security[language];
-    return { isMatch: true, text: res.text, source: res.source, updatedSlots: slots };
-  }
-
-  return { isMatch: false, text: '', source: '', updatedSlots: slots };
 }
 
 interface ApiAssistantResult {
@@ -435,7 +241,6 @@ async function fetchPublicDemoAdvisory(
   language: Language,
   slots: AgronomicEntitySlots
 ): Promise<ApiAssistantResult> {
-  const defaultAnswer = PRESET_ANSWERS.default[language === 'sw' ? 'sw' : 'en'];
   try {
     const response = await apiClient.post('/chatbot/public-demo', {
       query,
@@ -448,9 +253,10 @@ async function fetchPublicDemoAdvisory(
     });
 
     const data = response.data?.data;
+    if (!data?.text?.trim()) throw new Error('Advisory response is empty');
     return {
-      text: data?.text || defaultAnswer.text,
-      source: data?.source || defaultAnswer.source,
+      text: data.text,
+      source: data.source || 'AI-assisted guidance; verify local applicability',
       citations: data?.citations,
       entitySlots: data?.entitySlots,
     };
@@ -464,9 +270,12 @@ async function fetchPublicDemoAdvisory(
         source: 'Rate Limit (10 queries/hour)',
       };
     }
+    console.warn('Public demo advisory unavailable:', err);
     return {
-      text: defaultAnswer.text,
-      source: defaultAnswer.source,
+      text: language === 'sw'
+        ? 'Msaidizi wa ushauri hapatikani kwa sasa. Tafadhali jaribu tena au wasiliana na afisa ugani wa eneo lako.'
+        : 'The advisory assistant is unavailable right now. Please try again or contact your local extension officer.',
+      source: 'Advisory unavailable',
     };
   }
 }
@@ -539,6 +348,7 @@ async function requestTranscribeAudioBlob(
     const res = await apiClient.post('/chatbot/public-demo/stt', {
       audio: base64,
       language,
+      mimeType: blob.type || 'audio/webm',
     });
     return res.data?.data?.text ?? null;
   } catch (err) {
@@ -1969,34 +1779,7 @@ export function TalkingAssistant({ defaultOpen = false, className = '' }: Talkin
       activeSlots: AgronomicEntitySlots,
       speakFn: (t: string, l: Language) => void
     ) => {
-      // 1. Check local edge preset / follow-up rules (0ms latency)
-      const local = resolveLocalAgronomicTurn(query, activeSlots, lang);
-      if (local.isMatch) {
-        setTimeout(() => {
-          const assistantMsg: Message = {
-            id: `assistant-${Date.now()}`,
-            sender: 'assistant',
-            text: local.text,
-            language: lang,
-            sourceBadge: local.source,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          };
-
-          setEntitySlots(local.updatedSlots);
-          setMessages((prev) => {
-            const next = [...prev, assistantMsg];
-            void persistSessionState(next, local.updatedSlots);
-            return next;
-          });
-
-          if (autoSpeak && isOpenRef.current) {
-            speakFn(local.text, lang);
-          }
-        }, 300);
-        return;
-      }
-
-      // 2. Call dynamic public demo API
+      // Every advisory uses the backend's grounding and safety policy.
       setIsLoading(true);
       const apiResult = await fetchPublicDemoAdvisory(query, messages, lang, activeSlots);
       setIsLoading(false);

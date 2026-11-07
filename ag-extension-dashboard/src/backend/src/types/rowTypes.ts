@@ -432,6 +432,7 @@ export interface AuthenticatedRequestUser {
   userId: string;
   email: string;
   role: 'admin' | 'regional_manager' | 'extension_officer' | 'farmer';
+  isDemo?: boolean;
 }
 
 // --- Channel Gateway & Onboarding types (channels.ts, telegram.ts) -----------
@@ -508,5 +509,4 @@ export interface RegionalAgronomySkillRow {
   created_at: Date | string | null;
   updated_at: Date | string | null;
 }
-
 

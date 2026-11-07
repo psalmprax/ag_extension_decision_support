@@ -11,7 +11,7 @@ import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
-import { MessageAccessError, resolveFarmerId } from '@/services/messageAccessService';
+import { assertConversationAccess, checkMessageAccess, MessageAccessError, resolveFarmerId } from '@/services/messageAccessService';
 import { getRealtimeServer } from '@/services/realtimeHub';
 
 const router = Router();
@@ -36,6 +36,12 @@ async function assertChatWriteAllowed(
     if (!fRows[0] || fRows[0].assigned_officer_id !== user.userId) {
       throw new MessageAccessError('You can only message farmers assigned to you.');
     }
+  }
+  if (user.role === 'regional_manager' && targetFarmerId) {
+    await checkMessageAccess(user, { farmerId: targetFarmerId });
+  }
+  if (conversationId) {
+    await assertConversationAccess(user, conversationId);
   }
   if (user.role === 'farmer' && conversationId) {
     const ownFarmerId = (await resolveFarmerId(user.userId)) ?? user.userId;
@@ -162,6 +168,11 @@ router.patch('/messages/:id', authorize(['admin', 'regional_manager', 'extension
     if (!next) return res.status(400).json({ success: false, error: 'content required' });
     const { rows } = await query<ChatMessageRow>(`SELECT m.* FROM chat_messages m JOIN chat_conversations cv ON cv.id=m.conversation_id WHERE m.id=$1`, [msgId]);
     if (rows.length === 0) return res.status(404).json({ success: false, error: 'Message not found' });
+    if (rows[0].conversation_id) {
+      await assertConversationAccess(user, rows[0].conversation_id);
+    } else if (user.role !== 'admin') {
+      return res.status(404).json({ success: false, error: 'Message not found' });
+    }
     const isOwner = rows[0].role === (user.role === 'farmer' ? 'user' : 'officer') || user.role === 'admin';
     if (!isOwner) return res.status(403).json({ success: false, error: 'Not owner' });
     const createdAt = rows[0].created_at ? new Date(rows[0].created_at as string).getTime() : 0;
@@ -169,7 +180,11 @@ router.patch('/messages/:id', authorize(['admin', 'regional_manager', 'extension
     const { rows: updated } = await query<ChatMessageRow>(`UPDATE chat_messages SET content=$1, metadata=COALESCE(metadata,'{}'::jsonb) || $2::jsonb WHERE id=$3 RETURNING *`, [next, JSON.stringify({ editedAt: new Date().toISOString() }), msgId]);
     if (updated[0]) await fanoutNewMessage(updated[0].conversation_id!, updated[0]);
     return res.json({ success: true, data: updated[0] ? mapChatMessageRow(updated[0]) : null });
-  } catch (e) { logger.error('Edit message failed:', e); return safeError(res, 500, 'Edit failed'); }
+  } catch (e) {
+    if (e instanceof MessageAccessError) return safeError(res, e.statusCode, e.message);
+    logger.error('Edit message failed:', e);
+    return safeError(res, 500, 'Edit failed');
+  }
 });
 
 /**
@@ -181,12 +196,21 @@ router.delete('/messages/:id', authorize(['admin', 'regional_manager', 'extensio
     const msgId = req.params.id;
     const { rows } = await query<ChatMessageRow>(`SELECT m.* FROM chat_messages m JOIN chat_conversations cv ON cv.id=m.conversation_id WHERE m.id=$1`, [msgId]);
     if (rows.length === 0) return res.status(404).json({ success: false, error: 'Message not found' });
+    if (rows[0].conversation_id) {
+      await assertConversationAccess(user, rows[0].conversation_id);
+    } else if (user.role !== 'admin') {
+      return res.status(404).json({ success: false, error: 'Message not found' });
+    }
     const isOwner = rows[0].role === (user.role === 'farmer' ? 'user' : 'officer') || user.role === 'admin';
     if (!isOwner) return res.status(403).json({ success: false, error: 'Not owner' });
     const { rows: updated } = await query<ChatMessageRow>(`UPDATE chat_messages SET content='[deleted]', metadata=COALESCE(metadata,'{}'::jsonb) || $1::jsonb WHERE id=$2 RETURNING *`, [JSON.stringify({ deletedAt: new Date().toISOString(), deletedBy: user.userId }), msgId]);
     if (updated[0]) await fanoutNewMessage(updated[0].conversation_id!, updated[0]);
     return res.json({ success: true });
-  } catch (e) { logger.error('Delete message failed:', e); return safeError(res, 500, 'Delete failed'); }
+  } catch (e) {
+    if (e instanceof MessageAccessError) return safeError(res, e.statusCode, e.message);
+    logger.error('Delete message failed:', e);
+    return safeError(res, 500, 'Delete failed');
+  }
 });
 
 export default router;

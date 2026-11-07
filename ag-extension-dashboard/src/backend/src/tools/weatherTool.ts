@@ -6,7 +6,7 @@ import { WeatherService } from '../services/weatherService';
 // Define the schema for weather tool arguments
 const WeatherSchema = z.object({
   location: z.string().describe('The city or region to get weather for'),
-  days: z.number().optional().default(3).describe('Number of days for forecast (1-7)'),
+  days: z.number().int().min(1).max(7).optional().default(3).describe('Number of days for forecast (1-7)'),
 });
 
 /**
@@ -62,7 +62,7 @@ export const weatherTool: Tool<typeof WeatherSchema> = {
  */
 function getAgriculturalAdvice(condition: string): string {
   const c = condition.toLowerCase();
-  if (c.includes('rain') || c.includes('shower') || c.includes('drizzle')) return 'Perfect for top-dressing fertilizer.';
+  if (c.includes('rain') || c.includes('shower') || c.includes('drizzle')) return 'Check rainfall intensity, drainage and field soil moisture before scheduling field work.';
   if (c.includes('sun') || c.includes('clear')) return 'Good for sun-drying crops.';
   if (c.includes('cloud') || c.includes('overcast')) return 'Ideal for manual weeding or soil preparation.';
   if (c.includes('wind') || c.includes('gale')) return 'Delay spraying pesticides to avoid drift.';

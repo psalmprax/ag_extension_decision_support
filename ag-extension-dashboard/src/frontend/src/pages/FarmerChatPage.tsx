@@ -24,6 +24,7 @@ import { useDemoMode } from '@/demo';
 import { AudioReaderButton } from '@/components/audio/AudioReaderButton';
 import { VoiceNoteTaker } from '@/components/audio/VoiceNoteTaker';
 import { fetchWeather } from '@/api/weatherService';
+import { getChatCompletion } from '@/api/aiService';
 import apiClient from '@/api/client';
 
 interface FarmerChatPageProps {
@@ -183,18 +184,17 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   useEffect(() => {
     if (!activeFarmerConvId) { setLiveSuggestions(null); return; }
     if (!lastUserMessage) return;
-    import('@/api/aiService').then(async mod => {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const res = await (mod as any).getChatCompletion?.([{ role: 'user', content: `Given farmer said: "${lastUserMessage.slice(0,300)}", suggest 3 short advisory follow-ups (<=15 words each), one per line, no numbering.` }], { model: 'gpt-4o-mini', maxTokens: 120 });
-        const text = (res as unknown as { text?: string })?.text || (res as unknown as string) || '';
-        // eslint-disable-next-line no-useless-escape
-        const lines = String(text).split('\n').map(s => s.replace(/^[\d\-*\.\s]+/, '').trim()).filter(Boolean).slice(0,3);
-        if (lines.length >= 2) setLiveSuggestions(lines);
-      } catch (err) {
-        console.error('AI copilot suggestions fetch failed — keeping static suggestions:', err);
-      }
-    }).catch((err) => console.error('AI copilot suggestions module load failed:', err));
+    getChatCompletion(
+      `Given farmer said: "${lastUserMessage.slice(0, 300)}", suggest 3 short advisory follow-ups (<=15 words each), one per line, no numbering.`,
+      undefined,
+      'en'
+    ).then(res => {
+      const text = res.data.messages.find(message => message.role === 'assistant')?.content ?? '';
+      const lines = text.split('\n').map(s => s.replace(/^[\d\-*.\s]+/, '').trim()).filter(Boolean).slice(0, 3);
+      if (lines.length >= 2) setLiveSuggestions(lines);
+    }).catch(err => {
+      console.error('AI copilot suggestions fetch failed — keeping static suggestions:', err);
+    });
   }, [activeFarmerConvId, lastUserMessage]);
 
   // Realtime: join the active conversation room and reload messages on new_message events.
@@ -496,6 +496,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 )}
                 {farmerChatMessages.map((msg, i) => {
                   const isOfficer = msg.role === 'officer';
+                  const isAssistant = msg.role === 'assistant';
                   // Backend sends `createdAt`; tolerate either field and never
                   // render "Invalid Date" for missing/unparseable values.
                   const timeLabel = formatChatTime(msg);
@@ -520,7 +521,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                           }`}
                         >
                           <div className="flex items-center gap-1.5">
-                            <span>{isOfficer ? 'OFFICER DISPATCH' : 'FARMER INCOMING'}</span>
+                            <span>{isOfficer ? 'OFFICER DISPATCH' : isAssistant ? 'AI ADVISORY' : 'FARMER INCOMING'}</span>
                             <AudioReaderButton
                               text={msg.content}
                               size="xs"

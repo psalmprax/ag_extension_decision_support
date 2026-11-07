@@ -155,7 +155,7 @@ export const config: AppConfig = {
             region: getEnv('AI_FALLBACK_REGION', 'us-central1'),
         },
         embeddings: {
-            provider: getEnv('AI_EMBEDDINGS_PROVIDER', 'openai'),
+            provider: getEnv('AI_EMBEDDINGS_PROVIDER', 'aihubmix'),
             model: getEnv('AI_EMBEDDINGS_MODEL', 'text-embedding-3-large'),
         },
         speech: {

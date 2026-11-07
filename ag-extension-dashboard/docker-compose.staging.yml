@@ -75,7 +75,7 @@ services:
       # AI providers — Ollama primary on staging server, OpenAI fallback
       AI_PRIMARY_PROVIDER: ${AI_PRIMARY_PROVIDER:-ollama}
       AI_PRIMARY_MODEL: ${AI_PRIMARY_MODEL:-llama3.2:1b}
-      AI_EMBEDDINGS_PROVIDER: ${AI_EMBEDDINGS_PROVIDER:-ollama}
+      AI_EMBEDDINGS_PROVIDER: ${AI_EMBEDDINGS_PROVIDER:-aihubmix}
       AI_EMBEDDINGS_MODEL: ${AI_EMBEDDINGS_MODEL:-nomic-embed-text}
       AI_FALLBACK_PROVIDER: ${AI_FALLBACK_PROVIDER:-openai}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:1b}

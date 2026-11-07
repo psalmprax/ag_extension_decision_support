@@ -62,16 +62,16 @@ describe('Deep-Tier Security — AgronomicSafetyGuard AI Boundary Validation', (
 
       expect(result.safe).toBe(false);
       expect(result.hazardLevel).toBe('critical_hazard');
-      expect(result.violations.some((v) => v.includes('lethal liquid dosage'))).toBe(true);
+      expect(result.violations.some((v) => v.includes('Treatment rate withheld'))).toBe(true);
     });
 
-    it('should pass normal, realistic agronomic advisory text', () => {
+    it('should withhold plausible but unverified pesticide rates', () => {
       const safeAiText =
         'Apply 1.5 L/ha of approved bio-pesticide early in the morning, followed by light irrigation.';
       const result = agronomicSafetyGuard.scanGeneratedAdvice(safeAiText);
 
-      expect(result.safe).toBe(true);
-      expect(result.violations.length).toBe(0);
+      expect(result.safe).toBe(false);
+      expect(result.violations.length).toBeGreaterThan(0);
     });
   });
 
@@ -80,17 +80,17 @@ describe('Deep-Tier Security — AgronomicSafetyGuard AI Boundary Validation', (
       const advice = 'Apply 2.5 L/ha of contact fungicide across the affected area.';
       const enriched = agronomicSafetyGuard.translateToKnapsackUnits(advice);
 
-      expect(enriched).toContain('Knapsack Sprayer Calibration (Field Guidance)');
-      expect(enriched).toContain('16L or 20L');
+      expect(enriched).toContain('Calibrate the actual sprayer');
+      expect(enriched).not.toContain('200–250');
     });
 
-    it('should prepend lethal dosage alert and knapsack calibration during guardAndEnrichAdvice', () => {
+    it('should remove lethal dosage text instead of returning it below a warning', () => {
       const hazardousAdvice = 'Apply 30 Liters per hectare of pesticide solution to control the pest.';
       const { text, boundaryCheck } = agronomicSafetyGuard.guardAndEnrichAdvice(hazardousAdvice);
 
       expect(boundaryCheck.safe).toBe(false);
-      expect(text).toContain('AGRONOMIC DOSAGE WARNING');
-      expect(text).toContain('Knapsack Sprayer Calibration');
+      expect(text).toContain('cannot verify');
+      expect(text).not.toContain('30 Liters');
     });
 
     it('should prepend quarantine alert when high-consequence pathogen is detected in advice', () => {
@@ -98,16 +98,18 @@ describe('Deep-Tier Security — AgronomicSafetyGuard AI Boundary Validation', (
       const { text, boundaryCheck } = agronomicSafetyGuard.guardAndEnrichAdvice(quarantineAdvice);
 
       expect(boundaryCheck.quarantineAlert).toBe(true);
-      expect(text).toContain('QUARANTINE ALERT');
+      expect(text).toContain('legal quarantine status depends on the country');
       expect(text).toContain('maize lethal necrosis');
     });
 
     it('should append Pre-Harvest Interval (PHI) and Pollinator safety warnings for chemical recommendations', () => {
-      const chemicalAdvice = 'Spray 1.5 L/ha of pesticide during flowering stage to control aphids.';
+      const chemicalAdvice = 'Any pesticide decision during flowering needs local label review.';
       const { text } = agronomicSafetyGuard.guardAndEnrichAdvice(chemicalAdvice);
 
       expect(text).toContain('Pre-Harvest & Re-Entry Safety (PHI / REI)');
       expect(text).toContain('Pollinator & Bee Protection Warning');
+      expect(text).not.toContain('7–14 days');
+      expect(text).not.toContain('24–48 hours');
     });
   });
 
@@ -136,4 +138,3 @@ describe('Deep-Tier Security — AgronomicSafetyGuard AI Boundary Validation', (
     });
   });
 });
-

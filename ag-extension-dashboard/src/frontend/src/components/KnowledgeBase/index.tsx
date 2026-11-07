@@ -104,27 +104,6 @@ const matchesArticle = (art: DocumentArticle, category: string, query: string): 
   );
 };
 
-// Demo benchmark: built from the curated scenario, not from a live backend
-// synthesis — so it must not claim the backend's "verified" grounding badge.
-const buildBenchmarkResult = (scenario: ResearchScenario, queryText: string): Result => ({
-  answer: scenario.sampleAnswer,
-  contextUsed: [],
-  cached: true,
-  query: queryText || scenario.query,
-  timestamp: new Date().toISOString(),
-  citations: scenario.citations,
-  evidenceStatus: 'unverified',
-  visuals: {
-    kpis: [
-      { label: 'Data Grounding', value: 'Demo benchmark (not live-verified)', status: 'warning' },
-      { label: 'Latency', value: '<50ms (Demo Benchmark)', status: 'good' },
-    ],
-    charts: [],
-    images: [],
-    videos: [],
-  },
-});
-
 // Honest failure state for a failed/exception'd search: no fabricated answer,
 // no citations, no verified badge. Retry runs through the panel's Regenerate action.
 const SEARCH_FAILURE_ANSWER =
@@ -144,32 +123,11 @@ const buildErrorResult = (queryText: string): Result => ({
   visuals: { kpis: [], charts: [], images: [], videos: [] },
 });
 
-const findMatchingScenario = (queryText: string): ResearchScenario | undefined => {
-  const q = queryText.toLowerCase().trim();
-  return RESEARCH_SCENARIOS.find(
-    s => s.query.toLowerCase().trim() === q ||
-         s.title.toLowerCase().includes(q) ||
-         q.includes(s.title.toLowerCase()) ||
-         q.includes(s.query.toLowerCase().slice(0, 30)) ||
-         (s.crop && q.includes(s.crop.toLowerCase())) ||
-         (s.id === 'fall_armyworm_ipm' && (q.includes('armyworm') || q.includes('faw')))
-  );
-};
-
 const resolveSearchResult = (
   res: AskResponse,
-  queryText: string,
-  isDemo: boolean,
-  matchingScenario?: ResearchScenario
+  queryText: string
 ): Result => {
-  // Demo mode may serve the canned benchmark scenario (the user is explicitly in demo).
-  if (isDemo && matchingScenario) {
-    return buildBenchmarkResult(matchingScenario, queryText);
-  }
-
-  // The backend reports evidenceStatus honestly (derived from citation/context
-  // counts) — an unavailable assistant arrives as a no_verified_source answer
-  // with no citations, which AIResult renders with an evidence warning.
+  // Source counts describe retrieval, not factual or regulatory verification.
   return {
     ...res.data,
     query: queryText || 'Multimodal Search',
@@ -190,7 +148,7 @@ const notifySearchResult = (
   if (res.data.cached) {
     notify({
       type: 'info',
-      message: 'Result retrieved from semantic cache (Cost optimized)',
+      message: 'Result retrieved from your context-scoped answer cache',
     });
   } else if (bypassCache) {
     notify({
@@ -265,16 +223,10 @@ export const KnowledgeBase: React.FC = () => {
   }, [addNotification]);
 
   const finishFailedSearch = useCallback((queryText: string, error: unknown): void => {
-    const matchingScenario = findMatchingScenario(queryText) || (isDemo ? RESEARCH_SCENARIOS[0] : undefined);
-    if (isDemo && matchingScenario) {
-      setLastResult(buildBenchmarkResult(matchingScenario, queryText));
-      setAttachments([]);
-      return;
-    }
     handleSearchError(error);
     setLastResult(buildErrorResult(queryText));
     setAttachments([]);
-  }, [handleSearchError, isDemo]);
+  }, [handleSearchError]);
 
   const fetchQuotaData = useCallback(async () => {
     try {
@@ -292,14 +244,13 @@ export const KnowledgeBase: React.FC = () => {
     res: AskResponse,
     queryText: string,
     bypassCache: boolean,
-    matchingScenario: ResearchScenario | undefined,
   ): void => {
-    setLastResult(resolveSearchResult(res, queryText, isDemo, matchingScenario));
+    setLastResult(resolveSearchResult(res, queryText));
     setAttachments([]);
     applyQuotaUpdate(res.data.dailyRemaining, res.data.dailyLimit);
     fetchQuotaData();
     notifySearchResult(res, bypassCache, addNotification);
-  }, [addNotification, applyQuotaUpdate, fetchQuotaData, isDemo]);
+  }, [addNotification, applyQuotaUpdate, fetchQuotaData]);
 
   const fetchStats = async () => {
     try {
@@ -323,8 +274,6 @@ export const KnowledgeBase: React.FC = () => {
       setRetrievalStep(prev => (prev < 4 ? prev + 1 : prev));
     }, 450);
 
-    const matchingScenario = findMatchingScenario(queryText);
-
     try {
       const res = await askAI(queryText, attachments, { bypassCache });
       clearInterval(stepInterval);
@@ -335,7 +284,7 @@ export const KnowledgeBase: React.FC = () => {
         return;
       }
 
-      finishSuccessfulSearch(res, queryText, bypassCache, matchingScenario);
+      finishSuccessfulSearch(res, queryText, bypassCache);
     } catch (error: unknown) {
       clearInterval(stepInterval);
       setRetrievalStep(4);

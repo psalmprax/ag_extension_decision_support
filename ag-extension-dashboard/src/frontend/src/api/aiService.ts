@@ -85,6 +85,17 @@ export const getChatCompletion = async (
   return response.data;
 };
 
+export const getPublicDemoChatCompletion = async (
+  message: string,
+  language = 'en'
+): Promise<{ success: boolean; data: { text: string }; error?: string }> => {
+  const response = await apiClient.post<{ success: boolean; data: { text: string }; error?: string }>('/chatbot/public-demo', {
+    query: message,
+    language,
+  });
+  return response.data;
+};
+
 export interface TextToSpeechResponse {
   success: boolean;
   data?: {
@@ -107,4 +118,3 @@ export const synthesizeSpeech = async (
   });
   return response.data;
 };
-

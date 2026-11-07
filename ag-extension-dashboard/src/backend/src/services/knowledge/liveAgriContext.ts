@@ -46,8 +46,8 @@ async function fetchFAOAlertsContext(queryCategories: string[], region?: string,
         if (alerts && alerts.length > 0) {
             return {
                 id: `live-fao-alerts-${Date.now()}`,
-                content: `FAO Disease Alerts for ${region} (Crop: ${crop || 'All'}):\n${alerts.map((a: DiseaseAlert) => `- [${a.severity.toUpperCase()}] ${a.title}: ${a.description}`).join('\n')}`,
-                metadata: { title: `FAO Pest & Disease Alerts (${region})`, category: 'Disease Alerts', crop: crop || 'All', sourceUrl: 'https://www.fao.org', contentType: 'text' },
+                content: `FAO production anomalies for ${region} (not confirmed pest outbreaks; crop: ${crop || 'All'}):\n${alerts.map((a: DiseaseAlert) => `- ${a.title}: ${a.description}`).join('\n')}`,
+                metadata: { title: `FAO Production Anomalies (${region})`, category: 'Production Statistics', crop: crop || 'All', sourceUrl: 'https://www.fao.org/faostat/en/', contentType: 'text' },
                 score: 1.0
             };
         }
@@ -56,7 +56,7 @@ async function fetchFAOAlertsContext(queryCategories: string[], region?: string,
 }
 
 async function fetchNasaAgroclimateContext(queryCategories: string[], lat: number | undefined, lng: number | undefined, crop: string | undefined): Promise<SearchResult | null> {
-    if (!lat || !lng) return null;
+    if (lat === undefined || lng === undefined || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
     if (queryCategories.length > 0 && !queryCategories.includes('agronomy_and_yield') && !queryCategories.includes('climate_and_weather')) return null;
     try {
         const { NasaPowerService } = await import('@/services/data/nasaPowerService');
@@ -80,7 +80,7 @@ async function fetchNasaAgroclimateContext(queryCategories: string[], lat: numbe
 }
 
 async function fetchSoilPropertiesContext(queryCategories: string[], lat: number | undefined, lng: number | undefined, crop: string | undefined): Promise<SearchResult | null> {
-    if (!lat || !lng) return null;
+    if (lat === undefined || lng === undefined || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
     if (queryCategories.length > 0 && !queryCategories.includes('agronomy_and_yield') && !queryCategories.includes('climate_and_weather')) return null;
     try {
         const { soilGridsService } = await import('@/services/data/soilGridsService');
@@ -100,18 +100,20 @@ async function fetchSoilPropertiesContext(queryCategories: string[], lat: number
     return null;
 }
 
-async function fetchMarketPricesContext(queryCategories: string[], crop: string | undefined): Promise<SearchResult | null> {
+async function fetchMarketPricesContext(queryCategories: string[], crop: string | undefined, country?: string): Promise<SearchResult | null> {
     if (queryCategories.length > 0 && !queryCategories.includes('market_prices')) return null;
+    if (!country) return null;
     try {
         const { marketPriceService } = await import('@/services/marketPriceService');
-        const prices = await marketPriceService.getLatestPrices();
+        const prices = (await marketPriceService.getLatestPrices(undefined, country))
+            .filter(price => price.dataStatus === 'live');
         if (prices && prices.length > 0) {
             const relevantPrices = crop ? prices.filter((p: MarketPrice) => p.crop.toLowerCase().includes(crop.toLowerCase())) : prices;
             const priceList = relevantPrices.length > 0 ? relevantPrices : prices;
             return {
                 id: `live-market-prices-${Date.now()}`,
-                content: `Latest Market Prices:\n${priceList.map((p: MarketPrice) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`,
-                metadata: { title: 'Latest Market Prices Context', category: 'Market Prices', crop: crop || 'All', sourceUrl: 'https://www.ratin.net', contentType: 'text' },
+                content: `Reported price snapshots for ${country} (not a current local retail or farm-gate quote):\n${priceList.map((p: MarketPrice) => `- ${p.crop}: ${p.price}; source: ${p.source}; fetched: ${p.fetchedAt}`).join('\n')}`,
+                metadata: { title: `Reported Price Snapshots (${country})`, country, category: 'Market Prices', crop: crop || 'All', contentType: 'text' },
                 score: 1.0
             };
         }
@@ -128,7 +130,7 @@ export async function fetchLiveAgriContext(
         fetchFAOAlertsContext(queryCategories, location.region, location.crop),
         fetchNasaAgroclimateContext(queryCategories, location.lat, location.lng, location.crop),
         fetchSoilPropertiesContext(queryCategories, location.lat, location.lng, location.crop),
-        fetchMarketPricesContext(queryCategories, location.crop)
+        fetchMarketPricesContext(queryCategories, location.crop, location.country)
     ];
 
     const results = await Promise.all(tasks);

@@ -1,21 +1,23 @@
 import { AIRouter } from '@/services/aiProvider/aiProvider';
 import type { ReasoningResult } from '@/services/aiProvider/aiProvider';
-import { VectorService, SearchResult } from '@/services/vectorService';
-import { SemanticCacheService } from '@/services/semanticCacheService';
+import { VectorService, type SearchResult } from '@/services/vectorService';
+import { createHash } from 'crypto';
 import { cacheSet } from '@/services/cacheService';
 import { logger } from '@/utils/logger';
 import { normalizeAgronomicQuery, isAgronomicContent } from '@/utils/agronomicQueryNormalizer';
-import { checkAnswerCaches, checkExactCachesOnly } from '@/services/knowledge/cacheLookup';
+import { checkExactCachesOnly } from '@/services/knowledge/cacheLookup';
 import { enrichContextWithWebFallbacks } from '@/services/knowledge/webEnrichment';
-import { resolveUserContext, UserLocation } from '@/services/knowledge/userContext';
+import { resolveUserContext, type UserLocation } from '@/services/knowledge/userContext';
 import { fetchLiveAgriContext } from '@/services/knowledge/liveAgriContext';
-import { callReasoningAgentic, callReasoningWithTimeout } from '@/services/knowledge/reasoning';
+import { callReasoningAgentic } from '@/services/knowledge/reasoning';
 import { buildExtractiveAnswer } from '@/services/knowledge/insightExtract';
 import { splitQuarantined, quarantineDisclosure } from '@/services/knowledge/groundingPolicy';
 import { postProcessResponse } from '@/services/knowledge/visuals';
 import { logSearch } from '@/services/knowledge/searchLog';
-import { aegisShield } from '@/services/security/aegisShield';
+import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
+import { buildAdvisoryEvidence, resolveAdvisoryCountry, validateAdvisoryCitations } from './advisoryPolicy';
 import type { AskOptions, FinalAnswer, KnowledgeAttachment, ReasonOptions } from '@/services/knowledge/types';
+import { withAdvisoryTimeout } from './advisoryRuntime';
 
 /**
  * askQuestion pipeline: cache fast-path → parallel retrieval (categorize,
@@ -33,23 +35,34 @@ async function resolveAggregatedContext(
         ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather', 'market_prices'].includes(c)
     );
 
-    let contextResults = await enrichContextWithWebFallbacks(queryText, queryCategories, isAgriQuery, initialContextResults);
+    let contextResults = initialContextResults;
+    try {
+        contextResults = await withAdvisoryTimeout(
+            () => enrichContextWithWebFallbacks(queryText, queryCategories, isAgriQuery, initialContextResults),
+            12000, 'Knowledge web enrichment'
+        );
+    } catch (error) {
+        logger.warn('Knowledge web enrichment unavailable; using retrieved evidence:', error);
+    }
 
     if (isAgriQuery) {
-        const liveResults = await fetchLiveAgriContext(queryCategories, userContext);
-        contextResults = [...liveResults, ...contextResults];
+        try {
+            const liveResults = await withAdvisoryTimeout(
+                () => fetchLiveAgriContext(queryCategories, userContext), 12000, 'Knowledge live context'
+            );
+            contextResults = [...liveResults, ...contextResults];
+        } catch (error) {
+            logger.warn('Knowledge live context unavailable; no live claims supplied:', error);
+        }
     }
 
     // Quarantine: unverified scrapes never enter grounding text.
     const { groundable, withheld } = splitQuarantined(contextResults);
     contextResults = groundable;
 
-    const contextText = contextResults
-        .map(res => {
-            const sanitized = aegisShield.sanitizeToolResult(res.content || '');
-            return `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType || 'text'}, Score: ${res.score !== undefined ? res.score.toFixed(2) : '1.0'}, URL: ${res.metadata.sourceUrl || ''})\n${sanitized.sanitizedInput}`;
-        })
-        .join('\n\n---\n\n') + quarantineDisclosure(withheld);
+    const evidence = buildAdvisoryEvidence(contextResults, userContext);
+    contextResults = evidence.documents;
+    const contextText = evidence.context + quarantineDisclosure(withheld);
 
     return { contextResults, contextText };
 }
@@ -63,8 +76,8 @@ function cacheAndLogResponse(userId: string, queryText: string, attachments: Kno
 
     if (!attachments || attachments.length === 0) {
         if (isAnswerValid) {
-            cacheSet(redisKey, JSON.stringify(response), 3600 * 24).catch(e => logger.error('Failed to set Redis exact cache:', e));
-            SemanticCacheService.save(queryText, response.answer, response.contextUsed, response.visuals).catch(e => logger.error('Failed to save semantic cache:', e));
+            const ttl = queryCategories.some(category => ['market_prices', 'climate_and_weather'].includes(category)) ? 60 : 3600;
+            cacheSet(redisKey, JSON.stringify(response), ttl).catch(e => logger.error('Failed to set Redis exact cache:', e));
         } else {
             logger.warn(`Skipping caching for low-quality or short answer (${response.answer?.length || 0} chars)`);
         }
@@ -76,16 +89,11 @@ function cacheAndLogResponse(userId: string, queryText: string, attachments: Kno
     ).catch(logError => logger.error('Background logging failed:', logError));
 }
 
-function handleAskQuestionFallback(userId: string, queryText: string, contextResults: SearchResult[], error: unknown): FinalAnswer {
+function handleAskQuestionFallback(queryText: string, contextResults: SearchResult[], error: unknown): FinalAnswer {
     logger.error('RAG analysis failed:', error);
 
     if (contextResults.length > 0) {
         const fallback = buildExtractiveAnswer(queryText, contextResults);
-        logSearch(
-            userId, queryText,
-            contextResults[0]?.metadata?.category as string | undefined, contextResults[0]?.metadata?.crop as string | undefined,
-            fallback.answer, fallback.reasoning, fallback.visuals
-        ).catch(logError => logger.error('Fallback search logging failed:', logError));
         return fallback;
     }
 
@@ -106,11 +114,6 @@ function handleAskQuestionFallback(userId: string, queryText: string, contextRes
         cached: false
     };
 
-    logSearch(
-        userId, queryText, 'general_inquiry', undefined,
-        noResultAnswer.answer, noResultAnswer.reasoning, noResultAnswer.visuals
-    ).catch(logError => logger.error('Fallback search logging failed:', logError));
-
     return noResultAnswer;
 }
 
@@ -122,15 +125,38 @@ async function finalizeAnswer(
     queryCategories: string[],
     contextResults: SearchResult[],
     reasoningResult: ReasoningResult,
-    attachments: KnowledgeAttachment[] | undefined
+    attachments: KnowledgeAttachment[] | undefined,
+    options?: ReasonOptions
 ): Promise<FinalAnswer> {
-    const { visuals, audio } = await postProcessResponse(reasoningResult, queryText);
+    const evidence = buildAdvisoryEvidence(contextResults, options);
+    if (!reasoningResult.answer?.trim()) {
+        throw new Error('Knowledge advisory provider returned no answer');
+    }
+    const guarded = agronomicSafetyGuard.guardAndEnrichAdvice(reasoningResult.answer, options?.language);
+    const validated = validateAdvisoryCitations(guarded.text, evidence.citations, options?.language);
+    const reasoningUnsafe = agronomicSafetyGuard.scanGeneratedAdvice(reasoningResult.reasoning || '').violations.length > 0;
+    const visualsUnsafe = agronomicSafetyGuard.scanGeneratedAdvice(JSON.stringify(reasoningResult.visuals || {})).violations.length > 0;
+    // Generate any audio from the guarded answer, never the original prescription.
+    const safeReasoning = {
+        ...reasoningResult,
+        answer: validated.answer,
+        reasoning: guarded.boundaryCheck.violations.length > 0 || reasoningUnsafe
+            ? 'Treatment details withheld pending current local label or soil-test verification.'
+            : reasoningResult.reasoning,
+        toolCalls: undefined,
+        audio: undefined,
+        confidence: undefined,
+        visuals: guarded.boundaryCheck.violations.length > 0 || visualsUnsafe ? undefined : reasoningResult.visuals,
+    };
+    const { visuals, audio } = await postProcessResponse(safeReasoning, queryText, options?.language);
 
     const response = {
-        ...reasoningResult,
+        ...safeReasoning,
         visuals,
         audio,
-        contextUsed: contextResults,
+        contextUsed: evidence.documents,
+        advisoryQuality: validated.evidence,
+        safety: guarded.boundaryCheck,
         cached: false
     };
 
@@ -189,6 +215,30 @@ export async function categorizeQuery(queryText: string, options?: ReasonOptions
     }
 }
 
+async function lookupScopedAnswer(queryText: string, redisKey: string, attachments?: KnowledgeAttachment[], options?: AskOptions): Promise<FinalAnswer | null> {
+    if (options?.bypassCache || attachments?.length) return null;
+    try {
+        return await withAdvisoryTimeout(
+            () => checkExactCachesOnly(queryText, redisKey, true), 2000, 'Knowledge answer cache'
+        );
+    } catch (error) {
+        logger.warn('Knowledge cache unavailable; generating a fresh answer:', error);
+        return null;
+    }
+}
+
+function applyAdvisoryLocation(userContext: UserLocation, queryText: string, options?: AskOptions): ReasonOptions {
+    const profileCountry = userContext.country;
+    userContext.country = resolveAdvisoryCountry(queryText, options?.country || profileCountry);
+    if (options?.country || userContext.country !== profileCountry) {
+        userContext.location = options?.region;
+        userContext.region = options?.region;
+        userContext.lat = undefined;
+        userContext.lng = undefined;
+    }
+    return { ...options, country: userContext.country, region: options?.region || userContext.region };
+}
+
 export async function runAskQuestion(
     userId: string,
     queryText: string,
@@ -198,33 +248,38 @@ export async function runAskQuestion(
     const cleanQueryText = normalizeAgronomicQuery(queryText);
     logger.info(`Getting RAG-based answer for query: "${queryText}" (normalized: "${cleanQueryText}", User: ${userId}, Attachments: ${attachments?.length || 0}, PreferredProvider: ${options?.preferredProvider || 'default'}, BypassCache: ${Boolean(options?.bypassCache)})`);
 
-    const normalized = cleanQueryText.toLowerCase().trim();
-    const baseRedisKey = `rag:exact:${normalized}`;
+    const userContext = await withAdvisoryTimeout(
+        () => resolveUserContext(userId, cleanQueryText), 5000, 'Knowledge user context'
+    );
+    const reasonOptions = applyAdvisoryLocation(userContext, cleanQueryText, options);
+    const scope = createHash('sha256').update(JSON.stringify({
+        userId, query: cleanQueryText, country: userContext.country,
+        region: reasonOptions.region, language: options?.language,
+        provider: options?.preferredProvider, day: new Date().toISOString().slice(0, 10),
+        allowTools: options?.allowTools,
+    })).digest('hex');
+    const baseRedisKey = `rag:advisory-v3:${scope}`;
 
-    // Fast-path: check exact match caches first (<2ms) before making AI classification or vector calls
-    if (!options?.bypassCache && (!attachments || attachments.length === 0)) {
-        const exactHit = await checkExactCachesOnly(cleanQueryText, baseRedisKey);
-        if (exactHit) {
-            logger.info(`Exact cache HIT (pre-categorization) for query: "${cleanQueryText}"`);
-            return exactHit;
-        }
+    // Only reuse this user's context-scoped, policy-versioned answer cache.
+    const exactHit = await lookupScopedAnswer(cleanQueryText, baseRedisKey, attachments, options);
+    if (exactHit) {
+        logger.info(`Exact cache HIT (pre-categorization) for query: "${cleanQueryText}"`);
+        return exactHit;
     }
 
-    // Parallelize query categorization, local vector search, and user/farmer context resolution
-    const [queryCategories, initialContextResults, userContext] = await Promise.all([
+    // Parallelize categorization and retrieval after resolving location scope.
+    const [queryCategories, initialContextResults] = await Promise.all([
         categorizeQuery(cleanQueryText, options),
-        VectorService.hybridSearch(normalizeAgronomicQuery(cleanQueryText), 3, {}),
-        resolveUserContext(userId, cleanQueryText),
+        withAdvisoryTimeout(
+            () => VectorService.hybridSearch(normalizeAgronomicQuery(cleanQueryText), 3, {}),
+            8000, 'Knowledge vector retrieval'
+        ).catch(error => {
+            logger.warn('Knowledge vector retrieval unavailable; continuing without local evidence:', error);
+            return [] as SearchResult[];
+        }),
     ]);
 
-    const isRealTimeIntent = queryCategories.some(c => ['market_and_commodity_prices', 'climate_and_weather', 'market_prices'].includes(c));
-    const freshSuffix = isRealTimeIntent ? `:fresh:${new Date().toISOString().slice(0, 10)}` : '';
-    const redisKey = `rag:exact:${normalized}${freshSuffix}`;
-
-    if (!options?.bypassCache) {
-        const cachedHit = await checkAnswerCaches(cleanQueryText, redisKey, attachments, isRealTimeIntent);
-        if (cachedHit) return cachedHit;
-    }
+    const redisKey = baseRedisKey;
 
     const { contextResults, contextText } = await resolveAggregatedContext(
         cleanQueryText,
@@ -234,11 +289,26 @@ export async function runAskQuestion(
     );
 
     try {
-        const reasoningResult = process.env.KNOWLEDGE_AGENTIC_LOOP === 'false'
-            ? await callReasoningWithTimeout(contextText, cleanQueryText, attachments, options)
-            : await callReasoningAgentic(contextText, cleanQueryText, attachments, options, queryCategories);
-        return await finalizeAnswer(userId, cleanQueryText, redisKey, queryCategories, contextResults, reasoningResult, attachments);
+        const reasoningResult = await callReasoningAgentic(contextText, cleanQueryText, attachments, reasonOptions, queryCategories);
+        return await finalizeAnswer(userId, cleanQueryText, redisKey, queryCategories, contextResults, reasoningResult, attachments, reasonOptions);
     } catch (error) {
-        return handleAskQuestionFallback(userId, cleanQueryText, contextResults, error);
+        const fallback = handleAskQuestionFallback(cleanQueryText, contextResults, error);
+        const guarded = agronomicSafetyGuard.guardAndEnrichAdvice(fallback.answer, options?.language);
+        const validated = validateAdvisoryCitations(guarded.text, buildAdvisoryEvidence(fallback.contextUsed, reasonOptions).citations, options?.language);
+        const reasoningUnsafe = agronomicSafetyGuard.scanGeneratedAdvice(fallback.reasoning || '').violations.length > 0;
+        const visualsUnsafe = agronomicSafetyGuard.scanGeneratedAdvice(JSON.stringify(fallback.visuals || {})).violations.length > 0;
+        const response: FinalAnswer = {
+            ...fallback, answer: validated.answer, confidence: undefined,
+            reasoning: guarded.boundaryCheck.violations.length > 0 || reasoningUnsafe
+                ? 'Treatment details withheld pending current local label or soil-test verification.'
+                : fallback.reasoning,
+            audio: undefined,
+            toolCalls: undefined,
+            visuals: guarded.boundaryCheck.violations.length > 0 || visualsUnsafe ? undefined : fallback.visuals,
+            advisoryQuality: validated.evidence, safety: guarded.boundaryCheck,
+        };
+        logSearch(userId, cleanQueryText, queryCategories[0], undefined, response.answer, response.reasoning, response.visuals)
+            .catch(logError => logger.error('Fallback search logging failed:', logError));
+        return response;
     }
 }

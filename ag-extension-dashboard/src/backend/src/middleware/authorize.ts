@@ -34,6 +34,7 @@ export const authorize = (allowedRoles: UserRole[]) => {
                 userId: string;
                 email: string;
                 role: UserRole;
+                isDemo?: boolean;
             };
 
             // Check if session has been revoked (DB-backed; see sessionService)
@@ -52,6 +53,7 @@ export const authorize = (allowedRoles: UserRole[]) => {
                 userId: decoded.userId,
                 email: decoded.email,
                 role: normalizedRole,
+                isDemo: decoded.isDemo === true || decoded.email?.toLowerCase() === 'demo@agridemo.com',
             };
 
             // Check if user role is allowed
@@ -109,6 +111,7 @@ export const optionalAuth = async (req: Request, _res: Response, next: NextFunct
             userId: string;
             email: string;
             role: UserRole;
+            isDemo?: boolean;
         };
 
         const sessionActive = await isSessionValid(token);
@@ -123,6 +126,7 @@ export const optionalAuth = async (req: Request, _res: Response, next: NextFunct
             userId: decoded.userId,
             email: decoded.email,
             role: decoded.role === ('agent' as unknown as UserRole) ? 'extension_officer' : decoded.role,
+            isDemo: decoded.isDemo === true || decoded.email?.toLowerCase() === 'demo@agridemo.com',
         };
 
         next();

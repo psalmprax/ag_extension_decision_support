@@ -1,8 +1,10 @@
-import { AIRouter, ReasoningResult } from '@/services/aiProvider/aiProvider';
+import type { ReasoningResult } from '@/services/aiProvider/aiProvider';
+import { synthesizeVoiceAdvisory } from '@/services/voiceAudioService';
 import { AssetValidationService } from '@/services/assetValidationService';
 import { logger } from '@/utils/logger';
 import { normalizeAllCapsText } from '@/services/knowledge/textNormalize';
 import type { AnswerVisuals } from '@/services/knowledge/types';
+import { withAdvisoryTimeout } from './advisoryRuntime';
 
 /**
  * Visual assets + TTS post-processing for knowledge answers.
@@ -41,7 +43,7 @@ async function enhanceImages(enhancedVisuals: AnswerVisuals, searchQuery: string
             if (!existingUrls.has(additional.url)) {
                 (enhancedVisuals.images ?? []).push({
                     url: additional.url,
-                    caption: `Verified agricultural image (${additional.category})`
+                    caption: `Agricultural reference image (${additional.category})`
                 });
                 if ((enhancedVisuals.images?.length ?? 0) >= 3) break;
             }
@@ -96,7 +98,8 @@ async function validateAndEnhanceVisuals(visuals: AnswerVisuals, searchQuery: st
 
 export async function postProcessResponse(
     reasoningResult: ReasoningResult,
-    queryText: string
+    queryText: string,
+    language?: string
 ): Promise<{ visuals: AnswerVisuals | undefined; audio?: string }> {
     if (reasoningResult.answer && typeof reasoningResult.answer === 'string') {
         reasoningResult.answer = normalizeAllCapsText(reasoningResult.answer);
@@ -109,25 +112,28 @@ export async function postProcessResponse(
     await Promise.all([
         (async () => {
             if (sourceVisuals) {
-                enhancedVisuals = await validateAndEnhanceVisuals(sourceVisuals, queryText);
+                try {
+                    enhancedVisuals = await withAdvisoryTimeout(
+                        () => validateAndEnhanceVisuals(sourceVisuals, queryText), 8000, 'Knowledge visual assets'
+                    );
+                } catch (error) {
+                    enhancedVisuals = undefined;
+                    logger.warn('Knowledge visual assets unavailable:', error);
+                }
             }
         })(),
         (async () => {
             if (process.env.KNOWLEDGE_TTS_ENABLED !== 'true') return;
+            if (language !== 'en' && language !== 'sw') {
+                logger.info('Knowledge server speech skipped: an explicitly supported language is required');
+                return;
+            }
             try {
-                const ttsResult = await AIRouter.routeRequest('generate', {
-                    prompt: `Summarize this answer in 2 short, enticing sentences for audio playback: ${reasoningResult.answer}`,
-                    options: { maxTokens: 100 }
-                });
-                if (ttsResult.text) {
-                    const audioResult = await AIRouter.routeRequest('speech', {
-                        text: ttsResult.text,
-                        options: { voice: 'en-US-AriaNeural' }
-                    });
-                    if (audioResult && audioResult.audio) {
-                        audioBase64 = audioResult.audio.toString('base64');
-                    }
-                }
+                const audioResult = await withAdvisoryTimeout(() => synthesizeVoiceAdvisory({
+                    text: reasoningResult.answer,
+                    language,
+                }), 15000, 'Knowledge speech');
+                audioBase64 = audioResult.audioBase64;
             } catch (ttsError) {
                 logger.warn('Failed to generate audio abstraction in parallel:', ttsError);
             }

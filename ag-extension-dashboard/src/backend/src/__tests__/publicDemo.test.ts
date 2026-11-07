@@ -3,6 +3,7 @@ import app from '../app';
 import { __resetPublicDemoRateLimitForTests } from '../routes/chatbot/publicDemoRateLimit';
 import { AIRouter } from '../services/aiProvider/aiProvider';
 import { isNonAgronomicOrInjection } from '../routes/chatbot/publicDemoDomainGuard';
+import { transcribeVoiceNote, synthesizeVoiceAdvisory } from '../services/voiceAudioService';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -45,6 +46,18 @@ jest.mock('../services/aiProvider/aiProvider', () => ({
   },
 }));
 
+jest.mock('../services/voiceAudioService', () => ({
+  transcribeVoiceNote: jest.fn().mockResolvedValue({
+    transcription: 'How do I control Fall Armyworm in maize?',
+    detectedLanguage: 'en',
+  }),
+  synthesizeVoiceAdvisory: jest.fn().mockResolvedValue({
+    audioBase64: Buffer.from('mock-mp3-audio-bytes').toString('base64'),
+    format: 'audio/mp3',
+    durationSeconds: 2,
+  }),
+}));
+
 jest.mock('../services/ragV2Service', () => ({
   RAGV2Service: {
     enhancedSearch: jest.fn().mockResolvedValue({
@@ -85,6 +98,7 @@ describe('POST /api/v1/chatbot/public-demo', () => {
       prompt: expect.arrayContaining([
         expect.objectContaining({ role: 'user', content: 'maize\t\n\rsoil \u00e9\ud83c\udf31\u007f' }),
       ]),
+      options: expect.objectContaining({ preferredProvider: 'aihubmix' }),
     }));
   });
 
@@ -130,6 +144,9 @@ describe('POST /api/v1/chatbot/public-demo', () => {
   });
 
   it('handles multi-turn contextual dialogue tracking and follow-up dosage query', async () => {
+    jest.mocked(AIRouter.routeRequest).mockResolvedValueOnce({
+      text: 'Apply neem oil at 3 ml/L.',
+    });
     const res = await request(app)
       .post('/api/v1/chatbot/public-demo')
       .set('X-Forwarded-For', '198.51.100.2')
@@ -157,15 +174,19 @@ describe('POST /api/v1/chatbot/public-demo', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    // Anaphora resolution resolves context: Maize + Fall Armyworm + 3 acres -> 1.2 liters Neem oil
-    expect(res.body.data.text).toContain('3 acres of maize');
-    expect(res.body.data.text).toContain('1.2 liters of Neem oil');
+    expect(res.body.data.text).toContain('cannot verify a treatment rate');
+    expect(res.body.data.text).not.toContain('3 ml/L');
+    expect(res.body.data.safety.safe).toBe(false);
+    expect(res.body.data.citations.some((citation: { sourceId: string }) => citation.sourceId === 'fao-faw-2024')).toBe(false);
     expect(res.body.data.entitySlots.crop).toBe('Maize');
     expect(res.body.data.entitySlots.pest_disease).toBe('Fall Armyworm');
     expect(res.body.data.entitySlots.field_size).toBe('3 acres');
   });
 
   it('supports Kiswahili language for agronomic inquiries', async () => {
+    jest.mocked(AIRouter.routeRequest).mockResolvedValueOnce({
+      text: 'Tumia mafuta ya mwarobaini mililita 3 kwa lita moja.',
+    });
     const res = await request(app)
       .post('/api/v1/chatbot/public-demo')
       .set('X-Forwarded-For', '198.51.100.3')
@@ -180,8 +201,9 @@ describe('POST /api/v1/chatbot/public-demo', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.text).toContain('ekari 3 za mahindi');
-    expect(res.body.data.text).toContain('lita 1.2');
+    expect(res.body.data.text).toContain('Siwezi kuthibitisha kipimo');
+    expect(res.body.data.text).not.toContain('lita 1.2');
+    expect(res.body.data.safety.safe).toBe(false);
   });
 
   it('supports multilingual agronomic inquiries in other project languages (e.g. French)', async () => {
@@ -287,12 +309,18 @@ describe('POST /api/v1/chatbot/public-demo', () => {
       .send({
         audio: Buffer.from('mock-audio-pcm-bytes').toString('base64'),
         language: 'en',
+        mimeType: 'audio/mp4',
       });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data.text).toContain('Fall Armyworm');
     expect(res.body.data.language).toBe('en');
+    expect(transcribeVoiceNote).toHaveBeenCalledWith(expect.objectContaining({
+      languageHint: 'en',
+      mimeType: 'audio/mp4',
+      audioBuffer: expect.any(Buffer),
+    }));
   });
 
   it('rejects /api/v1/chatbot/public-demo/stt when audio payload is missing', async () => {
@@ -322,6 +350,11 @@ describe('POST /api/v1/chatbot/public-demo', () => {
     expect(res.body.data.audioBase64).toBeDefined();
     expect(res.body.data.format).toBe('mp3');
     expect(res.body.data.voice).toBe('nova');
+    expect(synthesizeVoiceAdvisory).toHaveBeenCalledWith({
+      text: 'Apply cold-pressed Neem oil across your field at dusk.',
+      language: 'en',
+      voice: 'nova',
+    });
   });
 
   it('rejects /api/v1/chatbot/public-demo/tts when text is missing', async () => {

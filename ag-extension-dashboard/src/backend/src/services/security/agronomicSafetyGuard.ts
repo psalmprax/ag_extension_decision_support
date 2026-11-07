@@ -1,7 +1,8 @@
 import { logger } from '@/utils/logger';
+import { getAdvisoryMessages } from '@/services/knowledge/advisoryLanguage';
 import {
   regulatoryProvenanceService,
-  RegulatoryDecision,
+  type RegulatoryDecision,
 } from '@/services/regulatoryProvenanceService';
 
 export interface AgronomicBoundaryCheck {
@@ -208,17 +209,24 @@ class AgronomicSafetyGuard {
     const quarantineDiseases: string[] = [];
     let hazardLevel: 'safe' | 'warning' | 'critical_hazard' = 'safe';
 
-    // Regex to capture excessive dosage patterns like "50 L/ha", "500 kg of urea", "10000 ml/ha"
-    const excessiveLiquidPattern = /(\b\d{2,}\s*(?:liters|litres|L)\s*(?:\/|\s*per\s*)\s*(?:ha|hectare|acre)\b)/gi;
-    const matchesLiquid = text.match(excessiveLiquidPattern);
-    if (matchesLiquid) {
-      for (const m of matchesLiquid) {
-        const num = parseFloat(m.replace(/[^\d.]/g, ''));
-        if (num >= 15) { // 15+ Liters per hectare of concentrated chemical is hazardous
-          violations.push(`Potentially lethal liquid dosage recommendation detected: "${m}"`);
-          hazardLevel = 'critical_hazard';
-        }
-      }
+    // Open-ended advice has no validated product/soil-test context. A plausible
+    // rate is not an authorized rate, including botanical pesticides and lime.
+    const normalized = text.normalize('NFKC').replace(/[\u200B-\u200D\u2060\uFEFF]/g, '').toLowerCase();
+    const treatment = /(?:\b(?:pesticid\w*|fungicid\w*|insecticid\w*|herbicid\w*|fertiliz\w*|fertilis\w*|urea|lime|neem|azadirachtin|mancozeb|chlorpyrifos|mbolea|chokaa|mwarobaini|engrais|fongicide|pestizid\w*|calcário|adubo\w*|concim\w*|meststof\w*|kireç|umanyolo|umcako|kalk|mocznik)\b|dünger|gübre|gødning|pestycyd|nawóz|nawoz|wapn|növényvéd|műtrágya|mész|îngrăș|ingras|hnojiv|vápn|pesticíd|कीटनाशक|उर्वरक|खाद|चूना|नीम|杀虫剂|農薬|农药|肥料|石灰|пестицид|фунгицид|инсектицид|гербицид|удобрени|добрив|сечовин|мочевин|извест|вапн|урея|торове|φυτοφαρμάκ|λιπασμ|λίπασμα|ασβέστ|مبيد|سماد|الأسمدة|الجير|ئوغۇت|ھاشارات دورىسى|ھاك)/iu.test(normalized);
+    const quantity = String.raw`(?:\p{Nd}+(?:[.,]\p{Nd}+)?|[一二三四五六七八九十百半]+|\b(?:one|two|three|four|five|six|seven|eight|nine|ten|half|quarter|un|une|deux|trois|quatre|cinq|demi|uno|una|dos|tres|cuatro|cinco|medio|um|uma|dois|duas|três|quatro|meio|ein|eine|zwei|drei|vier|fünf|halb|moja|mbili|tatu|nne|tano|nusu|due|tre|quattro|een|twee|drie|vijf|bir|iki|üç|dört|beş|en|et|to|fire|fem|halv|dwa|dwie|trzy|cztery|pięć|pół|egy|két|kettő|három|négy|öt|fél|doi|două|trei|patru|cinci|jumătate|dva|dvě|tři|čtyři|pět|dve|tri|štyri|päť)\b|एक|दो|तीन|चार|पांच|पाँच|आधा|واحد|اثنين|ثلاثة|نصف|один|одна|два|две|три|четыре|половин|дві|чотири|един|една|четири|ένα|μία|δύο|τρία|τρεις|τέσσερα|μισό|بىر|ئىككى|ئۈچ|تۆت|بەش|يېرىم)`;
+    const unit = String.raw`(?:(?:ml|l|g|kg|lit\p{L}*|gram\p{L}*|kilogram\p{L}*|mililit\p{L}*|tonnes?|tons?|tani|lita|kilogramu|quilos?|kilo|teaspoons?|tablespoons?|spoonfuls?|bottle[- ]?caps?)\b|मिलीलीटर|मिलिलीटर|लीटर|ग्राम|किलोग्राम|毫升|公升|升|公斤|千克|克|миллилитр|миллилитров|літр|литр|грамм|кілограм|килограмм|λίτρ|γραμμάρ|χιλιοστόλιτρ|ملليلتر|مليلتر|لتر|غرام|كيلوغرام|مىللىلىتىر|لىتىر|گرام|كىلوگرام|٪|%)`;
+    const dose = new RegExp(`${quantity}\\s*(?:${unit})|(?:${unit})\\s*${quantity}`, 'iu').test(normalized);
+    const areaOrMixtureRate = /\p{Nd}+(?:[.,]\p{Nd}+)?\s*(?:ml|l|g|kg|liters?|litres?|tonnes?)\s*(?:\/|per)\s*(?:ha|hectares?|acres?|l|liters?|litres?|kg)\b/iu.test(normalized);
+    const applicationInstruction = /(?:\b(?:apply|mix|dilute|dose|dosage|spray|concentrat\w*|tumia|changanya|appliqu\w*|aplicar|mezclar|dosier\w*|anwenden|aplique|mistur\w*|mescol\w*|meng|uygula\w*)\b|मिलाकर|छिड़क|डाल|喷洒|加入|施用|смеш|примен|оброб|اخلط|رش)/iu.test(normalized);
+    if ((treatment && dose) || (areaOrMixtureRate && applicationInstruction)) {
+      violations.push('Treatment rate withheld: current local label or soil-test authorization has not been established.');
+      hazardLevel = 'critical_hazard';
+    }
+    const interval = /(?:\b(?:phi|rei|pre[- ]harvest|re[- ]entry|restricted[- ]entry|harvest|wait|waiting|attend\w*|récolte|cosecha|esper\w*|colheita|warte\w*|ernt\w*)\b|कटाई|प्रतीक्षा|采收|收获|等待|урожая|збирання|حصاد|انتظر)/iu;
+    const duration = new RegExp(`${quantity}\\s*(?:days?|hours?|jours?|heures?|días?|horas?|dias?|giorni|ore|dagen|uur|tage[n]?|stunden|siku|saa|gün|saat|dage|timer|dni|godzin\\p{L}*|nap|óra|zile|ore|dní|hodin\\p{L}*|ημέρ\\p{L}*|ώρ\\p{L}*|दिन|घंटे|天|小时|дн\\p{L}*|час\\p{L}*|доби|годин\\p{L}*|أيام|يوم|ساعات|كۈن|سائەت)`, 'iu');
+    if (treatment && interval.test(normalized) && duration.test(normalized)) {
+      violations.push('Product-specific harvest or re-entry interval requires the current locally registered label.');
+      hazardLevel = 'critical_hazard';
     }
 
     // Check for quarantine outbreaks mentioned in advice
@@ -240,56 +248,48 @@ class AgronomicSafetyGuard {
   }
 
   /**
-   * Translates scientific application rates into practical knapsack sprayer operational units
-   * (16L/20L knapsacks, bottle-caps ~10-20ml, matchbox micro-doses).
+   * Calibration requires measured equipment output and the registered label;
+   * do not fabricate a generic conversion from area rates.
    */
   translateToKnapsackUnits(text: string): string {
     const ratePattern = /(\b\d+(?:\.\d+)?\s*(?:L|liters|litres|kg)\s*(?:\/|\s*per\s*)\s*(?:ha|hectare|acre)\b)/gi;
     const matches = text.match(ratePattern);
     if (!matches || matches.length === 0) return text;
 
-    let enriched = text;
-    if (!text.toLowerCase().includes('knapsack')) {
-      enriched += `\n\n📌 **Knapsack Sprayer Calibration (Field Guidance)**:\n` +
-        `• Standard knapsack volume: 16L or 20L. Typical spray volume is 200–250 L of water per hectare (~10–12 full knapsacks/ha).\n` +
-        `• Always wear personal protective equipment (gloves, mask, boots). Never spray against the wind or during hot midday hours.`;
-    }
-    return enriched;
+    return `${text}\n\nCalibrate the actual sprayer with clean water and follow the current locally registered product label. Do not estimate doses using bottle caps or generic tank conversions.`;
   }
 
   /**
    * Applies safety notices, quarantine alerts, and knapsack guidance to generated advice text.
    */
-  guardAndEnrichAdvice(text: string): { text: string; boundaryCheck: AgronomicBoundaryCheck } {
+  guardAndEnrichAdvice(text: string, language = 'en'): { text: string; boundaryCheck: AgronomicBoundaryCheck } {
     const boundaryCheck = this.scanGeneratedAdvice(text);
     let enriched = text;
 
-    if (!boundaryCheck.safe) {
-      const alertPrefix: string[] = [];
-      if (boundaryCheck.violations.length > 0) {
-        alertPrefix.push(`⚠️ **AGRONOMIC DOSAGE WARNING**: ${boundaryCheck.violations.join('; ')}. Verify with local certified agricultural extension officer before application.`);
-      }
-      if (boundaryCheck.quarantineAlert) {
-        alertPrefix.push(`🚨 **QUARANTINE ALERT**: High-consequence pathogen detected (${boundaryCheck.quarantineDiseases.join(', ')}). Immediate reporting to county agricultural officer required.`);
-      }
-      enriched = `${alertPrefix.join('\n\n')}\n\n${enriched}`;
+    if (boundaryCheck.violations.length > 0) {
+      logger.warn('Generated treatment instructions withheld by agronomic safety policy:', boundaryCheck.violations);
+      enriched = getAdvisoryMessages(language).treatment;
+      boundaryCheck.sanitizedAdvice = enriched;
     }
 
-    enriched = this.translateToKnapsackUnits(enriched);
+    if (boundaryCheck.quarantineAlert) {
+      enriched += language === 'sw'
+        ? '\n\nDalili zinaweza kuhusisha tatizo kubwa la afya ya mimea. Wasiliana na afisa ugani au mamlaka ya afya ya mimea kwa uthibitisho; hadhi ya karantini hutegemea nchi.'
+        : '\n\nA potentially serious plant-health issue was mentioned. Contact the local extension or plant-health authority for confirmation; legal quarantine status depends on the country.';
+    }
 
     const hasChemical = /\b(pesticide|fungicide|insecticide|herbicide|spray|spraying|chemical|malathion|chlorpyrifos|mancozeb|dimethoate|deltamethrin|lambda)\b/i.test(text);
 
-    if (hasChemical) {
+    if (hasChemical && boundaryCheck.violations.length === 0) {
       if (!/\b(pre-harvest interval|phi)\b/i.test(text)) {
         enriched += `\n\n⏱️ **Pre-Harvest & Re-Entry Safety (PHI / REI)**:\n` +
-          `• Pre-Harvest Interval (PHI): Observe mandatory minimum 7–14 days between chemical application and harvesting food crops.\n` +
-          `• Restricted-Entry Interval (REI): Keep people and livestock out of treated fields for at least 24–48 hours unless wearing full PPE.`;
+          `• PHI and REI are product-, crop- and country-specific. Follow the current locally registered label; no universal waiting period is safe to assume.`;
       }
 
       if (/\b(flower|flowering|bloom|blooming|pollinat\w*|bee|bees)\b/i.test(text) && !/\b(pollinator safety|pollinator protection)\b/i.test(text)) {
         enriched += `\n\n🐝 **Pollinator & Bee Protection Warning**:\n` +
           `• Do NOT spray blooming crops or flowering weeds during daylight hours when honeybees and pollinators are actively foraging.\n` +
-          `• If treatment is urgent, apply strictly at dusk or late evening to minimize pollinator colony collapse.`;
+          `• Follow the label's pollinator restrictions. Spraying at dusk is not automatically safe.`;
       }
     }
 

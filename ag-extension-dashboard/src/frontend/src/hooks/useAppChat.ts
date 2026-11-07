@@ -3,11 +3,11 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   fetchConversations,
   fetchMessages,
-  sendMessage,
   updateConversation,
   deleteConversation,
   createConversation,
 } from '@/api/chatbotService';
+import { getChatCompletion, getPublicDemoChatCompletion } from '@/api/aiService';
 import { isDemoFarmerId } from '@/demo/demoIds';
 import { Conversation, ChatMessage, Farmer } from '../types/dashboard';
 
@@ -21,12 +21,7 @@ interface QueuedChatItem {
 /** Send one queued item; true when it drained (caller may drop it from the queue). */
 async function sendQueuedChatItem(item: QueuedChatItem): Promise<boolean> {
   try {
-    await sendMessage({
-      conversationId: item.conversationId || undefined,
-      message: item.message,
-      mode: 'farmer',
-      language: item.language,
-    });
+    await getChatCompletion(item.message, item.conversationId || undefined, item.language);
     return true;
   } catch {
     return false;
@@ -53,26 +48,33 @@ function enqueueOfflineMessage(
   localStorage.setItem(queueKey, JSON.stringify(q));
 }
 
-function sendDemoFarmerResponse(
+async function sendDemoFarmerResponse(
   currentInput: string,
-  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>
-): void {
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
+  language: string
+): Promise<void> {
   const sentMsg: ChatMessage = {
     role: 'officer',
     content: currentInput,
     timestamp: new Date().toISOString(),
   };
   setMessages(prev => [...prev, sentMsg]);
-  setTimeout(() => {
+  try {
+    const response = await getPublicDemoChatCompletion(currentInput, language);
+    const reply = response.data.text;
+    if (!reply) throw new Error('AI assistant returned an empty response');
     setMessages(prev => [
       ...prev,
       {
         role: 'assistant',
-        content: 'Asante sana! I have received your advisory and will update you on the crop progress.',
+        content: reply,
         timestamp: new Date().toISOString(),
       },
     ]);
-  }, 700);
+  } catch (error) {
+    console.error('Failed to generate demo chat response:', error);
+    toast.error('Could not get an AI response. Please try again.');
+  }
 }
 
 function buildDemoConversation(farmer: Farmer): Conversation {
@@ -206,7 +208,7 @@ export const useAppChat = (language: string) => {
     setFarmerChatInput('');
 
     if (activeFarmerConvId?.startsWith('conv-demo-farmer-')) {
-      sendDemoFarmerResponse(currentInput, setFarmerChatMessages);
+      void sendDemoFarmerResponse(currentInput, setFarmerChatMessages, language);
       return;
     }
 
@@ -220,12 +222,7 @@ export const useAppChat = (language: string) => {
     }
 
     try {
-      const res = await sendMessage({
-        conversationId: activeFarmerConvId || undefined,
-        message: currentInput,
-        mode: 'farmer',
-        language,
-      });
+      const res = await getChatCompletion(currentInput, activeFarmerConvId || undefined, language);
       if (res.success && activeFarmerConvId) {
         loadFarmerMessages(activeFarmerConvId);
         loadFarmerConversations();

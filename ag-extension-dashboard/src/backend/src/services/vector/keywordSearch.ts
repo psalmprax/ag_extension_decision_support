@@ -21,6 +21,9 @@ type KeywordRow = {
     title: unknown;
     category: unknown;
     crops: unknown[] | null;
+    tags: unknown;
+    regions: unknown;
+    updated_at: unknown;
     source_url: unknown;
     content_type: unknown;
     score: unknown;
@@ -63,6 +66,9 @@ export function mapKeywordRows(rows: unknown[]): SearchResult[] {
             category: row.category,
             crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
             sourceUrl: row.source_url,
+            tags: row.tags,
+            regions: row.regions,
+            updatedAt: row.updated_at,
             contentType: (row.content_type as string) || 'text'
         },
         score: Number.parseFloat(String(row.score ?? 0))
@@ -80,7 +86,7 @@ export async function searchByTsQuery(
     applyKeywordFilters(params, where, filters);
     params.push(limit);
     const result = await query(`
-        SELECT id, title, content, category, crops, source_url, content_type,
+        SELECT id, title, content, category, crops, tags, regions, updated_at, source_url, content_type,
                ts_rank_cd(to_tsvector('english', title || ' ' || content), to_tsquery('english', $1)) as score
         FROM knowledge_articles
         WHERE ${where.join(' AND ')}
@@ -131,7 +137,7 @@ export async function executeIlikeFallback(
     params.push(limit);
 
     const ilikeResult = await query(`
-        SELECT id, title, content, category, crops, source_url, content_type, 0.6 as score
+        SELECT id, title, content, category, crops, tags, regions, updated_at, source_url, content_type, 0.6 as score
         FROM knowledge_articles
         WHERE ${conditions.join(' AND ')}
         ORDER BY created_at DESC
@@ -146,6 +152,9 @@ export async function executeIlikeFallback(
             category: row.category,
             crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
             sourceUrl: row.source_url,
+            tags: row.tags,
+            regions: row.regions,
+            updatedAt: row.updated_at,
             contentType: (row.content_type as string) || 'text'
         },
         score: 0.6

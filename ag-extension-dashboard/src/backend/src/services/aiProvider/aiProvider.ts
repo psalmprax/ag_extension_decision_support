@@ -112,7 +112,11 @@ export class AIProviderFactory {
             allProviders = Array.from(new Set([preferredProvider, ...allProviders])).filter((p): p is AIProviderType => Boolean(p));
         }
 
-        return this.prioritizeConfiguredProviders(allProviders);
+        const prioritizedProviders = await this.prioritizeConfiguredProviders(allProviders);
+        if (preferredProvider && prioritizedProviders.includes(preferredProvider)) {
+            return [preferredProvider, ...prioritizedProviders.filter(provider => provider !== preferredProvider)];
+        }
+        return prioritizedProviders;
     }
 
     private static async tryProviderOperation(

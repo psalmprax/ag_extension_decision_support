@@ -367,7 +367,7 @@ export class RAGV2Service {
 
             const { rows } = await query(
                 `SELECT c.id, c.article_id, c.content, c.chunk_index,
-                        a.title, a.category, a.source, a.source_url, a.crops,
+                        a.title, a.category, a.source, a.source_url, a.crops, a.tags, a.regions, a.updated_at,
                         (1 - (c.embedding <=> $1::vector)) as score
                  FROM knowledge_chunks c
                  JOIN knowledge_articles a ON a.id = c.article_id
@@ -387,6 +387,9 @@ export class RAGV2Service {
                     source: row.source,
                     sourceUrl: row.source_url,
                     crops: row.crops,
+                    tags: row.tags,
+                    regions: row.regions,
+                    updatedAt: row.updated_at,
                     chunkIndex: row.chunk_index
                 },
                 score: Number.parseFloat(String(row.score)),

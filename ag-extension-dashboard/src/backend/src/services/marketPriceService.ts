@@ -83,10 +83,9 @@ function faostatAreaCode(country: string): string {
     'india': '100', 'brazil': '21', 'united states': '231', 'usa': '231',
     'canada': '33',
   };
-  for (const [key, code] of Object.entries(codes)) {
-    if (lower.includes(key)) return code;
-  }
-  return lower.includes('kenya') ? '114' : '158'; // default to Nigeria
+  const code = codes[lower.trim()];
+  if (!code) throw new Error(`No country-specific FAOSTAT price mapping is configured for ${country}`);
+  return code;
 }
 
 export async function getUserCountry(userId?: string): Promise<string> {
@@ -97,9 +96,8 @@ export async function getUserCountry(userId?: string): Promise<string> {
     if (user?.role === 'farmer') {
       const farmer = await prisma.farmer.findFirst({ where: { userId: user.id } });
       if (farmer?.country) return farmer.country;
-    } else if (user?.region) {
-      return user.region;
     }
+    if (user?.country) return user.country;
   } catch (err) {
     logger.error(`Error looking up user country details for ${userId}:`, err);
   }
@@ -269,12 +267,12 @@ async function resolveGiewsOrBaseline(
 }
 
 export const marketPriceService = {
-  async getLatestPrices(userId?: string): Promise<MarketPrice[]> {
-    const country = await getUserCountry(userId);
+  async getLatestPrices(userId?: string, countryOverride?: string): Promise<MarketPrice[]> {
+    const country = countryOverride || await getUserCountry(userId);
+    const areaCode = faostatAreaCode(country);
     const targetCurrency = getCurrencyForCountry(country);
     const exchangeRate = await fetchExchangeRate(targetCurrency);
     const fetchedAt = new Date().toISOString();
-    const areaCode = faostatAreaCode(country);
     const currentYear = String(new Date().getFullYear());
     const previousYear = String(Number(currentYear) - 1);
 

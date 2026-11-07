@@ -8,6 +8,7 @@ import type {
   AuthenticatedRequestUser,
 } from '@/types/rowTypes';
 import {
+  mapChatMessageRow,
   mapCountRow,
   mapSatisfactionAvgRow,
 } from '@/types/dtos';
@@ -15,14 +16,17 @@ import { logger } from '@/utils/logger';
 import { z } from 'zod';
 import { validate } from '@/middleware/validate';
 import { chatCompletionSchema } from '@/shared-api/chatbot';
-import { parseToolArguments } from '@/services/aiProvider/toolCalling';
-import { VectorService } from '@/services/vectorService';
 import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
-import { RAGV2Service } from '@/services/ragV2Service';
-import { mcpAdapter } from '@/services/mcpAdapter';
+import { retrieveAdvisoryEvidence } from '@/services/knowledge/advisoryRetrieval';
+import { buildAdvisoryDirective, resolveAdvisoryCountry, validateAdvisoryCitations } from '@/services/knowledge/advisoryPolicy';
+import { resolveUserContext } from '@/services/knowledge/userContext';
+import { callAdvisoryTool, getAdvisoryTools } from '@/services/knowledge/advisoryTools';
+import { AdvisoryTimeoutError, withAdvisoryTimeout } from '@/services/knowledge/advisoryRuntime';
 import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
+import { getRealtimeServer } from '@/services/realtimeHub';
+import { assertConversationAccess, MessageAccessError, resolvePrincipalRegion } from '@/services/messageAccessService';
 
 const router = Router();
 
@@ -66,61 +70,13 @@ async function loadHistoryBlock(conversationId: string | undefined, userId: stri
   }
 }
 
-/** Retrieve grounded knowledge-base context via RAG v2 enhanced search (empty on failure). */
-interface CompletionCitation { sourceId: string; title: string; category: string; excerpt: string; score: number }
-
-async function loadRagBlock(message: string): Promise<{ context: string; citations: CompletionCitation[] }> {
+async function canAccessConversation(conversationId: string, userId: string, role: string): Promise<boolean> {
   try {
-    let { results, citations } = await RAGV2Service.enhancedSearch(message, {
-      limit: 3,
-      useChunks: true,
-      useGraph: true,
-      useReranking: true,
-    });
-    // Chunk table can be empty (fresh deploy, embeddings still backfilling). Fall
-    // back to article-level hybrid search rather than answering with no context.
-    if (results.length === 0) {
-      const fallback = await VectorService.hybridSearch(message, 3, undefined, 0.0);
-      results = fallback.map(doc => {
-        const title = typeof doc.metadata?.title === 'string' ? doc.metadata.title : 'Knowledge article';
-        return {
-          id: String(doc.id),
-          articleId: String(doc.id),
-          content: String(doc.content),
-          metadata: doc.metadata,
-          score: doc.score,
-          citation: title,
-        };
-      });
-      citations = fallback.map(doc => ({
-        sourceId: String(doc.id),
-        title: typeof doc.metadata?.title === 'string' ? doc.metadata.title : 'Knowledge article',
-        category: typeof doc.metadata?.category === 'string' ? doc.metadata.category : 'general',
-        excerpt: String(doc.content).slice(0, 200),
-        score: doc.score,
-      }));
-    }
-    if (results.length === 0) return { context: '', citations: [] };
-    const snippets = results
-      .map((doc, i) => {
-        const title = typeof doc.metadata?.title === 'string' ? doc.metadata.title : 'Knowledge article';
-        return `[${i + 1}] ${title}: ${String(doc.content).slice(0, 400)}`;
-      })
-      .join('\n');
-    const citationList: CompletionCitation[] = citations.map(c => ({
-      sourceId: c.sourceId,
-      title: c.title,
-      category: c.category,
-      excerpt: c.excerpt,
-      score: c.score,
-    }));
-    return {
-      context: `\n\nKNOWLEDGE BASE CONTEXT (cite sources when used):\n${snippets}`,
-      citations: citationList
-    };
-  } catch (err) {
-    logger.warn('RAG v2 retrieval failed for chat completions, continuing without context:', err);
-    return { context: '', citations: [] };
+    await assertConversationAccess({ userId, role }, conversationId);
+    return true;
+  } catch (error) {
+    if (error instanceof MessageAccessError) return false;
+    throw error;
   }
 }
 
@@ -133,7 +89,7 @@ interface ChatToolDefinition {
 }
 
 const buildToolDefinitions = (): ChatToolDefinition[] =>
-  mcpAdapter.convertToMCPTools().map((t: { name: string; description: string; inputSchema: Record<string, unknown> }) => ({
+  getAdvisoryTools().map(t => ({
     type: 'function' as const,
     function: { name: t.name, description: t.description, parameters: t.inputSchema },
   }));
@@ -142,17 +98,38 @@ const MAX_TOOL_ROUNDS = 3;
 
 type ToolCall = { id?: string; function: { name: string; arguments: unknown } };
 
-const executeToolCalls = async (toolCalls: ToolCall[]): Promise<Array<{ call: ToolCall; output: string }>> => {
+function fanoutMessage(conversationId: string, message: ChatMessageRow): void {
+  try {
+    getRealtimeServer()?.to(`conversation:${conversationId}`).emit('new_message', mapChatMessageRow(message));
+  } catch {
+    // Realtime delivery is best-effort; the persisted message remains authoritative.
+  }
+}
+
+async function persistTurnMessage(conversationId: string | undefined, role: string, content: string, language?: string): Promise<void> {
+  if (!conversationId) return;
+  const { rows } = await query<ChatMessageRow>(
+    `INSERT INTO chat_messages (conversation_id, role, content, language)
+     VALUES ($1, $2, $3, $4) RETURNING *`,
+    [conversationId, role, content, language ?? null]
+  );
+  if (rows[0]) fanoutMessage(conversationId, rows[0]);
+}
+
+const executeToolCalls = async (toolCalls: ToolCall[], deadline: number): Promise<Array<{ call: ToolCall; output: string }>> => {
   const results: Array<{ call: ToolCall; output: string }> = [];
   for (const toolCall of toolCalls) {
-    const args = parseToolArguments(toolCall.function.arguments);
     try {
-      const toolResult = await mcpAdapter.callTool(toolCall.function.name, args);
+      const toolResult = await withAdvisoryTimeout(
+        () => callAdvisoryTool(toolCall.function.name, toolCall.function.arguments),
+        deadline - Date.now(), 'Chat tool execution'
+      );
       const text = toolResult.content.map(c => c.text).join('\n') || 'No output';
       results.push({ call: toolCall, output: toolResult.isError ? `ERROR: ${text}` : text });
     } catch (toolErr) {
+      if (toolErr instanceof AdvisoryTimeoutError && Date.now() >= deadline) throw toolErr;
       logger.error(`Tool ${toolCall.function.name} execution failed:`, toolErr);
-      results.push({ call: toolCall, output: `ERROR: ${toolErr instanceof Error ? toolErr.message : String(toolErr)}` });
+      results.push({ call: toolCall, output: 'ERROR: Evidence tool unavailable. Do not infer missing results.' });
     }
   }
   return results;
@@ -182,16 +159,18 @@ const runAssistantTurn = async (systemPrompt: string, message: string, tools: Ch
   ];
   const usedToolNames: string[] = [];
   let assistantText = '';
+  const deadline = Date.now() + 45000;
 
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
     const allowTools = tools.length > 0 && round < MAX_TOOL_ROUNDS;
-    const response = await AIRouter.routeRequest('generate', {
+    const response = await withAdvisoryTimeout(() => AIRouter.routeRequest('generate', {
       prompt: messages,
       options: {
         tools: allowTools ? tools : undefined,
         temperature: 0.2,
+        preferredProvider: 'aihubmix',
       },
-    });
+    }), Math.min(35000, deadline - Date.now()), 'Chat inference');
 
     assistantText = (response?.text ?? '').toString().trim();
     const toolCalls = (response?.toolCalls ?? []) as ToolCall[];
@@ -203,7 +182,8 @@ const runAssistantTurn = async (systemPrompt: string, message: string, tools: Ch
       content: assistantText || null,
       tool_calls: toolCalls.map((tc, i) => formatToolCall(tc, `call_${round}_${i}`)),
     });
-    const results = await executeToolCalls(toolCalls);
+    if (toolCalls.length > 4) throw new Error('Provider exceeded the advisory tool-call limit');
+    const results = await executeToolCalls(toolCalls, deadline);
     results.forEach((r, i) => {
       usedToolNames.push(r.call.function.name);
       messages.push({
@@ -215,18 +195,40 @@ const runAssistantTurn = async (systemPrompt: string, message: string, tools: Ch
     });
   }
 
+  if (!assistantText) {
+    throw new Error('Advisory provider returned no answer');
+  }
   return {
-    text:
-      assistantText ||
-      'No diagnostic recommendation could be generated from the available inputs. Please verify field observations, crop symptoms, or soil parameters and resubmit.',
+    text: assistantText,
     usedToolNames: [...new Set(usedToolNames)],
   };
 };
 
 // Request contract = shared `chatCompletionSchema` (camelCase) + legacy `conversation_id`.
 const completionsBodySchema = chatCompletionSchema
-  .extend({ conversation_id: z.string().uuid().optional() })
+  .extend({ conversation_id: z.string().uuid().optional(), country: z.string().trim().min(2).max(100).optional() })
   .transform(b => ({ ...b, conversationId: b.conversationId ?? b.conversation_id }));
+
+async function loadAdvisoryContext(userId: string, message: string, conversationId?: string, countryHint?: string, language?: string) {
+  const profile = await resolveUserContext(userId, message);
+  if (conversationId) {
+    const { rows } = await query<{ country: string | null; region: string | null }>(
+      `SELECT f.country, f.region FROM chat_conversations cv
+       JOIN farmers f ON f.id = cv.farmer_id WHERE cv.id = $1 LIMIT 1`,
+      [conversationId]
+    );
+    if (rows[0]) {
+      profile.country = rows[0].country ?? undefined;
+      profile.region = rows[0].region ?? undefined;
+    }
+  }
+  const country = resolveAdvisoryCountry(message, countryHint || profile.country);
+  return {
+    country,
+    region: countryHint || country !== profile.country ? undefined : profile.region,
+    language,
+  };
+}
 
 router.post('/completions', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), checkUsageLimit('ai_chat'), validate({ body: completionsBodySchema }), async (req: AuthedRequest, res: Response) => {
   try {
@@ -244,36 +246,40 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
     // eslint-disable-next-line no-control-regex
     const sanitizedMessage = rawMessage.slice(0, 2000).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
 
+    if (user.isDemo && body.conversation_id) {
+      return res.status(403).json({ success: false, error: 'Demo chat is stateless; persistent conversations are unavailable' });
+    }
+
+    if (body.conversation_id && !(await canAccessConversation(body.conversation_id, user.userId, user.role))) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    }
+
     // Fetch context in parallel: history + RAG
+    const advisoryContext = await loadAdvisoryContext(
+      user.userId, sanitizedMessage, body.conversation_id, parsed.country, body.language
+    );
     const [historyBlock, ragResult] = await Promise.all([
       loadHistoryBlock(body.conversation_id, user.userId, user.role),
-      loadRagBlock(sanitizedMessage),
+      retrieveAdvisoryEvidence(sanitizedMessage, advisoryContext),
     ]);
 
-    // Persist user message
-    await query(
-      `INSERT INTO chat_messages (conversation_id, role, content, language)
-       VALUES ($1, 'user', $2, $3)`,
-      [body.conversation_id ?? null, sanitizedMessage, body.language ?? null]
-    );
+    // Standalone assistant requests (without a conversation) are not chat history.
+    await persistTurnMessage(body.conversation_id, user.role === 'farmer' ? 'user' : 'officer', sanitizedMessage, body.language);
 
-    const tools = buildToolDefinitions();
+    const tools = user.isDemo ? [] : buildToolDefinitions();
     const toolsClause = tools.length > 0
       ? ' You have access to specialized agricultural tools — call them when they can provide accurate, data-driven information; never claim to have used a tool you did not call.'
       : '';
-    const systemPrompt = `You are an agricultural extension advisory assistant. Answer the farmer's or officer's message using the knowledge base context when relevant.${toolsClause} Be concise and actionable.${historyBlock}${ragResult.context}`;
+    const systemPrompt = `${buildAdvisoryDirective(advisoryContext)}${toolsClause}\n${historyBlock}${ragResult.context}`;
 
     const { text: assistantText, usedToolNames } = await runAssistantTurn(systemPrompt, sanitizedMessage, tools);
 
     // Guard and enrich agronomic advice
-    const { text: safeAssistantText, boundaryCheck } = agronomicSafetyGuard.guardAndEnrichAdvice(assistantText);
+    const { text: guardedText, boundaryCheck } = agronomicSafetyGuard.guardAndEnrichAdvice(assistantText, body.language);
+    const validated = validateAdvisoryCitations(guardedText, ragResult.citations, body.language);
+    const safeAssistantText = validated.answer;
 
-    // Persist assistant message
-    await query(
-      `INSERT INTO chat_messages (conversation_id, role, content, language)
-       VALUES ($1, 'assistant', $2, $3)`,
-      [body.conversation_id ?? null, safeAssistantText, body.language ?? null]
-    );
+    await persistTurnMessage(body.conversation_id, 'assistant', safeAssistantText, body.language);
 
     return res.json({
       success: true,
@@ -283,34 +289,54 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
           { role: 'assistant', content: safeAssistantText },
         ],
         citations: ragResult.citations,
+        advisoryQuality: validated.evidence,
         usedTools: usedToolNames,
         safety: boundaryCheck,
       },
     });
   } catch (error) {
     logger.error('Chat completion failed:', error);
-    return safeError(res, 500, 'Chat completion failed');
+    return safeError(res, error instanceof AdvisoryTimeoutError ? 503 : 500, 'Chat completion failed');
   }
 });
 
 /**
  * GET /api/chatbot/stats/overview — 7-day conversation volume + average satisfaction.
  */
-router.get('/stats/overview', authorize(['admin', 'regional_manager', 'extension_officer']), async (_req: Request, res: Response) => {
+router.get('/stats/overview', authorize(['admin', 'regional_manager', 'extension_officer']), async (req: AuthedRequest, res: Response) => {
   try {
     const pool = getPool();
     if (!pool) {
       return res.status(503).json({ success: false, error: 'Database unavailable' });
     }
 
+    const user = req.user!;
+    let scopeClause = '';
+    const scopeParams: string[] = [];
+    if (user.role === 'regional_manager') {
+      scopeParams.push((await resolvePrincipalRegion(user.userId)) ?? '');
+    } else if (user.role === 'extension_officer') {
+      scopeParams.push(user.userId);
+    }
+    if (user.role === 'regional_manager') {
+      scopeClause = ' AND f.region = $1';
+    } else if (user.role === 'extension_officer') {
+      scopeClause = ' AND cv.officer_id = $1';
+    }
+    const joinFarmers = user.role === 'regional_manager'
+      ? ' LEFT JOIN farmers f ON f.id = cv.farmer_id'
+      : '';
     const { rows: countRows } = await query<CountRow>(
-      "SELECT COUNT(*) AS count FROM chat_conversations WHERE started_at > NOW() - INTERVAL '7 days'"
+      `SELECT COUNT(*) AS count FROM chat_conversations cv${joinFarmers}
+        WHERE cv.started_at > NOW() - INTERVAL '7 days'${scopeClause}`,
+      scopeParams
     );
     const { rows: satRows } = await query<SatisfactionAvgRow>(
       `SELECT AVG(satisfaction_score)::numeric(10,4) AS avg_satisfaction,
               COUNT(satisfaction_score)            AS total_ratings
-         FROM chat_conversations
-        WHERE satisfaction_score IS NOT NULL`
+         FROM chat_conversations cv${joinFarmers}
+        WHERE cv.satisfaction_score IS NOT NULL${scopeClause}`,
+      scopeParams
     );
 
     const [conversations7d] = countRows.map(mapCountRow);

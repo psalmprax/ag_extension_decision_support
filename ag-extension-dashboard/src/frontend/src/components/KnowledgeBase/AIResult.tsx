@@ -233,13 +233,15 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
       )}
 
       <div className="p-6 sm:p-10 rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl backdrop-blur-2xl space-y-6">
-        {result.evidenceStatus && result.evidenceStatus !== 'verified_sources' && (
+        {result.evidenceStatus && (
           <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-800 dark:text-amber-200">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <div>
               <p className="text-xs font-bold uppercase tracking-wider">Evidence Status Notice</p>
               <p className="mt-1 text-xs text-amber-900 dark:text-amber-100/90">
-                {result.evidenceStatus === 'context_only'
+                {result.evidenceStatus === 'verified_sources'
+                  ? 'Sources were retrieved, but relevance is not proof of accuracy or local treatment authorization. Check the source, country, crop and current product label before acting.'
+                  : result.evidenceStatus === 'context_only'
                   ? 'Synthesized using retrieved knowledge chunks without definitive rule citations. Recommended for verification.'
                   : result.evidenceStatus === 'unverified'
                     ? 'Not verified against live grounded backend sources. Cross-reference this content before acting on it.'
@@ -504,13 +506,13 @@ const AIResultHeader: React.FC<{
           {result.cached && (
             <span className="text-xxs font-black tracking-widest uppercase px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
               <Zap className="w-2.5 h-2.5 fill-current" />
-              Semantic Cache (0.04s)
+              Context-scoped cache
             </span>
           )}
           {result.evidenceStatus === 'verified_sources' && (
             <span className="text-xxs font-black tracking-widest uppercase px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
               <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-              Verified Evidence
+              Retrieved Sources
             </span>
           )}
         </div>

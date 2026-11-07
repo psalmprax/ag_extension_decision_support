@@ -114,6 +114,10 @@ export { mcpAdapter };
  * else is rejected. `/health` stays public for liveness probes.
  */
 function mcpAuth(req: Request, res: Response, next: () => void): void {
+  if (req.user?.isDemo === true) {
+    res.status(403).json({ success: false, error: 'Demo accounts cannot access live MCP tools' });
+    return;
+  }
   const role = req.user?.role;
   if (role === 'admin' || role === 'regional_manager' || role === 'extension_officer') {
     return next();

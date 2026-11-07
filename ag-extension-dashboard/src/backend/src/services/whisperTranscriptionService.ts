@@ -13,15 +13,13 @@ interface WhisperSegment {
 interface WhisperTranscriptionResult {
   text: string;
   language: string;
-  /** Rough transcription confidence proxy: 0.95 with real segments, 0.5 from the text-only fallback. */
-  languageProbability: number;
   /** Wall-clock processing time in seconds (this binding exposes no audio-duration readout). */
   duration: number;
   segments: WhisperSegment[];
 }
 
 interface WhisperTranscribeOptions {
-  language?: 'sw' | 'en' | 'auto';
+  language?: string;
   /** Closest equivalent to VAD in this binding: suppress non-speech tokens. */
   vadFilter?: boolean;
 }
@@ -114,7 +112,7 @@ class WhisperTranscriptionService {
   /**
    * Transcribe from file path (useful for large files)
    */
-  async transcribeFile(filePath: string, options: { language?: 'sw' | 'en' | 'auto' } = {}): Promise<WhisperTranscriptionResult> {
+  async transcribeFile(filePath: string, options: { language?: string } = {}): Promise<WhisperTranscriptionResult> {
     const { lib, model } = await this.requireModel();
 
     const startTime = Date.now();
@@ -166,7 +164,7 @@ class WhisperTranscriptionService {
     text: string,
     segments: WhisperSegment[],
     startTime: number,
-    requestedLanguage: 'sw' | 'en' | 'auto' | undefined
+    requestedLanguage: string | undefined
   ): WhisperTranscriptionResult {
     let language: string;
     if (requestedLanguage === 'auto') {
@@ -180,7 +178,6 @@ class WhisperTranscriptionService {
     return {
       text: text.trim() || segments.map((s) => s.text).join(' ').trim(),
       language,
-      languageProbability: segments.length > 0 ? 0.95 : 0.5,
       duration: (Date.now() - startTime) / 1000,
       segments,
     };

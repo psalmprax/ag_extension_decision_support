@@ -17,6 +17,20 @@ let mockPlay: ReturnType<typeof vi.fn>;
 describe('TalkingAssistant Component', () => {
   beforeEach(() => {
     mockedPost.mockReset();
+    mockedPost.mockImplementation(async (path: string, body: { query?: string }) => {
+      if (path !== '/chatbot/public-demo') return { data: { success: false } };
+      return {
+        data: {
+          success: true,
+          data: {
+            text: /dosage|lime/i.test(body.query || '')
+              ? 'Confirm the country and current product label or soil-test results before choosing a treatment rate.'
+              : 'Scout leaf whorls at dawn or dusk and confirm the pest before selecting a treatment.',
+            source: 'Retrieved guidance; local applicability requires confirmation',
+          },
+        },
+      };
+    });
     sessionStorage.clear();
     window.history.replaceState(null, '', '/');
 
@@ -111,7 +125,7 @@ describe('TalkingAssistant Component', () => {
     expect(screen.getByText(/Acidic Soil Remediation/i)).toBeInTheDocument();
   });
 
-  it('performs multi-turn slot tracking and anaphora dosage resolution', async () => {
+  it('tracks multi-turn context but delegates dosage questions to the safeguarded backend', async () => {
     render(<TalkingAssistant defaultOpen />);
 
     const armywormPrompt = screen.getByText(/Fall Armyworm bio-control/i);
@@ -133,16 +147,19 @@ describe('TalkingAssistant Component', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(
-          /For 3 acres of maize, mix 1.2 liters of Neem oil \(at 3ml\/L water rate across 400L total spray volume\) applied directly into the central leaf whorls\./i
-        )
+        screen.getByText(/Confirm the country and current product label/i)
       ).toBeInTheDocument();
     });
 
     expect(screen.getByText(/📐 3 acres/i)).toBeInTheDocument();
+    expect(mockedPost).toHaveBeenCalledWith('/chatbot/public-demo', expect.objectContaining({
+      query: 'What dosage should I use for 3 acres?',
+      entitySlots: expect.objectContaining({ crop: 'Maize', field_size: '3 acres' }),
+    }));
+    expect(screen.queryByText(/1.2 liters of Neem oil/i)).not.toBeInTheDocument();
   });
 
-  it('resolves lime dosage recommendation correctly even when maize context is active', async () => {
+  it('does not invent lime rates even when maize context is active', async () => {
     render(<TalkingAssistant defaultOpen />);
 
     // Turn 1: Establish maize context
@@ -160,9 +177,13 @@ describe('TalkingAssistant Component', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/agricultural calcitic or dolomitic lime/i)
+        screen.getByText(/soil-test results before choosing a treatment rate/i)
       ).toBeInTheDocument();
     });
+    expect(mockedPost).toHaveBeenCalledWith('/chatbot/public-demo', expect.objectContaining({
+      query: 'How much lime should I apply for acidic soil?',
+    }));
+    expect(screen.queryByText(/2.5 tonnes/i)).not.toBeInTheDocument();
   });
 
   it('dispatches to public demo API when query is outside preset local rules', async () => {
@@ -403,7 +424,12 @@ describe('TalkingAssistant Component', () => {
   });
 
   it('synthesizes humanized speech with expanded units and calibrated prosody on fallback', async () => {
-    mockedPost.mockRejectedValue(new Error('Server neural TTS unavailable'));
+    mockedPost.mockImplementation(async (url: string) => {
+      if (url === '/chatbot/public-demo/tts') throw new Error('Server neural TTS unavailable');
+      return { data: { success: true, data: {
+        text: 'Scout leaf whorls at dawn or dusk. The laboratory sample volume was 3 ml/L, not a treatment recommendation.',
+      } } };
+    });
 
     render(<TalkingAssistant defaultOpen />);
 
@@ -517,7 +543,7 @@ describe('TalkingAssistant Component', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     await new Promise((resolve) => setTimeout(resolve, 350));
     expect(mockSpeak).not.toHaveBeenCalled();
-    expect(mockedPost).not.toHaveBeenCalled();
+    expect(mockedPost.mock.calls.some(([url]) => url === '/chatbot/public-demo/tts')).toBe(false);
 
     fireEvent.click(screen.getByRole('button', { name: /Open agronomic assistant/i }));
     expect(screen.getByText(/scout leaf whorls at dawn or dusk/i)).toBeInTheDocument();

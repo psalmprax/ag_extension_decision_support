@@ -2,7 +2,7 @@
  * Conversation ownership tests — chat completions must not accept a foreign
  * conversation_id (IDOR). History context is only injected when the caller
  * owns the conversation: farmers match via their farmer record (or user id),
- * officers via officer_id. Admin/regional managers may read across.
+ * officers via officer_id, and regional managers within their region.
  */
 process.env.NODE_ENV = 'test';
 
@@ -70,9 +70,9 @@ const FARMER_USER_ID = 'farmer-user-1';
 const FARMER_RECORD_ID = 'farmer-record-1';
 const OTHER_FARMER_RECORD_ID = 'farmer-record-999';
 
-function tokenFor(userId: string, role: string): string {
+function tokenFor(userId: string, role: string, email = `${userId}@test.dev`): string {
     return jwt.sign(
-        { userId, email: `${userId}@test.dev`, role },
+        { userId, email, role },
         config.jwt.secret as string,
         { expiresIn: '1h' }
     );
@@ -91,6 +91,19 @@ function mockFarmerCompletionsDb(opts: { ownershipParam: string }) {
 
         if (sql.includes('FROM farmers WHERE user_id')) {
             return Promise.resolve({ rows: [{ id: FARMER_RECORD_ID }], rowCount: 1 });
+        }
+        if (sql.includes('FROM chat_conversations cv') && sql.includes('LEFT JOIN farmers')) {
+            const ownsIt = opts.ownershipParam === FARMER_RECORD_ID || opts.ownershipParam === FARMER_USER_ID;
+            return Promise.resolve({
+                rows: ownsIt
+                    ? [{ farmer_id: FARMER_RECORD_ID, officer_id: OFFICER_ID, region: 'North' }]
+                    : [],
+                rowCount: ownsIt ? 1 : 0,
+            });
+        }
+        if (sql.includes('FROM chat_conversations cv') && sql.includes('cv.id = $1')) {
+            const ownsIt = opts.ownershipParam === FARMER_RECORD_ID || opts.ownershipParam === FARMER_USER_ID;
+            return Promise.resolve({ rows: ownsIt ? [{ id: CONVERSATION_ID }] : [], rowCount: ownsIt ? 1 : 0 });
         }
         if (sql.includes('FROM chat_messages m') && sql.includes('JOIN chat_conversations cv')) {
             // $2 is the ownership param. Foreign conversations yield zero rows.
@@ -130,6 +143,11 @@ describe('chat completions conversation ownership (IDOR)', () => {
 
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
+        const routeCall = (await import('../services/aiProvider/aiProvider')).AIRouter
+            .routeRequest as jest.Mock;
+        expect(routeCall).toHaveBeenCalledWith('generate', expect.objectContaining({
+            options: expect.objectContaining({ preferredProvider: 'aihubmix' }),
+        }));
 
         // The history query must carry the farmer's own record id as $2.
         const historyCall = mockQuery.mock.calls.find(
@@ -140,7 +158,7 @@ describe('chat completions conversation ownership (IDOR)', () => {
         expect(historyCall![1][1]).toBe(FARMER_RECORD_ID);
     });
 
-    it('denies history for a foreign conversation (farmer, other id → zero rows)', async () => {
+    it('rejects a foreign conversation before writing or generating a completion', async () => {
         const token = tokenFor(FARMER_USER_ID, 'farmer');
         // The join's ownership param is the caller's OWN record; the foreign
         // conversation does not match it, so the mocked join yields zero rows.
@@ -151,29 +169,25 @@ describe('chat completions conversation ownership (IDOR)', () => {
             .set('Authorization', `Bearer ${token}`)
             .send({ message: 'sneaky read', conversation_id: FOREIGN_CONVERSATION_ID });
 
-        expect(res.status).toBe(200);
-
-        const historyCall = mockQuery.mock.calls.find(
-            (c) => typeof c[0] === 'string' && c[0].includes('JOIN chat_conversations cv')
-        );
-        expect(historyCall).toBeDefined();
-        // The ownership parameter is the CALLER's identity — never the
-        // attacker-chosen conversation id.
-        expect(historyCall![1][1]).toBe(FARMER_RECORD_ID);
-        expect(historyCall![1][1]).not.toBe(FOREIGN_CONVERSATION_ID);
-
-        // And the system prompt must NOT contain the foreign conversation text.
-        const routeCall = (await import('../services/aiProvider/aiProvider')).AIRouter
-            .routeRequest as jest.Mock;
-        const promptArg = routeCall.mock.calls[0][1]?.prompt;
-        const systemMessage = Array.isArray(promptArg) ? promptArg.find((m: { role: string }) => m.role === 'system') : null;
-        expect(systemMessage?.content).not.toContain('RECENT CONVERSATION');
+        expect(res.status).toBe(404);
+        expect(mockQuery.mock.calls.some(c => typeof c[0] === 'string' && c[0].includes('INSERT INTO chat_messages'))).toBe(false);
+        const routeCall = (await import('../services/aiProvider/aiProvider')).AIRouter.routeRequest as jest.Mock;
+        expect(routeCall).not.toHaveBeenCalled();
     });
 
     it('scopes officer access by officer_id, not by farmer record', async () => {
         const token = tokenFor(OFFICER_ID, 'extension_officer');
         mockQuery.mockImplementation((sql: string) => {
             if (typeof sql !== 'string') return Promise.resolve({ rows: [], rowCount: 0 });
+            if (sql.includes('FROM chat_conversations cv') && sql.includes('LEFT JOIN farmers')) {
+                return Promise.resolve({
+                    rows: [{ farmer_id: FARMER_RECORD_ID, officer_id: OFFICER_ID, region: 'North' }],
+                    rowCount: 1,
+                });
+            }
+            if (sql.includes('FROM chat_conversations cv') && sql.includes('cv.id = $1')) {
+                return Promise.resolve({ rows: [{ id: CONVERSATION_ID }], rowCount: 1 });
+            }
             if (sql.includes('FROM chat_messages m') && sql.includes('JOIN chat_conversations cv')) {
                 // Officer's own id as ownership param → sees their conversations.
                 return Promise.resolve({
@@ -228,5 +242,50 @@ describe('chat completions conversation ownership (IDOR)', () => {
         expect(historyCall).toBeDefined();
         // Admins skip the ownership clause entirely (no $2 binding).
         expect(historyCall![0]).not.toContain('cv.farmer_id = $2');
+    });
+
+    it('rejects a regional manager outside the conversation farmer region', async () => {
+        const token = tokenFor('manager-1', 'regional_manager');
+        mockQuery.mockImplementation((sql: string) => {
+            if (typeof sql !== 'string') return Promise.resolve({ rows: [], rowCount: 0 });
+            if (sql.includes('FROM chat_conversations cv') && sql.includes('LEFT JOIN farmers')) {
+                return Promise.resolve({
+                    rows: [{ farmer_id: 'farmer-2', officer_id: OFFICER_ID, region: 'South' }],
+                    rowCount: 1,
+                });
+            }
+            if (sql.includes('SELECT region FROM users')) {
+                return Promise.resolve({ rows: [{ region: 'North' }], rowCount: 1 });
+            }
+            return Promise.resolve({ rows: [], rowCount: 0 });
+        });
+
+        const res = await request(app)
+            .post('/api/chatbot/completions')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ message: 'foreign conversation', conversation_id: CONVERSATION_ID });
+
+        expect(res.status).toBe(404);
+        const routeCall = (await import('../services/aiProvider/aiProvider')).AIRouter
+            .routeRequest as jest.Mock;
+        expect(routeCall).not.toHaveBeenCalled();
+    });
+
+    it('keeps demo accounts out of persistent conversations and completions', async () => {
+        const token = tokenFor('demo-user', 'extension_officer', 'demo@agridemo.com');
+
+        const completion = await request(app)
+            .post('/api/chatbot/completions')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ message: 'demo question' });
+        const conversations = await request(app)
+            .get('/api/chatbot/conversations')
+            .set('Authorization', `Bearer ${token}`);
+
+        expect(completion.status).toBe(403);
+        expect(conversations.status).toBe(403);
+        const routeCall = (await import('../services/aiProvider/aiProvider')).AIRouter
+            .routeRequest as jest.Mock;
+        expect(routeCall).not.toHaveBeenCalled();
     });
 });

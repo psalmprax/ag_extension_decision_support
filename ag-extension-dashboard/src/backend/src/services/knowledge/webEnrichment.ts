@@ -1,7 +1,8 @@
 import type { SearchResult } from '@/services/vectorService';
 import { logger } from '@/utils/logger';
 import { tavilyService } from '@/services/tavilyService';
-import { StealthScraperService, ScrapedDocument } from '@/services/stealthScraperService';
+import { StealthScraperService } from '@/services/stealthScraperService';
+import { withAdvisoryTimeout } from './advisoryRuntime';
 import { isAgronomicContent, prepareWebSearchQuery } from '@/utils/agronomicQueryNormalizer';
 
 /**
@@ -26,23 +27,23 @@ async function fallbackAgriQuery(queryText: string, queryCategories: string[], c
             platform = 'africarice';
         }
 
-        const stealthResults = await Promise.race([
-            StealthScraperService.scrapeKnowledge(queryText, platform, 'Global Tropics'),
-            new Promise<null>((_, reject) =>
-                setTimeout(() => reject(new Error('StealthScraperService.scrapeKnowledge timed out after 5s')), 5000)
-            )
-        ]) as ScrapedDocument[] | null;
+        const stealthResults = await withAdvisoryTimeout(
+            () => StealthScraperService.scrapeKnowledge(queryText, platform, 'Global Tropics'),
+            5000, 'Unreviewed web retrieval'
+        );
 
         if (stealthResults && stealthResults.length > 0) {
             const mappedStealthResults: SearchResult[] = stealthResults.map((r, index) => ({
                 id: `stealth-${index}-${Date.now()}`,
                 content: `Stealth Scrape (${platform}): Topic: ${r.title}. Summary: ${r.summary || 'N/A'}. Keywords: ${r.keywords.join(', ')}`,
                 metadata: {
-                    title: `Tropical DB: ${r.title}`,
-                    category: 'Validated Scientific Guidance',
+                    title: r.title,
+                    category: 'Unreviewed Web Extract',
                     crop: 'Dynamic',
-                    sourceUrl: r.url || 'https://www.fao.org/pest-and-pesticide-management/en/',
-                    contentType: 'text'
+                    sourceUrl: r.url || undefined,
+                    contentType: 'text',
+                    tags: ['unverified_scrape'],
+                    groundingAllowed: false,
                 },
                 score: 0.5
             }));
@@ -86,7 +87,7 @@ export async function enrichContextWithWebFallbacks(
     contextResults: SearchResult[]
 ): Promise<SearchResult[]> {
     const fetchedAt = new Date().toISOString();
-    const isRealTimeIntent = queryCategories.some(c => ['market_and_commodity_prices', 'climate_and_weather'].includes(c));
+    const isRealTimeIntent = queryCategories.some(c => ['market_prices', 'market_and_commodity_prices', 'climate_and_weather'].includes(c));
 
     // Always attempt fresh web retrieval for real-time intents or when local score is weak (< 0.78)
     const needsFreshWeb = isRealTimeIntent || contextResults.length === 0 || (contextResults[0].score !== undefined && contextResults[0].score < 0.78);
@@ -138,7 +139,7 @@ async function fetchTavilyWebResults(queryText: string, fetchedAt: string): Prom
                     sourceUrl: r.url,
                     contentType: 'text',
                     fetchedAt,
-                    publishedDate: (r as unknown as { published_date?: string }).published_date || fetchedAt,
+                    publishedDate: (r as unknown as { published_date?: string }).published_date,
                 },
                 score: r.score
             } as SearchResult;

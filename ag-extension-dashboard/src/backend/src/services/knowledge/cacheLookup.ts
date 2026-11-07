@@ -113,7 +113,8 @@ async function checkCaches(
 
 export async function checkExactCachesOnly(
     queryText: string,
-    redisKey: string
+    redisKey: string,
+    scopedOnly = false
 ): Promise<FinalAnswer | null> {
     const cachedResponse = await cacheGet(redisKey);
     if (cachedResponse) {
@@ -128,6 +129,7 @@ export async function checkExactCachesOnly(
             }
         } catch (e) { logger.error('Failed to parse cached Redis response:', e); }
     }
+    if (scopedOnly) return null;
     const dbExact = await lookupDbExact(queryText);
     if (dbExact) {
         const resPayload = toCachedAnswer(dbExact, 'Retrieved from exact search cache.');

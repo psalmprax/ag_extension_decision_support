@@ -100,12 +100,14 @@ export interface Attachment {
 export const askAI = async (
   question: string,
   attachments?: Attachment[],
-  options?: { bypassCache?: boolean }
+  options?: { bypassCache?: boolean; country?: string; language?: string }
 ): Promise<AskResponse> => {
   const response = await apiClient.post<AskResponse>('/knowledge/ask', {
     question,
     attachments,
     bypassCache: options?.bypassCache,
+    country: options?.country,
+    language: options?.language,
   });
   return response.data;
 };

@@ -209,11 +209,11 @@ export async function assertConversationAccess(
   if (principal.role === 'farmer') {
     const farmerId = (await resolveFarmerId(principal.userId)) ?? principal.userId;
     if (row.farmer_id === farmerId || row.officer_id === principal.userId) return;
-  } else if (row.officer_id === principal.userId) {
-    return;
   } else if (principal.role === 'regional_manager') {
     const region = principal.region ?? (await resolvePrincipalRegion(principal.userId));
     if (region && row.region === region) return;
+  } else if (row.officer_id === principal.userId) {
+    return;
   }
 
   throw new MessageAccessError('You do not have access to this conversation.', 403);

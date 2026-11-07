@@ -1,10 +1,10 @@
 import { Router, Response } from 'express';
-import { AIRouter } from '@/services/aiProvider/aiProvider';
 import { logger } from '@/utils/logger';
 import { AuthRequest } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { usageService } from '@/services/usageService';
 import { safeError } from '@/utils/safeResponse';
+import { getAudioMimeType, transcribeVoiceNote } from '@/services/voiceAudioService';
 
 const router = Router();
 
@@ -39,9 +39,10 @@ router.post('/transcribe-audio', [checkUsageLimit('speech', { meter: false })], 
             return res.status(400).json({ success: false, error: 'Invalid audio payload.' });
         }
 
-        const result = await AIRouter.routeRequest('speech', {
-            audio: audioBuffer,
-            options: { language: language || 'en' }
+        const result = await transcribeVoiceNote({
+            audioBuffer,
+            mimeType: getAudioMimeType(audio),
+            languageHint: language || 'en',
         });
 
         await usageService.incrementUsage(userId, 'speech');
@@ -49,8 +50,8 @@ router.post('/transcribe-audio', [checkUsageLimit('speech', { meter: false })], 
         return res.json({
             success: true,
             data: {
-                text: result?.text || '',
-                language: result?.language || language || 'en',
+                text: result.transcription,
+                language: result.detectedLanguage,
             }
         });
     } catch (error) {

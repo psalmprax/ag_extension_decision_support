@@ -13,7 +13,7 @@ import {
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
-import { MessageAccessError, resolveFarmerId } from '@/services/messageAccessService';
+import { assertConversationAccess, MessageAccessError, resolveFarmerId, resolvePrincipalRegion } from '@/services/messageAccessService';
 import { getRealtimeServer } from '@/services/realtimeHub';
 
 const router = Router();
@@ -43,16 +43,9 @@ router.get('/conversations', authorize(['admin', 'regional_manager', 'extension_
       // Super admin / Admin sees all conversations
       whereClause = '1=1';
     } else if (user.role === 'regional_manager') {
-      // Regional manager sees officers and farmers in their region
-      const region = user.region || (await (async () => {
-        try {
-          const { resolvePrincipalRegion } = await import('@/services/messageAccessService');
-          return await resolvePrincipalRegion(user.userId);
-        } catch { return ''; }
-      })()) || '';
-      params.push(region);
-      params.push(user.userId);
-      whereClause = `(u.region = $1 OR f.region = $1 OR cv.officer_id = $2)`;
+      // Scope by the farmer's region, not merely the assigned officer's region.
+      params.push((await resolvePrincipalRegion(user.userId)) ?? '');
+      whereClause = 'f.region = $1';
     } else if (user.role === 'farmer') {
       // Farmer sees their conversation with their officer (1-to-1)
       const farmerId = await resolveFarmerId(user.userId);
@@ -125,6 +118,8 @@ router.get('/conversations/:id/messages', authorize(['admin', 'regional_manager'
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
+    await assertConversationAccess(user, conversationId);
+
     const whereOwner = user.role !== 'admin' && user.role !== 'regional_manager'
       ? 'AND (cv.farmer_id = $2 OR cv.officer_id = $2)'
       : '';
@@ -144,6 +139,9 @@ router.get('/conversations/:id/messages', authorize(['admin', 'regional_manager'
     );
     return res.json({ success: true, data: mapChatMessageRows(rows) });
   } catch (error) {
+    if (error instanceof MessageAccessError) {
+      return safeError(res, error.statusCode, error.message);
+    }
     logger.error('Failed to list conversation messages:', error);
     return safeError(res, 500, 'Failed to list conversation messages');
   }
@@ -182,6 +180,20 @@ const resolveParticipants = async (user: AuthenticatedRequestUser, body: Convers
         throw new MessageAccessError('You can only message farmers assigned to you.');
       }
     }
+  } else if (user.role === 'regional_manager') {
+    if (!targetFarmerId) {
+      throw new MessageAccessError('A farmer in your region is required.');
+    }
+    const region = await resolvePrincipalRegion(user.userId);
+    const { rows: fRows } = await query<{ region: string | null; assigned_officer_id: string | null }>(
+      `SELECT region, assigned_officer_id FROM farmers WHERE id = $1 LIMIT 1`,
+      [targetFarmerId]
+    );
+    const farmer = fRows[0];
+    if (!region || !farmer || farmer.region !== region) {
+      throw new MessageAccessError('You can only create conversations within your region.');
+    }
+    targetOfficerId = farmer.assigned_officer_id ?? user.userId;
   } else {
     targetOfficerId = targetOfficerId ?? user.userId;
   }
@@ -284,6 +296,8 @@ router.delete('/conversations/:id', authorize(['admin', 'regional_manager', 'ext
       return res.status(400).json({ success: false, error: 'Conversation id is required' });
     }
 
+    await assertConversationAccess(user, conversationId);
+
     let whereClause = 'WHERE id = $1';
     const params: unknown[] = [conversationId];
 
@@ -303,6 +317,9 @@ router.delete('/conversations/:id', authorize(['admin', 'regional_manager', 'ext
 
     return res.json({ success: true, message: 'Conversation deleted successfully' });
   } catch (error) {
+    if (error instanceof MessageAccessError) {
+      return safeError(res, error.statusCode, error.message);
+    }
     logger.error('Failed to delete conversation:', error);
     return safeError(res, 500, 'Failed to delete conversation');
   }

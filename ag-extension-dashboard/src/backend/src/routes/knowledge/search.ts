@@ -300,34 +300,19 @@ function getMaxCitationScore(citations: Citation[]): number {
 }
 
 async function resolveAnswerCitations(
-    question: string,
+    _question: string,
     contextUsed: Awaited<ReturnType<typeof KnowledgeService.askQuestion>>['contextUsed']
 ): Promise<Citation[]> {
     let citations: Citation[] = [];
     if (contextUsed && contextUsed.length > 0) {
         // Map contextUsed directly to citations: 0ms latency, exact match to retrieved ground truth
-        citations = contextUsed.slice(0, 3).map((item, idx) => ({
+        citations = contextUsed.map((item, idx) => ({
             sourceId: item.id || `src-${idx + 1}`,
             title: (item.metadata?.title as string) || `${item.metadata?.crop || 'Agro'} ${item.metadata?.category || 'Knowledge'}`,
             category: (item.metadata?.category as string) || 'Knowledge Base',
             excerpt: (item.content || '').replace(/[\n\r]+/g, ' ').slice(0, 250),
-            score: typeof item.score === 'number' ? item.score : 0.85
+            score: typeof item.score === 'number' ? item.score : 0
         }));
-    } else {
-        try {
-            const { RAGV2Service } = await import('@/services/ragV2Service');
-            const enhanced = await RAGV2Service.enhancedSearch(question, {
-                limit: 3,
-                useChunks: true,
-                useGraph: false,
-                useReranking: false
-            });
-            citations = enhanced.citations;
-        } catch (ragErr) {
-            // Non-fatal for the answer, but never silent: an empty citation list is
-            // otherwise indistinguishable from "retrieval found nothing".
-            logger.warn('RAG v2 citation retrieval failed for /knowledge/ask; evidenceStatus will reflect zero citations:', ragErr);
-        }
     }
     return citations;
 }
@@ -335,13 +320,17 @@ async function resolveAnswerCitations(
 // Ask AI a question (RAG-based)
 router.post('/ask', async (req: Request, res: Response) => {
     try {
-        const { question, bypassCache, attachments } = req.body;
+        const { question, bypassCache, attachments, country, language } = req.body;
         const user = (req as Request & { user?: Record<string, unknown> }).user;
         const userId = (user?.userId || user?.id) as string;
         const userRole = (user?.role) as string | undefined;
 
-        if (!question) {
+        if (typeof question !== 'string' || !question.trim()) {
             return res.status(400).json({ success: false, error: 'Question is required' });
+        }
+        if ((country !== undefined && (typeof country !== 'string' || country.length > 100 || country.trim().length < 2))
+            || (language !== undefined && (typeof language !== 'string' || language.length > 10 || language.length < 2))) {
+            return res.status(400).json({ success: false, error: 'Invalid advisory country or language' });
         }
         if (!userId) {
             return res.status(401).json({ success: false, error: 'User not authenticated' });
@@ -367,16 +356,11 @@ router.post('/ask', async (req: Request, res: Response) => {
             });
         }
 
-        // Free-tier users (farmers) route to the freebuff best-effort provider;
-        // officers and admins continue to use the primary/fallback chain.
-        const askUser = user as Record<string, unknown> | undefined;
-        const isFreeTier = askUser?.role === 'farmer';
-        const preferredProvider = isFreeTier ? 'freebuff' : undefined;
         const result = await KnowledgeService.askQuestion(
             userId,
             question,
             attachments,
-            { preferredProvider, bypassCache: Boolean(bypassCache) }
+            { preferredProvider: 'aihubmix', bypassCache: Boolean(bypassCache), country, language, allowTools: !isDemoUser }
         );
 
         // Record search for daily quota tracking
@@ -399,6 +383,8 @@ router.post('/ask', async (req: Request, res: Response) => {
                 cached: result.cached,
                 citations,
                 evidenceStatus,
+                advisoryQuality: result.advisoryQuality,
+                safety: result.safety,
                 dailyRemaining: remainingAfter,
                 dailyLimit: dailyQuota.limit,
             },

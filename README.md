@@ -56,6 +56,66 @@ ag-extension-shared/           # Shared zod schemas — frontend/backend API con
 >
 > 📜 **Feature honesty**: derived metrics (satellite indices, carbon estimates, passport flags) disclose their provenance and assumptions in each service's response payload, and unconfigured integrations fail loud instead of returning fabricated data — see `Anti-Flaws.md` §17 for the trust-boundary protocol.
 
+## Advisory quality and country-specific safeguards
+
+Knowledge answers, dashboard chat and the landing demo use one advisory policy:
+plain-language explanations, explicit uncertainty, country-aware evidence and
+locally applicable guidance. The same safeguards apply in every supported country;
+the UI's country coverage does **not** imply a complete regulatory dataset.
+
+The landing demo no longer substitutes canned pesticide/lime doses or fabricated
+source citations. Open-ended advice with numeric treatment rates or product-specific
+harvest/re-entry intervals is withheld pending a current locally registered label
+or soil-test-based recommendation. Botanical pesticides are not exempt. Generic
+knapsack conversions and universal PHI/REI values are not supplied. Serious pest
+mentions require local confirmation, not an automatic worldwide quarantine claim.
+
+Sources tagged `unverified_scrape` and explicit foreign-country sources are excluded
+from grounding. Unknown geography/dates remain visibly unestablished. Numbered
+citations correspond to the evidence actually supplied to the model; unsupported
+references/links are removed. `advisoryQuality` distinguishes retrieved evidence
+from general guidance and always reports open-chat regulatory authorization as
+`not_established`. Citation integrity is **not** proof that a source supports a claim.
+The legacy `verified_sources` API value describes retrieval only; the UI labels it
+"Retrieved Sources", not verified advice.
+
+Knowledge answer caches are policy-versioned, user/location/language-scoped, and
+expire after one hour (one minute for classified weather/market queries). The personalized pipeline no longer reads or writes shared
+semantic answer caches. Audio reads the guarded answer rather than a new LLM summary.
+
+Country names are recognized using localized names for the 24 UI languages, with
+the latest explicit user location taking precedence over history and profile hints.
+Not every inflected place name is recognized; confirm location before field-specific
+decisions. Treatment detection includes Unicode digits and selected word-number
+forms, with safety refusals and evidence notices in those languages. This is a
+conservative text guard, not a complete multilingual safety classifier.
+
+Advisory tools are restricted to public date/weather evidence. Personal-record,
+shared-memory, orchestration, account and treatment-calculator tools are unavailable
+in chat. Knowledge's agentic loop requires `KNOWLEDGE_AGENTIC_LOOP=true`. Retrieval,
+inference, tool calls and optional audio/assets have bounded caller deadlines; these
+do not cancel every underlying provider operation. Unreviewed scraper extracts
+cannot bypass quarantine, and a retrieval timestamp is never a publication date.
+
+AIHubMix uses `AIHUBMIX_API_KEY` for text. Speech still requires `OPENAI_API_KEY`
+or local Whisper for transcription; server synthesis supports English/Swahili,
+with browser synthesis for other languages. Browser speech quality varies. Long
+speech inputs fail explicitly instead of silently dropping the end of an advisory.
+
+Before claiming expert-level accuracy, agronomists should review representative
+cases for **each** country and language: pest look-alikes, planting under local
+rainfall/frost conditions, missing locations, contradictory sources, soil amendment
+requests and current local registrations. Require zero unverified treatment doses
+or fabricated citations in those cases, and assess factual support, practical
+usefulness and translation separately. Automated regression tests cover policy
+boundaries; they do not constitute field validation or certification.
+
+Run the focused regression suites:
+
+```bash
+npm test --workspace ag-extension-backend -- --runInBand src/__tests__/advisoryPolicy.test.ts src/__tests__/advisoryRuntime.test.ts src/__tests__/askPipeline.advisoryPolicy.test.ts src/__tests__/security.agronomicSafetyGuard.test.ts src/__tests__/publicDemo.test.ts src/__tests__/chatbot.completionsOwnership.test.ts
+```
+
 ## Tech stack
 
 - **Backend**: Node.js 18+, Express, TypeScript

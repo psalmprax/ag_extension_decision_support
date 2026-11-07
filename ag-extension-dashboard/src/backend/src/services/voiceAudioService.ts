@@ -1,15 +1,14 @@
 /**
  * Voice transcription/synthesis — wired via POST /api/pillars/voice/* and /api/chatbot/speech.
- * Uses local faster-whisper for transcription (free, offline-capable).
- * Falls back to OpenAI Whisper API only when local model unavailable.
+ * Uses local whisper.cpp when configured, then OpenAI's transcription API.
  */
 import { logger } from '../utils/logger';
 import { whisperTranscriptionService } from './whisperTranscriptionService';
 
 export interface VoiceTranscriptionResult {
   transcription: string;
-  detectedLanguage: 'sw' | 'en' | 'ki' | 'luo' | 'kal' | 'unknown';
-  confidence: number;
+  detectedLanguage: string;
+  confidence?: number;
   durationSeconds?: number;
   agronomicKeywords: string[];
 }
@@ -21,13 +20,8 @@ export interface VoiceSynthesisResult {
   durationSeconds: number;
 }
 
-// Evaluated transcription hints. Other Bantu/vernacular inputs are accepted but
-// routed through Swahili acoustics and flagged low-confidence until dialect
-// eval sets exist — never presented as verified transcripts.
-const SUPPORTED_VOICE_HINTS = new Set(['sw', 'en']);
-
 export function isVoiceHintSupported(hint: string): boolean {
-  return SUPPORTED_VOICE_HINTS.has(hint);
+  return hint === 'auto' || /^[a-z]{2}$/i.test(hint);
 }
 
 const COMMON_SWAHILI_AGRO_TERMS: Record<string, string> = {
@@ -77,13 +71,13 @@ export function detectVernacularKeywords(text: string): { keywords: string[]; de
   };
 }
 
-const toWhisperLanguage = (hint: string): 'sw' | 'en' | 'auto' => (hint === 'sw' ? 'sw' : hint === 'en' ? 'en' : 'auto');
+const toWhisperLanguage = (hint: string): string => {
+  const language = hint.trim().toLowerCase().split(/[-_]/)[0];
+  return isVoiceHintSupported(language) ? language : 'auto';
+};
 
 /** Strategy 1: local whisper.cpp model (free, offline-capable). Throws if unavailable so the caller can fall back. */
 async function transcribeWithLocalWhisper(audioBuffer: Buffer | undefined, languageHint: string): Promise<VoiceTranscriptionResult> {
-  if (!whisperTranscriptionService.isReady()) {
-    throw new Error('Local Whisper model not ready');
-  }
   if (!audioBuffer || audioBuffer.length === 0) {
     throw new Error('No audio buffer provided');
   }
@@ -92,14 +86,14 @@ async function transcribeWithLocalWhisper(audioBuffer: Buffer | undefined, langu
     language: toWhisperLanguage(languageHint),
     vadFilter: true,
   });
+  if (!result.text?.trim()) throw new Error('Local speech provider returned an empty transcript');
 
-  const { keywords, detectedLanguage } = detectVernacularKeywords(result.text);
+  const { keywords } = detectVernacularKeywords(result.text);
   logger.info(`Local Whisper transcription succeeded (${result.text.length} chars, lang=${result.language})`);
 
   return {
     transcription: result.text,
-    detectedLanguage: detectedLanguage as VoiceTranscriptionResult['detectedLanguage'],
-    confidence: result.languageProbability,
+    detectedLanguage: result.language || 'unknown',
     durationSeconds: result.duration,
     agronomicKeywords: keywords,
   };
@@ -115,6 +109,10 @@ function resolveAudioFileExtension(mimeType?: string): string {
   return 'ogg';
 }
 
+export function getAudioMimeType(audioData: string): string | undefined {
+  return audioData.match(/^data:([^;,]+(?:;[^,]+)?);base64,/i)?.[1];
+}
+
 /** Strategy 2: OpenAI Whisper API. Returns null when unconfigured, unauthenticated audio, or on failure. */
 async function transcribeWithOpenAI(audioBuffer: Buffer | undefined, mimeType: string | undefined, languageHint: string): Promise<VoiceTranscriptionResult | null> {
   const whisperApiKey = process.env.OPENAI_API_KEY;
@@ -123,24 +121,23 @@ async function transcribeWithOpenAI(audioBuffer: Buffer | undefined, mimeType: s
   try {
     const OpenAI = (await import('openai')).default;
     const { toFile } = await import('openai/uploads');
-    const client = new OpenAI({ apiKey: whisperApiKey });
+    const client = new OpenAI({ apiKey: whisperApiKey, timeout: 30000, maxRetries: 0 });
     const ext = resolveAudioFileExtension(mimeType);
     const file = await toFile(audioBuffer, `voice-note.${ext}`, { type: mimeType || 'audio/ogg' });
     const tr = await client.audio.transcriptions.create({
       file,
-      model: process.env.WHISPER_MODEL || 'whisper-1',
-      language: languageHint === 'sw' ? 'sw' : languageHint === 'en' ? 'en' : undefined,
+      model: process.env.WHISPER_MODEL || 'gpt-4o-transcribe',
+      language: toWhisperLanguage(languageHint) === 'auto' ? undefined : toWhisperLanguage(languageHint),
     });
 
     const text = (tr as unknown as { text: string }).text?.trim();
-    if (!text) return null;
+    if (!text) throw new Error('Speech provider returned an empty transcript');
 
-    const { keywords, detectedLanguage } = detectVernacularKeywords(text);
+    const { keywords } = detectVernacularKeywords(text);
     logger.info(`OpenAI Whisper transcription succeeded (${text.length} chars)`);
     return {
       transcription: text,
-      detectedLanguage,
-      confidence: 0.85,
+      detectedLanguage: toWhisperLanguage(languageHint) === 'auto' ? 'unknown' : toWhisperLanguage(languageHint),
       agronomicKeywords: keywords,
     };
   } catch (err) {
@@ -162,7 +159,7 @@ function stubTranscriptionForNoAudio(): VoiceTranscriptionResult {
   return {
     transcription: `[STUB - no audio provided] ${transcript}`,
     detectedLanguage,
-    confidence: 0.0,
+    confidence: 0,
     durationSeconds: 12,
     agronomicKeywords: keywords,
   };
@@ -175,9 +172,9 @@ export async function transcribeVoiceNote(params: {
   languageHint?: string;
 }): Promise<VoiceTranscriptionResult> {
   const { audioBuffer, audioUrl, mimeType, languageHint = 'sw' } = params;
-  const effectiveHint = isVoiceHintSupported(languageHint) ? languageHint : 'sw';
-  if (effectiveHint !== languageHint) {
-    logger.warn(`Unsupported voice languageHint '${languageHint}' — routing through Swahili acoustics as low-confidence`);
+  const effectiveHint = toWhisperLanguage(languageHint);
+  if (effectiveHint === 'auto' && languageHint.toLowerCase() !== 'auto') {
+    logger.warn(`Unsupported voice languageHint '${languageHint}' — using automatic language detection`);
   }
 
   logger.info(`Processing inbound voice note (${audioBuffer ? `${audioBuffer.length} bytes` : audioUrl}, langHint=${effectiveHint})`);
@@ -195,7 +192,7 @@ export async function transcribeVoiceNote(params: {
 
   // Test/no-audio fallback: deterministic sample so pillar tests stay green in offline CI.
   // Clearly marked as stub — not a real STT result; never used when a real buffer is provided.
-  if (!audioBuffer || audioBuffer.length === 0) {
+  if ((!audioBuffer || audioBuffer.length === 0) && process.env.NODE_ENV === 'test') {
     return stubTranscriptionForNoAudio();
   }
 
@@ -207,8 +204,12 @@ export async function transcribeVoiceNote(params: {
 export async function synthesizeVoiceAdvisory(params: {
   text: string;
   language?: 'sw' | 'en';
+  voice?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
 }): Promise<VoiceSynthesisResult> {
-  const { text, language = 'sw' } = params;
+  const { text, language = 'sw', voice = 'alloy' } = params;
+  if (!text.trim() || text.length > 4096) {
+    throw new Error('Speech synthesis requires non-empty text of at most 4096 characters');
+  }
 
   logger.info(`Synthesizing voice advisory (${text.length} chars, lang=${language})`);
 
@@ -217,11 +218,11 @@ export async function synthesizeVoiceAdvisory(params: {
   if (ttsKey && text) {
     try {
       const OpenAI = (await import('openai')).default;
-      const client = new OpenAI({ apiKey: ttsKey });
+      const client = new OpenAI({ apiKey: ttsKey, timeout: 15000, maxRetries: 0 });
       const mp3 = await client.audio.speech.create({
-        model: process.env.TTS_MODEL || 'tts-1',
-        voice: language === 'sw' ? 'alloy' : 'alloy',
-        input: text.slice(0, 4000),
+        model: process.env.TTS_MODEL || 'tts-1-hd',
+        voice,
+        input: text,
       });
       const buffer = Buffer.from(await mp3.arrayBuffer());
       return {
@@ -230,7 +231,7 @@ export async function synthesizeVoiceAdvisory(params: {
         durationSeconds: Math.ceil(text.split(' ').length / 2.5),
       };
     } catch (err) {
-      logger.warn('OpenAI TTS failed, falling back to dummy header:', err);
+      logger.warn('OpenAI TTS failed:', err);
     }
   }
 

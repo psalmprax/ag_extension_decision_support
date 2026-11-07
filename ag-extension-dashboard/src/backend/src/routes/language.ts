@@ -114,11 +114,15 @@ router.get('/:code', (req: Request, res: Response) => {
 router.post('/translate', async (req: Request, res: Response) => {
     try {
         const { text, targetLanguage, sourceLanguage = 'en' } = req.body;
-        if (!text || !targetLanguage) {
+        if (typeof text !== 'string' || !text.trim() || typeof targetLanguage !== 'string' ||
+            typeof sourceLanguage !== 'string') {
             return res.status(400).json({ success: false, error: 'text and targetLanguage are required' });
         }
+        if (text.length > 8000) {
+            return res.status(400).json({ success: false, error: 'Translation text exceeds 8000 characters' });
+        }
 
-        const cacheKey = `trans:${crypto.createHash('md5').update(`${targetLanguage}:${text.slice(0, 500)}`).digest('hex')}`;
+        const cacheKey = `trans:v2:${crypto.createHash('sha256').update(JSON.stringify([sourceLanguage, targetLanguage, text])).digest('hex')}`;
         const cached = await cacheGet(cacheKey);
         if (cached) {
             return res.json({
@@ -133,13 +137,16 @@ router.post('/translate', async (req: Request, res: Response) => {
         }
 
         const langName = supportedLanguages.find(l => l.code === targetLanguage)?.nativeName || targetLanguage;
-        const prompt = `You are a professional agricultural translator and expert agronomist.
-Translate the following agronomic advice and scientific findings into ${langName} (${targetLanguage}).
+        const sourceLangName = supportedLanguages.find(l => l.code === sourceLanguage)?.nativeName || sourceLanguage;
+        const prompt = `You are an expert human-level translator specializing in agriculture.
+Translate the following text from ${sourceLangName} (${sourceLanguage}) into ${langName} (${targetLanguage}).
 CRITICAL RULES:
-1. Maintain all Markdown formatting, headings (###, ####), bullet points, and table structures exactly.
-2. Keep cultivar names, chemical formulas, and scientific terms accurate.
-3. Localize agricultural terminology appropriately for farmers and extension officers.
-4. Output ONLY the translated markdown. Do not add any conversational preamble, notes, or introductions.
+1. Preserve the full meaning; never summarize, add, omit, or invent information.
+2. Maintain all Markdown formatting, headings, bullet points, and table structures.
+3. Keep cultivar names, chemical formulas, measurements, and scientific terms accurate.
+4. Use natural, locally appropriate agricultural terminology, not word-for-word translation.
+5. If a technical term has no reliable equivalent, retain it and briefly explain it in the target language.
+6. Output only the translation; do not add a preamble, notes, or introductions.
 
 Text to translate:
 """
@@ -148,10 +155,12 @@ ${text}
 
         const result = await AIRouter.routeRequest('generate', {
             prompt,
-            options: { temperature: 0.1, maxTokens: 2500 }
+            options: { temperature: 0.1, maxTokens: 8192, preferredProvider: 'aihubmix' }
         });
 
-        const translatedText = (result.text || text).trim();
+        const translatedText = (result.text || '').trim();
+        if (!translatedText) throw new Error('The translation provider returned an empty translation');
+        if (result.finishReason === 'length') throw new Error('The translation provider truncated its answer');
         await cacheSet(cacheKey, translatedText, 86400); // 24-hour cache
 
         return res.json({

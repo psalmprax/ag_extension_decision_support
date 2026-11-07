@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 import conversationsRouter from './conversations';
 import messagesRouter from './messages';
 import completionsRouter from './completions';
@@ -13,6 +13,16 @@ const router = Router();
 // their own auth/usage middleware. Read-side sub-routers (conversations,
 // importSession) stay on the general per-user limiter only.
 router.use(aiRateLimiter);
+router.use((req: Request, res: Response, next: NextFunction) => {
+  const isPublicDemoRoute = req.path === '/public-demo' || req.path.startsWith('/public-demo/');
+  if (req.user?.isDemo === true && !isPublicDemoRoute) {
+    return res.status(403).json({
+      success: false,
+      error: 'Demo accounts can use stateless demo chat only',
+    });
+  }
+  next();
+});
 router.use(messagesRouter);
 router.use(completionsRouter);
 router.use(publicDemoRouter);
