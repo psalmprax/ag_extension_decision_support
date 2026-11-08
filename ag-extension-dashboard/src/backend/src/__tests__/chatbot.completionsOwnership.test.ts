@@ -89,36 +89,32 @@ function mockFarmerCompletionsDb(opts: { ownershipParam: string }) {
     mockQuery.mockImplementation((sql: string) => {
         if (typeof sql !== 'string') return Promise.resolve({ rows: [], rowCount: 0 });
 
-        if (sql.includes('FROM farmers WHERE user_id')) {
-            return Promise.resolve({ rows: [{ id: FARMER_RECORD_ID }], rowCount: 1 });
+        const ownsIt = opts.ownershipParam === FARMER_RECORD_ID || opts.ownershipParam === FARMER_USER_ID;
+        switch (true) {
+            case sql.includes('FROM farmers WHERE user_id'):
+                return Promise.resolve({ rows: [{ id: FARMER_RECORD_ID }], rowCount: 1 });
+            case sql.includes('FROM chat_conversations cv') && sql.includes('LEFT JOIN farmers'):
+                return Promise.resolve({
+                    rows: ownsIt
+                        ? [{ farmer_id: FARMER_RECORD_ID, officer_id: OFFICER_ID, region: 'North' }]
+                        : [],
+                    rowCount: ownsIt ? 1 : 0,
+                });
+            case sql.includes('FROM chat_conversations cv') && sql.includes('cv.id = $1'):
+                return Promise.resolve({ rows: ownsIt ? [{ id: CONVERSATION_ID }] : [], rowCount: ownsIt ? 1 : 0 });
+            case sql.includes('FROM chat_messages m') && sql.includes('JOIN chat_conversations cv'):
+                // $2 is the ownership param. Foreign conversations yield zero rows.
+                return Promise.resolve({
+                    rows: ownsIt
+                        ? [{ role: 'user', content: 'my earlier question about maize' }]
+                        : [],
+                    rowCount: ownsIt ? 1 : 0,
+                });
+            case sql.includes('INSERT INTO chat_messages'):
+                return Promise.resolve({ rows: [], rowCount: 1 });
+            default:
+                return Promise.resolve({ rows: [], rowCount: 0 });
         }
-        if (sql.includes('FROM chat_conversations cv') && sql.includes('LEFT JOIN farmers')) {
-            const ownsIt = opts.ownershipParam === FARMER_RECORD_ID || opts.ownershipParam === FARMER_USER_ID;
-            return Promise.resolve({
-                rows: ownsIt
-                    ? [{ farmer_id: FARMER_RECORD_ID, officer_id: OFFICER_ID, region: 'North' }]
-                    : [],
-                rowCount: ownsIt ? 1 : 0,
-            });
-        }
-        if (sql.includes('FROM chat_conversations cv') && sql.includes('cv.id = $1')) {
-            const ownsIt = opts.ownershipParam === FARMER_RECORD_ID || opts.ownershipParam === FARMER_USER_ID;
-            return Promise.resolve({ rows: ownsIt ? [{ id: CONVERSATION_ID }] : [], rowCount: ownsIt ? 1 : 0 });
-        }
-        if (sql.includes('FROM chat_messages m') && sql.includes('JOIN chat_conversations cv')) {
-            // $2 is the ownership param. Foreign conversations yield zero rows.
-            const ownsIt = opts.ownershipParam === FARMER_RECORD_ID || opts.ownershipParam === FARMER_USER_ID;
-            return Promise.resolve({
-                rows: ownsIt
-                    ? [{ role: 'user', content: 'my earlier question about maize' }]
-                    : [],
-                rowCount: ownsIt ? 1 : 0,
-            });
-        }
-        if (sql.includes('INSERT INTO chat_messages')) {
-            return Promise.resolve({ rows: [], rowCount: 1 });
-        }
-        return Promise.resolve({ rows: [], rowCount: 0 });
     });
 }
 
