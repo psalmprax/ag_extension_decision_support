@@ -9,7 +9,7 @@
  * inputs.
  */
 import { logger } from '../utils/logger';
-import { getPrisma } from './prismaService';
+import { query } from './databaseService';
 import { pillarProvenance } from './provenance';
 
 export const MECHANIZATION_ASSET_TYPES = [
@@ -76,21 +76,21 @@ export interface EquipmentSearchResult {
 }
 
 /** Adds one asset to the registry. Callers must be authorized administrators. */
-export async function registerEquipment(input: RegisterEquipmentInput): Promise<MechanizationAsset> {
-  const record = await getPrisma().mechanizationAsset.create({
-    data: {
-      assetType: input.assetType,
-      modelName: input.modelName.trim(),
-      ownerName: input.ownerName.trim(),
-      ownerPhone: input.ownerPhone.trim(),
-      county: input.county.trim(),
-      subCounty: input.subCounty.trim(),
-      ratePerUnitKes: input.ratePerUnitKes,
-      rateUnit: input.rateUnit,
-      isAvailable: input.isAvailable ?? true,
-      isVerified: input.isVerified ?? false,
-    },
-  });
+export async function registerEquipment(tenantId: string, input: RegisterEquipmentInput): Promise<MechanizationAsset> {
+  if (!tenantId?.trim()) throw new Error('Tenant is required for equipment registration');
+  const { rows } = await query<MechanizationAssetRecord>(`
+    INSERT INTO mechanization_assets
+      (tenant_id, asset_type, model_name, owner_name, owner_phone, county, sub_county,
+       rate_per_unit_kes, rate_unit, is_available, is_verified)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    RETURNING id, asset_type AS "assetType", model_name AS "modelName", owner_name AS "ownerName",
+      owner_phone AS "ownerPhone", county, sub_county AS "subCounty", rate_per_unit_kes AS "ratePerUnitKes",
+      rate_unit AS "rateUnit", is_available AS "isAvailable", is_verified AS "isVerified"
+  `, [tenantId, input.assetType, input.modelName.trim(), input.ownerName.trim(), input.ownerPhone.trim(),
+    input.county.trim(), input.subCounty.trim(), input.ratePerUnitKes, input.rateUnit,
+    input.isAvailable ?? true, input.isVerified ?? false]);
+  const record = rows[0];
+  if (!record) throw new Error('Equipment registration did not return a record');
 
   logger.info(`Registered mechanization asset ${record.id} (${record.assetType}) in ${record.county}`);
   return toAsset(record);
@@ -101,21 +101,23 @@ export async function registerEquipment(input: RegisterEquipmentInput): Promise<
  * with provenance saying so — when nothing has been registered for that county;
  * it never substitutes demo records.
  */
-export async function findAvailableEquipment(params: {
+export async function findAvailableEquipment(tenantId: string, params: {
   county: string;
   assetType?: MechanizationAssetType;
 }): Promise<EquipmentSearchResult> {
+  if (!tenantId?.trim()) throw new Error('Tenant is required for equipment search');
   const { county, assetType } = params;
   logger.info(`Searching mechanization registry in ${county} (type=${assetType || 'all'})`);
 
-  const records = await getPrisma().mechanizationAsset.findMany({
-    where: {
-      county: { equals: county.trim(), mode: 'insensitive' },
-      isAvailable: true,
-      ...(assetType ? { assetType } : {}),
-    },
-    orderBy: [{ isVerified: 'desc' }, { ratePerUnitKes: 'asc' }],
-  });
+  const { rows: records } = await query<MechanizationAssetRecord>(`
+    SELECT id, asset_type AS "assetType", model_name AS "modelName", owner_name AS "ownerName",
+      owner_phone AS "ownerPhone", county, sub_county AS "subCounty", rate_per_unit_kes AS "ratePerUnitKes",
+      rate_unit AS "rateUnit", is_available AS "isAvailable", is_verified AS "isVerified"
+    FROM mechanization_assets
+    WHERE tenant_id = $1 AND lower(county) = lower($2) AND is_available = true
+      AND ($3::text IS NULL OR asset_type = $3)
+    ORDER BY is_verified DESC, rate_per_unit_kes ASC
+  `, [tenantId, county.trim(), assetType ?? null]);
 
   return {
     equipment: records.map(toAsset),

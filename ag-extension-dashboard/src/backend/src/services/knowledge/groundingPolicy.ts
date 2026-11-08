@@ -24,7 +24,8 @@ export function isQuarantined(res: SearchResult): boolean {
   if (meta.groundingAllowed === false || meta.quarantine === true) return true;
   const tags = Array.isArray(meta.tags) ? meta.tags.map(String) : [];
   const status = typeof meta.dataStatus === 'string' ? meta.dataStatus : '';
-  return tags.includes('unverified_scrape') || status === 'unverified_scrape';
+  const source = typeof meta.source === 'string' ? meta.source.trim() : '';
+  return tags.includes('unverified_scrape') || status === 'unverified_scrape' || /^faostat(?:\s|$)/i.test(source);
 }
 
 /** Partition retrieval results into groundable context vs. withheld items. */
@@ -46,7 +47,7 @@ export function quarantineDisclosure(withheld: SearchResult[]): string {
   const titles = withheld
     .slice(0, 3)
     .map(res => safeDisclosureTitle(String((metaOf(res).title as string) || res.id || 'untitled')));
-  return `\n\n[Note: ${withheld.length} unverified web extract(s) withheld from grounding pending human review: ${titles.join('; ')}.]`;
+  return `\n\n[Note: ${withheld.length} unverified source(s) withheld from grounding pending review: ${titles.join('; ')}.]`;
 }
 
 /**

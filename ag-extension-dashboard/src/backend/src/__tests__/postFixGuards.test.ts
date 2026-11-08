@@ -136,6 +136,14 @@ describe('Post-fix guards (settlement grade, calibration, eval, backtest, ingest
     expect(quarantineDisclosure([])).toBe('');
   });
 
+  it('withholds historical and live FAOSTAT records until independently validated', () => {
+    const records = ['FAOSTAT 2022 static fallback', 'FAOSTAT API'].map(source => ({
+      id: source, content: 'Unverified production statistic', metadata: { source }, score: 0.9,
+    }));
+    expect(splitQuarantined(records).groundable).toEqual([]);
+    expect(splitQuarantined(records).withheld).toHaveLength(2);
+  });
+
   it('neutralizes prompt injection smuggled in quarantined titles', () => {
     const evil = {
       id: 'evil-1',

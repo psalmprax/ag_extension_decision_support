@@ -65,6 +65,8 @@ describe('Agricultural advisory quality policy', () => {
             source('foreign', { country: 'India' }),
             source('regional-foreign', { regions: ['Canada'] }),
             source('unverified', { tags: ['unverified_scrape'] }),
+            source('old-faostat', { source: 'FAOSTAT 2022 static fallback' }),
+            source('api-faostat', { source: 'FAOSTAT API' }),
             source('general'),
         ], { country: 'Kenya' });
         expect(result.documents.map(document => document.id)).toEqual(['local', 'general']);

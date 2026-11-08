@@ -6,12 +6,14 @@
 
 ## Services Affected
 
-The following services exist only in test files (`__tests__/advancedPillars*.test.ts`, `__tests__/frontierCapabilities.test.ts`) with no route, tool, worker, or app.ts wiring:
+These services include specifications and prototype routes; their presence or wiring
+does not establish production readiness. Prototype pillar routes are only available
+when explicitly enabled in development/test and remain gated elsewhere.
 
 1. `traceabilityPassportService` — EUDR/GS1 passports (hardcoded GTIN, fake compliance)
 2. `pestSwarmRadarService` — DBSCAN clustering (greedy neighbor merge, hardcoded counties)
 3. `crossBorderTradeService` — Regional arbitrage (3 hardcoded markets, 650km all pairs)
-4. `mechanizationFleetService` — Drone/tractor marketplace (2 hardcoded entries) — **updated 2026-10-29:** now backed by the `mechanization_assets` registry table and wired through `POST /api/pillars/mechanization/search` and the admin-only `POST /api/pillars/mechanization/assets`; the demo directory is gone.
+4. `mechanizationFleetService` — registry-backed equipment search and admin registration. Both use the authenticated user's active tenant. Pre-existing unassigned records remain hidden until ownership is verified. Drone planning remains illustrative; the routes are still prototypes.
 5. `satelliteNdviService` — NDVI analysis (pure math on caller-supplied pixels)
 6. `agriCreditInsuranceService` — Parametric insurance (fake verification source string)
 7. `inputSupplierService` — Anti-counterfeit (5-item fake regulator registry)
@@ -33,4 +35,6 @@ The following services exist only in test files (`__tests__/advancedPillars*.tes
 
 ## Rationale
 
-These services were developed as specification prototypes but never integrated into the production API surface. The prior stub-audit rounds removed fabricated data from *wired* paths; these services remain as dead code that inflates capability claims. Honest documentation is more valuable than aspirational feature lists.
+These services were developed as specifications and prototypes. Some have routes, but
+still need real integrations, tenant controls, operational safeguards or independent
+domain validation. Honest documentation is more valuable than aspirational claims.
