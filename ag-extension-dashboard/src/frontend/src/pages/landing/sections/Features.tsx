@@ -77,7 +77,7 @@ export function Features() {
                       The Smallholder Farmer
                     </h3>
                     <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
-                      Receives actionable planting advice, disease treatment steps, and NASA rain alerts via 2G SMS and USSD in local dialects.
+                      May receive messages through configured channels. Consult a local expert before treatment.
                     </p>
                   </div>
 
@@ -122,7 +122,7 @@ export function Features() {
                   </div>
                   <div className="absolute bottom-3 left-4 right-4">
                     <span className="text-xxs font-mono text-emerald-300 bg-emerald-500/30 border border-emerald-400/40 px-2 py-0.5 rounded-md font-bold">
-                      100% Offline-First Sync
+                      Selected Offline Workflows
                     </span>
                   </div>
                 </div>
@@ -133,7 +133,7 @@ export function Features() {
                       The Field Extension Officer
                     </h3>
                     <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
-                      Conducts rapid digital farm visits, queues leaf photos for multimodal AI diagnosis, and logs visit records securely offline in remote areas.
+                      Records field observations using available tools; cloud analysis requires connectivity and a configured provider.
                     </p>
                   </div>
 
@@ -144,7 +144,7 @@ export function Features() {
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span>Instant Multimodal Leaf &amp; Pest Diagnosis</span>
+                      <span>Image assessment requiring expert confirmation</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />

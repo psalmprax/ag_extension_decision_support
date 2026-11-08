@@ -6,7 +6,6 @@ import {
   Smartphone,
   Database,
   ArrowLeft,
-  RefreshCw,
   Layers,
   Play,
   Activity,
@@ -27,14 +26,11 @@ export function DemoPage({
   const [activeTab, setActiveTab] = useState<'rag' | 'synthesis' | 'telemetry' | 'canvas' | 'telecom' | 'scrubber'>(initialTab);
 
   // RAG states
-  const [isTyping, setIsTyping] = useState(false);
-  const [ragStep, setRagStep] = useState(0);
-  const [simulatedResponse, setSimulatedResponse] = useState('');
   const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
 
   // Audio synthesis states
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [isSynthesizing, setIsSynthesizing] = useState(false);
+  const [audioError, setAudioError] = useState('');
   const [synthesisOutput, setSynthesisOutput] = useState<{
     farmer?: string;
     status?: string;
@@ -43,91 +39,58 @@ export function DemoPage({
   } | null>(null);
 
   // Telemetry
-  const [telemetryLogs] = useState([
-    '[15:47:01] Fetching NASA POWER Solar Radiation data... OK',
-    '[15:47:02] SoilGrids v2: Clay density (fine earth) = 380 g/kg',
-    '[15:47:04] Fetching current precipitation coefficients... 4.2mm/day',
-    '[15:47:05] Synced 4 offline field visits to main extension store',
-  ]);
+  const telemetryLogs = [
+    'Example: weather and soil observations may be displayed here.',
+    'Example: field visits may be synchronized when connectivity is available.',
+  ];
 
   const presets = [
     {
       query: 'How do I diagnose and treat Maize Rust?',
       response:
-        'Common Maize Rust (Puccinia sorghi) is recognized by powdery golden-brown pustules on both leaf surfaces.\n\nTreatment: Apply triazole or strobilurin-based fungicides if incidence levels exceed 10% before silking.\n\nCultural practices: Rotate crops with non-gramineous hosts like soybeans, and manage soil nitrogen balance.',
-      citations: ['FAO Technical Note 28B', 'NASA POWER Weather Index', 'IITA Diagnostic Manual'],
+        'Leaf spots may have several causes. Record the affected crop, symptoms and location, then consult a local extension officer to confirm the cause and discuss locally authorized options.',
     },
     {
       query: 'Recommend soil recovery plan for high acidity (pH 4.8).',
       response:
-        'A pH of 4.8 indicates severe acidity causing aluminum toxicity.\n\nRecovery Plan: 1. Apply calcitic or dolomitic agricultural lime at 2.5 tonnes/ha. 2. Incorporate green manure (e.g. Mucuna pruriens) to increase organic matter. 3. Transition to acid-tolerant cultivars (e.g., specific cassava clones or finger millet).',
-      citations: [
-        'Sub-Saharan SoilGrids v2',
-        'IFDC Fertilizer Strategy Report',
-        'CIMMYT Crop Guide',
-      ],
+        'A soil test can help assess acidity. Ask a local soil specialist to interpret the results and recommend amendments appropriate to the crop and field.',
     },
     {
       query: 'What is the rainfall forecast impact on Cassava planting in Eastern region?',
       response:
-        'NASA POWER model indicates a delayed start to the wet season. Soil moisture saturation currently stands at 22% (Moderate deficit).\n\nActionable Advice: Delay cassava planting by 10-14 days. Treat cuttings with agricultural ash to protect against early stem rot. Prioritize micro-dosing phosphorus during planting.',
-      citations: ['NASA POWER satellite models', 'FAOSTAT Saturation Indices'],
+        'Planting decisions depend on the location, forecast and field conditions. Check an up-to-date local forecast and consult an extension officer before planting.',
     },
   ];
 
-  const runRagSimulation = async (index: number) => {
-    if (isTyping) return;
-    setSelectedPreset(index);
-    setIsTyping(true);
-    setSimulatedResponse('');
-
-    setRagStep(1);
-    await new Promise(r => setTimeout(r, 900));
-
-    setRagStep(2);
-    await new Promise(r => setTimeout(r, 800));
-
-    setRagStep(3);
-    const full = presets[index].response;
-    let typed = '';
-    for (let i = 0; i < full.length; i += 3) {
-      typed += full.substring(i, i + 3);
-      setSimulatedResponse(typed);
-      await new Promise(r => setTimeout(r, 15));
-    }
-    setIsTyping(false);
-  };
-
   const triggerAudioPlayback = () => {
     if (isPlayingAudio) return;
-    setIsPlayingAudio(true);
+    setAudioError('');
 
     const noteText =
-      "Checked Emmanuel Mwangi's farm in Machakos. The beans look stable, but the maize leaves show significant light green discoloration. Recommended immediate check for nitrogen deficit.";
+      'Example field note: maize leaves show discoloration. Ask a local extension officer to assess the symptoms.';
 
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      setIsPlayingAudio(true);
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(noteText);
       utterance.rate = 0.95;
       utterance.onend = () => setIsPlayingAudio(false);
-      utterance.onerror = () => setIsPlayingAudio(false);
+      utterance.onerror = () => {
+        setIsPlayingAudio(false);
+        setAudioError('Speech playback failed in this browser.');
+      };
       window.speechSynthesis.speak(utterance);
     } else {
-      setTimeout(() => setIsPlayingAudio(false), 3000);
+      setAudioError('Speech playback is not available in this browser.');
     }
   };
 
-  const triggerSynthesisToDashboard = async () => {
-    if (isSynthesizing) return;
-    setIsSynthesizing(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setIsSynthesizing(false);
+  const triggerSynthesisToDashboard = () => {
     setSynthesisOutput({
-      crop: 'Maize & Beans',
-      status: 'Alert (Nitrogen Deficit)',
-      farmer: 'Emmanuel Mwangi (Machakos)',
-      action:
-        'Dispatched automated SMS recommendation: "Apply top-dressing nitrogen urea fertilizer before next Tuesday rains."',
+      crop: 'Maize',
+      status: 'Discoloration reported; cause unconfirmed',
+      farmer: 'Example farmer',
+      action: 'Example only: consult a local extension officer. No record or message was sent.',
     });
   };
 
@@ -168,8 +131,8 @@ export function DemoPage({
           </div>
           <h1 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">Experience GPExts</h1>
           <p className="text-stone-400 max-w-lg mx-auto">
-            Explore the AI-powered capabilities that help agricultural extension officers make
-            data-driven decisions in the field.
+            Explore illustrative examples. This sandbox does not retrieve live data, verify sources,
+            send messages or create field records.
           </p>
         </div>
 
@@ -236,7 +199,7 @@ export function DemoPage({
                   {presets.map((preset, idx) => (
                     <button
                       key={idx}
-                      onClick={() => runRagSimulation(idx)}
+                      onClick={() => setSelectedPreset(idx)}
                       className={`p-4 text-xs text-left rounded-xl transition-all border ${
                         selectedPreset === idx
                           ? 'bg-cyan-500/15 border-cyan-400/40 text-white'
@@ -253,56 +216,22 @@ export function DemoPage({
                 <div className="flex items-center gap-2 border-b border-white/5 pb-3 mb-4">
                   <Bot className="w-4 h-4 text-purple-400" />
                   <span className="text-xs font-bold font-mono text-stone-400">
-                    RAG v2 Assistant Response
+                    Example assistant response (scripted)
                   </span>
                 </div>
 
-                {ragStep === 0 && (
+                {selectedPreset === null && (
                   <p className="text-sm text-stone-500 italic">
-                    Click one of the scenarios above to see the AI assistant retrieve and synthesize
-                    agronomic knowledge in real time.
+                    Select a scenario to see a scripted example. No AI or knowledge search is run.
                   </p>
                 )}
 
-                {ragStep === 1 && (
-                  <div className="flex items-center gap-2 text-sm text-cyan-400 animate-pulse">
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Parsing Query Graph & Searching FAO Soil Knowledge Store...
-                  </div>
-                )}
-
-                {ragStep === 2 && (
-                  <div className="flex items-center gap-2 text-sm text-purple-400 animate-pulse">
-                    <Layers className="w-4 h-4 animate-bounce" />
-                    Retrieving RAG Vector Fragments & Index Rankings...
-                  </div>
-                )}
-
-                {ragStep === 3 && (
+                {selectedPreset !== null && (
                   <>
                     <p className="text-sm font-mono leading-relaxed whitespace-pre-line text-stone-200">
-                      {simulatedResponse}
-                      {isTyping && <span className="animate-pulse">|</span>}
+                      {presets[selectedPreset].response}
                     </p>
-
-                    {!isTyping && selectedPreset !== null && (
-                      <div className="mt-5 pt-3 border-t border-white/5 flex items-center justify-between flex-wrap gap-3">
-                        <div className="flex flex-wrap gap-2">
-                          {presets[selectedPreset].citations.map((cite, i) => (
-                            <span
-                              key={i}
-                              className="px-2.5 py-1 rounded-md bg-white/5 text-xxs font-mono text-stone-400 border border-white/5"
-                            >
-                              {cite}
-                            </span>
-                          ))}
-                        </div>
-                        <span className="text-xs text-green-400 flex items-center gap-1">
-                          <CheckCircle className="w-3.5 h-3.5" />
-                          Source Verified
-                        </span>
-                      </div>
-                    )}
+                    <p className="mt-4 text-xs text-amber-300">Example only; not a diagnosis or verified advice.</p>
                   </>
                 )}
               </div>
@@ -316,13 +245,12 @@ export function DemoPage({
                 <div className="flex justify-between items-center text-xs">
                   <span className="font-mono text-stone-400">Audio Note Transcript Preview:</span>
                   <span className="text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md font-mono text-xxs">
-                    Offline Recorded
+                    Scripted example
                   </span>
                 </div>
                 <p className="text-sm italic text-stone-300 leading-relaxed max-w-lg mx-auto">
-                  "Checked Emmanuel Mwangi's farm in Machakos. The beans look stable, but the maize
-                  leaves show significant light green discoloration. Recommended immediate check for
-                  nitrogen deficit. Dispatched a guidance advice to prepare fertilizer dressings."
+                  Example field note: maize leaves show discoloration. Ask a local extension officer
+                  to assess the symptoms.
                 </p>
 
                 <div className="flex justify-center gap-3 flex-wrap">
@@ -338,31 +266,23 @@ export function DemoPage({
                   >
                     {isPlayingAudio ? (
                       <>
-                        <Activity className="w-4 h-4 animate-bounce" /> Playing Recorded Note...
+                        <Activity className="w-4 h-4 animate-bounce" /> Playing example...
                       </>
                     ) : (
                       <>
-                        <Play className="w-4 h-4" /> Play Recorded Note
+                        <Play className="w-4 h-4" /> Play example text
                       </>
                     )}
                   </button>
                   <button
                     type="button"
                     onClick={triggerSynthesisToDashboard}
-                    disabled={isSynthesizing}
                     className="px-5 py-2.5 rounded-xl text-xs font-bold bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center gap-2 cursor-pointer transition-all"
                   >
-                    {isSynthesizing ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" /> Synthesizing Insights...
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="w-4 h-4 text-purple-400" /> Synthesize to Dashboard
-                      </>
-                    )}
+                    <Zap className="w-4 h-4 text-purple-400" /> Preview example summary
                   </button>
                 </div>
+                {audioError && <p role="alert" className="text-xs text-amber-300">{audioError}</p>}
               </div>
 
               <AnimatePresence>
@@ -374,7 +294,7 @@ export function DemoPage({
                   >
                     <p className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
                       <CheckCircle className="w-4 h-4" />
-                      Synthesized Visit Entry Dispatched to Dashboard
+                      Example summary (not saved or dispatched)
                     </p>
                     <div className="grid grid-cols-2 gap-4 text-xs">
                       <div>
@@ -383,7 +303,7 @@ export function DemoPage({
                       </div>
                       <div>
                         <p className="text-stone-500 font-mono text-xxs uppercase mb-0.5">
-                          Soil Assessment
+                          Observation
                         </p>
                         <p className="font-semibold text-amber-400">
                           {synthesisOutput.status ?? ''}
@@ -409,7 +329,7 @@ export function DemoPage({
                   </span>
                   <span className="text-2xl font-bold font-mono text-cyan-400">1.25 kg/dm3</span>
                   <span className="text-xxs text-emerald-400 block mt-1.5">
-                    Optimal aeration tier
+                    Illustrative value
                   </span>
                 </div>
                 <div className="p-4 rounded-xl bg-black/30 border border-white/5">
@@ -418,15 +338,14 @@ export function DemoPage({
                   </span>
                   <span className="text-2xl font-bold font-mono text-amber-400">22 g/kg</span>
                   <span className="text-xxs text-amber-400 block mt-1.5">
-                    Slight deficit (Target: 30)
+                    Illustrative value
                   </span>
                 </div>
               </div>
 
               <div className="p-5 rounded-xl bg-black/40 border border-white/5 space-y-3">
                 <div className="flex justify-between items-center text-xs border-b border-white/5 pb-3">
-                  <span className="font-mono text-stone-400">NASA POWER Live Stream Data</span>
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="font-mono text-stone-400">Illustrative telemetry (not live)</span>
                 </div>
                 <div className="space-y-2 font-mono text-xs-plus text-cyan-400/90 leading-relaxed">
                   {telemetryLogs.map((log, i) => (
@@ -438,8 +357,7 @@ export function DemoPage({
               <div className="flex items-center gap-3 p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
                 <MapPin className="w-5 h-5 text-cyan-400 flex-shrink-0" />
                 <p className="text-xs text-stone-400">
-                  Data sourced from NASA POWER, SoilGrids v2, and FAOSTAT APIs. All metrics are
-                  region-specific and updated in real time when connected.
+                  These sample values are not field measurements and are not retrieved from an API.
                 </p>
               </div>
             </div>
@@ -455,12 +373,12 @@ export function DemoPage({
                     Interactive 3D Agro-Intelligence Scrubber
                   </h2>
                   <p className="text-xs text-stone-400 mt-1">
-                    Drag the slider or click stages to scrub through the 4-phase remote-sensing and agronomic decision pipeline.
+                    Explore an illustrated four-stage concept. No live observations or dispatches are shown.
                   </p>
                 </div>
                 <div className="flex items-center gap-2 font-mono text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/20">
                   <Activity className="w-3.5 h-3.5" />
-                  <span>60 FPS Procedural Canvas</span>
+                  <span>Illustrative canvas</span>
                 </div>
               </div>
 
@@ -473,7 +391,7 @@ export function DemoPage({
                   <div className="text-xs font-mono text-sky-400">STAGE 01 // ORBITAL</div>
                   <div className="text-sm font-bold text-white">Atmospheric Flux</div>
                   <p className="text-xs text-stone-400">
-                    NASA POWER solar radiation and GPM rainfall ingested every 6 hours.
+                    Example of weather data that could inform a field assessment.
                   </p>
                 </div>
 
@@ -481,7 +399,7 @@ export function DemoPage({
                   <div className="text-xs font-mono text-emerald-400">STAGE 02 // CANOPY</div>
                   <div className="text-sm font-bold text-white">Multi-Spectral NDVI</div>
                   <p className="text-xs text-stone-400">
-                    Vegetation vigor index mapped across centimeter-accurate GPS smallholder plots.
+                    Example of vegetation indices used to explore crop conditions.
                   </p>
                 </div>
 
@@ -489,7 +407,7 @@ export function DemoPage({
                   <div className="text-xs font-mono text-purple-400">STAGE 03-04 // SYNTHESIS</div>
                   <div className="text-sm font-bold text-white">Edge USSD Uplink</div>
                   <p className="text-xs text-stone-400">
-                    SoilGrids v2 calibrated with RAG rules, dispatched to SMS/USSD offline channels.
+                    Example of how observations and messages might be presented to an officer.
                   </p>
                 </div>
               </div>

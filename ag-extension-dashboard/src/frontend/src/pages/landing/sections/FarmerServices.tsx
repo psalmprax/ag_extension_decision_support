@@ -63,7 +63,7 @@ export function FarmerServices() {
             variants={fadeUp}
             className="text-sm sm:text-base lg:text-lg text-white/70 leading-relaxed font-normal"
           >
-            Designed specifically for smallholder farms. Large touch buttons, plain everyday language, and immediate help — even without internet.
+            Designed for smallholder farms, with plain-language tools and selected offline workflows.
           </motion.p>
         </motion.div>
 
@@ -83,7 +83,7 @@ export function FarmerServices() {
                   <Camera className="w-7 h-7" />
                 </div>
                 <span className="text-xs font-bold font-mono uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
-                  Free • Offline photo queueing
+                  Crop assessment
                 </span>
               </div>
 
@@ -92,7 +92,7 @@ export function FarmerServices() {
                   Diagnose My Crop
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Capture a crop photo and queue it while offline. Diagnosis and remedy guidance require an internet connection.
+                  Share a crop photo or symptoms for an assessment. Results require confirmation by a local expert.
                 </p>
               </div>
 
@@ -101,19 +101,19 @@ export function FarmerServices() {
                   <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Recognizes 120+ blights, fungal rots &amp; caterpillars</span>
+                  <span>Explore possible causes of visible symptoms</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Gives organic recipes (Neem, wood ash) and safe spray doses</span>
+                  <span>Consult a local expert before treatment</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Queued photos are sent for analysis when you reconnect</span>
+                  <span>Cloud analysis requires connectivity and a configured provider</span>
                 </div>
               </div>
             </div>
@@ -145,16 +145,16 @@ export function FarmerServices() {
                   <CloudRain className="w-7 h-7" />
                 </div>
                 <span className="text-xs font-bold font-mono uppercase tracking-wider text-sky-400 bg-sky-500/10 border border-sky-500/20 px-3 py-1 rounded-full">
-                  Hyperlocal Satellite Radar
+                  Weather information
                 </span>
               </div>
 
               <div>
                 <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-sky-300 transition-colors">
-                  Check the Weather &amp; Spray Timing
+                  Check the Weather
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Know exactly when rain is coming before you apply fertilizer or pesticides. Avoid costly chemical wash-off and prepare your soil for planting.
+                  Review available forecasts alongside local conditions when planning farm activities.
                 </p>
               </div>
 
@@ -163,19 +163,19 @@ export function FarmerServices() {
                   <div className="w-4 h-4 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>7-day hourly rain probability mapped to your parish</span>
+                  <span>Weather coverage and detail depend on the configured provider</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Clear spray window alerts: &quot;Spray Friday morning; rain in 18 hrs&quot;</span>
+                  <span>Forecasts can change and should not be treated as guarantees</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Automatic SMS rain warnings on basic 2G feature phones</span>
+                  <span>Messaging availability depends on your organization&apos;s configuration</span>
                 </div>
               </div>
             </div>
@@ -353,9 +353,9 @@ export function FarmerServices() {
                 </div>
                 <div className="p-2.5 rounded-lg bg-teal-950/40 border border-teal-500/30 text-xs text-teal-200">
                   <span className="italic leading-snug">
-                    {activeDialect === 'sw' && '"Nyunyizia mchanganyiko wa mwarobaini jioni..."'}
-                    {activeDialect === 'lg' && '"Fukirira eddagala ly\'enim ku kisaakaate..."'}
-                    {activeDialect === 'en' && '"Spray the Neem mixture into leaf whorls at dusk..."'}
+                    {activeDialect === 'sw' && '"Wasiliana na afisa ugani wa eneo lako."'}
+                    {activeDialect === 'lg' && '"Tuukirira omukugu mu by\'obulimi ow\'omu kitundu kyo."'}
+                    {activeDialect === 'en' && '"Contact your local extension officer."'}
                   </span>
                 </div>
               </div>

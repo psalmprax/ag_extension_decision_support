@@ -30,15 +30,15 @@ export function AgentOS({
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-8 sm:mb-10">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
                 <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                <span>Crop Clinic: Instant Disease Response</span>
+                <span>Crop observations</span>
               </div>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
                 <Radio className="w-3.5 h-3.5 shrink-0" />
-                <span>Hyperlocal Rain Synced</span>
+                <span>Weather context</span>
               </div>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-semibold">
                 <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                <span>SMS &amp; WhatsApp Delivery Ready</span>
+                <span>Channel examples</span>
               </div>
             </div>
 
@@ -59,16 +59,17 @@ export function AgentOS({
                 variants={fadeUp}
                 className="text-2xl sm:text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight max-w-2xl mx-auto px-2 text-white"
               >
-                Watch How GPExts Protects Your Crops{' '}
+                Explore an Example Advisory Workflow{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300">
-                  in Real Time
+                  in a Simulator
                 </span>
               </motion.h2>
               <motion.p
                 variants={fadeUp}
                 className="text-xs sm:text-base text-white/70 max-w-2xl mx-auto mt-3 px-2 leading-relaxed"
               >
-                Select a crop scenario below to see how our agronomic engine analyzes symptoms, cross-checks rainfall, and delivers immediate step-by-step remedies directly to farmers via phone.
+                Select a fictional scenario to explore an illustrative workflow. No live data is checked,
+                no diagnosis is made, and no messages or visits are sent or queued.
               </motion.p>
             </motion.div>
 
@@ -88,7 +89,7 @@ export function AgentOS({
                           Interactive
                         </span>
                       </div>
-                      <div className="text-xs text-white/40">Select a real farm scenario to see immediate guidance</div>
+                      <div className="text-xs text-white/40">Select an example scenario; no real farm data is used</div>
                     </div>
                   </div>
 
@@ -101,7 +102,7 @@ export function AgentOS({
                     <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
                     <span className="relative z-10 flex items-center gap-2">
                       <Zap className={`w-4 h-4 ${isSimulating ? 'animate-spin' : 'text-amber-300'}`} />
-                      <span>{isSimulating ? 'Analyzing Field Data...' : 'Run Advisory Simulation'}</span>
+                      <span>{isSimulating ? 'Playing simulation...' : 'Run Advisory Simulation'}</span>
                     </span>
                   </button>
                 </div>
@@ -146,16 +147,16 @@ export function AgentOS({
                 {/* Execution Trace Stepper */}
                 <div className="space-y-2.5">
                   <div className="text-xxs font-bold uppercase tracking-wider text-white/50 flex items-center justify-between">
-                    <span>Autonomous Execution Trace</span>
+                    <span>Illustrative workflow</span>
                     <span className="font-mono text-emerald-400">{simProgress}/4 Steps Completed</span>
                   </div>
 
                   <div className="space-y-2">
                     {[
-                      { step: '1. Intent & Environmental Sensor Query', detail: `Analyzed weather anomaly for ${activePreset.targetRegion}. Cross-checked SoilGrids telemetry.`, icon: CloudSun },
-                      { step: '2. Closed-Loop Skill Synthesis', detail: `Injected local skill: "${activePreset.skillTitle}" (${activePreset.confidence} confidence).`, icon: Sparkles },
-                      { step: '3. Precision Cohort Mapping', detail: `Identified ${activePreset.affectedFarmers} vulnerable ${activePreset.targetCrop} farmers with vital scores < 70.`, icon: Users },
-                      { step: '4. Multi-Channel Dispatch & Visit Queuing', detail: `Dispatched ${activePreset.alertsDispatched} localized advisories. Queued ${activePreset.visitsQueued} priority field visits.`, icon: Zap },
+                      { step: '1. Collect observations', detail: 'Example: gather symptoms and relevant local context.', icon: CloudSun },
+                      { step: '2. Review information', detail: `Example: review "${activePreset.skillTitle}" with an expert.`, icon: Sparkles },
+                      { step: '3. Identify recipients', detail: `Illustrative ${activePreset.targetCrop} scenario in ${activePreset.targetRegion}; no farmers were identified.`, icon: Users },
+                      { step: '4. Preview communication', detail: 'Example only: no advisories were dispatched and no visits were queued.', icon: Zap },
                     ].map((t, idx) => (
                       <div
                         key={idx}
@@ -188,10 +189,10 @@ export function AgentOS({
                   <div className="flex flex-wrap items-center justify-between border-b border-white/[0.08] pb-3 gap-2">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                      <span className="font-bold text-xs text-white">Closed-Loop Regional Skill Card</span>
+                      <span className="font-bold text-xs text-white">Example guidance card</span>
                     </div>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shrink-0">
-                      {activePreset.confidence} Verified
+                      Not verified
                     </span>
                   </div>
 
@@ -201,7 +202,7 @@ export function AgentOS({
                       {activePreset.skillBody}
                     </p>
                     <div className="pt-2 border-t border-white/[0.04] flex flex-wrap items-center justify-between text-[9px] font-mono text-white/40 gap-1">
-                      <span>SOURCE: FIELD_VISIT_CONSENSUS</span>
+                      <span>SOURCE: SCRIPTED EXAMPLE</span>
                       <span>REGION: {activePreset.targetRegion}</span>
                     </div>
                   </div>
@@ -212,7 +213,7 @@ export function AgentOS({
                   <div className="flex flex-wrap items-center justify-between border-b border-white/[0.08] pb-3 gap-2">
                     <div className="flex items-center gap-2">
                       <MessageSquare className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span className="font-bold text-xs text-white">Multi-Channel Advisory Dispatch</span>
+                      <span className="font-bold text-xs text-white">Multi-channel message preview</span>
                     </div>
 
                     <div className="flex bg-slate-950 rounded-lg p-0.5 border border-white/[0.06] shrink-0">
@@ -235,7 +236,7 @@ export function AgentOS({
                   <div className="p-3.5 sm:p-4 rounded-xl bg-slate-950/90 border border-white/[0.08] space-y-3">
                     <div className="flex items-center justify-between text-xxs font-mono text-white/40">
                       <span>CHANNEL: {activeChannelTab.toUpperCase()}</span>
-                      <span className="text-emerald-400">DISPATCHED (45/45)</span>
+                      <span className="text-amber-300">PREVIEW ONLY — NOT SENT</span>
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-900/80 border border-white/[0.06] text-xs text-white/90 whitespace-pre-line leading-relaxed font-sans break-words min-h-[140px] flex flex-col justify-start">
@@ -245,15 +246,15 @@ export function AgentOS({
                     <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-center text-xxs font-mono pt-1">
                       <div className="p-2 rounded-lg bg-slate-900/50 border border-white/[0.04]">
                         <div className="text-emerald-400 font-bold">{activePreset.affectedFarmers}</div>
-                        <div className="text-[9px] text-white/40">Farmers</div>
+                        <div className="text-[9px] text-white/40">Example farmers</div>
                       </div>
                       <div className="p-2 rounded-lg bg-slate-900/50 border border-white/[0.04]">
                         <div className="text-amber-400 font-bold">{activePreset.alertsDispatched}</div>
-                        <div className="text-[9px] text-white/40">Alerts</div>
+                        <div className="text-[9px] text-white/40">Example alerts</div>
                       </div>
                       <div className="p-2 rounded-lg bg-slate-900/50 border border-white/[0.04]">
                         <div className="text-sky-400 font-bold">{activePreset.visitsQueued}</div>
-                        <div className="text-[9px] text-white/40">Visits Queued</div>
+                        <div className="text-[9px] text-white/40">Example visits</div>
                       </div>
                     </div>
                   </div>
