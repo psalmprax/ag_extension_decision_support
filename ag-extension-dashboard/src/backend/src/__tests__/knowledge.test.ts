@@ -81,6 +81,8 @@ jest.mock('../services/tavilyService', () => ({
 }));
 
 import { query } from '../services/databaseService';
+import { cacheGet, cacheSet } from '../services/cacheService';
+import { RAGV2Service } from '../services/ragV2Service';
 const mockQuery = query as jest.Mock;
 
 // ─── Fixtures (snake_case, mirror raw SQL output) ────────────────────────────
@@ -129,6 +131,27 @@ describe('Knowledge Route — performLegacySearch tuple return shape', () => {
 
     beforeEach(() => {
         mockQuery.mockReset();
+    });
+
+    it('does not serve or cache stale RAG v2 search responses', async () => {
+        jest.mocked(cacheGet).mockClear().mockResolvedValueOnce(JSON.stringify({ stale: true }));
+        jest.mocked(cacheSet).mockClear();
+        const search = jest.spyOn(RAGV2Service, 'enhancedSearch').mockResolvedValueOnce({
+            results: [], graphContext: '', citations: [],
+        });
+        try {
+            const response = await request(app)
+                .get('/api/v1/knowledge/search?query=maize&v2=true')
+                .set('Authorization', `Bearer ${officerToken}`);
+            expect(response.status).toBe(200);
+            expect(response.body.data.articles).toEqual([]);
+            expect(search).toHaveBeenCalledTimes(1);
+            expect(cacheGet).not.toHaveBeenCalled();
+            expect(cacheSet).not.toHaveBeenCalled();
+        } finally {
+            search.mockRestore();
+            jest.mocked(cacheGet).mockReset().mockResolvedValue(null);
+        }
     });
 
     it('GET /search (no q) triggers performLegacySearch and returns { articles, totalCount } tuple', async () => {

@@ -148,26 +148,22 @@ describe('RAGV2Service', () => {
     // ── Relationship Extraction ──────────────────────────────────────────────
 
     describe('extractRelationships', () => {
-        it('creates crop-disease relationships', () => {
+        it('does not turn co-occurrence into a disease claim', () => {
             const text = 'Maize is affected by northern leaf blight.';
             const entities = RAGV2Service.extractEntities(text, 'article-1');
             const rels = RAGV2Service.extractRelationships(entities, 'article-1');
 
-            const cropDiseaseRels = rels.filter(r =>
-                r.relationType === 'affected_by' || r.relationType === 'affects'
-            );
-            expect(cropDiseaseRels.length).toBeGreaterThanOrEqual(1);
+            expect(rels.length).toBeGreaterThanOrEqual(1);
+            expect(rels.every(r => r.relationType === 'co_occurs_with')).toBe(true);
         });
 
-        it('creates crop-soil relationships', () => {
+        it('does not turn co-occurrence into a soil suitability claim', () => {
             const text = 'Cassava grows well in sandy loam soil.';
             const entities = RAGV2Service.extractEntities(text, 'article-2');
             const rels = RAGV2Service.extractRelationships(entities, 'article-2');
 
-            const soilRels = rels.filter(r =>
-                r.relationType === 'grows_in' || r.relationType === 'suitable_for'
-            );
-            expect(soilRels.length).toBeGreaterThanOrEqual(1);
+            expect(rels.length).toBeGreaterThanOrEqual(1);
+            expect(rels.every(r => r.relationType === 'co_occurs_with')).toBe(true);
         });
 
         it('creates bidirectional relationships', () => {
@@ -175,11 +171,9 @@ describe('RAGV2Service', () => {
             const entities = RAGV2Service.extractEntities(text, 'article-3');
             const rels = RAGV2Service.extractRelationships(entities, 'article-3');
 
-            // Should have both crop->nutrient and nutrient->crop
-            const requires = rels.filter(r => r.relationType === 'requires');
-            const neededBy = rels.filter(r => r.relationType === 'needed_by');
-            expect(requires.length).toBeGreaterThanOrEqual(1);
-            expect(neededBy.length).toBeGreaterThanOrEqual(1);
+            expect(rels.some(r => r.sourceEntityId === 'crop:maize' && r.targetEntityId === 'nutrient:nitrogen')).toBe(true);
+            expect(rels.some(r => r.targetEntityId === 'crop:maize' && r.sourceEntityId === 'nutrient:nitrogen')).toBe(true);
+            expect(rels.every(r => r.relationType === 'co_occurs_with')).toBe(true);
         });
 
         it('tags relationships with articleId', () => {
@@ -255,10 +249,10 @@ describe('RAGV2Service', () => {
             // First call should be DELETE
             const firstCall = mockQuery.mock.calls[0];
             expect(firstCall[0]).toContain('DELETE FROM knowledge_chunks');
-            expect(firstCall[1]).toEqual(['art-4']);
+            expect(firstCall[1]).toEqual(['art-4', 'Short text content here.']);
         });
 
-        it('continues if individual chunk embedding fails', async () => {
+        it('reports individual chunk embedding failures', async () => {
             const longText = 'Maize farming practices for tropical regions. '.repeat(50); // ~2200 chars
             mockGetEmbedding
                 .mockResolvedValueOnce(fakeEmbedding())
@@ -266,8 +260,7 @@ describe('RAGV2Service', () => {
                 .mockResolvedValueOnce(fakeEmbedding());
             mockQuery.mockResolvedValue(mockResult([], 1));
 
-            const count = await RAGV2Service.chunkAndEmbedArticle('art-5', longText, {});
-            expect(count).toBeGreaterThan(0);
+            await expect(RAGV2Service.chunkAndEmbedArticle('art-5', longText, {})).rejects.toThrow('Embedding failed');
         });
     });
 
@@ -296,7 +289,7 @@ describe('RAGV2Service', () => {
     // ── Store Relationships ──────────────────────────────────────────────────
 
     describe('storeRelationships', () => {
-        it('inserts relationships with ON CONFLICT DO NOTHING', async () => {
+        it('updates the source version on relationship conflicts', async () => {
             const rels = [{
                 sourceEntityId: 'crop:maize',
                 targetEntityId: 'disease:blight',
@@ -306,14 +299,15 @@ describe('RAGV2Service', () => {
             }];
 
             mockQuery.mockResolvedValue(mockResult([], 1));
-            await RAGV2Service.storeRelationships(rels);
+            await RAGV2Service.storeRelationships(rels, 'Maize and blight');
 
             expect(mockQuery).toHaveBeenCalledTimes(1);
             const call = mockQuery.mock.calls[0];
-            expect(call[0]).toContain('ON CONFLICT DO NOTHING');
+            expect(call[0]).toContain('ON CONFLICT');
+            expect(call[0]).toContain('source_content_hash = EXCLUDED.source_content_hash');
         });
 
-        it('silently ignores duplicate key errors', async () => {
+        it('reports failed relationship writes', async () => {
             const rels = [{
                 sourceEntityId: 'crop:maize',
                 targetEntityId: 'disease:blight',
@@ -324,8 +318,7 @@ describe('RAGV2Service', () => {
 
             mockQuery.mockRejectedValue(new Error('duplicate key value violates unique constraint'));
 
-            // Should not throw
-            await expect(RAGV2Service.storeRelationships(rels)).resolves.toBeUndefined();
+            await expect(RAGV2Service.storeRelationships(rels, 'Maize and blight')).rejects.toThrow('duplicate key');
         });
     });
 
@@ -355,6 +348,7 @@ describe('RAGV2Service', () => {
             expect(results[0].articleId).toBe('art-1');
             expect(results[0].score).toBe(0.85);
             expect(results[0].citation).toContain('Maize Guide');
+            expect(mockQuery.mock.calls[0][0]).toContain('c.source_content_hash');
         });
 
         it('returns empty array on error', async () => {

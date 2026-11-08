@@ -34,12 +34,9 @@ export class VectorService {
         try {
             // Generate embedding (uses cache for repeated content)
             const embedding = await getEmbedding(content);
-            // Convert to pgvector format: [val1,val2,val3]
-            const vector = `[${embedding.join(',')}]`;
-
             await query(`
                 INSERT INTO knowledge_articles (id, title, content, category, tags, crops, regions, source, source_url, content_type, embedding, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::double precision[], NOW())
                 ON CONFLICT (id) DO UPDATE SET
                     title = EXCLUDED.title,
                     content = EXCLUDED.content,
@@ -63,7 +60,7 @@ export class VectorService {
                 metadata.source || null,
                 metadata.sourceUrl || null,
                 metadata.contentType || 'text',
-                vector
+                embedding
             ]);
         } catch (error) {
             logger.error(`Failed to upsert document ${id} to DB:`, error);
@@ -111,7 +108,7 @@ export class VectorService {
             const result = await query(`
                 SELECT * FROM (
                     SELECT id, title, content, category, crops, tags, regions, updated_at, source, source_url, content_type,
-                           (1 - (embedding <=> $1::vector)) as score
+                           (1 - (embedding::vector <=> $1::vector)) as score
                     FROM knowledge_articles
                     WHERE ${where.join(' AND ')}
                 ) sub
