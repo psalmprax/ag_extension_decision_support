@@ -110,7 +110,7 @@ export class VectorService {
             // Only select needed columns — avoid fetching the large embedding vector
             const result = await query(`
                 SELECT * FROM (
-                    SELECT id, title, content, category, crops, tags, regions, updated_at, source_url, content_type,
+                    SELECT id, title, content, category, crops, tags, regions, updated_at, source, source_url, content_type,
                            (1 - (embedding <=> $1::vector)) as score
                     FROM knowledge_articles
                     WHERE ${where.join(' AND ')}
@@ -120,7 +120,7 @@ export class VectorService {
                 LIMIT $${params.length}
             `, params as unknown as unknown[]);
 
-            type VectorRow = { id: string; content: string; title: unknown; category: unknown; crops: unknown[] | null; tags: unknown; regions: unknown; updated_at: unknown; source_url: unknown; content_type: unknown; score: unknown };
+            type VectorRow = { id: string; content: string; title: unknown; category: unknown; crops: unknown[] | null; tags: unknown; regions: unknown; updated_at: unknown; source: unknown; source_url: unknown; content_type: unknown; score: unknown };
             return (result.rows as unknown as VectorRow[]).map((row) => ({
                 id: row.id,
                 content: row.content,
@@ -128,6 +128,7 @@ export class VectorService {
                     title: row.title,
                     category: row.category,
                     crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
+                    source: row.source,
                     sourceUrl: row.source_url,
                     tags: row.tags,
                     regions: row.regions,

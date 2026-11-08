@@ -117,6 +117,12 @@ or fabricated citations in those cases, and assess factual support, practical
 usefulness and translation separately. Automated regression tests cover policy
 boundaries; they do not constitute field validation or certification.
 
+Full knowledge sync returns an error on a failed write and rejects overlapping syncs
+within the same server process. New FAOSTAT syncs use stable IDs per country and
+source; this does not remove older duplicates created by earlier versions. Live
+and static-fallback articles remain distinct, and the fallback is historical, not
+current data. The in-process guard does not coordinate multiple backend instances.
+
 Run the focused regression suites:
 
 ```bash

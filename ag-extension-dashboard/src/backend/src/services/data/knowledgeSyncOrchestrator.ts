@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { v4 as uuidv4 } from 'uuid';
+import { v5 as uuidv5 } from 'uuid';
 import { logger } from '../../utils/logger';
 import { VectorService } from '../vectorService';
 import { TropicalKnowledgeSourceService } from './tropicalKnowledgeSources';
@@ -7,15 +7,22 @@ import { faostatService } from './faostatService';
 
 /**
  * Orchestrates syncing of all external data sources into the knowledge base.
- * Runs on startup and can be triggered manually via API.
+ * The lightweight sync runs on startup; full sync can be triggered via API.
  */
+export class KnowledgeSyncInProgressError extends Error {
+    constructor() {
+        super('Knowledge sync is already in progress');
+        this.name = 'KnowledgeSyncInProgressError';
+    }
+}
+
 export class KnowledgeSyncOrchestrator {
     private static syncInProgress = false;
     private static lastSyncAt: string | null = null;
 
     /**
      * Run a full sync of all data sources.
-     * Safe to call multiple times — uses ON CONFLICT DO NOTHING.
+     * Repeated syncs update the same FAOSTAT article for each source and country.
      */
     static async syncAll(): Promise<{
         tropicalSources: number;
@@ -24,8 +31,7 @@ export class KnowledgeSyncOrchestrator {
         totalEmbeddings: number;
     }> {
         if (this.syncInProgress) {
-            logger.info('Knowledge sync already in progress, skipping.');
-            return { tropicalSources: 0, tropicalArticles: 0, faostatArticles: 0, totalEmbeddings: 0 };
+            throw new KnowledgeSyncInProgressError();
         }
 
         this.syncInProgress = true;
@@ -34,8 +40,7 @@ export class KnowledgeSyncOrchestrator {
         try {
             // 1. Seed tropical knowledge source registry
             logger.info('[KnowledgeSync] Seeding tropical knowledge sources...');
-            await TropicalKnowledgeSourceService.seedSourcesFromStatic();
-            results.tropicalSources = 8; // 8 sources in the static array
+            results.tropicalSources = await TropicalKnowledgeSourceService.seedSourcesFromStatic();
 
             // 2. Sync curated tropical articles (pest mgmt, disease, etc.)
             logger.info('[KnowledgeSync] Syncing curated tropical articles...');
@@ -48,7 +53,7 @@ export class KnowledgeSyncOrchestrator {
             const faostatArticles = await faostatService.generateCountryArticles();
             for (const article of faostatArticles) {
                 await VectorService.upsertDocument(
-                    uuidv4(),
+                    uuidv5(`faostat:${article.source}:${article.title}`, uuidv5.URL),
                     article.content,
                     {
                         title: article.title,
@@ -69,6 +74,7 @@ export class KnowledgeSyncOrchestrator {
             logger.info(`[KnowledgeSync] Complete. Sources: ${results.tropicalSources}, Articles: ${results.tropicalArticles + results.faostatArticles}, Embeddings: ${results.totalEmbeddings}`);
         } catch (error) {
             logger.error(`[KnowledgeSync] Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+            throw error;
         } finally {
             this.syncInProgress = false;
         }

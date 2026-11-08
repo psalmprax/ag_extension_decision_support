@@ -24,6 +24,7 @@ type KeywordRow = {
     tags: unknown;
     regions: unknown;
     updated_at: unknown;
+    source: unknown;
     source_url: unknown;
     content_type: unknown;
     score: unknown;
@@ -65,6 +66,7 @@ export function mapKeywordRows(rows: unknown[]): SearchResult[] {
             title: row.title,
             category: row.category,
             crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
+            source: row.source,
             sourceUrl: row.source_url,
             tags: row.tags,
             regions: row.regions,
@@ -86,7 +88,7 @@ export async function searchByTsQuery(
     applyKeywordFilters(params, where, filters);
     params.push(limit);
     const result = await query(`
-        SELECT id, title, content, category, crops, tags, regions, updated_at, source_url, content_type,
+        SELECT id, title, content, category, crops, tags, regions, updated_at, source, source_url, content_type,
                ts_rank_cd(to_tsvector('english', title || ' ' || content), to_tsquery('english', $1)) as score
         FROM knowledge_articles
         WHERE ${where.join(' AND ')}
@@ -137,28 +139,14 @@ export async function executeIlikeFallback(
     params.push(limit);
 
     const ilikeResult = await query(`
-        SELECT id, title, content, category, crops, tags, regions, updated_at, source_url, content_type, 0.6 as score
+        SELECT id, title, content, category, crops, tags, regions, updated_at, source, source_url, content_type, 0.6 as score
         FROM knowledge_articles
         WHERE ${conditions.join(' AND ')}
         ORDER BY created_at DESC
         LIMIT $${params.length}
     `, params as unknown as unknown[]);
 
-    return (ilikeResult.rows as unknown as KeywordRow[]).map((row) => ({
-        id: row.id,
-        content: row.content,
-        metadata: {
-            title: row.title,
-            category: row.category,
-            crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
-            sourceUrl: row.source_url,
-            tags: row.tags,
-            regions: row.regions,
-            updatedAt: row.updated_at,
-            contentType: (row.content_type as string) || 'text'
-        },
-        score: 0.6
-    }));
+    return mapKeywordRows(ilikeResult.rows);
 }
 
 /** Search for knowledge articles using PostgreSQL full-text search (keyword-based). */
