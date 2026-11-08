@@ -2,9 +2,9 @@
 /**
  * RAG v2 Service — Chunking + Knowledge Graph + Re-ranking + Citations
  *
- * Upgrades the basic vector search into a production-grade RAG pipeline:
+ * Adds optional derived retrieval to the article search pipeline:
  * 1. Chunking: Long articles split into overlapping chunks for precise retrieval
- * 2. Knowledge Graph: Entity extraction + relationship traversal for multi-hop reasoning
+ * 2. Knowledge Graph: entity co-occurrence, not verified relationships
  * 3. Re-ranking: LLM-based relevance scoring after initial retrieval
  * 4. Citations: Source attribution in every answer
  */
@@ -34,7 +34,7 @@ export interface Entity {
 export interface Relationship {
     sourceEntityId: string;
     targetEntityId: string;
-    relationType: string; // e.g., 'treats', 'affects', 'grows_in', 'requires'
+    relationType: string;
     articleId?: string;
     properties: Record<string, unknown>;
 }
@@ -124,25 +124,26 @@ export class RAGV2Service {
         const chunks = chunkText(content, 800, 150);
         if (chunks.length === 0) return 0;
 
-        // Delete existing chunks for this article
-        await query('DELETE FROM knowledge_chunks WHERE article_id = $1', [articleId]);
+        await query(
+            `DELETE FROM knowledge_chunks
+             WHERE article_id = $1 AND source_content_hash = encode(sha256(convert_to($2::text, 'UTF8')), 'hex')
+               AND EXISTS (SELECT 1 FROM knowledge_articles WHERE id = $1 AND content = $2)`,
+            [articleId, content]
+        );
 
         let embedded = 0;
         for (let i = 0; i < chunks.length; i++) {
-            try {
-                const embedding = await getEmbedding(chunks[i]);
-                const vector = `[${embedding.join(',')}]`;
-                await query(
-                    `INSERT INTO knowledge_chunks (id, article_id, chunk_index, content, embedding)
-                     VALUES ($1, $2, $3, $4, $5::vector)
-                     ON CONFLICT (id) DO UPDATE SET content = EXCLUDED.content, embedding = EXCLUDED.embedding`,
-                    [`${articleId}-chunk-${i}`, articleId, i, chunks[i], vector]
-                );
-                embedded++;
-            } catch (err: unknown) {
-                const errorMessage = err instanceof Error ? err.message : String(err);
-                logger.warn(`[RAGv2] Failed to embed chunk ${i} of article ${articleId}: ${errorMessage}`);
-            }
+            const embedding = await getEmbedding(chunks[i]);
+            const inserted = await query(
+                `INSERT INTO knowledge_chunks (id, article_id, chunk_index, content, embedding, source_content_hash)
+                 SELECT $1, id, $3, $4, $5::double precision[], encode(sha256(convert_to($6::text, 'UTF8')), 'hex')
+                 FROM knowledge_articles WHERE id = $2 AND content = $6
+                 ON CONFLICT (id) DO UPDATE SET content = EXCLUDED.content, embedding = EXCLUDED.embedding,
+                     source_content_hash = EXCLUDED.source_content_hash`,
+                [`${articleId}-chunk-${i}`, articleId, i, chunks[i], embedding, content]
+            );
+            if (inserted.rowCount !== 1) throw new Error(`Article ${articleId} changed during chunk indexing`);
+            embedded++;
         }
 
         return embedded;
@@ -213,25 +214,21 @@ export class RAGV2Service {
     // ── Relationship Extraction ──────────────────────────────────────────────
 
     private static processRelationshipPair(a: Entity, b: Entity, articleId: string, rels: Relationship[]) {
-        const relType = this.inferRelationType(a.type, b.type);
-        if (relType) {
+        if (a.type !== b.type) {
             rels.push({
                 sourceEntityId: a.id,
                 targetEntityId: b.id,
-                relationType: relType,
+                relationType: 'co_occurs_with',
                 articleId,
                 properties: { coOccurrence: true }
             });
-            const reverseRel = this.inferRelationType(b.type, a.type);
-            if (reverseRel) {
-                rels.push({
-                    sourceEntityId: b.id,
-                    targetEntityId: a.id,
-                    relationType: reverseRel,
-                    articleId,
-                    properties: { coOccurrence: true }
-                });
-            }
+            rels.push({
+                sourceEntityId: b.id,
+                targetEntityId: a.id,
+                relationType: 'co_occurs_with',
+                articleId,
+                properties: { coOccurrence: true }
+            });
         }
     }
 
@@ -248,43 +245,17 @@ export class RAGV2Service {
         return rels;
     }
 
-    private static inferRelationType(sourceType: string, targetType: string): string | null {
-        const key = `${sourceType}->${targetType}`;
-        const map: Record<string, string> = {
-            'crop->disease': 'affected_by',
-            'disease->crop': 'affects',
-            'crop->soil': 'grows_in',
-            'soil->crop': 'suitable_for',
-            'crop->nutrient': 'requires',
-            'nutrient->crop': 'needed_by',
-            'crop->practice': 'managed_by',
-            'practice->crop': 'applies_to',
-            'crop->region': 'grown_in',
-            'region->crop': 'grows',
-            'disease->practice': 'treated_by',
-            'practice->disease': 'treats',
-            'disease->nutrient': 'related_to',
-            'nutrient->disease': 'related_to',
-        };
-        return map[key] || null;
-    }
-
-    static async storeRelationships(relationships: Relationship[]): Promise<void> {
+    static async storeRelationships(relationships: Relationship[], sourceContent: string): Promise<void> {
         for (const rel of relationships) {
-            try {
-                await query(
-                    `INSERT INTO knowledge_relationships (source_id, target_id, relation_type, article_id, properties)
-                     VALUES ($1, $2, $3, $4, $5)
-                     ON CONFLICT DO NOTHING`,
-                    [rel.sourceEntityId, rel.targetEntityId, rel.relationType, rel.articleId, JSON.stringify(rel.properties)]
-                );
-            } catch (err: unknown) {
-                // Ignore duplicate key errors
-                const errorMessage = err instanceof Error ? err.message : String(err);
-                if (!errorMessage.includes('duplicate key')) {
-                    logger.warn(`[RAGv2] Failed to store relationship: ${errorMessage}`);
-                }
-            }
+            const inserted = await query(
+                `INSERT INTO knowledge_relationships (source_id, target_id, relation_type, article_id, properties, source_content_hash)
+                 SELECT $1, $2, $3, id, $5, encode(sha256(convert_to($6::text, 'UTF8')), 'hex')
+                 FROM knowledge_articles WHERE id = $4 AND content = $6
+                 ON CONFLICT (source_id, target_id, relation_type, article_id) DO UPDATE SET
+                     properties = EXCLUDED.properties, source_content_hash = EXCLUDED.source_content_hash`,
+                [rel.sourceEntityId, rel.targetEntityId, rel.relationType, rel.articleId, JSON.stringify(rel.properties), sourceContent]
+            );
+            if (inserted.rowCount !== 1) throw new Error(`Article ${rel.articleId} changed during graph indexing`);
         }
     }
 
@@ -317,7 +288,9 @@ export class RAGV2Service {
             `SELECT e.id, e.name, e.entity_type, e.properties, r.relation_type
              FROM knowledge_relationships r
              JOIN knowledge_entities e ON (e.id = r.target_id)
-             WHERE r.source_id = $1
+             JOIN knowledge_articles a ON a.id = r.article_id
+             WHERE r.source_id = $1 AND r.relation_type = 'co_occurs_with'
+               AND r.source_content_hash = encode(sha256(convert_to(a.content, 'UTF8')), 'hex')
              LIMIT 10`,
             [eId]
         );
@@ -360,7 +333,7 @@ export class RAGV2Service {
 
     // ── Chunk-Level Search ───────────────────────────────────────────────────
 
-    static async searchChunks(queryText: string, limit: number = 10): Promise<RankedResult[]> {
+    static async searchChunks(queryText: string, limit: number = 10, filters: { category?: string; crop?: string } = {}): Promise<RankedResult[]> {
         try {
             const embedding = await getEmbedding(queryText);
             const vector = `[${embedding.join(',')}]`;
@@ -368,13 +341,16 @@ export class RAGV2Service {
             const { rows } = await query(
                 `SELECT c.id, c.article_id, c.content, c.chunk_index,
                         a.title, a.category, a.source, a.source_url, a.crops, a.tags, a.regions, a.updated_at,
-                        (1 - (c.embedding <=> $1::vector)) as score
+                        (1 - (c.embedding::vector <=> $1::vector)) as score
                  FROM knowledge_chunks c
                  JOIN knowledge_articles a ON a.id = c.article_id
                  WHERE c.embedding IS NOT NULL
-                 ORDER BY c.embedding <=> $1::vector
+                   AND c.source_content_hash = encode(sha256(convert_to(a.content, 'UTF8')), 'hex')
+                   AND ($3::text IS NULL OR a.category = $3)
+                   AND ($4::text IS NULL OR $4 = ANY(a.crops))
+                 ORDER BY c.embedding::vector <=> $1::vector
                  LIMIT $2`,
-                [vector, limit]
+                [vector, limit, filters.category ?? null, filters.crop ?? null]
             );
 
             return rows.map((row: Record<string, unknown>) => ({
@@ -449,21 +425,26 @@ JSON scores:`;
 
     // ── Full RAG v2 Pipeline ─────────────────────────────────────────────────
 
-    private static async fetchInitialResults(queryText: string, limit: number, useChunks: boolean, filters: Record<string, unknown>): Promise<RankedResult[]> {
-        if (useChunks) {
-            return await this.searchChunks(queryText, limit * 3);
-        } else {
-            const { VectorService } = await import('./vectorService');
-            const articleResults = await VectorService.hybridSearch(queryText, limit * 3, filters);
-            return articleResults.map(r => ({
+    private static async fetchInitialResults(queryText: string, limit: number, useChunks: boolean, filters: { category?: string; crop?: string }): Promise<RankedResult[]> {
+        const { VectorService } = await import('./vectorService');
+        const articleResults = await VectorService.hybridSearch(queryText, limit * 3, filters);
+        const articles = articleResults.map(r => ({
                 id: r.id,
                 articleId: r.id,
                 content: r.content,
                 metadata: r.metadata,
                 score: r.score,
                 citation: `${r.metadata.title} (${r.metadata.category})`
-            }));
-        }
+        }));
+        if (!useChunks) return articles;
+        const chunks = await this.searchChunks(queryText, limit * 3, filters);
+        const byArticle = new Map<string, RankedResult>();
+        for (const chunk of chunks) if (!byArticle.has(chunk.articleId)) byArticle.set(chunk.articleId, chunk);
+        const articleIds = new Set(articles.map(article => article.articleId));
+        return [
+            ...articles.map(article => byArticle.get(article.articleId) ?? article),
+            ...[...byArticle.values()].filter(chunk => !articleIds.has(chunk.articleId)),
+        ];
     }
 
     private static async buildGraphContext(queryText: string): Promise<string> {
@@ -489,7 +470,7 @@ JSON scores:`;
             }
 
             if (relatedContexts.length > 0) {
-                return `Knowledge Graph Context:\n${relatedContexts.join('\n')}`;
+                return `Entity co-occurrences in articles (not verified relationships or recommendations):\n${relatedContexts.join('\n')}`;
             }
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -548,7 +529,7 @@ JSON scores:`;
             totalEntities += entities.size;
 
             const relationships = this.extractRelationships(entities, row.id);
-            await this.storeRelationships(relationships);
+            await this.storeRelationships(relationships, row.content);
             totalRels += relationships.length;
         }
 

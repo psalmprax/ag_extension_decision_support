@@ -54,7 +54,7 @@ async function performLegacySearch(limit: string, offset: string, category?: str
     };
 }
 
-async function executeRagV2Search(q: string, limit: string, category: string | undefined, crop: string | undefined, cacheKey: string, res: Response) {
+async function executeRagV2Search(q: string, limit: string, category: string | undefined, crop: string | undefined, res: Response) {
     try {
         const { RAGV2Service } = await import('@/services/ragV2Service');
         const enhanced = await RAGV2Service.enhancedSearch(q, {
@@ -75,7 +75,6 @@ async function executeRagV2Search(q: string, limit: string, category: string | u
             success: true,
             data: { articles, graphContext: enhanced.graphContext, citations: enhanced.citations },
         };
-        await cacheSet(cacheKey, JSON.stringify(response), 300);
         return res.json(response);
     } catch (ragErr) {
         logger.warn('RAG v2 search failed, falling back to standard search:', ragErr);
@@ -83,7 +82,7 @@ async function executeRagV2Search(q: string, limit: string, category: string | u
     }
 }
 
-async function fetchKnowledgeArticles(q: unknown, limit: unknown, offset: unknown, category: unknown, crop: unknown, v2: unknown, cacheKey: string, res: Response): Promise<SearchResult[] | Response> {
+async function fetchKnowledgeArticles(q: unknown, limit: unknown, offset: unknown, category: unknown, crop: unknown, v2: unknown, res: Response): Promise<SearchResult[] | Response> {
     let articles: SearchResult[] = [];
     const pool = getPool();
 
@@ -91,7 +90,7 @@ async function fetchKnowledgeArticles(q: unknown, limit: unknown, offset: unknow
 
     if (q) {
         if (v2 === 'true' || v2 === true) {
-            const ragRes = await executeRagV2Search(q as string, limit as string, category as string | undefined, crop as string | undefined, cacheKey, res);
+            const ragRes = await executeRagV2Search(q as string, limit as string, category as string | undefined, crop as string | undefined, res);
             if (ragRes) return ragRes; // Response already sent
         } else if (v2 === 'false' || v2 === false) {
             // Fast-path: keyword search via Postgres FTS / ILIKE without embedding or LLM overhead (<10ms)
@@ -132,12 +131,13 @@ router.get('/search', validate({ query: knowledgeSearchQuery }), async (req: Req
         const v2 = qv.v2;
 
         const cacheKey = 'knowledge:search:' + q + ':' + category + ':' + crop + ':' + limit + ':' + offset + ':' + (v2 || 'false');
-        const cached = await cacheGet(cacheKey);
+        const isV2 = v2 === 'true' || v2 === true;
+        const cached = isV2 ? null : await cacheGet(cacheKey);
         if (cached) {
             return res.json(JSON.parse(cached));
         }
 
-        const fetchResult = await fetchKnowledgeArticles(q, limit, offset, category, crop, v2, cacheKey, res);
+        const fetchResult = await fetchKnowledgeArticles(q, limit, offset, category, crop, v2, res);
         if ('json' in fetchResult && typeof fetchResult.json === 'function') {
             // It's a response object, already handled
             return;
@@ -155,7 +155,7 @@ router.get('/search', validate({ query: knowledgeSearchQuery }), async (req: Req
             },
         };
 
-        await cacheSet(cacheKey, JSON.stringify(response), 300);
+        if (!isV2) await cacheSet(cacheKey, JSON.stringify(response), 300);
 
         const user = (req as Request & { user?: Record<string, unknown> }).user;
         const userId = (user?.userId || user?.id) as string | undefined;
