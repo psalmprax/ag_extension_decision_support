@@ -10,6 +10,8 @@ import { logger } from '@/utils/logger';
 import type { SearchResult } from '@/services/vectorService';
 import type { ReasoningResult } from '@/services/aiProvider/aiProvider';
 
+const HISTORY_WRITE_TIMEOUT_MS = 2000;
+
 jest.mock('@/services/cacheService', () => ({ cacheSet: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('@/services/knowledge/cacheLookup', () => ({ checkExactCachesOnly: jest.fn().mockResolvedValue(null) }));
 jest.mock('@/services/knowledge/userContext', () => ({
@@ -215,11 +217,14 @@ describe('Knowledge advisory policy integration', () => {
                     return result;
                 });
                 await jest.advanceTimersByTimeAsync(path === 'generated' ? 5000 : 0);
+                expect(settled).toBe(true);
                 expect(logSearch).toHaveBeenCalledTimes(1);
-                await jest.advanceTimersByTimeAsync(1999);
-                expect(settled).toBe(false);
-                await jest.advanceTimersByTimeAsync(1);
                 const result = await pending;
+                await jest.advanceTimersByTimeAsync(HISTORY_WRITE_TIMEOUT_MS - 1);
+                expect(logger.warn).not.toHaveBeenCalledWith(
+                    expect.stringContaining('history persistence timed out'), expect.any(Error)
+                );
+                await jest.advanceTimersByTimeAsync(1);
 
                 expect(result.answerMode).toBe(path === 'extractive' ? 'extractive' : 'generated');
                 expect(result.cached).toBe(path === 'cached');
@@ -228,6 +233,9 @@ describe('Knowledge advisory policy integration', () => {
                 );
                 rejectWrite(new Error('Late database failure'));
                 await Promise.resolve();
+                expect(logger.error).toHaveBeenCalledWith(
+                    'Knowledge history persistence failed:', expect.any(Error)
+                );
             } finally {
                 jest.useRealTimers();
             }

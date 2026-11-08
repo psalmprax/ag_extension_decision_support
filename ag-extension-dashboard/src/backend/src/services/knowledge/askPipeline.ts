@@ -69,10 +69,23 @@ async function resolveAggregatedContext(
 
 const HISTORY_WRITE_TIMEOUT_MS = 2000;
 
-async function logSearchWithTimeout(...args: Parameters<typeof logSearch>): Promise<void> {
+function logSearchWithTimeout(...args: Parameters<typeof logSearch>): void {
+    let historyWrite: Promise<void>;
     try {
-        await withAdvisoryTimeout(() => logSearch(...args), HISTORY_WRITE_TIMEOUT_MS, 'Knowledge history persistence');
+        historyWrite = Promise.resolve(logSearch(...args));
     } catch (error) {
+        logger.error('Knowledge history persistence failed:', error);
+        return;
+    }
+
+    const handledHistoryWrite = historyWrite.catch(error => {
+        logger.error('Knowledge history persistence failed:', error);
+    });
+    void withAdvisoryTimeout(
+        () => handledHistoryWrite,
+        HISTORY_WRITE_TIMEOUT_MS,
+        'Knowledge history persistence'
+    ).catch(error => {
         if (error instanceof AdvisoryTimeoutError) {
             logger.warn('Knowledge history persistence timed out; returning answer without waiting for history:', error);
         } else {
@@ -97,7 +110,7 @@ async function cacheAndLogResponse(userId: string, queryText: string, attachment
         }
     }
 
-    await logSearchWithTimeout(
+    logSearchWithTimeout(
         userId, queryText, queryCategories[0] || 'general_inquiry', undefined,
         response.answer, response.reasoning, response.visuals
     );
@@ -283,7 +296,7 @@ export async function runAskQuestion(
     const exactHit = await lookupScopedAnswer(cleanQueryText, baseRedisKey, attachments, options);
     if (exactHit) {
         logger.info(`Exact cache HIT (pre-categorization) for query: "${cleanQueryText}"`);
-        await logSearchWithTimeout(userId, cleanQueryText, undefined, undefined, exactHit.answer, exactHit.reasoning, exactHit.visuals);
+        logSearchWithTimeout(userId, cleanQueryText, undefined, undefined, exactHit.answer, exactHit.reasoning, exactHit.visuals);
         return exactHit;
     }
 
@@ -328,7 +341,7 @@ export async function runAskQuestion(
             advisoryQuality: validated.evidence, safety: guarded.boundaryCheck,
         };
         if (response.answerMode !== 'unavailable') {
-            await logSearchWithTimeout(userId, cleanQueryText, queryCategories[0], undefined, response.answer, response.reasoning, response.visuals);
+            logSearchWithTimeout(userId, cleanQueryText, queryCategories[0], undefined, response.answer, response.reasoning, response.visuals);
         }
         return response;
     }
