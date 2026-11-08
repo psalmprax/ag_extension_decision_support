@@ -240,7 +240,7 @@ export const AnalysisResultsHUD: React.FC<{
               >
                 <div className="flex items-center justify-between mb-1">
                   <h5 className="text-xs font-medium text-white">
-                    {disease.reviewStatus === 'needs_expert_review' ? 'Probable Match: ' : ''}
+                    {disease.reviewStatus === 'needs_expert_review' || disease.provenance.evidenceStatus !== 'verified_source' ? 'Possible Match: ' : ''}
                     {disease.disease}
                   </h5>
                   <span
@@ -268,7 +268,7 @@ export const AnalysisResultsHUD: React.FC<{
       {imageAnalysis.recommendations.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-xs font-semibold text-white">
-            Immediate agronomic interventions
+            Guidance
           </h4>
           <div className="grid grid-cols-1 gap-1.5">
             {imageAnalysis.recommendations.map((rec, index) => (

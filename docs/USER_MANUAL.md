@@ -332,14 +332,20 @@ Two paths are possible, and the result tells you which one ran:
 | On-device scan | No connection, or when you choose the offline scanner | Colour and lesion-based classification computed on the phone. No image leaves the device. |
 | Server analysis | Connection available and the vision service is configured | Model-based diagnosis with ranked candidates and a confidence score |
 
-Both paths return a confidence value. Treat anything below the displayed threshold as "possible, needs confirmation" and escalate rather than treating on the spot.
+Model confidence and symptom-match scores are not proof of a diagnosis, at any value. Confirm findings with a qualified local expert before treatment.
+
+## Video observations
+
+Select **Video Observations**, choose an MP4, WebM or MOV file up to 30 MB, and select **Analyze video**. Sign-in, connectivity, a configured vision provider and server-side FFmpeg are required. The server extracts a limited number of frames and returns only supported visual observation labels. The video frames are sent to the configured provider; do not upload sensitive footage without appropriate consent.
+
+The result is unverified and is not a diagnosis. If the video cannot be decoded, the provider is unavailable, or its response cannot be safely interpreted, the screen reports the failure and keeps the selected video for retry. Deployment-specific proxy or request-body limits can be lower than 30 MB.
 
 ## Reading a diagnosis result
 
 - **Candidates** - likely causes, each with a confidence score. The top candidate is not a certainty.
 - **Evidence** - the symptoms the assessment relied on.
 - **Provenance** - which engine produced the result and whether it was on-device, model-based, or unavailable.
-- **Recommended action** - treatment or cultural guidance, including dose and legal constraints where a pesticide is suggested.
+- **Treatment guidance** - specific treatment and prevention instructions are withheld until a qualified local expert confirms the diagnosis and applicable authorization.
 
 If the service is unavailable, the screen says so and offers the on-device scanner and a symptom questionnaire. It does not fabricate a diagnosis.
 
@@ -348,7 +354,7 @@ If the service is unavailable, the screen says so and offers the on-device scann
 | Action | Result |
 |---|---|
 | Save to farmer record | Attaches the diagnosis to the farmer and field history |
-| Create advisory | Opens the advisory composer prefilled with the treatment |
+| Create advisory | Use locally verified guidance after an expert review |
 | Plot on WorldMonitor | Adds the finding to the outbreak map so neighbouring officers see the signal |
 | Escalate | Assigns the case for review with the evidence attached |
 

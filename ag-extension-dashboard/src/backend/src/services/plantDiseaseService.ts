@@ -66,6 +66,8 @@ export interface SoilAnalysisResult {
 const DIAGNOSTIC_REVIEW_THRESHOLD = 0.75;
 const DIAGNOSTIC_SAFETY_NOTICE =
   'General guidance only. Confirm the diagnosis with a qualified agronomist and follow locally approved product labels before treatment.';
+const WITHHELD_TREATMENT =
+  'Treatment and prevention advice is withheld until a qualified local expert confirms the diagnosis and applicable product authorization.';
 
 function normalizeConfidence(value: number): number {
   if (!Number.isFinite(value)) return 0;
@@ -73,8 +75,9 @@ function normalizeConfidence(value: number): number {
   return Math.max(0, Math.min(1, normalized));
 }
 
-function getReviewStatus(confidence: number): DiagnosticReviewStatus {
-  return normalizeConfidence(confidence) >= DIAGNOSTIC_REVIEW_THRESHOLD ? 'ready' : 'needs_expert_review';
+function getReviewStatus(confidence: number, evidenceStatus: DiagnosticEvidenceStatus): DiagnosticReviewStatus {
+  return evidenceStatus === 'verified_source' && normalizeConfidence(confidence) >= DIAGNOSTIC_REVIEW_THRESHOLD
+    ? 'ready' : 'needs_expert_review';
 }
 
 function createProvenance(
@@ -462,20 +465,23 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
     provenance: DiagnosticProvenance
   ): PlantImageAnalysis {
     const confidence = normalizeConfidence(analysis.confidence);
-    const reviewStatus = getReviewStatus(confidence);
+    const reviewStatus = getReviewStatus(confidence, provenance.evidenceStatus);
     return {
       ...analysis,
       confidence,
       reviewStatus,
       provenance,
+      recommendations: [WITHHELD_TREATMENT],
       diseases: (analysis.diseases ?? []).map(disease => {
         const diseaseConfidence = normalizeConfidence(disease.confidence);
         return {
           ...disease,
           confidence: diseaseConfidence,
-          reviewStatus: getReviewStatus(diseaseConfidence),
+          reviewStatus: getReviewStatus(diseaseConfidence, provenance.evidenceStatus),
           provenance,
-          safetyNotice: disease.safetyNotice ?? DIAGNOSTIC_SAFETY_NOTICE,
+          safetyNotice: DIAGNOSTIC_SAFETY_NOTICE,
+          treatment: [WITHHELD_TREATMENT],
+          prevention: [WITHHELD_TREATMENT],
         };
       }),
     };
@@ -493,7 +499,8 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
           ? Math.max(0, Math.min(100, analysis.overallHealthScore))
           : null,
       confidence,
-      reviewStatus: getReviewStatus(confidence),
+      reviewStatus: getReviewStatus(confidence, provenance.evidenceStatus),
+      recommendations: [WITHHELD_TREATMENT],
       provenance,
       npkDeficiencies: {
         nitrogen: analysis.npkDeficiencies?.nitrogen ?? 'unknown',
@@ -667,14 +674,14 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
         diagnoses.push({
           disease: diseaseId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
           confidence,
-          reviewStatus: getReviewStatus(confidence),
+          reviewStatus: getReviewStatus(confidence, provenance.evidenceStatus),
           provenance,
           safetyNotice: DIAGNOSTIC_SAFETY_NOTICE,
           severity: this.getSymptomSeverity(similarity),
           description: diseaseInfo.description,
           symptoms: matchedSymptoms.length > 0 ? matchedSymptoms : [diseaseInfo.symptoms[0]],
-          treatment: diseaseInfo.treatment,
-          prevention: diseaseInfo.prevention,
+          treatment: [WITHHELD_TREATMENT],
+          prevention: [WITHHELD_TREATMENT],
         });
       }
     }
@@ -708,7 +715,10 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
       : diseaseId.toLowerCase().replace(/\s+/g, '_');
     const entry = PlantDiseaseService.DISEASE_DATABASE[key];
     if (!entry) return null;
-    return { disease: PlantDiseaseService.prettifyDiseaseId(key), ...entry };
+    return {
+      disease: PlantDiseaseService.prettifyDiseaseId(key), ...entry,
+      treatment: [WITHHELD_TREATMENT], prevention: [WITHHELD_TREATMENT],
+    };
   }
 
   /** Alias for getDiseaseInfo for caller contract flexibility */

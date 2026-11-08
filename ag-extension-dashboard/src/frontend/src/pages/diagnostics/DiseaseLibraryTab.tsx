@@ -26,7 +26,7 @@ export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onVi
             </h3>
           </div>
           <p className="text-[11px] font-mono text-slate-400">
-            Browse FAO and National Extension verified pathology dossiers, bio-remedies, and preventative schedules.
+            Browse the internal disease reference. Entries are not verified treatment protocols.
           </p>
         </div>
 
@@ -62,7 +62,7 @@ export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onVi
                     {disease}
                   </h4>
                   <span className="text-[10px] font-mono text-slate-500 font-medium">
-                    Verified Protocol
+                    Reference information
                   </span>
                 </div>
               </div>

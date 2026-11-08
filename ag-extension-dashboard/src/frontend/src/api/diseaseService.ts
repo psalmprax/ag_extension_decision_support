@@ -1,5 +1,20 @@
 import apiClient from './client';
 
+export const MAX_DIAGNOSIS_VIDEO_BYTES = 30 * 1024 * 1024;
+
+export async function analyzeCropVideo(video: string): Promise<{ analysis: string; framesAnalyzed: number }> {
+  const response = await apiClient.post<{ success: boolean; data: { analysis: string; framesAnalyzed: number } }>(
+    '/ai/analyze-video',
+    { video, mode: 'crop_observations' }
+  );
+  const { data } = response.data;
+  if (!response.data.success || typeof data?.analysis !== 'string' || !data.analysis.trim() ||
+      !Number.isInteger(data.framesAnalyzed) || data.framesAnalyzed < 1) {
+    throw new Error('Video observations were unavailable. Please try again.');
+  }
+  return data;
+}
+
 export interface DiagnosticProvenance {
   evidenceStatus: 'verified_source' | 'no_verified_source';
   source: string;

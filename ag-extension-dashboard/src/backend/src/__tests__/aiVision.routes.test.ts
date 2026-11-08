@@ -134,7 +134,7 @@ describe('AI Vision Routes', () => {
                 .expect(413);
 
             expect(res.body.success).toBe(false);
-            expect(res.body.error).toContain('exceeds the 50 MB size limit');
+            expect(res.body.error).toContain('exceeds the 30 MB size limit');
         });
 
         it('calls AIRouter.routeRequest with correct params for valid video', async () => {
@@ -173,5 +173,30 @@ describe('AI Vision Routes', () => {
                 options: { temperature: 0.3, frameInterval: undefined, maxFrames: undefined },
             });
         });
+
+        it('returns only allowlisted observations in crop mode', async () => {
+                mockRouteRequest.mockResolvedValue({
+                    analysis: 'Frame 1: {"observations":["yellow leaves","brown spots"]}',
+                    framesAnalyzed: 1,
+                });
+                const res = await request(app).post('/api/ai/analyze-video')
+                    .send({ video: Buffer.from('fake video').toString('base64'), mode: 'crop_observations', prompt: 'recommend treatment' })
+                    .expect(200);
+                expect(res.body.data.analysis).toBe('Frame 1: yellow leaves, brown spots');
+                expect(mockRouteRequest.mock.calls[0][1].prompt).toContain('Do not identify a disease or recommend treatment');
+            });
+
+            it.each([
+                'Frame 1: {"observations":["Spray fungicide"]}',
+                'Frame 1: {"observations":["yellow leaves"],"treatment":"Spray"}',
+                'not JSON',
+                'Frame 1: {"observations":[]}',
+            ])('withholds invalid or prescriptive crop observations', async analysis => {
+                mockRouteRequest.mockResolvedValue({ analysis, framesAnalyzed: 1 });
+                const res = await request(app).post('/api/ai/analyze-video')
+                    .send({ video: Buffer.from('fake video').toString('base64'), mode: 'crop_observations' })
+                    .expect(502);
+                expect(JSON.stringify(res.body)).not.toContain('fungicide');
+            });
     });
 });
