@@ -479,7 +479,23 @@ The platform refuses to fill gaps with invented values. If a metric could not be
 
 # SMS and messaging channels
 
-Messaging reaches farmers who do not use the app. Everything sent is recorded against the farmer and counted against the plan quota.
+Messaging reaches farmers who do not use the app. Delivery and record-keeping depend on the configured provider and channel; a provider accepting a message does not guarantee delivery.
+
+## Ask for a knowledge hint
+
+On SMS, Twilio WhatsApp or Telegram, send `ASK` followed by a question, for example `ASK maize leaves turning yellow`. Include the crop, location, growth stage and symptoms when relevant. Telegram also accepts `/ask`. Send `ASK` alone for instructions. Do not include personal or sensitive information; messages may be retained by the service and its providers.
+
+The reply is a short, separately reviewed public hint linked to a matching Knowledge Base article, not a diagnosis or a treatment prescription. Confirm it with a local extension officer. A message does not automatically request a visit or queue an officer review. If there is no eligible matching source, the reply says so. USSD cannot retrieve knowledge hints; use SMS instead.
+
+Administrators must explicitly configure public hints before any are available. The Knowledge Base does not currently have a public/private visibility field, so the channel does **not** expose article text, private documents, or tenant-specific knowledge. `MESSAGING_KB_PUBLIC_HINTS` is a JSON array with at most 100 entries, each containing `articleId`, `sha256`, `source`, and `hint`. Example structure:
+
+```json
+[{"articleId":"9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb01","sha256":"REPLACE_WITH_REVISION_HASH","source":"Public field guide","hint":"Inspect maize leaves regularly."}]
+```
+
+For each article, independently verify public redistribution rights and review the hint for safety and general applicability. `source` is a public source label (at most 60 characters) and `hint` is the approved standalone public note (at most 160 characters); neither may contain private information. Notes containing treatment rates or common pesticide/fertilizer terms are withheld, but this automated screen is not a substitute for review. The SHA-256 must be the lowercase hex digest of the UTF-8 bytes of JavaScript `JSON.stringify([article.title, article.content])`. Calculate it from the exact database values, for example with `crypto.createHash('sha256').update(JSON.stringify([title, content])).digest('hex')`. A changed article or one tagged `unverified_scrape` is withheld until reviewed and reapproved. An empty list disables hints; malformed configuration or a database failure produces an unavailable response. Remove an entry to revoke it. Configure and distribute the same list to all backend instances.
+
+Telegram requires `TELEGRAM_WEBHOOK_SECRET` and a webhook registered with the same Telegram `secret_token`; requests without the matching secret are rejected. SMS inbound requires a supported provider signature. WhatsApp replies currently require the Twilio WhatsApp provider; Meta Cloud outbound delivery is not implemented. Ensure provider credentials, webhook registration and delivery monitoring are in place before relying on any channel.
 
 ## Send a bulk SMS
 

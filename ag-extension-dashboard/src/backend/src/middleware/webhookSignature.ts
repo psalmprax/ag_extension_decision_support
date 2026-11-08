@@ -4,12 +4,29 @@ import { logger } from '@/utils/logger';
 
 const META_SIGNATURE_HEADER = 'x-hub-signature-256';
 const TWILIO_SIGNATURE_HEADER = 'x-twilio-signature';
+const TELEGRAM_SECRET_HEADER = 'x-telegram-bot-api-secret-token';
 
 const safeHexEqual = (received: string, expected: string): boolean => {
     const a = Buffer.from(received, 'utf8');
     const b = Buffer.from(expected, 'utf8');
     if (a.length !== b.length) return false;
     return crypto.timingSafeEqual(a, b);
+};
+
+export const verifyTelegramWebhookSecret = (req: Request, res: Response, next: NextFunction): void => {
+    const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    if (!secret) {
+        logger.crit('TELEGRAM_WEBHOOK_SECRET not set — rejecting Telegram webhook');
+        res.status(503).json({ success: false, error: 'Telegram webhook verification is not configured' });
+        return;
+    }
+    const received = req.headers[TELEGRAM_SECRET_HEADER];
+    if (typeof received !== 'string' || !safeHexEqual(received, secret)) {
+        logger.warn('Telegram webhook rejected — invalid secret token');
+        res.status(403).json({ success: false, error: 'Webhook signature verification failed' });
+        return;
+    }
+    next();
 };
 
 const verifyMetaSignature = (rawBody: Buffer, signatureHeader: string, appSecret: string): boolean => {

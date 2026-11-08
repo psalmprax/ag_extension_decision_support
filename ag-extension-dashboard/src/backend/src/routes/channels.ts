@@ -4,7 +4,7 @@ import { authorize, AuthRequest } from '@/middleware/authorize';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
-import { verifyInboundWebhookSignature } from '@/middleware/webhookSignature';
+import { verifyTelegramWebhookSecret } from '@/middleware/webhookSignature';
 import { telegramService } from '@/services/telegramService';
 import { whatsappService } from '@/services/whatsappService';
 import { smsService } from '@/services/smsService';
@@ -13,6 +13,7 @@ import { checkMessageAccess, MessageAccessError } from '@/services/messageAccess
 import { WeatherService } from '@/services/weatherService';
 import { marketPriceService } from '@/services/marketPriceService';
 import type { TenantChannelConfigRow } from '@/types/rowTypes';
+import { ASK_HELP, messagingKnowledgeReply, parseAskCommand } from '@/services/knowledge/messagingHints';
 
 const router = Router();
 
@@ -71,7 +72,28 @@ async function handleTelegramPrices(chatId: string) {
     }
 }
 
-router.post('/telegram/webhook', verifyInboundWebhookSignature, async (req: Request, res: Response) => {
+async function handleTelegramKnowledgeOrOnboarding(chatId: string | number, text: string, firstName: string, res: Response): Promise<boolean> {
+    const question = parseAskCommand(text);
+    if (question !== null) {
+        const sent = await telegramService.sendMessage({ chatId, text: await messagingKnowledgeReply(question), parseMode: null });
+        if (!sent.success) safeError(res, 503, 'Failed to send knowledge hint');
+        else res.status(200).json({ ok: true, handled: 'knowledge' });
+        return true;
+    }
+
+    const result = await onboardingEngine.processIncomingMessage({
+        channel: 'telegram', identifier: String(chatId), message: text, senderName: firstName,
+    });
+    if (result.isHandled && result.responseMessage) {
+        const sent = await telegramService.sendMessage({ chatId, text: result.responseMessage, farmerId: result.farmerId });
+        if (!sent.success) safeError(res, 503, 'Failed to send onboarding reply');
+        else res.status(200).json({ ok: true, handled: 'onboarding' });
+        return true;
+    }
+    return false;
+}
+
+router.post('/telegram/webhook', verifyTelegramWebhookSecret, async (req: Request, res: Response) => {
     try {
         const update = req.body;
         if (!update || !update.message) {
@@ -99,22 +121,7 @@ router.post('/telegram/webhook', verifyInboundWebhookSignature, async (req: Requ
             status: 'received',
         });
 
-        // Run through auto-onboarding engine
-        const onboardingResult = await onboardingEngine.processIncomingMessage({
-            channel: 'telegram',
-            identifier: String(chatId),
-            message: text,
-            senderName: firstName,
-        });
-
-        if (onboardingResult.isHandled && onboardingResult.responseMessage) {
-            await telegramService.sendMessage({
-                chatId,
-                text: onboardingResult.responseMessage,
-                farmerId: onboardingResult.farmerId,
-            });
-            return res.status(200).json({ ok: true, handled: 'onboarding' });
-        }
+        if (await handleTelegramKnowledgeOrOnboarding(chatId, text, firstName, res)) return;
 
         // If registered farmer sends a command/query
         const queryLower = text.toLowerCase().trim();
@@ -128,16 +135,16 @@ router.post('/telegram/webhook', verifyInboundWebhookSignature, async (req: Requ
             return res.status(200).json({ ok: true });
         }
 
-        // Conversational AI fallback
-        await telegramService.sendMessage({
+        const sent = await telegramService.sendMessage({
             chatId,
-            text: `🌾 *Ag Extension AI Assistant:*\nThank you for reaching out! We received your message: _"${text}"_.\n\nOur extension intelligence system is reviewing your inquiry. Type */weather* for forecasts or */prices* for commodity rates.`,
+            text: `${ASK_HELP}\nType /weather for forecasts or /prices for commodity rates.`,
+            parseMode: null,
         });
-
+        if (!sent.success) return safeError(res, 503, 'Failed to send instructions');
         return res.status(200).json({ ok: true });
     } catch (error) {
         logger.error('Telegram webhook processing error:', error);
-        return res.status(200).json({ ok: false, error: 'Internal processing error' });
+        return res.status(500).json({ ok: false, error: 'Internal processing error' });
     }
 });
 

@@ -16,6 +16,7 @@ import { onboardingEngine } from '@/services/onboardingEngine';
 import { checkMessageAccess, MessageAccessError, resolvePrincipalRegion } from '@/services/messageAccessService';
 import { logger } from '@/utils/logger';
 import { verifyInboundWebhookSignature } from '@/middleware/webhookSignature';
+import { ASK_HELP, messagingKnowledgeReply, parseAskCommand } from '@/services/knowledge/messagingHints';
 
 const router = Router();
 
@@ -32,7 +33,12 @@ router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res:
             return res.status(400).json({ success: false, error: 'from and text are required' });
         }
 
-        logger.info(`Inbound SMS received from ${from}: ${text}`);
+        const question = parseAskCommand(text);
+        if (question !== null) {
+            const sent = await smsService.sendSMS({ to: from, message: await messagingKnowledgeReply(question) });
+            if (!sent) return safeError(res, 503, 'Failed to send knowledge hint');
+            return res.status(200).json({ success: true, handled: true });
+        }
 
         // Run through auto-onboarding engine
         const onboardingResult = await onboardingEngine.processIncomingMessage({
@@ -42,11 +48,16 @@ router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res:
         });
 
         if (onboardingResult.isHandled && onboardingResult.responseMessage) {
-            await smsService.sendSMS({
+            const sent = await smsService.sendSMS({
                 to: from,
                 message: onboardingResult.responseMessage,
                 farmerId: onboardingResult.farmerId,
             });
+            if (!sent) return safeError(res, 503, 'Failed to send onboarding reply');
+        } else if (onboardingResult.isRegistered) {
+            const sent = await smsService.sendSMS({ to: from, message: ASK_HELP, farmerId: onboardingResult.farmerId });
+            if (!sent) return safeError(res, 503, 'Failed to send instructions');
+            return res.status(200).json({ success: true, handled: true });
         }
 
         return res.status(200).json({ success: true, handled: onboardingResult.isHandled });

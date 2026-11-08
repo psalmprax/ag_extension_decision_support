@@ -185,7 +185,7 @@ class OnboardingEngine {
             isRegistered: true,
             completedNow: true,
             farmerId: newFarmerId,
-            responseMessage: `🎉 *Registration Complete!*\n\nWelcome aboard, *${data.name}*!\nYour Farm Profile is active for *${data.region}* (${data.crop}, ${parsedSize} ha).\n\n📱 *How you can use this channel:*\n• Ask any crop management question or disease symptom\n• Type *WEATHER* for local 7-day agricultural forecasts\n• Type *PRICES* for regional market commodity trends\n• Type *VISIT* to request an extension officer field visit`,
+            responseMessage: `🎉 *Registration Complete!*\n\nWelcome aboard, *${data.name}*!\nYour Farm Profile is active for *${data.region}* (${data.crop}, ${parsedSize} ha).\n\nSend ASK followed by your crop question for an approved public knowledge hint. Include your location and symptoms. Contact a local extension officer for confirmation.`,
         };
     }
 

@@ -7,7 +7,7 @@ import type { TelegramMessageRow, TenantChannelConfigRow } from '../types/rowTyp
 interface TelegramSendOptions {
     chatId: string | number;
     text: string;
-    parseMode?: 'Markdown' | 'MarkdownV2' | 'HTML';
+    parseMode?: 'Markdown' | 'MarkdownV2' | 'HTML' | null;
     farmerId?: string;
     senderId?: string;
     tenantId?: string;
@@ -118,7 +118,7 @@ class TelegramService {
         botToken: string,
         chatId: string | number,
         text: string,
-        parseMode: string,
+        parseMode: string | null,
         replyMarkup?: unknown
     ): Promise<{ ok: boolean; messageId?: number; error?: string }> {
         try {
@@ -126,8 +126,8 @@ class TelegramService {
             const payload: Record<string, unknown> = {
                 chat_id: chatId,
                 text,
-                parse_mode: parseMode,
             };
+            if (parseMode) payload.parse_mode = parseMode;
             if (replyMarkup) {
                 payload.reply_markup = replyMarkup;
             }

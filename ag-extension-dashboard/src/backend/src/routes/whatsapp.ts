@@ -10,7 +10,7 @@ import { verifyInboundWebhookSignature } from '@/middleware/webhookSignature';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { whatsappService } from '@/services/whatsappService';
 import { onboardingEngine } from '@/services/onboardingEngine';
-import { symptomTriageService } from '@/services/symptomTriageService';
+import { ASK_HELP, messagingKnowledgeReply, parseAskCommand } from '@/services/knowledge/messagingHints';
 import { transcribeVoiceNote, synthesizeVoiceAdvisory } from '@/services/voiceAudioService';
 import { checkMessageAccess, MessageAccessError, resolvePrincipalRegion } from '@/services/messageAccessService';
 
@@ -220,6 +220,10 @@ async function handleInboundAdvisoryOrOnboarding(
     body: string,
     senderName?: string
 ): Promise<{ responseText?: string; farmerId?: string; handled: boolean }> {
+    const question = parseAskCommand(body);
+    if (question !== null) {
+        return { responseText: await messagingKnowledgeReply(question), handled: true };
+    }
     const onboardingResult = await onboardingEngine.processIncomingMessage({
         channel: 'whatsapp',
         identifier: from,
@@ -236,15 +240,10 @@ async function handleInboundAdvisoryOrOnboarding(
     }
 
     if (!onboardingResult.isHandled && onboardingResult.isRegistered) {
-        const triageReply = await symptomTriageService.handleDiagnoseMessage(
-            body,
-            onboardingResult.farmerId ?? null,
-            from
-        );
         return {
-            responseText: triageReply,
+            responseText: ASK_HELP,
             farmerId: onboardingResult.farmerId,
-            handled: Boolean(triageReply),
+            handled: true,
         };
     }
 
@@ -285,21 +284,22 @@ async function dispatchOutboundResponse(
     dispatch: { responseText?: string; farmerId?: string; handled: boolean },
     isVoice: boolean,
     detectedLang: string
-): Promise<void> {
-    if (!dispatch.responseText) return;
+): Promise<boolean> {
+    if (!dispatch.responseText) return true;
 
     let mediaUrl: string | undefined;
     if (isVoice) {
         mediaUrl = await synthesizeOutboundAudio(dispatch.responseText, detectedLang);
     }
 
-    await whatsappService.sendMessage({
+    const sent = await whatsappService.sendMessage({
         to: from,
         message: dispatch.responseText,
         farmerId: dispatch.farmerId,
         mediaUrl,
         isVoiceNote: isVoice,
     });
+    return sent.success;
 }
 
 /**
@@ -327,7 +327,9 @@ router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res:
         logger.info(`WhatsApp inbound ${payload.messageId ?? '-'}: ${rows.length} row(s) inserted (isVoice=${isVoice})`);
 
         const dispatch = await handleInboundAdvisoryOrOnboarding(from, body, senderName);
-        await dispatchOutboundResponse(from, dispatch, isVoice, detectedLang);
+        if (!await dispatchOutboundResponse(from, dispatch, isVoice, detectedLang)) {
+            return safeError(res, 503, 'Failed to send WhatsApp reply');
+        }
 
         return res.status(202).json({
             success: true,
@@ -336,8 +338,8 @@ router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res:
             transcription: isVoice ? body : undefined,
         });
     } catch (error) {
-        logger.error('Failed to persist WhatsApp inbound message:', error);
-        return safeError(res, 500, 'Failed to persist WhatsApp inbound message');
+        logger.error('Failed to process WhatsApp inbound message:', error);
+        return safeError(res, 500, 'Failed to process WhatsApp inbound message');
     }
 });
 
