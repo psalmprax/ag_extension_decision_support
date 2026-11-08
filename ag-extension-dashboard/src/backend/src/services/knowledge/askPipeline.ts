@@ -17,7 +17,7 @@ import { logSearch } from '@/services/knowledge/searchLog';
 import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
 import { buildAdvisoryEvidence, resolveAdvisoryCountry, validateAdvisoryCitations } from './advisoryPolicy';
 import type { AskOptions, FinalAnswer, KnowledgeAttachment, ReasonOptions } from '@/services/knowledge/types';
-import { withAdvisoryTimeout } from './advisoryRuntime';
+import { AdvisoryTimeoutError, withAdvisoryTimeout } from './advisoryRuntime';
 
 /**
  * askQuestion pipeline: cache fast-path → parallel retrieval (categorize,
@@ -67,6 +67,33 @@ async function resolveAggregatedContext(
     return { contextResults, contextText };
 }
 
+const HISTORY_WRITE_TIMEOUT_MS = 2000;
+
+function logSearchWithTimeout(...args: Parameters<typeof logSearch>): void {
+    let historyWrite: Promise<void>;
+    try {
+        historyWrite = Promise.resolve(logSearch(...args));
+    } catch (error) {
+        logger.error('Knowledge history persistence failed:', error);
+        return;
+    }
+
+    const handledHistoryWrite = historyWrite.catch(error => {
+        logger.error('Knowledge history persistence failed:', error);
+    });
+    void withAdvisoryTimeout(
+        () => handledHistoryWrite,
+        HISTORY_WRITE_TIMEOUT_MS,
+        'Knowledge history persistence'
+    ).catch(error => {
+        if (error instanceof AdvisoryTimeoutError) {
+            logger.warn('Knowledge history persistence timed out; returning answer without waiting for history:', error);
+        } else {
+            logger.error('Knowledge history persistence failed:', error);
+        }
+    });
+}
+
 async function cacheAndLogResponse(userId: string, queryText: string, attachments: KnowledgeAttachment[] | undefined, redisKey: string, queryCategories: string[], response: FinalAnswer): Promise<void> {
     const isAnswerValid = response.answer &&
         typeof response.answer === 'string' &&
@@ -83,10 +110,10 @@ async function cacheAndLogResponse(userId: string, queryText: string, attachment
         }
     }
 
-    await logSearch(
+    logSearchWithTimeout(
         userId, queryText, queryCategories[0] || 'general_inquiry', undefined,
         response.answer, response.reasoning, response.visuals
-    ).catch(logError => logger.error('Background logging failed:', logError));
+    );
 }
 
 function handleAskQuestionFallback(queryText: string, contextResults: SearchResult[], error: unknown): FinalAnswer {
@@ -269,8 +296,7 @@ export async function runAskQuestion(
     const exactHit = await lookupScopedAnswer(cleanQueryText, baseRedisKey, attachments, options);
     if (exactHit) {
         logger.info(`Exact cache HIT (pre-categorization) for query: "${cleanQueryText}"`);
-        await logSearch(userId, cleanQueryText, undefined, undefined, exactHit.answer, exactHit.reasoning, exactHit.visuals)
-            .catch(logError => logger.error('Cached search logging failed:', logError));
+        logSearchWithTimeout(userId, cleanQueryText, undefined, undefined, exactHit.answer, exactHit.reasoning, exactHit.visuals);
         return exactHit;
     }
 
@@ -315,8 +341,7 @@ export async function runAskQuestion(
             advisoryQuality: validated.evidence, safety: guarded.boundaryCheck,
         };
         if (response.answerMode !== 'unavailable') {
-            await logSearch(userId, cleanQueryText, queryCategories[0], undefined, response.answer, response.reasoning, response.visuals)
-                .catch(logError => logger.error('Fallback search logging failed:', logError));
+            logSearchWithTimeout(userId, cleanQueryText, queryCategories[0], undefined, response.answer, response.reasoning, response.visuals);
         }
         return response;
     }

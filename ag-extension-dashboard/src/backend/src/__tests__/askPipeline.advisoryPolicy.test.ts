@@ -10,6 +10,8 @@ import { logger } from '@/utils/logger';
 import type { SearchResult } from '@/services/vectorService';
 import type { ReasoningResult } from '@/services/aiProvider/aiProvider';
 
+const HISTORY_WRITE_TIMEOUT_MS = 2000;
+
 jest.mock('@/services/cacheService', () => ({ cacheSet: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('@/services/knowledge/cacheLookup', () => ({ checkExactCachesOnly: jest.fn().mockResolvedValue(null) }));
 jest.mock('@/services/knowledge/userContext', () => ({
@@ -188,5 +190,64 @@ describe('Knowledge advisory policy integration', () => {
         expect(logSearch).toHaveBeenCalledWith(
             'user-1', 'Maize advice', undefined, undefined, 'Cached guidance.', '', undefined
         );
+    });
+
+    it.each(['generated', 'cached', 'extractive'] as const)(
+        'returns the %s answer when history persistence stalls',
+        async path => {
+            jest.useFakeTimers();
+            try {
+                if (path === 'cached') {
+                    jest.mocked(checkExactCachesOnly).mockResolvedValueOnce({
+                        answer: 'Cached guidance.', reasoning: '', contextUsed: [], cached: true, answerMode: 'generated',
+                    });
+                } else if (path === 'extractive') {
+                    jest.mocked(callReasoningAgentic).mockRejectedValueOnce(new Error('Provider unavailable'));
+                } else {
+                    jest.mocked(resolveUserContext).mockReturnValueOnce(new Promise(() => {}));
+                }
+                let rejectWrite: (error: Error) => void = () => { throw new Error('Write not started'); };
+                jest.mocked(logSearch).mockReturnValueOnce(new Promise((_resolve, reject) => {
+                    rejectWrite = reject;
+                }));
+
+                let settled = false;
+                const pending = runAskQuestion('user-1', 'Maize advice').then(result => {
+                    settled = true;
+                    return result;
+                });
+                await jest.advanceTimersByTimeAsync(path === 'generated' ? 5000 : 0);
+                expect(settled).toBe(true);
+                expect(logSearch).toHaveBeenCalledTimes(1);
+                const result = await pending;
+                await jest.advanceTimersByTimeAsync(HISTORY_WRITE_TIMEOUT_MS - 1);
+                expect(logger.warn).not.toHaveBeenCalledWith(
+                    expect.stringContaining('history persistence timed out'), expect.any(Error)
+                );
+                await jest.advanceTimersByTimeAsync(1);
+
+                expect(result.answerMode).toBe(path === 'extractive' ? 'extractive' : 'generated');
+                expect(result.cached).toBe(path === 'cached');
+                expect(logger.warn).toHaveBeenCalledWith(
+                    expect.stringContaining('history persistence timed out'), expect.any(Error)
+                );
+                rejectWrite(new Error('Late database failure'));
+                await Promise.resolve();
+                expect(logger.error).toHaveBeenCalledWith(
+                    'Knowledge history persistence failed:', expect.any(Error)
+                );
+            } finally {
+                jest.useRealTimers();
+            }
+        }
+    );
+
+    it('returns the answer and reports a history persistence failure', async () => {
+        jest.mocked(logSearch).mockRejectedValueOnce(new Error('Database failure'));
+
+        const result = await runAskQuestion('user-1', 'Maize advice');
+
+        expect(result.answerMode).toBe('generated');
+        expect(logger.error).toHaveBeenCalledWith('Knowledge history persistence failed:', expect.any(Error));
     });
 });
