@@ -21,7 +21,7 @@ router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
  *       200:
  *         description: Sync results
  *       409:
- *         description: A sync is already in progress in this server process
+ *         description: A sync is already in progress on a backend instance
  */
 router.post('/', async (_req: Request, res: Response) => {
     try {
@@ -50,7 +50,7 @@ router.post('/', async (_req: Request, res: Response) => {
  */
 router.get('/status', async (_req: Request, res: Response) => {
     try {
-        const status = KnowledgeSyncOrchestrator.getStatus();
+        const status = await KnowledgeSyncOrchestrator.getStatus();
         res.json({ success: true, data: status });
     } catch (_error) {
         safeError(res, 500, 'Failed to get sync status');

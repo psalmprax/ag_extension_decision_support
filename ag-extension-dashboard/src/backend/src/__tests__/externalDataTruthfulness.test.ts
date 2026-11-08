@@ -81,6 +81,8 @@ describe('production data truthfulness', () => {
     expect(articles[0].source).toBe('FAOSTAT 2022 static fallback');
     expect(articles.find(article => article.title.endsWith('Malawi'))?.regions).toEqual(['Malawi']);
     expect(articles.find(article => article.title.endsWith('India'))?.regions).toEqual(['India']);
+    expect(articles.find(article => article.title.endsWith('Malawi'))?.crops).toContain('tobacco');
+    expect(articles.find(article => article.title.endsWith('Malawi'))?.crops).not.toContain('coffee, green');
     fetchMock.mockRestore();
   });
 

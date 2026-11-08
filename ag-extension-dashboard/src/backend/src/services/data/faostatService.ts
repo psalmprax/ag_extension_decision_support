@@ -99,8 +99,8 @@ export class FaostatService {
     async fetchCropData(
         itemCode: string,
         areaCode: string,
-        startYear: number = 2018,
-        endYear: number = 2023
+        startYear: number = new Date().getUTCFullYear() - 6,
+        endYear: number = new Date().getUTCFullYear() - 1
     ): Promise<FaostatCropRecord[]> {
         try {
             const url = `${this.baseUrl}/data/QCL`;
@@ -116,26 +116,25 @@ export class FaostatService {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 15000);
 
-            let response: Response;
+            interface FaostatRawRow { area: string; area_code: string; item: string; item_code: string; element: string; element_code: string; year: string; unit: string; value: string | null }
+            interface FaostatApiResponse { data?: FaostatRawRow[] }
+            let data: FaostatApiResponse;
             try {
-                response = await fetch(`${url}?${params}`, {
+                const response = await fetch(`${url}?${params}`, {
                     headers: {
                         'Accept': 'application/json',
                         'User-Agent': 'ag-extension-dashboard/1.0'
                     },
                     signal: controller.signal
                 });
+                if (!response.ok) {
+                    throw new Error(`FAOSTAT returned HTTP ${response.status}`);
+                }
+                data = await response.json() as FaostatApiResponse;
             } finally {
                 clearTimeout(timeout);
             }
 
-            if (!response.ok) {
-                throw new Error(`FAOSTAT returned HTTP ${response.status}`);
-            }
-
-            interface FaostatRawRow { area: string; area_code: string; item: string; item_code: string; element: string; element_code: string; year: string; unit: string; value: string | null }
-            interface FaostatApiResponse { data?: FaostatRawRow[] }
-            const data = await response.json() as FaostatApiResponse;
             const records: FaostatCropRecord[] = (data?.data || []).map((row: FaostatRawRow) => ({
                 areaName: row.area,
                 areaCode: row.area_code,
@@ -165,22 +164,25 @@ export class FaostatService {
         return byElement;
     }
 
-    private static formatCropSummary(cropName: string, records: FaostatCropRecord[]): string | null {
+    private static formatCropSummary(records: FaostatCropRecord[]): string | null {
         const byElement = FaostatService.groupByElement(records);
         const production = byElement.get('Production');
         const area = byElement.get('Area harvested');
         const yield_ = byElement.get('Yield');
 
-        const latestProd = production?.filter(r => r.value != null).sort((a, b) => b.year - a.year)[0];
-        const latestArea = area?.filter(r => r.value != null).sort((a, b) => b.year - a.year)[0];
-        const latestYield = yield_?.filter(r => r.value != null).sort((a, b) => b.year - a.year)[0];
+        const valid = (r: FaostatCropRecord) => r.value !== null && Number.isFinite(r.value) && Number.isInteger(r.year);
+        const latestProd = production?.filter(valid).sort((a, b) => b.year - a.year)[0];
+        const latestArea = area?.filter(valid).sort((a, b) => b.year - a.year)[0];
+        const latestYield = yield_?.filter(valid).sort((a, b) => b.year - a.year)[0];
 
-        if (!latestProd && !latestArea) return null;
+        if (!latestProd && !latestArea && !latestYield) return null;
+        const itemName = (latestProd ?? latestArea ?? latestYield)?.itemName;
+        if (typeof itemName !== 'string' || !itemName.trim()) return null;
 
-        const parts = [`${cropName}:`];
-        if (latestProd?.value) parts.push(`${Math.round(latestProd.value).toLocaleString()} tonnes (${latestProd.year})`);
-        if (latestArea?.value) parts.push(`${Math.round(latestArea.value).toLocaleString()} ha harvested`);
-        if (latestYield?.value) parts.push(`yield ${Math.round(latestYield.value)} hg/ha`);
+        const parts = [`${itemName.trim()}:`];
+        if (latestProd?.value != null) parts.push(`${Math.round(latestProd.value).toLocaleString()} tonnes (${latestProd.year})`);
+        if (latestArea?.value != null) parts.push(`${Math.round(latestArea.value).toLocaleString()} ha harvested (${latestArea.year})`);
+        if (latestYield?.value != null) parts.push(`yield ${Math.round(latestYield.value)} hg/ha (${latestYield.year})`);
         return parts.join(' ');
     }
 
@@ -190,17 +192,19 @@ export class FaostatService {
      */
     async fetchCountryCropSummary(areaCode: string, areaName: string): Promise<string> {
         const lines: string[] = [`Crop production statistics for ${areaName} (Source: FAOSTAT):`];
-        let fetchCount = 0;
+        const includedItems = new Set<string>();
+        const endYear = new Date().getUTCFullYear() - 1;
 
-        for (const [cropName, cropCode] of Object.entries(this.tropicalCrops)) {
-            if (fetchCount >= 8) break; // Limit to avoid rate limiting
-            const records = await this.fetchCropData(cropCode, areaCode, 2020, 2023);
+        for (const cropCode of Object.values(this.tropicalCrops)) {
+            if (includedItems.size >= 8) break;
+            const records = await this.fetchCropData(cropCode, areaCode, endYear - 5, endYear);
             if (records.length === 0) continue;
 
-            const summary = FaostatService.formatCropSummary(cropName, records);
-            if (summary) {
+            const summary = FaostatService.formatCropSummary(records);
+            const item = summary?.split(':', 1)[0].toLowerCase();
+            if (summary && item && !includedItems.has(item)) {
                 lines.push(summary);
-                fetchCount++;
+                includedItems.add(item);
             }
 
             // Small delay to avoid hammering the API
@@ -208,6 +212,12 @@ export class FaostatService {
         }
 
         return lines.join('\n');
+    }
+
+    private static articleCrops(content: string): string[] {
+        return [...new Set(content.split('\n').slice(1)
+            .map(line => line.split(':', 1)[0].trim().toLowerCase())
+            .filter(Boolean))];
     }
 
     /**
@@ -343,7 +353,8 @@ Oil palm fruit: 2,000,000 tonnes, 350,000 ha — Andhra Pradesh`,
         // Try API first for one country to check availability
         let apiAvailable = false;
         try {
-            const testUrl = `https://fenixservices.fao.org/faostat/api/v1/en/data/QCL?area=109&item=056&element=5510&year=2023&output_type=json`;
+            const probeYear = new Date().getUTCFullYear() - 2;
+            const testUrl = `https://fenixservices.fao.org/faostat/api/v1/en/data/QCL?area=109&item=056&element=5510&year=${probeYear}&output_type=json`;
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 10000);
             let testResponse: Response;
@@ -366,7 +377,7 @@ Oil palm fruit: 2,000,000 tonnes, 350,000 ha — Andhra Pradesh`,
                         title: `Crop Production Statistics - ${countryName}`,
                         content,
                         category: 'Production Data',
-                        crops: Object.keys(this.tropicalCrops).map(c => c.toLowerCase()),
+                        crops: FaostatService.articleCrops(content),
                         regions: [countryName],
                         source: 'FAOSTAT 2022 static fallback',
                         sourceUrl: 'https://fenixservices.fao.org/faostat/api/v1/en/',
@@ -386,7 +397,7 @@ Oil palm fruit: 2,000,000 tonnes, 350,000 ha — Andhra Pradesh`,
                     title: `Crop Production Statistics - ${countryName}`,
                     content,
                     category: 'Production Data',
-                    crops: Object.keys(this.tropicalCrops).map(c => c.toLowerCase()),
+                    crops: FaostatService.articleCrops(content),
                     regions: [countryName],
                     source: 'FAOSTAT API',
                     sourceUrl: 'https://fenixservices.fao.org/faostat/api/v1/en/',

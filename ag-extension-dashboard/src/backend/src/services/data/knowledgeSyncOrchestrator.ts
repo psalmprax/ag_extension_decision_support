@@ -4,6 +4,7 @@ import { logger } from '../../utils/logger';
 import { VectorService } from '../vectorService';
 import { TropicalKnowledgeSourceService } from './tropicalKnowledgeSources';
 import { faostatService } from './faostatService';
+import { acquireKnowledgeSyncLock, isKnowledgeSyncLocked } from './knowledgeSyncLock';
 
 /**
  * Orchestrates syncing of all external data sources into the knowledge base.
@@ -16,6 +17,21 @@ export class KnowledgeSyncInProgressError extends Error {
     }
 }
 
+type FaostatDataStatus = 'api' | 'historical_fallback' | 'mixed' | 'unavailable';
+interface KnowledgeSyncResult {
+    tropicalSources: number;
+    tropicalArticles: number;
+    faostatArticles: number;
+    totalEmbeddings: number;
+    faostatDataStatus: FaostatDataStatus;
+}
+
+function getFaostatDataStatus(sources: Set<string>): FaostatDataStatus {
+    if (sources.size === 0) return 'unavailable';
+    if (sources.size > 1) return 'mixed';
+    return sources.has('FAOSTAT API') ? 'api' : 'historical_fallback';
+}
+
 export class KnowledgeSyncOrchestrator {
     private static syncInProgress = false;
     private static lastSyncAt: string | null = null;
@@ -24,52 +40,59 @@ export class KnowledgeSyncOrchestrator {
      * Run a full sync of all data sources.
      * Repeated syncs update the same FAOSTAT article for each source and country.
      */
-    static async syncAll(): Promise<{
-        tropicalSources: number;
-        tropicalArticles: number;
-        faostatArticles: number;
-        totalEmbeddings: number;
-    }> {
+    static async syncAll(): Promise<KnowledgeSyncResult> {
         if (this.syncInProgress) {
             throw new KnowledgeSyncInProgressError();
         }
 
         this.syncInProgress = true;
-        const results = { tropicalSources: 0, tropicalArticles: 0, faostatArticles: 0, totalEmbeddings: 0 };
+        const results: KnowledgeSyncResult = {
+            tropicalSources: 0, tropicalArticles: 0, faostatArticles: 0, totalEmbeddings: 0,
+            faostatDataStatus: 'unavailable',
+        };
 
         try {
-            // 1. Seed tropical knowledge source registry
-            logger.info('[KnowledgeSync] Seeding tropical knowledge sources...');
-            results.tropicalSources = await TropicalKnowledgeSourceService.seedSourcesFromStatic();
+            const lock = await acquireKnowledgeSyncLock();
+            if (!lock) throw new KnowledgeSyncInProgressError();
+            try {
+                lock.assertHeld();
+                logger.info('[KnowledgeSync] Seeding tropical knowledge sources...');
+                results.tropicalSources = await TropicalKnowledgeSourceService.seedSourcesFromStatic();
+                lock.assertHeld();
 
-            // 2. Sync curated tropical articles (pest mgmt, disease, etc.)
-            logger.info('[KnowledgeSync] Syncing curated tropical articles...');
-            const tropicalResult = await TropicalKnowledgeSourceService.syncCuratedArticles();
-            results.tropicalArticles = tropicalResult.synced;
-            results.totalEmbeddings += tropicalResult.synced;
+                logger.info('[KnowledgeSync] Syncing curated tropical articles...');
+                const tropicalResult = await TropicalKnowledgeSourceService.syncCuratedArticles();
+                lock.assertHeld();
+                results.tropicalArticles = tropicalResult.synced;
+                results.totalEmbeddings += tropicalResult.synced;
 
-            // 3. Sync FAOSTAT crop production data
-            logger.info('[KnowledgeSync] Fetching FAOSTAT crop production data...');
-            const faostatArticles = await faostatService.generateCountryArticles();
-            for (const article of faostatArticles) {
-                await VectorService.upsertDocument(
-                    uuidv5(`faostat:${article.source}:${article.title}`, uuidv5.URL),
-                    article.content,
-                    {
-                        title: article.title,
-                        category: article.category,
-                        tags: ['faostat', 'production', 'statistics'],
-                        crops: article.crops,
-                        regions: article.regions,
-                        source: article.source,
-                        sourceUrl: article.sourceUrl,
-                        contentType: 'text'
-                    }
-                );
-                results.faostatArticles++;
-                results.totalEmbeddings++;
+                logger.info('[KnowledgeSync] Fetching FAOSTAT crop production data...');
+                const faostatArticles = await faostatService.generateCountryArticles();
+                lock.assertHeld();
+                results.faostatDataStatus = getFaostatDataStatus(new Set(faostatArticles.map(article => article.source)));
+                for (const article of faostatArticles) {
+                    lock.assertHeld();
+                    await VectorService.upsertDocument(
+                        uuidv5(`faostat:${article.source}:${article.title}`, uuidv5.URL),
+                        article.content,
+                        {
+                            title: article.title,
+                            category: article.category,
+                            tags: ['faostat', 'production', 'statistics'],
+                            crops: article.crops,
+                            regions: article.regions,
+                            source: article.source,
+                            sourceUrl: article.sourceUrl,
+                            contentType: 'text'
+                        }
+                    );
+                    lock.assertHeld();
+                    results.faostatArticles++;
+                    results.totalEmbeddings++;
+                }
+            } finally {
+                await lock.release();
             }
-
             this.lastSyncAt = new Date().toISOString();
             logger.info(`[KnowledgeSync] Complete. Sources: ${results.tropicalSources}, Articles: ${results.tropicalArticles + results.faostatArticles}, Embeddings: ${results.totalEmbeddings}`);
         } catch (error) {
@@ -96,7 +119,11 @@ export class KnowledgeSyncOrchestrator {
         }
     }
 
-    static getStatus(): { inProgress: boolean; lastSyncAt: string | null } {
-        return { inProgress: this.syncInProgress, lastSyncAt: this.lastSyncAt };
+    static async getStatus(): Promise<{ inProgress: boolean; lastSyncAt: string | null; lastSyncScope: 'process' }> {
+        return {
+            inProgress: this.syncInProgress || await isKnowledgeSyncLocked(),
+            lastSyncAt: this.lastSyncAt,
+            lastSyncScope: 'process',
+        };
     }
 }
