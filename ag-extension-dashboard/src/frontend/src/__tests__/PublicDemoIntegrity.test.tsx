@@ -9,9 +9,9 @@ import { SANDBOX_PRESETS } from '../pages/landing/data';
 import { Hero } from '../pages/landing/sections/Hero';
 import { FarmerServices } from '../pages/landing/sections/FarmerServices';
 import { TrustAndSafety } from '../pages/landing/sections/TrustAndSafety';
+import { AgroEcosystemCanvasScrubber } from '../components/canvas-ui/AgroEcosystemCanvasScrubber';
 
 vi.mock('@/components/canvas-ui/CanvasUiLab', () => ({ CanvasUiLab: () => null }));
-vi.mock('@/components/canvas-ui/AgroEcosystemCanvasScrubber', () => ({ AgroEcosystemCanvasScrubber: () => null }));
 vi.mock('@/components/landing/Visuals', () => ({ GlobalConstellationVisualization: () => null }));
 
 describe('public demos', () => {
@@ -41,6 +41,49 @@ describe('public demos', () => {
     render(<MemoryRouter><DemoPage initialTab="telemetry" /></MemoryRouter>);
     expect(screen.getByText(/Illustrative telemetry \(not live\)/)).toBeInTheDocument();
     expect(screen.getByText(/not field measurements/)).toBeInTheDocument();
+  });
+
+  it('uses observation and expert-review guidance in the scrubber canvas', () => {
+    const fillText = vi.fn();
+    const gradient = { addColorStop: vi.fn() };
+    const context = new Proxy(
+      {
+        fillText,
+        createRadialGradient: vi.fn(() => gradient),
+        createLinearGradient: vi.fn(() => gradient),
+      },
+      {
+        get: (target, property) =>
+          property in target ? target[property as keyof typeof target] : vi.fn(),
+      }
+    );
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext')
+      .mockReturnValue(context as unknown as CanvasRenderingContext2D);
+    const { container, unmount } = render(
+      <AgroEcosystemCanvasScrubber progress={0.9} autoPlay={false} />
+    );
+    const scrubber = container.firstElementChild as HTMLDivElement;
+    Object.defineProperties(scrubber, {
+      clientWidth: { configurable: true, value: 600 },
+      clientHeight: { configurable: true, value: 400 },
+    });
+    const getBoundingClientRect = vi.spyOn(scrubber, 'getBoundingClientRect').mockReturnValue({
+      width: 600,
+      height: 400,
+    } as DOMRect);
+    try {
+      fireEvent(window, new Event('resize'));
+
+      expect(fillText).toHaveBeenCalledWith('OBSERVATION', expect.any(Number), expect.any(Number));
+      expect(fillText).toHaveBeenCalledWith('Review field data', expect.any(Number), expect.any(Number));
+      expect(fillText).toHaveBeenCalledWith('Seek expert review', expect.any(Number), expect.any(Number));
+      expect(fillText).not.toHaveBeenCalledWith('Apply 2.5t Lime', expect.any(Number), expect.any(Number));
+      expect(fillText).not.toHaveBeenCalledWith('Before Rain: 48h', expect.any(Number), expect.any(Number));
+    } finally {
+      unmount();
+      getBoundingClientRect.mockRestore();
+      getContext.mockRestore();
+    }
   });
 
   it('keeps telecom examples local and never reports delivery or a booking', () => {
