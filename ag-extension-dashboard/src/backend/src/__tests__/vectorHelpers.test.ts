@@ -75,12 +75,13 @@ describe('applyKeywordFilters', () => {
 describe('mapKeywordRows', () => {
     it('maps rows to SearchResults with crop head and text fallback', () => {
         const rows = [
-            { id: 'a', content: 'c', title: 't', category: 'cat', crops: ['maize', 'rice'], source_url: 'u', content_type: null, score: '0.7' },
+            { id: 'a', content: 'c', title: 't', category: 'cat', crops: ['maize', 'rice'], source: 'FAOSTAT 2022 static fallback', source_url: 'u', content_type: null, score: '0.7' },
             { id: 'b', content: 'c', title: 't', category: 'cat', crops: null, source_url: 'u', content_type: 'text', score: null },
         ];
         const [first, second] = mapKeywordRows(rows);
         expect(first.metadata.crop).toBe('maize');
         expect(first.metadata.contentType).toBe('text');
+        expect(first.metadata.source).toBe('FAOSTAT 2022 static fallback');
         expect(first.score).toBeCloseTo(0.7);
         expect(second.metadata.crop).toBeUndefined();
         expect(second.score).toBe(0);
@@ -111,10 +112,12 @@ describe('keywordSearch', () => {
     it('falls back to ILIKE for single-word misses', async () => {
         mockedQuery
             .mockResolvedValueOnce({ rows: [], rowCount: 0 })
-            .mockResolvedValueOnce({ rows: [{ id: 'b', content: 'c', title: 't', category: 'c', crops: [], source_url: 'u', content_type: 'text', score: 0.6 }], rowCount: 1 });
+            .mockResolvedValueOnce({ rows: [{ id: 'b', content: 'c', title: 't', category: 'c', crops: [], source: 'FAOSTAT 2022 static fallback', source_url: 'u', content_type: 'text', score: 0.6 }], rowCount: 1 });
         const res = await keywordSearch('maize', 5, {});
         expect(res).toHaveLength(1);
         expect(res[0].score).toBe(0.6);
+        expect(res[0].metadata.source).toBe('FAOSTAT 2022 static fallback');
+        expect(String(mockedQuery.mock.calls[1][0])).toContain('source, source_url');
         expect(String(mockedQuery.mock.calls[1][0])).toContain('ILIKE');
     });
 

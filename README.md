@@ -110,6 +110,26 @@ or fabricated citations in those cases, and assess factual support, practical
 usefulness and translation separately. Automated regression tests cover policy
 boundaries; they do not constitute field validation or certification.
 
+Full knowledge sync returns an error on a failed write and uses a PostgreSQL
+session advisory lock to reject concurrent runs across backend instances sharing
+the same database. It requires a direct or session-pooled PostgreSQL connection,
+not transaction pooling. If the lock connection is lost, the run fails at its
+next checkpoint; an already-running operation cannot be cancelled by that check.
+Status reports database-wide activity, while `lastSyncAt` is process-local.
+
+New FAOSTAT syncs use stable IDs per country and source; this does not remove
+older duplicates created by earlier versions. API and static-fallback articles
+remain distinct. Sync results report whether FAOSTAT data came from the API,
+historical fallback, both, or was unavailable; API data is not necessarily current.
+The fallback is historical and its underlying statistics have not been independently
+verified. FAOSTAT item and country mappings and live response coverage still need
+verification against the provider.
+
+Article sync does not automatically rebuild RAG v2 chunks or graph relationships.
+Existing derived chunks and relationships can therefore be stale after an article
+changes. Graph relationships are inferred from co-occurrence and must not be treated
+as verified treatment or agronomic recommendations.
+
 Run the focused regression suites:
 
 ```bash
