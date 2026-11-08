@@ -35,11 +35,16 @@ jobs:
       # via husky (`gitleaks protect --staged`).
       # Note: the binary is run directly rather than via gitleaks-action,
       # whose EULA requires a commercial license for organizations.
+      - name: Setup Go
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version: '1.24'
+          cache: false
+
       - name: Install gitleaks (pinned 8.28.0)
         run: |
-          curl -sSL --fail -o /tmp/gitleaks.tar.gz \
-            https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz
-          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          GOBIN=/tmp go install -ldflags '-X=github.com/zricethezav/gitleaks/v8/cmd.Version=8.28.0' \
+            github.com/zricethezav/gitleaks/v8@v8.28.0
           /tmp/gitleaks version | grep -qx "8.28.0"
 
       - name: Gitleaks — full history secret scan

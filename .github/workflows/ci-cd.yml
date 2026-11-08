@@ -26,8 +26,8 @@ jobs:
           cache: 'npm'
           cache-dependency-path: package-lock.json
       
-      - name: Install dependencies (root + workspaces)
-        run: npm ci
+      - name: Install frontend dependencies
+        run: npm ci --workspace=ag-extension-frontend
       
       - name: Lint frontend
         run: |
@@ -182,8 +182,9 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install fallow (pinned)
-        run: npm install --no-audit --no-fund
+      # Static analysis does not execute application dependency install scripts.
+      - name: Install fallow and analysis dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
@@ -269,8 +270,8 @@ jobs:
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
-      - name: Install dependencies (root + workspaces)
-        run: npm ci
+      - name: Install backend dependencies
+        run: npm ci --workspace=ag-extension-dashboard/src/backend
 
       - name: Replay migrations on fresh DB and diff against schema
         run: node scripts/prisma-migration-replay-check.cjs
@@ -302,8 +303,8 @@ jobs:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: package-lock.json
-      - name: Install dependencies
-        run: npm ci
+      - name: Install backend dependencies
+        run: npm ci --workspace=ag-extension-dashboard/src/backend
       - name: Test derived-data integrity and distributed locking
         working-directory: ag-extension-dashboard/src/backend
         run: npx --no-install jest --runInBand src/__tests__/ragDerivedIntegrity.integration.test.ts src/__tests__/knowledgeSyncLock.integration.test.ts
@@ -328,7 +329,7 @@ jobs:
           cache-dependency-path: package-lock.json
       
       - name: Install dependencies (root + workspaces)
-        run: npm ci
+        run: npm ci --workspaces
       
       - name: Setup Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
