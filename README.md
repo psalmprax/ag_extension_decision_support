@@ -110,6 +110,13 @@ or fabricated citations in those cases, and assess factual support, practical
 usefulness and translation separately. Automated regression tests cover policy
 boundaries; they do not constitute field validation or certification.
 
+The farmer-chat forecast card reports fixed threshold estimates, not official
+alerts or confirmed outbreaks. It skips days missing required forecast readings;
+the Open-Meteo fallback currently lacks daily humidity and wind forecasts for this
+calculation, so the card may be unavailable. The prototype hazard scan reports
+only successful in-app notifications and should remain disabled in deployments.
+Voice transcription requires uploaded audio; URL-only input is not supported.
+
 Full knowledge sync returns an error on a failed write and uses a PostgreSQL
 session advisory lock to reject concurrent runs across backend instances sharing
 the same database. It requires a direct or session-pooled PostgreSQL connection,

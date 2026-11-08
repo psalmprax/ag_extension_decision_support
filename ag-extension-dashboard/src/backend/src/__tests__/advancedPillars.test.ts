@@ -5,6 +5,10 @@ import { aggregateHarvestProjections, matchOfftakerContracts } from '../services
 import { calculateAgronomicRoi } from '../services/agronomicRoiService';
 import { calculateSocStock, auditSoilCarbonSequestration } from '../services/soilCarbonMrvService';
 import { evaluateWeatherHazards, runProactiveHazardScan } from '../services/weatherHazardDaemonService';
+import { query } from '../services/databaseService';
+
+jest.mock('../services/databaseService', () => ({ query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }) }));
+jest.mock('../services/notificationService', () => ({ notificationService: { send: jest.fn() } }));
 
 jest.mock('../utils/logger', () => ({
   logger: {
@@ -218,7 +222,7 @@ describe('Strategic Architecture Pillars (Voice, Economics, Carbon, Hazards)', (
       expect(hazards[0].threatLevel).toBe('emergency');
     });
 
-    it('executes proactive hazard scan and auto-triggers notification dispatch', async () => {
+    it('does not claim notifications were sent when no recipients were resolved', async () => {
       const forecast = [
         {
           date: '2026-09-05',
@@ -236,9 +240,22 @@ describe('Strategic Architecture Pillars (Voice, Economics, Carbon, Hazards)', (
         farmerCount: 300,
       });
 
-      expect(result.autoAlertTriggered).toBe(true);
-      expect(result.dispatchedNotificationCount).toBe(300);
+      expect(result.autoAlertTriggered).toBe(false);
+      expect(result.dispatchedNotificationCount).toBe(0);
       expect(result.hazardsDetected[0].hazardType).toBe('frost');
+    });
+
+    it('reports a failed recipient lookup instead of a fabricated dispatch count', async () => {
+      jest.mocked(query).mockRejectedValueOnce(new Error('database unavailable'));
+      const result = await runProactiveHazardScan({
+        county: 'Nyandarua', farmerCount: 300, forecast: [{
+          date: '2026-09-05', minTempC: 1, maxTempC: 15,
+          precipitationMm: 0, relativeHumidityPct: 60, windSpeedKmh: 5,
+        }],
+      });
+      expect(result.autoAlertTriggered).toBe(false);
+      expect(result.dispatchedNotificationCount).toBe(0);
+      expect(result.dispatchErrors).toBe(1);
     });
   });
 });

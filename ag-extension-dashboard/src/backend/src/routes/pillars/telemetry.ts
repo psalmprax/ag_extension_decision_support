@@ -96,14 +96,22 @@ router.post('/roi/calculate', checkUsageLimit('ai_chat'), validate({ body: z.obj
     try { return res.json({ success: true, data: calculateAgronomicRoi(req.body as never) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
 });
 
+const forecastSchema = z.array(z.object({
+    date: z.string().trim().min(1).max(40),
+    minTempC: z.number().finite(), maxTempC: z.number().finite(),
+    precipitationMm: z.number().finite().nonnegative(),
+    relativeHumidityPct: z.number().finite().min(0).max(100),
+    windSpeedKmh: z.number().finite().nonnegative(),
+}).refine(day => day.minTempC <= day.maxTempC, { message: 'Minimum temperature must not exceed maximum' })).min(1).max(14);
+
 router.post('/hazard/evaluate', checkUsageLimit('ai_chat'), validate({ body: z.object({
-    forecast: z.array(z.object({ date: z.string(), minTempC: z.number(), maxTempC: z.number(), precipitationMm: z.number(), relativeHumidityPct: z.number(), windSpeedKmh: z.number() })),
+    forecast: forecastSchema,
 })}), async (req: AuthRequest, res: Response) => {
     try { return res.json({ success: true, data: evaluateWeatherHazardsWithProvenance(req.body.forecast as never) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
 });
 
 router.post('/hazard/scan', checkUsageLimit('ai_chat'), validate({ body: z.object({
-    county: z.string().min(1), forecast: z.array(z.object({ date: z.string(), minTempC: z.number(), maxTempC: z.number(), precipitationMm: z.number(), relativeHumidityPct: z.number(), windSpeedKmh: z.number() })), farmerCount: z.number().optional(),
+    county: z.string().min(1), forecast: forecastSchema, farmerCount: z.number().optional(),
 })}), async (req: AuthRequest, res: Response) => {
     try { return res.json({ success: true, data: await runProactiveHazardScan(req.body as never) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
 });

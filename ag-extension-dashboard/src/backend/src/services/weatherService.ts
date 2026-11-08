@@ -57,6 +57,16 @@ const getCondition = (code: number): string => {
   return conditions[code] || 'Unknown';
 };
 
+function optionalFiniteNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function requiredForecastTemperature(value: unknown): number {
+  const temperature = optionalFiniteNumber(value);
+  if (temperature === undefined) throw new Error('Weather forecast is missing a valid temperature');
+  return Math.round(temperature);
+}
+
 export class WeatherService {
   private static getWeatherApiKey(): string {
     return process.env.WEATHER_API_KEY || config.externalApis.weather.apiKey || '';
@@ -72,7 +82,7 @@ export class WeatherService {
   private static async fetchWeatherApiForecast(location: string, days: number = 3): Promise<WeatherData> {
     const apiKey = this.getWeatherApiKey();
     const baseUrl = this.getWeatherApiUrl();
-    const cacheKey = `weatherapi:${location}:${days}`;
+    const cacheKey = `weatherapi:v2:${location}:${days}`;
 
     return rateLimitedFetch<WeatherData>('weatherApi', cacheKey, async () => {
       logger.info(`Fetching weather from WeatherAPI.com for ${location} (${days} days)`);
@@ -110,11 +120,11 @@ export class WeatherService {
         alerts,
         forecast: forecastDays.map((day: { date: string; day: { maxtemp_c: number; mintemp_c: number; totalprecip_mm?: number; avghumidity?: number; maxwind_kph?: number; condition?: { text?: string } } }) => ({
           date: day.date,
-          maxTemp: Math.round(day.day.maxtemp_c),
-          minTemp: Math.round(day.day.mintemp_c),
-          precipitationMm: Number(day.day.totalprecip_mm || 0),
-          relativeHumidityPct: Number(day.day.avghumidity || current.humidity),
-          windSpeedKmh: Number(day.day.maxwind_kph || current.wind_kph),
+          maxTemp: requiredForecastTemperature(day.day.maxtemp_c),
+          minTemp: requiredForecastTemperature(day.day.mintemp_c),
+          precipitationMm: optionalFiniteNumber(day.day.totalprecip_mm),
+          relativeHumidityPct: optionalFiniteNumber(day.day.avghumidity),
+          windSpeedKmh: optionalFiniteNumber(day.day.maxwind_kph),
           condition: day.day.condition?.text || 'Variable',
         })),
         source: 'WeatherAPI.com (Real-time & Forecast)',
@@ -222,11 +232,9 @@ export class WeatherService {
           const precip = daily.precipitation_sum;
           return {
             date,
-            maxTemp: Math.round(daily.temperature_2m_max[i]),
-            minTemp: Math.round(daily.temperature_2m_min[i]),
-            precipitationMm: precip && Number.isFinite(precip[i]) ? Number(precip[i]) : 0,
-            relativeHumidityPct: Math.round(current.relative_humidity_2m),
-            windSpeedKmh: Math.round(current.wind_speed_10m),
+            maxTemp: requiredForecastTemperature(daily.temperature_2m_max[i]),
+            minTemp: requiredForecastTemperature(daily.temperature_2m_min[i]),
+            precipitationMm: precip && Number.isFinite(precip[i]) ? Number(precip[i]) : undefined,
             condition: getCondition(daily.weather_code[i]),
           };
         }),

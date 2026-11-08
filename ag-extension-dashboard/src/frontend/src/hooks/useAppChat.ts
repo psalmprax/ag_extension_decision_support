@@ -51,7 +51,8 @@ function enqueueOfflineMessage(
 async function sendDemoFarmerResponse(
   currentInput: string,
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
-  language: string
+  language: string,
+  isActive: () => boolean
 ): Promise<void> {
   const sentMsg: ChatMessage = {
     role: 'officer',
@@ -63,6 +64,7 @@ async function sendDemoFarmerResponse(
     const response = await getPublicDemoChatCompletion(currentInput, language);
     const reply = response.data.text;
     if (!reply) throw new Error('AI assistant returned an empty response');
+    if (!isActive()) return;
     setMessages(prev => [
       ...prev,
       {
@@ -73,7 +75,7 @@ async function sendDemoFarmerResponse(
     ]);
   } catch (error) {
     console.error('Failed to generate demo chat response:', error);
-    toast.error('Could not get an AI response. Please try again.');
+    if (isActive()) toast.error('Could not get an AI response. Please try again.');
   }
 }
 
@@ -102,9 +104,19 @@ export const useAppChat = (language: string) => {
 
   // Farmer Chat State
   const [farmerConversations, setFarmerConversations] = useState<Conversation[]>([]);
-  const [activeFarmerConvId, setActiveFarmerConvId] = useState<string | null>(null);
+  const [activeFarmerConvId, setActiveFarmerConvIdState] = useState<string | null>(null);
   const [farmerChatMessages, setFarmerChatMessages] = useState<ChatMessage[]>([]);
   const [farmerChatInput, setFarmerChatInput] = useState('');
+  const activeFarmerConvIdRef = useRef<string | null>(null);
+  const farmerMessagesRequestRef = useRef(0);
+  const setActiveFarmerConvId = useCallback((id: string | null) => {
+    if (activeFarmerConvIdRef.current !== id) {
+      activeFarmerConvIdRef.current = id;
+      farmerMessagesRequestRef.current++;
+      setFarmerChatMessages([]);
+    }
+    setActiveFarmerConvIdState(id);
+  }, []);
 
   const loadConversations = useCallback(async () => {
     try {
@@ -121,7 +133,6 @@ export const useAppChat = (language: string) => {
   // Guards against out-of-order responses: switching conversations quickly could
   // otherwise render the previous conversation's messages under the newly selected one.
   const aiMessagesRequestRef = useRef(0);
-  const farmerMessagesRequestRef = useRef(0);
 
   const loadMessages = useCallback(async (id: string) => {
     const requestId = ++aiMessagesRequestRef.current;
@@ -182,13 +193,14 @@ export const useAppChat = (language: string) => {
     } catch (error) {
       console.error('Failed to load farmer conversations:', error);
     }
-  }, [activeFarmerConvId]);
+  }, [activeFarmerConvId, setActiveFarmerConvId]);
 
   const loadFarmerMessages = useCallback(async (id: string) => {
+    if (activeFarmerConvIdRef.current !== id) return;
+    const requestId = ++farmerMessagesRequestRef.current;
     if (id.startsWith('conv-demo-farmer-')) {
       return;
     }
-    const requestId = ++farmerMessagesRequestRef.current;
     try {
       const res = await fetchMessages(id);
       // Drop a stale resolution so the active conversation always shows its own messages.
@@ -208,7 +220,7 @@ export const useAppChat = (language: string) => {
     setFarmerChatInput('');
 
     if (activeFarmerConvId?.startsWith('conv-demo-farmer-')) {
-      void sendDemoFarmerResponse(currentInput, setFarmerChatMessages, language);
+      void sendDemoFarmerResponse(currentInput, setFarmerChatMessages, language, () => activeFarmerConvIdRef.current === activeFarmerConvId);
       return;
     }
 
