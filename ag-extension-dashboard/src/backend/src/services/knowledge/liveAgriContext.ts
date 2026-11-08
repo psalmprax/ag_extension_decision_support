@@ -47,7 +47,7 @@ async function fetchFAOAlertsContext(queryCategories: string[], region?: string,
             return {
                 id: `live-fao-alerts-${Date.now()}`,
                 content: `FAO production anomalies for ${region} (not confirmed pest outbreaks; crop: ${crop || 'All'}):\n${alerts.map((a: DiseaseAlert) => `- ${a.title}: ${a.description}`).join('\n')}`,
-                metadata: { title: `FAO Production Anomalies (${region})`, category: 'Production Statistics', crop: crop || 'All', sourceUrl: 'https://www.fao.org/faostat/en/', contentType: 'text' },
+                metadata: { title: `FAO Production Anomalies (${region})`, category: 'Production Statistics', crop: crop || 'All', source: 'FAOSTAT API', sourceUrl: 'https://www.fao.org/faostat/en/', contentType: 'text' },
                 score: 1.0
             };
         }
@@ -100,9 +100,20 @@ async function fetchSoilPropertiesContext(queryCategories: string[], lat: number
     return null;
 }
 
-async function fetchMarketPricesContext(queryCategories: string[], crop: string | undefined, country?: string): Promise<SearchResult | null> {
-    if (queryCategories.length > 0 && !queryCategories.includes('market_prices')) return null;
-    if (!country) return null;
+function priceContextResults(prices: MarketPrice[], country: string, crop?: string): SearchResult[] {
+    const faostatPrices = prices.filter(p => p.source === 'faostat_producer_prices' || p.source === 'giews_fpma');
+    const otherPrices = prices.filter(p => p.source !== 'faostat_producer_prices' && p.source !== 'giews_fpma');
+    return [otherPrices, faostatPrices].flatMap((group, index) => group.length ? [{
+        id: `live-market-prices-${index}-${Date.now()}`,
+        content: `Reported price snapshots for ${country} (not a current local retail or farm-gate quote):\n${group.map((p: MarketPrice) => `- ${p.crop}: ${p.price}; source: ${p.source}; fetched: ${p.fetchedAt}`).join('\n')}`,
+        metadata: { title: `Reported Price Snapshots (${country})`, country, category: 'Market Prices', crop: crop || 'All', contentType: 'text', ...(index === 1 ? { source: 'FAOSTAT API' } : {}) },
+        score: 1.0,
+    }] : []);
+}
+
+async function fetchMarketPricesContext(queryCategories: string[], crop: string | undefined, country?: string): Promise<SearchResult[]> {
+    if (queryCategories.length > 0 && !queryCategories.includes('market_prices')) return [];
+    if (!country) return [];
     try {
         const { marketPriceService } = await import('@/services/marketPriceService');
         const prices = (await marketPriceService.getLatestPrices(undefined, country))
@@ -110,22 +121,17 @@ async function fetchMarketPricesContext(queryCategories: string[], crop: string 
         if (prices && prices.length > 0) {
             const relevantPrices = crop ? prices.filter((p: MarketPrice) => p.crop.toLowerCase().includes(crop.toLowerCase())) : prices;
             const priceList = relevantPrices.length > 0 ? relevantPrices : prices;
-            return {
-                id: `live-market-prices-${Date.now()}`,
-                content: `Reported price snapshots for ${country} (not a current local retail or farm-gate quote):\n${priceList.map((p: MarketPrice) => `- ${p.crop}: ${p.price}; source: ${p.source}; fetched: ${p.fetchedAt}`).join('\n')}`,
-                metadata: { title: `Reported Price Snapshots (${country})`, country, category: 'Market Prices', crop: crop || 'All', contentType: 'text' },
-                score: 1.0
-            };
+            return priceContextResults(priceList, country, crop);
         }
     } catch (err) { logger.warn('Failed to fetch market prices in askQuestion:', err); }
-    return null;
+    return [];
 }
 
 export async function fetchLiveAgriContext(
     queryCategories: string[],
     location: UserLocation
 ): Promise<SearchResult[]> {
-    const tasks: Array<Promise<SearchResult | null>> = [
+    const tasks: Array<Promise<SearchResult | SearchResult[] | null>> = [
         fetchWeatherContext(queryCategories, location.location, location.crop),
         fetchFAOAlertsContext(queryCategories, location.region, location.crop),
         fetchNasaAgroclimateContext(queryCategories, location.lat, location.lng, location.crop),
@@ -134,5 +140,5 @@ export async function fetchLiveAgriContext(
     ];
 
     const results = await Promise.all(tasks);
-    return results.filter((r): r is SearchResult => r !== null);
+    return results.flatMap(result => result === null ? [] : Array.isArray(result) ? result : [result]);
 }

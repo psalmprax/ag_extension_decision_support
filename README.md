@@ -45,7 +45,7 @@ ag-extension-shared/           # Shared zod schemas — frontend/backend API con
 
 > 📖 **Complete Architecture Documentation**: See [`ARCHITECTURE_PILLARS.md`](./ARCHITECTURE_PILLARS.md) for full data models, algorithmic formulas, and API contracts.
 >
-> 📜 **Prototype capabilities**: credit, trade, traceability, telemetry, mechanization, pest and tenant pillar routes are specification-phase and return 501 by default except for the explicitly enabled production routes. Optional sandbox responses are labeled as prototypes. See [`docs/PILLAR_SERVICES_DECISION.md`](./docs/PILLAR_SERVICES_DECISION.md) and `routes/pillars/index.ts`; do not treat prototype outputs as verified production services.
+> 📜 **Prototype capabilities**: credit, trade, traceability, telemetry, mechanization, pest and tenant pillar routes are specification-phase and return 501 except for the explicitly enabled production routes. Prototype routes can only be enabled in explicitly configured development or test environments, and responses are labeled as prototypes. See [`docs/PILLAR_SERVICES_DECISION.md`](./docs/PILLAR_SERVICES_DECISION.md) and `routes/pillars/index.ts`; do not treat prototype outputs as verified production services.
 
 The public demo and landing-page simulator show scripted examples, not live retrieval, delivery, measurements or field activity. No messages or visits are sent or queued by these previews. Diagnostic suggestions require qualified local confirmation, and provider-dependent features require deployment configuration.
 
@@ -118,12 +118,24 @@ next checkpoint; an already-running operation cannot be cancelled by that check.
 Status reports database-wide activity, while `lastSyncAt` is process-local.
 
 New FAOSTAT syncs use stable IDs per country and source; this does not remove
-older duplicates created by earlier versions. API and static-fallback articles
-remain distinct. Sync results report whether FAOSTAT data came from the API,
-historical fallback, both, or was unavailable; API data is not necessarily current.
-The fallback is historical and its underlying statistics have not been independently
-verified. FAOSTAT item and country mappings and live response coverage still need
-verification against the provider.
+older duplicates created by earlier versions. FAOSTAT results are excluded from
+advisory grounding until mappings, coverage and observations have been independently
+verified. Live responses are checked for matching country, item, element codes and
+units, but this is not independent validation. Unverified static fallback data is
+disabled by default and cannot be enabled outside development/test. Existing
+articles are retained and withheld from grounding, not automatically deleted.
+The same advisory quarantine covers live FAOSTAT production anomalies and
+FAOSTAT-derived price snapshots, including the current GIEWS adapter, while
+preserving separately sourced price snapshots. The advisory cache namespace was
+changed so answers produced before quarantine are not reused.
+The [provider's published API examples](https://github.com/FAOSTAT/faostat-api/blob/master/faostat-api-web/src/main/resources/payloads/GetData_OUT.json)
+describe a different response shape from this adapter; unsupported shapes fail
+explicitly until the current live endpoint can be verified.
+
+The sandbox mechanization registry scopes searches and registrations to the active
+user's database-backed organization. Existing records without a tenant are not
+visible; operators must verify ownership before assigning them. This isolation does
+not make the wider prototype pillars or their estimates production-ready.
 
 RAG v2 only retrieves chunks and graph links whose source-content hash matches the
 current article. Article searches fall back to the full article when current chunks

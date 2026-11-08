@@ -20,7 +20,7 @@ router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer'
  * docs/PILLAR_SERVICES_DECISION.md): they compute from hardcoded registries and
  * illustrative constants. Only the endpoints the product actually uses are always
  * on; everything else returns 501 unless PILLARS_SPEC_ROUTES_ENABLED=true is set
- * for a sandbox/demo deployment. Responses from gated routes are stamped
+ * in an explicitly development or test environment. Responses are stamped
  * `dataStatus: 'specification_prototype'` so nothing downstream mistakes them for
  * verified data.
  */
@@ -34,7 +34,8 @@ const PRODUCTION_PILLAR_ROUTES = new Set<string>([
 router.use((req: AuthRequest, res: Response, next) => {
     const key = `${req.method} ${req.path}`;
     if (PRODUCTION_PILLAR_ROUTES.has(key)) return next();
-    if (process.env.PILLARS_SPEC_ROUTES_ENABLED === 'true') {
+    const sandbox = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+    if (sandbox && process.env.PILLARS_SPEC_ROUTES_ENABLED === 'true') {
         // Stamp prototype provenance onto every JSON body from a gated route.
         const originalJson = res.json.bind(res);
         res.json = (body: unknown) => {

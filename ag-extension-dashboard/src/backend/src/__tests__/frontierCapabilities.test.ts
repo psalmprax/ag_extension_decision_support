@@ -13,16 +13,8 @@ jest.mock('../utils/logger', () => ({
   },
 }));
 
-const mockAssetFindMany = jest.fn();
-const mockAssetCreate = jest.fn();
-jest.mock('../services/prismaService', () => ({
-  getPrisma: () => ({
-    mechanizationAsset: {
-      findMany: mockAssetFindMany,
-      create: mockAssetCreate,
-    },
-  }),
-}));
+const mockAssetQuery = jest.fn();
+jest.mock('../services/databaseService', () => ({ query: (...args: unknown[]) => mockAssetQuery(...args) }));
 
 describe('Frontier Agricultural Capabilities (IoT, EUDR, Drone Fleet, Swarm Radar, Cross-Border Trade)', () => {
   describe('IoT & LoRaWAN Sensor Mesh & Smart Irrigation', () => {
@@ -113,7 +105,7 @@ describe('Frontier Agricultural Capabilities (IoT, EUDR, Drone Fleet, Swarm Rada
     });
 
     it('searches the registry for available tractor and drone assets', async () => {
-      mockAssetFindMany.mockResolvedValue([
+      mockAssetQuery.mockResolvedValue({ rows: [
         {
           id: 'asset-1', assetType: 'tractor_75hp', modelName: 'Massey Ferguson 375',
           ownerName: 'Njoro Machinery Co-op', ownerPhone: '+254711000111', county: 'Nakuru',
@@ -126,13 +118,11 @@ describe('Frontier Agricultural Capabilities (IoT, EUDR, Drone Fleet, Swarm Rada
           subCounty: 'Rongai', ratePerUnitKes: 1200, rateUnit: 'per_acre',
           isAvailable: true, isVerified: false,
         },
-      ]);
+      ] });
 
-      const { equipment, provenance } = await findAvailableEquipment({ county: 'Nakuru' });
+      const { equipment, provenance } = await findAvailableEquipment('tenant-1', { county: 'Nakuru' });
 
-      expect(mockAssetFindMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: { county: { equals: 'Nakuru', mode: 'insensitive' }, isAvailable: true },
-      }));
+      expect(mockAssetQuery).toHaveBeenCalledWith(expect.stringContaining('WHERE tenant_id = $1'), ['tenant-1', 'Nakuru', null]);
       expect(equipment).toHaveLength(2);
       expect(equipment.some(e => e.assetType === 'spraying_drone_t30')).toBe(true);
       expect(provenance.kind).toBe('tenant_registry');
@@ -140,9 +130,9 @@ describe('Frontier Agricultural Capabilities (IoT, EUDR, Drone Fleet, Swarm Rada
     });
 
     it('returns an empty list with disclosed provenance when the registry has no match', async () => {
-      mockAssetFindMany.mockResolvedValue([]);
+      mockAssetQuery.mockResolvedValue({ rows: [] });
 
-      const { equipment, provenance } = await findAvailableEquipment({ county: 'Turkana' });
+      const { equipment, provenance } = await findAvailableEquipment('tenant-1', { county: 'Turkana' });
 
       expect(equipment).toEqual([]);
       expect(provenance.kind).toBe('tenant_registry');
@@ -151,11 +141,14 @@ describe('Frontier Agricultural Capabilities (IoT, EUDR, Drone Fleet, Swarm Rada
     });
 
     it('registers equipment as unavailable for verification until confirmed', async () => {
-      mockAssetCreate.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
-        id: 'asset-3', ...data,
-      }));
+      mockAssetQuery.mockResolvedValue({ rows: [{
+        id: 'asset-3', assetType: 'combine_harvester', modelName: 'Claas Dominator 130',
+        ownerName: 'Nakuru Grain Growers', ownerPhone: '+254733000333',
+        county: 'Nakuru', subCounty: 'Gilgil', ratePerUnitKes: 9500,
+        rateUnit: 'per_day', isAvailable: true, isVerified: false,
+      }] });
 
-      const asset = await registerEquipment({
+      const asset = await registerEquipment('tenant-1', {
         assetType: 'combine_harvester',
         modelName: '  Claas Dominator 130  ',
         ownerName: 'Nakuru Grain Growers',
@@ -166,13 +159,9 @@ describe('Frontier Agricultural Capabilities (IoT, EUDR, Drone Fleet, Swarm Rada
         rateUnit: 'per_day',
       });
 
-      expect(mockAssetCreate).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          modelName: 'Claas Dominator 130',
-          isAvailable: true,
-          isVerified: false,
-        }),
-      });
+      expect(mockAssetQuery).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO mechanization_assets'),
+        ['tenant-1', 'combine_harvester', 'Claas Dominator 130', 'Nakuru Grain Growers', '+254733000333',
+          'Nakuru', 'Gilgil', 9500, 'per_day', true, false]);
       expect(asset.id).toBe('asset-3');
       expect(asset.rateUnit).toBe('per_day');
     });

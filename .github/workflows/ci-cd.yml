@@ -159,6 +159,7 @@ jobs:
         env:
           DATABASE_URL: postgres://psalmprax:password@localhost:5432/ag_extension
           REDIS_URL: redis://localhost:6379
+          MECHANIZATION_TENANT_TEST_DATABASE_URL: postgresql://psalmprax:password@localhost:5432/ag_extension
           NODE_ENV: test
 
   # Dead-code regression gate (fallow)

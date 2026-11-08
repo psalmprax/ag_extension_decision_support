@@ -73,7 +73,7 @@ describe('Knowledge advisory policy integration', () => {
         await runAskQuestion('user-1', 'How do I treat maize damage?', undefined, { country: 'India' });
         const keys = jest.mocked(checkExactCachesOnly).mock.calls.map(call => call[1]);
         expect(new Set(keys).size).toBe(3);
-        expect(keys.every(key => key.startsWith('rag:advisory-v3:'))).toBe(true);
+        expect(keys.every(key => key.startsWith('rag:advisory-v4:'))).toBe(true);
         expect(jest.mocked(checkExactCachesOnly).mock.calls.every(call => call[2] === true)).toBe(true);
     });
 
