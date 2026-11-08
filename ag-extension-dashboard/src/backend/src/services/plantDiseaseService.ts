@@ -153,7 +153,7 @@ class PlantDiseaseService {
       symptoms: ['Mottled yellow-green pattern on leaves', 'Stunted growth', 'Distorted leaves', 'Reduced fruit size'],
       treatment: ['No cure for viral diseases', 'Remove and destroy infected plants', 'Control insect vectors (aphids)', 'Use virus-free seeds'],
       prevention: ['Use certified virus-free seeds', 'Control aphid populations', 'Practice good hygiene', 'Remove weeds that host viruses'],
-      description: 'Mosaic viruses are spread by insects and contaminated tools. Once infected, plants cannot be cured and must be removed.',
+      description: 'Mosaic viruses are spread by insects and contaminated tools. Once infected, plants cannot be cured.',
       susceptibleCrops: ['cassava', 'maize', 'tomato', 'tobacco', 'cucumber'],
     },
     'fall_armyworm': {

@@ -25,6 +25,7 @@ describe('VideoAnalysisTab', () => {
 
   it('rejects unsupported and oversized files before uploading', () => {
     render(<VideoAnalysisTab />);
+    expect(screen.getByRole('button', { name: 'Analyze video' })).toHaveClass('bg-emerald-800', 'text-white');
     const input = screen.getByLabelText('Choose a plant video');
     fireEvent.change(input, { target: { files: [new File(['x'], 'image.png', { type: 'image/png' })] } });
     expect(screen.getByRole('alert')).toHaveTextContent('MP4');
@@ -49,6 +50,26 @@ describe('VideoAnalysisTab', () => {
       expect(screen.getByText('Selected: plant.webm')).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'Analyze video' }));
       expect(await screen.findByText('Frame 1: wilting')).toBeInTheDocument();
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  it.each([
+    { flags: { limitReached: true }, message: 'You’ve reached your video observation limit. Review your usage or plan.' },
+    { flags: { upgradeRequired: true }, message: 'Video observations require an eligible plan. Review your plan.' },
+  ])('shows relevant guidance for access denials', async ({ flags, message }) => {
+    vi.mocked(analyzeCropVideo).mockRejectedValueOnce(
+      Object.assign(new Error('Forbidden'), { response: { data: flags } })
+    );
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      render(<VideoAnalysisTab />);
+      fireEvent.change(screen.getByLabelText('Choose a plant video'), {
+        target: { files: [new File(['video'], 'plant.mp4', { type: 'video/mp4' })] },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Analyze video' }));
+      expect(await screen.findByRole('alert')).toHaveTextContent(message);
     } finally {
       log.mockRestore();
     }

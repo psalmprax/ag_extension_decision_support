@@ -44,7 +44,16 @@ export function VideoAnalysisTab() {
       setResult(await analyzeCropVideo(await readVideo(file)));
     } catch (err) {
       console.error('Video observation failed:', err);
-      setError('Video observations are unavailable. Check your connection and sign-in, then retry or contact an extension officer.');
+      const responseData = (err as {
+        response?: { data?: { limitReached?: boolean; upgradeRequired?: boolean } };
+      } | null)?.response?.data;
+      if (responseData?.limitReached) {
+        setError('You’ve reached your video observation limit. Review your usage or plan.');
+      } else if (responseData?.upgradeRequired) {
+        setError('Video observations require an eligible plan. Review your plan.');
+      } else {
+        setError('Video observations are unavailable. Check your connection and sign-in, then retry or contact an extension officer.');
+      }
     } finally {
       setLoading(false);
     }
@@ -62,7 +71,7 @@ export function VideoAnalysisTab() {
         onChange={event => selectFile(event.target.files?.[0])} className="block w-full text-xs" />
       {file && <p className="text-xs">Selected: {file.name}</p>}
       <button type="button" onClick={analyze} disabled={!file || loading}
-        className="px-4 py-2 bg-emerald-600 rounded text-sm disabled:opacity-40">
+        className="px-4 py-2 bg-emerald-800 text-white rounded text-sm disabled:opacity-40">
         {loading ? 'Analyzing video...' : 'Analyze video'}
       </button>
       {error && <p role="alert" className="text-xs text-rose-300">{error}</p>}
