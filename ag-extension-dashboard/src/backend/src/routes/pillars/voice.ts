@@ -64,7 +64,7 @@ router.post('/voice/transcribe-local', checkUsageLimit('speech'), validate({ bod
         if (!audioBuffer) {
           throw new Error('No audio buffer provided');
         }
-        const result = await transcribeLocalOrFallback(audioBuffer, mimeType, languageHint);
+        const result = await transcribeLocalOrFallback(audioBuffer, mimeType, languageHint ?? 'auto');
         return res.json({ success: true, data: result });
     } catch (e) {
       logger.error('Voice transcription unavailable:', e);

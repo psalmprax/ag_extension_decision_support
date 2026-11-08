@@ -49,6 +49,19 @@ describe('Pillar voice transcription', () => {
         });
     });
 
+    it('uses automatic language detection when a local fallback has no language hint', async () => {
+        jest.mocked(whisperTranscriptionService.transcribe).mockRejectedValueOnce(new Error('local unavailable'));
+        jest.mocked(transcribeVoiceNote).mockResolvedValueOnce({
+            transcription: 'Cloud transcript', detectedLanguage: 'en', agronomicKeywords: [],
+        });
+        await request(app).post('/voice/transcribe-local')
+            .send({ audio: Buffer.from('audio').toString('base64') }).expect(200);
+        expect(whisperTranscriptionService.transcribe).toHaveBeenCalledWith(Buffer.from('audio'), { language: 'auto' });
+        expect(transcribeVoiceNote).toHaveBeenCalledWith({
+            audioBuffer: Buffer.from('audio'), mimeType: undefined, languageHint: 'auto', skipLocal: true,
+        });
+    });
+
     it('does not report an empty local transcript as success', async () => {
         jest.mocked(whisperTranscriptionService.transcribe).mockResolvedValueOnce({
             text: '   ', language: 'en', duration: 1, segments: [],

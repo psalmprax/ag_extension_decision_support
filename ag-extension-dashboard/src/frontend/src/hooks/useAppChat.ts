@@ -109,14 +109,25 @@ export const useAppChat = (language: string) => {
   const [farmerChatInput, setFarmerChatInput] = useState('');
   const activeFarmerConvIdRef = useRef<string | null>(null);
   const farmerMessagesRequestRef = useRef(0);
+  const farmerSelectionGenerationRef = useRef(0);
+  const demoFarmerMessagesRef = useRef(new Map<string, ChatMessage[]>());
   const setActiveFarmerConvId = useCallback((id: string | null) => {
     if (activeFarmerConvIdRef.current !== id) {
       activeFarmerConvIdRef.current = id;
       farmerMessagesRequestRef.current++;
-      setFarmerChatMessages([]);
+      farmerSelectionGenerationRef.current++;
+      setFarmerChatMessages(id?.startsWith('conv-demo-farmer-')
+        ? demoFarmerMessagesRef.current.get(id) ?? []
+        : []);
     }
     setActiveFarmerConvIdState(id);
   }, []);
+
+  useEffect(() => {
+    if (activeFarmerConvId?.startsWith('conv-demo-farmer-')) {
+      demoFarmerMessagesRef.current.set(activeFarmerConvId, farmerChatMessages);
+    }
+  }, [activeFarmerConvId, farmerChatMessages]);
 
   const loadConversations = useCallback(async () => {
     try {
@@ -220,7 +231,12 @@ export const useAppChat = (language: string) => {
     setFarmerChatInput('');
 
     if (activeFarmerConvId?.startsWith('conv-demo-farmer-')) {
-      void sendDemoFarmerResponse(currentInput, setFarmerChatMessages, language, () => activeFarmerConvIdRef.current === activeFarmerConvId);
+      const selectedConvId = activeFarmerConvId;
+      const selectionGeneration = farmerSelectionGenerationRef.current;
+      void sendDemoFarmerResponse(currentInput, setFarmerChatMessages, language, () =>
+        activeFarmerConvIdRef.current === selectedConvId &&
+        farmerSelectionGenerationRef.current === selectionGeneration
+      );
       return;
     }
 

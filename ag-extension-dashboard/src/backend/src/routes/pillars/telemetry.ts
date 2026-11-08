@@ -112,6 +112,7 @@ router.post('/hazard/evaluate', checkUsageLimit('ai_chat'), validate({ body: z.o
 
 router.post('/hazard/scan', checkUsageLimit('ai_chat'), validate({ body: z.object({
     county: z.string().min(1), forecast: forecastSchema, farmerCount: z.number().optional(),
+    farmerIds: z.array(z.string().uuid()).optional(),
 })}), async (req: AuthRequest, res: Response) => {
     try { return res.json({ success: true, data: await runProactiveHazardScan(req.body as never) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
 });
