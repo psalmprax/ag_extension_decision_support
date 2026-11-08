@@ -4,6 +4,7 @@ import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { assertNotMalicious } from '@/services/malwareScanService';
 import { objectStorage } from '@/services/objectStorageService';
+import { detectVideoContainer } from '@/services/videoContainer';
 
 export const MAX_UPLOAD_BYTES = Number(process.env.MAX_UPLOAD_MB || 100) * 1024 * 1024;
 /** Per-user total storage quota (bytes). Override with UPLOAD_QUOTA_MB. */
@@ -109,14 +110,10 @@ function matchesDocumentSignature(buffer: Buffer, mimeType: SupportedMimeType): 
 
 function matchesVideoSignature(buffer: Buffer, mimeType: SupportedMimeType): boolean {
   if (mimeType === 'video/mp4' || mimeType === 'video/quicktime') {
-    if (buffer.length >= 12) {
-      const ftyp = buffer.subarray(4, 8).toString('ascii');
-      return ftyp === 'ftyp' || ftyp === 'moov' || ftyp === 'wide' || ftyp === 'mdat';
-    }
-    return false;
+    return detectVideoContainer(buffer) === 'mov';
   }
   if (mimeType === 'video/webm' || mimeType === 'video/x-matroska') {
-    return buffer.length >= 4 && buffer[0] === 0x1a && buffer[1] === 0x45 && buffer[2] === 0xdf && buffer[3] === 0xa3;
+    return detectVideoContainer(buffer) === 'matroska';
   }
   return false;
 }

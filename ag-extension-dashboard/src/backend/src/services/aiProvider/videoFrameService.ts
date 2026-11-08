@@ -1,11 +1,12 @@
 import { spawn } from 'child_process';
-import { mkdtemp, readdir, readFile, rm } from 'fs/promises';
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'fs/promises';
 import os from 'os';
 import path from 'path';
 
+import { detectVideoContainer } from '../videoContainer';
 import type { VideoAnalysisOptions } from './types';
 
-const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+export const MAX_VIDEO_BYTES = 30 * 1024 * 1024;
 const DEFAULT_MAX_FRAMES = 6;
 const MAX_FRAMES = 12;
 const DEFAULT_FRAME_INTERVAL_SECONDS = 2;
@@ -43,15 +44,22 @@ export async function extractVideoFrames(
     }
 
     if (videoData.length > MAX_VIDEO_BYTES) {
-        throw new VideoFrameExtractionError('Video exceeds the 50 MB size limit');
+        throw new VideoFrameExtractionError('Video exceeds the 30 MB size limit');
+    }
+
+    const format = detectVideoContainer(videoData);
+    if (!format) {
+        throw new VideoFrameExtractionError('Unsupported video format; use MP4, MOV, or WebM');
     }
 
     const { frameInterval, maxFrames } = normalizeOptions(options);
     const workDir = await mkdtemp(path.join(os.tmpdir(), 'ag-video-'));
     const outputPattern = path.join(workDir, 'frame-%06d.jpg');
+    const inputPath = path.join(workDir, 'input.video');
 
     try {
-        await runFfmpeg(videoData, outputPattern, frameInterval, maxFrames);
+        await writeFile(inputPath, videoData, { mode: 0o600 });
+        await runFfmpeg(inputPath, outputPattern, frameInterval, maxFrames, format);
 
         const frameNames = (await readdir(workDir))
             .filter(name => /^frame-\d{6}\.jpg$/.test(name))
@@ -62,25 +70,31 @@ export async function extractVideoFrames(
             throw new VideoFrameExtractionError('Unable to extract frames from the supplied video');
         }
 
-        return Promise.all(frameNames.map(frameName => readFile(path.join(workDir, frameName))));
+        return await Promise.all(frameNames.map(frameName => readFile(path.join(workDir, frameName))));
     } finally {
         await rm(workDir, { recursive: true, force: true });
     }
 }
 
 function runFfmpeg(
-    videoData: Buffer,
+    inputPath: string,
     outputPattern: string,
     frameInterval: number,
     maxFrames: number,
+    format: 'mov' | 'matroska',
 ): Promise<void> {
     return new Promise((resolve, reject) => {
         const process = spawn('ffmpeg', [
             '-hide_banner',
             '-loglevel',
             'error',
+            '-protocol_whitelist',
+            'file,pipe',
+            '-f',
+            format,
+            ...(format === 'mov' ? ['-enable_drefs', '0', '-use_absolute_path', '0'] : []),
             '-i',
-            'pipe:0',
+            inputPath,
             '-vf',
             `fps=1/${frameInterval}`,
             '-frames:v',
@@ -90,7 +104,7 @@ function runFfmpeg(
             '-f',
             'image2',
             outputPattern,
-        ], { stdio: ['pipe', 'ignore', 'pipe'] });
+        ], { stdio: ['ignore', 'ignore', 'pipe'] });
 
         let stderr = '';
         let settled = false;
@@ -125,9 +139,5 @@ function runFfmpeg(
             }
         });
 
-        process.stdin.on('error', error => {
-            finish(new VideoFrameExtractionError(`Failed to provide video data to ffmpeg: ${error.message}`));
-        });
-        process.stdin.end(videoData);
     });
 }

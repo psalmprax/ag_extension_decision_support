@@ -21,6 +21,8 @@ vi.mock('@/api/diseaseService', () => ({
   getAllDiseases: vi.fn().mockResolvedValue({ success: true, data: ['Maize Rust', 'Fall Armyworm'] }),
   getDiseaseInfo: vi.fn().mockResolvedValue({ success: true, data: { disease: 'Maize Rust' } }),
   analyzePlantImage: vi.fn(),
+  analyzeCropVideo: vi.fn(),
+  MAX_DIAGNOSIS_VIDEO_BYTES: 30 * 1024 * 1024,
   diagnoseFromSymptoms: vi.fn(),
 }));
 
@@ -41,10 +43,11 @@ describe('DiagnosisPage Component', () => {
 
     // Verify clinic title and guarantees
     expect(screen.getByText(/Instant Crop Disease & Leaf Pathology Doctor/i)).toBeDefined();
-    expect(screen.getByText(/On-Device AI/i)).toBeDefined();
+    expect(screen.getByText(/Online analysis/i)).toBeDefined();
 
     // Verify diagnostic tabs
     expect(screen.getByText(/Leaf Image Analysis/i)).toBeDefined();
+    expect(screen.getByText(/Video Observations/i)).toBeDefined();
     expect(screen.getByText(/Symptom Inference/i)).toBeDefined();
     expect(screen.getByText(/Soil Diagnostics/i)).toBeDefined();
     expect(screen.getByText(/Pathology Library/i)).toBeDefined();

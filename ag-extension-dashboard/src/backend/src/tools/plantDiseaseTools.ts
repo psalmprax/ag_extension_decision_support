@@ -45,10 +45,10 @@ export const diagnoseFromSymptomsTool: Tool<typeof diagnoseFromSymptomsSchema> =
       reviewStatus: diagnoses[0]?.reviewStatus,
       safetyNotice: diagnoses[0]?.safetyNotice,
       corpusSize: PLANT_DISEASE_CORPUS_SIZE,
-      cropFilterApplied: false,
+      cropFilterApplied: Boolean(cropType?.trim()),
       possibleDiseases: diagnoses.map(d => ({
         disease: d.disease,
-        confidence: `${d.confidence}%`,
+        confidence: `${(d.confidence * 100).toFixed(1)}%`,
         matchStrength: d.severity,
         description: d.description,
         matchedSymptoms: d.symptoms,
@@ -58,11 +58,7 @@ export const diagnoseFromSymptomsTool: Tool<typeof diagnoseFromSymptomsSchema> =
         reviewStatus: d.reviewStatus,
       })),
       generalAdvice: [
-        'Isolate affected plants to prevent spread',
-        'Remove and destroy severely infected parts',
-        'Apply recommended treatment promptly',
-        'Monitor surrounding plants for similar symptoms',
-        'Consult local extension officer for confirmation',
+        'Consult a local extension officer to confirm the diagnosis and applicable treatment.',
       ],
     }, null, 2);
   },
@@ -73,7 +69,7 @@ export const analyzePlantImageTool: Tool<typeof analyzePlantImageSchema> = {
   description: 'Analyzes plant images for disease identification. Use when farmers or extension officers upload photos of affected crops for visual diagnosis.',
   schema: analyzePlantImageSchema,
   execute: async ({ imageData, cropType }) => {
-    const analysis = await plantDiseaseService.analyzeImage(imageData);
+    const analysis = await plantDiseaseService.analyzeImage(imageData, cropType);
 
     // Feed outbreak intelligence (fire-and-forget; failures must not break diagnosis)
     const primary = analysis.diseases?.[0];
@@ -91,7 +87,7 @@ export const analyzePlantImageTool: Tool<typeof analyzePlantImageSchema> = {
     return JSON.stringify({
       cropType: cropType || null,
       overallHealth: analysis.overallHealth,
-      confidence: `${analysis.confidence}%`,
+      confidence: `${(analysis.confidence * 100).toFixed(1)}%`,
       diseases: analysis.diseases,
       nutrientDeficiencies: analysis.nutrientDeficiencies,
       recommendations: analysis.recommendations,

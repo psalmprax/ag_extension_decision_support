@@ -5,7 +5,7 @@ import {
   Layers,
   Search,
   Radio,
-  WifiOff,
+  Video,
 } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -19,6 +19,7 @@ import { SoilDiagnosticsTab } from './diagnostics/SoilDiagnosticsTab';
 import { DiseaseLibraryTab } from './diagnostics/DiseaseLibraryTab';
 import { DiseaseInfoModal } from './diagnostics/DiseaseInfoModal';
 import { EdgeVisionScannerModal } from '@/components/EdgeVisionScannerModal';
+import { VideoAnalysisTab } from './diagnostics/VideoAnalysisTab';
 
 export function DiseaseDiagnosis() {
   const { t } = useLanguage();
@@ -26,7 +27,7 @@ export function DiseaseDiagnosis() {
   const { addNotification } = useAppStore();
 
   // Shared State
-  const [activeTab, setActiveTab] = useState<'symptoms' | 'image' | 'soil' | 'library'>('image');
+  const [activeTab, setActiveTab] = useState<'symptoms' | 'image' | 'video' | 'soil' | 'library'>('image');
   const [cropType, setCropType] = useState('');
 
   // Disease Library State
@@ -92,15 +93,14 @@ export function DiseaseDiagnosis() {
                 Crop Doctor &amp; Pathology
               </span>
               <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Instant on-device leaf diagnosis
+                Image, video and symptom assessment
               </span>
             </div>
             <h1 className={`text-2xl font-semibold text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
               Crop Doctor &amp; Plant Pathology Clinic
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-xs mt-1">
-              {t('disease_diagnosis_subtitle') ||
-                'On-device leaf vision diagnosis, symptom inference, and localized biological & chemical treatment plans.'}
+              Upload a photo or video, or describe symptoms. Results require expert confirmation.
             </p>
           </div>
 
@@ -113,24 +113,24 @@ export function DiseaseDiagnosis() {
               <span>Camera Scan Leaf</span>
             </button>
             <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium">
-              <WifiOff className="w-3.5 h-3.5 text-slate-400" />
-              <span>Offline Ready</span>
+              <span>Analysis requires connectivity</span>
             </span>
           </div>
         </div>
 
         {/* Diagnostic Tabs */}
         <div className="p-1 rounded-lg bg-slate-100 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 backdrop-blur-2xl shadow-sm dark:shadow-lg">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-1">
             {[
               { id: 'image', label: 'Leaf Image Analysis', icon: Camera, badge: 'Vision' },
-              { id: 'symptoms', label: 'Symptom Inference', icon: Activity, badge: 'Expert' },
+              { id: 'video', label: 'Video Observations', icon: Video, badge: 'Vision' },
+              { id: 'symptoms', label: 'Symptom Inference', icon: Activity, badge: 'Heuristic' },
               { id: 'soil', label: 'Soil Diagnostics', icon: Layers, badge: 'Chemistry' },
-              { id: 'library', label: 'Pathology Library', icon: Search, badge: 'FAO DB' },
+              { id: 'library', label: 'Pathology Library', icon: Search, badge: 'Reference' },
             ].map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as 'symptoms' | 'image' | 'soil' | 'library')}
+                onClick={() => setActiveTab(tab.id as 'symptoms' | 'image' | 'video' | 'soil' | 'library')}
                 className={`py-2.5 px-3 rounded-md font-medium text-xs flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-colors ${
                   activeTab === tab.id
                     ? 'bg-white dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-slate-200 dark:border-emerald-500/40 shadow-sm'
@@ -179,6 +179,8 @@ export function DiseaseDiagnosis() {
               getSeverityColor={getSeverityColor}
             />
           )}
+
+          {activeTab === 'video' && <VideoAnalysisTab />}
 
           {activeTab === 'soil' && (
             <SoilDiagnosticsTab
