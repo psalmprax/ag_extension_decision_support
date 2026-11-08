@@ -140,6 +140,7 @@ describe('Weather Service & Tool Integration (WeatherAPI.com & Open-Meteo Fallba
     const parsed = JSON.parse(toolResultJson);
 
     expect(parsed.location).toBe('Kitale');
-    expect(parsed.forecast[0].advice).toContain('top-dressing fertilizer');
+    expect(parsed.forecast[0].advice).toContain('rainfall intensity, drainage and field soil moisture');
+    expect(parsed.forecast[0].advice).not.toContain('fertilizer');
   });
 });

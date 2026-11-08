@@ -86,34 +86,25 @@ function tokenFor(userId: string, role: string, email = `${userId}@test.dev`): s
  * parameter matches the farmer's own record.
  */
 function mockFarmerCompletionsDb(opts: { ownershipParam: string }) {
+    const ownsIt = [FARMER_RECORD_ID, FARMER_USER_ID].includes(opts.ownershipParam);
+    const ownedResult = <T>(row: T) => Promise.resolve({
+        rows: ownsIt ? [row] : [],
+        rowCount: ownsIt ? 1 : 0,
+    });
+
     mockQuery.mockImplementation((sql: string) => {
         if (typeof sql !== 'string') return Promise.resolve({ rows: [], rowCount: 0 });
-
         if (sql.includes('FROM farmers WHERE user_id')) {
             return Promise.resolve({ rows: [{ id: FARMER_RECORD_ID }], rowCount: 1 });
         }
         if (sql.includes('FROM chat_conversations cv') && sql.includes('LEFT JOIN farmers')) {
-            const ownsIt = opts.ownershipParam === FARMER_RECORD_ID || opts.ownershipParam === FARMER_USER_ID;
-            return Promise.resolve({
-                rows: ownsIt
-                    ? [{ farmer_id: FARMER_RECORD_ID, officer_id: OFFICER_ID, region: 'North' }]
-                    : [],
-                rowCount: ownsIt ? 1 : 0,
-            });
+            return ownedResult({ farmer_id: FARMER_RECORD_ID, officer_id: OFFICER_ID, region: 'North' });
         }
         if (sql.includes('FROM chat_conversations cv') && sql.includes('cv.id = $1')) {
-            const ownsIt = opts.ownershipParam === FARMER_RECORD_ID || opts.ownershipParam === FARMER_USER_ID;
-            return Promise.resolve({ rows: ownsIt ? [{ id: CONVERSATION_ID }] : [], rowCount: ownsIt ? 1 : 0 });
+            return ownedResult({ id: CONVERSATION_ID });
         }
         if (sql.includes('FROM chat_messages m') && sql.includes('JOIN chat_conversations cv')) {
-            // $2 is the ownership param. Foreign conversations yield zero rows.
-            const ownsIt = opts.ownershipParam === FARMER_RECORD_ID || opts.ownershipParam === FARMER_USER_ID;
-            return Promise.resolve({
-                rows: ownsIt
-                    ? [{ role: 'user', content: 'my earlier question about maize' }]
-                    : [],
-                rowCount: ownsIt ? 1 : 0,
-            });
+            return ownedResult({ role: 'user', content: 'my earlier question about maize' });
         }
         if (sql.includes('INSERT INTO chat_messages')) {
             return Promise.resolve({ rows: [], rowCount: 1 });

@@ -76,7 +76,9 @@ describe('Chatbot Route — Mapper-before-response: mapChatMessageRow + mapChatC
             metadata: null,
             created_at: '2024-12-15T10:00:00Z',
         };
-        mockQuery.mockResolvedValueOnce({ rows: [insertedRow], rowCount: 1 });
+        mockQuery
+            .mockResolvedValueOnce({ rows: [{ farmer_id: 'farm-uuid-1', officer_id: 'off-1', region: 'North' }], rowCount: 1 })
+            .mockResolvedValueOnce({ rows: [insertedRow], rowCount: 1 });
 
         const response = await request(app)
             .post('/api/v1/chatbot/messages')
@@ -84,6 +86,7 @@ describe('Chatbot Route — Mapper-before-response: mapChatMessageRow + mapChatC
             .send({ role: 'user', content: 'How do I plant maize?', conversation_id: 'conv-1' });
 
         expect(response.status).toBe(201);
+        expect(mockQuery).toHaveBeenNthCalledWith(1, expect.stringContaining('LEFT JOIN farmers'), ['conv-1']);
         // snake_case → camelCase
         expect(response.body.data.id).toBe('msg-1');
         expect(response.body.data.conversationId).toBe('conv-1');
@@ -150,13 +153,16 @@ describe('Chatbot Route — Mapper-before-response: mapChatMessageRow + mapChatC
             metadata: null,
             created_at: '2024-12-15T10:00:00Z',
         };
-        mockQuery.mockResolvedValueOnce({ rows: [msgRow], rowCount: 1 });
+        mockQuery
+            .mockResolvedValueOnce({ rows: [{ farmer_id: 'farm-uuid-1', officer_id: 'off-1', region: 'North' }], rowCount: 1 })
+            .mockResolvedValueOnce({ rows: [msgRow], rowCount: 1 });
 
         const response = await request(app)
             .get('/api/v1/chatbot/conversations/conv-1/messages')
             .set('Authorization', `Bearer ${officerToken}`);
 
         expect(response.status).toBe(200);
+        expect(mockQuery).toHaveBeenNthCalledWith(1, expect.stringContaining('LEFT JOIN farmers'), ['conv-1']);
         const first = response.body.data[0];
         expect(first.conversationId).toBe('conv-1');
         expect(first.createdAt).toBe('2024-12-15T10:00:00Z');

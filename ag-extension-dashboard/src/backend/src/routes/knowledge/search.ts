@@ -299,6 +299,21 @@ function getMaxCitationScore(citations: Citation[]): number {
     return citations.length ? Math.max(...citations.map(c => typeof c.score === 'number' ? c.score : 0)) : 0;
 }
 
+function isValidAdvisoryContext(country: unknown, language: unknown): boolean {
+    return !(
+        (country !== undefined && (typeof country !== 'string' || country.length > 100 || country.trim().length < 2))
+        || (language !== undefined && (typeof language !== 'string' || language.length > 10 || language.length < 2))
+    );
+}
+
+async function getDailyKnowledgeAccess(user: Record<string, unknown> | undefined, userId: string, userRole?: string) {
+    const isDemoUser = user?.email === 'demo@agridemo.com' || Boolean(user?.isDemo);
+    const dailyQuota = userRole === 'admin' || isDemoUser
+        ? { allowed: true, current: 0, limit: -1, remaining: 999999 }
+        : await usageService.checkDailyKnowledgeLimit(userId, userRole);
+    return { dailyQuota, isDemoUser };
+}
+
 async function resolveAnswerCitations(
     _question: string,
     contextUsed: Awaited<ReturnType<typeof KnowledgeService.askQuestion>>['contextUsed']
@@ -328,8 +343,7 @@ router.post('/ask', async (req: Request, res: Response) => {
         if (typeof question !== 'string' || !question.trim()) {
             return res.status(400).json({ success: false, error: 'Question is required' });
         }
-        if ((country !== undefined && (typeof country !== 'string' || country.length > 100 || country.trim().length < 2))
-            || (language !== undefined && (typeof language !== 'string' || language.length > 10 || language.length < 2))) {
+        if (!isValidAdvisoryContext(country, language)) {
             return res.status(400).json({ success: false, error: 'Invalid advisory country or language' });
         }
         if (!userId) {
@@ -337,11 +351,11 @@ router.post('/ask', async (req: Request, res: Response) => {
         }
 
         // Daily knowledge quota check (3 per day for Free tier; admin and demo accounts are exempt)
-        const isDemoUser = (user as Record<string, unknown> | undefined)?.email === 'demo@agridemo.com'
-            || Boolean((user as Record<string, unknown> | undefined)?.isDemo);
-        const dailyQuota = (userRole === 'admin' || isDemoUser)
-            ? { allowed: true, current: 0, limit: -1, remaining: 999999 }
-            : await usageService.checkDailyKnowledgeLimit(userId, userRole);
+        const { dailyQuota, isDemoUser } = await getDailyKnowledgeAccess(
+            user as Record<string, unknown> | undefined,
+            userId,
+            userRole
+        );
 
         if (!dailyQuota.allowed) {
             return res.status(403).json({
@@ -363,9 +377,14 @@ router.post('/ask', async (req: Request, res: Response) => {
             { preferredProvider: 'aihubmix', bypassCache: Boolean(bypassCache), country, language, allowTools: !isDemoUser }
         );
 
-        // Record search for daily quota tracking
-        await usageService.recordKnowledgeSearch(userId, question, result.answer);
+        if (result.answerMode === 'unavailable') {
+            return res.status(503).json({
+                success: false,
+                error: 'The knowledge assistant is unavailable and no eligible sources were found. Please retry.',
+            });
+        }
 
+        // The pipeline records one history row, which also counts toward the daily quota.
         const citations = await resolveAnswerCitations(question, result.contextUsed);
 
         const remainingAfter = userRole === 'admin' ? 999999 : Math.max(0, dailyQuota.remaining - 1);
@@ -376,6 +395,7 @@ router.post('/ask', async (req: Request, res: Response) => {
             success: true,
             data: {
                 answer: result.answer,
+                answerMode: result.answerMode,
                 reasoning: result.reasoning,
                 visuals: result.visuals,
                 audio: (result as unknown as Record<string, unknown>).audio,

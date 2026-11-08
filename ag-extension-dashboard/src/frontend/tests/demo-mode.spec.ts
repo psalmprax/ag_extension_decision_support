@@ -122,6 +122,23 @@ test.describe('Demo mode network isolation', () => {
   }) => {
     const requests: string[] = [];
     await mockDemoBackend(page, url => requests.push(url));
+    await page.route(url => url.pathname === '/api/knowledge/ask', async route => {
+      requests.push(route.request().url());
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            answer: 'Confirm soil acidity with a current soil test before deciding on liming.',
+            answerMode: 'generated',
+            evidenceStatus: 'no_verified_source',
+            contextUsed: [],
+            citations: [],
+          },
+        }),
+      });
+    });
     await loginAsDemo(page);
 
     // Navigate to Knowledge Base
@@ -133,9 +150,9 @@ test.describe('Demo mode network isolation', () => {
     await expect(scenarioCard).toBeVisible({ timeout: 10000 });
     await scenarioCard.click();
 
-    // Verify grounded synthesis renders
-    await expect(page.getByText('Grounded Synthesis Completed').first()).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('ALFA Spatial Reasoning').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('General Guidance — Not Verified')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Confirm soil acidity with a current soil test before deciding on liming.')).toBeVisible();
+    expect(requests.some(url => new URL(url).pathname === '/api/knowledge/ask')).toBe(true);
 
     // Verify no demo id requests leaked to the network
     const demoIdRequests = requests.filter(url => containsDemoId(url));
