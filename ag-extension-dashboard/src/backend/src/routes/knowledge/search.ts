@@ -377,9 +377,14 @@ router.post('/ask', async (req: Request, res: Response) => {
             { preferredProvider: 'aihubmix', bypassCache: Boolean(bypassCache), country, language, allowTools: !isDemoUser }
         );
 
-        // Record search for daily quota tracking
-        await usageService.recordKnowledgeSearch(userId, question, result.answer);
+        if (result.answerMode === 'unavailable') {
+            return res.status(503).json({
+                success: false,
+                error: 'The knowledge assistant is unavailable and no eligible sources were found. Please retry.',
+            });
+        }
 
+        // The pipeline records one history row, which also counts toward the daily quota.
         const citations = await resolveAnswerCitations(question, result.contextUsed);
 
         const remainingAfter = userRole === 'admin' ? 999999 : Math.max(0, dailyQuota.remaining - 1);
@@ -390,6 +395,7 @@ router.post('/ask', async (req: Request, res: Response) => {
             success: true,
             data: {
                 answer: result.answer,
+                answerMode: result.answerMode,
                 reasoning: result.reasoning,
                 visuals: result.visuals,
                 audio: (result as unknown as Record<string, unknown>).audio,

@@ -72,6 +72,24 @@ async function mockDemoBackend(page: Page) {
   });
 }
 
+async function openKnowledgeBase(page: Page) {
+  await page.goto('/login');
+  await page.getByRole('button', { name: 'Try the Demo' }).click({ timeout: 90000 });
+  await expect(page.getByRole('button', { name: 'Dashboard' }).first()).toBeVisible({ timeout: 30000 });
+  await page.goto('/knowledge');
+  await expect(page.locator('input[placeholder*="Ask ALFA Agro-RAG"]')).toBeVisible({ timeout: 15000 });
+}
+
+async function submitQuery(page: Page, query = 'Maize Fall Armyworm IPM control') {
+  await page.locator('input[placeholder*="Ask ALFA Agro-RAG"]').fill(query);
+  const bypassBtn = page.locator('button:has-text("Bypass"), button:has-text("Bypass & Ask General")');
+  if (await bypassBtn.isVisible()) {
+    await bypassBtn.click();
+  } else {
+    await page.getByRole('button', { name: 'Search RAG' }).click();
+  }
+}
+
 test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
   test.setTimeout(180_000);
 
@@ -124,26 +142,8 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
       });
     });
 
-    await page.goto('/login');
-    await page.getByRole('button', { name: 'Try the Demo' }).click({ timeout: 90000 });
-    await expect(page.getByRole('button', { name: 'Dashboard' }).first()).toBeVisible({ timeout: 30000 });
-
-    // Navigate to Knowledge Base
-    await page.goto('/knowledge');
-    const kbInput = page.locator('input[placeholder*="Ask ALFA Agro-RAG"]');
-    await expect(kbInput).toBeVisible({ timeout: 15000 });
-
-    // Enter query
-    const query = 'What are the biological control thresholds for Fall Armyworm in maize?';
-    await kbInput.fill(query);
-
-    // Handle intake clarification card if displayed, or click search
-    const bypassBtn = page.locator('button:has-text("Bypass"), button:has-text("Bypass & Ask General")');
-    if (await bypassBtn.isVisible().catch(() => false)) {
-      await bypassBtn.click();
-    } else {
-      await page.locator('button:has-text("Search RAG")').click();
-    }
+    await openKnowledgeBase(page);
+    await submitQuery(page, 'What are the biological control thresholds for Fall Armyworm in maize?');
 
     // Verify Grounded Synthesis result renders
     await expect(page.getByText('Grounded Synthesis Completed')).toBeVisible({ timeout: 15000 });
@@ -166,29 +166,95 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
       });
     });
 
-    await page.goto('/login');
-    await page.getByRole('button', { name: 'Try the Demo' }).click({ timeout: 90000 });
-    await expect(page.getByRole('button', { name: 'Dashboard' }).first()).toBeVisible({ timeout: 30000 });
-
-    // Navigate to Knowledge Base
-    await page.goto('/knowledge');
-    const kbInput = page.locator('input[placeholder*="Ask ALFA Agro-RAG"]');
-    await expect(kbInput).toBeVisible({ timeout: 15000 });
-
-    // Type query
-    await kbInput.fill('Maize Fall Armyworm IPM control');
-
-    const bypassBtn = page.locator('button:has-text("Bypass"), button:has-text("Bypass & Ask General")');
-    if (await bypassBtn.isVisible().catch(() => false)) {
-      await bypassBtn.click();
-    } else {
-      await page.locator('button:has-text("Search RAG")').click();
-    }
+    await openKnowledgeBase(page);
+    await submitQuery(page);
 
     // A failed request must not be presented as a grounded or fabricated answer.
     await expect(page.getByText('Search Failed — No Answer Generated')).toBeVisible({ timeout: 15000 });
     await expect(page.getByText('The knowledge search failed, so no answer was produced', { exact: false }))
       .toBeVisible();
     await expect(page.getByText('Verified Agro-RAG Synthesis', { exact: false })).toHaveCount(0);
+  });
+
+  for (const [label, body] of [
+    ['empty answer', { success: true, data: { answer: '   ', contextUsed: [], citations: [] } }],
+    ['missing data', { success: true }],
+    ['invalid answer', { success: true, data: { answer: 42 } }],
+    ['application error', { success: false, error: 'Search unavailable' }],
+    ['unavailable answer', { success: true, data: { answer: 'Unavailable', answerMode: 'unavailable' } }],
+  ] as const) {
+    test(`rejects ${label} without claiming a grounded synthesis`, async ({ page }) => {
+      await mockDemoBackend(page);
+      await page.route(url => url.pathname === '/api/knowledge/ask', async route => {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+      });
+      await openKnowledgeBase(page);
+      await submitQuery(page);
+
+      await expect(page.getByText('Search Failed — No Answer Generated')).toBeVisible({ timeout: 15000 });
+      await expect(page.getByText('Grounded Synthesis Completed')).toHaveCount(0);
+    });
+  }
+
+  for (const [answerMode, evidenceStatus, heading] of [
+    ['extractive', 'verified_sources', 'Source Excerpts — AI Synthesis Unavailable'],
+    ['generated', 'no_verified_source', 'General Guidance — Not Verified'],
+  ] as const) {
+    test(`labels ${answerMode} responses without overstating evidence`, async ({ page }) => {
+      await mockDemoBackend(page);
+      await page.route(url => url.pathname === '/api/knowledge/ask', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: { answer: 'Scout maize fields.', answerMode, evidenceStatus, contextUsed: [], citations: [] },
+          }),
+        });
+      });
+      await openKnowledgeBase(page);
+      await submitQuery(page);
+
+      await expect(page.getByText(heading)).toBeVisible();
+      await expect(page.getByText('Grounded Synthesis Completed')).toHaveCount(0);
+    });
+  }
+
+  test('clears a stale answer on failure and successfully retries with cache bypass', async ({ page }) => {
+    await mockDemoBackend(page);
+    let requests = 0;
+    await page.route(url => url.pathname === '/api/knowledge/ask', async route => {
+      requests++;
+      if (requests === 2) {
+        await route.fulfill({
+          status: 503, contentType: 'application/json',
+          body: JSON.stringify({ success: false, error: 'Assistant unavailable' }),
+        });
+        return;
+      }
+      if (requests === 3) expect(route.request().postDataJSON().bypassCache).toBe(true);
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            answer: 'Scout maize fields before treatment.', answerMode: 'generated',
+            evidenceStatus: 'no_verified_source', contextUsed: [], citations: [],
+          },
+        }),
+      });
+    });
+    await openKnowledgeBase(page);
+    await submitQuery(page);
+    await expect(page.getByText('Scout maize fields before treatment.', { exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Regenerate Live' }).click();
+    await expect(page.getByText('Search Failed — No Answer Generated')).toBeVisible();
+    await expect(page.getByText('Scout maize fields before treatment.', { exact: true })).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Regenerate Live' }).click();
+    await expect(page.getByText('Scout maize fields before treatment.', { exact: true })).toBeVisible();
+    await expect(page.getByText('Search Failed — No Answer Generated')).toHaveCount(0);
+    expect(requests).toBe(3);
   });
 });

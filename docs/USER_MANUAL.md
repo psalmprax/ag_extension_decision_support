@@ -435,7 +435,9 @@ Search combines keyword matching with semantic retrieval, so a natural-language 
 
 ## Ask the library
 
-Select **Ask AI** inside the knowledge base to get a synthesised answer with citations restricted to the library. This is the preferred mode when you need a quotable answer: every claim links to a document you can open.
+Select **Ask AI** inside the knowledge base to get an answer with retrieved source references. Sources may include the library and external agricultural research. Retrieval and citation scores describe relevance, not independent factual verification or local regulatory approval.
+
+If AI synthesis is unavailable but eligible sources exist, the panel explicitly shows source excerpts instead of claiming a fresh AI synthesis. Answers without supporting sources are labelled general guidance, not verified advice. If neither a provider answer nor eligible sources are available, or a request returns an empty response, the panel shows a no-answer error. Retry with **Regenerate Live**; failed requests retain attachments for retry and unavailable answers do not consume the daily search quota.
 
 ## Add material
 

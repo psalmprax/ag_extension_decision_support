@@ -67,7 +67,7 @@ async function resolveAggregatedContext(
     return { contextResults, contextText };
 }
 
-function cacheAndLogResponse(userId: string, queryText: string, attachments: KnowledgeAttachment[] | undefined, redisKey: string, queryCategories: string[], response: FinalAnswer): void {
+async function cacheAndLogResponse(userId: string, queryText: string, attachments: KnowledgeAttachment[] | undefined, redisKey: string, queryCategories: string[], response: FinalAnswer): Promise<void> {
     const isAnswerValid = response.answer &&
         typeof response.answer === 'string' &&
         response.answer.length >= 200 &&
@@ -83,7 +83,7 @@ function cacheAndLogResponse(userId: string, queryText: string, attachments: Kno
         }
     }
 
-    logSearch(
+    await logSearch(
         userId, queryText, queryCategories[0] || 'general_inquiry', undefined,
         response.answer, response.reasoning, response.visuals
     ).catch(logError => logger.error('Background logging failed:', logError));
@@ -94,11 +94,12 @@ function handleAskQuestionFallback(queryText: string, contextResults: SearchResu
 
     if (contextResults.length > 0) {
         const fallback = buildExtractiveAnswer(queryText, contextResults);
-        return fallback;
+        return { ...fallback, answerMode: 'extractive' };
     }
 
     const noResultAnswer: FinalAnswer = {
-        reasoning: 'No context found in knowledge base and AI provider did not complete in time.',
+        answerMode: 'unavailable',
+        reasoning: 'No eligible context found in knowledge base and AI provider did not return an answer.',
         answer: `I wasn't able to find information about **"${queryText}"** in the knowledge base, and the AI assistant is currently unavailable. Please try rephrasing your question or check back later.`,
         confidence: 0.1,
         visuals: {
@@ -129,7 +130,7 @@ async function finalizeAnswer(
     options?: ReasonOptions
 ): Promise<FinalAnswer> {
     const evidence = buildAdvisoryEvidence(contextResults, options);
-    if (!reasoningResult.answer?.trim()) {
+    if (typeof reasoningResult?.answer !== 'string' || !reasoningResult.answer.trim()) {
         throw new Error('Knowledge advisory provider returned no answer');
     }
     const guarded = agronomicSafetyGuard.guardAndEnrichAdvice(reasoningResult.answer, options?.language);
@@ -150,8 +151,9 @@ async function finalizeAnswer(
     };
     const { visuals, audio } = await postProcessResponse(safeReasoning, queryText, options?.language);
 
-    const response = {
+    const response: FinalAnswer = {
         ...safeReasoning,
+        answerMode: 'generated',
         visuals,
         audio,
         contextUsed: evidence.documents,
@@ -160,7 +162,7 @@ async function finalizeAnswer(
         cached: false
     };
 
-    cacheAndLogResponse(userId, queryText, attachments, redisKey, queryCategories, response);
+    await cacheAndLogResponse(userId, queryText, attachments, redisKey, queryCategories, response);
     return response;
 }
 
@@ -248,9 +250,12 @@ export async function runAskQuestion(
     const cleanQueryText = normalizeAgronomicQuery(queryText);
     logger.info(`Getting RAG-based answer for query: "${queryText}" (normalized: "${cleanQueryText}", User: ${userId}, Attachments: ${attachments?.length || 0}, PreferredProvider: ${options?.preferredProvider || 'default'}, BypassCache: ${Boolean(options?.bypassCache)})`);
 
-    const userContext = await withAdvisoryTimeout(
+    const userContext: UserLocation = await withAdvisoryTimeout(
         () => resolveUserContext(userId, cleanQueryText), 5000, 'Knowledge user context'
-    );
+    ).catch(error => {
+        logger.warn('Knowledge user context unavailable; proceeding without profile location:', error);
+        return { crop: undefined };
+    });
     const reasonOptions = applyAdvisoryLocation(userContext, cleanQueryText, options);
     const scope = createHash('sha256').update(JSON.stringify({
         userId, query: cleanQueryText, country: userContext.country,
@@ -264,6 +269,8 @@ export async function runAskQuestion(
     const exactHit = await lookupScopedAnswer(cleanQueryText, baseRedisKey, attachments, options);
     if (exactHit) {
         logger.info(`Exact cache HIT (pre-categorization) for query: "${cleanQueryText}"`);
+        await logSearch(userId, cleanQueryText, undefined, undefined, exactHit.answer, exactHit.reasoning, exactHit.visuals)
+            .catch(logError => logger.error('Cached search logging failed:', logError));
         return exactHit;
     }
 
@@ -307,8 +314,10 @@ export async function runAskQuestion(
             visuals: guarded.boundaryCheck.violations.length > 0 || visualsUnsafe ? undefined : fallback.visuals,
             advisoryQuality: validated.evidence, safety: guarded.boundaryCheck,
         };
-        logSearch(userId, cleanQueryText, queryCategories[0], undefined, response.answer, response.reasoning, response.visuals)
-            .catch(logError => logger.error('Fallback search logging failed:', logError));
+        if (response.answerMode !== 'unavailable') {
+            await logSearch(userId, cleanQueryText, queryCategories[0], undefined, response.answer, response.reasoning, response.visuals)
+                .catch(logError => logger.error('Fallback search logging failed:', logError));
+        }
         return response;
     }
 }

@@ -28,6 +28,7 @@ export type AnswerVisuals = NonNullable<ReasoningResult['visuals']>;
 /** Final answer payload returned by askQuestion (and its fallback paths). */
 export type FinalAnswer = ReasoningResult & {
     cached: boolean;
+    answerMode?: 'generated' | 'extractive' | 'unavailable';
     contextUsed: SearchResult[];
     advisoryQuality?: ReturnType<typeof validateAdvisoryCitations>['evidence'];
     safety?: AgronomicBoundaryCheck;
