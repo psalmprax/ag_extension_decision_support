@@ -124,6 +124,10 @@ verified. Live responses are checked for matching country, item, element codes a
 units, but this is not independent validation. Unverified static fallback data is
 disabled by default and cannot be enabled outside development/test. Existing
 articles are retained and withheld from grounding, not automatically deleted.
+The same advisory quarantine covers live FAOSTAT production anomalies and
+FAOSTAT-derived price snapshots, including the current GIEWS adapter, while
+preserving separately sourced price snapshots. The advisory cache namespace was
+changed so answers produced before quarantine are not reused.
 The [provider's published API examples](https://github.com/FAOSTAT/faostat-api/blob/master/faostat-api-web/src/main/resources/payloads/GetData_OUT.json)
 describe a different response shape from this adapter; unsupported shapes fail
 explicitly until the current live endpoint can be verified.

@@ -25,7 +25,18 @@ export function isQuarantined(res: SearchResult): boolean {
   const tags = Array.isArray(meta.tags) ? meta.tags.map(String) : [];
   const status = typeof meta.dataStatus === 'string' ? meta.dataStatus : '';
   const source = typeof meta.source === 'string' ? meta.source.trim() : '';
-  return tags.includes('unverified_scrape') || status === 'unverified_scrape' || /^faostat(?:\s|$)/i.test(source);
+  let faostatUrl = false;
+  if (typeof meta.sourceUrl === 'string') {
+    try {
+      const url = new URL(meta.sourceUrl);
+      faostatUrl = ['fao.org', 'www.fao.org', 'fenixservices.fao.org'].includes(url.hostname.toLowerCase()) &&
+        /^\/faostat(?:\/|$)/i.test(url.pathname);
+    } catch {
+      // Invalid URLs do not establish provenance.
+    }
+  }
+  return tags.includes('unverified_scrape') || status === 'unverified_scrape' ||
+    /^faostat(?:[\s_-]|$)/i.test(source) || faostatUrl;
 }
 
 /** Partition retrieval results into groundable context vs. withheld items. */

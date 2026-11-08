@@ -104,6 +104,39 @@ describe('FAOSTAT production summaries', () => {
         await expect(new FaostatService().fetchCropData('056', '109', 2020, 2025)).rejects.toThrow('invalid observation');
     });
 
+    it.each([
+        ['missing value', { value: undefined }],
+        ['array-valued area', { area_code: [109] }],
+        ['array-valued item', { item_code: [56] }],
+        ['array-valued element', { element_code: [5510] }],
+        ['array-valued year', { year: [2024] }],
+        ['boolean year', { year: true }],
+    ])('rejects a malformed observation with %s', async (_label, invalid) => {
+        jest.spyOn(global, 'fetch').mockResolvedValue({
+            ok: true, json: async () => ({ data: [{
+                area: 'Malawi', area_code: 109, item: 'Maize', item_code: 56,
+                element: 'Production', element_code: 5510, year: 2024, unit: 't', value: 42,
+                ...invalid,
+            }] }),
+        } as Response);
+        await expect(new FaostatService().fetchCropData('056', '109', 2020, 2025)).rejects.toThrow('invalid observation');
+    });
+
+    it('retains accepted units with surrounding whitespace in country summaries', async () => {
+        const service = new FaostatService();
+        jest.spyOn(global, 'fetch').mockResolvedValue({
+            ok: true, json: async () => ({ data: [{
+                area: 'Malawi', area_code: 109, item: 'Maize', item_code: 56,
+                element: 'Production', element_code: 5510, year: 2024, unit: ' T ', value: 42,
+            }] }),
+        } as Response);
+        const records = await service.fetchCropData('056', '109', 2020, 2025);
+        jest.spyOn(service, 'fetchCropData').mockResolvedValue(records);
+        const summary = service.fetchCountryCropSummary('109', 'Malawi');
+        await jest.runAllTimersAsync();
+        expect(await summary).toContain('Maize: 42 tonnes (2024)');
+    });
+
     it('rejects unexpected units and nonnumeric values from the provider', async () => {
         jest.spyOn(global, 'fetch').mockResolvedValueOnce({
             ok: true, json: async () => ({ data: [{
@@ -130,6 +163,6 @@ describe('FAOSTAT production summaries', () => {
         jest.spyOn(global, 'fetch').mockResolvedValue({
             ok: true, json: async () => ({ data: [{ area_code: '109', area_label: 'Malawi', quantity: 42 }] }),
         } as Response);
-        await expect(new FaostatService().fetchCropData('056', '109', 2020, 2025)).rejects.toThrow('mismatched observation');
+        await expect(new FaostatService().fetchCropData('056', '109', 2020, 2025)).rejects.toThrow('invalid observation');
     });
 });

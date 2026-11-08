@@ -40,13 +40,21 @@ interface FaostatRawRow {
 }
 
 function validRawValue(value: unknown): boolean {
-    if (value == null || typeof value === 'number') return true;
+    if (value === null || typeof value === 'number') return true;
     return typeof value === 'string' && /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(value.trim());
+}
+
+function validRawCode(value: unknown): boolean {
+    return typeof value === 'number'
+        ? Number.isSafeInteger(value) && value >= 0
+        : typeof value === 'string' && /^\d+$/.test(value);
 }
 
 function parseObservations(data: { data?: FaostatRawRow[] }, itemCode: string, areaCode: string, startYear: number, endYear: number): FaostatCropRecord[] {
     if (!data || !Array.isArray(data.data)) throw new Error('FAOSTAT response has no data array');
-    if (data.data.some(row => !row || !validRawValue(row.value))) {
+    if (data.data.some(row => !row || typeof row !== 'object' || Array.isArray(row) ||
+        !validRawValue(row.value) ||
+        ![row.area_code, row.item_code, row.element_code, row.year].every(validRawCode))) {
         throw new Error('FAOSTAT response contains an invalid observation');
     }
     const records: FaostatCropRecord[] = data.data.map(row => ({
@@ -214,7 +222,7 @@ export class FaostatService {
 
         const valid = (r: FaostatCropRecord, code: string, unit: string) =>
             r.value !== null && Number.isFinite(r.value) && Number.isInteger(r.year) &&
-            r.elementCode === code && r.unit.toLowerCase() === unit;
+            r.elementCode === code && r.unit.trim().toLowerCase() === unit;
         const latestProd = production?.filter(r => valid(r, '5510', 't')).sort((a, b) => b.year - a.year)[0];
         const latestArea = area?.filter(r => valid(r, '5312', 'ha')).sort((a, b) => b.year - a.year)[0];
         const latestYield = yield_?.filter(r => valid(r, '5419', 'hg/ha')).sort((a, b) => b.year - a.year)[0];
