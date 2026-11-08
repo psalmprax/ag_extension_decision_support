@@ -37,24 +37,17 @@ ag-extension-shared/           # Shared zod schemas — frontend/backend API con
 - **Payments & comms** — Stripe billing (checkout + signature-verified webhooks) and PayPal billing (one-time sales granting prepaid passes, plus Subscriptions API auto-renewing profiles with lifecycle webhooks), SMS/USSD, WhatsApp (incl. template messages), email workflows, web push
 - **Enterprise Security & Identity Hardening** — RFC 6238 TOTP Authenticator (2FA), brute-force account lockout, SHA-256 session invalidation, and GeoIP login auditing
 - **Zero-Connectivity Field Edge** — On-device visual disease classification via HTML5 canvas, WGS-84 geodesic parcel boundary tracing & acreage calculation
-- **Smallholder Voice & IVR Channels** — WhatsApp voice note Whisper transcription in Swahili/vernacular and automated TwiML/AT IVR voice broadcasts
-- **Economic Loop Closure** — Certified agro-dealer geo-inventory, anti-counterfeit batch verification, and institutional harvest offtaker matchmaking
-- **Agronomic ROI & Soil Carbon MRV** — Quantifiable yield differential & BCR financial modeling, IPCC Tier 2 Soil Organic Carbon (SOC) carbon credit auditing
-- **Automated Proactive Hazard Warning** — Weather anomaly scanning daemon & 48-hour preventive early warning alert dispatch
+- **Voice channels** — transcription and synthesis are available when the relevant providers are configured; IVR broadcast prototypes are not production-enabled by default.
 - **Satellite Earth Observation & Sentinel-2 NDVI Indexing** — 10m multispectral NDVI/EVI/NDWI calculation, crop stress anomaly detection, and Sentinel Hub parcel band ingestion (fails loud with an explicit "unconfigured" error when Sentinel Hub credentials are absent)
-- **Agronomic Credit Scoring & Parametric Insurance** — 0–1000 creditworthiness scoring (AAA–C tiers) and automated weather-index insurance underwriting
 - **Multi-Tenant Agribusiness Federation** — Organization-Region-Cooperative hierarchical tenancy, custom chemical restrictions, and white-label branding *(demo-scale: two seeded tenants in a registry with fail-closed compliance checks; tenant CRUD/multi-DB tenancy is not implemented yet)*
 - **Durable Offline Mutation Queue & Stateful Conflict Reconciliation** — Cryptographic idempotency keys, dual IndexedDB/localStorage persistence, and exponential backoff retry
-- **On-Farm IoT & LoRaWAN Sensor Mesh Telemetry** — Soil moisture/salinity probe ingestion and VPD-driven smart solar irrigation
-- **EUDR Zero-Deforestation & GS1 Digital Passports** — EUDR 2020 forest baseline verification and cryptographically signed farm-to-fork batch passports
-- **Shared Mechanization & Drone Fleet Dispatcher** — Tractor sharing marketplace and ULV drone spray mission planning with wind speed safety buffers
-- **Crowd-Sourced Pest Swarm Radar (DBSCAN)** — Spatial sighting clustering and wind-vector epidemiological trajectory forecasting
-- **Cross-Border Regional Commodity Trade & Arbitrage** — East African multi-currency price monitoring (KES, UGX, TZS, RWF, ETB) and net trade spread calculation
 - **Unified Multi-Cloud Object Storage** — S3-compatible architecture supporting the cheapest raw storage (Backblaze B2 @ $0.006/GB) and zero-egress streaming (Cloudflare R2), with direct presigned uploads, dual local caching, and report archival (see [`docs/MEDIA_OBJECT_STORAGE_GUIDE.md`](./docs/MEDIA_OBJECT_STORAGE_GUIDE.md))
 
 > 📖 **Complete Architecture Documentation**: See [`ARCHITECTURE_PILLARS.md`](./ARCHITECTURE_PILLARS.md) for full data models, algorithmic formulas, and API contracts.
 >
-> 📜 **Feature honesty**: derived metrics (satellite indices, carbon estimates, passport flags) disclose their provenance and assumptions in each service's response payload, and unconfigured integrations fail loud instead of returning fabricated data — see `Anti-Flaws.md` §17 for the trust-boundary protocol.
+> 📜 **Prototype capabilities**: credit, trade, traceability, telemetry, mechanization, pest and tenant pillar routes are specification-phase and return 501 except for the explicitly enabled production routes. Prototype routes can only be enabled in explicitly configured development or test environments, and responses are labeled as prototypes. See [`docs/PILLAR_SERVICES_DECISION.md`](./docs/PILLAR_SERVICES_DECISION.md) and `routes/pillars/index.ts`; do not treat prototype outputs as verified production services.
+
+The public demo and landing-page simulator show scripted examples, not live retrieval, delivery, measurements or field activity. No messages or visits are sent or queued by these previews. Diagnostic suggestions require qualified local confirmation, and provider-dependent features require deployment configuration.
 
 ## Advisory quality and country-specific safeguards
 
@@ -116,6 +109,48 @@ requests and current local registrations. Require zero unverified treatment dose
 or fabricated citations in those cases, and assess factual support, practical
 usefulness and translation separately. Automated regression tests cover policy
 boundaries; they do not constitute field validation or certification.
+
+The farmer-chat forecast card reports fixed threshold estimates, not official
+alerts or confirmed outbreaks. It skips days missing required forecast readings;
+the Open-Meteo fallback currently lacks daily humidity and wind forecasts for this
+calculation, so the card may be unavailable. The prototype hazard scan reports
+only successful in-app notifications and should remain disabled in deployments.
+Voice transcription requires uploaded audio; URL-only input is not supported.
+
+Full knowledge sync returns an error on a failed write and uses a PostgreSQL
+session advisory lock to reject concurrent runs across backend instances sharing
+the same database. It requires a direct or session-pooled PostgreSQL connection,
+not transaction pooling. If the lock connection is lost, the run fails at its
+next checkpoint; an already-running operation cannot be cancelled by that check.
+Status reports database-wide activity, while `lastSyncAt` is process-local.
+
+New FAOSTAT syncs use stable IDs per country and source; this does not remove
+older duplicates created by earlier versions. FAOSTAT results are excluded from
+advisory grounding until mappings, coverage and observations have been independently
+verified. Live responses are checked for matching country, item, element codes and
+units, but this is not independent validation. Unverified static fallback data is
+disabled by default and cannot be enabled outside development/test. Existing
+articles are retained and withheld from grounding, not automatically deleted.
+The same advisory quarantine covers live FAOSTAT production anomalies and
+FAOSTAT-derived price snapshots, including the current GIEWS adapter, while
+preserving separately sourced price snapshots. The advisory cache namespace was
+changed so answers produced before quarantine are not reused.
+The [provider's published API examples](https://github.com/FAOSTAT/faostat-api/blob/master/faostat-api-web/src/main/resources/payloads/GetData_OUT.json)
+describe a different response shape from this adapter; unsupported shapes fail
+explicitly until the current live endpoint can be verified.
+
+The sandbox mechanization registry scopes searches and registrations to the active
+user's database-backed organization. Existing records without a tenant are not
+visible; operators must verify ownership before assigning them. This isolation does
+not make the wider prototype pillars or their estimates production-ready.
+
+RAG v2 only retrieves chunks and graph links whose source-content hash matches the
+current article. Article searches fall back to the full article when current chunks
+are unavailable. After deploying the derived-data migration, an authorized knowledge
+manager should run `/api/v1/knowledge/ragv2/bootstrap` to rebuild chunks and graph
+links; older unversioned derived records remain stored but are excluded from retrieval.
+Graph links indicate only co-occurrence and are not verified agronomic relationships
+or recommendations. Rebuilding can require substantial embedding-provider capacity.
 
 Run the focused regression suites:
 

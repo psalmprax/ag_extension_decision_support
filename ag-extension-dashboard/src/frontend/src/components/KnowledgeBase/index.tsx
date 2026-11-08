@@ -58,6 +58,7 @@ interface ContextItem {
 
 interface Result {
   answer: string;
+  answerMode?: AskResponse['data']['answerMode'];
   contextUsed: ContextItem[];
   cached?: boolean;
   query?: string;
@@ -142,7 +143,11 @@ const notifySearchResult = (
 ): void => {
   // Never claim a fresh synthesis when the assistant answered nothing.
   if (res.data.evidenceStatus === 'no_verified_source') {
-    notify({ type: 'info', message: 'No grounded answer available — the assistant is unavailable right now.' });
+    notify({ type: 'info', message: 'General guidance only — no supporting sources were retrieved.' });
+    return;
+  }
+  if (res.data.answerMode === 'extractive') {
+    notify({ type: 'info', message: 'AI synthesis unavailable — showing excerpts from retrieved sources.' });
     return;
   }
   if (res.data.cached) {
@@ -156,6 +161,13 @@ const notifySearchResult = (
       message: 'Fresh real-time LLM synthesis generated',
     });
   }
+};
+
+const resultHeading = (result: Result): string => {
+  if (result.failed) return 'Search Failed — No Answer Generated';
+  if (result.answerMode === 'extractive') return 'Source Excerpts — AI Synthesis Unavailable';
+  if (result.evidenceStatus !== 'verified_sources') return 'General Guidance — Not Verified';
+  return 'Grounded Synthesis Completed';
 };
 
 // This legacy feature shell coordinates search, graph, telemetry, and document-library state;
@@ -225,7 +237,6 @@ export const KnowledgeBase: React.FC = () => {
   const finishFailedSearch = useCallback((queryText: string, error: unknown): void => {
     handleSearchError(error);
     setLastResult(buildErrorResult(queryText));
-    setAttachments([]);
   }, [handleSearchError]);
 
   const fetchQuotaData = useCallback(async () => {
@@ -279,8 +290,9 @@ export const KnowledgeBase: React.FC = () => {
       clearInterval(stepInterval);
       setRetrievalStep(4);
 
-      if (!res.success) {
-        finishFailedSearch(queryText, new Error(res.error || 'Knowledge search failed'));
+      if (!res.success || typeof res.data?.answer !== 'string' || !res.data.answer.trim()
+        || res.data.answerMode === 'unavailable') {
+        finishFailedSearch(queryText, new Error(res.error || 'Knowledge search returned no answer'));
         return;
       }
 
@@ -556,7 +568,7 @@ export const KnowledgeBase: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full ${lastResult.failed ? 'bg-amber-400' : 'bg-emerald-400'}`} />
                     <span className="text-xs font-medium text-slate-900 dark:text-white font-mono">
-                      {lastResult.failed ? 'Search Failed — No Answer Generated' : 'Grounded Synthesis Completed'}
+                      {resultHeading(lastResult)}
                     </span>
                   </div>
 

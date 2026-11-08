@@ -83,7 +83,7 @@ export function DiseaseInfoModal({
               <div className="p-3.5 rounded-[4px] bg-slate-900/80 border border-slate-800 space-y-2">
                 <h4 className="text-xs font-mono font-medium text-slate-400 flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  Chemical & Bio-Treatment Protocols
+                  Treatment guidance
                 </h4>
                 <div className="space-y-1.5">
                   {diseaseInfo.treatment.map((treatment, index) => (
@@ -101,7 +101,7 @@ export function DiseaseInfoModal({
               {/* Prevention Pod */}
               <div className="p-3.5 rounded-[4px] bg-slate-900/80 border border-slate-800 space-y-2">
                 <h4 className="text-xs font-mono font-medium text-slate-400">
-                  Preventative & Cultural Management
+                  Prevention guidance
                 </h4>
                 <div className="space-y-1.5">
                   {diseaseInfo.prevention.map((prevent, index) => (

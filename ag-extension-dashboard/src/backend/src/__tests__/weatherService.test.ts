@@ -105,6 +105,43 @@ describe('Weather Service & Tool Integration (WeatherAPI.com & Open-Meteo Fallba
     expect(weather.temperature).toBe(21);
     expect(weather.condition).toBe('Slight rain');
     expect(weather.forecast[0].precipitationMm).toBe(4.2);
+    expect(weather.forecast[0].relativeHumidityPct).toBeUndefined();
+    expect(weather.forecast[0].windSpeedKmh).toBeUndefined();
+  });
+
+  it('does not replace missing forecast values with zero or current conditions', async () => {
+    process.env.WEATHER_API_KEY = 'test-weather-key';
+    mockedAxios.get.mockResolvedValueOnce({
+      data: {
+        current: { temp_c: 20, humidity: 75, wind_kph: 10, condition: { text: 'Clear' } },
+        forecast: { forecastday: [{
+          date: '2026-09-01', day: { maxtemp_c: 25, mintemp_c: 14, totalprecip_mm: 0, avghumidity: 0 },
+        }] },
+      },
+    });
+    const weather = await WeatherService.getByLocation('Forecast missing wind, Kenya', 1);
+    expect(weather.forecast[0].precipitationMm).toBe(0);
+    expect(weather.forecast[0].relativeHumidityPct).toBe(0);
+    expect(weather.forecast[0].windSpeedKmh).toBeUndefined();
+  });
+
+  it('keeps missing Open-Meteo precipitation unavailable', async () => {
+    mockedAxios.get.mockResolvedValueOnce({ data: { results: [{ latitude: -1, longitude: 36, country_code: 'KE' }] } });
+    mockedAxios.get.mockResolvedValueOnce({ data: {
+      current: { temperature_2m: 20, relative_humidity_2m: 70, weather_code: 0, wind_speed_10m: 10 },
+      daily: { time: ['2026-09-01'], temperature_2m_max: [25], temperature_2m_min: [15], weather_code: [0] },
+    } });
+    const weather = await WeatherService.getByLocation('Missing precipitation, Kenya', 1);
+    expect(weather.forecast[0].precipitationMm).toBeUndefined();
+  });
+
+  it('rejects null forecast temperatures instead of converting them to zero', async () => {
+    mockedAxios.get.mockResolvedValueOnce({ data: { results: [{ latitude: -2, longitude: 36, country_code: 'KE' }] } });
+    mockedAxios.get.mockResolvedValueOnce({ data: {
+      current: { temperature_2m: 20, relative_humidity_2m: 70, weather_code: 0, wind_speed_10m: 10 },
+      daily: { time: ['2026-09-01'], temperature_2m_max: [25], temperature_2m_min: [null], weather_code: [0] },
+    } });
+    await expect(WeatherService.getByLocation('Missing temperature, Kenya', 1)).rejects.toThrow('missing a valid temperature');
   });
 
   it('executes weatherTool successfully and returns agricultural advice', async () => {
@@ -140,6 +177,7 @@ describe('Weather Service & Tool Integration (WeatherAPI.com & Open-Meteo Fallba
     const parsed = JSON.parse(toolResultJson);
 
     expect(parsed.location).toBe('Kitale');
-    expect(parsed.forecast[0].advice).toContain('top-dressing fertilizer');
+    expect(parsed.forecast[0].advice).toContain('rainfall intensity, drainage and field soil moisture');
+    expect(parsed.forecast[0].advice).not.toContain('fertilizer');
   });
 });

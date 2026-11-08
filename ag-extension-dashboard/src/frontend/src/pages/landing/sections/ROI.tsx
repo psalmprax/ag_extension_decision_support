@@ -34,7 +34,7 @@ export function ROI() {
                 variants={fadeUp}
                 className="text-sm sm:text-base text-white/70 max-w-xl mx-auto font-normal leading-relaxed"
               >
-                From smallholder plots to nationwide extension networks, our technology bridges the gap between field challenges and verified science.
+                From smallholder plots to extension networks, our tools can help officers organize field information and consult relevant evidence.
               </motion.p>
             </motion.div>
 

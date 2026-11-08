@@ -413,6 +413,16 @@ export async function createTables(pool: Pool): Promise<void> {
       );
       CREATE INDEX IF NOT EXISTS farmer_onboarding_channel_identifier_idx ON farmer_onboarding_sessions(channel, external_identifier);
 
+      CREATE TABLE IF NOT EXISTS messaging_inbound_events (
+        channel VARCHAR(30) NOT NULL,
+        external_identifier VARCHAR(128) NOT NULL,
+        event_id VARCHAR(255) NOT NULL,
+        response_message TEXT,
+        farmer_id UUID REFERENCES farmers(id) ON DELETE SET NULL,
+        created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (channel, external_identifier, event_id)
+      );
+
       CREATE TABLE IF NOT EXISTS autonomous_campaign_runs (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,

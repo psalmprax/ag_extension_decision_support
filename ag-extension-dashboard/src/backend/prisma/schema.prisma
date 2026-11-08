@@ -520,6 +520,7 @@ model CancellationFeedback {
 /// Availability is an operator-maintained flag, not live telematics.
 model MechanizationAsset {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String?  @map("tenant_id") @db.Uuid
   assetType      String   @map("asset_type") @db.VarChar(50)
   modelName      String   @map("model_name") @db.VarChar(200)
   ownerName      String   @map("owner_name") @db.VarChar(200)
@@ -532,7 +533,9 @@ model MechanizationAsset {
   isVerified     Boolean  @default(false) @map("is_verified")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+  tenant         Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
+  @@index([tenantId, county, assetType])
   @@index([county, assetType])
   @@index([isAvailable])
   @@map("mechanization_assets")
@@ -848,6 +851,7 @@ model KnowledgeChunk {
   chunkIndex Int               @map("chunk_index")
   content    String
   embedding  Float[]
+  sourceContentHash String?    @map("source_content_hash")
   createdAt  DateTime?         @default(now()) @map("created_at") @db.Timestamp(6)
   article    KnowledgeArticle  @relation(fields: [articleId], references: [id], onDelete: Cascade)
 
@@ -874,6 +878,7 @@ model KnowledgeRelationship {
   targetId     String           @map("target_id")
   relationType String           @map("relation_type")
   articleId    String?          @map("article_id") @db.Uuid
+  sourceContentHash String?     @map("source_content_hash")
   properties   Json             @default("{}")
   createdAt    DateTime?        @default(now()) @map("created_at") @db.Timestamp(6)
   source       KnowledgeEntity  @relation("SourceEntity", fields: [sourceId], references: [id], onDelete: Cascade)
@@ -912,6 +917,7 @@ model Tenant {
   whatsappMessages WhatsappMessage[]
   smsFeedbacks     SmsFeedback[]
   advisoryWorkflows AdvisoryWorkflow[]
+  mechanizationAssets MechanizationAsset[]
 
   @@map("tenants")
 }
@@ -1319,6 +1325,5 @@ model AdvisoryWorkflow {
   @@index([createdBy])
   @@map("advisory_workflows")
 }
-
 
 

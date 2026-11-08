@@ -40,6 +40,7 @@ describe('production data truthfulness', () => {
     delete process.env.SENTINEL_HUB_CLIENT_ID;
     delete process.env.SENTINEL_HUB_CLIENT_SECRET;
     delete process.env.NASA_EARTHDATA_KEY;
+    delete process.env.FAOSTAT_ALLOW_UNVERIFIED_FALLBACK;
   });
 
   it('uses actual precipitation in weather scoring', () => {
@@ -73,13 +74,35 @@ describe('production data truthfulness', () => {
     fetchMock.mockRestore();
   });
 
-  it('marks static FAOSTAT articles with fallback provenance', async () => {
+  it('does not ingest unverified static FAOSTAT figures by default', async () => {
+    jest.spyOn(global, 'fetch').mockRejectedValue(new Error('FAOSTAT unavailable'));
+    expect(await new FaostatService().generateCountryArticles()).toEqual([]);
+  });
+
+  it('marks explicitly enabled sandbox fallback articles with provenance', async () => {
+    process.env.FAOSTAT_ALLOW_UNVERIFIED_FALLBACK = 'true';
     const fetchMock = jest.spyOn(global, 'fetch').mockRejectedValue(new Error('FAOSTAT unavailable'));
     const articles = await new FaostatService().generateCountryArticles();
 
     expect(articles.length).toBeGreaterThan(0);
     expect(articles[0].source).toBe('FAOSTAT 2022 static fallback');
+    expect(articles.find(article => article.title.endsWith('Malawi'))?.regions).toEqual(['Malawi']);
+    expect(articles.find(article => article.title.endsWith('India'))?.regions).toEqual(['India']);
+    expect(articles.find(article => article.title.endsWith('Malawi'))?.crops).toContain('tobacco');
+    expect(articles.find(article => article.title.endsWith('Malawi'))?.crops).not.toContain('coffee, green');
     fetchMock.mockRestore();
+  });
+
+  it('never enables the unverified fallback in production', async () => {
+    const nodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    process.env.FAOSTAT_ALLOW_UNVERIFIED_FALLBACK = 'true';
+    jest.spyOn(global, 'fetch').mockRejectedValue(new Error('FAOSTAT unavailable'));
+    try {
+      expect(await new FaostatService().generateCountryArticles()).toEqual([]);
+    } finally {
+      process.env.NODE_ENV = nodeEnv;
+    }
   });
 
   it('returns labeled market estimates without mutating the database', async () => {

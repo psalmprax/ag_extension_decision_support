@@ -54,7 +54,7 @@ async function performLegacySearch(limit: string, offset: string, category?: str
     };
 }
 
-async function executeRagV2Search(q: string, limit: string, category: string | undefined, crop: string | undefined, cacheKey: string, res: Response) {
+async function executeRagV2Search(q: string, limit: string, category: string | undefined, crop: string | undefined, res: Response) {
     try {
         const { RAGV2Service } = await import('@/services/ragV2Service');
         const enhanced = await RAGV2Service.enhancedSearch(q, {
@@ -75,7 +75,6 @@ async function executeRagV2Search(q: string, limit: string, category: string | u
             success: true,
             data: { articles, graphContext: enhanced.graphContext, citations: enhanced.citations },
         };
-        await cacheSet(cacheKey, JSON.stringify(response), 300);
         return res.json(response);
     } catch (ragErr) {
         logger.warn('RAG v2 search failed, falling back to standard search:', ragErr);
@@ -83,7 +82,7 @@ async function executeRagV2Search(q: string, limit: string, category: string | u
     }
 }
 
-async function fetchKnowledgeArticles(q: unknown, limit: unknown, offset: unknown, category: unknown, crop: unknown, v2: unknown, cacheKey: string, res: Response): Promise<SearchResult[] | Response> {
+async function fetchKnowledgeArticles(q: unknown, limit: unknown, offset: unknown, category: unknown, crop: unknown, v2: unknown, res: Response): Promise<SearchResult[] | Response> {
     let articles: SearchResult[] = [];
     const pool = getPool();
 
@@ -91,7 +90,7 @@ async function fetchKnowledgeArticles(q: unknown, limit: unknown, offset: unknow
 
     if (q) {
         if (v2 === 'true' || v2 === true) {
-            const ragRes = await executeRagV2Search(q as string, limit as string, category as string | undefined, crop as string | undefined, cacheKey, res);
+            const ragRes = await executeRagV2Search(q as string, limit as string, category as string | undefined, crop as string | undefined, res);
             if (ragRes) return ragRes; // Response already sent
         } else if (v2 === 'false' || v2 === false) {
             // Fast-path: keyword search via Postgres FTS / ILIKE without embedding or LLM overhead (<10ms)
@@ -132,12 +131,13 @@ router.get('/search', validate({ query: knowledgeSearchQuery }), async (req: Req
         const v2 = qv.v2;
 
         const cacheKey = 'knowledge:search:' + q + ':' + category + ':' + crop + ':' + limit + ':' + offset + ':' + (v2 || 'false');
-        const cached = await cacheGet(cacheKey);
+        const isV2 = v2 === 'true' || v2 === true;
+        const cached = isV2 ? null : await cacheGet(cacheKey);
         if (cached) {
             return res.json(JSON.parse(cached));
         }
 
-        const fetchResult = await fetchKnowledgeArticles(q, limit, offset, category, crop, v2, cacheKey, res);
+        const fetchResult = await fetchKnowledgeArticles(q, limit, offset, category, crop, v2, res);
         if ('json' in fetchResult && typeof fetchResult.json === 'function') {
             // It's a response object, already handled
             return;
@@ -155,7 +155,7 @@ router.get('/search', validate({ query: knowledgeSearchQuery }), async (req: Req
             },
         };
 
-        await cacheSet(cacheKey, JSON.stringify(response), 300);
+        if (!isV2) await cacheSet(cacheKey, JSON.stringify(response), 300);
 
         const user = (req as Request & { user?: Record<string, unknown> }).user;
         const userId = (user?.userId || user?.id) as string | undefined;
@@ -299,6 +299,21 @@ function getMaxCitationScore(citations: Citation[]): number {
     return citations.length ? Math.max(...citations.map(c => typeof c.score === 'number' ? c.score : 0)) : 0;
 }
 
+function isValidAdvisoryContext(country: unknown, language: unknown): boolean {
+    return !(
+        (country !== undefined && (typeof country !== 'string' || country.length > 100 || country.trim().length < 2))
+        || (language !== undefined && (typeof language !== 'string' || language.length > 10 || language.length < 2))
+    );
+}
+
+async function getDailyKnowledgeAccess(user: Record<string, unknown> | undefined, userId: string, userRole?: string) {
+    const isDemoUser = user?.email === 'demo@agridemo.com' || Boolean(user?.isDemo);
+    const dailyQuota = userRole === 'admin' || isDemoUser
+        ? { allowed: true, current: 0, limit: -1, remaining: 999999 }
+        : await usageService.checkDailyKnowledgeLimit(userId, userRole);
+    return { dailyQuota, isDemoUser };
+}
+
 async function resolveAnswerCitations(
     _question: string,
     contextUsed: Awaited<ReturnType<typeof KnowledgeService.askQuestion>>['contextUsed']
@@ -328,8 +343,7 @@ router.post('/ask', async (req: Request, res: Response) => {
         if (typeof question !== 'string' || !question.trim()) {
             return res.status(400).json({ success: false, error: 'Question is required' });
         }
-        if ((country !== undefined && (typeof country !== 'string' || country.length > 100 || country.trim().length < 2))
-            || (language !== undefined && (typeof language !== 'string' || language.length > 10 || language.length < 2))) {
+        if (!isValidAdvisoryContext(country, language)) {
             return res.status(400).json({ success: false, error: 'Invalid advisory country or language' });
         }
         if (!userId) {
@@ -337,11 +351,11 @@ router.post('/ask', async (req: Request, res: Response) => {
         }
 
         // Daily knowledge quota check (3 per day for Free tier; admin and demo accounts are exempt)
-        const isDemoUser = (user as Record<string, unknown> | undefined)?.email === 'demo@agridemo.com'
-            || Boolean((user as Record<string, unknown> | undefined)?.isDemo);
-        const dailyQuota = (userRole === 'admin' || isDemoUser)
-            ? { allowed: true, current: 0, limit: -1, remaining: 999999 }
-            : await usageService.checkDailyKnowledgeLimit(userId, userRole);
+        const { dailyQuota, isDemoUser } = await getDailyKnowledgeAccess(
+            user as Record<string, unknown> | undefined,
+            userId,
+            userRole
+        );
 
         if (!dailyQuota.allowed) {
             return res.status(403).json({
@@ -363,9 +377,14 @@ router.post('/ask', async (req: Request, res: Response) => {
             { preferredProvider: 'aihubmix', bypassCache: Boolean(bypassCache), country, language, allowTools: !isDemoUser }
         );
 
-        // Record search for daily quota tracking
-        await usageService.recordKnowledgeSearch(userId, question, result.answer);
+        if (result.answerMode === 'unavailable') {
+            return res.status(503).json({
+                success: false,
+                error: 'The knowledge assistant is unavailable and no eligible sources were found. Please retry.',
+            });
+        }
 
+        // The pipeline records one history row, which also counts toward the daily quota.
         const citations = await resolveAnswerCitations(question, result.contextUsed);
 
         const remainingAfter = userRole === 'admin' ? 999999 : Math.max(0, dailyQuota.remaining - 1);
@@ -376,6 +395,7 @@ router.post('/ask', async (req: Request, res: Response) => {
             success: true,
             data: {
                 answer: result.answer,
+                answerMode: result.answerMode,
                 reasoning: result.reasoning,
                 visuals: result.visuals,
                 audio: (result as unknown as Record<string, unknown>).audio,

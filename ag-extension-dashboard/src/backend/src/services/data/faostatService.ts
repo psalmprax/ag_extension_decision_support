@@ -27,6 +27,70 @@ export interface FaostatCountryArticle {
     sourceUrl: string;
 }
 
+interface FaostatRawRow {
+    area: string;
+    area_code: string | number;
+    item: string;
+    item_code: string | number;
+    element: string;
+    element_code: string | number;
+    year: string | number;
+    unit: string;
+    value: string | number | null;
+}
+
+function validRawValue(value: unknown): boolean {
+    if (value === null || typeof value === 'number') return true;
+    return typeof value === 'string' && /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(value.trim());
+}
+
+function validRawCode(value: unknown): boolean {
+    return typeof value === 'number'
+        ? Number.isSafeInteger(value) && value >= 0
+        : typeof value === 'string' && /^\d+$/.test(value);
+}
+
+function parseObservations(data: { data?: FaostatRawRow[] }, itemCode: string, areaCode: string, startYear: number, endYear: number): FaostatCropRecord[] {
+    if (!data || !Array.isArray(data.data)) throw new Error('FAOSTAT response has no data array');
+    if (data.data.some(row => !row || typeof row !== 'object' || Array.isArray(row) ||
+        !validRawValue(row.value) ||
+        ![row.area_code, row.item_code, row.element_code, row.year].every(validRawCode))) {
+        throw new Error('FAOSTAT response contains an invalid observation');
+    }
+    const records: FaostatCropRecord[] = data.data.map(row => ({
+        areaName: row.area,
+        areaCode: String(row.area_code),
+        itemName: row.item,
+        itemCode: String(row.item_code),
+        elementName: row.element,
+        elementCode: String(row.element_code),
+        year: Number(row.year),
+        unit: row.unit,
+        value: row.value != null ? Number(row.value) : null
+    }));
+    const normalizeCode = (code: string) => code.replace(/^0+(?=\d)/, '');
+    for (const record of records) {
+        if (typeof record.areaName !== 'string' || !record.areaName.trim() ||
+            typeof record.itemName !== 'string' || !record.itemName.trim() ||
+            typeof record.elementName !== 'string' || typeof record.unit !== 'string' ||
+            normalizeCode(record.areaCode) !== normalizeCode(areaCode) ||
+            normalizeCode(record.itemCode) !== normalizeCode(itemCode) ||
+            !Number.isInteger(record.year) || record.year < startYear || record.year > endYear ||
+            (record.value !== null && (!Number.isFinite(record.value) || record.value < 0))) {
+            throw new Error(`FAOSTAT returned an invalid or mismatched observation for item=${itemCode} area=${areaCode}`);
+        }
+        const element = {
+            '5510': ['Production', 't'],
+            '5312': ['Area harvested', 'ha'],
+            '5419': ['Yield', 'hg/ha'],
+        }[record.elementCode];
+        if (!element || record.elementName !== element[0] || record.unit.trim().toLowerCase() !== element[1]) {
+            throw new Error(`FAOSTAT returned an unexpected element or unit for item=${itemCode} area=${areaCode}`);
+        }
+    }
+    return records;
+}
+
 /**
  * Service to fetch crop production data from FAOSTAT API.
  * Free, no authentication required.
@@ -99,8 +163,8 @@ export class FaostatService {
     async fetchCropData(
         itemCode: string,
         areaCode: string,
-        startYear: number = 2018,
-        endYear: number = 2023
+        startYear: number = new Date().getUTCFullYear() - 6,
+        endYear: number = new Date().getUTCFullYear() - 1
     ): Promise<FaostatCropRecord[]> {
         try {
             const url = `${this.baseUrl}/data/QCL`;
@@ -116,42 +180,27 @@ export class FaostatService {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 15000);
 
-            let response: Response;
+            let data: { data?: FaostatRawRow[] };
             try {
-                response = await fetch(`${url}?${params}`, {
+                const response = await fetch(`${url}?${params}`, {
                     headers: {
                         'Accept': 'application/json',
                         'User-Agent': 'ag-extension-dashboard/1.0'
                     },
                     signal: controller.signal
                 });
+                if (!response.ok) {
+                    throw new Error(`FAOSTAT returned HTTP ${response.status}`);
+                }
+                data = await response.json() as { data?: FaostatRawRow[] };
             } finally {
                 clearTimeout(timeout);
             }
 
-            if (!response.ok) {
-                throw new Error(`FAOSTAT returned HTTP ${response.status}`);
-            }
-
-            interface FaostatRawRow { area: string; area_code: string; item: string; item_code: string; element: string; element_code: string; year: string; unit: string; value: string | null }
-            interface FaostatApiResponse { data?: FaostatRawRow[] }
-            const data = await response.json() as FaostatApiResponse;
-            const records: FaostatCropRecord[] = (data?.data || []).map((row: FaostatRawRow) => ({
-                areaName: row.area,
-                areaCode: row.area_code,
-                itemName: row.item,
-                itemCode: row.item_code,
-                elementName: row.element,
-                elementCode: row.element_code,
-                year: parseInt(row.year),
-                unit: row.unit,
-                value: row.value != null ? parseFloat(row.value) : null
-            }));
-
-            return records;
+            return parseObservations(data, itemCode, areaCode, startYear, endYear);
         } catch (error) {
             logger.warn(`FAOSTAT fetch failed for item=${itemCode} area=${areaCode}: ${error instanceof Error ? error.message : "Unknown error"}`);
-            return [];
+            throw error;
         }
     }
 
@@ -165,22 +214,30 @@ export class FaostatService {
         return byElement;
     }
 
-    private static formatCropSummary(cropName: string, records: FaostatCropRecord[]): string | null {
+    private static formatCropSummary(records: FaostatCropRecord[]): string | null {
         const byElement = FaostatService.groupByElement(records);
         const production = byElement.get('Production');
         const area = byElement.get('Area harvested');
         const yield_ = byElement.get('Yield');
 
-        const latestProd = production?.filter(r => r.value != null).sort((a, b) => b.year - a.year)[0];
-        const latestArea = area?.filter(r => r.value != null).sort((a, b) => b.year - a.year)[0];
-        const latestYield = yield_?.filter(r => r.value != null).sort((a, b) => b.year - a.year)[0];
+        const valid = (r: FaostatCropRecord, code: string, unit: string) =>
+            r.value !== null && Number.isFinite(r.value) && Number.isInteger(r.year) &&
+            r.elementCode === code && r.unit.trim().toLowerCase() === unit;
+        const latestProd = production?.filter(r => valid(r, '5510', 't')).sort((a, b) => b.year - a.year)[0];
+        const latestArea = area?.filter(r => valid(r, '5312', 'ha')).sort((a, b) => b.year - a.year)[0];
+        const latestYield = yield_?.filter(r => valid(r, '5419', 'hg/ha')).sort((a, b) => b.year - a.year)[0];
 
-        if (!latestProd && !latestArea) return null;
+        if (!latestProd && !latestArea && !latestYield) return null;
+        const itemName = (latestProd ?? latestArea ?? latestYield)?.itemName;
+        if (typeof itemName !== 'string' || !itemName.trim()) return null;
+        if ([latestProd, latestArea, latestYield].some(record => record && record.itemName !== itemName)) {
+            throw new Error('FAOSTAT returned inconsistent item names for one crop code');
+        }
 
-        const parts = [`${cropName}:`];
-        if (latestProd?.value) parts.push(`${Math.round(latestProd.value).toLocaleString()} tonnes (${latestProd.year})`);
-        if (latestArea?.value) parts.push(`${Math.round(latestArea.value).toLocaleString()} ha harvested`);
-        if (latestYield?.value) parts.push(`yield ${Math.round(latestYield.value)} hg/ha`);
+        const parts = [`${itemName.trim()}:`];
+        if (latestProd?.value != null) parts.push(`${Math.round(latestProd.value).toLocaleString()} tonnes (${latestProd.year})`);
+        if (latestArea?.value != null) parts.push(`${Math.round(latestArea.value).toLocaleString()} ha harvested (${latestArea.year})`);
+        if (latestYield?.value != null) parts.push(`yield ${Math.round(latestYield.value)} hg/ha (${latestYield.year})`);
         return parts.join(' ');
     }
 
@@ -190,24 +247,37 @@ export class FaostatService {
      */
     async fetchCountryCropSummary(areaCode: string, areaName: string): Promise<string> {
         const lines: string[] = [`Crop production statistics for ${areaName} (Source: FAOSTAT):`];
-        let fetchCount = 0;
+        const includedItems = new Set<string>();
+        const requestedCodes = new Set<string>();
+        const endYear = new Date().getUTCFullYear() - 1;
 
-        for (const [cropName, cropCode] of Object.entries(this.tropicalCrops)) {
-            if (fetchCount >= 8) break; // Limit to avoid rate limiting
-            const records = await this.fetchCropData(cropCode, areaCode, 2020, 2023);
+        for (const cropCode of Object.values(this.tropicalCrops)) {
+            if (includedItems.size >= 8) break;
+            if (requestedCodes.has(cropCode)) continue;
+            requestedCodes.add(cropCode);
+            const records = await this.fetchCropData(cropCode, areaCode, endYear - 5, endYear);
+            await new Promise(r => setTimeout(r, 200));
             if (records.length === 0) continue;
-
-            const summary = FaostatService.formatCropSummary(cropName, records);
-            if (summary) {
-                lines.push(summary);
-                fetchCount++;
+            if (records.some(record => record.areaName.trim().toLowerCase() !== areaName.trim().toLowerCase())) {
+                throw new Error(`FAOSTAT area name did not match requested country ${areaName}`);
             }
 
-            // Small delay to avoid hammering the API
-            await new Promise(r => setTimeout(r, 200));
+            const summary = FaostatService.formatCropSummary(records);
+            const item = summary?.split(':', 1)[0].toLowerCase();
+            if (summary && item && !includedItems.has(item)) {
+                lines.push(summary);
+                includedItems.add(item);
+            }
+
         }
 
         return lines.join('\n');
+    }
+
+    private static articleCrops(content: string): string[] {
+        return [...new Set(content.split('\n').slice(1)
+            .map(line => line.split(':', 1)[0].trim().toLowerCase())
+            .filter(Boolean))];
     }
 
     /**
@@ -343,7 +413,8 @@ Oil palm fruit: 2,000,000 tonnes, 350,000 ha — Andhra Pradesh`,
         // Try API first for one country to check availability
         let apiAvailable = false;
         try {
-            const testUrl = `https://fenixservices.fao.org/faostat/api/v1/en/data/QCL?area=109&item=056&element=5510&year=2023&output_type=json`;
+            const probeYear = new Date().getUTCFullYear() - 2;
+            const testUrl = `https://fenixservices.fao.org/faostat/api/v1/en/data/QCL?area=109&item=056&element=5510&year=${probeYear}&output_type=json`;
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 10000);
             let testResponse: Response;
@@ -358,7 +429,13 @@ Oil palm fruit: 2,000,000 tonnes, 350,000 ha — Andhra Pradesh`,
         }
 
         if (!apiAvailable) {
-            logger.info('[FAOSTAT] API unavailable, using static fallback data');
+            const allowFallback = process.env.FAOSTAT_ALLOW_UNVERIFIED_FALLBACK === 'true' &&
+                (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test');
+            if (!allowFallback) {
+                logger.warn('[FAOSTAT] API unavailable; unverified historical fallback is disabled');
+                return [];
+            }
+            logger.warn('[FAOSTAT] API unavailable; using unverified static fallback for sandbox only');
             for (const [countryName] of Object.entries(priorityCountries)) {
                 const content = FaostatService.STATIC_COUNTRY_DATA[countryName];
                 if (content) {
@@ -366,8 +443,8 @@ Oil palm fruit: 2,000,000 tonnes, 350,000 ha — Andhra Pradesh`,
                         title: `Crop Production Statistics - ${countryName}`,
                         content,
                         category: 'Production Data',
-                        crops: Object.keys(this.tropicalCrops).map(c => c.toLowerCase()),
-                        regions: [countryName, 'Africa', 'Asia', 'tropical'],
+                        crops: FaostatService.articleCrops(content),
+                        regions: [countryName],
                         source: 'FAOSTAT 2022 static fallback',
                         sourceUrl: 'https://fenixservices.fao.org/faostat/api/v1/en/',
                     });
@@ -381,13 +458,13 @@ Oil palm fruit: 2,000,000 tonnes, 350,000 ha — Andhra Pradesh`,
             logger.info(`Fetching FAOSTAT data for ${countryName}...`);
             const content = await this.fetchCountryCropSummary(countryCode, countryName);
 
-            if (content.split('\n').length > 2) {
+            if (content.split('\n').length > 1) {
                 articles.push({
                     title: `Crop Production Statistics - ${countryName}`,
                     content,
                     category: 'Production Data',
-                    crops: Object.keys(this.tropicalCrops).map(c => c.toLowerCase()),
-                    regions: [countryName, 'Africa', 'Asia', 'tropical'],
+                    crops: FaostatService.articleCrops(content),
+                    regions: [countryName],
                     source: 'FAOSTAT API',
                     sourceUrl: 'https://fenixservices.fao.org/faostat/api/v1/en/',
                 });

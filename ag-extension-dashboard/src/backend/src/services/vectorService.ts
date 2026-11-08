@@ -34,12 +34,9 @@ export class VectorService {
         try {
             // Generate embedding (uses cache for repeated content)
             const embedding = await getEmbedding(content);
-            // Convert to pgvector format: [val1,val2,val3]
-            const vector = `[${embedding.join(',')}]`;
-
             await query(`
                 INSERT INTO knowledge_articles (id, title, content, category, tags, crops, regions, source, source_url, content_type, embedding, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::double precision[], NOW())
                 ON CONFLICT (id) DO UPDATE SET
                     title = EXCLUDED.title,
                     content = EXCLUDED.content,
@@ -63,7 +60,7 @@ export class VectorService {
                 metadata.source || null,
                 metadata.sourceUrl || null,
                 metadata.contentType || 'text',
-                vector
+                embedding
             ]);
         } catch (error) {
             logger.error(`Failed to upsert document ${id} to DB:`, error);
@@ -110,8 +107,8 @@ export class VectorService {
             // Only select needed columns — avoid fetching the large embedding vector
             const result = await query(`
                 SELECT * FROM (
-                    SELECT id, title, content, category, crops, tags, regions, updated_at, source_url, content_type,
-                           (1 - (embedding <=> $1::vector)) as score
+                    SELECT id, title, content, category, crops, tags, regions, updated_at, source, source_url, content_type,
+                           (1 - (embedding::vector <=> $1::vector)) as score
                     FROM knowledge_articles
                     WHERE ${where.join(' AND ')}
                 ) sub
@@ -120,7 +117,7 @@ export class VectorService {
                 LIMIT $${params.length}
             `, params as unknown as unknown[]);
 
-            type VectorRow = { id: string; content: string; title: unknown; category: unknown; crops: unknown[] | null; tags: unknown; regions: unknown; updated_at: unknown; source_url: unknown; content_type: unknown; score: unknown };
+            type VectorRow = { id: string; content: string; title: unknown; category: unknown; crops: unknown[] | null; tags: unknown; regions: unknown; updated_at: unknown; source: unknown; source_url: unknown; content_type: unknown; score: unknown };
             return (result.rows as unknown as VectorRow[]).map((row) => ({
                 id: row.id,
                 content: row.content,
@@ -128,6 +125,7 @@ export class VectorService {
                     title: row.title,
                     category: row.category,
                     crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
+                    source: row.source,
                     sourceUrl: row.source_url,
                     tags: row.tags,
                     regions: row.regions,

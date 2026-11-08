@@ -174,6 +174,9 @@ describe('POST /chatbot/completions tool loop', () => {
   });
 
   it('accepts the legacy snake_case conversation_id', async () => {
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ farmer_id: 'farmer-1', officer_id: 'u1', region: 'North' }],
+    });
     routeRequest.mockResolvedValueOnce({ text: 'ok' });
     const res = await request(app).post('/chatbot/completions').send({ message: 'hi', conversation_id: '11111111-1111-4111-8111-111111111111' });
     expect(res.status).toBe(200);

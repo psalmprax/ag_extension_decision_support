@@ -502,11 +502,11 @@ function renderStage4EdgeUplink(rc: RenderContext) {
   ctx.fillRect(phoneX - 28, phoneY - 45, 56, 40);
   ctx.fillStyle = '#34d399';
   ctx.font = 'bold 8px sans-serif';
-  ctx.fillText('AI ADVISORY', phoneX - 24, phoneY - 33);
+  ctx.fillText('OBSERVATION', phoneX - 24, phoneY - 33);
   ctx.fillStyle = '#e2e8f0';
   ctx.font = '7px sans-serif';
-  ctx.fillText('Apply 2.5t Lime', phoneX - 24, phoneY - 21);
-  ctx.fillText('Before Rain: 48h', phoneX - 24, phoneY - 11);
+  ctx.fillText('Review field data', phoneX - 24, phoneY - 21);
+  ctx.fillText('Seek expert review', phoneX - 24, phoneY - 11);
 
   ctx.restore();
 }

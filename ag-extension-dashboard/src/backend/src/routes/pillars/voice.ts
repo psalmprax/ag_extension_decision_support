@@ -5,21 +5,36 @@ import { validate } from '@/middleware/validate';
 import { safeError } from '@/utils/safeResponse';
 import { logger } from '@/utils/logger';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
-import { transcribeVoiceNote, synthesizeVoiceAdvisory } from '@/services/voiceAudioService';
+import { transcribeVoiceNote, synthesizeVoiceAdvisory, detectVernacularKeywords } from '@/services/voiceAudioService';
 import { generateIvrXml, processDtmfResponse, dispatchVoiceBroadcast } from '@/services/ivrBroadcastService';
 
 const router = Router();
 
 const MAX_AUDIO_BASE64_LENGTH = 16 * 1024 * 1024; // ~12MB binary limit for DoS mitigation
 
+async function transcribeLocalOrFallback(audioBuffer: Buffer, mimeType?: string, languageHint?: string) {
+    try {
+        const { whisperTranscriptionService } = await import('@/services/whisperTranscriptionService');
+        const result = await whisperTranscriptionService.transcribe(audioBuffer, {
+            language: languageHint === 'sw' ? 'sw' : languageHint === 'en' ? 'en' : 'auto',
+        });
+        if (!result.text?.trim()) throw new Error('Local speech provider returned an empty transcript');
+        return {
+            ...result, transcription: result.text.trim(), detectedLanguage: result.language || 'unknown',
+            agronomicKeywords: detectVernacularKeywords(result.text).keywords, provider: 'local-whisper',
+        };
+    } catch (error) {
+        logger.warn('Local Whisper transcribe failed; trying cloud fallback:', error);
+        const result = await transcribeVoiceNote({ audioBuffer, mimeType, languageHint, skipLocal: true });
+        return { ...result, provider: 'openai-fallback' };
+    }
+}
+
 router.post('/voice/transcribe', checkUsageLimit('speech'), validate({ body: z.object({ audio: z.string().optional(), audioUrl: z.string().optional(), mimeType: z.string().optional(), languageHint: z.string().optional() }) }), async (req: AuthRequest, res: Response) => {
     try {
         const { audio, audioUrl, mimeType, languageHint } = req.body as { audio?: string; audioUrl?: string; mimeType?: string; languageHint?: string };
-        if (!audio && !audioUrl) {
-            // Fail loudly at the boundary: without input audio the service can
-            // only return its offline CI stub transcript, which must never be
-            // served over HTTP as if it were a real transcription.
-            return res.status(400).json({ success: false, error: 'Audio data or audioUrl is required' });
+        if (!audio) {
+            return res.status(400).json({ success: false, error: 'Audio data is required; audio URLs are not supported' });
         }
         if (audio && audio.length > MAX_AUDIO_BASE64_LENGTH) {
             return res.status(413).json({ success: false, error: 'Audio payload exceeds maximum size limit (12MB).' });
@@ -35,9 +50,9 @@ router.post('/voice/transcribe', checkUsageLimit('speech'), validate({ body: z.o
 
 router.post('/voice/transcribe-local', checkUsageLimit('speech'), validate({ body: z.object({ audio: z.string().optional(), audioUrl: z.string().optional(), mimeType: z.string().optional(), languageHint: z.string().optional() }) }), async (req: AuthRequest, res: Response) => {
     try {
-        const { audio, audioUrl, languageHint } = req.body as { audio?: string; audioUrl?: string; mimeType?: string; languageHint?: string };
-        if (!audio && !audioUrl) {
-            return res.status(400).json({ success: false, error: 'Audio data or audioUrl is required' });
+        const { audio, mimeType, languageHint } = req.body as { audio?: string; mimeType?: string; languageHint?: string };
+        if (!audio) {
+            return res.status(400).json({ success: false, error: 'Audio data is required; audio URLs are not supported' });
         }
         if (audio && audio.length > MAX_AUDIO_BASE64_LENGTH) {
             return res.status(413).json({ success: false, error: 'Audio payload exceeds maximum size limit (12MB).' });
@@ -46,20 +61,14 @@ router.post('/voice/transcribe-local', checkUsageLimit('speech'), validate({ bod
         if (audio && (!audioBuffer || audioBuffer.length === 0)) {
             return res.status(400).json({ success: false, error: 'Invalid audio payload: empty or unparseable base64' });
         }
-        // Use local Whisper transcription service (free, offline-capable)
-        const { whisperTranscriptionService } = await import('@/services/whisperTranscriptionService');
         if (!audioBuffer) {
           throw new Error('No audio buffer provided');
         }
-        const result = await whisperTranscriptionService.transcribe(audioBuffer, {
-          language: languageHint === 'sw' ? 'sw' : languageHint === 'en' ? 'en' : 'auto',
-        });
-        return res.json({ success: true, data: { ...result, provider: 'local-whisper' } });
+        const result = await transcribeLocalOrFallback(audioBuffer, mimeType, languageHint ?? 'auto');
+        return res.json({ success: true, data: result });
     } catch (e) {
-      logger.error('Local Whisper transcribe failed:', e);
-      // Fallback to OpenAI if local fails
-      const result = await transcribeVoiceNote(req.body as never);
-      return res.json({ success: true, data: { ...result, provider: 'openai-fallback' } });
+      logger.error('Voice transcription unavailable:', e);
+      return safeError(res, 503, 'Voice transcription unavailable');
     }
 });
 

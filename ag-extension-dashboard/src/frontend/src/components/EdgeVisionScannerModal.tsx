@@ -255,7 +255,7 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
     <div className="space-y-2 pt-2 text-xs border-t border-white/10">
       <div>
         <span className="font-medium text-emerald-400 font-mono text-xs">
-          Cultural Management:
+          Review guidance:
         </span>
         <ul className="list-disc pl-4 text-slate-300 space-y-0.5 mt-0.5">
           {result.primaryDiagnosis.culturalControl.map((c, i) => (
@@ -266,7 +266,7 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
 
       <div>
         <span className="font-medium text-indigo-400 font-mono text-xs">
-          Chemical Threshold:
+          Treatment guidance:
         </span>
         <p className="text-slate-300 mt-0.5">
           {result.primaryDiagnosis.chemicalIntervention}
@@ -342,7 +342,7 @@ const VerifiedCloudCard: React.FC<{
       <div className="flex items-center gap-2 text-emerald-400">
         <ShieldCheck className="w-4 h-4" />
         <span className="text-xs font-medium font-mono">
-          Cloud AI Multimodal Verification Confirmed
+          Cloud AI observation — not a confirmed diagnosis
         </span>
       </div>
 
@@ -350,15 +350,17 @@ const VerifiedCloudCard: React.FC<{
         <div className="space-y-1.5 text-xs text-slate-300">
           <div className="flex justify-between items-center">
             <span className="font-bold text-white">
-              {cropData.diseases[0]?.disease || 'Healthy Crop Vigor'}
+              {cropData.diseases[0]?.disease || `Health status: ${cropData.overallHealth}`}
             </span>
-            <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px]">
-              {Math.round((cropData.diseases[0]?.confidence || 0.9) * 100)}% Confidence
-            </span>
+            {cropData.diseases[0] && (
+              <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px]">
+                {Math.round(cropData.diseases[0].confidence * 100)}% model confidence
+              </span>
+            )}
           </div>
           {cropData.diseases[0]?.treatment && cropData.diseases[0].treatment.length > 0 && (
             <p className="text-slate-300 text-[11px]">
-              <strong className="text-emerald-400">Prescribed Treatment:</strong>{' '}
+              <strong className="text-emerald-400">Guidance:</strong>{' '}
               {cropData.diseases[0].treatment.join('; ')}
             </p>
           )}
@@ -729,7 +731,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
   const handleVerifyWithCloud = async () => {
     if (!imageSrc) return;
     if (!navigator.onLine) {
-      toast.error('Offline: Specimen saved locally. Verify when back online.');
+      toast.error('Offline: request cloud analysis when back online.');
       return;
     }
 
@@ -738,13 +740,15 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
       const verified = await requestCloudVerification(scanMode, imageSrc, crop);
       if (verified.cropData) {
         setVerifiedCrop(verified.cropData);
-        toast.success('Crop pathology verified via cloud vision AI');
+        if (verified.cropData.overallHealth === 'unknown') toast.error('Cloud crop analysis unavailable.');
+        else toast.success('Cloud crop analysis received; expert confirmation is required.');
       } else if (verified.soilData) {
         setVerifiedSoil(verified.soilData);
-        toast.success('Soil chemistry & texture verified via cloud AI');
+        if (verified.soilData.overallHealthScore === null) toast.error('Cloud soil analysis unavailable.');
+        else toast.success('Cloud soil analysis received; laboratory confirmation is required.');
       }
     } catch {
-      toast.error('Cloud verification currently unavailable. Offline findings preserved.');
+      toast.error('Cloud analysis currently unavailable. Offline findings preserved.');
     } finally {
       setIsVerifying(false);
     }
@@ -955,12 +959,12 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                 {isVerifying ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Verifying with Cloud Vision AI...</span>
+                    <span>Requesting Cloud Vision AI...</span>
                   </>
                 ) : (
                   <>
                     <Eye className="w-4 h-4" />
-                    <span>Verify with Multimodal AI (Cloud)</span>
+                    <span>Request Cloud AI Analysis</span>
                   </>
                 )}
               </button>

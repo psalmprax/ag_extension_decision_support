@@ -104,7 +104,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             variants={fadeUp}
             className="text-sm sm:text-base lg:text-lg text-white/80 leading-relaxed max-w-xl mx-auto sm:mx-0 font-normal"
           >
-            Capture a photo of a sick leaf, stem, or pest and queue it offline; diagnosis and remedy guidance require an internet connection.
+            Share a crop photo or symptoms for an assessment. Results are unverified and require expert confirmation.
           </motion.p>
 
           {/* 4 Farmer Benefit Signifiers */}
@@ -114,8 +114,8 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <Camera className="w-4 h-4 text-emerald-400" />
               </div>
               <div className="text-left min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white truncate">3-Sec Leaf Scan</div>
-                <div className="text-xxs sm:text-xs text-white/60 truncate">Spots 120+ pests &amp; blights</div>
+                <div className="text-xs sm:text-sm font-bold text-white truncate">Crop Assessment</div>
+                <div className="text-xxs sm:text-xs text-white/60 truncate">Possible causes, not a diagnosis</div>
               </div>
             </div>
 
@@ -125,7 +125,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
               </div>
               <div className="text-left min-w-0">
                 <div className="text-xs sm:text-sm font-bold text-white truncate">Rain Forecasts</div>
-                <div className="text-xxs sm:text-xs text-white/60 truncate">Avoid fertilizer wash-off</div>
+                <div className="text-xxs sm:text-xs text-white/60 truncate">Check local conditions</div>
               </div>
             </div>
 
@@ -134,8 +134,8 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <Radio className="w-4 h-4 text-amber-400" />
               </div>
               <div className="text-left min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white truncate">Queue Photos Offline</div>
-                <div className="text-xxs sm:text-xs text-white/60 truncate">Reconnect to get a diagnosis</div>
+                <div className="text-xs sm:text-sm font-bold text-white truncate">Field Tools</div>
+                <div className="text-xxs sm:text-xs text-white/60 truncate">Availability varies by feature</div>
               </div>
             </div>
 
@@ -200,8 +200,8 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                     <strong>Text sample in {textLanguage === 'sw' ? 'Kiswahili' : 'English'}:</strong>{' '}
                     <em>
                       {textLanguage === 'sw'
-                        ? '"Mmea wako una kiwavi wa jeshi. Changanya vijiko viwili vya mafuta ya mwarobaini..."'
-                        : '"Your maize has armyworm caterpillars. Mix two tablespoons of neem oil in one bucket of clean water..."'}
+                        ? '"Wasiliana na afisa ugani wa eneo lako."'
+                        : '"Contact your local extension officer."'}
                     </em>
                   </span>
                 </div>
@@ -256,7 +256,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <span>09:41</span>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  <span className="text-emerald-400 font-semibold">Photo Queue Ready</span>
+                  <span className="text-emerald-400 font-semibold">Illustrative preview</span>
                 </div>
               </div>
 
@@ -282,7 +282,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
               <div className="relative h-[210px] sm:h-[230px] w-full overflow-hidden bg-slate-900">
                 <img
                   src="/images/landing/maize-leaf-diagnostics.webp"
-                  alt="Close-up of diagnosed maize crop leaf with Fall Armyworm damage"
+                  alt="Illustrative close-up of a maize leaf"
                   className="w-full h-full object-cover object-center filter saturate-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/30" />
@@ -300,16 +300,16 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                   </div>
                   <div className="bg-slate-950/90 backdrop-blur-md rounded-lg p-1.5 border border-emerald-400/40 text-left">
                     <div className="text-[10px] font-bold text-white flex items-center gap-1">
-                      <span>🐛 Fall Armyworm Caterpillar</span>
+                      <span>Example leaf observation</span>
                       <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                     </div>
-                    <div className="text-[9px] text-emerald-400 font-semibold">✅ High Certainty Match</div>
+                    <div className="text-[9px] text-emerald-400 font-semibold">Illustration, not a diagnosis</div>
                   </div>
                 </div>
 
                 {/* Floating Location Tag in Plain Language */}
                 <div className="absolute bottom-2.5 left-3 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-[9px] font-medium text-white/90 border border-white/10">
-                  📍 Meru District • Photo queued offline
+                  Illustrative sample • No photo was uploaded
                 </div>
               </div>
 
@@ -319,18 +319,18 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400 block">
-                      Recommended Next Step
+                      Example next step
                     </span>
-                    <h3 className="text-sm font-bold text-white">Fall Armyworm Caterpillar</h3>
+                    <h3 className="text-sm font-bold text-white">Unconfirmed leaf symptoms</h3>
                   </div>
                   <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
-                    Moderate Problem
+                    Expert review needed
                   </span>
                 </div>
 
                 {/* Remedy Tabs Switcher */}
-                <div role="group" aria-label="Remedy type" className="flex rounded-lg bg-black/40 p-0.5 border border-white/5 text-[11px] font-semibold">
+                <div role="group" aria-label="Example next steps" className="flex rounded-lg bg-black/40 p-0.5 border border-white/5 text-[11px] font-semibold">
                   <button
                     type="button"
                     aria-pressed={activeRemedyTab === 'organic'}
@@ -341,7 +341,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                         : 'text-white/60 hover:text-white'
                     }`}
                   >
-                    🌿 Organic Recipe
+                    Observe
                   </button>
                   <button
                     type="button"
@@ -353,7 +353,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                         : 'text-white/60 hover:text-white'
                     }`}
                   >
-                    🛡️ Safe Farm Spray
+                    Consult
                   </button>
                 </div>
 
@@ -361,13 +361,13 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5 text-xs text-white/80 leading-relaxed">
                   {activeRemedyTab === 'organic' ? (
                     <div>
-                      <strong className="text-emerald-400 block text-[11px] mb-1">Cold-Pressed Neem Oil (Natural Recipe)</strong>
-                      Mix 2 tablespoons of Neem oil in 1 bucket of clean water. Spray inside leaf whorls at sunset. Reapply after 5 days. Safe for bees, livestock &amp; children.
+                      <strong className="text-emerald-400 block text-[11px] mb-1">Record symptoms</strong>
+                      Note the crop, symptoms and location to help a local expert assess the cause.
                     </div>
                   ) : (
                     <div>
-                      <strong className="text-emerald-400 block text-[11px] mb-1">Approved Bio-Pesticide (Bt)</strong>
-                      Apply certified bio-insecticide in early morning or late evening. Wear a basic cloth face cover when spraying. Safe for soil health.
+                      <strong className="text-emerald-400 block text-[11px] mb-1">Seek local advice</strong>
+                      Consult a qualified local expert to confirm the diagnosis and locally authorized options before treatment.
                     </div>
                   )}
                 </div>
@@ -376,7 +376,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <div className="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center gap-2.5 text-xs text-sky-200">
                   <Droplets className="w-4 h-4 text-sky-400 shrink-0" />
                   <div className="leading-tight text-[11px]">
-                    <strong>Rain Alert:</strong> 14mm rain expected in 18 hrs. Hold foliar spray until Friday morning so the medicine doesn&apos;t wash away.
+                    <strong>Weather:</strong> This illustration is not a forecast. Check current local information.
                   </div>
                 </div>
 

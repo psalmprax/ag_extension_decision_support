@@ -26,6 +26,7 @@ import { VoiceNoteTaker } from '@/components/audio/VoiceNoteTaker';
 import { fetchWeather } from '@/api/weatherService';
 import { getChatCompletion } from '@/api/aiService';
 import apiClient from '@/api/client';
+import { buildHazardDays, defaultFollowUpQuestions, parseFollowUpQuestions, toPlotTelemetry, type PlotTelemetry, type WeatherForecastDay } from './farmerChatSafety';
 
 interface FarmerChatPageProps {
   farmerConversations: Conversation[];
@@ -41,21 +42,7 @@ interface FarmerChatPageProps {
   onDeleteConversation?: (id: string) => void;
 }
 
-// NOTE: outbreak risk is evaluated from the REAL live forecast (weatherService ->
-// /external/weather -> /pillars/hazard/evaluate). An earlier version derived a
-// 7-day forecast from soil telemetry (temperature defaulted to 25°C, humidity computed
-// from moisture) and displayed the result as a "LIVE" risk score. That presented
-// synthesized inputs as measured weather; when weather or evaluation fails the card
-// degrades to "unavailable" instead of scoring fabricated inputs.
-
-interface WeatherForecastDay {
-  date: string;
-  maxTemp: number;
-  minTemp: number;
-  precipitationMm?: number;
-  relativeHumidityPct?: number;
-  windSpeedKmh?: number;
-}
+// Forecast thresholds are estimates, not confirmed outbreaks or official alerts.
 
 interface DetectedHazard {
   hazardType: string;
@@ -64,8 +51,11 @@ interface DetectedHazard {
 }
 
 interface HazardEvaluation {
+  conversationId: string | null;
   status: 'idle' | 'loading' | 'ready' | 'unavailable';
   hazards: DetectedHazard[];
+  evaluatedDays?: number;
+  totalDays?: number;
 }
 
 export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
@@ -96,10 +86,14 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   const activeConv = farmerConversations.find(c => c.id === activeFarmerConvId);
   const activeFarmer = activeConv as unknown as { ndvi?: number; ph?: number; temperature?: number; outbreakRisk?: number } | undefined;
 
-  const [plotTelemetry, setPlotTelemetry] = useState<{ ph: number | null; soc: number | null; moisture: number | null; temp: number | null; loading: boolean }>({ ph: null, soc: null, moisture: null, temp: null, loading: false });
+  const [plotState, setPlotTelemetry] = useState<PlotTelemetry>({ conversationId: null, ph: null, soc: null, moisture: null, temp: null, loading: false });
+  const plotTelemetry = plotState.conversationId === activeFarmerConvId
+    ? plotState : { ph: null, soc: null, moisture: null, temp: null, loading: false };
   const [showVoiceComposer, setShowVoiceComposer] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+    setPlotTelemetry({ conversationId: activeFarmerConvId, ph: null, soc: null, moisture: null, temp: null, loading: false });
     if (!activeFarmerConvId || !activeConv) return;
     const farmerId = (activeConv as unknown as { farmerId?: string }).farmerId;
     if (!farmerId) return;
@@ -107,60 +101,53 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
     import('@/api/soilService').then(async mod => {
       try {
         const res = await mod.fetchFarmerSoilProfile(farmerId);
-        const baseline = res.data?.baseline as unknown as { ph?: number; organicCarbonGPerKg?: number } | null;
-        const moisture = res.data?.moisture as unknown as { soilMoisture?: { avgTop9cm?: number }; soilTemperature?: { avgTop6cm?: number } } | null;
-        setPlotTelemetry({
-          ph: baseline?.ph ?? null,
-          soc: baseline?.organicCarbonGPerKg ?? null,
-          moisture: moisture?.soilMoisture?.avgTop9cm != null ? Number((moisture.soilMoisture.avgTop9cm * 100).toFixed(1)) : null,
-          temp: moisture?.soilTemperature?.avgTop6cm ?? null,
-          loading: false,
-        });
-      } catch { setPlotTelemetry(prev => ({ ...prev, loading: false })); }
-    }).catch(() => setPlotTelemetry(prev => ({ ...prev, loading: false })));
+        if (cancelled) return;
+        setPlotTelemetry(toPlotTelemetry(activeFarmerConvId, res.data));
+      } catch (error) {
+        console.warn('Farmer soil profile unavailable:', error);
+        if (!cancelled) setPlotTelemetry(prev => ({ ...prev, loading: false }));
+      }
+    }).catch(error => {
+      console.warn('Farmer soil service unavailable:', error);
+      if (!cancelled) setPlotTelemetry(prev => ({ ...prev, loading: false }));
+    });
+    return () => { cancelled = true; };
   }, [activeFarmerConvId, activeConv]);
 
   // Outbreak risk: evaluated from the live forecast via /pillars/hazard/evaluate.
   // Days with missing measured fields are skipped (never defaulted), and a failed
   // weather/evaluation call degrades the card instead of scoring fabricated inputs.
-  const [hazardEval, setHazardEval] = useState<HazardEvaluation>({ status: 'idle', hazards: [] });
+  const [hazardState, setHazardEval] = useState<HazardEvaluation>({ conversationId: null, status: 'idle', hazards: [] });
+  const hazardEval: HazardEvaluation = hazardState.conversationId === activeFarmerConvId
+    ? hazardState : { conversationId: activeFarmerConvId, status: 'idle', hazards: [] };
 
   useEffect(() => {
     const region = activeConv?.farmerRegion;
     if (!activeFarmerConvId || !activeConv || !region) {
-      setHazardEval({ status: 'idle', hazards: [] });
+      setHazardEval({ conversationId: activeFarmerConvId, status: 'idle', hazards: [] });
       return;
     }
     let cancelled = false;
-    setHazardEval(prev => ({ ...prev, status: 'loading' }));
+    setHazardEval({ conversationId: activeFarmerConvId, status: 'loading', hazards: [] });
     (async () => {
       try {
         const weatherRes = await fetchWeather(region);
         const forecast = (weatherRes?.data?.forecast ?? []) as WeatherForecastDay[];
-        const hazardDays = forecast
-          .slice(0, 3)
-          .map(d => ({
-            date: String(d.date),
-            minTempC: Number(d.minTemp),
-            maxTempC: Number(d.maxTemp),
-            precipitationMm: Number(d.precipitationMm),
-            relativeHumidityPct: Number(d.relativeHumidityPct),
-            windSpeedKmh: Number(d.windSpeedKmh),
-          }))
-          .filter(d =>
-            [d.minTempC, d.maxTempC, d.precipitationMm, d.relativeHumidityPct, d.windSpeedKmh].every(Number.isFinite)
-          );
+        const hazardDays = buildHazardDays(forecast);
         if (!hazardDays.length) throw new Error('Live forecast returned no measurable days');
         const res = await apiClient.post<{ success: boolean; data: { hazards?: DetectedHazard[] } }>(
           '/pillars/hazard/evaluate',
           { forecast: hazardDays }
         );
         if (cancelled) return;
-        setHazardEval({ status: 'ready', hazards: res.data?.data?.hazards ?? [] });
+        setHazardEval({
+          conversationId: activeFarmerConvId, status: 'ready', hazards: res.data?.data?.hazards ?? [],
+          evaluatedDays: hazardDays.length, totalDays: Math.min(forecast.length, 3),
+        });
       } catch (err) {
         console.error('Live hazard evaluation failed:', err);
         if (cancelled) return;
-        setHazardEval({ status: 'unavailable', hazards: [] });
+        setHazardEval({ conversationId: activeFarmerConvId, status: 'unavailable', hazards: [] });
       }
     })();
     return () => { cancelled = true; };
@@ -168,33 +155,33 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
   // AI Copilot suggestions — fetched live when conversation has context, otherwise fallback to
   // curated defaults. Re-fires when the last officer/user message changes.
-  const [liveSuggestions, setLiveSuggestions] = useState<string[] | null>(null);
+  const [suggestionResult, setSuggestionResult] = useState<{ conversationId: string; message: string; suggestions: string[] } | null>(null);
   const lastUserMessage = useMemo(
     () => [...farmerChatMessages].reverse().find(m => m.role === 'user' || m.role === 'officer')?.content ?? null,
     [farmerChatMessages]
   );
-  const copilotSuggestions = liveSuggestions || [
-    'Inspect maize leaf whorls today at sunset for early instar caterpillars.',
-    'Damp overcast forecast. Apply preventive copper spray before Thursday.',
-    '45mm rainfall recorded. Apply second split CAN top-dressing once topsoil drains.',
-  ];
+  const liveSuggestions = suggestionResult?.conversationId === activeFarmerConvId && suggestionResult?.message === lastUserMessage
+    ? suggestionResult.suggestions : null;
+  const copilotSuggestions = liveSuggestions || defaultFollowUpQuestions;
   // The list above is a static reference when the live call has not produced output —
   // it must not be presented as AI-generated or "verified" advice.
   const suggestionsAreLive = liveSuggestions !== null;
   useEffect(() => {
-    if (!activeFarmerConvId) { setLiveSuggestions(null); return; }
+    let cancelled = false;
+    if (!activeFarmerConvId) return;
     if (!lastUserMessage) return;
     getChatCompletion(
-      `Given farmer said: "${lastUserMessage.slice(0, 300)}", suggest 3 short advisory follow-ups (<=15 words each), one per line, no numbering.`,
+      `Given farmer said: "${lastUserMessage.slice(0, 300)}", suggest 3 short information-gathering questions (<=15 words each), one per line. Do not prescribe treatments or assume field conditions.`,
       undefined,
       'en'
     ).then(res => {
       const text = res.data.messages.find(message => message.role === 'assistant')?.content ?? '';
-      const lines = text.split('\n').map(s => s.replace(/^[\d\-*.\s]+/, '').trim()).filter(Boolean).slice(0, 3);
-      if (lines.length >= 2) setLiveSuggestions(lines);
+      const lines = parseFollowUpQuestions(text);
+      if (!cancelled && lines.length >= 2) setSuggestionResult({ conversationId: activeFarmerConvId, message: lastUserMessage, suggestions: lines });
     }).catch(err => {
       console.error('AI copilot suggestions fetch failed — keeping static suggestions:', err);
     });
+    return () => { cancelled = true; };
   }, [activeFarmerConvId, lastUserMessage]);
 
   // Realtime: join the active conversation room and reload messages on new_message events.
@@ -547,7 +534,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                   <Bot className="w-3 h-3" />
                   <span>
                     {suggestionsAreLive
-                      ? 'AI Copilot Advisory Suggestions:'
+                      ? 'AI-generated follow-up questions (review before sending):'
                       : 'Suggested follow-ups (reference only, not AI-generated):'}
                   </span>
                 </div>
@@ -670,7 +657,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
             </div>
 
             <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] space-y-1">
-              <div className="text-[10px] font-mono text-slate-500 dark:text-white/40">OUTBREAK RISK</div>
+              <div className="text-[10px] font-mono text-slate-500 dark:text-white/40">FORECAST THRESHOLDS</div>
               <div className={`text-base font-bold ${hazardEval.status === 'ready' && hazardEval.hazards.length > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'} flex items-center gap-1`}>
                 <CheckCircle2 className={`w-4 h-4 ${hazardEval.status === 'ready' && hazardEval.hazards.length > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`} />
                 <span>
@@ -679,7 +666,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                     : hazardEval.status === 'ready'
                       ? hazardEval.hazards.length > 0
                         ? `${hazardEval.hazards.length} hazard window${hazardEval.hazards.length > 1 ? 's' : ''}`
-                        : 'No outbreak windows'
+                        : 'No thresholds triggered on evaluated days'
                       : '—'}
                 </span>
               </div>
@@ -690,8 +677,15 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                     ? 'Live weather unavailable — hazard evaluation skipped'
                     : hazardEval.status === 'idle'
                       ? 'Add farmer region for live hazard evaluation'
-                      : 'Pillar hazard model • evaluated from live forecast'}
+                        : hazardEval.status === 'loading'
+                          ? 'Evaluating available forecast data'
+                          : 'No hazard thresholds detected on available days'}
               </div>
+              {hazardEval.status === 'ready' && (
+                <div className="text-[9px] text-slate-500 dark:text-white/40">
+                  Estimated thresholds only • {hazardEval.evaluatedDays}/{hazardEval.totalDays} days evaluated • not an outbreak diagnosis
+                </div>
+              )}
             </div>
           </div>
         )}

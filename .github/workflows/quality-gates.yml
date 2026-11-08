@@ -58,7 +58,7 @@ jobs:
             package-lock.json
 
       - name: Install workspace dependencies
-        run: npm ci
+        run: npm ci --workspace=ag-extension-dashboard/src/backend --workspace=ag-extension-frontend --workspace=@ag-extension/shared
 
       - name: Generate Prisma client
         working-directory: ag-extension-dashboard/src/backend
@@ -111,8 +111,9 @@ jobs:
           node-version: '22'
           cache: npm
 
+      # Static analysis does not execute application dependency install scripts.
       - name: Install root tooling
-        run: npm install --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 

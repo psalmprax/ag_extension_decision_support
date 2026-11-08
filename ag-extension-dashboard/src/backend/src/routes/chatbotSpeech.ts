@@ -49,7 +49,7 @@ router.post('/speech-to-text', checkUsageLimit('speech'), async (req: Request, r
 // Text to speech
 router.post('/text-to-speech', checkUsageLimit('speech'), async (req: Request, res: Response) => {
     try {
-        const { text, language = 'en', voice = 'default' } = req.body;
+        const { text, language = 'en' } = req.body;
 
         if (!text) {
             return res.status(400).json({ success: false, error: 'Text is required' });

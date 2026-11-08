@@ -58,6 +58,7 @@ export interface AskResponse {
   error?: string;
   data: {
     answer: string;
+    answerMode?: 'generated' | 'extractive' | 'unavailable';
     contextUsed: ContextItem[];
     cached?: boolean;
     citations?: Citation[];

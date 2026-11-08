@@ -120,8 +120,6 @@ async function bootstrapKnowledge() {
             if (bf.remaining > 0) logger.warn(`Embedding backfill left ${bf.remaining} rows unindexed${bf.aborted ? ` — ${bf.aborted}` : ''}`);
         }
 
-        const { RAGV2Service } = await import('./services/ragV2Service');
-        await RAGV2Service.bootstrap();
         logger.info('Knowledge bootstrap complete');
     } catch (err) {
         logger.error('Knowledge bootstrap failed:', err);
@@ -201,9 +199,8 @@ async function bootstrap() {
 
     await initializeStep('AI Provider Factory', () => AIProviderFactory.initialize());
 
-    // Knowledge bootstrap runs in the background but *sequentially*: rows must exist
-    // before embeddings are generated, embeddings must exist before RAG v2 chunks
-    // them, and the seeders must not race each other on the same ids.
+    // Knowledge seeding and embedding backfill run in the background but sequentially.
+    // RAG v2 corpus rebuilds remain operator-triggered via the knowledge bootstrap route.
     await initializeStep('knowledge bootstrap (background)', async () => {
         void bootstrapKnowledge();
     });

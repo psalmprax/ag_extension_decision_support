@@ -1,4 +1,5 @@
 import { plantDiseaseService } from '../services/plantDiseaseService';
+import { AIRouter } from '../services/aiProvider/aiProvider';
 
 describe('PlantDiseaseService — Crop Isolation & Symptom Diagnostics', () => {
   it('should diagnose Late Blight when symptoms match and crop is potato', async () => {
@@ -65,5 +66,40 @@ describe('PlantDiseaseService — Crop Isolation & Symptom Diagnostics', () => {
 
     expect(results.length).toBeGreaterThan(0);
     expect(results.some(d => d.disease === 'Coffee Leaf Rust')).toBe(true);
+  });
+
+  it('withholds unverified treatment and prevention in symptom and library responses', async () => {
+    const symptoms = ['White powdery coating on leaves', 'Yellowing leaves'];
+    const results = await plantDiseaseService.diagnoseFromSymptoms(symptoms);
+    const powdery = results.find(result => result.disease === 'Powdery Mildew');
+    expect(powdery?.provenance.evidenceStatus).toBe('no_verified_source');
+    expect(powdery?.reviewStatus).toBe('needs_expert_review');
+    expect(powdery?.treatment.join(' ')).toContain('withheld');
+    expect(powdery?.prevention.join(' ')).toContain('withheld');
+    const info = plantDiseaseService.getDiseaseInfo('Powdery Mildew');
+    expect(info?.treatment.join(' ')).not.toContain('2ml/L');
+    expect(info?.prevention.join(' ')).toContain('withheld');
+  });
+
+  it('does not present model treatment or high model confidence as verified', async () => {
+    const spy = jest.spyOn(AIRouter, 'routeRequest').mockResolvedValueOnce({
+      analysis: JSON.stringify({
+        overallHealth: 'diseased',
+        diseases: [{ disease: 'Rust', confidence: 99, severity: 'severe', description: 'Spots',
+          symptoms: ['spots'], treatment: ['Apply fungicide'], prevention: ['Spray'], safetyNotice: 'Safe' }],
+        nutrientDeficiencies: [], recommendations: ['Use 2 ml/L neem'], confidence: 99,
+      }),
+    });
+    try {
+      const result = await plantDiseaseService.analyzeImage('image');
+      expect(result.reviewStatus).toBe('needs_expert_review');
+      expect(result.provenance.evidenceStatus).toBe('no_verified_source');
+      expect(result.diseases[0].reviewStatus).toBe('needs_expert_review');
+      expect(result.diseases[0].treatment.join(' ')).toContain('withheld');
+      expect(result.recommendations.join(' ')).not.toContain('2 ml/L');
+      expect(result.diseases[0].safetyNotice).toContain('qualified agronomist');
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

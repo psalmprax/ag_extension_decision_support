@@ -245,11 +245,12 @@ export class TropicalKnowledgeSourceService {
         }
     }
 
-    static async seedSourcesFromStatic(): Promise<void> {
+    static async seedSourcesFromStatic(): Promise<number> {
         try {
             logger.info('Seeding tropical knowledge sources from static array...');
+            let inserted = 0;
             for (const source of tropicalKnowledgeSources) {
-                await query(`
+                const result = await query(`
                     INSERT INTO tropical_knowledge_sources 
                         (id, name, provider, type, license, url, sync_mode, topics, crops, regions, description, priority, is_active)
                     VALUES 
@@ -269,10 +270,13 @@ export class TropicalKnowledgeSourceService {
                     source.description,
                     source.priority
                 ]);
+                inserted += result.rowCount;
             }
             logger.info('Seeding of tropical knowledge sources complete.');
+            return inserted;
         } catch (error) {
             logger.error('Failed to seed tropical sources:', error);
+            throw error;
         }
     }
 

@@ -1015,7 +1015,7 @@ jobs:
               || echo "  (extension pre-create warning — migrate deploy will surface real cause if this matters)"
 
             echo "Running database migrations..."
-            docker compose $COMPOSE_FILES run --rm backend bash -c '
+            docker compose $COMPOSE_FILES run --rm -e SKIP_MIGRATIONS=true backend bash -c '
               MIGRATION_DONE=0
               MIGRATE_OUTPUT=""
               for i in $(seq 1 30); do
@@ -1042,6 +1042,14 @@ jobs:
                     FAILED_MIG=$(echo "$MIGRATE_OUTPUT" | grep -oE "The \`[0-9]+_[a-zA-Z0-9_]+\` migration started at" | cut -d"\`" -f2 || true)
                   fi
                   if [ -n "$FAILED_MIG" ]; then
+                    if [ "$FAILED_MIG" = "20261108100000_version_rag_derived_data" ]; then
+                      echo "----- migration failure before rollback ($FAILED_MIG) -----" >&2
+                      printf "%s\n" "$MIGRATE_OUTPUT" >&2
+                      echo "---------------------------------------------------------" >&2
+                      echo "Resetting idempotent migration $FAILED_MIG for a safe retry..."
+                      npx prisma migrate resolve --rolled-back "$FAILED_MIG"
+                      continue
+                    fi
                     echo "Schema collision detected for migration $FAILED_MIG. Resolving as applied..."
                     npx prisma migrate resolve --applied "$FAILED_MIG"
                     continue

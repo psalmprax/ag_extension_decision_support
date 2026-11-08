@@ -640,12 +640,6 @@ function App() {
         <USSDSimulatorDrawer
           isOpen={isUSSDSimulatorOpen}
           onClose={() => setIsUSSDSimulatorOpen(false)}
-          onEscalate={(farmerName, reason) => {
-            addNotification({
-              type: 'warning',
-              message: `🚨 USSD Escalation: ${farmerName} - ${reason}`,
-            });
-          }}
         />
 
         <MobileBottomNav
