@@ -5,7 +5,7 @@ import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
 import { withAdvisoryTimeout } from './advisoryRuntime';
 
 type PublicHint = { articleId: string; sha256: string; source: string; hint: string };
-type Article = { id: string; title: string; content: string; tags: string[] };
+type Article = { id: string; title: string; content: string; tags: string[] | null };
 
 export const ASK_HELP = 'Send ASK followed by your question, crop, location, growth stage and symptoms. Example: ASK maize leaves turning yellow in Kenya. Do not send personal information.';
 const NO_SOURCE = 'No approved public knowledge hint matched your question. Contact a local extension officer; no request has been sent to one.';
@@ -44,14 +44,15 @@ export async function messagingKnowledgeReply(question: string): Promise<string>
         if (!hints.length) return NO_SOURCE;
         const words = question.toLowerCase().match(/[a-z0-9]{3,}/g)?.slice(0, 12) || [];
         if (!words.length) return ASK_HELP;
+        const searchQuery = words.map(word => `"${word}"`).join(' OR ');
         const result = await withAdvisoryTimeout(() => query<Article>(
             `SELECT id, title, content, tags FROM knowledge_articles
              WHERE id = ANY($1::uuid[])
-               AND NOT ('unverified_scrape' = ANY(tags))
-               AND to_tsvector('english', title || ' ' || content) @@ plainto_tsquery('english', $2)
-             ORDER BY ts_rank_cd(to_tsvector('english', title || ' ' || content), plainto_tsquery('english', $2)) DESC
-             LIMIT 20`,
-            [hints.map(h => h.articleId), words.join(' ')]
+               AND NOT ('unverified_scrape' = ANY(COALESCE(tags, ARRAY[]::text[])))
+               AND to_tsvector('english', title || ' ' || content) @@ websearch_to_tsquery('english', $2)
+             ORDER BY ts_rank_cd(to_tsvector('english', title || ' ' || content), websearch_to_tsquery('english', $2)) DESC
+             LIMIT 100`,
+            [hints.map(h => h.articleId), searchQuery]
         ), 4000, 'Public messaging knowledge search');
         for (const article of result.rows) {
             const hint = hints.find(h => h.articleId === article.id.toLowerCase());

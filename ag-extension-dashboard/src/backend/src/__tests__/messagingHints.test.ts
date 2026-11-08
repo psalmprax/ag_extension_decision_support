@@ -33,13 +33,15 @@ describe('public messaging knowledge hints', () => {
 
     it('returns only the separately approved hint for the matching unchanged article', async () => {
         mockQuery.mockResolvedValue({ rows: [article] });
-        const reply = await messagingKnowledgeReply('maize leaves');
+        const reply = await messagingKnowledgeReply('armyworm maize in Lilongwe');
         expect(reply).toContain('Public field guide');
         expect(reply).toContain(hint.hint);
         expect(reply).not.toContain(article.content);
         expect(reply).toContain('Not a diagnosis');
-        expect(mockQuery.mock.calls[0][1]).toEqual([[article.id], 'maize leaves']);
-        expect(mockQuery.mock.calls[0][0]).toContain("NOT ('unverified_scrape' = ANY(tags))");
+        expect(mockQuery.mock.calls[0][1]).toEqual([[article.id], '"armyworm" OR "maize" OR "lilongwe"']);
+        expect(mockQuery.mock.calls[0][0]).toContain("NOT ('unverified_scrape' = ANY(COALESCE(tags, ARRAY[]::text[])))");
+        expect(mockQuery.mock.calls[0][0]).toContain("websearch_to_tsquery('english', $2)");
+        expect(mockQuery.mock.calls[0][0]).toContain('LIMIT 100');
     });
 
     it.each([
@@ -49,6 +51,11 @@ describe('public messaging knowledge hints', () => {
     ])('withholds changed, unapproved and quarantined sources', async row => {
         mockQuery.mockResolvedValue({ rows: [row] });
         expect(await messagingKnowledgeReply('maize')).toContain('No approved public knowledge hint');
+    });
+
+    it('allows approved articles with no tags', async () => {
+        mockQuery.mockResolvedValue({ rows: [{ ...article, tags: null }] });
+        expect(await messagingKnowledgeReply('maize')).toContain(hint.hint);
     });
 
     it('withholds unsafe treatment hints even if approved', async () => {

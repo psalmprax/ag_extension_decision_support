@@ -52,6 +52,7 @@ interface InboundMessagePayload {
     from?: string;
     body?: string;
     messageId?: string;
+    MessageSid?: string;
     timestamp?: string;
     From?: string; // Twilio format fallback
     Body?: string; // Twilio format fallback
@@ -218,7 +219,8 @@ async function synthesizeOutboundAudio(text: string, language: string): Promise<
 async function handleInboundAdvisoryOrOnboarding(
     from: string,
     body: string,
-    senderName?: string
+    senderName?: string,
+    eventId?: string
 ): Promise<{ responseText?: string; farmerId?: string; handled: boolean }> {
     const question = parseAskCommand(body);
     if (question !== null) {
@@ -229,6 +231,7 @@ async function handleInboundAdvisoryOrOnboarding(
         identifier: from,
         message: body,
         senderName,
+        eventId,
     });
 
     if (onboardingResult.isHandled && onboardingResult.responseMessage) {
@@ -326,7 +329,8 @@ router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res:
 
         logger.info(`WhatsApp inbound ${payload.messageId ?? '-'}: ${rows.length} row(s) inserted (isVoice=${isVoice})`);
 
-        const dispatch = await handleInboundAdvisoryOrOnboarding(from, body, senderName);
+        const eventId = payload.messageId || payload.MessageSid;
+        const dispatch = await handleInboundAdvisoryOrOnboarding(from, body, senderName, eventId);
         if (!await dispatchOutboundResponse(from, dispatch, isVoice, detectedLang)) {
             return safeError(res, 503, 'Failed to send WhatsApp reply');
         }

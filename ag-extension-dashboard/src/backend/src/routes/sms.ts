@@ -20,6 +20,12 @@ import { ASK_HELP, messagingKnowledgeReply, parseAskCommand } from '@/services/k
 
 const router = Router();
 
+function getInboundEventId(payload: Record<string, unknown>): string | undefined {
+    const rawEventId = payload.messageId || payload.MessageSid || payload.SmsMessageSid || payload.id;
+    if (typeof rawEventId !== 'string' && typeof rawEventId !== 'number') return undefined;
+    return String(rawEventId).trim() || undefined;
+}
+
 /**
  * POST /api/sms/inbound — Inbound SMS Webhook for Africa's Talking and Twilio
  * Verifies HMAC when META_APP_SECRET/TWILIO_AUTH_TOKEN is configured; dev allows unsigned for local testing.
@@ -28,6 +34,7 @@ router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res:
     try {
         const from = req.body.from || req.body.From || req.body.phoneNumber;
         const text = req.body.text || req.body.Body || req.body.message;
+        const eventId = getInboundEventId(req.body);
 
         if (!from || !text) {
             return res.status(400).json({ success: false, error: 'from and text are required' });
@@ -45,6 +52,7 @@ router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res:
             channel: 'sms',
             identifier: from,
             message: text,
+            eventId,
         });
 
         if (onboardingResult.isHandled && onboardingResult.responseMessage) {

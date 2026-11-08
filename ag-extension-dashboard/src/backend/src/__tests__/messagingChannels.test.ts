@@ -89,9 +89,28 @@ describe('channel knowledge requests', () => {
 
     it('preserves onboarding for ordinary messages', async () => {
         (onboardingEngine.processIncomingMessage as jest.Mock).mockResolvedValue({ isHandled: true, responseMessage: 'Welcome' });
-        await request(app).post('/sms/inbound').send({ from: '+12345678901', text: 'START' });
+        await request(app).post('/sms/inbound').send({ from: '+12345678901', text: 'START', messageId: 'sms-event-1' });
         expect(smsService.sendSMS).toHaveBeenCalledWith(expect.objectContaining({ message: 'Welcome' }));
+        expect(onboardingEngine.processIncomingMessage).toHaveBeenCalledWith(expect.objectContaining({ eventId: 'sms-event-1' }));
         expect(messagingKnowledgeReply).not.toHaveBeenCalled();
+    });
+
+    it('passes provider event IDs to onboarding across messaging channels', async () => {
+        (onboardingEngine.processIncomingMessage as jest.Mock).mockResolvedValue({ isHandled: true, responseMessage: 'Welcome' });
+
+        await request(app).post('/whatsapp/inbound').send({
+            from: '+12345678901', body: 'START', messageId: 'whatsapp-event-1',
+        });
+        expect(onboardingEngine.processIncomingMessage).toHaveBeenLastCalledWith(expect.objectContaining({
+            channel: 'whatsapp', eventId: 'whatsapp-event-1',
+        }));
+
+        await request(app).post('/channels/telegram/webhook')
+            .set('x-telegram-bot-api-secret-token', 'test-secret')
+            .send({ update_id: 42, message: { chat: { id: 123 }, text: 'START' } });
+        expect(onboardingEngine.processIncomingMessage).toHaveBeenLastCalledWith(expect.objectContaining({
+            channel: 'telegram', eventId: '42',
+        }));
     });
 
     it('reports outbound delivery failures rather than success', async () => {

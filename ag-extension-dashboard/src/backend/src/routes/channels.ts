@@ -72,7 +72,18 @@ async function handleTelegramPrices(chatId: string) {
     }
 }
 
-async function handleTelegramKnowledgeOrOnboarding(chatId: string | number, text: string, firstName: string, res: Response): Promise<boolean> {
+function getTelegramEventId(update: { update_id?: unknown }): string | undefined {
+    const updateId = update.update_id;
+    return updateId === undefined || updateId === null ? undefined : String(updateId);
+}
+
+async function handleTelegramKnowledgeOrOnboarding(
+    chatId: string | number,
+    text: string,
+    firstName: string,
+    eventId: string | undefined,
+    res: Response
+): Promise<boolean> {
     const question = parseAskCommand(text);
     if (question !== null) {
         const sent = await telegramService.sendMessage({ chatId, text: await messagingKnowledgeReply(question), parseMode: null });
@@ -82,7 +93,7 @@ async function handleTelegramKnowledgeOrOnboarding(chatId: string | number, text
     }
 
     const result = await onboardingEngine.processIncomingMessage({
-        channel: 'telegram', identifier: String(chatId), message: text, senderName: firstName,
+        channel: 'telegram', identifier: String(chatId), message: text, senderName: firstName, eventId,
     });
     if (result.isHandled && result.responseMessage) {
         const sent = await telegramService.sendMessage({ chatId, text: result.responseMessage, farmerId: result.farmerId });
@@ -121,7 +132,8 @@ router.post('/telegram/webhook', verifyTelegramWebhookSecret, async (req: Reques
             status: 'received',
         });
 
-        if (await handleTelegramKnowledgeOrOnboarding(chatId, text, firstName, res)) return;
+        const eventId = getTelegramEventId(update);
+        if (await handleTelegramKnowledgeOrOnboarding(chatId, text, firstName, eventId, res)) return;
 
         // If registered farmer sends a command/query
         const queryLower = text.toLowerCase().trim();
