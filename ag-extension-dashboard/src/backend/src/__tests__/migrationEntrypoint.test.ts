@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'fs';
+import { existsSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 import { spawnSync } from 'child_process';
@@ -12,12 +12,12 @@ describe('container migration failures', () => {
   });
   afterEach(() => rmSync(directory, { recursive: true, force: true }));
 
-  function run(error: string) {
+  function run(error: string, skipMigrations = false) {
     return spawnSync('/bin/sh', [path.resolve(__dirname, '../../docker-entrypoint.sh'), '/bin/sh', '-c', 'printf APPLICATION_STARTED'], {
       cwd: directory,
       encoding: 'utf8',
       timeout: 5000,
-      env: { ...process.env, PATH: `${directory}:${process.env.PATH}`, SKIP_MIGRATIONS: 'false', MIGRATION_TEST_ERROR: error, MIGRATION_TEST_LOG: path.join(directory, 'calls') },
+      env: { ...process.env, PATH: `${directory}:${process.env.PATH}`, SKIP_MIGRATIONS: skipMigrations ? 'true' : 'false', MIGRATION_TEST_ERROR: error, MIGRATION_TEST_LOG: path.join(directory, 'calls') },
     });
   }
 
@@ -30,6 +30,13 @@ describe('container migration failures', () => {
 
   it('starts the application only after a successful deployment', () => {
     expect(run('').stdout).toContain('APPLICATION_STARTED');
+  });
+
+  it('skips migrations when the deployment runner owns migration recovery', () => {
+    const result = run('P3009', true);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('APPLICATION_STARTED');
+    expect(existsSync(path.join(directory, 'calls'))).toBe(false);
   });
 
   it('bounds retries of other migration failures and refuses to start', () => {

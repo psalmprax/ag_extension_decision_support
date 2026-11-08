@@ -45,6 +45,7 @@ const newContent = 'Rice and powdery mildew occur in the updated article.';
         `);
         const migration = readFileSync(path.resolve(__dirname, '../../prisma/migrations/20261108100000_version_rag_derived_data/migration.sql'), 'utf8');
         await client.query(migration);
+        await client.query(migration);
         jest.mocked(query).mockImplementation(async (sql, params) => {
             const result = await client.query(sql, params);
             return { rows: result.rows, rowCount: result.rowCount ?? 0 };
