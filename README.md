@@ -132,10 +132,13 @@ The fallback is historical and its underlying statistics have not been independe
 verified. FAOSTAT item and country mappings and live response coverage still need
 verification against the provider.
 
-Article sync does not automatically rebuild RAG v2 chunks or graph relationships.
-Existing derived chunks and relationships can therefore be stale after an article
-changes. Graph relationships are inferred from co-occurrence and must not be treated
-as verified treatment or agronomic recommendations.
+RAG v2 only retrieves chunks and graph links whose source-content hash matches the
+current article. Article searches fall back to the full article when current chunks
+are unavailable. After deploying the derived-data migration, an authorized knowledge
+manager should run `/api/v1/knowledge/ragv2/bootstrap` to rebuild chunks and graph
+links; older unversioned derived records remain stored but are excluded from retrieval.
+Graph links indicate only co-occurrence and are not verified agronomic relationships
+or recommendations. Rebuilding can require substantial embedding-provider capacity.
 
 Run the focused regression suites:
 

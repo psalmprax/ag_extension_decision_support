@@ -250,7 +250,7 @@ router.post('/ingest', authorize(knowledgeAdminRoles), knowledgeUpload.single('f
 });
 
 // RAG v2 bootstrap
-router.post('/ragv2/bootstrap', async (_req: Request, res: Response) => {
+router.post('/ragv2/bootstrap', authorize(knowledgeAdminRoles), async (_req: Request, res: Response) => {
     try {
         const { RAGV2Service } = await import('@/services/ragV2Service');
         await RAGV2Service.initializeSchema();
