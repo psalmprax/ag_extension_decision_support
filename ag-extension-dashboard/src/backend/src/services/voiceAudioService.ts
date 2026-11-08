@@ -170,8 +170,9 @@ export async function transcribeVoiceNote(params: {
   audioUrl?: string;
   mimeType?: string;
   languageHint?: string;
+  skipLocal?: boolean;
 }): Promise<VoiceTranscriptionResult> {
-  const { audioBuffer, audioUrl, mimeType, languageHint = 'sw' } = params;
+  const { audioBuffer, audioUrl, mimeType, languageHint = 'sw', skipLocal = false } = params;
   const effectiveHint = toWhisperLanguage(languageHint);
   if (effectiveHint === 'auto' && languageHint.toLowerCase() !== 'auto') {
     logger.warn(`Unsupported voice languageHint '${languageHint}' — using automatic language detection`);
@@ -180,11 +181,12 @@ export async function transcribeVoiceNote(params: {
   logger.info(`Processing inbound voice note (${audioBuffer ? `${audioBuffer.length} bytes` : audioUrl}, langHint=${effectiveHint})`);
 
   // Try local Whisper first (free, offline-capable)
-  try {
-    return await transcribeWithLocalWhisper(audioBuffer, effectiveHint);
-  } catch (err) {
-    logger.warn('Local Whisper transcription failed, falling back to OpenAI:', err);
-    // Fall through to OpenAI fallback
+  if (!skipLocal) {
+    try {
+      return await transcribeWithLocalWhisper(audioBuffer, effectiveHint);
+    } catch (err) {
+      logger.warn('Local Whisper transcription failed, falling back to OpenAI:', err);
+    }
   }
 
   const openAiResult = await transcribeWithOpenAI(audioBuffer, mimeType, effectiveHint);

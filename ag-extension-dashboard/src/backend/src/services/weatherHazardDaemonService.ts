@@ -36,12 +36,12 @@ function evaluateDayHazards(day: WeatherForecastDay, leadHours: number): Detecte
     dayHazards.push({
       hazardType: 'frost',
       threatLevel: day.minTempC <= 1.0 ? 'warning' : 'watch',
-      title: `Severe Frost Warning for ${day.date} (Min ${day.minTempC}°C)`,
+      title: `Low-temperature threshold reached for ${day.date} (Min ${day.minTempC}°C)`,
       leadTimeHours: leadHours,
       affectedCrops: ['Potato', 'Tea', 'Tomato', 'French Beans'],
-      preventiveActionsSwahili: 'Mwagilia mashamba jioni au tumia moshi mwepesi wa majani makavu kuzuia barafu kuharibu majani usiku.',
-      preventiveActionsEnglish: 'Irrigate fields in late afternoon or maintain gentle smudge fires to create a thermal smoke blanket against frost.',
-      recommendedIntervention: 'Apply potassium silicate foliar spray 24h prior to reinforce plant cell wall osmotic tolerance.',
+      preventiveActionsSwahili: 'Fuatilia utabiri wa eneo lako na wasiliana na afisa ugani kuhusu hatari ya baridi.',
+      preventiveActionsEnglish: 'Check the local forecast and consult an extension officer about frost risk.',
+      recommendedIntervention: 'Seek locally appropriate guidance before choosing a protective action.',
     });
   }
 
@@ -50,12 +50,12 @@ function evaluateDayHazards(day: WeatherForecastDay, leadHours: number): Detecte
     dayHazards.push({
       hazardType: 'flash_flood',
       threatLevel: day.precipitationMm >= 80 ? 'emergency' : 'warning',
-      title: `Extreme Rainfall Alert (${day.precipitationMm}mm on ${day.date})`,
+      title: `High rainfall threshold reached (${day.precipitationMm}mm on ${day.date})`,
       leadTimeHours: leadHours,
       affectedCrops: ['Maize', 'Vegetables', 'Beans', 'Cereals'],
-      preventiveActionsSwahili: 'Safisha mifereji ya kupitisha maji na usipulize dawa au mbolea ya maji kwani itasombwa na mvua.',
-      preventiveActionsEnglish: 'Clear field drainage trenches immediately. Suspend all top-dressing and foliar spraying to prevent fertilizer leaching.',
-      recommendedIntervention: 'Postpone nitrogen application until soil drainage stabilizes 48h after storm event.',
+      preventiveActionsSwahili: 'Fuatilia tahadhari za mafuriko na epuka maeneo yenye maji mengi.',
+      preventiveActionsEnglish: 'Monitor local flood alerts and avoid flooded or unstable areas.',
+      recommendedIntervention: 'Consult local guidance before field work or crop applications.',
     });
   }
 
@@ -64,12 +64,12 @@ function evaluateDayHazards(day: WeatherForecastDay, leadHours: number): Detecte
     dayHazards.push({
       hazardType: 'drought_heatwave',
       threatLevel: 'warning',
-      title: `Extreme Heat Wave (${day.maxTempC}°C on ${day.date})`,
+      title: `High temperature threshold reached (${day.maxTempC}°C on ${day.date})`,
       leadTimeHours: leadHours,
       affectedCrops: ['Maize', 'Sorghum', 'Horticulture'],
-      preventiveActionsSwahili: 'Weka matandazo ya nyasi (mulch) ardhini kuhifadhi unyevu na mwagilia asubuhi na mapema kabla ya jua kali.',
-      preventiveActionsEnglish: 'Apply organic mulch around root zones and perform early-morning irrigation before peak heat hours.',
-      recommendedIntervention: 'Ensure soil moisture replenishment to prevent maize silk desiccation and kernel abortion.',
+      preventiveActionsSwahili: 'Fuatilia tahadhari za joto na hali ya mazao, na wasiliana na afisa ugani.',
+      preventiveActionsEnglish: 'Monitor local heat alerts and crop conditions.',
+      recommendedIntervention: 'Consult an extension officer about locally appropriate water management.',
     });
   }
 
@@ -78,12 +78,12 @@ function evaluateDayHazards(day: WeatherForecastDay, leadHours: number): Detecte
     dayHazards.push({
       hazardType: 'pest_climate_window',
       threatLevel: 'watch',
-      title: `Armyworm & Blight Outbreak Climate Window (${day.date})`,
+      title: `Warm and humid weather threshold reached (${day.date})`,
       leadTimeHours: leadHours,
       affectedCrops: ['Maize', 'Potato', 'Tomato', 'Cassava'],
-      preventiveActionsSwahili: 'Kagua mashamba yako kwa makini asubuhi. Hali ya unyevu inachochea kuzaliana kwa viwavi na ukungu.',
-      preventiveActionsEnglish: 'Conduct intensive morning field scouting. High humidity and warmth trigger rapid caterpillar hatching and fungal sporulation.',
-      recommendedIntervention: 'Prepare bio-pesticides and preventive copper/mancozeb contact fungicides.',
+      preventiveActionsSwahili: 'Kagua mimea na wasiliana na afisa ugani ukiona dalili zisizo za kawaida.',
+      preventiveActionsEnglish: 'Scout crops for unusual symptoms; weather alone does not confirm an outbreak.',
+      recommendedIntervention: 'Seek local diagnosis and guidance before selecting any treatment.',
     });
   }
 
@@ -113,7 +113,7 @@ export function evaluateWeatherHazardsWithProvenance(forecast: WeatherForecastDa
     provenance: pillarProvenance(
       'deterministic_estimation',
       'Hazards are fixed threshold rules (frost <= 3.5°C, rain >= 55mm/24h, heat >= 34°C dry, pest window 24-29°C & RH >= 80% & rain > 15mm) applied to the caller-supplied forecast. No live weather feed is ingested by this service.',
-      ['Thresholds are fixed; lead time assumes 24h per forecast day index'],
+      ['Thresholds are unvalidated estimates, not official alerts or outbreak diagnoses; lead time assumes 24h per forecast day index'],
       false
     ),
   };
@@ -133,47 +133,38 @@ export async function runProactiveHazardScan(params: {
   dispatchErrors?: number;
   provenance: ReturnType<typeof pillarProvenance>;
 }> {
-  const { county, forecast, farmerCount = 250, farmerIds } = params;
+  const { county, forecast, farmerIds } = params;
 
   logger.info(`Running automated weather hazard scan for ${county} across ${forecast.length} forecast days`);
 
   const hazards = evaluateWeatherHazards(forecast);
   const hasCriticalHazard = hazards.some(h => h.threatLevel === 'warning' || h.threatLevel === 'emergency');
 
-  const dispatch = hasCriticalHazard ? await dispatchHazardNotifications(county, hazards, farmerIds, farmerCount) : { dispatchedCount: 0, dispatchErrors: 0 };
+  const dispatch = hasCriticalHazard ? await dispatchHazardNotifications(county, hazards, farmerIds) : { dispatchedCount: 0, dispatchErrors: 0 };
 
   return {
     scannedAt: new Date().toISOString(),
     hazardsDetected: hazards,
-    autoAlertTriggered: hasCriticalHazard,
+    autoAlertTriggered: dispatch.dispatchedCount > 0,
     dispatchedNotificationCount: dispatch.dispatchedCount,
     ...(dispatch.dispatchErrors ? { dispatchErrors: dispatch.dispatchErrors } : {}),
     provenance: evaluateWeatherHazardsWithProvenance(forecast).provenance,
   };
 }
 
-/** Send in-app hazard notifications to the resolved farmer cohort. Falls back to the caller-supplied count when the cohort cannot be resolved. */
+/** Send in-app hazard notifications to the resolved farmer cohort. */
 async function dispatchHazardNotifications(
   county: string,
   hazards: DetectedWeatherHazard[],
-  farmerIds: string[] | undefined,
-  farmerCount: number
+  farmerIds: string[] | undefined
 ): Promise<{ dispatchedCount: number; dispatchErrors: number }> {
   try {
     const { notificationService } = await import('./notificationService');
     const primaryHazard = hazards.find(h => h.threatLevel === 'emergency') ?? hazards.find(h => h.threatLevel === 'warning')!;
-    // Resolve farmer IDs: use explicit list or query by county
-    let targetIds = farmerIds ?? [];
+    const targetIds = await resolveFarmerUserIds(county, farmerIds);
     if (targetIds.length === 0) {
-      targetIds = await resolveFarmerIdsForCounty(county);
-      if (targetIds.length === 0) {
-        // No geolocated farmers found — fall back to the caller-supplied count for API compatibility
-        logger.warn(`No farmer IDs found for county ${county}; returning fallback count ${farmerCount}`);
-        return { dispatchedCount: farmerCount, dispatchErrors: 0 };
-      }
-    }
-    if (targetIds.length === 0) {
-      return { dispatchedCount: farmerCount, dispatchErrors: 0 };
+      logger.warn(`No notification recipients found for county ${county}`);
+      return { dispatchedCount: 0, dispatchErrors: 0 };
     }
     const results = await Promise.allSettled(
       targetIds.map(fid =>
@@ -193,19 +184,17 @@ async function dispatchHazardNotifications(
     return { dispatchedCount, dispatchErrors };
   } catch (dispatchErr) {
     logger.error(`Hazard notification dispatch failed for ${county}:`, dispatchErr);
-    // Preserve fallback behavior on dispatch infrastructure failure
-    return { dispatchedCount: farmerCount, dispatchErrors: 1 };
+    return { dispatchedCount: 0, dispatchErrors: 1 };
   }
 }
 
-/** Resolve farmer IDs from an explicit list or by county lookup; empty array signals unresolvable cohort. */
-async function resolveFarmerIdsForCounty(county: string): Promise<string[]> {
-  try {
-    const { query } = await import('./databaseService');
-    const { rows } = await query<{ id: string }>(`SELECT id FROM farmers WHERE district = $1 OR region = $1 LIMIT 500`, [county]);
-    return rows.map(r => r.id);
-  } catch (dbErr) {
-    logger.warn(`DB lookup for hazard dispatch failed, using fallback count:`, dbErr);
-    return [];
-  }
+/** Resolve notification user IDs by county; propagate database failures to the dispatch result. */
+async function resolveFarmerUserIds(county: string, farmerIds?: string[]): Promise<string[]> {
+  const { query } = await import('./databaseService');
+  const { rows } = await query<{ id: string }>(
+    `SELECT DISTINCT user_id AS id FROM farmers WHERE (district = $1 OR region = $1)
+     AND user_id IS NOT NULL AND ($2::uuid[] IS NULL OR id = ANY($2::uuid[])) LIMIT 500`,
+    [county, farmerIds ?? null]
+  );
+  return rows.map(r => r.id);
 }
