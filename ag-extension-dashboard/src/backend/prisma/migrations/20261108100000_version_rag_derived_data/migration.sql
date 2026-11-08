@@ -40,6 +40,16 @@ CREATE INDEX IF NOT EXISTS "knowledge_relationships_relation_type_idx" ON "knowl
 CREATE UNIQUE INDEX IF NOT EXISTS "knowledge_relationships_source_id_target_id_relation_type_a_key"
     ON "knowledge_relationships"("source_id", "target_id", "relation_type", "article_id");
 
+DELETE FROM "knowledge_relationships" AS relationship
+WHERE NOT EXISTS (
+    SELECT 1 FROM "knowledge_entities" AS source
+    WHERE source."id" = relationship."source_id"
+)
+OR NOT EXISTS (
+    SELECT 1 FROM "knowledge_entities" AS target
+    WHERE target."id" = relationship."target_id"
+);
+
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'knowledge_chunks_article_id_fkey'
