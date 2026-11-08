@@ -332,14 +332,20 @@ Two paths are possible, and the result tells you which one ran:
 | On-device scan | No connection, or when you choose the offline scanner | Colour and lesion-based classification computed on the phone. No image leaves the device. |
 | Server analysis | Connection available and the vision service is configured | Model-based diagnosis with ranked candidates and a confidence score |
 
-Both paths return a confidence value. Treat anything below the displayed threshold as "possible, needs confirmation" and escalate rather than treating on the spot.
+Model confidence and symptom-match scores are not proof of a diagnosis, at any value. Confirm findings with a qualified local expert before treatment.
+
+## Video observations
+
+Select **Video Observations**, choose an MP4, WebM or MOV file up to 30 MB, and select **Analyze video**. Sign-in, connectivity, a configured vision provider and server-side FFmpeg are required. The server extracts a limited number of frames and returns only supported visual observation labels. The video frames are sent to the configured provider; do not upload sensitive footage without appropriate consent.
+
+The result is unverified and is not a diagnosis. If the video cannot be decoded, the provider is unavailable, or its response cannot be safely interpreted, the screen reports the failure and keeps the selected video for retry. Deployment-specific proxy or request-body limits can be lower than 30 MB.
 
 ## Reading a diagnosis result
 
 - **Candidates** - likely causes, each with a confidence score. The top candidate is not a certainty.
 - **Evidence** - the symptoms the assessment relied on.
 - **Provenance** - which engine produced the result and whether it was on-device, model-based, or unavailable.
-- **Recommended action** - treatment or cultural guidance, including dose and legal constraints where a pesticide is suggested.
+- **Treatment guidance** - specific treatment and prevention instructions are withheld until a qualified local expert confirms the diagnosis and applicable authorization.
 
 If the service is unavailable, the screen says so and offers the on-device scanner and a symptom questionnaire. It does not fabricate a diagnosis.
 
@@ -348,7 +354,7 @@ If the service is unavailable, the screen says so and offers the on-device scann
 | Action | Result |
 |---|---|
 | Save to farmer record | Attaches the diagnosis to the farmer and field history |
-| Create advisory | Opens the advisory composer prefilled with the treatment |
+| Create advisory | Use locally verified guidance after an expert review |
 | Plot on WorldMonitor | Adds the finding to the outbreak map so neighbouring officers see the signal |
 | Escalate | Assigns the case for review with the evidence attached |
 
@@ -479,7 +485,23 @@ The platform refuses to fill gaps with invented values. If a metric could not be
 
 # SMS and messaging channels
 
-Messaging reaches farmers who do not use the app. Everything sent is recorded against the farmer and counted against the plan quota.
+Messaging reaches farmers who do not use the app. Delivery and record-keeping depend on the configured provider and channel; a provider accepting a message does not guarantee delivery.
+
+## Ask for a knowledge hint
+
+On SMS, Twilio WhatsApp or Telegram, send `ASK` followed by a question, for example `ASK maize leaves turning yellow`. Include the crop, location, growth stage and symptoms when relevant. Telegram also accepts `/ask`. Send `ASK` alone for instructions. Do not include personal or sensitive information; messages may be retained by the service and its providers.
+
+The reply is a short, separately reviewed public hint linked to a matching Knowledge Base article, not a diagnosis or a treatment prescription. Confirm it with a local extension officer. A message does not automatically request a visit or queue an officer review. If there is no eligible matching source, the reply says so. USSD cannot retrieve knowledge hints; use SMS instead.
+
+Administrators must explicitly configure public hints before any are available. The Knowledge Base does not currently have a public/private visibility field, so the channel does **not** expose article text, private documents, or tenant-specific knowledge. `MESSAGING_KB_PUBLIC_HINTS` is a JSON array with at most 100 entries, each containing `articleId`, `sha256`, `source`, and `hint`. Example structure:
+
+```json
+[{"articleId":"9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb01","sha256":"REPLACE_WITH_REVISION_HASH","source":"Public field guide","hint":"Inspect maize leaves regularly."}]
+```
+
+For each article, independently verify public redistribution rights and review the hint for safety and general applicability. `source` is a public source label (at most 60 characters) and `hint` is the approved standalone public note (at most 160 characters); neither may contain private information. Notes containing treatment rates or common pesticide/fertilizer terms are withheld, but this automated screen is not a substitute for review. The SHA-256 must be the lowercase hex digest of the UTF-8 bytes of JavaScript `JSON.stringify([article.title, article.content])`. Calculate it from the exact database values, for example with `crypto.createHash('sha256').update(JSON.stringify([title, content])).digest('hex')`. A changed article or one tagged `unverified_scrape` is withheld until reviewed and reapproved. An empty list disables hints; malformed configuration or a database failure produces an unavailable response. Remove an entry to revoke it. Configure and distribute the same list to all backend instances.
+
+Telegram requires `TELEGRAM_WEBHOOK_SECRET` and a webhook registered with the same Telegram `secret_token`; requests without the matching secret are rejected. SMS inbound requires a supported provider signature. WhatsApp replies currently require the Twilio WhatsApp provider; Meta Cloud outbound delivery is not implemented. Ensure provider credentials, webhook registration and delivery monitoring are in place before relying on any channel.
 
 ## Send a bulk SMS
 

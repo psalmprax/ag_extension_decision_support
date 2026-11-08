@@ -396,7 +396,9 @@ class SMSService {
                         return `CON Current prices:\n${summary || 'Market prices unavailable.'}\n1. Back to menu`;
                     }
                     case '4': {
-                        return `CON Knowledge Base Topics:\n1. Pest Control\n2. Fertilizer Guidelines\n3. Planting Calendar\n4. Irrigation Tips\n5. Back to main menu`;
+                        this.ussdSessions.delete(sessionId);
+                        void this.ussdRedisDel(sessionId);
+                        return 'END Knowledge hints are not available over USSD. Send an SMS starting with ASK followed by your question.';
                     }
                     case '5': {
                         return `CON Please rate our service (1-5):\n1. Excellent 2. Good 3. Average 4. Poor 5. Very Poor\nYour feedback helps us improve`;

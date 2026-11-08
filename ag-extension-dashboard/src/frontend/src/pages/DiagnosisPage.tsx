@@ -82,17 +82,17 @@ export function DiagnosisPage() {
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-xs font-medium">
                   <Radio className="w-3 h-3 text-emerald-400" />
-                  Free Diagnostics
+                  Crop observations
                 </span>
                 <span className="text-xxs sm:text-xs text-slate-400 font-mono">
-                  No sign-up or credit card required
+                  Sign in to request an analysis
                 </span>
               </div>
               <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                 Instant Crop Disease &amp; Leaf Pathology Doctor
               </h1>
               <p className="text-xs sm:text-sm text-slate-300/90 leading-relaxed">
-                Take a photo of any sick leaf or select your crop symptoms below. Our neural vision models and verified agronomic compendiums run right on your device with localized organic and biological treatment plans.
+                Upload a photo or video, or describe symptoms. Results are suggestions, not confirmed diagnoses; consult a qualified local expert.
               </p>
             </div>
 
@@ -101,23 +101,23 @@ export function DiagnosisPage() {
               <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
                 <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold mb-0.5">
                   <Cpu className="w-3.5 h-3.5" />
-                  <span>On-Device AI</span>
+                  <span>Online analysis</span>
                 </div>
-                <div className="text-[10px] text-slate-400">Works 100% offline</div>
+                <div className="text-[10px] text-slate-400">Requires a configured service</div>
               </div>
               <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
                 <div className="flex items-center gap-1.5 text-sky-400 text-xs font-bold mb-0.5">
                   <BookOpen className="w-3.5 h-3.5" />
-                  <span>FAO Manuals</span>
+                  <span>Reference library</span>
                 </div>
-                <div className="text-[10px] text-slate-400">Scientific remedies</div>
+                <div className="text-[10px] text-slate-400">Not a verified diagnosis</div>
               </div>
               <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5 col-span-2 sm:col-span-1">
                 <div className="flex items-center gap-1.5 text-amber-400 text-xs font-bold mb-0.5">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Safe &amp; Free</span>
+                  <span>Expert review</span>
                 </div>
-                <div className="text-[10px] text-slate-400">Zero data lock-in</div>
+                <div className="text-[10px] text-slate-400">Confirm before treatment</div>
               </div>
             </div>
           </div>

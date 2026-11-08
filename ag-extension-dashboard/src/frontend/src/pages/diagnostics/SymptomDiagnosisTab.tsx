@@ -53,7 +53,7 @@ const SymptomInputPanel: React.FC<{
         Symptom Observation Panel
       </h3>
       <span className="text-xxs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
-        Expert Inference
+        Heuristic Match
       </span>
     </div>
 
@@ -185,7 +185,7 @@ const SymptomResultCard: React.FC<{
   >
     <div className="flex items-center justify-between">
       <h4 className="text-xs font-semibold text-white">
-        {result.reviewStatus === 'needs_expert_review' ? 'Probable: ' : ''}
+        {result.reviewStatus === 'needs_expert_review' || result.provenance.evidenceStatus !== 'verified_source' ? 'Possible: ' : ''}
         {result.disease}
       </h4>
       <span
@@ -193,16 +193,16 @@ const SymptomResultCard: React.FC<{
           result.severity
         )}`}
       >
-        {result.severity}
+        Match strength: {result.severity}
       </span>
     </div>
 
     <div className="flex items-center justify-between text-xs font-mono">
       <span className="text-emerald-400 font-medium tabular-nums">
-        Confidence: {(result.confidence * 100).toFixed(1)}%
+        Symptom match: {(result.confidence * 100).toFixed(1)}%
       </span>
       <span className="text-slate-500 text-xxs">
-        {result.reviewStatus === 'needs_expert_review' ? 'Needs Review' : 'Verified Evidence'}
+        {result.provenance.evidenceStatus === 'verified_source' ? 'Verified source' : 'Unverified; needs expert review'}
       </span>
     </div>
 
@@ -218,7 +218,7 @@ const SymptomResultCard: React.FC<{
         onClick={() => onViewDiseaseInfo(result.disease)}
         className="text-xs font-medium text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
       >
-        <span>View treatment protocol</span>
+        <span>View disease information</span>
         <span>&rarr;</span>
       </button>
     </div>

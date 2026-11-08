@@ -973,6 +973,11 @@ function runHeuristicStage2(metrics: EdgeVisualMetrics, cropHint?: string): { pr
   return { primary, alternatives };
 }
 
+export function withholdEdgeAdvice(candidate: EdgeDiagnosisCandidate): EdgeDiagnosisCandidate {
+  const notice = 'Treatment is withheld until a qualified local expert confirms the diagnosis and applicable authorization.';
+  return { ...candidate, culturalControl: [notice], biologicalControl: [], chemicalIntervention: notice };
+}
+
 export async function diagnosePlantOffline(
   imageSource: HTMLImageElement | HTMLCanvasElement,
   cropHint?: string
@@ -991,9 +996,9 @@ export async function diagnosePlantOffline(
       isOfflineInference: true,
       origin: onnxResult.model === 'mobilevit-xxs' ? 'mobilevit-onnx' : 'onnx',
       modelVersion: `${onnxResult.model}-v1`,
-      heuristicDisclaimer: `Two-Stage Edge AI: Stage 1 YOLOv8n detector + Stage 2 ${onnxResult.model.toUpperCase()} classifier.`,
-      primaryDiagnosis: onnxResult.candidates[0],
-      alternatives: onnxResult.candidates.slice(1, 3),
+      heuristicDisclaimer: `Two-Stage Edge AI: Stage 1 YOLOv8n detector + Stage 2 ${onnxResult.model.toUpperCase()} classifier. All results require expert confirmation.`,
+      primaryDiagnosis: withholdEdgeAdvice(onnxResult.candidates[0]),
+      alternatives: onnxResult.candidates.slice(1, 3).map(withholdEdgeAdvice),
       metrics,
       twoStage: {
         stage1Detector: stage1,
@@ -1011,9 +1016,9 @@ export async function diagnosePlantOffline(
   return {
     isOfflineInference: true,
     origin: 'heuristic',
-    heuristicDisclaimer: 'Two-Stage Edge Pipeline: Stage 1 YOLOv8n detector + Stage 2 Heuristic triage. Confirm with lab/extension officer if confidence <0.8.',
-    primaryDiagnosis: primary,
-    alternatives,
+    heuristicDisclaimer: 'Heuristic triage, not a confirmed diagnosis. Consult a laboratory or extension officer.',
+    primaryDiagnosis: withholdEdgeAdvice(primary),
+    alternatives: alternatives.map(withholdEdgeAdvice),
     metrics,
     twoStage: {
       stage1Detector: stage1,

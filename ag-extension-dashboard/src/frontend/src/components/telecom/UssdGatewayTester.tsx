@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { PhoneCall, Send, Radio, CheckCircle2, Smartphone, RotateCcw } from 'lucide-react';
-import toast from 'react-hot-toast';
 
 export const UssdGatewayTester: React.FC = () => {
   const [activeChannel, setActiveChannel] = useState<'ussd' | 'sms'>('ussd');
+  const nextPreviewId = useRef(0);
 
   // USSD State
-  const ussdDialCode = '*384*77#';
+  const ussdDialCode = '*123#';
   const [ussdSessionActive, setUssdSessionActive] = useState(false);
   const [ussdScreen, setUssdScreen] = useState<string>(
     'CON Welcome to GPExts Farmer Advisory:\n1. Maize Armyworm Alert\n2. Soil NPK Test Request\n3. Book Extension Visit\n4. Swahili Language'
@@ -15,29 +15,18 @@ export const UssdGatewayTester: React.FC = () => {
   const [ussdHistory, setUssdHistory] = useState<string[]>([]);
 
   // SMS State
-  const [smsPhone, setSmsPhone] = useState('+254 712 345 678');
+  const [smsPhone, setSmsPhone] = useState('');
   const [smsMessage, setSmsMessage] = useState(
-    'GPExts: Nyunyizia mimea ya mahindi dawa ya neem mapema asubuhi kuzuia viwavi jeshi. Piga *384*77# kwa msaada zaidi.'
+    'Example: Contact a local extension officer to discuss your crop symptoms.'
   );
-  const [isSendingSms, setIsSendingSms] = useState(false);
   const [smsLogs, setSmsLogs] = useState<
     {
       id: string;
       phone: string;
       message: string;
-      timestamp: string;
-      status: 'Delivered' | 'Pending';
+      status: 'Preview only';
     }[]
-  >([
-    {
-      id: 'sms-901',
-      phone: '+254 722 100 200',
-      message:
-        'GPExts: Mvua inatarajiwa Kiambu wiki hii. Andaa mashamba kwa ajili ya upanzi wa mahindi.',
-      timestamp: '10 mins ago',
-      status: 'Delivered',
-    },
-  ]);
+  >([]);
 
   const handleDialUssd = () => {
     setUssdSessionActive(true);
@@ -57,19 +46,19 @@ export const UssdGatewayTester: React.FC = () => {
 
     if (input === '1') {
       setUssdScreen(
-        'END Maize Advisory:\nScout for ragged leaf holes. Spray approved biopesticide early morning. An SMS guide has been sent to your phone.'
+        'END Example only: record crop symptoms and consult a local extension officer. No SMS was sent.'
       );
     } else if (input === '2') {
       setUssdScreen(
-        'END Soil Testing:\nOfficer Wanjiku assigned to your ward (Kiambu Central). Field visit scheduled for Thursday.'
+        'END Example only: contact a local soil specialist. No visit was scheduled.'
       );
     } else if (input === '3') {
       setUssdScreen(
-        'CON Enter your Acreage:\n1. Less than 2 Acres\n2. 2 - 5 Acres\n3. More than 5 Acres'
+        'END Example only: contact an extension officer to request a visit. No visit was scheduled.'
       );
     } else if (input === '4') {
       setUssdScreen(
-        'CON Karibu GPExts Ushauri wa Kilimo:\n1. Magonjwa ya Mahindi\n2. Kupima Udongo\n3. Panga Ziara ya Afisa'
+        'END Mfano pekee: wasiliana na afisa ugani. Hakuna ujumbe uliotumwa.'
       );
     } else {
       setUssdScreen('END Thank you for using GPExts Agricultural Advisory. Session closed.');
@@ -86,23 +75,13 @@ export const UssdGatewayTester: React.FC = () => {
 
   const handleSendSms = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!smsPhone || !smsMessage) return;
+    if (!smsPhone.trim() || !smsMessage.trim()) return;
 
-    setIsSendingSms(true);
-    setTimeout(() => {
-      setIsSendingSms(false);
-      setSmsLogs(prev => [
-        {
-          id: `sms-${Date.now()}`,
-          phone: smsPhone,
-          message: smsMessage,
-          timestamp: 'Just now',
-          status: 'Delivered',
-        },
-        ...prev,
-      ]);
-      toast.success(`SMS successfully dispatched to ${smsPhone}!`);
-    }, 600);
+    const id = String(nextPreviewId.current++);
+    setSmsLogs(prev => [
+      { id, phone: smsPhone, message: smsMessage, status: 'Preview only' },
+      ...prev,
+    ]);
   };
 
   return (
@@ -115,8 +94,8 @@ export const UssdGatewayTester: React.FC = () => {
             Telecom Gateway & USSD/SMS Simulator
           </h3>
           <p className="text-xs text-stone-400 mt-0.5">
-            Simulate smallholder 2G feature phone interactions (Africa&apos;s Talking / Twilio
-            bridge).
+            Local simulation only. No gateway is contacted, messages sent, or visits scheduled.
+            Do not enter real phone numbers or personal information.
           </p>
         </div>
 
@@ -189,8 +168,8 @@ export const UssdGatewayTester: React.FC = () => {
                 ) : (
                   <div className="flex flex-col items-center justify-center h-[180px] text-center">
                     <Radio className="w-8 h-8 opacity-40 mb-2" />
-                    <span className="font-bold text-sm">GPExts GSM Ready</span>
-                    <span className="text-xs opacity-75 mt-1">Dial {ussdDialCode} to begin</span>
+                    <span className="font-bold text-sm">Simulated phone</span>
+                    <span className="text-xs opacity-75 mt-1">Example code {ussdDialCode} (not a live service)</span>
                   </div>
                 )}
               </div>
@@ -203,7 +182,7 @@ export const UssdGatewayTester: React.FC = () => {
                     className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-900/30"
                   >
                     <PhoneCall className="w-3.5 h-3.5" />
-                    Dial {ussdDialCode}
+                    Simulate dialing {ussdDialCode}
                   </button>
                 ) : (
                   <button
@@ -223,10 +202,10 @@ export const UssdGatewayTester: React.FC = () => {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xxs font-mono uppercase text-emerald-400 font-bold">
-                  Live USSD Session Trace
+                  Simulated USSD Session Trace
                 </span>
                 <span className="text-xxs text-stone-400">
-                  Telco: Africa&apos;s Talking Gateway
+                  No provider connected
                 </span>
               </div>
               <div className="bg-slate-950 p-4 rounded-xl font-mono text-xs text-stone-300 min-h-[160px] space-y-1.5 border border-white/5">
@@ -246,8 +225,7 @@ export const UssdGatewayTester: React.FC = () => {
 
             <div className="mt-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-stone-300">
               <span className="font-bold text-emerald-400">Smallholder Inclusivity:</span> USSD
-              requires zero internet, zero smartphone capabilities, and functions on any $10 2G
-              phone across Sub-Saharan Africa.
+              can work on basic phones when a supported carrier and service are configured.
             </div>
           </div>
         </div>
@@ -261,10 +239,11 @@ export const UssdGatewayTester: React.FC = () => {
             className="p-6 rounded-xl bg-black/40 border border-white/10 space-y-4"
           >
             <div>
-              <label className="text-xs font-bold text-stone-300 block mb-1.5">
-                Recipient Phone (E.164)
+              <label htmlFor="demo-phone" className="text-xs font-bold text-stone-300 block mb-1.5">
+                Example recipient (do not enter a real number)
               </label>
               <input
+                id="demo-phone"
                 type="text"
                 value={smsPhone}
                 onChange={e => setSmsPhone(e.target.value)}
@@ -273,12 +252,13 @@ export const UssdGatewayTester: React.FC = () => {
             </div>
             <div>
               <div className="flex justify-between items-center mb-1.5">
-                <label className="text-xs font-bold text-stone-300">Advisory Message</label>
+                <label htmlFor="demo-message" className="text-xs font-bold text-stone-300">Example message</label>
                 <span className="text-xxs font-mono text-stone-400">
-                  {smsMessage.length} chars (1 SMS = $0.012)
+                  {smsMessage.length} characters
                 </span>
               </div>
               <textarea
+                id="demo-message"
                 rows={4}
                 value={smsMessage}
                 onChange={e => setSmsMessage(e.target.value)}
@@ -287,18 +267,17 @@ export const UssdGatewayTester: React.FC = () => {
             </div>
             <button
               type="submit"
-              disabled={isSendingSms}
               className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center justify-center gap-2 cursor-pointer border border-white/10 shadow-sm"
             >
               <Send className="w-3.5 h-3.5" />
-              {isSendingSms ? 'Transmitting via Telecom Gateway...' : 'Send Live SMS Advisory'}
+              Add local preview
             </button>
           </form>
 
           {/* SMS Logs */}
           <div className="p-6 rounded-xl bg-black/40 border border-white/10 space-y-3">
             <h4 className="text-xs font-medium text-stone-400">
-              Dispatched SMS Outbox
+              Local previews (not sent)
             </h4>
             <div className="space-y-2.5 max-h-[260px] overflow-y-auto">
               {smsLogs.map(log => (
