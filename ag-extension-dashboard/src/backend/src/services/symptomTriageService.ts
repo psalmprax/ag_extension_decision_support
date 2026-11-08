@@ -1,6 +1,5 @@
 import { createHash } from 'crypto';
-import { query } from './databaseService';
-import { logger } from '@/utils/logger';
+import { messagingKnowledgeReply } from './knowledge/messagingHints';
 
 /**
  * Symptom triage over SMS/USSD — pure keyword matching against regional
@@ -20,50 +19,50 @@ export const PLAYBOOKS: TriagePlaybook[] = [
     {
         keywords: ['armyworm', 'fall armyworm', 'worms eating', 'caterpillar'],
         crop: 'maize',
-        diagnosis: 'Likely fall armyworm',
-        advice: 'Scout early morning. Treat when 2 in 10 plants show fresh leaf damage. Use recommended pesticide or hand-pick larvae. Report to your extension officer.',
+        diagnosis: 'Possible armyworm symptoms',
+        advice: 'Scout the affected plants and contact a local extension officer for confirmation.',
     },
     {
         keywords: ['rust', 'red spots', 'brown spots leaves'],
         crop: 'maize/groundnut',
-        diagnosis: 'Likely rust disease',
-        advice: 'Remove heavily infected leaves. Apply a fungicide at first signs. Rotate crops next season to reduce build-up.',
+        diagnosis: 'Possible rust symptoms',
+        advice: 'Record where the spots appear and contact a local extension officer for confirmation.',
     },
     {
         keywords: ['blight', 'black spots', 'leaves rotting'],
         crop: 'potato/tomato',
-        diagnosis: 'Likely late blight',
-        advice: 'Cool humid weather spreads blight fast. Spray a protective fungicide now and remove infected plants. Do not reuse infected plants for compost.',
+        diagnosis: 'Possible blight symptoms',
+        advice: 'Record when the spots appeared and contact a local extension officer for confirmation.',
     },
     {
         keywords: ['aphids', 'small insects', 'sticky leaves'],
         crop: 'vegetables',
-        diagnosis: 'Likely aphid infestation',
-        advice: 'Spray with soapy water or recommended insecticide. Encourage ladybirds which eat aphids.',
+        diagnosis: 'Possible aphid symptoms',
+        advice: 'Inspect the affected plants and contact a local extension officer for confirmation.',
     },
     {
         keywords: ['stalk borer', 'stem borer', 'hollow stem'],
         crop: 'maize',
-        diagnosis: 'Likely stalk borer',
-        advice: 'Remove and burn infested stalks after harvest. Apply recommended insecticide in the funnel leaves.',
+        diagnosis: 'Possible stalk borer symptoms',
+        advice: 'Inspect the affected stalks and contact a local extension officer for confirmation.',
     },
     {
         keywords: ['wilting', 'yellow leaves', 'dying'],
         crop: 'general',
         diagnosis: 'Possible wilt disease or water stress',
-        advice: 'Check for waterlogging or drought first. If wilting spreads plant-to-plant, remove infected plants and rotate to a non-host crop next season.',
+        advice: 'Check whether the soil is waterlogged or dry and contact a local extension officer for confirmation.',
     },
     {
         keywords: ['weevils', 'insects in storage', 'maize in store'],
         crop: 'stored grain',
-        diagnosis: 'Likely storage weevils',
-        advice: 'Treat stored grain with approved storage insecticide. Dry grain to 13% moisture before storage. Use sealed bags or bins.',
+        diagnosis: 'Possible storage weevils',
+        advice: 'Inspect the stored grain and contact a local extension officer for confirmation.',
     },
     {
         keywords: ['striga', 'witchweed', 'purple flowers weeds'],
         crop: 'maize/sorghum',
-        diagnosis: 'Likely Striga (witchweed)',
-        advice: 'Hand-pull Striga before it flowers. Push-pull intercropping with Desmodium reduces Striga. Rotate with legumes.',
+        diagnosis: 'Possible Striga (witchweed)',
+        advice: 'Note where the weeds occur and contact a local extension officer for confirmation.',
     },
 ];
 
@@ -93,7 +92,7 @@ export function triageSymptoms(message: string): TriageResult {
             crop: 'unknown',
             diagnosis: 'Symptom not recognized',
             advice:
-                'Thank you. Your message needs an officer\'s review. An extension officer will contact you. For faster help, describe: which crop, what you see on the plant, and for how long.',
+                'Contact a local extension officer. Describe the crop, what you see and for how long. No request has been sent to an officer.',
             escalate: true,
         };
     }
@@ -114,23 +113,8 @@ export const symptomTriageService = {
      * Handle a 'diagnose' flow message from the onboarding engine.
      * Returns the reply text to send back over the same channel.
      */
-    async handleDiagnoseMessage(message: string, farmerId: string | null, phone: string): Promise<string> {
-        const result = triageSymptoms(message);
-        const reply = `${result.diagnosis}\n\n${result.advice}`;
-
-        // Log the triage into diagnosis_events so outbreak intelligence sees feature-phone reports too.
-        try {
-            await query(
-                `INSERT INTO diagnosis_events (farmer_id, district, crop, disease_label, confidence, source)
-                 SELECT $1, f.district, $2, $3, 0.5, 'sms_triage'
-                 FROM (SELECT $4::uuid AS id) x
-                 LEFT JOIN farmers f ON f.id = x.id`,
-                [farmerId, result.crop, result.diagnosis, farmerId]
-            );
-        } catch (error) {
-            logger.warn(`SMS triage log failed for ${phone}:`, error);
-        }
-        return reply;
+    async handleDiagnoseMessage(message: string, _farmerId: string | null, _phone: string): Promise<string> {
+        return messagingKnowledgeReply(message);
     },
 
     fingerprint(message: string): string {
