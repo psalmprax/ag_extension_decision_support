@@ -91,7 +91,7 @@ function logSearchWithTimeout(...args: Parameters<typeof logSearch>): void {
         } else {
             logger.error('Knowledge history persistence failed:', error);
         }
-    }
+    });
 }
 
 async function cacheAndLogResponse(userId: string, queryText: string, attachments: KnowledgeAttachment[] | undefined, redisKey: string, queryCategories: string[], response: FinalAnswer): Promise<void> {
