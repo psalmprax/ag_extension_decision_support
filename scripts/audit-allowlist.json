@@ -9,7 +9,7 @@
     },
     {
       "package": "brace-expansion",
-      "scope": ["ag_extension_decision_support", "backend", "frontend", "ag-extension-browser-ext"],
+      "scope": ["ag_extension_decision_support", "backend", "ag-extension-browser-ext"],
       "advisories": [
         "GHSA-q2hr-2g5m-vwhr",
         "GHSA-qhr7-859c-m2p7",
