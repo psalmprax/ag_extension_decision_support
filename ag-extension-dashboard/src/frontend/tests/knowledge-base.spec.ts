@@ -257,4 +257,41 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
     await expect(page.getByText('Search Failed — No Answer Generated')).toHaveCount(0);
     expect(requests).toBe(3);
   });
+
+  test('retains failed search attachments and resubmits them on retry', async ({ page }) => {
+    await mockDemoBackend(page);
+    const bodies: Array<{ attachments: unknown[]; bypassCache?: boolean }> = [];
+    await page.route(url => url.pathname === '/api/knowledge/ask', async route => {
+      bodies.push(route.request().postDataJSON());
+      if (bodies.length === 1) {
+        await route.fulfill({
+          status: 503, contentType: 'application/json',
+          body: JSON.stringify({ success: false, error: 'Assistant unavailable' }),
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: { answer: 'Check the field notes with your officer.', contextUsed: [], evidenceStatus: 'no_verified_source' },
+        }),
+      });
+    });
+    await openKnowledgeBase(page);
+    await page.locator('input[type="file"]').setInputFiles({
+      name: 'field-notes.txt', mimeType: 'text/plain', buffer: Buffer.from('Maize leaf observations'),
+    });
+    await expect(page.getByText('field-notes.txt', { exact: true })).toBeVisible();
+    await submitQuery(page);
+    await expect(page.getByText('Search Failed — No Answer Generated')).toBeVisible();
+    await expect(page.getByText('field-notes.txt', { exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Regenerate Live' }).click();
+    await expect(page.getByText('Check the field notes with your officer.', { exact: true })).toBeVisible();
+    expect(bodies).toHaveLength(2);
+    expect(bodies[0].attachments).toHaveLength(1);
+    expect(bodies[1]).toMatchObject({ attachments: bodies[0].attachments, bypassCache: true });
+    await expect(page.getByText('field-notes.txt', { exact: true })).toHaveCount(0);
+  });
 });

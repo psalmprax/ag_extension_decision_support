@@ -60,6 +60,7 @@ describe('optionalAuth middleware — session revocation', () => {
       userId: expect.any(String),
       email: expect.stringContaining('@test.dev'),
       role: 'extension_officer',
+      isDemo: false,
     });
   });
 
