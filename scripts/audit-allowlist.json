@@ -6,17 +6,6 @@
       "advisories": ["GHSA-jmr9-qjv8-65gv", "GHSA-7pqw-9j4j-h8q3"],
       "reason": "Development-only transitive dependency of @opengsd/gsd-pi (devDependency, never shipped or deployed); extract-zip 2.0.1 is the latest upstream release with no patched version for either symlink-traversal advisory. Re-evaluate when upstream releases a fix or before this expiry.",
       "expires": "2026-12-31"
-    },
-    {
-      "package": "brace-expansion",
-      "scope": ["ag_extension_decision_support", "backend", "ag-extension-browser-ext"],
-      "advisories": [
-        "GHSA-q2hr-2g5m-vwhr",
-        "GHSA-qhr7-859c-m2p7",
-        "GHSA-6j4f-fj2g-mc7p"
-      ],
-      "reason": "Transitive build/dev tooling dependency (eslint, flat-cache, glob, jake/workbox). Not reachable by untrusted user input in production runtime. Re-evaluate when upstream tooling bumps minimatch/brace-expansion or before this expiry.",
-      "expires": "2026-12-31"
     }
   ]
 }
