@@ -1043,6 +1043,9 @@ jobs:
                   fi
                   if [ -n "$FAILED_MIG" ]; then
                     if [ "$FAILED_MIG" = "20261108100000_version_rag_derived_data" ]; then
+                      echo "----- migration failure before rollback ($FAILED_MIG) -----" >&2
+                      printf '%s\n' "$MIGRATE_OUTPUT" >&2
+                      echo "---------------------------------------------------------" >&2
                       echo "Resetting idempotent migration $FAILED_MIG for a safe retry..."
                       npx prisma migrate resolve --rolled-back "$FAILED_MIG"
                       continue
