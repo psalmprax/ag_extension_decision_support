@@ -35,8 +35,8 @@ export function Demo() {
                 variants={fadeUp}
                 className="text-sm sm:text-base text-white/65 max-w-2xl mx-auto mt-3 font-normal leading-relaxed"
               >
-                Connecting extension officers to verified global agricultural datasets, localized
-                soil chemistry, and real-time offline workflows.
+                Supporting field workflows with available agricultural data and AI-assisted tools.
+                Availability and evidence quality vary by deployment.
               </motion.p>
             </motion.div>
 
@@ -52,19 +52,19 @@ export function Demo() {
                   icon: Layers,
                   title: 'Soil Telemetry',
                   badge: 'SoilGrids ISRIC',
-                  desc: 'Sub-surface pH mapping, organic carbon densities, and precision lime and nutrient recovery formulas.',
+                  desc: 'Explore available soil information; local testing and expert interpretation remain important.',
                 },
                 {
                   icon: Brain,
                   title: 'AI Advisory Engine',
                   badge: 'RAG Knowledge Graph',
-                  desc: 'Instant pest and disease diagnosis referencing verified FAOSTAT agronomic manuals and extension research.',
+                  desc: 'Explore possible causes and retrieved information; expert confirmation is required.',
                 },
                 {
                   icon: Wifi,
                   title: 'Offline-First Sync',
-                  badge: 'Zero Latency',
-                  desc: 'Record visit notes and audio logs with no cell coverage; auto-syncs securely once back in range.',
+                  badge: 'Field workflows',
+                  desc: 'Some field workflows support offline capture and synchronization when connectivity returns.',
                 },
               ].map((cap, i) => (
                 <motion.div

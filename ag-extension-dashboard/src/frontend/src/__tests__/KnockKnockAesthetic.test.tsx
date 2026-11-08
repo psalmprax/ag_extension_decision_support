@@ -281,8 +281,8 @@ describe('KnockKnock Aesthetic Component Suite', () => {
       );
 
       expect(screen.getByText('USSD & SMS Sandbox')).toBeInTheDocument();
-      expect(screen.getAllByText('*384*274#')[0]).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Send USSD Request/i })).toBeInTheDocument();
+      expect(screen.getAllByText('*123#')[0]).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Start simulation/i })).toBeInTheDocument();
     });
 
     it('initiates USSD session and displays main menu options', async () => {
@@ -290,7 +290,7 @@ describe('KnockKnock Aesthetic Component Suite', () => {
         <USSDSimulatorDrawer isOpen={true} onClose={vi.fn()} />
       );
 
-      const dialBtn = screen.getByRole('button', { name: /Send USSD Request/i });
+      const dialBtn = screen.getByRole('button', { name: /Start simulation/i });
       fireEvent.click(dialBtn);
 
       expect(screen.getByText(/1. Diagnose Crop Disease/i)).toBeInTheDocument();
@@ -303,31 +303,47 @@ describe('KnockKnock Aesthetic Component Suite', () => {
         <USSDSimulatorDrawer isOpen={true} onClose={vi.fn()} />
       );
 
-      fireEvent.click(screen.getByRole('button', { name: /Send USSD Request/i }));
+      fireEvent.click(screen.getByRole('button', { name: /Start simulation/i }));
 
       const input = screen.getByPlaceholderText('Reply...');
       fireEvent.change(input, { target: { value: '1' } });
       fireEvent.click(screen.getByRole('button', { name: /Send/i }));
 
       expect(screen.getByText(/Describe your crop symptoms/i)).toBeInTheDocument();
+      fireEvent.change(screen.getByPlaceholderText('Reply...'), { target: { value: 'spots' } });
+      fireEvent.click(screen.getByRole('button', { name: /Send/i }));
+      expect(screen.getByText(/no diagnosis was made/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Mancozeb|Metalaxyl/i)).not.toBeInTheDocument();
     });
 
-    it('triggers escalation callback when officer request option is chosen', async () => {
-      const mockEscalate = vi.fn();
+    it('makes clear that an officer request is only simulated', async () => {
       await renderWithLanguage(
-        <USSDSimulatorDrawer isOpen={true} onClose={vi.fn()} onEscalate={mockEscalate} />
+        <USSDSimulatorDrawer isOpen={true} onClose={vi.fn()} />
       );
 
-      fireEvent.click(screen.getByRole('button', { name: /Send USSD Request/i }));
+      fireEvent.click(screen.getByRole('button', { name: /Start simulation/i }));
 
       const input = screen.getByPlaceholderText('Reply...');
       fireEvent.change(input, { target: { value: '3' } });
       fireEvent.click(screen.getByRole('button', { name: /Send/i }));
 
-      expect(mockEscalate).toHaveBeenCalledWith(
-        expect.stringContaining('Simulated Farmer'),
-        expect.stringContaining('USSD')
-      );
+      expect(screen.getByText(/no request was sent and no officer was assigned/i)).toBeInTheDocument();
+    });
+
+    it.each([
+      ['en', /no diagnosis was made/i],
+      ['sw', /Mfano pekee: wasiliana na afisa ugani/i],
+      ['fr', /Exemple uniquement : consultez un agronome/i],
+    ])('does not present a simulated diagnosis as real in %s', async (language, notice) => {
+      await renderWithLanguage(<USSDSimulatorDrawer isOpen={true} onClose={vi.fn()} />);
+      fireEvent.click(screen.getByRole('button', { name: language }));
+      fireEvent.click(screen.getByRole('button', { name: /Start simulation/i }));
+      fireEvent.change(screen.getByPlaceholderText('Reply...'), { target: { value: '1' } });
+      fireEvent.click(screen.getByRole('button', { name: /Send/i }));
+      fireEvent.change(screen.getByPlaceholderText('Reply...'), { target: { value: 'spots' } });
+      fireEvent.click(screen.getByRole('button', { name: /Send/i }));
+      expect(screen.getByText(notice)).toBeInTheDocument();
+      expect(screen.queryByText(/Ridomil|Mancozeb|Metalaxyl/i)).not.toBeInTheDocument();
     });
   });
 });

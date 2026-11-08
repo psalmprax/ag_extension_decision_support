@@ -55,7 +55,7 @@ export function TrustAndSafety() {
             variants={fadeUp}
             className="text-sm sm:text-base lg:text-lg text-white/70 leading-relaxed font-normal"
           >
-            We believe agricultural technology must be humble, scientifically proven, and backed by real certified human extension officers.
+            Agricultural technology should acknowledge uncertainty and support qualified local expertise.
           </motion.p>
         </motion.div>
 
@@ -75,12 +75,12 @@ export function TrustAndSafety() {
               </div>
               <h3 className="text-lg font-bold text-white">Clear AI Limits &amp; Human Escalation</h3>
               <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
-                AI should never guess with your livelihood. If an image is blurry or a blight is uncertain, GPExts alerts you immediately and gives you a one-tap connection to an official extension officer.
+                AI assessments can be wrong or uncertain. Use them as suggestions and consult a qualified local expert to confirm the cause.
               </p>
             </div>
             <div className="pt-4 mt-4 border-t border-white/[0.06] text-xs text-emerald-300 font-semibold flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>Zero false guarantees</span>
+              <span>Expert confirmation matters</span>
             </div>
           </motion.div>
 
@@ -96,14 +96,14 @@ export function TrustAndSafety() {
               <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
                 <BookOpenCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">Backed by Agricultural Institutes</h3>
+              <h3 className="text-lg font-bold text-white">Check the Evidence</h3>
               <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
-                All disease diagnostics and spray dosages are calibrated against verified research from national agricultural institutes (KALRO, NARO, CGIAR, and FAO) to ensure local environmental suitability.
+                Retrieved information is not proof of a diagnosis or local product authorization. Check sources and consult an expert before treatment.
               </p>
             </div>
             <div className="pt-4 mt-4 border-t border-white/[0.06] text-xs text-amber-300 font-semibold flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-amber-400" />
-              <span>Scientifically proven protocols</span>
+              <span>Verify sources and local applicability</span>
             </div>
           </motion.div>
 
@@ -119,9 +119,9 @@ export function TrustAndSafety() {
               <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                 <Leaf className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">Bee-Safe &amp; Family-Friendly Recipes</h3>
+              <h3 className="text-lg font-bold text-white">Protect People and Pollinators</h3>
               <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
-                We prioritize safe organic recipes (cold-pressed Neem, ash tea, bio-fungicides) that don’t poison beneficial bees, harm grazing livestock, or endanger your children helping in the field.
+                Natural or biological products are not automatically safe. Follow locally approved labels and qualified advice to reduce risks to people, animals and pollinators.
               </p>
             </div>
             <div className="pt-4 mt-4 border-t border-white/[0.06] text-xs text-emerald-300 font-semibold flex items-center gap-1.5">
@@ -145,10 +145,10 @@ export function TrustAndSafety() {
             </div>
             <div>
               <h4 className="text-base sm:text-lg font-bold text-white mb-1">
-                Connected to 1,200+ Field Extension Officers Across Districts
+                Work with Local Extension Officers
               </h4>
               <p className="text-xs sm:text-sm text-white/70 max-w-2xl leading-relaxed">
-                When a problem needs physical inspection, GPExts alerts verified officers in your ward for on-site farm visits and group field demonstration days.
+                Where your organization has configured officer workflows, use them to coordinate follow-up. Contact a local extension service if a field inspection is needed.
               </p>
             </div>
           </div>

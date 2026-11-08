@@ -126,7 +126,7 @@ export const CanvasUiLab: React.FC = () => {
                     3D Perspective Tilt & Specular Glare
                   </span>
                   <h4 className="text-2xl font-bold text-white mt-1">
-                    Field Diagnostic Scan #8492
+                    Example Field Scan
                   </h4>
                 </div>
                 <ShieldCheck className="w-6 h-6 text-emerald-400" />
@@ -134,17 +134,17 @@ export const CanvasUiLab: React.FC = () => {
               <div className="space-y-3 text-xs text-stone-300 mb-6">
                 <div className="flex justify-between border-b border-white/5 pb-2">
                   <span className="text-stone-400">Target Crop:</span>
-                  <span className="font-semibold text-white">Arabica Coffee (Kiambu)</span>
+                  <span className="font-semibold text-white">Example coffee crop</span>
                 </div>
                 <div className="flex justify-between border-b border-white/5 pb-2">
-                  <span className="text-stone-400">Pathology Diagnosis:</span>
+                  <span className="text-stone-400">Observation:</span>
                   <span className="font-semibold text-amber-400">
-                    Coffee Leaf Rust (12% incidence)
+                    Leaf symptoms require review
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-stone-400">Multimodal Confidence:</span>
-                  <span className="font-semibold text-emerald-400">96.4% Verified</span>
+                  <span className="text-stone-400">Status:</span>
+                  <span className="font-semibold text-emerald-400">Illustration, not a diagnosis</span>
                 </div>
               </div>
               <div className="flex items-center gap-3 text-xxs text-stone-400">

@@ -5,15 +5,15 @@ import { Building2, GraduationCap, Heart } from 'lucide-react';
 export const painPoints = [
   {
     problem: 'Watching your crops wither while waiting days for an agronomist to visit',
-    solution: 'Instant leaf photo scan identifying pests & diseases in 3 seconds directly on your phone',
+    solution: 'Share leaf photos and symptoms to support a conversation with an extension officer',
   },
   {
     problem: 'Wasting hard-earned money on expensive chemical sprays that do not work',
-    solution: 'Targeted organic and affordable remedies with step-by-step application instructions',
+    solution: 'Seek a confirmed diagnosis and locally authorized guidance before treatment',
   },
   {
     problem: 'Losing seeds and fertilizer because rain came late or washed soil away',
-    solution: 'Hyperlocal 7-day rain forecasts so you know the exact right day to sow, spray, and harvest',
+    solution: 'Use available forecasts alongside local field knowledge when planning farm activities',
   },
   {
     problem: 'Complicated technical advice written in foreign languages with small print',
@@ -29,13 +29,13 @@ export const steps = [
   },
   {
     num: '02',
-    title: 'Get 3-Second Diagnosis',
-    desc: 'Our AI Crop Doctor identifies the exact disease, pest, or nutrient deficiency with clear, high-certainty advice.',
+    title: 'Review Possible Causes',
+    desc: 'The assessment suggests possible causes; it is not a confirmed diagnosis.',
   },
   {
     num: '03',
-    title: 'Apply the Cure',
-    desc: 'Follow step-by-step treatment instructions using low-cost local supplies, natural recipes, and safe farm sprays.',
+    title: 'Consult a Local Expert',
+    desc: 'Confirm the cause and locally authorized options with an extension officer before treatment.',
   },
 ];
 
@@ -43,7 +43,7 @@ export const audiences = [
   {
     icon: Heart,
     title: 'Smallholder Farmers',
-    desc: 'Get instant pocket crop doctor advice, rain predictions, and localized treatment plans on any device.',
+    desc: 'Explore crop observations and available weather information, then consult a local expert.',
   },
   {
     icon: GraduationCap,
@@ -74,27 +74,27 @@ export const faqItems = [
   {
     question: 'Does this app work without an active internet connection in rural fields?',
     answer:
-      'Yes! GPExts is designed from the ground up for rural fields. You can capture crop photos, review previously saved remedy guides, and record detailed farm visit notes deep in the field with zero cellular signal. Queued diagnosis requests automatically upload and deliver AI remedies as soon as your device reconnects.',
+      'Some field workflows support offline use and synchronization when connectivity returns. Cloud analysis and current external data require a connection; availability depends on the device and deployment.',
   },
   {
     question: 'Do I need an expensive smartphone to use GPExts?',
     answer:
-      'No. The application is ultra-lightweight and runs smoothly on low-cost Android phones (including Android Go), iPhones, or basic mobile browsers. Furthermore, farmers without smartphones can receive automated SMS and USSD voice advisories directly on simple feature phones.',
+      'The web application supports mobile browsers. SMS and USSD availability depends on provider and carrier configuration; contact your organization for supported channels.',
   },
   {
     question: 'Is GPExts free for individual smallholder farmers?',
     answer:
-      'Yes! Crop disease diagnosis, rain forecasts, and basic agronomic remedies are completely free for individual smallholder farmers. Institutional features (such as bulk district management, multi-officer synchronization, and regional GIS exports) are funded by sponsoring cooperatives, NGOs, and government ministries.',
+      'Availability and pricing depend on your organization and deployment. Check the current plan details before signing up.',
   },
   {
     question: 'Which crops and plant diseases are currently supported?',
     answer:
-      'GPExts recognizes over 120 common agricultural pests, fungal infections, bacterial blights, and soil nutrient deficiencies across 30+ staple crops — including maize, cassava, tomatoes, beans, potatoes, rice, wheat, bananas, peppers, onions, coffee, and cocoa.',
+      'The disease reference includes multiple crops and conditions, but coverage and accuracy vary. Results are suggestions, not confirmed diagnoses; consult a local expert.',
   },
   {
     question: 'Can I listen to advice in my local native language?',
     answer:
-      'Yes. You can listen to voice readouts and read instructions in your local dialect — including Swahili, Luganda, Hindi, Hausa, French, Spanish, Portuguese, and English. Simply tap the audio speaker icon on any diagnosis result card.',
+      'Language and speech support vary by feature, browser and configured provider. Check the available language and audio options in your deployment.',
   },
   {
     question: 'How do Agricultural Extension Officers and Ministries use GPExts?',
@@ -108,57 +108,54 @@ export const SANDBOX_PRESETS = [
     id: 'armyworm',
     badge: 'PEST INTERVENTION',
     title: '🌽 Fall Armyworm Containment',
-    goalPrompt: 'Identify Nakuru maize farmers at risk of Armyworm post-rainfall, inject local bio-control skill card, dispatch Swahili advisory, and schedule scouting for vital score < 60.',
+    goalPrompt: 'Illustrate a possible workflow for reporting maize symptoms and requesting expert review.',
     targetRegion: 'Nakuru County',
     targetCrop: 'Maize',
     affectedFarmers: 45,
     alertsDispatched: 45,
     visitsQueued: 3,
-    confidence: '96%',
-    skillTitle: 'Nakuru Bio-Control Protocol (2026)',
-    skillBody: 'Apply Neem extract + Pyrethrum at dusk (18:00-19:30). Alternate with Bacillus thuringiensis. Avoid mid-day application to protect pollinators.',
+    skillTitle: 'Example crop observation',
+    skillBody: 'Record symptoms and location, then consult a local extension officer before treatment.',
     channelPreview: {
-      sms: 'Hello Amina Okafor,\n🌾 GP-Ext Alert: Early Fall Armyworm detected in Rongai. Inspect leaf whorls at sunset. Spray Neem extract today to prevent spread.',
-      whatsapp: '🌿 *GP-Ext Regional Advisory (Nakuru)*\n\nHello Amina,\nFollowing recent rain and 78% humidity, scouting reveals early Armyworm instar in maize.\n\n✅ *Action:* Apply Neem/Pyrethrum at sunset.\n📍 *Extension Officer:* J. Mwangi visiting Thursday.',
-      telegram: '🚨 *Automated Campaign Alert*\nRegion: Nakuru | Crop: Maize\nAction: Spray bio-control at dusk. Officer visit queued.',
+      sms: 'Example: Please contact your local extension officer about observed maize symptoms.',
+      whatsapp: 'Example: Record maize symptoms and contact an extension officer for confirmation.',
+      telegram: 'Example: A crop observation may need expert review.',
     },
   },
   {
     id: 'potato-blight',
     badge: 'PATHOLOGY SHIELD',
     title: '🥔 Potato Late Blight Prevention',
-    goalPrompt: 'Detect 3-day continuous damp cloud cover in Nyandarua, broadcast preventive copper fungicide timing to potato growers, and alert zonal officers.',
+    goalPrompt: 'Illustrate a possible workflow for reviewing potato symptoms and local weather.',
     targetRegion: 'Nyandarua County',
     targetCrop: 'Irish Potatoes',
     affectedFarmers: 62,
     alertsDispatched: 62,
     visitsQueued: 5,
-    confidence: '94%',
-    skillTitle: 'Kinangop Late Blight Spray Calendar',
-    skillBody: 'Apply preventive Mancozeb or Copper oxychloride before rain onset. Ensure full under-leaf canopy coverage. Re-apply if rainfall exceeds 25mm.',
+    skillTitle: 'Example potato observation',
+    skillBody: 'Weather and symptoms alone do not confirm a disease. Ask a local expert to assess the crop.',
     channelPreview: {
-      sms: 'Hello Joseph Mensah,\n🥔 GP-Ext Alert: Damp overcast week forecast in Nyandarua. Apply preventive copper spray before Thursday rains.',
-      whatsapp: '🥔 *GP-Ext Disease Warning*\n\nHello Joseph,\nHigh humidity (>85%) increases late blight risk.\n\n✅ *Action:* Apply copper fungicide to Irish potatoes today.',
-      telegram: '🚨 *Pathology Alert:* Nyandarua Late Blight fungicide window active.',
+      sms: 'Example: Consult an extension officer about potato symptoms.',
+      whatsapp: 'Example: Share observations with a local expert for diagnosis.',
+      telegram: 'Example: Potato symptoms may need expert review.',
     },
   },
   {
     id: 'nutrient-recovery',
     badge: 'SOIL & WEATHER',
     title: '🌧️ Heavy Rain Nutrient Recovery',
-    goalPrompt: 'Evaluate nitrogen leaching in Eldoret cereal plots after 80mm rainfall anomaly, dispatch split top-dressing guidance, and queue soil check.',
+    goalPrompt: 'Illustrate a possible workflow for reviewing soil conditions after rain.',
     targetRegion: 'Uasin Gishu County',
     targetCrop: 'Maize & Wheat',
     affectedFarmers: 38,
     alertsDispatched: 38,
     visitsQueued: 2,
-    confidence: '98%',
-    skillTitle: 'Eldoret Post-Storm Leaching Recovery',
-    skillBody: 'Wait 24h for topsoil drainage before top dressing. Apply CAN at 50kg/acre in split dose to prevent secondary root burn.',
+    skillTitle: 'Example soil observation',
+    skillBody: 'A soil test and local advice can help determine whether an amendment is appropriate.',
     channelPreview: {
-      sms: 'Hello Ngozi Kalu,\n🌾 GP-Ext Alert: Heavy rain caused nitrogen leaching. Apply split CAN top-dressing once field drains.',
-      whatsapp: '🌾 *Soil Fertility Alert*\n\nHello Ngozi,\n80mm rain anomaly recorded in Eldoret.\n\n✅ *Action:* Apply CAN fertilizer 50kg/acre once topsoil drains.',
-      telegram: '🚨 *Agronomy Alert:* Eldoret Post-Storm top-dressing guide dispatched.',
+      sms: 'Example: Ask a soil specialist about field conditions after rain.',
+      whatsapp: 'Example: Share soil-test results with a local specialist.',
+      telegram: 'Example: Soil conditions may need expert review.',
     },
   },
 ];

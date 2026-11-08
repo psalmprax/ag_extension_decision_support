@@ -16,7 +16,6 @@ import { useLanguage } from '@/lib/LanguageContext';
 interface USSDSimulatorDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onEscalate?: (farmerName: string, reason: string) => void;
 }
 
 type USSDStep = 'idle' | 'dialing' | 'main' | 'diagnose' | 'weather' | 'officer' | 'feedback' | 'response';
@@ -24,10 +23,9 @@ type USSDStep = 'idle' | 'dialing' | 'main' | 'diagnose' | 'weather' | 'officer'
 export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
   isOpen,
   onClose,
-  onEscalate,
 }) => {
   useLanguage();
-  const [dialCode, setDialCode] = useState('*384*274#');
+  const [dialCode, setDialCode] = useState('*123#');
   const [ussdStep, setUssdStep] = useState<USSDStep>('idle');
   const [userInput, setUserInput] = useState('');
   const [selectedLang, setSelectedLang] = useState<'en' | 'sw' | 'fr'>('en');
@@ -71,22 +69,22 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
   const getWeatherText = (lang: 'en' | 'sw' | 'fr') => {
     switch (lang) {
       case 'sw':
-        return 'END Tahadhari: Mvua kubwa inatarajiwa Nakuru kesho. Hatari ya Koga ya Majani (Late Blight) ni ya juu.';
+        return 'END Mfano pekee: angalia utabiri wa hali ya hewa wa eneo lako.';
       case 'fr':
-        return 'END Alerte: Fortes pluies à Nakuru demain. Risque élevé de mildiou.';
+        return 'END Exemple uniquement : consultez les prévisions météorologiques locales.';
       default:
-        return 'END Alert: Heavy rain forecast in Nakuru County. High risk of Late Blight spores. Apply preventive fungicide.';
+        return 'END Example only: check a current local weather forecast. This is not a forecast.';
     }
   };
 
   const getOfficerText = (lang: 'en' | 'sw' | 'fr') => {
     switch (lang) {
       case 'sw':
-        return 'END Ombi lako limepokelewa. Afisa wa Kilimo atawasiliana nawe ndani ya saa 2.';
+        return 'END Mfano pekee: hakuna ombi lililotumwa kwa afisa ugani.';
       case 'fr':
-        return 'END Votre demande a été reçue. Un agronome vous contactera dans les 2 heures.';
+        return 'END Exemple uniquement : aucune demande n’a été envoyée à un agronome.';
       default:
-        return 'END Ticket Created #AG-8821. Extension Officer assigned and will call you within 2 hours.';
+        return 'END Example only: no request was sent and no officer was assigned.';
     }
   };
 
@@ -104,11 +102,11 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
   const getDiagnosisResult = (lang: 'en' | 'sw' | 'fr') => {
     switch (lang) {
       case 'sw':
-        return 'END Utambuzi wa AI: Koga ya Majani (Late Blight) - Ukali 85%.\nDawa: Ridomil Gold 50g/20L maji mara moja.';
+        return 'END Mfano pekee: wasiliana na afisa ugani wa eneo lako kutathmini dalili.';
       case 'fr':
-        return 'END Diagnostic AI: Mildiou (Late Blight) - Gravité 85%.\nTraitement: Fongicide à base de cuivre immédiatement.';
+        return 'END Exemple uniquement : consultez un agronome local pour évaluer les symptômes.';
       default:
-        return 'END AI Diagnosis: Late Blight (Phytophthora infestans) - Confidence 88%.\nAction: Apply Mancozeb/Metalaxyl spray within 24 hours. Keep leaves dry.';
+        return 'END Example only: no diagnosis was made. Consult a local expert about the symptoms.';
     }
   };
 
@@ -132,7 +130,6 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
       case '3':
         setUssdStep('officer');
         addLog('ussd', getOfficerText(selectedLang));
-        onEscalate?.('Simulated Farmer (+254 712 345678)', 'Urgent USSD Field Visit Request');
         setUssdStep('response');
         break;
       case '4':
@@ -172,7 +169,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
   const resetSession = () => {
     setUssdStep('idle');
     setUserInput('');
-    setDialCode('*384*274#');
+    setDialCode('*123#');
     setSessionLogs([]);
   };
 
@@ -207,10 +204,10 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-sm text-white tracking-wide">USSD & SMS Sandbox</h3>
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      LIVE
+                      SIMULATION
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400">Interactive mobile gateway simulator</p>
+                  <p className="text-xs text-slate-400">Local example only; no messages or requests are sent. Do not enter personal information.</p>
                 </div>
               </div>
 
@@ -262,7 +259,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                 <div className="flex justify-between items-center text-xs text-slate-400 pb-2 border-b border-slate-800/60 mb-3">
                   <span className="flex items-center gap-1.5">
                     <Radio className="w-3 h-3 text-emerald-400" />
-                    Safaricom / Airtel
+                    Example network
                   </span>
                   <span className="flex items-center gap-1 font-mono text-xs">
                     <Battery className="w-3.5 h-3.5 text-slate-400" />
@@ -278,7 +275,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                     </div>
                     <p className="text-sm font-semibold text-white mb-1">Ready to Dial</p>
                     <p className="text-xs text-slate-400 mb-4 max-w-[200px]">
-                      Dial <code className="text-emerald-400 font-mono">*384*274#</code> to initiate farmer USSD session
+                      Example code <code className="text-emerald-400 font-mono">*123#</code> is not a live service.
                     </p>
                     <div className="font-mono text-xl font-semibold text-emerald-400 tabular-nums bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 mb-4">
                       {dialCode || '---'}
@@ -288,7 +285,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                       className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs rounded-xl flex items-center gap-2 transition-colors"
                     >
                       <PhoneCall className="w-4 h-4" />
-                      Send USSD Request
+                      Start simulation
                     </button>
                   </div>
                 ) : (
@@ -365,9 +362,9 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                       resetSession();
                       setSelectedLang('sw');
                       setTimeout(() => {
-                        setDialCode('*384*274#');
+                        setDialCode('*123#');
                         setUssdStep('main');
-                        addLog('user', '*384*274#');
+                        addLog('user', '*123#');
                         addLog('ussd', 'CON Karibu GPExts Huduma:\n1. Tambua Ugonjwa wa Mmea\n2. Hali ya Hewa\n3. Omba Afisa');
                       }, 100);
                     }}
@@ -380,7 +377,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                     onClick={() => {
                       resetSession();
                       setTimeout(() => {
-                        setDialCode('*384*274#');
+                        setDialCode('*123#');
                         setUssdStep('diagnose');
                         addLog('user', '1');
                         addLog('ussd', 'CON Describe your crop symptoms:');
@@ -398,9 +395,9 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
 
             {/* Session Debug Log Footer */}
             <div className="p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-slate-950 border-t border-slate-800 text-[10px] font-mono text-slate-500 flex justify-between items-center">
-              <span>Gateway: Africa's Talking / Twilio Sandbox</span>
+              <span>No gateway connected</span>
               <span className="text-emerald-400 flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" /> Ready
+                <CheckCircle className="w-3 h-3" /> Simulation
               </span>
             </div>
           </motion.div>
