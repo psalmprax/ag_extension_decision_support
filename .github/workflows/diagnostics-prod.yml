@@ -65,7 +65,7 @@ jobs:
                 });
                 console.log(`HTTP status: ${response.status}`);
                 if (!response.ok) {
-                  await response.body?.cancel();
+                  console.log(`Error response: ${safe(await response.text())}`);
                   fail(`AIHubMix returned HTTP ${response.status}; no fallback was attempted`);
                 } else {
                   const data = await response.json();
