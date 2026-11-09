@@ -89,7 +89,6 @@ jobs:
                     messages: [{ role: 'user', content: prompt }],
                     max_tokens: 128,
                     stream: false,
-                    web_search: false,
                   }),
                   signal: AbortSignal.timeout(45000),
                 });
