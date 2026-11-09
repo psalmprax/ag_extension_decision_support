@@ -62,4 +62,37 @@ describe('ImageAnalysisTab Provenance Display', () => {
     const sourceEl = screen.getByText(/Source:/i);
     expect(sourceEl).toHaveTextContent('Source: AI vision analysis (AIMixHub)');
   });
+
+  it('clearly marks fallback results as unavailable instead of displaying a confidence score', () => {
+    const unavailableAnalysis: ImageAnalysisData = {
+      ...baseAnalysis,
+      overallHealth: 'unknown',
+      diseases: [],
+      recommendations: [
+        'Analysis was unavailable; do not treat this as a diagnosis',
+        'Provide clear photos of affected plant parts for another attempt',
+      ],
+      confidence: 0,
+      reviewStatus: 'needs_expert_review',
+      provenance: {
+        ...baseAnalysis.provenance,
+        evidenceStatus: 'no_verified_source',
+        source: 'AI vision analysis unavailable; no verified source',
+        provider: null,
+        model: null,
+      },
+    };
+
+    render(
+      <AnalysisResultsHUD
+        imageAnalysis={unavailableAnalysis}
+        imagePreview={null}
+        offlineQueued={false}
+        getSeverityColor={() => 'text-red-400'}
+      />
+    );
+
+    expect(screen.getByText('Analysis unavailable. No diagnosis was generated.')).toBeInTheDocument();
+    expect(screen.queryByText('0.0%')).not.toBeInTheDocument();
+  });
 });

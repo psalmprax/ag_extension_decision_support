@@ -175,7 +175,7 @@ export const AnalysisResultsHUD: React.FC<{
       <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 flex flex-col justify-center space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-slate-400">
-            Neural Attention Map & Loupe
+            Specimen Image Loupe
           </span>
           <span className="text-xxs font-mono text-slate-500">Standby</span>
         </div>
@@ -183,11 +183,15 @@ export const AnalysisResultsHUD: React.FC<{
           <DiseaseSaliencyCanvas />
         </div>
         <p className="text-xs font-mono text-center text-slate-500">
-          Upload a specimen photo on the left to trigger deep leaf pathology scanning.
+          Upload a specimen photo on the left to inspect it with the image loupe.
         </p>
       </div>
     );
   }
+
+  const analysisUnavailable = imageAnalysis.recommendations.includes(
+    'Analysis was unavailable; do not treat this as a diagnosis'
+  );
 
   return (
     <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 space-y-4">
@@ -201,30 +205,37 @@ export const AnalysisResultsHUD: React.FC<{
         <DiseaseSaliencyCanvas imageSrc={imagePreview || undefined} detections={[]} />
       </div>
 
-      {/* Health Metric Banner */}
-      <div className="p-3.5 rounded-lg bg-slate-950 border border-emerald-500/30 flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-emerald-400" />
-            <h4 className="text-xs font-semibold text-white">
-              Health status: {imageAnalysis.overallHealth}
-            </h4>
+      {analysisUnavailable ? (
+        <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-2 text-amber-300">
+          <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
+          <p className="text-xs font-mono">Analysis unavailable. No diagnosis was generated.</p>
+        </div>
+      ) : (
+        /* Health Metric Banner */
+        <div className="p-3.5 rounded-lg bg-slate-950 border border-emerald-500/30 flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-emerald-400" />
+              <h4 className="text-xs font-semibold text-white">
+                Health status: {imageAnalysis.overallHealth}
+              </h4>
+            </div>
+            <p className="text-xxs font-mono text-slate-400 mt-1">
+              Source: {imageAnalysis.provenance.source}
+              {imageAnalysis.provenance.provider &&
+              !imageAnalysis.provenance.source.toLowerCase().includes(imageAnalysis.provenance.provider.toLowerCase())
+                ? ` (${imageAnalysis.provenance.provider})`
+                : ''}
+            </p>
           </div>
-          <p className="text-xxs font-mono text-slate-400 mt-1">
-            Source: {imageAnalysis.provenance.source}
-            {imageAnalysis.provenance.provider &&
-            !imageAnalysis.provenance.source.toLowerCase().includes(imageAnalysis.provenance.provider.toLowerCase())
-              ? ` (${imageAnalysis.provenance.provider})`
-              : ''}
-          </p>
+          <div className="text-right">
+            <span className="text-xl font-mono font-bold text-emerald-400 tabular-nums">
+              {(imageAnalysis.confidence * 100).toFixed(1)}%
+            </span>
+            <p className="text-xxs font-mono text-slate-500">Confidence</p>
+          </div>
         </div>
-        <div className="text-right">
-          <span className="text-xl font-mono font-bold text-emerald-400 tabular-nums">
-            {(imageAnalysis.confidence * 100).toFixed(1)}%
-          </span>
-          <p className="text-xxs font-mono text-slate-500">Confidence</p>
-        </div>
-      </div>
+      )}
 
       {/* Detected Pathogens */}
       {imageAnalysis.diseases.length > 0 && (
@@ -376,7 +387,15 @@ export function ImageAnalysisTab({
       const res = await analyzePlantImage(imageData, cropType || undefined);
       if (res.success) {
         setImageAnalysis(res.data);
-        toast.success('Plant disease analysis completed!');
+        if (res.data.recommendations.includes('Analysis was unavailable; do not treat this as a diagnosis')) {
+          toast.error('Plant image analysis is unavailable. No diagnosis was generated.');
+          addNotification({
+            type: 'error',
+            message: 'Plant image analysis is unavailable — no diagnosis was generated.',
+          });
+        } else {
+          toast.success('Plant disease analysis completed!');
+        }
       } else {
         toast.error('The analysis service could not process this image. No diagnosis was generated — please try again.');
         addNotification({

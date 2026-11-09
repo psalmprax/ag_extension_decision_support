@@ -68,14 +68,15 @@ export class AIProviderFactory {
     static async getWithFallback(
         operation: (provider: AICapability) => Promise<any>,
         preferredProvider?: AIProviderType,
-        telemetryContext?: { correlationId?: string; userId?: string; operation?: string; promptText?: string }
+        telemetryContext?: { correlationId?: string; userId?: string; operation?: string; promptText?: string },
+        requiredCapability?: string
     ): Promise<any> {
         const allProviders = await this.buildProviderChain(preferredProvider);
         let lastError: Error | null = null;
         const context = this.resolveAttemptContext(telemetryContext);
 
         for (const [attempt, providerType] of allProviders.entries()) {
-            const outcome = await this.tryProviderOperation(providerType, attempt, operation, context);
+            const outcome = await this.tryProviderOperation(providerType, attempt, operation, context, requiredCapability);
             if (outcome.success) {
                 return outcome.result;
             }
@@ -123,11 +124,17 @@ export class AIProviderFactory {
         providerType: AIProviderType,
         attempt: number,
         operation: (provider: AICapability) => Promise<any>,
-        context: { correlationId?: string; userId?: string; operation: string }
+        context: { correlationId?: string; userId?: string; operation: string },
+        requiredCapability?: string
     ): Promise<{ success: true; result: any } | { success: false; error: Error | null }> {
         const startedAt = Date.now();
         try {
             const provider = await this.getProvider(providerType);
+
+            if (requiredCapability && !provider.capabilities.includes(requiredCapability)) {
+                logger.debug(`AI provider ${providerType} does not support ${requiredCapability}; skipping...`);
+                return { success: false, error: null };
+            }
 
             if (!provider.isConfigured()) {
                 logger.debug(`AI provider ${providerType} not configured, skipping...`);
@@ -366,7 +373,7 @@ export class AIRouter {
             }
         }, params.options?.preferredProvider, {
             promptText: this.getFallbackPrompt(requestType, params),
-        });
+        }, requestType === 'vision' || requestType === 'video' ? 'vision' : undefined);
 
         // Normalize OmniRoute free-model fallback result into the standard shape callers expect.
         if (result?.providerUsed && result?.text !== undefined) {

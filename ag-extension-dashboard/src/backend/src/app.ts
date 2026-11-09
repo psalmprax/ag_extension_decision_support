@@ -624,8 +624,9 @@ import('./services/mcpAdapter')
   });
 
 
-// MCP middleware wrapper - synchronous
-app.use('/api/v1/mcp', (req, res, next) => {
+// MCP middleware wrapper - synchronous. Keep the unversioned alias because the
+// dashboard's API client uses the legacy /api base path.
+app.use(['/api/v1/mcp', '/api/mcp'], (req, res, next) => {
   if (mcpRouter) {
     mcpRouter(req, res, next);
   } else {

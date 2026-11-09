@@ -11,6 +11,7 @@ describe('OmniRoute Hugging Face + NVIDIA providers', () => {
     process.env.NVIDIA_API_KEY = originalNvidiaKey;
   });
 
+
   it('huggingface reports not configured without a key', () => {
     process.env.HUGGINGFACE_API_KEY = '';
     expect(new HuggingFaceProvider().isConfigured()).toBe(false);
@@ -87,4 +88,33 @@ describe('OmniRoute Hugging Face + NVIDIA providers', () => {
 
     spy.mockRestore();
   });
+
+  it.each(['vision', 'video'] as const)(
+    'requires a vision-capable provider for %s requests',
+    async requestType => {
+      const { AIRouter, AIProviderFactory } = await import('../services/aiProvider/aiProvider');
+      const spy = jest.spyOn(AIProviderFactory, 'getWithFallback').mockResolvedValueOnce({
+        analysis: 'Visible leaf damage',
+        model: 'vision-model',
+        provider: 'aihubmix',
+      });
+
+      try {
+        await AIRouter.routeRequest(requestType, {
+          imageData: Buffer.from('image'),
+          videoData: Buffer.from('video'),
+          prompt: 'Describe visible crop symptoms',
+        });
+
+        expect(spy).toHaveBeenCalledWith(
+          expect.any(Function),
+          undefined,
+          expect.objectContaining({ promptText: undefined }),
+          'vision'
+        );
+      } finally {
+        spy.mockRestore();
+      }
+    }
+  );
 });

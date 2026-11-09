@@ -5,6 +5,7 @@ import { jest } from '@jest/globals';
 import diseaseRouter from '@/routes/diseases';
 import { plantDiseaseService } from '@/services/plantDiseaseService';
 import { query } from '@/services/databaseService';
+import { outbreakService } from '@/services/outbreakService';
 
 // Mock dependencies
 jest.mock('@/services/plantDiseaseService');
@@ -64,6 +65,9 @@ describe('Diseases Routes', () => {
         typeof plantDiseaseService.analyzeSoilImage
     >;
     const mockQuery = query as jest.MockedFunction<typeof query>;
+    const mockRecordDiagnosisEvent = outbreakService.recordDiagnosisEvent as jest.MockedFunction<
+        typeof outbreakService.recordDiagnosisEvent
+    >;
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -198,6 +202,46 @@ describe('Diseases Routes', () => {
             expect(res.body.data).toEqual(expect.arrayContaining([
                 expect.objectContaining({ disease: 'Maize Rust' }),
             ]));
+        });
+
+        it('records only symptom matches above 0.5 confidence using normalized 0-1 values', async () => {
+            const provenance = {
+                evidenceStatus: 'no_verified_source' as const,
+                source: 'test',
+                sourceUrl: null,
+                sourceTimestamp: null,
+                provider: null,
+                model: null,
+                generatedAt: new Date().toISOString(),
+            };
+            const diagnosis = {
+                disease: 'Possible Rust',
+                confidence: 0.85,
+                reviewStatus: 'needs_expert_review' as const,
+                provenance,
+                safetyNotice: 'Review with an agronomist',
+                severity: 'moderate' as const,
+                description: 'Possible rust',
+                symptoms: ['spots'],
+                treatment: ['withheld'],
+                prevention: ['withheld'],
+            };
+            mockDiagnoseFromSymptoms.mockResolvedValue([
+                diagnosis,
+                { ...diagnosis, disease: 'Weak match', confidence: 0.49 },
+            ]);
+
+            await request(app)
+                .post('/api/ai/diseases/diagnose')
+                .send({ symptoms: ['spots'], cropType: 'maize' })
+                .expect(200);
+
+            expect(mockRecordDiagnosisEvent).toHaveBeenCalledTimes(1);
+            expect(mockRecordDiagnosisEvent).toHaveBeenCalledWith(expect.objectContaining({
+                diseaseLabel: 'Possible Rust',
+                confidence: 0.85,
+                source: 'symptom_diagnosis',
+            }));
         });
 
         it('returns 500 when service throws', async () => {

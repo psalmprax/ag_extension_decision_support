@@ -253,24 +253,25 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
         <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>
-            No live leaf-inference detections are available yet. Upload or select an
-            analyzed sample to see lesion highlighting here — this canvas does not manufacture scan results.
+            No lesion regions were provided for this image. The loupe can inspect pixels, but no saliency overlay is available.
           </span>
         </div>
       )}
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowHeatmap(!showHeatmap)}
-            className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-              showHeatmap
-                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
-            }`}
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span>Thermal Saliency</span>
-          </button>
+          {hasLiveDetections && (
+            <button
+              onClick={() => setShowHeatmap(!showHeatmap)}
+              className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                showHeatmap
+                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Thermal Saliency</span>
+            </button>
+          )}
 
           <button
             onClick={() => setShowLoupe(!showLoupe)}
@@ -285,19 +286,21 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
           </button>
         </div>
 
-        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-          <Sliders className="w-3.5 h-3.5" />
-          <span className="text-xxs uppercase tracking-wider">Heatmap Alpha:</span>
-          <input
-            type="range"
-            min={0.2}
-            max={1.0}
-            step={0.05}
-            value={heatmapOpacity}
-            onChange={e => setHeatmapOpacity(Number(e.target.value))}
-            className="w-20 accent-emerald-500"
-          />
-        </div>
+        {hasLiveDetections && (
+          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+            <Sliders className="w-3.5 h-3.5" />
+            <span className="text-xxs uppercase tracking-wider">Heatmap Alpha:</span>
+            <input
+              type="range"
+              min={0.2}
+              max={1.0}
+              step={0.05}
+              value={heatmapOpacity}
+              onChange={e => setHeatmapOpacity(Number(e.target.value))}
+              className="w-20 accent-emerald-500"
+            />
+          </div>
+        )}
       </div>
 
       <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-950 shadow-lg">
@@ -322,7 +325,7 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
         )}
 
         <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-md border border-white/10 text-xxs font-mono text-gray-400">
-          Edge AI Saliency Engine • Move cursor to inspect
+          {hasLiveDetections ? 'Lesion overlay • Move cursor to inspect' : 'Image loupe • No lesion detection overlay'}
         </div>
       </div>
     </div>
