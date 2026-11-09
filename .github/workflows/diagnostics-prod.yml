@@ -18,7 +18,79 @@ jobs:
     environment: production
     runs-on: ubuntu-latest
     steps:
+      - name: Live AIHubMix request and response (no fallback)
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          command_timeout: 2m
+          script: |
+            set -eu
+            docker exec -i ag-dashboard-backend node --input-type=module <<'NODE'
+            const startedAt = Date.now();
+            const key = process.env.AIHUBMIX_API_KEY?.trim();
+            const model = process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash';
+            const prompt = 'Reply with a short sentence confirming you can respond.';
+            const secrets = [key, key?.replace(/^Bearer\s+/i, ''), process.env.AIHUBMIX_ACCESS_KEY].filter(Boolean);
+            function safe(value) {
+              let text = String(value);
+              for (const secret of secrets) text = text.split(secret).join('[REDACTED]');
+              return text.replace(/[\x00-\x1f\x7f]/g, ' ').slice(0, 1000);
+            }
+            function fail(message) {
+              console.error(`\x1b[31mFAIL: ${safe(message)} (${Date.now() - startedAt} ms)\x1b[0m`);
+              process.exitCode = 1;
+            }
+            if (!key) {
+              fail('AIHUBMIX_API_KEY is missing; a real API key is required. No account token is provisioned.');
+            } else {
+              console.log(`Model: ${safe(model)}`);
+              console.log(`Prompt: ${prompt}`);
+              try {
+                const response = await fetch('https://aihubmix.com/v1/chat/completions', {
+                  method: 'POST',
+                  headers: {
+                    Authorization: /^Bearer\s+/i.test(key) ? key : `Bearer ${key}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    model,
+                    messages: [{ role: 'user', content: prompt }],
+                    max_tokens: 128,
+                    stream: false,
+                    web_search: false,
+                  }),
+                  signal: AbortSignal.timeout(45000),
+                });
+                console.log(`HTTP status: ${response.status}`);
+                if (!response.ok) {
+                  await response.body?.cancel();
+                  fail(`AIHubMix returned HTTP ${response.status}; no fallback was attempted`);
+                } else {
+                  const data = await response.json();
+                  const text = data.choices?.[0]?.message?.content;
+                  if (typeof text !== 'string' || !text.trim()) {
+                    fail('AIHubMix returned no nonempty assistant response');
+                  } else {
+                    console.log(`Response: ${safe(text.trim())}`);
+                    console.log(`Returned model: ${safe(data.model || model)}`);
+                    console.log(`PASS: AIHubMix responded in ${Date.now() - startedAt} ms (no fallback)`);
+                  }
+                }
+              } catch (error) {
+                fail(error.name === 'TimeoutError'
+                  ? 'AIHubMix did not respond within 45 seconds'
+                  : `AIHubMix request failed (${error.name}); check network connectivity or response format`);
+              }
+            }
+            NODE
+      - name: Report live AIHubMix failure
+        if: failure()
+        run: |
+          echo "::error::Live AIHubMix request failed. See the request/response step for HTTP status or timeout."
       - name: SSH and run diagnostics
+        if: always()
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
@@ -134,4 +206,3 @@ jobs:
               val=$(echo "$line" | cut -d= -f2-)
               echo "  $key=SET (length: ${#val})"
             done || echo "❌ Could not read crew-ai env"
-
