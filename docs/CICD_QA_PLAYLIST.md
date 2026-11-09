@@ -63,7 +63,10 @@ then persists it in production's `.env` and recreates only the backend without
 building or restarting databases. Readiness and the container's model setting
 are checked; a failed update restores the previous environment. Repository or
 environment `AI_PRIMARY_MODEL` secrets/variables still override deployment
-defaults and must not point to the retired `gemini-2.5-flash`.
+defaults. Deployment synchronization replaces the known retired
+`gemini-2.5-flash` override with verified `gemini-3.1-flash-lite` and logs a
+warning; other explicit model choices are preserved. Update stale GitHub
+secrets/variables to remove the obsolete override at its source.
 
 ### Q3. What is the normal lifecycle for a code change?
 
