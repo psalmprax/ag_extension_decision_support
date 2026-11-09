@@ -24,6 +24,7 @@ jobs:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          timeout: 60s
           command_timeout: 15m
           script: |
             set -e
@@ -134,4 +135,3 @@ jobs:
               val=$(echo "$line" | cut -d= -f2-)
               echo "  $key=SET (length: ${#val})"
             done || echo "❌ Could not read crew-ai env"
-
