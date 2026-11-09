@@ -130,7 +130,8 @@ const executeToolCalls = async (toolCalls: ToolCall[], deadline: number): Promis
     try {
       const toolResult = await withAdvisoryTimeout(
         () => callAdvisoryTool(toolCall.function.name, toolCall.function.arguments),
-        getRemainingTimeout(deadline, 'Chat tool execution')
+        getRemainingTimeout(deadline, 'Chat tool execution'),
+        'Chat tool execution'
       );
       const text = toolResult.content.map(c => c.text).join('\n') || 'No output';
       results.push({ call: toolCall, output: toolResult.isError ? `ERROR: ${text}` : text });
