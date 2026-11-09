@@ -79,14 +79,15 @@ function recordSymptomOutbreakEvents(req: AuthRequest, diagnosis: DiseaseDiagnos
         const resolvedFarmerId = req.body.farmerId || (req.user?.role === 'farmer' ? req.user.userId : null);
         const resolvedDistrict = req.body.district || null;
         for (const item of diagnosis) {
-            if ((item.confidence ?? 0) >= 50) {
+            const confidence = parseDiagnosisConfidence(item.confidence);
+            if (confidence !== null && confidence >= 0.5) {
                 void outbreakService
                     .recordDiagnosisEvent({
                         farmerId: resolvedFarmerId,
                         district: resolvedDistrict,
                         crop: cropType || 'unspecified',
                         diseaseLabel: item.disease,
-                        confidence: item.confidence,
+                        confidence,
                         source: 'symptom_diagnosis',
                     })
                     .catch(err => logger.error('[outbreak] failed to record symptom diagnosis event:', err));
@@ -145,8 +146,12 @@ async function saveDiagnosisReport(req: AuthRequest, analysis: PlantImageAnalysi
 }
 
 function parseDiagnosisConfidence(confidence: unknown): number | null {
-    if (typeof confidence === 'string') return parseFloat(confidence);
-    return typeof confidence === 'number' ? confidence : null;
+    const parsed = typeof confidence === 'string' && confidence.trim() !== ''
+        ? Number(confidence)
+        : confidence;
+    if (typeof parsed !== 'number' || !Number.isFinite(parsed) || parsed < 0) return null;
+    if (parsed <= 1) return parsed;
+    return parsed <= 100 ? parsed / 100 : null;
 }
 
 function recordImageOutbreakEvents(req: AuthRequest, analysis: PlantImageAnalysis): void {
@@ -157,14 +162,15 @@ function recordImageOutbreakEvents(req: AuthRequest, analysis: PlantImageAnalysi
         const resolvedDistrict = req.body.district || null;
         if (analysis.diseases && Array.isArray(analysis.diseases)) {
             for (const item of analysis.diseases) {
-                const conf = parseDiagnosisConfidence(item.confidence);
+                const confidence = parseDiagnosisConfidence(item.confidence);
+                if (confidence === null || confidence < 0.5) continue;
                 void outbreakService
                     .recordDiagnosisEvent({
                         farmerId: resolvedFarmerId,
                         district: resolvedDistrict,
                         crop: cropType || 'unspecified',
                         diseaseLabel: item.disease,
-                        confidence: conf,
+                        confidence,
                         source: 'ai_vision',
                     })
                     .catch(err => logger.error('[outbreak] failed to record image diagnosis event:', err));

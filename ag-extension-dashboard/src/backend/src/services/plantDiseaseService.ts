@@ -385,11 +385,10 @@ IMPORTANT GUIDELINES:
         return this.normalizeImageAnalysis(parsed, provenance);
       }
 
-      return this.generateFallbackAnalysis('Failed to parse LLM vision analysis', provenance);
+      return this.generateFallbackAnalysis(provenance);
     } catch (error) {
       logger.error('Plant disease analysis failed:', error);
       return this.generateFallbackAnalysis(
-        error instanceof Error ? error.message : 'Unknown error',
         createProvenance('AI vision analysis unavailable; no verified source', new Date().toISOString())
       );
     }
@@ -450,11 +449,10 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
         return this.normalizeSoilAnalysis(parsed, provenance);
       }
 
-      return this.generateFallbackSoilAnalysis('Failed to parse LLM soil analysis', provenance);
+      return this.generateFallbackSoilAnalysis(provenance);
     } catch (error) {
       logger.error('Soil analysis failed:', error);
       return this.generateFallbackSoilAnalysis(
-        error instanceof Error ? error.message : 'Unknown error',
         createProvenance('AI soil image analysis unavailable; no verified source', new Date().toISOString())
       );
     }
@@ -556,7 +554,6 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
   }
 
   private generateFallbackSoilAnalysis(
-    error: string,
     provenance: DiagnosticProvenance
   ): SoilAnalysisResult {
     return {
@@ -564,7 +561,7 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
       texture: 'Unavailable',
       estimatedMoisture: 'Unavailable',
       drainageClass: 'Unavailable',
-      colorDiscoloration: `Analysis unavailable: ${error}`,
+      colorDiscoloration: 'Analysis unavailable',
       npkDeficiencies: {
         nitrogen: 'unknown',
         phosphorus: 'unknown',
@@ -737,7 +734,6 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
   }
 
   private generateFallbackAnalysis(
-    error: string,
     provenance: DiagnosticProvenance
   ): PlantImageAnalysis {
     return {
@@ -751,10 +747,7 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
       ],
       confidence: 0,
       reviewStatus: 'needs_expert_review',
-      provenance: {
-        ...provenance,
-        source: `${provenance.source} (${error})`,
-      },
+      provenance,
     };
   }
 }

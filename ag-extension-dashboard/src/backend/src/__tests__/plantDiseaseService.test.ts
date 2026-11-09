@@ -102,4 +102,21 @@ describe('PlantDiseaseService — Crop Isolation & Symptom Diagnostics', () => {
       spy.mockRestore();
     }
   });
+
+  it('does not expose provider errors in unavailable plant or soil analyses', async () => {
+    const spy = jest.spyOn(AIRouter, 'routeRequest').mockRejectedValue(new Error('private upstream detail'));
+    try {
+      const plantResult = await plantDiseaseService.analyzeImage('image');
+      expect(plantResult.overallHealth).toBe('unknown');
+      expect(plantResult.provenance.source).toBe('AI vision analysis unavailable; no verified source');
+      expect(JSON.stringify(plantResult)).not.toContain('private upstream detail');
+
+      const soilResult = await plantDiseaseService.analyzeSoilImage('image');
+      expect(soilResult.colorDiscoloration).toBe('Analysis unavailable');
+      expect(soilResult.provenance.source).toBe('AI soil image analysis unavailable; no verified source');
+      expect(JSON.stringify(soilResult)).not.toContain('private upstream detail');
+    } finally {
+      spy.mockRestore();
+    }
+  });
 });

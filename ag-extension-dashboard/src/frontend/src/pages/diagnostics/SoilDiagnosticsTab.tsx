@@ -241,8 +241,16 @@ const SoilResultsHUD: React.FC<{
     );
   }
 
+  const analysisUnavailable = soilAnalysis.colorDiscoloration === 'Analysis unavailable';
+
   return (
     <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 space-y-4">
+      {analysisUnavailable && (
+        <div className="flex items-start gap-2 p-2.5 rounded-[3px] bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span>Analysis unavailable. No soil measurements were generated.</span>
+        </div>
+      )}
       {/* Overall Health Score Pod */}
       <div className="p-3.5 rounded-[4px] bg-slate-950 border border-emerald-500/30">
         <div className="flex items-center justify-between mb-2">
@@ -253,7 +261,7 @@ const SoilResultsHUD: React.FC<{
             </h4>
           </div>
           <span className="text-[10px] font-mono tabular-nums text-emerald-400 font-medium">
-            Confidence: {(soilAnalysis.confidence * 100).toFixed(1)}%
+            Confidence: {analysisUnavailable ? 'N/A' : `${(soilAnalysis.confidence * 100).toFixed(1)}%`}
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -511,7 +519,15 @@ export function SoilDiagnosticsTab({
       const res = await analyzeSoilImage(imageData, cropType || undefined, { farmNotes });
       if (res.success) {
         setSoilAnalysis(res.data);
-        toast.success('Soil diagnostics completed successfully!');
+        if (res.data.colorDiscoloration === 'Analysis unavailable') {
+          toast.error('Soil image analysis is unavailable. No measurements were generated.');
+          addNotification({
+            type: 'error',
+            message: 'Soil image analysis is unavailable — no measurements were generated.',
+          });
+        } else {
+          toast.success('Soil diagnostics completed successfully!');
+        }
       } else {
         addNotification({
           type: 'error',
