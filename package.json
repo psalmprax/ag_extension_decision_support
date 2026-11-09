@@ -37,6 +37,7 @@
     "assurance:check": "node ag-extension-dashboard/scripts/assurance-gates.cjs"
   },
   "overrides": {
+    "postcss-selector-parser@6.x": "^6.1.6",
     "follow-redirects": "^1.16.2",
     "source-map-js": "^1.2.2",
     "@typescript-eslint/eslint-plugin": "^8.70.1",

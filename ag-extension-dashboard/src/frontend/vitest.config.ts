@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 
 import { fileURLToPath } from 'url';
@@ -8,6 +9,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default defineConfig({
+  // Resolve virtual:pwa-register during coverage transforms without registering a worker in tests.
+  plugins: [VitePWA({ injectRegister: false })],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

@@ -26,8 +26,9 @@ vi.mock('@/api/supportService', () => ({
 }));
 
 describe('HelpCenterModal', () => {
-  it('resets the category when opening a generic support ticket', () => {
+  it('resets the category when opening a generic support ticket', async () => {
     render(<HelpCenterModal isOpen onClose={vi.fn()} />);
+    await screen.findByText('No FAQs available');
 
     fireEvent.click(screen.getByRole('button', { name: 'Feature Request' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close support ticket form' }));

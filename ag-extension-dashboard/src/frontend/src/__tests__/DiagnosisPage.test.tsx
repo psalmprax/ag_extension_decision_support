@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { LanguageProvider } from '@/lib/LanguageContext';
@@ -27,17 +27,21 @@ vi.mock('@/api/diseaseService', () => ({
 }));
 
 describe('DiagnosisPage Component', () => {
-  it('renders the public diagnosis clinic and prominent back navigation', () => {
-    render(
-      <MemoryRouter>
-        <LanguageProvider>
-          <DiagnosisPage />
-        </LanguageProvider>
-      </MemoryRouter>
-    );
+  it('renders the public diagnosis clinic and prominent back navigation', async () => {
+    await act(async () => {
+      render(
+        <MemoryRouter>
+          <LanguageProvider>
+            <DiagnosisPage />
+          </LanguageProvider>
+        </MemoryRouter>
+      );
+    });
 
     // Verify prominent Back to Landing Page navigation
-    const backBtn = screen.getByRole('link', { name: /Back to Landing Page/i });
+    const backBtn = within(screen.getByRole('banner')).getByRole('link', {
+      name: /Back to Landing Page/i,
+    });
     expect(backBtn).toBeDefined();
     expect(backBtn.getAttribute('href')).toBe('/');
 
