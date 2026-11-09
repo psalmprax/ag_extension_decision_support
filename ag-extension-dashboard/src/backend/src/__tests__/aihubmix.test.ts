@@ -203,7 +203,24 @@ describe('AIHubMix Integration (REST Account API, MCP Tool & Model Provider)', (
       expect(reply).toBe('Recommended fertilizer: NPK 17:17:17 at 50kg/acre.');
     });
 
-    it('defaults to gemini-2.5-flash with web_search and web_search_options', async () => {
+    it('defaults to the verified model when AI_PRIMARY_MODEL is unset', async () => {
+      delete process.env.AI_PRIMARY_MODEL;
+      mockedAxios.post.mockResolvedValueOnce({
+        data: { choices: [{ message: { role: 'assistant', content: 'I can respond.' } }] },
+      });
+
+      const provider = new AIHubMixProvider('sk-test-key');
+      const result = await provider.generateText('Reply briefly.', { webSearch: false });
+
+      expect(result.model).toBe('gemini-3.1-flash-lite');
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        'https://aihubmix.com/v1/chat/completions',
+        expect.objectContaining({ model: 'gemini-3.1-flash-lite' }),
+        expect.any(Object)
+      );
+    });
+
+    it('honors AI_PRIMARY_MODEL with web_search and web_search_options', async () => {
       mockedAxios.post.mockResolvedValueOnce({
         data: {
           id: 'chat-2',

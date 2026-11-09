@@ -326,7 +326,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       if (!key) return false;
 
       const authHeader = key.startsWith('Bearer ') ? key : `Bearer ${key}`;
-      const probeModel = process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash';
+      const probeModel = process.env.AI_PRIMARY_MODEL || 'gemini-3.1-flash-lite';
 
       // 10s timeout to tolerate remote proxy and multi-model routing latency
       try {
@@ -432,7 +432,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       throw new Error('AIHubMix API key not configured (AIHUBMIX_API_KEY or AIHUBMIX_ACCESS_KEY missing).');
     }
 
-    const model = req.model || process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash';
+    const model = req.model || process.env.AI_PRIMARY_MODEL || 'gemini-3.1-flash-lite';
     const enableWebSearch = req.web_search ?? (process.env.AIHUBMIX_WEB_SEARCH !== 'false');
 
     const makeRequest = (withWebSearch: boolean) => this.makeChatRequest(req, model, key, withWebSearch);
@@ -456,7 +456,7 @@ export class AIHubMixProvider extends BaseAIProvider {
     options?: TextGenerationOptions
   ): Promise<TextGenerationResult> {
     const messages = normalizeMessages(prompt) as AIHubMixRequest['messages'];
-    const model = options?.model || process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash';
+    const model = options?.model || process.env.AI_PRIMARY_MODEL || 'gemini-3.1-flash-lite';
     const tools = normalizeToolDefinitions(options?.tools);
     const raw = await this.chatRaw({
       model,
@@ -517,7 +517,7 @@ export class AIHubMixProvider extends BaseAIProvider {
     ];
 
     const result = await this.generateText(messages, {
-      model: options?.model || process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash',
+      model: options?.model || process.env.AI_PRIMARY_MODEL || 'gemini-3.1-flash-lite',
       temperature: options?.temperature ?? 0.2,
       maxTokens: Math.max(options?.maxTokens ?? 4096, 4096),
       tools: options?.tools,
@@ -534,7 +534,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       .trim();
 
     return {
-      reasoning: `Detailed Intelligence Analysis completed via AIHubMix (${result.model || 'gemini-2.5-flash'}).`,
+      reasoning: `Detailed Intelligence Analysis completed via AIHubMix (${result.model || 'gemini-3.1-flash-lite'}).`,
       answer: cleanAnswer,
       visuals,
       toolCalls: result.toolCalls,
@@ -577,7 +577,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       throw new Error('AIHubMix API key not configured (AIHUBMIX_API_KEY or AIHUBMIX_ACCESS_KEY missing).');
     }
 
-    const model = options?.model || process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash';
+    const model = options?.model || process.env.AI_PRIMARY_MODEL || 'gemini-3.1-flash-lite';
 
     const base64Image = this.encodeImage(imageData);
 

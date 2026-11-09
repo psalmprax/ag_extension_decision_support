@@ -41,6 +41,30 @@ The repository also contains mobile and browser-extension packaging workflows. A
 
 Always inspect the workflow file before changing assumptions about triggers, environments, permissions, or required checks.
 
+### Q2a. How can I verify a real AIHubMix response?
+
+Run **Run Production Diagnostics** manually in GitHub Actions. Its first step
+calls AIHubMix directly from the running backend container using its deployed
+`AIHUBMIX_API_KEY` and `AI_PRIMARY_MODEL` (default `gemini-3.1-flash-lite`).
+It prints the prompt, HTTP status, returned text, model, and elapsed time,
+without printing credentials. The request disables web search and fallback,
+uses at most 128 output tokens, and times out after 45 seconds.
+Missing credentials, unsuccessful HTTP responses, invalid/empty responses, and
+timeouts fail the job with red output and a GitHub error annotation. This is a
+manual live check that may incur provider usage, not a mocked unit test or an
+automatic deployment gate. Production environment approval still applies.
+Enable the optional `discover_models` input to query `/v1/models` with the
+deployed key and test up to three available lightweight models instead of the
+configured model. Each request is independently reported; any failed request
+fails the job. Discovery does not change production configuration and may incur
+up to three small completion requests.
+With discovery disabled, `use_verified_model` first probes `gemini-3.1-flash-lite`,
+then persists it in production's `.env` and recreates only the backend without
+building or restarting databases. Readiness and the container's model setting
+are checked; a failed update restores the previous environment. Repository or
+environment `AI_PRIMARY_MODEL` secrets/variables still override deployment
+defaults and must not point to the retired `gemini-2.5-flash`.
+
 ### Q3. What is the normal lifecycle for a code change?
 
 **A.** The project lifecycle is:
