@@ -53,6 +53,11 @@ Missing credentials, unsuccessful HTTP responses, invalid/empty responses, and
 timeouts fail the job with red output and a GitHub error annotation. This is a
 manual live check that may incur provider usage, not a mocked unit test or an
 automatic deployment gate. Production environment approval still applies.
+Enable the optional `discover_models` input to query `/v1/models` with the
+deployed key and test up to three available lightweight models instead of the
+configured model. Each request is independently reported; any failed request
+fails the job. Discovery does not change production configuration and may incur
+up to three small completion requests.
 
 ### Q3. What is the normal lifecycle for a code change?
 
