@@ -7,6 +7,10 @@ on:
         description: Discover and test up to three lightweight available models
         type: boolean
         default: false
+      use_verified_model:
+        description: Switch production to verified gemini-3.1-flash-lite after a successful live probe
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -32,10 +36,10 @@ jobs:
           command_timeout: 4m
           script: |
             set -eu
-            docker exec -i -e DISCOVER_MODELS=${{ inputs.discover_models && 'true' || 'false' }} ag-dashboard-backend node --input-type=module <<'NODE'
+            docker exec -i -e DISCOVER_MODELS=${{ inputs.discover_models && 'true' || 'false' }} -e VERIFY_MODEL=${{ inputs.use_verified_model && 'gemini-3.1-flash-lite' || '' }} ag-dashboard-backend node --input-type=module <<'NODE'
             const startedAt = Date.now();
             const key = process.env.AIHUBMIX_API_KEY?.trim();
-            const configuredModel = process.env.AI_PRIMARY_MODEL || 'gemini-2.5-flash';
+            const configuredModel = process.env.VERIFY_MODEL || process.env.AI_PRIMARY_MODEL || 'gemini-3.1-flash-lite';
             const prompt = 'Reply with a short sentence confirming you can respond.';
             const secrets = [key, key?.replace(/^Bearer\s+/i, ''), process.env.AIHUBMIX_ACCESS_KEY].filter(Boolean);
             function safe(value) {
@@ -122,6 +126,49 @@ jobs:
         if: failure()
         run: |
           echo "::error::Live AIHubMix request failed. See the request/response step for HTTP status or timeout."
+      - name: Apply verified production model
+        if: success() && inputs.use_verified_model && !inputs.discover_models
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          command_timeout: 5m
+          script: |
+            set -eu
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            backup=$(mktemp)
+            chmod 600 "$backup"
+            cp .env "$backup"
+            compose() {
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml "$@"
+            }
+            rollback() {
+              cp "$backup" .env
+              rm -f "$backup"
+              compose up -d --no-deps --no-build --force-recreate backend
+              echo "Model update failed; previous environment restored." >&2
+            }
+            trap rollback EXIT
+            if grep -q '^AI_PRIMARY_MODEL=' .env; then
+              sed -i 's/^AI_PRIMARY_MODEL=.*/AI_PRIMARY_MODEL=gemini-3.1-flash-lite/' .env
+            else
+              printf '\nAI_PRIMARY_MODEL=gemini-3.1-flash-lite\n' >> .env
+            fi
+            compose up -d --no-deps --no-build --force-recreate backend
+            ready=false
+            for attempt in $(seq 1 24); do
+              if docker exec ag-dashboard-backend node -e \
+                'if(process.env.AI_PRIMARY_MODEL!=="gemini-3.1-flash-lite")process.exit(1);fetch("http://localhost:3001/health/ready").then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))'; then
+                ready=true
+                break
+              fi
+              sleep 5
+            done
+            test "$ready" = true
+            trap - EXIT
+            rm -f "$backup"
+            echo "Production backend ready with AI_PRIMARY_MODEL=gemini-3.1-flash-lite"
       - name: SSH and run diagnostics
         if: always()
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)

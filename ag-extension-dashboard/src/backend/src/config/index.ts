@@ -146,7 +146,7 @@ export const config: AppConfig = {
     ai: {
         primary: {
             provider: getEnv('AI_PRIMARY_PROVIDER', 'aihubmix'),
-            model: getEnv('AI_PRIMARY_MODEL', 'gemini-2.5-flash'),
+            model: getEnv('AI_PRIMARY_MODEL', 'gemini-3.1-flash-lite'),
             region: getEnv('AI_PRIMARY_REGION', 'eastus'),
         },
         fallback: {
