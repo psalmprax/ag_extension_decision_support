@@ -86,27 +86,29 @@ describe('Diseases Route — Outbreak Intelligence Event Recording', () => {
     });
 
     it('POST /api/v1/diseases/diagnose triggers outbreakService.recordDiagnosisEvent for high confidence results', async () => {
-        jest.spyOn(plantDiseaseService, 'diagnoseFromSymptoms').mockResolvedValueOnce([
-            {
-                disease: 'Maize Lethal Necrosis',
-                confidence: 85,
-                reviewStatus: 'ready',
-                provenance: {
-                    evidenceStatus: 'verified_source',
-                    source: 'test',
-                    sourceUrl: null,
-                    sourceTimestamp: null,
-                    provider: 'test',
-                    model: 'test',
-                    generatedAt: new Date().toISOString(),
-                },
-                safetyNotice: 'Notice',
-                severity: 'severe',
-                description: 'Severe necrosis',
-                symptoms: ['wilting', 'yellowing'],
-                treatment: ['Destroy crop'],
-                prevention: ['Clean seed'],
+        const highConfidenceDiagnosis = {
+            disease: 'Maize Lethal Necrosis',
+            confidence: 0.85,
+            reviewStatus: 'ready' as const,
+            provenance: {
+                evidenceStatus: 'verified_source' as const,
+                source: 'test',
+                sourceUrl: null,
+                sourceTimestamp: null,
+                provider: 'test',
+                model: 'test',
+                generatedAt: new Date().toISOString(),
             },
+            safetyNotice: 'Notice',
+            severity: 'severe' as const,
+            description: 'Severe necrosis',
+            symptoms: ['wilting', 'yellowing'],
+            treatment: ['Destroy crop'],
+            prevention: ['Clean seed'],
+        };
+        jest.spyOn(plantDiseaseService, 'diagnoseFromSymptoms').mockResolvedValueOnce([
+            highConfidenceDiagnosis,
+            { ...highConfidenceDiagnosis, disease: 'Low confidence match', confidence: 0.49 },
         ]);
 
         const response = await request(app)
@@ -125,42 +127,45 @@ describe('Diseases Route — Outbreak Intelligence Event Recording', () => {
             expect.objectContaining({
                 crop: 'Maize',
                 diseaseLabel: 'Maize Lethal Necrosis',
-                confidence: 85,
+                confidence: 0.85,
                 district: 'Lilongwe',
                 farmerId: 'farm-123',
                 source: 'symptom_diagnosis',
             })
         );
+        expect(outbreakService.recordDiagnosisEvent).toHaveBeenCalledTimes(1);
     });
 
     it('POST /api/v1/diseases/diagnose/image triggers outbreakService.recordDiagnosisEvent for detected diseases', async () => {
+        const highConfidenceDisease = {
+            disease: 'Banana Bacterial Wilt',
+            confidence: 0.9,
+            reviewStatus: 'ready' as const,
+            provenance: {
+                evidenceStatus: 'verified_source' as const,
+                source: 'test',
+                sourceUrl: null,
+                sourceTimestamp: null,
+                provider: 'test',
+                model: 'test',
+                generatedAt: new Date().toISOString(),
+            },
+            safetyNotice: 'Notice',
+            severity: 'severe' as const,
+            description: 'Bacterial wilt',
+            symptoms: ['wilting'],
+            treatment: ['Eradication'],
+            prevention: ['Sterile tools'],
+        };
         jest.spyOn(plantDiseaseService, 'analyzeImage').mockResolvedValueOnce({
             overallHealth: 'diseased',
             diseases: [
-                {
-                    disease: 'Banana Bacterial Wilt',
-                    confidence: 90,
-                    reviewStatus: 'ready',
-                    provenance: {
-                        evidenceStatus: 'verified_source',
-                        source: 'test',
-                        sourceUrl: null,
-                        sourceTimestamp: null,
-                        provider: 'test',
-                        model: 'test',
-                        generatedAt: new Date().toISOString(),
-                    },
-                    safetyNotice: 'Notice',
-                    severity: 'severe',
-                    description: 'Bacterial wilt',
-                    symptoms: ['wilting'],
-                    treatment: ['Eradication'],
-                    prevention: ['Sterile tools'],
-                },
+                highConfidenceDisease,
+                { ...highConfidenceDisease, disease: 'Low confidence possible match', confidence: 0.49 },
             ],
             nutrientDeficiencies: [],
             recommendations: ['Report to agricultural officer'],
-            confidence: 90,
+            confidence: 0.9,
             reviewStatus: 'ready',
             provenance: {
                 evidenceStatus: 'verified_source',
@@ -192,11 +197,12 @@ describe('Diseases Route — Outbreak Intelligence Event Recording', () => {
             expect.objectContaining({
                 crop: 'Banana',
                 diseaseLabel: 'Banana Bacterial Wilt',
-                confidence: 90,
+                confidence: 0.9,
                 district: 'Kasungu',
                 farmerId: 'farm-456',
                 source: 'ai_vision',
             })
         );
+        expect(outbreakService.recordDiagnosisEvent).toHaveBeenCalledTimes(1);
     });
 });
