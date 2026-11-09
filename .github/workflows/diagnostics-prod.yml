@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: diagnostics-prod-${{ github.ref }}
+  group: production-deployment
   cancel-in-progress: false
 
 jobs:
@@ -137,11 +137,18 @@ jobs:
           script: |
             set -eu
             cd /root/ag_extension_decision_support/ag-extension-dashboard
+            if ! docker exec ag-dashboard-backend node -e \
+              'if(process.env.AI_PRIMARY_PROVIDER!=="aihubmix")process.exit(1)'; then
+              echo "Cannot apply the verified model unless AI_PRIMARY_PROVIDER is aihubmix." >&2
+              exit 1
+            fi
+            backend_image_id=$(docker inspect --format '{{.Image}}' ag-dashboard-backend)
+            test -n "$backend_image_id"
             backup=$(mktemp)
             chmod 600 "$backup"
             cp .env "$backup"
             compose() {
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml "$@"
+              BACKEND_IMAGE_ID="$backend_image_id" docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml "$@"
             }
             rollback() {
               cp "$backup" .env
