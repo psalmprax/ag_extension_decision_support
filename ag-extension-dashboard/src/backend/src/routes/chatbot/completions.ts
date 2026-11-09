@@ -95,6 +95,8 @@ const buildToolDefinitions = (): ChatToolDefinition[] =>
   }));
 
 const MAX_TOOL_ROUNDS = 3;
+const ADVISORY_INFERENCE_TIMEOUT_MS = 60_000;
+const ADVISORY_TURN_TIMEOUT_MS = 180_000;
 
 type ToolCall = { id?: string; function: { name: string; arguments: unknown } };
 
@@ -159,7 +161,7 @@ const runAssistantTurn = async (systemPrompt: string, message: string, tools: Ch
   ];
   const usedToolNames: string[] = [];
   let assistantText = '';
-  const deadline = Date.now() + 45000;
+  const deadline = Date.now() + ADVISORY_TURN_TIMEOUT_MS;
 
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
     const allowTools = tools.length > 0 && round < MAX_TOOL_ROUNDS;
@@ -170,7 +172,7 @@ const runAssistantTurn = async (systemPrompt: string, message: string, tools: Ch
         temperature: 0.2,
         preferredProvider: 'aihubmix',
       },
-    }), Math.min(35000, deadline - Date.now()), 'Chat inference');
+    }), Math.min(ADVISORY_INFERENCE_TIMEOUT_MS, deadline - Date.now()), 'Chat inference');
 
     assistantText = (response?.text ?? '').toString().trim();
     const toolCalls = (response?.toolCalls ?? []) as ToolCall[];
