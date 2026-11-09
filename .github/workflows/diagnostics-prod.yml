@@ -176,6 +176,7 @@ jobs:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          timeout: 60s
           command_timeout: 15m
           script: |
             set -e
