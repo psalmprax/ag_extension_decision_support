@@ -551,6 +551,9 @@ jobs:
   deploy-production:
     needs: ci-checks
     if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'master') || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    concurrency:
+      group: production-deployment
+      cancel-in-progress: false
     # Production-mutating deploy: require maintainer approval via the
     # production environment (Settings → Environments → production →
     # "Required reviewers"), matching reset-admin-prod.yml.
