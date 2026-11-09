@@ -98,6 +98,12 @@ const MAX_TOOL_ROUNDS = 3;
 const ADVISORY_INFERENCE_TIMEOUT_MS = 60_000;
 const ADVISORY_TURN_TIMEOUT_MS = 180_000;
 
+const getRemainingTimeout = (deadline: number, stage: string, maximumMs?: number): number => {
+  const remainingMs = deadline - Date.now();
+  if (remainingMs <= 0) throw new AdvisoryTimeoutError(stage);
+  return maximumMs === undefined ? remainingMs : Math.min(maximumMs, remainingMs);
+};
+
 type ToolCall = { id?: string; function: { name: string; arguments: unknown } };
 
 function fanoutMessage(conversationId: string, message: ChatMessageRow): void {
@@ -124,7 +130,7 @@ const executeToolCalls = async (toolCalls: ToolCall[], deadline: number): Promis
     try {
       const toolResult = await withAdvisoryTimeout(
         () => callAdvisoryTool(toolCall.function.name, toolCall.function.arguments),
-        deadline - Date.now(), 'Chat tool execution'
+        getRemainingTimeout(deadline, 'Chat tool execution')
       );
       const text = toolResult.content.map(c => c.text).join('\n') || 'No output';
       results.push({ call: toolCall, output: toolResult.isError ? `ERROR: ${text}` : text });
@@ -172,7 +178,7 @@ const runAssistantTurn = async (systemPrompt: string, message: string, tools: Ch
         temperature: 0.2,
         preferredProvider: 'aihubmix',
       },
-    }), Math.min(ADVISORY_INFERENCE_TIMEOUT_MS, deadline - Date.now()), 'Chat inference');
+    }), getRemainingTimeout(deadline, 'Chat inference', ADVISORY_INFERENCE_TIMEOUT_MS), 'Chat inference');
 
     assistantText = (response?.text ?? '').toString().trim();
     const toolCalls = (response?.toolCalls ?? []) as ToolCall[];

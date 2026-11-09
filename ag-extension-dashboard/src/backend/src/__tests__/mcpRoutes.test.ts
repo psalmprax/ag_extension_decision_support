@@ -3,11 +3,16 @@ import app from '../app';
 
 describe('MCP route aliases', () => {
   beforeAll(async () => {
+    let ready = false;
     for (let attempt = 0; attempt < 20; attempt++) {
       const response = await request(app).get('/api/v1/mcp/health');
-      if (response.status !== 503) return;
+      if (response.status === 200) {
+        ready = true;
+        break;
+      }
       await new Promise(resolve => setTimeout(resolve, 25));
     }
+    if (!ready) throw new Error('MCP health endpoint did not become ready after 20 attempts');
   });
 
   it.each(['/api/mcp/health', '/api/v1/mcp/health'])(
