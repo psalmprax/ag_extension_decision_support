@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { logger } from '@/utils/logger';
 import { AIRouter } from '@/services/aiProvider/aiProvider';
+import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
 
 // NOTE: A backend ONNX inference path was removed during the truthfulness remediation:
 // it fed a uniform tensor derived from the first byte of the JPEG header into an
@@ -86,6 +87,13 @@ const SOIL_REVIEW_GUIDANCE = [
   'Record recent rainfall or irrigation and inspect moisture and drainage in the field.',
   'Share the crop, field location and test results with a local extension officer for field-specific advice.',
 ];
+
+function screenObservation(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  return agronomicSafetyGuard.scanGeneratedAdvice(value).violations.length > 0
+    ? WITHHELD_TREATMENT
+    : value;
+}
 
 function normalizeConfidence(value: number): number {
   if (!Number.isFinite(value)) return 0;
@@ -482,21 +490,28 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
   ): PlantImageAnalysis {
     const confidence = normalizeConfidence(analysis.confidence);
     const reviewStatus = getReviewStatus(confidence, provenance.evidenceStatus);
+    const nutrientDeficiencies = (Array.isArray(analysis.nutrientDeficiencies) ? analysis.nutrientDeficiencies : [])
+      .map(screenObservation)
+      .filter((observation): observation is string => observation !== undefined);
     return {
       ...analysis,
       confidence,
       reviewStatus,
       provenance,
-      nutrientDeficiencies: analysis.nutrientDeficiencies ?? [],
+      nutrientDeficiencies,
       recommendations: [
         ...IMAGE_REVIEW_GUIDANCE,
-        ...(analysis.overallHealth === 'stressed' || analysis.nutrientDeficiencies?.length
+        ...(analysis.overallHealth === 'stressed' || nutrientDeficiencies.length
           ? STRESS_REVIEW_GUIDANCE : []),
       ],
       diseases: (analysis.diseases ?? []).map(disease => {
         const diseaseConfidence = normalizeConfidence(disease.confidence);
         return {
           ...disease,
+          description: screenObservation(disease.description) ?? '',
+          symptoms: (Array.isArray(disease.symptoms) ? disease.symptoms : [])
+            .map(screenObservation)
+            .filter((observation): observation is string => observation !== undefined),
           confidence: diseaseConfidence,
           reviewStatus: getReviewStatus(diseaseConfidence, provenance.evidenceStatus),
           provenance,

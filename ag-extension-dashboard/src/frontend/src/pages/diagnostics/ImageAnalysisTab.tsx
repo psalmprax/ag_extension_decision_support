@@ -294,7 +294,7 @@ export const AnalysisResultsHUD: React.FC<{
                   Model-reported confidence: {(disease.confidence * 100).toFixed(1)}%
                 </p>
                 <p className="mt-1 text-xs text-slate-300">{disease.description}</p>
-                {disease.symptoms.length > 0 && (
+                {Array.isArray(disease.symptoms) && disease.symptoms.length > 0 && (
                   <p className="mt-1 text-xs text-slate-400">Reported symptoms: {disease.symptoms.join('; ')}</p>
                 )}
                 <p className="mt-1 text-xs text-amber-300 font-mono flex items-start gap-1">

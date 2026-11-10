@@ -218,7 +218,7 @@ class AgronomicSafetyGuard {
     // Percentages of crop populations describe scouting, not product concentration.
     // Leave all other percentages and physical dose units subject to withholding.
     const doseText = normalized.replace(
-      /\p{Nd}+(?:[.,]\p{Nd}+)?\s*(?:%|٪)\s*(?:of\s+)?(?:(?:the|sampled|inspected|affected|infested|damaged)\s+)*(?:plants?|leaves|whorls?|seedlings?|stems?|ears?|pods?|infestation|incidence)\b/giu,
+      /\p{Nd}+(?:[.,]\p{Nd}+)?\s*(?:%|٪)\s*(?:of\s+(?:(?:the|sampled|inspected|affected|infested|damaged)\s+)*(?:plants|leaves|whorls?|seedlings?|stems?|ears?|pods?)\b|(?:affected|infested|damaged)\s+plants\b|(?:plants|leaves|whorls?|seedlings?|stems?|ears?|pods?)\s+(?:affected|infested|damaged)\b|infestation\b|incidence\b)/giu,
       ''
     );
     const dose = new RegExp(`${quantity}\\s*(?:${unit})|(?:${unit})\\s*${quantity}`, 'iu').test(doseText);

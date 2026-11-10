@@ -147,4 +147,28 @@ describe('ImageAnalysisTab Provenance Display', () => {
     expect(screen.getByText('Reported symptoms: Orange spots on leaf undersides')).toBeInTheDocument();
     expect(screen.queryByText('Possible nutrient issues (unconfirmed)')).not.toBeInTheDocument();
   });
+
+  it('keeps disease results visible when the symptom list is malformed', () => {
+    render(
+      <AnalysisResultsHUD
+        imageAnalysis={{
+          ...baseAnalysis,
+          diseases: [{
+            disease: 'Rust', confidence: 0.8, severity: 'moderate',
+            reviewStatus: 'needs_expert_review', provenance: baseAnalysis.provenance,
+            description: 'Orange pustules may be consistent with rust.',
+            symptoms: null as unknown as string[],
+            treatment: [], prevention: [], safetyNotice: 'Confirm with a local expert.',
+          }],
+        }}
+        imagePreview={null}
+        offlineQueued={false}
+        getSeverityColor={() => 'text-red-400'}
+      />
+    );
+
+    expect(screen.getByText('Possible Match: Rust')).toBeInTheDocument();
+    expect(screen.getByText('Orange pustules may be consistent with rust.')).toBeInTheDocument();
+    expect(screen.queryByText(/Reported symptoms:/)).not.toBeInTheDocument();
+  });
 });

@@ -137,6 +137,56 @@ describe('PlantDiseaseService — Crop Isolation & Symptom Diagnostics', () => {
     }
   });
 
+  it('withholds prescriptions embedded in free-text image observations', async () => {
+    const spy = jest.spyOn(AIRouter, 'routeRequest').mockResolvedValueOnce({
+      analysis: JSON.stringify({
+        overallHealth: 'stressed',
+        diseases: [{
+          disease: 'Rust', confidence: 80, severity: 'moderate',
+          description: 'Possible rust; apply 100 kg/ha of urea.',
+          symptoms: ['Orange spots on leaves', 'Spray 3 ml/L of pesticide.'],
+        }],
+        nutrientDeficiencies: ['Possible nitrogen deficiency; apply 100 kg/ha of urea.'],
+        confidence: 85,
+      }),
+    });
+    try {
+      const result = await plantDiseaseService.analyzeImage('image');
+      expect(result.nutrientDeficiencies).toHaveLength(1);
+      expect(result.nutrientDeficiencies[0]).toContain('withheld');
+      expect(result.nutrientDeficiencies.join(' ')).not.toContain('100 kg/ha');
+      expect(result.diseases[0].description).toContain('withheld');
+      expect(result.diseases[0].description).not.toContain('100 kg/ha');
+      expect(result.diseases[0].symptoms).toContain('Orange spots on leaves');
+      expect(result.diseases[0].symptoms.join(' ')).not.toContain('3 ml/L');
+      expect(result.diseases[0].symptoms.join(' ')).toContain('withheld');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('drops malformed nutrient and symptom collections from image observations', async () => {
+    const spy = jest.spyOn(AIRouter, 'routeRequest').mockResolvedValueOnce({
+      analysis: JSON.stringify({
+        overallHealth: 'healthy',
+        diseases: [{
+          disease: 'Rust', confidence: 80, severity: 'moderate',
+          description: 'Orange pustules may be consistent with rust.',
+          symptoms: null,
+        }],
+        nutrientDeficiencies: 'Possible nitrogen deficiency',
+        confidence: 85,
+      }),
+    });
+    try {
+      const result = await plantDiseaseService.analyzeImage('image');
+      expect(result.nutrientDeficiencies).toEqual([]);
+      expect(result.diseases[0].symptoms).toEqual([]);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it('preserves actual model provenance and defaults missing deficiency observations to empty', async () => {
     const spy = jest.spyOn(AIRouter, 'routeRequest').mockResolvedValueOnce({
       provider: 'aihubmix', model: 'gemini-3.1-flash-lite',

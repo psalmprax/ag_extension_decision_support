@@ -118,6 +118,8 @@ describe('Agricultural advisory quality policy', () => {
         'Apply 5% insecticide.',
         'At 20% of plants affected, apply neem at 3 ml/L.',
         'At 20% of plants affected, spray a 2% insecticide solution.',
+        'Spray a 2% plant-based insecticide solution.',
+        'Use a 2% plant extract pesticide solution.',
     ])('withholds an unverified treatment prescription: %s', advice => {
         const result = agronomicSafetyGuard.guardAndEnrichAdvice(advice);
         expect(result.boundaryCheck.safe).toBe(false);
