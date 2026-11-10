@@ -67,7 +67,25 @@ const DIAGNOSTIC_REVIEW_THRESHOLD = 0.75;
 const DIAGNOSTIC_SAFETY_NOTICE =
   'General guidance only. Confirm the diagnosis with a qualified agronomist and follow locally approved product labels before treatment.';
 const WITHHELD_TREATMENT =
-  'Treatment and prevention advice is withheld until a qualified local expert confirms the diagnosis and applicable product authorization.';
+  'Disease-specific treatment is withheld until a qualified local expert confirms the diagnosis and applicable product authorization.';
+const GENERAL_PREVENTION = [
+  'Monitor affected and nearby plants for changes; photograph both sides of leaves and the whole plant.',
+  'Avoid moving suspect plant material between fields while the cause is being assessed.',
+];
+const IMAGE_REVIEW_GUIDANCE = [
+  ...GENERAL_PREVENTION,
+  'Record the crop, growth stage, field location, symptom onset and recent irrigation or weather; share these with a local extension officer.',
+  'Do not select a pesticide or fertilizer treatment from a photo alone; confirm the cause and any applicable local product authorization first.',
+];
+const STRESS_REVIEW_GUIDANCE = [
+  'Check soil moisture and drainage before changing irrigation; discoloration can have several causes.',
+  'A photograph cannot confirm a nutrient deficiency. Use an appropriate soil or leaf-tissue test before choosing fertilizer.',
+];
+const SOIL_REVIEW_GUIDANCE = [
+  'Obtain a laboratory soil test before choosing fertilizer or lime; a photograph cannot establish nutrient levels or pH.',
+  'Record recent rainfall or irrigation and inspect moisture and drainage in the field.',
+  'Share the crop, field location and test results with a local extension officer for field-specific advice.',
+];
 
 function normalizeConfidence(value: number): number {
   if (!Number.isFinite(value)) return 0;
@@ -362,8 +380,8 @@ Provide a diagnostic analysis in JSON format. The JSON MUST strictly match the f
   "confidence": number (overall analysis confidence, 0 to 100)
 }
 IMPORTANT GUIDELINES:
-- If overallHealth is "stressed", specify the exact nutrient deficiency (e.g., Nitrogen, Potassium, Iron, Magnesium) or abiotic stress factor (e.g., drought, heat scorch, waterlogging).
-- Tailor treatments, foliar sprays, and cultural practices specifically to the targeted crop if provided.
+- A photograph alone cannot confirm a disease, nutrient deficiency or abiotic stress cause. Describe visible symptoms and label possible causes as unconfirmed; do not infer an exact nutrient deficiency from appearance alone.
+- Give low-risk observation and prevention steps suited to the target crop. Do not prescribe pesticides, fertilizer, foliar sprays, doses, mixtures or harvest/re-entry intervals. Leave treatment empty pending field confirmation and applicable local authorization.
 - Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do not write any conversational text.`;
 
       const result = await AIRouter.routeRequest('vision', {
@@ -373,7 +391,7 @@ IMPORTANT GUIDELINES:
       });
       const generatedAt = new Date().toISOString();
       const providerName = resolveVisionProvider(result?.provider);
-      const modelName = result?.model || 'gemini-2.5-flash';
+      const modelName = result?.model || null;
       const provenance = createProvenance(`AI vision analysis via ${providerName}`, generatedAt, {
         provider: providerName,
         model: modelName,
@@ -437,7 +455,7 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
       });
       const generatedAt = new Date().toISOString();
       const providerName = resolveVisionProvider(result?.provider);
-      const modelName = result?.model || 'gemini-2.5-flash';
+      const modelName = result?.model || null;
       const provenance = createProvenance(`AI soil image analysis via ${providerName}`, generatedAt, {
         provider: providerName,
         model: modelName,
@@ -469,7 +487,12 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
       confidence,
       reviewStatus,
       provenance,
-      recommendations: [WITHHELD_TREATMENT],
+      nutrientDeficiencies: analysis.nutrientDeficiencies ?? [],
+      recommendations: [
+        ...IMAGE_REVIEW_GUIDANCE,
+        ...(analysis.overallHealth === 'stressed' || analysis.nutrientDeficiencies?.length
+          ? STRESS_REVIEW_GUIDANCE : []),
+      ],
       diseases: (analysis.diseases ?? []).map(disease => {
         const diseaseConfidence = normalizeConfidence(disease.confidence);
         return {
@@ -479,7 +502,7 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
           provenance,
           safetyNotice: DIAGNOSTIC_SAFETY_NOTICE,
           treatment: [WITHHELD_TREATMENT],
-          prevention: [WITHHELD_TREATMENT],
+          prevention: [...GENERAL_PREVENTION],
         };
       }),
     };
@@ -498,7 +521,7 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
           : null,
       confidence,
       reviewStatus: getReviewStatus(confidence, provenance.evidenceStatus),
-      recommendations: [WITHHELD_TREATMENT],
+      recommendations: [...SOIL_REVIEW_GUIDANCE],
       provenance,
       npkDeficiencies: {
         nitrogen: analysis.npkDeficiencies?.nitrogen ?? 'unknown',
@@ -678,7 +701,7 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
           description: diseaseInfo.description,
           symptoms: matchedSymptoms.length > 0 ? matchedSymptoms : [diseaseInfo.symptoms[0]],
           treatment: [WITHHELD_TREATMENT],
-          prevention: [WITHHELD_TREATMENT],
+          prevention: [...GENERAL_PREVENTION],
         });
       }
     }
@@ -714,7 +737,7 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
     if (!entry) return null;
     return {
       disease: PlantDiseaseService.prettifyDiseaseId(key), ...entry,
-      treatment: [WITHHELD_TREATMENT], prevention: [WITHHELD_TREATMENT],
+      treatment: [WITHHELD_TREATMENT], prevention: [...GENERAL_PREVENTION],
     };
   }
 

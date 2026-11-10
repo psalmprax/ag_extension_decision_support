@@ -1,6 +1,10 @@
 import { plantDiseaseService } from '../services/plantDiseaseService';
 import { AIRouter } from '../services/aiProvider/aiProvider';
 
+jest.mock('../services/aiProvider/aiProvider', () => ({
+  AIRouter: { routeRequest: jest.fn() },
+}));
+
 describe('PlantDiseaseService — Crop Isolation & Symptom Diagnostics', () => {
   it('should diagnose Late Blight when symptoms match and crop is potato', async () => {
     const symptoms = ['Dark water-soaked lesions on leaves', 'White fungal growth on leaf undersides'];
@@ -68,17 +72,18 @@ describe('PlantDiseaseService — Crop Isolation & Symptom Diagnostics', () => {
     expect(results.some(d => d.disease === 'Coffee Leaf Rust')).toBe(true);
   });
 
-  it('withholds unverified treatment and prevention in symptom and library responses', async () => {
+  it('withholds unverified treatments but provides low-risk prevention in symptom and library responses', async () => {
     const symptoms = ['White powdery coating on leaves', 'Yellowing leaves'];
     const results = await plantDiseaseService.diagnoseFromSymptoms(symptoms);
     const powdery = results.find(result => result.disease === 'Powdery Mildew');
     expect(powdery?.provenance.evidenceStatus).toBe('no_verified_source');
     expect(powdery?.reviewStatus).toBe('needs_expert_review');
     expect(powdery?.treatment.join(' ')).toContain('withheld');
-    expect(powdery?.prevention.join(' ')).toContain('withheld');
+    expect(powdery?.prevention.join(' ')).toContain('Monitor affected and nearby plants');
+    expect(powdery?.prevention.join(' ')).not.toContain('spray');
     const info = plantDiseaseService.getDiseaseInfo('Powdery Mildew');
     expect(info?.treatment.join(' ')).not.toContain('2ml/L');
-    expect(info?.prevention.join(' ')).toContain('withheld');
+    expect(info?.prevention.join(' ')).toContain('Monitor affected and nearby plants');
   });
 
   it('does not present model treatment or high model confidence as verified', async () => {
@@ -97,7 +102,72 @@ describe('PlantDiseaseService — Crop Isolation & Symptom Diagnostics', () => {
       expect(result.diseases[0].reviewStatus).toBe('needs_expert_review');
       expect(result.diseases[0].treatment.join(' ')).toContain('withheld');
       expect(result.recommendations.join(' ')).not.toContain('2 ml/L');
+      expect(result.recommendations.join(' ')).toContain('Record the crop, growth stage');
+      expect(result.diseases[0].prevention.join(' ')).not.toContain('Spray');
       expect(result.diseases[0].safetyNotice).toContain('qualified agronomist');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('returns useful next steps for stress without a disease match or fabricated model provenance', async () => {
+    const spy = jest.spyOn(AIRouter, 'routeRequest').mockResolvedValueOnce({
+      provider: 'aihubmix',
+      analysis: JSON.stringify({
+        overallHealth: 'stressed', diseases: [], nutrientDeficiencies: ['Possible nitrogen deficiency'],
+        recommendations: ['Apply 100 kg/ha of urea.'], confidence: 85,
+      }),
+    });
+    try {
+      const result = await plantDiseaseService.analyzeImage('image', 'maize');
+      expect(result.overallHealth).toBe('stressed');
+      expect(result.confidence).toBe(0.85);
+      expect(result.reviewStatus).toBe('needs_expert_review');
+      expect(result.nutrientDeficiencies).toEqual(['Possible nitrogen deficiency']);
+      expect(result.recommendations.join(' ')).toContain('Check soil moisture and drainage');
+      expect(result.recommendations.join(' ')).toContain('soil or leaf-tissue test');
+      expect(result.recommendations.join(' ')).not.toContain('100 kg/ha');
+      expect(result.recommendations.join(' ')).not.toContain('prevention advice is withheld');
+      expect(result.provenance.model).toBeNull();
+      expect(AIRouter.routeRequest).toHaveBeenLastCalledWith('vision', expect.objectContaining({
+        prompt: expect.stringContaining('A photograph alone cannot confirm'),
+      }));
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('preserves actual model provenance and defaults missing deficiency observations to empty', async () => {
+    const spy = jest.spyOn(AIRouter, 'routeRequest').mockResolvedValueOnce({
+      provider: 'aihubmix', model: 'gemini-3.1-flash-lite',
+      analysis: JSON.stringify({
+        overallHealth: 'healthy', diseases: [], recommendations: [], confidence: 90,
+      }),
+    });
+    try {
+      const result = await plantDiseaseService.analyzeImage('image');
+      expect(result.nutrientDeficiencies).toEqual([]);
+      expect(result.provenance.model).toBe('gemini-3.1-flash-lite');
+      expect(result.recommendations.join(' ')).toContain('Record the crop, growth stage');
+      expect(result.recommendations.join(' ')).not.toContain('soil or leaf-tissue test');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('replaces soil prescriptions with low-risk observation and testing guidance', async () => {
+    const spy = jest.spyOn(AIRouter, 'routeRequest').mockResolvedValueOnce({
+      analysis: JSON.stringify({
+        overallHealthScore: 60, texture: 'Possible loam', confidence: 85,
+        recommendations: ['Apply 100 kg/ha of fertilizer.'],
+      }),
+    });
+    try {
+      const result = await plantDiseaseService.analyzeSoilImage('image');
+      expect(result.recommendations.join(' ')).toContain('laboratory soil test');
+      expect(result.recommendations.join(' ')).not.toContain('100 kg/ha');
+      expect(result.provenance.model).toBeNull();
+      expect(result.reviewStatus).toBe('needs_expert_review');
     } finally {
       spy.mockRestore();
     }

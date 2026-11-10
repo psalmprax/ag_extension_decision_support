@@ -105,6 +105,20 @@ The RAG answer cache uses policy namespace `rag:advisory-v5` so older answers
 incorrectly replaced by the warning are not reused. Regression coverage is in
 `advisoryPolicy.test.ts` and `askPipeline.advisoryPolicy.test.ts`.
 
+### Q2d. Why does photo review show no lesion overlay or withhold treatment?
+
+The current image-diagnosis response supplies observations, not localized lesion
+coordinates. The loupe is for pixel inspection; an absent overlay does not mean
+the specimen is healthy. Do not fabricate lesion regions or saliency maps.
+
+Vision observations remain unconfirmed even at high model-reported confidence.
+Photo review displays possible nutrient issues, disease descriptions and reported
+symptoms, with general monitoring, field-context and testing steps. These low-risk
+steps do not require product authorization. Disease-specific prescriptions remain
+withheld pending confirmation and applicable local authorization; raw model
+treatment/prevention instructions and fertilizer rates are not passed through.
+Unknown provider model names remain unset rather than using a guessed model.
+
 ### Q3. What is the normal lifecycle for a code change?
 
 **A.** The project lifecycle is:
