@@ -48,7 +48,9 @@ describe('AudioReaderButton', () => {
   });
 
   afterEach(() => {
-    stopAllAudioPlayback();
+    act(() => {
+      stopAllAudioPlayback();
+    });
     vi.restoreAllMocks();
   });
 

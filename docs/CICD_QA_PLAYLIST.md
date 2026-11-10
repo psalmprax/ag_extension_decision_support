@@ -68,6 +68,29 @@ defaults. Deployment synchronization replaces the known retired
 warning; other explicit model choices are preserved. Update stale GitHub
 secrets/variables to remove the obsolete override at its source.
 
+### Q2b. Which CI log messages need investigation?
+
+Frontend coverage must include `src/lib/swRegistration.ts`. The standalone
+`vitest.config.ts` loads the PWA plugin so `virtual:pwa-register` resolves during
+both tests and uncovered-file transforms; do not exclude the registration module
+to silence a parser error. The plugin's default development mode does not
+register a service worker in jsdom.
+
+PostgreSQL CI health checks must specify the configured user and database:
+`pg_isready -U psalmprax -d ag_extension`. A bare `pg_isready` selects the container
+OS user (`root`) and produces repeated role errors despite a ready database.
+Expected negative-path test logs and successful Playwright dependency installs
+are not test failures. Do not suppress production error reporting to quiet tests.
+
+Inspect dependency findings with
+`npm audit --workspace=ag-extension-frontend --workspace=ag-extension-backend`.
+Apply compatible patches and validate the affected workspaces. Workspace-level
+`overrides` are ignored by npm; required overrides belong in the root manifest.
+The selector-parser override stays within major version 6. Vitest and its V8
+coverage provider must be upgraded together. Do not use `npm audit fix --force`:
+some suggested "fixes" downgrade tooling or change dependency APIs. Remaining
+unpatched or major-only advisories must be reported rather than hidden.
+
 ### Q3. What is the normal lifecycle for a code change?
 
 **A.** The project lifecycle is:
