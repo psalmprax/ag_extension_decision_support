@@ -290,7 +290,7 @@ export async function runAskQuestion(
         provider: options?.preferredProvider, day: new Date().toISOString().slice(0, 10),
         allowTools: options?.allowTools,
     })).digest('hex');
-    const baseRedisKey = `rag:advisory-v4:${scope}`;
+    const baseRedisKey = `rag:advisory-v5:${scope}`;
 
     // Only reuse this user's context-scoped, policy-versioned answer cache.
     const exactHit = await lookupScopedAnswer(cleanQueryText, baseRedisKey, attachments, options);

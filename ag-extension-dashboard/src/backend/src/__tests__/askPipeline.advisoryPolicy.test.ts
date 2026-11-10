@@ -69,13 +69,35 @@ describe('Knowledge advisory policy integration', () => {
         expect(logSearch).toHaveBeenCalledTimes(1);
     });
 
+    it('preserves sourced infestation thresholds without treating them as insecticide doses', async () => {
+        const answer = 'An example scouting threshold is 20% of plants affected [1]. Confirm the local threshold and maize growth stage before considering an insecticide; follow the registered label.';
+        jest.mocked(VectorService.hybridSearch).mockResolvedValueOnce([{
+            id: 'threshold-source',
+            content: answer,
+            metadata: { title: 'Example scouting guidance', country: 'Kenya' },
+            score: 0.9,
+        }]);
+        jest.mocked(callReasoningAgentic).mockResolvedValueOnce({
+            answer,
+            reasoning: 'Distinguish an infestation percentage from a treatment concentration.',
+        });
+
+        const result = await runAskQuestion('user-1', 'What are the biological and low-toxicity chemical control thresholds for Fall Armyworm (Spodoptera frugiperda) in maize?');
+
+        expect(result.answer).toContain(answer);
+        expect(result.answer).not.toContain('cannot verify a treatment rate');
+        expect(result.safety?.safe).toBe(true);
+        expect(result.advisoryQuality?.citedSourceNumbers).toEqual([1]);
+        expect(result.advisoryQuality?.regulatoryAuthorization).toBe('not_established');
+    });
+
     it('never shares exact answer cache keys across users or countries', async () => {
         await runAskQuestion('user-1', 'How do I treat maize damage?');
         await runAskQuestion('user-2', 'How do I treat maize damage?');
         await runAskQuestion('user-1', 'How do I treat maize damage?', undefined, { country: 'India' });
         const keys = jest.mocked(checkExactCachesOnly).mock.calls.map(call => call[1]);
         expect(new Set(keys).size).toBe(3);
-        expect(keys.every(key => key.startsWith('rag:advisory-v4:'))).toBe(true);
+        expect(keys.every(key => key.startsWith('rag:advisory-v5:'))).toBe(true);
         expect(jest.mocked(checkExactCachesOnly).mock.calls.every(call => call[2] === true)).toBe(true);
     });
 

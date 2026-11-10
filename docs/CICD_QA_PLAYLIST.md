@@ -91,6 +91,20 @@ coverage provider must be upgraded together. Do not use `npm audit fix --force`:
 some suggested "fixes" downgrade tooling or change dependency APIs. Remaining
 unpatched or major-only advisories must be reported rather than hidden.
 
+### Q2c. Why can a pest-threshold answer become a treatment-rate warning?
+
+The generated-advice guard withholds unverified pesticide doses, concentrations,
+and product-specific harvest/re-entry intervals. An explicit crop-population
+percentage (for example, the percentage of sampled plants affected) is a scouting
+measurement, not a product concentration. Preserve that distinction without
+treating any example percentage as a universal treatment trigger: thresholds
+still need source evidence, crop stage, and local applicability. Mixed answers
+that also contain an unverified dose must still be withheld.
+
+The RAG answer cache uses policy namespace `rag:advisory-v5` so older answers
+incorrectly replaced by the warning are not reused. Regression coverage is in
+`advisoryPolicy.test.ts` and `askPipeline.advisoryPolicy.test.ts`.
+
 ### Q3. What is the normal lifecycle for a code change?
 
 **A.** The project lifecycle is:

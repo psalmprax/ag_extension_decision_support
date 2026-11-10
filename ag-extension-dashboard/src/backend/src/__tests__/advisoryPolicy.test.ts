@@ -113,6 +113,11 @@ describe('Agricultural advisory quality policy', () => {
         'Apply ３ ml/L of pesticide.',
         'Apply 3ml/L of pesticide.',
         'Mix one teaspoon of pesticide.',
+        'Use insecticide at a 2% concentration.',
+        'Mix a 2% neem solution.',
+        'Apply 5% insecticide.',
+        'At 20% of plants affected, apply neem at 3 ml/L.',
+        'At 20% of plants affected, spray a 2% insecticide solution.',
     ])('withholds an unverified treatment prescription: %s', advice => {
         const result = agronomicSafetyGuard.guardAndEnrichAdvice(advice);
         expect(result.boundaryCheck.safe).toBe(false);
@@ -124,6 +129,28 @@ describe('Agricultural advisory quality policy', () => {
         const advice = 'Scout 10 plants in several parts of the field; take clear photos of damaged leaves.';
         expect(agronomicSafetyGuard.guardAndEnrichAdvice(advice).text).toBe(advice);
         expect(agronomicSafetyGuard.scanGeneratedAdvice('The recorded yield was 5 kg/ha.').safe).toBe(true);
+    });
+
+    it.each([
+        '20% of plants affected',
+        '20% of sampled plants with fresh damage',
+        '20 % damaged plants',
+        '20% infestation',
+        '20% of whorls with live larvae',
+        '２０％ of plants affected',
+    ])('distinguishes scouting percentages from pesticide concentrations: %s', threshold => {
+        const advice = `An example scouting threshold is ${threshold} [1]. This is not a universal spray trigger. Confirm local guidance before choosing an insecticide.`;
+        const result = agronomicSafetyGuard.guardAndEnrichAdvice(advice);
+
+        expect(result.boundaryCheck.safe).toBe(true);
+        expect(result.text).toContain(advice);
+        expect(result.text).not.toContain('cannot verify a treatment rate');
+    });
+
+    it('instructs synthesis to distinguish action thresholds from treatment rates', () => {
+        const directive = buildAdvisoryDirective();
+        expect(directive).toContain('Distinguish scouting/action thresholds');
+        expect(directive).toContain('Do not invent a universal threshold');
     });
 
     it('localizes treatment withholding and evidence disclosure', () => {

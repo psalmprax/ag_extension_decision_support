@@ -215,7 +215,13 @@ class AgronomicSafetyGuard {
     const treatment = /(?:\b(?:pesticid\w*|fungicid\w*|insecticid\w*|herbicid\w*|fertiliz\w*|fertilis\w*|urea|lime|neem|azadirachtin|mancozeb|chlorpyrifos|mbolea|chokaa|mwarobaini|engrais|fongicide|pestizid\w*|calcário|adubo\w*|concim\w*|meststof\w*|kireç|umanyolo|umcako|kalk|mocznik)\b|dünger|gübre|gødning|pestycyd|nawóz|nawoz|wapn|növényvéd|műtrágya|mész|îngrăș|ingras|hnojiv|vápn|pesticíd|कीटनाशक|उर्वरक|खाद|चूना|नीम|杀虫剂|農薬|农药|肥料|石灰|пестицид|фунгицид|инсектицид|гербицид|удобрени|добрив|сечовин|мочевин|извест|вапн|урея|торове|φυτοφαρμάκ|λιπασμ|λίπασμα|ασβέστ|مبيد|سماد|الأسمدة|الجير|ئوغۇت|ھاشارات دورىسى|ھاك)/iu.test(normalized);
     const quantity = String.raw`(?:\p{Nd}+(?:[.,]\p{Nd}+)?|[一二三四五六七八九十百半]+|\b(?:one|two|three|four|five|six|seven|eight|nine|ten|half|quarter|un|une|deux|trois|quatre|cinq|demi|uno|una|dos|tres|cuatro|cinco|medio|um|uma|dois|duas|três|quatro|meio|ein|eine|zwei|drei|vier|fünf|halb|moja|mbili|tatu|nne|tano|nusu|due|tre|quattro|een|twee|drie|vijf|bir|iki|üç|dört|beş|en|et|to|fire|fem|halv|dwa|dwie|trzy|cztery|pięć|pół|egy|két|kettő|három|négy|öt|fél|doi|două|trei|patru|cinci|jumătate|dva|dvě|tři|čtyři|pět|dve|tri|štyri|päť)\b|एक|दो|तीन|चार|पांच|पाँच|आधा|واحد|اثنين|ثلاثة|نصف|один|одна|два|две|три|четыре|половин|дві|чотири|един|една|четири|ένα|μία|δύο|τρία|τρεις|τέσσερα|μισό|بىر|ئىككى|ئۈچ|تۆت|بەش|يېرىم)`;
     const unit = String.raw`(?:(?:ml|l|g|kg|lit\p{L}*|gram\p{L}*|kilogram\p{L}*|mililit\p{L}*|tonnes?|tons?|tani|lita|kilogramu|quilos?|kilo|teaspoons?|tablespoons?|spoonfuls?|bottle[- ]?caps?)\b|मिलीलीटर|मिलिलीटर|लीटर|ग्राम|किलोग्राम|毫升|公升|升|公斤|千克|克|миллилитр|миллилитров|літр|литр|грамм|кілограм|килограмм|λίτρ|γραμμάρ|χιλιοστόλιτρ|ملليلتر|مليلتر|لتر|غرام|كيلوغرام|مىللىلىتىر|لىتىر|گرام|كىلوگرام|٪|%)`;
-    const dose = new RegExp(`${quantity}\\s*(?:${unit})|(?:${unit})\\s*${quantity}`, 'iu').test(normalized);
+    // Percentages of crop populations describe scouting, not product concentration.
+    // Leave all other percentages and physical dose units subject to withholding.
+    const doseText = normalized.replace(
+      /\p{Nd}+(?:[.,]\p{Nd}+)?\s*(?:%|٪)\s*(?:of\s+)?(?:(?:the|sampled|inspected|affected|infested|damaged)\s+)*(?:plants?|leaves|whorls?|seedlings?|stems?|ears?|pods?|infestation|incidence)\b/giu,
+      ''
+    );
+    const dose = new RegExp(`${quantity}\\s*(?:${unit})|(?:${unit})\\s*${quantity}`, 'iu').test(doseText);
     const areaOrMixtureRate = /\p{Nd}+(?:[.,]\p{Nd}+)?\s*(?:ml|l|g|kg|liters?|litres?|tonnes?)\s*(?:\/|per)\s*(?:ha|hectares?|acres?|l|liters?|litres?|kg)\b/iu.test(normalized);
     const applicationInstruction = /(?:\b(?:apply|mix|dilute|dose|dosage|spray|concentrat\w*|tumia|changanya|appliqu\w*|aplicar|mezclar|dosier\w*|anwenden|aplique|mistur\w*|mescol\w*|meng|uygula\w*)\b|मिलाकर|छिड़क|डाल|喷洒|加入|施用|смеш|примен|оброб|اخلط|رش)/iu.test(normalized);
     if ((treatment && dose) || (areaOrMixtureRate && applicationInstruction)) {
