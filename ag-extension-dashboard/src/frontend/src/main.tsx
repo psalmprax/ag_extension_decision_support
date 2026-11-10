@@ -45,7 +45,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   duration: 4000,
                   style: {
                     background: 'var(--color-primary-500)',
-                    color: 'var(--color-primary-500)',
+                    color: '#ffffff',
                   },
                   success: {
                     duration: 3000,
