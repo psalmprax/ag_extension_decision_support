@@ -91,6 +91,45 @@ coverage provider must be upgraded together. Do not use `npm audit fix --force`:
 some suggested "fixes" downgrade tooling or change dependency APIs. Remaining
 unpatched or major-only advisories must be reported rather than hidden.
 
+### Q2c. Why can a pest-threshold answer become a treatment-rate warning?
+
+The generated-advice guard withholds unverified pesticide doses, concentrations,
+and product-specific harvest/re-entry intervals. An explicit crop-population
+percentage (for example, the percentage of sampled plants affected) is a scouting
+measurement, not a product concentration. Preserve that distinction without
+treating any example percentage as a universal treatment trigger: thresholds
+still need source evidence, crop stage, and local applicability. Mixed answers
+that also contain an unverified dose must still be withheld.
+
+The RAG answer cache uses policy namespace `rag:advisory-v6` so older answers
+incorrectly replaced by the warning are not reused. Regression coverage is in
+`advisoryPolicy.test.ts` and `askPipeline.advisoryPolicy.test.ts`.
+
+### Q2d. Why does photo review show no lesion overlay or withhold treatment?
+
+The current image-diagnosis response supplies observations, not localized lesion
+coordinates. The loupe is for pixel inspection; an absent overlay does not mean
+the specimen is healthy. Do not fabricate lesion regions or saliency maps.
+
+Vision observations remain unconfirmed even at high model-reported confidence.
+Photo review displays possible nutrient issues, disease descriptions and reported
+symptoms, with general monitoring, field-context and testing steps. These low-risk
+steps do not require product authorization. Disease-specific prescriptions remain
+withheld pending confirmation and applicable local authorization; raw model
+treatment/prevention instructions and fertilizer rates are not passed through.
+Unknown provider model names remain unset rather than using a guessed model.
+
+### Q2e. How are broad-region questions and the optional farm profile reconciled?
+
+An explicit country or broad region in the current question (for example,
+West Africa) takes precedence over the saved country/coordinates and any
+auto-appended precision-intake profile. The intake metadata is removed from the
+retrieval query and passed separately as optional context. Intake fields are
+blank by default so an unselected Midwest climate zone is never attached to a
+question. Seasonal answers should stay at the requested geographic scale and
+must not invent one planting calendar for a diverse region. Regression coverage
+is in `askPipeline.advisoryPolicy.test.ts` and `AgronomicIntakeCard.test.tsx`.
+
 ### Q3. What is the normal lifecycle for a code change?
 
 **A.** The project lifecycle is:

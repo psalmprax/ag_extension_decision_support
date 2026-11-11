@@ -79,6 +79,7 @@ export const analyzePlantImage = async (
   data: {
     overallHealth: string;
     diseases: DiseaseDiagnosis[];
+    nutrientDeficiencies?: string[];
     recommendations: string[];
     confidence: number;
     reviewStatus: DiagnosticReviewStatus;

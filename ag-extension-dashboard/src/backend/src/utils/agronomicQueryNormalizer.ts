@@ -143,6 +143,40 @@ const RETAIL_VENTURE_CONFUSION_PATTERNS = [
     /\bhow\s+to\s+start\s+a\s+farmers?\s+market\b/i,
 ];
 
+export interface AgronomicIntakeContext {
+    locationZone?: string;
+    soil?: string;
+    water?: string;
+    goal?: string;
+}
+
+export function extractAgronomicIntakeContext(rawQuery: string): {
+    query: string;
+    context: AgronomicIntakeContext;
+} {
+    const marker = /\s*\[Agronomic Context:\s*([^\]]*)\]/i;
+    const match = rawQuery.match(marker);
+    if (!match) return { query: rawQuery, context: {} };
+
+    const value = (key: string): string | undefined => {
+        const found = match[1]?.match(
+            new RegExp(`(?:^|,\\s*)${key}=([\\s\\S]*?)(?=,\\s*(?:Location/Zone|Soil|Water|Goal)=|$)`, 'i')
+        );
+        const result = found?.[1]?.trim();
+        return result && result.toLowerCase() !== 'not specified' ? result : undefined;
+    };
+
+    return {
+        query: rawQuery.replace(marker, '').replace(/\s+/g, ' ').trim(),
+        context: {
+            locationZone: value('Location/Zone'),
+            soil: value('Soil'),
+            water: value('Water'),
+            goal: value('Goal'),
+        },
+    };
+}
+
 function isRetailVentureConfusion(text: string): boolean {
     return RETAIL_VENTURE_CONFUSION_PATTERNS.some((pattern) => pattern.test(text));
 }

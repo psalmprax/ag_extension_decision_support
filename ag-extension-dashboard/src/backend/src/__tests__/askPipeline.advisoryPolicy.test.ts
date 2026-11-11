@@ -1,6 +1,7 @@
 import { runAskQuestion } from '@/services/knowledge/askPipeline';
 import { checkExactCachesOnly } from '@/services/knowledge/cacheLookup';
 import { resolveUserContext } from '@/services/knowledge/userContext';
+import { fetchLiveAgriContext } from '@/services/knowledge/liveAgriContext';
 import { callReasoningAgentic } from '@/services/knowledge/reasoning';
 import { logSearch } from '@/services/knowledge/searchLog';
 import { VectorService } from '@/services/vectorService';
@@ -69,13 +70,35 @@ describe('Knowledge advisory policy integration', () => {
         expect(logSearch).toHaveBeenCalledTimes(1);
     });
 
+    it('preserves sourced infestation thresholds without treating them as insecticide doses', async () => {
+        const answer = 'An example scouting threshold is 20% of plants affected [1]. Confirm the local threshold and maize growth stage before considering an insecticide; follow the registered label.';
+        jest.mocked(VectorService.hybridSearch).mockResolvedValueOnce([{
+            id: 'threshold-source',
+            content: answer,
+            metadata: { title: 'Example scouting guidance', country: 'Kenya' },
+            score: 0.9,
+        }]);
+        jest.mocked(callReasoningAgentic).mockResolvedValueOnce({
+            answer,
+            reasoning: 'Distinguish an infestation percentage from a treatment concentration.',
+        });
+
+        const result = await runAskQuestion('user-1', 'What are the biological and low-toxicity chemical control thresholds for Fall Armyworm (Spodoptera frugiperda) in maize?');
+
+        expect(result.answer).toContain(answer);
+        expect(result.answer).not.toContain('cannot verify a treatment rate');
+        expect(result.safety?.safe).toBe(true);
+        expect(result.advisoryQuality?.citedSourceNumbers).toEqual([1]);
+        expect(result.advisoryQuality?.regulatoryAuthorization).toBe('not_established');
+    });
+
     it('never shares exact answer cache keys across users or countries', async () => {
         await runAskQuestion('user-1', 'How do I treat maize damage?');
         await runAskQuestion('user-2', 'How do I treat maize damage?');
         await runAskQuestion('user-1', 'How do I treat maize damage?', undefined, { country: 'India' });
         const keys = jest.mocked(checkExactCachesOnly).mock.calls.map(call => call[1]);
         expect(new Set(keys).size).toBe(3);
-        expect(keys.every(key => key.startsWith('rag:advisory-v4:'))).toBe(true);
+        expect(keys.every(key => key.startsWith('rag:advisory-v6:'))).toBe(true);
         expect(jest.mocked(checkExactCachesOnly).mock.calls.every(call => call[2] === true)).toBe(true);
     });
 
@@ -88,6 +111,42 @@ describe('Knowledge advisory policy integration', () => {
             expect.any(String), expect.any(String), undefined,
             expect.objectContaining({ country: 'India', language: 'hi', allowTools: false }),
             expect.any(Array)
+        );
+    });
+
+    it('uses explicit broad-region questions instead of the saved country or injected climate zone', async () => {
+        const query = 'What season is West Africa going through now for crops to be planted? [Agronomic Context: Location/Zone=Zone 5–6 (Temperate / Midwest), Soil=Well-Drained Loam / Silt, Water=Rainfed / Dryland, Goal=Commercial Yield]';
+        jest.mocked(resolveUserContext).mockResolvedValueOnce({
+            crop: 'maize', country: 'Canada', location: 'Ontario', region: 'Ontario', lat: 43.65, lng: -79.38,
+        });
+        jest.mocked(callReasoningAgentic).mockResolvedValueOnce({
+            answer: 'West Africa spans different rainfall zones; planting is timed to local rainy-season onset. Confirm the country and current rainfall outlook before sowing.',
+            reasoning: 'Answer at the region scale without treating the Midwest profile as the location.',
+        });
+
+        const result = await runAskQuestion('user-1', query);
+
+        expect(result.answer).toContain('West Africa spans different rainfall zones');
+        expect(VectorService.hybridSearch).toHaveBeenLastCalledWith(
+            'What season is West Africa going through now for crops to be planted?', 3, {}
+        );
+        expect(callReasoningAgentic).toHaveBeenLastCalledWith(
+            expect.any(String),
+            'What season is West Africa going through now for crops to be planted?',
+            undefined,
+            expect.objectContaining({
+                country: undefined,
+                region: 'West Africa',
+                locationZone: 'Zone 5–6 (Temperate / Midwest)',
+                soil: 'Well-Drained Loam / Silt',
+            }),
+            expect.any(Array)
+        );
+        expect(fetchLiveAgriContext).toHaveBeenLastCalledWith(
+            expect.any(Array),
+            expect.objectContaining({
+                country: undefined, location: undefined, region: 'West Africa', lat: undefined, lng: undefined,
+            })
         );
     });
 
