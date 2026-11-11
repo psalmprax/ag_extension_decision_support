@@ -212,7 +212,8 @@ class AgronomicSafetyGuard {
     // Open-ended advice has no validated product/soil-test context. A plausible
     // rate is not an authorized rate, including botanical pesticides and lime.
     const normalized = text.normalize('NFKC').replace(/[\u200B-\u200D\u2060\uFEFF]/g, '').toLowerCase();
-    const treatment = /(?:\b(?:pesticid\w*|fungicid\w*|insecticid\w*|herbicid\w*|fertiliz\w*|fertilis\w*|urea|lime|neem|azadirachtin|mancozeb|chlorpyrifos|mbolea|chokaa|mwarobaini|engrais|fongicide|pestizid\w*|calcário|adubo\w*|concim\w*|meststof\w*|kireç|umanyolo|umcako|kalk|mocznik)\b|dünger|gübre|gødning|pestycyd|nawóz|nawoz|wapn|növényvéd|műtrágya|mész|îngrăș|ingras|hnojiv|vápn|pesticíd|कीटनाशक|उर्वरक|खाद|चूना|नीम|杀虫剂|農薬|农药|肥料|石灰|пестицид|фунгицид|инсектицид|гербицид|удобрени|добрив|сечовин|мочевин|извест|вапн|урея|торове|φυτοφαρμάκ|λιπασμ|λίπασμα|ασβέστ|مبيد|سماد|الأسمدة|الجير|ئوغۇت|ھاشارات دورىسى|ھاك)/iu.test(normalized);
+    const treatmentPattern = /(?:\b(?:pesticid\w*|fungicid\w*|insecticid\w*|herbicid\w*|fertiliz\w*|fertilis\w*|urea|lime|neem|azadirachtin|mancozeb|chlorpyrifos|mbolea|chokaa|mwarobaini|engrais|fongicide|pestizid\w*|calcário|adubo\w*|concim\w*|meststof\w*|kireç|umanyolo|umcako|kalk|mocznik)\b|dünger|gübre|gødning|pestycyd|nawóz|nawoz|wapn|növényvéd|műtrágya|mész|îngrăș|ingras|hnojiv|vápn|pesticíd|कीटनाशक|उर्वरक|खाद|चूना|नीम|杀虫剂|農薬|农药|肥料|石灰|пестицид|фунгицид|инсектицид|гербицид|удобрени|добрив|сечовин|мочевин|извест|вапн|урея|торове|φυτοφαρμάκ|λιπασμ|λίπασμα|ασβέστ|مبيد|سماد|الأسمدة|الجير|ئوغۇت|ھاشارات دورىسى|ھاك)/iu;
+    const chemicalTreatmentPattern = /(?:\b(?:pesticid\w*|fungicid\w*|insecticid\w*|herbicid\w*|neem|azadirachtin|mancozeb|chlorpyrifos|mwarobaini|fongicide|pestizid\w*|pestycyd|növényvéd|pesticíd|कीटनाशक|नीम|杀虫剂|農薬|农药|пестицид|фунгицид|инсектицид|гербицид|φυτοφαρμάκ|مبيد|ھاشارات دورىسى)\b)/iu;
     const quantity = String.raw`(?:\p{Nd}+(?:[.,]\p{Nd}+)?|[一二三四五六七八九十百半]+|\b(?:one|two|three|four|five|six|seven|eight|nine|ten|half|quarter|un|une|deux|trois|quatre|cinq|demi|uno|una|dos|tres|cuatro|cinco|medio|um|uma|dois|duas|três|quatro|meio|ein|eine|zwei|drei|vier|fünf|halb|moja|mbili|tatu|nne|tano|nusu|due|tre|quattro|een|twee|drie|vijf|bir|iki|üç|dört|beş|en|et|to|fire|fem|halv|dwa|dwie|trzy|cztery|pięć|pół|egy|két|kettő|három|négy|öt|fél|doi|două|trei|patru|cinci|jumătate|dva|dvě|tři|čtyři|pět|dve|tri|štyri|päť)\b|एक|दो|तीन|चार|पांच|पाँच|आधा|واحد|اثنين|ثلاثة|نصف|один|одна|два|две|три|четыре|половин|дві|чотири|един|една|четири|ένα|μία|δύο|τρία|τρεις|τέσσερα|μισό|بىر|ئىككى|ئۈچ|تۆت|بەش|يېرىم)`;
     const unit = String.raw`(?:(?:ml|l|g|kg|lit\p{L}*|gram\p{L}*|kilogram\p{L}*|mililit\p{L}*|tonnes?|tons?|tani|lita|kilogramu|quilos?|kilo|teaspoons?|tablespoons?|spoonfuls?|bottle[- ]?caps?)\b|मिलीलीटर|मिलिलीटर|लीटर|ग्राम|किलोग्राम|毫升|公升|升|公斤|千克|克|миллилитр|миллилитров|літр|литр|грамм|кілограм|килограмм|λίτρ|γραμμάρ|χιλιοστόλιτρ|ملليلتر|مليلتر|لتر|غرام|كيلوغرام|مىللىلىتىر|لىتىر|گرام|كىلوگرام|٪|%)`;
     // Percentages of crop populations describe scouting, not product concentration.
@@ -220,17 +221,38 @@ class AgronomicSafetyGuard {
     const doseText = normalized.replace(
       /\p{Nd}+(?:[.,]\p{Nd}+)?\s*(?:%|٪)\s*(?:of\s+(?:(?:the|sampled|inspected|affected|infested|damaged)\s+)*(?:plants|leaves|whorls?|seedlings?|stems?|ears?|pods?)\b|(?:affected|infested|damaged)\s+plants\b|(?:plants|leaves|whorls?|seedlings?|stems?|ears?|pods?)\s+(?:affected|infested|damaged)\b|infestation\b|incidence\b)/giu,
       ''
+    ).replace(
+      new RegExp(`\\b(?:yield|harvest|production)\\s+(?:of\\s+)?${quantity}\\s*(?:tonnes?|tons?|kg)\\s*(?:\\/|per)\\s*(?:ha|hectares?|acres?)`, 'giu'),
+      ''
     );
-    const dose = new RegExp(`${quantity}\\s*(?:${unit})|(?:${unit})\\s*${quantity}`, 'iu').test(doseText);
-    const areaOrMixtureRate = /\p{Nd}+(?:[.,]\p{Nd}+)?\s*(?:ml|l|g|kg|liters?|litres?|tonnes?)\s*(?:\/|per)\s*(?:ha|hectares?|acres?|l|liters?|litres?|kg)\b/iu.test(normalized);
-    const applicationInstruction = /(?:\b(?:apply|mix|dilute|dose|dosage|spray|concentrat\w*|tumia|changanya|appliqu\w*|aplicar|mezclar|dosier\w*|anwenden|aplique|mistur\w*|mescol\w*|meng|uygula\w*)\b|मिलाकर|छिड़क|डाल|喷洒|加入|施用|смеш|примен|оброб|اخلط|رش)/iu.test(normalized);
-    if ((treatment && dose) || (areaOrMixtureRate && applicationInstruction)) {
+    const doseExpression = `(?:${quantity}\\s*(?:${unit})|(?:${unit})\\s*${quantity})`;
+    const dosePattern = new RegExp(doseExpression, 'iu');
+    const areaOrMixtureRatePattern = /\p{Nd}+(?:[.,]\p{Nd}+)?\s*(?:ml|l|g|kg|liters?|litres?|tonnes?)\s*(?:\/|per)\s*(?:ha|hectares?|acres?|l|liters?|litres?|kg)\b/iu;
+    const applicationInstruction = /(?:\b(?:apply|mix|dilute|dose|dosage|spray|concentrat\w*|tumia|changanya|appliqu\w*|aplicar|mezclar|dosier\w*|anwenden|aplique|mistur\w*|mescol\w*|meng|uygula\w*)\b|मिलाकर|छिड़क|डाल|喷洒|加入|施用|смеш|примен|оброб|اخلط|رش)/iu;
+    const unsafeRatePattern = new RegExp(
+      `(?:${treatmentPattern.source}.{0,48}${doseExpression}|${doseExpression}.{0,48}${treatmentPattern.source})`,
+      'iu'
+    );
+    const actionableAreaRatePattern = new RegExp(
+      `(?:${applicationInstruction.source}.{0,32}${areaOrMixtureRatePattern.source}|${areaOrMixtureRatePattern.source}.{0,32}${applicationInstruction.source})`,
+      'iu'
+    );
+    const adviceStatements = normalized.split(/(?<=[.!?;。！？])\s+|\n+/u);
+    const screenedStatements = doseText.split(/(?<=[.!?;。！？])\s+|\n+/u);
+    const hasUnsafeRate = screenedStatements.some(statement =>
+      unsafeRatePattern.test(statement) && dosePattern.test(statement)
+    ) || adviceStatements.some(statement =>
+      actionableAreaRatePattern.test(statement) && areaOrMixtureRatePattern.test(statement)
+    );
+    if (hasUnsafeRate) {
       violations.push('Treatment rate withheld: current local label or soil-test authorization has not been established.');
       hazardLevel = 'critical_hazard';
     }
     const interval = /(?:\b(?:phi|rei|pre[- ]harvest|re[- ]entry|restricted[- ]entry|harvest|wait|waiting|attend\w*|récolte|cosecha|esper\w*|colheita|warte\w*|ernt\w*)\b|कटाई|प्रतीक्षा|采收|收获|等待|урожая|збирання|حصاد|انتظر)/iu;
     const duration = new RegExp(`${quantity}\\s*(?:days?|hours?|jours?|heures?|días?|horas?|dias?|giorni|ore|dagen|uur|tage[n]?|stunden|siku|saa|gün|saat|dage|timer|dni|godzin\\p{L}*|nap|óra|zile|ore|dní|hodin\\p{L}*|ημέρ\\p{L}*|ώρ\\p{L}*|दिन|घंटे|天|小时|дн\\p{L}*|час\\p{L}*|доби|годин\\p{L}*|أيام|يوم|ساعات|كۈن|سائەت)`, 'iu');
-    if (treatment && interval.test(normalized) && duration.test(normalized)) {
+    if (adviceStatements.some(statement =>
+      chemicalTreatmentPattern.test(statement) && interval.test(statement) && duration.test(statement)
+    )) {
       violations.push('Product-specific harvest or re-entry interval requires the current locally registered label.');
       hazardLevel = 'critical_hazard';
     }

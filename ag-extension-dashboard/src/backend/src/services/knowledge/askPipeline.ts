@@ -4,7 +4,7 @@ import { VectorService, type SearchResult } from '@/services/vectorService';
 import { createHash } from 'crypto';
 import { cacheSet } from '@/services/cacheService';
 import { logger } from '@/utils/logger';
-import { normalizeAgronomicQuery, isAgronomicContent } from '@/utils/agronomicQueryNormalizer';
+import { extractAgronomicIntakeContext, normalizeAgronomicQuery, isAgronomicContent } from '@/utils/agronomicQueryNormalizer';
 import { checkExactCachesOnly } from '@/services/knowledge/cacheLookup';
 import { enrichContextWithWebFallbacks } from '@/services/knowledge/webEnrichment';
 import { resolveUserContext, type UserLocation } from '@/services/knowledge/userContext';
@@ -15,7 +15,13 @@ import { splitQuarantined, quarantineDisclosure } from '@/services/knowledge/gro
 import { postProcessResponse } from '@/services/knowledge/visuals';
 import { logSearch } from '@/services/knowledge/searchLog';
 import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
-import { buildAdvisoryEvidence, resolveAdvisoryCountry, validateAdvisoryCitations } from './advisoryPolicy';
+import {
+    buildAdvisoryEvidence,
+    hasExplicitAdvisoryGeography,
+    resolveAdvisoryCountry,
+    resolveAdvisoryRegion,
+    validateAdvisoryCitations,
+} from './advisoryPolicy';
 import type { AskOptions, FinalAnswer, KnowledgeAttachment, ReasonOptions } from '@/services/knowledge/types';
 import { AdvisoryTimeoutError, withAdvisoryTimeout } from './advisoryRuntime';
 
@@ -256,16 +262,135 @@ async function lookupScopedAnswer(queryText: string, redisKey: string, attachmen
     }
 }
 
-function applyAdvisoryLocation(userContext: UserLocation, queryText: string, options?: AskOptions): ReasonOptions {
-    const profileCountry = userContext.country;
-    userContext.country = resolveAdvisoryCountry(queryText, options?.country || profileCountry);
-    if (options?.country || userContext.country !== profileCountry) {
-        userContext.location = options?.region;
-        userContext.region = options?.region;
-        userContext.lat = undefined;
-        userContext.lng = undefined;
+type AdvisoryLocation = Pick<UserLocation, 'country' | 'region' | 'location' | 'lat' | 'lng'>;
+type IntakeContext = ReturnType<typeof extractAgronomicIntakeContext>['context'];
+
+function extractIntakeCoordinates(zone?: string): { lat: number; lng: number } | undefined {
+    const coordinates = zone?.match(
+        /lat(?:itude)?\s*[:=]\s*(-?\d+(?:\.\d+)?)\s*,?\s*lng(?:itude)?\s*[:=]\s*(-?\d+(?:\.\d+)?)/i
+    );
+    return coordinates ? { lat: Number(coordinates[1]), lng: Number(coordinates[2]) } : undefined;
+}
+
+function resolveAdvisoryScope(
+    queryText: string,
+    options: AskOptions | undefined,
+    intakeContext: IntakeContext,
+    profile: UserLocation
+): { country?: string; region?: string; replaceProfileLocation: boolean } {
+    const intakeCountry = intakeContext.locationZone
+        ? resolveAdvisoryCountry(intakeContext.locationZone) : undefined;
+    const explicitCountry = resolveAdvisoryCountry(queryText) || intakeCountry;
+    const explicitRegion = resolveAdvisoryRegion(queryText);
+    const hasExplicitGeography = hasExplicitAdvisoryGeography(queryText) || Boolean(intakeContext.locationZone);
+    const country = explicitCountry ||
+        (hasExplicitGeography ? undefined : resolveAdvisoryCountry('', options?.country || profile.country));
+    return {
+        country,
+        region: explicitRegion || options?.region,
+        replaceProfileLocation: Boolean(options?.country || options?.region) ||
+            hasExplicitGeography || country !== profile.country,
+    };
+}
+
+function resolveIntakeLocation(
+    queryText: string,
+    options: AskOptions | undefined,
+    intakeContext: IntakeContext
+): AdvisoryLocation {
+    const zone = intakeContext.locationZone;
+    const coordinates = extractIntakeCoordinates(zone);
+    const intakeCountry = zone ? resolveAdvisoryCountry(zone) : undefined;
+    const isClimateBand = Boolean(zone && /\bzone\s*\d|^tropical\b/i.test(zone));
+    const intakeLocationIsCountry = Boolean(intakeCountry && zone?.trim().toLowerCase() === intakeCountry.toLowerCase());
+    const region = resolveAdvisoryRegion(queryText) || options?.region;
+    const location = region ? undefined : options?.region ||
+        (zone && !isClimateBand && !intakeLocationIsCountry && !coordinates ? zone : undefined);
+    return {
+        region,
+        location,
+        lat: coordinates?.lat,
+        lng: coordinates?.lng,
+    };
+}
+
+function resolveLocationContext(
+    queryText: string,
+    options: AskOptions | undefined,
+    intakeContext: IntakeContext,
+    profile: UserLocation
+): AdvisoryLocation {
+    const scope = resolveAdvisoryScope(queryText, options, intakeContext, profile);
+    const intakeLocation = resolveIntakeLocation(queryText, options, intakeContext);
+    return {
+        country: scope.country,
+        region: scope.region || (scope.replaceProfileLocation ? undefined : profile.region),
+        location: scope.replaceProfileLocation ? intakeLocation.location : profile.location,
+        lat: scope.replaceProfileLocation ? intakeLocation.lat : profile.lat,
+        lng: scope.replaceProfileLocation ? intakeLocation.lng : profile.lng,
+    };
+}
+
+async function resolveUserContextSafely(userId: string, queryText: string): Promise<UserLocation> {
+    try {
+        return await withAdvisoryTimeout(
+            () => resolveUserContext(userId, queryText), 5000, 'Knowledge user context'
+        );
+    } catch (error) {
+        logger.warn('Knowledge user context unavailable; proceeding without profile location:', error);
+        return { crop: undefined };
     }
-    return { ...options, country: userContext.country, region: options?.region || userContext.region };
+}
+
+async function fetchInitialContext(
+    queryText: string,
+    options?: AskOptions
+): Promise<{ queryCategories: string[]; results: SearchResult[] }> {
+    const [queryCategories, results] = await Promise.all([
+        categorizeQuery(queryText, options),
+        withAdvisoryTimeout(
+            () => VectorService.hybridSearch(queryText, 3, {}),
+            8000, 'Knowledge vector retrieval'
+        ).catch(error => {
+            logger.warn('Knowledge vector retrieval unavailable; continuing without local evidence:', error);
+            return [] as SearchResult[];
+        }),
+    ]);
+    return { queryCategories, results };
+}
+
+function buildFallbackResponse(
+    userId: string,
+    queryText: string,
+    queryCategories: string[],
+    fallback: FinalAnswer,
+    reasonOptions: ReasonOptions
+): FinalAnswer {
+    const guarded = agronomicSafetyGuard.guardAndEnrichAdvice(fallback.answer, reasonOptions.language);
+    const validated = validateAdvisoryCitations(
+        guarded.text,
+        buildAdvisoryEvidence(fallback.contextUsed, reasonOptions).citations,
+        reasonOptions.language
+    );
+    const reasoningUnsafe = agronomicSafetyGuard.scanGeneratedAdvice(fallback.reasoning || '').violations.length > 0;
+    const visualsUnsafe = agronomicSafetyGuard.scanGeneratedAdvice(JSON.stringify(fallback.visuals || {})).violations.length > 0;
+    const response: FinalAnswer = {
+        ...fallback,
+        answer: validated.answer,
+        confidence: undefined,
+        reasoning: guarded.boundaryCheck.violations.length > 0 || reasoningUnsafe
+            ? 'Treatment details withheld pending current local label or soil-test verification.'
+            : fallback.reasoning,
+        audio: undefined,
+        toolCalls: undefined,
+        visuals: guarded.boundaryCheck.violations.length > 0 || visualsUnsafe ? undefined : fallback.visuals,
+        advisoryQuality: validated.evidence,
+        safety: guarded.boundaryCheck,
+    };
+    if (response.answerMode !== 'unavailable') {
+        logSearchWithTimeout(userId, queryText, queryCategories[0], undefined, response.answer, response.reasoning, response.visuals);
+    }
+    return response;
 }
 
 export async function runAskQuestion(
@@ -274,23 +399,23 @@ export async function runAskQuestion(
     attachments?: KnowledgeAttachment[],
     options?: AskOptions
 ): Promise<FinalAnswer> {
-    const cleanQueryText = normalizeAgronomicQuery(queryText);
+    const extractedQuery = extractAgronomicIntakeContext(queryText);
+    const cleanQueryText = normalizeAgronomicQuery(extractedQuery.query);
     logger.info(`Getting RAG-based answer for query: "${queryText}" (normalized: "${cleanQueryText}", User: ${userId}, Attachments: ${attachments?.length || 0}, PreferredProvider: ${options?.preferredProvider || 'default'}, BypassCache: ${Boolean(options?.bypassCache)})`);
 
-    const userContext: UserLocation = await withAdvisoryTimeout(
-        () => resolveUserContext(userId, cleanQueryText), 5000, 'Knowledge user context'
-    ).catch(error => {
-        logger.warn('Knowledge user context unavailable; proceeding without profile location:', error);
-        return { crop: undefined };
-    });
-    const reasonOptions = applyAdvisoryLocation(userContext, cleanQueryText, options);
+    const userContext = await resolveUserContextSafely(userId, cleanQueryText);
+    const locationContext = resolveLocationContext(cleanQueryText, options, extractedQuery.context, userContext);
+    Object.assign(userContext, locationContext);
+    const reasonOptions: ReasonOptions = { ...options, ...extractedQuery.context, ...locationContext };
     const scope = createHash('sha256').update(JSON.stringify({
         userId, query: cleanQueryText, country: userContext.country,
         region: reasonOptions.region, language: options?.language,
         provider: options?.preferredProvider, day: new Date().toISOString().slice(0, 10),
         allowTools: options?.allowTools,
+        locationZone: reasonOptions.locationZone, soil: reasonOptions.soil,
+        water: reasonOptions.water, goal: reasonOptions.goal,
     })).digest('hex');
-    const baseRedisKey = `rag:advisory-v5:${scope}`;
+    const baseRedisKey = `rag:advisory-v6:${scope}`;
 
     // Only reuse this user's context-scoped, policy-versioned answer cache.
     const exactHit = await lookupScopedAnswer(cleanQueryText, baseRedisKey, attachments, options);
@@ -301,16 +426,8 @@ export async function runAskQuestion(
     }
 
     // Parallelize categorization and retrieval after resolving location scope.
-    const [queryCategories, initialContextResults] = await Promise.all([
-        categorizeQuery(cleanQueryText, options),
-        withAdvisoryTimeout(
-            () => VectorService.hybridSearch(normalizeAgronomicQuery(cleanQueryText), 3, {}),
-            8000, 'Knowledge vector retrieval'
-        ).catch(error => {
-            logger.warn('Knowledge vector retrieval unavailable; continuing without local evidence:', error);
-            return [] as SearchResult[];
-        }),
-    ]);
+    const { queryCategories, results: initialContextResults } =
+        await fetchInitialContext(cleanQueryText, options);
 
     const redisKey = baseRedisKey;
 
@@ -326,23 +443,6 @@ export async function runAskQuestion(
         return await finalizeAnswer(userId, cleanQueryText, redisKey, queryCategories, contextResults, reasoningResult, attachments, reasonOptions);
     } catch (error) {
         const fallback = handleAskQuestionFallback(cleanQueryText, contextResults, error);
-        const guarded = agronomicSafetyGuard.guardAndEnrichAdvice(fallback.answer, options?.language);
-        const validated = validateAdvisoryCitations(guarded.text, buildAdvisoryEvidence(fallback.contextUsed, reasonOptions).citations, options?.language);
-        const reasoningUnsafe = agronomicSafetyGuard.scanGeneratedAdvice(fallback.reasoning || '').violations.length > 0;
-        const visualsUnsafe = agronomicSafetyGuard.scanGeneratedAdvice(JSON.stringify(fallback.visuals || {})).violations.length > 0;
-        const response: FinalAnswer = {
-            ...fallback, answer: validated.answer, confidence: undefined,
-            reasoning: guarded.boundaryCheck.violations.length > 0 || reasoningUnsafe
-                ? 'Treatment details withheld pending current local label or soil-test verification.'
-                : fallback.reasoning,
-            audio: undefined,
-            toolCalls: undefined,
-            visuals: guarded.boundaryCheck.violations.length > 0 || visualsUnsafe ? undefined : fallback.visuals,
-            advisoryQuality: validated.evidence, safety: guarded.boundaryCheck,
-        };
-        if (response.answerMode !== 'unavailable') {
-            logSearchWithTimeout(userId, cleanQueryText, queryCategories[0], undefined, response.answer, response.reasoning, response.visuals);
-        }
-        return response;
+        return buildFallbackResponse(userId, cleanQueryText, queryCategories, fallback, reasonOptions);
     }
 }

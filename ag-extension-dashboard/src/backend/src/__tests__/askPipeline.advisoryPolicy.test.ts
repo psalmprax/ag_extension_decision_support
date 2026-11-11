@@ -1,6 +1,7 @@
 import { runAskQuestion } from '@/services/knowledge/askPipeline';
 import { checkExactCachesOnly } from '@/services/knowledge/cacheLookup';
 import { resolveUserContext } from '@/services/knowledge/userContext';
+import { fetchLiveAgriContext } from '@/services/knowledge/liveAgriContext';
 import { callReasoningAgentic } from '@/services/knowledge/reasoning';
 import { logSearch } from '@/services/knowledge/searchLog';
 import { VectorService } from '@/services/vectorService';
@@ -97,7 +98,7 @@ describe('Knowledge advisory policy integration', () => {
         await runAskQuestion('user-1', 'How do I treat maize damage?', undefined, { country: 'India' });
         const keys = jest.mocked(checkExactCachesOnly).mock.calls.map(call => call[1]);
         expect(new Set(keys).size).toBe(3);
-        expect(keys.every(key => key.startsWith('rag:advisory-v5:'))).toBe(true);
+        expect(keys.every(key => key.startsWith('rag:advisory-v6:'))).toBe(true);
         expect(jest.mocked(checkExactCachesOnly).mock.calls.every(call => call[2] === true)).toBe(true);
     });
 
@@ -110,6 +111,42 @@ describe('Knowledge advisory policy integration', () => {
             expect.any(String), expect.any(String), undefined,
             expect.objectContaining({ country: 'India', language: 'hi', allowTools: false }),
             expect.any(Array)
+        );
+    });
+
+    it('uses explicit broad-region questions instead of the saved country or injected climate zone', async () => {
+        const query = 'What season is West Africa going through now for crops to be planted? [Agronomic Context: Location/Zone=Zone 5–6 (Temperate / Midwest), Soil=Well-Drained Loam / Silt, Water=Rainfed / Dryland, Goal=Commercial Yield]';
+        jest.mocked(resolveUserContext).mockResolvedValueOnce({
+            crop: 'maize', country: 'Canada', location: 'Ontario', region: 'Ontario', lat: 43.65, lng: -79.38,
+        });
+        jest.mocked(callReasoningAgentic).mockResolvedValueOnce({
+            answer: 'West Africa spans different rainfall zones; planting is timed to local rainy-season onset. Confirm the country and current rainfall outlook before sowing.',
+            reasoning: 'Answer at the region scale without treating the Midwest profile as the location.',
+        });
+
+        const result = await runAskQuestion('user-1', query);
+
+        expect(result.answer).toContain('West Africa spans different rainfall zones');
+        expect(VectorService.hybridSearch).toHaveBeenLastCalledWith(
+            'What season is West Africa going through now for crops to be planted?', 3, {}
+        );
+        expect(callReasoningAgentic).toHaveBeenLastCalledWith(
+            expect.any(String),
+            'What season is West Africa going through now for crops to be planted?',
+            undefined,
+            expect.objectContaining({
+                country: undefined,
+                region: 'West Africa',
+                locationZone: 'Zone 5–6 (Temperate / Midwest)',
+                soil: 'Well-Drained Loam / Silt',
+            }),
+            expect.any(Array)
+        );
+        expect(fetchLiveAgriContext).toHaveBeenLastCalledWith(
+            expect.any(Array),
+            expect.objectContaining({
+                country: undefined, location: undefined, region: 'West Africa', lat: undefined, lng: undefined,
+            })
         );
     });
 

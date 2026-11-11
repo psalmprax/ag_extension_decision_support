@@ -101,7 +101,7 @@ treating any example percentage as a universal treatment trigger: thresholds
 still need source evidence, crop stage, and local applicability. Mixed answers
 that also contain an unverified dose must still be withheld.
 
-The RAG answer cache uses policy namespace `rag:advisory-v5` so older answers
+The RAG answer cache uses policy namespace `rag:advisory-v6` so older answers
 incorrectly replaced by the warning are not reused. Regression coverage is in
 `advisoryPolicy.test.ts` and `askPipeline.advisoryPolicy.test.ts`.
 
@@ -118,6 +118,17 @@ steps do not require product authorization. Disease-specific prescriptions remai
 withheld pending confirmation and applicable local authorization; raw model
 treatment/prevention instructions and fertilizer rates are not passed through.
 Unknown provider model names remain unset rather than using a guessed model.
+
+### Q2e. How are broad-region questions and the optional farm profile reconciled?
+
+An explicit country or broad region in the current question (for example,
+West Africa) takes precedence over the saved country/coordinates and any
+auto-appended precision-intake profile. The intake metadata is removed from the
+retrieval query and passed separately as optional context. Intake fields are
+blank by default so an unselected Midwest climate zone is never attached to a
+question. Seasonal answers should stay at the requested geographic scale and
+must not invent one planting calendar for a diverse region. Regression coverage
+is in `askPipeline.advisoryPolicy.test.ts` and `AgronomicIntakeCard.test.tsx`.
 
 ### Q3. What is the normal lifecycle for a code change?
 

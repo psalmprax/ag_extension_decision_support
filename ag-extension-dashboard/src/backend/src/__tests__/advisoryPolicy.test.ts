@@ -1,7 +1,9 @@
 import {
     buildAdvisoryDirective,
     buildAdvisoryEvidence,
+    hasExplicitAdvisoryGeography,
     resolveAdvisoryCountry,
+    resolveAdvisoryRegion,
     validateAdvisoryCitations,
 } from '@/services/knowledge/advisoryPolicy';
 import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
@@ -31,6 +33,17 @@ describe('Agricultural advisory quality policy', () => {
         expect(resolveAdvisoryCountry('Help me identify leaf damage', 'KE')).toBe('Kenya');
         expect(resolveAdvisoryCountry('Compare Kenya and India')).toBeUndefined();
         expect(resolveAdvisoryCountry('Help me identify leaf damage')).toBeUndefined();
+    });
+
+    it.each([
+        ['West Africa', 'West Africa'],
+        ['western African maize belt', 'West Africa'],
+        ['Sahel region', 'Sahel'],
+        ['Gulf of Guinea coast', 'Gulf of Guinea'],
+        ['East Africa', 'East Africa'],
+    ])('resolves explicit regional scope: %s', (question, region) => {
+        expect(resolveAdvisoryRegion(question)).toBe(region);
+        expect(hasExplicitAdvisoryGeography(question)).toBe(true);
     });
 
     it.each([
