@@ -108,13 +108,18 @@ changed blindly. Each entry lists the risk and the concrete remediation.
   vendor the tarball (`vendor/xlsx-0.20.2.tgz`, committed, referenced as a
   `file:` dependency) or mirror it in a registry you control, then record its
   SHA-512 beside it.
-- [ ] **`@anthropic-ai/sdk` ^0.6.2** — pre-Messages-API SDK. Upgrade to the
-  current SDK and migrate call sites in `services/providers/` (completions →
-  messages); needs a live-key smoke test per provider route.
-- [ ] **`@google/generative-ai` ^0.1.3** — deprecated in favour of
-  `@google/genai`. Same migration/smoke-test procedure.
-- [ ] **`@azure/openai` 1.0.0-beta.x** — retired; Azure now routes through the
-  official `openai` SDK with Azure options. Migrate and smoke-test.
+- [x] **`@anthropic-ai/sdk`** — upgraded ^0.6.2 → ^1.8.0 (2026-11-15). The provider already
+  targeted the Messages API, which 0.6.x never shipped, so the pinned SDK could
+  never have worked at runtime. Default model is now config-driven
+  (`ANTHROPIC_MODEL`, default `claude-sonnet-5-5`; the old hardcoded
+  `claude-3-5-sonnet-20241022` was retired Oct 2025). Still needs a live-key smoke test.
+- [x] **`@google/generative-ai`** — migrated to `@google/genai` ^3.3.0 (2026-11-15). Embedding
+  model moved from retired `embedding-001` to `gemini-embedding-001` (NOTE:
+  3072-dim vs 768-dim — re-embed any vectors stored from this provider).
+  Still needs a live-key smoke test.
+- [x] **`@azure/openai`** — removed (2026-11-15); the provider now uses the official `openai`
+  SDK's `AzureOpenAI` client (`AZURE_OPENAI_API_VERSION`, default 2024-10-21).
+  Still needs a live-key smoke test.
 - [ ] **`paypal-rest-sdk`** — abandoned upstream since 2019. Migrate billing to
   `@paypal/paypal-server-sdk` (or PSP of choice); touch
   `services/paypalService.ts` + `pending_paypal_payments` flow together.

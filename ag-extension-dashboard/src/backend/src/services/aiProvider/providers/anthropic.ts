@@ -51,7 +51,7 @@ export class AnthropicProvider extends BaseAIProvider {
 
     async generateText(prompt: string | any[], options?: TextGenerationOptions): Promise<TextGenerationResult> {
         const client = await this.getClient();
-        const model = options?.model || 'claude-3-5-sonnet-20241022';
+        const model = options?.model || config.anthropic.model;
 
         try {
             const response = await client.messages.create({
@@ -80,7 +80,7 @@ export class AnthropicProvider extends BaseAIProvider {
 
     async *streamText(prompt: string, options?: TextGenerationOptions): AsyncGenerator<string> {
         const client = await this.getClient();
-        const model = options?.model || 'claude-3-5-sonnet-20241022';
+        const model = options?.model || config.anthropic.model;
 
         try {
             const stream = await client.messages.create({
@@ -152,7 +152,7 @@ export class AnthropicProvider extends BaseAIProvider {
 
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
         const client = await this.getClient();
-        const model = options?.model || 'claude-3-5-sonnet-20241022';
+        const model = options?.model || config.anthropic.model;
 
         const userContent = this.buildUserContent(context, query, options?.attachments);
 
@@ -180,7 +180,7 @@ export class AnthropicProvider extends BaseAIProvider {
 
     async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
         const client = await this.getClient();
-        const model = options?.model || 'claude-3-5-sonnet-20241022';
+        const model = options?.model || config.anthropic.model;
 
         try {
             let base64Image: string;
@@ -240,7 +240,7 @@ export class AnthropicProvider extends BaseAIProvider {
         try {
             const client = await this.getClient();
             await client.messages.create({
-                model: 'claude-3-5-sonnet-20241022',
+                model: config.anthropic.model,
                 max_tokens: 1,
                 messages: [{ role: 'user', content: 'test' }],
             });

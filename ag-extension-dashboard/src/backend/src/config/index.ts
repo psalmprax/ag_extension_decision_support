@@ -18,10 +18,10 @@ export interface AppConfig {
         embeddings: { provider: string; model: string };
         speech: { provider: string; voice: string };
     };
-    azureOpenAI: { apiKey: string; endpoint: string; deploymentName: string };
+    azureOpenAI: { apiKey: string; endpoint: string; deploymentName: string; apiVersion: string };
     googleVertex: { projectId: string; location: string };
     openAI: { apiKey: string };
-    anthropic: { apiKey: string };
+    anthropic: { apiKey: string; model: string };
     groq: { apiKey: string };
     aihubmix?: { apiKey: string; accessKey: string };
     freebuff: { authToken: string; apiBaseUrl: string; defaultModel: string };
@@ -168,6 +168,7 @@ export const config: AppConfig = {
         apiKey: getEnv('AZURE_OPENAI_API_KEY'),
         endpoint: getEnv('AZURE_OPENAI_ENDPOINT'),
         deploymentName: getEnv('AZURE_OPENAI_DEPLOYMENT_NAME', 'gpt-4'),
+        apiVersion: getEnv('AZURE_OPENAI_API_VERSION', '2024-10-21'),
     },
 
     googleVertex: {
@@ -181,6 +182,9 @@ export const config: AppConfig = {
 
     anthropic: {
         apiKey: getEnv('ANTHROPIC_API_KEY'),
+        // claude-3-5-sonnet-20241022 (the old hardcoded default) was retired on
+        // the Claude API in Oct 2025; claude-sonnet-5-5 is the documented replacement.
+        model: getEnv('ANTHROPIC_MODEL', 'claude-sonnet-5-5'),
     },
 
     groq: {

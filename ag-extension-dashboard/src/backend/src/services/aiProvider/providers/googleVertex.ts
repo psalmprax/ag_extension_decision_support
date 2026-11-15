@@ -44,8 +44,11 @@ export class GoogleVertexProvider extends BaseAIProvider {
         }
 
         try {
-            const { GoogleGenerativeAI } = await import('@google/generative-ai');
-            this.client = new GoogleGenerativeAI(config.googleVertex.projectId);
+            // @google/generative-ai was deprecated in favour of @google/genai.
+            // The same credential is kept: GOOGLE_VERTEX_PROJECT_ID has always
+            // carried the API key for this provider (see config.googleVertex).
+            const { GoogleGenAI } = await import('@google/genai');
+            this.client = new GoogleGenAI({ apiKey: config.googleVertex.projectId });
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize Google Vertex client:', error);
@@ -58,17 +61,16 @@ export class GoogleVertexProvider extends BaseAIProvider {
         const modelName = options?.model || config.ai.fallback.model;
 
         try {
-            const model = client.getGenerativeModel({ model: modelName });
-            const result = await model.generateContent(prompt);
-            const text = result.response.text();
+            const result = await client.models.generateContent({ model: modelName, contents: prompt });
+            const text = result.text ?? '';
 
             return {
                 text,
                 model: modelName,
                 usage: {
-                    promptTokens: result.response.usageMetadata?.promptTokenCount ?? 0,
-                    completionTokens: result.response.usageMetadata?.candidatesTokenCount ?? 0,
-                    totalTokens: result.response.usageMetadata?.totalTokenCount ?? 0,
+                    promptTokens: result.usageMetadata?.promptTokenCount ?? 0,
+                    completionTokens: result.usageMetadata?.candidatesTokenCount ?? 0,
+                    totalTokens: result.usageMetadata?.totalTokenCount ?? 0,
                 },
                 finishReason: 'stop',
             };
@@ -81,12 +83,11 @@ export class GoogleVertexProvider extends BaseAIProvider {
     async *streamText(prompt: string, options?: TextGenerationOptions): AsyncGenerator<string> {
         const client = await this.getClient();
         const modelName = options?.model || config.ai.fallback.model;
-        const model = client.getGenerativeModel({ model: modelName });
 
         try {
-            const result = await model.generateContentStream(prompt);
-            for (const chunk of result) {
-                const text = chunk.response.text();
+            const stream = await client.models.generateContentStream({ model: modelName, contents: prompt });
+            for await (const chunk of stream) {
+                const text = chunk.text;
                 if (text) yield text;
             }
         } catch (error) {
@@ -100,12 +101,12 @@ export class GoogleVertexProvider extends BaseAIProvider {
         // Model selection not needed - using embedded model directly below
 
         try {
-            // Use the correct Google Generative AI SDK embedding method
-            const embedModel = client.getGenerativeModel({ model: 'embedding-001' });
-            const result = await embedModel.embedContent(text);
+            // embedding-001 was retired with the old SDK; gemini-embedding-001 is
+            // the current Gemini API embedding model.
+            const result = await client.models.embedContent({ model: 'gemini-embedding-001', contents: text });
             return {
-                embedding: result.embedding.values,
-                model: 'embedding-001',
+                embedding: result.embeddings?.[0]?.values ?? [],
+                model: 'gemini-embedding-001',
                 usage: { tokens: 100 },
             };
         } catch (error) {
@@ -116,21 +117,15 @@ export class GoogleVertexProvider extends BaseAIProvider {
 
     async createBatchEmbeddings(texts: string[], options?: EmbeddingOptions): Promise<EmbeddingResult[]> {
         const client = await this.getClient();
-        const model = options?.model || 'embedding-001';
-        const embedModel = client.getGenerativeModel({ model });
+        const model = options?.model || 'gemini-embedding-001';
 
         try {
-            const results = await Promise.all(
-                texts.map(async (text) => {
-                    const result = await embedModel.embedContent(text);
-                    return {
-                        embedding: result.embedding.values,
-                        model,
-                        usage: { tokens: 0 },
-                    };
-                })
-            );
-            return results;
+            const result = await client.models.embedContent({ model, contents: texts });
+            return (result.embeddings ?? []).map((item: any) => ({
+                embedding: item.values ?? [],
+                model,
+                usage: { tokens: 0 },
+            }));
         } catch (error) {
             logger.error('Google Vertex createBatchEmbeddings error:', error);
             throw new Error(`Google Vertex batch embedding creation failed: ${(error as Error).message}`);
@@ -147,8 +142,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
 
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
         const client = await this.getClient();
-        const modelName = options?.model || config.ai.fallback.model || 'gemini-1.5-flash';
-        const model = client.getGenerativeModel({ model: modelName });
+        const modelName = options?.model || config.ai.fallback.model || 'gemini-flash-latest';
 
         const systemPrompt = REASONING_SYSTEM_PROMPT;
         
@@ -173,8 +167,8 @@ export class GoogleVertexProvider extends BaseAIProvider {
         }
 
         try {
-            const result = await model.generateContent({ contents });
-            const text = result.response.text();
+            const result = await client.models.generateContent({ model: modelName, contents });
+            const text = result.text ?? '';
             const visuals = extractVisuals(text);
 
             let cleanAnswer = text
@@ -210,8 +204,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
 
     async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
         const client = await this.getClient();
-        const modelName = options?.model || config.ai.fallback.model || 'gemini-1.5-flash';
-        const model = client.getGenerativeModel({ model: modelName });
+        const modelName = options?.model || config.ai.fallback.model || 'gemini-flash-latest';
 
         try {
             let base64Image: string;
@@ -238,15 +231,15 @@ export class GoogleVertexProvider extends BaseAIProvider {
                 }
             ];
 
-            const result = await model.generateContent({ contents });
-            
+            const result = await client.models.generateContent({ model: modelName, contents });
+
             return {
-                analysis: result.response.text() || 'Unable to analyze image',
+                analysis: result.text || 'Unable to analyze image',
                 model: modelName,
                 usage: {
-                    promptTokens: result.response.usageMetadata?.promptTokenCount ?? 0,
-                    completionTokens: result.response.usageMetadata?.candidatesTokenCount ?? 0,
-                    totalTokens: result.response.usageMetadata?.totalTokenCount ?? 0,
+                    promptTokens: result.usageMetadata?.promptTokenCount ?? 0,
+                    completionTokens: result.usageMetadata?.candidatesTokenCount ?? 0,
+                    totalTokens: result.usageMetadata?.totalTokenCount ?? 0,
                 },
             };
         } catch (error) {
@@ -263,8 +256,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
         if (!this.isConfigured()) return false;
         try {
             const client = await this.getClient();
-            const model = client.getGenerativeModel({ model: config.ai.fallback.model });
-            await model.generateContent('test');
+            await client.models.generateContent({ model: config.ai.fallback.model, contents: 'test' });
             this.recordHealthError();
             return true;
         } catch (error) {
