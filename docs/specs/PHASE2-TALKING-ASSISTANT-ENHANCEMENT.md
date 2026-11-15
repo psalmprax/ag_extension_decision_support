@@ -4,15 +4,15 @@
 **Classification:** Public Landing Page & Client Experience / Core Agronomic AI  
 **Target Audience:** Prospective Clients, Smallholder Farmers, Extension Officers, Platform Agronomists  
 **Related Documents:**
-- [`docs/specs/PHASE2-VOICE-ADVISING-STT.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/docs/specs/PHASE2-VOICE-ADVISING-STT.md)
-- [`docs/ag-extension-dashboard-architecture.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/docs/ag-extension-dashboard-architecture.md)
-- [`docs/CYBERSECURITY_PLAYBOOK.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/docs/CYBERSECURITY_PLAYBOOK.md)
+- [`docs/specs/PHASE2-VOICE-ADVISING-STT.md`](../../docs/specs/PHASE2-VOICE-ADVISING-STT.md)
+- [`docs/ag-extension-dashboard-architecture.md`](../../docs/ag-extension-dashboard-architecture.md)
+- [`docs/CYBERSECURITY_PLAYBOOK.md`](../../docs/CYBERSECURITY_PLAYBOOK.md)
 
 ---
 
 ## 1. Executive Summary & Vision
 
-The **Talking Assistant** deployed on the platform landing page ([`TalkingAssistant.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx)) demonstrates the platform's voice intelligence and agronomic decision engine. 
+The **Talking Assistant** deployed on the platform landing page ([`TalkingAssistant.tsx`](../../ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx)) demonstrates the platform's voice intelligence and agronomic decision engine. 
 
 To maximize client engagement, conversion, and advisory value, this enhancement upgrades the assistant from a single-turn demonstration into a **fully interactive, multi-turn conversational AI companion**. Prospective clients and smallholder farmers can conduct a natural spoken or typed dialogue with context continuity, receive grounded agronomic diagnoses, explore agricultural market data, and seamlessly transition their conversation directly into the authenticated platform upon registration.
 
@@ -121,7 +121,7 @@ A critical goal of the landing page assistant is converting curious farmers and 
 2. **Cryptographic Conversation State Preservation**:
    - The active message thread and identified farm entities are serialized and preserved in client-side encrypted storage (`sessionStorage` / AES-256).
 3. **Post-Registration Ingestion**:
-   - Upon registration or login, the dashboard automatically imports the landing page session into the user's permanent [`FarmerChatPage`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/FarmerChatPage.tsx) history, assigning a unique `conversation_id`.
+   - Upon registration or login, the dashboard automatically imports the landing page session into the user's permanent [`FarmerChatPage`](../../ag-extension-dashboard/src/frontend/src/pages/FarmerChatPage.tsx) history, assigning a unique `conversation_id`.
 
 ---
 
@@ -175,7 +175,7 @@ sequenceDiagram
 
 | Milestone | Deliverables | Target Gate |
 | :--- | :--- | :--- |
-| **Phase 2.3.1** | Slot extraction & client-side multi-turn context tracking in [`TalkingAssistant.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx) | Vitest component unit tests |
+| **Phase 2.3.1** | Slot extraction & client-side multi-turn context tracking in [`TalkingAssistant.tsx`](../../ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx) | Vitest component unit tests |
 | **Phase 2.3.2** | Public demo endpoint `POST /api/v1/chatbot/public-demo` with Redis sliding-window rate limiting | Jest backend tests & security test |
 | **Phase 2.3.3** | Fallback server-side Whisper transcription for browsers lacking Web Speech API | Cross-browser compatibility tests |
 | **Phase 2.3.4** | "Save to Dashboard" session handoff integrating with registration workflow | Playwright E2E signup-to-chat flow |

@@ -9,14 +9,20 @@ Welcome. This document defines the engineering guidelines, command reference, an
 Use these exact commands for common development operations. Do not hallucinate or guess.
 
 ### 🧪 Running Tests
-- **All Tests**: `npm run test|vitest|jest|pytest|cargo test|sbt test|mvn test|gradle test`
+- **Backend**: `npm run test:backend` (Jest; from the repo root)
+- **Frontend**: `npm run test:frontend` (Vitest; from the repo root)
+- **Both**: `npm test`
+- **E2E**: `npm run test:e2e` (Playwright)
 
 ### 🧹 Linting & Formatting
-- **Run Lint**: `npm run lint|eslint|flake8|clippy|chktex`
-- **Format Code**: `npm run format`
+- **Frontend lint**: `npm run lint:frontend` (max 20 warnings)
+- **Backend lint**: `cd ag-extension-dashboard/src/backend && npm run lint`
+- **Component-size ratchet**: `npm run check:component-size`
 
 ### ⚙️ Running Locally (Development)
-- **Dev Server**: `npm run dev`
+- **Full stack**: `docker compose up -d` (from `ag-extension-dashboard/`)
+- **Backend dev server**: `cd ag-extension-dashboard/src/backend && npm run dev`
+- **Frontend dev server**: `cd ag-extension-dashboard/src/frontend && npm run dev`
 
 ---
 
@@ -78,4 +84,4 @@ To maintain Git hygiene and repository integrity, you MUST follow this branching
 - **Local Caching (Bake)**: To bypass GHCR registry authorization rate limits and permission issues during workflow builds, direct cache exports (`cache-to`) to a local host directory (e.g., `type=local,dest=/root/docker-cache/<target>`) instead of remote registry endpoints. Ensure `--allow=fs=/root` is passed to the bake execution.
 - **External Shared Networks**: Any shared compose networks (e.g. `ag-network`) should be configured as `external: true` in `docker-compose.yml` to prevent compose label mismatch errors (`com.docker.compose.network`). The deployment pipelines must check/pre-create these networks (`docker network create --driver bridge ag-network || true`) before compose commands are run.
 - **Container-Independent Probes (Smoke Gates)**: When probing running container status during pre-build smoke testing, use Node's native `fetch` API (e.g., `node -e "fetch(...)"`) instead of relying on external utilities like `curl` which may be absent in minimal production/slim container base images.
-- **Dynamic Migration Resolving**: If database migrations fail during pipeline runs due to schema/table structural collisions (e.g. `relation already exists` or `column already exists` errors), parse the conflicting migration name from the error stream and run `npx prisma migrate resolve --applied <migration-name>` to dynamically unblock the migration queue.
+- **Failed Migrations Are Never Auto-Resolved**: Do NOT run `npx prisma migrate resolve --applied` to unblock a failed migration — it records SQL as applied that never ran, leaving the database silently behind the schema (the docker entrypoint and deploy workflows fail fast for the same reason). A `relation already exists` collision means the migration chain and the database disagree; stop and repair the migration (or the database) manually, then re-run `prisma migrate deploy`.

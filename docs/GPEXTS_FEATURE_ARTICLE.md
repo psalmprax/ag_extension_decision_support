@@ -2,7 +2,7 @@
 
 #### By Nicholas C. Sterling | Deep Tech & Global Infrastructure Feature  
 *Published in AgTech Horizon & Global Frontier Economics*  
-*Field Access: [gpexts.com](https://gpexts.com) | Core Repository: [`ag-extension-decision-support`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support)*
+*Field Access: [gpexts.com](https://gpexts.com) | Core Repository: [`ag-extension-decision-support`](./)*
 
 ---
 
@@ -76,7 +76,7 @@ In enterprise AI deployments, upstream API rate limits, model degradations, and 
 To guarantee continuous availability, GPFED Inc. developed **OmniRoute™**, a proprietary, quota-aware dynamic model router integrating tier-one model endpoints through **AIHubMix** and direct provider channels:
 1. **Dynamic Candidate Scoring:** OmniRoute™ continuously benchmarks live latency, throughput, and error-rate heuristics across a fleet of top-tier models (including Google Gemini 2.0 Flash, Anthropic Claude 3.5 Sonnet, Llama 3.3 70B, Groq-accelerated inferences, Azure OpenAI, and local Ollama runtimes).
 2. **Autonomous Circuit Breakers & Cooldown Queues:** When an upstream provider registers an anomalous latency spike, HTTP quota cap, or network error, OmniRoute™ instantly isolates that provider into a temporary cooldown quarantine and transparently reroutes active agronomic reasoning tasks to the next optimal candidate in under 120 milliseconds.
-3. **Fail-Closed Honesty Protocols:** As codified in the platform's architectural pillars ([`Anti-Flaws.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/Anti-Flaws.md)), GPEXTS™ explicitly prohibits synthetic hallucinations. If upstream feeds or specialized diagnostic models are unconfigured or unavailable, the system fails loud with cryptographically structured provenance errors rather than fabricating speculative advice.
+3. **Fail-Closed Honesty Protocols:** As codified in the platform's architectural pillars ([`Anti-Flaws.md`](../Anti-Flaws.md)), GPEXTS™ explicitly prohibits synthetic hallucinations. If upstream feeds or specialized diagnostic models are unconfigured or unavailable, the system fails loud with cryptographically structured provenance errors rather than fabricating speculative advice.
 
 ### The Zero-Connectivity Field Edge
 Deep in rural hinterlands where cell service drops to zero, GPEXTS™ transitions seamlessly into a standalone edge computer:

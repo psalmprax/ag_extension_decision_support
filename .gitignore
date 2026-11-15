@@ -81,3 +81,15 @@ ag-extension-dashboard/src/backend/models/*.onnx
 # Uploaded local media and report files
 uploads/
 **/uploads/
+
+# ── AI/assistant tool state (machine-local; never commit) ───────────────
+.refact/
+.kilocode/
+.kilocodemodes
+.gsd/
+.planning/
+.bg-shell/
+.openclaude/
+.clinerules/
+.claude/settings.local.json
+.mcp.json
