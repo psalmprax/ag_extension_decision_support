@@ -46,7 +46,7 @@ export interface ActivityItem {
 interface LiveActivityStreamProps {
   cardClass?: string;
   onOpenUSSDSimulator?: () => void;
-  onStartChat?: (farmerPhone: string, farmerName: string) => void;
+  onStartChat?: (ref: { farmerId?: string; phone: string; farmerName: string }) => void;
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────
@@ -141,7 +141,7 @@ interface ActivityCardProps {
   onClaim: (id: string) => void;
   onRelease: (id: string) => void;
   startCall: (a: { farmerName: string; phone: string; issue: string }) => void;
-  startChat?: (phone: string, name: string) => void;
+  startChat?: (ref: { farmerId?: string; phone: string; farmerName: string }) => void;
   replyId: string | null;
   replyText: string;
   setReplyText: (t: string) => void;
@@ -265,7 +265,7 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
 
           {startChat && (
             <button
-              onClick={() => startChat(activity.phone, activity.farmerName)}
+              onClick={() => startChat({ farmerId: activity.farmerId, phone: activity.phone, farmerName: activity.farmerName })}
               className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-slate-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0"
             >
               <ExternalLink className="w-3 h-3" />
