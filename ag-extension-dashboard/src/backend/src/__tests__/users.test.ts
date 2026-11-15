@@ -36,13 +36,19 @@ jest.mock('../middleware/authorize', () => ({
     UserRole: ['admin', 'regional_manager', 'extension_officer', 'farmer'],
 }));
 
+jest.mock('../services/sessionService', () => ({
+    revokeAllUserSessions: jest.fn().mockResolvedValue(0),
+}));
+
 jest.mock('bcryptjs', () => ({
     hash: jest.fn().mockResolvedValue('$2a$10$hashedpassword'),
 }));
 
 import { query, getPool } from '../services/databaseService';
+import { revokeAllUserSessions } from '../services/sessionService';
 const mockQuery = query as jest.Mock;
 const mockGetPool = getPool as jest.Mock;
+const mockRevokeAllUserSessions = revokeAllUserSessions as jest.Mock;
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
@@ -331,5 +337,66 @@ describe('Users Route — Mapper-before-response: mapUserPublicRows + mapUserPub
 
         expect(response.status).toBe(409);
         expect(response.body.error).toBe('Email already registered');
+    });
+});
+
+describe('Users Route — role changes are validated and revoke sessions', () => {
+    const adminToken = makeOfficerToken({ userId: 'admin-1', role: 'admin', email: 'admin@example.com' });
+    const updatedRow = {
+        id: 'user-2', email: 'u2@example.com', first_name: 'U', last_name: 'Two',
+        role: 'farmer', region: null, country: 'Kenya', phone: null, is_active: true,
+        created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    };
+
+    beforeEach(() => {
+        mockQuery.mockReset();
+        mockRevokeAllUserSessions.mockClear();
+        mockGetPool.mockImplementation(() => ({ query: jest.fn() }));
+        mockQuery.mockResolvedValue({ rows: [updatedRow] });
+    });
+
+    it('PUT /:id with a role change revokes every session (JWTs embed the role)', async () => {
+        const res = await request(app)
+            .put('/api/users/user-2')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ role: 'farmer' });
+        expect(res.status).toBe(200);
+        expect(mockRevokeAllUserSessions).toHaveBeenCalledWith('user-2');
+    });
+
+    it('PUT /:id without role/is_active changes does not revoke sessions', async () => {
+        const res = await request(app)
+            .put('/api/users/user-2')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ firstName: 'New' });
+        expect(res.status).toBe(200);
+        expect(mockRevokeAllUserSessions).not.toHaveBeenCalled();
+    });
+
+    it('PUT /:id rejects an unknown role (400, nothing revoked)', async () => {
+        const res = await request(app)
+            .put('/api/users/user-2')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ role: 'superuser' });
+        expect(res.status).toBe(400);
+        expect(mockRevokeAllUserSessions).not.toHaveBeenCalled();
+    });
+
+    it('PUT /:id blocks admin self-demotion (400)', async () => {
+        const res = await request(app)
+            .put('/api/users/admin-1')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ role: 'farmer' });
+        expect(res.status).toBe(400);
+        expect(mockRevokeAllUserSessions).not.toHaveBeenCalled();
+    });
+
+    it('DELETE /:id (deactivation) still revokes sessions', async () => {
+        mockQuery.mockResolvedValue({ rows: [{ id: 'user-2' }] });
+        const res = await request(app)
+            .delete('/api/users/user-2')
+            .set('Authorization', `Bearer ${adminToken}`);
+        expect(res.status).toBe(200);
+        expect(mockRevokeAllUserSessions).toHaveBeenCalledWith('user-2');
     });
 });

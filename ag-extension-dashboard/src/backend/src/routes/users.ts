@@ -24,9 +24,8 @@ function extractCreateUserData(body: Record<string, unknown>) {
     const country = typeof body.country === 'string' && body.country.trim() ? body.country.trim() : 'Kenya';
     const phone = typeof body.phone === 'string' && body.phone.trim() ? body.phone.trim() : null;
 
-    const allowedRoles = ['farmer', 'extension_officer', 'regional_manager', 'admin'];
     const safeRole = role.toLowerCase();
-    const normalizedRole = allowedRoles.includes(safeRole) ? safeRole : 'extension_officer';
+    const normalizedRole = ALLOWED_ROLES.includes(safeRole) ? safeRole : 'extension_officer';
 
     return { email, password, firstName, lastName, normalizedRole, region, country, phone };
 }
@@ -47,7 +46,10 @@ const USER_UPDATE_FIELD_MAP: Record<string, string> = {
     phone: 'phone',
     is_active: 'is_active',
     isActive: 'is_active',
+    role: 'role',
 };
+
+const ALLOWED_ROLES = ['farmer', 'extension_officer', 'regional_manager', 'admin'];
 
 function extractSafeUserUpdates(body: Record<string, unknown>): Record<string, unknown> {
     const safeUpdates: Record<string, unknown> = {};
@@ -277,9 +279,24 @@ router.put('/:id', authorize(['admin']), async (req: Request, res: Response) => 
         if (safeUpdates.is_active !== undefined && typeof safeUpdates.is_active !== 'boolean') {
             return res.status(400).json({ success: false, error: 'isActive must be a boolean' });
         }
+        if (safeUpdates.role !== undefined) {
+            const role = typeof safeUpdates.role === 'string' ? safeUpdates.role.trim().toLowerCase() : '';
+            if (!ALLOWED_ROLES.includes(role)) {
+                return res.status(400).json({ success: false, error: 'Invalid role' });
+            }
+            safeUpdates.role = role;
+            // An admin must not be able to demote themselves out of the last admin
+            // seat mid-session; more importantly, self-demotion while holding a
+            // still-valid admin JWT is confusing — require a second admin.
+            if (req.user?.userId === id && role !== 'admin') {
+                return res.status(400).json({ success: false, error: 'Admins cannot change their own role' });
+            }
+        }
 
-        // Reactivation must not restore tokens issued before the account was disabled.
-        if (safeUpdates.is_active !== undefined) {
+        // Roles are embedded in the JWT, so a role change (demotion included) and
+        // (re)activation must not leave previously issued tokens usable: revoke
+        // every session so the user signs in again and gets the new claims.
+        if (safeUpdates.is_active !== undefined || safeUpdates.role !== undefined) {
             await revokeAllUserSessions(id);
         }
 
