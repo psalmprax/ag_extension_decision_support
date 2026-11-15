@@ -71,20 +71,10 @@ docker compose -p ${COMPOSE_PROJECT_NAME} \
     down --remove-orphans || true
 docker rm -f ag-discovery-scraper ag-agent-zero ag-crew-ai 2>/dev/null || true
 
-# Ensure host web servers and orphaned port 80/443 listeners are cleared
+# Free ports 80/443 for Traefik without touching other projects' containers or
+# unknown processes (fails with a diagnostic instead). See the script header.
 echo "🌐 Ensuring ports 80 and 443 are free for Traefik..."
-systemctl stop apache2 nginx 2>/dev/null || true
-docker rm -f ag-traefik 2>/dev/null || true
-for cid in $(docker ps -q --filter "publish=80" --filter "publish=443" 2>/dev/null); do
-    docker rm -f "$cid" 2>/dev/null || true
-done
-if ss -tulpn 2>/dev/null | grep -qE ':(80|443) '; then
-    if command -v fuser >/dev/null 2>&1; then
-        fuser -k 80/tcp 2>/dev/null || true
-        fuser -k 443/tcp 2>/dev/null || true
-    fi
-    pkill -9 -f '[d]ocker-proxy.*-host-port (80|443)( |$)' 2>/dev/null || true
-fi
+bash "$(dirname "$0")/scripts/free-web-ports.sh" "${COMPOSE_PROJECT_NAME}"
 
 # 4. Deploy with build
 echo "🏗️ Building and Starting Containers..."
