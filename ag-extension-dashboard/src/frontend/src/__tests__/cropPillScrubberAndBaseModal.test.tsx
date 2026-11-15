@@ -2,7 +2,8 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BaseModal } from '@/components/BaseModal';
-import { CROP_PRESETS, SvgBoundingBoxesOverlay } from '@/components/EdgeVisionScannerModal';
+import { SvgBoundingBoxesOverlay } from '@/components/EdgeVisionScannerModal';
+import { CROP_PRESETS } from '@/components/cropPresets';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
 
 describe('Base App UX Additions: CropPillScrubber & BaseModal', () => {

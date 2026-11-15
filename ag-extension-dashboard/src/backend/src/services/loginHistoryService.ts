@@ -218,13 +218,12 @@ export async function getLoginStats(params: { userId?: string; email?: string } 
 
   const conditions: string[] = [];
   const values: unknown[] = [];
-  let paramIdx = 1;
 
   if (userId) {
-    conditions.push(`user_id = $${paramIdx++}`);
+    conditions.push(`user_id = $1`);
     values.push(userId);
   } else if (email) {
-    conditions.push(`lower(email) = lower($${paramIdx++})`);
+    conditions.push(`lower(email) = lower($1)`);
     values.push(email.trim());
   }
 

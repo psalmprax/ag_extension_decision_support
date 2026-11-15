@@ -48,7 +48,7 @@ export class OpenAIProvider extends BaseAIProvider {
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize OpenAI client:', error);
-            throw new Error('OpenAI client initialization failed — API key not configured');
+            throw new Error('OpenAI client initialization failed — API key not configured', { cause: error });
         }
     }
 
@@ -82,7 +82,7 @@ export class OpenAIProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('OpenAI generateText error:', error);
-            throw new Error(`OpenAI text generation failed: ${(error as Error).message}`);
+            throw new Error(`OpenAI text generation failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -105,7 +105,7 @@ export class OpenAIProvider extends BaseAIProvider {
             }
         } catch (error) {
             logger.error('OpenAI streamText error:', error);
-            throw new Error(`OpenAI streaming failed: ${(error as Error).message}`);
+            throw new Error(`OpenAI streaming failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -127,7 +127,7 @@ export class OpenAIProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('OpenAI createEmbedding error:', error);
-            throw new Error(`OpenAI embedding creation failed: ${(error as Error).message}`);
+            throw new Error(`OpenAI embedding creation failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -149,7 +149,7 @@ export class OpenAIProvider extends BaseAIProvider {
             }));
         } catch (error) {
             logger.error('OpenAI createBatchEmbeddings error:', error);
-            throw new Error(`OpenAI batch embedding creation failed: ${(error as Error).message}`);
+            throw new Error(`OpenAI batch embedding creation failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -250,7 +250,7 @@ export class OpenAIProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('OpenAI speechToText error:', error);
-            throw new Error(`OpenAI speech-to-text failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+            throw new Error(`OpenAI speech-to-text failed: ${error instanceof Error ? error.message : "Unknown error"}`, { cause: error });
         }
     }
 
@@ -270,7 +270,7 @@ export class OpenAIProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('OpenAI textToSpeech error:', error);
-            throw new Error(`OpenAI text-to-speech failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+            throw new Error(`OpenAI text-to-speech failed: ${error instanceof Error ? error.message : "Unknown error"}`, { cause: error });
         }
     }
 

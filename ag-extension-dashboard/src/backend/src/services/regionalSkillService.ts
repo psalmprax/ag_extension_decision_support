@@ -33,7 +33,7 @@ class RegionalSkillService {
     }): Promise<RegionalAgronomySkillRow | null> {
         const { visitId, region, crop, topic, findings, officerNotes, officerId, tenantId } = params;
 
-        let skillMarkdown = '';
+        let skillMarkdown: string;
         let title = `${topic} Management in ${region}`;
 
         try {

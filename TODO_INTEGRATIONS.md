@@ -135,8 +135,13 @@ changed blindly. Each entry lists the risk and the concrete remediation.
   Orders. Migrating changes ids and webhook events (`PAYMENT.SALE.*` →
   `PAYMENT.CAPTURE.*`), so do it together with `routes/billing/paypalWebhook.ts`
   and the `pending_paypal_payments` idempotency keys, behind a sandbox test.
-- [ ] **ESLint 8 (EOL)** — both workspaces. Requires flat-config migration;
-  mechanical but noisy, do it in its own PR.
+- [x] **ESLint 8 (EOL)** — both workspaces on ESLint 10 flat config
+  (2026-11-15), rules ported 1:1 (identical linted-file sets; a probe file
+  confirms every configured rule still fires). ESLint 10's new recommended
+  rules surfaced 41 rethrows that dropped the original error (now
+  `{ cause }`) and 23 dead stores; 17 stale `eslint-disable` comments
+  removed. `react-hooks` stays on the two classic rules — its v7 React
+  Compiler rules are a separate opt-in.
 
 ### Deployment pipeline (deploy-all.yml)
 - [ ] **SSH as root** — create a dedicated `deploy` user on the droplets (docker

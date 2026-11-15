@@ -244,7 +244,7 @@ class NotificationService {
      * Like send(), but propagates failures so a queue worker can retry.
      */
     async sendOrThrow(payload: NotificationPayload): Promise<void> {
-        let ok = false;
+        let ok: boolean;
         switch (payload.channel) {
             case 'in_app':
                 ok = await this.sendInApp(payload);

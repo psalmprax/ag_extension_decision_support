@@ -70,7 +70,7 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize Azure OpenAI client:', error);
-            throw new Error('Azure OpenAI client initialization failed — API key not configured');
+            throw new Error('Azure OpenAI client initialization failed — API key not configured', { cause: error });
         }
     }
 
@@ -104,7 +104,7 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Azure OpenAI generateText error:', error);
-            throw new Error(`Azure OpenAI text generation failed: ${(error as Error).message}`);
+            throw new Error(`Azure OpenAI text generation failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -133,7 +133,7 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             }
         } catch (error) {
             logger.error('Azure OpenAI streamText error:', error);
-            throw new Error(`Azure OpenAI streaming failed: ${(error as Error).message}`);
+            throw new Error(`Azure OpenAI streaming failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -150,7 +150,7 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Azure OpenAI createEmbedding error:', error);
-            throw new Error(`Azure OpenAI embedding failed: ${(error as Error).message}`);
+            throw new Error(`Azure OpenAI embedding failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -167,7 +167,7 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             }));
         } catch (error) {
             logger.error('Azure OpenAI createBatchEmbeddings error:', error);
-            throw new Error(`Azure OpenAI batch embedding failed: ${(error as Error).message}`);
+            throw new Error(`Azure OpenAI batch embedding failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -229,7 +229,7 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Azure OpenAI analyzeWithReasoning error:', error);
-            throw new Error(`Azure OpenAI reasoning analysis failed: ${(error as Error).message}`);
+            throw new Error(`Azure OpenAI reasoning analysis failed: ${(error as Error).message}`, { cause: error });
         }
     }
 

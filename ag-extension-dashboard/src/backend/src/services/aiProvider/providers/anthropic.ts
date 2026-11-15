@@ -45,7 +45,7 @@ export class AnthropicProvider extends BaseAIProvider {
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize Anthropic client:', error);
-            throw new Error('Anthropic client initialization failed — API key not configured');
+            throw new Error('Anthropic client initialization failed — API key not configured', { cause: error });
         }
     }
 
@@ -74,7 +74,7 @@ export class AnthropicProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Anthropic generateText error:', error);
-            throw new Error(`Anthropic text generation failed: ${(error as Error).message}`);
+            throw new Error(`Anthropic text generation failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -98,7 +98,7 @@ export class AnthropicProvider extends BaseAIProvider {
             }
         } catch (error) {
             logger.error('Anthropic streamText error:', error);
-            throw new Error(`Anthropic streaming failed: ${(error as Error).message}`);
+            throw new Error(`Anthropic streaming failed: ${(error as Error).message}`, { cause: error });
         }
     }
 

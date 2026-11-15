@@ -214,6 +214,6 @@ export async function ingestParcelBands(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     logger.error(`Satellite ingest failed: ${message}`);
-    throw new Error(`Satellite ingest FAILED: ${message}`);
+    throw new Error(`Satellite ingest FAILED: ${message}`, { cause: error });
   }
 }

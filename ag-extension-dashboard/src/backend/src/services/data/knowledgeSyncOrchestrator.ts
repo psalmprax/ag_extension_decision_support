@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { v5 as uuidv5 } from 'uuid';
 import { logger } from '../../utils/logger';
 import { VectorService } from '../vectorService';

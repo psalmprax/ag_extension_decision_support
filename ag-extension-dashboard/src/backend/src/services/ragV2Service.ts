@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * RAG v2 Service — Chunking + Knowledge Graph + Re-ranking + Citations
  *

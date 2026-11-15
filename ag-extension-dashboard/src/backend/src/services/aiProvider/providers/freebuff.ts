@@ -75,7 +75,7 @@ export class FreebuffProvider extends BaseAIProvider {
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize Freebuff client:', error);
-            throw new Error('Freebuff client initialization failed — openai package missing?');
+            throw new Error('Freebuff client initialization failed — openai package missing?', { cause: error });
         }
     }
 
@@ -117,7 +117,7 @@ export class FreebuffProvider extends BaseAIProvider {
         } catch (error) {
             logger.error('Freebuff generateText error:', error);
             throw new Error(
-                `Freebuff text generation failed: ${(error as Error).message}`
+                `Freebuff text generation failed: ${(error as Error).message}`, { cause: error }
             );
         }
     }
@@ -144,7 +144,7 @@ export class FreebuffProvider extends BaseAIProvider {
             }
         } catch (error) {
             logger.error('Freebuff streamText error:', error);
-            throw new Error(`Freebuff streaming failed: ${(error as Error).message}`);
+            throw new Error(`Freebuff streaming failed: ${(error as Error).message}`, { cause: error });
         }
     }
 

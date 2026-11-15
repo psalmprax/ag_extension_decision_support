@@ -93,7 +93,6 @@ class PaymentService {
         if (isValidKey) {
             try {
                 this.stripe = new Stripe(stripeKey, {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     apiVersion: '2024-12-18.acacia' as unknown as Stripe.LatestApiVersion,
                 });
                 logger.info('Stripe payment service initialized (Real Mode)');

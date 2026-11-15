@@ -108,7 +108,7 @@ export class NasaPowerService {
             return response.json() as Promise<NasaPowerResponse>;
         } catch (error) {
             logger.error(`Error fetching NASA POWER data: ${error instanceof Error ? error.message : "Unknown error"}`);
-            throw new Error(`Failed to fetch NASA POWER data: ${error instanceof Error ? error.message : "Unknown error"}`);
+            throw new Error(`Failed to fetch NASA POWER data: ${error instanceof Error ? error.message : "Unknown error"}`, { cause: error });
         }
     }
 

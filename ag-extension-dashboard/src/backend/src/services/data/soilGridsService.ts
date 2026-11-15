@@ -90,7 +90,7 @@ export class SoilGridsService {
             return this.parseSoilGridsResponse(data);
         } catch (error) {
             logger.error(`Error fetching SoilGrids: ${error instanceof Error ? error.message : "Unknown error"}`);
-            throw new Error(`Failed to fetch SoilGrids: ${error instanceof Error ? error.message : "Unknown error"}`);
+            throw new Error(`Failed to fetch SoilGrids: ${error instanceof Error ? error.message : "Unknown error"}`, { cause: error });
         }
     }
 

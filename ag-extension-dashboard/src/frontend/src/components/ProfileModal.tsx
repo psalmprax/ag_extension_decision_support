@@ -57,7 +57,7 @@ const DEFAULT_PREFERENCES = {
 };
 
 const getSavedProfileData = (user: User) => {
-  let parsedPrefs: Partial<typeof DEFAULT_PREFERENCES> = {};
+  let parsedPrefs: Partial<typeof DEFAULT_PREFERENCES>;
   let savedAvatar = 'agronomist';
   let savedUsername = `${(user.firstName || 'user').toLowerCase()}_${(user.lastName || 'officer').toLowerCase()}`;
   let savedPhone = '';

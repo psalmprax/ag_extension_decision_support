@@ -82,7 +82,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize Google Vertex client:', error);
-            throw new Error('Google Vertex client initialization failed — API key not configured');
+            throw new Error('Google Vertex client initialization failed — API key not configured', { cause: error });
         }
     }
 
@@ -106,7 +106,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Google Vertex generateText error:', error);
-            throw new Error(`Google Vertex text generation failed: ${(error as Error).message}`);
+            throw new Error(`Google Vertex text generation failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -122,7 +122,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
             }
         } catch (error) {
             logger.error('Google Vertex streamText error:', error);
-            throw new Error(`Google Vertex streaming failed: ${(error as Error).message}`);
+            throw new Error(`Google Vertex streaming failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -147,7 +147,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Google Vertex createEmbedding error:', error);
-            throw new Error(`Google Vertex embedding creation failed: ${(error as Error).message}`);
+            throw new Error(`Google Vertex embedding creation failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -168,7 +168,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
             }));
         } catch (error) {
             logger.error('Google Vertex createBatchEmbeddings error:', error);
-            throw new Error(`Google Vertex batch embedding creation failed: ${(error as Error).message}`);
+            throw new Error(`Google Vertex batch embedding creation failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -226,7 +226,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Google Vertex analyzeWithReasoning error:', error);
-            throw new Error(`Google Vertex reasoning analysis failed: ${(error as Error).message}`);
+            throw new Error(`Google Vertex reasoning analysis failed: ${(error as Error).message}`, { cause: error });
         }
     }
 

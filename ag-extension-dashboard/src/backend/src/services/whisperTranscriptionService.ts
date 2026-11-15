@@ -83,7 +83,7 @@ class WhisperTranscriptionService {
       logger.info(`Whisper model ${this.modelName} initialized successfully`);
     } catch (error) {
       logger.error('Failed to initialize Whisper model:', error);
-      throw new Error(`Failed to initialize Whisper model: ${(error as Error).message}`);
+      throw new Error(`Failed to initialize Whisper model: ${(error as Error).message}`, { cause: error });
     }
   }
 
@@ -105,7 +105,7 @@ class WhisperTranscriptionService {
       return this.buildResult(lib, model, text, segments, startTime, options.language);
     } catch (error) {
       logger.error('Whisper transcription failed:', error);
-      throw new Error(`Transcription failed: ${(error as Error).message}`);
+      throw new Error(`Transcription failed: ${(error as Error).message}`, { cause: error });
     }
   }
 
@@ -126,7 +126,7 @@ class WhisperTranscriptionService {
       return this.buildResult(lib, model, text, segments, startTime, options.language);
     } catch (error) {
       logger.error('Whisper file transcription failed:', error);
-      throw new Error(`File transcription failed: ${(error as Error).message}`);
+      throw new Error(`File transcription failed: ${(error as Error).message}`, { cause: error });
     }
   }
 

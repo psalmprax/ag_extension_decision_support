@@ -156,7 +156,7 @@ export class NVIDIAProvider extends BaseAIProvider {
 
       if (status === 429 || status === 402 || responseBodyStr.includes('quota') || responseBodyStr.includes('insufficient')) {
         logger.warn(`NVIDIA NIM quota/rate limit exceeded (HTTP ${status}) for model ${model}. Triggering OmniRoute failover.`);
-        throw new Error(`NVIDIA_QUOTA_EXCEEDED: Quota/Rate limit reached for ${model}`);
+        throw new Error(`NVIDIA_QUOTA_EXCEEDED: Quota/Rate limit reached for ${model}`, { cause: err });
       }
 
       logger.error(`NVIDIA NIM API error (${status || 'Network'}):`, axiosError.message);

@@ -208,7 +208,7 @@ export function projectAtmosphericDispersalCone(
     const viabilityScore = germinationIndex;
 
     // 4. Overall Outbreak Propagation Risk Level
-    let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+    let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
     if (viabilityScore >= 0.7 && dispersionDistanceKm >= 40) {
         riskLevel = 'CRITICAL';
     } else if (viabilityScore >= 0.5 && dispersionDistanceKm >= 20) {
