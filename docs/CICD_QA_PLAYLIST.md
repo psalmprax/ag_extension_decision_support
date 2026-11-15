@@ -339,7 +339,7 @@ Only run this as part of the approved workflow and never remove unrelated builde
 **A.** The deployment rules prefer local cache directories instead of remote GHCR cache exports when registry authorization or rate limits are a concern. Bake executions must include the appropriate filesystem permission, for example:
 
 ```bash
---allow=fs=/root
+--allow=fs="$HOME"   # the deploy user's home; /root when deploying as root
 ```
 
 Cache paths should be explicit, isolated by target, and excluded from application artifacts.
@@ -349,8 +349,10 @@ Cache paths should be explicit, isolated by target, and excluded from applicatio
 **A.** Shared networks such as `ag-network` should be external where required by the deployment architecture. The pipeline should verify or create the network before Compose starts:
 
 ```bash
-docker network create --driver bridge ag-network || true
+docker network inspect ag-network >/dev/null 2>&1 || docker network create --driver bridge ag-network
 ```
+
+Inspect-or-create keeps real failures (daemon errors, subnet conflicts) visible, unlike a blanket `|| true`.
 
 Do not silently convert an external shared network into a Compose-managed network; that can cause label conflicts and cross-service outages.
 
@@ -409,13 +411,15 @@ Do not silently convert an external shared network into a Compose-managed networ
 
 ### Q34. What if a migration says a table or column already exists?
 
-**A.** Do not blindly rerun or edit migration history. Inspect the schema and migration state. If the deployment rules apply, parse the conflicting migration name and resolve it as applied using Prisma’s approved command:
+**A.** Stop. Do not blindly rerun or edit migration history, and never resolve automatically: the deploy workflows and the container entrypoint fail fast on a failed migration by design. Inspect the schema and migration state. The collision means the migration chain and the database disagree.
+
+Only when a human has verified that **every** change in that migration already exists in the database (Prisma's baselining case) may it be recorded as applied:
 
 ```bash
 npx prisma migrate resolve --applied <migration-name>
 ```
 
-Record why the resolution was safe. Never mark a migration applied without verifying that its schema changes already exist.
+Record what was verified and why. If any part of the migration is missing, repair the migration or the database instead; marking it applied would leave the schema silently behind.
 
 ### Q35. Should migrations run before or after the application starts?
 
@@ -671,7 +675,7 @@ Avoid vague messages such as `Update workflow`.
 
 ### Q69. Scenario: a deployment has a migration conflict. What is the safe response?
 
-**A.** Pause deployment, identify the exact migration and schema state, verify whether the change already exists, and use the documented Prisma resolution only when justified. Record the decision and rerun migration status plus readiness checks.
+**A.** Pause deployment, identify the exact migration and schema state, and verify whether every change in it already exists. Use the manual Prisma resolution (Q34) only when it all does; otherwise repair forward. Record the decision and rerun migration status plus readiness checks.
 
 ### Q70. Scenario: Redis is down but the API is running. Can the release be marked successful?
 
