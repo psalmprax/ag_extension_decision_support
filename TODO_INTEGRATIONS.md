@@ -125,9 +125,16 @@ changed blindly. Each entry lists the risk and the concrete remediation.
   Requests route per call by deployment name; embeddings use
   `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` with `dimensions` pinned to 768.
   Still needs a live-key smoke test.
-- [ ] **`paypal-rest-sdk`** — abandoned upstream since 2019. Migrate billing to
-  `@paypal/paypal-server-sdk` (or PSP of choice); touch
-  `services/paypalService.ts` + `pending_paypal_payments` flow together.
+- [x] **`paypal-rest-sdk`** — removed (2026-11-15). Its only two calls (classic
+  sale create/execute) now go over REST using the service's existing OAuth
+  helper — same v1 endpoints, request bodies and payment/sale ids, so the
+  webhook and idempotency logic are unchanged. Execution now also requires
+  `state === "approved"` (a 2xx with `state: "failed"` used to count as paid).
+  Still needs one sandbox purchase end to end.
+- [ ] **PayPal v1 Payments API** — itself deprecated by PayPal in favour of v2
+  Orders. Migrating changes ids and webhook events (`PAYMENT.SALE.*` →
+  `PAYMENT.CAPTURE.*`), so do it together with `routes/billing/paypalWebhook.ts`
+  and the `pending_paypal_payments` idempotency keys, behind a sandbox test.
 - [ ] **ESLint 8 (EOL)** — both workspaces. Requires flat-config migration;
   mechanical but noisy, do it in its own PR.
 
