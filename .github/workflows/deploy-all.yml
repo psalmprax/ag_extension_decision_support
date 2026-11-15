@@ -487,11 +487,14 @@ jobs:
                   if [ -z "$FAILED_MIG" ]; then
                     FAILED_MIG=$(echo "$MIGRATE_OUTPUT" | grep -oE "The \`[0-9]+_[a-zA-Z0-9_]+\` migration started at" | cut -d"\`" -f2 || true)
                   fi
-                  if [ -n "$FAILED_MIG" ]; then
-                    echo "Schema collision detected for migration $FAILED_MIG. Resolving as applied..."
-                    npx prisma migrate resolve --applied "$FAILED_MIG"
-                    continue
-                  fi
+                  # Never mark a failed migration as applied: its SQL did not run, so doing
+                  # so leaves the database silently behind the schema. Stop and let an
+                  # operator inspect the database (same policy as docker-entrypoint.sh).
+                  echo "FATAL: migration ${FAILED_MIG:-<unknown>} failed and needs manual repair." >&2
+                  echo "----- last migrate output -----" >&2
+                  echo "$MIGRATE_OUTPUT" >&2
+                  echo "-------------------------------" >&2
+                  exit 1
                 fi
                 # Visibility: surface the actual error from each failed attempt (was previously silent).
                 echo "Attempt $i/30 failed. Last migrate output:"
@@ -1057,10 +1060,15 @@ jobs:
                       npx prisma migrate resolve --rolled-back "$FAILED_MIG"
                       continue
                     fi
-                    echo "Schema collision detected for migration $FAILED_MIG. Resolving as applied..."
-                    npx prisma migrate resolve --applied "$FAILED_MIG"
-                    continue
                   fi
+                  # Never mark a failed migration as applied: its SQL did not run, so doing
+                  # so leaves the database silently behind the schema. Stop and let an
+                  # operator inspect the database (same policy as docker-entrypoint.sh).
+                  echo "FATAL: migration ${FAILED_MIG:-<unknown>} failed and needs manual repair." >&2
+                  echo "----- last migrate output -----" >&2
+                  echo "$MIGRATE_OUTPUT" >&2
+                  echo "-------------------------------" >&2
+                  exit 1
                 fi
                 # Visibility: surface the actual error from each failed attempt (was previously silent).
                 echo "Attempt $i/30 failed. Last migrate output:"
