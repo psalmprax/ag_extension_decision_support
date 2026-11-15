@@ -169,7 +169,14 @@ changed blindly. Each entry lists the risk and the concrete remediation.
   convention is documented at the top of `deploy-all.yml`.
 
 ### Scope
-- [ ] **501-prototype surface** — several route families return 501 by design
-  (see README). Decide per family: promote (fund real integration), demote
-  (move behind `FEATURE_*` flags, default off), or delete. Keeping them
-  mounted inflates the attack/audit surface for no user value.
+- [x] **501-prototype gating** — verified (2026-11-15): `routes/pillars/index.ts`
+  already fails closed (501 in production except four allowlisted endpoints;
+  the enable flag is ignored outside development/test; prototype responses are
+  stamped). Of the 14 prototype services, only the pest-radar heuristic and
+  NDVI math are reached from always-on code, both as labelled, staff-only
+  previews. The pest layer had no data source at all (`pest_sightings` is never
+  created) yet showed "0 clusters"; it now reports `no_data_source`.
+  ARCHITECTURE_PILLARS.md now marks every prototype section.
+- [ ] **Per-family keep-or-delete** — product decision: for each prototype family
+  (credit, trade, traceability, telemetry, mechanization, pest, tenant), fund
+  the real integration or delete the code. Gating makes keeping it safe, not free.

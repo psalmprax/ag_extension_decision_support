@@ -2,6 +2,11 @@
 
 This document provides complete architectural specifications, data models, service interactions, and API contracts for the core platform expansion pillars and enterprise security features.
 
+> **Read the status notes.** Many sections below are *specifications*, not shipped
+> capabilities: their routes return 501 in production. Each section carries a status
+> note where that applies; unmarked sections describe production behaviour.
+> Source of truth for gating: `ag-extension-dashboard/src/backend/src/routes/pillars/index.ts`.
+
 ---
 
 ## Architecture Overview
@@ -144,6 +149,8 @@ Removes literacy and technological barriers by supporting native voice note audi
 - **Speech Synthesis**: Synthesizes localized audio advisory files (`audio/ogg`) for voice-note responses.
 
 #### B. Interactive Voice Response (IVR) & Automated Voice Broadcasts ([`ivrBroadcastService.ts`](ag-extension-dashboard/src/backend/src/services/ivrBroadcastService.ts))
+
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
 - **TwiML / Africa's Talking Voice XML**: Generates standard dynamic voice XML prompts.
 - **DTMF Keypad Interaction Workflow**:
   - `Press 1`: Confirm receipt and receive written advisory summary via SMS.
@@ -162,10 +169,14 @@ Connects farmers directly to genuine input supplies and guaranteed commodity buy
 ### Key Components
 
 #### A. Certified Agro-Dealer Directory & Anti-Counterfeit Verification ([`inputSupplierService.ts`](ag-extension-dashboard/src/backend/src/services/inputSupplierService.ts))
+
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
 - **Geo-Inventory Proximity Matching**: Searches verified stockists within a specified radius (km), sorting by distance, stock availability, and official licensing (PCPB/KEPHIS/KEBS).
 - **Anti-Counterfeit Batch Lookup**: Verifies seed, fertilizer, and agrochemical batch numbers against national regulator databases to identify counterfeit agricultural inputs.
 
 #### B. Harvest Offtaker & Market Aggregation Matchmaker ([`harvestOfftakeService.ts`](ag-extension-dashboard/src/backend/src/services/harvestOfftakeService.ts))
+
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
 - **Yield Aggregation**: Aggregates projected crop volumes across farmer cohorts by county and harvest window.
 - **Institutional Offtake Matching**: Matches cooperative tonnage with certified millers, processors, and commodity buyers (e.g. Unga Farm Care, East Africa Grain Council).
 - **Cooperative Premium Modeling**: Computes bulk contractual revenue gains vs. local middleman spot pricing.
@@ -180,6 +191,8 @@ Quantifies the financial return on investment of agronomic recommendations and p
 ### Key Components
 
 #### A. Quantifiable Yield Differential & Input ROI Calculator ([`agronomicRoiService.ts`](ag-extension-dashboard/src/backend/src/services/agronomicRoiService.ts))
+
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
 - **Control vs. Advisory Comparison**: Models financial differences between traditional practices and decision-support guided inputs (certified hybrid seeds, soil-test calibrated NPK, lime, IPM).
 - **Key Metrics Computed**:
   - Yield Gain (%) and Tonnage Gain (t/ha).
@@ -188,6 +201,8 @@ Quantifies the financial return on investment of agronomic recommendations and p
   - Break-Even Commodity Price per Ton.
 
 #### B. Soil Organic Carbon (SOC) IPCC Tier 2 MRV Engine ([`soilCarbonMrvService.ts`](ag-extension-dashboard/src/backend/src/services/soilCarbonMrvService.ts))
+
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
 - **IPCC Tier 2 Soil Quantification**:
   $$\text{SOC Stock (t C/ha)} = \frac{\% \text{SOM} \times 0.58}{100} \times \rho_b (\text{t/m}^3) \times d (\text{m}) \times 10,000\,\text{m}^2/\text{ha} \times (1 - f_{\text{coarse}})$$
 - **Carbon Sequestration & $\text{CO}_2\text{e}$**:
@@ -197,6 +212,8 @@ Quantifies the financial return on investment of agronomic recommendations and p
 ---
 
 ## 7. Pillar 6: Automated Proactive Hazard Warning Engine
+
+> **Status: partly live.** Rule-based hazard evaluation (`POST /api/pillars/hazard/evaluate`) is production-enabled and returns a provenance block. The scanning daemon and dispatch (`POST /hazard/scan`) are specification prototypes and return 501 in production.
 
 ### Purpose
 Transforms the platform from reactive query-handling into an autonomous hazard prediction and early warning alert daemon.
@@ -218,6 +235,8 @@ Transforms the platform from reactive query-handling into an autonomous hazard p
 
 ## 8. Satellite Earth Observation & Sentinel-2 NDVI Indexing
 
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
+
 ### Purpose
 Automates continuous orbital crop vigor monitoring and stress anomaly detection across registered farmer field parcel boundaries.
 
@@ -232,6 +251,8 @@ Automates continuous orbital crop vigor monitoring and stress anomaly detection 
 ---
 
 ## 9. Smallholder Agronomic Credit Scoring & Parametric Insurance Engine
+
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
 
 ### Purpose
 Unlocks microfinance lending and automated drought/flood insurance for smallholders using verified agronomic compliance telemetry.
@@ -249,6 +270,8 @@ Unlocks microfinance lending and automated drought/flood insurance for smallhold
 ---
 
 ## 10. Multi-Tenant Agribusiness Federation & Cooperative Hierarchy
+
+> **Status: demo-scale.** Two seeded tenants in a registry with fail-closed compliance checks; tenant CRUD and multi-database tenancy are not implemented. Tenant pillar routes are specification prototypes (501 in production).
 
 ### Purpose
 Enables large agribusiness unions, commodity exporters, and government agencies to administer hierarchical multi-tenant structures with custom branding and localized agronomic rulesets.
@@ -285,6 +308,8 @@ Enables field officers to record farm visits, soil tests, and parcel boundaries 
 
 ## 13. On-Farm IoT & LoRaWAN Sensor Mesh Telemetry
 
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
+
 ### Purpose
 Ingests continuous physical soil probe data (volumetric water content, electrical conductivity salinity, soil temperature) and calculates atmospheric evaporative stress to automate precision solar irrigation.
 
@@ -298,6 +323,8 @@ Ingests continuous physical soil probe data (volumetric water content, electrica
 
 ## 14. EUDR Zero-Deforestation & GS1 Farm-to-Fork Traceability Passport
 
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
+
 ### Purpose
 Certifies regulatory export compliance with the EU Deforestation Regulation (EUDR) and generates cryptographically signed GS1 Digital Link batch passports for harvested agricultural commodities.
 
@@ -308,6 +335,8 @@ Certifies regulatory export compliance with the EU Deforestation Regulation (EUD
 ---
 
 ## 15. Shared Mechanization & Agricultural Drone Fleet Dispatcher
+
+> **Status: specification prototype.** Registry-backed equipment search and admin registration are tenant-scoped, but the routes return 501 in production and drone planning is illustrative. See [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
 
 ### Purpose
 Aggregates equipment leasing (tractors, solar pumps) and coordinates certified drone operator spraying missions across contiguous smallholder farming blocks.
@@ -320,6 +349,8 @@ Aggregates equipment leasing (tractors, solar pumps) and coordinates certified d
 
 ## 16. Crowd-Sourced Epidemiological Pest Swarm Radar (DBSCAN)
 
+> **Status: specification prototype.** Pillar routes return 501 in production. The clustering heuristic also feeds the officer-only WorldMonitor layer as a labelled preview, which reports `no_data_source` until a `pest_sightings` table is provisioned.
+
 ### Purpose
 Aggregates participatory field sightings to identify active pest swarms and models wind-driven flight trajectories to alert downwind farming communities 24–48 hours in advance.
 
@@ -330,6 +361,8 @@ Aggregates participatory field sightings to identify active pest swarms and mode
 ---
 
 ## 17. Cross-Border Regional Commodity Trade & Arbitrage Engine
+
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
 
 ### Purpose
 Monitors regional wholesale grain and produce markets across East Africa (Kenya, Uganda, Tanzania, Rwanda, Ethiopia) to identify profitable cross-border trade corridors.
