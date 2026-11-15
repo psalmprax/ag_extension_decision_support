@@ -105,6 +105,13 @@ export function isAgronomicQueryAmbiguous(query: string): boolean {
     'nigeria',
     'tanzania',
     'uganda',
+    'africa',
+    'sahel',
+    'gulf of guinea',
+    'caribbean',
+    'central america',
+    'south america',
+    'middle east',
   ].some(loc => q.includes(loc));
 
   return !hasSpecificLocation;
@@ -116,10 +123,10 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
   onBypass,
   compact = false,
 }) => {
-  const [selectedZone, setSelectedZone] = useState<string>('Zone 5–6 (Temperate / Midwest)');
-  const [selectedSoil, setSelectedSoil] = useState<string>('Well-Drained Loam / Silt');
-  const [selectedIrrigation, setSelectedIrrigation] = useState<string>('Rainfed / Dryland');
-  const [selectedGoal, setSelectedGoal] = useState<string>('Commercial Yield');
+  const [selectedZone, setSelectedZone] = useState<string>('');
+  const [selectedSoil, setSelectedSoil] = useState<string>('');
+  const [selectedIrrigation, setSelectedIrrigation] = useState<string>('');
+  const [selectedGoal, setSelectedGoal] = useState<string>('');
   const [customLocation, setCustomLocation] = useState<string>('');
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
@@ -146,13 +153,21 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
   };
 
   const handleApply = () => {
-    const locPart = customLocation.trim() ? customLocation.trim() : selectedZone;
-    const enrichedQuery = `${initialQuery} [Agronomic Context: Location/Zone=${locPart}, Soil=${selectedSoil}, Water=${selectedIrrigation}, Goal=${selectedGoal}]`;
+    const location = customLocation.trim() || selectedZone;
+    const context = [
+      location ? `Location/Zone=${location}` : '',
+      selectedSoil ? `Soil=${selectedSoil}` : '',
+      selectedIrrigation ? `Water=${selectedIrrigation}` : '',
+      selectedGoal ? `Goal=${selectedGoal}` : '',
+    ].filter(Boolean);
+    const enrichedQuery = context.length
+      ? `${initialQuery} [Agronomic Context: ${context.join(', ')}]`
+      : initialQuery;
     onApplyIntake(enrichedQuery, {
-      zone: selectedZone,
-      soil: selectedSoil,
-      irrigation: selectedIrrigation,
-      goal: selectedGoal,
+      zone: selectedZone || undefined,
+      soil: selectedSoil || undefined,
+      irrigation: selectedIrrigation || undefined,
+      goal: selectedGoal || undefined,
       customLocation: customLocation.trim() || undefined,
     });
   };
@@ -177,7 +192,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
               Agronomic precision intake
             </h4>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              Select your farm profile to get exact planting windows, frost dates, and tested cultivars.
+              Add only field details you know. Named places in your question take precedence over this optional profile.
             </p>
           </div>
         </div>

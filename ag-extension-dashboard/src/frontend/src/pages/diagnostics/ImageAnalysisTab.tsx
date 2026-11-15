@@ -23,10 +23,17 @@ interface Props {
 export interface ImageAnalysisData {
   overallHealth: string;
   diseases: DiseaseDiagnosis[];
+  nutrientDeficiencies?: string[];
   recommendations: string[];
   confidence: number;
   reviewStatus: DiagnosticReviewStatus;
   provenance: DiagnosticProvenance;
+}
+
+function diagnosticSourceLabel({ source, provider }: DiagnosticProvenance): string {
+  return provider && !source.toLowerCase().includes(provider.toLowerCase())
+    ? `${source} (${provider})`
+    : source;
 }
 
 const ImageUploadViewfinder: React.FC<{
@@ -192,6 +199,8 @@ export const AnalysisResultsHUD: React.FC<{
   const analysisUnavailable = imageAnalysis.recommendations.includes(
     'Analysis was unavailable; do not treat this as a diagnosis'
   );
+  const needsReview = imageAnalysis.reviewStatus === 'needs_expert_review' ||
+    imageAnalysis.provenance.evidenceStatus !== 'verified_source';
 
   return (
     <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 space-y-4">
@@ -212,28 +221,47 @@ export const AnalysisResultsHUD: React.FC<{
         </div>
       ) : (
         /* Health Metric Banner */
-        <div className="p-3.5 rounded-lg bg-slate-950 border border-emerald-500/30 flex items-center justify-between">
+        <div className={`p-3.5 rounded-lg bg-slate-950 border ${needsReview ? 'border-amber-500/30' : 'border-emerald-500/30'} flex items-center justify-between`}>
           <div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-emerald-400" />
+              {needsReview
+                ? <ShieldAlert className="w-4 h-4 text-amber-400" />
+                : <CheckCircle className="w-4 h-4 text-emerald-400" />}
               <h4 className="text-xs font-semibold text-white">
-                Health status: {imageAnalysis.overallHealth}
+                {needsReview ? 'AI-observed health status' : 'Health status'}: {imageAnalysis.overallHealth}
               </h4>
             </div>
             <p className="text-xxs font-mono text-slate-400 mt-1">
-              Source: {imageAnalysis.provenance.source}
-              {imageAnalysis.provenance.provider &&
-              !imageAnalysis.provenance.source.toLowerCase().includes(imageAnalysis.provenance.provider.toLowerCase())
-                ? ` (${imageAnalysis.provenance.provider})`
-                : ''}
+              Source: {diagnosticSourceLabel(imageAnalysis.provenance)}
             </p>
           </div>
           <div className="text-right">
-            <span className="text-xl font-mono font-bold text-emerald-400 tabular-nums">
+            <span className={`text-xl font-mono font-bold ${needsReview ? 'text-amber-300' : 'text-emerald-400'} tabular-nums`}>
               {(imageAnalysis.confidence * 100).toFixed(1)}%
             </span>
-            <p className="text-xxs font-mono text-slate-500">Confidence</p>
+            <p className="text-xxs font-mono text-slate-400">{needsReview ? 'Model-reported confidence' : 'Confidence'}</p>
           </div>
+        </div>
+      )}
+
+      {!analysisUnavailable && needsReview && (
+        <p className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300">
+          Unconfirmed image observations, not a diagnosis. Model confidence is not diagnostic accuracy
+          or treatment authorization. Confirm the cause with a local extension officer before treatment.
+        </p>
+      )}
+
+      {!analysisUnavailable && Boolean(imageAnalysis.nutrientDeficiencies?.length) && (
+        <div className="space-y-2">
+          <h4 className="text-xs font-medium text-white">Possible nutrient issues (unconfirmed)</h4>
+          <ul className="list-disc pl-4 space-y-1 text-xs text-slate-300">
+            {imageAnalysis.nutrientDeficiencies?.map((observation, index) => (
+              <li key={index}>{observation}</li>
+            ))}
+          </ul>
+          <p className="text-xs text-slate-400">
+            Appearance alone cannot confirm a deficiency; soil or leaf-tissue testing may be needed.
+          </p>
         </div>
       )}
 
@@ -241,7 +269,7 @@ export const AnalysisResultsHUD: React.FC<{
       {imageAnalysis.diseases.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-xs font-semibold text-white">
-            Detected pathological matches
+            Possible pathological matches
           </h4>
           <div className="space-y-2">
             {imageAnalysis.diseases.map(disease => (
@@ -263,8 +291,12 @@ export const AnalysisResultsHUD: React.FC<{
                   </span>
                 </div>
                 <p className="text-xs font-mono text-emerald-400 tabular-nums">
-                  Confidence: {(disease.confidence * 100).toFixed(1)}%
+                  Model-reported confidence: {(disease.confidence * 100).toFixed(1)}%
                 </p>
+                <p className="mt-1 text-xs text-slate-300">{disease.description}</p>
+                {Array.isArray(disease.symptoms) && disease.symptoms.length > 0 && (
+                  <p className="mt-1 text-xs text-slate-400">Reported symptoms: {disease.symptoms.join('; ')}</p>
+                )}
                 <p className="mt-1 text-xs text-amber-300 font-mono flex items-start gap-1">
                   <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                   {disease.safetyNotice}

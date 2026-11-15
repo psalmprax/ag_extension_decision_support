@@ -73,6 +73,24 @@ describe('Deep-Tier Security — AgronomicSafetyGuard AI Boundary Validation', (
       expect(result.safe).toBe(false);
       expect(result.violations.length).toBeGreaterThan(0);
     });
+
+    it('does not replace seasonal guidance because a separate sentence mentions crop yield and fertilizer', () => {
+      const seasonalAnswer =
+        'West Africa has several rainfall zones, so planting timing varies by country and locality. A historical fertilizer trial reported maize yield of 2.5 tonnes per hectare. Check the current local rainfall outlook before sowing.';
+      const result = agronomicSafetyGuard.guardAndEnrichAdvice(seasonalAnswer);
+
+      expect(result.boundaryCheck.safe).toBe(true);
+      expect(result.text).toBe(seasonalAnswer);
+    });
+
+    it('still withholds an unverified pesticide rate even when the answer includes useful planting context', () => {
+      const answer =
+        'Rainfed planting follows reliable local rainfall. Apply neem at 3 ml/L to control pests.';
+      const result = agronomicSafetyGuard.guardAndEnrichAdvice(answer);
+
+      expect(result.boundaryCheck.safe).toBe(false);
+      expect(result.text).not.toContain('3 ml/L');
+    });
   });
 
   describe('3. Knapsack Sprayer Calibration & Advice Enrichment', () => {

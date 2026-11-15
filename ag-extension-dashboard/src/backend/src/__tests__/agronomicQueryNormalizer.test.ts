@@ -1,6 +1,31 @@
-import { normalizeAgronomicQuery, isAgronomicContent, prepareWebSearchQuery } from '../utils/agronomicQueryNormalizer';
+import {
+    extractAgronomicIntakeContext,
+    normalizeAgronomicQuery,
+    isAgronomicContent,
+    prepareWebSearchQuery,
+} from '../utils/agronomicQueryNormalizer';
 
 describe('agronomicQueryNormalizer', () => {
+    it('separates optional intake context from the question for retrieval', () => {
+        const result = extractAgronomicIntakeContext(
+            'What season is West Africa in? [Agronomic Context: Location/Zone=Zone 5–6 (Temperate / Midwest), Soil=Well-Drained Loam / Silt, Water=Rainfed / Dryland, Goal=Commercial Yield]'
+        );
+        expect(result.query).toBe('What season is West Africa in?');
+        expect(result.context).toEqual({
+            locationZone: 'Zone 5–6 (Temperate / Midwest)',
+            soil: 'Well-Drained Loam / Silt',
+            water: 'Rainfed / Dryland',
+            goal: 'Commercial Yield',
+        });
+    });
+
+    it('does not add a location to an otherwise unmodified query', () => {
+        expect(extractAgronomicIntakeContext('What crops are in season?')).toEqual({
+            query: 'What crops are in season?',
+            context: {},
+        });
+    });
+
     describe('normalizeAgronomicQuery', () => {
         it('corrects "farners" to "farmers"', () => {
             const result = normalizeAgronomicQuery('what are challenges Nigeria farners face?');

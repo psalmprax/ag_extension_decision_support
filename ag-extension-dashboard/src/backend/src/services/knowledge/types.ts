@@ -16,6 +16,10 @@ export interface ReasonOptions {
     region?: string;
     language?: string;
     allowTools?: boolean;
+    locationZone?: string;
+    soil?: string;
+    water?: string;
+    goal?: string;
 }
 
 export interface AskOptions extends ReasonOptions {
