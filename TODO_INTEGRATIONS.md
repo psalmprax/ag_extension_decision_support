@@ -92,3 +92,48 @@
 | OpenMontage evaluation | ✅ Completed | ag-extension-dashboard | 2026-07-06 | Content generation eval |
 | Open Design prototyping | ✅ Completed | ag-extension-dashboard | 2026-07-06 | UI/UX iteration |
 | Dev tooling plugins | ✅ Completed | ag-extension-dashboard | 2026-07-06 | Dev velocity improved |
+
+---
+
+## 🔴 Dependency & Deployment Risk Register (2026-11-15 audit)
+
+Items that need staged work against live services and therefore were NOT
+changed blindly. Each entry lists the risk and the concrete remediation.
+
+### Supply chain
+- [ ] **`xlsx` resolves to `https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz`** —
+  every `npm ci` depends on a third-party CDN with no lockfile integrity hash
+  (npm omits `integrity` for remote tarballs). Do NOT downgrade to the npm
+  registry's `xlsx` (stale, carries known CVEs fixed only in 0.20.x). Fix:
+  vendor the tarball (`vendor/xlsx-0.20.2.tgz`, committed, referenced as a
+  `file:` dependency) or mirror it in a registry you control, then record its
+  SHA-512 beside it.
+- [ ] **`@anthropic-ai/sdk` ^0.6.2** — pre-Messages-API SDK. Upgrade to the
+  current SDK and migrate call sites in `services/providers/` (completions →
+  messages); needs a live-key smoke test per provider route.
+- [ ] **`@google/generative-ai` ^0.1.3** — deprecated in favour of
+  `@google/genai`. Same migration/smoke-test procedure.
+- [ ] **`@azure/openai` 1.0.0-beta.x** — retired; Azure now routes through the
+  official `openai` SDK with Azure options. Migrate and smoke-test.
+- [ ] **`paypal-rest-sdk`** — abandoned upstream since 2019. Migrate billing to
+  `@paypal/paypal-server-sdk` (or PSP of choice); touch
+  `services/paypalService.ts` + `pending_paypal_payments` flow together.
+- [ ] **ESLint 8 (EOL)** — both workspaces. Requires flat-config migration;
+  mechanical but noisy, do it in its own PR.
+
+### Deployment pipeline (deploy-all.yml)
+- [ ] **SSH as root** — create a dedicated `deploy` user on the droplets (docker
+  group, no sudo), chown the compose tree, swap `username: root` in the four
+  appleboy/ssh-action blocks.
+- [ ] **On-host image builds** — images are built on the production host at
+  deploy time. Build in CI, push to GHCR by digest, and have the host only
+  `docker compose pull && up -d`. Removes the port-80/443 "kill whatever is
+  listening" window and most of the 1,298-line workflow's failure modes.
+- [ ] **`|| true` inventory** — after the registry migration, re-audit the ~40
+  `|| true` suffixes; each one that remains must state why failure is safe.
+
+### Scope
+- [ ] **501-prototype surface** — several route families return 501 by design
+  (see README). Decide per family: promote (fund real integration), demote
+  (move behind `FEATURE_*` flags, default off), or delete. Keeping them
+  mounted inflates the attack/audit surface for no user value.
