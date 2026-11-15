@@ -46,7 +46,7 @@ jobs:
           RUN_SEED: ${{ github.event.inputs.run_seed }}
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
-          username: root
+          username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           envs: TARGET_EMAIL,RUN_SEED
           command_timeout: 10m
@@ -58,7 +58,7 @@ jobs:
               *[!A-Za-z0-9@._+-]*|'') echo "❌ Invalid admin email input"; exit 1 ;;
             esac
 
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
 
             # Whatever happens below, never leave the plaintext password in the host .env.

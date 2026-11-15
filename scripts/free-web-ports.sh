@@ -22,6 +22,9 @@ set -uo pipefail
 PROJECT="${1:-${COMPOSE_PROJECT_NAME:-$(basename "$PWD")}}"
 PORTS="80 443"
 SS_FILTER='( sport = :80 or sport = :443 )'
+# Non-root deploy users stop host services via a narrow sudoers rule
+# (scripts/provision-deploy-user.sh); -n fails fast instead of prompting.
+SUDO=""; [ "$(id -u)" -eq 0 ] || SUDO="sudo -n"
 
 listeners() { ss -Htlnp "$SS_FILTER" 2>/dev/null; }
 publishers() {
@@ -45,8 +48,8 @@ done
 for svc in apache2 nginx; do
   if systemctl is-active --quiet "$svc" 2>/dev/null; then
     echo "  stopping host $svc"
-    systemctl stop "$svc"
-    systemctl disable "$svc" >/dev/null 2>&1 || true
+    $SUDO systemctl stop "$svc"
+    $SUDO systemctl disable "$svc" >/dev/null 2>&1 || true
   fi
 done
 

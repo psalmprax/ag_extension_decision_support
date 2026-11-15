@@ -127,7 +127,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
-          username: root
+          username: ${{ vars.TEST_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           command_timeout: 3m
           envs: GITHUB_TOKEN
@@ -136,12 +136,12 @@ jobs:
             : "${GITHUB_TOKEN:?GITHUB_TOKEN must be supplied by the workflow for git sync}"
             REPO_URL="https://github.com/${{ github.repository }}.git"
             AUTH_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
-            if [ ! -d "/root/ag_extension_decision_support/.git" ]; then
+            if [ ! -d "${HOME:?}/ag_extension_decision_support/.git" ]; then
               echo "Cloning repository..."
-              rm -rf /root/ag_extension_decision_support
-              cd /root && git clone "$AUTH_URL" ag_extension_decision_support
+              rm -rf ${HOME:?}/ag_extension_decision_support
+              cd "${HOME:?}" && git clone "$AUTH_URL" ag_extension_decision_support
             fi
-            cd /root/ag_extension_decision_support
+            cd ${HOME:?}/ag_extension_decision_support
             chmod -R u+rw .git 2>/dev/null || true
             rm -rf .git/config.lock .git/*.lock .git/refs/heads/*.lock 2>/dev/null || true
             # Scrub any token a previous deploy persisted in the remote URL.
@@ -153,7 +153,7 @@ jobs:
               git checkout -B ${{ github.ref_name }} origin/${{ github.ref_name }}
             fi
             git merge --ff-only refs/remotes/origin/${{ github.ref_name }}
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
             if [ ! -f .env ]; then
               cp .env.example .env
               echo ".env created from .env.example"
@@ -221,12 +221,12 @@ jobs:
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
-          username: root
+          username: ${{ vars.TEST_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           command_timeout: 6m
           script: |
             set -e
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.agents.yml"
 
             DB_UP=$(docker ps --filter "name=ag-dashboard-db" --filter "status=running" -q)
@@ -272,7 +272,7 @@ jobs:
           COMPOSE_PROFILES: ai
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
-          username: root
+          username: ${{ vars.TEST_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           # Extend the appleboy/ssh-action forwarding whitelist so the
           # step-level `env: COMPOSE_PROFILES: ai` actually reaches the
@@ -282,7 +282,8 @@ jobs:
           command_timeout: 1240m
           script: |
             set -e
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
+            export DOCKER_CACHE_DIR="${HOME:?}/docker-cache"  # read by docker-bake.hcl
             # Pin Docker daemon DNS to Cloudflare+Google so BuildKit + compose pulls
             # bypass Contabo's flaky default resolver (209.126.15.53). The earlier
             # /etc/resolv.conf swap is fragile: on Ubuntu 22 it is a systemd-resolved
@@ -295,14 +296,17 @@ jobs:
             # iptables (i.e., iptables fix is insufficient). The first two
             # entries cover the iptables-unblocked case at full UDP speed.
             TARGET_DNS='{"dns":["1.1.1.1","8.8.8.8","127.0.0.1"],"log-level":"warn"}'
-            mkdir -p /etc/docker
+            # Root-only host changes go through sudo when the deploy user is not root
+            # (scripts/provision-deploy-user.sh grants exactly these commands).
+            SUDO=""; [ "$(id -u)" -eq 0 ] || SUDO="sudo -n"
+            $SUDO mkdir -p /etc/docker
             CLEAN_CURRENT=$(cat /etc/docker/daemon.json 2>/dev/null | tr -d ' \n\t' || echo '{}')
             CLEAN_TARGET=$(echo "$TARGET_DNS" | tr -d ' \n\t')
             if [ "$CLEAN_CURRENT" != "$CLEAN_TARGET" ]; then
-              echo "$TARGET_DNS" > /etc/docker/daemon.json
+              echo "$TARGET_DNS" | $SUDO tee /etc/docker/daemon.json >/dev/null
               echo "Pinning Docker daemon DNS to 1.1.1.1 + 8.8.8.8..."
               echo "  Restarting Docker daemon to pick up new DNS..."
-              systemctl restart docker
+              $SUDO systemctl restart docker
               for i in $(seq 1 30); do
                 if docker info >/dev/null 2>&1; then
                   echo "  Docker daemon up after ${i}s."
@@ -327,9 +331,9 @@ jobs:
             # by ensuring the FORWARD + OUTPUT chains ACCEPT UDP/53 to/from
             # the bridge subnet regardless of buildx network-mode behaviour.
             # `iptables -C` exits 0 when rule exists → we skip the -I insert.
-            iptables -C FORWARD -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || iptables -I FORWARD 1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
-            iptables -C FORWARD -d 172.17.0.0/16 -p udp --sport 53 -j ACCEPT 2>/dev/null || iptables -I FORWARD 1 -d 172.17.0.0/16 -p udp --sport 53 -j ACCEPT
-            iptables -C OUTPUT  -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || iptables -I OUTPUT  1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
+            $SUDO iptables -C FORWARD -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || $SUDO iptables -I FORWARD 1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
+            $SUDO iptables -C FORWARD -d 172.17.0.0/16 -p udp --sport 53 -j ACCEPT 2>/dev/null || $SUDO iptables -I FORWARD 1 -d 172.17.0.0/16 -p udp --sport 53 -j ACCEPT
+            $SUDO iptables -C OUTPUT  -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || $SUDO iptables -I OUTPUT  1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
             echo "  iptables UDP/53 from 172.17.0.0/16: ensured"
 
             # Proactively prune dangling images and old builder cache to preserve disk space
@@ -347,15 +351,15 @@ jobs:
             # can leave that tree half-written, so the next export fails with
             # "rename .../startedat.tmp ...: no such file or directory". Removing
             # stale ingest dirs before baking lets the exporter start clean.
-            find /root/docker-cache -type d -name ingest -prune -exec rm -rf {} + 2>/dev/null || true
+            find ${HOME:?}/docker-cache -type d -name ingest -prune -exec rm -rf {} + 2>/dev/null || true
             echo "  Stale local-cache ingest state cleared."
 
             CLEAN_REBUILD="${{ github.event.inputs.force_clean_rebuild == 'true' && '--no-cache' || '' }}"
 
             if [ -n "$CLEAN_REBUILD" ]; then
               echo "Clean rebuild forced — building without cache in batches..."
-              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend
-              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl agent-zero crew-ai discovery-scraper
+              docker buildx bake --allow=fs="${HOME:?}" --load -f docker-bake.hcl backend frontend
+              docker buildx bake --allow=fs="${HOME:?}" --load -f docker-bake.hcl agent-zero crew-ai discovery-scraper
             else
               echo "Authenticating to GHCR for remote Docker layer cache..."
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
@@ -364,9 +368,9 @@ jobs:
               # This cuts peak memory and concurrent layer extraction in half, preventing buildkitd OOM / transport drops.
               run_bake() {
                 echo "==> [Bake 1/2] Building web services (backend, frontend)..."
-                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend
+                docker buildx bake --allow=fs="${HOME:?}" --load -f docker-bake.hcl backend frontend
                 echo "==> [Bake 2/2] Building agent & scraper services (agent-zero, crew-ai, discovery-scraper)..."
-                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl agent-zero crew-ai discovery-scraper
+                docker buildx bake --allow=fs="${HOME:?}" --load -f docker-bake.hcl agent-zero crew-ai discovery-scraper
               }
 
               echo "Building with remote cache (GHCR)..."
@@ -375,7 +379,7 @@ jobs:
                 echo "$BAKE_OUTPUT" | tail -40
                 if echo "$BAKE_OUTPUT" | grep -qE "startedat\.tmp|error writing layer blob|ingest/|connection error|graceful_stop|EOF|Unavailable|transport is closing|failed to receive status"; then
                   echo "Recoverable builder transport or cache-export issue detected. Resetting builder, clearing stale ingest state, and retrying..."
-                  find /root/docker-cache -type d -name ingest -prune -exec rm -rf {} + 2>/dev/null || true
+                  find ${HOME:?}/docker-cache -type d -name ingest -prune -exec rm -rf {} + 2>/dev/null || true
                   docker buildx rm remote-builder 2>/dev/null || true
                   docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
                   BAKE_OUTPUT=$(run_bake 2>&1) || { echo "$BAKE_OUTPUT" | tail -40; echo "FATAL: Bake failed after builder reset & cache cleanup retry." >&2; exit 1; }
@@ -449,12 +453,12 @@ jobs:
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
-          username: root
+          username: ${{ vars.TEST_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           command_timeout: 20m
           script: |
             set -e
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.agents.yml"
 
             echo "Ensuring pgvector + postgis extensions exist..."
@@ -523,11 +527,11 @@ jobs:
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
-          username: root
+          username: ${{ vars.TEST_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           command_timeout: 3m
           script: |
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.agents.yml"
             docker exec ag-dashboard-backend npx prisma db seed
             echo "Purging truncated or poisoned search_cache entries..."
@@ -541,7 +545,7 @@ jobs:
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
-          username: root
+          username: ${{ vars.TEST_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           command_timeout: 3m
           script: |
@@ -613,7 +617,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
-          username: root
+          username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           envs: GITHUB_TOKEN,JWT_SECRET,OPENAI_API_KEY,GROQ_API_KEY,ANTHROPIC_API_KEY,AZURE_OPENAI_API_KEY,GOOGLE_VERTEX_PROJECT_ID,AIHUBMIX_API_KEY,AIHUBMIX_ACCESS_KEY,OPENROUTER_API_KEY,HUGGINGFACE_API_KEY,NVIDIA_API_KEY,FREEBUFF_AUTH_TOKEN,WEATHER_API_KEY,WEATHER_API_URL,TAVILY_API_KEY,ACME_EMAIL,DEMO_ENABLED,DEMO_PASSWORD,AI_PRIMARY_PROVIDER,AI_PRIMARY_MODEL,AIHUBMIX_WEB_SEARCH,AI_FALLBACK_PROVIDER,AI_FALLBACK_MODEL,AI_EMBEDDINGS_PROVIDER,AI_EMBEDDINGS_MODEL,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_DEPLOYMENT_NAME,OLLAMA_HOST,OLLAMA_MODEL,MCP_API_TOKEN,CORS_ORIGIN
           command_timeout: 3m
@@ -624,11 +628,11 @@ jobs:
             : "${GITHUB_TOKEN:?GITHUB_TOKEN must be supplied by the workflow for git sync}"
             REPO_URL="https://github.com/${{ github.repository }}.git"
             AUTH_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
-            if [ ! -d "/root/ag_extension_decision_support/.git" ]; then
-              rm -rf /root/ag_extension_decision_support
-              cd /root && git clone "$AUTH_URL" ag_extension_decision_support
+            if [ ! -d "${HOME:?}/ag_extension_decision_support/.git" ]; then
+              rm -rf ${HOME:?}/ag_extension_decision_support
+              cd "${HOME:?}" && git clone "$AUTH_URL" ag_extension_decision_support
             fi
-            cd /root/ag_extension_decision_support
+            cd ${HOME:?}/ag_extension_decision_support
             chmod -R u+rw .git 2>/dev/null || true
             rm -rf .git/config.lock .git/*.lock .git/refs/heads/*.lock 2>/dev/null || true
             # Scrub any token a previous deploy persisted in the remote URL.
@@ -640,7 +644,7 @@ jobs:
               git checkout -B master refs/remotes/origin/master
             fi
             git merge --ff-only refs/remotes/origin/master
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
 
             if [ ! -f ".env" ]; then
               cp .env.example .env
@@ -721,12 +725,12 @@ jobs:
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
-          username: root
+          username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           command_timeout: 6m
           script: |
             set -e
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml"
 
             # Clean up dead or stopped container shells if present to prevent daemon name conflict
@@ -777,16 +781,16 @@ jobs:
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
-          username: root
+          username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           command_timeout: 10m
           script: |
             set -euo pipefail
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
             # Pre-build smoke gate with `--if-running`: probes existing containers if
             # running, but permits recovery deploys to proceed to Step 3/5 where
             # backend and ettametta-ollama are launched.
-            if ! bash /root/ag_extension_decision_support/scripts/smoke-ollama.sh --if-running --retries 18 --interval 10; then
+            if ! bash ${HOME:?}/ag_extension_decision_support/scripts/smoke-ollama.sh --if-running --retries 18 --interval 10; then
               echo "FATAL: ettametta-ollama smoke gate failed (service broken or unreachable)." >&2
               echo "----- ettametta-ollama container logs (last 50 lines, if present) -----"
               docker compose logs --tail 50 ettametta-ollama 2>&1 || echo "(no logs: container not present in this compose project)"
@@ -810,7 +814,7 @@ jobs:
           COMPOSE_PROFILES: ai
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
-          username: root
+          username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           # Extend the appleboy/ssh-action forwarding whitelist so the
           # step-level `env: COMPOSE_PROFILES: ai` actually reaches the
@@ -820,7 +824,8 @@ jobs:
           command_timeout: 1240m
           script: |
             set -e
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
+            export DOCKER_CACHE_DIR="${HOME:?}/docker-cache"  # read by docker-bake.hcl
             # Pin Docker daemon DNS to Cloudflare+Google so BuildKit + compose pulls
             # bypass Contabo's flaky default resolver (209.126.15.53). The earlier
             # /etc/resolv.conf swap is fragile: on Ubuntu 22 it is a systemd-resolved
@@ -833,14 +838,17 @@ jobs:
             # iptables (i.e., iptables fix is insufficient). The first two
             # entries cover the iptables-unblocked case at full UDP speed.
             TARGET_DNS='{"dns":["1.1.1.1","8.8.8.8","127.0.0.1"],"log-level":"warn"}'
-            mkdir -p /etc/docker
+            # Root-only host changes go through sudo when the deploy user is not root
+            # (scripts/provision-deploy-user.sh grants exactly these commands).
+            SUDO=""; [ "$(id -u)" -eq 0 ] || SUDO="sudo -n"
+            $SUDO mkdir -p /etc/docker
             CLEAN_CURRENT=$(cat /etc/docker/daemon.json 2>/dev/null | tr -d ' \n\t' || echo '{}')
             CLEAN_TARGET=$(echo "$TARGET_DNS" | tr -d ' \n\t')
             if [ "$CLEAN_CURRENT" != "$CLEAN_TARGET" ]; then
-              echo "$TARGET_DNS" > /etc/docker/daemon.json
+              echo "$TARGET_DNS" | $SUDO tee /etc/docker/daemon.json >/dev/null
               echo "Pinning Docker daemon DNS to 1.1.1.1 + 8.8.8.8..."
               echo "  Restarting Docker daemon to pick up new DNS..."
-              systemctl restart docker
+              $SUDO systemctl restart docker
               for i in $(seq 1 30); do
                 if docker info >/dev/null 2>&1; then
                   echo "  Docker daemon up after ${i}s."
@@ -865,17 +873,17 @@ jobs:
             # by ensuring the FORWARD + OUTPUT chains ACCEPT UDP/53 to/from
             # the bridge subnet regardless of buildx network-mode behaviour.
             # `iptables -C` exits 0 when rule exists → we skip the -I insert.
-            iptables -C FORWARD -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || iptables -I FORWARD 1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
-            iptables -C FORWARD -d 172.17.0.0/16 -p udp --sport 53 -j ACCEPT 2>/dev/null || iptables -I FORWARD 1 -d 172.17.0.0/16 -p udp --sport 53 -j ACCEPT
-            iptables -C OUTPUT  -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || iptables -I OUTPUT  1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
+            $SUDO iptables -C FORWARD -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || $SUDO iptables -I FORWARD 1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
+            $SUDO iptables -C FORWARD -d 172.17.0.0/16 -p udp --sport 53 -j ACCEPT 2>/dev/null || $SUDO iptables -I FORWARD 1 -d 172.17.0.0/16 -p udp --sport 53 -j ACCEPT
+            $SUDO iptables -C OUTPUT  -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || $SUDO iptables -I OUTPUT  1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
             echo "  iptables UDP/53 from 172.17.0.0/16: ensured"
 
             # Proactively prune dangling images and old builder cache to preserve disk space
             echo "Pruning dangling images and builder cache..."
             ROOT_USAGE=$(df / | awk 'NR==2 {print $5}' | tr -d '%')
             if [ "$ROOT_USAGE" -gt 70 ]; then
-              echo "Disk usage high (${ROOT_USAGE}%) — clearing /root/docker-cache and builder caches..."
-              rm -rf /root/docker-cache/* 2>/dev/null || true
+              echo "Disk usage high (${ROOT_USAGE}%) — clearing ${HOME}/docker-cache and builder caches..."
+              rm -rf ${HOME:?}/docker-cache/* 2>/dev/null || true
               docker builder prune -af 2>/dev/null || true
               docker image prune -af 2>/dev/null || true
             else
@@ -893,15 +901,15 @@ jobs:
             # can leave that tree half-written, so the next export fails with
             # "rename .../startedat.tmp ...: no such file or directory". Removing
             # stale ingest dirs before baking lets the exporter start clean.
-            find /root/docker-cache -type d -name ingest -prune -exec rm -rf {} + 2>/dev/null || true
+            find ${HOME:?}/docker-cache -type d -name ingest -prune -exec rm -rf {} + 2>/dev/null || true
             echo "  Stale local-cache ingest state cleared."
 
             CLEAN_REBUILD="${{ github.event.inputs.force_clean_rebuild == 'true' && '--no-cache' || '' }}"
 
             if [ -n "$CLEAN_REBUILD" ]; then
               echo "Clean rebuild forced — building without cache in batches..."
-              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend
-              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl agent-zero crew-ai discovery-scraper
+              docker buildx bake --allow=fs="${HOME:?}" --load -f docker-bake.hcl backend frontend
+              docker buildx bake --allow=fs="${HOME:?}" --load -f docker-bake.hcl agent-zero crew-ai discovery-scraper
             else
               echo "Authenticating to GHCR for remote Docker layer cache..."
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
@@ -910,9 +918,9 @@ jobs:
               # This cuts peak memory and concurrent layer extraction in half, preventing buildkitd OOM / transport drops.
               run_bake() {
                 echo "==> [Bake 1/2] Building web services (backend, frontend)..."
-                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend
+                docker buildx bake --allow=fs="${HOME:?}" --load -f docker-bake.hcl backend frontend
                 echo "==> [Bake 2/2] Building agent & scraper services (agent-zero, crew-ai, discovery-scraper)..."
-                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl agent-zero crew-ai discovery-scraper
+                docker buildx bake --allow=fs="${HOME:?}" --load -f docker-bake.hcl agent-zero crew-ai discovery-scraper
               }
 
               echo "Building with remote cache (GHCR)..."
@@ -921,7 +929,7 @@ jobs:
                 echo "$BAKE_OUTPUT" | tail -40
                 if echo "$BAKE_OUTPUT" | grep -qE "startedat\.tmp|error writing layer blob|ingest/|connection error|graceful_stop|EOF|Unavailable|transport is closing|failed to receive status|no space left on device|ResourceExhausted"; then
                   echo "Recoverable builder transport, disk-space, or cache issue detected. Purging local cache and retrying..."
-                  rm -rf /root/docker-cache/* 2>/dev/null || true
+                  rm -rf ${HOME:?}/docker-cache/* 2>/dev/null || true
                   docker builder prune -af 2>/dev/null || true
                   docker buildx rm -f remote-builder 2>/dev/null || true
                   docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
@@ -996,12 +1004,12 @@ jobs:
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
-          username: root
+          username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           command_timeout: 20m
           script: |
             set -e
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml"
 
             echo "Ensuring pgvector + postgis extensions exist..."
@@ -1081,11 +1089,11 @@ jobs:
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
-          username: root
+          username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           command_timeout: 3m
           script: |
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
             if docker compose $COMPOSE_FILES exec -T backend node prisma/seed.cjs; then
               echo "Seed completed with the compiled seed script."
@@ -1105,12 +1113,12 @@ jobs:
           ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
-          username: root
+          username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           envs: ACME_EMAIL
           command_timeout: 5m
           script: |
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
 
             # Ensure ACME_EMAIL is in .env
             if ! grep -q "ACME_EMAIL" .env 2>/dev/null; then
@@ -1176,12 +1184,12 @@ jobs:
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
-          username: root
+          username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           command_timeout: 10m
           script: |
             set -euo pipefail
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml"
 
             MAX_ATTEMPTS=12

@@ -37,6 +37,15 @@ echo "pkill $*" >> "$STUB_DIR/calls"
 exit 0
 `,
   sleep: '#!/bin/sh\nexit 0\n',
+  id: `#!/bin/sh
+[ "$1" = "-u" ] && { cat "$STUB_DIR/uid" 2>/dev/null || echo 0; exit 0; }
+exit 0
+`,
+  sudo: `#!/bin/sh
+echo "sudo $*" >> "$STUB_DIR/calls"
+[ "$1" = "-n" ] && shift
+exec "$@"
+`,
 };
 
 const PROXY_LINE = 'LISTEN 0 4096 0.0.0.0:80 0.0.0.0:* users:(("docker-proxy",pid=4242,fd=4))\n';
@@ -110,4 +119,18 @@ test('stops and disables an active host nginx, leaves inactive apache2 alone', (
   assert.match(r.calls, /systemctl stop nginx/);
   assert.match(r.calls, /systemctl disable nginx/);
   assert.doesNotMatch(r.calls, /systemctl stop apache2/);
+});
+
+test('as a non-root deploy user, stops host services through sudo -n', () => {
+  const r = run({ uid: '1001\n', active_apache2: '' });
+  assert.equal(r.status, 0, r.out);
+  assert.match(r.calls, /sudo -n systemctl stop apache2/);
+  assert.match(r.calls, /sudo -n systemctl disable apache2/);
+});
+
+test('as root, never invokes sudo', () => {
+  const r = run({ active_apache2: '' });
+  assert.equal(r.status, 0, r.out);
+  assert.doesNotMatch(r.calls, /sudo/);
+  assert.match(r.calls, /systemctl stop apache2/);
 });

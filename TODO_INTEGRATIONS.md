@@ -147,15 +147,26 @@ changed blindly. Each entry lists the risk and the concrete remediation.
   Compiler rules are a separate opt-in.
 
 ### Deployment pipeline (deploy-all.yml)
-- [ ] **SSH as root** — create a dedicated `deploy` user on the droplets (docker
-  group, no sudo), chown the compose tree, swap `username: root` in the four
-  appleboy/ssh-action blocks.
+- [ ] **SSH as root** — code side done (2026-11-15): every SSH step's user comes
+  from `TEST_DEPLOY_SSH_USER` / `PROD_DEPLOY_SSH_USER` (default `root`, so nothing
+  changes until set), all host paths are `$HOME`-relative, and the few root-only
+  host commands go through `sudo -n`. **Remaining (per host, you):** run
+  `sudo ./scripts/provision-deploy-user.sh` on the server, set the variable,
+  run a deploy, then set `PermitRootLogin no` (the script prints the steps).
+  Note: docker-group access is root-equivalent; the gain is no root SSH login,
+  a dedicated account in auth logs, and a 13-command sudo allowlist.
+- [x] **Port 80/443 takeover** — fixed (2026-11-15): `scripts/free-web-ports.sh`
+  no longer removes other projects' containers or kills unknown processes; it
+  fails with a diagnostic instead (9 tests, run in CI).
 - [ ] **On-host image builds** — images are built on the production host at
-  deploy time. Build in CI, push to GHCR by digest, and have the host only
-  `docker compose pull && up -d`. Removes the port-80/443 "kill whatever is
-  listening" window and most of the 1,298-line workflow's failure modes.
-- [ ] **`|| true` inventory** — after the registry migration, re-audit the ~40
-  `|| true` suffixes; each one that remains must state why failure is safe.
+  deploy time. Building in CI and pulling by digest would shrink the workflow
+  and keep build load off the server, but CLAUDE.md deliberately chose on-host
+  builds with a local BuildKit cache to avoid GHCR auth and rate-limit problems.
+  Needs an owner decision before changing; not changed.
+- [x] **`|| true` audit** — done (2026-11-15). Network creation is now
+  inspect-or-create; cache-purge failures raise `::warning`. The remaining
+  suffixes are idempotent cleanup, diagnostics or optional reads; the
+  convention is documented at the top of `deploy-all.yml`.
 
 ### Scope
 - [ ] **501-prototype surface** — several route families return 501 by design
