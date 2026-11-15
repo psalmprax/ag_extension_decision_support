@@ -12,7 +12,7 @@
 
 ## 1. Executive Summary & Vision
 
-The **Talking Assistant** deployed on the platform landing page ([`TalkingAssistant.tsx`](../../ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx)) demonstrates the platform's voice intelligence and agronomic decision engine. 
+The **Talking Assistant** deployed on the platform landing page ([`TalkingAssistant.tsx`](../../ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx)) demonstrates the platform's voice intelligence and agronomic decision engine.
 
 To maximize client engagement, conversion, and advisory value, this enhancement upgrades the assistant from a single-turn demonstration into a **fully interactive, multi-turn conversational AI companion**. Prospective clients and smallholder farmers can conduct a natural spoken or typed dialogue with context continuity, receive grounded agronomic diagnoses, explore agricultural market data, and seamlessly transition their conversation directly into the authenticated platform upon registration.
 
