@@ -102,12 +102,15 @@ changed blindly. Each entry lists the risk and the concrete remediation.
 
 ### Supply chain
 - [ ] **`xlsx` resolves to `https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz`** —
-  every `npm ci` depends on a third-party CDN with no lockfile integrity hash
-  (npm omits `integrity` for remote tarballs). Do NOT downgrade to the npm
-  registry's `xlsx` (stale, carries known CVEs fixed only in 0.20.x). Fix:
-  vendor the tarball (`vendor/xlsx-0.20.2.tgz`, committed, referenced as a
-  `file:` dependency) or mirror it in a registry you control, then record its
-  SHA-512 beside it.
+  integrity is fine (both lockfiles pin its sha512, so `npm ci` rejects a
+  tampered tarball; an earlier note here wrongly said otherwise). The risk is
+  availability: if the CDN is down or the URL disappears, every CI, Docker and
+  local install fails. Fix in one command from a machine that can reach the
+  CDN: `./scripts/vendor-xlsx.sh` — downloads, verifies against the pinned
+  sha512, vendors into `ag-extension-dashboard/src/backend/vendor/`, repoints
+  the dependency, regenerates both lockfiles and adds the `vendor/` COPY to the
+  three Dockerfile stages that install. Then commit. Do NOT swap to the npm
+  registry's `xlsx` (0.18.5, unmaintained, with CVEs fixed only in 0.20.x).
 - [x] **`@anthropic-ai/sdk`** — upgraded ^0.6.2 → ^1.8.0 (2026-11-15). The provider already
   targeted the Messages API, which 0.6.x never shipped, so the pinned SDK could
   never have worked at runtime. Default model is now config-driven
