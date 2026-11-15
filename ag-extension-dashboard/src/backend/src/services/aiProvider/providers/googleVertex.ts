@@ -20,6 +20,34 @@ import {
 import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
+import { EMBEDDING_DIMENSIONS } from '@/services/embeddingDimensions';
+
+type GoogleAuth =
+    | { mode: 'apiKey'; apiKey: string }
+    | { mode: 'vertex'; project: string; location: string };
+
+let warnedLegacyKey = false;
+
+/**
+ * Resolves how to authenticate, or null when the provider is not configured.
+ *  1. GEMINI_API_KEY / GOOGLE_API_KEY → Gemini Developer API.
+ *  2. Legacy: an API key ("AIza…") stored in GOOGLE_VERTEX_PROJECT_ID, which
+ *     older deployments relied on. Still honoured, with a warning.
+ *  3. A real project ID → Vertex AI with Application Default Credentials.
+ */
+export function resolveGoogleAuth(): GoogleAuth | null {
+    const { apiKey, projectId, location } = config.googleVertex;
+    if (apiKey) return { mode: 'apiKey', apiKey };
+    if (!projectId || projectId === 'your-project-id') return null;
+    if (projectId.startsWith('AIza')) {
+        if (!warnedLegacyKey) {
+            warnedLegacyKey = true;
+            logger.warn('GOOGLE_VERTEX_PROJECT_ID holds an API key; move it to GEMINI_API_KEY.');
+        }
+        return { mode: 'apiKey', apiKey: projectId };
+    }
+    return { mode: 'vertex', project: projectId, location: location || 'us-central1' };
+}
 
 export class GoogleVertexProvider extends BaseAIProvider {
     readonly provider: AIProviderType = 'google_vertex';
@@ -32,7 +60,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
     ];
 
     isConfigured(): boolean {
-        return !!config.googleVertex.projectId && config.googleVertex.projectId !== 'your-project-id';
+        return resolveGoogleAuth() !== null;
     }
 
     private client: any = null;
@@ -44,11 +72,13 @@ export class GoogleVertexProvider extends BaseAIProvider {
         }
 
         try {
-            // @google/generative-ai was deprecated in favour of @google/genai.
-            // The same credential is kept: GOOGLE_VERTEX_PROJECT_ID has always
-            // carried the API key for this provider (see config.googleVertex).
+            const auth = resolveGoogleAuth();
             const { GoogleGenAI } = await import('@google/genai');
-            this.client = new GoogleGenAI({ apiKey: config.googleVertex.projectId });
+            this.client = auth?.mode === 'apiKey'
+                ? new GoogleGenAI({ apiKey: auth.apiKey })
+                // Vertex AI: credentials come from Application Default
+                // Credentials (GOOGLE_APPLICATION_CREDENTIALS / metadata server).
+                : new GoogleGenAI({ vertexai: true, project: auth?.project, location: auth?.location });
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize Google Vertex client:', error);
@@ -103,7 +133,13 @@ export class GoogleVertexProvider extends BaseAIProvider {
         try {
             // embedding-001 was retired with the old SDK; gemini-embedding-001 is
             // the current Gemini API embedding model.
-            const result = await client.models.embedContent({ model: 'gemini-embedding-001', contents: text });
+            const result = await client.models.embedContent({
+                model: 'gemini-embedding-001',
+                contents: text,
+                // pgvector columns are vector(EMBEDDING_DIMENSIONS); the model's native
+                // size is 3072, so it must be pinned or every insert is rejected.
+                config: { outputDimensionality: EMBEDDING_DIMENSIONS },
+            });
             return {
                 embedding: result.embeddings?.[0]?.values ?? [],
                 model: 'gemini-embedding-001',
@@ -120,7 +156,11 @@ export class GoogleVertexProvider extends BaseAIProvider {
         const model = options?.model || 'gemini-embedding-001';
 
         try {
-            const result = await client.models.embedContent({ model, contents: texts });
+            const result = await client.models.embedContent({
+                model,
+                contents: texts,
+                config: { outputDimensionality: EMBEDDING_DIMENSIONS },
+            });
             return (result.embeddings ?? []).map((item: any) => ({
                 embedding: item.values ?? [],
                 model,

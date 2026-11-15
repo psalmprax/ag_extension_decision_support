@@ -18,8 +18,8 @@ export interface AppConfig {
         embeddings: { provider: string; model: string };
         speech: { provider: string; voice: string };
     };
-    azureOpenAI: { apiKey: string; endpoint: string; deploymentName: string; apiVersion: string };
-    googleVertex: { projectId: string; location: string };
+    azureOpenAI: { apiKey: string; endpoint: string; deploymentName: string; apiVersion: string; embeddingDeployment: string };
+    googleVertex: { projectId: string; location: string; apiKey: string };
     openAI: { apiKey: string };
     anthropic: { apiKey: string; model: string };
     groq: { apiKey: string };
@@ -169,11 +169,16 @@ export const config: AppConfig = {
         endpoint: getEnv('AZURE_OPENAI_ENDPOINT'),
         deploymentName: getEnv('AZURE_OPENAI_DEPLOYMENT_NAME', 'gpt-4'),
         apiVersion: getEnv('AZURE_OPENAI_API_VERSION', '2024-10-21'),
+        // Embeddings need their own deployment; the chat deployment cannot serve them.
+        embeddingDeployment: getEnv('AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'text-embedding-3-large'),
     },
 
     googleVertex: {
-        projectId: getEnv('GOOGLE_VERTEX_PROJECT_ID'),
+        // GOOGLE_VERTEX_PROJECT is the name .env.example has always documented.
+        projectId: getEnv('GOOGLE_VERTEX_PROJECT_ID') || getEnv('GOOGLE_VERTEX_PROJECT'),
         location: getEnv('GOOGLE_VERTEX_LOCATION', 'us-central1'),
+        // Gemini Developer API key. Takes precedence over Vertex (ADC) auth.
+        apiKey: getEnv('GEMINI_API_KEY') || getEnv('GOOGLE_API_KEY'),
     },
 
     openAI: {

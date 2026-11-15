@@ -20,6 +20,7 @@ import {
 import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
+import { EMBEDDING_DIMENSIONS } from '@/services/embeddingDimensions';
 
 export class AzureOpenAIProvider extends BaseAIProvider {
     readonly provider: AIProviderType = 'azure_openai';
@@ -61,7 +62,9 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             this.client = new AzureOpenAI({
                 endpoint: config.azureOpenAI.endpoint,
                 apiKey: config.azureOpenAI.apiKey,
-                deployment: config.azureOpenAI.deploymentName,
+                // No client-level `deployment`: it would pin every request to
+                // /deployments/{chat}, sending embeddings to the chat model. The
+                // SDK routes each request by its `model` (= deployment name).
                 apiVersion: config.azureOpenAI.apiVersion,
             });
             return this.client;
@@ -136,10 +139,10 @@ export class AzureOpenAIProvider extends BaseAIProvider {
 
     async createEmbedding(text: string, options?: EmbeddingOptions): Promise<EmbeddingResult> {
         const client = await this.getClient();
-        const model = options?.model || 'text-embedding-3-large';
+        const model = options?.model || config.azureOpenAI.embeddingDeployment;
 
         try {
-            const response = await client.embeddings.create({ model, input: text });
+            const response = await client.embeddings.create({ model, input: text, dimensions: EMBEDDING_DIMENSIONS });
             return {
                 embedding: response.data[0].embedding,
                 model,
@@ -153,10 +156,10 @@ export class AzureOpenAIProvider extends BaseAIProvider {
 
     async createBatchEmbeddings(texts: string[], options?: EmbeddingOptions): Promise<EmbeddingResult[]> {
         const client = await this.getClient();
-        const model = options?.model || 'text-embedding-3-large';
+        const model = options?.model || config.azureOpenAI.embeddingDeployment;
 
         try {
-            const response = await client.embeddings.create({ model, input: texts });
+            const response = await client.embeddings.create({ model, input: texts, dimensions: EMBEDDING_DIMENSIONS });
             return response.data.map((item: any) => ({
                 embedding: item.embedding,
                 model,

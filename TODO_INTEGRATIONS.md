@@ -114,11 +114,16 @@ changed blindly. Each entry lists the risk and the concrete remediation.
   (`ANTHROPIC_MODEL`, default `claude-sonnet-5-5`; the old hardcoded
   `claude-3-5-sonnet-20241022` was retired Oct 2025). Still needs a live-key smoke test.
 - [x] **`@google/generative-ai`** — migrated to `@google/genai` ^3.3.0 (2026-11-15). Embedding
-  model moved from retired `embedding-001` to `gemini-embedding-001` (NOTE:
-  3072-dim vs 768-dim — re-embed any vectors stored from this provider).
-  Still needs a live-key smoke test.
+  model moved from retired `embedding-001` to `gemini-embedding-001`, pinned to
+  `outputDimensionality: EMBEDDING_DIMENSIONS` (768) so it fits the pgvector
+  columns. Auth fixed: a real `GOOGLE_VERTEX_PROJECT_ID` now uses Vertex AI +
+  ADC (it was previously passed to the SDK as an API key); API keys go in
+  `GEMINI_API_KEY` (a legacy `AIza…` key in the project-ID var still works,
+  with a warning). Still needs a live-key smoke test.
 - [x] **`@azure/openai`** — removed (2026-11-15); the provider now uses the official `openai`
   SDK's `AzureOpenAI` client (`AZURE_OPENAI_API_VERSION`, default 2024-10-21).
+  Requests route per call by deployment name; embeddings use
+  `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` with `dimensions` pinned to 768.
   Still needs a live-key smoke test.
 - [ ] **`paypal-rest-sdk`** — abandoned upstream since 2019. Migrate billing to
   `@paypal/paypal-server-sdk` (or PSP of choice); touch
