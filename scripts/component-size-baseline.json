@@ -1,6 +1,6 @@
 {
   "App.tsx": 658,
-  "components/AgronomicIntakeCard.tsx": 349,
+  "components/AgronomicIntakeCard.tsx": 364,
   "components/AntiFraudVerificationBadge.tsx": 406,
   "components/AppModals.tsx": 495,
   "components/BillingDashboard.tsx": 871,
@@ -56,7 +56,7 @@
   "pages/Telemetry.tsx": 367,
   "pages/UserManagementPage.tsx": 709,
   "pages/VisitsPage.tsx": 364,
-  "pages/diagnostics/ImageAnalysisTab.tsx": 451,
+  "pages/diagnostics/ImageAnalysisTab.tsx": 483,
   "pages/diagnostics/SoilDiagnosticsTab.tsx": 756,
   "pages/diagnostics/SymptomDiagnosisTab.tsx": 334,
   "pages/landing/sections/FarmerServices.tsx": 386,
