@@ -33,6 +33,9 @@ jobs:
         run: |
           cd ag-extension-dashboard/src/frontend
           npm run lint
+
+      - name: Component-size ratchet (CLAUDE.md 300-line rule)
+        run: node scripts/component-size-ratchet.cjs
   
       - name: Validate locale translations
         run: |
