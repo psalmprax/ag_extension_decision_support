@@ -2,8 +2,8 @@
  * Body-limit regression tests.
  *
  * The global pre-auth parsers are capped at 1MB; media-heavy API prefixes are
- * re-opened to 16MB **for authenticated requests** (and for signature-verified
- * webhook endpoints). Anonymous clients are capped at 1MB everywhere — a 16MB
+ * re-opened to LARGE_BODY_LIMIT (default 50MB) **for authenticated requests**; signature-verified
+ * webhook endpoints get a bounded 4MB. Other anonymous clients are capped at 1MB — a large
  * pre-auth parser is a DoS amplification surface. Guards all three directions:
  *   - anonymous 1.5MB JSON on a normal route must be rejected (413)
  *   - the same payload from an anonymous client on a media route → 413
@@ -27,7 +27,7 @@ import { config } from '../config';
 import app from '../app';
 import { csrfTokenFor } from '../middleware/authCookie';
 
-// 1.5MB of JSON — over the 1MB global cap, under the 16MB media cap.
+// 1.5MB of JSON — over the 1MB global cap, under the media cap.
 const bigPayload = { data: 'x'.repeat(1.5 * 1024 * 1024) };
 
 // optionalAuth verifies the signature and the (mocked) session store; a signed
@@ -69,7 +69,7 @@ describe('request body limits', () => {
     });
 
     it('rejects oversized JSON from ANONYMOUS clients on media-heavy routes (413)', async () => {
-        // The 16MB allowance is auth-gated; anonymous upload spam is capped.
+        // The large-body allowance is auth-gated; anonymous upload spam is capped.
         const res = await request(app).post('/api/ai/speech').send(bigPayload);
         expect(res.status).toBe(413);
     });
@@ -87,6 +87,23 @@ describe('request body limits', () => {
 
     it('still parses large JSON for authenticated clients on v1 media-heavy routes (no 413)', async () => {
         const res = await request(app).post('/api/v1/ai/speech').set(authHeader).send(bigPayload);
+        expect(res.status).not.toBe(413);
+    });
+});
+
+describe('anonymous webhook body limits', () => {
+    // Webhook bodies are parsed BEFORE their signature is verified, so the
+    // anonymous allowance must stay bounded (4MB) and never reach the
+    // authenticated LARGE_BODY_LIMIT.
+    const overWebhookCap = { data: 'x'.repeat(5 * 1024 * 1024) };
+
+    it.each(['/api/whatsapp/inbound', '/api/v1/whatsapp/inbound'])('rejects 5MB anonymous JSON at %s (413)', async path => {
+        const res = await request(app).post(path).send(overWebhookCap);
+        expect(res.status).toBe(413);
+    });
+
+    it('still parses a 1.5MB anonymous webhook payload (no 413)', async () => {
+        const res = await request(app).post('/api/whatsapp/inbound').send(bigPayload);
         expect(res.status).not.toBe(413);
     });
 });

@@ -305,7 +305,7 @@ class AgentOrchestrator {
     // another replica claimed it first, rowCount is 0 — drop it locally.
     task.status = 'running';
     task.startedAt = new Date().toISOString();
-    let claimed = false;
+    let claimed: boolean;
     try {
       const claim = await query(
         `UPDATE agent_tasks

@@ -31,7 +31,7 @@ export async function drainAlphaOfflineQueue(send: (query: string) => Promise<bo
   const initial = readOfflineQueue();
   if (initial.length === 0) return;
   for (const queued of initial) {
-    let ok = false;
+    let ok: boolean;
     try {
       ok = await send(queued);
     } catch {

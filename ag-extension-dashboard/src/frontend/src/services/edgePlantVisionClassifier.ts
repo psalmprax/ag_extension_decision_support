@@ -628,7 +628,6 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
   },
 ];
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function classifyPixel(r: number, g: number, b: number): { isBackground: boolean; isGreen: boolean; isChlorotic: boolean; isNecrotic: boolean; isRust: boolean; isBrown: boolean; isYellowHalo: boolean } {
   if (r > 242 && g > 242 && b > 242) return { isBackground: true, isGreen: false, isChlorotic: false, isNecrotic: false, isRust: false, isBrown: false, isYellowHalo: false };
   const { h, s } = rgbToHsv(r, g, b);

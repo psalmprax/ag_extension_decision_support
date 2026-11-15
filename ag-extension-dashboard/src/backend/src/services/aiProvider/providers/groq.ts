@@ -67,7 +67,7 @@ export class GroqProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Groq generateText error:', error);
-            throw new Error(`Groq text generation failed: ${(error as Error).message}`);
+            throw new Error(`Groq text generation failed: ${(error as Error).message}`, { cause: error });
         }
     }
 

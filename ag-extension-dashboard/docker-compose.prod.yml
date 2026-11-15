@@ -9,6 +9,8 @@
 # Required .env vars:
 #   ACME_EMAIL=admin@gpexts.com     (Let's Encrypt registration email)
 #   DOMAIN=www.gpexts.com           (primary production domain)
+#   DATABASE_PASSWORD=...           (no default in production — see below)
+#   REDIS_PASSWORD=...              (no default in production — see below)
 #
 # Architecture:
 #   www.gpexts.com:443 ─→ Traefik ─→ frontend:80 (Nginx SPA)
@@ -23,6 +25,18 @@
 # ============================================================
 
 services:
+  # Fail closed: the base compose file falls back to well-known development
+  # passwords (`postgres`, `agext_redis_2024`). With this override in the stack,
+  # compose refuses to start unless both are set explicitly. The values must
+  # match what the existing database/redis volumes were initialised with.
+  app-db:
+    environment:
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?DATABASE_PASSWORD must be set in .env for production (no default)}
+
+  redis:
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env for production (no default)}
+
   traefik:
     image: traefik:v3.7
     depends_on:

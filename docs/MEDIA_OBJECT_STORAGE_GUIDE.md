@@ -101,7 +101,7 @@ When hosting and streaming rich media (video consultations, audio recordings, fi
 
 ## 5. Implemented Platform Architecture
 
-The platform provides a **universal S3-compatible driver** in [`objectStorageService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/objectStorageService.ts) that completely decouples the application code from any single cloud vendor.
+The platform provides a **universal S3-compatible driver** in [`objectStorageService.ts`](../ag-extension-dashboard/src/backend/src/services/objectStorageService.ts) that completely decouples the application code from any single cloud vendor.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -134,7 +134,7 @@ The platform provides a **universal S3-compatible driver** in [`objectStorageSer
 
 ### Core Services
 
-1. **`ObjectStorageService`** ([`objectStorageService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/objectStorageService.ts)):
+1. **`ObjectStorageService`** ([`objectStorageService.ts`](../ag-extension-dashboard/src/backend/src/services/objectStorageService.ts)):
    - Automatically detects provider backend: `'backblaze-b2' | 'cloudflare-r2' | 'wasabi' | 'hetzner' | 'aws-s3' | 'minio' | 'local-disk'`.
    - Methods:
      - `putObject(options)`: Uploads buffer to cloud and dual-writes to `./uploads` local cache.
@@ -145,18 +145,18 @@ The platform provides a **universal S3-compatible driver** in [`objectStorageSer
      - `getPresignedUploadUrl(options)`: Generates time-limited pre-authenticated PUT URLs.
      - `getPresignedDownloadUrl(options)`: Generates time-limited pre-authenticated GET URLs with optional `Content-Disposition: attachment`.
 
-2. **`ReportStorageService`** ([`reportStorageService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/reportStorageService.ts)):
+2. **`ReportStorageService`** ([`reportStorageService.ts`](../ag-extension-dashboard/src/backend/src/services/reportStorageService.ts)):
    - Bridges the analytics reporting engine with object storage.
    - Packages generated PDF, CSV, and Excel reports, computes SHA-256 hashes, stores them under `reports/{year}/{month}/{reportId}.{ext}`, and records metadata in PostgreSQL `reports` table.
 
-3. **Direct Browser-to-Cloud Upload Pipeline** ([`uploadService.ts` (Frontend)](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/api/uploadService.ts)):
+3. **Direct Browser-to-Cloud Upload Pipeline** ([`uploadService.ts` (Frontend)](../ag-extension-dashboard/src/frontend/src/api/uploadService.ts)):
    - `uploadLargeMediaDirect(file, farmerId, onProgress)`:
      1. Asks `/api/v1/upload/presign` for a signed URL.
      2. Directly sends an `XHR PUT` request to the bucket with real-time percentage progress callbacks.
      3. Notifies `/api/v1/upload/confirm` upon completion to run security validation and record the asset in the database.
    - Prevents memory exhaustion on Node.js API servers when multiple users upload 200 MB+ video files simultaneously.
 
-4. **Security & Binary Content Validation** ([`uploadService.ts` (Backend)](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/uploadService.ts)):
+4. **Security & Binary Content Validation** ([`uploadService.ts` (Backend)](../ag-extension-dashboard/src/backend/src/services/uploadService.ts)):
    - **MIME Normalization**: Maps browser MIME types to canonical types and file extensions.
    - **Magic Byte Signature Matching**: Inspects raw initial byte signatures (e.g. `ftyp` for MP4, `1A 45 DF A3` for WebM, `ID3`/`FF FB` for MP3, `%PDF-` for PDF, `PK` for XLSX/DOCX) to prevent malicious executables masquerading as media.
    - **Quotas**: Enforces per-file limits (`MAX_UPLOAD_MB`) and per-user storage quotas (`UPLOAD_QUOTA_MB`).
@@ -253,7 +253,7 @@ All upload and media routes reside under `/api/v1/upload`:
 
 ## 8. Automated Testing & Verification
 
-The storage subsystem is covered by automated unit and integration tests in [`objectStorage.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/objectStorage.test.ts):
+The storage subsystem is covered by automated unit and integration tests in [`objectStorage.test.ts`](../ag-extension-dashboard/src/backend/src/__tests__/objectStorage.test.ts):
 
 ```bash
 # Run the object storage test suite

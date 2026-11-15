@@ -104,18 +104,18 @@ graph TD
 ## 3. Subsystem Specifications
 
 ### 3.1 Client Tier
-* **Dashboard Frontend** ([`ag-extension-dashboard/src/frontend`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend)):
+* **Dashboard Frontend** ([`ag-extension-dashboard/src/frontend`](../ag-extension-dashboard/src/frontend)):
   * **Stack**: React 18, Vite 5, Tailwind CSS, TanStack Query, Lucide Icons, Recharts.
   * **Role**: Administrative control plane, GIS parcel visualization, real-time alert dispatch console, and telemetry dashboards.
-* **Mobile / PWA Client** ([`ag-extension-dashboard/src/frontend/ios`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/ios)):
+* **Mobile / PWA Client** ([`ag-extension-dashboard/src/frontend/ios`](../ag-extension-dashboard/src/frontend/ios)):
   * **Stack**: Capacitor runtime with Service Worker background synchronization.
   * **Role**: Zero-connectivity field operations for field officers. Caches farmer profiles, offline visits, and polygon GPS tracks in local IndexedDB.
-* **Browser Extension** ([`ag-extension-browser-ext`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-browser-ext)):
+* **Browser Extension** ([`ag-extension-browser-ext`](../ag-extension-browser-ext)):
   * **Stack**: WXT framework, Manifest V3, React, Tailwind CSS.
   * **Role**: Contextual agricultural assistant embedded within extension web portals and commodity market sites.
 
 ### 3.2 Backend Service Tier
-* **Location**: [`ag-extension-dashboard/src/backend`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend)
+* **Location**: [`ag-extension-dashboard/src/backend`](../ag-extension-dashboard/src/backend)
 * **Stack**: Node.js 20+, TypeScript, Express.js, Prisma ORM, BullMQ, Redis, Winston, OpenTelemetry.
 * **Responsibilities**:
   * Authentication, session lifecycle, and RFC 6238 TOTP MFA.
@@ -124,7 +124,7 @@ graph TD
   * Media streaming and presigned URL generation for audio and image storage.
 
 ### 3.3 Autonomous AI & Agent Tier
-* **Location**: [`ag-extension-dashboard/src/agents`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/agents)
+* **Location**: [`ag-extension-dashboard/src/agents`](../ag-extension-dashboard/src/agents)
 * **Stack**: Python 3.12, FastAPI, CrewAI, LangChain, Pydantic, CloakBrowser.
 * **Specialized Agent Roles**:
   * **Agronomist Agent**: Analyzes pest/disease symptoms, cross-referencing regional crop disease databases.
@@ -133,14 +133,14 @@ graph TD
   * **CloakBrowser Engine**: Employs headless browser profiles to monitor agricultural pricing portals without triggering bot defenses.
 
 ### 3.4 Shared Contract Layer
-* **Location**: [`ag-extension-shared`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-shared)
+* **Location**: [`ag-extension-shared`](../ag-extension-shared)
 * **Role**: Single source of truth (`@ag-extension/shared`) for TypeScript types, API response interfaces, WebSocket message shapes, and Zod validation schemas. Synced with backend and extension via `npm run shared:sync`.
 
 ---
 
 ## 4. Strategic Architecture Pillars
 
-Detailed in [`ARCHITECTURE_PILLARS.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ARCHITECTURE_PILLARS.md):
+Detailed in [`ARCHITECTURE_PILLARS.md`](../ARCHITECTURE_PILLARS.md):
 
 ```
 ┌───────────────────┬───────────────────┬───────────────────┬───────────────────┬───────────────────┬───────────────────┐
@@ -202,7 +202,7 @@ sequenceDiagram
 
 ## 6. Software Development Life Cycle (SDLC) & Engineering Workflow
 
-In alignment with [`CLAUDE.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/CLAUDE.md) and [`KARPATHY_RULES.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/KARPATHY_RULES.md), all engineering tasks strictly adhere to the sequential 6-phase development lifecycle:
+In alignment with [`CLAUDE.md`](../CLAUDE.md) and [`KARPATHY_RULES.md`](../KARPATHY_RULES.md), all engineering tasks strictly adhere to the sequential 6-phase development lifecycle:
 
 ```mermaid
 stateDiagram-v2
@@ -282,7 +282,7 @@ stateDiagram-v2
    *Direct pushes to remote `master` are strictly disallowed.*
 
 ### 7.2 Container & Deployment Operations
-Detailed in [`docs/PRODUCTION_DEPLOYMENT_GUIDE.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/docs/PRODUCTION_DEPLOYMENT_GUIDE.md):
+Detailed in [`docs/PRODUCTION_DEPLOYMENT_GUIDE.md`](../docs/PRODUCTION_DEPLOYMENT_GUIDE.md):
 
 * **Container Recreation Safety**: Always run `docker compose down --remove-orphans` prior to restarting services to prevent orphaned network collisions.
 * **Shared Network Pre-Creation**: Compose external networks (`ag-network`) must be pre-created before container startup:
@@ -298,18 +298,18 @@ Detailed in [`docs/PRODUCTION_DEPLOYMENT_GUIDE.md`](file:///home/psalmprax/ALL_P
 
 The system enforces four primary operational protocols:
 
-1. **[`anti_flop.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/anti_flop.md) (`AG-SKILL-AF-01`)**:
+1. **[`anti_flop.md`](../anti_flop.md) (`AG-SKILL-AF-01`)**:
    * Enforces zero regressions, eradication of dead stubs, offline graceful degradation, bounded memory usage for media streaming, and 100% CI green compliance.
    * Automated verification: `npm run verify:anti-flop`.
 
-2. **[`anti_hallucination.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/anti_hallucination.md) (`AG-SKILL-AH-01`)**:
+2. **[`anti_hallucination.md`](../anti_hallucination.md) (`AG-SKILL-AH-01`)**:
    * Enforces epistemic grounding: inspect source before asserting facts, reject uninstalled dependencies, prevent hallucinated agrochemical dosages or fake AI capabilities, and respect Prisma schema sovereignty.
    * Automated verification: `npm run verify:anti-hallucination`.
 
-3. **[`Anti-Flaws.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/Anti-Flaws.md) (`AG-SKILL-AFL-01`)**:
+3. **[`Anti-Flaws.md`](../Anti-Flaws.md) (`AG-SKILL-AFL-01`)**:
    * Enforces architectural, security, and agronomic integrity: spatial and unit precision sovereignty, multi-tenant database isolation, edge envelope encryption, React async closure hygiene, transactional atomicity, anti-sycophancy in AI diagnostics, and cognitive complexity bounds ($\le 15$).
 
-4. **[`KARPATHY_RULES.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/KARPATHY_RULES.md)**:
+4. **[`KARPATHY_RULES.md`](../KARPATHY_RULES.md)**:
    * **Think before coding**: Deeply understand context, schemas, and data flow.
    * **Simplicity first**: Prefer concrete, flat architectures over unnecessary abstractions.
    * **Surgical changes only**: Never touch unrelated files or refactor outside the assigned goal.

@@ -128,18 +128,19 @@ app.use(compression());
 const allowedOrigins = config.cors.origin.split(',').map(o => o.trim());
 app.use(cors({ origin: resolveCorsOrigin(allowedOrigins), credentials: true }));
 app.use(morgan('combined', { stream: { write: (message) => logger.info(message) } }));
-// Body parsing — deliberately SMALL by default. A 16MB pre-auth JSON parser on
-// every route lets any anonymous request pin ~16MB × concurrency of process
+// Body parsing — deliberately SMALL by default. A large pre-auth JSON parser on
+// every route lets any anonymous request pin that much × concurrency of process
 // memory per request (DoS amplification) and widens the request-smuggling
-// surface. Media-heavy endpoints opt back up to 16mb — but ONLY for
-// authenticated requests (see below); anonymous clients are capped at 1mb
+// surface. Media-heavy endpoints opt back up to LARGE_BODY_LIMIT (default
+// 50mb) — but ONLY for authenticated requests (see below); anonymous clients
+// are capped at 1mb
 // everywhere except signature-verified webhook endpoints, which get a bounded
 // 4mb allowance because providers legitimately push media payloads.
 //
 // Ordering:
 //   1. optionalAuth FIRST — it only reads headers, so it can run before any
-//      body parser, and the 16mb gate needs req.user.
-//   2. Then the conditional 16mb parser (body parsers are stream consumers — a
+//      body parser, and the large-body gate needs req.user.
+//   2. Then the conditional large/webhook parser (body parsers are stream consumers — a
 //      parser further down the chain would never see a body the 1mb parser
 //      already rejected). body-parser sets req._body after parsing, so the
 //      global parsers below no-op on media routes instead of clobbering or 413.
@@ -159,15 +160,26 @@ const largeBodyParser = express.json({
     },
 });
 // Signature-verified inbound webhook endpoints keep a bounded anonymous
-// allowance — Meta/Twilio servers are anonymous to us by design.
+// allowance — Meta/Twilio servers are anonymous to us by design. They must NOT
+// get the authenticated LARGE_BODY_LIMIT: the body is parsed before the
+// signature is checked, so that would hand every anonymous caller the big parser.
+const webhookBodyParser = express.json({
+    limit: process.env.WEBHOOK_BODY_LIMIT || '4mb',
+    verify: (req, _res, buf) => {
+        (req as Request).rawBody = buf;
+    },
+});
 const WEBHOOK_ROUTES = ['/api/whatsapp', '/api/v1/whatsapp', '/api/channels', '/api/v1/channels'];
 app.use(cookieParser());
 app.use(optionalAuth); // Parse optional user credentials before body parsing and rate limiting
 app.use((req, res, next) => {
     if (req.method !== 'GET' && LARGE_BODY_ROUTES.some(p => req.path === p || req.path.startsWith(p + '/'))) {
         const isWebhook = WEBHOOK_ROUTES.some(p => req.path === p || req.path.startsWith(p + '/'));
-        if (req.user || isWebhook) {
+        if (req.user) {
             return largeBodyParser(req, res, next);
+        }
+        if (isWebhook) {
+            return webhookBodyParser(req, res, next);
         }
         // Anonymous client on a media route: cap at the small-parser limit and
         // let the global 1mb parser below handle (or reject) the body.

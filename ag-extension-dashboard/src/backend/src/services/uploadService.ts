@@ -196,7 +196,6 @@ async function checkStorageQuota(ownerUserId: string, incomingBytes: number): Pr
   }
 }
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export async function saveUpload(input: UploadInput): Promise<UploadResult> {
   if (input.buffer.length === 0 || input.buffer.length > MAX_UPLOAD_BYTES) {
     throw new Error(`File exceeds the ${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)}MB upload limit`);

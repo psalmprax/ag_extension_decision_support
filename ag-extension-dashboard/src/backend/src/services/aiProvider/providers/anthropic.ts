@@ -45,13 +45,13 @@ export class AnthropicProvider extends BaseAIProvider {
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize Anthropic client:', error);
-            throw new Error('Anthropic client initialization failed — API key not configured');
+            throw new Error('Anthropic client initialization failed — API key not configured', { cause: error });
         }
     }
 
     async generateText(prompt: string | any[], options?: TextGenerationOptions): Promise<TextGenerationResult> {
         const client = await this.getClient();
-        const model = options?.model || 'claude-3-5-sonnet-20241022';
+        const model = options?.model || config.anthropic.model;
 
         try {
             const response = await client.messages.create({
@@ -74,13 +74,13 @@ export class AnthropicProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Anthropic generateText error:', error);
-            throw new Error(`Anthropic text generation failed: ${(error as Error).message}`);
+            throw new Error(`Anthropic text generation failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
     async *streamText(prompt: string, options?: TextGenerationOptions): AsyncGenerator<string> {
         const client = await this.getClient();
-        const model = options?.model || 'claude-3-5-sonnet-20241022';
+        const model = options?.model || config.anthropic.model;
 
         try {
             const stream = await client.messages.create({
@@ -98,7 +98,7 @@ export class AnthropicProvider extends BaseAIProvider {
             }
         } catch (error) {
             logger.error('Anthropic streamText error:', error);
-            throw new Error(`Anthropic streaming failed: ${(error as Error).message}`);
+            throw new Error(`Anthropic streaming failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -152,7 +152,7 @@ export class AnthropicProvider extends BaseAIProvider {
 
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
         const client = await this.getClient();
-        const model = options?.model || 'claude-3-5-sonnet-20241022';
+        const model = options?.model || config.anthropic.model;
 
         const userContent = this.buildUserContent(context, query, options?.attachments);
 
@@ -180,7 +180,7 @@ export class AnthropicProvider extends BaseAIProvider {
 
     async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
         const client = await this.getClient();
-        const model = options?.model || 'claude-3-5-sonnet-20241022';
+        const model = options?.model || config.anthropic.model;
 
         try {
             let base64Image: string;
@@ -240,7 +240,7 @@ export class AnthropicProvider extends BaseAIProvider {
         try {
             const client = await this.getClient();
             await client.messages.create({
-                model: 'claude-3-5-sonnet-20241022',
+                model: config.anthropic.model,
                 max_tokens: 1,
                 messages: [{ role: 'user', content: 'test' }],
             });

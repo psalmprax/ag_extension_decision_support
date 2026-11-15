@@ -57,7 +57,7 @@ export const nasaPowerTool: Tool<typeof NasaPowerSchema> = {
       return JSON.stringify({ error: "No data returned from NASA POWER for these coordinates." });
     } catch (error: unknown) {
       logger.error(`NASA POWER Tool failed:`, error);
-      throw new Error(`Geospatial data unavailable for ${latitude}, ${longitude}`);
+      throw new Error(`Geospatial data unavailable for ${latitude}, ${longitude}`, { cause: error });
     }
   },
 };

@@ -8,8 +8,8 @@
 ## 1. Executive Summary & Goals
 
 This plan executes on all three dimensions requested:
-1. **Phase 2.3.3**: Server-side fallback speech-to-text (Whisper) for browsers lacking native Web Speech API + real-time Web Audio API soundwave/frequency equalizer in [`TalkingAssistant.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx).
-2. **Phase 2.3.4**: Seamless cryptographic conversation handoff from landing page into [`FarmerChatPage.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/FarmerChatPage.tsx) upon user registration, importing active entity slots and advisory history into PostgreSQL.
+1. **Phase 2.3.3**: Server-side fallback speech-to-text (Whisper) for browsers lacking native Web Speech API + real-time Web Audio API soundwave/frequency equalizer in [`TalkingAssistant.tsx`](ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx).
+2. **Phase 2.3.4**: Seamless cryptographic conversation handoff from landing page into [`FarmerChatPage.tsx`](ag-extension-dashboard/src/frontend/src/pages/FarmerChatPage.tsx) upon user registration, importing active entity slots and advisory history into PostgreSQL.
 3. **Pillar 2 (In-App Visual Builder)**: Full production React implementation of the **Advisory & Field Form Studio** in the dashboard (`/advisory-studio`), backed by Prisma schema persistence and offline field PWA sync readiness.
 
 ---

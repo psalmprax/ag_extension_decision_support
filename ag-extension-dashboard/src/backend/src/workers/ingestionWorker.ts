@@ -152,7 +152,7 @@ export function stopIngestionWorker(): void {
 }
 
 // Auto-start the ingestion worker
-let ingestionStart: NodeJS.Timeout | null = null;
+let ingestionStart: NodeJS.Timeout | null;
 if (process.env.NODE_ENV !== 'test') {
     ingestionStart = setTimeout(() => {
         startIngestionWorker();

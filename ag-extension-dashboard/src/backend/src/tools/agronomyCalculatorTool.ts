@@ -31,8 +31,8 @@ export const limeCalculatorTool: Tool<typeof limeSchema> = {
     }
 
     const cceFactor = 100 / Math.max(50, cce_percentage);
-    let baseLimeTonsHa = 0;
-    let methodUsed = '';
+    let baseLimeTonsHa: number;
+    let methodUsed: string;
 
     // Crop sensitivity multiplier for Kamprath equation
     const lowerCrop = crop.toLowerCase();

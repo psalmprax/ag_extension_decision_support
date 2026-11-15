@@ -2,6 +2,11 @@
 
 This document provides complete architectural specifications, data models, service interactions, and API contracts for the core platform expansion pillars and enterprise security features.
 
+> **Read the status notes.** Many sections below are *specifications*, not shipped
+> capabilities: their routes return 501 in production. Each section carries a status
+> note where that applies; unmarked sections describe production behaviour.
+> Source of truth for gating: `ag-extension-dashboard/src/backend/src/routes/pillars/index.ts`.
+
 ---
 
 ## Architecture Overview
@@ -29,7 +34,7 @@ This document provides complete architectural specifications, data models, servi
 Provides comprehensive enterprise identity audit logs for security oversight, compliance, and suspicious activity detection (credential stuffing, geo-velocity anomalies, brute-force attempts).
 
 ### Database Schema
-Located in [`prisma/schema.prisma`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/prisma/schema.prisma) and [`databaseService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/databaseService.ts):
+Located in [`prisma/schema.prisma`](ag-extension-dashboard/src/backend/prisma/schema.prisma) and [`databaseService.ts`](ag-extension-dashboard/src/backend/src/services/databaseService.ts):
 
 ```sql
 CREATE TABLE IF NOT EXISTS login_history (
@@ -51,7 +56,7 @@ CREATE INDEX IF NOT EXISTS idx_login_history_status ON login_history(status);
 ```
 
 ### Key Components
-- **Device Parsing** ([`loginHistoryService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/loginHistoryService.ts)): Extracts client OS (iOS, Android, Windows, macOS, Linux) and Browser (Chrome, Safari, Firefox, Edge).
+- **Device Parsing** ([`loginHistoryService.ts`](ag-extension-dashboard/src/backend/src/services/loginHistoryService.ts)): Extracts client OS (iOS, Android, Windows, macOS, Linux) and Browser (Chrome, Safari, Firefox, Edge).
 - **Location Resolution**: Resolves client city/region/country using proxy/CDN headers (`cf-ipcountry`, `x-country-code`, `x-real-ip`, `x-forwarded-for`).
 - **Telemetry Querying**: Computes total logins, 24h failure rates, distinct IP addresses, and user timeline history.
 
@@ -70,20 +75,20 @@ Protects agricultural extension officers and system administrators against crede
 
 ### Key Components
 
-#### A. RFC 6238 TOTP Multi-Factor Authentication ([`mfaService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/mfaService.ts))
+#### A. RFC 6238 TOTP Multi-Factor Authentication ([`mfaService.ts`](ag-extension-dashboard/src/backend/src/services/mfaService.ts))
 - **Zero External Dependencies**: Built directly on Node.js `crypto` with custom Base32 encoding/decoding and HMAC-SHA1 dynamic truncation.
 - **Authenticator Support**: Compatible with Google Authenticator, Microsoft Authenticator, and 1Password via standard `otpauth://totp/...` URIs.
 - **Backup Recovery Codes**: Generates 8 cryptographically random alphanumeric backup codes (`XXXX-XXXX`) stored hashed in the database and consumed atomically on single use.
 
-#### B. Brute-Force Account Lockout ([`lockoutService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/lockoutService.ts))
+#### B. Brute-Force Account Lockout ([`lockoutService.ts`](ag-extension-dashboard/src/backend/src/services/lockoutService.ts))
 - **Threshold**: 5 consecutive failed login attempts within the sliding window.
 - **Lockout Duration**: 15 minutes (`LOCKOUT_DURATION_MS = 900,000`).
 - **HTTP Response**: Returns `423 Locked` with `lockoutRemainingSeconds`.
 - **Auto Reset**: Successful password verification instantly resets failed attempt counters.
 
-#### C. Active Session Management & SHA-256 Token Hashing ([`sessionService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/sessionService.ts))
+#### C. Active Session Management & SHA-256 Token Hashing ([`sessionService.ts`](ag-extension-dashboard/src/backend/src/services/sessionService.ts))
 - **Token Protection**: Raw JWTs are never stored in the database. Instead, sessions are indexed by deterministic SHA-256 token hashes (`tokenHash`).
-- **Instant Revocation**: Features a high-performance in-memory revocation set (`revokedTokenHashes`) synchronized with PostgreSQL for sub-millisecond, zero-database-overhead checks in [`authorize.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/middleware/authorize.ts).
+- **Instant Revocation**: Features a high-performance in-memory revocation set (`revokedTokenHashes`) synchronized with PostgreSQL for sub-millisecond, zero-database-overhead checks in [`authorize.ts`](ag-extension-dashboard/src/backend/src/middleware/authorize.ts).
 - **Remote Revocation**: Allows revoking specific sessions or revoking all other active devices.
 
 ### API Endpoints
@@ -106,7 +111,7 @@ Enables field officers and farmers in remote rural regions without cellular conn
 
 ### Key Components
 
-#### A. On-Device Edge Plant Vision Classifier ([`edgePlantVisionClassifier.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/services/edgePlantVisionClassifier.ts))
+#### A. On-Device Edge Plant Vision Classifier ([`edgePlantVisionClassifier.ts`](ag-extension-dashboard/src/frontend/src/services/edgePlantVisionClassifier.ts))
 - **Zero-Network Inference**: Analyzes crop foliage directly in HTML5 Canvas using RGB/HSV chromaticity ratios and spatial pixel statistics:
   - **Green Canopy Index**: NDVI approximation `(G - R) / (G + R + \epsilon)`.
   - **Chlorosis Index**: Yellow pigmentation ratio (high $R+G$, low $B$).
@@ -121,7 +126,7 @@ Enables field officers and farmers in remote rural regions without cellular conn
   - **Coffee Leaf Rust (*Hemileia vastatrix*)**: Powdery orange lesions on abaxial leaf surfaces.
 - **Output**: Returns diagnostic confidence score ($0.0 - 1.0$), severity grade (`mild`, `moderate`, `severe`), cultural controls, biological controls, and chemical intervention thresholds.
 
-#### B. WGS-84 Geodesic Parcel Boundary Polygon Tracer & Acreage Calculator ([`parcelGeoService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/services/parcelGeoService.ts))
+#### B. WGS-84 Geodesic Parcel Boundary Polygon Tracer & Acreage Calculator ([`parcelGeoService.ts`](ag-extension-dashboard/src/frontend/src/services/parcelGeoService.ts))
 - **Geodesic Acreage Calculation**: Uses metric planar-projected Shoelace formula on WGS-84 coordinates:
   $$\text{Area} = \frac{1}{2} \left| \sum_{i=0}^{n-1} (x_i y_{i+1} - x_{i+1} y_i) \right|$$
   where $x_i = \lambda_i \cdot \frac{\pi}{180} R \cos(\bar{\phi})$ and $y_i = \phi_i \cdot \frac{\pi}{180} R$.
@@ -138,12 +143,14 @@ Removes literacy and technological barriers by supporting native voice note audi
 
 ### Key Components
 
-#### A. WhatsApp & Voice Note Transcription Service ([`voiceAudioService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/voiceAudioService.ts))
+#### A. WhatsApp & Voice Note Transcription Service ([`voiceAudioService.ts`](ag-extension-dashboard/src/backend/src/services/voiceAudioService.ts))
 - **Multi-Format Audio Support**: Ingests OGG/Opus, MP3, M4A, and AMR audio streams from WhatsApp Cloud API and Africa's Talking.
 - **Vernacular Agronomic Parsing**: Detects agricultural terms in Swahili (*mahindi*, *muhogo*, *mbolea*, *viwavi*, *ukungu*, *shamba*), English, and regional dialects.
 - **Speech Synthesis**: Synthesizes localized audio advisory files (`audio/ogg`) for voice-note responses.
 
-#### B. Interactive Voice Response (IVR) & Automated Voice Broadcasts ([`ivrBroadcastService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/ivrBroadcastService.ts))
+#### B. Interactive Voice Response (IVR) & Automated Voice Broadcasts ([`ivrBroadcastService.ts`](ag-extension-dashboard/src/backend/src/services/ivrBroadcastService.ts))
+
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
 - **TwiML / Africa's Talking Voice XML**: Generates standard dynamic voice XML prompts.
 - **DTMF Keypad Interaction Workflow**:
   - `Press 1`: Confirm receipt and receive written advisory summary via SMS.
@@ -161,11 +168,15 @@ Connects farmers directly to genuine input supplies and guaranteed commodity buy
 
 ### Key Components
 
-#### A. Certified Agro-Dealer Directory & Anti-Counterfeit Verification ([`inputSupplierService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/inputSupplierService.ts))
+#### A. Certified Agro-Dealer Directory & Anti-Counterfeit Verification ([`inputSupplierService.ts`](ag-extension-dashboard/src/backend/src/services/inputSupplierService.ts))
+
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
 - **Geo-Inventory Proximity Matching**: Searches verified stockists within a specified radius (km), sorting by distance, stock availability, and official licensing (PCPB/KEPHIS/KEBS).
 - **Anti-Counterfeit Batch Lookup**: Verifies seed, fertilizer, and agrochemical batch numbers against national regulator databases to identify counterfeit agricultural inputs.
 
-#### B. Harvest Offtaker & Market Aggregation Matchmaker ([`harvestOfftakeService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/harvestOfftakeService.ts))
+#### B. Harvest Offtaker & Market Aggregation Matchmaker ([`harvestOfftakeService.ts`](ag-extension-dashboard/src/backend/src/services/harvestOfftakeService.ts))
+
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
 - **Yield Aggregation**: Aggregates projected crop volumes across farmer cohorts by county and harvest window.
 - **Institutional Offtake Matching**: Matches cooperative tonnage with certified millers, processors, and commodity buyers (e.g. Unga Farm Care, East Africa Grain Council).
 - **Cooperative Premium Modeling**: Computes bulk contractual revenue gains vs. local middleman spot pricing.
@@ -179,7 +190,9 @@ Quantifies the financial return on investment of agronomic recommendations and p
 
 ### Key Components
 
-#### A. Quantifiable Yield Differential & Input ROI Calculator ([`agronomicRoiService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/agronomicRoiService.ts))
+#### A. Quantifiable Yield Differential & Input ROI Calculator ([`agronomicRoiService.ts`](ag-extension-dashboard/src/backend/src/services/agronomicRoiService.ts))
+
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
 - **Control vs. Advisory Comparison**: Models financial differences between traditional practices and decision-support guided inputs (certified hybrid seeds, soil-test calibrated NPK, lime, IPM).
 - **Key Metrics Computed**:
   - Yield Gain (%) and Tonnage Gain (t/ha).
@@ -187,7 +200,9 @@ Quantifies the financial return on investment of agronomic recommendations and p
   - **Benefit-Cost Ratio (BCR)**: Net revenue gain per currency unit invested.
   - Break-Even Commodity Price per Ton.
 
-#### B. Soil Organic Carbon (SOC) IPCC Tier 2 MRV Engine ([`soilCarbonMrvService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/soilCarbonMrvService.ts))
+#### B. Soil Organic Carbon (SOC) IPCC Tier 2 MRV Engine ([`soilCarbonMrvService.ts`](ag-extension-dashboard/src/backend/src/services/soilCarbonMrvService.ts))
+
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
 - **IPCC Tier 2 Soil Quantification**:
   $$\text{SOC Stock (t C/ha)} = \frac{\% \text{SOM} \times 0.58}{100} \times \rho_b (\text{t/m}^3) \times d (\text{m}) \times 10,000\,\text{m}^2/\text{ha} \times (1 - f_{\text{coarse}})$$
 - **Carbon Sequestration & $\text{CO}_2\text{e}$**:
@@ -198,12 +213,14 @@ Quantifies the financial return on investment of agronomic recommendations and p
 
 ## 7. Pillar 6: Automated Proactive Hazard Warning Engine
 
+> **Status: partly live.** Rule-based hazard evaluation (`POST /api/pillars/hazard/evaluate`) is production-enabled and returns a provenance block. The scanning daemon and dispatch (`POST /hazard/scan`) are specification prototypes and return 501 in production.
+
 ### Purpose
 Transforms the platform from reactive query-handling into an autonomous hazard prediction and early warning alert daemon.
 
 ### Key Components
 
-#### A. Weather Anomaly Scanning Daemon ([`weatherHazardDaemonService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/weatherHazardDaemonService.ts))
+#### A. Weather Anomaly Scanning Daemon ([`weatherHazardDaemonService.ts`](ag-extension-dashboard/src/backend/src/services/weatherHazardDaemonService.ts))
 - **Continuous Multi-Day Scan**: Ingests weather forecast parameters (min/max temp, precipitation, relative humidity, wind speed).
 - **Hazard Detection Matrix**:
   1. **Severe Frost Warning**: Night temperature $\le 3.5^\circ\text{C}$ (potato/tea damage risk; triggers potassium silicate and thermal smoke recommendations).
@@ -218,10 +235,12 @@ Transforms the platform from reactive query-handling into an autonomous hazard p
 
 ## 8. Satellite Earth Observation & Sentinel-2 NDVI Indexing
 
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
+
 ### Purpose
 Automates continuous orbital crop vigor monitoring and stress anomaly detection across registered farmer field parcel boundaries.
 
-### Key Components ([`satelliteNdviService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/satelliteNdviService.ts))
+### Key Components ([`satelliteNdviService.ts`](ag-extension-dashboard/src/backend/src/services/satelliteNdviService.ts))
 - **Multispectral Indices**:
   - **NDVI** (Normalized Difference Vegetation Index): $\frac{\text{NIR} - \text{Red}}{\text{NIR} + \text{Red}}$
   - **EVI** (Enhanced Vegetation Index): $2.5 \times \frac{\text{NIR} - \text{Red}}{\text{NIR} + 6\,\text{Red} - 7.5\,\text{Blue} + 1}$
@@ -233,10 +252,12 @@ Automates continuous orbital crop vigor monitoring and stress anomaly detection 
 
 ## 9. Smallholder Agronomic Credit Scoring & Parametric Insurance Engine
 
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
+
 ### Purpose
 Unlocks microfinance lending and automated drought/flood insurance for smallholders using verified agronomic compliance telemetry.
 
-### Key Components ([`agriCreditInsuranceService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/agriCreditInsuranceService.ts))
+### Key Components ([`agriCreditInsuranceService.ts`](ag-extension-dashboard/src/backend/src/services/agriCreditInsuranceService.ts))
 - **0–1000 Agronomic Credit Score**:
   - Advisory Compliance Score (Max 300 pts)
   - Historical Yield Attainment (Max 250 pts)
@@ -250,10 +271,12 @@ Unlocks microfinance lending and automated drought/flood insurance for smallhold
 
 ## 10. Multi-Tenant Agribusiness Federation & Cooperative Hierarchy
 
+> **Status: demo-scale.** Two seeded tenants in a registry with fail-closed compliance checks; tenant CRUD and multi-database tenancy are not implemented. Tenant pillar routes are specification prototypes (501 in production).
+
 ### Purpose
 Enables large agribusiness unions, commodity exporters, and government agencies to administer hierarchical multi-tenant structures with custom branding and localized agronomic rulesets.
 
-### Key Components ([`multiTenantFederationService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/multiTenantFederationService.ts))
+### Key Components ([`multiTenantFederationService.ts`](ag-extension-dashboard/src/backend/src/services/multiTenantFederationService.ts))
 - **Hierarchy Model**: `Organization -> Region -> Cooperative Hub -> Field Officer -> Farmer`.
 - **Tenant Scoped Isolation**: Automated SQL filter clauses (`organization_id = $1`).
 - **Custom Advisory Compliance**: Intercepts chemical and fertilizer recommendations to enforce tenant-specific restrictions (e.g. banned export pesticides or organic certification standards).
@@ -265,7 +288,7 @@ Enables large agribusiness unions, commodity exporters, and government agencies 
 ### Purpose
 Enables field officers to record farm visits, soil tests, and parcel boundaries completely offline across multiple devices with guaranteed idempotency and stateful conflict resolution upon reconnection.
 
-### Key Components ([`syncQueueService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/api/syncQueueService.ts))
+### Key Components ([`syncQueueService.ts`](ag-extension-dashboard/src/frontend/src/api/syncQueueService.ts))
 - **Dual-Layer Persistence**: Mirrored persistence across IndexedDB (`ag-sync-queue-db`) and `localStorage` fallback to survive browser storage pressure.
 - **Cryptographic Idempotency Keys**: Generates stable UUID-based keys per mutation to prevent duplicate side effects upon re-connection.
 - **Exponential Backoff & Rate Handling**: Automatic scheduling with exponential backoff (`BASE_BACKOFF_MS = 30s` up to 8m, capped at 5 retries) and 429 throttling respect.
@@ -275,9 +298,9 @@ Enables field officers to record farm visits, soil tests, and parcel boundaries 
 
 ## 12. Interactive Frontend UI Modules
 
-- **[`SecuritySettingsModal.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/SecuritySettingsModal.tsx)**: Interactive TOTP QR setup, backup codes, and active session manager with one-click remote revocation.
-- **[`ParcelPolygonDrawer.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/crops/ParcelPolygonDrawer.tsx)**: Live GPS boundary vertex recorder with geodesic area display (Hectares/Acres) and GeoJSON export.
-- **[`EdgeVisionScannerModal.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/EdgeVisionScannerModal.tsx)**: Zero-connectivity leaf camera diagnostic scanner with RGB chromaticity visual metrics and immediate cultural/chemical intervention drawer.
+- **[`SecuritySettingsModal.tsx`](ag-extension-dashboard/src/frontend/src/components/SecuritySettingsModal.tsx)**: Interactive TOTP QR setup, backup codes, and active session manager with one-click remote revocation.
+- **[`ParcelPolygonDrawer.tsx`](ag-extension-dashboard/src/frontend/src/components/crops/ParcelPolygonDrawer.tsx)**: Live GPS boundary vertex recorder with geodesic area display (Hectares/Acres) and GeoJSON export.
+- **[`EdgeVisionScannerModal.tsx`](ag-extension-dashboard/src/frontend/src/components/EdgeVisionScannerModal.tsx)**: Zero-connectivity leaf camera diagnostic scanner with RGB chromaticity visual metrics and immediate cultural/chemical intervention drawer.
 
 ---
 
@@ -285,10 +308,12 @@ Enables field officers to record farm visits, soil tests, and parcel boundaries 
 
 ## 13. On-Farm IoT & LoRaWAN Sensor Mesh Telemetry
 
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
+
 ### Purpose
 Ingests continuous physical soil probe data (volumetric water content, electrical conductivity salinity, soil temperature) and calculates atmospheric evaporative stress to automate precision solar irrigation.
 
-### Key Components ([`iotTelemetryService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/iotTelemetryService.ts))
+### Key Components ([`iotTelemetryService.ts`](ag-extension-dashboard/src/backend/src/services/iotTelemetryService.ts))
 - **Vapor Pressure Deficit (VPD)**:
   $$\text{SVP (kPa)} = 0.61078 \times \exp\left(\frac{17.27 \times T}{T + 237.3}\right)$$
   $$\text{VPD (kPa)} = \text{SVP} \times \left(1 - \frac{\text{RH}}{100}\right)$$
@@ -298,10 +323,12 @@ Ingests continuous physical soil probe data (volumetric water content, electrica
 
 ## 14. EUDR Zero-Deforestation & GS1 Farm-to-Fork Traceability Passport
 
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
+
 ### Purpose
 Certifies regulatory export compliance with the EU Deforestation Regulation (EUDR) and generates cryptographically signed GS1 Digital Link batch passports for harvested agricultural commodities.
 
-### Key Components ([`traceabilityPassportService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/traceabilityPassportService.ts))
+### Key Components ([`traceabilityPassportService.ts`](ag-extension-dashboard/src/backend/src/services/traceabilityPassportService.ts))
 - **EUDR Deforestation Verifier**: Cross-checks field parcel polygon vertices against the December 31, 2020 forest cutoff baseline, producing Due Diligence Statement (DDS) compliance certificates.
 - **GS1 Digital Link Passport**: Generates verifiable QR endpoints (`https://id.agriextension.org/01/{gtin}/10/{batchId}`) certifying GPS origin, fair trade verification, pesticide MRL compliance, and low-carbon footprint metrics.
 
@@ -309,10 +336,12 @@ Certifies regulatory export compliance with the EU Deforestation Regulation (EUD
 
 ## 15. Shared Mechanization & Agricultural Drone Fleet Dispatcher
 
+> **Status: specification prototype.** Registry-backed equipment search and admin registration are tenant-scoped, but the routes return 501 in production and drone planning is illustrative. See [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
+
 ### Purpose
 Aggregates equipment leasing (tractors, solar pumps) and coordinates certified drone operator spraying missions across contiguous smallholder farming blocks.
 
-### Key Components ([`mechanizationFleetService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/mechanizationFleetService.ts))
+### Key Components ([`mechanizationFleetService.ts`](ag-extension-dashboard/src/backend/src/services/mechanizationFleetService.ts))
 - **Tractor & Solar Pump Sharing Registry**: Searches local equipment owners by county/sub-county with standardized per-acre/per-day leasing rates.
 - **Drone Spray Mission Planner**: Calculates Ultra-Low-Volume (ULV) spray volume, required drone flight sorties, battery swaps, and safety wind speed buffers ($\le 18\,\text{km/h}$).
 
@@ -320,10 +349,12 @@ Aggregates equipment leasing (tractors, solar pumps) and coordinates certified d
 
 ## 16. Crowd-Sourced Epidemiological Pest Swarm Radar (DBSCAN)
 
+> **Status: specification prototype.** Pillar routes return 501 in production. The clustering heuristic also feeds the officer-only WorldMonitor layer as a labelled preview, which reports `no_data_source` until a `pest_sightings` table is provisioned.
+
 ### Purpose
 Aggregates participatory field sightings to identify active pest swarms and models wind-driven flight trajectories to alert downwind farming communities 24–48 hours in advance.
 
-### Key Components ([`pestSwarmRadarService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/pestSwarmRadarService.ts))
+### Key Components ([`pestSwarmRadarService.ts`](ag-extension-dashboard/src/backend/src/services/pestSwarmRadarService.ts))
 - **Spatial DBSCAN Clustering**: Groups geotagged sighting reports within distance $\epsilon = 30\,\text{km}$ into active swarm clusters.
 - **Wind Vector Trajectory Model**: Uses prevailing wind direction and velocity to forecast 24h and 48h swarm displacement centroids $(\Delta \text{Lat}, \Delta \text{Lng})$, auto-identifying vulnerable downwind counties.
 
@@ -331,10 +362,12 @@ Aggregates participatory field sightings to identify active pest swarms and mode
 
 ## 17. Cross-Border Regional Commodity Trade & Arbitrage Engine
 
+> **Status: specification prototype.** Its API routes return 501 in production (`routes/pillars/index.ts`) and can only be enabled in development or test, where responses are stamped `dataStatus: 'specification_prototype'`. Not a production capability; see [`docs/PILLAR_SERVICES_DECISION.md`](docs/PILLAR_SERVICES_DECISION.md).
+
 ### Purpose
 Monitors regional wholesale grain and produce markets across East Africa (Kenya, Uganda, Tanzania, Rwanda, Ethiopia) to identify profitable cross-border trade corridors.
 
-### Key Components ([`crossBorderTradeService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/crossBorderTradeService.ts))
+### Key Components ([`crossBorderTradeService.ts`](ag-extension-dashboard/src/backend/src/services/crossBorderTradeService.ts))
 - **Multi-Currency Normalization**: Normalizes local commodity prices (KES, UGX, TZS, RWF, ETB) into USD.
 - **Net Arbitrage Margin Calculator**: Computes net profitability after factoring road freight rates ($\$0.075/\text{ton-km}$), border customs, transit bonds, and Sanitary & Phytosanitary (SPS) fees.
 
@@ -346,10 +379,10 @@ Monitors regional wholesale grain and produce markets across East Africa (Kenya,
 Provides a cost-optimized, vendor-agnostic object storage infrastructure for high-bandwidth multimedia (diagnostic crop imagery, video consultations, farmer voice recordings) and analytical export reports (PDF, CSV, Excel), natively supporting the cheapest raw storage (Backblaze B2 at $0.006/GB) and zero-egress streaming (Cloudflare R2).
 
 ### Key Components
-- **Universal S3 Driver** ([`objectStorageService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/objectStorageService.ts)): Supports `backblaze-b2`, `cloudflare-r2`, `wasabi`, `hetzner`, `aws-s3`, `minio`, and `local-disk`. Implements binary CRUD, HTTP range streaming, and dual-mode local caching.
-- **Report Archival Engine** ([`reportStorageService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/reportStorageService.ts)): Automatically packages generated reports, computes SHA-256 integrity digests, and saves to cloud buckets with presigned download links.
-- **Direct Presigned Browser Uploads** ([`uploadService.ts` (Frontend)](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/api/uploadService.ts)): Allows large videos (up to 100 MB+) to stream directly from browser to bucket via presigned PUT URLs, bypassing backend RAM.
-- **Binary Content Validation** ([`uploadService.ts` (Backend)](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/uploadService.ts)): Magic byte inspection against spoofed MIME extensions, ClamAV hook, and per-user storage quotas.
+- **Universal S3 Driver** ([`objectStorageService.ts`](ag-extension-dashboard/src/backend/src/services/objectStorageService.ts)): Supports `backblaze-b2`, `cloudflare-r2`, `wasabi`, `hetzner`, `aws-s3`, `minio`, and `local-disk`. Implements binary CRUD, HTTP range streaming, and dual-mode local caching.
+- **Report Archival Engine** ([`reportStorageService.ts`](ag-extension-dashboard/src/backend/src/services/reportStorageService.ts)): Automatically packages generated reports, computes SHA-256 integrity digests, and saves to cloud buckets with presigned download links.
+- **Direct Presigned Browser Uploads** ([`uploadService.ts` (Frontend)](ag-extension-dashboard/src/frontend/src/api/uploadService.ts)): Allows large videos (up to 100 MB+) to stream directly from browser to bucket via presigned PUT URLs, bypassing backend RAM.
+- **Binary Content Validation** ([`uploadService.ts` (Backend)](ag-extension-dashboard/src/backend/src/services/uploadService.ts)): Magic byte inspection against spoofed MIME extensions, ClamAV hook, and per-user storage quotas.
 
 ---
 
@@ -357,14 +390,14 @@ Provides a cost-optimized, vendor-agnostic object storage infrastructure for hig
 
 | Test Suite | File | Tests | Coverage Scope |
 |---|---|---|---|
-| **Object Storage** | [`objectStorage.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/objectStorage.test.ts) | 14 / 14 | Provider resolution (B2, R2, Wasabi, Hetzner, Local), binary CRUD, streaming, magic bytes, presigned URLs, report archival |
-| **Security Hardening** | [`securityHardening.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/securityHardening.test.ts) | 16 / 16 | Base32, TOTP validation, backup codes, token hashing, session revocation, account lockout |
-| **Login History** | [`loginHistory.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/loginHistory.test.ts) | 12 / 12 | Audit logs, GeoIP headers, user-agent parsing, 24h failure rates, timeline queries |
-| **Strategic Pillars** | [`advancedPillars.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/advancedPillars.test.ts) | 16 / 16 | Voice audio, IVR XML, DTMF, agro-dealers, batch verification, offtake, ROI, Soil Carbon, Hazard scans |
-| **Expanded Capabilities** | [`advancedPillarsExpanded.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/advancedPillarsExpanded.test.ts) | 9 / 9 | Sentinel-2 NDVI/EVI/NDWI, 0-1000 credit score, parametric insurance claim, multi-tenancy |
-| **Frontier Capabilities** | [`frontierCapabilities.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/frontierCapabilities.test.ts) | 9 / 9 | IoT soil telemetry, VPD irrigation, EUDR compliance, GS1 passports, drone missions, swarm radar, arbitrage |
-| **Edge Field Services** | [`edgeFieldServices.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/__tests__/edgeFieldServices.test.ts) | 3 / 3 | Haversine distance, WGS-84 metric Shoelace polygon acreage, RFC 7946 GeoJSON export |
-| **Offline Sync Queue** | [`syncQueueService.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/__tests__/syncQueueService.test.ts) | 5 / 5 | Idempotency keys, dual IndexedDB/localStorage persistence, exponential backoff, 409 conflict handling |
+| **Object Storage** | [`objectStorage.test.ts`](ag-extension-dashboard/src/backend/src/__tests__/objectStorage.test.ts) | 14 / 14 | Provider resolution (B2, R2, Wasabi, Hetzner, Local), binary CRUD, streaming, magic bytes, presigned URLs, report archival |
+| **Security Hardening** | [`securityHardening.test.ts`](ag-extension-dashboard/src/backend/src/__tests__/securityHardening.test.ts) | 16 / 16 | Base32, TOTP validation, backup codes, token hashing, session revocation, account lockout |
+| **Login History** | [`loginHistory.test.ts`](ag-extension-dashboard/src/backend/src/__tests__/loginHistory.test.ts) | 12 / 12 | Audit logs, GeoIP headers, user-agent parsing, 24h failure rates, timeline queries |
+| **Strategic Pillars** | [`advancedPillars.test.ts`](ag-extension-dashboard/src/backend/src/__tests__/advancedPillars.test.ts) | 16 / 16 | Voice audio, IVR XML, DTMF, agro-dealers, batch verification, offtake, ROI, Soil Carbon, Hazard scans |
+| **Expanded Capabilities** | [`advancedPillarsExpanded.test.ts`](ag-extension-dashboard/src/backend/src/__tests__/advancedPillarsExpanded.test.ts) | 9 / 9 | Sentinel-2 NDVI/EVI/NDWI, 0-1000 credit score, parametric insurance claim, multi-tenancy |
+| **Frontier Capabilities** | [`frontierCapabilities.test.ts`](ag-extension-dashboard/src/backend/src/__tests__/frontierCapabilities.test.ts) | 9 / 9 | IoT soil telemetry, VPD irrigation, EUDR compliance, GS1 passports, drone missions, swarm radar, arbitrage |
+| **Edge Field Services** | [`edgeFieldServices.test.ts`](ag-extension-dashboard/src/frontend/src/__tests__/edgeFieldServices.test.ts) | 3 / 3 | Haversine distance, WGS-84 metric Shoelace polygon acreage, RFC 7946 GeoJSON export |
+| **Offline Sync Queue** | [`syncQueueService.test.ts`](ag-extension-dashboard/src/frontend/src/__tests__/syncQueueService.test.ts) | 5 / 5 | Idempotency keys, dual IndexedDB/localStorage persistence, exponential backoff, 409 conflict handling |
 | **Backend Full Suite** | 70 test files | 656 / 656 | 100% passing across all backend routes, services, queues, and security gates |
 | **Frontend Full Suite** | 35 test files | 162 / 162 | 100% passing across UI components, state stores, and services |
 | **Linter & Dead-Code** | `fallow:check` | 0 regressions | Clean ESLint, strict TypeScript, and Fallow dead-code gate passing |

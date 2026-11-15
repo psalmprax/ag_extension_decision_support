@@ -81,13 +81,13 @@ jobs:
           ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
-          username: root
+          username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           envs: ACME_EMAIL
           command_timeout: 5m
           script: |
             set -e
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
 
             echo "📋 Current Traefik status:"

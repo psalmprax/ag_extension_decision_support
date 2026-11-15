@@ -52,7 +52,7 @@ export const weatherTool: Tool<typeof WeatherSchema> = {
       return JSON.stringify(result);
     } catch (error) {
       logger.error(`Weather retrieval failed for ${location}:`, error);
-      throw new Error(`Weather data unavailable for ${location}`);
+      throw new Error(`Weather data unavailable for ${location}`, { cause: error });
     }
   },
 };

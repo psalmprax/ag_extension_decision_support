@@ -119,3 +119,35 @@ describe('GET /api/worldmonitor/layers', () => {
     expect(res.body.data.filters.county).toBe('Nakuru');
   });
 });
+
+describe('GET /api/worldmonitor/layers — pest swarm status', () => {
+  // An empty pest map must never read as "no swarms" when there is no data source.
+  const get = () => request(app).get('/api/worldmonitor/layers').set('Authorization', 'Bearer fake-jwt-token');
+  const withPestQuery = (pest: () => Promise<unknown>) => mockQuery.mockImplementation((sql: string) =>
+    (String(sql).includes('FROM pest_sightings') ? pest() : Promise.resolve({ rows: [] })));
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('reports "live" when the source was queried, even with zero clusters', async () => {
+    withPestQuery(() => Promise.resolve({ rows: [] }));
+    const res = await get();
+    expect(res.status).toBe(200);
+    expect(res.body.data.pestSwarm).toEqual({ status: 'live', clusters: [], trajectories: [] });
+  });
+
+  it('reports "no_data_source" when pest_sightings does not exist (42P01)', async () => {
+    withPestQuery(() => Promise.reject(Object.assign(new Error('relation "pest_sightings" does not exist'), { code: '42P01' })));
+    const res = await get();
+    expect(res.status).toBe(200);
+    expect(res.body.data.pestSwarm.status).toBe('no_data_source');
+  });
+
+  it('reports "unavailable" and logs an error on any other failure', async () => {
+    const { logger } = jest.requireMock('../utils/logger') as { logger: { error: jest.Mock } };
+    withPestQuery(() => Promise.reject(Object.assign(new Error('connection terminated'), { code: '57P01' })));
+    const res = await get();
+    expect(res.status).toBe(200);
+    expect(res.body.data.pestSwarm.status).toBe('unavailable');
+    expect(logger.error).toHaveBeenCalledWith('WorldMonitor pest swarm fetch failed:', expect.any(Error));
+  });
+});

@@ -52,7 +52,10 @@ function getPrimaryAiCredentialStatus(provider: string): { key: string; isConfig
         case 'groq':
             return { key: 'GROQ_API_KEY', isConfigured: !!config.groq.apiKey };
         case 'google_vertex':
-            return { key: 'GOOGLE_VERTEX_PROJECT_ID', isConfigured: !!config.googleVertex.projectId };
+            return {
+                key: 'GEMINI_API_KEY or GOOGLE_VERTEX_PROJECT_ID',
+                isConfigured: !!config.googleVertex.apiKey || !!config.googleVertex.projectId,
+            };
         case 'freebuff':
             return { key: 'FREEBUFF_AUTH_TOKEN', isConfigured: !!config.freebuff.authToken };
         case 'ollama':

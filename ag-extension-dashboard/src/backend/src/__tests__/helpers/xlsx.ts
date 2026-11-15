@@ -27,7 +27,6 @@ export const binaryParser = (
     res.on('end', () => cb(null, Buffer.concat(chunks)));
     res.on('error', (err: Error) => {
         // Surface the stream error instead of silently returning an empty buffer
-        // eslint-disable-next-line no-console
         console.error('binaryParser stream error:', err);
         cb(err, Buffer.alloc(0));
     });

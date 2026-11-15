@@ -16,7 +16,8 @@ import { config } from '@/config';
  * from being embedded 3x per askQuestion() call.
  */
 
-export const EMBEDDING_DIMENSIONS = Number.parseInt(process.env.EMBEDDING_DIMENSIONS || '768', 10);
+import { EMBEDDING_DIMENSIONS } from '@/services/embeddingDimensions';
+export { EMBEDDING_DIMENSIONS };
 
 interface CacheEntry {
     embedding: number[];

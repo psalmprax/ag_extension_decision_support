@@ -33,8 +33,8 @@ flowchart TD
     D -.-> D1["Insidious design defects, unit distortions, unsafe pesticide timing, impossible velocity, state races"]
 ```
 
-* **Flop ([`anti_flop.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/anti_flop.md))**: Direct failure modes—broken builds, failing unit tests, dead stubs, unhandled runtime crashes, or regression breaches.
-* **Hallucination ([`anti_hallucination.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/anti_hallucination.md))**: Epistemic untruths—claiming code works without testing, referencing non-existent npm modules, or inventing imaginary database fields.
+* **Flop ([`anti_flop.md`](anti_flop.md))**: Direct failure modes—broken builds, failing unit tests, dead stubs, unhandled runtime crashes, or regression breaches.
+* **Hallucination ([`anti_hallucination.md`](anti_hallucination.md))**: Epistemic untruths—claiming code works without testing, referencing non-existent npm modules, or inventing imaginary database fields.
 * **Flaw (This Protocol)**: An **insidious design defect, architectural anti-pattern, agronomic safety blindspot, unit distortion, state race condition, or operational impossibility** that compiles cleanly and passes basic happy-path tests, but creates crop destruction, pesticide poisoning, data leakage, fraudulent visit reporting, or systemic unmaintainability.
 
 ---
@@ -92,7 +92,7 @@ flowchart TD
     S12 --> OUT["13. Follow-Up & Efficacy Feedback Loop"]
 ```
 
-1. **User & Query Ingestion**: Sanitizes input, verifies language code against [`i18n.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/lib/i18n.ts), and blocks prompt injection or non-agricultural queries.
+1. **User & Query Ingestion**: Sanitizes input, verifies language code against [`i18n.ts`](ag-extension-dashboard/src/frontend/src/lib/i18n.ts), and blocks prompt injection or non-agricultural queries.
 2. **Tenant & Territory Authorization**: Verifies user tenant ID and validates that an extension officer is authorized for the target farmer's assigned ward/district.
 3. **Field & Parcel Validation**: Confirms valid parcel ID, boundary coordinates, and historical crop rotation status.
 4. **Agronomic Context & Slot Matching**: Extracts structured slots: host crop, target pest/disease, planting date, growth stage, soil pH, and field size.
@@ -104,7 +104,7 @@ flowchart TD
 10. **Confidence & Anti-Sycophancy Verification**:
     * If confidence is below 85% or symptoms match multiple pathogens: **HALT** advisory, request specific physical markers, or escalate to human extension specialist.
     * Rejects farmer's false self-diagnoses with respectful evidence-based counter-analysis.
-11. **Knapsack Operational Unit Translation**: Translates scientific concentrations (e.g. `2.5 L/ha` or `0.03% EC at 3ml/L`) into farmer-executable units (e.g. *"Mix 60ml (3 standard bottle caps) per 20L knapsack sprayer, applying 4 full knapsacks across your 0.5 acre plot"*).
+11. **Knapsack Operational Unit Translation** (conditional): WHEN a dose is backed by a current locally registered label or a soil-test-based recommendation, the advisory translates it into farmer-executable units (e.g. per-20L-knapsack mixing). Without that provenance, numeric rates and generic knapsack conversions are withheld entirely — see the advisory policy in README.md ("Require zero unverified treatment doses"); the safeguard outranks the convenience.
 12. **Farmer-Facing Multilingual Delivery**: Dispatches via preferred channel (PWA voice, SMS, WhatsApp) in validated native tongue with audio prosody smoothing.
 
 ---
@@ -139,7 +139,7 @@ flowchart TD
      * Diagnostic finding tied to specific observable symptoms.
      * Concrete advisory with clear farmer actionable steps.
 4. **Territory Compliance**:
-   * Extension officers are restricted to their assigned operational zones as enforced in [`visits.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/visits.ts):
+   * Extension officers are restricted to their assigned operational zones as enforced in [`visits.ts`](ag-extension-dashboard/src/backend/src/routes/visits.ts):
      ```typescript
      if (officerId && assignedOfficerId && officerId !== assignedOfficerId) {
        throw new Error('Visit officer must be the farmer\'s assigned extension officer');
@@ -169,7 +169,7 @@ flowchart TD
    * AI copilots must be strictly trained and prompted to prioritize clinical symptoms over farmer assertions.
    * If a farmer states: *"My maize has drought stress,"* but symptoms describe Fall Armyworm windowing and frass, the copilot must politely dispute the hypothesis, explain the physical diagnostic indicators, and redirect to the correct pest treatment.
 2. **Structured Entity Slots vs. Context Bloat**:
-   * In [`publicDemo.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/chatbot/publicDemo.ts) and [`TalkingAssistant.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx), multi-turn consultations must track structured agronomic slots:
+   * In [`publicDemo.ts`](ag-extension-dashboard/src/backend/src/routes/chatbot/publicDemo.ts) and [`TalkingAssistant.tsx`](ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx), multi-turn consultations must track structured agronomic slots:
      ```typescript
      interface AgronomicEntitySlots {
        crop?: string | null;
@@ -193,7 +193,7 @@ flowchart TD
      * Bottle-cap measures (5ml, 10ml, 20ml).
      * Handful / matchbox fertilizer micro-dosing guides.
 2. **Multilingual Clarity Across 24 Languages**:
-   * Voice copilots must humanize agronomic units via localized unit expanders ([`TalkingAssistant.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx)):
+   * Voice copilots must humanize agronomic units via localized unit expanders ([`TalkingAssistant.tsx`](ag-extension-dashboard/src/frontend/src/pages/landing/sections/TalkingAssistant.tsx)):
      * Swahili: `expandAgronomicUnitsSw` (`mililita 3 kwa lita ya maji`).
      * French: `expandAgronomicUnitsFr` (`millilitres par litre`).
      * Spanish: `expandAgronomicUnitsEs` (`mililitros por litro`).
@@ -204,7 +204,7 @@ flowchart TD
 ## 9. Offline Field Operations & Synchronization
 
 1. **Two-Tier Envelope Encryption**:
-   * Client devices store records in IndexedDB encrypted with AES-256-GCM via [`EncryptedStorageService`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/services/encryptedStorageService.ts).
+   * Client devices store records in IndexedDB encrypted with AES-256-GCM via [`EncryptedStorageService`](ag-extension-dashboard/src/frontend/src/services/encryptedStorageService.ts).
 2. **Conflict Resolution Without Observation Destruction**:
    * When syncing offline queues, the server must never blindly execute "last-write-wins" over conflicting observations.
    * If both officer and farmer modified field notes simultaneously, retain both entries as distinct timestamped records in the field visit history.
@@ -231,7 +231,7 @@ flowchart TD
 1. **WGS-84 Geodesic Acreage Sovereignty**:
    * Never calculate acreage using planar Euclidean geometry. All parcel polygons must execute over ellipsoidal geodetic projections via PostGIS `ST_Area(geog)`.
 2. **Real-Time Weather Suitability Gate**:
-   * Integrate NASA POWER and live station data ([`seasonalAdvisoryService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/seasonalAdvisoryService.ts)):
+   * Integrate NASA POWER and live station data ([`seasonalAdvisoryService.ts`](ag-extension-dashboard/src/backend/src/services/seasonalAdvisoryService.ts)):
      * Check precipitation thresholds (planting window $\ge 25$mm, dry spell alerts $< 5$mm).
      * Prohibit spraying in high winds ($> 15$ km/h) or temperatures $> 32^\circ\text{C}$ to prevent spray vaporization.
 
@@ -252,7 +252,7 @@ flowchart TD
 ## 13. Outcome & Feedback Loops
 
 1. **Closed-Loop Efficacy Tracking**:
-   * Every advisory must conclude with an outcome assessment recorded in [`adviceEfficacyService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/adviceEfficacyService.ts):
+   * Every advisory must conclude with an outcome assessment recorded in [`adviceEfficacyService.ts`](ag-extension-dashboard/src/backend/src/services/adviceEfficacyService.ts):
      * `resolved`, `improved`, `unresolved`, `worsened`, `lost_to_followup`.
 2. **Automated Knowledge Quality Degradation**:
    * If an AI or extension advisory shows an unresolved/worsened rate $> 30\%$ across a region, down-rank the RAG knowledge source and flag the protocol for national agronomic board re-evaluation.
@@ -279,7 +279,7 @@ flowchart TD
 2. **Transactional Atomicity**:
    * Multi-table operations must be wrapped in `prisma.$transaction`.
 3. **Public Demo Rate Limiting**:
-   * Enforce per-IP rate limiting (10 queries/hour) in [`publicDemo.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/routes/chatbot/publicDemo.ts).
+   * Enforce per-IP rate limiting (10 queries/hour) in [`publicDemo.ts`](ag-extension-dashboard/src/backend/src/routes/chatbot/publicDemo.ts).
 4. **Streaming Architecture**:
    * Stream audio and imagery directly to S3/MinIO; never buffer large files monolithically in Node.js memory.
 
@@ -291,7 +291,7 @@ flowchart TD
 - [ ] Are pesticide recommendations verified against PHI and REI harvest calendar margins? (P0)
 - [ ] Are bee-safety windows enforced during peak flowering periods? (P0)
 - [ ] Does the AI copilot reject sycophantic agreement and execute differential diagnosis? (P0)
-- [ ] Is scientific dosage translated into practical knapsack sprayer units for the farmer? (P1)
+- [ ] Where a verified label/soil-test dose exists, is it translated into practical knapsack sprayer units? Where it does not, is the numeric rate withheld rather than estimated? (P1)
 - [ ] Does the system halt or escalate to human officers when confidence is below 85%? (P1)
 
 ### Field Operations & Officer Workflow Audit
