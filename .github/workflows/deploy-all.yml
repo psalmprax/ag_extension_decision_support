@@ -29,6 +29,12 @@ concurrency:
   group: deploy-all-${{ github.ref }}
   cancel-in-progress: false
 
+# `|| true` convention in the SSH scripts below (all run under `set -e`):
+# reserved for idempotent cleanup (rm -f, buildx rm, prune, stale lock files),
+# diagnostics (logs, ps), and optional-state reads (inspect/grep that may find
+# nothing). A step whose failure changes what users get must fail the deploy,
+# or at least emit a `::warning` annotation — never be silenced.
+
 jobs:
   # 1. CI Checks (Runs for all triggers)
   ci-checks:
@@ -405,8 +411,8 @@ jobs:
             fi
 
             # Pre-create external networks referenced by compose
-            docker network create --driver bridge ettametta_ettametta >/dev/null 2>&1 || true
-            docker network create --driver bridge ag-network >/dev/null 2>&1 || true
+            docker network inspect ettametta_ettametta >/dev/null 2>&1 || docker network create --driver bridge ettametta_ettametta >/dev/null
+            docker network inspect ag-network >/dev/null 2>&1 || docker network create --driver bridge ag-network >/dev/null
 
             # Remove any stopped or orphaned container shells to prevent daemon name conflicts
             docker rm -f ag-discovery-scraper ag-agent-zero ag-crew-ai 2>/dev/null || true
@@ -525,8 +531,10 @@ jobs:
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.agents.yml"
             docker exec ag-dashboard-backend npx prisma db seed
             echo "Purging truncated or poisoned search_cache entries..."
-            docker compose $COMPOSE_FILES exec -T app-db psql -U "${DATABASE_USER:-postgres}" -d "${DATABASE_NAME:-ag_extension}" -c "DELETE FROM search_cache WHERE length(answer) < 200 OR answer LIKE '%AI assistant is currently unavailable%';" || true
-            docker compose $COMPOSE_FILES exec -T redis sh -c 'redis-cli --no-auth-warning -a "$REDIS_PASSWORD" --scan --pattern "rag:exact:*" | xargs -r redis-cli --no-auth-warning -a "$REDIS_PASSWORD" del' || true
+            docker compose $COMPOSE_FILES exec -T app-db psql -U "${DATABASE_USER:-postgres}" -d "${DATABASE_NAME:-ag_extension}" -c "DELETE FROM search_cache WHERE length(answer) < 200 OR answer LIKE '%AI assistant is currently unavailable%';" \
+              || echo "::warning title=search_cache purge failed::Truncated or 'assistant unavailable' cached answers may still be served"
+            docker compose $COMPOSE_FILES exec -T redis sh -c 'redis-cli --no-auth-warning -a "$REDIS_PASSWORD" --scan --pattern "rag:exact:*" | xargs -r redis-cli --no-auth-warning -a "$REDIS_PASSWORD" del' \
+              || echo "::warning title=RAG cache purge failed::Redis rag:exact:* entries were not cleared"
 
       # ── Step 5/5: Health Check — verify services are up ─────────────────────
       - name: 5/5 Health Check — verify services
@@ -932,8 +940,8 @@ jobs:
             fi
 
             # Pre-create external networks referenced by compose
-            docker network create --driver bridge ettametta_ettametta >/dev/null 2>&1 || true
-            docker network create --driver bridge ag-network >/dev/null 2>&1 || true
+            docker network inspect ettametta_ettametta >/dev/null 2>&1 || docker network create --driver bridge ettametta_ettametta >/dev/null
+            docker network inspect ag-network >/dev/null 2>&1 || docker network create --driver bridge ag-network >/dev/null
 
             # Remove any stopped or orphaned container shells to prevent daemon name conflicts
             docker rm -f ag-discovery-scraper ag-agent-zero ag-crew-ai 2>/dev/null || true
@@ -1085,8 +1093,10 @@ jobs:
               docker compose $COMPOSE_FILES exec -T backend npx prisma db seed
             fi
             echo "Purging truncated or poisoned search_cache entries..."
-            docker compose $COMPOSE_FILES exec -T app-db psql -U "${DATABASE_USER:-postgres}" -d "${DATABASE_NAME:-ag_extension}" -c "DELETE FROM search_cache WHERE length(answer) < 200 OR answer LIKE '%AI assistant is currently unavailable%';" || true
-            docker compose $COMPOSE_FILES exec -T redis sh -c 'redis-cli --no-auth-warning -a "$REDIS_PASSWORD" --scan --pattern "rag:exact:*" | xargs -r redis-cli --no-auth-warning -a "$REDIS_PASSWORD" del' || true
+            docker compose $COMPOSE_FILES exec -T app-db psql -U "${DATABASE_USER:-postgres}" -d "${DATABASE_NAME:-ag_extension}" -c "DELETE FROM search_cache WHERE length(answer) < 200 OR answer LIKE '%AI assistant is currently unavailable%';" \
+              || echo "::warning title=search_cache purge failed::Truncated or 'assistant unavailable' cached answers may still be served"
+            docker compose $COMPOSE_FILES exec -T redis sh -c 'redis-cli --no-auth-warning -a "$REDIS_PASSWORD" --scan --pattern "rag:exact:*" | xargs -r redis-cli --no-auth-warning -a "$REDIS_PASSWORD" del' \
+              || echo "::warning title=RAG cache purge failed::Redis rag:exact:* entries were not cleared"
 
       # ── Step 5/5: SSL + Health Check ──────────────────────────
       - name: 5/5 SSL & Health Check — verify certificate and services
