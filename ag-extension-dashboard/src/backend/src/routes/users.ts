@@ -51,6 +51,34 @@ const USER_UPDATE_FIELD_MAP: Record<string, string> = {
 
 const ALLOWED_ROLES = ['farmer', 'extension_officer', 'regional_manager', 'admin'];
 
+/**
+ * Validates role/activation updates in place. Returns an error message, or
+ * null when the updates are acceptable.
+ */
+function validateSensitiveUserUpdates(
+    safeUpdates: Record<string, unknown>,
+    targetUserId: string,
+    actingUserId: string | undefined
+): string | null {
+    if (safeUpdates.is_active !== undefined && typeof safeUpdates.is_active !== 'boolean') {
+        return 'isActive must be a boolean';
+    }
+    if (safeUpdates.role !== undefined) {
+        const role = typeof safeUpdates.role === 'string' ? safeUpdates.role.trim().toLowerCase() : '';
+        if (!ALLOWED_ROLES.includes(role)) {
+            return 'Invalid role';
+        }
+        safeUpdates.role = role;
+        // An admin must not be able to demote themselves out of the last admin
+        // seat mid-session; more importantly, self-demotion while holding a
+        // still-valid admin JWT is confusing — require a second admin.
+        if (actingUserId === targetUserId && role !== 'admin') {
+            return 'Admins cannot change their own role';
+        }
+    }
+    return null;
+}
+
 function extractSafeUserUpdates(body: Record<string, unknown>): Record<string, unknown> {
     const safeUpdates: Record<string, unknown> = {};
     for (const [key, col] of Object.entries(USER_UPDATE_FIELD_MAP)) {
@@ -276,21 +304,9 @@ router.put('/:id', authorize(['admin']), async (req: Request, res: Response) => 
         if (Object.keys(safeUpdates).length === 0) {
             return res.status(400).json({ success: false, error: 'No valid updates supplied' });
         }
-        if (safeUpdates.is_active !== undefined && typeof safeUpdates.is_active !== 'boolean') {
-            return res.status(400).json({ success: false, error: 'isActive must be a boolean' });
-        }
-        if (safeUpdates.role !== undefined) {
-            const role = typeof safeUpdates.role === 'string' ? safeUpdates.role.trim().toLowerCase() : '';
-            if (!ALLOWED_ROLES.includes(role)) {
-                return res.status(400).json({ success: false, error: 'Invalid role' });
-            }
-            safeUpdates.role = role;
-            // An admin must not be able to demote themselves out of the last admin
-            // seat mid-session; more importantly, self-demotion while holding a
-            // still-valid admin JWT is confusing — require a second admin.
-            if (req.user?.userId === id && role !== 'admin') {
-                return res.status(400).json({ success: false, error: 'Admins cannot change their own role' });
-            }
+        const validationError = validateSensitiveUserUpdates(safeUpdates, id, req.user?.userId);
+        if (validationError) {
+            return res.status(400).json({ success: false, error: validationError });
         }
 
         // Roles are embedded in the JWT, so a role change (demotion included) and
