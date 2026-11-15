@@ -1,10 +1,11 @@
 name: Reset Admin / Seed Production Database
 
 # PRODUCTION-MUTATING — requires a maintainer approval before it can run.
-# The admin password is NEVER a workflow input: it lives in the PROD_ADMIN_NEW_PASSWORD
-# repo secret and is written to the host's docker-compose .env by this workflow.
-# Workflow inputs and inputs-derived env vars appear in run logs and the Actions API;
-# secrets do not.
+# The admin password is NEVER a workflow input (inputs appear in run logs and the
+# Actions API). The operator places one line, PROD_ADMIN_NEW_PASSWORD=<value>, in the
+# host's docker-compose .env before running this workflow. The script reads it on the
+# host, hands it to the one-off `docker compose exec` process only, and scrubs the
+# line afterwards — even when a step fails.
 
 on:
   workflow_dispatch:
@@ -13,6 +14,11 @@ on:
         description: 'Admin Email to reset/verify'
         required: true
         default: 'admin@agridemo.com'
+      run_seed:
+        description: 'Also run `prisma db seed` on production (normally NOT needed)'
+        type: boolean
+        required: true
+        default: false
 
 # Read-only token: the job only talks to the prod host via SSH.
 permissions:
@@ -37,11 +43,12 @@ jobs:
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         env:
           TARGET_EMAIL: ${{ github.event.inputs.admin_email }}
+          RUN_SEED: ${{ github.event.inputs.run_seed }}
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
-          envs: TARGET_EMAIL
+          envs: TARGET_EMAIL,RUN_SEED
           command_timeout: 10m
           script: |
             set -e
@@ -54,31 +61,45 @@ jobs:
             cd /root/ag_extension_decision_support/ag-extension-dashboard
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
 
-            echo "============================================="
-            echo "🌱 Running Prisma DB Seed on Production"
-            echo "============================================="
-            docker compose $COMPOSE_FILES exec -T backend npx prisma db seed
+            # Whatever happens below, never leave the plaintext password in the host .env.
+            trap "sed -i '/^PROD_ADMIN_NEW_PASSWORD=/d' .env" EXIT
+
+            # Seeding production is opt-in: resetting a password must not also
+            # (re)insert seed data as a side effect.
+            if [ "$RUN_SEED" = "true" ]; then
+              echo "============================================="
+              echo "🌱 Running Prisma DB Seed on Production"
+              echo "============================================="
+              docker compose $COMPOSE_FILES exec -T backend npx prisma db seed
+            fi
 
             echo "============================================="
             echo "🔐 Updating Admin Credentials directly"
             echo "============================================="
-            # The new password arrives from the PROD_ADMIN_NEW_PASSWORD secret,
-            # already written into the host .env by the operator (or a prior
-            # step). We read it inside the host script and pass it to the
-            # container over the compose env plumbing — never as a workflow
-            # input, so it can never show up in run logs or the API.
+            # The operator has written PROD_ADMIN_NEW_PASSWORD into the host .env.
+            # A running container does NOT see later .env edits (env_file is read
+            # at container creation), so the value and the target email are
+            # passed explicitly to the exec'd process with `-e`. Neither is ever
+            # a workflow input or echoed.
             if ! grep -q '^PROD_ADMIN_NEW_PASSWORD=' .env; then
               echo "❌ PROD_ADMIN_NEW_PASSWORD not set in host .env — refusing to reset admin password."
               echo "   Add it to the host .env (one line, no echo, do not commit)."
               exit 1
             fi
 
-            docker compose $COMPOSE_FILES exec -T backend node -e "
+            PROD_ADMIN_NEW_PASSWORD=$(grep -m1 '^PROD_ADMIN_NEW_PASSWORD=' .env | cut -d= -f2-)
+            export PROD_ADMIN_NEW_PASSWORD TARGET_EMAIL
+
+            docker compose $COMPOSE_FILES exec -T -e TARGET_EMAIL -e PROD_ADMIN_NEW_PASSWORD backend node -e "
               const { PrismaClient } = require('@prisma/client');
               const bcrypt = require('bcryptjs');
               const prisma = new PrismaClient();
               async function run() {
-                const email = process.env.TARGET_EMAIL || 'admin@agridemo.com';
+                const email = process.env.TARGET_EMAIL;
+                if (!email) {
+                  console.error('❌ TARGET_EMAIL was not passed to the container');
+                  process.exit(1);
+                }
                 const pass = process.env.PROD_ADMIN_NEW_PASSWORD;
                 if (!pass || pass.length < 12) {
                   console.error('❌ PROD_ADMIN_NEW_PASSWORD missing or shorter than 12 chars');
@@ -103,10 +124,8 @@ jobs:
               run().catch(err => { console.error('❌ Error updating admin:', err); process.exit(1); });
             "
 
-            echo "============================================="
-            echo "🧹 Scrubbing password from host .env"
-            echo "============================================="
-            sed -i '/^PROD_ADMIN_NEW_PASSWORD=/d' .env
+            unset PROD_ADMIN_NEW_PASSWORD
+            echo "🧹 Password line is scrubbed from the host .env on exit (trap)."
 
             echo "============================================="
             echo "✨ Verification Complete!"
