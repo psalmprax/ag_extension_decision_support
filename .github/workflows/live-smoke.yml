@@ -17,6 +17,8 @@ on:
   schedule:
     - cron: "41 4 * * 1"   # weekly, Monday 04:41 UTC: catches key/model expiry between deploys
   workflow_dispatch:
+  push:
+    branches: [ops/live-smoke]   # trial runs only; this branch is never merged
 
 permissions:
   contents: read
