@@ -492,7 +492,10 @@ export class AIHubMixProvider extends BaseAIProvider {
     const model = options?.model || process.env.AI_EMBEDDINGS_MODEL || 'text-embedding-3-large';
     const response = await axios.post(
       `${this.baseUrl}/embeddings`,
-      { model, input: text },
+      // Forward the requested width (OpenAI-compatible `dimensions`): the pgvector
+      // columns are vector(EMBEDDING_DIMENSIONS), and text-embedding-3-large is
+      // 3072 wide unless told otherwise.
+      { model, input: text, ...(options?.dimensions ? { dimensions: options.dimensions } : {}) },
       {
         headers: { Authorization: `Bearer ${key}` },
         timeout: 15000,

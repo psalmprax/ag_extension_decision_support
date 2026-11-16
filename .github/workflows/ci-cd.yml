@@ -37,8 +37,8 @@ jobs:
       - name: Component-size ratchet (CLAUDE.md 300-line rule)
         run: node scripts/component-size-ratchet.cjs
 
-      - name: Deploy script tests (port handling)
-        run: node --test scripts/free-web-ports.test.cjs
+      - name: Script tests (port handling, live smoke)
+        run: node --test scripts/*.test.cjs
   
       - name: Validate locale translations
         run: |
