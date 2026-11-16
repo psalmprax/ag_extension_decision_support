@@ -24,9 +24,15 @@ jobs:
           echo "127.0.0.1 cdn.sheetjs.com" | sudo tee -a /etc/hosts
           npm ci --ignore-scripts --no-audit --no-fund
           node -e "console.log('workspace xlsx', JSON.parse(require('fs').readFileSync('node_modules/xlsx/package.json','utf8')).version)"
-          cd ag-extension-dashboard/src/backend
-          rm -rf node_modules && npm ci --ignore-scripts --no-audit --no-fund --omit=dev
-          node -e "console.log('standalone xlsx', JSON.parse(require('fs').readFileSync('node_modules/xlsx/package.json','utf8')).version)"
+          # Standalone layout (as the Docker deps stage sees it): outside the workspace.
+          tmp="$(mktemp -d)"
+          cp ag-extension-dashboard/src/backend/package.json ag-extension-dashboard/src/backend/package-lock.json "$tmp/"
+          cp -r ag-extension-dashboard/src/backend/vendor "$tmp/vendor"
+          (cd "$tmp" && npm ci --ignore-scripts --no-audit --no-fund --omit=dev)
+          node -e "console.log('standalone xlsx', JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).version)" "$tmp/node_modules/xlsx/package.json"
+          # The real Docker deps stage, with the CDN unresolvable inside the build too.
+          docker build --add-host cdn.sheetjs.com:127.0.0.1 --target deps -f ag-extension-dashboard/src/backend/Dockerfile -t xlsx-vendor-check . >/dev/null
+          docker run --rm xlsx-vendor-check node -e "console.log('docker deps xlsx', require('fs').existsSync('/app/node_modules/xlsx/package.json'))"
       - name: Commit the vendored tarball
         run: |
           git config user.name "github-actions[bot]"
