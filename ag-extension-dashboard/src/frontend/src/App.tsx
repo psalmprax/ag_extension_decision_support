@@ -13,6 +13,7 @@ import { generateReport, Report } from '@/api/reportService';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useRoleTabGuard } from '@/hooks/useRoleTabGuard';
 import ErrorBoundary from '@ag-extension/shared';
 import { getNavItems } from './config/navItems';
 import { useDemoMode } from '@/demo';
@@ -236,6 +237,7 @@ function App() {
     dashboardData,
     isLoading,
     isError,
+    refetchDashboard,
     effectiveFarmers,
     visits,
     refetchVisits,
@@ -372,18 +374,12 @@ function App() {
     }
   };
 
-  if (effectiveUser && isError)
-    return (
-      <div className="flex items-center justify-center min-h-screen text-red-500 bg-gray-50 dark:bg-gray-900">
-        {t('error_loading')}
-      </div>
-    );
-
   const navItems = getNavItems().filter(item => {
     if (!effectiveUser || !item.roles.includes(effectiveUser.role)) return false;
     if (isDemo && item.hiddenInDemo) return false;
     return true;
   });
+  useRoleTabGuard(activeTab, setActiveTab, navItems.map(item => item.id), Boolean(effectiveUser));
 
   // Public routes
   if (!effectiveUser) {
@@ -532,6 +528,8 @@ function App() {
                     addNotification={addNotification as (n: unknown) => void}
                     dashboardData={dashboardData}
                     isLoading={isLoading}
+                    dashboardError={isError}
+                    onRetryDashboard={() => void refetchDashboard()}
                     performanceData={performanceData}
                     effectiveFarmers={effectiveFarmers}
                     isMapExpanded={isMapExpanded}

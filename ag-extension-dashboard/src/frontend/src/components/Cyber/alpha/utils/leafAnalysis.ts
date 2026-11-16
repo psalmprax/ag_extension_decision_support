@@ -62,8 +62,7 @@ export async function analyzeLeafImage(file: File): Promise<LeafAnalysisOutcome>
     r.onerror = reject;
     r.readAsDataURL(file);
   });
-  const base64 = dataUrl.split(',')[1];
-  const { data } = await apiClient.post('/ai/diseases/analyze', { image: base64 });
+  const { data } = await apiClient.post('/ai/diseases/diagnose/image', { imageData: dataUrl });
   const payload = (data?.data ?? data ?? {}) as {
     overallHealth?: string;
     confidence?: number;

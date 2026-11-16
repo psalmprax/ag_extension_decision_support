@@ -39,7 +39,7 @@ interface User {
   region: string;
   country?: string;
   phone: string;
-  lastLoginAt?: string | null;
+  lastLogin?: string | null;
 }
 
 const ROLES = [
@@ -370,8 +370,8 @@ export function UserManagementPage() {
 
                   <div className="pt-2 mt-2 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
                     <span className="text-[10px] text-slate-500 dark:text-white/40 font-mono truncate max-w-[150px]">
-                      {user.lastLoginAt
-                        ? t('users_last_login', 'Last: {date}', { date: new Date(user.lastLoginAt).toLocaleDateString() })
+                      {user.lastLogin
+                        ? t('users_last_login', 'Last: {date}', { date: new Date(user.lastLogin).toLocaleDateString() })
                         : t('users_no_recent_login', 'No recent login')}
                     </span>
                     <button

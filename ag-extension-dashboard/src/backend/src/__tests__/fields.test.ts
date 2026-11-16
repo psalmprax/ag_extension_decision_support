@@ -133,6 +133,7 @@ jest.mock('../services/prismaService', () => {
             },
             cropCycle: {
                 findMany: jest.fn().mockResolvedValue([]),
+                delete: jest.fn().mockImplementation((args: Prisma.CropCycleDeleteArgs) => Promise.resolve({ id: args.where.id })),
                 findUnique: jest.fn().mockImplementation((args: Prisma.CropCycleFindUniqueArgs) => {
                     if (args.where.id === 'cycle-1') {
                         return Promise.resolve({
@@ -159,8 +160,7 @@ jest.mock('../services/prismaService', () => {
                 update: jest.fn().mockImplementation((args: Prisma.CropCycleUpdateArgs) => Promise.resolve({
                     id: args.where.id,
                     ...args.data
-                })),
-                delete: jest.fn().mockResolvedValue({})
+                }))
             }
         }))
     };
@@ -317,6 +317,31 @@ describe('Fields & Crops API Integration Tests', () => {
 
         expect(response.status).toBe(201);
         expect(response.body.success).toBe(true);
+    });
+
+    it('lets the farmer delete a crop cycle on their own field', async () => {
+        const response = await request(app)
+            .delete('/api/v1/fields/22222222-2222-2222-2222-222222222222/cycles/cycle-1')
+            .set('Authorization', `Bearer ${farmerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ success: true, data: { id: 'cycle-1' } });
+    });
+
+    it('refuses to delete a crop cycle for a user without access', async () => {
+        const response = await request(app)
+            .delete('/api/v1/fields/22222222-2222-2222-2222-222222222222/cycles/cycle-1')
+            .set('Authorization', `Bearer ${unauthorizedToken}`);
+
+        expect(response.status).toBe(403);
+    });
+
+    it('answers 404 for a crop cycle on a different field', async () => {
+        const response = await request(app)
+            .delete('/api/v1/fields/33333333-3333-3333-3333-333333333333/cycles/cycle-1')
+            .set('Authorization', `Bearer ${farmerToken}`);
+
+        expect(response.status).toBe(404);
     });
 
     it('should reject unauthorized user from updating crop cycle', async () => {

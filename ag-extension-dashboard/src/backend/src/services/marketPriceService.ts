@@ -3,6 +3,7 @@ import { logger } from '@/utils/logger';
 import axios from 'axios';
 import { rateLimitedFetch } from './externalApiGuard';
 import { recordPriceSnapshot } from './priceHistoryService';
+import { cacheGet, cacheSet } from './cacheService';
 
 export type MarketDataStatus = 'live' | 'estimated' | 'unavailable';
 
@@ -266,9 +267,48 @@ async function resolveGiewsOrBaseline(
   return buildBaselinePrices(exchangeRate, targetCurrency, fetchedAt);
 }
 
+// FAOSTAT producer prices are published yearly, so live rows are kept for 6 h;
+// estimates and baselines for 30 min, so a recovered upstream is picked up soon.
+// Without this every page load waited on up to four upstream calls (20-40 s
+// when FAOSTAT is slow), which left the price cards spinning.
+const PRICE_CACHE_TTL_LIVE_S = 6 * 60 * 60;
+const PRICE_CACHE_TTL_ESTIMATE_S = 30 * 60;
+const inFlightPrices = new Map<string, Promise<MarketPrice[]>>();
+
+const priceCacheKey = (country: string) => `market-prices:v1:${country}`;
+
+async function readCachedPrices(country: string): Promise<MarketPrice[] | null> {
+  const raw = await cacheGet(priceCacheKey(country));
+  if (!raw) return null;
+  try {
+    return (JSON.parse(raw) as MarketPrice[]).map(row => ({ ...row, updatedAt: new Date(row.updatedAt) }));
+  } catch (error) {
+    logger.warn(`Ignoring unreadable cached prices for ${country}: ${error instanceof Error ? error.message : 'parse error'}`);
+    return null;
+  }
+}
+
 export const marketPriceService = {
+  /** Latest prices for the user's country: cached, and one upstream fetch at a time per country. */
   async getLatestPrices(userId?: string, countryOverride?: string): Promise<MarketPrice[]> {
     const country = countryOverride || await getUserCountry(userId);
+    const cached = await readCachedPrices(country);
+    if (cached) return cached;
+
+    const running = inFlightPrices.get(country);
+    if (running) return running;
+    const fetching = this.fetchLatestPrices(country)
+      .then(async result => {
+        const live = result.length > 0 && result.every(row => row.dataStatus === 'live');
+        await cacheSet(priceCacheKey(country), JSON.stringify(result), live ? PRICE_CACHE_TTL_LIVE_S : PRICE_CACHE_TTL_ESTIMATE_S);
+        return result;
+      })
+      .finally(() => inFlightPrices.delete(country));
+    inFlightPrices.set(country, fetching);
+    return fetching;
+  },
+
+  async fetchLatestPrices(country: string): Promise<MarketPrice[]> {
     const areaCode = faostatAreaCode(country);
     const targetCurrency = getCurrencyForCountry(country);
     const exchangeRate = await fetchExchangeRate(targetCurrency);

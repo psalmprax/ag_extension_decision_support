@@ -46,7 +46,7 @@ export const fetchSynthesis = async (
   farmerId: string,
   notes: string
 ): Promise<{ success: boolean; data: { summary: string } }> => {
-  const response = await apiClient.post('/chatbot/synthesis', { farmerId, notes });
+  const response = await apiClient.post('/ai/synthesize-visit', { farmerId, notes });
   return response.data;
 };
 

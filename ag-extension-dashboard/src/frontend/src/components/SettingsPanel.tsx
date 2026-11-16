@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { OfflineMapsSection } from '@/components/settings/OfflineMapsSection';
+import { NotificationPreferencesSection } from '@/components/settings/NotificationPreferencesSection';
+import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { Map } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Bell, Palette, Globe, Monitor, Moon, Sun, Volume2, VolumeX, Zap, MessageSquare, Droplets } from 'lucide-react';
+import { X, Palette, Globe, Monitor, Moon, Sun, Zap, MessageSquare, Droplets } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { DesignToggle } from './ABTestBanner';
 import { LiquidToggleSwitch } from './canvasui/LiquidToggleSwitch';
-import apiClient from '@/api/client';
 import toast from 'react-hot-toast';
 import { fetchOrganizationConfig, updateOrganizationConfig, OrganizationConfig } from '@/api/organizationService';
 import { downloadKnowledgePack } from '@/api/knowledgeService';
@@ -58,24 +59,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
       setIsOrganizationSaving(false);
     }
   };
-  const [notificationPrefs, setNotificationPrefs] = useState({
-    emailAlerts: true,
-    smsAlerts: true,
-    pushNotifications: true,
-    soundEnabled: false,
-  });
-
-  const handleToggle = async (key: keyof typeof notificationPrefs) => {
-    const updated = { ...notificationPrefs, [key]: !notificationPrefs[key] };
-    setNotificationPrefs(updated);
-    localStorage.setItem('ag-notification-prefs', JSON.stringify(updated));
-    try {
-      await apiClient.patch('/users/profile', { notificationPreferences: updated });
-      toast.success('Settings saved');
-    } catch {
-      toast.success('Settings saved locally');
-    }
-  };
+  const notifications = useNotificationPreferences();
 
   return (
     <AnimatePresence>
@@ -195,56 +179,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                   </h3>
                   <OfflineMapsSection />
                 </div>
-                <div className="space-y-3">
-                  <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                    <Bell className="w-4 h-4" />
-                    {t('settings_notifications') || 'Notifications'}
-                  </h3>
-                  <div className="space-y-2">
-                    {[
-                      {
-                        key: 'emailAlerts' as const,
-                        label: t('settings_email_alerts') || 'Email Alerts',
-                        icon: Bell,
-                      },
-                      {
-                        key: 'smsAlerts' as const,
-                        label: t('settings_sms_alerts') || 'SMS Alerts',
-                        icon: Bell,
-                      },
-                      {
-                        key: 'pushNotifications' as const,
-                        label: t('settings_push_notifs') || 'Push Notifications',
-                        icon: Bell,
-                      },
-                      {
-                        key: 'soundEnabled' as const,
-                        label: t('settings_sound') || 'Sound Effects',
-                        icon: notificationPrefs.soundEnabled ? Volume2 : VolumeX,
-                      },
-                    ].map(({ key, label, icon: Icon }) => (
-                      <div
-                        key={key}
-                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {label}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => handleToggle(key)}
-                          className={`w-12 h-6 rounded-full transition-colors ${notificationPrefs[key] ? 'bg-primary-600' : 'bg-gray-300'} relative`}
-                        >
-                          <div
-                            className={`w-5 h-5 bg-white rounded-full shadow absolute top-0.5 transition-transform ${notificationPrefs[key] ? 'translate-x-6' : 'translate-x-0.5'}`}
-                          />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <NotificationPreferencesSection {...notifications} />
 
                 {/* Organization */}
                 {organization && (
@@ -357,26 +292,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                     </span>
                   </button>
                   <button
-                    onClick={() => {
-                      const defaults = {
-                        emailAlerts: true,
-                        smsAlerts: true,
-                        pushNotifications: true,
-                        soundEnabled: false,
-                      };
-                      setNotificationPrefs(defaults);
-                      localStorage.setItem('ag-notification-prefs', JSON.stringify(defaults));
-                      apiClient
-                        .patch('/users/profile', { notificationPreferences: defaults })
-                        .catch(err => {
-                          console.warn('Failed to persist notification prefs:', err);
-                        });
-                      toast.success('Settings reset to defaults');
-                    }}
+                    onClick={() => void notifications.reset()}
                     className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   >
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Reset All Settings
+                      Reset alert settings
                     </span>
                   </button>
                 </div>

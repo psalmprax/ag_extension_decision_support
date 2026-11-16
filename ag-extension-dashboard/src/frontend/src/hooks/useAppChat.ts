@@ -192,20 +192,6 @@ export const useAppChat = (language: string) => {
     }
   };
 
-  // Farmer Chat functions
-  const loadFarmerConversations = useCallback(async () => {
-    try {
-      const res = await fetchConversations();
-      const list = res.data || [];
-      setFarmerConversations(list);
-      if (list.length > 0 && !activeFarmerConvId) {
-        setActiveFarmerConvId(list[0].id);
-      }
-    } catch (error) {
-      console.error('Failed to load farmer conversations:', error);
-    }
-  }, [activeFarmerConvId, setActiveFarmerConvId]);
-
   const loadFarmerMessages = useCallback(async (id: string) => {
     if (activeFarmerConvIdRef.current !== id) return;
     const requestId = ++farmerMessagesRequestRef.current;
@@ -222,6 +208,23 @@ export const useAppChat = (language: string) => {
       console.error('Failed to load farmer messages:', error);
     }
   }, []);
+
+  // Farmer Chat functions
+  const loadFarmerConversations = useCallback(async () => {
+    try {
+      const res = await fetchConversations();
+      const list = res.data || [];
+      setFarmerConversations(list);
+      if (list.length > 0 && !activeFarmerConvId) {
+        // Auto-selecting the newest conversation must also show its history;
+        // previously the thread stayed empty until it was clicked again.
+        setActiveFarmerConvId(list[0].id);
+        void loadFarmerMessages(list[0].id);
+      }
+    } catch (error) {
+      console.error('Failed to load farmer conversations:', error);
+    }
+  }, [activeFarmerConvId, setActiveFarmerConvId, loadFarmerMessages]);
 
   const handleFarmerChatSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();

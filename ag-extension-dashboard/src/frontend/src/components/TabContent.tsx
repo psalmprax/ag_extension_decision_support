@@ -13,6 +13,8 @@ interface AnalyticsDataShape {
   timeline?: Record<string, string | number>[];
 }
 
+import { DashboardLoadError } from '@/components/DashboardLoadError';
+
 const DashboardPage = React.lazy(() =>
   import('@/pages/DashboardPage').then(m => ({ default: m.DashboardPage }))
 );
@@ -59,7 +61,9 @@ const SMSPage = React.lazy(() => import('@/pages/SMS').then(m => ({ default: m.S
 const AlphaAI = React.lazy(() => import('@/components/Cyber/AlphaAI'));
 const KnowledgeBase = React.lazy(() =>
   // webpackChunkName guides Rollup's async-chunk naming (was generic "index")
-  import(/* webpackChunkName: "knowledge-base" */ '@/components/KnowledgeBase').then(m => ({ default: m.KnowledgeBase }))
+  import(/* webpackChunkName: "knowledge-base" */ '@/components/KnowledgeBase').then(m => ({
+    default: m.KnowledgeBase,
+  }))
 );
 const UserManagementPage = React.lazy(() =>
   import('@/pages/UserManagementPage').then(m => ({ default: m.UserManagementPage }))
@@ -81,6 +85,8 @@ interface TabContentProps {
   // Dashboard
   dashboardData: unknown;
   isLoading: boolean;
+  dashboardError: boolean;
+  onRetryDashboard: () => void;
   performanceData: unknown;
   effectiveFarmers: Farmer[];
   isMapExpanded: boolean;
@@ -133,24 +139,27 @@ export function TabContent(props: TabContentProps) {
   switch (activeTab) {
     case 'dashboard':
       return (
-        <DashboardPage
-          dashboardData={props.dashboardData as unknown as DashboardData | undefined}
-          isLoading={props.isLoading}
-          isOfficer={isOfficer}
-          performanceData={props.performanceData as unknown as AnalyticsDataShape | undefined}
-          effectiveFarmers={props.effectiveFarmers}
-          isMapExpanded={props.isMapExpanded}
-          setIsMapExpanded={props.setIsMapExpanded}
-          handleStartConversation={props.handleStartConversation}
-          handleOpenFarmerDetail={props.handleOpenFarmerDetail}
-          user={
-            user as
-              | { role?: string; firstName?: string; lastName?: string; avatarUrl?: string }
-              | undefined
-          }
-          addNotification={addNotification}
-          onOpenUSSDSimulator={props.onOpenUSSDSimulator}
-        />
+        <>
+          {props.dashboardError && <DashboardLoadError onRetry={props.onRetryDashboard} />}
+          <DashboardPage
+            dashboardData={props.dashboardData as unknown as DashboardData | undefined}
+            isLoading={props.isLoading}
+            isOfficer={isOfficer}
+            performanceData={props.performanceData as unknown as AnalyticsDataShape | undefined}
+            effectiveFarmers={props.effectiveFarmers}
+            isMapExpanded={props.isMapExpanded}
+            setIsMapExpanded={props.setIsMapExpanded}
+            handleStartConversation={props.handleStartConversation}
+            handleOpenFarmerDetail={props.handleOpenFarmerDetail}
+            user={
+              user as
+                | { role?: string; firstName?: string; lastName?: string; avatarUrl?: string }
+                | undefined
+            }
+            addNotification={addNotification}
+            onOpenUSSDSimulator={props.onOpenUSSDSimulator}
+          />
+        </>
       );
     case 'portfolio':
       return (

@@ -605,7 +605,7 @@ export const AlphaAI: React.FC = () => {
               <div className="pt-4 mt-4 border-t border-slate-200 dark:border-white/5 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-xxs text-slate-500 dark:text-white/50 font-mono">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Agronomic Safety Guard Active (Zero Hallucination Tolerance)</span>
+                  <span>Agronomic safety guard on: answers are checked for unsafe advice</span>
                 </div>
 
                 <div className="flex items-center gap-2">

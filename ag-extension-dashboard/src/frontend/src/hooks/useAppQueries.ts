@@ -60,6 +60,7 @@ export function useAppQueries(activeTab: string, searchQuery: string) {
     data: dashboardResponse,
     isLoading,
     isError,
+    refetch: refetchDashboard,
   } = useQuery({
     queryKey: ['dashboard'],
     queryFn: fetchDashboardData,
@@ -108,6 +109,7 @@ export function useAppQueries(activeTab: string, searchQuery: string) {
       dashboardData: buildDemoDashboardData(effectiveFarmers),
       isLoading: false,
       isError: false,
+      refetchDashboard,
       effectiveFarmers,
       visits: [],
       refetchVisits,
@@ -122,6 +124,7 @@ export function useAppQueries(activeTab: string, searchQuery: string) {
     dashboardData: dashboardResponse?.data,
     isLoading,
     isError,
+    refetchDashboard,
     effectiveFarmers,
     visits: visitsResponse?.data?.visits || [],
     refetchVisits,

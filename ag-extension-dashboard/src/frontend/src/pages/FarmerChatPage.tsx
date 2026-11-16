@@ -405,8 +405,8 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
           {activeFarmerConvId && activeConv ? (
             <>
               {/* Active Conversation Top Bar */}
-              <div className="p-3 sm:p-4 border-b border-slate-200/80 dark:border-white/[0.08] flex justify-between items-center bg-slate-50/80 dark:bg-slate-950/40">
-                <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-3 sm:p-4 border-b border-slate-200/80 dark:border-white/[0.08] flex justify-between items-center gap-2 bg-slate-50/80 dark:bg-slate-950/40">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                   <button
                     onClick={() => setActiveFarmerConvId(null)}
                     className="md:hidden p-2 rounded-lg bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 text-slate-700 dark:text-white transition-colors mr-1"
@@ -418,11 +418,8 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                     {(activeConv.farmerName || activeConv.title || 'F').trim().charAt(0).toUpperCase() || 'F'}
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-2 truncate">
-                      <span className="truncate">{activeConv.farmerName || activeConv.title || 'Smallholder Client'}</span>
-                      <span className="hidden sm:inline text-xxs font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 shrink-0">
-                        SMS & WhatsApp Synced
-                      </span>
+                    <h4 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                      {activeConv.farmerName || activeConv.title || 'Smallholder Client'}
                     </h4>
                     <div className="flex items-center gap-2 text-xxs text-slate-500 dark:text-white/40 font-mono">
                       <span>1-to-1 Advisory</span>
@@ -448,9 +445,9 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                       <span className="hidden sm:inline">Delete</span>
                     </button>
                   )}
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-                  <span className="text-xxs font-mono text-emerald-700 dark:text-emerald-400 font-medium hidden sm:inline">
-                    Live Channel
+                  <span className={`w-1.5 h-1.5 rounded-full ${socketConnected ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-slate-400'}`} aria-hidden="true" />
+                  <span className={`text-xxs font-mono font-medium hidden lg:inline ${socketConnected ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500'}`}>
+                    {socketConnected ? 'Live updates' : 'Updates paused'}
                   </span>
                 </div>
               </div>

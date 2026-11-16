@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {
   Activity,
   Camera,
@@ -22,6 +23,7 @@ import { EdgeVisionScannerModal } from '@/components/EdgeVisionScannerModal';
 import { VideoAnalysisTab } from './diagnostics/VideoAnalysisTab';
 
 export function DiseaseDiagnosis() {
+  const online = useOnlineStatus();
   const { t } = useLanguage();
   const { headingClass, radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
@@ -112,8 +114,15 @@ export function DiseaseDiagnosis() {
               <Camera className="w-4 h-4" />
               <span>Camera Scan Leaf</span>
             </button>
-            <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium">
-              <span>Analysis requires connectivity</span>
+            <span
+              role="status"
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium ${
+                online
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900/60 dark:text-emerald-200'
+                  : 'bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-950/30 dark:border-amber-900/60 dark:text-amber-100'
+              }`}
+            >
+              {online ? 'Online: analysis available' : 'Offline: analysis needs a connection'}
             </span>
           </div>
         </div>

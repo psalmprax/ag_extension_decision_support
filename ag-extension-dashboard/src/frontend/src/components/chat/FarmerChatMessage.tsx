@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChatMarkdown } from './ChatMarkdown';
 import { Bot, ShieldCheck, Sprout } from 'lucide-react';
 import type { ChatMessage } from '@/types/dashboard';
 import { AudioReaderButton } from '@/components/audio/AudioReaderButton';
@@ -30,7 +31,12 @@ export const FarmerChatMessage: React.FC<{ message: ChatMessage }> = ({ message 
           <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
           <span>{look.label}</span>
         </div>
-        <p className="text-xs sm:text-sm leading-relaxed">{message.content}</p>
+        {/* AI answers are markdown; what farmers and officers type stays verbatim. */}
+        {look.sender === 'assistant' ? (
+          <div className="text-xs sm:text-sm"><ChatMarkdown content={message.content} /></div>
+        ) : (
+          <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-line">{message.content}</p>
+        )}
         <div className={`flex items-center justify-between gap-3 text-xxs font-mono pt-1 border-t ${look.metaClass}`}>
           <AudioReaderButton
             text={message.content}

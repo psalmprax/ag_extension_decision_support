@@ -55,9 +55,23 @@ export const updateFarmer = async (
   return response.data;
 };
 
-export const deleteFarmer = async (id: string): Promise<{ success: boolean }> => {
-  const response = await apiClient.delete<{ success: boolean }>(`/farmers/${id}`);
-  return response.data;
+interface BulkDeleteResult {
+  success: boolean;
+  processed: number;
+  failed: number;
+  errors: string[];
+}
+
+/**
+ * There is no single-farmer DELETE route; the bulk endpoint applies the same
+ * access rules. It answers 200 for partial failure, so the outcome is read from
+ * its counts rather than the envelope.
+ */
+export const deleteFarmer = async (id: string): Promise<{ success: boolean; error?: string }> => {
+  const response = await apiClient.post<{ success: boolean; data?: BulkDeleteResult }>('/farmers/bulk/delete', { ids: [id] });
+  const result = response.data.data;
+  if (result && result.processed === 1 && result.failed === 0) return { success: true };
+  return { success: false, error: result?.errors?.[0]?.replace(/^Failed to delete farmer \S+: /, '') || 'The farmer could not be deleted.' };
 };
 
 export const deleteFarmers = async (ids: string[]): Promise<{ success: boolean }> => {

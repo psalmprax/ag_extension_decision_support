@@ -470,44 +470,61 @@ function updateFieldData(data: Prisma.FieldUpdateInput, body: Partial<{
 /**
  * PATCH /api/fields/:fieldId/cycles/:id — update crop cycle
  */
-router.patch('/:fieldId/cycles/:id', async (req: Request, res: Response) => {
-    try {
-        const { fieldId, id } = req.params;
-        if (!fieldId || !id) {
-            return res.status(400).json({ success: false, error: 'fieldId and cycle id are required' });
-        }
-        const prisma = getPrisma();
-        const user = req.user as { userId?: string; role?: string } | undefined;
-        const existingCycle = await prisma.cropCycle.findUnique({
-            where: { id },
-            include: {
-                field: {
-                    include: {
-                        farmer: { select: { userId: true, assignedOfficerId: true } },
-                    },
+type CycleAccess = { ok: true; id: string } | { ok: false; status: number; error: string };
+
+/** The crop cycle in the URL, if it exists on that field and the caller may change it. */
+async function resolveEditableCycle(req: Request): Promise<CycleAccess> {
+    const { fieldId, id } = req.params;
+    if (!fieldId || !id) return { ok: false, status: 400, error: 'fieldId and cycle id are required' };
+    const user = req.user as { userId?: string; role?: string } | undefined;
+    const existingCycle = await getPrisma().cropCycle.findUnique({
+        where: { id },
+        include: {
+            field: {
+                include: {
+                    farmer: { select: { userId: true, assignedOfficerId: true } },
                 },
             },
-        });
-        if (!existingCycle || existingCycle.fieldId !== fieldId) {
-            return res.status(404).json({ success: false, error: 'Crop cycle not found' });
-        }
-        if (user?.role === 'farmer' && existingCycle.field?.farmer?.userId !== user.userId) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
-        if (user?.role === 'extension_officer' && existingCycle.field?.farmer?.assignedOfficerId !== user.userId) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
+        },
+    });
+    if (!existingCycle || existingCycle.fieldId !== fieldId) return { ok: false, status: 404, error: 'Crop cycle not found' };
+    if (user?.role === 'farmer' && existingCycle.field?.farmer?.userId !== user.userId) {
+        return { ok: false, status: 403, error: 'Access denied' };
+    }
+    if (user?.role === 'extension_officer' && existingCycle.field?.farmer?.assignedOfficerId !== user.userId) {
+        return { ok: false, status: 403, error: 'Access denied' };
+    }
+    return { ok: true, id };
+}
+
+router.patch('/:fieldId/cycles/:id', async (req: Request, res: Response) => {
+    try {
+        const access = await resolveEditableCycle(req);
+        if (!access.ok) return res.status(access.status).json({ success: false, error: access.error });
 
         const data = mapCropCycleUpdate(req.body as CropCycleUpdateBody);
-
-        const cycle = await prisma.cropCycle.update({
-            where: { id },
-            data,
-        });
+        const cycle = await getPrisma().cropCycle.update({ where: { id: access.id }, data });
         return res.json({ success: true, data: cycle });
     } catch (error) {
         logger.error('Failed to update crop cycle:', error);
         return safeError(res, 500, 'Failed to update crop cycle');
+    }
+});
+
+/** DELETE /api/fields/:fieldId/cycles/:id — same access rules as editing the cycle. */
+router.delete('/:fieldId/cycles/:id', async (req: Request, res: Response) => {
+    try {
+        const access = await resolveEditableCycle(req);
+        if (!access.ok) return res.status(access.status).json({ success: false, error: access.error });
+
+        await getPrisma().cropCycle.delete({ where: { id: access.id } });
+        return res.json({ success: true, data: { id: access.id } });
+    } catch (error) {
+        if ((error as { code?: string })?.code === 'P2003') {
+            return res.status(409).json({ success: false, error: 'This crop cycle has records that depend on it and cannot be deleted.' });
+        }
+        logger.error('Failed to delete crop cycle:', error);
+        return safeError(res, 500, 'Failed to delete crop cycle');
     }
 });
 
