@@ -85,6 +85,6 @@ describe('Demo and live data separation', () => {
         const officerQuery = queries.find(sql => sql.includes('LEFT JOIN visits'));
         expect(officerQuery).toContain('live_f.id = v.farmer_id');
         expect(officerQuery).toContain('live_f.id = c.farmer_id');
-        expect(cacheGet).toHaveBeenCalledWith('analytics:performance:live-v2:legacy:month:all:all');
+        expect(cacheGet).toHaveBeenCalledWith('analytics:performance:live-v3:legacy:month:all:all');
     });
 });

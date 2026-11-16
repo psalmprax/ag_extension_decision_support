@@ -23,30 +23,30 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
   return (
     <section
       aria-labelledby="invoices-title"
-      className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl overflow-hidden relative"
+      className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl overflow-hidden relative"
     >
-      <div className="flex flex-wrap justify-between items-center gap-4 pb-6 border-b border-white/10 relative z-10">
+      <div className="flex flex-wrap justify-between items-center gap-4 pb-6 border-b border-slate-200 dark:border-white/10 relative z-10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-sm text-emerald-400">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-sm text-emerald-700 dark:text-emerald-400">
             <Receipt className="w-6 h-6" />
           </div>
           <div>
             <h3
               id="invoices-title"
-              className="text-xl font-bold tracking-tight text-white"
+              className="text-xl font-bold tracking-tight text-slate-900 dark:text-white"
             >
               {t('billing_legacy_transactions') || 'Billing & Receipt History'}
             </h3>
-            <p className="text-xs text-white/60 mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
               {t('billing_transaction_archive') || 'Audited Invoices & Direct Downloads'}
             </p>
           </div>
         </div>
       </div>
-      <div className="overflow-x-auto rounded-xl border border-white/10 relative z-10 mt-6">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/10 relative z-10 mt-6">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-white/[0.03] border-b border-white/10">
+            <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/10">
               {[
                 'billing_timeframe',
                 'billing_evaluation',
@@ -62,22 +62,22 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-slate-200 dark:divide-white/5">
             {invoices.length > 0 ? (
               invoices.map(invoice => (
                 <tr
                   key={invoice.id}
-                  className="hover:bg-white/[0.02] transition-colors duration-200"
+                  className="hover:bg-slate-100 dark:hover:bg-white/[0.02] transition-colors duration-200"
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2.5">
-                      <Clock className="w-4 h-4 text-emerald-400" />
-                      <span className="text-xs font-mono tabular-nums text-white/80">
+                      <Clock className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                      <span className="text-xs font-mono tabular-nums text-slate-700 dark:text-white/80">
                         {new Date(invoice.created * 1000).toLocaleDateString()}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-xs font-medium text-white font-mono tabular-nums">
+                  <td className="px-6 py-4 text-xs font-medium text-slate-900 dark:text-white font-mono tabular-nums">
                     {(invoice.amount_paid / 100).toLocaleString('en-US', {
                       style: 'currency',
                       currency: invoice.currency,
@@ -102,13 +102,13 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
                         target="_blank"
                         rel="noreferrer"
                         onClick={() => triggerHaptic('light')}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/10 text-white border border-white/10 text-xs font-medium transition-all"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 text-xs font-medium transition-all"
                       >
-                        <Download className="w-3.5 h-3.5 text-emerald-400" />
+                        <Download className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
                         <span>PDF</span>
                       </a>
                     ) : (
-                      <span className="text-xs text-white/40 italic">
+                      <span className="text-xs text-slate-500 dark:text-white/40 italic">
                         {t('billing_no_pdf') || 'Unavailable'}
                       </span>
                     )}
@@ -122,7 +122,7 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
                   className="px-6 py-12 text-center text-xs text-slate-400 font-medium italic"
                 >
                   <div className="flex flex-col items-center justify-center gap-2">
-                    <FileText className="w-8 h-8 text-white/20" />
+                    <FileText className="w-8 h-8 text-slate-300 dark:text-white/20" />
                     <span>{t('billing_no_invoices') || 'No audited invoices found for this account'}</span>
                   </div>
                 </td>

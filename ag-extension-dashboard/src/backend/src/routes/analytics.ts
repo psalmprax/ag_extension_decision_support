@@ -5,6 +5,7 @@ import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
+import { formatPerformanceMetrics } from '@/services/analytics/performanceMetrics';
 
 const router = Router();
 
@@ -335,20 +336,6 @@ router.get('/farmer-stats', async (req: Request, res: Response) => {
     }
 });
 
-function formatPerformanceMetrics(results: Record<string, unknown>[][], days: number) {
-    const [responseTimeResult, resolutionResult, satisfactionResult, followUpResult, fcrResult] = results;
-    const totalConversations = parseInt((resolutionResult[0]?.total as string) || '0');
-    const resolvedConversations = parseInt((resolutionResult[0]?.resolved as string) || '0');
-
-    return {
-        avgResponseTime: Math.round(parseFloat(responseTimeResult[0]?.avg_minutes as string || '0') * 10) / 10,
-        resolutionRate: totalConversations > 0 ? Math.round((resolvedConversations / totalConversations) * PERCENTAGE_MULTIPLIER) : 0,
-        satisfactionScore: Math.round(parseFloat((satisfactionResult[0]?.avg as string) || '0') * 10) / 10,
-        followUpRate: Math.round(parseInt((followUpResult[0]?.count as string) || '0') / days * PERCENTAGE_MULTIPLIER),
-        firstContactResolution: Math.round(parseInt((fcrResult[0]?.count as string) || '0') / (totalConversations || 1) * PERCENTAGE_MULTIPLIER),
-    };
-}
-
 function formatTimelineData(timelineData: Record<string, unknown>[]) {
     return timelineData.length > 0 ? timelineData.map((row: Record<string, unknown>) => ({
         date: row.date,
@@ -377,7 +364,7 @@ router.get('/performance', async (req: Request, res: Response) => {
         const conversationTenant = tenantPredicate(tenantId, 'c');
         const days = period === 'week' ? 7 : period === 'month' ? 30 : 90;
 
-        const cacheKey = `analytics:performance:live-v2:${tenantId || 'legacy'}:${period}:${officerId || 'all'}:${region || 'all'}`;
+        const cacheKey = `analytics:performance:live-v3:${tenantId || 'legacy'}:${period}:${officerId || 'all'}:${region || 'all'}`;
         const cached = await cacheGet(cacheKey);
         if (cached) {
             return res.json(JSON.parse(cached));
@@ -385,7 +372,7 @@ router.get('/performance', async (req: Request, res: Response) => {
 
         // Get performance metrics from database
         const [
-            responseTimeResult,
+            replyResult,
             resolutionResult,
             satisfactionResult,
             followUpResult,
@@ -394,9 +381,16 @@ router.get('/performance', async (req: Request, res: Response) => {
             officerData
         ] = await Promise.all([
             getFromDB(`
-                SELECT AVG(EXTRACT(EPOCH FROM (completed_at - started_at)) / 60) as avg_minutes
-                FROM visits v
-                WHERE v.status = 'completed' AND v.started_at > NOW() - INTERVAL '${days} days'${visitTenant}
+                SELECT AVG(EXTRACT(EPOCH FROM (first_reply - started_at)) / 60) as avg_minutes,
+                       COUNT(*) as replied
+                FROM (
+                    SELECT c.started_at,
+                           (SELECT MIN(m.created_at) FROM chat_messages m
+                            WHERE m.conversation_id = c.id AND m.role IN ('assistant', 'officer')) as first_reply
+                    FROM chat_conversations c
+                    WHERE c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
+                ) replies
+                WHERE first_reply IS NOT NULL
             `),
             getFromDB(`
                 SELECT COUNT(*) as total,
@@ -405,22 +399,28 @@ router.get('/performance', async (req: Request, res: Response) => {
                 WHERE c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
             `),
             getFromDB(`
-                SELECT AVG(satisfaction_score) as avg
+                SELECT AVG(satisfaction_score) as avg, COUNT(*) as rated
                 FROM chat_conversations c
                 WHERE c.satisfaction_score IS NOT NULL
                 AND c.created_at > NOW() - INTERVAL '${days} days'${conversationTenant}
             `),
             getFromDB(`
-                SELECT COUNT(*) as count
+                SELECT COUNT(*) as completed,
+                       COUNT(*) FILTER (WHERE v.follow_up_required = true) as follow_ups
                 FROM visits v
-                WHERE v.follow_up_required = true
+                WHERE v.status = 'completed'
                 AND v.created_at > NOW() - INTERVAL '${days} days'${visitTenant}
             `),
             getFromDB(`
-                SELECT COUNT(*) as count
-                FROM chat_conversations c
-                WHERE c.status = 'resolved'
-                AND c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
+                SELECT COUNT(*) as total,
+                       COUNT(*) FILTER (WHERE status = 'resolved' AND farmer_messages = 1) as first_contact
+                FROM (
+                    SELECT c.status,
+                           (SELECT COUNT(*) FROM chat_messages m
+                            WHERE m.conversation_id = c.id AND m.role IN ('user', 'farmer')) as farmer_messages
+                    FROM chat_conversations c
+                    WHERE c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
+                ) contacts
             `),
             getFromDB(`
                 SELECT DATE(created_at) as date,
@@ -452,7 +452,7 @@ router.get('/performance', async (req: Request, res: Response) => {
         ]);
 
         const performance = {
-            metrics: formatPerformanceMetrics([responseTimeResult, resolutionResult, satisfactionResult, followUpResult, fcrResult], days),
+            metrics: formatPerformanceMetrics([replyResult, resolutionResult, satisfactionResult, followUpResult, fcrResult]),
             timeline: formatTimelineData(timelineData),
             byOfficer: formatOfficerData(officerData),
         };

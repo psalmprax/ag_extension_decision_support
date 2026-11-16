@@ -341,7 +341,7 @@ export function buildDemoPerformanceData(farmers: Farmer[]) {
     metrics: {
       resolutionRate: demoResolutionRate(total),
       satisfactionScore: 4.6,
-      avgResponseTime: '2.4m',
+      avgResponseTime: 2.4,
       followUpRate: 68,
       firstContactResolution: 74,
     },

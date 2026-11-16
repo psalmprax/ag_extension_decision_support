@@ -49,8 +49,8 @@ const SOURCE_ICONS: Record<string, React.ElementType> = {
 };
 
 const DATA_STATUS_STYLE: Record<MarketDataStatus, string> = {
-  live: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  estimated: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  live: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+  estimated: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
   unavailable: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
 };
 
@@ -116,10 +116,10 @@ const RetailSnapshotSection: React.FC<{ rows: PriceChartRow[]; country?: string 
   return (
     <div className="pt-2 space-y-2">
       <div>
-        <p className="text-xs font-medium text-white">
+        <p className="text-xs font-medium text-slate-900 dark:text-white">
           Retail Snapshot{country ? ` — ${country}` : ''} ({sourceTag})
         </p>
-        <p className="text-xxs text-white/40 mt-0.5">
+        <p className="text-xxs text-slate-500 dark:text-white/40 mt-0.5">
           Per-kg retail medians across markets
           {periodDate ? ` — ${periodDate.slice(0, 7)}` : ''} — monthly, not comparable with per-bag bars above.
         </p>
@@ -139,15 +139,15 @@ const PriceSummaryGrid: React.FC<{ rows: PriceChartRow[] }> = ({ rows }) => (
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: i * 0.06 }}
-        className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:border-primary-500/20 transition-colors"
+        className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 hover:border-primary-500/20 transition-colors"
       >
         <div className="min-w-0 pr-2">
-          <p className="text-xs font-medium text-white truncate">{row.crop}</p>
-          <p className="text-xxs text-white/30 font-mono mt-0.5">{SOURCE_LABELS[row.source] || row.source}</p>
+          <p className="text-xs font-medium text-slate-900 dark:text-white truncate">{row.crop}</p>
+          <p className="text-xxs text-slate-400 dark:text-white/30 font-mono mt-0.5">{SOURCE_LABELS[row.source] || row.source}</p>
         </div>
         <div className="text-right shrink-0">
-          <p className="text-sm font-semibold font-mono tabular-nums text-white">{row.formattedPrice}</p>
-          <p className={`text-xxs font-medium font-mono tabular-nums ${row.trendPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+          <p className="text-sm font-semibold font-mono tabular-nums text-slate-900 dark:text-white">{row.formattedPrice}</p>
+          <p className={`text-xxs font-medium font-mono tabular-nums ${row.trendPct >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
             {row.trendPct >= 0 ? '+' : ''}{row.trendPct.toFixed(1)}%
           </p>
         </div>
@@ -168,14 +168,14 @@ const PriceHistorySection: React.FC = () => {
   const hasHistory = history.merged.length >= 2;
 
   return (
-    <div className="pt-2 border-t border-white/5">
+    <div className="pt-2 border-t border-slate-200 dark:border-white/5">
       <div className="flex items-center gap-2.5 mb-3">
-        <div className="w-7 h-7 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
+        <div className="w-7 h-7 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-700 dark:text-sky-400 shrink-0">
           <History className="w-3.5 h-3.5" />
         </div>
         <div>
-          <h4 className="text-sm font-medium text-white">30-Day Price History</h4>
-          <p className="text-xxs text-white/40">
+          <h4 className="text-sm font-medium text-slate-900 dark:text-white">30-day price history</h4>
+          <p className="text-xxs text-slate-500 dark:text-white/40">
             Local-currency snapshots — daily movement reflects FX conversion of FAOSTAT/GIEWS baselines.
           </p>
         </div>
@@ -183,13 +183,13 @@ const PriceHistorySection: React.FC = () => {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 text-sky-400 animate-spin" />
+          <Loader2 className="w-6 h-6 text-sky-700 dark:text-sky-400 animate-spin" />
         </div>
       ) : !hasHistory ? (
         <div className="flex flex-col items-center justify-center py-10 text-center">
-          <History className="w-8 h-8 text-white/20 mb-2" />
+          <History className="w-8 h-8 text-slate-300 dark:text-white/20 mb-2" />
           <p className="text-xs font-medium text-slate-400">History building</p>
-          <p className="text-xxs text-white/30 mt-1">
+          <p className="text-xxs text-slate-400 dark:text-white/30 mt-1">
             Snapshots appear after the first few daily fetches (live data only — estimates are excluded).
           </p>
         </div>
@@ -230,14 +230,14 @@ const PriceHistorySection: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-3 mt-3">
             {history.series.map((s, i) => (
-              <span key={s.crop} className="flex items-center gap-1.5 text-xxs text-white/60">
+              <span key={s.crop} className="flex items-center gap-1.5 text-xxs text-slate-600 dark:text-white/60">
                 <span
                   className="w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: HISTORY_COLORS[i % HISTORY_COLORS.length] }}
                 />
                 {s.crop}
                 {s.dataStatus === 'live' && (
-                  <span className="text-emerald-400 font-medium font-mono text-xxs">· live</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-medium font-mono text-xxs">· live</span>
                 )}
               </span>
             ))}
@@ -296,28 +296,28 @@ export const MarketPriceTrendCard: React.FC = () => {
   const maxPrice = Math.max(1, ...chartData.map(d => d.price));
 
   return (
-    <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-2xl space-y-6">
+    <div className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-none space-y-6">
       {/* ── Header with metadata ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/5">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-700 dark:text-amber-400 shrink-0">
               <Truck className="w-4 h-4" />
             </div>
-            <h3 className="text-base font-semibold text-white">
-              Commodity Market Prices
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              Commodity market prices
             </h3>
           </div>
-          <p className="text-xs text-white/50">
-            Real-time producer price benchmarks per crop &mdash; sourced from global agricultural data APIs.
+          <p className="text-xs text-slate-500 dark:text-white/50">
+            Producer price benchmarks per crop from FAOSTAT and FAO GIEWS. Estimates are labelled as such.
           </p>
         </div>
 
         {/* Badges: source + status */}
         <div className="flex flex-wrap items-center gap-2">
           {sourceLabel && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-xs text-white/80 font-medium">
-              <SourceIcon className="w-3.5 h-3.5 text-primary-400" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-white/80 font-medium">
+              <SourceIcon className="w-3.5 h-3.5 text-primary-600 dark:text-primary-400" />
               {sourceLabel}
             </span>
           )}
@@ -327,7 +327,7 @@ export const MarketPriceTrendCard: React.FC = () => {
             </span>
           )}
           {metadata?.exchangeRateSource && (
-            <span className="px-2 py-1 rounded-lg bg-white/[0.03] border border-white/5 text-xxs text-white/40 font-mono">
+            <span className="px-2 py-1 rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 text-xxs text-slate-500 dark:text-white/40 font-mono">
               FX: {metadata.exchangeRateSource}
             </span>
           )}
@@ -337,19 +337,19 @@ export const MarketPriceTrendCard: React.FC = () => {
       {/* ── Loading / Error / Empty ── */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+          <Loader2 className="w-8 h-8 text-amber-700 dark:text-amber-400 animate-spin" />
         </div>
       ) : isError ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Database className="w-10 h-10 text-white/20 mb-3" />
+          <Database className="w-10 h-10 text-slate-300 dark:text-white/20 mb-3" />
           <p className="text-sm font-medium text-slate-400">Market data unavailable</p>
-          <p className="text-xs text-white/30 mt-1">FAOSTAT, GIEWS, and USDA APIs are unreachable. Retrying automatically.</p>
+          <p className="text-xs text-slate-400 dark:text-white/30 mt-1">FAOSTAT, GIEWS, and USDA APIs are unreachable. Retrying automatically.</p>
         </div>
       ) : chartData.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Truck className="w-10 h-10 text-white/20 mb-3" />
+          <Truck className="w-10 h-10 text-slate-300 dark:text-white/20 mb-3" />
           <p className="text-sm font-medium text-slate-400">No price data yet</p>
-          <p className="text-xs text-white/30 mt-1">Market data will appear once FAOSTAT producer prices are available.</p>
+          <p className="text-xs text-slate-400 dark:text-white/30 mt-1">Market data will appear once FAOSTAT producer prices are available.</p>
         </div>
       ) : (
         <>
@@ -400,7 +400,7 @@ export const MarketPriceTrendCard: React.FC = () => {
 
           {/* ── Footer: fetched timestamp ── */}
           {metadata?.fetchedAt && (
-            <div className="flex items-center justify-between pt-2 text-xxs text-white/30">
+            <div className="flex items-center justify-between pt-2 text-xxs text-slate-400 dark:text-white/30">
               <span className="flex items-center gap-1.5">
                 <TrendingUp className="w-3 h-3" />
                 Last updated

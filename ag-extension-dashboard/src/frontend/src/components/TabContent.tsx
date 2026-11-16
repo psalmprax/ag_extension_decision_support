@@ -2,16 +2,7 @@ import React from 'react';
 import { Farmer, Visit, Conversation, ChatMessage, DashboardData } from '@/types/dashboard';
 import { Report } from '@/api/reportService';
 import { PlanUpgradeGuard } from '@/components/PlanUpgradeGuard';
-interface AnalyticsDataShape {
-  metrics?: {
-    resolutionRate?: number;
-    avgResponseTime?: string | number;
-    satisfactionScore?: number;
-    followUpRate?: number;
-    firstContactResolution?: number;
-  };
-  timeline?: Record<string, string | number>[];
-}
+import type { PerformanceData } from '@/api/analyticsService';
 
 import { DashboardLoadError } from '@/components/DashboardLoadError';
 
@@ -87,7 +78,7 @@ interface TabContentProps {
   isLoading: boolean;
   dashboardError: boolean;
   onRetryDashboard: () => void;
-  performanceData: unknown;
+  performanceData: PerformanceData | undefined;
   effectiveFarmers: Farmer[];
   isMapExpanded: boolean;
   setIsMapExpanded: (v: boolean) => void;
@@ -145,7 +136,7 @@ export function TabContent(props: TabContentProps) {
             dashboardData={props.dashboardData as unknown as DashboardData | undefined}
             isLoading={props.isLoading}
             isOfficer={isOfficer}
-            performanceData={props.performanceData as unknown as AnalyticsDataShape | undefined}
+            performanceData={props.performanceData}
             effectiveFarmers={props.effectiveFarmers}
             isMapExpanded={props.isMapExpanded}
             setIsMapExpanded={props.setIsMapExpanded}
@@ -211,7 +202,7 @@ export function TabContent(props: TabContentProps) {
       return (
         <PlanUpgradeGuard category="analytics" featureName="Operational Analytics & Telemetry">
           <AnalyticsPage
-            performanceData={props.performanceData as unknown as AnalyticsDataShape | undefined}
+            performanceData={props.performanceData}
           />
         </PlanUpgradeGuard>
       );

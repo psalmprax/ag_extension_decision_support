@@ -1,32 +1,15 @@
 import React from 'react';
-import {
-  TrendingUp,
-  Clock,
-  Activity,
-  AlertTriangle,
-  MessageSquare,
-  BarChart3,
-  Radio,
-} from 'lucide-react';
+import { BarChart3, Radio } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLanguage } from '@/lib/LanguageContext';
 import { ChartTooltip } from '@/components/charts/ChartTooltip';
 import { chartTick } from '@/components/charts/chartConfig';
 import { MarketPriceTrendCard } from '@/components/MarketPriceTrendCard';
+import type { PerformanceData } from '@/api/analyticsService';
+import { KpiTiles } from './analytics/KpiTiles';
 
 interface AnalyticsPageProps {
-  performanceData:
-    | {
-        metrics?: {
-          resolutionRate?: number;
-          avgResponseTime?: string | number;
-          satisfactionScore?: number;
-          followUpRate?: number;
-          firstContactResolution?: number;
-        };
-        timeline?: Array<Record<string, string | number>>;
-      }
-    | undefined;
+  performanceData: PerformanceData | undefined;
 }
 
 export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData }) => {
@@ -46,11 +29,11 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">System Analytics</h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
                   <Radio className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                  Real-time Telemetry Ingestion
+                  Last 30 days
                 </span>
               </div>
               <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-                Throughput diagnostics, AI copilot advisory resolution velocities, and regional activity heat.
+                Support performance, commodity prices and daily activity for your farmers.
               </p>
             </div>
           </div>
@@ -60,98 +43,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
 
       {performanceData ? (
         <>
-          {/* ── KPI Stat Bento Grid ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* 1. Resolution Rate */}
-            <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  {t('analytics_resolution_rate') || 'Resolution Rate'}
-                </span>
-                <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                  <TrendingUp className="w-4 h-4" />
-                </div>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-mono tabular-nums">
-                  {performanceData?.metrics?.resolutionRate ?? '—'}%
-                </p>
-                <p className="text-xxs text-slate-500 dark:text-white/40 mt-1">Target baseline: &gt;85%</p>
-              </div>
-            </div>
-
-            {/* 2. Avg Response Time */}
-            <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  {t('analytics_avg_response_time') || 'Avg Response Time'}
-                </span>
-                <div className="p-2 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-                  <Clock className="w-4 h-4" />
-                </div>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-mono tabular-nums">
-                  {performanceData?.metrics?.avgResponseTime ?? '—'}
-                </p>
-                <p className="text-xxs text-slate-500 dark:text-white/40 mt-1">Real-time edge response</p>
-              </div>
-            </div>
-
-            {/* 3. Satisfaction Score */}
-            <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  {t('analytics_satisfaction_score') || 'Satisfaction Score'}
-                </span>
-                <div className="p-2 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
-                  <Activity className="w-4 h-4" />
-                </div>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-mono tabular-nums">
-                  {performanceData?.metrics?.satisfactionScore ?? '—'}
-                </p>
-                <p className="text-xxs text-slate-500 dark:text-white/40 mt-1">CSAT index (scale 1–5)</p>
-              </div>
-            </div>
-
-            {/* 4. Follow-Up Rate */}
-            <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  {t('analytics_follow_up_rate') || 'Follow-Up Rate'}
-                </span>
-                <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                  <AlertTriangle className="w-4 h-4" />
-                </div>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-mono tabular-nums">
-                  {performanceData?.metrics?.followUpRate ?? '—'}%
-                </p>
-                <p className="text-xxs text-slate-500 dark:text-white/40 mt-1">Requires field visit dispatch</p>
-              </div>
-            </div>
-
-            {/* 5. First Contact Resolution */}
-            <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  {t('analytics_first_contact_res') || 'First Contact Res'}
-                </span>
-                <div className="p-2 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                  <MessageSquare className="w-4 h-4" />
-                </div>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-mono tabular-nums">
-                  {performanceData?.metrics?.firstContactResolution ?? '—'}%
-                </p>
-                <p className="text-xxs text-slate-500 dark:text-white/40 mt-1">Autonomous 1-turn resolution</p>
-              </div>
-            </div>
-          </div>
+          <KpiTiles metrics={performanceData.metrics} t={t} />
 
           {/* ── Market Prices Full-Width Trend Card ── */}
           <MarketPriceTrendCard />
@@ -164,18 +56,18 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
                   {t('analytics_activity_timeline') || 'Activity & Advisory Timeline'}
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-white/50">
-                  Composite volume of scheduled on-site visits vs. conversational USSD/SMS queries.
+                  Completed field visits and new farmer conversations per day, all channels.
                 </p>
               </div>
 
               <div className="flex items-center gap-3 text-xs">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-                  <span className="text-slate-700 dark:text-white/70">Field Visits</span>
+                  <span className="text-slate-700 dark:text-white/70">Field visits</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-sky-500 dark:bg-sky-400" />
-                  <span className="text-slate-700 dark:text-white/70">USSD / SMS Queries</span>
+                  <span className="text-slate-700 dark:text-white/70">Conversations</span>
                 </div>
               </div>
             </div>
@@ -199,6 +91,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
                   <Area
                     type="monotone"
                     dataKey="visits"
+                    name="Field visits"
                     stroke="#10b981"
                     strokeWidth={2.5}
                     fillOpacity={1}
@@ -207,6 +100,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
                   <Area
                     type="monotone"
                     dataKey="queries"
+                    name="Conversations"
                     stroke="#38bdf8"
                     strokeWidth={2.5}
                     fillOpacity={1}

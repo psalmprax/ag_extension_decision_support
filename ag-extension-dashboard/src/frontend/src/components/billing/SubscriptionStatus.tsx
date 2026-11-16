@@ -30,7 +30,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
         aria-labelledby="subscription-status-title"
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative card p-8 lg:p-10 group bg-slate-950/90 dark:bg-slate-950/95 backdrop-blur-2xl border border-emerald-500/30 shadow-2xl overflow-hidden min-h-[440px] flex flex-col justify-between"
+        className="relative card p-8 lg:p-10 group bg-slate-950/90 dark:bg-slate-950/95 backdrop-blur-2xl border border-emerald-500/30 shadow-sm dark:shadow-none overflow-hidden min-h-[440px] flex flex-col justify-between"
         style={{ borderRadius: 'var(--radius-card, 0.75rem)' }}
       >
         {/* KnockKnock Ambient Mesh Gradient Orb */}
@@ -45,11 +45,11 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
 
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-6">
-            <div className="p-3.5 bg-emerald-500/15 rounded-xl backdrop-blur-xl border border-emerald-500/30 shadow-sm text-emerald-400">
+            <div className="p-3.5 bg-emerald-500/15 rounded-xl backdrop-blur-xl border border-emerald-500/30 shadow-sm text-emerald-700 dark:text-emerald-400">
               <ShieldCheck className="w-7 h-7" />
             </div>
             <div className="flex flex-col items-end">
-              <span className="text-xxs font-medium text-emerald-400 mb-1">
+              <span className="text-xxs font-medium text-emerald-700 dark:text-emerald-400 mb-1">
                 {t('billing_status_label') || 'Agronomist Seat'}
               </span>
               <Badge variant="success" size="sm">
@@ -65,11 +65,11 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
           >
             {t('billing_current_plan') || 'Current Plan'}
           </span>
-          <h2 className="text-2xl sm:text-3xl font-semibold text-white leading-tight tracking-tight mb-4 group-hover:text-emerald-400 transition-colors duration-300">
+          <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900 dark:text-white leading-tight tracking-tight mb-4 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors duration-300">
             {subscription?.plan?.name ?? 'N/A'}
           </h2>
-          <div className="flex items-center gap-2.5 text-slate-400 font-mono text-xs p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
-            <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="flex items-center gap-2.5 text-slate-400 font-mono text-xs p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-800/80">
+            <Clock className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
             <span>
               {t('billing_renews_on') || 'Renews on'}{' '}
               <span className="tabular-nums">
@@ -88,12 +88,12 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
               onPortal();
             }}
             disabled={actionLoading === 'portal'}
-            className={`w-full h-12 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-white ${radiusClass} font-medium text-xs transition-all duration-200 flex items-center justify-center gap-2.5 shadow-sm active:scale-[0.98] disabled:opacity-50 group/btn`}
+            className={`w-full h-12 bg-white dark:bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-900 dark:text-white ${radiusClass} font-medium text-xs transition-all duration-200 flex items-center justify-center gap-2.5 shadow-sm active:scale-[0.98] disabled:opacity-50 group/btn`}
           >
             {actionLoading === 'portal' ? (
-              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-slate-300 dark:border-white/20 border-t-white rounded-full animate-spin" />
             ) : (
-              <ExternalLink className="w-4 h-4 text-emerald-400 group-hover/btn:translate-x-0.5 transition-transform" />
+              <ExternalLink className="w-4 h-4 text-emerald-700 dark:text-emerald-400 group-hover/btn:translate-x-0.5 transition-transform" />
             )}
             <span>{t('billing_manage_subscription') || 'Manage Subscription'}</span>
           </button>
@@ -106,22 +106,22 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
     <motion.section
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`relative p-8 lg:p-10 bg-slate-950/90 dark:bg-slate-950/95 backdrop-blur-2xl ${radiusClass} border border-emerald-500/25 shadow-2xl overflow-hidden min-h-[440px] flex flex-col justify-between`}
+      className={`relative p-8 lg:p-10 bg-slate-950/90 dark:bg-slate-950/95 backdrop-blur-2xl ${radiusClass} border border-emerald-500/25 shadow-sm dark:shadow-none overflow-hidden min-h-[440px] flex flex-col justify-between`}
     >
       <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-[90px]" />
       <div className="relative z-10">
-        <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 w-fit mb-4 text-emerald-400">
+        <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 w-fit mb-4 text-emerald-700 dark:text-emerald-400">
           <TrendingUp className="w-6 h-6" />
         </div>
-        <h3 className="text-xl sm:text-2xl font-semibold text-white leading-tight tracking-tight mb-3">
+        <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-white leading-tight tracking-tight mb-3">
           {t('billing_promo_title') || 'Scale Your Agricultural Reach'}
         </h3>
         <p className="text-slate-400 font-normal text-xs leading-relaxed">
           {t('billing_promo_desc') || 'Unlock automated agronomic triage, multi-channel SMS broadcasts, and satellite NDVI maps.'}
         </p>
       </div>
-      <div className="relative z-10 p-4 bg-slate-900/80 rounded-xl border border-slate-800">
-        <div className="flex items-center gap-2 text-emerald-400 font-medium text-xs mb-2">
+      <div className="relative z-10 p-4 bg-white dark:bg-slate-900/80 rounded-xl border border-slate-800">
+        <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-medium text-xs mb-2">
           <ShieldCheck className="w-3.5 h-3.5" />
           <span>{t('billing_instant_activation') || 'Instant Cooperative Activation'}</span>
         </div>
