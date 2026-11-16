@@ -1,0 +1,30 @@
+# One-off, read-only production health check (never merged). Changes nothing;
+# prints no secrets.
+name: Production health check (one-off)
+on:
+  push:
+    branches: [ops/prod-health]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          command_timeout: 5m
+          script: |
+            set -u
+            cd "${HOME:?}/ag_extension_decision_support/ag-extension-dashboard"
+            echo "== deployed commit: $(git -C .. log -1 --format='%h %s')"
+            echo "== containers"
+            docker ps --format '{{.Names}}\t{{.Status}}' --filter name=ag-dashboard
+            echo "== backend restarts: $(docker inspect -f '{{.RestartCount}}' ag-dashboard-backend 2>/dev/null)"
+            echo "== /api/health (inside the backend container)"
+            docker exec ag-dashboard-backend node -e "fetch('http://localhost:3001/api/health').then(async r => { console.log('HTTP', r.status, (await r.text()).slice(0, 300)); process.exit(r.ok ? 0 : 1); }).catch(e => { console.log('ERROR', e.message); process.exit(1); })"
+            echo "== real database login with the backend's own DATABASE_URL (over the network, not loopback)"
+            docker exec ag-dashboard-backend sh -c 'cd /app && npx --no-install prisma migrate status 2>&1 | grep -E "up to date|following migration|P1000|Error|have not yet been applied" | head -5'
+            echo "== backend P1000/auth errors in the last 30 minutes"
+            docker logs --since 30m ag-dashboard-backend 2>&1 | grep -ciE "P1000|authentication failed" || true
