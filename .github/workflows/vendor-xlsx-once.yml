@@ -23,10 +23,10 @@ jobs:
           # Block the CDN host, then install from the vendored tarball in both layouts.
           echo "127.0.0.1 cdn.sheetjs.com" | sudo tee -a /etc/hosts
           npm ci --ignore-scripts --no-audit --no-fund
-          node -e "console.log('workspace xlsx', require('xlsx/package.json').version)"
+          node -e "console.log('workspace xlsx', JSON.parse(require('fs').readFileSync('node_modules/xlsx/package.json','utf8')).version)"
           cd ag-extension-dashboard/src/backend
           rm -rf node_modules && npm ci --ignore-scripts --no-audit --no-fund --omit=dev
-          node -e "console.log('standalone xlsx', require('xlsx/package.json').version)"
+          node -e "console.log('standalone xlsx', JSON.parse(require('fs').readFileSync('node_modules/xlsx/package.json','utf8')).version)"
       - name: Commit the vendored tarball
         run: |
           git config user.name "github-actions[bot]"
