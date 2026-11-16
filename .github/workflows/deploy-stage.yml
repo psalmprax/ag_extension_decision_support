@@ -137,16 +137,26 @@ jobs:
           username: ${{ vars.TEST_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           timeout: 60s
-          command_timeout: 5m
+          # A first pull of a multi-GB model can take several minutes.
+          command_timeout: 20m
           envs: OLLAMA_MODEL
           script: |
             set -euo pipefail
-            if docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^ettametta-ollama$'; then
-              echo "=== Pre-pulling $OLLAMA_MODEL on existing ollama container ==="
-              docker exec ettametta-ollama ollama pull "$OLLAMA_MODEL" 2>&1 || echo "(pre-pull skipped — container may be starting up)"
-              echo "✅ Pre-pull complete"
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
+            # Address the container through compose (its real name carries the
+            # project prefix, so matching the bare service name never found it
+            # and the configured model was never pulled).
+            export COMPOSE_PROFILES=ai
+            COMPOSE="docker compose -f docker-compose.yml -f docker-compose.staging.yml"
+            if $COMPOSE ps --services --filter status=running 2>/dev/null | grep -qx ettametta-ollama; then
+              echo "=== Pulling $OLLAMA_MODEL into the running ollama service ==="
+              if ! $COMPOSE exec -T ettametta-ollama ollama pull "$OLLAMA_MODEL"; then
+                echo "FATAL: could not pull $OLLAMA_MODEL (the backend is configured to use it)." >&2
+                exit 1
+              fi
+              echo "✅ $OLLAMA_MODEL is available"
             else
-              echo "(ettametta-ollama not running — pre-pull deferred to entrypoint)"
+              echo "(ettametta-ollama not running — its entrypoint pulls $OLLAMA_MODEL on start)"
             fi
 
       - name: "Pre-build smoke gate: verify ettametta-ollama"
