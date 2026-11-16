@@ -316,6 +316,7 @@
     "empty_no_visits": "Ungakhethwa kwe-zithetho",
     "empty_no_visits_desc": "Tshela zithetho kwenye magwala kuphela ukhulule.",
     "error_loading": "Ishaya yokulima ukhulule.",
+    "dashboard_summary_unavailable": "Dashboard figures could not be loaded. Other pages still work.",
     "exec_summary": "Isumo Lelinye",
     "farmer_active_since": "Ukusha Kusukela",
     "farmer_active_status": "Ukusha",

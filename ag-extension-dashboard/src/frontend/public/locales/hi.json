@@ -316,6 +316,7 @@
     "empty_no_visits": "अब तक कोई दौरा नहीं",
     "empty_no_visits_desc": "किसान को दौरा करने के लिए एक योजना बनाएं और शुरू करें।",
     "error_loading": "डैशबोर्ड लोड करने में त्रुटि हुई।",
+    "dashboard_summary_unavailable": "Dashboard figures could not be loaded. Other pages still work.",
     "exec_summary": "कार्यकारी सारांश",
     "farmer_active_since": "कार्यरत से",
     "farmer_active_status": "कार्यरत",

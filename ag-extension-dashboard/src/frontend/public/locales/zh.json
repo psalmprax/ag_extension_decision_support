@@ -316,6 +316,7 @@
     "empty_no_visits": "暂无预约",
     "empty_no_visits_desc": "计划访问农民开始。",
     "error_loading": "加载仪表板错误。",
+    "dashboard_summary_unavailable": "Dashboard figures could not be loaded. Other pages still work.",
     "exec_summary": "执行总结",
     "farmer_active_since": "活跃时间",
     "farmer_active_status": "活跃",

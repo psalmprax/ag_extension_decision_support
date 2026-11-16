@@ -316,6 +316,7 @@
     "empty_no_visits": "Nessuna visita programmata",
     "empty_no_visits_desc": "Pianifica una visita al contadino per iniziare.",
     "error_loading": "Errore di caricamento del dashboard.",
+    "dashboard_summary_unavailable": "Dashboard figures could not be loaded. Other pages still work.",
     "exec_summary": "Riepilogo esecutivo",
     "farmer_active_since": "Attivo da",
     "farmer_active_status": "Attivo",

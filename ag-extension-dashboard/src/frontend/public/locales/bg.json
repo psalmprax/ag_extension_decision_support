@@ -316,6 +316,7 @@
     "empty_no_visits": "Няма планирани посещения",
     "empty_no_visits_desc": "Планирай посещение на фермера за да започнете.",
     "error_loading": "Грешка при зареждане на дашборда.",
+    "dashboard_summary_unavailable": "Dashboard figures could not be loaded. Other pages still work.",
     "exec_summary": "Извлечен Обзор",
     "farmer_active_since": "Активен От",
     "farmer_active_status": "Активен",

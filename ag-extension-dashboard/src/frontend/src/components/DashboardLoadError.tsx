@@ -26,7 +26,7 @@ export function DashboardLoadError({ onRetry }: { onRetry: () => void }) {
         className="ml-auto inline-flex items-center gap-1 rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium dark:border-amber-800"
       >
         <RefreshCw className="h-3 w-3" aria-hidden="true" />
-        {t('retry', { defaultValue: 'Retry' })}
+        {t('action_try_again', { defaultValue: 'Try again' })}
       </button>
     </div>
   );
