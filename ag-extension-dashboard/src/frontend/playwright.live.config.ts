@@ -16,6 +16,9 @@ export default defineConfig({
     viewport: { width: 1440, height: 900 },
     ignoreHTTPSErrors: false,
     trace: 'off',
+    // A covered or missing element fails fast instead of stalling the audit.
+    actionTimeout: 15_000,
+    navigationTimeout: 45_000,
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } }],
 });

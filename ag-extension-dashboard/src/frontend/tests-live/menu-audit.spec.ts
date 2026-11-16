@@ -26,6 +26,7 @@ interface PageReport {
   requestFailures: string[];
   consoleErrors: string[];
   pageErrors: string[];
+  menuObstructed: string | null;
   headings: string[];
   text: string;
   screenshot: string;
@@ -77,16 +78,30 @@ async function menuItems(page: Page): Promise<Array<{ section: string; label: st
   return items;
 }
 
-async function openItem(page: Page, item: { section: string; label: string }) {
+/**
+ * Opens a menu item like a user would. If something covers it (a tour, a
+ * floating widget), that is recorded and the item is opened directly so the
+ * page itself still gets audited. Returns the obstruction, if any.
+ */
+async function openItem(page: Page, item: { section: string; label: string }): Promise<string | null> {
   const toggle = page.locator('nav button[aria-controls^="sidebar-section-"]', { hasText: item.section }).first();
   if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
   const panel = page.locator(`#${await toggle.getAttribute('aria-controls')}`);
-  await panel.locator(':scope > button', { hasText: item.label }).first().click();
+  const button = panel.locator(':scope > button', { hasText: item.label }).first();
+  try {
+    await button.click({ timeout: 10_000 });
+    return null;
+  } catch (error) {
+    const reason = (error as Error).message.match(/<[^>]+> (?:from <[^>]+> )?subtree intercepts pointer events/)?.[0]
+      ?? (error as Error).message.split('\n')[0];
+    await button.dispatchEvent('click');
+    return clip(reason, 200);
+  }
 }
 
 for (const account of ACCOUNTS) {
   test(`menu audit as ${account.role}`, async ({ page }) => {
-    test.setTimeout(30 * 60_000);
+    test.setTimeout(25 * 60_000);
     const reports: PageReport[] = [];
     let current: { api: ApiFailure[]; failed: string[]; console: string[]; errors: string[] } = { api: [], failed: [], console: [], errors: [] };
 
@@ -105,16 +120,21 @@ for (const account of ACCOUNTS) {
     });
     page.on('pageerror', error => current.errors.push(clip(error.message, 300)));
 
-    await signIn(page, account.email);
-    const items = await menuItems(page);
     const dir = path.join(OUT, account.role);
     fs.mkdirSync(dir, { recursive: true });
+    const save = () => fs.writeFileSync(path.join(OUT, `${account.role}.json`), JSON.stringify(reports, null, 2));
+    await signIn(page, account.email);
+    await page.screenshot({ path: path.join(dir, '00-after-sign-in.jpg'), type: 'jpeg', quality: 55 });
+    const items = await menuItems(page);
+    console.log(`[${account.role}] signed in; ${items.length} menu items`);
 
     for (const [order, item] of items.entries()) {
       current = { api: [], failed: [], console: [], errors: [] };
       const started = Date.now();
+      console.log(`[${account.role}] ${order + 1}/${items.length} ${item.section} › ${item.label}`);
+      let obstructed: string | null = null;
       try {
-        await openItem(page, item);
+        obstructed = await openItem(page, item);
       } catch (error) {
         current.errors.push(`could not open menu item: ${(error as Error).message.split('\n')[0]}`);
       }
@@ -125,7 +145,8 @@ for (const account of ACCOUNTS) {
       const boundary = await page.getByRole('alert').filter({ hasText: 'Something went wrong' }).first().innerText().catch(() => '');
       const spinners = await main.locator('.animate-spin:visible').count().catch(() => 0);
       const file = path.join(dir, `${String(order + 1).padStart(2, '0')}-${slug(item.label)}.jpg`);
-      await page.screenshot({ path: file, type: 'jpeg', quality: 55, fullPage: true }).catch(() => undefined);
+      await page.screenshot({ path: file, type: 'jpeg', quality: 55, fullPage: true, timeout: 20_000 })
+        .catch(() => page.screenshot({ path: file, type: 'jpeg', quality: 55, timeout: 10_000 }).catch(() => undefined));
       reports.push({
         role: account.role,
         section: item.section,
@@ -139,10 +160,12 @@ for (const account of ACCOUNTS) {
         requestFailures: current.failed,
         consoleErrors: current.console,
         pageErrors: current.errors,
+        menuObstructed: obstructed,
         headings: (await main.locator('h1, h2, h3').allInnerTexts().catch(() => [])).slice(0, 12).map(h => clip(h.trim(), 80)),
         text: clip(text, 1500),
         screenshot: path.relative(OUT, file),
       });
+      save();
       // Recover from a crashed page so the next item is audited on a clean shell.
       if (boundary) {
         await page.reload({ waitUntil: 'domcontentloaded' });
@@ -151,6 +174,6 @@ for (const account of ACCOUNTS) {
       }
     }
 
-    fs.writeFileSync(path.join(OUT, `${account.role}.json`), JSON.stringify(reports, null, 2));
+    save();
   });
 }
