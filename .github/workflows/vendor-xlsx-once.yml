@@ -1,0 +1,38 @@
+# One-off: run scripts/vendor-xlsx.sh on a GitHub runner (which can reach
+# cdn.sheetjs.com) and commit the verified tarball back to this branch.
+# Lives only on ops/vendor-xlsx; never merged.
+name: Vendor xlsx (one-off)
+on:
+  push:
+    branches: [ops/vendor-xlsx]
+permissions:
+  contents: write
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Vendor and verify against the lockfile sha512
+        run: ./scripts/vendor-xlsx.sh
+      - name: Prove installs work without the CDN
+        run: |
+          set -e
+          # Block the CDN host, then install from the vendored tarball in both layouts.
+          echo "127.0.0.1 cdn.sheetjs.com" | sudo tee -a /etc/hosts
+          npm ci --ignore-scripts --no-audit --no-fund
+          node -e "console.log('workspace xlsx', require('xlsx/package.json').version)"
+          cd ag-extension-dashboard/src/backend
+          rm -rf node_modules && npm ci --ignore-scripts --no-audit --no-fund --omit=dev
+          node -e "console.log('standalone xlsx', require('xlsx/package.json').version)"
+      - name: Commit the vendored tarball
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json ag-extension-dashboard/src/backend/package.json \
+            ag-extension-dashboard/src/backend/package-lock.json ag-extension-dashboard/src/backend/vendor \
+            ag-extension-dashboard/src/backend/Dockerfile
+          git commit -m "build: vendor SheetJS xlsx 0.20.2 (verified against the lockfile sha512)"
+          git push origin HEAD:ops/vendor-xlsx
