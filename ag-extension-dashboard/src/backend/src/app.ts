@@ -95,6 +95,7 @@ import offlineRoutes from './routes/offline';
 import auditLogsRoutes from './routes/auditLogs';
 import accountRoutes from './routes/account';
 import workflowsRoutes from './routes/workflows';
+import { demoSessionGuard } from '@/middleware/demoSessionGuard';
 
 const app: Application = express();
 // Trust exactly the number of reverse-proxy hops in front of the app (default 1 = Traefik).
@@ -219,6 +220,7 @@ app.use((req, _res, next) => {
     setRequestUserId(req.user?.userId);
     next();
 });
+app.use(demoSessionGuard); // "Try the Demo" sessions: read-only, demo records only
 app.use(globalAuditMiddleware); // privileged / sensitive mutations → audit_logs
 app.use(idempotencyMiddleware);
 

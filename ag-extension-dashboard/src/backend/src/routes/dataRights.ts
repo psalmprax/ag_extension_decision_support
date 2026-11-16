@@ -10,7 +10,7 @@ const router = Router();
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 function getPrincipal(req: Request) {
-  return principalFromRequest(req.user ? { userId: req.user.userId, role: req.user.role } : undefined);
+  return principalFromRequest(req.user ? { userId: req.user.userId, role: req.user.role, isDemo: req.user.isDemo } : undefined);
 }
 
 function validText(value: unknown, max: number): value is string {

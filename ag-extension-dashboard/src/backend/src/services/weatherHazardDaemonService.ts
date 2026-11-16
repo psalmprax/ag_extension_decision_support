@@ -7,6 +7,7 @@
  */
 import { logger } from '../utils/logger';
 import { pillarProvenance } from './provenance';
+import { demoSql } from '@/services/demoScope';
 
 export interface WeatherForecastDay {
   date: string;
@@ -193,7 +194,7 @@ async function resolveFarmerUserIds(county: string, farmerIds?: string[]): Promi
   const { query } = await import('./databaseService');
   const { rows } = await query<{ id: string }>(
     `SELECT DISTINCT user_id AS id FROM farmers WHERE (district = $1 OR region = $1)
-     AND user_id IS NOT NULL AND ($2::uuid[] IS NULL OR id = ANY($2::uuid[])) LIMIT 500`,
+     AND user_id IS NOT NULL AND ${demoSql('farmers')} AND ($2::uuid[] IS NULL OR id = ANY($2::uuid[])) LIMIT 500`,
     [county, farmerIds ?? null]
   );
   return rows.map(r => r.id);

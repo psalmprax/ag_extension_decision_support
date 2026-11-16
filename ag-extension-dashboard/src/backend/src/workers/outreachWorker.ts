@@ -4,6 +4,7 @@ import { smsService } from '../services/smsService';
 import { whatsappService } from '../services/whatsappService';
 import { emailService } from '../services/emailService';
 import { runIfLeader } from '../services/leaderElection';
+import { linkedDemoSql, type DemoViewer } from '@/services/demoScope';
 
 /**
  * Outreach Worker
@@ -315,15 +316,17 @@ interface FailureRow {
  * Delivery statistics for the outreach queue. Honest zeros when the queue
  * table does not exist yet (worker has never run) — never a fabricated count.
  */
-export async function getOutreachDeliveryStats(): Promise<OutreachDeliveryStats> {
+/** Delivery totals and recent failures. The demo session only ever sees demo-linked messages. */
+export async function getOutreachDeliveryStats(viewer?: DemoViewer): Promise<OutreachDeliveryStats> {
     try {
+        const scope = linkedDemoSql('outreach_messages', viewer);
         const [statusResult, channelResult, failureResult] = await Promise.all([
-            query<StatusCountRow>('SELECT status, COUNT(*)::text AS count FROM outreach_messages GROUP BY status'),
-            query<ChannelStatusRow>('SELECT channel, status, COUNT(*)::text AS count FROM outreach_messages GROUP BY channel, status'),
+            query<StatusCountRow>(`SELECT status, COUNT(*)::text AS count FROM outreach_messages WHERE ${scope} GROUP BY status`),
+            query<ChannelStatusRow>(`SELECT channel, status, COUNT(*)::text AS count FROM outreach_messages WHERE ${scope} GROUP BY channel, status`),
             query<FailureRow>(`
                 SELECT id, channel, recipient, last_error, attempts, updated_at
                 FROM outreach_messages
-                WHERE status = 'failed'
+                WHERE status = 'failed' AND ${scope}
                 ORDER BY updated_at DESC
                 LIMIT 10
             `),

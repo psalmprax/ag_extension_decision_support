@@ -22,6 +22,7 @@ import { authorize } from '@/middleware/authorize';
 import * as XLSX from 'xlsx';
 import { safeError } from '@/utils/safeResponse';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
+import { demoSql, linkedDemoSql } from '@/services/demoScope';
 
 const router = Router();
 
@@ -44,8 +45,8 @@ router.get('/', async (req: Request, res: Response) => {
         const scope = await getPortfolioScope(req);
         if (!scope) return res.status(403).json({ success: false, error: 'Tenant membership required' });
         const { officerId: oId, tenantId } = scope;
-        const farmerTenantFilter = tenantId ? ' AND f.tenant_id = $2' : '';
-        const visitTenantFilter = tenantId ? ' AND EXISTS (SELECT 1 FROM farmers sf WHERE sf.id = visits.farmer_id AND sf.tenant_id = $2)' : '';
+        const farmerTenantFilter = `${tenantId ? ' AND f.tenant_id = $2' : ''} AND ${demoSql('f', req.user)}`;
+        const visitTenantFilter = `${tenantId ? ' AND EXISTS (SELECT 1 FROM farmers sf WHERE sf.id = visits.farmer_id AND sf.tenant_id = $2)' : ''} AND ${linkedDemoSql('visits', req.user)}`;
         const cacheKey = `portfolio:${oId}:${tenantId || 'legacy'}`;
         const cached = await cacheGet(cacheKey);
         if (cached) {
@@ -130,7 +131,7 @@ router.get('/recommendations', async (req: Request, res: Response) => {
         const scope = await getPortfolioScope(req);
         if (!scope) return res.status(403).json({ success: false, error: 'Tenant membership required' });
         const { officerId: oId, tenantId } = scope;
-        const farmerTenantFilter = tenantId ? ' AND f.tenant_id = $2' : '';
+        const farmerTenantFilter = `${tenantId ? ' AND f.tenant_id = $2' : ''} AND ${demoSql('f', req.user)}`;
         const targetDate = typeof req.query.date === 'string' ? req.query.date : new Date().toISOString().split('T')[0];
 
         const pool = getPool();
@@ -217,7 +218,7 @@ router.get('/farmers/:id', async (req: Request, res: Response) => {
                        f.language_preference,
                        (SELECT MAX(v.completed_at) FROM visits v WHERE v.farmer_id = f.id AND v.status = 'completed') as last_visit
                 FROM farmers f
-                WHERE f.id = $1
+                WHERE f.id = $1 AND ${demoSql('f', req.user)}
                   ${tenantId ? 'AND f.tenant_id = $2' : ''}
             `, [id, tenantId]);
             farmer = result.rows[0] ?? null;
@@ -332,7 +333,7 @@ router.get('/export/excel', async (req: Request, res: Response) => {
                    (SELECT COUNT(*) FROM visits v WHERE v.farmer_id = f.id AND v.status = 'completed') as total_visits,
                    (SELECT MAX(v.completed_at) FROM visits v WHERE v.farmer_id = f.id AND v.status = 'completed') as last_visit_date
             FROM farmers f
-            WHERE (f.assigned_officer_id = $1 OR f.user_id = $1)
+            WHERE (f.assigned_officer_id = $1 OR f.user_id = $1) AND ${demoSql('f', req.user)}
               ${tenantId ? 'AND f.tenant_id = $2' : ''}
             ORDER BY f.last_name, f.first_name
         `, [oId, tenantId]);

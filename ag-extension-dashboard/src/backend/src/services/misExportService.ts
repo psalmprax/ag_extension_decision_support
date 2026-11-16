@@ -1,5 +1,6 @@
 import { query } from './databaseService';
 import { logger } from '@/utils/logger';
+import { demoSql } from '@/services/demoScope';
 
 /**
  * Government MIS interop — standardized CSV exports with a documented column
@@ -42,7 +43,7 @@ export const misExportService = {
                         array_to_string(crops, ';') AS crops,
                         farm_size_hectares AS farm_size_ha,
                         created_at AS registered_at
-                 FROM farmers WHERE is_active = true ORDER BY created_at LIMIT $1`,
+                 FROM farmers WHERE is_active = true AND ${demoSql('farmers')} ORDER BY created_at LIMIT $1`,
                 [limit]
             );
             rows = r;

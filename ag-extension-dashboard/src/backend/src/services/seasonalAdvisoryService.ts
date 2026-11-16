@@ -5,6 +5,7 @@ import { whatsappService } from './whatsappService';
 import { smsService } from './smsService';
 import { addEmailJob } from '@/queues/emailQueue';
 import { logger } from '@/utils/logger';
+import { demoSql } from '@/services/demoScope';
 
 export type AdvisoryRuleKey =
     | 'planting_window'
@@ -299,7 +300,7 @@ export const seasonalAdvisoryService = {
             `SELECT f.district, f.id AS farmer_id, f.phone, p.channels, p.categories, f.crops, f.location_lat AS lat, f.location_lng AS lng
              FROM farmers f
              JOIN advisory_preferences p ON p.farmer_id = f.id
-             WHERE p.opt_in = true AND f.district IS NOT NULL AND f.is_active = true`
+             WHERE p.opt_in = true AND f.district IS NOT NULL AND f.is_active = true AND ${demoSql('f')}`
         );
 
         const byDistrict = new Map<string, OptedInRow[]>();
@@ -332,7 +333,7 @@ export const seasonalAdvisoryService = {
             `SELECT DISTINCT u.email FROM users u
              JOIN farmers f ON f.assigned_officer_id = u.id
              JOIN advisory_preferences p ON p.farmer_id = f.id
-             WHERE p.opt_in = true AND u.email IS NOT NULL`
+             WHERE p.opt_in = true AND u.email IS NOT NULL AND ${demoSql('u')} AND ${demoSql('f')}`
         );
         for (const row of rows) {
             await addEmailJob({

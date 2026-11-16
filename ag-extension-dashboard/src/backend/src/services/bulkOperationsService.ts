@@ -4,6 +4,7 @@ import { getPrisma } from './prismaService';
 import { logger } from '@/utils/logger';
 import { query } from './databaseService';
 import crypto from 'crypto';
+import { demoWhere } from '@/services/demoScope';
 
 export interface BulkOperationResult {
     success: boolean;
@@ -223,7 +224,8 @@ class BulkOperationsService {
     }
 
     private async buildFarmerExportFilters(filters: Record<string, any>, userId: string, userRole: string): Promise<Record<string, any>> {
-        const where: Record<string, any> = {};
+        // Exports are for real accounts only: demo farmers are never exported.
+        const where: Record<string, any> = { ...demoWhere() };
 
         if (userRole === 'extension_officer') {
             where.assignedOfficerId = userId;

@@ -8,6 +8,7 @@ import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 import { UUID_REGEX } from '@/utils/uuid';
+import { demoWhere, linkedDemoSql } from '@/services/demoScope';
 
 const router = Router();
 
@@ -70,7 +71,8 @@ async function buildFieldListWhere(
     user: FieldUser | undefined,
     farmerIdQuery: unknown
 ): Promise<Prisma.FieldWhereInput> {
-    const where: Prisma.FieldWhereInput = { isActive: true };
+    // Demo farmers' fields are only for the demo session.
+    const where: Prisma.FieldWhereInput = { isActive: true, farmer: demoWhere(user) };
     const farmerId = farmerIdQuery as string | undefined;
 
     if (user?.role === 'farmer') {
@@ -553,7 +555,7 @@ router.get('/stats/summary', async (req: Request, res: Response) => {
                     SUM(area_hectares) AS total_size,
                     ARRAY_AGG(DISTINCT soil_type) FILTER (WHERE soil_type IS NOT NULL) AS crop_types
                FROM fields
-              WHERE is_active = true${scopeClause}
+              WHERE is_active = true AND ${linkedDemoSql('fields', user)}${scopeClause}
               GROUP BY farmer_id`,
             scopeParams
         );

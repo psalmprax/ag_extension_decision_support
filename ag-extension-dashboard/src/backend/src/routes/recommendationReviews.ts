@@ -4,6 +4,7 @@ import { query } from '@/services/databaseService';
 import { getFarmerForPrincipal, getPrincipalTenantId } from '@/services/dataGovernanceService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
+import { viewerIsDemo } from '@/services/demoScope';
 
 const router = Router();
 // Farmers may ask for a human to check advice they received (POST); listing and
@@ -29,6 +30,8 @@ router.get('/', reviewersOnly, async (req: Request, res: Response) => {
   try {
     const user = principal(req);
     if (!user) return res.status(401).json({ success: false, error: 'Authentication required' });
+    // The demo session may share a tenant with real users; it never sees their reviews.
+    if (viewerIsDemo(req.user)) return res.json({ success: true, data: [] });
     const tenantId = user.role === 'admin'
       ? (typeof req.query.tenantId === 'string' ? req.query.tenantId : null)
       : await getPrincipalTenantId(user.userId);

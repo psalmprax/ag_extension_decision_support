@@ -299,6 +299,8 @@ export interface UserPublicRow {
   preferred_language: string | null;
   avatar_url: string | null;
   last_login: Date | string | null;
+  /** Demo session account; only admins are shown these. */
+  is_demo?: boolean | null;
 }
 
 // --- Fields routes (fields.ts) ---------------------------------------------

@@ -6,6 +6,7 @@ import { safeError } from '@/utils/safeResponse';
 import { logger } from '@/utils/logger';
 import { config } from '@/config';
 import { seasonalAdvisoryService } from '@/services/seasonalAdvisoryService';
+import { viewerIsDemo } from '@/services/demoScope';
 
 const router = Router();
 
@@ -57,6 +58,8 @@ router.get('/preferences/:farmerId', async (req: AuthedRequest, res: Response) =
 router.get('/recent', async (req: AuthedRequest, res: Response) => {
     try {
         const limit = Math.min(parseInt((req.query.limit as string) || '50', 10) || 50, 200);
+        // Dispatches are real district advisories; the demo session has none.
+        if (viewerIsDemo(req.user)) return res.json({ success: true, data: [] });
         const dispatches = await seasonalAdvisoryService.getRecentDispatches(limit);
         return res.json({ success: true, data: dispatches });
     } catch (error) {

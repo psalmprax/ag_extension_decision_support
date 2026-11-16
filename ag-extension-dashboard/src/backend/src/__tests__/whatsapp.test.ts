@@ -170,6 +170,7 @@ describe('WhatsApp Route — Mapper-before-response: mapWhatsAppMessageRows + ma
             expect(sql).toMatch(/WHERE direction = '(inbound|outbound)' AND \(\(/);
             expect(sql).not.toMatch(/WHERE direction = '(inbound|outbound)' WHERE/);
             expect(sql).toContain('assigned_officer_id = $1');
+            expect(sql).toContain('NOT EXISTS (SELECT 1 FROM farmers demo_f');
             expect(params).toEqual(['off-1']);
         }
     });

@@ -4,6 +4,7 @@ import { getPrisma } from '@/services/prismaService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { authorize, AuthRequest } from '@/middleware/authorize';
+import { linkedDemoSql } from '@/services/demoScope';
 
 const router = Router();
 
@@ -170,6 +171,7 @@ async function fetchSmsEvents(userId: string, role: string): Promise<ActivityIte
     FROM sms_history sh
     LEFT JOIN farmers f ON f.id = sh.farmer_id
     WHERE sh.created_at >= NOW() - INTERVAL '24 hours'
+      AND ${linkedDemoSql('sh')}
       ${scopeClause}
       AND sh.status != 'scheduled'
     ORDER BY sh.created_at DESC
@@ -226,6 +228,7 @@ async function fetchChatEvents(userId: string, role: string): Promise<ActivityIt
     LEFT JOIN farmers f ON f.id = cc.farmer_id
     WHERE cm.role = 'user'
       AND cm.created_at >= NOW() - INTERVAL '24 hours'
+      AND ${linkedDemoSql('cc')}
       ${scopeClause}
     ORDER BY cm.created_at DESC
     LIMIT 30

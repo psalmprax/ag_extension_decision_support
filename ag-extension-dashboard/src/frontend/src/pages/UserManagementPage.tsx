@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
   UserPlus,
-  Shield,
   X,
   Loader2,
   ChevronDown,
@@ -29,6 +28,7 @@ import {
   getCountryConfig,
 } from '@/lib/countries';
 import { useLanguage } from '@/lib/LanguageContext';
+import { StaffBadges } from '@/components/users/StaffBadges';
 
 interface User {
   id: string;
@@ -40,6 +40,7 @@ interface User {
   country?: string;
   phone: string;
   lastLogin?: string | null;
+  isDemo?: boolean;
 }
 
 const ROLES = [
@@ -339,12 +340,7 @@ export function UserManagementPage() {
                       <h3 className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
                         {user.firstName} {user.lastName}
                       </h3>
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium capitalize border mt-1 ${roleBadge.color}`}
-                      >
-                        <Shield className="w-2.5 h-2.5" />
-                        {t(roleBadge.labelKey, roleBadge.label)}
-                      </span>
+                      <StaffBadges roleLabel={t(roleBadge.labelKey, roleBadge.label)} roleClass={roleBadge.color} isDemo={user.isDemo} />
                     </div>
                   </div>
                 </div>

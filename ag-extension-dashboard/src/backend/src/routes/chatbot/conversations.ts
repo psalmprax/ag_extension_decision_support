@@ -15,6 +15,7 @@ import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
 import { assertConversationAccess, MessageAccessError, resolveFarmerId, resolvePrincipalRegion } from '@/services/messageAccessService';
 import { getRealtimeServer } from '@/services/realtimeHub';
+import { linkedDemoSql } from '@/services/demoScope';
 
 const router = Router();
 
@@ -56,6 +57,8 @@ router.get('/conversations', authorize(['admin', 'regional_manager', 'extension_
       params.push(user.userId);
       whereClause = `cv.officer_id = $1`;
     }
+    // Demo conversations only for the demo session; real ones never for it.
+    whereClause = `(${whereClause}) AND ${linkedDemoSql('cv', user)}`;
 
     params.push(limit);
     params.push(offset);

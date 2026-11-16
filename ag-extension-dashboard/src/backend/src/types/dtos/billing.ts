@@ -197,6 +197,7 @@ export interface UserPublicDTO {
   preferredLanguage: string | null;
   avatarUrl: string | null;
   lastLogin: string | null;
+  isDemo: boolean;
 }
 export function mapUserPublicRow(row: UserPublicRow): UserPublicDTO {
   return {
@@ -212,6 +213,7 @@ export function mapUserPublicRow(row: UserPublicRow): UserPublicDTO {
     preferredLanguage: row.preferred_language,
     avatarUrl: row.avatar_url,
     lastLogin: toIso(row.last_login) ?? null,
+    isDemo: row.is_demo === true,
   };
 }
 export function mapUserPublicRows(rows: UserPublicRow[]): UserPublicDTO[] {

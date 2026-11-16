@@ -8,6 +8,7 @@ import { logger } from '@/utils/logger';
 import { SoilGridsService } from '@/services/soilGridsService';
 import { OpenMeteoSoilService } from '@/services/openMeteoSoilService';
 import { clusterPestSightings, type SwarmCluster } from '@/services/pestSwarmRadarService';
+import { demoSql } from '@/services/demoScope';
 
 const router = Router();
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
@@ -32,6 +33,8 @@ router.get('/layers', validate({ query: layersQuery }), async (req: AuthRequest,
     const userRegion = (req.user as unknown as { region?: string })?.region || region;
 
     const { clauses, params, nextIdx } = buildFarmerFilters(userRegion, crop, county);
+    // Demo farmers never appear on a real account's map (f is joined in both layers).
+    clauses.push(demoSql('f', req.user));
 
     // 1. Farmer points (for NDVI/soil anchors) — live from farmers table with lat/lon
     const farmerConditions = ['f.location_lat IS NOT NULL', 'f.location_lng IS NOT NULL', ...clauses];

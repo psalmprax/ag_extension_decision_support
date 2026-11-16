@@ -49,9 +49,9 @@ router.post('/goal', async (req: AuthRequest, res: Response) => {
 /**
  * GET /api/campaigns/outreach-stats — Delivery status of the outreach queue
  */
-router.get('/outreach-stats', async (_req: Request, res: Response) => {
+router.get('/outreach-stats', async (req: Request, res: Response) => {
     try {
-        const stats = await getOutreachDeliveryStats();
+        const stats = await getOutreachDeliveryStats(req.user);
         return res.json({ success: true, data: stats });
     } catch (error) {
         logger.error('Failed to fetch outreach delivery stats:', error);

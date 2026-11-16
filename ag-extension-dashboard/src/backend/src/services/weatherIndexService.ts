@@ -1,6 +1,7 @@
 import { NasaPowerService, DailyPoint } from './nasaPowerService';
 import { query } from './databaseService';
 import { logger } from '@/utils/logger';
+import { demoSql } from '@/services/demoScope';
 
 /**
  * Weather-index insurance data layer — computes the seasonal rainfall index
@@ -46,7 +47,7 @@ export const weatherIndexService = {
     async computeDistrictIndex(district: string, now = new Date()): Promise<RainfallIndex | null> {
         const { rows } = await query<{ lat: number; lng: number }>(
             `SELECT AVG(location_lat) AS lat, AVG(location_lng) AS lng
-             FROM farmers WHERE district = $1 AND location_lat IS NOT NULL AND is_active = true`,
+             FROM farmers WHERE district = $1 AND location_lat IS NOT NULL AND is_active = true AND ${demoSql('farmers')}`,
             [district]
         );
         if (rows.length === 0 || rows[0].lat === null) return null;

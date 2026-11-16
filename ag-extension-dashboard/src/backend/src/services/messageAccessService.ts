@@ -1,5 +1,6 @@
 import { query } from './databaseService';
 import { logger } from '@/utils/logger';
+import { viewerIsDemo } from '@/services/demoScope';
 
 /** Error whose `statusCode` the route layer maps to an HTTP response. */
 export class MessageAccessError extends Error {
@@ -24,6 +25,7 @@ export interface MessagePrincipal {
   role: string;
   region?: string | null;
   tenantId?: string | null;
+  isDemo?: unknown;
 }
 
 interface FarmerWriteTarget {
@@ -171,6 +173,7 @@ interface ConversationOwnershipRow {
   farmer_id: string | null;
   officer_id: string | null;
   region: string | null;
+  is_demo: boolean | null;
 }
 
 /**
@@ -191,10 +194,8 @@ export async function assertConversationAccess(
   if (!conversationId) {
     throw new MessageAccessError('Conversation id is required.', 400);
   }
-  if (principal.role === 'admin') return;
-
   const { rows } = await query<ConversationOwnershipRow>(
-    `SELECT cv.farmer_id, cv.officer_id, f.region
+    `SELECT cv.farmer_id, cv.officer_id, f.region, COALESCE(f.is_demo, false) AS is_demo
        FROM chat_conversations cv
        LEFT JOIN farmers f ON f.id = cv.farmer_id
       WHERE cv.id = $1
@@ -202,9 +203,11 @@ export async function assertConversationAccess(
     [conversationId]
   );
   const row = rows[0];
-  if (!row) {
+  // A demo/real mismatch reads as "not found", like any conversation you may not see.
+  if (!row || Boolean(row.is_demo) !== viewerIsDemo(principal)) {
     throw new MessageAccessError('Conversation not found.', 404);
   }
+  if (principal.role === 'admin') return;
 
   if (principal.role === 'farmer') {
     const farmerId = (await resolveFarmerId(principal.userId)) ?? principal.userId;

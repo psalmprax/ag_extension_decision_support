@@ -17,6 +17,7 @@ import { checkMessageAccess, MessageAccessError, resolvePrincipalRegion } from '
 import { logger } from '@/utils/logger';
 import { verifyInboundWebhookSignature } from '@/middleware/webhookSignature';
 import { ASK_HELP, messagingKnowledgeReply, parseAskCommand } from '@/services/knowledge/messagingHints';
+import { linkedDemoSql } from '@/services/demoScope';
 
 const router = Router();
 
@@ -197,7 +198,7 @@ router.get('/history', async (req: AuthRequest, res: Response) => {
     try {
         const { farmerId } = req.query;
         const user = req.user;
-        let sql = 'SELECT * FROM sms_history WHERE 1=1';
+        let sql = `SELECT * FROM sms_history sh WHERE ${linkedDemoSql('sh', user)}`;
         const params: unknown[] = [];
         let paramIdx = 1;
 

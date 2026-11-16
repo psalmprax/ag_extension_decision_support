@@ -1,0 +1,74 @@
+import { NextFunction, Request, Response } from 'express';
+import { viewerIsDemo } from '@/services/demoScope';
+
+/**
+ * The public demo session ("Try the Demo") is read-only and limited to demo
+ * records. It may call only the endpoints the demo UI uses (taken from a crawl
+ * of every demo page): its own account, reference data, demo-scoped records,
+ * signing in and out, and the public assistant. Everything else is refused, so
+ * a route nobody listed can never show the demo real data or change anything.
+ *
+ * Endpoints are written without the /api or /api/v1 prefix.
+ */
+export const DEMO_READS: ReadonlySet<string> = new Set([
+  '/auth/me',
+  '/advisories/recent', // empty for the demo
+  '/ai/diseases', // disease catalogue
+  '/ai/reviews', // empty for the demo
+  '/billing/invoices',
+  '/billing/payment-methods',
+  '/billing/plans',
+  '/billing/quotas',
+  '/billing/subscription',
+  '/billing/transaction/my',
+  '/campaigns/outreach-stats', // demo-linked messages only
+  '/efficacy/followups', // the demo officer's own queue
+  '/efficacy/summary',
+  '/external/ndvi-timeseries',
+  '/external/weather',
+  '/knowledge/quota',
+  '/knowledge/stats',
+  '/knowledge/search', // public knowledge base
+  '/notifications/unread-count',
+  '/outbreaks', // demo-linked diagnoses only
+  '/worldmonitor/layers', // demo farmers only
+]);
+
+export const DEMO_WRITES: ReadonlySet<string> = new Set([
+  '/auth/demo',
+  '/auth/refresh',
+  '/auth/logout',
+  '/chatbot/public-demo', // the landing-page assistant, public anyway
+  '/chatbot/public-demo/stt',
+  '/chatbot/public-demo/tts',
+  '/knowledge/ask', // knowledge-base answers, with the demo's daily quota
+]);
+
+const READ_METHODS = new Set(['GET', 'HEAD']);
+
+/**
+ * "/api/v1/farmers/" → "/farmers"; null for anything outside /api. Express
+ * matches routes case-insensitively, so "/API/V1/Farmers" must not slip past.
+ */
+export function apiEndpoint(path: string): string | null {
+  const normalised = path.replace(/\/{2,}/g, '/').toLowerCase();
+  const match = /^\/api(?:\/v1)?(\/.*)?$/.exec(normalised);
+  if (!match) return null;
+  const endpoint = (match[1] || '/').replace(/\/+$/, '');
+  return endpoint || '/';
+}
+
+export function demoSessionGuard(req: Request, res: Response, next: NextFunction): void {
+  if (!viewerIsDemo(req.user) || req.method === 'OPTIONS') return next();
+  const endpoint = apiEndpoint(req.path);
+  if (endpoint === null) return next();
+
+  const allowed = READ_METHODS.has(req.method) ? DEMO_READS : DEMO_WRITES;
+  if (allowed.has(endpoint)) return next();
+
+  res.status(403).json({
+    success: false,
+    error: 'This is not available in the demo. Create an account to use it with your own farmers.',
+    code: 'DEMO_READ_ONLY',
+  });
+}

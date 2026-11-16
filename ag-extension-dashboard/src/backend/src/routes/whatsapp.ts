@@ -13,6 +13,7 @@ import { onboardingEngine } from '@/services/onboardingEngine';
 import { ASK_HELP, messagingKnowledgeReply, parseAskCommand } from '@/services/knowledge/messagingHints';
 import { transcribeVoiceNote, synthesizeVoiceAdvisory } from '@/services/voiceAudioService';
 import { checkMessageAccess, MessageAccessError, resolvePrincipalRegion } from '@/services/messageAccessService';
+import { linkedDemoSql } from '@/services/demoScope';
 
 const router = Router();
 
@@ -390,7 +391,8 @@ router.get('/messages', async (req: Request, res: Response) => {
         const scope = await buildMessageScope(user);
         const params = [...scope.params];
         const paramIdx = params.length + 1;
-        const scopeSql = scope.sql + ` ORDER BY created_at DESC LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
+        const scopeSql = `SELECT * FROM (${scope.sql}) scoped WHERE ${linkedDemoSql('scoped', user)}`
+            + ` ORDER BY created_at DESC LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
         params.push(limit, offset);
 
         const { rows } = await query<WhatsAppMessageRow>(scopeSql, params);
@@ -471,6 +473,7 @@ router.get('/stats', async (req: Request, res: Response) => {
                 scopedParams = [region];
             }
         }
+        scopeClause = `${scopeClause} AND ${linkedDemoSql('whatsapp_messages', user)}`;
         const { rows: inbound } = await query<CountRow>(
             `SELECT COUNT(*) AS count FROM whatsapp_messages WHERE direction = 'inbound' ${scopeClause}`,
             scopedParams
