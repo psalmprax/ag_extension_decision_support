@@ -150,6 +150,10 @@ export interface AtmosphericDispersalProjection {
 export const outbreakService = {
     async getClusters(params: { days?: number; bbox?: string } = {}): Promise<OutbreakCluster[]> {
         const { data } = await apiClient.get('/outbreaks', { params });
+        // Reject a malformed payload here (a query error the banner treats as "no
+        // alerts") instead of handing a non-array to callers that filter it, which
+        // took the whole dashboard down with "filter is not a function".
+        if (!Array.isArray(data?.data)) throw new Error('Unexpected /outbreaks response: data is not a list');
         return data.data;
     },
 

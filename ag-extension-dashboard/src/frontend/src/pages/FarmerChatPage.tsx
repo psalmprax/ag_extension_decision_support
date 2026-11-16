@@ -564,6 +564,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                   />
                   <button
                     type="submit"
+                    aria-label="Send message"
                     disabled={!farmerChatInput.trim()}
                     className={`p-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors disabled:opacity-40 ${btnClass}`}
                   >
