@@ -747,26 +747,45 @@ jobs:
             if [ -z "$DB_UP" ] || [ -z "$REDIS_UP" ]; then
               echo "Databases down — building infrastructure..."
               docker compose $COMPOSE_FILES up -d --build app-db redis
+            else
+              # Apply .env changes (e.g. a new DATABASE_PASSWORD) now, before anything
+              # depends on them; compose recreates only when the config changed.
+              docker compose $COMPOSE_FILES up -d app-db redis
             fi
 
             echo "Waiting for app-db + redis to be healthy..."
+            INFRA_HEALTHY=0
             for i in $(seq 1 60); do
               DB_H=$(docker inspect --format='{{.State.Health.Status}}' ag-dashboard-db 2>/dev/null || echo 'unknown')
               REDIS_H=$(docker inspect --format='{{.State.Health.Status}}' ag-dashboard-redis 2>/dev/null || echo 'unknown')
               if [ "$DB_H" = "healthy" ] && [ "$REDIS_H" = "healthy" ]; then
                 echo "  app-db=$DB_H  redis=$REDIS_H"
                 echo "Both services healthy."
-                exit 0
+                INFRA_HEALTHY=1
+                break
               fi
               if [ $((i % 10)) -eq 0 ]; then
                 echo "  Attempt $i/60 — app-db=$DB_H  redis=$REDIS_H"
               fi
               sleep 2
             done
-            echo "app-db or redis never reached healthy state after 120s" >&2
-            docker logs --tail 80 ag-dashboard-db 2>/dev/null || true
-            docker logs --tail 40 ag-dashboard-redis 2>/dev/null || true
-            exit 1
+            if [ "$INFRA_HEALTHY" -ne 1 ]; then
+              echo "app-db or redis never reached healthy state after 120s" >&2
+              docker logs --tail 80 ag-dashboard-db 2>/dev/null || true
+              docker logs --tail 40 ag-dashboard-redis 2>/dev/null || true
+              exit 1
+            fi
+
+            # .env's DATABASE_PASSWORD is the source of truth. Postgres keeps the
+            # password it was created with even when the container is recreated,
+            # so align the role to it on every deploy (no-op when unchanged). Runs
+            # over the container's local socket, which needs no old password; the
+            # value is read inside the container and never appears in logs.
+            echo "Aligning the database role password with .env..."
+            docker exec -i ag-dashboard-db sh -c 'psql -v ON_ERROR_STOP=1 -q -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -v pw="$POSTGRES_PASSWORD"' <<'SQL'
+            ALTER ROLE CURRENT_USER WITH PASSWORD :'pw';
+            SQL
+            echo "  done"
 
       # ── Pre-build smoke gate: verify ettametta-ollama is live before the long
       # parallel build. Same pattern as deploy-stage.yml's gate: dedicated step,
