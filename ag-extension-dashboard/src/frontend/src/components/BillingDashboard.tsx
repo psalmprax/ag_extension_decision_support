@@ -460,7 +460,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
                 setIsAnnual(false);
               }}
               className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                !isAnnual ? 'bg-emerald-600 text-white shadow-sm' : 'text-white/60 hover:text-white'
+                !isAnnual ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Monthly
@@ -472,7 +472,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
                 setIsAnnual(true);
               }}
               className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                isAnnual ? 'bg-emerald-600 text-white shadow-sm' : 'text-white/60 hover:text-white'
+                isAnnual ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Annual (-20%)

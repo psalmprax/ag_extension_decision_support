@@ -151,6 +151,18 @@ describe('BillingDashboard', () => {
     expect(screen.getByRole('heading', { name: /Pro/i, level: 2 })).toBeInTheDocument();
   });
 
+  it('keeps the unselected billing period readable in light mode', async () => {
+    renderComponent();
+    await waitFor(() => {
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+    const annual = screen.getByRole('button', { name: 'Annual (-20%)' });
+    // White text is only for the selected (solid green) option; on the light
+    // header an unselected option needs a dark text colour.
+    expect(annual.className).toMatch(/(^|\s)text-slate-600(\s|$)/);
+    expect(annual.className).not.toMatch(/(^|\s)text-white(\/\d+)?(\s|$)/);
+  });
+
   it('renders available plans', async () => {
     renderComponent();
 
