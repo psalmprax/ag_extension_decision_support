@@ -149,6 +149,28 @@ describe('chat completions conversation ownership (IDOR)', () => {
         expect(historyCall![1][1]).toBe(FARMER_RECORD_ID);
     });
 
+    it('queues an unsourced answer in a farmer conversation for agronomic review', async () => {
+        const token = tokenFor(FARMER_USER_ID, 'farmer');
+        mockFarmerCompletionsDb({ ownershipParam: FARMER_RECORD_ID });
+        const ownerDb = mockQuery.getMockImplementation()!;
+        mockQuery.mockImplementation((sql: string, params?: unknown[]) =>
+            typeof sql === 'string' && sql.includes('INSERT INTO recommendation_reviews')
+                ? Promise.resolve({ rows: [{ id: 'review-1' }], rowCount: 1 })
+                : ownerDb(sql, params));
+
+        const res = await request(app)
+            .post('/api/chatbot/completions')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ message: 'what should I spray on my maize?', conversation_id: CONVERSATION_ID });
+
+        expect(res.status).toBe(200);
+        // RAG is mocked to return no citations, so this is the model's own guidance.
+        expect(res.body.data.advisoryQuality.status).toBe('general_guidance_only');
+        expect(res.body.data.review).toEqual({ queued: true, trigger: 'no_sources' });
+        const insert = mockQuery.mock.calls.find(c => typeof c[0] === 'string' && c[0].includes('INSERT INTO recommendation_reviews'));
+        expect(insert![1]).toEqual([CONVERSATION_ID, FARMER_USER_ID, expect.any(String), 'no_sources']);
+    });
+
     it('rejects a foreign conversation before writing or generating a completion', async () => {
         const token = tokenFor(FARMER_USER_ID, 'farmer');
         // The join's ownership param is the caller's OWN record; the foreign

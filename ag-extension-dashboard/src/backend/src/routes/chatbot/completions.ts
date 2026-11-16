@@ -21,6 +21,7 @@ import { authorize } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { retrieveAdvisoryEvidence } from '@/services/knowledge/advisoryRetrieval';
 import { buildAdvisoryDirective, resolveAdvisoryCountry, validateAdvisoryCitations } from '@/services/knowledge/advisoryPolicy';
+import { enqueueAdvisoryReview, reviewTriggerFor } from '@/services/knowledge/reviewQueue';
 import { resolveUserContext } from '@/services/knowledge/userContext';
 import { callAdvisoryTool, getAdvisoryTools } from '@/services/knowledge/advisoryTools';
 import { AdvisoryTimeoutError, withAdvisoryTimeout } from '@/services/knowledge/advisoryRuntime';
@@ -290,6 +291,18 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
 
     await persistTurnMessage(body.conversation_id, 'assistant', safeAssistantText, body.language);
 
+    // Unsourced, mis-cited or safety-flagged advice in a farmer's conversation
+    // goes to the agronomic review queue; the answer itself is not held back.
+    const reviewTrigger = reviewTriggerFor(validated.evidence, boundaryCheck.violations.length);
+    const reviewId = body.conversation_id && reviewTrigger
+      ? await enqueueAdvisoryReview({
+        conversationId: body.conversation_id,
+        createdBy: user.userId,
+        recommendation: safeAssistantText,
+        trigger: reviewTrigger,
+      })
+      : null;
+
     return res.json({
       success: true,
       data: {
@@ -301,6 +314,7 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
         advisoryQuality: validated.evidence,
         usedTools: usedToolNames,
         safety: boundaryCheck,
+        review: reviewId ? { queued: true, trigger: reviewTrigger } : { queued: false },
       },
     });
   } catch (error) {
