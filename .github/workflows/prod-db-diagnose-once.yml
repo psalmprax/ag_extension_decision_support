@@ -1,0 +1,42 @@
+# One-off, read-only production diagnostic (never merged). Prints yes/no facts
+# about how the configured passwords survive URL embedding; never prints a
+# password, a fragment of one, or a parsed host that could contain one.
+name: Production DB credential diagnostic (one-off)
+on:
+  push:
+    branches: [ops/prod-db-diagnose]
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          command_timeout: 5m
+          script: |
+            set -eu
+            cd "${HOME:?}/ag_extension_decision_support/ag-extension-dashboard"
+            COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml"
+            echo "== backend container view (read-only; no DB access) =="
+            docker compose $COMPOSE_FILES run --rm --no-deps -e SKIP_MIGRATIONS=true --entrypoint node backend -e '
+              const yes = b => (b ? "yes" : "no");
+              const reserved = /[@:\/?#\[\]%\s"<>\\^`{|}]/;
+              const check = (label, raw, urlVar, expectedHost) => {
+                const p = raw || "";
+                console.log(`${label}: set=${yes(p.length > 0)} url-reserved-chars=${yes(reserved.test(p))}`);
+                let u = null;
+                try { u = new URL(process.env[urlVar]); } catch (e) { console.log(`  ${urlVar}: does NOT parse as a URL`); return; }
+                console.log(`  ${urlVar}: host-correct=${yes(u.host === expectedHost)} password-round-trips=${yes(decodeURIComponent(u.password) === p)}`);
+              };
+              check("DATABASE_PASSWORD", process.env.DATABASE_PASSWORD, "DATABASE_URL", "app-db:5432");
+              check("REDIS_PASSWORD", process.env.REDIS_PASSWORD, "REDIS_URL", "redis:6379");
+            '
+            echo "== database container =="
+            same=$(docker exec ag-dashboard-db sh -c 'printf %s "$POSTGRES_PASSWORD" | sha256sum | cut -c1-64')
+            envp=$(docker compose $COMPOSE_FILES run --rm --no-deps -e SKIP_MIGRATIONS=true --entrypoint sh backend -c 'printf %s "$DATABASE_PASSWORD" | sha256sum | cut -c1-64')
+            [ "$same" = "$envp" ] && echo "db container password == backend DATABASE_PASSWORD: yes" || echo "db container password == backend DATABASE_PASSWORD: no"
+            docker inspect -f 'ag-dashboard-db created: {{.Created}}' ag-dashboard-db
+            docker inspect -f 'ag-dashboard-backend status: {{.State.Status}} restarts={{.RestartCount}}' ag-dashboard-backend
