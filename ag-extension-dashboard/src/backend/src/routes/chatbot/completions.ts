@@ -21,7 +21,7 @@ import { authorize } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { retrieveAdvisoryEvidence } from '@/services/knowledge/advisoryRetrieval';
 import { buildAdvisoryDirective, resolveAdvisoryCountry, validateAdvisoryCitations } from '@/services/knowledge/advisoryPolicy';
-import { enqueueAdvisoryReview, reviewTriggerFor } from '@/services/knowledge/reviewQueue';
+import { enqueueAdvisoryReview, reviewTriggerFor, type ReviewTrigger } from '@/services/knowledge/reviewQueue';
 import { resolveUserContext } from '@/services/knowledge/userContext';
 import { callAdvisoryTool, getAdvisoryTools } from '@/services/knowledge/advisoryTools';
 import { AdvisoryTimeoutError, withAdvisoryTimeout } from '@/services/knowledge/advisoryRuntime';
@@ -240,6 +240,25 @@ async function loadAdvisoryContext(userId: string, message: string, conversation
   };
 }
 
+/**
+ * Queues a farmer conversation's answer for agronomic review after the
+ * response is sent, so the farmer never waits on it. Returns the trigger
+ * when a review was scheduled, otherwise null.
+ */
+function scheduleAdvisoryReview(
+  conversationId: string | null | undefined,
+  createdBy: string,
+  recommendation: string,
+  trigger: ReviewTrigger | null,
+): ReviewTrigger | null {
+  if (!conversationId || !trigger) return null;
+  setImmediate(() => {
+    enqueueAdvisoryReview({ conversationId, createdBy, recommendation, trigger })
+      .catch(error => logger.warn('Could not schedule AI recommendation review:', error));
+  });
+  return trigger;
+}
+
 router.post('/completions', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), checkUsageLimit('ai_chat'), validate({ body: completionsBodySchema }), async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
@@ -293,20 +312,12 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
 
     // Unsourced, mis-cited or safety-flagged advice in a farmer's conversation
     // goes to the agronomic review queue; the answer itself is not held back.
-    const reviewTrigger = reviewTriggerFor(validated.evidence, boundaryCheck.safe);
-    const conversationId = body.conversation_id;
-    const reviewScheduled = Boolean(conversationId && reviewTrigger);
-    if (conversationId && reviewTrigger) {
-      setImmediate(() => {
-        void enqueueAdvisoryReview({
-          conversationId,
-          createdBy: user.userId,
-          recommendation: safeAssistantText,
-          trigger: reviewTrigger,
-        })
-          .catch(error => logger.warn('Could not schedule AI recommendation review:', error));
-      });
-    }
+    const reviewTrigger = scheduleAdvisoryReview(
+      body.conversation_id,
+      user.userId,
+      safeAssistantText,
+      reviewTriggerFor(validated.evidence, boundaryCheck.safe),
+    );
 
     return res.json({
       success: true,
@@ -319,7 +330,7 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
         advisoryQuality: validated.evidence,
         usedTools: usedToolNames,
         safety: boundaryCheck,
-        review: reviewScheduled
+        review: reviewTrigger
           ? { queued: false, scheduled: true, trigger: reviewTrigger }
           : { queued: false },
       },
