@@ -293,15 +293,20 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
 
     // Unsourced, mis-cited or safety-flagged advice in a farmer's conversation
     // goes to the agronomic review queue; the answer itself is not held back.
-    const reviewTrigger = reviewTriggerFor(validated.evidence, boundaryCheck.violations.length);
-    const reviewId = body.conversation_id && reviewTrigger
-      ? await enqueueAdvisoryReview({
-        conversationId: body.conversation_id,
-        createdBy: user.userId,
-        recommendation: safeAssistantText,
-        trigger: reviewTrigger,
-      })
-      : null;
+    const reviewTrigger = reviewTriggerFor(validated.evidence, boundaryCheck.safe);
+    const conversationId = body.conversation_id;
+    const reviewScheduled = Boolean(conversationId && reviewTrigger);
+    if (conversationId && reviewTrigger) {
+      setImmediate(() => {
+        void enqueueAdvisoryReview({
+          conversationId,
+          createdBy: user.userId,
+          recommendation: safeAssistantText,
+          trigger: reviewTrigger,
+        })
+          .catch(error => logger.warn('Could not schedule AI recommendation review:', error));
+      });
+    }
 
     return res.json({
       success: true,
@@ -314,7 +319,9 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
         advisoryQuality: validated.evidence,
         usedTools: usedToolNames,
         safety: boundaryCheck,
-        review: reviewId ? { queued: true, trigger: reviewTrigger } : { queued: false },
+        review: reviewScheduled
+          ? { queued: false, scheduled: true, trigger: reviewTrigger }
+          : { queued: false },
       },
     });
   } catch (error) {

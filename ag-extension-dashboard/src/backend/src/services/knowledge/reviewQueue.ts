@@ -22,8 +22,8 @@ export interface AdvisoryEvidenceSummary {
  * Answers grounded in retrieved sources with valid citations are not queued:
  * the queue is for advice nobody has evidence for, so it stays reviewable.
  */
-export function reviewTriggerFor(evidence: AdvisoryEvidenceSummary, safetyViolations: number): ReviewTrigger | null {
-    if (safetyViolations > 0) return 'safety_boundary';
+export function reviewTriggerFor(evidence: AdvisoryEvidenceSummary, safetySafe: boolean): ReviewTrigger | null {
+    if (!safetySafe) return 'safety_boundary';
     if (evidence.invalidReferences) return 'invalid_references';
     if (evidence.status === 'general_guidance_only') return 'no_sources';
     return null;

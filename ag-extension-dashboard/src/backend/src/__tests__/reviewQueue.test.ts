@@ -12,19 +12,19 @@ describe('reviewTriggerFor', () => {
     const grounded = { status: 'retrieved_not_independently_verified', invalidReferences: false };
 
     it('queues safety-flagged advice first, whatever its sources', () => {
-        expect(reviewTriggerFor(grounded, 2)).toBe('safety_boundary');
+        expect(reviewTriggerFor(grounded, false)).toBe('safety_boundary');
     });
 
     it('queues answers that cite sources they were not given', () => {
-        expect(reviewTriggerFor({ ...grounded, invalidReferences: true }, 0)).toBe('invalid_references');
+        expect(reviewTriggerFor({ ...grounded, invalidReferences: true }, true)).toBe('invalid_references');
     });
 
     it('queues answers with no retrieved sources', () => {
-        expect(reviewTriggerFor({ status: 'general_guidance_only', invalidReferences: false }, 0)).toBe('no_sources');
+        expect(reviewTriggerFor({ status: 'general_guidance_only', invalidReferences: false }, true)).toBe('no_sources');
     });
 
     it('does not queue cleanly sourced answers', () => {
-        expect(reviewTriggerFor(grounded, 0)).toBeNull();
+        expect(reviewTriggerFor(grounded, true)).toBeNull();
     });
 });
 

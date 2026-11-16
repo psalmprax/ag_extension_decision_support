@@ -777,17 +777,6 @@ jobs:
               exit 1
             fi
 
-            # .env's DATABASE_PASSWORD is the source of truth. Postgres keeps the
-            # password it was created with even when the container is recreated,
-            # so align the role to it on every deploy (no-op when unchanged). Runs
-            # over the container's local socket, which needs no old password; the
-            # value is read inside the container and never appears in logs.
-            echo "Aligning the database role password with .env..."
-            docker exec -i ag-dashboard-db sh -c 'psql -v ON_ERROR_STOP=1 -q -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -v pw="$POSTGRES_PASSWORD"' <<'SQL'
-            ALTER ROLE CURRENT_USER WITH PASSWORD :'pw';
-            SQL
-            echo "  done"
-
       # ── Pre-build smoke gate: verify ettametta-ollama is live before the long
       # parallel build. Same pattern as deploy-stage.yml's gate: dedicated step,
       # 10m budget, retries 18 × 10s = ~350s worst case, on-fail diagnostic dump.
@@ -1011,12 +1000,30 @@ jobs:
               rm -f .deploy/prev-backend-image
               echo "No running backend — fresh install, no rollback snapshot."
             fi
+            # .env's DATABASE_PASSWORD is the source of truth. Rotate it only
+            # after replacement images are built, immediately before recreating
+            # their consumers; rotating in the infrastructure step would leave
+            # the old backend unable to reconnect during a failed/long build.
+            echo "Aligning the database role password with .env..."
+            docker exec -i ag-dashboard-db sh -c 'psql -v ON_ERROR_STOP=1 -q -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -v pw="$POSTGRES_PASSWORD"' <<'SQL'
+            ALTER ROLE CURRENT_USER WITH PASSWORD :'pw';
+            SQL
+            echo "  done"
             if ! docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --remove-orphans --no-build traefik backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama; then
               echo "Compose up failed with container conflict. Cleaning up conflicting shells and retrying..."
               docker rm -f ag-dashboard-db ag-dashboard-redis ag-traefik 2>/dev/null || true
               bash ../scripts/free-web-ports.sh ag-extension-dashboard
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build app-db redis
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --remove-orphans --no-build traefik backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama
+              if ! docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --remove-orphans --no-build traefik backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama; then
+                if [ -n "$PREV_BACKEND_ID" ]; then
+                  echo "Cutover failed; restoring the previous backend image..."
+                  sed -i '/^BACKEND_IMAGE_ID=/d' .env
+                  echo "BACKEND_IMAGE_ID=$PREV_BACKEND_ID" >> .env
+                  docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --no-deps --force-recreate backend
+                fi
+                echo "FATAL: service cutover failed after retry." >&2
+                exit 1
+              fi
             fi
 
       # ── Step 4/5: Migrations against the FRESHLY BUILT backend image ──

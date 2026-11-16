@@ -131,6 +131,12 @@ async function checkPayPal(paymentService) {
 
 async function main() {
     const { config } = require(`${DIST}/config`);
+    const { logger } = require(`${DIST}/utils/logger`);
+    for (const transport of logger.transports || []) {
+        if (transport.name === 'console' || transport.constructor?.name === 'Console') {
+            transport.silent = true;
+        }
+    }
     const { AIProviderFactory } = require(`${DIST}/services/aiProvider/aiProvider`);
     const { EMBEDDING_DIMENSIONS } = require(`${DIST}/services/embeddingDimensions`);
     AIProviderFactory.initialize();

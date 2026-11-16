@@ -33,6 +33,18 @@ try {
   process.exit(2);
 }
 
+const fatalFiles = report.filter(file =>
+  file.fatalErrorCount > 0 || file.messages.some(message => message.fatal)
+);
+if (fatalFiles.length > 0) {
+  console.error('eslint reported fatal diagnostics; refusing to measure or update the baseline:');
+  for (const file of fatalFiles) {
+    const message = file.messages.find(diagnostic => diagnostic.fatal)?.message || 'fatal diagnostic';
+    console.error(`${file.filePath}: ${message}`);
+  }
+  process.exit(2);
+}
+
 const current = {};
 for (const file of report) {
   const rel = path.relative(BACKEND, file.filePath).split(path.sep).join('/');

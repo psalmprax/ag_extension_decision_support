@@ -25,6 +25,17 @@ function makeDist({ primary = 'aihubmix', fallback = 'openrouter', embeddings = 
         ai: { primary: { provider: primary }, fallback: { provider: fallback }, embeddings: { provider: embeddings, model: 'emb-model' } },
     })};`);
     write('services/embeddingDimensions.js', `exports.EMBEDDING_DIMENSIONS = ${width};`);
+    write('utils/logger.js', `
+        class Console {
+            constructor() { this.name = 'console'; this.silent = false; }
+        }
+        const transport = new Console();
+        exports.logger = {
+            transports: [transport],
+            warn(...args) {
+                if (!transport.silent) process.stdout.write(JSON.stringify(args) + '\\n');
+            },
+        };`);
     // getEmbedding(): app.dims (default: width), app.throws, app.timeoutsFirst.
     write('services/embeddingCache.js', `
         const app = ${JSON.stringify({ dims: width, ...app })};
@@ -37,6 +48,7 @@ function makeDist({ primary = 'aihubmix', fallback = 'openrouter', embeddings = 
         };`);
     write('services/aiProvider/aiProvider.js', `
         const spec = ${JSON.stringify(providers)};
+        const { logger } = require('../../utils/logger');
         exports.AIProviderFactory = {
             initialize() {},
             async getProvider(type) {
@@ -44,7 +56,12 @@ function makeDist({ primary = 'aihubmix', fallback = 'openrouter', embeddings = 
                 return {
                     isConfigured: () => !!s.configured,
                     async generateText() {
-                        if (s.throws) { const e = new Error(s.throws); e.response = { status: 401, data: { error: { message: s.throws } } }; throw e; }
+                        if (s.throws) {
+                            const e = new Error(s.throws);
+                            e.response = { status: 401, data: { error: { message: s.throws }, config: { headers: { Authorization: s.throws } } } };
+                            logger.warn('AI provider failed:', e);
+                            throw e;
+                        }
                         return { text: s.text ?? 'pong', model: type + '-model' };
                     },
                     async createEmbedding(_text, opts) {
