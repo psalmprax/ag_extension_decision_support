@@ -6,10 +6,6 @@ on:
       - stage
       - master
       - 'feature/*'
-  pull_request:
-    branches:
-      - master
-    types: [closed]
   workflow_dispatch:
     inputs:
       force_clean_rebuild:
@@ -26,7 +22,9 @@ permissions:
 # killed between `compose up` and its health gate would leave the host in an
 # unknown state, so later runs queue instead.
 concurrency:
-  group: deploy-all-${{ github.ref }}
+  # Keyed by branch name so every way of starting a deploy of the same branch
+  # (push, manual dispatch) queues behind the one already running.
+  group: deploy-all-${{ github.ref_name }}
   cancel-in-progress: false
 
 # `|| true` convention in the SSH scripts below (all run under `set -e`):
@@ -565,7 +563,10 @@ jobs:
   # 3. Deploy to Production (New Server) — 5 timed steps, parallel builds via BuildKit
   deploy-production:
     needs: ci-checks
-    if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'master') || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    # Exactly one trigger per change: a merged PR already produces a push to
+    # master. (A separate pull_request:closed trigger ran a second production
+    # deploy in parallel, in another concurrency group, against the same host.)
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     concurrency:
       group: production-deployment
       cancel-in-progress: false
