@@ -6,7 +6,7 @@ import { Select } from '../ui/Select';
 import { Textarea } from '../ui/Textarea';
 import { triggerHaptic } from '@/lib/haptics';
 
-export const CANCELLATION_REASON_OPTIONS = [
+const CANCELLATION_REASON_OPTIONS = [
   { value: '', label: 'Prefer not to say' },
   { value: 'too_expensive', label: 'Too expensive' },
   { value: 'not_using_enough', label: 'Not using it enough' },

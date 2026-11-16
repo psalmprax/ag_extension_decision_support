@@ -33,7 +33,7 @@ export class OllamaProvider extends BaseAIProvider {
         const host = config.ollama.host;
         const model = options?.model || config.ollama.model || 'llama3';
 
-        let messages: any[] = [];
+        let messages: any[];
         if (Array.isArray(prompt)) {
             messages = prompt;
         } else {
@@ -71,7 +71,7 @@ export class OllamaProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Ollama generateText error:', error);
-            throw new Error(`Ollama text generation failed: ${(error as Error).message}`);
+            throw new Error(`Ollama text generation failed: ${(error as Error).message}`, { cause: error });
         }
     }
 

@@ -38,6 +38,7 @@ const DEFAULT_ALLOW_TABLES = new Set([
   'tenant_channel_configs',
   'telegram_messages',
   'farmer_onboarding_sessions',
+  'messaging_inbound_events',
   'autonomous_campaign_runs',
   'regional_agronomy_skills',
   'agent_memories',

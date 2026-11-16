@@ -3,6 +3,7 @@ import { Layers, Globe, Bug, Satellite, Droplets, AlertTriangle } from 'lucide-r
 import { useDemoMode } from '@/demo';
 import { useAppStore } from '@/store/useAppStore';
 import apiClient from '@/api/client';
+import { liveLayersSummary, pestSwarmLabel, type PestSwarmStatus } from './worldMonitorStatus';
 
 type Filters = { region?: string; crop?: string; county?: string };
 
@@ -22,7 +23,7 @@ const WorldMonitor: React.FC = () => {
     farmers: { id: string; lat: number; lon: number; region: string | null }[];
     soilHorizon: { centroid: { lat: number; lon: number }; baseline: { ph: number | null; organicCarbonGPerKg: number | null } | null } | null;
     ndviPoints: { lat: string | number | null; lng: string | number | null; disease_label: string }[];
-    pestSwarm: { clusters: { clusterId: string; centroid: [number, number]; severityLevel: string }[] };
+    pestSwarm: { status?: PestSwarmStatus; clusters: { clusterId: string; centroid: [number, number]; severityLevel: string }[] };
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,7 +92,7 @@ const WorldMonitor: React.FC = () => {
         </div>
         <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
           <Bug className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
-          <div><div className="text-xs text-slate-500 dark:text-white/50">Pest swarm</div><div className="text-xs font-medium font-mono tabular-nums text-slate-900 dark:text-white">{data?.pestSwarm?.clusters?.length ?? 0} clusters</div></div>
+          <div><div className="text-xs text-slate-500 dark:text-white/50">Pest swarm</div><div className="text-xs font-medium font-mono tabular-nums text-slate-900 dark:text-white">{pestSwarmLabel(data?.pestSwarm)}</div></div>
         </div>
       </div>
 
@@ -101,7 +102,7 @@ const WorldMonitor: React.FC = () => {
         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
           <Globe className="w-10 h-10 text-white/20 mb-2" />
           <p className="text-sm font-semibold text-white">Spatial Layer Status</p>
-          <p className="text-xs text-white/50 mt-1 max-w-md">4 live layers (farmers, NDVI 30d, SoilGrids 250m centroid, pest swarm) filtered by region/crop/county. Globe canvas is officer-desktop only to keep the farmer PWA lightweight.</p>
+          <p className="text-xs text-white/50 mt-1 max-w-md">{liveLayersSummary(data?.pestSwarm?.status)}, filtered by region/crop/county. Globe canvas is officer-desktop only to keep the farmer PWA lightweight.</p>
           <div className="mt-4 grid grid-cols-2 gap-2 text-left text-xs font-mono tabular-nums w-full max-w-2xl">
             <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-emerald-400">Farmers:</span> {data?.farmers?.length ?? 0}</div>
             <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-amber-400">Soil centroid:</span> {data?.soilHorizon ? `${Number(data.soilHorizon.centroid.lat).toFixed(2)}, ${Number(data.soilHorizon.centroid.lon).toFixed(2)}` : '—'}</div>

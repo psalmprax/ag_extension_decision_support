@@ -1,6 +1,5 @@
 import Stripe from 'stripe';
 import type { PrismaClient } from '@prisma/client';
-import paypal from 'paypal-rest-sdk';
 import axios from 'axios';
 
 import { logger } from '../utils/logger';
@@ -94,7 +93,6 @@ class PaymentService {
         if (isValidKey) {
             try {
                 this.stripe = new Stripe(stripeKey, {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     apiVersion: '2024-12-18.acacia' as unknown as Stripe.LatestApiVersion,
                 });
                 logger.info('Stripe payment service initialized (Real Mode)');
@@ -118,14 +116,9 @@ class PaymentService {
 
         if (paypalClientId && paypalClientSecret) {
             try {
-                paypal.configure({
-                    mode: process.env.NODE_ENV === 'production' ? 'live' : 'sandbox',
-                    client_id: paypalClientId,
-                    client_secret: paypalClientSecret
-                });
+                // No SDK: PayPal calls are made over REST with an OAuth token from
+                // fetchPayPalAccessToken(); paypalApiBase() picks sandbox vs live.
                 this.paypalConfigured = true;
-                // Retained for the REST-webhook signature check, which needs the raw
-                // credentials rather than the SDK's configured client.
                 this.paypalClientId = paypalClientId;
                 this.paypalClientSecret = paypalClientSecret;
                 logger.info('PayPal payment service initialized');
@@ -878,52 +871,49 @@ class PaymentService {
             };
         }
 
-        return new Promise((resolve) => {
-            const createPaymentJson = {
-                intent: 'sale',
-                payer: {
-                    payment_method: 'paypal'
-                },
-                redirect_urls: {
-                    return_url: params.returnUrl,
-                    cancel_url: params.cancelUrl
-                },
-                transactions: [{
-                    item_list: {
-                        items: [{
-                            name: params.description,
-                            sku: 'subscription',
-                            price: (params.amount / 100).toFixed(2),
-                            currency: params.currency,
-                            quantity: 1
-                        }]
-                    },
-                    amount: {
+        const createPaymentJson = {
+            intent: 'sale',
+            payer: {
+                payment_method: 'paypal'
+            },
+            redirect_urls: {
+                return_url: params.returnUrl,
+                cancel_url: params.cancelUrl
+            },
+            transactions: [{
+                item_list: {
+                    items: [{
+                        name: params.description,
+                        sku: 'subscription',
+                        price: (params.amount / 100).toFixed(2),
                         currency: params.currency,
-                        total: (params.amount / 100).toFixed(2)
-                    },
-                    description: params.description
-                }]
-            };
+                        quantity: 1
+                    }]
+                },
+                amount: {
+                    currency: params.currency,
+                    total: (params.amount / 100).toFixed(2)
+                },
+                description: params.description
+            }]
+        };
 
-            paypal.payment.create(createPaymentJson, (error, payment) => {
-                if (error) {
-                    logger.error('PayPal payment creation failed:', error);
-                    resolve({
-                        success: false,
-                        errorCode: 'PAYPAL_ERROR',
-                        message: error.message || 'Failed to initiate PayPal payment'
-                    });
-                } else {
-                    const approvalUrl = payment.links?.find(link => link.rel === 'approval_url')?.href ?? '';
-                    resolve({
-                        success: true,
-                        paymentId: payment.id,
-                        approvalUrl
-                    });
-                }
-            });
-        });
+        try {
+            const payment = await this.paypalRest<PayPalPayment>('/v1/payments/payment', createPaymentJson);
+            const approvalUrl = payment.links?.find(link => link.rel === 'approval_url')?.href ?? '';
+            if (!payment.id || !approvalUrl) {
+                logger.error('PayPal payment creation returned no id/approval_url:', payment);
+                return { success: false, errorCode: 'PAYPAL_ERROR', message: 'PayPal returned an incomplete payment' };
+            }
+            return { success: true, paymentId: payment.id, approvalUrl };
+        } catch (error) {
+            logger.error('PayPal payment creation failed:', describePayPalError(error));
+            return {
+                success: false,
+                errorCode: 'PAYPAL_ERROR',
+                message: describePayPalError(error) || 'Failed to initiate PayPal payment'
+            };
+        }
     }
 
     async executePayPalPayment(paymentId: string, payerId: string): Promise<boolean> {
@@ -932,19 +922,48 @@ class PaymentService {
             return false;
         }
 
-        return new Promise((resolve) => {
-            paypal.payment.execute(paymentId, { payer_id: payerId }, (error, payment) => {
-                if (error) {
-                    logger.error('PayPal payment execution failed:', error);
-                    resolve(false);
-                } else {
-                    logger.info('PayPal payment executed successfully:', payment.id);
-                    resolve(true);
-                }
-            });
-        });
+        try {
+            const payment = await this.paypalRest<PayPalPayment>(
+                `/v1/payments/payment/${encodeURIComponent(paymentId)}/execute`,
+                { payer_id: payerId }
+            );
+            // A 2xx response alone is not proof of payment: PayPal reports a
+            // declined/failed execution as state "failed". Only "approved" pays.
+            if (payment.state !== 'approved') {
+                logger.error(`PayPal payment ${paymentId} executed with state "${payment.state}" — not granting access`);
+                return false;
+            }
+            logger.info('PayPal payment executed successfully:', payment.id);
+            return true;
+        } catch (error) {
+            logger.error('PayPal payment execution failed:', describePayPalError(error));
+            return false;
+        }
     }
 
+    /** POST to the PayPal REST API with a fresh OAuth token. */
+    private async paypalRest<T>(path: string, body: unknown): Promise<T> {
+        const token = await this.fetchPayPalAccessToken();
+        const { data } = await axios.post<T>(`${this.paypalApiBase()}${path}`, body, {
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            timeout: 30_000,
+        });
+        return data;
+    }
+
+}
+
+interface PayPalPayment {
+    id?: string;
+    state?: string;
+    links?: Array<{ rel: string; href: string }>;
+}
+
+/** PayPal error bodies carry name/message/details; surface them, not just "400". */
+function describePayPalError(error: unknown): string {
+    const resp = (error as { response?: { data?: { name?: string; message?: string } } })?.response?.data;
+    if (resp?.name || resp?.message) return [resp.name, resp.message].filter(Boolean).join(': ');
+    return (error as Error)?.message ?? String(error);
 }
 
 export const paymentService = new PaymentService();

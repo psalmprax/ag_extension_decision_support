@@ -236,7 +236,7 @@ class ObjectStorageService {
         etag = res.ETag?.replace(/"/g, '');
       } catch (err) {
         logger.error(`[ObjectStorage] Cloud upload failed for key ${key}:`, err);
-        throw new Error(`Object storage upload failed: ${(err as Error).message}`);
+        throw new Error(`Object storage upload failed: ${(err as Error).message}`, { cause: err });
       }
     }
 
@@ -249,7 +249,7 @@ class ObjectStorageService {
       } catch (err) {
         if (!this.s3Client) {
           logger.error(`[ObjectStorage] Local write failed for ${key}:`, err);
-          throw new Error(`Local storage write failed: ${(err as Error).message}`);
+          throw new Error(`Local storage write failed: ${(err as Error).message}`, { cause: err });
         }
         logger.warn(`[ObjectStorage] Local cache write failed for ${key} (non-fatal):`, err);
       }
@@ -306,7 +306,7 @@ class ObjectStorageService {
         return buffer;
       } catch (err) {
         logger.error(`[ObjectStorage] Failed to get object ${cleanKey} from S3/R2:`, err);
-        throw new Error(`Object not found: ${cleanKey}`);
+        throw new Error(`Object not found: ${cleanKey}`, { cause: err });
       }
     }
 

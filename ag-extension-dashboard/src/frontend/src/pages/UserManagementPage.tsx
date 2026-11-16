@@ -71,7 +71,6 @@ const ROLES = [
 
 const getRoleBadge = (role: string) => ROLES.find(r => r.value === role) || ROLES[2];
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export function UserManagementPage() {
   const { t } = useLanguage();
   const { isDemo } = useDemoMode();

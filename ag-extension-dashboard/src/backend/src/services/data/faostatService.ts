@@ -411,7 +411,7 @@ Oil palm fruit: 2,000,000 tonnes, 350,000 ha — Andhra Pradesh`,
         };
 
         // Try API first for one country to check availability
-        let apiAvailable = false;
+        let apiAvailable: boolean;
         try {
             const probeYear = new Date().getUTCFullYear() - 2;
             const testUrl = `https://fenixservices.fao.org/faostat/api/v1/en/data/QCL?area=109&item=056&element=5510&year=${probeYear}&output_type=json`;

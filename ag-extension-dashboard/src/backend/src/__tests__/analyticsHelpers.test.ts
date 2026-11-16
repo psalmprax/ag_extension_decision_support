@@ -77,7 +77,7 @@ describe('Analytics Route Helpers', () => {
     describe('Cache Key Logic', () => {
         it('should build officer cache key', () => {
             const user = { isOfficer: true, isManager: false, officerId: 'officer-1', managerRegion: null };
-            let cacheKey = '';
+            let cacheKey: string;
             
             if (user.isOfficer) cacheKey = `analytics:dashboard:${user.officerId}`;
             else if (user.isManager) cacheKey = `analytics:dashboard:region:${user.managerRegion || 'unknown'}`;
@@ -88,7 +88,7 @@ describe('Analytics Route Helpers', () => {
 
         it('should build manager cache key', () => {
             const user = { isOfficer: false, isManager: true, officerId: null, managerRegion: 'Nairobi' };
-            let cacheKey = '';
+            let cacheKey: string;
             
             if (user.isOfficer) cacheKey = `analytics:dashboard:${user.officerId}`;
             else if (user.isManager) cacheKey = `analytics:dashboard:region:${user.managerRegion || 'unknown'}`;
@@ -99,7 +99,7 @@ describe('Analytics Route Helpers', () => {
 
         it('should build global cache key for admin', () => {
             const user = { isOfficer: false, isManager: false, officerId: null, managerRegion: null };
-            let cacheKey = '';
+            let cacheKey: string;
             
             if (user.isOfficer) cacheKey = `analytics:dashboard:${user.officerId}`;
             else if (user.isManager) cacheKey = `analytics:dashboard:region:${user.managerRegion || 'unknown'}`;

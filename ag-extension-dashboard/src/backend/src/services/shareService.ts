@@ -207,7 +207,7 @@ class ShareService {
             return;
         }
 
-        let exists = false;
+        let exists: boolean;
         const prisma = getPrisma();
 
         switch (entityType) {

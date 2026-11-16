@@ -218,7 +218,6 @@
     "framer-motion",
     "lucide-react",
     "stripe",
-    "paypal-rest-sdk",
     "multer",
     "pdf-parse",
     "react",
@@ -226,7 +225,14 @@
     "@napi-rs/whisper",
     "@aws-sdk/client-s3",
     "@aws-sdk/s3-request-presigner",
-    "puppeteer-core"
+    "puppeteer-core",
+    "@eslint/js",
+    "typescript-eslint",
+    "globals",
+    "eslint-plugin-sonarjs",
+    "eslint-plugin-react-hooks",
+    "eslint-plugin-react-refresh",
+    "eslint-plugin-unused-imports"
   ],
   "ignoreExports": [
     {

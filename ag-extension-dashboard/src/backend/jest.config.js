@@ -3,7 +3,14 @@ module.exports = {
   testEnvironment: 'node',
   forceExit: true,
   detectOpenHandles: true,
-  moduleDirectories: ['node_modules', '<rootDir>/node_modules'],
+  // Ancestor lookup first; the backend's node_modules only as a fallback
+  // (modulePaths is searched AFTER the hierarchy). As a moduleDirectories entry
+  // it outranked every ancestor, so in the workspace install CI uses, root-hoisted
+  // groq-sdk (needs CJS node-fetch v2) resolved the backend-local ESM-only
+  // node-fetch v3 and every suite importing it failed. The fallback still lets
+  // files outside the backend (ag-extension-shared) find backend-installed deps.
+  moduleDirectories: ['node_modules'],
+  modulePaths: ['<rootDir>/node_modules'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
@@ -24,8 +31,10 @@ module.exports = {
     ],
   },
   // otplib's @scure/* and @noble/* transitive deps ship ESM-only: transform them instead of
-  // ignoring the whole node_modules tree.
-  transformIgnorePatterns: ['/node_modules/(?!(@scure|@noble)/)'],
+  // ignoring the whole node_modules tree — including copies nested under another
+  // package (e.g. @otplib/plugin-crypto-noble/node_modules/@noble/hashes), which
+  // correct module resolution loads in the standalone backend install.
+  transformIgnorePatterns: ['/node_modules/(?!(?:.*/node_modules/)?(?:@scure|@noble)/)'],
   testMatch: ['**/__tests__/**/*.test.ts'],
   setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
   // v8 provider: babel-plugin-istanbul crashes on this tree

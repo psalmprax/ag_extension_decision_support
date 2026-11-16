@@ -172,7 +172,6 @@ const resultHeading = (result: Result): string => {
 
 // This legacy feature shell coordinates search, graph, telemetry, and document-library state;
 // keep the global cognitive-complexity rule active for all extracted helpers and new components.
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export const KnowledgeBase: React.FC = () => {
   const { user, addNotification, setActiveTab } = useAppStore();
   const { isDemo } = useDemoMode();

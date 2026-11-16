@@ -27,15 +27,7 @@ import {
   type SoilAnalysisResult,
 } from '@/api/diseaseService';
 import toast from 'react-hot-toast';
-
-export const CROP_PRESETS = [
-  { id: 'Maize', label: 'Maize', emoji: '🌽', alt: 'Corn' },
-  { id: 'Cassava', label: 'Cassava', emoji: '🌿', alt: 'Manioc' },
-  { id: 'Tomato', label: 'Tomato', emoji: '🍅', alt: 'Solanum' },
-  { id: 'Coffee', label: 'Coffee', emoji: '☕', alt: 'Arabica' },
-  { id: 'Banana', label: 'Banana', emoji: '🍌', alt: 'Musa' },
-  { id: 'Legumes', label: 'Legumes', emoji: '🫘', alt: 'Beans' },
-] as const;
+import { CROP_PRESETS } from './cropPresets';
 
 interface CropPillScrubberProps {
   selectedCrop: string;

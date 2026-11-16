@@ -130,7 +130,7 @@ export class OpenRouterProvider extends BaseAIProvider {
 
       if (status === 429 || responseBodyStr.includes('quota') || status === 402) {
         logger.warn(`OpenRouter quota/rate limit exceeded (HTTP ${status}) for model ${model}.`);
-        throw new Error(`OPENROUTER_QUOTA_EXCEEDED: Quota/Rate limit reached for ${model}`);
+        throw new Error(`OPENROUTER_QUOTA_EXCEEDED: Quota/Rate limit reached for ${model}`, { cause: err });
       }
 
       logger.error(`OpenRouter API error (${status || 'Network'}):`, axiosError.message);

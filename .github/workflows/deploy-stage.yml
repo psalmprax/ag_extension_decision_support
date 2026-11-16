@@ -129,7 +129,7 @@ jobs:
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           port: ${{ secrets.TEST_SERVER_PORT || 22 }}
-          username: root
+          username: ${{ vars.TEST_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           timeout: 60s
           command_timeout: 5m
@@ -148,18 +148,18 @@ jobs:
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           port: ${{ secrets.TEST_SERVER_PORT || 22 }}
-          username: root
+          username: ${{ vars.TEST_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           timeout: 60s
           command_timeout: 10m
           script: |
             set -euo pipefail
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
             # Absolute script path because cwd here is `ag-extension-dashboard/`
             # Pre-build smoke gate with `--if-running`: probes existing containers if
             # running, but permits first-time / recovery deploys to proceed to the build step
             # where backend and ettametta-ollama are launched.
-            if ! bash /root/ag_extension_decision_support/scripts/smoke-ollama.sh --if-running --retries 18 --interval 10 --expected-model llama3.2:1b; then
+            if ! bash ${HOME:?}/ag_extension_decision_support/scripts/smoke-ollama.sh --if-running --retries 18 --interval 10 --expected-model llama3.2:1b; then
               echo "FATAL: ettametta-ollama smoke gate failed (service broken or unresponsive)." >&2
               echo "----- ettametta-ollama container logs (last 50 lines, if present) -----"
               docker compose logs --tail 50 ettametta-ollama 2>&1 || echo "(no logs: container not present in this compose project)"
@@ -217,7 +217,7 @@ jobs:
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           port: ${{ secrets.TEST_SERVER_PORT || 22 }}
-          username: root
+          username: ${{ vars.TEST_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           timeout: 60s
           command_timeout: 15m
@@ -230,12 +230,12 @@ jobs:
             : "${GITHUB_TOKEN:?GITHUB_TOKEN must be supplied by the workflow for git sync}"
             REPO_URL="https://github.com/${{ github.repository }}.git"
             AUTH_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
-            if [ ! -d /root/ag_extension_decision_support/.git ]; then
+            if [ ! -d ${HOME:?}/ag_extension_decision_support/.git ]; then
               echo "Cloning repository..."
-              rm -rf /root/ag_extension_decision_support
-              cd /root && git clone "$AUTH_URL" ag_extension_decision_support
+              rm -rf ${HOME:?}/ag_extension_decision_support
+              cd "${HOME:?}" && git clone "$AUTH_URL" ag_extension_decision_support
             fi
-            cd /root/ag_extension_decision_support
+            cd ${HOME:?}/ag_extension_decision_support
             chmod -R u+rw .git 2>/dev/null || true
             rm -rf .git/config.lock .git/*.lock .git/refs/heads/*.lock 2>/dev/null || true
             # Scrub any token a previous deploy persisted in the remote URL.
@@ -375,14 +375,17 @@ jobs:
             # iptables (i.e., iptables fix is insufficient). The first two
             # entries cover the iptables-unblocked case at full UDP speed.
             TARGET_DNS='{"dns":["1.1.1.1","8.8.8.8","127.0.0.1"],"log-level":"warn"}'
-            mkdir -p /etc/docker
+            # Root-only host changes go through sudo when the deploy user is not root
+            # (scripts/provision-deploy-user.sh grants exactly these commands).
+            SUDO=""; [ "$(id -u)" -eq 0 ] || SUDO="sudo -n"
+            $SUDO mkdir -p /etc/docker
             CLEAN_CURRENT=$(cat /etc/docker/daemon.json 2>/dev/null | tr -d ' \n\t' || echo '{}')
             CLEAN_TARGET=$(echo "$TARGET_DNS" | tr -d ' \n\t')
             if [ "$CLEAN_CURRENT" != "$CLEAN_TARGET" ]; then
-              echo "$TARGET_DNS" > /etc/docker/daemon.json
+              echo "$TARGET_DNS" | $SUDO tee /etc/docker/daemon.json >/dev/null
               echo "Pinning Docker daemon DNS to 1.1.1.1 + 8.8.8.8..."
               echo "  Restarting Docker daemon to pick up new DNS..."
-              systemctl restart docker
+              $SUDO systemctl restart docker
               for i in $(seq 1 30); do
                 if docker info >/dev/null 2>&1; then
                   echo "  Docker daemon up after ${i}s."
@@ -403,9 +406,9 @@ jobs:
             # Counteract by ensuring the FORWARD + OUTPUT chains ACCEPT
             # UDP/53 to/from the bridge subnet regardless of buildx
             # network-mode behaviour.
-            iptables -C FORWARD -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || iptables -I FORWARD 1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
-            iptables -C FORWARD -d 172.17.0.0/16 -p udp --sport 53 -j ACCEPT 2>/dev/null || iptables -I FORWARD 1 -d 172.17.0.0/16 -p udp --sport 53 -j ACCEPT
-            iptables -C OUTPUT  -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || iptables -I OUTPUT  1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
+            $SUDO iptables -C FORWARD -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || $SUDO iptables -I FORWARD 1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
+            $SUDO iptables -C FORWARD -d 172.17.0.0/16 -p udp --sport 53 -j ACCEPT 2>/dev/null || $SUDO iptables -I FORWARD 1 -d 172.17.0.0/16 -p udp --sport 53 -j ACCEPT
+            $SUDO iptables -C OUTPUT  -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || $SUDO iptables -I OUTPUT  1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
             echo "  iptables UDP/53 from 172.17.0.0/16: ensured"
 
             # Compose's --build spawns a buildkit worker container on the
@@ -463,7 +466,7 @@ jobs:
             curl -fsSL -o /dev/null -w "%{http_code}\n" --max-time 5 http://127.0.0.1:7503/ 2>/dev/null || echo "(frontend probe did not return headers — non-fatal)"
             echo
             echo "=== post-deploy smoke gate: verify ettametta-ollama from live backend ==="
-            if ! bash /root/ag_extension_decision_support/scripts/smoke-ollama.sh --retries 18 --interval 10 --expected-model llama3.2:1b; then
+            if ! bash ${HOME:?}/ag_extension_decision_support/scripts/smoke-ollama.sh --retries 18 --interval 10 --expected-model llama3.2:1b; then
               echo "⚠️ ettametta-ollama smoke test warning (backend started, but model still loading in ollama)" >&2
               docker compose logs --tail 30 ettametta-ollama 2>&1 || true
             else

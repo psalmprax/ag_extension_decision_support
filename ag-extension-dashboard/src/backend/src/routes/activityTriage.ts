@@ -150,13 +150,12 @@ interface ChatRow {
 async function fetchSmsEvents(userId: string, role: string): Promise<ActivityItem[]> {
   let scopeClause = '';
   const params: unknown[] = [];
-  let paramIdx = 1;
 
   if (role === 'farmer') {
-    scopeClause = `AND sh.farmer_id IN (SELECT id FROM farmers WHERE user_id = $${paramIdx++})`;
+    scopeClause = `AND sh.farmer_id IN (SELECT id FROM farmers WHERE user_id = $1)`;
     params.push(userId);
   } else if (role === 'extension_officer') {
-    scopeClause = `AND sh.farmer_id IN (SELECT id FROM farmers WHERE assigned_officer_id = $${paramIdx++})`;
+    scopeClause = `AND sh.farmer_id IN (SELECT id FROM farmers WHERE assigned_officer_id = $1)`;
     params.push(userId);
   }
 
@@ -206,13 +205,12 @@ function mapSmsToActivity(row: SmsRow): ActivityItem {
 async function fetchChatEvents(userId: string, role: string): Promise<ActivityItem[]> {
   let scopeClause = '';
   const params: unknown[] = [];
-  let paramIdx = 1;
 
   if (role === 'farmer') {
-    scopeClause = `AND cc.farmer_id IN (SELECT id FROM farmers WHERE user_id = $${paramIdx++})`;
+    scopeClause = `AND cc.farmer_id IN (SELECT id FROM farmers WHERE user_id = $1)`;
     params.push(userId);
   } else if (role === 'extension_officer') {
-    scopeClause = `AND cc.farmer_id IN (SELECT id FROM farmers WHERE assigned_officer_id = $${paramIdx++})`;
+    scopeClause = `AND cc.farmer_id IN (SELECT id FROM farmers WHERE assigned_officer_id = $1)`;
     params.push(userId);
   }
 

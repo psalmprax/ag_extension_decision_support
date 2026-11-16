@@ -23,12 +23,12 @@ when explicitly enabled in development/test and remain gated elsewhere.
 11. `soilCarbonMrvService` — IPCC Tier 2 MRV (textbook formula, no verification)
 12. `agronomicRoiService` — BCR financial modeling (no real data)
 13. `ivrBroadcastService` — IVR voice broadcasts (TwiML only, no telephony)
-14. `voiceAudioService` — Whisper transcription (empty branch, hardcoded Swahili)
+14. `voiceAudioService` — Whisper transcription (empty branch, hardcoded Swahili). *Superseded:* its transcription and synthesis routes are now on the production allowlist (`POST /voice/transcribe`, `/voice/transcribe-local`, `/voice/synthesize`); IVR broadcast remains a prototype.
 
 ## Action Items
 
-- [ ] Remove these services from README.md feature list
-- [ ] Remove from ARCHITECTURE_PILLARS.md capability claims
+- [x] Remove these services from README.md feature list (README marks them as prototypes)
+- [x] Remove from ARCHITECTURE_PILLARS.md capability claims (each section now carries a status note, 2026-11-15)
 - [ ] Add `@deprecated` JSDoc tags with "Specification phase only — not wired to any API surface"
 - [ ] Update test files to import from a `__specs__/` folder or mark tests as specification tests
 - [ ] Create GitHub issues for each service to track implementation priority

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { query, getPool, TypedQueryResult } from '@/services/databaseService';
 import { emailService } from '@/services/emailService';
 import { logger } from '@/utils/logger';

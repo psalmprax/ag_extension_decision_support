@@ -7,7 +7,7 @@ import { safeError } from '@/utils/safeResponse';
 import { logger } from '@/utils/logger';
 import { SoilGridsService } from '@/services/soilGridsService';
 import { OpenMeteoSoilService } from '@/services/openMeteoSoilService';
-import { clusterPestSightings } from '@/services/pestSwarmRadarService';
+import { clusterPestSightings, type SwarmCluster } from '@/services/pestSwarmRadarService';
 
 const router = Router();
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
@@ -21,8 +21,9 @@ const layersQuery = z.object({
 
 /**
  * GET /api/worldmonitor/layers?region=&crop=&county=&limit=
- * Officer-only: 4 GIS layers (soil, NDVI, pest live; satellite orbit is a
- * deterministic preview — see `live: false` on the orbit payload).
+ * Officer-only: 4 GIS layers (soil, NDVI, pest; satellite orbit is a
+ * deterministic preview — see `live: false` on the orbit payload). The pest
+ * layer carries a `status` so a missing data source is never shown as zero.
  * Each layer is filtered by the same region/crop/county so the globe stays coherent.
  */
 router.get('/layers', validate({ query: layersQuery }), async (req: AuthRequest, res: Response) => {
@@ -150,19 +151,45 @@ async function fetchNdviPoints(clauses: string[], params: unknown[], nextIdx: nu
   }
 }
 
-/** 4. Pest swarm trajectories — live from pest_sightings table if present, else empty (no synthetic counties). */
-async function fetchPestSwarm(): Promise<unknown> {
+/**
+ * 4. Pest swarm trajectories — clustered from pest_sightings (last 14 days).
+ *
+ * `status` keeps an empty map from reading as an all-clear: `live` means the
+ * source was queried (zero clusters is a real result), `no_data_source` means
+ * the pest_sightings table does not exist on this deployment, `unavailable`
+ * means the query failed.
+ */
+export type PestSwarmLayer = {
+  status: 'live' | 'no_data_source' | 'unavailable';
+  clusters: SwarmCluster[];
+  trajectories: Array<Pick<SwarmCluster, 'clusterId' | 'centroid' | 'severityLevel'>>;
+};
+
+let warnedNoPestSource = false;
+
+async function fetchPestSwarm(): Promise<PestSwarmLayer> {
   try {
     const { rows: sightings } = await query<{
       id: string; pest_type: string; lat: string; lng: string; county: string; severity: string; reported_at: string; reporter_role: string;
     }>(`SELECT id, pest_type, lat, lng, county, severity, reported_at, reporter_role FROM pest_sightings WHERE reported_at > NOW() - INTERVAL '14 days' LIMIT 500`);
-    if (sightings.length < 2) return { clusters: [], trajectories: [] };
+    if (sightings.length < 2) return { status: 'live', clusters: [], trajectories: [] };
     const clusters = clusterPestSightings(sightings.map(s => ({
       id: s.id, pestType: s.pest_type as never, lat: Number(s.lat), lng: Number(s.lng), county: s.county, severity: s.severity as never, reportedAt: s.reported_at, reporterRole: s.reporter_role as never,
     })));
-    return { clusters, trajectories: clusters.map(c => ({ clusterId: c.clusterId, centroid: c.centroid, severityLevel: c.severityLevel })) };
-  } catch {
-    // table may not exist yet — return empty swarm
-    return { clusters: [], trajectories: [] };
+    return {
+      status: 'live',
+      clusters,
+      trajectories: clusters.map(c => ({ clusterId: c.clusterId, centroid: c.centroid, severityLevel: c.severityLevel })),
+    };
+  } catch (error) {
+    if ((error as { code?: string })?.code === '42P01') {
+      if (!warnedNoPestSource) {
+        warnedNoPestSource = true;
+        logger.warn('WorldMonitor pest swarm layer has no data source: table pest_sightings does not exist.');
+      }
+      return { status: 'no_data_source', clusters: [], trajectories: [] };
+    }
+    logger.error('WorldMonitor pest swarm fetch failed:', error);
+    return { status: 'unavailable', clusters: [], trajectories: [] };
   }
 }

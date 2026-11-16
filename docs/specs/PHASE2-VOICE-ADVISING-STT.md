@@ -47,4 +47,4 @@ WhatsApp voice note (existing inbound webhook, `routes/whatsapp.ts`) → downloa
 ---
 
 ## Related Specifications
-- For the interactive web/landing-page voice assistant, see: [`docs/specs/PHASE2-TALKING-ASSISTANT-ENHANCEMENT.md`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/docs/specs/PHASE2-TALKING-ASSISTANT-ENHANCEMENT.md).
+- For the interactive web/landing-page voice assistant, see: [`docs/specs/PHASE2-TALKING-ASSISTANT-ENHANCEMENT.md`](../../docs/specs/PHASE2-TALKING-ASSISTANT-ENHANCEMENT.md).

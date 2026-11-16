@@ -31,7 +31,7 @@ jobs:
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
-          username: root
+          username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           command_timeout: 4m
           script: |
@@ -131,12 +131,12 @@ jobs:
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
-          username: root
+          username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           command_timeout: 5m
           script: |
             set -eu
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
             if ! docker exec ag-dashboard-backend node -e \
               'if(process.env.AI_PRIMARY_PROVIDER!=="aihubmix")process.exit(1)'; then
               echo "Cannot apply the verified model unless AI_PRIMARY_PROVIDER is aihubmix." >&2
@@ -181,13 +181,13 @@ jobs:
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
-          username: root
+          username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           timeout: 60s
           command_timeout: 15m
           script: |
             set -e
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
 
             echo "============================================="
             echo "🐳 Docker Containers Status"
@@ -256,9 +256,9 @@ jobs:
             echo "🔑 Environment Checks (.env and container envs)"
             echo "============================================="
             echo "Checking .env file keys on host:"
-            if [ -f "/root/ag_extension_decision_support/ag-extension-dashboard/.env" ]; then
+            if [ -f "${HOME:?}/ag_extension_decision_support/ag-extension-dashboard/.env" ]; then
               echo "✅ .env file exists"
-              grep -E "^[A-Z0-9_]+=" /root/ag_extension_decision_support/ag-extension-dashboard/.env | while read -r line; do
+              grep -E "^[A-Z0-9_]+=" ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard/.env | while read -r line; do
                 key=$(echo "$line" | cut -d= -f1)
                 val=$(echo "$line" | cut -d= -f2-)
                 if [ -z "$val" ]; then

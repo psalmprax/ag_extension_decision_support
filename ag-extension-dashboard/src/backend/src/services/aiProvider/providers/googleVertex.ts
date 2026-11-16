@@ -20,6 +20,34 @@ import {
 import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
+import { EMBEDDING_DIMENSIONS } from '@/services/embeddingDimensions';
+
+type GoogleAuth =
+    | { mode: 'apiKey'; apiKey: string }
+    | { mode: 'vertex'; project: string; location: string };
+
+let warnedLegacyKey = false;
+
+/**
+ * Resolves how to authenticate, or null when the provider is not configured.
+ *  1. GEMINI_API_KEY / GOOGLE_API_KEY → Gemini Developer API.
+ *  2. Legacy: an API key ("AIza…") stored in GOOGLE_VERTEX_PROJECT_ID, which
+ *     older deployments relied on. Still honoured, with a warning.
+ *  3. A real project ID → Vertex AI with Application Default Credentials.
+ */
+export function resolveGoogleAuth(): GoogleAuth | null {
+    const { apiKey, projectId, location } = config.googleVertex;
+    if (apiKey) return { mode: 'apiKey', apiKey };
+    if (!projectId || projectId === 'your-project-id') return null;
+    if (projectId.startsWith('AIza')) {
+        if (!warnedLegacyKey) {
+            warnedLegacyKey = true;
+            logger.warn('GOOGLE_VERTEX_PROJECT_ID holds an API key; move it to GEMINI_API_KEY.');
+        }
+        return { mode: 'apiKey', apiKey: projectId };
+    }
+    return { mode: 'vertex', project: projectId, location: location || 'us-central1' };
+}
 
 export class GoogleVertexProvider extends BaseAIProvider {
     readonly provider: AIProviderType = 'google_vertex';
@@ -32,7 +60,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
     ];
 
     isConfigured(): boolean {
-        return !!config.googleVertex.projectId && config.googleVertex.projectId !== 'your-project-id';
+        return resolveGoogleAuth() !== null;
     }
 
     private client: any = null;
@@ -44,12 +72,17 @@ export class GoogleVertexProvider extends BaseAIProvider {
         }
 
         try {
-            const { GoogleGenerativeAI } = await import('@google/generative-ai');
-            this.client = new GoogleGenerativeAI(config.googleVertex.projectId);
+            const auth = resolveGoogleAuth();
+            const { GoogleGenAI } = await import('@google/genai');
+            this.client = auth?.mode === 'apiKey'
+                ? new GoogleGenAI({ apiKey: auth.apiKey })
+                // Vertex AI: credentials come from Application Default
+                // Credentials (GOOGLE_APPLICATION_CREDENTIALS / metadata server).
+                : new GoogleGenAI({ vertexai: true, project: auth?.project, location: auth?.location });
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize Google Vertex client:', error);
-            throw new Error('Google Vertex client initialization failed — API key not configured');
+            throw new Error('Google Vertex client initialization failed — API key not configured', { cause: error });
         }
     }
 
@@ -58,40 +91,38 @@ export class GoogleVertexProvider extends BaseAIProvider {
         const modelName = options?.model || config.ai.fallback.model;
 
         try {
-            const model = client.getGenerativeModel({ model: modelName });
-            const result = await model.generateContent(prompt);
-            const text = result.response.text();
+            const result = await client.models.generateContent({ model: modelName, contents: prompt });
+            const text = result.text ?? '';
 
             return {
                 text,
                 model: modelName,
                 usage: {
-                    promptTokens: result.response.usageMetadata?.promptTokenCount ?? 0,
-                    completionTokens: result.response.usageMetadata?.candidatesTokenCount ?? 0,
-                    totalTokens: result.response.usageMetadata?.totalTokenCount ?? 0,
+                    promptTokens: result.usageMetadata?.promptTokenCount ?? 0,
+                    completionTokens: result.usageMetadata?.candidatesTokenCount ?? 0,
+                    totalTokens: result.usageMetadata?.totalTokenCount ?? 0,
                 },
                 finishReason: 'stop',
             };
         } catch (error) {
             logger.error('Google Vertex generateText error:', error);
-            throw new Error(`Google Vertex text generation failed: ${(error as Error).message}`);
+            throw new Error(`Google Vertex text generation failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
     async *streamText(prompt: string, options?: TextGenerationOptions): AsyncGenerator<string> {
         const client = await this.getClient();
         const modelName = options?.model || config.ai.fallback.model;
-        const model = client.getGenerativeModel({ model: modelName });
 
         try {
-            const result = await model.generateContentStream(prompt);
-            for (const chunk of result) {
-                const text = chunk.response.text();
+            const stream = await client.models.generateContentStream({ model: modelName, contents: prompt });
+            for await (const chunk of stream) {
+                const text = chunk.text;
                 if (text) yield text;
             }
         } catch (error) {
             logger.error('Google Vertex streamText error:', error);
-            throw new Error(`Google Vertex streaming failed: ${(error as Error).message}`);
+            throw new Error(`Google Vertex streaming failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -100,40 +131,44 @@ export class GoogleVertexProvider extends BaseAIProvider {
         // Model selection not needed - using embedded model directly below
 
         try {
-            // Use the correct Google Generative AI SDK embedding method
-            const embedModel = client.getGenerativeModel({ model: 'embedding-001' });
-            const result = await embedModel.embedContent(text);
+            // embedding-001 was retired with the old SDK; gemini-embedding-001 is
+            // the current Gemini API embedding model.
+            const result = await client.models.embedContent({
+                model: 'gemini-embedding-001',
+                contents: text,
+                // pgvector columns are vector(EMBEDDING_DIMENSIONS); the model's native
+                // size is 3072, so it must be pinned or every insert is rejected.
+                config: { outputDimensionality: EMBEDDING_DIMENSIONS },
+            });
             return {
-                embedding: result.embedding.values,
-                model: 'embedding-001',
+                embedding: result.embeddings?.[0]?.values ?? [],
+                model: 'gemini-embedding-001',
                 usage: { tokens: 100 },
             };
         } catch (error) {
             logger.error('Google Vertex createEmbedding error:', error);
-            throw new Error(`Google Vertex embedding creation failed: ${(error as Error).message}`);
+            throw new Error(`Google Vertex embedding creation failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
     async createBatchEmbeddings(texts: string[], options?: EmbeddingOptions): Promise<EmbeddingResult[]> {
         const client = await this.getClient();
-        const model = options?.model || 'embedding-001';
-        const embedModel = client.getGenerativeModel({ model });
+        const model = options?.model || 'gemini-embedding-001';
 
         try {
-            const results = await Promise.all(
-                texts.map(async (text) => {
-                    const result = await embedModel.embedContent(text);
-                    return {
-                        embedding: result.embedding.values,
-                        model,
-                        usage: { tokens: 0 },
-                    };
-                })
-            );
-            return results;
+            const result = await client.models.embedContent({
+                model,
+                contents: texts,
+                config: { outputDimensionality: EMBEDDING_DIMENSIONS },
+            });
+            return (result.embeddings ?? []).map((item: any) => ({
+                embedding: item.values ?? [],
+                model,
+                usage: { tokens: 0 },
+            }));
         } catch (error) {
             logger.error('Google Vertex createBatchEmbeddings error:', error);
-            throw new Error(`Google Vertex batch embedding creation failed: ${(error as Error).message}`);
+            throw new Error(`Google Vertex batch embedding creation failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -147,8 +182,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
 
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
         const client = await this.getClient();
-        const modelName = options?.model || config.ai.fallback.model || 'gemini-1.5-flash';
-        const model = client.getGenerativeModel({ model: modelName });
+        const modelName = options?.model || config.ai.fallback.model || 'gemini-flash-latest';
 
         const systemPrompt = REASONING_SYSTEM_PROMPT;
         
@@ -173,8 +207,8 @@ export class GoogleVertexProvider extends BaseAIProvider {
         }
 
         try {
-            const result = await model.generateContent({ contents });
-            const text = result.response.text();
+            const result = await client.models.generateContent({ model: modelName, contents });
+            const text = result.text ?? '';
             const visuals = extractVisuals(text);
 
             let cleanAnswer = text
@@ -192,7 +226,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Google Vertex analyzeWithReasoning error:', error);
-            throw new Error(`Google Vertex reasoning analysis failed: ${(error as Error).message}`);
+            throw new Error(`Google Vertex reasoning analysis failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -210,8 +244,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
 
     async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
         const client = await this.getClient();
-        const modelName = options?.model || config.ai.fallback.model || 'gemini-1.5-flash';
-        const model = client.getGenerativeModel({ model: modelName });
+        const modelName = options?.model || config.ai.fallback.model || 'gemini-flash-latest';
 
         try {
             let base64Image: string;
@@ -238,15 +271,15 @@ export class GoogleVertexProvider extends BaseAIProvider {
                 }
             ];
 
-            const result = await model.generateContent({ contents });
-            
+            const result = await client.models.generateContent({ model: modelName, contents });
+
             return {
-                analysis: result.response.text() || 'Unable to analyze image',
+                analysis: result.text || 'Unable to analyze image',
                 model: modelName,
                 usage: {
-                    promptTokens: result.response.usageMetadata?.promptTokenCount ?? 0,
-                    completionTokens: result.response.usageMetadata?.candidatesTokenCount ?? 0,
-                    totalTokens: result.response.usageMetadata?.totalTokenCount ?? 0,
+                    promptTokens: result.usageMetadata?.promptTokenCount ?? 0,
+                    completionTokens: result.usageMetadata?.candidatesTokenCount ?? 0,
+                    totalTokens: result.usageMetadata?.totalTokenCount ?? 0,
                 },
             };
         } catch (error) {
@@ -263,8 +296,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
         if (!this.isConfigured()) return false;
         try {
             const client = await this.getClient();
-            const model = client.getGenerativeModel({ model: config.ai.fallback.model });
-            await model.generateContent('test');
+            await client.models.generateContent({ model: config.ai.fallback.model, contents: 'test' });
             this.recordHealthError();
             return true;
         } catch (error) {

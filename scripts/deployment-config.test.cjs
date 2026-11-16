@@ -16,8 +16,15 @@ test('backend images upgrade inherited PCRE2 and Perl in the shared base layer',
   }
 });
 
-function composeConfig(overrides, environment = {}) {
+// The production override refuses to render without explicit datastore passwords.
+const PROD_REQUIRED_ENV = {
+  DATABASE_PASSWORD: 'compose-config-test-only-db',
+  REDIS_PASSWORD: 'compose-config-test-only-redis',
+};
+
+function composeConfig(overrides, environment = {}, { withProdSecrets = true } = {}) {
   const files = ['docker-compose.yml', ...overrides];
+  const prodEnv = withProdSecrets && overrides.includes('docker-compose.prod.yml') ? PROD_REQUIRED_ENV : {};
   const output = execFileSync('docker', [
     'compose', '--env-file', '/dev/null', '--project-name', 'ag-config-test',
     ...files.flatMap(file => ['-f', file]),
@@ -31,8 +38,10 @@ function composeConfig(overrides, environment = {}) {
       HOME: process.env.HOME,
       ACME_EMAIL: 'compose-test@example.invalid',
       JWT_SECRET: 'compose-config-test-only-not-for-deployment',
+      ...prodEnv,
       ...environment,
     },
+    stdio: ['ignore', 'pipe', 'pipe'],
   });
   return JSON.parse(output);
 }
@@ -74,6 +83,25 @@ for (const [mode, overrides, frontendTarget] of [
     });
   }
 }
+
+for (const missing of Object.keys(PROD_REQUIRED_ENV)) {
+  test(`production: refuses to render without ${missing} (no development default)`, () => {
+    const environment = { ...PROD_REQUIRED_ENV };
+    delete environment[missing];
+    assert.throws(
+      () => composeConfig(['docker-compose.prod.yml'], environment, { withProdSecrets: false }),
+      error => String(error.stderr).includes(`${missing} must be set`));
+  });
+}
+
+test('production: datastore passwords come from the environment, never the dev defaults', () => {
+  const { services } = composeConfig(['docker-compose.prod.yml']);
+  assert.equal(services['app-db'].environment.POSTGRES_PASSWORD, PROD_REQUIRED_ENV.DATABASE_PASSWORD);
+  assert.equal(services.redis.environment.REDIS_PASSWORD, PROD_REQUIRED_ENV.REDIS_PASSWORD);
+  const rendered = JSON.stringify(services);
+  assert.ok(!rendered.includes('agext_redis_2024'), 'default redis password leaked into prod config');
+  assert.ok(!rendered.includes(':postgres@'), 'default postgres password leaked into prod config');
+});
 
 for (const mode of ['staging', 'prod']) {
   test(`${mode}: frontend and queue host ports remain configurable`, () => {

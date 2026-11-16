@@ -92,3 +92,91 @@
 | OpenMontage evaluation | ✅ Completed | ag-extension-dashboard | 2026-07-06 | Content generation eval |
 | Open Design prototyping | ✅ Completed | ag-extension-dashboard | 2026-07-06 | UI/UX iteration |
 | Dev tooling plugins | ✅ Completed | ag-extension-dashboard | 2026-07-06 | Dev velocity improved |
+
+---
+
+## 🔴 Dependency & Deployment Risk Register (2026-11-15 audit)
+
+Items that need staged work against live services and therefore were NOT
+changed blindly. Each entry lists the risk and the concrete remediation.
+
+### Supply chain
+- [ ] **`xlsx` resolves to `https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz`** —
+  integrity is fine (both lockfiles pin its sha512, so `npm ci` rejects a
+  tampered tarball; an earlier note here wrongly said otherwise). The risk is
+  availability: if the CDN is down or the URL disappears, every CI, Docker and
+  local install fails. Fix in one command from a machine that can reach the
+  CDN: `./scripts/vendor-xlsx.sh` — downloads, verifies against the pinned
+  sha512, vendors into `ag-extension-dashboard/src/backend/vendor/`, repoints
+  the dependency, regenerates both lockfiles and adds the `vendor/` COPY to the
+  three Dockerfile stages that install. Then commit. Do NOT swap to the npm
+  registry's `xlsx` (0.18.5, unmaintained, with CVEs fixed only in 0.20.x).
+- [x] **`@anthropic-ai/sdk`** — upgraded ^0.6.2 → ^1.8.0 (2026-11-15). The provider already
+  targeted the Messages API, which 0.6.x never shipped, so the pinned SDK could
+  never have worked at runtime. Default model is now config-driven
+  (`ANTHROPIC_MODEL`, default `claude-sonnet-5-5`; the old hardcoded
+  `claude-3-5-sonnet-20241022` was retired Oct 2025). Still needs a live-key smoke test.
+- [x] **`@google/generative-ai`** — migrated to `@google/genai` ^3.3.0 (2026-11-15). Embedding
+  model moved from retired `embedding-001` to `gemini-embedding-001`, pinned to
+  `outputDimensionality: EMBEDDING_DIMENSIONS` (768) so it fits the pgvector
+  columns. Auth fixed: a real `GOOGLE_VERTEX_PROJECT_ID` now uses Vertex AI +
+  ADC (it was previously passed to the SDK as an API key); API keys go in
+  `GEMINI_API_KEY` (a legacy `AIza…` key in the project-ID var still works,
+  with a warning). Still needs a live-key smoke test.
+- [x] **`@azure/openai`** — removed (2026-11-15); the provider now uses the official `openai`
+  SDK's `AzureOpenAI` client (`AZURE_OPENAI_API_VERSION`, default 2024-10-21).
+  Requests route per call by deployment name; embeddings use
+  `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` with `dimensions` pinned to 768.
+  Still needs a live-key smoke test.
+- [x] **`paypal-rest-sdk`** — removed (2026-11-15). Its only two calls (classic
+  sale create/execute) now go over REST using the service's existing OAuth
+  helper — same v1 endpoints, request bodies and payment/sale ids, so the
+  webhook and idempotency logic are unchanged. Execution now also requires
+  `state === "approved"` (a 2xx with `state: "failed"` used to count as paid).
+  Still needs one sandbox purchase end to end.
+- [ ] **PayPal v1 Payments API** — itself deprecated by PayPal in favour of v2
+  Orders. Migrating changes ids and webhook events (`PAYMENT.SALE.*` →
+  `PAYMENT.CAPTURE.*`), so do it together with `routes/billing/paypalWebhook.ts`
+  and the `pending_paypal_payments` idempotency keys, behind a sandbox test.
+- [x] **ESLint 8 (EOL)** — both workspaces on ESLint 10 flat config
+  (2026-11-15), rules ported 1:1 (identical linted-file sets; a probe file
+  confirms every configured rule still fires). ESLint 10's new recommended
+  rules surfaced 41 rethrows that dropped the original error (now
+  `{ cause }`) and 23 dead stores; 17 stale `eslint-disable` comments
+  removed. `react-hooks` stays on the two classic rules — its v7 React
+  Compiler rules are a separate opt-in.
+
+### Deployment pipeline (deploy-all.yml)
+- [ ] **SSH as root** — code side done (2026-11-15): every SSH step's user comes
+  from `TEST_DEPLOY_SSH_USER` / `PROD_DEPLOY_SSH_USER` (default `root`, so nothing
+  changes until set), all host paths are `$HOME`-relative, and the few root-only
+  host commands go through `sudo -n`. **Remaining (per host, you):** run
+  `sudo ./scripts/provision-deploy-user.sh` on the server, set the variable,
+  run a deploy, then set `PermitRootLogin no` (the script prints the steps).
+  Note: docker-group access is root-equivalent; the gain is no root SSH login,
+  a dedicated account in auth logs, and a 13-command sudo allowlist.
+- [x] **Port 80/443 takeover** — fixed (2026-11-15): `scripts/free-web-ports.sh`
+  no longer removes other projects' containers or kills unknown processes; it
+  fails with a diagnostic instead (9 tests, run in CI).
+- [ ] **On-host image builds** — images are built on the production host at
+  deploy time. Building in CI and pulling by digest would shrink the workflow
+  and keep build load off the server, but CLAUDE.md deliberately chose on-host
+  builds with a local BuildKit cache to avoid GHCR auth and rate-limit problems.
+  Needs an owner decision before changing; not changed.
+- [x] **`|| true` audit** — done (2026-11-15). Network creation is now
+  inspect-or-create; cache-purge failures raise `::warning`. The remaining
+  suffixes are idempotent cleanup, diagnostics or optional reads; the
+  convention is documented at the top of `deploy-all.yml`.
+
+### Scope
+- [x] **501-prototype gating** — verified (2026-11-15): `routes/pillars/index.ts`
+  already fails closed (501 in production except four allowlisted endpoints;
+  the enable flag is ignored outside development/test; prototype responses are
+  stamped). Of the 14 prototype services, only the pest-radar heuristic and
+  NDVI math are reached from always-on code, both as labelled, staff-only
+  previews. The pest layer had no data source at all (`pest_sightings` is never
+  created) yet showed "0 clusters"; it now reports `no_data_source`.
+  ARCHITECTURE_PILLARS.md now marks every prototype section.
+- [ ] **Per-family keep-or-delete** — product decision: for each prototype family
+  (credit, trade, traceability, telemetry, mechanization, pest, tenant), fund
+  the real integration or delete the code. Gating makes keeping it safe, not free.

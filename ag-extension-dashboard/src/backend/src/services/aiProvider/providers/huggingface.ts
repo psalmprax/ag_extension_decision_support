@@ -156,7 +156,7 @@ export class HuggingFaceProvider extends BaseAIProvider {
 
       if (status === 429 || status === 402 || responseBodyStr.includes('quota') || responseBodyStr.includes('exceeded')) {
         logger.warn(`Hugging Face quota/rate limit exceeded (HTTP ${status}) for model ${model}. Triggering OmniRoute failover.`);
-        throw new Error(`HUGGINGFACE_QUOTA_EXCEEDED: Quota/Rate limit reached for ${model}`);
+        throw new Error(`HUGGINGFACE_QUOTA_EXCEEDED: Quota/Rate limit reached for ${model}`, { cause: err });
       }
 
       logger.error(`Hugging Face API error (${status || 'Network'}):`, axiosError.message);

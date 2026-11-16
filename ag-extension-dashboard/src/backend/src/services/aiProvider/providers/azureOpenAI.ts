@@ -20,6 +20,7 @@ import {
 import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
+import { EMBEDDING_DIMENSIONS } from '@/services/embeddingDimensions';
 
 export class AzureOpenAIProvider extends BaseAIProvider {
     readonly provider: AIProviderType = 'azure_openai';
@@ -39,6 +40,15 @@ export class AzureOpenAIProvider extends BaseAIProvider {
 
     private client: any = null;
 
+    private mapUsage(usage: any): { promptTokens: number; completionTokens: number; totalTokens: number } | undefined {
+        if (!usage) return undefined;
+        return {
+            promptTokens: usage.prompt_tokens ?? 0,
+            completionTokens: usage.completion_tokens ?? 0,
+            totalTokens: usage.total_tokens ?? 0,
+        };
+    }
+
     private async getClient(): Promise<any> {
         if (this.client) return this.client;
         if (!this.isConfigured()) {
@@ -46,15 +56,21 @@ export class AzureOpenAIProvider extends BaseAIProvider {
         }
 
         try {
-            const { OpenAIClient, AzureKeyCredential } = await import('@azure/openai');
-            this.client = new OpenAIClient(
-                config.azureOpenAI.endpoint,
-                new AzureKeyCredential(config.azureOpenAI.apiKey)
-            );
+            // The @azure/openai beta client library was retired; Azure now routes
+            // through the official OpenAI SDK's AzureOpenAI client.
+            const { AzureOpenAI } = await import('openai');
+            this.client = new AzureOpenAI({
+                endpoint: config.azureOpenAI.endpoint,
+                apiKey: config.azureOpenAI.apiKey,
+                // No client-level `deployment`: it would pin every request to
+                // /deployments/{chat}, sending embeddings to the chat model. The
+                // SDK routes each request by its `model` (= deployment name).
+                apiVersion: config.azureOpenAI.apiVersion,
+            });
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize Azure OpenAI client:', error);
-            throw new Error('Azure OpenAI client initialization failed — API key not configured');
+            throw new Error('Azure OpenAI client initialization failed — API key not configured', { cause: error });
         }
     }
 
@@ -67,32 +83,28 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             { role: 'user', content: prompt },
         ];
 
-        const requestOptions = {
-            temperature: options?.temperature ?? 0.7,
-            maxTokens: options?.maxTokens ?? 1000,
-            topP: options?.topP,
-            frequencyPenalty: options?.frequencyPenalty,
-            presencePenalty: options?.presencePenalty,
-            stop: options?.stop,
-        };
-
         try {
-            const response = await client.getChatCompletions(
-                config.azureOpenAI.deploymentName,
+            const response = await client.chat.completions.create({
+                model: config.azureOpenAI.deploymentName,
                 messages,
-                requestOptions
-            );
+                temperature: options?.temperature ?? 0.7,
+                max_tokens: options?.maxTokens ?? 1000,
+                top_p: options?.topP,
+                frequency_penalty: options?.frequencyPenalty,
+                presence_penalty: options?.presencePenalty,
+                stop: options?.stop,
+            });
 
             const choice = response.choices[0];
             return {
                 text: choice.message.content,
                 model,
-                usage: response.usage,
-                finishReason: choice.finishReason,
+                usage: this.mapUsage(response.usage),
+                finishReason: choice.finish_reason,
             };
         } catch (error) {
             logger.error('Azure OpenAI generateText error:', error);
-            throw new Error(`Azure OpenAI text generation failed: ${(error as Error).message}`);
+            throw new Error(`Azure OpenAI text generation failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -103,21 +115,17 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             { role: 'user', content: prompt },
         ];
 
-        const requestOptions = {
-            temperature: options?.temperature ?? 0.7,
-            maxTokens: options?.maxTokens ?? 1000,
-            stream: true,
-        };
-
         try {
-            const events = await client.streamChatCompletions(
-                config.azureOpenAI.deploymentName,
+            const events = await client.chat.completions.create({
+                model: config.azureOpenAI.deploymentName,
                 messages,
-                requestOptions
-            );
+                temperature: options?.temperature ?? 0.7,
+                max_tokens: options?.maxTokens ?? 1000,
+                stream: true,
+            });
 
             for await (const event of events) {
-                for (const choice of event.choices) {
+                for (const choice of event.choices ?? []) {
                     if (choice.delta?.content) {
                         yield choice.delta.content;
                     }
@@ -125,41 +133,41 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             }
         } catch (error) {
             logger.error('Azure OpenAI streamText error:', error);
-            throw new Error(`Azure OpenAI streaming failed: ${(error as Error).message}`);
+            throw new Error(`Azure OpenAI streaming failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
     async createEmbedding(text: string, options?: EmbeddingOptions): Promise<EmbeddingResult> {
         const client = await this.getClient();
-        const model = options?.model || 'text-embedding-3-large';
+        const model = options?.model || config.azureOpenAI.embeddingDeployment;
 
         try {
-            const response = await client.getEmbeddings(model, text);
+            const response = await client.embeddings.create({ model, input: text, dimensions: EMBEDDING_DIMENSIONS });
             return {
                 embedding: response.data[0].embedding,
                 model,
-                usage: { tokens: response.usage.tokens },
+                usage: { tokens: response.usage?.total_tokens ?? 0 },
             };
         } catch (error) {
             logger.error('Azure OpenAI createEmbedding error:', error);
-            throw new Error(`Azure OpenAI embedding failed: ${(error as Error).message}`);
+            throw new Error(`Azure OpenAI embedding failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
     async createBatchEmbeddings(texts: string[], options?: EmbeddingOptions): Promise<EmbeddingResult[]> {
         const client = await this.getClient();
-        const model = options?.model || 'text-embedding-3-large';
+        const model = options?.model || config.azureOpenAI.embeddingDeployment;
 
         try {
-            const response = await client.getEmbeddings(model, texts);
+            const response = await client.embeddings.create({ model, input: texts, dimensions: EMBEDDING_DIMENSIONS });
             return response.data.map((item: any) => ({
                 embedding: item.embedding,
                 model,
-                usage: { tokens: response.usage.tokens / texts.length },
+                usage: { tokens: (response.usage?.total_tokens ?? 0) / texts.length },
             }));
         } catch (error) {
             logger.error('Azure OpenAI createBatchEmbeddings error:', error);
-            throw new Error(`Azure OpenAI batch embedding failed: ${(error as Error).message}`);
+            throw new Error(`Azure OpenAI batch embedding failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -195,17 +203,13 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             { role: 'user', content: userContent }
         ];
 
-        const requestOptions = {
-            temperature: options?.temperature ?? 0.2,
-            maxTokens: options?.maxTokens ?? 2000,
-        };
-
         try {
-            const response = await client.getChatCompletions(
-                config.azureOpenAI.deploymentName,
+            const response = await client.chat.completions.create({
+                model: config.azureOpenAI.deploymentName,
                 messages,
-                requestOptions
-            );
+                temperature: options?.temperature ?? 0.2,
+                max_tokens: options?.maxTokens ?? 2000,
+            });
 
             const text = response.choices[0].message.content ?? '';
             const visuals = extractVisuals(text);
@@ -225,7 +229,7 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Azure OpenAI analyzeWithReasoning error:', error);
-            throw new Error(`Azure OpenAI reasoning analysis failed: ${(error as Error).message}`);
+            throw new Error(`Azure OpenAI reasoning analysis failed: ${(error as Error).message}`, { cause: error });
         }
     }
 
@@ -271,21 +275,17 @@ export class AzureOpenAIProvider extends BaseAIProvider {
                 },
             ];
 
-            const requestOptions = {
-                temperature: options?.temperature ?? 0.3,
-                maxTokens: options?.maxTokens ?? 1000,
-            };
-
-            const response = await client.getChatCompletions(
-                config.azureOpenAI.deploymentName,
+            const response = await client.chat.completions.create({
+                model: config.azureOpenAI.deploymentName,
                 messages,
-                requestOptions
-            );
+                temperature: options?.temperature ?? 0.3,
+                max_tokens: options?.maxTokens ?? 1000,
+            });
 
             return {
                 analysis: response.choices[0].message.content || 'Unable to analyze image',
                 model,
-                usage: response.usage,
+                usage: this.mapUsage(response.usage),
             };
         } catch (error) {
             logger.error('Azure OpenAI analyzeImage error:', error);
@@ -302,11 +302,11 @@ export class AzureOpenAIProvider extends BaseAIProvider {
         try {
             const client = await this.getClient();
             // Try a simple request to check connectivity
-            await client.getChatCompletions(
-                config.azureOpenAI.deploymentName,
-                [{ role: 'user', content: 'Hi' }],
-                { maxTokens: 1 }
-            );
+            await client.chat.completions.create({
+                model: config.azureOpenAI.deploymentName,
+                messages: [{ role: 'user', content: 'Hi' }],
+                max_tokens: 1,
+            });
             this.recordHealthError();
             return true;
         } catch (error) {

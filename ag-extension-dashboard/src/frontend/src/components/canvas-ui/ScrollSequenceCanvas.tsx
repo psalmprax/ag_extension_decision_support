@@ -63,8 +63,8 @@ export function ScrollSequenceCanvas({
       ctx.fillStyle = backgroundColor;
       ctx.fillRect(0, 0, width, height);
 
-      let drawWidth = width;
-      let drawHeight = height;
+      let drawWidth: number;
+      let drawHeight: number;
       let offsetX = 0;
       let offsetY = 0;
 

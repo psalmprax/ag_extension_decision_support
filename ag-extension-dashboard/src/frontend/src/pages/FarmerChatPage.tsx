@@ -15,13 +15,12 @@ import {
   Mic,
 } from 'lucide-react';
 import { Conversation, ChatMessage } from '../types/dashboard';
-import { formatChatTime } from '@/lib/chatTime';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useDeviceThermalMemoryBudget } from '@/hooks/useDeviceThermalMemoryBudget';
 import { VirtualizedList } from '@/components/common/VirtualizedList';
 import { useDemoMode } from '@/demo';
-import { AudioReaderButton } from '@/components/audio/AudioReaderButton';
+import { FarmerChatMessage } from '@/components/chat/FarmerChatMessage';
 import { VoiceNoteTaker } from '@/components/audio/VoiceNoteTaker';
 import { fetchWeather } from '@/api/weatherService';
 import { getChatCompletion } from '@/api/aiService';
@@ -481,51 +480,9 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                     </div>
                   </div>
                 )}
-                {farmerChatMessages.map((msg, i) => {
-                  const isOfficer = msg.role === 'officer';
-                  const isAssistant = msg.role === 'assistant';
-                  // Backend sends `createdAt`; tolerate either field and never
-                  // render "Invalid Date" for missing/unparseable values.
-                  const timeLabel = formatChatTime(msg);
-                  return (
-                    <div
-                      key={i}
-                      className={`flex ${isOfficer ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[75%] p-4 rounded-xl shadow-sm space-y-1.5 ${
-                          isOfficer
-                            ? 'bg-emerald-600 text-white rounded-tr-none border border-emerald-500/20'
-                            : 'backdrop-blur-md bg-slate-100 dark:bg-slate-950/80 text-slate-800 dark:text-white/90 rounded-tl-none border border-slate-200 dark:border-white/[0.08]'
-                        }`}
-                      >
-                        <p className="text-xs sm:text-sm leading-relaxed">{msg.content}</p>
-                        <div
-                          className={`flex items-center justify-between gap-3 text-xxs font-mono pt-1 border-t ${
-                            isOfficer
-                              ? 'text-white/70 border-white/20'
-                              : 'text-slate-600 dark:text-white/50 border-slate-200/80 dark:border-white/[0.08]'
-                          }`}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <span>{isOfficer ? 'OFFICER DISPATCH' : isAssistant ? 'AI ADVISORY' : 'FARMER INCOMING'}</span>
-                            <AudioReaderButton
-                              text={msg.content}
-                              size="xs"
-                              variant="ghost"
-                              className={
-                                isOfficer
-                                  ? 'text-white/70 hover:text-white'
-                                  : 'text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white'
-                              }
-                            />
-                          </div>
-                          {timeLabel && <span>{timeLabel}</span>}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                {farmerChatMessages.map((msg, i) => (
+                  <FarmerChatMessage key={i} message={msg} />
+                ))}
               </div>
 
               {/* AI Copilot Suggestion Bar */}
