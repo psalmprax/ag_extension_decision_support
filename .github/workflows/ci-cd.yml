@@ -153,6 +153,9 @@ jobs:
           npm run shared:sync
           npm run shared:check
 
+      - name: Explicit-any ratchet (counts through eslint-disable comments)
+        run: node scripts/explicit-any-ratchet.cjs
+
       - name: Type check backend
         run: |
           cd ag-extension-dashboard/src/backend

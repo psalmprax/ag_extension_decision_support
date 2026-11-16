@@ -32,6 +32,25 @@ export { BaseAIProvider } from './types';
 import type { AIProviderType, AICapability } from './types';
 
 // Factory for creating AI providers
+/** What the OmniRoute free-model fallback returns when every provider failed. */
+export interface OmniRouteFallbackResult {
+    text: string;
+    providerUsed: string;
+    modelUsed: string;
+    isFreeModel: true;
+}
+
+function isOmniRouteFallback(result: unknown): result is OmniRouteFallbackResult {
+    const r = result as Partial<OmniRouteFallbackResult> | null | undefined;
+    return Boolean(r?.providerUsed) && r?.text !== undefined;
+}
+
+/** Token usage, when an operation's result reports it (text generation does). */
+function reportedTokens(result: unknown): number | undefined {
+    const usage = (result as { usage?: { totalTokens?: unknown } } | null | undefined)?.usage;
+    return typeof usage?.totalTokens === 'number' ? usage.totalTokens : undefined;
+}
+
 export class AIProviderFactory {
     private static providers: Map<AIProviderType, AICapability> = new Map();
     private static primaryProvider: AIProviderType;
@@ -65,12 +84,12 @@ export class AIProviderFactory {
 
     private static healthCache: Map<AIProviderType, { isHealthy: boolean; expiresAt: number }> = new Map();
 
-    static async getWithFallback(
-        operation: (provider: AICapability) => Promise<any>,
+    static async getWithFallback<T>(
+        operation: (provider: AICapability) => Promise<T>,
         preferredProvider?: AIProviderType,
         telemetryContext?: { correlationId?: string; userId?: string; operation?: string; promptText?: string },
         requiredCapability?: string
-    ): Promise<any> {
+    ): Promise<T | OmniRouteFallbackResult> {
         const allProviders = await this.buildProviderChain(preferredProvider);
         let lastError: Error | null = null;
         const context = this.resolveAttemptContext(telemetryContext);
@@ -120,13 +139,13 @@ export class AIProviderFactory {
         return prioritizedProviders;
     }
 
-    private static async tryProviderOperation(
+    private static async tryProviderOperation<T>(
         providerType: AIProviderType,
         attempt: number,
-        operation: (provider: AICapability) => Promise<any>,
+        operation: (provider: AICapability) => Promise<T>,
         context: { correlationId?: string; userId?: string; operation: string },
         requiredCapability?: string
-    ): Promise<{ success: true; result: any } | { success: false; error: Error | null }> {
+    ): Promise<{ success: true; result: T } | { success: false; error: Error | null }> {
         const startedAt = Date.now();
         try {
             const provider = await this.getProvider(providerType);
@@ -152,8 +171,9 @@ export class AIProviderFactory {
             const result = await operation(provider);
             this.healthCache.set(providerType, { isHealthy: true, expiresAt: Date.now() + 120_000 });
             await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'success', undefined, result);
-            if (result && typeof result === 'object' && !result.provider) {
-                result.provider = providerType === 'aihubmix' ? 'AIMixHub' : providerType;
+            if (result && typeof result === 'object') {
+                const tagged = result as { provider?: string };
+                if (!tagged.provider) tagged.provider = providerType === 'aihubmix' ? 'AIMixHub' : providerType;
             }
             return { success: true, result };
         } catch (error) {
@@ -165,7 +185,7 @@ export class AIProviderFactory {
         }
     }
 
-    private static async tryOmniRouteFallback(promptText?: string): Promise<any | null> {
+    private static async tryOmniRouteFallback(promptText?: string): Promise<OmniRouteFallbackResult | null> {
         if (!promptText) return null;
         try {
             const { OmniRouteService } = await import('@/services/omniRouteService');
@@ -244,7 +264,7 @@ export class AIProviderFactory {
         context: { correlationId?: string; userId?: string; operation: string },
         status: 'success' | 'error',
         error?: string,
-        result?: any
+        result?: unknown
     ): Promise<void> {
         try {
             await agentTelemetry.record({
@@ -252,7 +272,7 @@ export class AIProviderFactory {
                 agentId: provider,
                 userId: context.userId,
                 durationMs: Date.now() - startedAt,
-                tokensUsed: result?.usage?.totalTokens,
+                tokensUsed: reportedTokens(result),
                 // No per-token pricing tables exist in this codebase, so no honest cost
                 // can be computed here — the field is omitted (persisted as NULL) rather
                 // than recorded as a fake 0.
@@ -376,7 +396,7 @@ export class AIRouter {
         }, requestType === 'vision' || requestType === 'video' ? 'vision' : undefined);
 
         // Normalize OmniRoute free-model fallback result into the standard shape callers expect.
-        if (result?.providerUsed && result?.text !== undefined) {
+        if (isOmniRouteFallback(result)) {
             if (requestType === 'reason') {
                 const text = result.text ?? '';
                 const visuals = extractVisuals(text);
