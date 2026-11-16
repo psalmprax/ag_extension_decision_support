@@ -8,15 +8,17 @@
  *   docker exec -i ag-dashboard-backend node - < scripts/live-smoke.cjs
  *
  * What it does:
- *   - AI: one short text generation per configured provider, plus one embedding
- *     from the configured embeddings provider/model, checked against the
- *     pgvector width (EMBEDDING_DIMENSIONS).
+ *   - AI: one short text generation per configured provider; one embedding
+ *     through the app's own getEmbedding() (router, fallback chain and the
+ *     pgvector width check, EMBEDDING_DIMENSIONS); and one direct embedding
+ *     from the selected AI_EMBEDDINGS_PROVIDER.
  *   - PayPal: creates (never executes) a 1.00 USD sandbox payment. Skipped when
  *     PayPal is not configured or the API base is not the sandbox.
  *
- * Exit code: 1 when a REQUIRED check fails (primary text, fallback text,
- * embeddings, PayPal sandbox when configured). Other configured providers that
- * fail are reported as WARN. Output never includes keys, prompts' replies
+ * Exit code: 1 when a REQUIRED check fails (primary text, fallback text, the
+ * app's embedding path, PayPal sandbox when configured). Other configured
+ * providers, and the selected embeddings provider when the router can still
+ * serve embeddings without it, are reported as WARN. Output never includes keys, prompts' replies
  * beyond a short preview, or payment ids.
  */
 'use strict';
@@ -59,7 +61,8 @@ async function checkText(factory, type) {
     const started = Date.now();
     const ms = type === 'ollama' ? 120_000 : 45_000;
     const result = await withTimeout(
-        provider.generateText('Reply with exactly one word: pong', { maxTokens: 16, temperature: 0 }),
+        // Room for reasoning models, which spend tokens before the visible reply.
+        provider.generateText('Reply with exactly one word: pong', { maxTokens: 256, temperature: 0 }),
         ms, `${type} text`,
     );
     const text = (result?.text || '').trim();
@@ -70,9 +73,29 @@ async function checkText(factory, type) {
     };
 }
 
+/** The app's own path: router + fallback chain + width assertion. */
+async function checkAppEmbedding(getEmbedding, width) {
+    const run = () => withTimeout(getEmbedding(`maize leaf rust ${Date.now()}`), 30_000, 'getEmbedding');
+    const started = Date.now();
+    let note = '';
+    let vector;
+    try {
+        vector = await run();
+    } catch (error) {
+        // A fresh process pays provider health checks inside getEmbedding's 3.5 s
+        // budget; the running app has them cached. Retry once, and say so.
+        if (!/timed out/.test(String(error?.message))) throw error;
+        note = ', passed on retry after a cold-start timeout';
+        vector = await run();
+    }
+    return { status: 'PASS', detail: `${vector.length} dims (EMBEDDING_DIMENSIONS=${width}), ${Date.now() - started} ms${note}` };
+}
+
 async function checkEmbedding(factory, providerType, model, width) {
     const provider = await factory.getProvider(providerType);
-    if (!provider.isConfigured()) throw new Error(`embeddings provider "${providerType}" is not configured`);
+    if (!provider.isConfigured()) {
+        return { status: 'WARN', detail: `AI_EMBEDDINGS_PROVIDER=${providerType} is not configured; embeddings come from the fallback chain` };
+    }
     const started = Date.now();
     const result = await withTimeout(
         provider.createEmbedding('maize leaf rust on smallholder farms', { model, dimensions: width }),
@@ -127,11 +150,17 @@ async function main() {
         }
     }
 
+    try {
+        const { getEmbedding } = require(`${DIST}/services/embeddingCache`);
+        record('embedding: app path', true, await checkAppEmbedding(getEmbedding, EMBEDDING_DIMENSIONS));
+    } catch (error) {
+        record('embedding: app path', true, { status: 'FAIL', detail: describe(error) });
+    }
     const { provider: embProvider, model: embModel } = config.ai.embeddings;
     try {
-        record(`embedding: ${embProvider}`, true, await checkEmbedding(AIProviderFactory, embProvider, embModel, EMBEDDING_DIMENSIONS));
+        record(`embedding: ${embProvider} (selected)`, false, await checkEmbedding(AIProviderFactory, embProvider, embModel, EMBEDDING_DIMENSIONS));
     } catch (error) {
-        record(`embedding: ${embProvider}`, true, { status: 'FAIL', detail: describe(error) });
+        record(`embedding: ${embProvider} (selected)`, false, { status: 'WARN', detail: describe(error) });
     }
 
     try {
@@ -150,7 +179,10 @@ async function main() {
     }
 
     const width = Math.max(...rows.map(r => r.check.length));
-    console.log(`Live smoke (${new Date().toISOString()}), NODE_ENV=${process.env.NODE_ENV || 'unset'}`);
+    // Selection only (names, never keys), so a failure can be read without the server.
+    const env = process.env;
+    console.log(`Live smoke (${new Date().toISOString()}), NODE_ENV=${env.NODE_ENV || 'unset'}`);
+    console.log(`Selected: primary=${primary}/${env.AI_PRIMARY_MODEL || 'provider default'}, fallback=${fallback}/${env.AI_FALLBACK_MODEL || 'provider default'}, embeddings=${embProvider}/${embModel} at ${EMBEDDING_DIMENSIONS} dims, OLLAMA_MODEL=${env.OLLAMA_MODEL || 'unset'}\n`);
     for (const row of rows) console.log(`${row.status.padEnd(4)}  ${row.check.padEnd(width)}  ${row.detail}`);
     const failed = rows.filter(r => r.status === 'FAIL');
     const warned = rows.filter(r => r.status === 'WARN');
@@ -158,12 +190,13 @@ async function main() {
     return failed.length === 0 ? 0 : 1;
 }
 
-// `node - < live-smoke.cjs` (stdin) leaves require.main undefined; tests require() it.
-if (require.main === module || require.main === undefined) {
+// Runs when executed directly or piped (`node - < live-smoke.cjs`, module id
+// "[stdin]"); does nothing when require()d.
+if (require.main === module || module.id === '[stdin]') {
     main().then(
         code => process.exit(code),
         error => { console.error(`FATAL: ${describe(error)}`); process.exit(1); },
     );
 }
 
-module.exports = { describe, withTimeout, checkText, checkEmbedding, checkPayPal };
+module.exports = { describe, withTimeout, checkText, checkAppEmbedding, checkEmbedding, checkPayPal };

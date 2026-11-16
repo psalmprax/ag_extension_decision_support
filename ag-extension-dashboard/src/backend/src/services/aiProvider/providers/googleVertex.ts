@@ -21,6 +21,9 @@ import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import { EMBEDDING_DIMENSIONS } from '@/services/embeddingDimensions';
+import { selectedModelFor } from '../selectedModel';
+
+const GOOGLE_DEFAULT_MODEL = 'gemini-flash-latest';
 
 type GoogleAuth =
     | { mode: 'apiKey'; apiKey: string }
@@ -88,7 +91,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
 
     async generateText(prompt: string | any[], options?: TextGenerationOptions): Promise<TextGenerationResult> {
         const client = await this.getClient();
-        const modelName = options?.model || config.ai.fallback.model;
+        const modelName = options?.model || selectedModelFor('google_vertex') || GOOGLE_DEFAULT_MODEL;
 
         try {
             const result = await client.models.generateContent({ model: modelName, contents: prompt });
@@ -112,7 +115,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
 
     async *streamText(prompt: string, options?: TextGenerationOptions): AsyncGenerator<string> {
         const client = await this.getClient();
-        const modelName = options?.model || config.ai.fallback.model;
+        const modelName = options?.model || selectedModelFor('google_vertex') || GOOGLE_DEFAULT_MODEL;
 
         try {
             const stream = await client.models.generateContentStream({ model: modelName, contents: prompt });
@@ -182,7 +185,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
 
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
         const client = await this.getClient();
-        const modelName = options?.model || config.ai.fallback.model || 'gemini-flash-latest';
+        const modelName = options?.model || selectedModelFor('google_vertex') || GOOGLE_DEFAULT_MODEL;
 
         const systemPrompt = REASONING_SYSTEM_PROMPT;
         
@@ -244,7 +247,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
 
     async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
         const client = await this.getClient();
-        const modelName = options?.model || config.ai.fallback.model || 'gemini-flash-latest';
+        const modelName = options?.model || selectedModelFor('google_vertex') || GOOGLE_DEFAULT_MODEL;
 
         try {
             let base64Image: string;
@@ -296,7 +299,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
         if (!this.isConfigured()) return false;
         try {
             const client = await this.getClient();
-            await client.models.generateContent({ model: config.ai.fallback.model, contents: 'test' });
+            await client.models.generateContent({ model: selectedModelFor('google_vertex') || GOOGLE_DEFAULT_MODEL, contents: 'test' });
             this.recordHealthError();
             return true;
         } catch (error) {

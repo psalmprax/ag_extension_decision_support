@@ -117,6 +117,11 @@ jobs:
     needs: ci-checks
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    env:
+      # One value for the backend's .env, the pre-pull, the Ollama entrypoint
+      # (docker-compose.staging.yml) and both smoke gates. When these disagreed
+      # (3b configured, 1b pulled) every Ollama request failed with HTTP 404.
+      OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL || vars.OLLAMA_MODEL || 'llama3.2:1b' }}
     steps:
       # NOTE: no `env: COMPOSE_PROFILES: ai` here on purpose. `docker compose
       # ps -a --services` is profile-agnostic — services are project-defined
@@ -133,11 +138,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           timeout: 60s
           command_timeout: 5m
+          envs: OLLAMA_MODEL
           script: |
             set -euo pipefail
             if docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^ettametta-ollama$'; then
-              echo "=== Pre-pulling llama3.2:1b on existing ollama container ==="
-              docker exec ettametta-ollama ollama pull llama3.2:1b 2>&1 || echo "(pre-pull skipped — container may be starting up)"
+              echo "=== Pre-pulling $OLLAMA_MODEL on existing ollama container ==="
+              docker exec ettametta-ollama ollama pull "$OLLAMA_MODEL" 2>&1 || echo "(pre-pull skipped — container may be starting up)"
               echo "✅ Pre-pull complete"
             else
               echo "(ettametta-ollama not running — pre-pull deferred to entrypoint)"
@@ -152,6 +158,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           timeout: 60s
           command_timeout: 10m
+          envs: OLLAMA_MODEL
           script: |
             set -euo pipefail
             cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
@@ -159,7 +166,7 @@ jobs:
             # Pre-build smoke gate with `--if-running`: probes existing containers if
             # running, but permits first-time / recovery deploys to proceed to the build step
             # where backend and ettametta-ollama are launched.
-            if ! bash ${HOME:?}/ag_extension_decision_support/scripts/smoke-ollama.sh --if-running --retries 18 --interval 10 --expected-model llama3.2:1b; then
+            if ! bash ${HOME:?}/ag_extension_decision_support/scripts/smoke-ollama.sh --if-running --retries 18 --interval 10 --expected-model "$OLLAMA_MODEL"; then
               echo "FATAL: ettametta-ollama smoke gate failed (service broken or unresponsive)." >&2
               echo "----- ettametta-ollama container logs (last 50 lines, if present) -----"
               docker compose logs --tail 50 ettametta-ollama 2>&1 || echo "(no logs: container not present in this compose project)"
@@ -212,7 +219,6 @@ jobs:
           AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT || vars.AZURE_OPENAI_ENDPOINT }}
           AZURE_OPENAI_DEPLOYMENT_NAME: ${{ secrets.AZURE_OPENAI_DEPLOYMENT_NAME || vars.AZURE_OPENAI_DEPLOYMENT_NAME || 'gpt-4' }}
           OLLAMA_HOST: ${{ secrets.OLLAMA_HOST || vars.OLLAMA_HOST || 'http://ettametta-ollama:11434' }}
-          OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL || vars.OLLAMA_MODEL || 'llama3.2:3b' }}
           MCP_API_TOKEN: ${{ secrets.MCP_API_TOKEN || vars.MCP_API_TOKEN }}
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
@@ -466,7 +472,7 @@ jobs:
             curl -fsSL -o /dev/null -w "%{http_code}\n" --max-time 5 http://127.0.0.1:7503/ 2>/dev/null || echo "(frontend probe did not return headers — non-fatal)"
             echo
             echo "=== post-deploy smoke gate: verify ettametta-ollama from live backend ==="
-            if ! bash ${HOME:?}/ag_extension_decision_support/scripts/smoke-ollama.sh --retries 18 --interval 10 --expected-model llama3.2:1b; then
+            if ! bash ${HOME:?}/ag_extension_decision_support/scripts/smoke-ollama.sh --retries 18 --interval 10 --expected-model "$OLLAMA_MODEL"; then
               echo "⚠️ ettametta-ollama smoke test warning (backend started, but model still loading in ollama)" >&2
               docker compose logs --tail 30 ettametta-ollama 2>&1 || true
             else

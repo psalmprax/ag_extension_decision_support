@@ -19,6 +19,7 @@ import {
 } from '../types';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
+import { selectedModelFor } from '../selectedModel';
 
 import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt } from '../assetLibrary';
 import { normalizeToolDefinitions, normalizeMessages, normalizeToolCalls } from '../toolCalling';
@@ -54,7 +55,7 @@ export class OpenAIProvider extends BaseAIProvider {
 
     async generateText(prompt: string | any[], options?: TextGenerationOptions): Promise<TextGenerationResult> {
         const client = await this.getClient();
-        const model = options?.model || config.ai.primary.model || 'gpt-4';
+        const model = options?.model || selectedModelFor('openai') || 'gpt-4';
 
         const messages = normalizeMessages(prompt) as any[];
         const tools = normalizeToolDefinitions(options?.tools);
@@ -88,7 +89,7 @@ export class OpenAIProvider extends BaseAIProvider {
 
     async *streamText(prompt: string, options?: TextGenerationOptions): AsyncGenerator<string> {
         const client = await this.getClient();
-        const model = options?.model || config.ai.primary.model || 'gpt-4';
+        const model = options?.model || selectedModelFor('openai') || 'gpt-4';
 
         try {
             const stream = await client.chat.completions.create({
@@ -341,13 +342,9 @@ export class OpenAIProvider extends BaseAIProvider {
         try {
             const client = await this.getClient();
             
-            // Resolve the best OpenAI model to test with
-            let testModel = 'gpt-4o-mini';
-            if (config.ai.primary.provider === 'openai' && config.ai.primary.model.startsWith('gpt')) {
-                testModel = config.ai.primary.model;
-            } else if (config.ai.fallback.provider === 'openai' && config.ai.fallback.model.startsWith('gpt')) {
-                testModel = config.ai.fallback.model;
-            }
+            // Probe with the model OpenAI is configured to use, when it is a GPT model.
+            const selected = selectedModelFor('openai');
+            const testModel = selected?.startsWith('gpt') ? selected : 'gpt-4o-mini';
 
             await client.chat.completions.create({
                 model: testModel,

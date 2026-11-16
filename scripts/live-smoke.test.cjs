@@ -15,7 +15,7 @@ const SCRIPT = fs.readFileSync(path.join(__dirname, 'live-smoke.cjs'));
  * Build a fake dist/. `providers` maps provider type -> behaviour:
  *   { configured, text, throws, embedding: number (dims) }
  */
-function makeDist({ primary = 'aihubmix', fallback = 'openrouter', embeddings = 'aihubmix', width = 768, providers, paypal }) {
+function makeDist({ primary = 'aihubmix', fallback = 'openrouter', embeddings = 'aihubmix', width = 768, providers, paypal, app = {} }) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'live-smoke-'));
     const write = (rel, body) => {
         fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
@@ -25,6 +25,16 @@ function makeDist({ primary = 'aihubmix', fallback = 'openrouter', embeddings = 
         ai: { primary: { provider: primary }, fallback: { provider: fallback }, embeddings: { provider: embeddings, model: 'emb-model' } },
     })};`);
     write('services/embeddingDimensions.js', `exports.EMBEDDING_DIMENSIONS = ${width};`);
+    // getEmbedding(): app.dims (default: width), app.throws, app.timeoutsFirst.
+    write('services/embeddingCache.js', `
+        const app = ${JSON.stringify({ dims: width, ...app })};
+        let calls = 0;
+        exports.getEmbedding = async () => {
+            calls += 1;
+            if (app.timeoutsFirst && calls === 1) throw new Error('Embedding generation timed out after 3500ms');
+            if (app.throws) throw new Error(app.throws);
+            return new Array(app.dims).fill(0.1);
+        };`);
     write('services/aiProvider/aiProvider.js', `
         const spec = ${JSON.stringify(providers)};
         exports.AIProviderFactory = {
@@ -80,16 +90,35 @@ test('passes when primary, fallback, embeddings and PayPal sandbox all work', ()
     assert.equal(code, 0, out);
     assert.match(out, /PASS\s+text: aihubmix \(primary\)/);
     assert.match(out, /PASS\s+text: openrouter \(fallback\)/);
-    assert.match(out, /PASS\s+embedding: aihubmix\s+emb-model, 768 dims/);
+    assert.match(out, /PASS\s+embedding: app path\s+768 dims \(EMBEDDING_DIMENSIONS=768\)/);
+    assert.match(out, /PASS\s+embedding: aihubmix \(selected\)\s+emb-model, 768 dims/);
+    assert.match(out, /Selected: primary=aihubmix\/.*, fallback=openrouter\/.*, embeddings=aihubmix\/emb-model at 768 dims/);
     assert.match(out, /PASS\s+paypal: sandbox order/);
     assert.match(out, /SKIP\s+text: anthropic\s+not configured/);
     assert.doesNotMatch(out, /PAYID-1|EC-1/, 'payment ids must not be printed');
 });
 
-test('fails on an embedding width that does not fit the pgvector columns', () => {
-    const { code, out } = run(makeDist({ providers: { ...healthy, aihubmix: { configured: true, embedding: 3072 } } }));
+test('fails when the app cannot produce embeddings that fit the pgvector columns', () => {
+    const { code, out } = run(makeDist({
+        providers: { ...healthy, aihubmix: { configured: true, embedding: 3072 } },
+        app: { throws: 'Embedding has 3072 dimensions; expected 768' },
+    }));
     assert.equal(code, 1);
-    assert.match(out, /FAIL\s+embedding: aihubmix\s+.*returned 3072 dimensions; pgvector columns are 768/);
+    assert.match(out, /FAIL\s+embedding: app path\s+Embedding has 3072 dimensions/);
+    assert.match(out, /WARN\s+embedding: aihubmix \(selected\)\s+.*returned 3072 dimensions; pgvector columns are 768/);
+});
+
+test('an unconfigured embeddings selection is a warning while the app path still works', () => {
+    const { code, out } = run(makeDist({ embeddings: 'openai', providers: healthy }));
+    assert.equal(code, 0, out);
+    assert.match(out, /PASS\s+embedding: app path/);
+    assert.match(out, /WARN\s+embedding: openai \(selected\)\s+AI_EMBEDDINGS_PROVIDER=openai is not configured/);
+});
+
+test('a cold-start timeout on the app path is retried once and reported', () => {
+    const { code, out } = run(makeDist({ providers: healthy, app: { timeoutsFirst: true } }));
+    assert.equal(code, 0, out);
+    assert.match(out, /PASS\s+embedding: app path\s+768 dims .*passed on retry after a cold-start timeout/);
 });
 
 test('a failing primary fails the run and its key is masked', () => {
