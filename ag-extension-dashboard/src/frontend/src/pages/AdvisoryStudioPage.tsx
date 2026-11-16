@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { dosagePreviewText } from './advisoryStudio/dosagePreview';
+import { AdvisoryRatesNotice } from './advisoryStudio/AdvisoryRatesNotice';
 import {
   Smartphone,
   CheckCircle,
@@ -414,11 +416,7 @@ function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
                 <label className="text-[10px] text-emerald-400 font-medium block mb-0.5">
                   Step {idx + 1}: Automated recommendation
                 </label>
-                <p className="text-[10px] text-slate-300 leading-snug">
-                  {isLime
-                    ? 'Apply 2.2 tonnes/ha calcitic lime incorporated into top 15cm.'
-                    : 'Mix 1.2L cold-pressed Neem oil across 3 acres at dusk.'}
-                </p>
+                <p className="text-[10px] text-slate-300 leading-snug">{dosagePreviewText(step.config, Boolean(isLime))}</p>
               </div>
             );
           }
@@ -648,7 +646,7 @@ export function AdvisoryStudioPage() {
           </button>
         </div>
       </header>
-
+      <AdvisoryRatesNotice />
       {saveSuccess && (
         <div className="bg-slate-900 border-b border-emerald-500/30 px-6 py-2 flex items-center justify-between text-xs text-emerald-300 font-normal">
           <span>✓ Workflow schema synchronized and ready for offline deployment.</span>

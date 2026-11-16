@@ -84,7 +84,7 @@ export const useAppSync = (
         await uploadMultipleFiles(files);
         addNotification({
           type: 'success',
-          message: `${files.length} file(s) uploaded and processed successfully.`,
+          message: `${files.length} file(s) uploaded.`,
         });
       } catch (error) {
         console.error('Upload error:', error);

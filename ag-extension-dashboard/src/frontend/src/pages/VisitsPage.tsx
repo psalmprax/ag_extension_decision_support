@@ -1,17 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  MapPin,
-  Clock,
-  ChevronRight,
-  Plus,
-  Calendar,
-  Radio,
-  User,
-} from 'lucide-react';
+import { MapPin, Clock, ChevronRight, Plus, Calendar, Radio, User } from 'lucide-react';
 import { Visit, Farmer } from '../types/dashboard';
 import { updateVisit } from '@/api/visitService';
 import { useLanguage } from '@/lib/LanguageContext';
+import { visitTypeLabel } from '@/lib/visitType';
 
 interface VisitsPageProps {
   visits: Visit[];
@@ -62,7 +55,7 @@ const VisitCard: React.FC<VisitCardProps> = ({
       : farmerData
       ? `${farmerData.firstName} ${farmerData.lastName}`
       : 'Assigned Farmer';
-  const visitTypeDisplay = visit.visitType || visit.visit_type || 'Routine Visit';
+  const visitTypeDisplay = visitTypeLabel(visit.visitType || visit.visit_type);
   const rawDate =
     visit.scheduledAt ||
     visit.scheduled_at ||

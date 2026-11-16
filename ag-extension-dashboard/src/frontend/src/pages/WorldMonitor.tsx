@@ -80,7 +80,7 @@ const WorldMonitor: React.FC = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
           <Satellite className="w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
-          <div><div className="text-xs text-slate-500 dark:text-white/50">Satellite orbit</div><div className="text-xs font-medium text-slate-900 dark:text-white">{data ? 'Stub — Kepler deterministic' : '—'}</div></div>
+          <div><div className="text-xs text-slate-500 dark:text-white/50">Satellite orbit</div><div className="text-xs font-medium text-slate-900 dark:text-white">{data ? 'Not connected yet' : '—'}</div></div>
         </div>
         <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
           <Layers className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -104,7 +104,7 @@ const WorldMonitor: React.FC = () => {
           <p className="text-sm font-semibold text-white">Spatial Layer Status</p>
           <p className="text-xs text-white/50 mt-1 max-w-md">{liveLayersSummary(data?.pestSwarm?.status)}, filtered by region/crop/county. Globe canvas is officer-desktop only to keep the farmer PWA lightweight.</p>
           <div className="mt-4 grid grid-cols-2 gap-2 text-left text-xs font-mono tabular-nums w-full max-w-2xl">
-            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-emerald-400">Farmers:</span> {data?.farmers?.length ?? 0}</div>
+            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-emerald-400">Farmers mapped:</span> {data?.farmers?.length ?? 0}</div>
             <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-amber-400">Soil centroid:</span> {data?.soilHorizon ? `${Number(data.soilHorizon.centroid.lat).toFixed(2)}, ${Number(data.soilHorizon.centroid.lon).toFixed(2)}` : '—'}</div>
             <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-rose-400">Swarm clusters:</span> {data?.pestSwarm?.clusters?.map(c => c.clusterId.slice(0, 8)).join(', ') || '—'}</div>
             <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-cyan-400">View:</span> {viewState.longitude.toFixed(1)}, {viewState.latitude.toFixed(1)} z{viewState.zoom}</div>
@@ -112,7 +112,7 @@ const WorldMonitor: React.FC = () => {
         </div>
       </div>
 
-      <p className="text-[10px] text-slate-400 dark:text-white/40 text-center">Live GIS: farmers + NDVI (diagnosis_events 30d) + SoilGrids horizon + pest swarm (14d). Satellite orbit is deterministic stub — replace with Celestrak TLE when promoted.</p>
+      <p className="text-[10px] text-slate-400 dark:text-white/40 text-center">Shows farmers with a saved location, NDVI from diagnoses in the last 30 days, SoilGrids soil at those points, and pest reports from the last 14 days. Add a farmer's location to put them on the map.</p>
     </div>
   );
 };

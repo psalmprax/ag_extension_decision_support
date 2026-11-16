@@ -180,6 +180,27 @@ describe('AIHubMix Integration (REST Account API, MCP Tool & Model Provider)', (
       }), expect.any(Object));
     });
 
+    it('forwards the requested embedding width so vectors fit the pgvector columns', async () => {
+      mockedAxios.post.mockResolvedValueOnce({ data: { data: [{ embedding: new Array(768).fill(0) }] } });
+      const provider = new AIHubMixProvider('sk-test-key');
+
+      const result = await provider.createEmbedding('maize rust', { model: 'text-embedding-3-large', dimensions: 768 });
+      expect(result.embedding).toHaveLength(768);
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        expect.stringMatching(/\/embeddings$/),
+        { model: 'text-embedding-3-large', input: 'maize rust', dimensions: 768 },
+        expect.any(Object),
+      );
+    });
+
+    it('omits dimensions when the caller does not ask for a width', async () => {
+      mockedAxios.post.mockResolvedValueOnce({ data: { data: [{ embedding: [0.1] }] } });
+      const provider = new AIHubMixProvider('sk-test-key');
+
+      await provider.createEmbedding('maize rust', { model: 'text-embedding-3-small' });
+      expect(mockedAxios.post.mock.calls[0][1]).toEqual({ model: 'text-embedding-3-small', input: 'maize rust' });
+    });
+
     it('sends chat completions request with bearer token', async () => {
       mockedAxios.post.mockResolvedValueOnce({
         data: {

@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useAppChat } from '../hooks/useAppChat';
-import { fetchMessages } from '@/api/chatbotService';
+import { fetchConversations, fetchMessages } from '@/api/chatbotService';
 import { getPublicDemoChatCompletion } from '@/api/aiService';
 import { Farmer } from '../types/dashboard';
 
@@ -70,5 +70,17 @@ describe('Farmer conversation isolation', () => {
     act(() => result.current.setFarmerChatInput('Second question'));
     await act(async () => { await result.current.handleFarmerChatSend(); });
     expect(result.current.farmerChatMessages.at(-1)?.content).toBe('Current reply');
+  });
+
+  it('shows the history of the conversation it opens automatically', async () => {
+    vi.mocked(fetchMessages).mockReset().mockResolvedValue({ success: true, data: [{ role: 'user', content: 'When should I apply the first top dressing?' }] });
+    vi.mocked(fetchConversations).mockResolvedValue({ success: true, data: [{ id: 'conv-john', farmerId: 'f-john' }] });
+    const { result } = renderHook(() => useAppChat('en'));
+
+    await act(async () => { await result.current.loadFarmerConversations(); });
+
+    expect(result.current.activeFarmerConvId).toBe('conv-john');
+    expect(fetchMessages).toHaveBeenCalledWith('conv-john');
+    expect(result.current.farmerChatMessages.map(m => m.content)).toEqual(['When should I apply the first top dressing?']);
   });
 });

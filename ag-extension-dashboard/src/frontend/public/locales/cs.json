@@ -316,6 +316,7 @@
     "empty_no_visits": "Žádné návštěvy naplánované",
     "empty_no_visits_desc": "Nastavte návštěvu u zemědělce, aby se začalo.",
     "error_loading": "Chyba při načítání rozhraní.",
+    "dashboard_summary_unavailable": "Dashboard figures could not be loaded. Other pages still work.",
     "exec_summary": "Souhrn",
     "farmer_active_since": "Aktivní od",
     "farmer_active_status": "Aktivní",

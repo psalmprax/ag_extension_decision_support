@@ -2,6 +2,9 @@ import apiClient from './client';
 
 export type ReviewStatus = 'pending' | 'approved' | 'dismissed' | 'escalated';
 
+/** Why the item was queued (null for manual submissions made before triggers existed). */
+export type ReviewTrigger = 'safety_boundary' | 'invalid_references' | 'no_sources' | 'farmer_request';
+
 export interface RecommendationReview {
   id: string;
   farmer_id: string;
@@ -9,6 +12,7 @@ export interface RecommendationReview {
   recommendation: string;
   confidence: number | null;
   evidence_status: 'verified_source' | 'no_verified_source';
+  trigger?: ReviewTrigger | null;
   status: ReviewStatus;
   disposition?: string | null;
   created_at: string;

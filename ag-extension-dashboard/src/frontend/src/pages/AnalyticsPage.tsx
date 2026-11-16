@@ -7,7 +7,6 @@ import {
   MessageSquare,
   BarChart3,
   Radio,
-  Zap,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -56,12 +55,6 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-slate-600 dark:text-white/70 flex items-center gap-1.5 font-mono">
-              <Zap className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-              SLO: <strong className="text-slate-900 dark:text-white tabular-nums">99.8%</strong>
-            </span>
-          </div>
         </div>
       </div>
 

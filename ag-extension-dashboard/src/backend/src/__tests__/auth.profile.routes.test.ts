@@ -56,6 +56,33 @@ describe('PATCH /api/auth/me', () => {
         );
     });
 
+    it('saves an alert channel choice by merging it into the stored preferences', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 'user-1', email: 'user@example.com', first_name: 'Jordan', last_name: 'Farmer',
+                role: 'extension_officer', region: 'Nakuru', phone: null,
+                notification_preferences: { emailAlerts: true, smsAlerts: false },
+            }],
+            rowCount: 1,
+        });
+
+        const response = await request(app)
+            .patch('/api/auth/me')
+            .send({ notificationPreferences: { smsAlerts: false } })
+            .expect(200);
+
+        expect(response.body.data.notificationPreferences).toEqual({ emailAlerts: true, smsAlerts: false });
+        const [sql, params] = mockQuery.mock.calls[0];
+        expect(sql).toContain(`notification_preferences = COALESCE(notification_preferences, '{}'::jsonb) || $1::jsonb`);
+        expect(params).toEqual([JSON.stringify({ smsAlerts: false }), 'user-1']);
+    });
+
+    it('rejects unknown or non-boolean alert preferences', async () => {
+        await request(app).patch('/api/auth/me').send({ notificationPreferences: { smsAlerts: 'no' } }).expect(400);
+        await request(app).patch('/api/auth/me').send({ notificationPreferences: { marketingCalls: true } }).expect(400);
+        expect(mockQuery).not.toHaveBeenCalled();
+    });
+
     it('rejects authorization and other protected fields in self-service profile updates', async () => {
         await request(app)
             .patch('/api/auth/me')

@@ -316,6 +316,7 @@
     "empty_no_visits": "ھېچقانداق زىيارەت جادۋاللىنىپ قۇيۇلمىغان",
     "empty_no_visits_desc": "دەڭلىق بىلەن تۇنچى قىلىش ئۈچۈن بىر دەڭلىقنى تاللاڭ.",
     "error_loading": "ئەسلىھەت تاختىسىنى يۈكلەش خاتالىقى.",
+    "dashboard_summary_unavailable": "Dashboard figures could not be loaded. Other pages still work.",
     "exec_summary": "ئىجرا قىسقىچە مەزكۇر",
     "farmer_active_since": "ئاكتىپ قىلىنغان ۋاقتى",
     "farmer_active_status": "ئاكتىپ",

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutDashboard, Radio } from 'lucide-react';
 import type { CanvasViewType } from './rules';
 import type { ChatMessageItem } from './response';
+import { ChatMarkdown } from '@/components/chat/ChatMarkdown';
 
 export interface MessageStreamProps {
   messages: ChatMessageItem[];
@@ -36,9 +37,11 @@ export const MessageStream: React.FC<MessageStreamProps> = ({ messages, isProces
                 : 'bg-slate-50 border border-slate-200 text-slate-800 dark:bg-white/[0.04] dark:border-white/10 dark:text-white/90 rounded-tl-none space-y-3'
             }`}
           >
-            <div className="whitespace-pre-line prose-invert font-sans">
-              {msg.text}
-            </div>
+            {msg.sender === 'user' ? (
+              <div className="whitespace-pre-line font-sans">{msg.text}</div>
+            ) : (
+              <div className="font-sans"><ChatMarkdown content={msg.text} /></div>
+            )}
 
             {/* Interactive Canvas Pill Trigger in Assistant Message */}
             {msg.canvasTrigger && (

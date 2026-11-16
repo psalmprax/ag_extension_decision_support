@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { QueueStats } from './agents/QueueStats';
 import {
   Server,
-  Activity,
-  CheckCircle,
-  XCircle,
-  Clock,
   RefreshCw,
   Send,
   Zap,
@@ -169,54 +166,7 @@ function Agents() {
         </div>
       </div>
 
-      {/* Queue Stats Bento Strip */}
-      {queueStatus && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-medium">
-              <Clock className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-              <span>Queued Tasks</span>
-            </div>
-            <div className="text-xl font-semibold font-mono tabular-nums text-amber-600 dark:text-amber-400 flex items-baseline gap-2">
-              {queueStatus.queued}
-              <span className="text-xs font-normal text-slate-400">In buffer</span>
-            </div>
-          </div>
-
-          <div className="p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-medium">
-              <Activity className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" />
-              <span>Active Workers</span>
-            </div>
-            <div className="text-xl font-semibold font-mono tabular-nums text-sky-600 dark:text-sky-400 flex items-baseline gap-2">
-              {queueStatus.active}
-              <span className="text-xs font-normal text-slate-400">Executing</span>
-            </div>
-          </div>
-
-          <div className="p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-medium">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
-              <span>Completed Total</span>
-            </div>
-            <div className="text-xl font-semibold font-mono tabular-nums text-emerald-600 dark:text-emerald-400 flex items-baseline gap-2">
-              {queueStatus.completed}
-              <span className="text-xs font-normal text-emerald-600 dark:text-emerald-400/80">98.5% pass</span>
-            </div>
-          </div>
-
-          <div className="p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-medium">
-              <XCircle className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" />
-              <span>Failed / Retried</span>
-            </div>
-            <div className="text-xl font-semibold font-mono tabular-nums text-rose-600 dark:text-rose-400 flex items-baseline gap-2">
-              {queueStatus.failed}
-              <span className="text-xs font-normal text-slate-400">Auto-handed off</span>
-            </div>
-          </div>
-        </div>
-      )}
+      {queueStatus && <QueueStats status={queueStatus} />}
 
       {/* Agent Status Grid (KnockKnock Bento Style) */}
       <div className="space-y-4">
@@ -225,7 +175,6 @@ function Agents() {
             <Server className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Active Agent Nodes</span>
           </div>
-          <span className="text-xxs font-mono text-slate-500 dark:text-white/40">CLUSTER: PROD-EAST-AFRICA</span>
         </div>
         {agents.length === 0 && (
           <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-6 text-sm text-amber-700 dark:text-amber-200">

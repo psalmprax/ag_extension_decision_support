@@ -32,7 +32,8 @@ export const uploadFile = async (file: File, farmerId?: string): Promise<Uploade
   formData.append('file', file);
   if (farmerId) formData.append('farmerId', farmerId);
 
-  const { data } = await apiClient.post('/upload', formData, {
+  // The upload router is mounted at /upload and serves POST /upload and /upload/multiple.
+  const { data } = await apiClient.post('/upload/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return data.data;
@@ -44,7 +45,7 @@ export const uploadMultipleFiles = async (files: File[]): Promise<UploadedFile[]
     formData.append('files', file);
   });
 
-  const { data } = await apiClient.post('/upload/multiple', formData, {
+  const { data } = await apiClient.post('/upload/upload/multiple', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },

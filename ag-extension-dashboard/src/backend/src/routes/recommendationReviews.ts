@@ -1,18 +1,31 @@
-import { Router, Request, Response } from 'express';
-import { authorize } from '@/middleware/authorize';
+import { Router, Request, Response, NextFunction } from 'express';
+import { authorize, type UserRole } from '@/middleware/authorize';
 import { query } from '@/services/databaseService';
 import { getFarmerForPrincipal, getPrincipalTenantId } from '@/services/dataGovernanceService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
+// Farmers may ask for a human to check advice they received (POST); listing and
+// deciding reviews is for the officers and managers who do the checking.
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
+const REVIEWER_ROLES: readonly UserRole[] = ['admin', 'regional_manager', 'extension_officer'];
+function reviewersOnly(req: Request, res: Response, next: NextFunction): void {
+  if (!req.user?.role || !REVIEWER_ROLES.includes(req.user.role as UserRole)) {
+    res.status(403).json({ success: false, error: 'Only officers and managers can list or decide reviews' });
+    return;
+  }
+  next();
+}
+
+const REVIEW_COLUMNS = `id, farmer_id, report_id, recommendation, confidence, evidence_status, trigger, status,
+                disposition, created_by, reviewed_by, created_at, reviewed_at`;
 
 function principal(req: Request) {
   return req.user?.userId && req.user.role ? { userId: req.user.userId, role: req.user.role } : null;
 }
 
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', reviewersOnly, async (req: Request, res: Response) => {
   try {
     const user = principal(req);
     if (!user) return res.status(401).json({ success: false, error: 'Authentication required' });
@@ -27,16 +40,14 @@ router.get('/', async (req: Request, res: Response) => {
 
     if (tenantId) {
       const result = await query(
-        `SELECT id, farmer_id, report_id, recommendation, confidence, evidence_status, status,
-                disposition, created_by, reviewed_by, created_at, reviewed_at
+        `SELECT ${REVIEW_COLUMNS}
          FROM recommendation_reviews WHERE tenant_id = $1 AND status = $2 ORDER BY created_at ASC`,
         [tenantId, status]
       );
       return res.json({ success: true, data: result.rows });
     } else if (user.role === 'admin') {
       const result = await query(
-        `SELECT id, farmer_id, report_id, recommendation, confidence, evidence_status, status,
-                disposition, created_by, reviewed_by, created_at, reviewed_at
+        `SELECT ${REVIEW_COLUMNS}
          FROM recommendation_reviews WHERE status = $1 ORDER BY created_at ASC`,
         [status]
       );
@@ -69,10 +80,14 @@ router.post('/', async (req: Request, res: Response) => {
 
     const result = await query(
       `INSERT INTO recommendation_reviews
-        (tenant_id, farmer_id, report_id, created_by, recommendation, confidence, evidence_status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id, farmer_id, report_id, recommendation, confidence, evidence_status, status, created_at`,
-      [farmer.tenant_id, farmerId, typeof reportId === 'string' ? reportId : null, user.userId, recommendation.trim(), confidence ?? null, evidenceStatus]
+        (tenant_id, farmer_id, report_id, created_by, recommendation, confidence, evidence_status, trigger)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id, farmer_id, report_id, recommendation, confidence, evidence_status, trigger, status, created_at`,
+      [
+        farmer.tenant_id, farmerId, typeof reportId === 'string' ? reportId : null, user.userId,
+        recommendation.trim(), confidence ?? null, evidenceStatus,
+        user.role === 'farmer' ? 'farmer_request' : null,
+      ]
     );
     return res.status(201).json({ success: true, data: result.rows[0] });
   } catch (error) {
@@ -81,7 +96,7 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/:id', async (req: Request, res: Response) => {
+router.patch('/:id', reviewersOnly, async (req: Request, res: Response) => {
   try {
     const user = principal(req);
     if (!user) return res.status(401).json({ success: false, error: 'Authentication required' });
@@ -90,19 +105,24 @@ router.patch('/:id', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'A valid status and disposition are required' });
     }
 
-    const reviewTarget = await query<{ farmer_id: string | null }>(
-      'SELECT farmer_id FROM recommendation_reviews WHERE id = $1 AND status = \'pending\'',
+    const reviewTarget = await query<{ farmer_id: string | null; created_by: string }>(
+      'SELECT farmer_id, created_by FROM recommendation_reviews WHERE id = $1 AND status = \'pending\'',
       [req.params.id]
     );
     const farmerId = reviewTarget.rows[0]?.farmer_id;
     if (!farmerId || !(await getFarmerForPrincipal(farmerId, user))) {
       return res.status(404).json({ success: false, error: 'Pending review not found' });
     }
+    // Four eyes: whoever put advice in the queue (including the officer whose
+    // chat produced it) cannot also sign it off.
+    if (reviewTarget.rows[0]!.created_by === user.userId) {
+      return res.status(403).json({ success: false, error: 'You cannot review a recommendation you submitted' });
+    }
 
     const result = await query(
       `UPDATE recommendation_reviews
        SET status = $1, disposition = $2, reviewed_by = $3, reviewed_at = NOW()
-       WHERE id = $4 AND status = 'pending'
+       WHERE id = $4 AND status = 'pending' AND created_by <> $3
        RETURNING id, status, disposition, reviewed_by, reviewed_at`,
       [status, disposition.trim(), user.userId, req.params.id]
     );

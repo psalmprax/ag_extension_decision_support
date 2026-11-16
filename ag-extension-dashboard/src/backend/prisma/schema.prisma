@@ -70,6 +70,7 @@ model User {
   lastLoginAt   DateTime?          @map("last_login_at") @db.Timestamp(6)
   loginHistories LoginHistory[]
   mfaEnabled    Boolean            @default(false) @map("mfa_enabled")
+  notificationPreferences Json?    @map("notification_preferences")
   mfaSecret     String?            @map("mfa_secret") @db.VarChar(255)
   mfaBackupCodes String[]          @default([]) @map("mfa_backup_codes")
   failedLoginAttempts Int          @default(0) @map("failed_login_attempts")
@@ -1020,6 +1021,7 @@ model RecommendationReview {
   recommendation String
   confidence     Decimal? @db.Decimal(5, 2)
   evidenceStatus String   @default("no_verified_source") @map("evidence_status") @db.VarChar(40)
+  trigger        String?  @db.VarChar(40)
   status         String   @default("pending") @db.VarChar(30)
   disposition    String?
   reviewedBy     String?  @map("reviewed_by") @db.Uuid

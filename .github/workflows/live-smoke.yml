@@ -1,0 +1,61 @@
+name: Live smoke (stage, real services)
+
+# Calls the real third-party services from the deployed stage backend, using
+# the app's own compiled providers and the host's real configuration:
+#   - one short text generation per configured AI provider,
+#   - one embedding from the configured embeddings provider, checked against
+#     the pgvector width,
+#   - one PayPal sandbox payment, created but never executed (skipped unless
+#     the API base is the sandbox).
+# Unit tests mock all of these; this is what catches expired keys, retired
+# models, quota exhaustion and config drift. Script: scripts/live-smoke.cjs.
+
+on:
+  workflow_run:
+    workflows: ["Deploy to Stage (auto on push)"]
+    types: [completed]
+  schedule:
+    - cron: "41 4 * * 1"   # weekly, Monday 04:41 UTC: catches key/model expiry between deploys
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-smoke
+  cancel-in-progress: false
+
+jobs:
+  live-smoke:
+    # After a stage deploy only when that deploy succeeded.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/live-smoke.cjs
+          sparse-checkout-cone-mode: false
+
+      # The script travels with the workflow (not the host checkout), so a run
+      # always uses the version from this ref. It is not secret.
+      - name: Package the smoke script
+        run: echo "LIVE_SMOKE_B64=$(base64 -w0 scripts/live-smoke.cjs)" >> "$GITHUB_ENV"
+
+      - name: Run against the stage backend
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
+        with:
+          host: ${{ secrets.TEST_SERVER_IP }}
+          port: ${{ secrets.TEST_SERVER_PORT || 22 }}
+          username: ${{ vars.TEST_DEPLOY_SSH_USER || 'root' }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
+          timeout: 60s
+          command_timeout: 12m
+          envs: LIVE_SMOKE_B64
+          script: |
+            set -eu
+            if [ "$(docker inspect --format '{{.State.Running}}' ag-dashboard-backend 2>/dev/null)" != "true" ]; then
+              echo "FATAL: ag-dashboard-backend is not running on the stage host" >&2
+              exit 1
+            fi
+            printf '%s' "$LIVE_SMOKE_B64" | base64 -d | docker exec -i ag-dashboard-backend node -

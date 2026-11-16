@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAppStore } from '@/store/useAppStore';
 import { Farmer } from '@/types/dashboard';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
@@ -45,6 +46,8 @@ export const FarmerDetailHeader: React.FC<FarmerDetailHeaderProps> = ({
   radiusClass: _radiusClass,
   isCyber: _isCyber,
 }) => {
+  // Deleting a farmer is limited to admins and regional managers by the API.
+  const canDelete = ['admin', 'regional_manager'].includes(useAppStore(s => s.user?.role) ?? '');
   return (
     <div className="relative h-60 flex-shrink-0 bg-slate-950 border-b border-emerald-500/30 overflow-hidden" onContextMenu={handleContextMenu}>
       {/* Background Neon Grid / Ambient Glow */}
@@ -78,13 +81,16 @@ export const FarmerDetailHeader: React.FC<FarmerDetailHeaderProps> = ({
         >
           <MoreVertical className="w-4 h-4" />
         </button>
-        <button
-          onClick={() => setIsDeleteModalOpen(true)}
-          className="p-2 rounded-[4px] text-rose-300 hover:text-white bg-rose-500/10 hover:bg-rose-600 border border-rose-500/30 transition-all backdrop-blur-md"
-          title="Delete Farmer"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        {canDelete && (
+          <button
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="p-2 rounded-[4px] text-rose-300 hover:text-white bg-rose-500/10 hover:bg-rose-600 border border-rose-500/30 transition-all backdrop-blur-md"
+            title="Delete Farmer"
+            aria-label="Delete farmer"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
         <button
           onClick={onClose}
           className="p-2 rounded-[4px] text-slate-400 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 transition-all backdrop-blur-md"

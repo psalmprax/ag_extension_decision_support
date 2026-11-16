@@ -10,8 +10,9 @@
  *
  * Usage:  node scripts/component-size-ratchet.cjs [--update]
  */
-const { readFileSync, writeFileSync, readdirSync, statSync } = require('node:fs');
+const { readFileSync, readdirSync, statSync } = require('node:fs');
 const path = require('node:path');
+const { runRatchet } = require('./ratchet-core.cjs');
 
 const ROOT = path.join(__dirname, '..', 'ag-extension-dashboard', 'src', 'frontend', 'src');
 const BASELINE_FILE = path.join(__dirname, 'component-size-baseline.json');
@@ -38,31 +39,12 @@ for (const p of walk(ROOT)) {
   if (lines > LIMIT) current[path.relative(ROOT, p).split(path.sep).join('/')] = lines;
 }
 
-let baseline = {};
-try { baseline = JSON.parse(readFileSync(BASELINE_FILE, 'utf8')); } catch { /* first run */ }
-
-if (UPDATE) {
-  writeFileSync(BASELINE_FILE, JSON.stringify(current, null, 2) + '\n');
-  console.log(`Baseline updated: ${Object.keys(current).length} files over ${LIMIT} lines.`);
-  process.exit(0);
-}
-
-const errors = [];
-for (const [file, lines] of Object.entries(current)) {
-  if (!(file in baseline)) {
-    errors.push(`NEW oversized component: ${file} (${lines} lines > ${LIMIT}). Decompose it (CLAUDE.md rule).`);
-  } else if (lines > baseline[file]) {
-    errors.push(`${file} grew from ${baseline[file]} to ${lines} lines. Shrink it back or decompose.`);
-  }
-}
-
-const shrunk = Object.keys(baseline).filter(f => !(f in current) || current[f] < baseline[f]);
-if (shrunk.length && !errors.length) {
-  console.log(`Progress: ${shrunk.length} baselined file(s) shrank — run with --update to lock it in.`);
-}
-
-if (errors.length) {
-  console.error(errors.join('\n'));
-  process.exit(1);
-}
-console.log(`Component-size ratchet OK (${Object.keys(current).length} grandfathered, 0 regressions).`);
+process.exit(runRatchet({
+  current,
+  baselineFile: BASELINE_FILE,
+  update: UPDATE,
+  name: 'Component-size ratchet',
+  unit: 'lines',
+  newMessage: (file, lines) => `NEW oversized component: ${file} (${lines} lines > ${LIMIT}). Decompose it (CLAUDE.md rule).`,
+  grewMessage: (file, from, to) => `${file} grew from ${from} to ${to} lines. Shrink it back or decompose.`,
+}));

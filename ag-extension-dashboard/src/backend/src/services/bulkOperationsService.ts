@@ -54,8 +54,7 @@ class BulkOperationsService {
         ids: string[],
         userId: string,
         userRole: string,
-        deleteItem: (id: string, tx: Record<string, any>) => Promise<void>,
-        batchSize: number = 10
+        deleteItem: (id: string, tx: Record<string, any>) => Promise<void>
     ): Promise<BulkOperationResult> {
         const operationId = this.generateOperationId();
         let processed = 0;
@@ -64,19 +63,18 @@ class BulkOperationsService {
 
         logger.info(`Starting bulk ${entityType} deletion: ${ids.length} items`, { operationId, userId });
 
-        for (let i = 0; i < ids.length; i += batchSize) {
-            const batch = ids.slice(i, i + batchSize);
-            await this.prisma.$transaction(async (tx) => {
-                for (const id of batch) {
-                    try {
-                        await deleteItem(id, tx);
-                        processed++;
-                    } catch (error) {
-                        failed++;
-                        errors.push(`Failed to delete ${entityType} ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                    }
-                }
-            });
+        // One transaction per item. A shared transaction with per-item catches
+        // is wrong on Postgres: the first failed statement aborts it, the rest of
+        // the batch then fails, and COMMIT silently rolls back the items already
+        // counted as processed, so the reported counts were not what happened.
+        for (const id of ids) {
+            try {
+                await this.prisma.$transaction(async (tx) => deleteItem(id, tx));
+                processed++;
+            } catch (error) {
+                failed++;
+                errors.push(`Failed to delete ${entityType} ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
         }
 
         const result = { success: failed === 0, processed, failed, errors, operationId };

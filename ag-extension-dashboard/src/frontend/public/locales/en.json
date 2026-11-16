@@ -316,6 +316,7 @@
     "empty_no_visits": "No visits scheduled",
     "empty_no_visits_desc": "Schedule a visit to a farmer to get started.",
     "error_loading": "Error loading dashboard.",
+    "dashboard_summary_unavailable": "Dashboard figures could not be loaded. Other pages still work.",
     "exec_summary": "Executive Summary",
     "farmer_active_since": "Active Since",
     "farmer_active_status": "Active",

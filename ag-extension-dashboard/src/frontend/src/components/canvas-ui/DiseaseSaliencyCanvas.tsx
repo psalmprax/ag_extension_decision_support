@@ -249,7 +249,7 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {!hasLiveDetections && (
+      {imageSrc && !hasLiveDetections && (
         <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>

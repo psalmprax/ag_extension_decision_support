@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { logger } from '../../../utils/logger';
+import { selectedModelFor } from '../selectedModel';
 import { normalizeToolDefinitions, normalizeMessages, normalizeToolCalls } from '../toolCalling';
 import {
   BaseAIProvider,
@@ -93,7 +94,7 @@ export class OpenRouterProvider extends BaseAIProvider {
       throw new Error('OpenRouter API key not configured (OPENROUTER_API_KEY missing).');
     }
 
-    const model = req.model || process.env.AI_FALLBACK_MODEL || 'minimax/minimax-m3:free';
+    const model = req.model || selectedModelFor('openrouter') || 'minimax/minimax-m3:free';
 
     try {
       logger.info(`Routing request to OpenRouter provider (model: ${model})`);
@@ -143,7 +144,7 @@ export class OpenRouterProvider extends BaseAIProvider {
     options?: TextGenerationOptions
   ): Promise<TextGenerationResult> {
     const messages = normalizeMessages(prompt) as OpenRouterRequest['messages'];
-    const model = options?.model || process.env.AI_FALLBACK_MODEL || 'minimax/minimax-m3:free';
+    const model = options?.model || selectedModelFor('openrouter') || 'minimax/minimax-m3:free';
     const tools = normalizeToolDefinitions(options?.tools);
     const raw = await this.chatRaw({
       model,

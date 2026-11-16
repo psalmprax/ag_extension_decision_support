@@ -8,6 +8,7 @@ import { createSession, isSessionValid, revokeToken, withUserSessionLock } from 
 import { setAuthCookie, clearAuthCookie, getBearerToken } from '@/middleware/authCookie';
 import { isSubscriptionActive } from '@/services/subscriptionUtils';
 import { z } from 'zod';
+import type { NotificationPreferences } from '@/services/notificationPreferences';
 import { validate } from '@/middleware/validationMiddleware';
 import { auditMiddleware } from '@/middleware/auditMiddleware';
 import { authorize } from '@/middleware/authorize';
@@ -55,11 +56,18 @@ async function requireSession(req: Request): Promise<JWTPayload | null> {
 // was offline through expiry can recover its session without re-login, provided
 // the underlying session was never revoked. Issues a fresh token + session row.
 const REFRESH_GRACE_SECONDS = 7 * 24 * 3600;
+const notificationPreferencesSchema = z.object({
+    emailAlerts: z.boolean().optional(),
+    smsAlerts: z.boolean().optional(),
+    pushNotifications: z.boolean().optional(),
+}).strict();
+
 const updateProfileSchema = z.object({
     body: z.object({
         firstName: z.string().trim().min(1).max(100).optional(),
         lastName: z.string().trim().min(1).max(100).optional(),
         phone: z.string().trim().max(40).optional(),
+        notificationPreferences: notificationPreferencesSchema.optional(),
     }).strict().refine(body => Object.keys(body).length > 0, 'At least one profile field is required'),
 });
 
@@ -145,19 +153,24 @@ router.post('/logout', async (req: Request, res: Response) => {
 // Get current user
 router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), perUserRateLimit, validate(updateProfileSchema), auditMiddleware('auth.profile_update'), async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const updates = req.body as { firstName?: string; lastName?: string; phone?: string };
+    const updates = req.body as { firstName?: string; lastName?: string; phone?: string; notificationPreferences?: NotificationPreferences };
     const fields: Array<[string, unknown]> = [
         ['first_name', updates.firstName],
         ['last_name', updates.lastName],
         ['phone', updates.phone],
     ].filter((entry): entry is [string, string] => typeof entry[1] === 'string');
     const assignments = fields.map(([column], index) => `${column} = $${index + 1}`);
-    const values = fields.map(([, value]) => value);
+    const values: unknown[] = fields.map(([, value]) => value);
+    if (updates.notificationPreferences) {
+        // Merge, so toggling one channel never resets the others.
+        values.push(JSON.stringify(updates.notificationPreferences));
+        assignments.push(`notification_preferences = COALESCE(notification_preferences, '{}'::jsonb) || $${values.length}::jsonb`);
+    }
     try {
         const result = await query(
             `UPDATE users SET ${assignments.join(', ')}, updated_at = NOW()
              WHERE id = $${values.length + 1}
-             RETURNING id, email, first_name, last_name, role, region, phone`,
+             RETURNING id, email, first_name, last_name, role, region, phone, notification_preferences`,
             [...values, userId]
         );
         const user = result.rows[0];
@@ -172,6 +185,7 @@ router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manage
                 role: user.role,
                 region: user.region,
                 phone: user.phone,
+                notificationPreferences: user.notification_preferences ?? {},
             },
         });
     } catch (error) {
@@ -194,7 +208,7 @@ router.get('/me', async (req: Request, res: Response) => {
         }
 
         const result = await query(`
-            SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.region, u.phone, u.is_demo,
+            SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.region, u.phone, u.is_demo, u.notification_preferences,
                    sp.name as plan_name,
                    sp.price as plan_price,
                    s.status as subscription_status,
@@ -234,6 +248,7 @@ router.get('/me', async (req: Request, res: Response) => {
                 role: user.role,
                 region: user.region,
                 phone: user.phone,
+                notificationPreferences: user.notification_preferences ?? {},
                 planName,
                 isFree,
             },

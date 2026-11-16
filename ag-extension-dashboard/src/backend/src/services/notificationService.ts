@@ -1,5 +1,6 @@
 import { logger } from '../utils/logger';
 import { sendPushNotification } from './pushNotificationService';
+import { channelAllowed, loadNotificationPreferences } from './notificationPreferences';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { addNotificationJob } from '../queues/notificationQueue';
 import { config } from '@/config';
@@ -52,12 +53,15 @@ class NotificationService {
      */
     async send(payload: NotificationPayload): Promise<boolean> {
         try {
+            const prefs = await loadNotificationPreferences(payload.userId);
             switch (payload.channel) {
                 case 'in_app':
-                    return await this.sendInApp(payload);
+                    return await this.sendInApp(payload, channelAllowed(prefs, 'push'));
                 case 'email':
+                    if (!channelAllowed(prefs, 'email')) return this.skipByPreference(payload);
                     return await this.sendEmail(payload);
                 case 'sms':
+                    if (!channelAllowed(prefs, 'sms')) return this.skipByPreference(payload);
                     return await this.sendSMS(payload);
                 default:
                     logger.warn(`Unknown notification channel: ${payload.channel}`);
@@ -69,10 +73,17 @@ class NotificationService {
         }
     }
 
+    /** The user turned this channel off in Settings: not sent, and not an error. */
+    private skipByPreference(payload: NotificationPayload): boolean {
+        logger.info(`Skipped ${payload.channel} notification to user ${payload.userId}: channel turned off in their settings`);
+        return true;
+    }
+
     /**
-     * Send in-app notification (store in database)
+     * Send in-app notification (store in database). The in-app record is always
+     * kept; the Web Push copy follows the user's push preference.
      */
-    private async sendInApp(payload: NotificationPayload): Promise<boolean> {
+    private async sendInApp(payload: NotificationPayload, pushAllowed = true): Promise<boolean> {
         try {
             // Store notification in database for in-app display
             await prisma.notification.create({
@@ -88,9 +99,11 @@ class NotificationService {
 
             logger.info(`In-app notification saved and sent to user ${payload.userId}: ${payload.title}`);
 
-            // Also trigger Web Push for in-app notifications
-            const metadataUrl = typeof payload.metadata?.url === 'string' ? payload.metadata.url : '/';
-            await sendPushNotification(payload.userId, payload.title, payload.message, metadataUrl);
+            // Also trigger Web Push for in-app notifications, unless the user turned push off.
+            if (pushAllowed) {
+                const metadataUrl = typeof payload.metadata?.url === 'string' ? payload.metadata.url : '/';
+                await sendPushNotification(payload.userId, payload.title, payload.message, metadataUrl);
+            }
 
             return true;
         } catch (error) {

@@ -8,8 +8,6 @@ import {
   MessageSquare,
   Radio,
   Bot,
-  Sprout,
-  CheckCircle2,
   ArrowLeft,
   Trash2,
   Mic,
@@ -21,6 +19,7 @@ import { useDeviceThermalMemoryBudget } from '@/hooks/useDeviceThermalMemoryBudg
 import { VirtualizedList } from '@/components/common/VirtualizedList';
 import { useDemoMode } from '@/demo';
 import { FarmerChatMessage } from '@/components/chat/FarmerChatMessage';
+import { PlotTelemetryDrawer, type DetectedHazard, type HazardEvaluation } from '@/components/chat/PlotTelemetryDrawer';
 import { VoiceNoteTaker } from '@/components/audio/VoiceNoteTaker';
 import { fetchWeather } from '@/api/weatherService';
 import { getChatCompletion } from '@/api/aiService';
@@ -41,21 +40,6 @@ interface FarmerChatPageProps {
   onDeleteConversation?: (id: string) => void;
 }
 
-// Forecast thresholds are estimates, not confirmed outbreaks or official alerts.
-
-interface DetectedHazard {
-  hazardType: string;
-  threatLevel: string;
-  title: string;
-}
-
-interface HazardEvaluation {
-  conversationId: string | null;
-  status: 'idle' | 'loading' | 'ready' | 'unavailable';
-  hazards: DetectedHazard[];
-  evaluatedDays?: number;
-  totalDays?: number;
-}
 
 export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   farmerConversations,
@@ -421,8 +405,8 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
           {activeFarmerConvId && activeConv ? (
             <>
               {/* Active Conversation Top Bar */}
-              <div className="p-3 sm:p-4 border-b border-slate-200/80 dark:border-white/[0.08] flex justify-between items-center bg-slate-50/80 dark:bg-slate-950/40">
-                <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-3 sm:p-4 border-b border-slate-200/80 dark:border-white/[0.08] flex justify-between items-center gap-2 bg-slate-50/80 dark:bg-slate-950/40">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                   <button
                     onClick={() => setActiveFarmerConvId(null)}
                     className="md:hidden p-2 rounded-lg bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 text-slate-700 dark:text-white transition-colors mr-1"
@@ -434,11 +418,8 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                     {(activeConv.farmerName || activeConv.title || 'F').trim().charAt(0).toUpperCase() || 'F'}
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-2 truncate">
-                      <span className="truncate">{activeConv.farmerName || activeConv.title || 'Smallholder Client'}</span>
-                      <span className="hidden sm:inline text-xxs font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 shrink-0">
-                        SMS & WhatsApp Synced
-                      </span>
+                    <h4 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                      {activeConv.farmerName || activeConv.title || 'Smallholder Client'}
                     </h4>
                     <div className="flex items-center gap-2 text-xxs text-slate-500 dark:text-white/40 font-mono">
                       <span>1-to-1 Advisory</span>
@@ -464,9 +445,9 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                       <span className="hidden sm:inline">Delete</span>
                     </button>
                   )}
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-                  <span className="text-xxs font-mono text-emerald-700 dark:text-emerald-400 font-medium hidden sm:inline">
-                    Live Channel
+                  <span className={`w-1.5 h-1.5 rounded-full ${socketConnected ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-slate-400'}`} aria-hidden="true" />
+                  <span className={`text-xxs font-mono font-medium hidden lg:inline ${socketConnected ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500'}`}>
+                    {socketConnected ? 'Live updates' : 'Updates paused'}
                   </span>
                 </div>
               </div>
@@ -564,6 +545,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                   />
                   <button
                     type="submit"
+                    aria-label="Send message"
                     disabled={!farmerChatInput.trim()}
                     className={`p-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors disabled:opacity-40 ${btnClass}`}
                   >
@@ -587,64 +569,8 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
           )}
         </div>
 
-        {/* Right Column: Farmer Mini Telemetry Drawer (Bento Style) */}
         {activeConv && (
-          <div className="hidden xl:flex w-72 flex-col backdrop-blur-xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/[0.08] rounded-xl p-5 shadow-sm space-y-4 overflow-y-auto">
-            <div className="text-xs font-mono font-medium text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-              <Sprout className="w-4 h-4" />
-              <span>Plot Telemetry</span>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] space-y-1">
-              <div className="text-[10px] font-mono text-slate-500 dark:text-white/40">NDVI CANOPY VIGOR</div>
-              <div className="text-base font-bold text-emerald-600 dark:text-emerald-400">{activeFarmer?.ndvi ? `${activeFarmer.ndvi.toFixed(2)}` : '—'} {activeFarmer?.ndvi ? (activeFarmer.ndvi > 0.6 ? '(Optimal)' : activeFarmer.ndvi > 0.3 ? '(Moderate)' : '(Low)') : ''}</div>
-              <div className="text-[9px] text-slate-500 dark:text-white/40">Sentinel-2 Multispectral — add field polygon for NDVI</div>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] space-y-1">
-              <div className="text-[10px] font-mono text-slate-500 dark:text-white/40">SOIL pH & CARBON</div>
-              <div className="text-base font-bold text-amber-600 dark:text-amber-400">{plotTelemetry.loading ? '…' : plotTelemetry.ph != null ? `${plotTelemetry.ph.toFixed(1)} pH / ${plotTelemetry.soc ?? '—'} g/kg SOC` : activeFarmer?.ph ? `${activeFarmer.ph.toFixed(1)} pH` : '—'}</div>
-              <div className="text-[9px] text-slate-500 dark:text-white/40">ISRIC SoilGrids 250m {plotTelemetry.ph != null ? '• live' : activeFarmer?.ph ? '• cached' : '• no farmer geo'}</div>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] space-y-1">
-              <div className="text-[10px] font-mono text-slate-500 dark:text-white/40">NASA POWER WEATHER</div>
-              <div className="text-base font-bold text-sky-600 dark:text-sky-400">{plotTelemetry.temp != null ? `${plotTelemetry.temp}°C` : plotTelemetry.moisture != null ? `${plotTelemetry.moisture}% VWC` : activeFarmer?.temperature ? `${activeFarmer.temperature}°C` : '—'}</div>
-              <div className="text-[9px] text-slate-500 dark:text-white/40">Open-Meteo modeled {plotTelemetry.temp != null ? '• live' : '• no geo'}</div>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] space-y-1">
-              <div className="text-[10px] font-mono text-slate-500 dark:text-white/40">FORECAST THRESHOLDS</div>
-              <div className={`text-base font-bold ${hazardEval.status === 'ready' && hazardEval.hazards.length > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'} flex items-center gap-1`}>
-                <CheckCircle2 className={`w-4 h-4 ${hazardEval.status === 'ready' && hazardEval.hazards.length > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`} />
-                <span>
-                  {hazardEval.status === 'loading'
-                    ? '…'
-                    : hazardEval.status === 'ready'
-                      ? hazardEval.hazards.length > 0
-                        ? `${hazardEval.hazards.length} hazard window${hazardEval.hazards.length > 1 ? 's' : ''}`
-                        : 'No thresholds triggered on evaluated days'
-                      : '—'}
-                </span>
-              </div>
-              <div className="text-[9px] text-slate-500 dark:text-white/40">
-                {hazardEval.status === 'ready' && hazardEval.hazards.length > 0
-                  ? hazardEval.hazards[0].title
-                  : hazardEval.status === 'unavailable'
-                    ? 'Live weather unavailable — hazard evaluation skipped'
-                    : hazardEval.status === 'idle'
-                      ? 'Add farmer region for live hazard evaluation'
-                        : hazardEval.status === 'loading'
-                          ? 'Evaluating available forecast data'
-                          : 'No hazard thresholds detected on available days'}
-              </div>
-              {hazardEval.status === 'ready' && (
-                <div className="text-[9px] text-slate-500 dark:text-white/40">
-                  Estimated thresholds only • {hazardEval.evaluatedDays}/{hazardEval.totalDays} days evaluated • not an outbreak diagnosis
-                </div>
-              )}
-            </div>
-          </div>
+          <PlotTelemetryDrawer farmer={activeFarmer} telemetry={plotTelemetry} hazardEval={hazardEval} />
         )}
       </div>
     </div>

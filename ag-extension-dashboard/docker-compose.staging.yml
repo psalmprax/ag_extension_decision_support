@@ -135,7 +135,9 @@ services:
           memory: 8G
     environment:
       OLLAMA_KEEP_ALIVE: 30m
-    entrypoint: /bin/sh -c "ollama serve & sleep 10 && ollama pull llama3.2:1b && ollama pull nomic-embed-text && wait"
+      # Same model the backend is configured to call (OLLAMA_MODEL in .env).
+      OLLAMA_PULL_MODEL: ${OLLAMA_MODEL:-llama3.2:1b}
+    entrypoint: /bin/sh -c "ollama serve & sleep 10 && ollama pull $${OLLAMA_PULL_MODEL} && ollama pull nomic-embed-text && wait"
 
 volumes:
   traefik_letsencrypt:

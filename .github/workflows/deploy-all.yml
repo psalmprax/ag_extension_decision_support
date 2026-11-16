@@ -6,10 +6,6 @@ on:
       - stage
       - master
       - 'feature/*'
-  pull_request:
-    branches:
-      - master
-    types: [closed]
   workflow_dispatch:
     inputs:
       force_clean_rebuild:
@@ -26,7 +22,9 @@ permissions:
 # killed between `compose up` and its health gate would leave the host in an
 # unknown state, so later runs queue instead.
 concurrency:
-  group: deploy-all-${{ github.ref }}
+  # Keyed by branch name so every way of starting a deploy of the same branch
+  # (push, manual dispatch) queues behind the one already running.
+  group: deploy-all-${{ github.ref_name }}
   cancel-in-progress: false
 
 # `|| true` convention in the SSH scripts below (all run under `set -e`):
@@ -565,7 +563,10 @@ jobs:
   # 3. Deploy to Production (New Server) — 5 timed steps, parallel builds via BuildKit
   deploy-production:
     needs: ci-checks
-    if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'master') || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    # Exactly one trigger per change: a merged PR already produces a push to
+    # master. (A separate pull_request:closed trigger ran a second production
+    # deploy in parallel, in another concurrency group, against the same host.)
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     concurrency:
       group: production-deployment
       cancel-in-progress: false
@@ -747,26 +748,34 @@ jobs:
             if [ -z "$DB_UP" ] || [ -z "$REDIS_UP" ]; then
               echo "Databases down — building infrastructure..."
               docker compose $COMPOSE_FILES up -d --build app-db redis
+            else
+              # Apply .env changes (e.g. a new DATABASE_PASSWORD) now, before anything
+              # depends on them; compose recreates only when the config changed.
+              docker compose $COMPOSE_FILES up -d app-db redis
             fi
 
             echo "Waiting for app-db + redis to be healthy..."
+            INFRA_HEALTHY=0
             for i in $(seq 1 60); do
               DB_H=$(docker inspect --format='{{.State.Health.Status}}' ag-dashboard-db 2>/dev/null || echo 'unknown')
               REDIS_H=$(docker inspect --format='{{.State.Health.Status}}' ag-dashboard-redis 2>/dev/null || echo 'unknown')
               if [ "$DB_H" = "healthy" ] && [ "$REDIS_H" = "healthy" ]; then
                 echo "  app-db=$DB_H  redis=$REDIS_H"
                 echo "Both services healthy."
-                exit 0
+                INFRA_HEALTHY=1
+                break
               fi
               if [ $((i % 10)) -eq 0 ]; then
                 echo "  Attempt $i/60 — app-db=$DB_H  redis=$REDIS_H"
               fi
               sleep 2
             done
-            echo "app-db or redis never reached healthy state after 120s" >&2
-            docker logs --tail 80 ag-dashboard-db 2>/dev/null || true
-            docker logs --tail 40 ag-dashboard-redis 2>/dev/null || true
-            exit 1
+            if [ "$INFRA_HEALTHY" -ne 1 ]; then
+              echo "app-db or redis never reached healthy state after 120s" >&2
+              docker logs --tail 80 ag-dashboard-db 2>/dev/null || true
+              docker logs --tail 40 ag-dashboard-redis 2>/dev/null || true
+              exit 1
+            fi
 
       # ── Pre-build smoke gate: verify ettametta-ollama is live before the long
       # parallel build. Same pattern as deploy-stage.yml's gate: dedicated step,
@@ -991,12 +1000,30 @@ jobs:
               rm -f .deploy/prev-backend-image
               echo "No running backend — fresh install, no rollback snapshot."
             fi
+            # .env's DATABASE_PASSWORD is the source of truth. Rotate it only
+            # after replacement images are built, immediately before recreating
+            # their consumers; rotating in the infrastructure step would leave
+            # the old backend unable to reconnect during a failed/long build.
+            echo "Aligning the database role password with .env..."
+            docker exec -i ag-dashboard-db sh -c 'psql -v ON_ERROR_STOP=1 -q -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -v pw="$POSTGRES_PASSWORD"' <<'SQL'
+            ALTER ROLE CURRENT_USER WITH PASSWORD :'pw';
+            SQL
+            echo "  done"
             if ! docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --remove-orphans --no-build traefik backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama; then
               echo "Compose up failed with container conflict. Cleaning up conflicting shells and retrying..."
               docker rm -f ag-dashboard-db ag-dashboard-redis ag-traefik 2>/dev/null || true
               bash ../scripts/free-web-ports.sh ag-extension-dashboard
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build app-db redis
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --remove-orphans --no-build traefik backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama
+              if ! docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --remove-orphans --no-build traefik backend frontend agent-zero crew-ai discovery-scraper ettametta-ollama; then
+                if [ -n "$PREV_BACKEND_ID" ]; then
+                  echo "Cutover failed; restoring the previous backend image..."
+                  sed -i '/^BACKEND_IMAGE_ID=/d' .env
+                  echo "BACKEND_IMAGE_ID=$PREV_BACKEND_ID" >> .env
+                  docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --no-deps --force-recreate backend
+                fi
+                echo "FATAL: service cutover failed after retry." >&2
+                exit 1
+              fi
             fi
 
       # ── Step 4/5: Migrations against the FRESHLY BUILT backend image ──

@@ -23,6 +23,7 @@ ARG BACKEND_DIR=ag-extension-dashboard/src/backend
 
 # Copy only dependency manifests first for maximum layer caching
 COPY ${BACKEND_DIR}/package*.json ./
+COPY ${BACKEND_DIR}/vendor/ ./vendor/
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
 
 ENV npm_config_fetch_retries=5 \
@@ -57,6 +58,7 @@ ENV npm_config_fetch_retries=5 \
     npm_config_maxsockets=5
 ARG BACKEND_DIR=ag-extension-dashboard/src/backend
 COPY ${BACKEND_DIR}/package*.json ./
+COPY ${BACKEND_DIR}/vendor/ ./vendor/
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
 
 # Install ALL dependencies including devDeps
@@ -100,6 +102,7 @@ ENV npm_config_fetch_retries=5 \
     npm_config_maxsockets=5
 ARG BACKEND_DIR=ag-extension-dashboard/src/backend
 COPY ${BACKEND_DIR}/package*.json ./
+COPY ${BACKEND_DIR}/vendor/ ./vendor/
 COPY ${BACKEND_DIR}/prisma/ ./prisma/
 RUN for attempt in 1 2 3 4 5; do \
       echo "==> [backend dev] npm install attempt $attempt of 5..." && \

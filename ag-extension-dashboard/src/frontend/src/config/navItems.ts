@@ -38,7 +38,7 @@ export const getNavItems = (): NavItem[] => [
     label: 'Dashboard',
     labelKey: 'nav_dashboard',
     icon: LayoutDashboard,
-    roles: ['extension_officer', 'admin'],
+    roles: ['extension_officer', 'admin', 'regional_manager'],
   },
   {
     id: 'farmer_dashboard',
@@ -69,21 +69,21 @@ export const getNavItems = (): NavItem[] => [
     label: 'Knowledge Base',
     labelKey: 'nav_knowledge',
     icon: Search,
-    roles: ['extension_officer', 'admin', 'farmer'],
+    roles: ['extension_officer', 'admin', 'farmer', 'regional_manager'],
   },
   {
     id: 'portfolio',
     label: 'Farmers',
     labelKey: 'nav_farmers',
     icon: Users,
-    roles: ['extension_officer', 'admin'],
+    roles: ['extension_officer', 'admin', 'regional_manager'],
   },
   {
     id: 'visits',
     label: 'Visits',
     labelKey: 'nav_visits',
     icon: MapPin,
-    roles: ['extension_officer', 'admin', 'farmer'],
+    roles: ['extension_officer', 'admin', 'farmer', 'regional_manager'],
     requiresPro: true,
   },
   {
@@ -91,14 +91,14 @@ export const getNavItems = (): NavItem[] => [
     label: 'Reports',
     labelKey: 'nav_reports',
     icon: FileText,
-    roles: ['extension_officer', 'admin'],
+    roles: ['extension_officer', 'admin', 'regional_manager'],
   },
   {
     id: 'sms',
     label: 'SMS',
     labelKey: 'nav_sms',
     icon: Send,
-    roles: ['extension_officer', 'admin'],
+    roles: ['extension_officer', 'admin', 'regional_manager'],
     requiresPro: true,
   },
   {
@@ -106,7 +106,7 @@ export const getNavItems = (): NavItem[] => [
     label: 'Analytics',
     labelKey: 'nav_analytics',
     icon: BarChart3,
-    roles: ['extension_officer', 'admin'],
+    roles: ['extension_officer', 'admin', 'regional_manager'],
     requiresPro: true,
   },
   {
@@ -142,7 +142,7 @@ export const getNavItems = (): NavItem[] => [
     label: 'Fields',
     labelKey: 'nav_fields',
     icon: Leaf,
-    roles: ['extension_officer', 'admin', 'farmer'],
+    roles: ['extension_officer', 'admin', 'farmer', 'regional_manager'],
   },
   {
     id: 'disease_diagnosis',

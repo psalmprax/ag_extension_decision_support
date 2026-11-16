@@ -316,6 +316,7 @@
     "empty_no_visits": "Nincs tervezett látogatás",
     "empty_no_visits_desc": "Tervezzen egy látogatást egy mezőgazdához, hogy elkezdjen.",
     "error_loading": "Hiba a dashboard betöltésekor.",
+    "dashboard_summary_unavailable": "Dashboard figures could not be loaded. Other pages still work.",
     "exec_summary": "Vezérigazgatási Összefoglaló",
     "farmer_active_since": "Aktív Azóta",
     "farmer_active_status": "Aktív",

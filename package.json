@@ -19,6 +19,7 @@
     "test": "npm run test:backend && npm run test:frontend",
     "test:e2e": "npx playwright test",
     "check:component-size": "node scripts/component-size-ratchet.cjs",
+    "check:explicit-any": "node scripts/explicit-any-ratchet.cjs",
     "prepare": "husky || true",
     "lint:frontend": "cd ag-extension-dashboard/src/frontend && npm run lint",
     "lint:backend": "cd ag-extension-dashboard/src/backend && npm run lint",

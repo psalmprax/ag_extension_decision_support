@@ -17,6 +17,14 @@ export interface User {
   phone?: string;
   planName?: string;
   isFree?: boolean;
+  notificationPreferences?: NotificationPreferences;
+}
+
+/** Alert channels the user switched on or off in Settings (missing = on). */
+export interface NotificationPreferences {
+  emailAlerts?: boolean;
+  smsAlerts?: boolean;
+  pushNotifications?: boolean;
 }
 
 export interface Farmer {
@@ -288,7 +296,7 @@ export const useAppStore = create<AppState>()(
             }));
             toast.success('Farmer removed successfully');
           } else {
-            toast.error('Failed to remove farmer');
+            toast.error(`Failed to remove farmer: ${response.error}`);
           }
         } catch (error) {
           console.error('Remove farmer error:', error);

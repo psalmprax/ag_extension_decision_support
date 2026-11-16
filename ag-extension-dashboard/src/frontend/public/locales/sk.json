@@ -316,6 +316,7 @@
     "empty_no_visits": "Žiadne návštevy",
     "empty_no_visits_desc": "Naplánujte návštevu farmára, aby ste sa začali.",
     "error_loading": "Chyba pri načítaní dashboardu.",
+    "dashboard_summary_unavailable": "Dashboard figures could not be loaded. Other pages still work.",
     "exec_summary": "Štatistika",
     "farmer_active_since": "Aktívny od",
     "farmer_active_status": "Aktívny",

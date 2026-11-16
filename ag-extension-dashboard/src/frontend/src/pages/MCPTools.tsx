@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { ratePercent } from '@/lib/rates';
 import { RefreshCw, Wrench, Play, CheckCircle, Terminal } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -153,10 +154,8 @@ function MCPTools() {
     h => new Date(h.timestamp).toDateString() === new Date().toDateString()
   ).length;
   const successCount = executionHistory.filter(h => !h.result?.isError).length;
-  const successRate =
-    executionHistory.length > 0
-      ? `${Math.round((successCount / executionHistory.length) * 100)}%`
-      : '100%';
+  // No executions yet: there is no rate to show.
+  const successRate = ratePercent(successCount, executionHistory.length) ?? '—';
 
   return (
     <div className="space-y-6">

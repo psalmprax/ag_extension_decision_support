@@ -10,17 +10,6 @@ export const fetchMessages = async (conversationId: string) => {
   return data;
 };
 
-export const sendMessage = async (params: {
-  conversationId?: string;
-  message: string;
-  farmerId?: string;
-  mode?: string;
-  language?: string;
-}) => {
-  const { data } = await apiClient.post('/chatbot/message', params);
-  return data;
-};
-
 export const createConversation = async (params: {
   farmerId?: string;
   farmerName?: string;

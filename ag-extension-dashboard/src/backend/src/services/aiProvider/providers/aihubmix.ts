@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { logger } from '../../../utils/logger';
 import { config } from '@/config';
+import { selectedModelFor } from '../selectedModel';
 import { normalizeToolDefinitions, normalizeMessages, normalizeToolCalls } from '../toolCalling';
 import {
   BaseAIProvider,
@@ -326,7 +327,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       if (!key) return false;
 
       const authHeader = key.startsWith('Bearer ') ? key : `Bearer ${key}`;
-      const probeModel = process.env.AI_PRIMARY_MODEL || 'gemini-3.1-flash-lite';
+      const probeModel = selectedModelFor('aihubmix') || 'gemini-3.1-flash-lite';
 
       // 10s timeout to tolerate remote proxy and multi-model routing latency
       try {
@@ -432,7 +433,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       throw new Error('AIHubMix API key not configured (AIHUBMIX_API_KEY or AIHUBMIX_ACCESS_KEY missing).');
     }
 
-    const model = req.model || process.env.AI_PRIMARY_MODEL || 'gemini-3.1-flash-lite';
+    const model = req.model || selectedModelFor('aihubmix') || 'gemini-3.1-flash-lite';
     const enableWebSearch = req.web_search ?? (process.env.AIHUBMIX_WEB_SEARCH !== 'false');
 
     const makeRequest = (withWebSearch: boolean) => this.makeChatRequest(req, model, key, withWebSearch);
@@ -456,7 +457,7 @@ export class AIHubMixProvider extends BaseAIProvider {
     options?: TextGenerationOptions
   ): Promise<TextGenerationResult> {
     const messages = normalizeMessages(prompt) as AIHubMixRequest['messages'];
-    const model = options?.model || process.env.AI_PRIMARY_MODEL || 'gemini-3.1-flash-lite';
+    const model = options?.model || selectedModelFor('aihubmix') || 'gemini-3.1-flash-lite';
     const tools = normalizeToolDefinitions(options?.tools);
     const raw = await this.chatRaw({
       model,
@@ -492,7 +493,10 @@ export class AIHubMixProvider extends BaseAIProvider {
     const model = options?.model || process.env.AI_EMBEDDINGS_MODEL || 'text-embedding-3-large';
     const response = await axios.post(
       `${this.baseUrl}/embeddings`,
-      { model, input: text },
+      // Forward the requested width (OpenAI-compatible `dimensions`): the pgvector
+      // columns are vector(EMBEDDING_DIMENSIONS), and text-embedding-3-large is
+      // 3072 wide unless told otherwise.
+      { model, input: text, ...(options?.dimensions ? { dimensions: options.dimensions } : {}) },
       {
         headers: { Authorization: `Bearer ${key}` },
         timeout: 15000,
@@ -517,7 +521,7 @@ export class AIHubMixProvider extends BaseAIProvider {
     ];
 
     const result = await this.generateText(messages, {
-      model: options?.model || process.env.AI_PRIMARY_MODEL || 'gemini-3.1-flash-lite',
+      model: options?.model || selectedModelFor('aihubmix') || 'gemini-3.1-flash-lite',
       temperature: options?.temperature ?? 0.2,
       maxTokens: Math.max(options?.maxTokens ?? 4096, 4096),
       tools: options?.tools,
@@ -577,7 +581,7 @@ export class AIHubMixProvider extends BaseAIProvider {
       throw new Error('AIHubMix API key not configured (AIHUBMIX_API_KEY or AIHUBMIX_ACCESS_KEY missing).');
     }
 
-    const model = options?.model || process.env.AI_PRIMARY_MODEL || 'gemini-3.1-flash-lite';
+    const model = options?.model || selectedModelFor('aihubmix') || 'gemini-3.1-flash-lite';
 
     const base64Image = this.encodeImage(imageData);
 
