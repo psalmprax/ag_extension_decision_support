@@ -22,7 +22,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  AUDIT_BASE_URL: ${{ vars.STAGING_BASE_URL || 'https://staging.gpexts.com' }}
+  # The stage frontend is only bound to the server's localhost (and its public
+  # domain has no DNS record), so the audit reaches it through an SSH tunnel.
+  AUDIT_BASE_URL: http://localhost:7503
   AUDIT_ADMIN_EMAIL: ui-audit-admin@audit.invalid
   AUDIT_OFFICER_EMAIL: ui-audit-officer@audit.invalid
   AUDIT_FARMER_EMAIL: ui-audit-farmer@audit.invalid
@@ -34,8 +36,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Stage is reachable
-        run: curl -fsS --max-time 20 -o /dev/null -w 'stage frontend HTTP %{http_code}\n' "$AUDIT_BASE_URL/login"
+      - name: Tunnel to the stage frontend
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
+          STAGE_HOST: ${{ secrets.TEST_SERVER_IP }}
+          STAGE_PORT: ${{ secrets.TEST_SERVER_PORT || 22 }}
+          STAGE_USER: ${{ vars.TEST_DEPLOY_SSH_USER || 'root' }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/stage && chmod 600 ~/.ssh/stage
+          ssh_stage() { ssh -i ~/.ssh/stage -p "$STAGE_PORT" -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 "$STAGE_USER@$STAGE_HOST" "$@"; }
+          remote=$(ssh_stage "docker port ag-dashboard-frontend 80/tcp | head -1")
+          echo "stage frontend is published on the host at $remote"
+          ssh_stage -f -N -L "7503:$remote"
+          for i in $(seq 1 10); do curl -fsS -o /dev/null --max-time 10 "$AUDIT_BASE_URL/login" && break; sleep 2; done
+          curl -fsS --max-time 10 -o /dev/null -w 'stage frontend through the tunnel: HTTP %{http_code}\n' "$AUDIT_BASE_URL/login"
+          curl -fsS --max-time 10 -w '\nstage API through the tunnel: HTTP %{http_code}\n' "$AUDIT_BASE_URL/api/health"
 
       - name: One-time password for the audit accounts
         run: |
