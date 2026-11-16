@@ -28,6 +28,7 @@ env:
   AUDIT_ADMIN_EMAIL: ui-audit-admin@audit.invalid
   AUDIT_OFFICER_EMAIL: ui-audit-officer@audit.invalid
   AUDIT_FARMER_EMAIL: ui-audit-farmer@audit.invalid
+  AUDIT_DEMO: 'true'   # also crawl the public demo session (no account needed)
 
 jobs:
   audit:
