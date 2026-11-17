@@ -6,6 +6,7 @@ import { whatsappService } from './whatsappService';
 import { telegramService } from './telegramService';
 import { AIProviderFactory } from './aiProvider/aiProvider';
 import type { AutonomousCampaignRunRow, RegionalAgronomySkillRow } from '../types/rowTypes';
+import { demoSql } from '@/services/demoScope';
 
 interface GoalCampaignInput {
     goalPrompt: string;
@@ -70,7 +71,8 @@ class AutonomousCampaignService {
         targetRegion?: string | null,
         targetCrop?: string | null
     ): Promise<any[]> {
-        let farmerSql = `SELECT * FROM farmers WHERE 1=1`;
+        // Campaigns never target demo farmers.
+        let farmerSql = `SELECT * FROM farmers WHERE ${demoSql('farmers')}`;
         const farmerParams: any[] = [];
 
         if (tenantId) {
@@ -406,7 +408,7 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
 
     private async getDefaultOfficerId(tenantId?: string | null): Promise<string | null> {
         try {
-            let sql = `SELECT id FROM users WHERE role IN ('extension_officer', 'regional_manager', 'admin')`;
+            let sql = `SELECT id FROM users WHERE role IN ('extension_officer', 'regional_manager', 'admin') AND ${demoSql('users')}`;
             const params: any[] = [];
             if (tenantId) {
                 params.push(tenantId);

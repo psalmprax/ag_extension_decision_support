@@ -4,6 +4,7 @@ import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import { isSessionValid } from '@/services/sessionService';
 import { getBearerToken } from '@/middleware/authCookie';
+import { tokenIsDemo } from '@/services/demoScope';
 
 export type UserRole = 'admin' | 'regional_manager' | 'extension_officer' | 'farmer';
 
@@ -53,7 +54,7 @@ export const authorize = (allowedRoles: UserRole[]) => {
                 userId: decoded.userId,
                 email: decoded.email,
                 role: normalizedRole,
-                isDemo: decoded.isDemo === true || decoded.email?.toLowerCase() === 'demo@agridemo.com',
+                isDemo: tokenIsDemo(decoded),
             };
 
             // Check if user role is allowed
@@ -126,7 +127,7 @@ export const optionalAuth = async (req: Request, _res: Response, next: NextFunct
             userId: decoded.userId,
             email: decoded.email,
             role: decoded.role === ('agent' as unknown as UserRole) ? 'extension_officer' : decoded.role,
-            isDemo: decoded.isDemo === true || decoded.email?.toLowerCase() === 'demo@agridemo.com',
+            isDemo: tokenIsDemo(decoded),
         };
 
         next();

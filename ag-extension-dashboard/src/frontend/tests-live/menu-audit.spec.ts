@@ -23,6 +23,8 @@ interface PageReport {
   planLocked: boolean;
   stuckLoading: boolean;
   apiFailures: ApiFailure[];
+  /** Every API call the page made, as "METHOD /path STATUS". */
+  apiCalls: string[];
   requestFailures: string[];
   consoleErrors: string[];
   pageErrors: string[];
@@ -38,6 +40,8 @@ const ACCOUNTS = [
   { role: 'admin', email: process.env.AUDIT_ADMIN_EMAIL },
   { role: 'extension_officer', email: process.env.AUDIT_OFFICER_EMAIL },
   { role: 'farmer', email: process.env.AUDIT_FARMER_EMAIL },
+  // The public demo session: signs in with the "Try the Demo" button, no account needed.
+  { role: 'demo', email: process.env.AUDIT_DEMO === 'true' ? 'demo' : undefined },
 ].filter((a): a is { role: string; email: string } => Boolean(a.email));
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
@@ -54,9 +58,13 @@ async function dismissOverlays(page: Page) {
 
 async function signIn(page: Page, email: string) {
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[type="email"]').fill(email);
-  await page.locator('input[type="password"]').fill(PASSWORD);
-  await page.locator('button[type="submit"]').first().click();
+  if (email === 'demo') {
+    await page.getByRole('button', { name: /try the demo/i }).first().click();
+  } else {
+    await page.locator('input[type="email"]').fill(email);
+    await page.locator('input[type="password"]').fill(PASSWORD);
+    await page.locator('button[type="submit"]').first().click();
+  }
   await page.locator('nav').first().waitFor({ state: 'visible', timeout: 60_000 });
   await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => undefined);
   await dismissOverlays(page);
@@ -103,11 +111,19 @@ for (const account of ACCOUNTS) {
   test(`menu audit as ${account.role}`, async ({ page }) => {
     test.setTimeout(25 * 60_000);
     const reports: PageReport[] = [];
-    let current: { api: ApiFailure[]; failed: string[]; console: string[]; errors: string[] } = { api: [], failed: [], console: [], errors: [] };
+    let current: { api: ApiFailure[]; calls: Set<string>; failed: string[]; console: string[]; errors: string[] } =
+      { api: [], calls: new Set(), failed: [], console: [], errors: [] };
+    const allCalls = new Set<string>();
 
     page.on('response', async response => {
       const url = new URL(response.url());
-      if (!url.pathname.startsWith('/api/') || response.status() < 400) return;
+      if (!url.pathname.startsWith('/api/')) return;
+      // Ids in paths are collapsed so the call list reads as endpoints.
+      const endpoint = url.pathname.replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, ':id').replace(/\/\d+(?=\/|$)/g, '/:n');
+      const call = `${response.request().method()} ${endpoint} ${response.status()}`;
+      current.calls.add(call);
+      allCalls.add(call);
+      if (response.status() < 400) return;
       const body = await response.text().catch(() => '');
       current.api.push({ method: response.request().method(), path: url.pathname + url.search, status: response.status(), body: clip(body.replace(/\s+/g, ' '), 240) });
     });
@@ -122,14 +138,17 @@ for (const account of ACCOUNTS) {
 
     const dir = path.join(OUT, account.role);
     fs.mkdirSync(dir, { recursive: true });
-    const save = () => fs.writeFileSync(path.join(OUT, `${account.role}.json`), JSON.stringify(reports, null, 2));
+    const save = () => {
+      fs.writeFileSync(path.join(OUT, `${account.role}.json`), JSON.stringify(reports, null, 2));
+      fs.writeFileSync(path.join(OUT, `${account.role}-api-calls.json`), JSON.stringify([...allCalls].sort(), null, 2));
+    };
     await signIn(page, account.email);
     await page.screenshot({ path: path.join(dir, '00-after-sign-in.jpg'), type: 'jpeg', quality: 55 });
     const items = await menuItems(page);
     console.log(`[${account.role}] signed in; ${items.length} menu items`);
 
     for (const [order, item] of items.entries()) {
-      current = { api: [], failed: [], console: [], errors: [] };
+      current = { api: [], calls: new Set(), failed: [], console: [], errors: [] };
       const started = Date.now();
       console.log(`[${account.role}] ${order + 1}/${items.length} ${item.section} › ${item.label}`);
       let obstructed: string | null = null;
@@ -157,6 +176,7 @@ for (const account of ACCOUNTS) {
         planLocked: /Pro Feature Locked/i.test(text),
         stuckLoading: spinners > 0 || /^\s*loading/i.test(text),
         apiFailures: current.api,
+        apiCalls: [...current.calls].sort(),
         requestFailures: current.failed,
         consoleErrors: current.console,
         pageErrors: current.errors,

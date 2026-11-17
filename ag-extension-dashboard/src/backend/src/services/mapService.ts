@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { query, getPool } from './databaseService';
 import { logger } from '../utils/logger';
+import { demoSql } from '@/services/demoScope';
 
 export interface MapFeature {
     id: string;
@@ -26,7 +27,7 @@ export const getMapData = async (): Promise<MapFeature[]> => {
             SELECT id, first_name, last_name, region, village, crops, 
                    location_lat as lat, location_lng as lng
             FROM farmers
-            WHERE location_lat IS NOT NULL AND location_lng IS NOT NULL
+            WHERE location_lat IS NOT NULL AND location_lng IS NOT NULL AND ${demoSql('farmers')}
             LIMIT 200
         `);
 

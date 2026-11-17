@@ -3,6 +3,7 @@ import { logger } from '@/utils/logger';
 import { getPrisma } from '@/services/prismaService';
 import { bulkOperationsService } from '@/services/bulkOperationsService';
 import { safeError } from '@/utils/safeResponse';
+import { demoWhere } from '@/services/demoScope';
 
 const router = Router();
 
@@ -84,7 +85,7 @@ const role = String(_role);
         // Get farmer IDs to check ownership
         const farmerIds = items.map(item => item.id);
         const farmers = await prisma.farmer.findMany({
-            where: { id: { in: farmerIds } },
+            where: { id: { in: farmerIds }, ...demoWhere(req.user) },
             select: { id: true, assignedOfficerId: true, userId: true, region: true }
         });
 

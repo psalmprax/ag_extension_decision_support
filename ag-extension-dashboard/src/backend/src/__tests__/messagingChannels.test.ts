@@ -10,12 +10,14 @@ import { onboardingEngine } from '../services/onboardingEngine';
 import { messagingKnowledgeReply } from '../services/knowledge/messagingHints';
 import { query } from '../services/databaseService';
 import { WeatherService } from '../services/weatherService';
+import { takeRegisteredFarmerMessage } from '../services/chat/channelInbound';
 
 jest.mock('../services/databaseService', () => ({ query: jest.fn(), getPool: jest.fn() }));
-jest.mock('../services/onboardingEngine', () => ({ onboardingEngine: { processIncomingMessage: jest.fn() } }));
+jest.mock('../services/onboardingEngine', () => ({ onboardingEngine: { processIncomingMessage: jest.fn(), findFarmerByIdentifier: jest.fn() } }));
 jest.mock('../services/smsService', () => ({ smsService: { sendSMS: jest.fn() } }));
 jest.mock('../services/whatsappService', () => ({ whatsappService: { sendMessage: jest.fn() } }));
-jest.mock('../services/telegramService', () => ({ telegramService: { sendMessage: jest.fn(), persistMessage: jest.fn() } }));
+jest.mock('../services/telegramService', () => ({ telegramService: { sendMessage: jest.fn(), persistMessage: jest.fn(), answerCallbackQuery: jest.fn() } }));
+jest.mock('../services/chat/channelInbound', () => ({ takeRegisteredFarmerMessage: jest.fn() }));
 jest.mock('../services/knowledge/messagingHints', () => ({
     ASK_HELP: 'Send ASK followed by your question.',
     parseAskCommand: (text: string) => /^\/?ask(?:\s|$)/i.test(text) ? text.replace(/^\/?ask\s*/i, '') : null,
@@ -43,6 +45,9 @@ describe('channel knowledge requests', () => {
         (telegramService.sendMessage as jest.Mock).mockResolvedValue({ success: true });
         (telegramService.persistMessage as jest.Mock).mockResolvedValue({});
         (onboardingEngine.processIncomingMessage as jest.Mock).mockResolvedValue({ isHandled: false, isRegistered: true });
+        // Most cases here are about people who are not registered farmers.
+        (onboardingEngine.findFarmerByIdentifier as jest.Mock).mockResolvedValue(null);
+        (takeRegisteredFarmerMessage as jest.Mock).mockResolvedValue(false);
     });
     afterEach(() => {
         delete process.env.ALLOW_UNSIGNED_WEBHOOKS_FOR_LOCAL_DEV;
@@ -122,4 +127,45 @@ describe('channel knowledge requests', () => {
         expect((await request(app).post('/channels/telegram/webhook').set('x-telegram-bot-api-secret-token', 'test-secret')
             .send({ message: { chat: { id: 123 }, text: 'ASK maize' } })).status).toBe(503);
     });
+
+    describe('registered farmers', () => {
+        beforeEach(() => (takeRegisteredFarmerMessage as jest.Mock).mockResolvedValue(true));
+
+        it("takes a farmer's SMS into their thread instead of onboarding or hints", async () => {
+            const res = await request(app).post('/sms/inbound').send({ from: '+254712000111', text: 'ASK AI maize leaves yellow' });
+            expect(res.status).toBe(200);
+            expect(takeRegisteredFarmerMessage).toHaveBeenCalledWith(expect.objectContaining({ channel: 'sms', identifier: '+254712000111', text: 'ASK AI maize leaves yellow' }));
+            expect(messagingKnowledgeReply).not.toHaveBeenCalled();
+            expect(onboardingEngine.processIncomingMessage).not.toHaveBeenCalled();
+            expect(smsService.sendSMS).not.toHaveBeenCalled();
+        });
+
+        it("treats a tap on WhatsApp's Ask AI button as the ASK AI code", async () => {
+            const res = await request(app).post('/whatsapp/inbound').send({ From: 'whatsapp:+254712000111', Body: 'Ask AI', ButtonPayload: 'ask_ai' });
+            expect(res.status).toBe(202);
+            expect(takeRegisteredFarmerMessage).toHaveBeenCalledWith(expect.objectContaining({ channel: 'whatsapp', text: 'ASK AI' }));
+            expect(whatsappService.sendMessage).not.toHaveBeenCalled();
+        });
+
+        it("answers Telegram's Ask AI button and stops its spinner", async () => {
+            const res = await request(app)
+                .post('/channels/telegram/webhook')
+                .set('X-Telegram-Bot-Api-Secret-Token', 'test-secret')
+                .send({ update_id: 5, callback_query: { id: 'cb-1', data: 'ask_ai', message: { chat: { id: 987654 } } } });
+            expect(res.status).toBe(200);
+            expect(telegramService.answerCallbackQuery).toHaveBeenCalledWith('cb-1');
+            expect(takeRegisteredFarmerMessage).toHaveBeenCalledWith({ channel: 'telegram', identifier: '987654', text: 'ASK AI', eventId: 'callback:cb-1' });
+        });
+
+        it("sends a registered farmer's Telegram question to their officer, not the weather", async () => {
+            const res = await request(app)
+                .post('/channels/telegram/webhook')
+                .set('X-Telegram-Bot-Api-Secret-Token', 'test-secret')
+                .send({ update_id: 6, message: { chat: { id: 987654 }, text: 'Will the weather hurt my beans?' } });
+            expect(res.status).toBe(200);
+            expect(takeRegisteredFarmerMessage).toHaveBeenCalledWith(expect.objectContaining({ channel: 'telegram', text: 'Will the weather hurt my beans?' }));
+            expect(telegramService.sendMessage).not.toHaveBeenCalled();
+        });
+    });
 });
+

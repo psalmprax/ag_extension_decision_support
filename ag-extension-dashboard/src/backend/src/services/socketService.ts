@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import { config } from '@/config';
 import { AUTH_COOKIE_NAME } from '@/middleware/authCookie';
 import { assertConversationAccess, messageAccessErrorDetail } from '@/services/messageAccessService';
+import { tokenIsDemo } from '@/services/demoScope';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface UserSocket {
@@ -45,10 +46,10 @@ function allowedConversations(socket: Socket): Set<string> {
 }
 
 async function authorizeConversation(socket: Socket, conversationId: string): Promise<boolean> {
-    const user = socket.data.user as { userId: string; role: string } | undefined;
+    const user = socket.data.user as { userId: string; role: string; isDemo?: boolean } | undefined;
     if (!user?.userId) return false;
     try {
-        await assertConversationAccess({ userId: user.userId, role: user.role }, conversationId);
+        await assertConversationAccess({ userId: user.userId, role: user.role, isDemo: user.isDemo }, conversationId);
         return true;
     } catch (error) {
         logger.warn(
@@ -179,7 +180,8 @@ export function initializeSocketHandlers(io: SocketServer): void {
 
             socket.data.user = {
                 userId: decoded.userId,
-                role: decoded.role
+                role: decoded.role,
+                isDemo: tokenIsDemo(decoded),
             };
             
             next();

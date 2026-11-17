@@ -6,6 +6,8 @@ import { AudioReaderButton } from '@/components/audio/AudioReaderButton';
 import { formatChatTime } from '@/lib/chatTime';
 import { farmerChatSender, type FarmerChatSender } from '@/lib/farmerChatSender';
 
+const CHANNEL_LABEL = { sms: 'SMS', whatsapp: 'WhatsApp', telegram: 'Telegram' } as const;
+
 const SENDER_ICON: Record<FarmerChatSender, React.ComponentType<{ className?: string }>> = {
   farmer: Sprout,
   assistant: Bot,
@@ -30,6 +32,11 @@ export const FarmerChatMessage: React.FC<{ message: ChatMessage }> = ({ message 
         <div className={`flex items-center gap-1.5 text-xs font-medium ${onDark ? 'text-white/90' : ''}`}>
           <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
           <span>{look.label}</span>
+          {message.channel && (
+            <span className="ml-1 font-normal opacity-75">
+              {look.sender === 'farmer' ? 'via' : 'sent by'} {CHANNEL_LABEL[message.channel]}
+            </span>
+          )}
         </div>
         {/* AI answers are markdown; what farmers and officers type stays verbatim. */}
         {look.sender === 'assistant' ? (

@@ -189,7 +189,7 @@ describe('chat completions conversation ownership (IDOR)', () => {
         expect(routeCall).not.toHaveBeenCalled();
     });
 
-    it('scopes officer access by officer_id, not by farmer record', async () => {
+    it('scopes an officer copilot draft by officer_id, not by farmer record', async () => {
         const token = tokenFor(OFFICER_ID, 'extension_officer');
         mockQuery.mockImplementation((sql: string) => {
             if (typeof sql !== 'string') return Promise.resolve({ rows: [], rowCount: 0 });
@@ -218,20 +218,49 @@ describe('chat completions conversation ownership (IDOR)', () => {
         const res = await request(app)
             .post('/api/chatbot/completions')
             .set('Authorization', `Bearer ${token}`)
-            .send({ message: 'check in', conversation_id: CONVERSATION_ID });
+            .send({ message: 'check in', conversation_id: CONVERSATION_ID, mode: 'draft' });
 
         expect(res.status).toBe(200);
+        expect(res.body.data.draft).toBe(true);
         const historyCall = mockQuery.mock.calls.find(
             (c) => typeof c[0] === 'string' && c[0].includes('JOIN chat_conversations cv')
         );
         expect(historyCall).toBeDefined();
         expect(historyCall![1][1]).toBe(OFFICER_ID);
+        // A draft is private to the officer: nothing reaches the farmer's thread.
+        expect(mockQuery.mock.calls.some(c => typeof c[0] === 'string' && c[0].includes('INSERT INTO chat_messages'))).toBe(false);
     });
 
-    it('lets admins read across conversations (no ownership clause)', async () => {
+    it('does not let a real admin open a demo conversation', async () => {
+        const token = tokenFor('admin-1', 'admin');
+        mockQuery.mockImplementation((sql: string) => {
+            if (typeof sql === 'string' && sql.includes('SELECT cv.farmer_id, cv.officer_id')) {
+                return Promise.resolve({
+                    rows: [{ farmer_id: FARMER_RECORD_ID, officer_id: OFFICER_ID, region: 'Nakuru', is_demo: true }],
+                    rowCount: 1,
+                });
+            }
+            return Promise.resolve({ rows: [], rowCount: 0 });
+        });
+
+        const res = await request(app)
+            .post('/api/chatbot/completions')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ message: 'audit check', conversation_id: FOREIGN_CONVERSATION_ID });
+
+        expect(res.status).toBe(404);
+    });
+
+    it('lets admins draft across conversations (no ownership clause)', async () => {
         const token = tokenFor('admin-1', 'admin');
         mockQuery.mockImplementation((sql: string) => {
             if (typeof sql !== 'string') return Promise.resolve({ rows: [], rowCount: 0 });
+            if (sql.includes('SELECT cv.farmer_id, cv.officer_id')) {
+                return Promise.resolve({
+                    rows: [{ farmer_id: FARMER_RECORD_ID, officer_id: OFFICER_ID, region: 'Nakuru', is_demo: false }],
+                    rowCount: 1,
+                });
+            }
             if (sql.includes('FROM chat_messages m') && sql.includes('JOIN chat_conversations cv')) {
                 return Promise.resolve({
                     rows: [{ role: 'user', content: 'any conversation content' }],
@@ -247,7 +276,7 @@ describe('chat completions conversation ownership (IDOR)', () => {
         const res = await request(app)
             .post('/api/chatbot/completions')
             .set('Authorization', `Bearer ${token}`)
-            .send({ message: 'audit check', conversation_id: FOREIGN_CONVERSATION_ID });
+            .send({ message: 'audit check', conversation_id: FOREIGN_CONVERSATION_ID, mode: 'draft' });
 
         expect(res.status).toBe(200);
         const historyCall = mockQuery.mock.calls.find(

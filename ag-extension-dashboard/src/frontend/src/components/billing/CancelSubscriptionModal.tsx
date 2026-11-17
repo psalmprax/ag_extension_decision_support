@@ -56,8 +56,8 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
       onClose={handleClose}
       title="Cancel subscription"
       subtitle="Access continues until the end of the paid period"
-      icon={<AlertTriangle className="w-5 h-5 text-amber-300" />}
-      iconBg="bg-amber-500/15 border border-amber-500/30 text-amber-300"
+      icon={<AlertTriangle className="w-5 h-5 text-amber-700 dark:text-amber-300" />}
+      iconBg="bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300"
       footer={
         <div className="flex gap-3">
           <Button variant="ghost" onClick={handleClose} disabled={loading} className="flex-1">
@@ -77,7 +77,7 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
       }
     >
       <div className="space-y-4">
-        <p className="text-xs text-white/70 leading-relaxed">
+        <p className="text-xs text-slate-600 dark:text-white/70 leading-relaxed">
           Your plan stays active until the current period ends. If you tell us why you are leaving, it is
           recorded against this subscription and shown only in aggregate churn reporting.
         </p>
@@ -85,7 +85,7 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
         <div className="space-y-2">
           <label
             htmlFor="cancellation-reason"
-            className="text-xxs font-bold text-white/60 uppercase tracking-widest block ml-1"
+            className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
           >
             Reason (optional)
           </label>
@@ -101,7 +101,7 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
         <div className="space-y-2">
           <label
             htmlFor="cancellation-comment"
-            className="text-xxs font-bold text-white/60 uppercase tracking-widest block ml-1"
+            className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
           >
             Anything else? (optional)
           </label>
@@ -115,11 +115,11 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
             disabled={loading || !reason}
           />
           {!reason && (
-            <p className="text-xxs text-white/40 ml-1">
+            <p className="text-xxs text-slate-500 dark:text-white/40 ml-1">
               Select a reason before adding an optional comment.
             </p>
           )}
-          <p className="text-xxs text-white/40 ml-1">{comment.length}/1000</p>
+          <p className="text-xxs text-slate-500 dark:text-white/40 ml-1">{comment.length}/1000</p>
         </div>
       </div>
     </BaseModal>

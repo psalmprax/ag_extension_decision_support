@@ -174,8 +174,9 @@ describe('POST /chatbot/completions tool loop', () => {
   });
 
   it('accepts the legacy snake_case conversation_id', async () => {
+    // The officer's own private AI chat: the one place an officer's turn is stored with an AI reply.
     dbQuery.mockResolvedValueOnce({
-      rows: [{ farmer_id: 'farmer-1', officer_id: 'u1', region: 'North' }],
+      rows: [{ farmer_id: 'farmer-1', officer_id: 'u1', region: 'North', kind: 'officer_ai' }],
     });
     routeRequest.mockResolvedValueOnce({ text: 'ok' });
     const res = await request(app).post('/chatbot/completions').send({ message: 'hi', conversation_id: '11111111-1111-4111-8111-111111111111' });

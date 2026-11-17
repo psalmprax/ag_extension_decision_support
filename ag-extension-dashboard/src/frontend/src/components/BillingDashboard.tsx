@@ -52,23 +52,23 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
       {/* Admin Vault Settings */}
       <section
         aria-labelledby="admin-billing-title"
-        className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden"
+        className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden"
       >
         <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-          <Settings className="w-32 h-32 text-indigo-400" />
+          <Settings className="w-32 h-32 text-indigo-700 dark:text-indigo-400" />
         </div>
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-indigo-400" />
+          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center">
+            <Shield className="w-5 h-5 text-indigo-700 dark:text-indigo-400" />
           </div>
           <div>
             <h3
               id="admin-billing-title"
-              className="text-xl font-bold tracking-tight text-white"
+              className="text-xl font-bold tracking-tight text-slate-900 dark:text-white"
             >
               {t('billing_admin_vault_title') || 'Payment Gateway Credentials Vault'}
             </h3>
-            <p className="text-xs text-white/60 mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
               {t('billing_admin_vault_subtitle') || 'Encrypted Server-Side API Secrets'}
             </p>
           </div>
@@ -77,7 +77,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
           <div className="space-y-2">
             <label
               htmlFor="stripe-secret"
-              className="text-xxs font-bold text-white/60 uppercase tracking-widest block ml-1"
+              className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
             >
               Stripe Secret Key (sk_live_...)
             </label>
@@ -98,7 +98,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
           <div className="space-y-2">
             <label
               htmlFor="stripe-webhook"
-              className="text-xxs font-bold text-white/60 uppercase tracking-widest block ml-1"
+              className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
             >
               Stripe Webhook Secret (whsec_...)
             </label>
@@ -119,7 +119,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
           <div className="space-y-2">
             <label
               htmlFor="paypal-client"
-              className="text-xxs font-bold text-white/60 uppercase tracking-widest block ml-1"
+              className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
             >
               PayPal Client ID
             </label>
@@ -139,7 +139,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
           <div className="space-y-2">
             <label
               htmlFor="paypal-secret"
-              className="text-xxs font-bold text-white/60 uppercase tracking-widest block ml-1"
+              className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
             >
               PayPal Secret Key
             </label>
@@ -175,50 +175,50 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
       </section>
 
       {/* Admin Mobile Money Verification Queue */}
-      <section className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl overflow-hidden">
+      <section className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl overflow-hidden">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center">
-            <AlertCircle className="w-5 h-5 text-amber-400" />
+          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center">
+            <AlertCircle className="w-5 h-5 text-amber-700 dark:text-amber-400" />
           </div>
           <div>
-            <h3 className="text-xl font-bold tracking-tight text-white">
+            <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
               {t('billing_admin_transactions') || 'Pending Mobile Money Queue'}
             </h3>
-            <p className="text-xs text-white/60 mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
               Manual USSD / Till Verification
             </p>
           </div>
         </div>
-        <div className="overflow-x-auto rounded-xl border border-white/10">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/10">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-white/[0.03] border-b border-white/10">
+              <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/10">
                 {['User', 'Method', 'TX ID', 'Amount', 'Plan', 'Actions'].map(h => (
                   <th
                     key={h}
-                    className="px-6 py-4 text-xxs font-bold uppercase tracking-wider text-white/60"
+                    className="px-6 py-4 text-xxs font-bold uppercase tracking-wider text-slate-600 dark:text-white/60"
                   >
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
               {billing.adminTransactions.length > 0 ? (
                 billing.adminTransactions.map(tx => (
                   <tr
                     key={tx.id}
-                    className="hover:bg-white/[0.02] transition-colors"
+                    className="hover:bg-slate-100 dark:hover:bg-white/[0.02] transition-colors"
                   >
-                    <td className="px-6 py-4 text-xs font-bold text-white">{tx.userEmail}</td>
-                    <td className="px-6 py-4 text-xs font-black uppercase text-amber-400">
+                    <td className="px-6 py-4 text-xs font-bold text-slate-900 dark:text-white">{tx.userEmail}</td>
+                    <td className="px-6 py-4 text-xs font-black uppercase text-amber-700 dark:text-amber-400">
                       {tx.method}
                     </td>
-                    <td className="px-6 py-4 text-xs font-mono text-white/80">{tx.transactionId}</td>
-                    <td className="px-6 py-4 text-xs font-bold text-white">
+                    <td className="px-6 py-4 text-xs font-mono text-slate-700 dark:text-white/80">{tx.transactionId}</td>
+                    <td className="px-6 py-4 text-xs font-bold text-slate-900 dark:text-white">
                       {tx.amount} {tx.currency}
                     </td>
-                    <td className="px-6 py-4 text-xs uppercase text-white/60 font-bold">
+                    <td className="px-6 py-4 text-xs uppercase text-slate-600 dark:text-white/60 font-bold">
                       {tx.planId?.split('_')[1]}
                     </td>
                     <td className="px-6 py-4">
@@ -250,7 +250,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-6 py-12 text-center text-xs text-white/40 font-semibold uppercase tracking-widest italic"
+                    className="px-6 py-12 text-center text-xs text-slate-500 dark:text-white/40 font-semibold uppercase tracking-widest italic"
                   >
                     {t('billing_admin_no_pending') || 'No pending mobile money transactions'}
                   </td>
@@ -262,16 +262,16 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
       </section>
 
       {/* Admin Voucher Generator */}
-      <section className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl overflow-hidden">
+      <section className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl overflow-hidden">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center">
             <Ticket className="w-5 h-5 text-purple-400" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold tracking-tight text-white">
+            <h3 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
               {t('billing_admin_vouchers') || 'AgriVoucher Minting Engine'}
             </h3>
-            <p className="text-xs text-white/60 mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
               Batch Generation for Cooperatives & NGOs
             </p>
           </div>
@@ -291,7 +291,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
                 { value: 'price_pro_yearly', label: 'Pro Officer (Yearly)' },
                 { value: 'price_enterprise_monthly', label: 'Enterprise Cooperative' },
               ]}
-              className="font-medium bg-slate-900 border-white/10 text-white rounded-xl text-xs"
+              className="font-medium bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
             />
           </div>
           <div>
@@ -307,7 +307,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
                   count: parseInt(e.target.value),
                 })
               }
-              className="bg-white/[0.03] border-white/10 text-white rounded-xl text-xs"
+              className="bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
             />
           </div>
           <div>
@@ -323,7 +323,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
                   expiresInDays: parseInt(e.target.value),
                 })
               }
-              className="bg-white/[0.03] border-white/10 text-white rounded-xl text-xs"
+              className="bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
             />
           </div>
         </div>
@@ -333,7 +333,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
             billing.handleGenerateVouchers();
           }}
           disabled={billing.actionLoading === 'generate-vouchers'}
-          className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-xl border border-white/10 transition-colors flex items-center justify-center gap-2"
+          className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-xl border border-slate-200 dark:border-white/10 transition-colors flex items-center justify-center gap-2"
         >
           {t('billing_admin_generate_vouchers') || 'Mint Batch Vouchers'}
         </button>
@@ -368,17 +368,17 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
   const { t } = useLanguage();
 
   return (
-    <div className="bg-slate-900/90 border border-white/10 rounded-xl p-4 sm:p-6 shadow-sm relative overflow-hidden">
+    <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 rounded-xl p-4 sm:p-6 shadow-sm relative overflow-hidden">
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-            <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+            <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-700 dark:text-emerald-400" />
           </div>
           <div>
             <div className="flex items-center gap-2 sm:gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">Billing & Subscriptions</h1>
-              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <Radio className="w-2.5 h-2.5 text-emerald-400" />
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Billing & Subscriptions</h1>
+              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                <Radio className="w-2.5 h-2.5 text-emerald-700 dark:text-emerald-400" />
                 Commerce Radar
               </span>
             </div>
@@ -391,13 +391,13 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
         <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
           {/* Telemetry Stat Chips */}
           <div className="flex items-center gap-2 overflow-x-auto">
-            <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white/80 font-mono whitespace-nowrap">
-              Tier: <strong className="text-white font-medium">{currentPlanName}</strong>
+            <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-white/80 font-mono whitespace-nowrap">
+              Tier: <strong className="text-slate-900 dark:text-white font-medium">{currentPlanName}</strong>
             </span>
-            <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 font-mono whitespace-nowrap">
+            <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300 font-mono whitespace-nowrap">
               Status: <strong className="font-medium">{isProActive ? 'Active' : 'Starter'}</strong>
             </span>
-            <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 font-mono whitespace-nowrap">
+            <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 font-mono whitespace-nowrap">
               Billing: <strong className="font-medium">{isAnnual ? 'Annual (-20%)' : 'Monthly'}</strong>
             </span>
           </div>
@@ -411,7 +411,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
             className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
           >
             {actionLoading === 'portal' ? (
-              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-slate-300 dark:border-white/20 border-t-white rounded-full animate-spin" />
             ) : (
               <ExternalLink className="w-4 h-4" />
             )}
@@ -421,7 +421,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
       </div>
 
       {/* Status Filter / Navigation Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-white/5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-slate-200 dark:border-white/5">
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {[
             { id: 'plans', label: 'Plans & Pricing', icon: Layers },
@@ -438,8 +438,8 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 border whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
-                  : 'bg-white/[0.02] text-slate-400 border-white/5 hover:border-white/10 hover:text-white'
+                  ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                  : 'bg-slate-50 dark:bg-white/[0.02] text-slate-400 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <tab.icon className="w-3.5 h-3.5" />
@@ -452,7 +452,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
           <div className="hidden sm:block">
             <LiquidToggleSwitch compact={true} />
           </div>
-          <div className="flex items-center gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/10">
+          <div className="flex items-center gap-1 p-1 bg-slate-50 dark:bg-white/[0.03] rounded-xl border border-slate-200 dark:border-white/10">
             <button
               type="button"
               onClick={() => {
@@ -460,7 +460,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
                 setIsAnnual(false);
               }}
               className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                !isAnnual ? 'bg-emerald-600 text-white shadow-sm' : 'text-white/60 hover:text-white'
+                !isAnnual ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Monthly
@@ -472,7 +472,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
                 setIsAnnual(true);
               }}
               className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                isAnnual ? 'bg-emerald-600 text-white shadow-sm' : 'text-white/60 hover:text-white'
+                isAnnual ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Annual (-20%)
@@ -502,7 +502,7 @@ export const BillingDashboard: React.FC = () => {
           <div className="absolute inset-0 border-4 border-emerald-500/20 rounded-full"></div>
           <div className="absolute inset-0 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <CreditCard className="w-7 h-7 text-emerald-400" />
+            <CreditCard className="w-7 h-7 text-emerald-700 dark:text-emerald-400" />
           </div>
         </div>
         <p className="mt-4 text-slate-400 font-medium text-xs">
@@ -527,9 +527,9 @@ export const BillingDashboard: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="p-5 bg-amber-500/10 border-2 border-amber-500/40 rounded-xl flex items-start gap-4 shadow-xl backdrop-blur-xl"
         >
-          <AlertCircle className="w-6 h-6 text-amber-400 mt-0.5 flex-shrink-0" />
+          <AlertCircle className="w-6 h-6 text-amber-700 dark:text-amber-400 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
-            <h3 className="text-amber-400 font-black uppercase tracking-widest text-xs mb-1">
+            <h3 className="text-amber-700 dark:text-amber-400 font-black uppercase tracking-widest text-xs mb-1">
               {t('billing_configuration_alert') || 'PAYMENT GATEWAY CONFIGURATION REQUIRED'}
             </h3>
             <p className="text-amber-300/90 font-medium text-xs leading-relaxed">
@@ -548,8 +548,8 @@ export const BillingDashboard: React.FC = () => {
           animate={{ opacity: 1, x: 0 }}
           className="p-4 bg-emerald-500/10 border border-emerald-500/40 rounded-xl flex items-center gap-3 shadow-lg"
         >
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          <span className="text-emerald-300 font-bold text-xs">
+          <CheckCircle2 className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
+          <span className="text-emerald-700 dark:text-emerald-300 font-bold text-xs">
             {t('subscription_success') || 'Subscription successfully updated! Thank you for empowering African agriculture.'}
           </span>
         </motion.div>
@@ -560,8 +560,8 @@ export const BillingDashboard: React.FC = () => {
           animate={{ opacity: 1, x: 0 }}
           className="p-4 bg-amber-500/10 border border-amber-500/40 rounded-xl flex items-center gap-3 shadow-lg"
         >
-          <AlertCircle className="w-5 h-5 text-amber-400" />
-          <span className="text-amber-300 font-bold text-xs">
+          <AlertCircle className="w-5 h-5 text-amber-700 dark:text-amber-400" />
+          <span className="text-amber-700 dark:text-amber-300 font-bold text-xs">
             {t('subscription_canceled') || 'Checkout session canceled. You can upgrade anytime.'}
           </span>
         </motion.div>
@@ -585,58 +585,58 @@ export const BillingDashboard: React.FC = () => {
       {/* ── Active Membership Pod Ribbon (Unit Test Target) ── */}
       <section
         aria-label="Subscription Overview"
-        className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden"
+        className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden"
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1: Current Plan */}
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-3.5">
-              <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
+              <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-700 dark:text-emerald-400">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xxs font-black uppercase tracking-widest text-white/50 block mb-0.5">
+                <span className="text-xxs font-black uppercase tracking-widest text-slate-500 dark:text-white/50 block mb-0.5">
                   {t('billing_current_plan') || 'Current Plan'}
                 </span>
-                <h2 className="text-xl font-bold text-white leading-tight">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">
                   {currentPlanName}
                 </h2>
               </div>
             </div>
-            <span className="px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+            <span className="px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
               {isProActive ? 'ACTIVE' : 'STARTER'}
             </span>
           </div>
 
           {/* Card 2: Renewal Timeline */}
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-3.5">
-              <div className="p-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-400">
+              <div className="p-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-700 dark:text-indigo-400">
                 <Clock className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xxs font-black uppercase tracking-widest text-white/50 block mb-0.5">
+                <span className="text-xxs font-black uppercase tracking-widest text-slate-500 dark:text-white/50 block mb-0.5">
                   {t('billing_renews_on') || 'Billing Cycle'}
                 </span>
-                <span className="text-xs font-mono font-bold text-white">
+                <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">
                   {billing.subscription?.currentPeriodEnd
                     ? new Date(billing.subscription.currentPeriodEnd).toLocaleDateString()
                     : 'Lifetime Free Starter'}
                 </span>
               </div>
             </div>
-            <span className="text-xxs text-emerald-400 font-mono font-bold">
+            <span className="text-xxs text-emerald-700 dark:text-emerald-400 font-mono font-bold">
               {isAnnual ? 'Annual (-20%)' : 'Monthly Auto-Renew'}
             </span>
           </div>
 
           {/* Card 3: Instant Customer Portal Action */}
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-xxs font-black uppercase tracking-widest text-white/50 block">
+              <span className="text-xxs font-black uppercase tracking-widest text-slate-500 dark:text-white/50 block">
                 Stripe Customer Portal
               </span>
-              <span className="text-xs text-white/70 font-medium">Manage payment methods & invoices</span>
+              <span className="text-xs text-slate-600 dark:text-white/70 font-medium">Manage payment methods & invoices</span>
             </div>
             <button
               onClick={() => {
@@ -644,12 +644,12 @@ export const BillingDashboard: React.FC = () => {
                 void billing.handlePortal();
               }}
               disabled={billing.actionLoading === 'portal'}
-              className="px-3.5 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/10 text-white border border-white/10 font-bold text-xxs uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0"
+              className="px-3.5 py-1.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 font-bold text-xxs uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0"
             >
               {billing.actionLoading === 'portal' ? (
-                <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-slate-300 dark:border-white/20 border-t-white rounded-full animate-spin" />
               ) : (
-                <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
+                <ExternalLink className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
               )}
               <span>Portal</span>
             </button>
@@ -657,8 +657,8 @@ export const BillingDashboard: React.FC = () => {
         </div>
 
         {billing.subscription && !billing.subscription.cancelAtPeriodEnd && (
-          <div className="mt-4 pt-4 border-t border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <p className="text-xxs text-white/50">
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <p className="text-xxs text-slate-500 dark:text-white/50">
               Cancelling keeps your plan active until the period ends.
             </p>
             <button
@@ -666,14 +666,14 @@ export const BillingDashboard: React.FC = () => {
                 triggerHaptic('light');
                 setShowCancelModal(true);
               }}
-              className="text-xxs font-bold uppercase tracking-wider text-rose-300 hover:text-rose-200 transition-colors self-start sm:self-auto"
+              className="text-xxs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300 hover:text-rose-200 transition-colors self-start sm:self-auto"
             >
               Cancel subscription
             </button>
           </div>
         )}
         {billing.subscription?.cancelAtPeriodEnd && (
-          <p className="mt-4 pt-4 border-t border-white/5 text-xxs text-amber-300">
+          <p className="mt-4 pt-4 border-t border-slate-200 dark:border-white/5 text-xxs text-amber-700 dark:text-amber-300">
             This subscription is set to end at the close of the current period.
           </p>
         )}
@@ -811,8 +811,8 @@ export const BillingDashboard: React.FC = () => {
         onClose={() => billing.setSelectedTransactionId(null)}
         title="Reject Transaction"
         subtitle="Admin Verification Action"
-        icon={<AlertCircle className="w-5 h-5 text-rose-400" />}
-        iconBg="bg-rose-500/15 border border-rose-500/30 text-rose-400"
+        icon={<AlertCircle className="w-5 h-5 text-rose-700 dark:text-rose-400" />}
+        iconBg="bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-400"
         footer={
           <div className="flex gap-3">
             <Button
@@ -821,7 +821,7 @@ export const BillingDashboard: React.FC = () => {
                 triggerHaptic('light');
                 billing.setSelectedTransactionId(null);
               }}
-              className="flex-1 text-slate-300 hover:text-white"
+              className="flex-1 text-slate-300 hover:text-slate-900 dark:hover:text-white"
             >
               {t('common_cancel') || 'Cancel'}
             </Button>
@@ -846,7 +846,7 @@ export const BillingDashboard: React.FC = () => {
           value={billing.rejectReason}
           onChange={e => billing.setRejectReason(e.target.value)}
           placeholder="Enter reason for rejection..."
-          className="w-full bg-slate-900/80 border-slate-800 text-white rounded-xl text-xs"
+          className="w-full bg-white dark:bg-slate-900/80 border-slate-800 text-slate-900 dark:text-white rounded-xl text-xs"
           rows={4}
         />
       </BaseModal>

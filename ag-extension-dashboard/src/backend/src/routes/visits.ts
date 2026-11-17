@@ -20,6 +20,7 @@ import { safeError } from '@/utils/safeResponse';
 import { executeIdempotentMutation } from '@/services/idempotencyService';
 import { getFarmerForPrincipal, getPrincipalTenantId } from '@/services/dataGovernanceService';
 import type { PoolClient } from 'pg';
+import { linkedDemoSql } from '@/services/demoScope';
 
 const router = Router();
 
@@ -90,7 +91,7 @@ router.get('/', async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        let sql = "SELECT v.*, f.first_name || ' ' || f.last_name as farmer_name FROM visits v LEFT JOIN farmers f ON f.id = v.farmer_id WHERE 1=1";
+        let sql = `SELECT v.*, f.first_name || ' ' || f.last_name as farmer_name FROM visits v LEFT JOIN farmers f ON f.id = v.farmer_id WHERE ${linkedDemoSql('v', req.user)}`;
         const params: unknown[] = [...scope.params];
         let paramIndex = params.length + 1;
         sql += scope.clause;
@@ -139,7 +140,7 @@ router.get('/:id', async (req: Request, res: Response) => {
                 `SELECT v.*, f.first_name || ' ' || f.last_name as farmer_name
                  FROM visits v
                  LEFT JOIN farmers f ON f.id = v.farmer_id
-                 WHERE v.id = $1`,
+                 WHERE v.id = $1 AND ${linkedDemoSql('v', req.user)}`,
                 [id]
             );
             visit = result.rows[0] ?? null;

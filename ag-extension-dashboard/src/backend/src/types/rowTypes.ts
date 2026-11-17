@@ -299,6 +299,8 @@ export interface UserPublicRow {
   preferred_language: string | null;
   avatar_url: string | null;
   last_login: Date | string | null;
+  /** Demo session account; only admins are shown these. */
+  is_demo?: boolean | null;
 }
 
 // --- Fields routes (fields.ts) ---------------------------------------------
@@ -366,6 +368,8 @@ export interface ChatMessageRow {
   rating: number | null;
   feedback: string | null;
   metadata: Record<string, unknown> | null;
+  /** null = the app; sms / whatsapp / telegram. */
+  channel?: string | null;
   created_at: Date | string | null;
 }
 
@@ -374,6 +378,7 @@ export interface ChatConversationRow {
   user_id?: string | null;
   officer_id?: string | null;
   farmer_id: string | null;
+  kind?: string | null;
   title?: string | null;
   status: string | null;
   language?: string | null;

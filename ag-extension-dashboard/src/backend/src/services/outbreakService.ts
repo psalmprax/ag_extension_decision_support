@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { query } from './databaseService';
 import { logger } from '@/utils/logger';
+import { demoSql, linkedDemoSql, type DemoViewer } from '@/services/demoScope';
 
 export interface CentroidCoordinate {
     lat: number;
@@ -313,6 +314,8 @@ export const outbreakService = {
         epsilon?: number;
         maxPerturbationMeters?: number;
         seed?: number;
+        /** The request's user; the demo session only sees demo-linked diagnoses. */
+        viewer?: DemoViewer;
     } = {}): Promise<OutbreakCluster[]> {
         const days = options.days ?? TRAILING_DAYS;
         const bboxClause = options.bbox
@@ -332,6 +335,7 @@ export const outbreakService = {
              LEFT JOIN farmers f ON f.id = de.farmer_id
              WHERE de.created_at >= NOW() - ($1 || ' days')::interval
                AND de.district IS NOT NULL
+               AND ${linkedDemoSql('de', options.viewer)}
                ${bboxClause}
              GROUP BY de.district, de.crop, de.disease_label
              HAVING COUNT(DISTINCT de.farmer_id) >= $2
@@ -410,6 +414,7 @@ export const outbreakService = {
             `SELECT DISTINCT u.email FROM users u
              JOIN farmers f ON f.assigned_officer_id = u.id
              WHERE u.email IS NOT NULL
+               AND ${demoSql('u')} AND ${demoSql('f')}
                AND (f.district = $1 OR f.district = ANY($2::varchar[]))`,
             [district, adjacent]
         );

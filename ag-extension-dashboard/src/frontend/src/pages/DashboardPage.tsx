@@ -36,6 +36,8 @@ import { OutbreakBanner } from '@/components/outbreaks/OutbreakBanner';
 import { OutreachDeliveryWidget } from '@/components/campaigns/OutreachDeliveryWidget';
 import { useDemoMode } from '@/demo';
 import { DashboardHeader } from './DashboardHeader';
+import type { PerformanceData } from '@/api/analyticsService';
+import { SupportEfficiencyCard } from '@/components/dashboard/SupportEfficiencyCard';
 
 const REGION_MAP_MAX_RETRIES = 3;
 const REGION_MAP_RETRY_BASE_DELAY_MS = 800;
@@ -45,7 +47,7 @@ interface DashboardPageProps {
   isLoading: boolean;
   isOfficer: boolean;
   performanceData:
-    | { metrics?: { resolutionRate?: number; satisfactionScore?: number } }
+    | PerformanceData
     | undefined;
   effectiveFarmers: Farmer[];
   isMapExpanded: boolean;
@@ -233,61 +235,6 @@ function formatPulseUptime(seconds: number): string {
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
 }
-
-const SupportEfficiencyCard: React.FC<{
-  performanceData?: { metrics?: { resolutionRate?: number; satisfactionScore?: number } };
-  t: (key: string) => string;
-  cardClass: string;
-}> = ({ performanceData, t, cardClass }) => {
-  const resolutionRate = performanceData?.metrics?.resolutionRate ?? 0;
-  const satisfactionScore = performanceData?.metrics?.satisfactionScore ?? 0;
-  const satisfactionProgress = satisfactionScore * 20;
-
-  return (
-    <div className={`${cardClass} p-4 sm:p-6 lg:p-8`}>
-      <h3 className="text-base sm:text-lg font-headline font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">
-        {t('analytics_support_efficiency')}
-      </h3>
-      {performanceData ? (
-        <div className="space-y-4 sm:space-y-6">
-          {[
-            {
-              name: t('analytics_resolution_rate'),
-              progress: resolutionRate,
-              color: 'bg-primary-500',
-            },
-            {
-              name: t('analytics_satisfaction_score'),
-              progress: satisfactionProgress,
-              color: 'bg-slate-500',
-            },
-          ].map((item, i) => (
-            <div key={i} className="space-y-1.5 sm:space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">{item.name}</span>
-                <span className="text-xs font-semibold tabular-nums text-primary-700 dark:text-primary-400">
-                  {Math.round(item.progress)}%
-                </span>
-              </div>
-              <div className="w-full h-1.5 sm:h-1 bg-white/5 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${item.progress}%` }}
-                  transition={{ duration: 1, delay: i * 0.1 }}
-                  className={`h-full ${item.color} rounded-full`}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-primary-400" />
-        </div>
-      )}
-    </div>
-  );
-};
 
 const DashboardMapSection: React.FC<{
   effectiveFarmers: Farmer[];

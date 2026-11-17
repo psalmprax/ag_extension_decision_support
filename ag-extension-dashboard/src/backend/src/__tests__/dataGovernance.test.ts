@@ -84,3 +84,28 @@ describe('data governance contracts', () => {
     expect(result.url).toContain('/api/v1/upload/file/');
   });
 });
+
+describe('demo farmers in the access check', () => {
+  const demoFarmer = { id: 'farmer-demo', user_id: null, assigned_officer_id: 'demo-officer', region: 'Central', tenant_id: 'tenant-a', is_active: true, is_demo: true };
+
+  beforeEach(() => queryMock.mockReset());
+
+  it('hides a demo farmer from a real admin', async () => {
+    queryMock.mockResolvedValueOnce({ rows: [demoFarmer] });
+    await expect(getFarmerForPrincipal('farmer-demo', { userId: 'admin-1', role: 'admin' })).resolves.toBeNull();
+  });
+
+  it('hides a real farmer from the demo session', async () => {
+    queryMock.mockResolvedValueOnce({ rows: [{ ...demoFarmer, is_demo: false }] });
+    await expect(getFarmerForPrincipal('farmer-demo', { userId: 'demo-officer', role: 'extension_officer', isDemo: true }))
+      .resolves.toBeNull();
+  });
+
+  it('lets the demo session reach its own demo farmer', async () => {
+    queryMock
+      .mockResolvedValueOnce({ rows: [demoFarmer] })
+      .mockResolvedValueOnce({ rows: [{ tenant_id: 'tenant-a' }] });
+    await expect(getFarmerForPrincipal('farmer-demo', { userId: 'demo-officer', role: 'extension_officer', isDemo: true }))
+      .resolves.toMatchObject({ id: 'farmer-demo' });
+  });
+});

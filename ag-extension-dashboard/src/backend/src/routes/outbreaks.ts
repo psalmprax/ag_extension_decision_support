@@ -27,7 +27,7 @@ router.get('/', async (req: AuthedRequest, res: Response) => {
             }
         }
 
-        const clusters = await outbreakService.getClusters({ days, bbox });
+        const clusters = await outbreakService.getClusters({ days, bbox, viewer: req.user });
         const threshold = 5;
         return res.json({
             success: true,

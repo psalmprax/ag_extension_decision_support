@@ -6,6 +6,7 @@ import { createFarmerSchema, updateFarmerSchema } from '@/utils/schemas';
 import { getPrisma } from '@/services/prismaService';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 import { safeError } from '@/utils/safeResponse';
+import { demoWhere } from '@/services/demoScope';
 
 const router = Router();
 
@@ -16,6 +17,8 @@ async function applyTenantScope(
 ): Promise<boolean> {
     const user = req.user;
     if (!user?.userId || !user.role) return false;
+    // Demo farmers are only for the demo session; real accounts never see them.
+    Object.assign(where, demoWhere(user));
     if (user.role === 'admin') return true;
 
     const tenantId = user.tenantId || await getPrincipalTenantId(user.userId);
@@ -430,7 +433,7 @@ router.patch('/:id', validate(updateFarmerSchema), async (req: Request, res: Res
         // Ownership check: admin/regional_manager can edit any, others only their own or assigned
         if (userRole !== 'admin' && userRole !== 'regional_manager') {
             const prisma = getPrisma();
-            const existing = await prisma.farmer.findFirst({ where: { id, ...(tenantScope.tenantId ? { tenantId: tenantScope.tenantId as string } : {}) } });
+            const existing = await prisma.farmer.findFirst({ where: { id, ...demoWhere(user), ...(tenantScope.tenantId ? { tenantId: tenantScope.tenantId as string } : {}) } });
             if (!existing) {
                 return res.status(404).json({ success: false, error: 'Farmer not found' });
             }
@@ -449,7 +452,7 @@ router.patch('/:id', validate(updateFarmerSchema), async (req: Request, res: Res
         const prisma = getPrisma();
 
         const updateResult = await prisma.farmer.updateMany({
-            where: { id, ...(tenantScope.tenantId ? { tenantId: tenantScope.tenantId as string } : {}) },
+            where: { id, ...demoWhere(user), ...(tenantScope.tenantId ? { tenantId: tenantScope.tenantId as string } : {}) },
             data: {
                 firstName,
                 lastName,

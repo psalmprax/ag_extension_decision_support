@@ -147,6 +147,23 @@ class TelegramService {
     /**
      * Send a message to a Telegram chat
      */
+    /** Stop the spinner on a tapped inline button (Telegram expects an answer to every callback). */
+    async answerCallbackQuery(callbackQueryId: string, text?: string, tenantId?: string): Promise<boolean> {
+        const botToken = await this.getBotTokenForTenant(tenantId);
+        if (!botToken) return false;
+        try {
+            await axios.post(
+                `https://api.telegram.org/bot${botToken}/answerCallbackQuery`,
+                { callback_query_id: callbackQueryId, ...(text ? { text } : {}) },
+                { timeout: 10000 },
+            );
+            return true;
+        } catch (error) {
+            logger.warn(`Telegram answerCallbackQuery failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+            return false;
+        }
+    }
+
     async sendMessage(options: TelegramSendOptions): Promise<TelegramDeliveryResult> {
         const { chatId, text, parseMode = 'Markdown', farmerId, senderId, tenantId, replyMarkup } = options;
         const botToken = await this.getBotTokenForTenant(tenantId);

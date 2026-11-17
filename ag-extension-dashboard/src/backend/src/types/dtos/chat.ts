@@ -5,6 +5,7 @@ import type {
   SatisfactionAvgRow,
 } from '../rowTypes';
 import { parseCount, parseDecimal, toIso } from './common';
+import { DEFAULT_CONVERSATION_KIND, parseConversationKind, type ConversationKind } from '@/services/chat/conversationKind';
 
 export interface ConversationStatsDTO {
   totalConversations: number;
@@ -31,6 +32,8 @@ export interface ChatMessageDTO {
   rating: number | null;
   feedback: string | null;
   metadata: Record<string, unknown> | null;
+  /** null = the app; sms / whatsapp / telegram. */
+  channel: string | null;
   createdAt: string | null;
 }
 export function mapChatMessageRow(row: ChatMessageRow): ChatMessageDTO {
@@ -44,6 +47,7 @@ export function mapChatMessageRow(row: ChatMessageRow): ChatMessageDTO {
     rating: row.rating,
     feedback: row.feedback,
     metadata: row.metadata,
+    channel: row.channel ?? null,
     createdAt: toIso(row.created_at) ?? null,
   };
 }
@@ -53,6 +57,8 @@ export function mapChatMessageRows(rows: ChatMessageRow[]): ChatMessageDTO[] {
 
 export interface ChatConversationDTO {
   id: string;
+  /** farmer_thread or officer_ai (an officer's private AI chat). */
+  kind: ConversationKind;
   userId: string | null;
   officerId?: string | null;
   farmerId: string | null;
@@ -89,6 +95,7 @@ export function mapChatConversationRow(row: ChatConversationRow): ChatConversati
 
   return {
     id: row.id,
+    kind: parseConversationKind(row.kind) ?? DEFAULT_CONVERSATION_KIND,
     userId: getNullableString(row.user_id),
     officerId: getNullableString(row.officer_id),
     farmerId: row.farmer_id,

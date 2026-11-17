@@ -9,6 +9,7 @@ import { emailService } from './emailService';
 import { whatsappService } from './whatsappService';
 import { logger } from '../utils/logger';
 import { getPrisma } from './prismaService';
+import { demoWhere } from '@/services/demoScope';
 
 export interface FarmerNotificationPrefs {
     farmerId: string;
@@ -161,6 +162,7 @@ export class AgriculturalReportService {
         const activeFarmers = await prisma.farmer.findMany({
             where: {
                 isActive: true,
+                ...demoWhere(),
                 OR: [
                     { phone: { not: null } },
                     { user: { isNot: null } }

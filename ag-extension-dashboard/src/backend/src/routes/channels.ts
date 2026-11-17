@@ -14,6 +14,8 @@ import { WeatherService } from '@/services/weatherService';
 import { marketPriceService } from '@/services/marketPriceService';
 import type { TenantChannelConfigRow } from '@/types/rowTypes';
 import { ASK_HELP, messagingKnowledgeReply, parseAskCommand } from '@/services/knowledge/messagingHints';
+import { takeRegisteredFarmerMessage } from '@/services/chat/channelInbound';
+import { TELEGRAM_ASK_AI_DATA } from '@/services/chat/channelThread';
 
 const router = Router();
 
@@ -104,9 +106,32 @@ async function handleTelegramKnowledgeOrOnboarding(
     return false;
 }
 
+interface TelegramCallbackQuery {
+    id: string;
+    data?: string;
+    message?: { chat?: { id?: number | string } };
+}
+
+/** The Ask AI inline button: the AI answers the farmer's latest message in their thread. */
+async function handleTelegramButton(callback: TelegramCallbackQuery): Promise<void> {
+    const chatId = callback.message?.chat?.id;
+    await telegramService.answerCallbackQuery(callback.id);
+    if (callback.data !== TELEGRAM_ASK_AI_DATA || chatId === undefined) return;
+    const taken = await takeRegisteredFarmerMessage({
+        channel: 'telegram', identifier: String(chatId), text: 'ASK AI', eventId: `callback:${callback.id}`,
+    });
+    if (!taken) {
+        await telegramService.sendMessage({ chatId, text: 'Send /start to register first.', parseMode: null });
+    }
+}
+
 router.post('/telegram/webhook', verifyTelegramWebhookSecret, async (req: Request, res: Response) => {
     try {
         const update = req.body;
+        if (update?.callback_query) {
+            await handleTelegramButton(update.callback_query);
+            return res.status(200).json({ ok: true });
+        }
         if (!update || !update.message) {
             return res.status(200).json({ ok: true, ignored: true });
         }
@@ -133,10 +158,22 @@ router.post('/telegram/webhook', verifyTelegramWebhookSecret, async (req: Reques
         });
 
         const eventId = getTelegramEventId(update);
+        const queryLower = text.toLowerCase().trim();
+        if (queryLower.startsWith('/weather')) {
+            await handleTelegramWeather(String(chatId));
+            return res.status(200).json({ ok: true });
+        }
+        if (queryLower.startsWith('/prices')) {
+            await handleTelegramPrices(String(chatId));
+            return res.status(200).json({ ok: true });
+        }
+        // A registered farmer's message goes into their thread for their officer.
+        if (await takeRegisteredFarmerMessage({ channel: 'telegram', identifier: String(chatId), text, eventId })) {
+            return res.status(200).json({ ok: true, handled: 'thread' });
+        }
         if (await handleTelegramKnowledgeOrOnboarding(chatId, text, firstName, eventId, res)) return;
 
-        // If registered farmer sends a command/query
-        const queryLower = text.toLowerCase().trim();
+        // Keyword shortcuts for people who are not registered yet.
         if (queryLower.startsWith('/weather') || queryLower.includes('weather') || queryLower.includes('hali ya hewa')) {
             await handleTelegramWeather(String(chatId));
             return res.status(200).json({ ok: true });

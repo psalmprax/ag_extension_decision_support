@@ -1,5 +1,7 @@
 import { query } from './databaseService';
 import { logger } from '@/utils/logger';
+import { viewerIsDemo } from '@/services/demoScope';
+import { DEFAULT_CONVERSATION_KIND, parseConversationKind, type ConversationKind } from '@/services/chat/conversationKind';
 
 /** Error whose `statusCode` the route layer maps to an HTTP response. */
 export class MessageAccessError extends Error {
@@ -24,6 +26,7 @@ export interface MessagePrincipal {
   role: string;
   region?: string | null;
   tenantId?: string | null;
+  isDemo?: unknown;
 }
 
 interface FarmerWriteTarget {
@@ -171,6 +174,13 @@ interface ConversationOwnershipRow {
   farmer_id: string | null;
   officer_id: string | null;
   region: string | null;
+  is_demo: boolean | null;
+  kind?: string | null;
+}
+
+/** What a caller learns about a conversation it may open. */
+export interface ConversationAccess {
+  kind: ConversationKind;
 }
 
 /**
@@ -187,14 +197,12 @@ interface ConversationOwnershipRow {
 export async function assertConversationAccess(
   principal: MessagePrincipal,
   conversationId: string
-): Promise<void> {
+): Promise<ConversationAccess> {
   if (!conversationId) {
     throw new MessageAccessError('Conversation id is required.', 400);
   }
-  if (principal.role === 'admin') return;
-
   const { rows } = await query<ConversationOwnershipRow>(
-    `SELECT cv.farmer_id, cv.officer_id, f.region
+    `SELECT cv.farmer_id, cv.officer_id, cv.kind, f.region, COALESCE(f.is_demo, false) AS is_demo
        FROM chat_conversations cv
        LEFT JOIN farmers f ON f.id = cv.farmer_id
       WHERE cv.id = $1
@@ -202,21 +210,32 @@ export async function assertConversationAccess(
     [conversationId]
   );
   const row = rows[0];
-  if (!row) {
+  // A demo/real mismatch reads as "not found", like any conversation you may not see.
+  if (!row || Boolean(row.is_demo) !== viewerIsDemo(principal)) {
     throw new MessageAccessError('Conversation not found.', 404);
   }
+  const access: ConversationAccess = { kind: parseConversationKind(row.kind) ?? DEFAULT_CONVERSATION_KIND };
+  if (access.kind === 'officer_ai') {
+    // An officer's private AI chat: its owner and admins only. To everyone
+    // else, the farmer it is about included, it does not exist.
+    if (principal.role === 'admin' || (principal.role !== 'farmer' && row.officer_id === principal.userId)) return access;
+    throw new MessageAccessError('Conversation not found.', 404);
+  }
+  if (await mayOpenFarmerThread(principal, row)) return access;
+  throw new MessageAccessError('You do not have access to this conversation.', 403);
+}
 
+async function mayOpenFarmerThread(principal: MessagePrincipal, row: ConversationOwnershipRow): Promise<boolean> {
+  if (principal.role === 'admin') return true;
   if (principal.role === 'farmer') {
     const farmerId = (await resolveFarmerId(principal.userId)) ?? principal.userId;
-    if (row.farmer_id === farmerId || row.officer_id === principal.userId) return;
-  } else if (principal.role === 'regional_manager') {
-    const region = principal.region ?? (await resolvePrincipalRegion(principal.userId));
-    if (region && row.region === region) return;
-  } else if (row.officer_id === principal.userId) {
-    return;
+    return row.farmer_id === farmerId || row.officer_id === principal.userId;
   }
-
-  throw new MessageAccessError('You do not have access to this conversation.', 403);
+  if (principal.role === 'regional_manager') {
+    const region = principal.region ?? (await resolvePrincipalRegion(principal.userId));
+    return Boolean(region && row.region === region);
+  }
+  return row.officer_id === principal.userId;
 }
 
 /** Map an unknown thrown value from these guards into a safe log line. */

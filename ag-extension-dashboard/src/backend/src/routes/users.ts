@@ -7,6 +7,7 @@ import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 import { revokeAllUserSessions } from '@/services/sessionService';
+import { demoSql } from '@/services/demoScope';
 
 const router = Router();
 
@@ -125,6 +126,8 @@ async function executeUserUpdate(
  */
 router.get('/', async (req: Request, res: Response) => {
     try {
+        // Admins see demo accounts (flagged) so they can manage them; nobody else does.
+        const demoAccountsFilter = req.user?.role === 'admin' ? '' : `WHERE ${demoSql('users')}`;
         const pool = getPool();
         if (!pool) {
             return res.status(503).json({ success: false, error: 'Database unavailable' });
@@ -136,8 +139,10 @@ router.get('/', async (req: Request, res: Response) => {
                 `SELECT id, email, first_name, last_name, role, region, country, phone, is_active,
                         avatar_url, created_at,
                         NULL::text AS preferred_language,
-                        last_login_at AS last_login
+                        last_login_at AS last_login,
+                        COALESCE(is_demo, false) AS is_demo
                  FROM users
+                 ${demoAccountsFilter}
                  ORDER BY created_at DESC`
             );
             rows = queryRes.rows || [];
@@ -169,6 +174,8 @@ router.get('/', async (req: Request, res: Response) => {
  */
 router.get('/:id', async (req: Request, res: Response) => {
     try {
+        // Admins see demo accounts (flagged) so they can manage them; nobody else does.
+        const demoAccountsFilter = req.user?.role === 'admin' ? '' : `WHERE ${demoSql('users')}`;
         const id = req.params.id;
         if (!id) {
             return res.status(400).json({ success: false, error: 'User id is required' });
@@ -185,8 +192,9 @@ router.get('/:id', async (req: Request, res: Response) => {
                 `SELECT id, email, first_name, last_name, role, region, country, phone, is_active,
                         avatar_url, created_at,
                         NULL::text AS preferred_language,
-                        last_login_at AS last_login
-                 FROM users WHERE id = $1`,
+                        last_login_at AS last_login,
+                        COALESCE(is_demo, false) AS is_demo
+                 FROM users WHERE id = $1 ${demoAccountsFilter.replace('WHERE', 'AND')}`,
                 [id]
             );
             rows = queryRes.rows || [];
@@ -380,7 +388,9 @@ router.get('/role/:role', async (req: Request, res: Response) => {
         }
 
         const { rows } = await query<UserRow>(
-            'SELECT * FROM users WHERE role = $1 AND is_active = true ORDER BY first_name',
+            // Pickers (e.g. assigning a farmer to an officer) never offer demo accounts:
+            // a real farmer assigned to the demo officer would be visible to the public demo session.
+            `SELECT * FROM users WHERE role = $1 AND is_active = true AND ${demoSql('users')} ORDER BY first_name`,
             [role]
         );
 

@@ -1,9 +1,11 @@
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
+import { viewerIsDemo } from '@/services/demoScope';
 
 export interface RequestPrincipal {
   userId: string;
   role: string;
+  isDemo?: unknown;
 }
 
 interface FarmerScopeRow {
@@ -13,6 +15,7 @@ interface FarmerScopeRow {
   region: string | null;
   tenant_id: string | null;
   is_active: boolean | null;
+  is_demo: boolean | null;
 }
 
 async function isTenantMember(farmer: FarmerScopeRow, principal: RequestPrincipal): Promise<boolean> {
@@ -44,13 +47,15 @@ async function hasRoleAccess(farmer: FarmerScopeRow, principal: RequestPrincipal
 
 export async function getFarmerForPrincipal(farmerId: string, principal: RequestPrincipal): Promise<FarmerScopeRow | null> {
   const result = await query<FarmerScopeRow>(
-    `SELECT f.id, f.user_id, f.assigned_officer_id, f.region, f.tenant_id, f.is_active
+    `SELECT f.id, f.user_id, f.assigned_officer_id, f.region, f.tenant_id, f.is_active, f.is_demo
      FROM farmers f
      WHERE f.id = $1`,
     [farmerId]
   );
   const farmer = result.rows[0];
-  if (!farmer || !(await isTenantMember(farmer, principal))) return null;
+  // Demo farmers exist only for the demo session, and the demo session only for them.
+  if (!farmer || Boolean(farmer.is_demo) !== viewerIsDemo(principal)) return null;
+  if (!(await isTenantMember(farmer, principal))) return null;
   return (await hasRoleAccess(farmer, principal)) ? farmer : null;
 }
 

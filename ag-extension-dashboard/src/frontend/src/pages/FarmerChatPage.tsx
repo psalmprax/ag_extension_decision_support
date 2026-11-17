@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import {
   Users,
@@ -7,7 +7,6 @@ import {
   Lock,
   MessageSquare,
   Radio,
-  Bot,
   ArrowLeft,
   Trash2,
   Mic,
@@ -19,12 +18,14 @@ import { useDeviceThermalMemoryBudget } from '@/hooks/useDeviceThermalMemoryBudg
 import { VirtualizedList } from '@/components/common/VirtualizedList';
 import { useDemoMode } from '@/demo';
 import { FarmerChatMessage } from '@/components/chat/FarmerChatMessage';
+import { OfficerCopilot } from '@/components/chat/OfficerCopilot';
+import { FarmerAskAi } from '@/components/chat/FarmerAskAi';
+import { useAppStore } from '@/store/useAppStore';
 import { PlotTelemetryDrawer, type DetectedHazard, type HazardEvaluation } from '@/components/chat/PlotTelemetryDrawer';
 import { VoiceNoteTaker } from '@/components/audio/VoiceNoteTaker';
 import { fetchWeather } from '@/api/weatherService';
-import { getChatCompletion } from '@/api/aiService';
 import apiClient from '@/api/client';
-import { buildHazardDays, defaultFollowUpQuestions, parseFollowUpQuestions, toPlotTelemetry, type PlotTelemetry, type WeatherForecastDay } from './farmerChatSafety';
+import { buildHazardDays, toPlotTelemetry, type PlotTelemetry, type WeatherForecastDay } from './farmerChatSafety';
 
 interface FarmerChatPageProps {
   farmerConversations: Conversation[];
@@ -55,7 +56,8 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   onDeleteConversation,
   // eslint-disable-next-line sonarjs/cognitive-complexity
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isFarmerUser = useAppStore(state => state.user?.role) === 'farmer';
   const { headingClass, btnClass } = useThemeClasses();
   const { isLowEndDevice } = useDeviceThermalMemoryBudget();
   const { isDemo } = useDemoMode();
@@ -135,37 +137,6 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
     })();
     return () => { cancelled = true; };
   }, [activeFarmerConvId, activeConv]);
-
-  // AI Copilot suggestions — fetched live when conversation has context, otherwise fallback to
-  // curated defaults. Re-fires when the last officer/user message changes.
-  const [suggestionResult, setSuggestionResult] = useState<{ conversationId: string; message: string; suggestions: string[] } | null>(null);
-  const lastUserMessage = useMemo(
-    () => [...farmerChatMessages].reverse().find(m => m.role === 'user' || m.role === 'officer')?.content ?? null,
-    [farmerChatMessages]
-  );
-  const liveSuggestions = suggestionResult?.conversationId === activeFarmerConvId && suggestionResult?.message === lastUserMessage
-    ? suggestionResult.suggestions : null;
-  const copilotSuggestions = liveSuggestions || defaultFollowUpQuestions;
-  // The list above is a static reference when the live call has not produced output —
-  // it must not be presented as AI-generated or "verified" advice.
-  const suggestionsAreLive = liveSuggestions !== null;
-  useEffect(() => {
-    let cancelled = false;
-    if (!activeFarmerConvId) return;
-    if (!lastUserMessage) return;
-    getChatCompletion(
-      `Given farmer said: "${lastUserMessage.slice(0, 300)}", suggest 3 short information-gathering questions (<=15 words each), one per line. Do not prescribe treatments or assume field conditions.`,
-      undefined,
-      'en'
-    ).then(res => {
-      const text = res.data.messages.find(message => message.role === 'assistant')?.content ?? '';
-      const lines = parseFollowUpQuestions(text);
-      if (!cancelled && lines.length >= 2) setSuggestionResult({ conversationId: activeFarmerConvId, message: lastUserMessage, suggestions: lines });
-    }).catch(err => {
-      console.error('AI copilot suggestions fetch failed — keeping static suggestions:', err);
-    });
-    return () => { cancelled = true; };
-  }, [activeFarmerConvId, lastUserMessage]);
 
   // Realtime: join the active conversation room and reload messages on new_message events.
   const socketRef = useRef<Socket | null>(null);
@@ -466,29 +437,15 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 ))}
               </div>
 
-              {/* AI Copilot Suggestion Bar */}
-              <div className="px-4 py-2 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-200/80 dark:border-white/[0.04] space-y-1.5">
-                <div className="flex items-center gap-1.5 text-xxs font-mono text-emerald-700 dark:text-emerald-400">
-                  <Bot className="w-3 h-3" />
-                  <span>
-                    {suggestionsAreLive
-                      ? 'AI-generated follow-up questions (review before sending):'
-                      : 'Suggested follow-ups (reference only, not AI-generated):'}
-                  </span>
-                </div>
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {copilotSuggestions.map((sug, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setFarmerChatInput(sug)}
-                      className="px-2.5 py-1 rounded-lg text-xxs font-sans bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] hover:border-emerald-500/40 text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white shrink-0 transition-colors text-left max-w-xs truncate"
-                    >
-                      {sug}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* The copilot is the officer's private tool; farmers never see it. */}
+              {!isFarmerUser && activeFarmerConvId && (
+                <OfficerCopilot
+                  conversationId={activeFarmerConvId}
+                  messages={farmerChatMessages}
+                  language={language}
+                  onUseText={setFarmerChatInput}
+                />
+              )}
 
               {/* Voice Note Composer for Extension Officer / Hands-free */}
               {showVoiceComposer && (
@@ -517,6 +474,16 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 </div>
               )}
 
+              {/* The farmer can ask the AI at any time; their officer sees the answer. */}
+              {isFarmerUser && activeFarmerConvId && !isDemo && (
+                <FarmerAskAi
+                  conversationId={activeFarmerConvId}
+                  input={farmerChatInput}
+                  clearInput={() => setFarmerChatInput('')}
+                  language={language}
+                  reload={() => loadFarmerMessages(activeFarmerConvId)}
+                />
+              )}
               {/* Chat Input Form */}
               <form
                 onSubmit={handleFarmerChatSend}

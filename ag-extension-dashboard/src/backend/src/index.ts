@@ -41,6 +41,7 @@ if (process.env.SENTRY_DSN) {
 import './workers/emailWorker';
 import './workers/alertWorker';
 import './workers/ingestionWorker';
+import './workers/turnTakingWorker';
 import './workers/outreachWorker';
 import './workers/notificationWorker';
 
@@ -342,6 +343,10 @@ async function stopIntervalWorkers() {
     try {
         const { stopIngestionWorker } = await import('./workers/ingestionWorker');
         stopIngestionWorker();
+    } catch { /* worker may not have started */ }
+    try {
+        const { stopTurnTakingWorker } = await import('./workers/turnTakingWorker');
+        stopTurnTakingWorker();
     } catch { /* worker may not have started */ }
     try {
         const { outreachWorker } = await import('./workers/outreachWorker');

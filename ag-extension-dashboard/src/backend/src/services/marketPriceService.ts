@@ -126,10 +126,11 @@ function getCurrencyForCountry(country: string): string {
   return match?.currency || 'KES';
 }
 
+const usdIdentityRate = (): ExchangeRateResult =>
+  ({ rate: 1, source: 'live', asOf: new Date().toISOString(), estimated: false, stale: false });
+
 async function fetchExchangeRate(targetCurrency: string): Promise<ExchangeRateResult> {
-  if (targetCurrency === 'USD') {
-    return { rate: 1, source: 'live', asOf: new Date().toISOString(), estimated: false, stale: false };
-  }
+  if (targetCurrency === 'USD') return usdIdentityRate();
   const cacheKey = `rate:${targetCurrency}`;
   try {
     return await rateLimitedFetch<ExchangeRateResult>('openERate', cacheKey, async () => {
@@ -145,6 +146,12 @@ async function fetchExchangeRate(targetCurrency: string): Promise<ExchangeRateRe
   } catch (err: unknown) {
     logger.warn(`Failed to fetch live USD/${targetCurrency} exchange rate: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
+  return fallbackExchangeRate(targetCurrency);
+}
+
+/** Rate without a network call: the last live rate while fresh, else the static table (stale). */
+function fallbackExchangeRate(targetCurrency: string): ExchangeRateResult {
+  if (targetCurrency === 'USD') return usdIdentityRate();
   const lastGood = lastLiveRates.get(targetCurrency);
   if (lastGood && Date.now() - new Date(lastGood.asOf).getTime() <= fxFreshnessTtlMs()) {
     logger.warn(`Serving last-known-good USD/${targetCurrency} from ${lastGood.asOf} (estimated)`);
@@ -277,6 +284,36 @@ const inFlightPrices = new Map<string, Promise<MarketPrice[]>>();
 
 const priceCacheKey = (country: string) => `market-prices:v1:${country}`;
 
+// A cold lookup tries four upstream sources in turn (up to ~27 s). Callers wait
+// at most this long, then get the labelled baseline estimate while the live
+// fetch carries on and fills the cache for the next request.
+function priceLookupBudgetMs(): number {
+  const parsed = Number(process.env.MARKET_PRICE_BUDGET_MS ?? 5000);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 5000;
+}
+
+function estimatedPricesFor(country: string): MarketPrice[] {
+  const currency = getCurrencyForCountry(country);
+  return buildBaselinePrices(fallbackExchangeRate(currency), currency, new Date().toISOString());
+}
+
+async function withinBudget(country: string, fetching: Promise<MarketPrice[]>): Promise<MarketPrice[]> {
+  const budgetMs = priceLookupBudgetMs();
+  let timer: NodeJS.Timeout | undefined;
+  const budget = new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), budgetMs); });
+  try {
+    const result = await Promise.race([fetching, budget]);
+    if (result) return result;
+  } finally {
+    clearTimeout(timer);
+  }
+  logger.warn(`Market prices for ${country} not ready after ${budgetMs} ms; serving the baseline estimate meanwhile`);
+  fetching.catch(error => logger.warn(
+    `Background market price fetch for ${country} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+  ));
+  return estimatedPricesFor(country);
+}
+
 async function readCachedPrices(country: string): Promise<MarketPrice[] | null> {
   const raw = await cacheGet(priceCacheKey(country));
   if (!raw) return null;
@@ -289,14 +326,19 @@ async function readCachedPrices(country: string): Promise<MarketPrice[] | null> 
 }
 
 export const marketPriceService = {
-  /** Latest prices for the user's country: cached, and one upstream fetch at a time per country. */
+  /**
+   * Latest prices for the user's country: cached, one upstream fetch at a time
+   * per country, and never more than the lookup budget of waiting.
+   */
   async getLatestPrices(userId?: string, countryOverride?: string): Promise<MarketPrice[]> {
     const country = countryOverride || await getUserCountry(userId);
     const cached = await readCachedPrices(country);
     if (cached) return cached;
+    return withinBudget(country, inFlightPrices.get(country) ?? this.startPriceFetch(country));
+  },
 
-    const running = inFlightPrices.get(country);
-    if (running) return running;
+  /** Fetches upstream once and caches the result (live 6 h, estimates 30 min). */
+  startPriceFetch(country: string): Promise<MarketPrice[]> {
     const fetching = this.fetchLatestPrices(country)
       .then(async result => {
         const live = result.length > 0 && result.every(row => row.dataStatus === 'live');

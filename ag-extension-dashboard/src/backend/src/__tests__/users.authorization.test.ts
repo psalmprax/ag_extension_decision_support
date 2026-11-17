@@ -118,3 +118,31 @@ describe('user management with real authorization and session validation', () =>
     expect((await request(app).get('/protected').set('Authorization', `Bearer ${victim}`)).status).toBe(401);
   });
 });
+
+describe('demo accounts in the staff directory', () => {
+  const sqlMatching = (needle: string) => mockQuery.mock.calls.map(([sql]) => String(sql)).find(sql => sql.includes(needle));
+
+  it('shows admins every account, with demo accounts flagged', async () => {
+    const base = mockQuery.getMockImplementation()!;
+    mockQuery.mockImplementation(async (sql: string, params: unknown[] = []) =>
+      sql.includes('AS is_demo')
+        ? { rows: [{ id: 'demo-1', email: 'demo@agridemo.com', first_name: 'Demo', last_name: 'User', role: 'extension_officer', is_demo: true }], rowCount: 1 }
+        : base(sql, params));
+
+    const res = await request(app).get('/users').set('Authorization', `Bearer ${token('admin', 'admin')}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data[0]).toMatchObject({ email: 'demo@agridemo.com', isDemo: true });
+    expect(sqlMatching('AS is_demo')).not.toContain('is_demo, false) = false');
+  });
+
+  it('hides demo accounts from regional managers', async () => {
+    const res = await request(app).get('/users').set('Authorization', `Bearer ${token('manager', 'regional_manager')}`);
+    expect(res.status).toBe(200);
+    expect(sqlMatching('AS is_demo')).toContain('COALESCE(users.is_demo, false) = false');
+  });
+
+  it('never offers demo accounts when picking an officer', async () => {
+    await request(app).get('/users/role/extension_officer').set('Authorization', `Bearer ${token('admin', 'admin')}`);
+    expect(sqlMatching('WHERE role = $1')).toContain('COALESCE(users.is_demo, false) = false');
+  });
+});

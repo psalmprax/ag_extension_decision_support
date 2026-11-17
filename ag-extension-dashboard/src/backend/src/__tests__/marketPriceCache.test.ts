@@ -8,6 +8,7 @@ jest.mock('../services/priceHistoryService', () => ({ recordPriceSnapshot: jest.
 jest.mock('../utils/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } }));
 
 import { marketPriceService, type MarketPrice } from '../services/marketPriceService';
+import { logger } from '../utils/logger';
 
 const row = (dataStatus: MarketPrice['dataStatus']): MarketPrice => ({
     id: 'r1', crop: 'Maize', price: 'KES 40', trend: 'New', updatedAt: new Date('2026-11-16T06:00:00Z'),
@@ -52,5 +53,44 @@ describe('market price cache', () => {
         await expect(marketPriceService.getLatestPrices(undefined, 'TZ')).rejects.toThrow('upstream down');
         await expect(marketPriceService.getLatestPrices(undefined, 'TZ')).resolves.toHaveLength(1);
         expect(fetchSpy).toHaveBeenCalledTimes(2);
+    });
+
+    describe('lookup budget', () => {
+        const flush = () => new Promise(resolve => setImmediate(resolve));
+        beforeEach(() => { process.env.MARKET_PRICE_BUDGET_MS = '20'; });
+        afterEach(() => { delete process.env.MARKET_PRICE_BUDGET_MS; });
+
+        it('answers with the labelled estimate when upstream is slow, then serves the live rows', async () => {
+            let release!: (rows: MarketPrice[]) => void;
+            fetchSpy.mockReturnValue(new Promise<MarketPrice[]>(resolve => { release = resolve; }));
+
+            const first = await marketPriceService.getLatestPrices(undefined, 'Kenya');
+            expect(first.length).toBeGreaterThan(0);
+            expect(first.every(r => r.dataStatus === 'estimated' && r.source === 'baseline_estimate')).toBe(true);
+            expect(first[0].currency).toBe('KES');
+
+            release([row('live')]);
+            await flush();
+            const second = await marketPriceService.getLatestPrices(undefined, 'Kenya');
+            expect(second[0].crop).toBe('Maize');
+            expect(fetchSpy).toHaveBeenCalledTimes(1);
+        });
+
+        it('prices the US estimate at the 1:1 dollar rate', async () => {
+            fetchSpy.mockReturnValue(new Promise<MarketPrice[]>(() => undefined));
+            const rows = await marketPriceService.getLatestPrices(undefined, 'United States');
+            expect(rows[0]).toMatchObject({ currency: 'USD', priceValue: 32.4 });
+        });
+
+        it('logs a background failure after the budget instead of surfacing it', async () => {
+            let fail!: (error: Error) => void;
+            fetchSpy.mockReturnValue(new Promise<MarketPrice[]>((_, reject) => { fail = reject; }));
+            const rows = await marketPriceService.getLatestPrices(undefined, 'Ghana');
+            expect(rows[0].dataStatus).toBe('estimated');
+
+            fail(new Error('FAOSTAT timeout'));
+            await flush();
+            expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Background market price fetch for Ghana failed: FAOSTAT timeout'));
+        });
     });
 });
