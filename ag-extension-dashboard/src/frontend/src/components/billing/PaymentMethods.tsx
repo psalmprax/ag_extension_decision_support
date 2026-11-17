@@ -222,7 +222,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                 triggerHaptic('light');
                 setShowVoucherForm(!showVoucherForm);
               }}
-              className="px-3.5 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-slate-900 dark:hover:text-white text-xs font-medium transition-all"
+              className="px-3.5 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white text-xs font-medium transition-all"
             >
               {showVoucherForm ? 'Hide' : t('action_redeem') || 'Redeem'}
             </button>
@@ -333,7 +333,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             onPayPalSubscription('price_pro_monthly');
           }}
           disabled={actionLoading === 'paypal-price_pro_monthly'}
-          className="px-4 py-2 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-slate-900 dark:hover:text-white text-xs font-medium transition-all flex items-center gap-2"
+          className="px-4 py-2 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white text-xs font-medium transition-all flex items-center gap-2"
         >
           <Globe className="w-4 h-4" />
           <span>{t('billing_subscribe_paypal') || 'PayPal Checkout'}</span>

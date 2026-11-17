@@ -388,16 +388,23 @@ router.get('/performance', async (req: Request, res: Response) => {
             officerData
         ] = await Promise.all([
             getFromDB(`
-                SELECT AVG(EXTRACT(EPOCH FROM (first_reply - started_at)) / 60) as avg_minutes,
+                SELECT AVG(EXTRACT(EPOCH FROM (replies.first_reply - farmer.first_message)) / 60) as avg_minutes,
                        COUNT(*) as replied
-                FROM (
-                    SELECT c.started_at,
-                           (SELECT MIN(m.created_at) FROM chat_messages m
-                            WHERE m.conversation_id = c.id AND m.role IN ('assistant', 'officer')) as first_reply
-                    FROM chat_conversations c
-                    WHERE c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
+                FROM chat_conversations c
+                CROSS JOIN LATERAL (
+                    SELECT MIN(m.created_at) as first_message
+                    FROM chat_messages m
+                    WHERE m.conversation_id = c.id AND m.role IN ('user', 'farmer')
+                ) farmer
+                CROSS JOIN LATERAL (
+                    SELECT MIN(m.created_at) as first_reply
+                    FROM chat_messages m
+                    WHERE m.conversation_id = c.id
+                      AND m.role IN ('assistant', 'officer')
+                      AND m.created_at >= farmer.first_message
                 ) replies
-                WHERE first_reply IS NOT NULL
+                WHERE farmer.first_message > NOW() - INTERVAL '${days} days'
+                  AND replies.first_reply IS NOT NULL${conversationTenant}
             `),
             getFromDB(`
                 SELECT COUNT(*) as total,
@@ -416,7 +423,7 @@ router.get('/performance', async (req: Request, res: Response) => {
                        COUNT(*) FILTER (WHERE v.follow_up_required = true) as follow_ups
                 FROM visits v
                 WHERE v.status = 'completed'
-                AND v.created_at > NOW() - INTERVAL '${days} days'${visitTenant}
+                AND v.completed_at > NOW() - INTERVAL '${days} days'${visitTenant}
             `),
             getFromDB(`
                 SELECT COUNT(*) as total,
@@ -434,9 +441,9 @@ router.get('/performance', async (req: Request, res: Response) => {
                        COUNT(*) FILTER (WHERE status = 'completed') as visits,
                        COUNT(*) FILTER (WHERE type = 'query') as queries
                 FROM (
-                    SELECT v.created_at, 'visit' as type, v.status FROM visits v WHERE 1 = 1${visitTenant}
+                    SELECT v.completed_at as created_at, 'visit' as type, v.status FROM visits v WHERE v.completed_at IS NOT NULL${visitTenant}
                     UNION ALL
-                    SELECT c.started_at, 'query', c.status FROM chat_conversations c WHERE 1 = 1${conversationTenant}
+                    SELECT c.created_at, 'query', c.status FROM chat_conversations c WHERE 1 = 1${conversationTenant}
                 ) combined
                 WHERE created_at > NOW() - INTERVAL '${days} days'
                 GROUP BY DATE(created_at)

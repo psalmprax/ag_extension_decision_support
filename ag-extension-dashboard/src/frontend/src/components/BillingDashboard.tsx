@@ -333,7 +333,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
             billing.handleGenerateVouchers();
           }}
           disabled={billing.actionLoading === 'generate-vouchers'}
-          className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-medium rounded-xl border border-slate-200 dark:border-white/10 transition-colors flex items-center justify-center gap-2"
+          className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-xl border border-slate-200 dark:border-white/10 transition-colors flex items-center justify-center gap-2"
         >
           {t('billing_admin_generate_vouchers') || 'Mint Batch Vouchers'}
         </button>

@@ -142,7 +142,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
             ? 'bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-white/40 cursor-default'
             : isPro
             ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-            : 'bg-slate-50 dark:bg-white/[0.05] hover:bg-slate-100 dark:hover:bg-white/10 text-white border border-slate-200 dark:border-white/10'
+            : 'bg-slate-50 dark:bg-white/[0.05] hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10'
         }`}
       >
         {actionLoading === plan.id ? (

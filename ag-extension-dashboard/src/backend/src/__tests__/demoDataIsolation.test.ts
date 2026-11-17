@@ -85,6 +85,17 @@ describe('Demo and live data separation', () => {
         const officerQuery = queries.find(sql => sql.includes('LEFT JOIN visits'));
         expect(officerQuery).toContain('live_f.id = v.farmer_id');
         expect(officerQuery).toContain('live_f.id = c.farmer_id');
+        const replyQuery = queries.find(sql => sql.includes('replies.first_reply - farmer.first_message'));
+        expect(replyQuery).toContain("m.role IN ('user', 'farmer')");
+        expect(replyQuery).toContain("m.role IN ('assistant', 'officer')");
+        expect(replyQuery).toContain('m.created_at >= farmer.first_message');
+        expect(replyQuery).toContain('farmer.first_message > NOW()');
+        expect(replyQuery).toContain('replies.first_reply IS NOT NULL');
+        const followUpQuery = queries.find(sql => sql.includes('v.follow_up_required = true'));
+        expect(followUpQuery).toContain('v.completed_at > NOW()');
+        const timelineQuery = queries.find(sql => sql.includes('GROUP BY DATE(created_at)'));
+        expect(timelineQuery).toContain('SELECT v.completed_at as created_at');
+        expect(timelineQuery).toContain('SELECT c.created_at,');
         expect(cacheGet).toHaveBeenCalledWith('analytics:performance:live-v3:legacy:month:all:all');
     });
 });

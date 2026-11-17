@@ -177,5 +177,8 @@ describe('BillingDashboard', () => {
     // Check for plan headings (Free and Pro)
     expect(screen.getByRole('heading', { name: /Free/i, level: 3 })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Pro/i, level: 3 })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Select Plan' }).className).toContain(
+      'text-slate-900 dark:text-white'
+    );
   });
 });
