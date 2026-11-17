@@ -1,0 +1,23 @@
+[
+  "GET /api/advisories/recent 200",
+  "GET /api/ai/diseases 200",
+  "GET /api/ai/reviews 200",
+  "GET /api/auth/me 200",
+  "GET /api/billing/invoices 200",
+  "GET /api/billing/payment-methods 200",
+  "GET /api/billing/plans 200",
+  "GET /api/billing/quotas 200",
+  "GET /api/billing/subscription 200",
+  "GET /api/billing/transaction/my 200",
+  "GET /api/campaigns/outreach-stats 200",
+  "GET /api/efficacy/followups 200",
+  "GET /api/efficacy/summary 200",
+  "GET /api/external/ndvi-timeseries 200",
+  "GET /api/external/weather 200",
+  "GET /api/knowledge/quota 200",
+  "GET /api/knowledge/stats 200",
+  "GET /api/notifications/unread-count 200",
+  "GET /api/outbreaks 200",
+  "GET /api/worldmonitor/layers 200",
+  "POST /api/auth/demo 200"
+]

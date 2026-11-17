@@ -1,0 +1,558 @@
+[
+  {
+    "role": "admin",
+    "section": "Field work",
+    "label": "Dashboard",
+    "order": 1,
+    "loadMs": 16765,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Operations Dashboard",
+      "TOTAL FARMERS",
+      "ACTIVE CONVERSATIONS",
+      "VISITS THIS MONTH",
+      "AVG SATISFACTION",
+      "Regional Distribution",
+      "Regional Vegetation Health (estimated)",
+      "Support Efficiency",
+      "FIELD AGRONOMY TOOLS",
+      "OFFICER LEADERBOARD",
+      "PROACTIVE AGRONOMIC ADVISORIES",
+      "ADVICE EFFICACY"
+    ],
+    "text": "Operations Dashboard\nWelcome back, Audit! Here is your overview.\nBrowser online · 0 pending\nSync Now\n+0%\nTOTAL FARMERS\n1\n+0%\nACTIVE CONVERSATIONS\n0\n+0%\nVISITS THIS MONTH\n0\n+0%\nAVG SATISFACTION\n0/5\nRegional Distribution\nPORTFOLIO OVERVIEW\nExpand\n+\n−\n Leaflet | © OpenStreetMap\nOutbreaks\nMAP TYPE\nStreet\nSatellite\nTerrain\nCROP LEGEND\nMaize\nTobacco\nGroundnuts\nSoybeans\nRice\nCotton\nACTIVE\nDisease Alerts\nDetail View\nRegional Vegetation Health (estimated)\nClimate-based vigor proxy — not satellite NDVI\n0.51\nHealthy Vegetation\n11-03\n11-13\nEstimated Vegetation Vigor Proxy From NASA POWER Temperature And Precipitation; This Is Not Satellite NDVI.\nEstimated NDVI Proxy\nSupport Efficiency\nResolution Rate\nNo data yet\nSatisfaction Score\nNo data yet\nFIELD AGRONOMY TOOLS\nWorks offline in low-connectivity areas\nTank mix\nFertilizer blend\nPlant density\nPRODUCT RATE\nL/ha\nAREA\nha\nTANK SIZE\nL\nWATER RATE\nL/ha\n0.12 product per 16L tank · 120ml/tank\n13 tanks · 200L water total · 1.5 product total\nOFFICER LEADERBOARD\n30 days\nNo officer activity in the last 30 days.\nPROACTIVE AGRONOMIC ADVISORIES\nNo advisories dispatched recently\nADVICE EFFICACY\n0%\nSUCCESS RATE\n0 of 0 tracked outcomes improved or resolved (90d)\nOutreach Delivery Status\nNo broadcast deliveries dispatched yet.\nActive Pulse\nDatabase\nstaging\nCONNECTED\nRedis Cache\nstaging\nCONNECTED\nUptime\nstaging\n1M\nLive Intelligence Stream\nLive\nLive farmer triage, journey breadcrumbs, and 1-click tele-agronomy handoff\nUSSD Sandbox\nUrgency Heat\nALL\nCRITICAL\nMOD…",
+    "screenshot": "admin/01-dashboard.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Field work",
+    "label": "AI Agronomist",
+    "order": 2,
+    "loadMs": 16650,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/chatbot/conversations 200",
+      "GET /api/health 200",
+      "GET /api/knowledge/stats 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "AI Agronomic Co-Pilot"
+    ],
+    "text": "AI Agronomic Co-Pilot\nAg-Agronomist 4.5 Pro\nMulti-modal decision engine powered by NASA POWER, SoilGrids v2, and Spatial RAG.\nAPI:\nHEALTHY\n· EXT 2/2 keyed external APIs configured (weather, tavily); keyless by design: fao, nasa\nKNOWLEDGE:\n36 ARTICLES\nCo-Pilot Studio\nAgent Fleet Ops\nAI Agronomist\n•\n02:58 AM\nAgronomic Decision Support Co-Pilot\nSynthesizing live NASA POWER agroclimatology, SoilGrids v2 soil properties, and RAG agronomic research into actionable field advisories and real-time interactive spatial canvas models.\nSelect a scenario below, enter field query parameters, or upload leaf symptoms to begin.\nView Interactive Soil Nutrient Grid →\nSoil Heatmap\nDisease Saliency\nAgro Scrubber\nRAG Graph\nRadar Telemetry\nInteractive Canvas\nSpatial Soil Chemistry & pH Heatmap (0–15cm)\nTap a cell to check its nutrients\nSoil\nNitrogen\nPhosphorus\nPotassium\nVolumetric\nSoil\nIDW Mesh Resolution: 8px\nℹ️ No live data for this nutrient yet — save the field location or add a lab test, or preview a sample map in the demo account.\nNo live soil map yet\nSave this field's location or add a lab result to grow a live map here. The demo account shows a sample map.\n4 pH\n8.5 pH\nAgronomic safety guard on: answers are checked for unsafe advice\nExport PDF\nDispatch Advisory SMS",
+    "screenshot": "admin/02-ai-agronomist.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Field work",
+    "label": "Farmer Direct Chat",
+    "order": 3,
+    "loadMs": 16664,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/chatbot/conversations 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Farmer Chat",
+      "Farmer Chats",
+      "Select a Conversation"
+    ],
+    "text": "Multi-Channel Advisory Bridge\nFarmer Chat\nReal-time communication and agricultural guidance for your farmers\nREALTIME CONNECTED\nFarmer Chats\n0 Active Smallholders\nALL\nSMS\nWHATSAPP\nTELEGRAM\nNo conversations yet.\nStart a new chat with a farmer.\nSelect a Conversation\nConnect with your assigned farmers in real-time to provide agricultural guidance.",
+    "screenshot": "admin/03-farmer-direct-chat.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Field work",
+    "label": "Knowledge",
+    "order": 4,
+    "loadMs": 16633,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/knowledge/quota 200",
+      "GET /api/knowledge/stats 200",
+      "GET /api/notifications/unread-count 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Agro-Spatial Knowledge Mesh"
+    ],
+    "text": "Agro-Spatial Knowledge Mesh\nRAG 2.0\nMulti-modal grounded semantic retrieval, topological citation graph, and verified agronomic almanacs.\nDAILY QUOTA:\nUnlimited\nSearch & Discovery\nKnowledge Graph\nSpatial Simulators\nDocument Library\nIndex Telemetry\nDemo scenarios are available in the demo account — use Search & Discovery above for live RAG over your ingested knowledge base.\nSearch RAG\nSpatial Knowledge Engine Ready\nSelect a research scenario above or enter a multi-modal query to explore full-width agronomic recommendations, citations, and interactive models.",
+    "screenshot": "admin/04-knowledge.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Field work",
+    "label": "Farmers",
+    "order": 5,
+    "loadMs": 16602,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Client Portfolio",
+      "Audit Farmer"
+    ],
+    "text": "Client Portfolio\nTelemetry Mesh Active\nManage smallholder cohorts, inspect individual agronomic telemetry, and dispatch bulk advisories.\nTotal Clients\n1\nTotal Land\n0.0 ha\nSelected\n0\nSelect All Filtered\nExport CSV\nA\nAudit Farmer\nID: de6c5df2\nLocation\nMachakos\nLand Holding\n0 ha\nmaize\nSMS",
+    "screenshot": "admin/05-farmers.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Field work",
+    "label": "Visits",
+    "order": 6,
+    "loadMs": 16641,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/visits 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Field Visits & Itineraries",
+      "No Field Visits Scheduled"
+    ],
+    "text": "Field Visits & Itineraries\nDispatch Radar\nManage scheduled on-site inspections, priority risk queue appointments, and tele-agronomy calls.\nTotal: 0\nPending: 0\nDone: 0\nSchedule New Visit\nAll Itineraries\n0\nActive & Pending\n0\nCompleted\n0\nCancelled\n0\nNo Field Visits Scheduled\nNo farm visits in queue. Dispatch your extension team or schedule an agronomic visit.\nSchedule Field Visit",
+    "screenshot": "admin/06-visits.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Field work",
+    "label": "Crops & Fields",
+    "order": 7,
+    "loadMs": 16643,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/farmers 200",
+      "GET /api/v1/fields 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Fields & Geospatial Parcels",
+      "No Farm Sectors Found"
+    ],
+    "text": "Fields & Geospatial Parcels\nGrowth Cycles Active\nMonitor agronomic fields and crop lifecycle performance for registered farmers.\nAudit Farmer (Machakos)\nAdd Field Sector\nTotal Sectors\n0\nTotal Cultivated Area\n0.0 ha\nActive Timelines\n0\nHarvested Yield\n0.0 tons\nField Sectors\nGrowth Timelines\nNo Farm Sectors Found\nStart by provisioning your first agronomic field sector.\nCreate First Sector",
+    "screenshot": "admin/07-crops-fields.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Field work",
+    "label": "Disease Diagnosis",
+    "order": 8,
+    "loadMs": 16692,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/ai/diseases 200",
+      "GET /api/notifications/unread-count 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Crop Doctor & Plant Pathology Clinic",
+      "Field Specimen Viewfinder"
+    ],
+    "text": "Crop Doctor & Pathology\nImage, video and symptom assessment\nCrop Doctor & Plant Pathology Clinic\nUpload a photo or video, or describe symptoms. Results require expert confirmation.\nCamera Scan Leaf\nOnline: analysis available\nLeaf Image Analysis\nVision\nVideo Observations\nVision\nSymptom Inference\nHeuristic\nSoil Diagnostics\nChemistry\nPathology Library\nReference\nField Specimen Viewfinder\nNeural Sensor\nTarget Crop (Optional Context)\nCapture or Upload Leaf Photo\nDrag & Drop JPG, PNG (Max 10MB)\nRun AI Pathology Analysis\nSpecimen Image Loupe\nStandby\n2.5x Loupe Lens\nImage loupe • No lesion detection overlay\nUpload a specimen photo on the left to inspect it with the image loupe.",
+    "screenshot": "admin/08-disease-diagnosis.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Field work",
+    "label": "Advisory Studio",
+    "order": 9,
+    "loadMs": 16661,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Agronomic blocks",
+      "Protocol decision canvas"
+    ],
+    "text": "v1 • draft\nVisual no-code agronomic protocol & form studio\nTemplate: Maize Fall Armyworm\nTemplate: Soil pH & Lime\nExport\nSave Draft\nPublish to Field PWA\nRates and thresholds in templates are examples to edit. Confirm them with an agronomist and the product label for your crop and region before publishing.\nAgronomic blocks\nClick block to insert into workflow canvas\nCrop & Phenology\nCrop species, variety, and growth stage selector.\nSoil Chemistry & pH\npH sensor input, texture class & ISRIC telemetry.\nPest & Disease Rater\nSeverity slider (1-100%) and threshold alert.\nCamera Diagnostic\nOffline MobileNet leaf photo scan & GPS tag.\nBio-Dosage Calculator\nDynamic Neem oil or Lime dosage per acreage.\nZero-code logic: Conditional branching evaluates locally in browser and field SQLite/IndexedDB.\nProtocol decision canvas\n4 Steps\nClear Canvas\n1\nCrop & Phenology Phase\n+ Add conditional logic\nDefault crop\nMaize\nGrowth stage\nV4 - Early Whorl\n2\nFall Armyworm Severity Assessment\nIF:\nCrop == \"Maize\"\nEdit\nSeverity threshold:\n30%\n3\nLeaf Funnel Photo Scan\nIF:\nSeverity > 20%\nEdit\nEdge diagnostic: MobileNetV3\n4\nPrecision Bio-Dosage Calculator\n+ Add conditional logic\nRate: 0.4 L/acre in 133 L water\nAdd Step to Protocol\nMobile PWA Preview\nOffline ready\nField Scouting PWA\nOFFLINE\nKitale Sector 4 • Plot 12A\nStep 1: Select crop\nMaize (Mahindi)\nCassava (Mhogo)\nSorghum (Mtama)\nStep 2: Infestation\n35%\nThreshold exceeded: Action required!\nStep 3: Leaf diagnostic\nTap to scan whorl with camera\nStep 4: Automat…",
+    "screenshot": "admin/09-advisory-studio.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Insights",
+    "label": "Reports",
+    "order": 10,
+    "loadMs": 16643,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/ai/reviews 200",
+      "GET /api/reporting 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "GOVERNMENT MIS EXPORTS (CSV)",
+      "Data Reports"
+    ],
+    "text": "GOVERNMENT MIS EXPORTS (CSV)\nFarmers CSV\nVisits CSV\nOutcomes CSV\nAgronomic Audit & Analytics\nData Reports\nVerified field synthesis, farmer cohort outcomes, and institutional audit logs.\nGenerate AI Report\nREPORTS GENERATED\n0\nActive\nREPORTS ARCHIVE\n0\nTotal\nLATEST REPORT\n—\nDATA SOURCE\nSystem Generated\nAudit Log Archive\n0 Available\nNo reports found\nClick \"Generate AI Report\" to synthesize field data into an operational report.",
+    "screenshot": "admin/10-reports.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Insights",
+    "label": "Analytics",
+    "order": 11,
+    "loadMs": 16635,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/external/prices 200",
+      "GET /api/external/prices/history 200",
+      "GET /api/external/prices/retail 200",
+      "GET /api/notifications/unread-count 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "System Analytics",
+      "Commodity market prices",
+      "Activity Timeline"
+    ],
+    "text": "System Analytics\nLast 30 days\nSupport performance, commodity prices and daily activity for your farmers.\nResolution Rate\nNo data yet\nConversations marked resolved\nAvg. Response Time\nNo data yet\nTime to the first reply\nSatisfaction Score\nNo data yet\nFarmer rating, 1–5\nFollow-up Rate\nNo data yet\nCompleted visits needing a follow-up\nFirst Contact Res.\nNo data yet\nResolved after the farmer's first message\nCommodity market prices\nProducer price benchmarks per crop from FAOSTAT and FAO GIEWS. Estimates are labelled as such.\nActivity Timeline\nCompleted field visits and new farmer conversations per day, all channels.\nField visits\nConversations",
+    "screenshot": "admin/11-analytics.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Insights",
+    "label": "Global Geospatial Monitor",
+    "order": 12,
+    "loadMs": 16607,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/worldmonitor/layers 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "WorldMonitor — Live Spatial GIS"
+    ],
+    "text": "WorldMonitor — Live Spatial GIS\nLive GIS\nApply\nSatellite orbit\nNot connected yet\nNDVI stress\n0 points (30d)\nSoilGrids horizon\n—\nPest swarm\nNo data source\nSpatial Layer Status\n3 live layers (farmers, NDVI 30d, SoilGrids 250m centroid); pest swarm is not connected, filtered by region/crop/county. Globe canvas is officer-desktop only to keep the farmer PWA lightweight.\nFarmers mapped: 0\nSoil centroid: —\nSwarm clusters: —\nView: 36.8, -1.3 z2.2\nShows farmers with a saved location, NDVI from diagnoses in the last 30 days, SoilGrids soil at those points, and pest reports from the last 14 days. Add a farmer's location to put them on the map.",
+    "screenshot": "admin/12-global-geospatial-monitor.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Operations",
+    "label": "SMS",
+    "order": 13,
+    "loadMs": 16634,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/billing/usage 200",
+      "GET /api/farmers 200",
+      "GET /api/sms/history 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Recent Recipients",
+      "SMS Quota",
+      "Flash Templates"
+    ],
+    "text": "Recent Recipients\nAudit Farmer\nAdd\nCompose\nHistory\nSINGLE\nBULK\nGoal Mode\nGateways\nPhone Number\nMessage\nTranslate\n0 / 160 characters\nSend SMS\nSMS Quota\n×\n—\nQuota unavailable\nSMS Stats\n0\nSent\n0\nFailed\nFlash Templates\nGreeting\n\"Hello, this is your GPExts officer. How is your crop doing?\"\nVisit Reminder\n\"I will be visiting your farm tomorrow at 10 AM. Please be available.\"\nAlert\n\"URGENT: Heavy rain expected. Please take necessary precautions for your harvest.\"",
+    "screenshot": "admin/13-sms.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Operations",
+    "label": "Billing & Subscription",
+    "order": 14,
+    "loadMs": 16645,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/billing/invoices 200",
+      "GET /api/billing/payment-methods 200",
+      "GET /api/billing/plans 200",
+      "GET /api/billing/quotas 200",
+      "GET /api/billing/subscription 200",
+      "GET /api/billing/transaction/list 200",
+      "GET /api/billing/transaction/my 200",
+      "GET /api/billing/voucher/list 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "BILLING GATEWAY IS NOT FULLY CONFIGURED. PLEASE SET YOUR STRIPE OR PAYPAL KEYS I…",
+      "Billing & Subscriptions",
+      "Free Starter",
+      "Feature Access & Cost Matrix"
+    ],
+    "text": "BILLING GATEWAY IS NOT FULLY CONFIGURED. PLEASE SET YOUR STRIPE OR PAYPAL KEYS IN THE ADMIN SETTINGS TO ENABLE PAYMENTS AND PORTAL ACCESS.\nAction Required: Stripe or PayPal API keys are missing. Please update your credentials in the Admin Vault section below to enable card and PayPal payments.\nBilling & Subscriptions\nCommerce Radar\nManage your subscription, plans, and payment methods\nTier: Free Starter\nStatus: Starter\nBilling: Monthly\nCustomer Portal\nPlans & Pricing\nQuota & Telemetry\nPayment Rails\nInvoices & Receipts\nAdmin Vault\nMonthly\nAnnual (-20%)\nCURRENT PLAN\nFree Starter\nSTARTER\nRENEWS ON\nLifetime Free Starter\nMonthly Auto-Renew\nSTRIPE CUSTOMER PORTAL\nManage payment methods & invoices\nPORTAL\nTransparent Unit Rates\nFeature Access & Cost Matrix\nTransparent breakdown of tier quotas, unit rates, and interactive cooperative budget simulator for SMS, LLM reasoning, WhatsApp, AI Vision, and Speech synthesis.\nAccess Matrix\nReference Costs\nPlan Fit\nPlatform Capability / Service\t\nFree Starter\n$0 / month\n\t\nPro Officer\n$29 / month\n\t\nEnterprise Org\nCustom Tier\nKnowledge Base Retrieval\nAI & Intelligence\nAgronomic RAG search backed by FAO & CIMMYT indices\n\t3 queries / day\tUnlimited\tUnlimited + Custom RAG\nAI Conversational Assistant\nAI & Intelligence\nMultilingual generative agronomy assistant (Swahili, Chichewa, English)\n\t\n\t1,000 chats / mo\tUnlimited Dedicated Model\nPathological AI Vision (Plant & Soil)\nAI & Intelligence\nLeaf disease recognition, NPK deficit detection via computer visio…",
+    "screenshot": "admin/14-billing-subscription.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Operations",
+    "label": "Email Automation",
+    "order": 15,
+    "loadMs": 16633,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/email/approvals/pending 200",
+      "GET /api/email/templates 200",
+      "GET /api/notifications/unread-count 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Email Workflows",
+      "Disease Alert Notification",
+      "Market Price Update",
+      "Training Invitation",
+      "Farmer Visit Confirmation",
+      "Weather Advisory"
+    ],
+    "text": "Email Workflows\nManage email templates and approval workflows\nRefresh\nEMAIL TEMPLATES\n5\nPENDING APPROVALS\n0\nCATEGORIES\n5\nTOTAL VARIABLES\n28\nTemplates (5)\nPending Approvals (0)\nAll Categories\nalerts\nmarket\ntraining\nvisits\nweather\nalerts\nDisease Alert Notification\n⚠️ {{diseaseName}} Alert - {{region}} Region\nVariables:\n5\ndiseaseName\nregion\naffectedCrops\n+2 more\nCreated by system • 8/16/2026\nPreview\nEdit\nmarket\nMarket Price Update\nMarket Price Update - {{cropName}} at {{price}}/{{unit}}\nVariables:\n6\ncropName\nprice\nunit\n+3 more\nCreated by system • 8/16/2026\nPreview\nEdit\ntraining\nTraining Invitation\nTraining Invitation: {{trainingTopic}} on {{date}}\nVariables:\n7\nrecipientName\ntrainingTopic\ndate\n+4 more\nCreated by system • 8/16/2026\nPreview\nEdit\nvisits\nFarmer Visit Confirmation\nFarm Visit Confirmed - {{farmerName}} on {{visitDate}}\nVariables:\n6\nfarmerName\nofficerName\nlocation\n+3 more\nCreated by system • 8/16/2026\nPreview\nEdit\nweather\nWeather Advisory\nWeather Advisory - {{region}} ({{dateRange}})\nVariables:\n4\nregion\ndateRange\nweatherSummary\n+1 more\nCreated by system • 8/16/2026\nPreview\nEdit",
+    "screenshot": "admin/15-email-automation.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Administration",
+    "label": "System Telemetry",
+    "order": 16,
+    "loadMs": 16646,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/ai/telemetry/events 200",
+      "GET /api/ai/telemetry/summary 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "System Telemetry",
+      "Spatial Soil & Environmental Telemetry Interpolator\nSOILGRIDS V2 + NASA POWER",
+      "Request Status Distribution",
+      "Agent Usage",
+      "Recent Events"
+    ],
+    "text": "System Telemetry\nMonitor AI agent performance and usage\nLast Hour\nLast 24 Hours\nLast 7 Days\nLast 30 Days\nRefresh\nTOTAL REQUESTS\n90\nLive count — sparkline history available in demo account\nAVG RESPONSE TIME\n469ms\nLive latency — history in demo\nERROR RATE\n0.0%\nLive error rate — history in demo\nTOTAL COST\n$0.00\nLive cost — history in demo\nSpatial Soil & Environmental Telemetry Interpolator\nSOILGRIDS V2 + NASA POWER\nHardware-accelerated 2D IDW interpolation mesh for sub-surface acidity, NPK, moisture saturation, and SOC.\nSoil\nNitrogen\nPhosphorus\nPotassium\nVolumetric\nSoil\nIDW Mesh Resolution: 8px\nℹ️ No live data for this nutrient yet — save the field location or add a lab test, or preview a sample map in the demo account.\nNo live soil map yet\nSave this field's location or add a lab result to grow a live map here. The demo account shows a sample map.\n4 pH\n8.5 pH\nRequest Status Distribution\nSuccess\nError\nPending\n0\n25\n50\n75\n100\nAgent Usage\naihubmix\n0\n25\n50\n75\n100\nRecent Events\nAll Status\nSuccess\nError\nPending\nagent_request\nAgent: aihubmix\n11/17/2026, 2:56:27 AM\n363ms\nagent_request\nAgent: aihubmix\n11/17/2026, 2:56:27 AM\n380ms\nagent_request\nAgent: aihubmix\n11/17/2026, 2:56:26 AM\n358ms\nagent_request\nAgent: aihubmix\n11/17/2026, 2:56:26 AM\n384ms\nagent_request\nAgent: aihubmix\n11/17/2026, 2:56:25 AM\n357ms\nagent_request\nAgent: aihubmix\n11/17/2026, 2:56:25 AM\n1113ms\nagent_request\nAgent: aihubmix\n11/17/2026, 2:30:15 AM\n367ms\nagent_request\nAgent: aihubmix\n11/17/2026, 2:30:15 AM\n345ms\nagent_requ…",
+    "screenshot": "admin/16-system-telemetry.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Administration",
+    "label": "Active Autonomous Agents",
+    "order": 17,
+    "loadMs": 16662,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/ai/agents/handoffs 200",
+      "GET /api/ai/agents/queue 200",
+      "GET /api/ai/agents/status 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Agent Orchestration",
+      "Queue Status Telemetry",
+      "Autonomous Handoff Stream"
+    ],
+    "text": "Autonomous Mesh Fleet\nAgent Orchestration\nReal-time telemetry, auto-handoff coordination, and execution matrix.\n2/2 nodes healthy\nRefresh\nQueued tasks\n0\nWaiting\nActive workers\n0\nRunning now\nCompleted\n0\nno runs yet\nFailed\n0\nAfter all retries\nActive Agent Nodes\nAgent Zero\nID: agent-zero\nHealthy\nConcurrency load\n0 / 3 (0%)\nCapabilities\nfarmer_outreach\ndata_collection\nweather_monitoring\n*\nHeartbeat: 2:56:24 AM\nDispatch Probe\nCrew AI\nID: crew-ai\nHealthy\nConcurrency load\n0 / 5 (0%)\nCapabilities\nmarket_analysis\ndisease_diagnosis\npolicy_research\n*\nHeartbeat: 2:56:24 AM\nDispatch Probe\nQueue Status Telemetry\nReal-time density\nAutonomous Handoff Stream\n0 ERRORS",
+    "screenshot": "admin/17-active-autonomous-agents.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Administration",
+    "label": "System Health & Ops",
+    "order": 18,
+    "loadMs": 16667,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/notifications/unread-count 200",
+      "GET /api/system/health/components 200",
+      "GET /api/system/health/recovery-log 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "SRE & Self-Healing Telemetry",
+      "Core Infrastructure Nodes (5)",
+      "Recovery Actions Log"
+    ],
+    "text": "SRE & Self-Healing Telemetry\nCluster Online\nReal-time node latency, database connections, and autonomous self-healing monitors.\nDeep Diagnostic\nRefresh\nHEALTHY SERVICES\n5\nDEGRADED NODES\n0\nUNHEALTHY\n0\nOFFLINE\n0\nCore Infrastructure Nodes (5)\nActive Mesh\nai-provider\nHealthy\nLast Poll\n3:02:24 AM\nLast Ack\n3:02:24 AM\nFailures\n0\ndatabase\nHealthy\nLast Poll\n3:02:24 AM\nLast Ack\n3:02:24 AM\nFailures\n0\ncache\nHealthy\nLast Poll\n3:02:24 AM\nLast Ack\n3:02:24 AM\nFailures\n0\nagent-zero\nHealthy\nLast Poll\n3:02:24 AM\nLast Ack\n3:02:24 AM\nFailures\n0\ncrew-ai\nHealthy\nLast Poll\n3:02:24 AM\nLast Ack\n3:02:24 AM\nFailures\n0\nOffline sync queue is empty.\nRecovery Actions Log\nReal-time Stream\nNo recovery interventions recorded. Cluster operating autonomously.",
+    "screenshot": "admin/18-system-health-ops.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Administration",
+    "label": "Semantic Memory",
+    "order": 19,
+    "loadMs": 16697,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/ai/memories 200",
+      "GET /api/ai/memories/summary 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Agent Memory & Knowledge Engine",
+      "Dynamic RAG Semantic Mesh",
+      "Indexed Memories & Knowledge Vectors (0)",
+      "No Memory Vectors Found"
+    ],
+    "text": "Agent Memory & Knowledge Engine\nRAG Vector Store Synced\nDynamic conversational memory, regional skill cards, and semantic recall embeddings.\nVectors\n0\nCategories\n0\nMean Score\n0%\nAdd Memory\nAll Vector Categories (0)\nDynamic RAG Semantic Mesh\nReal-Time Impulse Graph\nALL\nFAO\nSOIL\nNASA\nFARMER\nRULE\nNo indexed knowledge yet\nThe knowledge graph visualizes real RAG-memory entries. When indexed articles, soils, or farmer records exist, they'll appear here — fabricated sample data is never shown.\nPhysics Force Directed • Drag nodes to reposition\nIndexed Memories & Knowledge Vectors (0)\nTotal Accesses: 0\nNo Memory Vectors Found\nThe agent has no custom episodic memory entries yet. Inject your first agronomic rule.\nAdd First Knowledge Vector",
+    "screenshot": "admin/19-semantic-memory.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Administration",
+    "label": "MCP Tool Registry",
+    "order": 20,
+    "loadMs": 16674,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/mcp/health 200",
+      "GET /api/mcp/tools 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "System Tools",
+      "MCP Server Status",
+      "Available Tools",
+      "Tool Execution",
+      "Select a Tool"
+    ],
+    "text": "System Tools\nExplore and execute Model Context Protocol tools\nRefresh\nMCP Server Status\nhealthy\n24\nTools Available\nMCP\nProtocol Version\n1.0.0\nServer Version\nAVAILABLE TOOLS\n24\nEXECUTED TODAY\n0\nSUCCESS RATE\n—\nTOTAL EXECUTIONS\n0\nAvailable Tools\nget_current_date\nReturns the current date in YYYY-MM-DD format.\n0 parameters\nget_geospatial_weather\nFetches highly accurate meteorological data (temperature, solar irradiance, soil moisture indicators) for a precise latitude/longitude from NASA POWER. Use this for drought risk, pest modeling, and precision agriculture advice.\n3 parameters\n2 required\nget_weather_forecast\nFetches the weather forecast for a specific agricultural region or city. Use this to provide advice on planting, harvesting, or pest control based on upcoming weather.\n2 parameters\n1 required\nschedule_visit\nSchedules a new field visit for a farmer. Use this when a farmer requests a visit or when the AI identifies a high-priority need for a face-to-face consultation.\n4 parameters\n2 required\nget_market_prices\nFetches the latest agricultural market prices for various crops. Each row carries a dataStatus (live vs. estimated); only quote live rows as market facts to farmers and extension officers.\n1 parameters\nget_disease_alerts\nReturns a crop-production anomaly signal derived from FAOSTAT annual statistics (a lagging proxy for disease/pest pressure, NOT real-time alerts). Use for background context only; tell the user that live field scouting and national plant-protection bul…",
+    "screenshot": "admin/20-mcp-tool-registry.jpg"
+  },
+  {
+    "role": "admin",
+    "section": "Administration",
+    "label": "Staff & Officers",
+    "order": 21,
+    "loadMs": 16672,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/users 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Staff & Officer Directory",
+      "Audit Admin",
+      "Audit Officer",
+      "Audit Farmer",
+      "Demo User",
+      "Demo User"
+    ],
+    "text": "Staff & Officer Directory\nRBAC Active\nManage extension officers, regional supervisors, and administrative credentials.\nTotal Staff\n5\nOfficers\n2\nCountries\n1\nRegions\n2\nCreate User\nAll Roles (5)\nAdmin\nRegional Manager\nExtension Officer\nFarmer\nAA\nAudit Admin\nAdmin\nui-audit-admin@audit.invalid\n🇰🇪\nKenya\n•\nUnassigned Region\nLast: 11/17/2026\nHistory\nAO\nAudit Officer\nExtension Officer\nui-audit-officer@audit.invalid\n🇰🇪\nKenya\n•\nUnassigned Region\nNo recent login\nHistory\nAF\nAudit Farmer\nFarmer\nui-audit-farmer@audit.invalid\n🇰🇪\nKenya\n•\nUnassigned Region\nNo recent login\nHistory\nDU\nDemo User\nExtension Officer\nDemo\ndemo@agridemo.com\n🇰🇪\nKenya\n•\nKenya\n+254700000000\nNo recent login\nHistory\nDU\nDemo User\nAdmin\nDemo\ndemo@ag-extension.com\n🇰🇪\nKenya\n•\nCentral Region\n+254712345678\nNo recent login\nHistory",
+    "screenshot": "admin/21-staff-officers.jpg"
+  }
+]

@@ -1,0 +1,325 @@
+[
+  {
+    "role": "demo",
+    "section": "Field work",
+    "label": "Dashboard",
+    "order": 1,
+    "loadMs": 16794,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Operations Dashboard",
+      "MY FARMERS",
+      "MY ACTIVE CHATS",
+      "MY VISITS (30D)",
+      "AVG. CONVERSATIONS",
+      "Regional Distribution",
+      "Regional Vegetation Health (estimated)",
+      "Support Efficiency",
+      "FIELD AGRONOMY TOOLS",
+      "OFFICER LEADERBOARD",
+      "PROACTIVE AGRONOMIC ADVISORIES",
+      "ADVICE EFFICACY"
+    ],
+    "text": "Operations Dashboard\nWelcome back, Demo! Here is your overview.\nBrowser online · 0 pending\nSync Now\n+4.2%\nMY FARMERS\n12\n+6.1%\nMY ACTIVE CHATS\n9\n+3.4%\nMY VISITS (30D)\n7\nAVG. CONVERSATIONS\n0.8\nRegional Distribution\nKENYA OVERVIEW\nExpand\nSample demo locations\n🌽\n📍\n🥔\n📍\n🍚\n🌽\n📍\n📍\n🌽\n📍\n📍\n📍\n+\n−\n Leaflet | © OpenStreetMap\nOutbreaks\nMAP TYPE\nStreet\nSatellite\nTerrain\nCROP LEGEND\nMaize\nTobacco\nGroundnuts\nSoybeans\nRice\nCotton\nACTIVE\nDisease Alerts\nDetail View\nRegional Vegetation Health (estimated)\nClimate-based vigor proxy — not satellite NDVI\n0.51\nHealthy Vegetation\n11-03\n11-13\nEstimated Vegetation Vigor Proxy From NASA POWER Temperature And Precipitation; This Is Not Satellite NDVI.\nEstimated NDVI Proxy\nSupport Efficiency\nResolution Rate\n91.7%\nSatisfaction Score\n4.6 / 5\nFIELD AGRONOMY TOOLS\nWorks offline in low-connectivity areas\nTank mix\nFertilizer blend\nPlant density\nPRODUCT RATE\nL/ha\nAREA\nha\nTANK SIZE\nL\nWATER RATE\nL/ha\n0.12 product per 16L tank · 120ml/tank\n13 tanks · 200L water total · 1.5 product total\nOFFICER LEADERBOARD\n30 days\n1\nSamuel Omondi · 42 visits · 94% efficacy\nRoad Warrior\nTrusted Advisor\n2\nFaith Chebet · 35 visits · 91% efficacy\nField Regular\nTrusted Advisor\n3\nDavid Kiprono · 28 visits · 88% efficacy\nField Regular\nEvidence Collector\n4\nAmina Hassan · 24 visits · 85% efficacy\nField Regular\nOutcome Tracker\n5\nJoseph Mutua · 19 visits · 82% efficacy\nOutcome Tracker\nPROACTIVE AGRONOMIC ADVISORIES\nNo advisories dispatched recently\nADVICE EFFICACY\n0%\nSUCCESS RATE\n0 of…",
+    "screenshot": "demo/01-dashboard.jpg"
+  },
+  {
+    "role": "demo",
+    "section": "Field work",
+    "label": "Farmer Direct Chat",
+    "order": 2,
+    "loadMs": 16617,
+    "errorBoundary": null,
+    "planLocked": true,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Farmer Chat & Direct Communication"
+    ],
+    "text": "Pro Feature Locked\nFarmer Chat & Direct Communication\nInteractive AI advisory engine, multi-turn farmer chat, and voice notes synthesis require high-capacity neural models available on Pro plans.\nIncluded in Pro & Enterprise Plans:\n1,000+ monthly AI reasoning credits\nDirect extension-to-farmer live chat\nSpeech-to-text audio field notes\nReal-time agronomic recommendations\nUpgrade to Pro Plan\nView Full Cost & Access Matrix",
+    "screenshot": "demo/02-farmer-direct-chat.jpg"
+  },
+  {
+    "role": "demo",
+    "section": "Field work",
+    "label": "Knowledge",
+    "order": 3,
+    "loadMs": 16623,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/knowledge/quota 200",
+      "GET /api/knowledge/stats 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Agro-Spatial Knowledge Mesh"
+    ],
+    "text": "Agro-Spatial Knowledge Mesh\nRAG 2.0\nMulti-modal grounded semantic retrieval, topological citation graph, and verified agronomic almanacs.\nDAILY QUOTA:\n1000/1000\nSearch & Discovery\nKnowledge Graph\nSpatial Simulators\nDocument Library\nIndex Telemetry\nVERIFIED RESEARCH SCENARIOS\nDemo\nSelect a verified benchmark to run semantic inquiry\nMAIZE\nEntomology & IPM\nFall Armyworm Integrated Pest Protocol\nLoad Grounded Protocol\nMULTI-CROP\nSoil Chemistry & Agronomy\nSevere Soil Acidity (pH 4.8) & Liming Protocol\nLoad Grounded Protocol\nCASSAVA & CEREALS\nAgroclimatology\nNASA POWER Satellite Moisture & Planting Sowing Window\nLoad Grounded Protocol\nMAIZE\nPathology & Vision AI\nMaize Foliar Rust & Chlorosis Pathology\nLoad Grounded Protocol\nSearch RAG\nSpatial Knowledge Engine Ready\nSelect a research scenario above or enter a multi-modal query to explore full-width agronomic recommendations, citations, and interactive models.",
+    "screenshot": "demo/03-knowledge.jpg"
+  },
+  {
+    "role": "demo",
+    "section": "Field work",
+    "label": "Farmers",
+    "order": 4,
+    "loadMs": 16629,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/notifications/unread-count 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Client Portfolio",
+      "Emmanuel Mwangi",
+      "Grace Wanjiku",
+      "David Kiprono",
+      "Amina Hassan",
+      "Samuel Otieno",
+      "Faith Chebet",
+      "Joseph Mutua",
+      "Esther Nyambura",
+      "Brian Wekesa",
+      "Lydia Moraa",
+      "Peter Maina"
+    ],
+    "text": "Client Portfolio\nTelemetry Mesh Active\nManage smallholder cohorts, inspect individual agronomic telemetry, and dispatch bulk advisories.\nTotal Clients\n12\nTotal Land\n44.1 ha\nSelected\n0\nSelect All Filtered\nExport CSV\nSandbox Mode: Sample farmer cohort records shown. Connect tenant account to sync live SMS registries and satellite NDVI boundaries.\nE\nEmmanuel Mwangi\nID: demo-far\nLocation\nMachakos\nLand Holding\n3.5 ha\nMaize\nBeans\nSMS\nActive\nG\nGrace Wanjiku\nID: demo-far\nLocation\nKiambu\nLand Holding\n2.2 ha\nCoffee\nMaize\nSMS\nActive\nD\nDavid Kiprono\nID: demo-far\nLocation\nNakuru\nLand Holding\n5 ha\nPotatoes\nWheat\nSMS\nActive\nA\nAmina Hassan\nID: demo-far\nLocation\nKilifi\nLand Holding\n4.1 ha\nCassava\nCashew\nSMS\nActive\nS\nSamuel Otieno\nID: demo-far\nLocation\nKisumu\nLand Holding\n1.8 ha\nRice\nSorghum\nSMS\nActive\nF\nFaith Chebet\nID: demo-far\nLocation\nUasin Gishu\nLand Holding\n6.5 ha\nMaize\nSoybeans\nSMS\nActive\nJ\nJoseph Mutua\nID: demo-far\nLocation\nMeru\nLand Holding\n2.8 ha\nTea\nAvocado\nSMS\nActive\nE\nEsther Nyambura\nID: demo-far\nLocation\nNyeri\nLand Holding\n1.5 ha\nCoffee\nMacadamia\nSMS\nActive\nB\nBrian Wekesa\nID: demo-far\nLocation\nKitale\nLand Holding\n8 ha\nMaize\nSunflower\nSMS\nActive\nL\nLydia Moraa\nID: demo-far\nLocation\nKisii\nLand Holding\n1.2 ha\nBananas\nTea\nSMS\nActive\nP\nPeter Maina\nID: demo-far\nLocation\nMuranga\nLand Holding\n3 ha\nAvocado\nCoffee\nSMS\nActive\nB\nBeatrice Cherotich\nID: demo-far\nLocation\nBomet\nLand Holding\n4.5 ha\nTea\nDairy Pasture\nSMS\nActive",
+    "screenshot": "demo/04-farmers.jpg"
+  },
+  {
+    "role": "demo",
+    "section": "Field work",
+    "label": "Visits",
+    "order": 5,
+    "loadMs": 16600,
+    "errorBoundary": null,
+    "planLocked": true,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Field Visits & Tracking"
+    ],
+    "text": "Pro Feature Locked\nField Visits & Tracking\nGPS-geotagged field visit routing, automated audio-to-text visit synthesis, and longitudinal farmer observation histories require a Pro subscription.\nIncluded in Pro & Enterprise Plans:\nUnlimited GPS-logged field visits & scheduling\nAutomated AI visit synthesis & diagnosis generator\nHistorical visit comparison & severity tracking\nOfficer route optimization & follow-up queues\nUpgrade to Pro Plan\nView Full Cost & Access Matrix",
+    "screenshot": "demo/05-visits.jpg"
+  },
+  {
+    "role": "demo",
+    "section": "Field work",
+    "label": "Crops & Fields",
+    "order": 6,
+    "loadMs": 16636,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Fields & Geospatial Parcels",
+      "Machakos Maize Sector A"
+    ],
+    "text": "Fields & Geospatial Parcels\nGrowth Cycles Active\nMonitor agronomic fields and crop lifecycle performance for registered farmers.\nEmmanuel Mwangi (Machakos)\nGrace Wanjiku (Kiambu)\nDavid Kiprono (Nakuru)\nAmina Hassan (Kilifi)\nSamuel Otieno (Kisumu)\nFaith Chebet (Uasin Gishu)\nJoseph Mutua (Meru)\nEsther Nyambura (Nyeri)\nBrian Wekesa (Kitale)\nLydia Moraa (Kisii)\nPeter Maina (Muranga)\nBeatrice Cherotich (Bomet)\nAdd Field Sector\nTotal Sectors\n1\nTotal Cultivated Area\n4.5 ha\nActive Timelines\n1\nHarvested Yield\n0.0 tons\nField Sectors\nGrowth Timelines\nMachakos Maize Sector A\nID: field-de\nArea size\n4.5 Hectares\nSoil type\nLoam\nSoil pH\n6.5 pH\nCoordinates\n-1.5177, 37.2634\nGrowing\nPlanted 11/15/2026\nMaize (SC 719)\nSeason Plan\nRecord Harvest",
+    "screenshot": "demo/06-crops-fields.jpg"
+  },
+  {
+    "role": "demo",
+    "section": "Field work",
+    "label": "Disease Diagnosis",
+    "order": 7,
+    "loadMs": 16660,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/ai/diseases 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Crop Doctor & Plant Pathology Clinic",
+      "Field Specimen Viewfinder"
+    ],
+    "text": "Crop Doctor & Pathology\nImage, video and symptom assessment\nCrop Doctor & Plant Pathology Clinic\nUpload a photo or video, or describe symptoms. Results require expert confirmation.\nCamera Scan Leaf\nOnline: analysis available\nLeaf Image Analysis\nVision\nVideo Observations\nVision\nSymptom Inference\nHeuristic\nSoil Diagnostics\nChemistry\nPathology Library\nReference\nField Specimen Viewfinder\nNeural Sensor\nTarget Crop (Optional Context)\nCapture or Upload Leaf Photo\nDrag & Drop JPG, PNG (Max 10MB)\nRun AI Pathology Analysis\nSpecimen Image Loupe\nStandby\n2.5x Loupe Lens\nImage loupe • No lesion detection overlay\nUpload a specimen photo on the left to inspect it with the image loupe.",
+    "screenshot": "demo/07-disease-diagnosis.jpg"
+  },
+  {
+    "role": "demo",
+    "section": "Field work",
+    "label": "Advisory Studio",
+    "order": 8,
+    "loadMs": 16666,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/notifications/unread-count 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Agronomic blocks",
+      "Protocol decision canvas"
+    ],
+    "text": "v1 • draft\nVisual no-code agronomic protocol & form studio\nTemplate: Maize Fall Armyworm\nTemplate: Soil pH & Lime\nExport\nSave Draft\nPublish to Field PWA\nRates and thresholds in templates are examples to edit. Confirm them with an agronomist and the product label for your crop and region before publishing.\nAgronomic blocks\nClick block to insert into workflow canvas\nCrop & Phenology\nCrop species, variety, and growth stage selector.\nSoil Chemistry & pH\npH sensor input, texture class & ISRIC telemetry.\nPest & Disease Rater\nSeverity slider (1-100%) and threshold alert.\nCamera Diagnostic\nOffline MobileNet leaf photo scan & GPS tag.\nBio-Dosage Calculator\nDynamic Neem oil or Lime dosage per acreage.\nZero-code logic: Conditional branching evaluates locally in browser and field SQLite/IndexedDB.\nProtocol decision canvas\n4 Steps\nClear Canvas\n1\nCrop & Phenology Phase\n+ Add conditional logic\nDefault crop\nMaize\nGrowth stage\nV4 - Early Whorl\n2\nFall Armyworm Severity Assessment\nIF:\nCrop == \"Maize\"\nEdit\nSeverity threshold:\n30%\n3\nLeaf Funnel Photo Scan\nIF:\nSeverity > 20%\nEdit\nEdge diagnostic: MobileNetV3\n4\nPrecision Bio-Dosage Calculator\n+ Add conditional logic\nRate: 0.4 L/acre in 133 L water\nAdd Step to Protocol\nMobile PWA Preview\nOffline ready\nField Scouting PWA\nOFFLINE\nKitale Sector 4 • Plot 12A\nStep 1: Select crop\nMaize (Mahindi)\nCassava (Mhogo)\nSorghum (Mtama)\nStep 2: Infestation\n35%\nThreshold exceeded: Action required!\nStep 3: Leaf diagnostic\nTap to scan whorl with camera\nStep 4: Automat…",
+    "screenshot": "demo/08-advisory-studio.jpg"
+  },
+  {
+    "role": "demo",
+    "section": "Insights",
+    "label": "Reports",
+    "order": 9,
+    "loadMs": 16607,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/ai/reviews 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "GOVERNMENT MIS EXPORTS (CSV)",
+      "Data Reports"
+    ],
+    "text": "GOVERNMENT MIS EXPORTS (CSV)\nFarmers CSV\nVisits CSV\nOutcomes CSV\nAgronomic Audit & Analytics\nData Reports\nVerified field synthesis, farmer cohort outcomes, and institutional audit logs.\nGenerate AI Report\nREPORTS GENERATED\n0\nActive\nREPORTS ARCHIVE\n0\nTotal\nLATEST REPORT\n—\nDATA SOURCE\nSystem Generated\nAudit Log Archive\n0 Available\nNo reports found\nClick \"Generate AI Report\" to synthesize field data into an operational report.",
+    "screenshot": "demo/09-reports.jpg"
+  },
+  {
+    "role": "demo",
+    "section": "Insights",
+    "label": "Analytics",
+    "order": 10,
+    "loadMs": 16626,
+    "errorBoundary": null,
+    "planLocked": true,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Operational Analytics & Telemetry"
+    ],
+    "text": "Pro Feature Locked\nOperational Analytics & Telemetry\nComprehensive extension performance KPIs, resolution turnaround benchmarks, and predictive regional crop disease trends require a Pro subscription.\nIncluded in Pro & Enterprise Plans:\nOfficer speed-to-resolution benchmarking\nRegional crop outbreak predictive heatmaps\nDeep customer satisfaction & survey analytics\nExecutive data export & real-time telemetry feeds\nUpgrade to Pro Plan\nView Full Cost & Access Matrix",
+    "screenshot": "demo/10-analytics.jpg"
+  },
+  {
+    "role": "demo",
+    "section": "Insights",
+    "label": "Global Geospatial Monitor",
+    "order": 11,
+    "loadMs": 16605,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/notifications/unread-count 200",
+      "GET /api/worldmonitor/layers 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "WorldMonitor — Live Spatial GIS"
+    ],
+    "text": "WorldMonitor — Live Spatial GIS\nLive GIS\nDemo filters\nApply\nSatellite orbit\nNot connected yet\nNDVI stress\n0 points (30d)\nSoilGrids horizon\n—\nPest swarm\nNo data source\nSpatial Layer Status\n3 live layers (farmers, NDVI 30d, SoilGrids 250m centroid); pest swarm is not connected, filtered by region/crop/county. Globe canvas is officer-desktop only to keep the farmer PWA lightweight.\nFarmers mapped: 0\nSoil centroid: —\nSwarm clusters: —\nView: 36.8, -1.3 z2.2\nShows farmers with a saved location, NDVI from diagnoses in the last 30 days, SoilGrids soil at those points, and pest reports from the last 14 days. Add a farmer's location to put them on the map.",
+    "screenshot": "demo/11-global-geospatial-monitor.jpg"
+  },
+  {
+    "role": "demo",
+    "section": "Operations",
+    "label": "SMS",
+    "order": 12,
+    "loadMs": 16589,
+    "errorBoundary": null,
+    "planLocked": true,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "SMS Campaigns"
+    ],
+    "text": "Pro Feature Locked\nSMS Campaigns\nBulk SMS campaigns, automated weather dispatch, and USSD broadcasting to hundreds of farmers require a Pro or Enterprise subscription.\nIncluded in Pro & Enterprise Plans:\n500+ monthly SMS broadcast quota\nDirect multi-recipient campaigns\nAutomated weather & pest alerts\nLocalized language translation\nUpgrade to Pro Plan\nView Full Cost & Access Matrix",
+    "screenshot": "demo/12-sms.jpg"
+  },
+  {
+    "role": "demo",
+    "section": "Operations",
+    "label": "Billing & Subscription",
+    "order": 13,
+    "loadMs": 16654,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/billing/invoices 200",
+      "GET /api/billing/payment-methods 200",
+      "GET /api/billing/plans 200",
+      "GET /api/billing/quotas 200",
+      "GET /api/billing/subscription 200",
+      "GET /api/billing/transaction/my 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "BILLING GATEWAY IS NOT FULLY CONFIGURED. PLEASE SET YOUR STRIPE OR PAYPAL KEYS I…",
+      "Billing & Subscriptions",
+      "Free Starter",
+      "Feature Access & Cost Matrix"
+    ],
+    "text": "BILLING GATEWAY IS NOT FULLY CONFIGURED. PLEASE SET YOUR STRIPE OR PAYPAL KEYS IN THE ADMIN SETTINGS TO ENABLE PAYMENTS AND PORTAL ACCESS.\nNote: We are currently updating our payment gateways. Some card and PayPal features may be temporarily unavailable. Please use Vouchers or Mobile Money in the meantime.\nBilling & Subscriptions\nCommerce Radar\nManage your subscription, plans, and payment methods\nTier: Free Starter\nStatus: Starter\nBilling: Monthly\nCustomer Portal\nPlans & Pricing\nQuota & Telemetry\nPayment Rails\nInvoices & Receipts\nMonthly\nAnnual (-20%)\nCURRENT PLAN\nFree Starter\nSTARTER\nRENEWS ON\nLifetime Free Starter\nMonthly Auto-Renew\nSTRIPE CUSTOMER PORTAL\nManage payment methods & invoices\nPORTAL\nTransparent Unit Rates\nFeature Access & Cost Matrix\nTransparent breakdown of tier quotas, unit rates, and interactive cooperative budget simulator for SMS, LLM reasoning, WhatsApp, AI Vision, and Speech synthesis.\nAccess Matrix\nReference Costs\nPlan Fit\nPlatform Capability / Service\t\nFree Starter\n$0 / month\n\t\nPro Officer\n$29 / month\n\t\nEnterprise Org\nCustom Tier\nKnowledge Base Retrieval\nAI & Intelligence\nAgronomic RAG search backed by FAO & CIMMYT indices\n\t3 queries / day\tUnlimited\tUnlimited + Custom RAG\nAI Conversational Assistant\nAI & Intelligence\nMultilingual generative agronomy assistant (Swahili, Chichewa, English)\n\t\n\t1,000 chats / mo\tUnlimited Dedicated Model\nPathological AI Vision (Plant & Soil)\nAI & Intelligence\nLeaf disease recognition, NPK deficit detection via computer visi…",
+    "screenshot": "demo/13-billing-subscription.jpg"
+  }
+]

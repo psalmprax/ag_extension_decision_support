@@ -1,0 +1,344 @@
+[
+  {
+    "role": "extension_officer",
+    "section": "Field work",
+    "label": "Dashboard",
+    "order": 1,
+    "loadMs": 16726,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Operations Dashboard",
+      "MY FARMERS",
+      "MY ACTIVE CHATS",
+      "MY VISITS (30D)",
+      "AVG. CONVERSATIONS",
+      "Regional Distribution",
+      "Regional Vegetation Health (estimated)",
+      "Support Efficiency",
+      "FIELD AGRONOMY TOOLS",
+      "OFFICER LEADERBOARD",
+      "PROACTIVE AGRONOMIC ADVISORIES",
+      "ADVICE EFFICACY"
+    ],
+    "text": "Operations Dashboard\nWelcome back, Audit! Here is your overview.\nBrowser online · 0 pending\nSync Now\n+0%\nMY FARMERS\n0\n+0%\nMY ACTIVE CHATS\n0\n+0%\nMY VISITS (30D)\n0\nAVG. CONVERSATIONS\n0\nRegional Distribution\nPORTFOLIO OVERVIEW\nExpand\n+\n−\n Leaflet | © OpenStreetMap\nOutbreaks\nMAP TYPE\nStreet\nSatellite\nTerrain\nCROP LEGEND\nMaize\nTobacco\nGroundnuts\nSoybeans\nRice\nCotton\nACTIVE\nDisease Alerts\nDetail View\nRegional Vegetation Health (estimated)\nClimate-based vigor proxy — not satellite NDVI\n0.51\nHealthy Vegetation\n11-03\n11-13\nEstimated Vegetation Vigor Proxy From NASA POWER Temperature And Precipitation; This Is Not Satellite NDVI.\nEstimated NDVI Proxy\nSupport Efficiency\nResolution Rate\nNo data yet\nSatisfaction Score\nNo data yet\nFIELD AGRONOMY TOOLS\nWorks offline in low-connectivity areas\nTank mix\nFertilizer blend\nPlant density\nPRODUCT RATE\nL/ha\nAREA\nha\nTANK SIZE\nL\nWATER RATE\nL/ha\n0.12 product per 16L tank · 120ml/tank\n13 tanks · 200L water total · 1.5 product total\nOFFICER LEADERBOARD\n30 days\nNo officer activity in the last 30 days.\nPROACTIVE AGRONOMIC ADVISORIES\nNo advisories dispatched recently\nADVICE EFFICACY\n0%\nSUCCESS RATE\n0 of 0 tracked outcomes improved or resolved (90d)\nOutreach Delivery Status\nNo broadcast deliveries dispatched yet.\nSOIL TELEMETRY & CLIMATE RADAR\nIllustrative sample · not live telemetry\nSoil Moisture\n28.4%\nOptimal root zone\nTopsoil Temp\n22.8 °C\nNASA POWER data\nRegional Soil pH\n6.2 (Neutral / Fertile)\nAcidic (4.0)\nOptimal (6.5)\nAlkaline (8.5)\nLive Intelligence S…",
+    "screenshot": "extension_officer/01-dashboard.jpg"
+  },
+  {
+    "role": "extension_officer",
+    "section": "Field work",
+    "label": "AI Agronomist",
+    "order": 2,
+    "loadMs": 16664,
+    "errorBoundary": null,
+    "planLocked": true,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/chatbot/conversations 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "AI Agronomic Assistant"
+    ],
+    "text": "Pro Feature Locked\nAI Agronomic Assistant\nInteractive AI advisory engine, multi-turn farmer chat, and voice notes synthesis require high-capacity neural models available on Pro plans.\nIncluded in Pro & Enterprise Plans:\n1,000+ monthly AI reasoning credits\nDirect extension-to-farmer live chat\nSpeech-to-text audio field notes\nReal-time agronomic recommendations\nUpgrade to Pro Plan\nView Full Cost & Access Matrix",
+    "screenshot": "extension_officer/02-ai-agronomist.jpg"
+  },
+  {
+    "role": "extension_officer",
+    "section": "Field work",
+    "label": "Farmer Direct Chat",
+    "order": 3,
+    "loadMs": 16612,
+    "errorBoundary": null,
+    "planLocked": true,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/chatbot/conversations 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Farmer Chat & Direct Communication"
+    ],
+    "text": "Pro Feature Locked\nFarmer Chat & Direct Communication\nInteractive AI advisory engine, multi-turn farmer chat, and voice notes synthesis require high-capacity neural models available on Pro plans.\nIncluded in Pro & Enterprise Plans:\n1,000+ monthly AI reasoning credits\nDirect extension-to-farmer live chat\nSpeech-to-text audio field notes\nReal-time agronomic recommendations\nUpgrade to Pro Plan\nView Full Cost & Access Matrix",
+    "screenshot": "extension_officer/03-farmer-direct-chat.jpg"
+  },
+  {
+    "role": "extension_officer",
+    "section": "Field work",
+    "label": "Knowledge",
+    "order": 4,
+    "loadMs": 16646,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/knowledge/quota 200",
+      "GET /api/knowledge/stats 200",
+      "GET /api/notifications/unread-count 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Agro-Spatial Knowledge Mesh"
+    ],
+    "text": "Agro-Spatial Knowledge Mesh\nRAG 2.0\nMulti-modal grounded semantic retrieval, topological citation graph, and verified agronomic almanacs.\nDAILY QUOTA:\n3/3\nSearch & Discovery\nKnowledge Graph\nSpatial Simulators\nDocument Library\nIndex Telemetry\nDemo scenarios are available in the demo account — use Search & Discovery above for live RAG over your ingested knowledge base.\nSearch RAG\nSpatial Knowledge Engine Ready\nSelect a research scenario above or enter a multi-modal query to explore full-width agronomic recommendations, citations, and interactive models.",
+    "screenshot": "extension_officer/04-knowledge.jpg"
+  },
+  {
+    "role": "extension_officer",
+    "section": "Field work",
+    "label": "Farmers",
+    "order": 5,
+    "loadMs": 16652,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Client Portfolio",
+      "No Client Records Found"
+    ],
+    "text": "Client Portfolio\nTelemetry Mesh Active\nManage smallholder cohorts, inspect individual agronomic telemetry, and dispatch bulk advisories.\nTotal Clients\n0\nTotal Land\n0.0 ha\nSelected\n0\nSelect All Filtered\nExport CSV\nNo Client Records Found\nNo smallholder client farmers enrolled in this portfolio yet.",
+    "screenshot": "extension_officer/05-farmers.jpg"
+  },
+  {
+    "role": "extension_officer",
+    "section": "Field work",
+    "label": "Visits",
+    "order": 6,
+    "loadMs": 16623,
+    "errorBoundary": null,
+    "planLocked": true,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/visits 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Field Visits & Tracking"
+    ],
+    "text": "Pro Feature Locked\nField Visits & Tracking\nGPS-geotagged field visit routing, automated audio-to-text visit synthesis, and longitudinal farmer observation histories require a Pro subscription.\nIncluded in Pro & Enterprise Plans:\nUnlimited GPS-logged field visits & scheduling\nAutomated AI visit synthesis & diagnosis generator\nHistorical visit comparison & severity tracking\nOfficer route optimization & follow-up queues\nUpgrade to Pro Plan\nView Full Cost & Access Matrix",
+    "screenshot": "extension_officer/06-visits.jpg"
+  },
+  {
+    "role": "extension_officer",
+    "section": "Field work",
+    "label": "Crops & Fields",
+    "order": 7,
+    "loadMs": 16614,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/farmers 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Fields & Geospatial Parcels",
+      "No Farm Sectors Found"
+    ],
+    "text": "Fields & Geospatial Parcels\nGrowth Cycles Active\nMonitor agronomic fields and crop lifecycle performance for registered farmers.\nAdd Field Sector\nTotal Sectors\n0\nTotal Cultivated Area\n0.0 ha\nActive Timelines\n0\nHarvested Yield\n0.0 tons\nField Sectors\nGrowth Timelines\nNo Farm Sectors Found\nPlease select a farmer to load their sectors.\nCreate First Sector",
+    "screenshot": "extension_officer/07-crops-fields.jpg"
+  },
+  {
+    "role": "extension_officer",
+    "section": "Field work",
+    "label": "Disease Diagnosis",
+    "order": 8,
+    "loadMs": 16765,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/ai/diseases 200",
+      "GET /api/notifications/unread-count 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Crop Doctor & Plant Pathology Clinic",
+      "Field Specimen Viewfinder"
+    ],
+    "text": "Crop Doctor & Pathology\nImage, video and symptom assessment\nCrop Doctor & Plant Pathology Clinic\nUpload a photo or video, or describe symptoms. Results require expert confirmation.\nCamera Scan Leaf\nOnline: analysis available\nLeaf Image Analysis\nVision\nVideo Observations\nVision\nSymptom Inference\nHeuristic\nSoil Diagnostics\nChemistry\nPathology Library\nReference\nField Specimen Viewfinder\nNeural Sensor\nTarget Crop (Optional Context)\nCapture or Upload Leaf Photo\nDrag & Drop JPG, PNG (Max 10MB)\nRun AI Pathology Analysis\nSpecimen Image Loupe\nStandby\n2.5x Loupe Lens\nImage loupe • No lesion detection overlay\nUpload a specimen photo on the left to inspect it with the image loupe.",
+    "screenshot": "extension_officer/08-disease-diagnosis.jpg"
+  },
+  {
+    "role": "extension_officer",
+    "section": "Field work",
+    "label": "Advisory Studio",
+    "order": 9,
+    "loadMs": 16679,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Agronomic blocks",
+      "Protocol decision canvas"
+    ],
+    "text": "v1 • draft\nVisual no-code agronomic protocol & form studio\nTemplate: Maize Fall Armyworm\nTemplate: Soil pH & Lime\nExport\nSave Draft\nPublish to Field PWA\nRates and thresholds in templates are examples to edit. Confirm them with an agronomist and the product label for your crop and region before publishing.\nAgronomic blocks\nClick block to insert into workflow canvas\nCrop & Phenology\nCrop species, variety, and growth stage selector.\nSoil Chemistry & pH\npH sensor input, texture class & ISRIC telemetry.\nPest & Disease Rater\nSeverity slider (1-100%) and threshold alert.\nCamera Diagnostic\nOffline MobileNet leaf photo scan & GPS tag.\nBio-Dosage Calculator\nDynamic Neem oil or Lime dosage per acreage.\nZero-code logic: Conditional branching evaluates locally in browser and field SQLite/IndexedDB.\nProtocol decision canvas\n4 Steps\nClear Canvas\n1\nCrop & Phenology Phase\n+ Add conditional logic\nDefault crop\nMaize\nGrowth stage\nV4 - Early Whorl\n2\nFall Armyworm Severity Assessment\nIF:\nCrop == \"Maize\"\nEdit\nSeverity threshold:\n30%\n3\nLeaf Funnel Photo Scan\nIF:\nSeverity > 20%\nEdit\nEdge diagnostic: MobileNetV3\n4\nPrecision Bio-Dosage Calculator\n+ Add conditional logic\nRate: 0.4 L/acre in 133 L water\nAdd Step to Protocol\nMobile PWA Preview\nOffline ready\nField Scouting PWA\nOFFLINE\nKitale Sector 4 • Plot 12A\nStep 1: Select crop\nMaize (Mahindi)\nCassava (Mhogo)\nSorghum (Mtama)\nStep 2: Infestation\n35%\nThreshold exceeded: Action required!\nStep 3: Leaf diagnostic\nTap to scan whorl with camera\nStep 4: Automat…",
+    "screenshot": "extension_officer/09-advisory-studio.jpg"
+  },
+  {
+    "role": "extension_officer",
+    "section": "Insights",
+    "label": "Reports",
+    "order": 10,
+    "loadMs": 16628,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/ai/reviews 200",
+      "GET /api/reporting 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "GOVERNMENT MIS EXPORTS (CSV)",
+      "Data Reports"
+    ],
+    "text": "GOVERNMENT MIS EXPORTS (CSV)\nFarmers CSV\nVisits CSV\nOutcomes CSV\nAgronomic Audit & Analytics\nData Reports\nVerified field synthesis, farmer cohort outcomes, and institutional audit logs.\nGenerate AI Report\nREPORTS GENERATED\n0\nActive\nREPORTS ARCHIVE\n0\nTotal\nLATEST REPORT\n—\nDATA SOURCE\nSystem Generated\nAudit Log Archive\n0 Available\nNo reports found\nClick \"Generate AI Report\" to synthesize field data into an operational report.",
+    "screenshot": "extension_officer/10-reports.jpg"
+  },
+  {
+    "role": "extension_officer",
+    "section": "Insights",
+    "label": "Analytics",
+    "order": 11,
+    "loadMs": 16597,
+    "errorBoundary": null,
+    "planLocked": true,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/notifications/unread-count 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Operational Analytics & Telemetry"
+    ],
+    "text": "Pro Feature Locked\nOperational Analytics & Telemetry\nComprehensive extension performance KPIs, resolution turnaround benchmarks, and predictive regional crop disease trends require a Pro subscription.\nIncluded in Pro & Enterprise Plans:\nOfficer speed-to-resolution benchmarking\nRegional crop outbreak predictive heatmaps\nDeep customer satisfaction & survey analytics\nExecutive data export & real-time telemetry feeds\nUpgrade to Pro Plan\nView Full Cost & Access Matrix",
+    "screenshot": "extension_officer/11-analytics.jpg"
+  },
+  {
+    "role": "extension_officer",
+    "section": "Insights",
+    "label": "Global Geospatial Monitor",
+    "order": 12,
+    "loadMs": 16610,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/worldmonitor/layers 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "WorldMonitor — Live Spatial GIS"
+    ],
+    "text": "WorldMonitor — Live Spatial GIS\nLive GIS\nApply\nSatellite orbit\nNot connected yet\nNDVI stress\n0 points (30d)\nSoilGrids horizon\n—\nPest swarm\nNo data source\nSpatial Layer Status\n3 live layers (farmers, NDVI 30d, SoilGrids 250m centroid); pest swarm is not connected, filtered by region/crop/county. Globe canvas is officer-desktop only to keep the farmer PWA lightweight.\nFarmers mapped: 0\nSoil centroid: —\nSwarm clusters: —\nView: 36.8, -1.3 z2.2\nShows farmers with a saved location, NDVI from diagnoses in the last 30 days, SoilGrids soil at those points, and pest reports from the last 14 days. Add a farmer's location to put them on the map.",
+    "screenshot": "extension_officer/12-global-geospatial-monitor.jpg"
+  },
+  {
+    "role": "extension_officer",
+    "section": "Operations",
+    "label": "SMS",
+    "order": 13,
+    "loadMs": 16603,
+    "errorBoundary": null,
+    "planLocked": true,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "SMS Campaigns"
+    ],
+    "text": "Pro Feature Locked\nSMS Campaigns\nBulk SMS campaigns, automated weather dispatch, and USSD broadcasting to hundreds of farmers require a Pro or Enterprise subscription.\nIncluded in Pro & Enterprise Plans:\n500+ monthly SMS broadcast quota\nDirect multi-recipient campaigns\nAutomated weather & pest alerts\nLocalized language translation\nUpgrade to Pro Plan\nView Full Cost & Access Matrix",
+    "screenshot": "extension_officer/13-sms.jpg"
+  },
+  {
+    "role": "extension_officer",
+    "section": "Operations",
+    "label": "Billing & Subscription",
+    "order": 14,
+    "loadMs": 16647,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/billing/invoices 200",
+      "GET /api/billing/payment-methods 200",
+      "GET /api/billing/plans 200",
+      "GET /api/billing/quotas 200",
+      "GET /api/billing/subscription 200",
+      "GET /api/billing/transaction/my 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "BILLING GATEWAY IS NOT FULLY CONFIGURED. PLEASE SET YOUR STRIPE OR PAYPAL KEYS I…",
+      "Billing & Subscriptions",
+      "Free Starter",
+      "Feature Access & Cost Matrix"
+    ],
+    "text": "BILLING GATEWAY IS NOT FULLY CONFIGURED. PLEASE SET YOUR STRIPE OR PAYPAL KEYS IN THE ADMIN SETTINGS TO ENABLE PAYMENTS AND PORTAL ACCESS.\nNote: We are currently updating our payment gateways. Some card and PayPal features may be temporarily unavailable. Please use Vouchers or Mobile Money in the meantime.\nBilling & Subscriptions\nCommerce Radar\nManage your subscription, plans, and payment methods\nTier: Free Starter\nStatus: Starter\nBilling: Monthly\nCustomer Portal\nPlans & Pricing\nQuota & Telemetry\nPayment Rails\nInvoices & Receipts\nMonthly\nAnnual (-20%)\nCURRENT PLAN\nFree Starter\nSTARTER\nRENEWS ON\nLifetime Free Starter\nMonthly Auto-Renew\nSTRIPE CUSTOMER PORTAL\nManage payment methods & invoices\nPORTAL\nTransparent Unit Rates\nFeature Access & Cost Matrix\nTransparent breakdown of tier quotas, unit rates, and interactive cooperative budget simulator for SMS, LLM reasoning, WhatsApp, AI Vision, and Speech synthesis.\nAccess Matrix\nReference Costs\nPlan Fit\nPlatform Capability / Service\t\nFree Starter\n$0 / month\n\t\nPro Officer\n$29 / month\n\t\nEnterprise Org\nCustom Tier\nKnowledge Base Retrieval\nAI & Intelligence\nAgronomic RAG search backed by FAO & CIMMYT indices\n\t3 queries / day\tUnlimited\tUnlimited + Custom RAG\nAI Conversational Assistant\nAI & Intelligence\nMultilingual generative agronomy assistant (Swahili, Chichewa, English)\n\t\n\t1,000 chats / mo\tUnlimited Dedicated Model\nPathological AI Vision (Plant & Soil)\nAI & Intelligence\nLeaf disease recognition, NPK deficit detection via computer visi…",
+    "screenshot": "extension_officer/14-billing-subscription.jpg"
+  }
+]

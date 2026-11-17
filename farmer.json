@@ -1,0 +1,153 @@
+[
+  {
+    "role": "farmer",
+    "section": "Field work",
+    "label": "Dashboard",
+    "order": 1,
+    "loadMs": 16611,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Hello, Audit!",
+      "Market PricesESTIMATED",
+      "Ask AI Advisor",
+      "Vegetation health",
+      "Global benchmarks"
+    ],
+    "text": "Hello, Audit!\nHere is your farm advisory overview.\nMy Crops\nmaize\nNext Visit\nNone\nAI Advisory\n0 updates\nAlerts\nNo alerts\nMarket PricesESTIMATED\nWhite Maize (90kg)\nKES 4,200\nStable\nDry Beans (90kg)\nKES 12,550\nStable\nSorghum (90kg)\nKES 3,800\nStable\nFinger Millet (90kg)\nKES 9,250\nStable\nAsk AI Advisor\nGet instant advice on pests, weather, and crop management.\nStart Chat\nVegetation health\n14-day agroclimatology proxy\n0.51\nHealthy\n11-03\n11-13\nEstimated Vegetation Vigor Proxy From NASA POWER Temperature And Precipitation; This Is Not Satellite NDVI.\nESTIMATED\nGlobal benchmarks\nMaize · USDA PSD data\nNo benchmark data available",
+    "screenshot": "farmer/01-dashboard.jpg"
+  },
+  {
+    "role": "farmer",
+    "section": "Field work",
+    "label": "AI Agronomist",
+    "order": 2,
+    "loadMs": 16587,
+    "errorBoundary": null,
+    "planLocked": true,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/chatbot/conversations 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "AI Agronomic Assistant"
+    ],
+    "text": "Pro Feature Locked\nAI Agronomic Assistant\nInteractive AI advisory engine, multi-turn farmer chat, and voice notes synthesis require high-capacity neural models available on Pro plans.\nIncluded in Pro & Enterprise Plans:\n1,000+ monthly AI reasoning credits\nDirect extension-to-farmer live chat\nSpeech-to-text audio field notes\nReal-time agronomic recommendations\nUpgrade to Pro Plan\nView Full Cost & Access Matrix",
+    "screenshot": "farmer/02-ai-agronomist.jpg"
+  },
+  {
+    "role": "farmer",
+    "section": "Field work",
+    "label": "Knowledge",
+    "order": 3,
+    "loadMs": 16638,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/knowledge/quota 200",
+      "GET /api/knowledge/stats 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Agro-Spatial Knowledge Mesh"
+    ],
+    "text": "Agro-Spatial Knowledge Mesh\nRAG 2.0\nMulti-modal grounded semantic retrieval, topological citation graph, and verified agronomic almanacs.\nDAILY QUOTA:\n3/3\nSearch & Discovery\nKnowledge Graph\nSpatial Simulators\nDocument Library\nIndex Telemetry\nDemo scenarios are available in the demo account — use Search & Discovery above for live RAG over your ingested knowledge base.\nSearch RAG\nSpatial Knowledge Engine Ready\nSelect a research scenario above or enter a multi-modal query to explore full-width agronomic recommendations, citations, and interactive models.",
+    "screenshot": "farmer/03-knowledge.jpg"
+  },
+  {
+    "role": "farmer",
+    "section": "Field work",
+    "label": "Visits",
+    "order": 4,
+    "loadMs": 16601,
+    "errorBoundary": null,
+    "planLocked": true,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/notifications/unread-count 200",
+      "GET /api/visits 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Field Visits & Tracking"
+    ],
+    "text": "Pro Feature Locked\nField Visits & Tracking\nGPS-geotagged field visit routing, automated audio-to-text visit synthesis, and longitudinal farmer observation histories require a Pro subscription.\nIncluded in Pro & Enterprise Plans:\nUnlimited GPS-logged field visits & scheduling\nAutomated AI visit synthesis & diagnosis generator\nHistorical visit comparison & severity tracking\nOfficer route optimization & follow-up queues\nUpgrade to Pro Plan\nView Full Cost & Access Matrix",
+    "screenshot": "farmer/04-visits.jpg"
+  },
+  {
+    "role": "farmer",
+    "section": "Field work",
+    "label": "Crops & Fields",
+    "order": 5,
+    "loadMs": 16635,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/v1/fields 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "Fields & Geospatial Parcels",
+      "No Farm Sectors Found"
+    ],
+    "text": "Fields & Geospatial Parcels\nGrowth Cycles Active\nManage farm sectors, track soil pH profiles, and monitor growth timelines.\nAdd Field Sector\nTotal Sectors\n0\nTotal Cultivated Area\n0.0 ha\nActive Timelines\n0\nHarvested Yield\n0.0 tons\nField Sectors\nGrowth Timelines\nNo Farm Sectors Found\nStart by provisioning your first agronomic field sector.\nCreate First Sector",
+    "screenshot": "farmer/05-crops-fields.jpg"
+  },
+  {
+    "role": "farmer",
+    "section": "Operations",
+    "label": "Billing & Subscription",
+    "order": 6,
+    "loadMs": 16617,
+    "errorBoundary": null,
+    "planLocked": false,
+    "stuckLoading": false,
+    "apiFailures": [],
+    "apiCalls": [
+      "GET /api/billing/invoices 200",
+      "GET /api/billing/payment-methods 200",
+      "GET /api/billing/plans 200",
+      "GET /api/billing/quotas 200",
+      "GET /api/billing/subscription 200",
+      "GET /api/billing/transaction/my 200"
+    ],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "menuObstructed": null,
+    "headings": [
+      "BILLING GATEWAY IS NOT FULLY CONFIGURED. PLEASE SET YOUR STRIPE OR PAYPAL KEYS I…",
+      "Billing & Subscriptions",
+      "Free Starter",
+      "Feature Access & Cost Matrix"
+    ],
+    "text": "BILLING GATEWAY IS NOT FULLY CONFIGURED. PLEASE SET YOUR STRIPE OR PAYPAL KEYS IN THE ADMIN SETTINGS TO ENABLE PAYMENTS AND PORTAL ACCESS.\nNote: We are currently updating our payment gateways. Some card and PayPal features may be temporarily unavailable. Please use Vouchers or Mobile Money in the meantime.\nBilling & Subscriptions\nCommerce Radar\nManage your subscription, plans, and payment methods\nTier: Free Starter\nStatus: Starter\nBilling: Monthly\nCustomer Portal\nPlans & Pricing\nQuota & Telemetry\nPayment Rails\nInvoices & Receipts\nMonthly\nAnnual (-20%)\nCURRENT PLAN\nFree Starter\nSTARTER\nRENEWS ON\nLifetime Free Starter\nMonthly Auto-Renew\nSTRIPE CUSTOMER PORTAL\nManage payment methods & invoices\nPORTAL\nTransparent Unit Rates\nFeature Access & Cost Matrix\nTransparent breakdown of tier quotas, unit rates, and interactive cooperative budget simulator for SMS, LLM reasoning, WhatsApp, AI Vision, and Speech synthesis.\nAccess Matrix\nReference Costs\nPlan Fit\nPlatform Capability / Service\t\nFree Starter\n$0 / month\n\t\nPro Officer\n$29 / month\n\t\nEnterprise Org\nCustom Tier\nKnowledge Base Retrieval\nAI & Intelligence\nAgronomic RAG search backed by FAO & CIMMYT indices\n\t3 queries / day\tUnlimited\tUnlimited + Custom RAG\nAI Conversational Assistant\nAI & Intelligence\nMultilingual generative agronomy assistant (Swahili, Chichewa, English)\n\t\n\t1,000 chats / mo\tUnlimited Dedicated Model\nPathological AI Vision (Plant & Soil)\nAI & Intelligence\nLeaf disease recognition, NPK deficit detection via computer visi…",
+    "screenshot": "farmer/06-billing-subscription.jpg"
+  }
+]
