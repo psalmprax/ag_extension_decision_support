@@ -1,9 +1,9 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FarmerOfficerChatPage } from '@/pages/FarmerOfficerChatPage';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
-import { createConversation, fetchTurnTakingSettings, sendThreadMessage } from '@/api/chatbotService';
+import { askAiInThread, createConversation, fetchTurnTakingSettings, sendThreadMessage } from '@/api/chatbotService';
 import { useAppStore } from '@/store/useAppStore';
 import type { ThreadPageProps } from '@/components/chat/threadProps';
 
@@ -80,6 +80,42 @@ describe("the farmer's chat with their officer", () => {
     expect(createConversation).toHaveBeenCalledWith({ kind: 'farmer_thread', language: 'en' });
     expect(props.setActiveFarmerConvId).toHaveBeenCalledWith('new-thread');
     expect(props.handleFarmerChatSend).not.toHaveBeenCalled();
+  });
+
+  it('reloads the selected thread when the page opens', async () => {
+    const loadFarmerMessages = vi.fn();
+    renderPage({
+      farmerConversations: [{ id: 'thread-1', title: '', updatedAt: '', startedAt: '' }],
+      activeFarmerConvId: 'thread-1',
+      loadFarmerMessages,
+    });
+
+    await waitFor(() => expect(loadFarmerMessages).toHaveBeenCalledWith('thread-1'));
+  });
+
+  it('reloads the new thread after asking AI on the first question', async () => {
+    vi.mocked(createConversation).mockResolvedValue({ success: true, data: { id: 'new-thread' } });
+    vi.mocked(askAiInThread).mockResolvedValue({ success: true });
+    const loadFarmerMessages = vi.fn();
+    renderPage({ farmerChatInput: 'Why are my maize leaves yellow?', loadFarmerMessages });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ask AI' }));
+
+    await waitFor(() => expect(loadFarmerMessages).toHaveBeenCalledWith('new-thread'));
+    expect(askAiInThread).toHaveBeenCalledWith('new-thread');
+  });
+
+  it('disables the input while the first message is being sent', async () => {
+    vi.mocked(createConversation).mockResolvedValue({ success: true, data: { id: 'new-thread' } });
+    let resolveSend!: (value: { success: boolean }) => void;
+    vi.mocked(sendThreadMessage).mockImplementation(() => new Promise(resolve => { resolveSend = resolve; }));
+    renderPage({ farmerChatInput: 'Hello, my beans are wilting' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+
+    await waitFor(() => expect(sendThreadMessage).toHaveBeenCalled());
+    expect(screen.getByLabelText('Message to your officer')).toBeDisabled();
+    await act(async () => resolveSend({ success: true }));
   });
 
   it('sends later messages through the usual thread send (with its offline queue)', async () => {

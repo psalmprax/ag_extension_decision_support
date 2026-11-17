@@ -54,6 +54,7 @@ describe("the farmer's Ask AI button", () => {
     fireEvent.click(screen.getByRole('button', { name: 'Ask AI' }));
 
     await waitFor(() => expect(reload).toHaveBeenCalled());
+    expect(reload).toHaveBeenCalledWith('thread-1');
     expect(sendThreadMessage).toHaveBeenCalledWith('thread-1', 'Yellow leaves on maize', 'en');
     expect(clearInput).toHaveBeenCalled();
     expect(askAiInThread).toHaveBeenCalledWith('thread-1');

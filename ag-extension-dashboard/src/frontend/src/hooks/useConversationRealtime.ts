@@ -49,7 +49,13 @@ export function useConversationRealtime({ conversationId, enabled, onNewMessage 
   useEffect(() => {
     const socket = socketRef.current;
     if (!socket) return;
-    if (conversationId) socket.emit('join_conversation', conversationId);
+    const handleConnect = () => {
+      if (!conversationId) return;
+      socket.emit('join_conversation', conversationId);
+      void onNewMessage(conversationId);
+    };
+    if (socket.connected) handleConnect();
+    socket.on('connect', handleConnect);
     const handleNewMessage = (msg: unknown) => {
       const convId = (msg as { conversationId?: string } | null)?.conversationId;
       if (!convId || convId === conversationId) {
@@ -59,6 +65,7 @@ export function useConversationRealtime({ conversationId, enabled, onNewMessage 
     };
     socket.on('new_message', handleNewMessage);
     return () => {
+      socket.off('connect', handleConnect);
       socket.off('new_message', handleNewMessage);
     };
   }, [conversationId, onNewMessage]);

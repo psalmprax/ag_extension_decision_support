@@ -33,11 +33,11 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
   const threadId = thread?.id ?? activeFarmerConvId;
 
   useEffect(() => {
-    if (thread && thread.id !== activeFarmerConvId) {
-      setActiveFarmerConvId(thread.id);
-      void loadFarmerMessages(thread.id);
+    if (threadId && threadId !== activeFarmerConvId) {
+      setActiveFarmerConvId(threadId);
     }
-  }, [thread, activeFarmerConvId, setActiveFarmerConvId, loadFarmerMessages]);
+    if (threadId) void loadFarmerMessages(threadId);
+  }, [threadId, activeFarmerConvId, setActiveFarmerConvId, loadFarmerMessages]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ block: 'end' });
@@ -121,9 +121,7 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
             input={farmerChatInput}
             clearInput={() => setFarmerChatInput('')}
             language={language}
-            reload={() => {
-              if (threadId) void loadFarmerMessages(threadId);
-            }}
+            reload={id => void loadFarmerMessages(id)}
           />
           <form onSubmit={e => void send(e)} className="flex items-center gap-2 p-3">
             <label htmlFor="farmer-officer-message" className="sr-only">
@@ -132,6 +130,7 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
             <input
               id="farmer-officer-message"
               value={farmerChatInput}
+              disabled={sending}
               onChange={e => {
                 setFarmerChatInput(e.target.value);
                 realtime.notifyTyping();

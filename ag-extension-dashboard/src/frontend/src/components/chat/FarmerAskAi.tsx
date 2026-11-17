@@ -12,7 +12,7 @@ interface FarmerAskAiProps {
   input: string;
   clearInput: () => void;
   language: string;
-  reload: () => void;
+  reload: (conversationId: string) => void;
 }
 
 function errorText(error: unknown): string {
@@ -36,8 +36,9 @@ export const FarmerAskAi: React.FC<FarmerAskAiProps> = ({ ensureConversation, in
   const ask = async () => {
     setBusy(true);
     setError(null);
+    let conversationId: string | undefined;
     try {
-      const conversationId = await ensureConversation();
+      conversationId = await ensureConversation();
       const typed = input.trim();
       if (typed) {
         await sendThreadMessage(conversationId, typed, language);
@@ -48,7 +49,7 @@ export const FarmerAskAi: React.FC<FarmerAskAiProps> = ({ ensureConversation, in
       setError(errorText(err));
     } finally {
       setBusy(false);
-      reload();
+      if (conversationId) reload(conversationId);
     }
   };
 
