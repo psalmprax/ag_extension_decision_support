@@ -376,6 +376,7 @@ export interface ChatConversationRow {
   user_id?: string | null;
   officer_id?: string | null;
   farmer_id: string | null;
+  kind?: string | null;
   title?: string | null;
   status: string | null;
   language?: string | null;

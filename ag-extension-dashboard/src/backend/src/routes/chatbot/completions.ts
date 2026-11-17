@@ -27,7 +27,7 @@ import { callAdvisoryTool, getAdvisoryTools } from '@/services/knowledge/advisor
 import { AdvisoryTimeoutError, withAdvisoryTimeout } from '@/services/knowledge/advisoryRuntime';
 import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
 import { getRealtimeServer } from '@/services/realtimeHub';
-import { assertConversationAccess, MessageAccessError, resolvePrincipalRegion } from '@/services/messageAccessService';
+import { assertConversationAccess, MessageAccessError, resolvePrincipalRegion, type ConversationAccess } from '@/services/messageAccessService';
 
 const router = Router();
 
@@ -71,14 +71,39 @@ async function loadHistoryBlock(conversationId: string | undefined, userId: stri
   }
 }
 
-async function canAccessConversation(conversationId: string, userId: string, role: string): Promise<boolean> {
+async function conversationAccess(conversationId: string, user: AuthenticatedRequestUser): Promise<ConversationAccess | null> {
   try {
-    await assertConversationAccess({ userId, role }, conversationId);
-    return true;
+    return await assertConversationAccess(user, conversationId);
   } catch (error) {
-    if (error instanceof MessageAccessError) return false;
+    if (error instanceof MessageAccessError) return null;
     throw error;
   }
+}
+
+type TurnPlan = { storeIn: string | undefined } | { status: number; error: string };
+
+/**
+ * Where a turn is stored. Officers never trigger an automatic AI reply in a
+ * farmer's thread: they send plain messages (POST /chatbot/messages) and ask
+ * the copilot for a draft, which uses the thread as context, is shown only to
+ * them and is stored nowhere.
+ */
+async function planTurn(user: AuthenticatedRequestUser, conversationId: string | undefined, mode: 'send' | 'draft'): Promise<TurnPlan> {
+  if (!conversationId) return { storeIn: undefined };
+  const access = await conversationAccess(conversationId, user);
+  if (!access) return { status: 404, error: 'Conversation not found' };
+  if (mode === 'draft') {
+    return user.role === 'farmer'
+      ? { status: 400, error: 'Drafts are for officers.' }
+      : { storeIn: undefined };
+  }
+  if (access.kind === 'farmer_thread' && user.role !== 'farmer') {
+    return {
+      status: 409,
+      error: 'Officer messages in a farmer thread are sent as plain messages. Ask the copilot for a private draft instead.',
+    };
+  }
+  return { storeIn: conversationId };
 }
 
 /**
@@ -216,7 +241,12 @@ const runAssistantTurn = async (systemPrompt: string, message: string, tools: Ch
 
 // Request contract = shared `chatCompletionSchema` (camelCase) + legacy `conversation_id`.
 const completionsBodySchema = chatCompletionSchema
-  .extend({ conversation_id: z.string().uuid().optional(), country: z.string().trim().min(2).max(100).optional() })
+  .extend({
+    conversation_id: z.string().uuid().optional(),
+    country: z.string().trim().min(2).max(100).optional(),
+    /** draft: an officer's private copilot draft for a thread; nothing is stored. */
+    mode: z.enum(['send', 'draft']).optional(),
+  })
   .transform(b => ({ ...b, conversationId: b.conversationId ?? b.conversation_id }));
 
 async function loadAdvisoryContext(userId: string, message: string, conversationId?: string, countryHint?: string, language?: string) {
@@ -279,8 +309,9 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
       return res.status(403).json({ success: false, error: 'Demo chat is stateless; persistent conversations are unavailable' });
     }
 
-    if (body.conversation_id && !(await canAccessConversation(body.conversation_id, user.userId, user.role))) {
-      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    const turn = await planTurn(user, body.conversation_id, parsed.mode ?? 'send');
+    if ('error' in turn) {
+      return res.status(turn.status).json({ success: false, error: turn.error });
     }
 
     // Fetch context in parallel: history + RAG
@@ -293,7 +324,7 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
     ]);
 
     // Standalone assistant requests (without a conversation) are not chat history.
-    await persistTurnMessage(body.conversation_id, user.role === 'farmer' ? 'user' : 'officer', sanitizedMessage, body.language);
+    await persistTurnMessage(turn.storeIn, user.role === 'farmer' ? 'user' : 'officer', sanitizedMessage, body.language);
 
     const tools = user.isDemo ? [] : buildToolDefinitions();
     const toolsClause = tools.length > 0
@@ -308,12 +339,12 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
     const validated = validateAdvisoryCitations(guardedText, ragResult.citations, body.language);
     const safeAssistantText = validated.answer;
 
-    await persistTurnMessage(body.conversation_id, 'assistant', safeAssistantText, body.language);
+    await persistTurnMessage(turn.storeIn, 'assistant', safeAssistantText, body.language);
 
     // Unsourced, mis-cited or safety-flagged advice in a farmer's conversation
     // goes to the agronomic review queue; the answer itself is not held back.
     const reviewTrigger = scheduleAdvisoryReview(
-      body.conversation_id,
+      turn.storeIn,
       user.userId,
       safeAssistantText,
       reviewTriggerFor(validated.evidence, boundaryCheck.safe),
@@ -330,6 +361,7 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
         advisoryQuality: validated.evidence,
         usedTools: usedToolNames,
         safety: boundaryCheck,
+        draft: parsed.mode === 'draft',
         review: reviewTrigger
           ? { queued: false, scheduled: true, trigger: reviewTrigger }
           : { queued: false },

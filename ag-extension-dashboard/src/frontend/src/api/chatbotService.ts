@@ -1,7 +1,10 @@
 import apiClient from './client';
 
-export const fetchConversations = async () => {
-  const { data } = await apiClient.get('/chatbot/conversations');
+/** farmer_thread: farmer, officer and AI; officer_ai: an officer's private AI chat. */
+export type ConversationKind = 'farmer_thread' | 'officer_ai';
+
+export const fetchConversations = async (kind: ConversationKind = 'farmer_thread') => {
+  const { data } = await apiClient.get('/chatbot/conversations', { params: { kind } });
   return data;
 };
 
@@ -14,6 +17,7 @@ export const createConversation = async (params: {
   farmerId?: string;
   farmerName?: string;
   language?: string;
+  kind?: ConversationKind;
 }) => {
   const { data } = await apiClient.post('/chatbot/conversations', params);
   return data;
@@ -40,5 +44,11 @@ export const updateConversation = async (id: string, updates: { title?: string }
 
 export const deleteConversation = async (id: string) => {
   const { data } = await apiClient.delete(`/chatbot/conversations/${id}`);
+  return data;
+};
+
+/** A plain message from the signed-in user into a thread. No AI reply is triggered. */
+export const sendThreadMessage = async (conversationId: string, content: string, language?: string) => {
+  const { data } = await apiClient.post('/chatbot/messages', { conversationId, content, language });
   return data;
 };

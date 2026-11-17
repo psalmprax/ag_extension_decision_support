@@ -48,7 +48,7 @@ export async function enqueueAdvisoryReview(params: {
              SELECT f.tenant_id, cv.farmer_id, $2, $3, 'no_verified_source', $4
              FROM chat_conversations cv
              JOIN farmers f ON f.id = cv.farmer_id
-             WHERE cv.id = $1
+             WHERE cv.id = $1 AND cv.kind = 'farmer_thread'
              RETURNING id`,
             [params.conversationId, params.createdBy, params.recommendation.slice(0, 10000), params.trigger],
         );

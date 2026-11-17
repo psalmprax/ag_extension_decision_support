@@ -187,7 +187,8 @@ async function checkChatbotSatisfaction(): Promise<void> {
                 u.first_name
             FROM chat_conversations c
             JOIN users u ON u.id = c.officer_id
-            WHERE c.satisfaction_score IS NOT NULL
+            WHERE c.kind = 'farmer_thread'
+              AND c.satisfaction_score IS NOT NULL
               AND c.satisfaction_score <= 2
               AND c.started_at > NOW() - INTERVAL '24 hours'
               AND (c.low_satisfaction_alert_sent IS NULL OR c.low_satisfaction_alert_sent = FALSE)

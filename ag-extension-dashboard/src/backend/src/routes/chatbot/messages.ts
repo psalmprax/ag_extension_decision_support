@@ -10,7 +10,6 @@ import {
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
-import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { assertConversationAccess, checkMessageAccess, MessageAccessError, resolveFarmerId } from '@/services/messageAccessService';
 import { getRealtimeServer } from '@/services/realtimeHub';
 
@@ -76,15 +75,17 @@ async function resolveConversationIdForPost(
 const resolveOrCreateConversation = async (user: AuthenticatedRequestUser, targetFarmerId: string, language?: string) => {
   const officerId = user.role === 'farmer' ? null : user.userId;
   const { rows: existing } = await query<{ id: string }>(
-    `SELECT id FROM chat_conversations WHERE farmer_id = $1 AND (officer_id = $2 OR officer_id IS NULL) LIMIT 1`,
+    `SELECT id FROM chat_conversations
+      WHERE farmer_id = $1 AND (officer_id = $2 OR officer_id IS NULL) AND kind = 'farmer_thread'
+      LIMIT 1`,
     [targetFarmerId, officerId]
   );
   if (existing.length > 0) {
     return existing[0].id;
   }
   const { rows: created } = await query<{ id: string }>(
-    `INSERT INTO chat_conversations (farmer_id, officer_id, language, status)
-     VALUES ($1, $2, $3, 'active')
+    `INSERT INTO chat_conversations (farmer_id, officer_id, language, status, kind)
+     VALUES ($1, $2, $3, 'active', 'farmer_thread')
      RETURNING id`,
     [targetFarmerId, officerId, language || 'en']
   );
@@ -107,7 +108,6 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
     const body = req.body as {
       conversation_id?: string;
       conversationId?: string;
-      role?: string;
       content?: string;
       message?: string;
       farmerId?: string;
@@ -123,7 +123,9 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
     const targetFarmerId = body.farmerId ?? body.farmer_id;
     const conversationId = await resolveConversationIdForPost(user, targetFarmerId, body.conversation_id ?? body.conversationId, body.language);
 
-    const senderRole = body.role ?? (user?.role === 'farmer' ? 'user' : 'officer');
+    // The sender is whoever is signed in. A client can never post as the AI,
+    // as an officer, or as the farmer.
+    const senderRole = user?.role === 'farmer' ? 'user' : 'officer';
 
     const { rows } = await query<ChatMessageRow>(
       `INSERT INTO chat_messages (conversation_id, role, content, language)
@@ -153,8 +155,9 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
   }
 };
 
-router.post('/message', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), checkUsageLimit('ai_chat'), handleMessagePost);
-router.post('/messages', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), checkUsageLimit('ai_chat'), handleMessagePost);
+// A plain message between people: no AI is involved, so no AI quota is used.
+router.post('/message', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), handleMessagePost);
+router.post('/messages', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), handleMessagePost);
 
 /**
  * PATCH /api/chatbot/messages/:id — Edit own message (officer/farmer) within 15m.

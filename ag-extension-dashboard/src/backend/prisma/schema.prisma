@@ -323,6 +323,8 @@ model ChatConversation {
   officerId             String?       @map("officer_id") @db.Uuid
   language              String?       @default("en") @db.VarChar(20)
   status                String?       @default("active") @db.VarChar(50)
+  /// farmer_thread (farmer, officer, AI) or officer_ai (an officer's private AI chat)
+  kind                  String        @default("farmer_thread") @db.VarChar(20)
   startedAt             DateTime?     @default(now()) @map("started_at") @db.Timestamp(6)
   endedAt               DateTime?     @map("ended_at") @db.Timestamp(6)
   satisfactionScore     Int?          @map("satisfaction_score")
@@ -334,6 +336,7 @@ model ChatConversation {
   messages              ChatMessage[]
 
   @@index([tenantId])
+  @@index([kind])
   @@map("chat_conversations")
 }
 

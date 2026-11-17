@@ -45,3 +45,11 @@ export function farmerChatSender(role: ChatMessage['role']): SenderPresentation 
     metaClass: 'text-slate-600 dark:text-white/50 border-slate-200/80 dark:border-white/[0.08]',
   };
 }
+
+/** The farmer's latest message in a thread ('user' and 'farmer' are both the farmer). */
+export function lastFarmerMessage(messages: ReadonlyArray<Pick<ChatMessage, 'role' | 'content'>>): string | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (farmerChatSender(messages[i].role).sender === 'farmer') return messages[i].content;
+  }
+  return null;
+}

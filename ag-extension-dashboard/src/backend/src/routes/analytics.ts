@@ -51,6 +51,13 @@ async function getSafeAnalyticsTenantId(req: Request): Promise<string | null> {
     return tenantId || EMPTY_TENANT_ID;
 }
 
+/** Support analytics count farmer threads only, never officers' private AI chats. */
+const FARMER_THREADS = " AND c.kind = 'farmer_thread'";
+
+function farmerThreadsOnly<T extends { whereClause: string }>(scope: T): T {
+    return { ...scope, whereClause: `${scope.whereClause}${FARMER_THREADS}` };
+}
+
 function tenantPredicate(tenantId: string | null, alias: string): string {
     const liveOnly = alias === 'f' || alias === 'u'
         ? ` AND COALESCE(${alias}.is_demo, false) = false`
@@ -97,7 +104,7 @@ function buildCacheKey(user: UserScope): string {
 async function fetchOverviewCounts(user: UserScope) {
     const farmerScope = buildScopeFilter(user, 'assigned_officer_id', 'f');
     const visitScope = buildScopeFilter(user, 'officer_id', 'v');
-    const conversationScope = buildScopeFilter(user, 'officer_id', 'c');
+    const conversationScope = farmerThreadsOnly(buildScopeFilter(user, 'officer_id', 'c'));
     const [farmersCount, officersCount, activeConversations, recentVisits, avgSatisfactionResult, resolvedQueries, totalHectaresResult, avgYieldResult] = await Promise.all([
         getFromDB(`SELECT COUNT(*) as count FROM farmers f WHERE f.is_active = true ${farmerScope.whereClause}`, farmerScope.params),
         getFromDB(`SELECT COUNT(*) as count FROM users u WHERE u.role = 'extension_officer' AND u.is_active = true AND COALESCE(u.is_demo, false) = false${user.tenantId ? ` AND u.tenant_id = '${user.tenantId}'` : ''}`),
@@ -137,7 +144,7 @@ async function fetchCropDistribution(user: UserScope) {
 
 async function fetchRecentActivity(user: UserScope) {
     const visitScope = buildScopeFilter(user, 'officer_id', 'v');
-    const conversationScope = buildScopeFilter(user, 'officer_id', 'c');
+    const conversationScope = farmerThreadsOnly(buildScopeFilter(user, 'officer_id', 'c'));
     return getFromDB(`
         (SELECT 'visit' as type, 'Visit completed in ' || COALESCE(f.village, f.region) as description, NOW() - v.created_at as time_diff
          FROM visits v JOIN farmers f ON f.id = v.farmer_id
@@ -154,7 +161,7 @@ async function fetchRecentActivity(user: UserScope) {
 
 async function fetchTrendData(user: UserScope) {
     const farmerScope = buildScopeFilter(user, 'assigned_officer_id', 'f');
-    const conversationScope = buildScopeFilter(user, 'officer_id', 'c');
+    const conversationScope = farmerThreadsOnly(buildScopeFilter(user, 'officer_id', 'c'));
     const visitScope = buildScopeFilter(user, 'officer_id', 'v');
     const [lastMonthFarmers, lastMonthConversations, lastMonthVisits, lastMonthSatisfactionResult] = await Promise.all([
         getFromDB(`SELECT COUNT(*) as count FROM farmers f WHERE f.created_at > NOW() - INTERVAL '60 days' AND f.created_at < NOW() - INTERVAL '30 days' ${farmerScope.whereClause}`, farmerScope.params),
@@ -311,7 +318,7 @@ router.get('/farmer-stats', async (req: Request, res: Response) => {
             SELECT COUNT(*) as count 
             FROM chat_conversations 
             WHERE farmer_id = (SELECT id FROM farmers WHERE user_id = $1${tenantClause})
-              AND status = 'resolved'
+              AND status = 'resolved' AND kind = 'farmer_thread'
         `, [userId]);
         
         res.json({
@@ -361,7 +368,7 @@ router.get('/performance', async (req: Request, res: Response) => {
         const tenantId = await getSafeAnalyticsTenantId(req);
         const { period = 'month', officerId, region } = req.query;
         const visitTenant = tenantPredicate(tenantId, 'v');
-        const conversationTenant = tenantPredicate(tenantId, 'c');
+        const conversationTenant = `${tenantPredicate(tenantId, 'c')}${FARMER_THREADS}`;
         const days = period === 'week' ? 7 : period === 'month' ? 30 : 90;
 
         const cacheKey = `analytics:performance:live-v3:${tenantId || 'legacy'}:${period}:${officerId || 'all'}:${region || 'all'}`;
@@ -470,7 +477,7 @@ router.get('/performance', async (req: Request, res: Response) => {
 router.get('/queries', async (req: Request, res: Response) => {
     try {
         const tenantId = await getSafeAnalyticsTenantId(req);
-        const conversationTenant = tenantPredicate(tenantId, 'c');
+        const conversationTenant = `${tenantPredicate(tenantId, 'c')}${FARMER_THREADS}`;
         const { period = 'month' } = req.query;
         const days = period === 'week' ? 7 : period === 'month' ? 30 : 90;
 
@@ -509,7 +516,7 @@ router.get('/queries', async (req: Request, res: Response) => {
                 SELECT LOWER(m.content) as keyword, COUNT(*) as count
                 FROM chat_messages m
                 JOIN chat_conversations c ON c.id = m.conversation_id
-                WHERE m.role = 'farmer' AND m.created_at > NOW() - INTERVAL '${days} days'${conversationTenant}
+                WHERE m.role IN ('user', 'farmer') AND m.created_at > NOW() - INTERVAL '${days} days'${conversationTenant}
                 GROUP BY LOWER(m.content)
                 ORDER BY count DESC
                 LIMIT 10
@@ -582,7 +589,7 @@ function formatChatbotLanguages(languageData: Record<string, unknown>[], total: 
 router.get('/chatbot', async (req: Request, res: Response) => {
     try {
         const tenantId = await getSafeAnalyticsTenantId(req);
-        const conversationTenant = tenantPredicate(tenantId, 'c');
+        const conversationTenant = `${tenantPredicate(tenantId, 'c')}${FARMER_THREADS}`;
         const { period = 'month' } = req.query;
         const days = period === 'week' ? 7 : period === 'month' ? 30 : 90;
 

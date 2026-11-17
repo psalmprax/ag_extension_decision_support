@@ -226,7 +226,8 @@ async function fetchChatEvents(userId: string, role: string): Promise<ActivityIt
     FROM chat_messages cm
     JOIN chat_conversations cc ON cc.id = cm.conversation_id
     LEFT JOIN farmers f ON f.id = cc.farmer_id
-    WHERE cm.role = 'user'
+    WHERE cm.role IN ('user', 'farmer')
+      AND cc.kind = 'farmer_thread'
       AND cm.created_at >= NOW() - INTERVAL '24 hours'
       AND ${linkedDemoSql('cc')}
       ${scopeClause}

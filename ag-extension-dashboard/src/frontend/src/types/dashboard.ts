@@ -11,6 +11,8 @@ export interface StatCardProps {
 
 export interface Conversation {
   id: string;
+  /** farmer_thread (farmer, officer, AI) or officer_ai (an officer's private AI chat). */
+  kind?: 'farmer_thread' | 'officer_ai';
   title: string;
   farmerId?: string;
   farmerName?: string;
@@ -21,7 +23,8 @@ export interface Conversation {
 }
 
 export interface ChatMessage {
-  role: 'user' | 'assistant' | 'officer';
+  /** 'user' and 'farmer' are both the farmer; 'assistant' is the AI. */
+  role: 'user' | 'farmer' | 'assistant' | 'officer';
   content: string;
   // Backend ChatMessageDTO carries `createdAt`; some producers send
   // `timestamp`. Either may be absent — renderers must tolerate both.

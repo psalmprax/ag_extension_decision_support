@@ -85,6 +85,24 @@ export const getChatCompletion = async (
   return response.data;
 };
 
+/**
+ * An officer's private copilot draft for a farmer thread: the AI reads the
+ * thread for context, and nothing is stored or shown to the farmer.
+ */
+export const getCopilotDraft = async (
+  conversationId: string,
+  instruction: string,
+  language?: string
+): Promise<string> => {
+  const response = await apiClient.post<ChatCompletionResponse>('/chatbot/completions', {
+    message: instruction,
+    conversation_id: conversationId,
+    language,
+    mode: 'draft',
+  });
+  return response.data.data.messages.find(message => message.role === 'assistant')?.content ?? '';
+};
+
 export const getPublicDemoChatCompletion = async (
   message: string,
   language = 'en'

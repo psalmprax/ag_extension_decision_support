@@ -6,24 +6,37 @@ import {
   updateConversation,
   deleteConversation,
   createConversation,
+  sendThreadMessage,
 } from '@/api/chatbotService';
 import { getChatCompletion, getPublicDemoChatCompletion } from '@/api/aiService';
 import { isDemoFarmerId } from '@/demo/demoIds';
 import { Conversation, ChatMessage, Farmer } from '../types/dashboard';
+import { useAppStore } from '@/store/useAppStore';
 
 interface QueuedChatItem {
   conversationId: string | null;
   message: string;
   language: string;
   at?: number;
+  /**
+   * 'message': a plain message (officers; no AI reply). 'completion': the
+   * farmer's message, answered by the AI. Items queued before this field
+   * existed are sent as completions, as they were then.
+   */
+  via?: 'message' | 'completion';
 }
 
 /** Send one queued item; true when it drained (caller may drop it from the queue). */
 async function sendQueuedChatItem(item: QueuedChatItem): Promise<boolean> {
   try {
-    await getChatCompletion(item.message, item.conversationId || undefined, item.language);
+    if (item.via === 'message' && item.conversationId) {
+      await sendThreadMessage(item.conversationId, item.message, item.language);
+    } else {
+      await getChatCompletion(item.message, item.conversationId || undefined, item.language);
+    }
     return true;
-  } catch {
+  } catch (error) {
+    console.warn('Queued chat message not sent yet; will retry when online:', error);
     return false;
   }
 }
@@ -92,6 +105,7 @@ function buildDemoConversation(farmer: Farmer): Conversation {
 }
 
 export const useAppChat = (language: string) => {
+  const isFarmerUser = useAppStore(state => state.user?.role) === 'farmer';
   // AI Assistant Chat State
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
@@ -131,7 +145,8 @@ export const useAppChat = (language: string) => {
 
   const loadConversations = useCallback(async () => {
     try {
-      const res = await fetchConversations();
+      // Staff: their own private AI chats. Farmers have none: their AI help is their thread.
+      const res = await fetchConversations(isFarmerUser ? 'farmer_thread' : 'officer_ai');
       setConversations(res.data);
       if (res.data.length > 0 && !activeConvId) {
         setActiveConvId(res.data[0].id);
@@ -139,7 +154,7 @@ export const useAppChat = (language: string) => {
     } catch (error) {
       console.error('Failed to load conversations:', error);
     }
-  }, [activeConvId]);
+  }, [activeConvId, isFarmerUser]);
 
   // Guards against out-of-order responses: switching conversations quickly could
   // otherwise render the previous conversation's messages under the newly selected one.
@@ -212,7 +227,7 @@ export const useAppChat = (language: string) => {
   // Farmer Chat functions
   const loadFarmerConversations = useCallback(async () => {
     try {
-      const res = await fetchConversations();
+      const res = await fetchConversations('farmer_thread');
       const list = res.data || [];
       setFarmerConversations(list);
       if (list.length > 0 && !activeFarmerConvId) {
@@ -243,17 +258,22 @@ export const useAppChat = (language: string) => {
       return;
     }
 
+    const via: QueuedChatItem['via'] = isFarmerUser ? 'completion' : 'message';
     // Offline queue: if offline or network fails, stash and retry on online
     const queueKey = `chatOfflineQueue:${activeFarmerConvId || 'new'}`;
     const offline = typeof navigator !== 'undefined' && !navigator.onLine;
     if (offline) {
-      enqueueOfflineMessage(queueKey, { conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now() });
+      enqueueOfflineMessage(queueKey, { conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now(), via });
       console.warn('Chat offline queued:', currentInput.slice(0, 40));
       return;
     }
 
     try {
-      const res = await getChatCompletion(currentInput, activeFarmerConvId || undefined, language);
+      // An officer's message is a plain message: it never triggers an AI reply
+      // to the farmer. AI help for officers is the private copilot draft.
+      const res = via === 'message' && activeFarmerConvId
+        ? await sendThreadMessage(activeFarmerConvId, currentInput, language)
+        : await getChatCompletion(currentInput, activeFarmerConvId || undefined, language);
       if (res.success && activeFarmerConvId) {
         loadFarmerMessages(activeFarmerConvId);
         loadFarmerConversations();
@@ -261,7 +281,7 @@ export const useAppChat = (language: string) => {
     } catch (error) {
       const isNetwork = (error as Error)?.message?.toLowerCase().includes('network') || !navigator.onLine;
       if (isNetwork) {
-        enqueueOfflineMessage(queueKey, { conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now() });
+        enqueueOfflineMessage(queueKey, { conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now(), via });
         console.warn('Chat queued after failure:', currentInput.slice(0, 40));
       } else {
         console.error('Failed to send farmer message:', error);
@@ -351,6 +371,8 @@ export const useAppChat = (language: string) => {
         farmerId: farmer.id,
         farmerName: `${farmer.firstName} ${farmer.lastName}`,
         language: 'en',
+        // Asking the AI about a farmer is private to the officer; the farmer never sees it.
+        kind: chatType === 'farmer' ? 'farmer_thread' : 'officer_ai',
       });
 
       if (res.success && res.data) {

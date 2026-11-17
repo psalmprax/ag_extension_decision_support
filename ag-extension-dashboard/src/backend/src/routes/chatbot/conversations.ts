@@ -16,6 +16,7 @@ import { authorize } from '@/middleware/authorize';
 import { assertConversationAccess, MessageAccessError, resolveFarmerId, resolvePrincipalRegion } from '@/services/messageAccessService';
 import { getRealtimeServer } from '@/services/realtimeHub';
 import { linkedDemoSql } from '@/services/demoScope';
+import { DEFAULT_CONVERSATION_KIND, parseConversationKind, type ConversationKind } from '@/services/chat/conversationKind';
 
 const router = Router();
 
@@ -28,6 +29,30 @@ type AuthedRequest = Request & { user?: AuthenticatedRequestUser };
  * - Extension Officer: sees all conversations with their assigned farmers (1-to-many).
  * - Farmer: sees their single conversation thread with their extension officer (1-to-1).
  */
+/** An officer's (or admin's) own private AI chats; nobody lists anyone else's. */
+function ownAiChatScope(user: AuthenticatedRequestUser, params: unknown[]): string {
+  params.push(user.userId);
+  return `cv.officer_id = $${params.length}`;
+}
+
+/** Which farmer threads a role may list. */
+async function farmerThreadScope(user: AuthenticatedRequestUser, params: unknown[]): Promise<string> {
+  if (user.role === 'admin') return '1=1';
+  if (user.role === 'regional_manager') {
+    // Scope by the farmer's region, not merely the assigned officer's region.
+    params.push((await resolvePrincipalRegion(user.userId)) ?? '');
+    return `f.region = $${params.length}`;
+  }
+  if (user.role === 'farmer') {
+    // A farmer sees the thread with their officer (1-to-1).
+    params.push((await resolveFarmerId(user.userId)) || user.userId);
+    return `(cv.farmer_id = $${params.length} OR cv.officer_id = $${params.length})`;
+  }
+  // An extension officer sees the threads of their assigned farmers (1-to-many).
+  params.push(user.userId);
+  return `cv.officer_id = $${params.length}`;
+}
+
 router.get('/conversations', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
@@ -37,28 +62,18 @@ router.get('/conversations', authorize(['admin', 'regional_manager', 'extension_
     const limit = Math.min(parseInt((req.query.limit as string) || '100', 10), 200);
     const offset = Math.max(parseInt((req.query.offset as string) || '0', 10), 0);
 
-    let whereClause = '';
-    const params: unknown[] = [];
-
-    if (user.role === 'admin') {
-      // Super admin / Admin sees all conversations
-      whereClause = '1=1';
-    } else if (user.role === 'regional_manager') {
-      // Scope by the farmer's region, not merely the assigned officer's region.
-      params.push((await resolvePrincipalRegion(user.userId)) ?? '');
-      whereClause = 'f.region = $1';
-    } else if (user.role === 'farmer') {
-      // Farmer sees their conversation with their officer (1-to-1)
-      const farmerId = await resolveFarmerId(user.userId);
-      params.push(farmerId || user.userId);
-      whereClause = `(cv.farmer_id = $1 OR cv.officer_id = $1)`;
-    } else {
-      // Extension Officer sees their assigned farmer chats (1-to-many)
-      params.push(user.userId);
-      whereClause = `cv.officer_id = $1`;
+    const kind = parseConversationKind(req.query.kind) ?? DEFAULT_CONVERSATION_KIND;
+    // Farmers have no private AI chats: asking for them yields an empty list.
+    if (user.role === 'farmer' && kind !== 'farmer_thread') {
+      return res.json({ success: true, data: [], limit, offset });
     }
+    const params: unknown[] = [];
+    const scope = kind === 'officer_ai'
+      ? ownAiChatScope(user, params)
+      : await farmerThreadScope(user, params);
+    params.push(kind);
     // Demo conversations only for the demo session; real ones never for it.
-    whereClause = `(${whereClause}) AND ${linkedDemoSql('cv', user)}`;
+    const whereClause = `(${scope}) AND cv.kind = $${params.length} AND ${linkedDemoSql('cv', user)}`;
 
     params.push(limit);
     params.push(offset);
@@ -70,6 +85,7 @@ router.get('/conversations', authorize(['admin', 'regional_manager', 'extension_
         cv.id,
         cv.farmer_id,
         cv.officer_id,
+        cv.kind,
         cv.language,
         cv.status,
         cv.started_at,
@@ -156,6 +172,13 @@ interface ConversationBody {
   officer_id?: string;
   officerId?: string;
   language?: string;
+  kind?: string;
+}
+
+/** Farmers only start threads; staff name the kind, defaulting to a thread when a farmer is named. */
+function kindForNewConversation(user: AuthenticatedRequestUser, body: ConversationBody, targetFarmerId: string | null): ConversationKind {
+  if (user.role === 'farmer') return 'farmer_thread';
+  return parseConversationKind(body.kind) ?? (targetFarmerId ? 'farmer_thread' : 'officer_ai');
 }
 
 const resolveFarmerParticipants = async (user: AuthenticatedRequestUser) => {
@@ -215,7 +238,7 @@ const resolveParticipants = async (user: AuthenticatedRequestUser, body: Convers
   return { targetFarmerId, targetOfficerId: targetOfficerId ?? user.userId };
 };
 
-const findExistingConversation = async (farmerId: string, officerId: string) => {
+const findExistingConversation = async (farmerId: string, officerId: string, kind: ConversationKind) => {
   const { rows } = await query<ChatConversationRow>(
     `SELECT cv.*,
             TRIM(CONCAT(f.first_name, ' ', f.last_name)) AS farmer_name,
@@ -224,10 +247,10 @@ const findExistingConversation = async (farmerId: string, officerId: string) => 
        FROM chat_conversations cv
        LEFT JOIN farmers f ON f.id = cv.farmer_id
        LEFT JOIN users u ON u.id = cv.officer_id
-      WHERE cv.farmer_id = $1 AND cv.officer_id = $2
+      WHERE cv.farmer_id = $1 AND cv.officer_id = $2 AND cv.kind = $3
       ORDER BY cv.started_at DESC NULLS LAST
       LIMIT 1`,
-    [farmerId, officerId]
+    [farmerId, officerId, kind]
   );
   return rows[0] ?? null;
 };
@@ -258,9 +281,10 @@ router.post('/conversations', authorize(['admin', 'regional_manager', 'extension
     }
 
     const { targetFarmerId, targetOfficerId } = await resolveParticipants(user, req.body as ConversationBody);
+    const kind = kindForNewConversation(user, req.body as ConversationBody, targetFarmerId);
 
     if (targetFarmerId && targetOfficerId) {
-      const existing = await findExistingConversation(targetFarmerId, targetOfficerId);
+      const existing = await findExistingConversation(targetFarmerId, targetOfficerId, kind);
       if (existing) {
         return res.status(200).json({
           success: true,
@@ -272,10 +296,10 @@ router.post('/conversations', authorize(['admin', 'regional_manager', 'extension
 
     const language = (req.body as ConversationBody).language ?? 'en';
     const { rows } = await query<ChatConversationRow>(
-      `INSERT INTO chat_conversations (farmer_id, officer_id, language, status)
-       VALUES ($1, $2, $3, 'active')
+      `INSERT INTO chat_conversations (farmer_id, officer_id, language, status, kind)
+       VALUES ($1, $2, $3, 'active', $4)
        RETURNING *`,
-      [targetFarmerId, targetOfficerId, language]
+      [targetFarmerId, targetOfficerId, language, kind]
     );
     const created = rows[0];
 
