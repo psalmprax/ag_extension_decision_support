@@ -1,11 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Cpu, Droplets, Eye, Sliders, Network, Radio } from 'lucide-react';
+import { Zap, Cpu, Droplets, Eye, Sliders, Network } from 'lucide-react';
 import { SoilNutrientHeatmapCanvas, type SoilProbeResult } from '../../canvas-ui/SoilNutrientHeatmapCanvas';
 import { DiseaseSaliencyCanvas, type LesionDetectionZone } from '../../canvas-ui/DiseaseSaliencyCanvas';
 import { AgroEcosystemCanvasScrubber } from '../../canvas-ui/AgroEcosystemCanvasScrubber';
 import { RagKnowledgeGraphCanvas, type GraphNode } from '../../canvas-ui/RagKnowledgeGraphCanvas';
-import { TelemetryRadarCanvas } from '../../canvas-ui/TelemetryRadarCanvas';
 import type { CanvasViewType } from './rules';
 import type { AdvisoryCitation } from './response';
 
@@ -228,20 +227,6 @@ export const CanvasWorkbench: React.FC<{
             <p className="text-xxs text-white/70 leading-relaxed">{selectedGraphNode.snippet}</p>
           </motion.div>
         )}
-      </div>
-    )}
-
-    {view === 'telemetry_radar' && (
-      <div className="space-y-3">
-        <CanvasPanelHeader
-          icon={<Radio className="w-4 h-4 text-emerald-400" />}
-          title="Sensor Mesh Radar (visual simulation)"
-          hint="No live IoT feed is connected — decorative animation only"
-          hintClass="text-amber-300"
-        />
-        <div className="h-64 flex items-center justify-center">
-          <TelemetryRadarCanvas />
-        </div>
       </div>
     )}
   </>

@@ -10,7 +10,6 @@ import {
   Eye,
   Network,
   Sliders,
-  Radio,
   ShieldCheck,
   Download,
   Share2,
@@ -369,20 +368,15 @@ export const AlphaAI: React.FC = () => {
       {/* ── Top HUD Navigation Banner (knockknockapp.ai standard) ── */}
       <div className="backdrop-blur-2xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm dark:shadow-2xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
-          {/* Left: Branding & Model Badge */}
+          {/* Left: Branding */}
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <Brain className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
-                  AI Agronomic Co-Pilot
-                </h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                  Ag-Agronomist 4.5 Pro
-                </span>
-              </div>
+              <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
+                AI Agronomic Co-Pilot
+              </h1>
               <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
                 Multi-modal decision engine powered by NASA POWER, SoilGrids v2, and Spatial RAG.
               </p>
@@ -525,7 +519,6 @@ export const AlphaAI: React.FC = () => {
                   { id: 'disease_saliency' as const, label: 'Disease Saliency', icon: Eye },
                   { id: 'agro_scrubber' as const, label: 'Agro Scrubber', icon: Sliders },
                   { id: 'rag_graph' as const, label: 'RAG Graph', icon: Network },
-                  { id: 'telemetry_radar' as const, label: 'Radar Telemetry', icon: Radio },
                 ].map(tab => {
                   const Icon = tab.icon;
                   const isActive = activeCanvasView === tab.id;

@@ -4,7 +4,7 @@
   "components/AntiFraudVerificationBadge.tsx": 406,
   "components/AppModals.tsx": 495,
   "components/BillingDashboard.tsx": 871,
-  "components/Cyber/AlphaAI.tsx": 614,
+  "components/Cyber/AlphaAI.tsx": 607,
   "components/EdgeVisionScannerModal.tsx": 1011,
   "components/FarmerDetailPanel.tsx": 803,
   "components/FarmerMap.tsx": 490,

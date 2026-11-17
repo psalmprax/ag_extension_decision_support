@@ -4,8 +4,7 @@ export type CanvasViewType =
   | 'soil_heatmap'
   | 'disease_saliency'
   | 'agro_scrubber'
-  | 'rag_graph'
-  | 'telemetry_radar';
+  | 'rag_graph';
 
 export interface CanvasSelection {
   view: CanvasViewType;
