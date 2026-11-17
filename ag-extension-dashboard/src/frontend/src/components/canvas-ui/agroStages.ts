@@ -14,7 +14,7 @@ export const AGRO_STAGES: AgroStageMeta[] = [
   {
     id: 0,
     title: 'Orbital Recon & Atmospheric Radar',
-    subtitle: 'NASA POWER Solar Flux & GPM Precipitation Ingestion',
+    subtitle: 'How solar flux and rainfall drive the season',
     badge: 'STAGE 01 // SATELLITE',
     icon: Satellite,
     color: '#38bdf8',
@@ -22,7 +22,7 @@ export const AGRO_STAGES: AgroStageMeta[] = [
   {
     id: 1,
     title: 'Topological Farm Mesh & NDVI Analysis',
-    subtitle: 'Multi-Spectral Canopy Biomass & Field GPS Boundaries',
+    subtitle: 'How canopy growth is mapped across a field',
     badge: 'STAGE 02 // TOPOGRAPHY',
     icon: MapPin,
     color: '#34d399',
@@ -30,7 +30,7 @@ export const AGRO_STAGES: AgroStageMeta[] = [
   {
     id: 2,
     title: 'Subsurface Soil Horizon Stratigraphy',
-    subtitle: 'ISRIC SoilGrids v2 Clay, pH, and Moisture Dynamics',
+    subtitle: 'How clay, pH and moisture shape the root zone',
     badge: 'STAGE 03 // SOILGRIDS',
     icon: Layers,
     color: '#fbbf24',
@@ -38,7 +38,7 @@ export const AGRO_STAGES: AgroStageMeta[] = [
   {
     id: 3,
     title: 'Autonomous AI Synthesis & Edge Uplink',
-    subtitle: 'Agronomic RAG Reasoning to Offline USSD / SMS Dispatch',
+    subtitle: 'How an advisory reaches a farmer by SMS or USSD',
     badge: 'STAGE 04 // EDGE DISPATCH',
     icon: Radio,
     color: '#a855f7',

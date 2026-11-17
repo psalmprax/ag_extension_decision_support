@@ -6,12 +6,13 @@ import { askAiInThread, fetchTurnTakingSettings, sendThreadMessage } from '@/api
 import { officerReplyExpectation } from '@/lib/turnTakingText';
 
 interface FarmerAskAiProps {
-  conversationId: string;
+  /** The farmer's thread with their officer; created on first use. */
+  ensureConversation: () => Promise<string>;
   /** What the farmer has typed but not sent; sent first, then answered. */
   input: string;
   clearInput: () => void;
   language: string;
-  reload: () => void;
+  reload: (conversationId: string) => void;
 }
 
 function errorText(error: unknown): string {
@@ -27,7 +28,7 @@ function errorText(error: unknown): string {
  * The farmer's Ask AI button in their thread: the AI answers their latest
  * message now, labelled as AI, and their officer can see it.
  */
-export const FarmerAskAi: React.FC<FarmerAskAiProps> = ({ conversationId, input, clearInput, language, reload }) => {
+export const FarmerAskAi: React.FC<FarmerAskAiProps> = ({ ensureConversation, input, clearInput, language, reload }) => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { data } = useQuery({ queryKey: ['chat-turn-taking'], queryFn: fetchTurnTakingSettings, staleTime: 10 * 60_000 });
@@ -35,7 +36,9 @@ export const FarmerAskAi: React.FC<FarmerAskAiProps> = ({ conversationId, input,
   const ask = async () => {
     setBusy(true);
     setError(null);
+    let conversationId: string | undefined;
     try {
+      conversationId = await ensureConversation();
       const typed = input.trim();
       if (typed) {
         await sendThreadMessage(conversationId, typed, language);
@@ -46,7 +49,7 @@ export const FarmerAskAi: React.FC<FarmerAskAiProps> = ({ conversationId, input,
       setError(errorText(err));
     } finally {
       setBusy(false);
-      reload();
+      if (conversationId) reload(conversationId);
     }
   };
 

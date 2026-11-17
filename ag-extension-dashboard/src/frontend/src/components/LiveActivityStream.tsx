@@ -403,8 +403,10 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
   const [sendingSms, setSendingSms] = useState(false);
   const [activeVideoCall, setActiveVideoCall] = useState<{ farmerName: string; phone: string; issue: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, _setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
+  // Sample cards only ever appear in the demo session; real accounts see their own triage
+  // feed, the "Awaiting events" empty state, or an honest error with a retry.
   const fetchActivities = useCallback(async () => {
     if (isDemo) {
       setActivities(DEMO_ACTIVITIES as ActivityItem[]);
@@ -413,14 +415,12 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
     }
     try {
       const { data } = await apiClient.get<{ success: boolean; data: ActivityItem[] }>('/activities/triage');
-      if (data.success && data.data && data.data.length > 0) {
-        setActivities(data.data);
-      } else {
-        // Fallback to sample activities so triage filters and urgency heat remain interactive
-        setActivities(DEMO_ACTIVITIES as ActivityItem[]);
-      }
+      if (!data.success) throw new Error('The activity feed did not respond');
+      setActivities(data.data ?? []);
+      setError(null);
     } catch {
-      setActivities(DEMO_ACTIVITIES as ActivityItem[]);
+      setActivities([]);
+      setError('Could not load farmer activity. Check your connection and retry.');
     } finally {
       setIsLoading(false);
     }

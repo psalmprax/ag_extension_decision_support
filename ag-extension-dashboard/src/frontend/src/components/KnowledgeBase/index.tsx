@@ -765,8 +765,8 @@ export const KnowledgeBase: React.FC = () => {
               {activeCanvasMode === 'phenology' && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs font-mono text-slate-600 dark:text-white/70">
-                    <span>AGRO-ECOSYSTEM 4-STAGE PHENOLOGY SCRUBBER</span>
-                    <span className="text-cyan-600 dark:text-cyan-400">NASA POWER Synchronized</span>
+                    <span>Crop growth stages</span>
+                    <span className="text-amber-600 dark:text-amber-300">Illustration, not field data</span>
                   </div>
                   <div className="w-full h-[460px] min-h-[460px] relative">
                     <AgroEcosystemCanvasScrubber

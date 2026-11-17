@@ -768,9 +768,9 @@ export function AgroEcosystemCanvasScrubber({
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 bg-slate-900/80 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl font-mono tabular-nums text-[11px] text-emerald-400">
+        <div className="hidden sm:flex items-center gap-2 bg-slate-900/80 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl font-mono tabular-nums text-[11px] text-amber-300">
           <Activity className="w-3.5 h-3.5" />
-          <span>{(activeProgress * 100).toFixed(0)}% Synchronized</span>
+          <span>Illustration · stage {currentStage + 1} of {AGRO_STAGES.length}</span>
         </div>
       </div>
 

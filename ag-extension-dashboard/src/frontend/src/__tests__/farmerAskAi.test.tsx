@@ -40,7 +40,8 @@ describe("the farmer's Ask AI button", () => {
     vi.mocked(fetchTurnTakingSettings).mockResolvedValue({ tenantId: 't1', settings });
     const clearInput = vi.fn();
     const reload = vi.fn();
-    withQuery(<FarmerAskAi conversationId="thread-1" input={input} clearInput={clearInput} language="en" reload={reload} />);
+    const ensureConversation = vi.fn().mockResolvedValue('thread-1');
+    withQuery(<FarmerAskAi ensureConversation={ensureConversation} input={input} clearInput={clearInput} language="en" reload={reload} />);
     return { clearInput, reload };
   };
 
@@ -53,6 +54,7 @@ describe("the farmer's Ask AI button", () => {
     fireEvent.click(screen.getByRole('button', { name: 'Ask AI' }));
 
     await waitFor(() => expect(reload).toHaveBeenCalled());
+    expect(reload).toHaveBeenCalledWith('thread-1');
     expect(sendThreadMessage).toHaveBeenCalledWith('thread-1', 'Yellow leaves on maize', 'en');
     expect(clearInput).toHaveBeenCalled();
     expect(askAiInThread).toHaveBeenCalledWith('thread-1');

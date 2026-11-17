@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   Plus,
@@ -19,8 +18,8 @@ import { VirtualizedList } from '@/components/common/VirtualizedList';
 import { useDemoMode } from '@/demo';
 import { FarmerChatMessage } from '@/components/chat/FarmerChatMessage';
 import { OfficerCopilot } from '@/components/chat/OfficerCopilot';
-import { FarmerAskAi } from '@/components/chat/FarmerAskAi';
 import { useAppStore } from '@/store/useAppStore';
+import { useConversationRealtime } from '@/hooks/useConversationRealtime';
 import { PlotTelemetryDrawer, type DetectedHazard, type HazardEvaluation } from '@/components/chat/PlotTelemetryDrawer';
 import { VoiceNoteTaker } from '@/components/audio/VoiceNoteTaker';
 import { fetchWeather } from '@/api/weatherService';
@@ -138,64 +137,17 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
     return () => { cancelled = true; };
   }, [activeFarmerConvId, activeConv]);
 
-  // Realtime: join the active conversation room and reload messages on new_message events.
-  const socketRef = useRef<Socket | null>(null);
-  const [socketConnected, setSocketConnected] = useState(false);
-  const [typingUser, setTypingUser] = useState<string | null>(null);
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (isDemo) return;
-    const socket = io(window.location.origin, {
-      path: '/socket.io',
-      transports: ['websocket', 'polling'],
-      // Cookie auth: the browser attaches the httpOnly ag_token cookie on the
-      // websocket upgrade automatically — no token in the auth payload.
-      auth: cb => cb({}),
-    });
-    socketRef.current = socket;
-
-    socket.on('connect', () => setSocketConnected(true));
-    socket.on('disconnect', () => setSocketConnected(false));
-    socket.on('connect_error', () => setSocketConnected(false));
-    socket.on('user_typing', (uid: string) => setTypingUser(uid));
-    socket.on('user_stop_typing', () => setTypingUser(null));
-
-    return () => {
-      socket.removeAllListeners();
-      if (socket.connected) socket.close();
-      socketRef.current = null;
-      setSocketConnected(false);
-    };
-  }, [isDemo]);
-
-  useEffect(() => {
-    const socket = socketRef.current;
-    if (!socket) return;
-    if (activeFarmerConvId) {
-      socket.emit('join_conversation', activeFarmerConvId);
-    }
-    const onNewMessage = (msg: unknown) => {
-      const convId = (msg as { conversationId?: string } | null)?.conversationId;
-      if (!convId || convId === activeFarmerConvId) {
-        loadFarmerMessages(convId || activeFarmerConvId!);
-      }
-    };
-    socket.on('new_message', onNewMessage);
-    return () => {
-      socket.off('new_message', onNewMessage);
-    };
-  }, [activeFarmerConvId, loadFarmerMessages]);
-
+  // Realtime: join the open thread's room and reload on new messages.
+  const realtime = useConversationRealtime({
+    conversationId: activeFarmerConvId,
+    enabled: !isDemo,
+    onNewMessage: loadFarmerMessages,
+  });
+  const socketConnected = realtime.connected;
+  const typingUser = realtime.typingUser;
   const handleTyping = (value: string) => {
     setFarmerChatInput(value);
-    const socket = socketRef.current;
-    if (!socket || !activeFarmerConvId || isDemo) return;
-    const userId = (JSON.parse(localStorage.getItem('user') || '{}') as { id?: string })?.id || 'me';
-    socket.emit('typing', { conversationId: activeFarmerConvId, userId });
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      socket.emit('stop_typing', { conversationId: activeFarmerConvId, userId });
-    }, 900);
+    realtime.notifyTyping();
   };
 
   return (
@@ -474,16 +426,6 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 </div>
               )}
 
-              {/* The farmer can ask the AI at any time; their officer sees the answer. */}
-              {isFarmerUser && activeFarmerConvId && !isDemo && (
-                <FarmerAskAi
-                  conversationId={activeFarmerConvId}
-                  input={farmerChatInput}
-                  clearInput={() => setFarmerChatInput('')}
-                  language={language}
-                  reload={() => loadFarmerMessages(activeFarmerConvId)}
-                />
-              )}
               {/* Chat Input Form */}
               <form
                 onSubmit={handleFarmerChatSend}

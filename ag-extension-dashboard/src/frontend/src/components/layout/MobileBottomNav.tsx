@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, Camera, BookOpen, Menu, Lock } from 'lucide-react';
+import { LayoutDashboard, Users, Camera, BookOpen, Menu, Lock, MessageSquare } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
@@ -118,7 +118,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     setActiveTab(id);
   };
 
-  const navItems: NavItemConfig[] = [
+  // Farmers get their own tabs; the officers' ones would bounce back to their menu.
+  const farmerItems: NavItemConfig[] = [
+    { id: 'farmer_dashboard', label: t('nav_home', { defaultValue: 'Home' }), icon: LayoutDashboard },
+    { id: 'officerchat', label: t('nav_officerchat', { defaultValue: 'My officer' }), icon: MessageSquare, requiresPro: true },
+    { id: 'knowledge', label: t('nav_knowledge', { defaultValue: 'Knowledge' }), icon: BookOpen },
+  ];
+
+  const officerItems: NavItemConfig[] = [
     {
       id: 'dashboard',
       label: t('nav_home', { defaultValue: 'Home' }),
@@ -145,6 +152,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       requiresPro: false,
     },
   ];
+  const navItems = user?.role === 'farmer' ? farmerItems : officerItems;
 
   const navClass = isBase
     ? 'md:hidden fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-3 right-3 max-w-lg mx-auto z-40 bg-slate-950/85 dark:bg-black/90 backdrop-blur-2xl border border-white/15 rounded-2xl px-2 py-1.5 shadow-2xl shadow-black/80 transition-all duration-300 ring-1 ring-white/10'

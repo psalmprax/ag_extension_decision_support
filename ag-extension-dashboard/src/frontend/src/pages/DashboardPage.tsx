@@ -1,7 +1,6 @@
 import { hasAuthSession } from '@/hooks/useAppAuth';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import {
   AlertCircle,
   BarChart3,
@@ -10,9 +9,6 @@ import {
   MessageSquare,
   RefreshCw,
   Users,
-  Sprout,
-  Droplets,
-  Thermometer,
 } from 'lucide-react';
 import { CardSkeleton } from '@/components/Skeleton';
 import { FarmerMap } from '@/components/FarmerMap';
@@ -38,6 +34,8 @@ import { useDemoMode } from '@/demo';
 import { DashboardHeader } from './DashboardHeader';
 import type { PerformanceData } from '@/api/analyticsService';
 import { SupportEfficiencyCard } from '@/components/dashboard/SupportEfficiencyCard';
+import { DistributionPanels } from '@/components/dashboard/DistributionPanels';
+import { SoilClimateSampleCard } from '@/components/dashboard/SoilClimateSampleCard';
 
 const REGION_MAP_MAX_RETRIES = 3;
 const REGION_MAP_RETRY_BASE_DELAY_MS = 800;
@@ -497,144 +495,6 @@ const MapSkeletonWithRetry: React.FC<{
   </div>
 );
 
-const ClimateSoilIntelligenceCard: React.FC<{ cardClass: string }> = ({ cardClass }) => {
-  return (
-    <div className={`${cardClass} p-4 sm:p-6 space-y-4`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sprout className="w-4 h-4 text-emerald-500" />
-          <h3 className="text-xs sm:text-sm font-headline font-bold text-gray-900 dark:text-white uppercase tracking-widest">
-            Soil Telemetry & Climate Radar
-          </h3>
-        </div>
-        <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold">
-          Illustrative sample · not live telemetry
-        </span>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 space-y-1">
-          <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-500 dark:text-slate-400">
-            <Droplets className="w-3 h-3 text-sky-500" />
-            <span>Soil Moisture</span>
-          </div>
-          <div className="text-sm font-bold text-slate-900 dark:text-white">28.4%</div>
-          <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Optimal root zone</div>
-        </div>
-
-        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 space-y-1">
-          <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-500 dark:text-slate-400">
-            <Thermometer className="w-3 h-3 text-amber-500" />
-            <span>Topsoil Temp</span>
-          </div>
-          <div className="text-sm font-bold text-slate-900 dark:text-white">22.8 °C</div>
-          <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">NASA POWER data</div>
-        </div>
-      </div>
-
-      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 space-y-1.5">
-        <div className="flex justify-between text-xs">
-          <span className="font-medium text-slate-600 dark:text-slate-300">Regional Soil pH</span>
-          <span className="font-bold text-emerald-600 dark:text-emerald-400">6.2 (Neutral / Fertile)</span>
-        </div>
-        <div className="w-full bg-slate-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
-          <div className="bg-emerald-500 h-full rounded-full" style={{ width: '62%' }} />
-        </div>
-        <div className="flex justify-between text-[10px] font-mono text-slate-400">
-          <span>Acidic (4.0)</span>
-          <span>Optimal (6.5)</span>
-          <span>Alkaline (8.5)</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const DistributionPanels: React.FC<{
-  dashboardData?: DashboardData;
-  t: (key: string) => string;
-  cardClass: string;
-}> = ({ dashboardData, t, cardClass }) => {
-  const defaultCrops = [
-    { name: 'Maize (SC-419 / Drought-tolerant)', count: 64 },
-    { name: 'Cassava (TME 419 Early Maturity)', count: 42 },
-    { name: 'Irish Potato (Shangi Certified)', count: 28 },
-    { name: 'Sorghum & Millet (Arid Blend)', count: 14 },
-  ];
-  const defaultRegions = [
-    { region: 'Uasin Gishu / Eldoret North', farmers: 58 },
-    { region: 'Nakuru Sub-County Central', farmers: 46 },
-    { region: 'Trans-Nzoia / Kitale', farmers: 28 },
-    { region: 'Meru / Eastern Slopes', farmers: 16 },
-  ];
-  const crops = dashboardData?.crops && dashboardData.crops.length > 0 ? dashboardData.crops : defaultCrops;
-  const regions = dashboardData?.geography && dashboardData.geography.length > 0 ? dashboardData.geography : defaultRegions;
-  const cropsAreSample = !dashboardData?.crops?.length;
-  const regionsAreSample = !dashboardData?.geography?.length;
-  const maxCropCount = Math.max(1, ...crops.map(c => c.count));
-  const maxRegionCount = Math.max(1, ...regions.map(r => r.farmers));
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <div className={cardClass}>
-        <div className="flex items-center gap-2 mb-6">
-          <BarChart3 className="w-5 h-5 text-emerald-400" />
-          <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white">
-            {t('viz_crop_planning') || 'Crop Distribution'}
-          </h3>
-          {cropsAreSample && <span className="text-[10px] text-amber-700 dark:text-amber-300">Sample</span>}
-        </div>
-        <div className="space-y-4">
-          {crops.map(crop => (
-            <div key={crop.name}>
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{crop.name}</span>
-                <span className="text-xs font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">{crop.count}</span>
-              </div>
-              <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(crop.count / maxCropCount) * 100}%` }}
-                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  className="h-full bg-emerald-500 rounded-full"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className={cardClass}>
-        <div className="flex items-center gap-2 mb-6">
-          <Users className="w-5 h-5 text-primary-400" />
-          <h3 className="text-lg font-headline font-semibold text-gray-900 dark:text-white">
-            {t('stat_regional_distribution') || 'Regional Distribution'}
-          </h3>
-          {regionsAreSample && <span className="text-[10px] text-amber-700 dark:text-amber-300">Sample</span>}
-        </div>
-        <div className="space-y-4">
-          {regions.map(region => (
-            <div key={region.region}>
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{region.region}</span>
-                <span className="text-xs font-semibold tabular-nums text-primary-700 dark:text-primary-400">{region.farmers}</span>
-              </div>
-              <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(region.farmers / maxRegionCount) * 100}%` }}
-                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  className="h-full bg-primary-500 rounded-full"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const MapFallbackEmptyState: React.FC<{
   onRetry: () => void;
   t: (key: string) => string;
@@ -680,7 +540,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     useThemeClasses();
   const storeUser = useAppStore(state => state.user);
   const effectiveUser = user || storeUser;
-  const _isAdmin = effectiveUser?.role === 'admin' || effectiveUser?.role === 'superadmin';
+  const isAdmin = effectiveUser?.role === 'admin' || effectiveUser?.role === 'superadmin';
+  const { isDemo } = useDemoMode();
   const openFarmerChat = useOpenFarmerChat({ role: effectiveUser?.role, handleStartConversation, handleOpenFarmerDetail });
 
   return (
@@ -729,11 +590,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
         <div className="space-y-4 sm:space-y-6">
           <OutreachDeliveryWidget />
-          {(effectiveUser?.role === 'admin' || effectiveUser?.role === 'superadmin') ? (
-            <ActivePulseCard cardClass={cardClass} isLoading={isLoading} />
-          ) : (
-            <ClimateSoilIntelligenceCard cardClass={cardClass} />
-          )}
+          {isAdmin && <ActivePulseCard cardClass={cardClass} isLoading={isLoading} />}
+          {!isAdmin && isDemo && <SoilClimateSampleCard cardClass={cardClass} />}
         </div>
       </div>
 

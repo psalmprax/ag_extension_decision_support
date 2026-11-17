@@ -70,6 +70,7 @@ const TAB_TO_PATH: Record<string, string> = {
   knowledge: '/knowledge',
   aiassistant: '/ai-assistant',
   farmerchat: '/farmer-chat',
+  officerchat: '/my-officer',
   worldmonitor: '/world-monitor',
   sms: '/sms',
   telemetry: '/telemetry',
@@ -118,8 +119,7 @@ function App() {
   // Two independent effects used to fight each other on deep links: a reload
   // on /fields with a persisted activeTab of 'dashboard' flipped both values
   // forever (each effect re-triggering the other). Tracking the previous
-  // values makes the *changed* side the source of truth, so the pair settles
-  // in a single pass.
+  // values makes the *changed* side the source of truth: one pass settles it.
   const prevPathRef = React.useRef<string | null>(null);
   const prevTabRef = React.useRef(activeTab);
 
@@ -326,7 +326,7 @@ function App() {
   React.useEffect(() => {
     if (!user || isDemo) return;
     if (activeTab === 'aiassistant') loadConversations();
-    if (activeTab === 'farmerchat') loadFarmerConversations();
+    if (activeTab === 'farmerchat' || activeTab === 'officerchat') loadFarmerConversations();
   }, [activeTab, loadConversations, loadFarmerConversations, user, isDemo]);
 
   React.useEffect(() => {

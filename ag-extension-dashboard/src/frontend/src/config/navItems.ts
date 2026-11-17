@@ -65,6 +65,17 @@ export const getNavItems = (): NavItem[] => [
     requiresPro: true,
   },
   {
+    // The farmer's own chat with their officer (the in-app counterpart of SMS,
+    // WhatsApp and Telegram), on the same plan as the officers' Farmer Chat.
+    id: 'officerchat',
+    label: 'My officer',
+    labelKey: 'nav_officerchat',
+    icon: MessageSquare,
+    roles: ['farmer'],
+    hiddenInDemo: true,
+    requiresPro: true,
+  },
+  {
     id: 'knowledge',
     label: 'Knowledge Base',
     labelKey: 'nav_knowledge',

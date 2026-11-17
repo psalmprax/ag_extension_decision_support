@@ -18,4 +18,18 @@ describe('menu per role', () => {
     expect(menuFor('farmer')[0]).toBe('farmer_dashboard');
     expect(menuFor('farmer')).not.toContain('dashboard');
   });
+
+  it("gives farmers a chat with their own officer, on the same plan as officers' Farmer Chat", () => {
+    const items = getNavItems();
+    const officerChat = items.find(item => item.id === 'officerchat')!;
+    const farmerChat = items.find(item => item.id === 'farmerchat')!;
+
+    expect(officerChat.roles).toEqual(['farmer']);
+    expect(officerChat.requiresPro).toBe(true);
+    expect(officerChat.requiresPro).toBe(farmerChat.requiresPro);
+    // The officers' page (every farmer's thread, copilot, field data) stays theirs.
+    expect(menuFor('farmer')).not.toContain('farmerchat');
+    expect(menuFor('extension_officer')).not.toContain('officerchat');
+  });
 });
+
