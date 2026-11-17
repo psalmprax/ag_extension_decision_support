@@ -17,6 +17,8 @@ export interface Conversation {
   farmerId?: string;
   farmerName?: string;
   farmerRegion?: string;
+  /** The farmer's assigned officer (as the API sends it). */
+  officerName?: string | null;
   lastMessage?: string;
   updatedAt: string;
   startedAt: string;

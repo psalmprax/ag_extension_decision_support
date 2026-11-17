@@ -15,23 +15,32 @@ const SENDER_ICON: Record<FarmerChatSender, React.ComponentType<{ className?: st
 };
 
 /** One message in the farmer chat thread, labelled and styled by sender. */
-export const FarmerChatMessage: React.FC<{ message: ChatMessage }> = ({ message }) => {
+/**
+ * One message in a farmer thread. `viewer="farmer"` is the farmer's own page,
+ * where their messages read "You".
+ */
+export const FarmerChatMessage: React.FC<{ message: ChatMessage; viewer?: 'officer' | 'farmer' }> = ({
+  message,
+  viewer = 'officer',
+}) => {
   const look = farmerChatSender(message.role);
   const Icon = SENDER_ICON[look.sender];
   // Backend sends `createdAt`; never render "Invalid Date" for bad values.
   const timeLabel = formatChatTime(message);
   const onDark = look.sender === 'officer';
+  const ownMessage = viewer === 'farmer' ? look.sender === 'farmer' : look.align === 'end';
+  const label = viewer === 'farmer' && look.sender === 'farmer' ? 'You' : look.label;
 
   return (
-    <div className={`flex ${look.align === 'end' ? 'justify-end' : 'justify-start'}`} data-sender={look.sender}>
+    <div className={`flex ${ownMessage ? 'justify-end' : 'justify-start'}`} data-sender={look.sender}>
       <div
         role="group"
-        aria-label={`${look.label} message`}
+        aria-label={`${label} message`}
         className={`max-w-[75%] p-4 rounded-xl shadow-sm space-y-1.5 ${look.bubbleClass}`}
       >
         <div className={`flex items-center gap-1.5 text-xs font-medium ${onDark ? 'text-white/90' : ''}`}>
           <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
-          <span>{look.label}</span>
+          <span>{label}</span>
           {message.channel && (
             <span className="ml-1 font-normal opacity-75">
               {look.sender === 'farmer' ? 'via' : 'sent by'} {CHANNEL_LABEL[message.channel]}

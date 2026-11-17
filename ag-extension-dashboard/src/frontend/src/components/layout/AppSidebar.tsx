@@ -22,6 +22,7 @@ const NAV_SECTIONS = [
       'farmer_dashboard',
       'aiassistant',
       'farmerchat',
+      'officerchat',
       'knowledge',
       'portfolio',
       'visits',

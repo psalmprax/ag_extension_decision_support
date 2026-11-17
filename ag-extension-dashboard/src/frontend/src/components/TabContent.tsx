@@ -1,10 +1,11 @@
 import React from 'react';
-import { Farmer, Visit, Conversation, ChatMessage, DashboardData } from '@/types/dashboard';
+import { Farmer, Visit, DashboardData } from '@/types/dashboard';
 import { Report } from '@/api/reportService';
 import { PlanUpgradeGuard } from '@/components/PlanUpgradeGuard';
 import type { PerformanceData } from '@/api/analyticsService';
 
 import { DashboardLoadError } from '@/components/DashboardLoadError';
+import { threadProps } from './chat/threadProps';
 
 const DashboardPage = React.lazy(() =>
   import('@/pages/DashboardPage').then(m => ({ default: m.DashboardPage }))
@@ -24,6 +25,7 @@ const AnalyticsPage = React.lazy(() =>
 const FarmerChatPage = React.lazy(() =>
   import('@/pages/FarmerChatPage').then(m => ({ default: m.FarmerChatPage }))
 );
+const FarmerOfficerChatPage = React.lazy(() => import('@/pages/FarmerOfficerChatPage'));
 
 const FarmerDashboard = React.lazy(() =>
   import('@/components/FarmerDashboard').then(m => ({ default: m.FarmerDashboard }))
@@ -220,18 +222,17 @@ export function TabContent(props: TabContentProps) {
       return (
         <PlanUpgradeGuard category="chat" featureName="Farmer Chat & Direct Communication">
           <FarmerChatPage
-            farmerConversations={props.farmerConversations as Conversation[]}
-            activeFarmerConvId={props.activeFarmerConvId}
-            setActiveFarmerConvId={props.setActiveFarmerConvId}
-            loadFarmerMessages={props.loadFarmerMessages}
-            farmerChatMessages={props.farmerChatMessages as ChatMessage[]}
-            farmerChatInput={props.farmerChatInput}
-            setFarmerChatInput={props.setFarmerChatInput}
-            handleFarmerChatSend={props.handleFarmerChatSend}
+            {...threadProps(props)}
             loadFarmers={props.loadFarmers}
             setShowFarmerModal={props.setShowFarmerModal}
             onDeleteConversation={props.handleDeleteConversation}
           />
+        </PlanUpgradeGuard>
+      );
+    case 'officerchat':
+      return (
+        <PlanUpgradeGuard category="chat" featureName="Chat with your extension officer">
+          <FarmerOfficerChatPage {...threadProps(props)} />
         </PlanUpgradeGuard>
       );
     case 'farmer_dashboard':
