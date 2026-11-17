@@ -213,12 +213,27 @@ function isAllowlisted(pkgName, vuln, entries, scope) {
 }
 
 function areIndirectViasExempt(indirectVias, exemptPackages, vulnerabilities, level) {
-  return indirectVias.every((dep) => {
-    if (exemptPackages.has(dep)) return true;
-    const depVuln = vulnerabilities[dep];
-    return !!depVuln
-      && !!SEVERITY_RANK[depVuln.severity]
-      && SEVERITY_RANK[depVuln.severity] < SEVERITY_RANK[level];
+  // Peer cycles are not evidence of safety; require a reviewed or below-threshold exit.
+  function inspect(dep, visiting) {
+    if (exemptPackages.has(dep)) return { safe: true, grounded: true };
+    const vuln = vulnerabilities[dep];
+    if (!vuln || !SEVERITY_RANK[vuln.severity]) return { safe: false, grounded: false };
+    if (SEVERITY_RANK[vuln.severity] < SEVERITY_RANK[level]) return { safe: true, grounded: true };
+    if (visiting.has(dep)) return { safe: true, grounded: false };
+    const vias = vuln.via || [];
+    if (vias.length === 0 || vias.some(via => typeof via !== 'string')) {
+      return { safe: false, grounded: false };
+    }
+    const next = new Set(visiting).add(dep);
+    const results = vias.map(via => inspect(via, next));
+    return {
+      safe: results.every(result => result.safe),
+      grounded: results.some(result => result.grounded),
+    };
+  }
+  return indirectVias.every(dep => {
+    const result = inspect(dep, new Set());
+    return result.safe && result.grounded;
   });
 }
 
@@ -347,4 +362,3 @@ module.exports = {
   areIndirectViasExempt,
   main,
 };
-

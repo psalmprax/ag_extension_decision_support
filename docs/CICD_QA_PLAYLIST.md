@@ -91,6 +91,19 @@ coverage provider must be upgraded together. Do not use `npm audit fix --force`:
 some suggested "fixes" downgrade tooling or change dependency APIs. Remaining
 unpatched or major-only advisories must be reported rather than hidden.
 
+As of 2026-11-17, `GHSA-fc5q-39xc-vjpf` affects every published Picomatch
+version through `4.0.7`; upstream lists no patched version. The frontend-only
+exception in `scripts/audit-allowlist.json` expires on 2026-12-01. It accepts
+the residual build/test tooling risk for repository-controlled globs, not
+arbitrary user-supplied patterns. Production nginx receives compiled assets,
+not the Node tooling tree. This does **not** remediate Picomatch: monitor the
+advisory, install a patched release once available, and remove the exception.
+The gate still rejects unrelated advisories and expired/stale exceptions.
+Peer-dependency cycles (such as Vitest and its coverage provider) may inherit
+an exception only when their dependency graph reaches a reviewed exception or
+a below-threshold finding and contains no unreviewed advisory or unknown node.
+Regression checks: `node --test scripts/npm-audit-gate.test.cjs`.
+
 ### Q2c. Why can a pest-threshold answer become a treatment-rate warning?
 
 The generated-advice guard withholds unverified pesticide doses, concentrations,

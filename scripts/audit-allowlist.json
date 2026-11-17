@@ -1,6 +1,13 @@
 {
   "entries": [
     {
+      "package": "picomatch",
+      "scope": ["frontend"],
+      "advisories": ["GHSA-fc5q-39xc-vjpf"],
+      "reason": "Upstream reports all published picomatch versions through latest 4.0.7 affected, with no first patched version as of 2026-11-17. Frontend uses it transitively for repository-controlled build, lint and test glob patterns; application source does not import it, and the production nginx image copies only compiled assets, not Node tooling. This is temporary risk acceptance, not a vulnerability fix: keep untrusted glob patterns out of tooling, track the advisory, and upgrade/remove this entry when a patched release is available.",
+      "expires": "2026-12-01"
+    },
+    {
       "package": "extract-zip",
       "scope": ["ag_extension_decision_support"],
       "advisories": ["GHSA-jmr9-qjv8-65gv", "GHSA-7pqw-9j4j-h8q3"],
