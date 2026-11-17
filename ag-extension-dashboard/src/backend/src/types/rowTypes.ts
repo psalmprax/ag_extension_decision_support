@@ -368,6 +368,8 @@ export interface ChatMessageRow {
   rating: number | null;
   feedback: string | null;
   metadata: Record<string, unknown> | null;
+  /** null = the app; sms / whatsapp / telegram. */
+  channel?: string | null;
   created_at: Date | string | null;
 }
 

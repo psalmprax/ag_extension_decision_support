@@ -30,8 +30,8 @@ export async function runTurnTakingTick(now: Date = new Date()): Promise<number>
             }
             const decision = decideAutoReply(thread.state, now, thread.settings);
             if (decision.action !== 'answer') continue;
-            await answerFarmerInThread(thread, decision.reason);
-            answered++;
+            // Over the SMS limit nothing is sent; the officer still sees the message.
+            if ((await answerFarmerInThread(thread, decision.reason)) === 'answered') answered++;
         } catch (error) {
             // One failing thread must not stop the others; it is retried next tick.
             logger.warn(`Turn-taking: could not answer thread ${thread.conversationId}:`, error);

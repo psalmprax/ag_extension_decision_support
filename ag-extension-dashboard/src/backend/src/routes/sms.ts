@@ -18,6 +18,7 @@ import { logger } from '@/utils/logger';
 import { verifyInboundWebhookSignature } from '@/middleware/webhookSignature';
 import { ASK_HELP, messagingKnowledgeReply, parseAskCommand } from '@/services/knowledge/messagingHints';
 import { linkedDemoSql } from '@/services/demoScope';
+import { takeRegisteredFarmerMessage } from '@/services/chat/channelInbound';
 
 const router = Router();
 
@@ -39,6 +40,12 @@ router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res:
 
         if (!from || !text) {
             return res.status(400).json({ success: false, error: 'from and text are required' });
+        }
+
+        // A registered farmer's message goes into their thread for their officer
+        // ("ASK AI <question>" gets an AI answer by SMS).
+        if (await takeRegisteredFarmerMessage({ channel: 'sms', identifier: from, text, eventId })) {
+            return res.status(200).json({ success: true, handled: true });
         }
 
         const question = parseAskCommand(text);

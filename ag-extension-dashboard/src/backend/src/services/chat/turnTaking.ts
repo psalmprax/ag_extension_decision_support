@@ -159,8 +159,13 @@ export function urgentSafetyText(language?: string | null): string {
 }
 
 /** Footer on an automatic AI answer, so the farmer knows who answered and that a person will follow up. */
-export function autoAnswerFooter(reason: 'officer_unavailable' | 'outside_hours' | 'farmer_request', language?: string | null): string {
+export function autoAnswerFooter(
+    reason: 'officer_unavailable' | 'outside_hours' | 'farmer_request',
+    language?: string | null,
+    channel?: 'sms' | 'whatsapp' | 'telegram' | null,
+): string {
     const sw = language?.toLowerCase().startsWith('sw');
+    if (channel === 'sms') return sw ? '(Jibu la AI; afisa wako ataliona.)' : '(AI answer; your officer will see it.)';
     if (reason === 'farmer_request') {
         return sw ? 'Jibu hili limetolewa na AI. Afisa wako wa ugani anaweza kuliona.' : 'This answer is from the AI. Your extension officer can see it.';
     }

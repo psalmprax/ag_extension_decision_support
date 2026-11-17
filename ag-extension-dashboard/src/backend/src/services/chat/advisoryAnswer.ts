@@ -91,14 +91,22 @@ function fanoutMessage(conversationId: string, message: ChatMessageRow): void {
   }
 }
 
-export async function persistTurnMessage(conversationId: string | undefined, role: string, content: string, language?: string): Promise<void> {
-  if (!conversationId) return;
+/** Store a message in a thread and push it live; `channel` marks an SMS/WhatsApp/Telegram message. */
+export async function persistTurnMessage(
+  conversationId: string | undefined,
+  role: string,
+  content: string,
+  language?: string,
+  extra: { channel?: 'sms' | 'whatsapp' | 'telegram'; isVoice?: boolean } = {},
+): Promise<ChatMessageRow | null> {
+  if (!conversationId) return null;
   const { rows } = await query<ChatMessageRow>(
-    `INSERT INTO chat_messages (conversation_id, role, content, language)
-     VALUES ($1, $2, $3, $4) RETURNING *`,
-    [conversationId, role, content, language ?? null]
+    `INSERT INTO chat_messages (conversation_id, role, content, language, channel, is_voice)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+    [conversationId, role, content, language ?? null, extra.channel ?? null, extra.isVoice ?? false]
   );
   if (rows[0]) fanoutMessage(conversationId, rows[0]);
+  return rows[0] ?? null;
 }
 
 const executeToolCalls = async (toolCalls: ToolCall[], deadline: number): Promise<Array<{ call: ToolCall; output: string }>> => {
@@ -248,6 +256,8 @@ export interface AdvisoryAnswerRequest {
   trustedHistory?: boolean;
   /** Appended to the answer, e.g. that the officer has been notified. */
   footer?: string;
+  /** 'sms': the answer goes out by SMS, so it must be short plain text. */
+  brevity?: 'sms';
 }
 
 export interface AdvisoryAnswer {
@@ -257,7 +267,13 @@ export interface AdvisoryAnswer {
   usedTools: string[];
   safety: ReturnType<typeof agronomicSafetyGuard.guardAndEnrichAdvice>['boundaryCheck'];
   reviewTrigger: ReviewTrigger | null;
+  /** The stored answer's id, when it was stored. */
+  storedMessageId: string | null;
 }
+
+const SMS_BREVITY =
+  '\nThis answer is sent by SMS: reply in plain text (no markdown, no lists), in at most 300 characters. ' +
+  'If more detail is needed, say the officer will follow up.';
 
 export async function generateAdvisoryAnswer(req: AdvisoryAnswerRequest): Promise<AdvisoryAnswer> {
   const { requester } = req;
@@ -275,7 +291,8 @@ export async function generateAdvisoryAnswer(req: AdvisoryAnswerRequest): Promis
   const toolsClause = tools.length > 0
     ? ' You have access to specialized agricultural tools — call them when they can provide accurate, data-driven information; never claim to have used a tool you did not call.'
     : '';
-  const systemPrompt = `${buildAdvisoryDirective(advisoryContext)}${toolsClause}\n${historyBlock}${ragResult.context}`;
+  const brevityClause = req.brevity === 'sms' ? SMS_BREVITY : '';
+  const systemPrompt = `${buildAdvisoryDirective(advisoryContext)}${toolsClause}${brevityClause}\n${historyBlock}${ragResult.context}`;
 
   const { text: assistantText, usedToolNames } = await runAssistantTurn(systemPrompt, req.message, tools);
 
@@ -283,7 +300,7 @@ export async function generateAdvisoryAnswer(req: AdvisoryAnswerRequest): Promis
   const validated = validateAdvisoryCitations(guardedText, ragResult.citations, req.language);
   const text = req.footer ? `${validated.answer}\n\n${req.footer}` : validated.answer;
 
-  await persistTurnMessage(req.storeIn, 'assistant', text, req.language);
+  const stored = await persistTurnMessage(req.storeIn, 'assistant', text, req.language);
 
   // Unsourced, mis-cited or safety-flagged advice in a farmer's thread goes to
   // the agronomic review queue; the answer itself is not held back.
@@ -301,5 +318,6 @@ export async function generateAdvisoryAnswer(req: AdvisoryAnswerRequest): Promis
     usedTools: usedToolNames,
     safety: boundaryCheck,
     reviewTrigger,
+    storedMessageId: stored?.id ?? null,
   };
 }

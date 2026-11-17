@@ -2,14 +2,20 @@ jest.mock('@/services/databaseService', () => ({ query: jest.fn() }));
 jest.mock('@/utils/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } }));
 jest.mock('@/services/notificationService', () => ({ notificationService: { send: jest.fn().mockResolvedValue(true) } }));
 jest.mock('@/services/chat/advisoryAnswer', () => ({
-    generateAdvisoryAnswer: jest.fn().mockResolvedValue({ text: 'answer' }),
-    persistTurnMessage: jest.fn().mockResolvedValue(undefined),
+    generateAdvisoryAnswer: jest.fn().mockResolvedValue({ text: 'answer', storedMessageId: 'msg-ai' }),
+    persistTurnMessage: jest.fn().mockResolvedValue({ id: 'msg-safety' }),
 }));
 jest.mock('@/services/leaderElection', () => ({ runIfLeader: jest.fn() }));
+jest.mock('@/services/chat/channelThread', () => ({
+    replyChannelFor: jest.fn().mockResolvedValue(null),
+    deliverToFarmerChannel: jest.fn().mockResolvedValue(null),
+    smsAiAnswersToday: jest.fn().mockResolvedValue(0),
+}));
 
 import { query } from '@/services/databaseService';
 import { notificationService } from '@/services/notificationService';
 import { generateAdvisoryAnswer, persistTurnMessage } from '@/services/chat/advisoryAnswer';
+import { deliverToFarmerChannel, replyChannelFor, smsAiAnswersToday } from '@/services/chat/channelThread';
 import { answerFarmerInThread, toThreadForReply } from '@/services/chat/threadAutoReply';
 import { runTurnTakingTick } from '@/workers/turnTakingWorker';
 
@@ -58,6 +64,38 @@ describe('answering a farmer in their thread', () => {
         expect(generateAdvisoryAnswer).not.toHaveBeenCalled();
         expect(persistTurnMessage).toHaveBeenCalledWith('conv-1', 'assistant', expect.stringContaining('nearest health facility'), 'en');
         expect(send).toHaveBeenCalledWith(expect.objectContaining({ userId: 'officer-1', type: 'error', title: expect.stringMatching(/^Urgent/) }));
+    });
+});
+
+describe('answers on SMS, WhatsApp and Telegram', () => {
+    it('sends the answer back on the channel the farmer wrote from, kept short for SMS', async () => {
+        jest.mocked(replyChannelFor).mockResolvedValueOnce('sms');
+        await expect(answerFarmerInThread(toThreadForReply(row()), 'farmer_request')).resolves.toBe('answered');
+
+        expect(generateAdvisoryAnswer).toHaveBeenCalledWith(expect.objectContaining({ brevity: 'sms', footer: '(AI answer; your officer will see it.)' }));
+        expect(deliverToFarmerChannel).toHaveBeenCalledWith('conv-1', 'msg-ai', 'answer');
+    });
+
+    it("stops at the organisation's SMS limit and sends nothing", async () => {
+        jest.mocked(replyChannelFor).mockResolvedValueOnce('sms');
+        jest.mocked(smsAiAnswersToday).mockResolvedValueOnce(10);
+        await expect(answerFarmerInThread(toThreadForReply(row()), 'officer_unavailable')).resolves.toBe('sms_limit');
+
+        expect(generateAdvisoryAnswer).not.toHaveBeenCalled();
+        expect(deliverToFarmerChannel).not.toHaveBeenCalled();
+        expect(send).not.toHaveBeenCalled();
+    });
+
+    it('has no SMS limit on WhatsApp or Telegram', async () => {
+        jest.mocked(replyChannelFor).mockResolvedValueOnce('telegram');
+        jest.mocked(smsAiAnswersToday).mockResolvedValueOnce(99);
+        await expect(answerFarmerInThread(toThreadForReply(row()), 'farmer_request')).resolves.toBe('answered');
+        expect(generateAdvisoryAnswer).toHaveBeenCalledWith(expect.objectContaining({ brevity: undefined }));
+    });
+
+    it('delivers the urgent safety message on the channel too', async () => {
+        await answerFarmerInThread(toThreadForReply(row({ question: 'My child drank pesticide' })), 'farmer_request');
+        expect(deliverToFarmerChannel).toHaveBeenCalledWith('conv-1', 'msg-safety', expect.stringContaining('nearest health facility'));
     });
 });
 

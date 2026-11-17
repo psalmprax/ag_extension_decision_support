@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { FarmerChatMessage } from '@/components/chat/FarmerChatMessage';
+import type { ChatMessage } from '@/types/dashboard';
 
 vi.mock('@/components/audio/AudioReaderButton', () => ({ AudioReaderButton: () => null }));
 
@@ -30,4 +31,14 @@ describe('FarmerChatMessage — farmer, AI and officer messages are distinguisha
     render(<FarmerChatMessage message={{ role: 'assistant', content: 'b' }} />);
     expect(screen.queryByText(/AI ADVISORY|FARMER INCOMING|OFFICER DISPATCH/)).toBeNull();
   });
+
+  it('shows which channel a message came in on or went out by', () => {
+    const { rerender } = render(<FarmerChatMessage message={{ role: 'user', content: 'Yellow leaves', channel: 'sms' } as ChatMessage} />);
+    expect(screen.getByRole('group', { name: 'Farmer message' })).toHaveTextContent('via SMS');
+    rerender(<FarmerChatMessage message={{ role: 'officer', content: 'Since when?', channel: 'telegram' } as ChatMessage} />);
+    expect(screen.getByRole('group', { name: 'Officer message' })).toHaveTextContent('sent by Telegram');
+    rerender(<FarmerChatMessage message={{ role: 'user', content: 'From the app' } as ChatMessage} />);
+    expect(screen.getByRole('group', { name: 'Farmer message' })).not.toHaveTextContent(/via|sent by/);
+  });
 });
+

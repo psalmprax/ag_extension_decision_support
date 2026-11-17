@@ -32,6 +32,8 @@ export interface ChatMessageDTO {
   rating: number | null;
   feedback: string | null;
   metadata: Record<string, unknown> | null;
+  /** null = the app; sms / whatsapp / telegram. */
+  channel: string | null;
   createdAt: string | null;
 }
 export function mapChatMessageRow(row: ChatMessageRow): ChatMessageDTO {
@@ -45,6 +47,7 @@ export function mapChatMessageRow(row: ChatMessageRow): ChatMessageDTO {
     rating: row.rating,
     feedback: row.feedback,
     metadata: row.metadata,
+    channel: row.channel ?? null,
     createdAt: toIso(row.created_at) ?? null,
   };
 }

@@ -8,6 +8,7 @@ import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { notificationService } from '@/services/notificationService';
 import { generateAdvisoryAnswer, persistTurnMessage } from '@/services/chat/advisoryAnswer';
+import { deliverToFarmerChannel, replyChannelFor, smsAiAnswersToday } from '@/services/chat/channelThread';
 import {
     autoAnswerFooter,
     isUrgentMessage,
@@ -133,7 +134,9 @@ async function notifyOfficer(thread: ThreadForReply, title: string, message: str
 /** Fixed safety steps now, and an urgent alert to the officer. */
 export async function sendUrgentSafetyReply(thread: ThreadForReply): Promise<void> {
     const language = thread.question?.language ?? null;
-    await persistTurnMessage(thread.conversationId, 'assistant', urgentSafetyText(language), language ?? undefined);
+    const text = urgentSafetyText(language);
+    const stored = await persistTurnMessage(thread.conversationId, 'assistant', text, language ?? undefined);
+    await deliverToFarmerChannel(thread.conversationId, stored?.id ?? null, text);
     await notifyOfficer(
         thread,
         `Urgent: ${thread.farmerName} may need emergency help`,
@@ -142,19 +145,27 @@ export async function sendUrgentSafetyReply(thread: ThreadForReply): Promise<voi
     );
 }
 
+/** What happened when the AI was asked to answer. */
+export type AnswerOutcome = 'answered' | 'urgent' | 'sms_limit' | 'no_question';
+
 /**
- * The AI answers the farmer's latest message in their thread. Urgent messages
- * get the fixed safety reply instead of a generated answer.
+ * The AI answers the farmer's latest message in their thread, and the answer
+ * goes out on the channel the farmer used. Urgent messages get the fixed
+ * safety reply instead. By SMS, the organisation's daily limit applies.
  */
-export async function answerFarmerInThread(thread: ThreadForReply, reason: AnswerReason): Promise<void> {
+export async function answerFarmerInThread(thread: ThreadForReply, reason: AnswerReason): Promise<AnswerOutcome> {
     const question = thread.question;
-    if (!question) return;
+    if (!question) return 'no_question';
     if (isUrgentMessage(question.content)) {
         await sendUrgentSafetyReply(thread);
-        return;
+        return 'urgent';
+    }
+    const channel = await replyChannelFor(thread.conversationId);
+    if (channel === 'sms' && (await smsAiAnswersToday(thread.farmerId)) >= thread.settings.smsAiDailyLimit) {
+        return 'sms_limit';
     }
     const language = question.language ?? undefined;
-    await generateAdvisoryAnswer({
+    const answer = await generateAdvisoryAnswer({
         message: question.content,
         language,
         contextConversationId: thread.conversationId,
@@ -162,8 +173,10 @@ export async function answerFarmerInThread(thread: ThreadForReply, reason: Answe
         // Reviews are attributed to the officer responsible for the thread.
         requester: { userId: thread.officerId ?? thread.farmerUserId ?? thread.farmerId, role: 'farmer' },
         trustedHistory: true,
-        footer: autoAnswerFooter(reason, language),
+        footer: autoAnswerFooter(reason, language, channel),
+        brevity: channel === 'sms' ? 'sms' : undefined,
     });
+    await deliverToFarmerChannel(thread.conversationId, answer.storedMessageId, answer.text);
     if (reason !== 'farmer_request') {
         await notifyOfficer(
             thread,
@@ -172,6 +185,7 @@ export async function answerFarmerInThread(thread: ThreadForReply, reason: Answe
             'warning',
         );
     }
+    return 'answered';
 }
 
 /** Right after a farmer writes: an urgent message gets its safety steps at once. */

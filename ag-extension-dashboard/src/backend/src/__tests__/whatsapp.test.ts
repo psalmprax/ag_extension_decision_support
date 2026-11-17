@@ -254,6 +254,12 @@ jest.mock('../services/onboardingEngine', () => ({
     },
 }));
 
+// Registered farmers' messages go into their thread (see channelInbound.test.ts);
+// most cases here are about people who are not registered yet.
+jest.mock('../services/chat/channelInbound', () => ({
+    takeRegisteredFarmerMessage: jest.fn().mockResolvedValue(false),
+}));
+
 jest.mock('../services/whatsappService', () => ({
     whatsappService: {
         sendMessage: jest.fn().mockResolvedValue({ success: true }),
@@ -482,13 +488,10 @@ describe('POST /inbound — voice note transcription and synthesized advisory di
         );
     });
 
-    it('routes voice notes from registered farmers to symptom triage and returns synthesized advisory', async () => {
+    it("takes a registered farmer's voice note into their thread, transcribed and marked as voice", async () => {
         mockQuery.mockResolvedValue({ rows: [{ id: 'wa-v2' }], rowCount: 1 });
-        (onboardingEngine.processIncomingMessage as jest.Mock).mockResolvedValueOnce({
-            isHandled: false,
-            isRegistered: true,
-            farmerId: 'farm-reg-42',
-        });
+        const { takeRegisteredFarmerMessage } = jest.requireMock('../services/chat/channelInbound');
+        (takeRegisteredFarmerMessage as jest.Mock).mockResolvedValueOnce(true);
 
         const response = await request(app)
             .post('/api/v1/whatsapp/inbound')
@@ -500,19 +503,17 @@ describe('POST /inbound — voice note transcription and synthesized advisory di
             });
 
         expect(response.status).toBe(202);
-        expect(response.body.success).toBe(true);
         expect(response.body.handled).toBe(true);
         expect(response.body.isVoice).toBe(true);
-
-        expect(whatsappService.sendMessage).toHaveBeenCalledTimes(1);
-        expect(whatsappService.sendMessage).toHaveBeenCalledWith(
-            expect.objectContaining({
-                to: '+265999111333',
-                farmerId: 'farm-reg-42',
-                isVoiceNote: true,
-                mediaUrl: expect.stringMatching(/^data:audio\//),
-            })
-        );
+        expect(takeRegisteredFarmerMessage).toHaveBeenCalledWith(expect.objectContaining({
+            channel: 'whatsapp',
+            identifier: '+265999111333',
+            text: response.body.transcription,
+            isVoice: true,
+            language: expect.any(String),
+        }));
+        // Their officer (or the AI, on its turn) replies from the thread, spoken as well.
+        expect(whatsappService.sendMessage).not.toHaveBeenCalled();
     });
 
     it('returns 400 when neither text nor audio is supplied', async () => {

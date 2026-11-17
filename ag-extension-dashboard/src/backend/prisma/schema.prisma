@@ -351,6 +351,8 @@ model ChatMessage {
   entities          Json?
   isVoice           Boolean?         @default(false) @map("is_voice")
   audioUrl          String?          @map("audio_url")
+  /// null = the app; sms / whatsapp / telegram = received or delivered on that channel
+  channel           String?          @db.VarChar(20)
   createdAt         DateTime?        @default(now()) @map("created_at") @db.Timestamp(6)
   conversation      ChatConversation? @relation(fields: [conversationId], references: [id])
 

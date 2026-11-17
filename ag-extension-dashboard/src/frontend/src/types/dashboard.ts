@@ -25,6 +25,8 @@ export interface Conversation {
 export interface ChatMessage {
   /** 'user' and 'farmer' are both the farmer; 'assistant' is the AI. */
   role: 'user' | 'farmer' | 'assistant' | 'officer';
+  /** Received or delivered by SMS, WhatsApp or Telegram; absent or null = in the app. */
+  channel?: 'sms' | 'whatsapp' | 'telegram' | null;
   content: string;
   // Backend ChatMessageDTO carries `createdAt`; some producers send
   // `timestamp`. Either may be absent — renderers must tolerate both.

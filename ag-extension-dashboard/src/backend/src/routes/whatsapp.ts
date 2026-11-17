@@ -11,9 +11,12 @@ import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { whatsappService } from '@/services/whatsappService';
 import { onboardingEngine } from '@/services/onboardingEngine';
 import { ASK_HELP, messagingKnowledgeReply, parseAskCommand } from '@/services/knowledge/messagingHints';
-import { transcribeVoiceNote, synthesizeVoiceAdvisory } from '@/services/voiceAudioService';
+import { transcribeVoiceNote } from '@/services/voiceAudioService';
+import { synthesizeVoiceReply } from '@/services/chat/voiceReply';
 import { checkMessageAccess, MessageAccessError, resolvePrincipalRegion } from '@/services/messageAccessService';
 import { linkedDemoSql } from '@/services/demoScope';
+import { takeRegisteredFarmerMessage } from '@/services/chat/channelInbound';
+import { WHATSAPP_ASK_AI_PAYLOAD } from '@/services/chat/channelThread';
 
 const router = Router();
 
@@ -57,6 +60,8 @@ interface InboundMessagePayload {
     timestamp?: string;
     From?: string; // Twilio format fallback
     Body?: string; // Twilio format fallback
+    /** Twilio: the payload of a tapped quick-reply button. */
+    ButtonPayload?: string;
     ProfileName?: string;
     MediaUrl0?: string;
     MediaContentType0?: string;
@@ -204,25 +209,21 @@ async function transcribeInboundAudio(audioInfo: { buffer?: Buffer; url?: string
     }
 }
 
-async function synthesizeOutboundAudio(text: string, language: string): Promise<string | undefined> {
-    try {
-        const langCode = (language === 'sw' || language === 'en') ? language : 'sw';
-        const syn = await synthesizeVoiceAdvisory({ text, language: langCode });
-        if (syn?.audioBase64) {
-            return `data:${syn.format};base64,${syn.audioBase64}`;
-        }
-    } catch (err) {
-        logger.warn('Failed to synthesize outbound voice advisory:', err);
-    }
-    return undefined;
-}
-
 async function handleInboundAdvisoryOrOnboarding(
     from: string,
     body: string,
     senderName?: string,
-    eventId?: string
+    eventId?: string,
+    voice?: { isVoice: boolean; language: string }
 ): Promise<{ responseText?: string; farmerId?: string; handled: boolean }> {
+    // A registered farmer's message goes into their thread; replies are sent from there
+    // (spoken too, when the farmer sent a voice note).
+    if (await takeRegisteredFarmerMessage({
+        channel: 'whatsapp', identifier: from, text: body, eventId,
+        isVoice: voice?.isVoice, language: voice?.isVoice ? voice.language : undefined,
+    })) {
+        return { handled: true };
+    }
     const question = parseAskCommand(body);
     if (question !== null) {
         return { responseText: await messagingKnowledgeReply(question), handled: true };
@@ -262,7 +263,8 @@ async function extractInboundMessageContent(payload: InboundMessagePayload): Pro
     detectedLang: string;
 }> {
     const from = (payload.from || payload.From?.replace('whatsapp:', '') || '').trim();
-    let body = payload.body || payload.Body || '';
+    // The Ask AI quick-reply button arrives as its payload; treat it as the ASK AI code.
+    let body = payload.ButtonPayload === WHATSAPP_ASK_AI_PAYLOAD ? 'ASK AI' : payload.body || payload.Body || '';
     const senderName = payload.ProfileName;
 
     let isVoice = false;
@@ -293,7 +295,7 @@ async function dispatchOutboundResponse(
 
     let mediaUrl: string | undefined;
     if (isVoice) {
-        mediaUrl = await synthesizeOutboundAudio(dispatch.responseText, detectedLang);
+        mediaUrl = await synthesizeVoiceReply(dispatch.responseText, detectedLang);
     }
 
     const sent = await whatsappService.sendMessage({
@@ -331,7 +333,7 @@ router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res:
         logger.info(`WhatsApp inbound ${payload.messageId ?? '-'}: ${rows.length} row(s) inserted (isVoice=${isVoice})`);
 
         const eventId = payload.messageId || payload.MessageSid;
-        const dispatch = await handleInboundAdvisoryOrOnboarding(from, body, senderName, eventId);
+        const dispatch = await handleInboundAdvisoryOrOnboarding(from, body, senderName, eventId, { isVoice, language: detectedLang });
         if (!await dispatchOutboundResponse(from, dispatch, isVoice, detectedLang)) {
             return safeError(res, 503, 'Failed to send WhatsApp reply');
         }

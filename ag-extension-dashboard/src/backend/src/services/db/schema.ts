@@ -100,6 +100,7 @@ export async function createTables(pool: Pool): Promise<void> {
       ALTER TABLE visits ADD COLUMN IF NOT EXISTS tenant_id UUID;
       ALTER TABLE chat_conversations ADD COLUMN IF NOT EXISTS tenant_id UUID;
       ALTER TABLE chat_conversations ADD COLUMN IF NOT EXISTS kind VARCHAR(20) NOT NULL DEFAULT 'farmer_thread';
+      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS channel VARCHAR(20);
       ALTER TABLE alerts ADD COLUMN IF NOT EXISTS tenant_id UUID;
       ALTER TABLE notifications ADD COLUMN IF NOT EXISTS tenant_id UUID;
       ALTER TABLE reports ADD COLUMN IF NOT EXISTS tenant_id UUID;
