@@ -190,9 +190,9 @@ export const CanvasWorkbench: React.FC<{
       <div className="space-y-3">
         <CanvasPanelHeader
           icon={<Sliders className="w-4 h-4 text-cyan-400" />}
-          title="Agro-Ecosystem Phenology Scrubber (NASA POWER & NDVI)"
-          hint="Drag scrubber to simulate growth phases"
-          hintClass="text-cyan-400"
+          title="Crop growth stages (visual explainer)"
+          hint="Drag the scrubber to step through the stages — illustration, not field data"
+          hintClass="text-amber-300"
         />
         <div className="w-full h-[460px]">
           <AgroEcosystemCanvasScrubber showControls interactive className="w-full h-full" />

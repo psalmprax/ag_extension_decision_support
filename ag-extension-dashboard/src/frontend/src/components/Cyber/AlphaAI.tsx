@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Brain,
@@ -31,7 +31,10 @@ import {
   stashQueryOffline,
   requestAdvisoryMessage,
   handleAdvisoryFailure,
+  latestAdvisoryText,
+  WELCOME_MESSAGE_ID,
 } from './alpha/response';
+import { exportAdvisoryPdf } from './alpha/advisoryExport';
 import { StudioTabSwitcher, CanvasWorkbench, type LastImageAnalysis } from './alpha/StudioTabs';
 import { MessageStream } from './alpha/MessageStream';
 import { NasaPowerBadge, RagMeshBadge } from './alpha/badges';
@@ -162,7 +165,7 @@ export const AlphaAI: React.FC = () => {
   // Initial welcome message
   const [messages, setMessages] = useState<ChatMessageItem[]>([
     {
-      id: 'welcome-msg',
+      id: WELCOME_MESSAGE_ID,
       sender: 'assistant',
       text: `**Agronomic Decision Support Co-Pilot**\n\nSynthesizing live **NASA POWER agroclimatology**, **SoilGrids v2 soil properties**, and **RAG agronomic research** into actionable field advisories and real-time interactive spatial canvas models.\n\nSelect a scenario below, enter field query parameters, or upload leaf symptoms to begin.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -332,8 +335,10 @@ export const AlphaAI: React.FC = () => {
     input.click();
   };
 
+  const lastAdvisoryText = useCallback(() => latestAdvisoryText(messages), [messages]);
+
   const handleDispatchSms = async () => {
-    const lastAnswer = [...messages].reverse().find(m => m.sender === 'assistant')?.text;
+    const lastAnswer = lastAdvisoryText();
     if (!lastAnswer) {
       toast.error('No advisory to dispatch — ask a question first');
       return;
@@ -357,36 +362,7 @@ export const AlphaAI: React.FC = () => {
     }
   };
 
-  const handleExportPdf = async () => {
-    const lastAnswer = [...messages].reverse().find(m => m.sender === 'assistant')?.text;
-    if (!lastAnswer) {
-      toast.error('No advisory to export — ask a question first');
-      return;
-    }
-    try {
-      const { generateReport, downloadReportPdf } = await import('@/api/reportService');
-      const lastQuestion = [...messages].reverse().find(m => m.sender === 'user')?.text;
-      const gen = await generateReport(
-        'knowledge_factsheet',
-        `Advisory: ${(lastQuestion || lastAnswer).slice(0, 80)}`,
-        undefined,
-        { content: lastAnswer, question: lastQuestion }
-      );
-      const reportId =
-        (gen as { data?: { id?: string } })?.data?.id || (gen as { id?: string })?.id;
-      if (!reportId) throw new Error('No report id');
-      const blob = await downloadReportPdf(reportId);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `co-pilot-${Date.now()}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success('Prescription PDF downloaded');
-    } catch (e) {
-      toast.error((e as Error).message || 'PDF export failed');
-    }
-  };
+  const handleExportPdf = () => exportAdvisoryPdf(messages);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-20">
