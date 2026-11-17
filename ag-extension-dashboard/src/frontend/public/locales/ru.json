@@ -662,6 +662,8 @@
     "stat_pending_visits": "Ожидающиеся визиты",
     "stat_recent_activity": "Недавняя деятельность",
     "stat_regional_distribution": "Региональное распределение",
+    "dash_crops_empty": "No crops recorded yet. They appear here as farmers are registered with their crops.",
+    "dash_regions_empty": "No farmers registered yet. Their regions appear here once they are added.",
     "stat_total_farmers": "Общее количество фермеров",
     "stat_urgent_signals": "Срочные сигналы",
     "stat_visits_this_month": "Посещения за этот месяц",

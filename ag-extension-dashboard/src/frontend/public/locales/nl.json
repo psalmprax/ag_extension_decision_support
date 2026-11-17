@@ -662,6 +662,8 @@
     "stat_pending_visits": "Aanstaande Bezoeken",
     "stat_recent_activity": "Recente Activiteit",
     "stat_regional_distribution": "Regionale Verdeling",
+    "dash_crops_empty": "No crops recorded yet. They appear here as farmers are registered with their crops.",
+    "dash_regions_empty": "No farmers registered yet. Their regions appear here once they are added.",
     "stat_total_farmers": "Totaal Boeren",
     "stat_urgent_signals": "Urgente Signalen",
     "stat_visits_this_month": "Bezoeken Deze Maand",

@@ -662,6 +662,8 @@
     "stat_pending_visits": "अनुमोदित मुलाकातें",
     "stat_recent_activity": "हाल की गतिविधि",
     "stat_regional_distribution": "क्षेत्रीय वितरण",
+    "dash_crops_empty": "No crops recorded yet. They appear here as farmers are registered with their crops.",
+    "dash_regions_empty": "No farmers registered yet. Their regions appear here once they are added.",
     "stat_total_farmers": "कुल किसान",
     "stat_urgent_signals": "आपातकालीन संकेत",
     "stat_visits_this_month": "इस महीने के दौरान की गई यात्राएं",

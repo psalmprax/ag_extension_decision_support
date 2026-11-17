@@ -662,6 +662,8 @@
     "stat_pending_visits": "Ukungilazi Ufupi",
     "stat_recent_activity": "Izinhlobo Zokudala",
     "stat_regional_distribution": "Ukungcolwa Kwezindawo",
+    "dash_crops_empty": "No crops recorded yet. They appear here as farmers are registered with their crops.",
+    "dash_regions_empty": "No farmers registered yet. Their regions appear here once they are added.",
     "stat_total_farmers": "Izifundazwe Zokuhlanganisa",
     "stat_urgent_signals": "Izinto Ezinokhuluma",
     "stat_visits_this_month": "Zikhungo Zokudala Kwezinyanga",

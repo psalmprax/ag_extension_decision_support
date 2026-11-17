@@ -662,6 +662,8 @@
     "stat_pending_visits": "Čakajúce návštevy",
     "stat_recent_activity": "Nedávna aktivita",
     "stat_regional_distribution": "Regiónová distribúcia",
+    "dash_crops_empty": "No crops recorded yet. They appear here as farmers are registered with their crops.",
+    "dash_regions_empty": "No farmers registered yet. Their regions appear here once they are added.",
     "stat_total_farmers": "Celkový počet roľníkov",
     "stat_urgent_signals": "Prijemné signály",
     "stat_visits_this_month": "Navštevne v tomto mesiaci",

@@ -662,6 +662,8 @@
     "stat_pending_visits": "الزيارات المعلقة",
     "stat_recent_activity": "نشاط مؤخر",
     "stat_regional_distribution": "توزيع إقليمي",
+    "dash_crops_empty": "No crops recorded yet. They appear here as farmers are registered with their crops.",
+    "dash_regions_empty": "No farmers registered yet. Their regions appear here once they are added.",
     "stat_total_farmers": "المزارعين الإجمالي",
     "stat_urgent_signals": "الاشارات الحيوية",
     "stat_visits_this_month": "الزيارات لهذا الشهر",

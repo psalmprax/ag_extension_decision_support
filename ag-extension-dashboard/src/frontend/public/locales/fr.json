@@ -662,6 +662,8 @@
     "stat_pending_visits": "Visites en attente",
     "stat_recent_activity": "Activité récente",
     "stat_regional_distribution": "Répartition régionale",
+    "dash_crops_empty": "No crops recorded yet. They appear here as farmers are registered with their crops.",
+    "dash_regions_empty": "No farmers registered yet. Their regions appear here once they are added.",
     "stat_total_farmers": "Agriculteurs au total",
     "stat_urgent_signals": "Signaux urgents",
     "stat_visits_this_month": "Visites ce mois",

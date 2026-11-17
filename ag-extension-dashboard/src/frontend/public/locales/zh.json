@@ -662,6 +662,8 @@
     "stat_pending_visits": "待定拜访",
     "stat_recent_activity": "近期活动",
     "stat_regional_distribution": "区域分布",
+    "dash_crops_empty": "No crops recorded yet. They appear here as farmers are registered with their crops.",
+    "dash_regions_empty": "No farmers registered yet. Their regions appear here once they are added.",
     "stat_total_farmers": "总农户数",
     "stat_urgent_signals": "紧急信号",
     "stat_visits_this_month": "本月访问量",
