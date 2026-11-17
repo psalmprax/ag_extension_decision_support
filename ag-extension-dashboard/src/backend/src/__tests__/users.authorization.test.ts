@@ -122,23 +122,25 @@ describe('user management with real authorization and session validation', () =>
 describe('demo accounts in the staff directory', () => {
   const sqlMatching = (needle: string) => mockQuery.mock.calls.map(([sql]) => String(sql)).find(sql => sql.includes(needle));
 
-  it('shows admins every account, with demo accounts flagged', async () => {
+  it('shows admins demo accounts only in the explicit demo scope, with their origin flagged', async () => {
     const base = mockQuery.getMockImplementation()!;
     mockQuery.mockImplementation(async (sql: string, params: unknown[] = []) =>
       sql.includes('AS is_demo')
         ? { rows: [{ id: 'demo-1', email: 'demo@agridemo.com', first_name: 'Demo', last_name: 'User', role: 'extension_officer', is_demo: true }], rowCount: 1 }
         : base(sql, params));
 
-    const res = await request(app).get('/users').set('Authorization', `Bearer ${token('admin', 'admin')}`);
+    const res = await request(app).get('/users?dataset=demo').set('Authorization', `Bearer ${token('admin', 'admin')}`);
     expect(res.status).toBe(200);
     expect(res.body.data[0]).toMatchObject({ email: 'demo@agridemo.com', isDemo: true });
-    expect(sqlMatching('AS is_demo')).not.toContain('is_demo, false) = false');
+    expect(sqlMatching('AS is_demo')).toContain('WHERE COALESCE(is_demo, false) = $1');
+    expect(mockQuery.mock.calls.find(([sql]) => String(sql).includes('AS is_demo'))?.[1]).toEqual([true]);
   });
 
   it('hides demo accounts from regional managers', async () => {
     const res = await request(app).get('/users').set('Authorization', `Bearer ${token('manager', 'regional_manager')}`);
     expect(res.status).toBe(200);
-    expect(sqlMatching('AS is_demo')).toContain('COALESCE(users.is_demo, false) = false');
+    expect(sqlMatching('AS is_demo')).toContain('WHERE COALESCE(is_demo, false) = $1');
+    expect(mockQuery.mock.calls.find(([sql]) => String(sql).includes('AS is_demo'))?.[1]).toEqual([false]);
   });
 
   it('never offers demo accounts when picking an officer', async () => {

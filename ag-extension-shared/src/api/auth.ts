@@ -24,6 +24,7 @@ export const userSchema = z.object({
   avatarUrl: z.string().nullable().optional(),
   planName: z.string().optional(),
   isFree: z.boolean().optional(),
+  isDemo: z.boolean().optional(),
 });
 
 export const loginCredentialsSchema = z.object({

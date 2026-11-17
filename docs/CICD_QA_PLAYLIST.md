@@ -699,6 +699,23 @@ Avoid vague messages such as `Update workflow`.
 
 ---
 
+### Q75. Should a real administrator see demo farmers in Client Portfolio?
+
+**A.** No. Operational user/farmer lists and farmer CSV exports exclude demo
+records, including farmers linked to demo users or officers. A stale browser
+demo flag must not substitute sample farmers for a signed-in real account.
+Portfolio queries are account-scoped, and the verified profile refreshes the
+cached identity. An empty live portfolio stays empty.
+
+Administrators can explicitly open **Inspect demo records (admin only)** in
+the user directory. That read-only panel requests `dataset=demo`; ordinary
+lists default to `dataset=live`. Non-admin and demo sessions cannot use this
+inspection endpoint. Static preview fixtures are separate from stored records.
+Regression coverage: `PortfolioDemoIsolation.test.tsx`,
+`AdminDemoRecords.test.tsx`, and `adminDemoRecords.test.ts`.
+
+---
+
 ## 13. Release evidence template
 
 Copy this template into a release record or deployment issue:

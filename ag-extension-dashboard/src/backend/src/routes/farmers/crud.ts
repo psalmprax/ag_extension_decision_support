@@ -7,6 +7,7 @@ import { getPrisma } from '@/services/prismaService';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 import { safeError } from '@/utils/safeResponse';
 import { demoWhere } from '@/services/demoScope';
+import { farmerRecordFilter, validateRecordScope } from '@/services/demoRecordScope';
 
 const router = Router();
 
@@ -61,6 +62,13 @@ async function recordInitialAssignment(
  *     tags: [Farmers]
  *     parameters:
  *       - in: query
+ *         name: dataset
+ *         schema:
+ *           type: string
+ *           enum: [live, demo]
+ *           default: live
+ *         description: Demo records are available only to non-demo administrators.
+ *       - in: query
  *         name: region
  *         schema:
  *           type: string
@@ -103,7 +111,7 @@ async function recordInitialAssignment(
  *                     total: { type: integer }
  */
 // Get all farmers
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', validateRecordScope, async (req: Request, res: Response) => {
     try {
         const { region: queryRegion, search, limit = '50', offset = '0', mobile = 'false' } = req.query;
         const { userId: _userId, role: _role } = req.user as Record<string, unknown>;
@@ -111,10 +119,13 @@ const userId = String(_userId);
 const role = String(_role);
         const prisma = getPrisma();
 
-        const where: Record<string, unknown> = {};
+        const where: Record<string, unknown> = {
+            AND: [farmerRecordFilter(req.query.dataset === 'demo')],
+        };
         if (!(await applyTenantScope(req, where, true))) {
             return res.status(403).json({ success: false, error: 'Tenant membership required' });
         }
+        if (req.query.dataset === 'demo') delete where.isDemo;
 
         // Role-based filtering
         if (role === 'extension_officer') {

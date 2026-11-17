@@ -11,12 +11,18 @@ export const useAppAuth = (
   setUser: (user: Record<string, unknown> | null) => void
 ) => {
   const hasSession = hasAuthSession();
+  const cachedUserId = storeUser && typeof storeUser === 'object' && 'id' in storeUser
+    ? storeUser.id : undefined;
 
   const { data: userResponse, error: userError } = useQuery<ProfileResponse>({
-    queryKey: ['user-profile'],
+    queryKey: ['user-profile', cachedUserId],
     queryFn: fetchUserProfile,
     enabled: !!storeUser && hasSession,
   });
+
+  useEffect(() => {
+    if (userResponse?.data) setUser(userResponse.data);
+  }, [userResponse?.data, setUser]);
 
   // Clear invalid user session only on 401 errors
   useEffect(() => {

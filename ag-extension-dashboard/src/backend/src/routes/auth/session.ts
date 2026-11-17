@@ -183,6 +183,7 @@ router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manage
                 firstName: user.first_name,
                 lastName: user.last_name,
                 role: user.role,
+                isDemo: user.is_demo === true || user.email?.toLowerCase() === 'demo@agridemo.com',
                 region: user.region,
                 phone: user.phone,
                 notificationPreferences: user.notification_preferences ?? {},

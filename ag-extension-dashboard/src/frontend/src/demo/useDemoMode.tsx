@@ -3,6 +3,7 @@ import React from 'react';
 import { Lock } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
+import { isDemoSession } from './demoSession';
 
 interface UseDemoModeResult {
   isDemo: boolean;
@@ -19,7 +20,7 @@ const DemoBlocker: React.FC<{ children: React.ReactNode; label?: string }> = ({
   children,
   label,
 }) => {
-  const isDemo = useAppStore(s => s.isDemo);
+  const isDemo = useAppStore(s => isDemoSession(s.user, s.isDemo));
   const { t } = useLanguage();
   const overlayLabel = label || t('demo_not_available') || FALLBACK_LABEL;
   const upgradeHint = t('demo_upgrade_hint') || FALLBACK_HINT;
@@ -49,6 +50,6 @@ const DemoBlocker: React.FC<{ children: React.ReactNode; label?: string }> = ({
 };
 
 export function useDemoMode(): UseDemoModeResult {
-  const isDemo = useAppStore(s => s.isDemo);
+  const isDemo = useAppStore(s => isDemoSession(s.user, s.isDemo));
   return { isDemo, DemoBlocker, can: () => !isDemo };
 }

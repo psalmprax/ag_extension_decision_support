@@ -29,19 +29,9 @@ import {
 } from '@/lib/countries';
 import { useLanguage } from '@/lib/LanguageContext';
 import { StaffBadges } from '@/components/users/StaffBadges';
-
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-  region: string;
-  country?: string;
-  phone: string;
-  lastLogin?: string | null;
-  isDemo?: boolean;
-}
+import { AdminDemoRecords } from '@/components/AdminDemoRecords';
+import { useAppStore } from '@/store/useAppStore';
+import type { DirectoryUser as User } from '@/components/users/types';
 
 const ROLES = [
   {
@@ -75,6 +65,7 @@ const getRoleBadge = (role: string) => ROLES.find(r => r.value === role) || ROLE
 export function UserManagementPage() {
   const { t } = useLanguage();
   const { isDemo } = useDemoMode();
+  const currentUserId = useAppStore(state => state.user?.id);
   const queryClient = useQueryClient();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -119,7 +110,7 @@ export function UserManagementPage() {
 
   // Fetch users
   const { data: usersData, isLoading } = useQuery({
-    queryKey: ['users', roleFilter, isDemo],
+    queryKey: ['users', currentUserId, roleFilter, isDemo],
     queryFn: async () => {
       if (isDemo) {
         return DEMO_USERS.filter(u => !roleFilter || u.role === roleFilter) as User[];
@@ -291,6 +282,8 @@ export function UserManagementPage() {
           </div>
         </div>
       </div>
+
+      <AdminDemoRecords />
 
       {/* ── User Cards Grid ── */}
       {isLoading ? (

@@ -10,6 +10,7 @@ const router = Router();
 // Apply authentication to all farmers routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
+router.use(importExportRouter);
 router.use(crudRouter);
 
 /**
@@ -59,6 +60,5 @@ router.use(crudRouter);
 router.use(createShareRoute('farmer'));
 
 router.use(bulkRouter);
-router.use(importExportRouter);
 
 export default router;
