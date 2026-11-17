@@ -36,7 +36,7 @@ async function sendInThread(text: string) {
   return result;
 }
 
-describe('officer messages in a farmer thread', () => {
+describe('messages in a farmer thread', () => {
   it('go out as plain messages and never ask the AI', async () => {
     signInAs('extension_officer');
     vi.mocked(sendThreadMessage).mockResolvedValue({ success: true });
@@ -46,13 +46,13 @@ describe('officer messages in a farmer thread', () => {
     expect(getChatCompletion).not.toHaveBeenCalled();
   });
 
-  it("still reach the AI when the farmer writes (until turn-taking replaces this)", async () => {
+  it("a farmer's message is a plain message too: the AI answers on its turn", async () => {
     signInAs('farmer');
-    vi.mocked(getChatCompletion).mockResolvedValue({ success: true, data: { messages: [] } });
+    vi.mocked(sendThreadMessage).mockResolvedValue({ success: true });
     await sendInThread('My maize leaves are yellow');
 
-    expect(getChatCompletion).toHaveBeenCalledWith('My maize leaves are yellow', 'thread-1', 'en');
-    expect(sendThreadMessage).not.toHaveBeenCalled();
+    expect(sendThreadMessage).toHaveBeenCalledWith('thread-1', 'My maize leaves are yellow', 'en');
+    expect(getChatCompletion).not.toHaveBeenCalled();
   });
 });
 

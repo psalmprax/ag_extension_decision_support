@@ -4,6 +4,7 @@ import messagesRouter from './messages';
 import completionsRouter from './completions';
 import publicDemoRouter from './publicDemo';
 import importSessionRouter from './importSession';
+import turnTakingRouter from './turnTaking';
 import { aiRateLimiter } from '@/middleware/rateLimitMiddleware';
 
 const router = Router();
@@ -26,6 +27,7 @@ router.use((req: Request, res: Response, next: NextFunction) => {
 router.use(messagesRouter);
 router.use(completionsRouter);
 router.use(publicDemoRouter);
+router.use(turnTakingRouter);
 
 router.use(conversationsRouter);
 router.use(importSessionRouter);

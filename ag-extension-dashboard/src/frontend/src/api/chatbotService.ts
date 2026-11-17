@@ -52,3 +52,28 @@ export const sendThreadMessage = async (conversationId: string, content: string,
   const { data } = await apiClient.post('/chatbot/messages', { conversationId, content, language });
   return data;
 };
+
+/** The farmer asks the AI to answer their latest message now (their officer can see the answer). */
+export const askAiInThread = async (conversationId: string) => {
+  const { data } = await apiClient.post(`/chatbot/conversations/${conversationId}/ask-ai`);
+  return data;
+};
+
+/** How long the farmer waits for their officer before the AI answers, and when the officer works. */
+export interface TurnTakingSettings {
+  aiFallbackMinutes: number;
+  workingHours: { start: string; end: string; days: number[]; timezone: string };
+  aiPauseAfterOfficerMinutes: number;
+  smsAiDailyLimit: number;
+}
+
+export const fetchTurnTakingSettings = async (): Promise<{ tenantId: string | null; settings: TurnTakingSettings }> => {
+  const { data } = await apiClient.get('/chatbot/turn-taking');
+  return data.data;
+};
+
+export const saveTurnTakingSettings = async (settings: TurnTakingSettings, tenantId?: string) => {
+  const { data } = await apiClient.put('/chatbot/turn-taking', { settings, ...(tenantId ? { tenantId } : {}) });
+  return data.data as { tenantId: string; settings: TurnTakingSettings };
+};
+

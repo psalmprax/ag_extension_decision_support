@@ -258,7 +258,9 @@ export const useAppChat = (language: string) => {
       return;
     }
 
-    const via: QueuedChatItem['via'] = isFarmerUser ? 'completion' : 'message';
+    // A message in a farmer thread is for the people in it. The AI answers on its
+    // turn: when the farmer taps Ask AI, or when their officer has not replied in time.
+    const via: QueuedChatItem['via'] = 'message';
     // Offline queue: if offline or network fails, stash and retry on online
     const queueKey = `chatOfflineQueue:${activeFarmerConvId || 'new'}`;
     const offline = typeof navigator !== 'undefined' && !navigator.onLine;
@@ -269,8 +271,8 @@ export const useAppChat = (language: string) => {
     }
 
     try {
-      // An officer's message is a plain message: it never triggers an AI reply
-      // to the farmer. AI help for officers is the private copilot draft.
+      // A plain message never triggers an AI reply. AI help: the officer's private
+      // copilot draft, the farmer's Ask AI button, or the turn-taking fallback.
       const res = via === 'message' && activeFarmerConvId
         ? await sendThreadMessage(activeFarmerConvId, currentInput, language)
         : await getChatCompletion(currentInput, activeFarmerConvId || undefined, language);

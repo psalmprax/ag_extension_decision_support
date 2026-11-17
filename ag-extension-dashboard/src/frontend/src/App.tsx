@@ -322,12 +322,12 @@ function App() {
     setConfirmModal,
   });
 
-  // Chat data loading effects
+  // Chat data loading effects. The demo uses built-in sample chats; the server refuses it conversations.
   React.useEffect(() => {
-    if (!user) return;
+    if (!user || isDemo) return;
     if (activeTab === 'aiassistant') loadConversations();
     if (activeTab === 'farmerchat') loadFarmerConversations();
-  }, [activeTab, loadConversations, loadFarmerConversations, user]);
+  }, [activeTab, loadConversations, loadFarmerConversations, user, isDemo]);
 
   React.useEffect(() => {
     if (!user || !activeConvId) return;

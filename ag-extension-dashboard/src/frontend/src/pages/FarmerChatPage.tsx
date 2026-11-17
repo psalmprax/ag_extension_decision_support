@@ -19,6 +19,7 @@ import { VirtualizedList } from '@/components/common/VirtualizedList';
 import { useDemoMode } from '@/demo';
 import { FarmerChatMessage } from '@/components/chat/FarmerChatMessage';
 import { OfficerCopilot } from '@/components/chat/OfficerCopilot';
+import { FarmerAskAi } from '@/components/chat/FarmerAskAi';
 import { useAppStore } from '@/store/useAppStore';
 import { PlotTelemetryDrawer, type DetectedHazard, type HazardEvaluation } from '@/components/chat/PlotTelemetryDrawer';
 import { VoiceNoteTaker } from '@/components/audio/VoiceNoteTaker';
@@ -473,6 +474,16 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 </div>
               )}
 
+              {/* The farmer can ask the AI at any time; their officer sees the answer. */}
+              {isFarmerUser && activeFarmerConvId && !isDemo && (
+                <FarmerAskAi
+                  conversationId={activeFarmerConvId}
+                  input={farmerChatInput}
+                  clearInput={() => setFarmerChatInput('')}
+                  language={language}
+                  reload={() => loadFarmerMessages(activeFarmerConvId)}
+                />
+              )}
               {/* Chat Input Form */}
               <form
                 onSubmit={handleFarmerChatSend}

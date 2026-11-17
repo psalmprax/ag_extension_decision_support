@@ -12,6 +12,7 @@ import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
 import { assertConversationAccess, checkMessageAccess, MessageAccessError, resolveFarmerId } from '@/services/messageAccessService';
 import { getRealtimeServer } from '@/services/realtimeHub';
+import { respondIfUrgent } from '@/services/chat/threadAutoReply';
 
 const router = Router();
 
@@ -102,6 +103,13 @@ async function fanoutNewMessage(conversationId: string, message: ChatMessageRow)
 /**
  * POST /api/chatbot/message (and /api/chatbot/messages) — Persist message turn from officer or farmer.
  */
+/** A farmer's urgent message gets safety steps right away; the turn-taking job is the backstop. */
+function scheduleUrgentCheck(conversationId: string): void {
+  setImmediate(() => {
+    respondIfUrgent(conversationId).catch(error => logger.warn('Urgent safety reply failed:', error));
+  });
+}
+
 const handleMessagePost = async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
@@ -144,6 +152,7 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
     const created = rows[0];
     if (created && conversationId) {
       await fanoutNewMessage(conversationId, created);
+      if (senderRole === 'user') scheduleUrgentCheck(conversationId);
     }
     return res.status(201).json({ success: true, data: created ? mapChatMessageRow(created) : null });
   } catch (error) {
