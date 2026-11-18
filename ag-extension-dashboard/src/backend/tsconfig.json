@@ -4,7 +4,9 @@
         "module": "commonjs",
         "lib": [
             "ES2020",
-            "ES2022.Error"
+            "ES2022.Error",
+            // toSorted/toReversed typings; the runtime is Node >= 22 (engines + Docker).
+            "ES2023.Array"
         ],
         "outDir": "./dist",
         "rootDir": "./src",

@@ -88,17 +88,13 @@ export class NasaPowerService {
                 format: 'JSON'
             }).toString();
 
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 20000);
-
             const response = await fetch(url, {
                 headers: {
                     'Accept': 'application/json',
                     'User-Agent': 'ag-extension-dashboard/1.0'
                 },
-                signal: controller.signal
+                signal: AbortSignal.timeout(20000)
             });
-            clearTimeout(timeout);
 
             if (!response.ok) {
                 throw new Error(`NASA POWER returned HTTP ${response.status}`);

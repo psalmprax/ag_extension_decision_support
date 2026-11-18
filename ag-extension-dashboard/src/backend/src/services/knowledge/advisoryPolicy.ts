@@ -101,7 +101,7 @@ export function hasExplicitAdvisoryGeography(question: string): boolean {
 
 /** Localized explicit names take precedence; ambiguous locations require clarification. */
 export function resolveAdvisoryCountry(question: string, hint?: string, previousQuestions: string[] = []): string | undefined {
-    for (const text of [question, ...previousQuestions.slice().reverse()]) {
+    for (const text of [question, ...previousQuestions.toReversed()]) {
         const names = mentionedCountries(text);
         if (names.size === 1) return [...names][0];
         if (names.size > 1) return undefined;

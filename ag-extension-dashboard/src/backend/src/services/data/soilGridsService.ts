@@ -64,21 +64,13 @@ export class SoilGridsService {
             depths.forEach(d => url.searchParams.append('depth', d));
             url.searchParams.append('value', 'mean');
 
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 12000); // 12 seconds timeout
-
-            let response: Response;
-            try {
-                response = await fetch(url.toString(), {
-                    headers: {
-                        'Accept': 'application/json',
-                        'User-Agent': 'ag-extension-dashboard/1.0'
-                    },
-                    signal: controller.signal
-                });
-            } finally {
-                clearTimeout(timeout);
-            }
+            const response = await fetch(url.toString(), {
+                headers: {
+                    'Accept': 'application/json',
+                    'User-Agent': 'ag-extension-dashboard/1.0'
+                },
+                signal: AbortSignal.timeout(12000)
+            });
 
             if (!response.ok) {
                 throw new Error(`SoilGrids returned HTTP ${response.status}`);

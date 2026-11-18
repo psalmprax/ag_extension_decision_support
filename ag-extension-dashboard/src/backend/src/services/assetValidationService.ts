@@ -106,15 +106,10 @@ export class AssetValidationService {
 
     for (let attempt = 0; attempt <= this.MAX_RETRIES; attempt++) {
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
         const response = await fetch(safeUrl, {
-          method: 'HEAD', signal: controller.signal,
+          method: 'HEAD', signal: AbortSignal.timeout(10000),
           headers: { 'User-Agent': 'ALFA-Agricultural-Assistant/1.0' },
         });
-
-        clearTimeout(timeoutId);
         result.isValid = response.ok;
         result.statusCode = response.status;
         result.contentType = response.headers.get('content-type') || undefined;

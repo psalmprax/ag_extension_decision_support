@@ -177,25 +177,17 @@ export class FaostatService {
                 output_type: 'json'
             });
 
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 15000);
-
-            let data: { data?: FaostatRawRow[] };
-            try {
-                const response = await fetch(`${url}?${params}`, {
-                    headers: {
-                        'Accept': 'application/json',
-                        'User-Agent': 'ag-extension-dashboard/1.0'
-                    },
-                    signal: controller.signal
-                });
-                if (!response.ok) {
-                    throw new Error(`FAOSTAT returned HTTP ${response.status}`);
-                }
-                data = await response.json() as { data?: FaostatRawRow[] };
-            } finally {
-                clearTimeout(timeout);
+            const response = await fetch(`${url}?${params}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'User-Agent': 'ag-extension-dashboard/1.0'
+                },
+                signal: AbortSignal.timeout(15000)
+            });
+            if (!response.ok) {
+                throw new Error(`FAOSTAT returned HTTP ${response.status}`);
             }
+            const data = await response.json() as { data?: FaostatRawRow[] };
 
             return parseObservations(data, itemCode, areaCode, startYear, endYear);
         } catch (error) {
@@ -415,14 +407,10 @@ Oil palm fruit: 2,000,000 tonnes, 350,000 ha — Andhra Pradesh`,
         try {
             const probeYear = new Date().getUTCFullYear() - 2;
             const testUrl = `https://fenixservices.fao.org/faostat/api/v1/en/data/QCL?area=109&item=056&element=5510&year=${probeYear}&output_type=json`;
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 10000);
-            let testResponse: Response;
-            try {
-                testResponse = await fetch(testUrl, { headers: { 'Accept': 'application/json' }, signal: controller.signal });
-            } finally {
-                clearTimeout(timeout);
-            }
+            const testResponse = await fetch(testUrl, {
+                headers: { 'Accept': 'application/json' },
+                signal: AbortSignal.timeout(10000),
+            });
             apiAvailable = testResponse.ok;
         } catch {
             apiAvailable = false;

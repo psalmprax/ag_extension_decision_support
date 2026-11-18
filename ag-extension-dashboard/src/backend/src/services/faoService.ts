@@ -75,7 +75,7 @@ function groupProductionSeries(rows: CropProductionStat[]): Map<string, CropProd
 function buildProductionAnomalyAlerts(rows: CropProductionStat[], region: string): DiseaseAlert[] {
   const alerts: DiseaseAlert[] = [];
   for (const series of groupProductionSeries(rows).values()) {
-    const ordered = [...series].sort((a, b) => Number(a.year) - Number(b.year));
+    const ordered = series.toSorted((a, b) => Number(a.year) - Number(b.year));
     if (ordered.length < 2) continue;
     const latest = ordered[ordered.length - 1];
     const previous = ordered[ordered.length - 2];
