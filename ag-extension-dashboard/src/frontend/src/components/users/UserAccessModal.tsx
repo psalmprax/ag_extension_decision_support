@@ -134,7 +134,7 @@ export function UserAccessModal({ user, currentUserId, isDemo, onClose }: UserAc
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!hasChanges) return;
+    if (!hasChanges || updateAccess.isPending || Boolean(successMsg)) return;
     setErrorMsg('');
     setSuccessMsg('');
     updateAccess.mutate({
@@ -254,7 +254,7 @@ export function UserAccessModal({ user, currentUserId, isDemo, onClose }: UserAc
               </button>
               <button
                 type="submit"
-                disabled={updateAccess.isPending || !hasChanges}
+                disabled={updateAccess.isPending || !hasChanges || Boolean(successMsg)}
                 className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center gap-2 transition-colors disabled:opacity-50"
               >
                 {updateAccess.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}

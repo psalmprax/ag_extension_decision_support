@@ -416,6 +416,11 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
       });
     });
 
+    // During post-success countdown, Save stays disabled and cannot double-submit
+    expect(saveBtn).toBeDisabled();
+    fireEvent.click(saveBtn);
+    expect(apiClient.put).toHaveBeenCalledTimes(1);
+
     // Switch immediately to User B before User A's 600ms close timer expires
     fireEvent.keyDown(document.activeElement || document.body, { key: 'Escape', code: 'Escape' });
     await waitFor(() => {

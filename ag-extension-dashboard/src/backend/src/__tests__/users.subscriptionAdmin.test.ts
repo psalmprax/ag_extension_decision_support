@@ -186,7 +186,18 @@ describe('Admin user access & subscription tier management', () => {
     expect(sqlHistory.some(s => s.includes('UPDATE user_sessions'))).toBe(false);
     expect(sqlHistory.some(s => s.includes('pg_advisory_xact_lock'))).toBe(true);
     expect(sqlHistory.some(s => s.includes('INSERT INTO subscriptions') && s.includes('stripe_subscription_id = NULL'))).toBe(true);
-    expect(sqlHistory.some(s => s.includes('INSERT INTO usage') && s.includes('sms_count = 0') && s.includes('ai_vision_count = 0'))).toBe(true);
+    expect(
+      sqlHistory.some(
+        s =>
+          s.includes('INSERT INTO usage') &&
+          s.includes('sms_count = 0') &&
+          s.includes('ai_chat_count = 0') &&
+          s.includes('report_count = 0') &&
+          s.includes('ai_vision_count = 0') &&
+          s.includes('speech_count = 0') &&
+          s.includes('whatsapp_count = 0')
+      )
+    ).toBe(true);
     expect(sqlHistory.some(s => s.includes('INSERT INTO subscription_change_events'))).toBe(true);
 
     const lockIdx = sqlHistory.findIndex(s => s.includes('pg_advisory_xact_lock'));
@@ -334,6 +345,14 @@ describe('Admin user access & subscription tier management', () => {
       planStatus: 'active',
       isFree: false,
     });
+    expect(
+      sqlHistory.some(
+        s =>
+          s.includes('UPDATE users SET') &&
+          s.includes('LEFT JOIN subscriptions s') &&
+          s.includes('LEFT JOIN subscription_plans sp')
+      )
+    ).toBe(true);
     expect(sqlHistory.some(s => s.includes('UPDATE user_sessions'))).toBe(false);
 
     // Role change whose transaction fails in assignUserPlan must NOT revoke sessions post-commit
@@ -380,5 +399,111 @@ describe('Admin user access & subscription tier management', () => {
 
     expect(failRes.status).toBe(500);
     expect(sqlHistory.some(s => s.includes('UPDATE user_sessions'))).toBe(false);
+  });
+
+  it('POST /users with planId assigns subscription in the same transaction and rolls back on failure', async () => {
+    const adminToken = makeToken('admin-1', 'admin');
+    const future = new Date(Date.now() + 86400_000).toISOString();
+
+    mockQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
+      if (sql.includes('FROM user_sessions')) {
+        const hit = sessions.get(String(params[0]));
+        return { rows: hit ? [{ is_revoked: false, is_active: true, expires_at: future }] : [], rowCount: hit ? 1 : 0 };
+      }
+      if (sql.includes('FROM subscription_plans')) {
+        return { rows: [{ id: PRO_PLAN_ID, name: 'Pro', price: '29.00', interval: 'month' }], rowCount: 1 };
+      }
+      if (sql.includes('INSERT INTO users')) {
+        return {
+          rows: [{
+            id: 'u-created-pro',
+            email: params[0],
+            first_name: params[2],
+            last_name: params[3],
+            role: params[4],
+            region: null,
+            country: 'Kenya',
+            phone: null,
+            is_active: true,
+            preferred_language: null,
+            avatar_url: null,
+            last_login: null,
+          }],
+          rowCount: 1,
+        };
+      }
+      if (sql.includes('INSERT INTO subscriptions')) {
+        return { rows: [{ id: 'sub-new' }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    });
+
+    const okRes = await request(app)
+      .post('/users')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        email: 'new-pro@example.org',
+        password: 'password123',
+        firstName: 'New',
+        lastName: 'Pro',
+        role: 'extension_officer',
+        planId: PRO_PLAN_ID,
+      });
+
+    expect(okRes.status).toBe(201);
+    expect(okRes.body.data).toMatchObject({
+      id: 'u-created-pro',
+      planId: PRO_PLAN_ID,
+      planName: 'Pro',
+      planStatus: 'active',
+      isFree: false,
+    });
+
+    // Failure during plan assignment rejects the transaction with 500
+    mockQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
+      if (sql.includes('FROM user_sessions')) {
+        const hit = sessions.get(String(params[0]));
+        return { rows: hit ? [{ is_revoked: false, is_active: true, expires_at: future }] : [], rowCount: hit ? 1 : 0 };
+      }
+      if (sql.includes('FROM subscription_plans')) {
+        return { rows: [{ id: PRO_PLAN_ID, name: 'Pro', price: '29.00', interval: 'month' }], rowCount: 1 };
+      }
+      if (sql.includes('INSERT INTO users')) {
+        return {
+          rows: [{
+            id: 'u-rollback',
+            email: params[0],
+            first_name: params[2],
+            last_name: params[3],
+            role: params[4],
+            region: null,
+            country: 'Kenya',
+            phone: null,
+            is_active: true,
+            preferred_language: null,
+            avatar_url: null,
+            last_login: null,
+          }],
+          rowCount: 1,
+        };
+      }
+      if (sql.includes('INSERT INTO subscriptions')) {
+        throw new Error('Subscription write failed');
+      }
+      return { rows: [], rowCount: 0 };
+    });
+
+    const rollbackRes = await request(app)
+      .post('/users')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        email: 'rollback@example.org',
+        password: 'password123',
+        firstName: 'Roll',
+        lastName: 'Back',
+        planId: PRO_PLAN_ID,
+      });
+
+    expect(rollbackRes.status).toBe(500);
   });
 });
