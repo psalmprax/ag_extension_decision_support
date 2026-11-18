@@ -1,0 +1,49 @@
+name: Modern web guidance
+
+# Guards against legacy-platform drift: the scanner flags patterns we have
+# already modernised elsewhere (innerHTML sinks, hand-rolled AbortController
+# timeouts, [...x].sort(), IME-unsafe Enter handlers, missing autocomplete).
+# The suite currently has zero findings, so any finding is a regression.
+
+on:
+  pull_request:
+  push:
+    branches: [stage, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  legacy-scan:
+    name: Legacy platform scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Scan for legacy web platform patterns
+        run: |
+          set -o pipefail
+          npx --yes modern-web-guidance@1.0.1 legacy-scan | tee "$RUNNER_TEMP/scan.txt"
+
+      - name: Fail on new findings
+        run: |
+          set -euo pipefail
+          # The scanner exits 0 whether or not it finds anything, so the verdict
+          # is read from its output. It prints either
+          #   "Found N modernization opportunities across M guides (scanned ...)"
+          # or
+          #   "0 findings from 38 qualified guides."
+          if ! grep -qE '(Found [0-9]+ modernization|[0-9]+ findings? from)' "$RUNNER_TEMP/scan.txt"; then
+            echo "::error::Could not read the scan summary — the scanner failed or its output format changed."
+            exit 1
+          fi
+          if grep -qE '^  - ' "$RUNNER_TEMP/scan.txt"; then
+            echo "::error::Modernization findings detected. See the scan output in the previous step."
+            exit 1
+          fi
+          echo "No modernization findings."
