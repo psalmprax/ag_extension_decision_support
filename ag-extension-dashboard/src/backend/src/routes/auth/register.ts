@@ -15,6 +15,7 @@ import { createSession } from '@/services/sessionService';
 import { resolveLocationFromHeaders } from '@/services/loginHistoryService';
 import { setAuthCookie } from '@/middleware/authCookie';
 import { buildUserProfileColumns } from '@/services/userQueryBuilder';
+import { resolveRegionalManager } from '@/services/regionalManagerResolver';
 
 const router = Router();
 
@@ -73,7 +74,7 @@ async function createFreeSubscription(userId: string): Promise<void> {
  */
 router.post('/register', [auditMiddleware('auth_register'), validate(registerSchema)], async (req: Request, res: Response) => {
     try {
-        const { email, password, firstName, lastName, role, region, phone } = req.body;
+        const { email, password, firstName, lastName, role, region, country, phone, phoneNumber } = req.body;
 
         // SECURITY: Prevent self-registration as admin — admin accounts are internal-only
         const allowedRoles = ['extension_officer', 'farmer'];
@@ -83,6 +84,12 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
                 error: `Role "${role}" is not available for self-registration.`,
             });
         }
+
+        const accountRole: string = role || 'extension_officer';
+        const accountRegion: string | null = region?.trim() || null;
+        const accountCountry: string | null = country?.trim() || null;
+        // Older clients sent `phoneNumber`; validation accepts both, the column is `phone`.
+        const accountPhone: string | null = (phone ?? phoneNumber ?? '').trim() || null;
 
         const problems = passwordProblems(password, email);
         if (problems.length > 0) {
@@ -98,15 +105,30 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
             });
         }
 
+        // An officer is linked to the regional manager who owns their region.
+        // Farmers are enrolled by an officer later, so they carry no manager.
+        const managerResolution = accountRole === 'extension_officer'
+            ? await resolveRegionalManager(accountRegion, accountCountry)
+            : { managerId: null, matchedBy: 'none' as const };
+
+        if (accountRole === 'extension_officer' && !managerResolution.managerId) {
+            logger.info(
+                `Registration for ${email}: no regional manager matched region "${accountRegion ?? 'unspecified'}" in ${accountCountry ?? 'unspecified country'}; the account needs an administrator to link it.`
+            );
+        }
+
         // Hash password
         const passwordHash = await bcrypt.hash(password, 12);
 
         // Save to database (email unverified until the link in the welcome mail is clicked)
         const result = await query(`
-            INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, email_verified, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, false, NOW())
+            INSERT INTO users (email, password_hash, first_name, last_name, role, region, country, phone, manager_id, email_verified, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false, NOW())
             RETURNING ${buildUserProfileColumns()}
-        `, [email, passwordHash, firstName, lastName, role || 'extension_officer', region, phone]);
+        `, [
+            email, passwordHash, firstName, lastName, accountRole, accountRegion, accountCountry,
+            accountPhone, managerResolution.managerId,
+        ]);
 
         const newUser = result.rows[0];
 
@@ -148,8 +170,11 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
                     lastName: newUser.last_name,
                     role: newUser.role,
                     region: newUser.region,
+                    country: accountCountry,
+                    phone: newUser.phone ?? accountPhone,
                     emailVerified: false,
                 },
+                managerAssigned: managerResolution.managerId !== null,
             },
             message: 'Account created. Check your inbox to verify your email address.',
         });

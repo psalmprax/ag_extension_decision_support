@@ -180,11 +180,13 @@ export default defineConfig({
     allowedHosts: ['www.gpexts.com', 'gpexts.com'],
     proxy: {
       '/api': {
-        target: 'http://backend:3001',
+        // Docker compose resolves `backend`; the real-backend E2E run points
+        // this at a host-reachable backend instead.
+        target: process.env.VITE_API_PROXY_TARGET ?? 'http://backend:3001',
         changeOrigin: true,
       },
       '/api-docs': {
-        target: 'http://backend:3001',
+        target: process.env.VITE_API_PROXY_TARGET ?? 'http://backend:3001',
         changeOrigin: true,
       },
       '/socket.io': {

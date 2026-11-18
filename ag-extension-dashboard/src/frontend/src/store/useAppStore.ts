@@ -19,6 +19,8 @@ export interface User {
   planName?: string;
   isFree?: boolean;
   isDemo?: boolean;
+  /** Above every tenant: may create or promote an admin. */
+  isSystemAdmin?: boolean;
   notificationPreferences?: NotificationPreferences;
 }
 

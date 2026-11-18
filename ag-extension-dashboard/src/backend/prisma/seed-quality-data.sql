@@ -13,7 +13,7 @@ VALUES (
     '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu',
     'System', 'Administrator', 'admin', 'Global', '+1000000001',
     NOW()
-) ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash;
+) ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, is_system_admin = true;
 
 -- Regional Managers (1 per region)
 INSERT INTO users (id, email, password_hash, first_name, last_name, role, region, phone, created_at)

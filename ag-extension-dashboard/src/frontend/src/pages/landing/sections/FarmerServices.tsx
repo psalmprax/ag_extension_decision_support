@@ -6,10 +6,13 @@ import {
   ArrowRight, Check, Sparkles, Volume2
 } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
+import { MarketPriceCard } from './MarketPriceCard';
+import { useLandingPrices } from './useLandingPrices';
 
 export function FarmerServices() {
   const navigate = useNavigate();
   const [activeDialect, setActiveDialect] = useState<'sw' | 'lg' | 'en'>('sw');
+  const livePrices = useLandingPrices();
 
   const selectDialect = (lang: 'sw' | 'lg' | 'en') => {
     setActiveDialect(lang);
@@ -216,53 +219,33 @@ export function FarmerServices() {
                   Check Fair Market Prices
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Preview how regional commodity prices could be shown. The figures below are illustrative demo data, not current market observations.
+                  {livePrices
+                    ? 'Annual national producer prices for maize, dry beans and sorghum, published by FAOSTAT.'
+                    : 'Preview how regional commodity prices could be shown. The figures below are illustrative demo data, not current market observations.'}
                 </p>
               </div>
 
               {/* Commodity Price Preview Snippet */}
-              <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2.5">
-                <div className="text-xs font-semibold text-amber-300 flex items-center justify-between">
-                  <span>Illustrative demo data</span>
-                  <span className="text-[10px] font-mono text-white/50">Not live prices</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="p-2 rounded-lg bg-white/[0.04] border border-white/5">
-                    <div className="text-[11px] text-white/60">Maize</div>
-                    <div className="text-xs sm:text-sm font-bold text-white mt-0.5">KES 3,850</div>
-                    <div className="text-[10px] text-emerald-400 font-mono">+2.4% / bag</div>
-                  </div>
-                  <div className="p-2 rounded-lg bg-white/[0.04] border border-white/5">
-                    <div className="text-[11px] text-white/60">Dry Beans</div>
-                    <div className="text-xs sm:text-sm font-bold text-white mt-0.5">UGX 4,200</div>
-                    <div className="text-[10px] text-emerald-400 font-mono">+1.8% / kg</div>
-                  </div>
-                  <div className="p-2 rounded-lg bg-white/[0.04] border border-white/5">
-                    <div className="text-[11px] text-white/60">Sorghum</div>
-                    <div className="text-xs sm:text-sm font-bold text-white mt-0.5">TZS 1,450</div>
-                    <div className="text-[10px] text-amber-400 font-mono">Stable / kg</div>
-                  </div>
-                </div>
-              </div>
+              <MarketPriceCard snapshot={livePrices} />
 
               <div className="pt-2 space-y-2 text-xs sm:text-sm text-white/80">
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Example prices for maize, beans &amp; sorghum</span>
+                  <span>{livePrices ? 'Producer prices for maize, dry beans & sorghum' : 'Example prices for maize, beans & sorghum'}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>No live market feed is connected to this preview</span>
+                  <span>{livePrices ? 'Annual national averages from FAOSTAT, republished yearly' : 'No live market feed is connected to this preview'}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Local currency conversions &amp; retail median trend graphs</span>
+                  <span>{livePrices ? 'Year-on-year change against the previous published year' : 'Local currency conversions & retail median trend graphs'}</span>
                 </div>
               </div>
             </div>

@@ -251,6 +251,8 @@ function buildRetailResponse(
         fetchedAt,
         exchangeRateSource: 'native' as const,
         currency: s.currency,
+        period: s.periodDate.slice(0, 7),
+        priceType: 'retail' as const,
     }));
     return {
         success: true,

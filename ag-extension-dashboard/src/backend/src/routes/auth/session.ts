@@ -175,7 +175,7 @@ router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manage
         const result = await query(
             `UPDATE users SET ${assignments.join(', ')}, updated_at = NOW()
              WHERE id = $${values.length + 1}
-             RETURNING ${buildUserProfileColumns({ includeNotificationPreferences: true })}`,
+             RETURNING ${buildUserProfileColumns({ includeNotificationPreferences: true, includeSystemAdmin: true })}`,
             [...values, userId]
         );
         const user = result.rows[0];
@@ -189,6 +189,7 @@ router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manage
                 lastName: user.last_name,
                 role: user.role,
                 isDemo: user.is_demo === true || user.email?.toLowerCase() === 'demo@agridemo.com',
+                isSystemAdmin: user.is_system_admin === true,
                 region: user.region,
                 phone: user.phone,
                 notificationPreferences: user.notification_preferences ?? {},
@@ -218,6 +219,7 @@ router.get('/me', async (req: Request, res: Response) => {
                 source: 'u',
                 includeNotificationPreferences: true,
                 includeDemoFlag: true,
+                includeSystemAdmin: true,
             })},
                    ${SUBSCRIPTION_PLAN_COLUMNS}
             FROM users u
@@ -252,6 +254,7 @@ router.get('/me', async (req: Request, res: Response) => {
                 firstName: user.first_name,
                 lastName: user.last_name,
                 role: user.role,
+                isSystemAdmin: user.is_system_admin === true,
                 region: user.region,
                 phone: user.phone,
                 notificationPreferences: user.notification_preferences ?? {},

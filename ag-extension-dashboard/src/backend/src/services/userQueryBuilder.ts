@@ -41,6 +41,7 @@ export function buildUserColumns(options: UserColumnsOptions = {}): string {
     const columns: string[] = [
         ...LEADING_COLUMNS.map(column => qualify(source, column)),
         legacySchema ? 'NULL::text AS country' : qualify(source, 'country'),
+        legacySchema ? 'false AS is_system_admin' : qualify(source, 'is_system_admin'),
         ...TRAILING_COLUMNS.map(column => qualify(source, column)),
         'NULL::text AS preferred_language',
         legacySchema ? 'NULL::timestamp AS last_login' : `${qualify(source, 'last_login_at')} AS last_login`,
@@ -78,6 +79,8 @@ export interface UserProfileColumnsOptions {
     includeNotificationPreferences?: boolean;
     /** `is_demo` is only selected where the caller branches on demo origin. */
     includeDemoFlag?: boolean;
+    /** `is_system_admin` is only selected where the caller needs the flag. */
+    includeSystemAdmin?: boolean;
 }
 
 /**
@@ -85,11 +88,17 @@ export interface UserProfileColumnsOptions {
  * phone`): what register, profile update and /auth/me all read back.
  */
 export function buildUserProfileColumns(options: UserProfileColumnsOptions = {}): string {
-    const { source, includeNotificationPreferences = false, includeDemoFlag = false } = options;
+    const {
+        source,
+        includeNotificationPreferences = false,
+        includeDemoFlag = false,
+        includeSystemAdmin = false,
+    } = options;
     const columns: string[] = PROFILE_COLUMNS.map(column => qualify(source, column));
 
     if (includeNotificationPreferences) columns.push(qualify(source, 'notification_preferences'));
     if (includeDemoFlag) columns.push(`COALESCE(${qualify(source, 'is_demo')}, false) AS is_demo`);
+    if (includeSystemAdmin) columns.push(qualify(source, 'is_system_admin'));
 
     return columns.join(',\n');
 }

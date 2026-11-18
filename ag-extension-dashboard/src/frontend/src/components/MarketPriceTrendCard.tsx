@@ -176,7 +176,7 @@ const PriceHistorySection: React.FC = () => {
         <div>
           <h4 className="text-sm font-medium text-slate-900 dark:text-white">30-day price history</h4>
           <p className="text-xxs text-slate-500 dark:text-white/40">
-            Local-currency snapshots — daily movement reflects FX conversion of FAOSTAT/GIEWS baselines.
+            Local-currency snapshots of published figures; day-to-day movement reflects FX conversion, not a live quote.
           </p>
         </div>
       </div>
@@ -236,9 +236,7 @@ const PriceHistorySection: React.FC = () => {
                   style={{ backgroundColor: HISTORY_COLORS[i % HISTORY_COLORS.length] }}
                 />
                 {s.crop}
-                {s.dataStatus === 'live' && (
-                  <span className="text-emerald-700 dark:text-emerald-400 font-medium font-mono text-xxs">· live</span>
-                )}
+                <span className="text-slate-500 dark:text-white/40 font-mono text-xxs">{s.observedPeriod ? `· observed ${s.observedPeriod}` : '· period unknown'}</span>
               </span>
             ))}
           </div>

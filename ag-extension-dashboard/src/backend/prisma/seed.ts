@@ -20,6 +20,7 @@ async function main() {
       passwordHash,
       role: 'admin',
       isDemo: true,
+      isSystemAdmin: true,
     },
     create: {
       email: 'admin@agridemo.com',
@@ -29,6 +30,7 @@ async function main() {
       role: 'admin',
       region: 'Global',
       isDemo: true,
+      isSystemAdmin: true,
     },
   });
 

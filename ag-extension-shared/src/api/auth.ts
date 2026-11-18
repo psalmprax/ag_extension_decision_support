@@ -20,11 +20,14 @@ export const userSchema = z.object({
   lastName: z.string(),
   role: userRoleSchema,
   region: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
   phone: z.string().nullable().optional(),
   avatarUrl: z.string().nullable().optional(),
   planName: z.string().optional(),
   isFree: z.boolean().optional(),
   isDemo: z.boolean().optional(),
+  /** Above every tenant: the only flag that may create or promote an admin. */
+  isSystemAdmin: z.boolean().optional(),
 });
 
 export const loginCredentialsSchema = z.object({
@@ -32,13 +35,18 @@ export const loginCredentialsSchema = z.object({
   password: z.string().min(1),
 });
 
+/** Roles a person may pick on the public signup form. Admin and regional
+ *  manager accounts are created inside the product, never self-registered. */
+export const selfRegistrationRoleSchema = z.enum(['extension_officer', 'farmer']);
+
 export const registerDataSchema = z.object({
   email: z.string().min(1),
   password: z.string().min(1),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  role: z.string().optional(),
+  role: selfRegistrationRoleSchema.optional(),
   region: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
   phone: z.string().nullable().optional(),
 });
 
@@ -47,6 +55,8 @@ export const authResponseSchema = z.object({
   data: z.object({
     token: z.string(),
     user: userSchema,
+    /** Registration only: false when the chosen region has no regional manager yet. */
+    managerAssigned: z.boolean().optional(),
   }),
   // Legacy flat fields — some older clients expect them alongside `data`.
   user: userSchema.optional(),
@@ -59,6 +69,7 @@ export const meResponseSchema = z.object({
 });
 
 export type UserRole = z.infer<typeof userRoleSchema>;
+export type SelfRegistrationRole = z.infer<typeof selfRegistrationRoleSchema>;
 export type User = z.infer<typeof userSchema>;
 export type LoginCredentials = z.infer<typeof loginCredentialsSchema>;
 export type RegisterData = z.infer<typeof registerDataSchema>;

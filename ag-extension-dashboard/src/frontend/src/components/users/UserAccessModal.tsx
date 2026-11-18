@@ -5,12 +5,14 @@ import { ShieldCheck, X, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react
 import apiClient from '@/api/client';
 import { fetchPlanQuotas, type PlanQuotas } from '@/api/billingService';
 import { useLanguage } from '@/lib/LanguageContext';
-import { USER_ROLES, type DirectoryUser } from '@/components/users/types';
+import { USER_ROLES, assignableRoles, type DirectoryUser } from '@/components/users/types';
 import { PlanTierSelector } from '@/components/users/PlanTierSelector';
 
 interface UserAccessModalProps {
   user: DirectoryUser | null;
   currentUserId?: string;
+  /** Whether the signed-in actor may assign the admin role. */
+  actorIsSystemAdmin?: boolean;
   isDemo: boolean;
   onClose: () => void;
 }
@@ -21,7 +23,13 @@ interface AccessMutationVars {
   payload: Record<string, unknown>;
 }
 
-export function UserAccessModal({ user, currentUserId, isDemo, onClose }: UserAccessModalProps) {
+export function UserAccessModal({
+  user,
+  currentUserId,
+  actorIsSystemAdmin,
+  isDemo,
+  onClose,
+}: UserAccessModalProps) {
   const { t } = useLanguage();
   const queryClient = useQueryClient();
 
@@ -120,6 +128,16 @@ export function UserAccessModal({ user, currentUserId, isDemo, onClose }: UserAc
     quotasResp?.success === true && Array.isArray(quotasResp.data) ? quotasResp.data : [];
 
   const isEditingSelf = Boolean(currentUserId && user.id === currentUserId);
+  // A system administrator's seat is only editable by another system
+  // administrator; an ordinary admin may not touch it at all.
+  const isProtectedTarget =
+    user.isSystemAdmin === true || (user.role === 'admin' && !actorIsSystemAdmin);
+  const roleChoices = assignableRoles(actorIsSystemAdmin);
+  const currentRole = USER_ROLES.find(r => r.value === role);
+  const roleOptions =
+    roleChoices.some(r => r.value === role) || !currentRole
+      ? roleChoices
+      : [...roleChoices, currentRole];
 
   const changePayload: Record<string, unknown> = {};
   if (role !== initialRole) changePayload.role = role;
@@ -161,6 +179,12 @@ export function UserAccessModal({ user, currentUserId, isDemo, onClose }: UserAc
                 <p className="text-xs text-white/60">
                   {user.firstName} {user.lastName} • {user.email}
                 </p>
+                {user.isSystemAdmin && (
+                  <span className="mt-1 inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
+                    <ShieldCheck className="w-3 h-3" />
+                    System admin
+                  </span>
+                )}
               </div>
             </div>
             <button
@@ -195,11 +219,11 @@ export function UserAccessModal({ user, currentUserId, isDemo, onClose }: UserAc
               <select
                 id="access-role-select"
                 value={role}
-                disabled={isEditingSelf}
+                disabled={isEditingSelf || isProtectedTarget}
                 onChange={e => handleRoleChange(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-white/10 bg-slate-900 text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400 disabled:opacity-60"
               >
-                {USER_ROLES.map(r => (
+                {roleOptions.map(r => (
                   <option key={r.value} value={r.value}>
                     {t(r.labelKey, r.label)}
                   </option>
@@ -208,6 +232,14 @@ export function UserAccessModal({ user, currentUserId, isDemo, onClose }: UserAc
               {isEditingSelf && (
                 <p className="text-[11px] text-white/50">
                   {t('users_access_self_role_note', 'Admins cannot demote their own active role.')}
+                </p>
+              )}
+              {isProtectedTarget && !isEditingSelf && (
+                <p className="text-[11px] text-white/50">
+                  {t(
+                    'users_access_system_admin_note',
+                    'Only a system administrator can change this account.'
+                  )}
                 </p>
               )}
             </div>
@@ -238,7 +270,7 @@ export function UserAccessModal({ user, currentUserId, isDemo, onClose }: UserAc
               <input
                 type="checkbox"
                 checked={isActive}
-                disabled={isEditingSelf}
+                disabled={isEditingSelf || isProtectedTarget}
                 onChange={e => setIsActive(e.target.checked)}
                 className="w-4 h-4 accent-emerald-500 rounded cursor-pointer disabled:opacity-50"
               />

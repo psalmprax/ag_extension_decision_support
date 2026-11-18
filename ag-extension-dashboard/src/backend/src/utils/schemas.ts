@@ -42,7 +42,9 @@ import {
  *           type: string
  *         role:
  *           type: string
- *           enum: [extension_officer, regional_manager, admin, farmer]
+ *           enum: [extension_officer, farmer]
+ *         country:
+ *           type: string
  *         region:
  *           type: string
  *         phone:
@@ -114,15 +116,32 @@ export const loginSchema = z.object({
   }),
 });
 
+/**
+ * Public signup roles. Admin and regional manager accounts are created inside
+ * the product; letting the form name them was the source of a guaranteed 403.
+ */
 export const registerSchema = z.object({
   body: z.object({
     email: z.string().email('Invalid email format'),
     password: passwordSchema,
     firstName: z.string().min(2, 'First name is required'),
     lastName: z.string().min(2, 'Last name is required'),
-    role: z.enum(['extension_officer', 'regional_manager', 'admin', 'farmer']).optional(),
-    region: z.string().optional(),
-    phone: z.string().optional(),
+    role: z.enum(['extension_officer', 'farmer']).optional(),
+    country: z.string().min(2).max(64).optional(),
+    region: z.string().max(100).optional(),
+    phone: z.string().max(32).optional(),
+    /** Older clients send `phoneNumber`; the handler normalises it to `phone`. */
+    phoneNumber: z.string().max(32).optional(),
+  }).superRefine((data, ctx) => {
+    // The region is what the manager assignment resolves from, so an officer
+    // account without one can never be linked to a regional manager.
+    if (data.role === 'extension_officer' && !data.region?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['region'],
+        message: 'Region is required for extension officer accounts',
+      });
+    }
   }),
 });
 

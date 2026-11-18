@@ -21,6 +21,8 @@ model User {
   managerId     String?            @map("manager_id") @db.Uuid
   manager       User?              @relation("ManagerOfficers", fields: [managerId], references: [id], onDelete: SetNull)
   managedOfficers User[]           @relation("ManagerOfficers")
+  /// Above every tenant: only this account may create or promote another admin.
+  isSystemAdmin Boolean            @default(false) @map("is_system_admin")
 
   avatarUrl     String?            @map("avatar_url")
   isActive      Boolean?           @default(true) @map("is_active")

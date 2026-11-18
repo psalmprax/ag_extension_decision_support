@@ -199,6 +199,8 @@ export interface UserPublicDTO {
   avatarUrl: string | null;
   lastLogin: string | null;
   isDemo: boolean;
+  /** Above every tenant: may create or promote an admin. */
+  isSystemAdmin: boolean;
   planId: string | null;
   planName: string;
   planStatus: string | null;
@@ -236,6 +238,7 @@ export function mapUserPublicRow(row: UserPublicRow): UserPublicDTO {
     avatarUrl: row.avatar_url,
     lastLogin: toIso(row.last_login) ?? null,
     isDemo: row.is_demo === true,
+    isSystemAdmin: row.is_system_admin === true,
     planId: row.plan_id ?? null,
     planName,
     planStatus: row.subscription_status ?? (row.role === 'admin' ? 'active' : hasActiveRecord ? 'active' : null),

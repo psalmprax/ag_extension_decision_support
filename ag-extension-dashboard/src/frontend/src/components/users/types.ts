@@ -10,6 +10,8 @@ export interface DirectoryUser {
   isActive?: boolean | null;
   lastLogin?: string | null;
   isDemo?: boolean;
+  /** Above every tenant: the only flag that may create or promote an admin. */
+  isSystemAdmin?: boolean;
   planId?: string | null;
   planName?: string | null;
   planStatus?: string | null;
@@ -46,3 +48,11 @@ export const USER_ROLES = [
 
 export const getRoleBadge = (role: string) =>
   USER_ROLES.find(r => r.value === role) || USER_ROLES[2];
+
+/**
+ * Roles an actor may assign. `admin` is reserved for the system administrator;
+ * the server enforces the same rule, so hiding it here is usability, not the
+ * security boundary.
+ */
+export const assignableRoles = (actorIsSystemAdmin: boolean | undefined) =>
+  actorIsSystemAdmin ? USER_ROLES : USER_ROLES.filter(role => role.value !== 'admin');

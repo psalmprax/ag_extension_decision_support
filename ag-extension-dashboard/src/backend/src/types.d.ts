@@ -62,6 +62,8 @@ declare global {
                 email: string;
                 role: UserRole;
                 isDemo?: boolean;
+                /** Set by `requireSystemAdmin`; never taken from the JWT. */
+                isSystemAdmin?: boolean;
                 [key: string]: unknown;
             };
             language?: string;

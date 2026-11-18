@@ -45,12 +45,12 @@ from pptx.util import Inches, Pt
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-PRESENTATIONS_DIR = REPO_ROOT / "presentations"
+DOCS_DIR = REPO_ROOT / "docs"
 LOGO_PATH = REPO_ROOT / "ag-extension-dashboard" / "src" / "frontend" / "public" / "logo.png"
 CHART_DIR = Path("/tmp/ag_cost_deck_charts")
 
-OUT_PPTX = PRESENTATIONS_DIR / "Ag_Extension_Monthly_Cost_Model.pptx"
-OUT_PDF = PRESENTATIONS_DIR / "Ag_Extension_Monthly_Cost_Model.pdf"
+OUT_PPTX = DOCS_DIR / "Ag_Extension_Monthly_Cost_Model.pptx"
+OUT_PDF = DOCS_DIR / "Ag_Extension_Monthly_Cost_Model.pdf"
 
 FONT_FAMILY = "Liberation Sans"
 FONT_MONO = "Liberation Mono"
@@ -1157,7 +1157,7 @@ def build_presentation(summary: Dict[str, Any], charts: Dict[str, Path], specs: 
     add_header_and_footer(
         s5, prs, 5, total_slides,
         "Pillar 2  |  Cloud infrastructure",
-        f"Docker Compose Stack, Postgres 15, Dual Redis & Zero-Egress Media (${infra_cat[0]:,} to ${infra_cat[2]:,} / Mo)",
+        f"Docker Compose, Postgres 15, Dual Redis & Zero-Egress (${infra_cat[0]:,} to ${infra_cat[2]:,} / Mo)",
         "Grounded directly in GPEXTS Docker Compose topology (docker-compose.yml, Dockerfile.db) and multi-cloud S3 media optimization."
     )
 
@@ -1596,7 +1596,7 @@ def build_presentation(summary: Dict[str, Any], charts: Dict[str, Path], specs: 
                 f"12 / {total_slides:02d}",
                 font_size=8.5, bold=True, color_hex="#9CC5B0", align=PP_ALIGN.RIGHT, font_name=FONT_MONO)
 
-    PRESENTATIONS_DIR.mkdir(parents=True, exist_ok=True)
+    DOCS_DIR.mkdir(parents=True, exist_ok=True)
     prs.save(str(OUT_PPTX))
     return OUT_PPTX
 

@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import { useAppStore, type User } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { AgroEcosystemCanvasScrubber } from '@/components/canvas-ui/AgroEcosystemCanvasScrubber';
-import { register } from '@/api/authService';
+import { RegisterAccountFields } from '@/components/auth/RegisterAccountFields';
+import { RegisterAffiliationFields } from '@/components/auth/RegisterAffiliationFields';
+import { isTextFieldName, type RegisterFormState } from '@/components/auth/registerForm';
+import { register, type RegisterData } from '@/api/authService';
+import { getCountryConfig } from '@/lib/countries';
 import { getApiErrorMessage } from '@/lib/apiError';
 import apiClient from '@/api/client';
 import { EncryptedStorageService } from '@/services/encryptedStorageService';
@@ -74,14 +78,16 @@ export function Register() {
   const { setUser } = useAppStore();
   const { t } = useLanguage();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegisterFormState>({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    phoneNumber: '',
+    phone: '',
     organization: '',
+    country: 'Kenya',
+    region: '',
     role: 'extension_officer',
   });
 
@@ -89,12 +95,24 @@ export function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [managerNotice, setManagerNotice] = useState('');
+
+  const regionOptions = getCountryConfig(formData.country)?.regions ?? [];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    const { name, value } = e.target;
+    if (name === 'role') {
+      setFormData((prev) => ({ ...prev, role: value === 'farmer' ? 'farmer' : 'extension_officer' }));
+      return;
+    }
+    if (name === 'country') {
+      // Regions are country-specific; keeping the old one would assign the wrong manager.
+      setFormData((prev) => ({ ...prev, country: value, region: '' }));
+      return;
+    }
+    if (isTextFieldName(name)) {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,7 +127,17 @@ export function Register() {
     }
 
     try {
-      const data = await register(formData);
+      const payload: RegisterData = {
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        role: formData.role,
+        phone: formData.phone.trim() || undefined,
+        country: formData.country || undefined,
+        region: formData.region.trim() || undefined,
+      };
+      const data = await register(payload);
 
       // Handle nested response structure { success: true, data: { token, user } }
       // The JWT arrives as an httpOnly cookie — only the profile is stored.
@@ -123,6 +151,17 @@ export function Register() {
 
       if (!userData && !token) {
         throw new Error(t('register_failed_no_token'));
+      }
+
+      // The account exists, but this region has no regional manager yet. Say so
+      // instead of dropping the officer into a dashboard with no manager.
+      if (formData.role === 'extension_officer' && data.data?.managerAssigned === false) {
+        setManagerNotice(
+          formData.region
+            ? `Your account is created. No regional manager covers ${formData.region} yet, so an administrator will link your account.`
+            : 'Your account is created. An administrator will link your account to a regional manager.'
+        );
+        return;
       }
 
       const hasImportedSession = await handleHandoffPendingSession();
@@ -257,208 +296,56 @@ export function Register() {
               </div>
             )}
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="reg-firstName"
-                    className="block text-xs font-medium text-white/70 mb-1.5"
-                  >
-                    {t('register_first_name_label')}
-                  </label>
-                  <input
-                    id="reg-firstName"
-                    type="text"
-                    name="firstName"
-                    required
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
-                    placeholder={t('register_first_name_placeholder')}
-                    autoComplete="given-name"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="reg-lastName"
-                    className="block text-xs font-medium text-white/70 mb-1.5"
-                  >
-                    {t('register_last_name_label')}
-                  </label>
-                  <input
-                    id="reg-lastName"
-                    type="text"
-                    name="lastName"
-                    required
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
-                    placeholder={t('register_last_name_placeholder')}
-                    autoComplete="family-name"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="reg-email"
-                  className="block text-xs font-medium text-white/70 mb-1.5"
-                >
-                  {t('register_email_label')}
-                </label>
-                <input
-                  id="reg-email"
-                  type="email"
-                  name="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
-                  placeholder={t('register_email_placeholder')}
-                  autoComplete="email"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="reg-password"
-                    className="block text-xs font-medium text-white/70 mb-1.5"
-                  >
-                    {t('register_password_label')}
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="reg-password"
-                      type={showPassword ? 'text' : 'password'}
-                      name="password"
-                      required
-                      value={formData.password}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all pr-10 text-sm"
-                      placeholder="••••••••"
-                      autoComplete="new-password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
-                      aria-label={showPassword ? 'Hide secret' : 'Show secret'}
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <label
-                    htmlFor="reg-confirmPassword"
-                    className="block text-xs font-medium text-white/70 mb-1.5"
-                  >
-                    {t('register_confirm_password_label')}
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="reg-confirmPassword"
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      name="confirmPassword"
-                      required
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all pr-10 text-sm"
-                      placeholder="••••••••"
-                      autoComplete="new-password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
-                      aria-label={showConfirmPassword ? 'Hide secret' : 'Show secret'}
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="reg-phone"
-                    className="block text-xs font-medium text-white/70 mb-1.5"
-                  >
-                    {t('register_phone_label')}
-                  </label>
-                  <input
-                    id="reg-phone"
-                    type="tel"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
-                    placeholder={t('register_phone_placeholder')}
-                    autoComplete="tel"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="reg-organization"
-                    className="block text-xs font-medium text-white/70 mb-1.5"
-                  >
-                    {t('register_organization_label')}
-                  </label>
-                  <input
-                    id="reg-organization"
-                    type="text"
-                    name="organization"
-                    value={formData.organization}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
-                    placeholder={t('register_organization_placeholder')}
-                    autoComplete="organization"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="reg-role"
-                  className="block text-xs font-medium text-white/70 mb-1.5"
-                >
-                  {t('register_role_label')}
-                </label>
-                <select
-                  id="reg-role"
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
-                >
-                  <option value="extension_officer">{t('register_role_extension_officer')}</option>
-                  <option value="admin">{t('register_role_admin')}</option>
-                  <option value="farmer">{t('register_role_farmer')}</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+            {managerNotice && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="mb-4 p-4 bg-emerald-950/40 border border-emerald-500/30 rounded-xl backdrop-blur-sm space-y-3"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>{t('register_creating_account')}</span>
-                  </>
-                ) : (
-                  <span>{t('register_button')}</span>
-                )}
-              </button>
-            </form>
+                <p className="text-sm text-emerald-200">{managerNotice}</p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/dashboard')}
+                  className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl text-sm transition-all"
+                >
+                  Continue to dashboard
+                </button>
+              </div>
+            )}
+
+            {!managerNotice && (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <RegisterAccountFields
+                  formData={formData}
+                  onChange={handleChange}
+                  showPassword={showPassword}
+                  showConfirmPassword={showConfirmPassword}
+                  onTogglePassword={() => setShowPassword((prev) => !prev)}
+                  onToggleConfirmPassword={() => setShowConfirmPassword((prev) => !prev)}
+                />
+
+                <RegisterAffiliationFields
+                  formData={formData}
+                  onChange={handleChange}
+                  regionOptions={regionOptions}
+                />
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>{t('register_creating_account')}</span>
+                    </>
+                  ) : (
+                    <span>{t('register_button')}</span>
+                  )}
+                </button>
+              </form>
+            )}
           </div>
 
           {/* Footer */}

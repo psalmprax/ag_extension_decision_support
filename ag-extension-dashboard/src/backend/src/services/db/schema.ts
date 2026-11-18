@@ -90,6 +90,15 @@ export async function createTables(pool: Pool): Promise<void> {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT false;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS manager_id UUID;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS country VARCHAR(100) DEFAULT 'Kenya';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS is_system_admin BOOLEAN NOT NULL DEFAULT false;
+      -- Promote exactly one existing administrator, and only while no system
+      -- administrator exists, so a deliberate demotion is never undone on boot.
+      UPDATE users SET is_system_admin = true
+      WHERE id = (
+        SELECT id FROM users WHERE role = 'admin'
+        ORDER BY created_at ASC NULLS LAST, id ASC LIMIT 1
+      )
+      AND NOT EXISTS (SELECT 1 FROM users WHERE is_system_admin = true);
       ALTER TABLE farmers ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT false;
       UPDATE users SET is_demo = true WHERE id = '00000000-0000-0000-0000-000000000001';
       UPDATE users SET is_demo = true WHERE lower(COALESCE(email,'')) = 'demo@agridemo.com';

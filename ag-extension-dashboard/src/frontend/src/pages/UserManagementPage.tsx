@@ -32,13 +32,19 @@ import { StaffBadges } from '@/components/users/StaffBadges';
 import { UserAccessModal } from '@/components/users/UserAccessModal';
 import { AdminDemoRecords } from '@/components/AdminDemoRecords';
 import { useAppStore } from '@/store/useAppStore';
-import { USER_ROLES as ROLES, getRoleBadge, type DirectoryUser as User } from '@/components/users/types';
+import {
+  USER_ROLES as ROLES,
+  assignableRoles,
+  getRoleBadge,
+  type DirectoryUser as User,
+} from '@/components/users/types';
 
 export function UserManagementPage() {
   const { t } = useLanguage();
   const { isDemo } = useDemoMode();
   const currentUserId = useAppStore(state => state.user?.id);
   const currentUserRole = useAppStore(state => state.user?.role);
+  const currentUserIsSystemAdmin = useAppStore(state => state.user?.isSystemAdmin);
   const queryClient = useQueryClient();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -477,7 +483,7 @@ export function UserManagementPage() {
                       onChange={e => setFormData({ ...formData, role: e.target.value })}
                       className="w-full px-3 py-2 rounded-lg border border-white/10 bg-slate-900 text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                     >
-                      {ROLES.map(r => (
+                      {assignableRoles(currentUserIsSystemAdmin).map(r => (
                         <option key={r.value} value={r.value}>
                           {t(r.labelKey, r.label)}
                         </option>
@@ -686,6 +692,7 @@ export function UserManagementPage() {
       <UserAccessModal
         user={selectedUserForAccess}
         currentUserId={currentUserId}
+        actorIsSystemAdmin={currentUserIsSystemAdmin}
         isDemo={isDemo}
         onClose={() => setSelectedUserForAccess(null)}
       />

@@ -7,6 +7,7 @@ import { mapUserPublicRows, mapUserPublicRow, mapUserRows } from '@/types/dtos';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
+import { countActiveSystemAdmins, isSystemAdminUser } from '@/services/systemAdminService';
 import {
     acquireUserSessionLock,
     revokeAllUserSessions,
@@ -298,7 +299,12 @@ function extractCreateUserData(body: Record<string, unknown>) {
 function isMissingColumnError(err: unknown): boolean {
     if (!err || typeof err !== 'object') return false;
     const e = err as { message?: string; code?: string };
-    return Boolean(e.message?.includes('country') || e.message?.includes('last_login_at') || e.code === '42703');
+    return Boolean(
+        e.message?.includes('country') ||
+        e.message?.includes('last_login_at') ||
+        e.message?.includes('is_system_admin') ||
+        e.code === '42703'
+    );
 }
 
 const USER_UPDATE_FIELD_MAP: Record<string, string> = {
@@ -315,6 +321,83 @@ const USER_UPDATE_FIELD_MAP: Record<string, string> = {
 };
 
 const ALLOWED_ROLES = ['farmer', 'extension_officer', 'regional_manager', 'admin'];
+
+const SYSTEM_ADMIN_REQUIRED_CODE = 'SYSTEM_ADMIN_REQUIRED';
+const LAST_SYSTEM_ADMIN_CODE = 'LAST_SYSTEM_ADMIN';
+
+interface UserGuardRow {
+    id: string;
+    role: string | null;
+    is_active: boolean | null;
+    is_system_admin: boolean | null;
+}
+
+interface GuardFailure {
+    status: number;
+    error: string;
+    code: string;
+}
+
+async function loadUserGuardRow(id: string): Promise<UserGuardRow | null> {
+    const { rows } = await query<UserGuardRow>(
+        'SELECT id, role, is_active, is_system_admin FROM users WHERE id = $1',
+        [id]
+    );
+    return rows[0] ?? null;
+}
+
+async function actorIsSystemAdmin(req: Request): Promise<boolean> {
+    const userId = req.user?.userId;
+    return userId ? isSystemAdminUser(userId) : false;
+}
+
+/**
+ * Only a system administrator may create an administrator, promote someone to
+ * administrator, or change a system-administrator account. The last active
+ * system administrator can never be demoted or deactivated, whatever the
+ * actor's flag says.
+ */
+async function validateSystemAdminChange(
+    target: UserGuardRow,
+    safeUpdates: Record<string, unknown>,
+    actorHasFlag: boolean
+): Promise<GuardFailure | null> {
+    const requestedRole = typeof safeUpdates.role === 'string' ? safeUpdates.role.toLowerCase() : null;
+    const requestedIsActive = typeof safeUpdates.is_active === 'boolean' ? safeUpdates.is_active : null;
+
+    if (!actorHasFlag) {
+        if (target.is_system_admin === true) {
+            return {
+                status: 403,
+                error: 'Only a system administrator can modify a system administrator account',
+                code: SYSTEM_ADMIN_REQUIRED_CODE,
+            };
+        }
+        if (requestedRole === 'admin') {
+            return {
+                status: 403,
+                error: 'Only a system administrator can promote a user to administrator',
+                code: SYSTEM_ADMIN_REQUIRED_CODE,
+            };
+        }
+        return null;
+    }
+
+    if (target.is_system_admin !== true) return null;
+    const demoting = requestedRole !== null && requestedRole !== 'admin';
+    const deactivating = requestedIsActive === false;
+    if (!demoting && !deactivating) return null;
+    // An already-inactive account cannot take the last seat away.
+    if (target.is_active === false) return null;
+    if ((await countActiveSystemAdmins()) <= 1) {
+        return {
+            status: 400,
+            error: 'The last active system administrator cannot be demoted or deactivated',
+            code: LAST_SYSTEM_ADMIN_CODE,
+        };
+    }
+    return null;
+}
 
 /**
  * Validates role/activation updates in place. Returns an error message, or
@@ -630,6 +713,16 @@ router.post('/', authorize(['admin']), async (req: Request, res: Response) => {
             });
         }
 
+        // `authorize(['admin'])` only proves the caller is an admin. Minting
+        // another admin is reserved for the system administrator.
+        if (data.normalizedRole === 'admin' && !(await actorIsSystemAdmin(req))) {
+            return res.status(403).json({
+                success: false,
+                error: 'Only a system administrator can create administrator accounts',
+                errorCode: SYSTEM_ADMIN_REQUIRED_CODE,
+            });
+        }
+
         const planResolution = await resolveRequestedPlan(body);
         if (planResolution.error) {
             return res.status(400).json({ success: false, error: planResolution.error });
@@ -665,9 +758,25 @@ router.put('/:id', authorize(['admin']), async (req: Request, res: Response) => 
         const updates = (req.body || {}) as Record<string, unknown>;
         const safeUpdates = extractSafeUserUpdates(updates);
         const planResolution = await resolveRequestedPlan(updates);
+
         const payloadError = validatePutPayload(safeUpdates, planResolution, id, req.user?.userId);
         if (payloadError) {
             return res.status(400).json({ success: false, error: payloadError });
+        }
+
+        const target = await loadUserGuardRow(id);
+        if (!target) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        const guardFailure = await validateSystemAdminChange(
+            target,
+            safeUpdates,
+            await actorIsSystemAdmin(req)
+        );
+        if (guardFailure) {
+            return res
+                .status(guardFailure.status)
+                .json({ success: false, error: guardFailure.error, errorCode: guardFailure.code });
         }
 
         const shouldRevokeSessions = safeUpdates.is_active !== undefined || safeUpdates.role !== undefined;
@@ -706,6 +815,27 @@ router.delete('/:id', authorize(['admin']), async (req: Request, res: Response) 
         const pool = getPool();
         if (!pool) {
             return res.status(503).json({ success: false, error: 'Database unavailable' });
+        }
+
+        const target = await loadUserGuardRow(id);
+        if (!target) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        if (target.is_system_admin === true) {
+            if (!(await actorIsSystemAdmin(req))) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Only a system administrator can deactivate a system administrator account',
+                    errorCode: SYSTEM_ADMIN_REQUIRED_CODE,
+                });
+            }
+            if (target.is_active !== false && (await countActiveSystemAdmins()) <= 1) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'The last active system administrator cannot be deactivated',
+                    errorCode: LAST_SYSTEM_ADMIN_CODE,
+                });
+            }
         }
 
         const { rows } = await query<CountRow>(

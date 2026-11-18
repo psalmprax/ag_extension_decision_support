@@ -301,6 +301,8 @@ export interface UserPublicRow {
   last_login: Date | string | null;
   /** Demo session account; only admins are shown these. */
   is_demo?: boolean | null;
+  /** Above every tenant: may create or promote an admin. */
+  is_system_admin?: boolean | null;
   plan_id?: string | null;
   plan_name?: string | null;
   plan_price?: string | number | null;

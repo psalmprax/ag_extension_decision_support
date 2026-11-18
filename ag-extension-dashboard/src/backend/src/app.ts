@@ -69,6 +69,7 @@ import smsRoutes from './routes/sms';
 import billingRoutes from './routes/billing';
 import contextMenuRoutes from './routes/contextMenus';
 import { shareRouter, publicShareRouter } from './routes/shares';
+import publicMarketPricesRouter from './routes/publicMarketPrices';
 import alertRoutes from './routes/alerts';
 import supportRoutes from './routes/support';
 // MCP router will be created dynamically to avoid path alias issues in production
@@ -626,6 +627,9 @@ routeMounts.forEach(m => app.use(`/api/v1${m.path}`, m.router));
 
 // Also mount public shares (no v1 prefix needed)
 app.use('/api/public/shares', publicShareRouter);
+
+// Public landing-page producer prices (no auth: national annual statistics)
+app.use('/api/public/market-prices', publicMarketPricesRouter);
 
 // Create MCP router dynamically to support modern module standards and tree-shaking
 let mcpRouter: Router | null = null;

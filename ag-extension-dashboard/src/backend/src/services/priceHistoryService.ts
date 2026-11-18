@@ -1,6 +1,6 @@
 import { cacheHSet, cacheHGetAll, cacheHDel, cacheExpire } from './cacheService';
 import { logger } from '@/utils/logger';
-import type { MarketPrice, MarketDataStatus } from './marketPriceService';
+import type { MarketPrice, MarketDataStatus, PriceType } from './marketPriceService';
 
 /**
  * Daily price history snapshots, aggregated in Redis.
@@ -9,22 +9,33 @@ import type { MarketPrice, MarketDataStatus } from './marketPriceService';
  * hash keyed `ext:price_history:{areaCode}` with a `{date}:{crop}` field. The
  * hash is pruned to a 31-day window and given a matching TTL.
  *
- * Honesty note: FAOSTAT producer prices are annual and GIEWS FPMA is monthly,
- * so day-to-day movement in this series is driven by the daily FX conversion —
- * not by a live intra-day ticker. Estimated baseline snapshots (the synthetic
- * fallback) are intentionally NOT recorded, so the history only ever contains
- * real API-sourced data.
+ * Two different times are recorded, and they are not interchangeable:
+ *   - `date`           when WE valued the figure (record time),
+ *   - `observedPeriod` the period the figure was PUBLISHED for (a year, or a
+ *                      YYYY-MM month for monthly series).
+ *
+ * FAOSTAT producer prices are annual and GIEWS FPMA is monthly, so a snapshot
+ * recorded today usually describes last year's observation. Day-to-day movement
+ * in this series is driven by the daily FX conversion, not by a live ticker, and
+ * the UI says so. Without `observedPeriod` a 2025 figure recorded in 2026 is
+ * indistinguishable from a current quote. Estimated baseline snapshots (the
+ * synthetic fallback) are still never recorded.
+ *
+ * `priceType` keeps producer, wholesale and retail series from being merged:
+ * they are different quantities, not revisions of one another.
  */
 
 const HISTORY_KEY_PREFIX = 'ext:price_history:';
 const WINDOW_DAYS = 31;
 
 interface PriceSnapshot {
-  date: string;      // YYYY-MM-DD
+  date: string;      // YYYY-MM-DD the snapshot was recorded
+  observedPeriod: string | null; // publication period of the underlying figure
   crop: string;
   price: number;     // numeric local-currency price
   currency: string;
   source: string;
+  priceType: PriceType | null;
   dataStatus: MarketDataStatus;
 }
 
@@ -33,6 +44,9 @@ export interface PriceHistorySeries {
   currency: string;
   source: string;
   dataStatus: MarketDataStatus;
+  /** Publication period of the observations behind this series, when known. */
+  observedPeriod: string | null;
+  priceType: PriceType | null;
   series: Array<{ date: string; price: number }>;
 }
 
@@ -63,10 +77,12 @@ export async function recordPriceSnapshot(areaCode: string, prices: MarketPrice[
     for (const p of livePrices) {
       const snapshot: PriceSnapshot = {
         date: today,
+        observedPeriod: p.period ?? null,
         crop: p.crop,
         price: p.priceValue as number,
         currency: p.currency,
         source: p.source,
+        priceType: p.priceType ?? null,
         dataStatus: p.dataStatus,
       };
       await cacheHSet(key, `${today}:${p.crop}`, JSON.stringify(snapshot));
@@ -100,7 +116,13 @@ export async function getPriceHistory(areaCode: string, days = 30): Promise<Pric
 
   const cutoff = cutoffDate(days);
   const byCrop = new Map<string, Array<{ date: string; price: number }>>();
-  const meta = new Map<string, { currency: string; source: string; dataStatus: MarketDataStatus }>();
+  const meta = new Map<string, {
+    currency: string;
+    source: string;
+    dataStatus: MarketDataStatus;
+    observedPeriod: string | null;
+    priceType: PriceType | null;
+  }>();
 
   for (const [field, raw] of Object.entries(all)) {
     const date = field.split(':')[0];
@@ -113,6 +135,9 @@ export async function getPriceHistory(areaCode: string, days = 30): Promise<Pric
         currency: snapshot.currency,
         source: snapshot.source,
         dataStatus: snapshot.dataStatus,
+        // Entries written before this field existed carry no observation period.
+        observedPeriod: snapshot.observedPeriod ?? null,
+        priceType: snapshot.priceType ?? null,
       });
     } catch {
       logger.warn(`Skipping corrupt price history entry for field ${field}`);
@@ -128,6 +153,8 @@ export async function getPriceHistory(areaCode: string, days = 30): Promise<Pric
       currency: m?.currency || '',
       source: m?.source || '',
       dataStatus: m?.dataStatus || 'unavailable',
+      observedPeriod: m?.observedPeriod ?? null,
+      priceType: m?.priceType ?? null,
       series,
     });
   }

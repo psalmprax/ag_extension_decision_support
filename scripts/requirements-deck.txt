@@ -1,0 +1,6 @@
+# Pinned requirements for generating and testing the Investor Cost Model Deck
+python-pptx>=1.0.2
+matplotlib>=3.10.0
+numpy>=2.0.0
+pypdf>=6.0.0
+Pillow>=11.0.0

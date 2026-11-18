@@ -63,6 +63,7 @@ interface LoginUser {
     last_name: string | null;
     mfa_enabled: boolean;
     is_demo?: boolean;
+    is_system_admin?: boolean | null;
 }
 
 interface LoginUserRow extends LoginUser {
@@ -122,6 +123,7 @@ async function completePasswordLogin(req: Request, res: Response, user: LoginUse
                 lastName: user.last_name,
                 role: user.role,
                 isDemo: user.is_demo === true || user.email?.toLowerCase() === 'demo@agridemo.com',
+                isSystemAdmin: user.is_system_admin === true,
                 region: user.region,
                 mfaEnabled: !!user.mfa_enabled,
                 planName,
