@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAppQueries } from '@/hooks/useAppQueries';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore, type User } from '@/store/useAppStore';
 import { fetchDashboardData } from '@/api/dashboardService';
 import { fetchFarmers } from '@/api/farmerService';
 import { fetchVisits } from '@/api/visitService';
@@ -33,10 +33,18 @@ function wrapper() {
   );
 }
 
+const baseUser: User = {
+  id: 'user-1',
+  firstName: 'Ada',
+  lastName: 'Admin',
+  email: 'admin@example.com',
+  role: 'admin',
+};
+
 describe('useAppQueries runtime orchestration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useAppStore.setState({ user: { id: 'user-1', role: 'admin' } as never, farmers: [] });
+    useAppStore.setState({ user: baseUser, farmers: [] });
     mockedDemoMode.mockReturnValue({ isDemo: false } as ReturnType<typeof useDemoMode>);
     mockedDashboard.mockResolvedValue({ success: true, data: { overview: { totalFarmers: 1 } } } as never);
     mockedFarmers.mockResolvedValue({ success: true, data: { farmers: [{ id: 'farmer-1', firstName: 'Ada', lastName: 'K', region: 'North', crops: ['Maize'], farmSize: 2 }] } } as never);
@@ -80,8 +88,16 @@ describe('useAppQueries runtime orchestration', () => {
   });
 
   it('skips Pro visits and performance queries for Free users', async () => {
+    const freeOfficer: User = {
+      ...baseUser,
+      id: 'free-1',
+      email: 'free@example.com',
+      role: 'extension_officer',
+      planName: 'Free',
+      isFree: true,
+    };
     useAppStore.setState({
-      user: { id: 'free-1', role: 'extension_officer', planName: 'Free', isFree: true } as never,
+      user: freeOfficer,
       farmers: [],
     });
 

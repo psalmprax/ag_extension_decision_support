@@ -388,7 +388,14 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
 
     expect(await screen.findByText('Mercy Chebet')).toBeInTheDocument();
     const editButtons = screen.getAllByRole('button', { name: 'Edit Access' });
+    editButtons[0].focus();
     fireEvent.click(editButtons[0]);
+
+    const modalA = await screen.findByRole('dialog', { name: 'Manage Access & Subscription' });
+    await waitFor(() => {
+      expect(modalA.contains(document.activeElement)).toBe(true);
+    });
+    expect(editButtons[0].closest('[aria-hidden="true"]')).not.toBeNull();
 
     // Error state from fetchPlanQuotas + Retry button
     expect(await screen.findByText('Quotas service unavailable')).toBeInTheDocument();
@@ -425,6 +432,9 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
     fireEvent.keyDown(document.activeElement || document.body, { key: 'Escape', code: 'Escape' });
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(editButtons[0]).toHaveFocus();
     });
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit Access' })[1]);

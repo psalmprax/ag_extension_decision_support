@@ -61,6 +61,7 @@ declare global {
                 userId: string;
                 email: string;
                 role: UserRole;
+                isDemo?: boolean;
                 [key: string]: unknown;
             };
             language?: string;

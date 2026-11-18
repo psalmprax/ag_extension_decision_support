@@ -4,7 +4,7 @@ import { AuthRequest } from './authorize';
 import { logger } from '../utils/logger';
 
 function isDemoPrincipal(user: NonNullable<AuthRequest['user']>): boolean {
-    return Boolean((user as unknown as { isDemo?: boolean }).isDemo || user.email === 'demo@agridemo.com');
+    return Boolean(user.isDemo || user.email === 'demo@agridemo.com');
 }
 
 /**

@@ -56,6 +56,9 @@ app.use(express.json());
 app.get('/gated', authorize(['admin', 'extension_officer', 'farmer']), requirePaidPlan('Test Feature'), (_req: Request, res: Response) => {
   res.json({ success: true });
 });
+app.get('/gated-unauthenticated', requirePaidPlan('Field Visits'), (_req: Request, res: Response) => {
+  res.json({ success: true });
+});
 app.use('/visits', visitsRouter);
 app.use('/analytics', analyticsRouter);
 app.use('/worldmonitor', worldmonitorRouter);
@@ -82,13 +85,10 @@ describe('requirePaidPlan & backend Pro route gating', () => {
   });
 
   it('rejects unauthenticated requests at middleware boundary (401)', async () => {
-    const mw = requirePaidPlan('Field Visits');
-    const json = jest.fn();
-    const status = jest.fn(() => ({ json }));
-    const next = jest.fn();
-    await mw({} as Request, { status } as unknown as Response, next);
-    expect(status).toHaveBeenCalledWith(401);
-    expect(next).not.toHaveBeenCalled();
+    const res = await request(app).get('/gated-unauthenticated');
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual({ success: false, error: 'Authentication required' });
+    expect(mockIsFreeUser).not.toHaveBeenCalled();
   });
 
   it('blocks free extension officers with 403 upgradeRequired on all newly gated Pro endpoints', async () => {
