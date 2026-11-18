@@ -17,6 +17,7 @@ const OFFICER = {
   // Farmer chat is a Pro feature (PlanUpgradeGuard); a free officer sees the upgrade page.
   planName: 'Pro',
   isFree: false,
+  isDemo: true,
 };
 
 async function signInAsDemoOfficer(page: Page) {

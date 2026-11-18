@@ -17,6 +17,7 @@ const DEMO_USER = {
   lastName: 'Mwangi',
   role: 'extension_officer',
   region: 'Machakos',
+  isDemo: true,
 };
 
 const AUTH_RESPONSE = {
