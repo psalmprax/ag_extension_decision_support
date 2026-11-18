@@ -5,6 +5,7 @@ import { logger } from '@/utils/logger';
 import { query } from './databaseService';
 import crypto from 'crypto';
 import { demoWhere } from '@/services/demoScope';
+import { farmerRecordFilter } from './demoRecordScope';
 
 export interface BulkOperationResult {
     success: boolean;
@@ -225,7 +226,7 @@ class BulkOperationsService {
 
     private async buildFarmerExportFilters(filters: Record<string, any>, userId: string, userRole: string): Promise<Record<string, any>> {
         // Exports are for real accounts only: demo farmers are never exported.
-        const where: Record<string, any> = { ...demoWhere() };
+        const where: Record<string, any> = { ...demoWhere(), AND: [farmerRecordFilter(false)] };
 
         if (userRole === 'extension_officer') {
             where.assignedOfficerId = userId;

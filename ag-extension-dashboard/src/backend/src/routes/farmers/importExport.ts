@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { logger } from '@/utils/logger';
 import { bulkOperationsService } from '@/services/bulkOperationsService';
 import { safeError } from '@/utils/safeResponse';
+import { validateRecordScope } from '@/services/demoRecordScope';
 
 const router = Router();
 
@@ -25,8 +26,11 @@ const router = Router();
  *           text/csv:
  *             schema: { type: string }
  */
-router.get('/export', async (req: Request, res: Response) => {
+router.get('/export', validateRecordScope, async (req: Request, res: Response) => {
     try {
+        if (req.query.dataset === 'demo') {
+            return res.status(400).json({ success: false, error: 'Demo records are inspection-only and cannot be exported' });
+        }
         const { region, search } = req.query;
         const { userId: _userId, role: _role } = req.user as Record<string, unknown>;
 const userId = String(_userId);

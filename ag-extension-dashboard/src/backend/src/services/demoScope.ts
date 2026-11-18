@@ -1,6 +1,7 @@
 /**
  * Demo records (`is_demo` on farmers and users) belong to the public demo
- * session only. Real accounts never see them, and background jobs, which act
+ * session only. Operational lists never show them; administrators may inspect
+ * them in an explicitly scoped, separate demo-record view. Background jobs, which act
  * for no one, treat them as invisible, so no campaign, advisory or alert can
  * reach a demo farmer's phone number.
  *

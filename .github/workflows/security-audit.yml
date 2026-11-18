@@ -75,20 +75,28 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Audit Root Tooling Dependencies
-        run: node scripts/npm-audit-gate.cjs --dir . --level high
+      - name: Audit Root Tooling & Production Runtime Dependencies
+        run: |
+          node scripts/npm-audit-gate.cjs --dir . --level high --omit-dev
+          node scripts/npm-audit-gate.cjs --dir . --level high
 
       - name: Audit Backend Dependencies
-        run: node scripts/npm-audit-gate.cjs --dir ag-extension-dashboard/src/backend --level high
+        run: |
+          node scripts/npm-audit-gate.cjs --dir ag-extension-dashboard/src/backend --level high --omit-dev
+          node scripts/npm-audit-gate.cjs --dir ag-extension-dashboard/src/backend --level high
 
       - name: Audit Frontend Dependencies
-        run: node scripts/npm-audit-gate.cjs --dir ag-extension-dashboard/src/frontend --level high
+        run: |
+          node scripts/npm-audit-gate.cjs --dir ag-extension-dashboard/src/frontend --level high --omit-dev
+          node scripts/npm-audit-gate.cjs --dir ag-extension-dashboard/src/frontend --level high
 
       - name: Audit Shared Package Dependencies
         run: node scripts/npm-audit-gate.cjs --dir ag-extension-shared --level high
 
       - name: Audit Browser Extension Dependencies
-        run: node scripts/npm-audit-gate.cjs --dir ag-extension-browser-ext --level high
+        run: |
+          node scripts/npm-audit-gate.cjs --dir ag-extension-browser-ext --level high --omit-dev
+          node scripts/npm-audit-gate.cjs --dir ag-extension-browser-ext --level high
 
       - name: Audit Python Agent Dependencies
         run: |

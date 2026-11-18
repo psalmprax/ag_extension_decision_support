@@ -1,6 +1,18 @@
 {
   "entries": [
     {
+      "package": "picomatch",
+      "scope": [
+        "ag_extension_decision_support",
+        "backend",
+        "frontend",
+        "ag-extension-browser-ext"
+      ],
+      "advisories": ["GHSA-fc5q-39xc-vjpf"],
+      "reason": "Upstream reports all published picomatch versions through latest 4.0.7 affected by GHSA-fc5q-39xc-vjpf, with no first patched version as of 2026-11-17. Production runtime dependency trees (--omit=dev) are free of picomatch across all packages, and frontend nginx ships compiled assets only; remaining occurrences are solely in repository-controlled dev, build, lint, and test tooling. This is temporary risk acceptance, not a vulnerability fix: enforce --omit-dev in CI, track the advisory, and upgrade/remove this entry when a patched release is available.",
+      "expires": "2026-12-01"
+    },
+    {
       "package": "extract-zip",
       "scope": ["ag_extension_decision_support"],
       "advisories": ["GHSA-jmr9-qjv8-65gv", "GHSA-7pqw-9j4j-h8q3"],

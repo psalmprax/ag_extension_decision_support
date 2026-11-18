@@ -121,6 +121,7 @@ async function completePasswordLogin(req: Request, res: Response, user: LoginUse
                 firstName: user.first_name,
                 lastName: user.last_name,
                 role: user.role,
+                isDemo: user.is_demo === true || user.email?.toLowerCase() === 'demo@agridemo.com',
                 region: user.region,
                 mfaEnabled: !!user.mfa_enabled,
                 planName,

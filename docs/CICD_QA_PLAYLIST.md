@@ -91,6 +91,24 @@ coverage provider must be upgraded together. Do not use `npm audit fix --force`:
 some suggested "fixes" downgrade tooling or change dependency APIs. Remaining
 unpatched or major-only advisories must be reported rather than hidden.
 
+As of 2026-11-17, `GHSA-fc5q-39xc-vjpf` affects every published Picomatch
+version through `4.0.7`; upstream lists no patched version. The expiring
+exception in `scripts/audit-allowlist.json` (`expires: 2026-12-01`) covers the
+dev/build/test tooling scopes (`ag_extension_decision_support`, `backend`,
+`frontend`, and `ag-extension-browser-ext`). Production runtime dependencies
+are verified separately with `--omit-dev` (which allows no exemptions and has
+zero `picomatch` high/critical findings, while frontend production nginx ships
+compiled assets rather than Node tooling). This does **not** remediate
+Picomatch: monitor the advisory, install a patched release once available, and
+remove the exception. The gate still rejects unrelated advisories, production
+runtime advisories (`--omit-dev`), and expired/stale exceptions, and audits
+subpackages with standalone lockfiles (`--workspaces=false`) so root overrides
+cannot mask subpackage advisories.
+Peer-dependency cycles (such as Vitest and its coverage provider) may inherit
+an exception only when their dependency graph reaches a reviewed exception or
+a below-threshold finding and contains no unreviewed advisory or unknown node.
+Regression checks: `node --test scripts/npm-audit-gate.test.cjs`.
+
 ### Q2c. Why can a pest-threshold answer become a treatment-rate warning?
 
 The generated-advice guard withholds unverified pesticide doses, concentrations,
@@ -696,6 +714,23 @@ Avoid vague messages such as `Update workflow`.
 ### Q74. Scenario: a provider credential is absent in staging. What should happen?
 
 **A.** The affected integration should report not configured or unavailable. It must not return mock pricing, fake telemetry, placeholder IDs, guessed geography, or fabricated success. If the feature is intentionally demo-only, label it as such and prevent it from writing production records.
+
+---
+
+### Q75. Should a real administrator see demo farmers in Client Portfolio?
+
+**A.** No. Operational user/farmer lists and farmer CSV exports exclude demo
+records, including farmers linked to demo users or officers. A stale browser
+demo flag must not substitute sample farmers for a signed-in real account.
+Portfolio queries are account-scoped, and the verified profile refreshes the
+cached identity. An empty live portfolio stays empty.
+
+Administrators can explicitly open **Inspect demo records (admin only)** in
+the user directory. That read-only panel requests `dataset=demo`; ordinary
+lists default to `dataset=live`. Non-admin and demo sessions cannot use this
+inspection endpoint. Static preview fixtures are separate from stored records.
+Regression coverage: `PortfolioDemoIsolation.test.tsx`,
+`AdminDemoRecords.test.tsx`, and `adminDemoRecords.test.ts`.
 
 ---
 

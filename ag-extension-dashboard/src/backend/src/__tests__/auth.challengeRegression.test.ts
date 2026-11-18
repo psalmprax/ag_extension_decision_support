@@ -181,6 +181,7 @@ describe('Login subscription presentation', () => {
     const res = await request(app).post('/login').send({ email: user.email, password: 'Password123!' });
     expect(res.status).toBe(200);
     expect(res.body.data.user).toMatchObject({ planName: row.planName, isFree: row.isFree });
+    expect(res.body.data.user.isDemo).toBe(row.demo || row.email === 'demo@agridemo.com');
     expect(mockQuery).toHaveBeenCalledTimes(1);
   });
 

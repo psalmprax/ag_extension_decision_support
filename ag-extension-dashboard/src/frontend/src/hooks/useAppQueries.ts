@@ -7,6 +7,7 @@ import { fetchPerformanceData } from '@/api/analyticsService';
 import { getMyTransactions } from '@/api/billingService';
 import { useAppStore, type Farmer } from '@/store/useAppStore';
 import { useDemoMode, DEMO_FARMERS, buildDemoDashboardData, buildDemoPerformanceData } from '@/demo';
+import { isDemoFarmerId } from '@/demo/demoIds';
 
 function mapApiFarmerToStoreFarmer(farmer: ApiFarmer): Farmer {
   return {
@@ -33,7 +34,9 @@ export function resolveEffectiveFarmers(
   userRole?: string
 ): Farmer[] {
   if (isDemo) return DEMO_FARMERS;
-  let result = queryFarmers.map(mapApiFarmerToStoreFarmer);
+  let result = queryFarmers
+    .filter(farmer => !isDemoFarmerId(farmer.id) && !('isDemo' in farmer && farmer.isDemo === true))
+    .map(mapApiFarmerToStoreFarmer);
   // Client-side role guard: a farmer should only see their own record
   if (userRole === 'farmer' && result.length > 1) {
     result = result.slice(0, 1);
@@ -62,13 +65,13 @@ export function useAppQueries(activeTab: string, searchQuery: string) {
     isError,
     refetch: refetchDashboard,
   } = useQuery({
-    queryKey: ['dashboard'],
+    queryKey: ['dashboard', user?.id, isDemo],
     queryFn: fetchDashboardData,
     enabled: isDemoQueryEnabled(isDashboard, hasUser, isDemo),
   });
 
   const { data: farmersResponse } = useQuery({
-    queryKey: ['farmers'],
+    queryKey: ['farmers', user?.id, isDemo],
     queryFn: fetchFarmers,
     enabled: isDemoQueryEnabled(isPortfolioOrDash, hasUser, isDemo),
   });
@@ -81,25 +84,25 @@ export function useAppQueries(activeTab: string, searchQuery: string) {
   );
 
   const { data: visitsResponse, refetch: refetchVisits } = useQuery({
-    queryKey: ['visits'],
+    queryKey: ['visits', user?.id, isDemo],
     queryFn: fetchVisits,
     enabled: isDemoQueryEnabled(activeTab === 'visits', hasUser, isDemo),
   });
 
   const { data: reportsResponse, refetch: refetchReports } = useQuery({
-    queryKey: ['reports'],
+    queryKey: ['reports', user?.id, isDemo],
     queryFn: fetchReports,
     enabled: isDemoQueryEnabled(activeTab === 'reports', hasUser, isDemo),
   });
 
   const { data: performanceResponse } = useQuery({
-    queryKey: ['performance'],
+    queryKey: ['performance', user?.id, isDemo],
     queryFn: fetchPerformanceData,
     enabled: isDemoQueryEnabled(isAnalyticsOrDash, hasUser, isDemo),
   });
 
   const { data: transactionsResponse } = useQuery({
-    queryKey: ['transactions'],
+    queryKey: ['transactions', user?.id, isDemo],
     queryFn: getMyTransactions,
     enabled: isDemoQueryEnabled(isBillingOrSearch, hasUser, isDemo),
   });

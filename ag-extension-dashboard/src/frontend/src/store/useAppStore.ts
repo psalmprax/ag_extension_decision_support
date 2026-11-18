@@ -5,6 +5,7 @@ import * as farmerService from '@/api/farmerService';
 import * as visitService from '@/api/visitService';
 import { randomId } from '@/lib/randomId';
 import { toast } from 'react-hot-toast';
+import { isDemoSession } from '@/demo/demoSession';
 
 // Types
 export interface User {
@@ -17,6 +18,7 @@ export interface User {
   phone?: string;
   planName?: string;
   isFree?: boolean;
+  isDemo?: boolean;
   notificationPreferences?: NotificationPreferences;
 }
 
@@ -211,7 +213,13 @@ export const useAppStore = create<AppState>()(
       shareModal: null,
 
       // Actions
-      setUser: user => set({ user }),
+      setUser: user => set(state => ({
+        user,
+        isDemo: user ? isDemoSession(user, false) : false,
+        ...(state.user?.id !== user?.id ? {
+          farmers: [], visits: [], notifications: [], pendingSMS: null, subscription: null,
+        } : {}),
+      })),
       setPreferredAudioLanguage: preferredAudioLanguage => set({ preferredAudioLanguage }),
       setIsDemo: isDemo => set(_state => {
         // When exiting demo mode, clear all demo data from the store
@@ -409,6 +417,11 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'ag-extension-storage',
+      onRehydrateStorage: () => state => {
+        if (!state?.user) return;
+        const isDemo = isDemoSession(state.user, state.isDemo);
+        if (state.isDemo !== isDemo) state.setIsDemo(isDemo);
+      },
       partialize: state => ({
         themeName: state.themeName,
         darkMode: state.darkMode,

@@ -8,6 +8,7 @@ import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 import { revokeAllUserSessions } from '@/services/sessionService';
 import { demoSql } from '@/services/demoScope';
+import { validateRecordScope } from '@/services/demoRecordScope';
 
 const router = Router();
 
@@ -124,10 +125,8 @@ async function executeUserUpdate(
 /**
  * GET /api/users — list users (admin-only).
  */
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', validateRecordScope, async (req: Request, res: Response) => {
     try {
-        // Admins see demo accounts (flagged) so they can manage them; nobody else does.
-        const demoAccountsFilter = req.user?.role === 'admin' ? '' : `WHERE ${demoSql('users')}`;
         const pool = getPool();
         if (!pool) {
             return res.status(503).json({ success: false, error: 'Database unavailable' });
@@ -142,8 +141,9 @@ router.get('/', async (req: Request, res: Response) => {
                         last_login_at AS last_login,
                         COALESCE(is_demo, false) AS is_demo
                  FROM users
-                 ${demoAccountsFilter}
-                 ORDER BY created_at DESC`
+                 WHERE COALESCE(is_demo, false) = $1
+                 ORDER BY created_at DESC`,
+                [req.query.dataset === 'demo']
             );
             rows = queryRes.rows || [];
         } catch (dbErr: unknown) {
@@ -153,9 +153,12 @@ router.get('/', async (req: Request, res: Response) => {
                     `SELECT id, email, first_name, last_name, role, region, NULL::text AS country, phone, is_active,
                             avatar_url, created_at,
                             NULL::text AS preferred_language,
-                            NULL::timestamp AS last_login
+                            NULL::timestamp AS last_login,
+                            COALESCE(is_demo, false) AS is_demo
                      FROM users
-                     ORDER BY created_at DESC`
+                     WHERE COALESCE(is_demo, false) = $1
+                     ORDER BY created_at DESC`,
+                    [req.query.dataset === 'demo']
                 );
                 rows = fallbackRes.rows || [];
             } else {
@@ -206,7 +209,7 @@ router.get('/:id', async (req: Request, res: Response) => {
                             avatar_url, created_at,
                             NULL::text AS preferred_language,
                             NULL::timestamp AS last_login
-                     FROM users WHERE id = $1`,
+                     FROM users WHERE id = $1 ${demoAccountsFilter.replace('WHERE', 'AND')}`,
                     [id]
                 );
                 rows = fallbackRes.rows || [];
