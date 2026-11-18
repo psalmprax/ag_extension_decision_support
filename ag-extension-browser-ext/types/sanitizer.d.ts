@@ -2,26 +2,38 @@
  * Minimal typings for the HTML Sanitizer API.
  *
  * TypeScript 5.9's `lib.dom` still does not declare `Element.setHTML()` or the
- * `Sanitizer` interface, and the extension's tsconfig targets ESNext with the
- * stock DOM lib. Declaring them here keeps the toolbar code type-safe without
- * casting through `any`.
+ * `Sanitizer` interface, and the extension targets ESNext with the stock DOM
+ * lib. Declaring them here keeps the toolbar code type-safe without casting
+ * through `any`.
  *
- * Runtime support: Chromium 133+ and current Firefox. The content script
- * feature-detects both and degrades to text-only rendering when absent.
+ * Only the members actually used are declared. The config uses `elements` /
+ * `attributes` because that is the shape shipped engines read: Chrome 155
+ * silently ignores `allowElements` / `allowAttributes` (it reports an empty
+ * `removeElements` list), and `attributes` must be an array — an object map
+ * throws a TypeError.
  */
 
+interface SanitizerElementNamespace {
+  name: string;
+  namespace?: string | null;
+}
+
+interface SanitizerAttributeNamespace {
+  name: string;
+  namespace?: string | null;
+  elements?: string[];
+}
+
 interface SanitizerConfig {
-  allowElements?: string[];
-  blockElements?: string[];
-  dropElements?: string[];
-  allowAttributes?: Record<string, string[]>;
-  dropAttributes?: Record<string, string[]>;
-  allowCustomElements?: boolean;
-  allowComments?: boolean;
+  elements?: Array<string | SanitizerElementNamespace>;
+  attributes?: Array<string | SanitizerAttributeNamespace>;
+  comments?: boolean;
+  dataAttributes?: boolean;
 }
 
 declare class Sanitizer {
   constructor(config?: SanitizerConfig);
+  get(): SanitizerConfig;
 }
 
 interface Element {

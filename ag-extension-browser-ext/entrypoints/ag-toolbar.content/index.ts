@@ -2,6 +2,7 @@ import { defineContentScript } from 'wxt/utils/define-content-script';
 import { createShadowRootUi } from 'wxt/utils/content-script-ui/shadow-root';
 import { browser } from 'wxt/browser';
 import type { ContentScriptContext } from 'wxt/utils/content-script-context';
+import { safeSetHTML } from './sanitize';
 
 type ContentRequestMessage =
     | { action: 'get_page_context' }
@@ -26,63 +27,6 @@ const isContentRequestMessage = (message: unknown): message is ContentRequestMes
         action === 'clear_highlights' ||
         action === 'highlight_terms'
     );
-};
-
-/**
- * HTML sanitizer for toolbar templates.
- *
- * All HTML rendered in the content script passes through here. The toolbar
- * templates are static (built-in SVG + text), but a sanitizer — not trust —
- * is the enforcement point: anything dynamic that ever flows into a template
- * cannot smuggle event handlers, script/style elements, or javascript: URLs
- * into the host page, which runs with the extension's privileges.
- */
-const ALLOWED_HTML_TAGS = [
-  'div', 'span', 'svg', 'circle', 'path', 'rect', 'line', 'polyline', 'polygon', 'g', 'defs', 'title',
-  'p', 'strong', 'em', 'b', 'i', 'u', 'br', 'small', 'sub', 'sup', 'code', 'pre',
-];
-
-/**
- * Element and attribute policy for the toolbar templates: the tag list above,
- * and the inline `style` blocks plus the SVG presentation attributes the icons
- * use. The browser's baseline Sanitizer policy still removes event handlers,
- * `srcdoc`, `formaction` and `javascript:`/`vbscript:` URLs, which is the same
- * enforcement the former hand-rolled name/value checks provided.
- */
-const TOOLBAR_SANITIZER_CONFIG: SanitizerConfig = {
-  allowElements: ALLOWED_HTML_TAGS,
-  allowAttributes: {
-    '*': [
-      'style', 'class', 'id', 'title', 'role',
-      'width', 'height', 'viewBox', 'xmlns', 'preserveAspectRatio',
-      'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin',
-      'd', 'cx', 'cy', 'r', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'points', 'transform', 'opacity',
-    ],
-  },
-};
-
-const toolbarSanitizer =
-  typeof Sanitizer === 'function' ? new Sanitizer(TOOLBAR_SANITIZER_CONFIG) : null;
-
-/**
- * Replace an element's content with sanitized markup.
- *
- * Parsing goes through the native Sanitizer API (`Element.setHTML`), so the
- * platform filters untrusted markup instead of this file assigning `innerHTML`.
- * Replacing (rather than appending) is also what the callers intend: the sync
- * and GPS buttons swap their icon in place, and appending used to stack a new
- * SVG on every state change.
- *
- * On engines without the Sanitizer API the fallback inserts text only, so a
- * template with dynamic interpolation still cannot execute in the host page.
- */
-const safeSetHTML = (el: HTMLElement, html: string): void => {
-  if (toolbarSanitizer && typeof el.setHTML === 'function') {
-    el.setHTML(html.trim(), { sanitizer: toolbarSanitizer });
-    return;
-  }
-  console.warn('[ag-toolbar] Sanitizer API unavailable — rendering template as text');
-  el.textContent = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 };
 
 /**
