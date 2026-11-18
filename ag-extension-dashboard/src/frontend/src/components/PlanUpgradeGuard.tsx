@@ -144,12 +144,12 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
     worldmonitor: {
       icon: Globe,
       headline: 'WorldMonitor Spatial Intelligence',
-      desc: 'Multi-layer satellite NDVI vegetation telemetry, SoilGrids organic carbon mapping, and regional pest swarm radar require a Pro or Enterprise subscription.',
+      desc: 'Live spatial layer summaries combining 30-day NDVI crop stress diagnosis counts, SoilGrids regional pH baselines, and pest swarm cluster radar require a Pro or Enterprise subscription.',
       benefits: [
-        '3D geospatial globe with live NDVI vegetation overlays',
-        'SoilGrids organic carbon, moisture & pH layers',
-        'Regional pest swarm outbreak radar',
-        'County & crop-level spatial filtering',
+        '30-day NDVI stress diagnosis counts & mapped farmer cohorts',
+        'SoilGrids regional soil pH baseline & centroid telemetry',
+        '14-day regional pest swarm outbreak cluster radar',
+        'County, crop & region spatial filtering',
       ],
     },
   };

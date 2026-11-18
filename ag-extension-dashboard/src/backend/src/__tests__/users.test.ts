@@ -4,11 +4,28 @@ import { makeOfficerToken } from './helpers/setupMocks';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
-jest.mock('../services/databaseService', () => ({
-    initializeDatabase: jest.fn(),
-    getPool: jest.fn(() => ({ query: jest.fn() })),
-    query: jest.fn(),
-}));
+jest.mock('../services/databaseService', () => {
+    const query = jest.fn();
+    const txClient = {
+        query: jest.fn((sql: string, params?: unknown[]) => {
+            if (
+                sql.startsWith('SAVEPOINT') ||
+                sql.startsWith('RELEASE SAVEPOINT') ||
+                sql.startsWith('ROLLBACK TO SAVEPOINT') ||
+                sql.includes('pg_advisory_xact_lock')
+            ) {
+                return Promise.resolve({ rows: [], rowCount: 0 });
+            }
+            return query(sql, params);
+        }),
+    };
+    return {
+        initializeDatabase: jest.fn(),
+        getPool: jest.fn(() => ({ query: jest.fn() })),
+        query,
+        withTransaction: jest.fn(async (cb: (client: typeof txClient) => Promise<unknown>) => cb(txClient)),
+    };
+});
 
 jest.mock('../services/cacheService', () => ({
     initializeDatabase: jest.fn(),

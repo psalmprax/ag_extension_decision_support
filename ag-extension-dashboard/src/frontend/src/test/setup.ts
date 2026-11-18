@@ -86,6 +86,16 @@ class MockIntersectionObserver implements IntersectionObserver {
 }
 vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
 
+// Pure no-op ResizeObserver stub required by Headless UI v1 Dialog in jsdom
+// (invoking the callback on observe() would read zero getBoundingClientRect()
+// bounds and immediately trigger Dialog onClose).
+class MockResizeObserver implements ResizeObserver {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+vi.stubGlobal('ResizeObserver', MockResizeObserver);
+
 if (!window.matchMedia) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
     matches: false,

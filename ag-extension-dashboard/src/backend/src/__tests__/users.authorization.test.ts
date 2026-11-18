@@ -9,7 +9,27 @@ import { query } from '../services/databaseService';
 import { hashToken } from '../services/sessionService';
 import usersRouter from '../routes/users';
 
-jest.mock('../services/databaseService', () => ({ getPool: jest.fn(() => ({})), query: jest.fn() }));
+jest.mock('../services/databaseService', () => {
+  const query = jest.fn();
+  const txClient = {
+    query: jest.fn((sql: string, params?: unknown[]) => {
+      if (
+        sql.startsWith('SAVEPOINT') ||
+        sql.startsWith('RELEASE SAVEPOINT') ||
+        sql.startsWith('ROLLBACK TO SAVEPOINT') ||
+        sql.includes('pg_advisory_xact_lock')
+      ) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+      return query(sql, params);
+    }),
+  };
+  return {
+    getPool: jest.fn(() => ({})),
+    query,
+    withTransaction: jest.fn(async (cb: (client: typeof txClient) => Promise<unknown>) => cb(txClient)),
+  };
+});
 jest.mock('../services/cacheService', () => ({ getCache: jest.fn(() => null) }));
 jest.mock('../utils/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } }));
 

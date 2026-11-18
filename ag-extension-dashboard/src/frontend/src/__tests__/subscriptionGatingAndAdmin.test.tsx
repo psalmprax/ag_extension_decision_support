@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import apiClient from '@/api/client';
@@ -279,10 +279,157 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
     await waitFor(() => {
       expect(apiClient.put).toHaveBeenCalledWith('/users/u-basic', {
         role: 'extension_officer',
-        isActive: true,
         planId: PRO_PLAN_ID,
       });
     });
+  });
+
+  it('worldmonitor upgrade guard describes implemented spatial summaries instead of an unrendered 3D globe', async () => {
+    useAppStore.setState({
+      user: {
+        id: 'off-free',
+        email: 'free@example.org',
+        firstName: 'Free',
+        lastName: 'Officer',
+        role: 'extension_officer',
+        planName: 'Free',
+        isFree: true,
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <Suspense fallback={null}>
+          <TabContent {...buildTabProps('worldmonitor')} />
+        </Suspense>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText(/30-day NDVI stress diagnosis counts/i)).toBeInTheDocument();
+    expect(screen.queryByText(/3D geospatial globe/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/organic carbon/i)).not.toBeInTheDocument();
+  });
+
+  it('displays plan loading errors with retry, sends only changed fields, omits unchanged planId, scopes timer/session, and handles Escape', async () => {
+    useAppStore.setState({
+      user: {
+        id: 'admin-1',
+        email: 'admin@example.org',
+        firstName: 'Root',
+        lastName: 'Admin',
+        role: 'admin',
+        planName: 'Admin',
+        isFree: false,
+      },
+    });
+
+    vi.mocked(apiClient.get).mockResolvedValue({
+      data: {
+        success: true,
+        data: [
+          {
+            id: 'u-pro',
+            firstName: 'Mercy',
+            lastName: 'Chebet',
+            email: 'mercy@example.org',
+            role: 'extension_officer',
+            region: 'Eldoret',
+            phone: '',
+            isActive: true,
+            planId: PRO_PLAN_ID,
+            planName: 'Pro',
+            isFree: false,
+            lastLogin: null,
+          },
+          {
+            id: 'u-other',
+            firstName: 'Peter',
+            lastName: 'Karanja',
+            email: 'peter@example.org',
+            role: 'farmer',
+            region: 'Nakuru',
+            phone: '',
+            isActive: true,
+            planId: FREE_PLAN_ID,
+            planName: 'Free',
+            isFree: true,
+            lastLogin: null,
+          },
+        ],
+      },
+    });
+
+    vi.mocked(fetchPlanQuotas)
+      .mockResolvedValueOnce({ success: false, error: 'Quotas service unavailable' })
+      .mockResolvedValueOnce({
+        success: true,
+        data: [
+          {
+            id: PRO_PLAN_ID,
+            stripePriceId: 'price_pro_monthly',
+            name: 'Pro',
+            price: 29,
+            currency: 'USD',
+            interval: 'month',
+            quotas: { smsLimit: 500, aiChatLimit: 1000, reportLimit: 50, aiVisionLimit: 50 },
+            enforcement: 'hard_limit',
+          },
+        ],
+      });
+
+    vi.mocked(apiClient.put).mockResolvedValue({ data: { success: true } });
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <UserManagementPage />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Mercy Chebet')).toBeInTheDocument();
+    const editButtons = screen.getAllByRole('button', { name: 'Edit Access' });
+    fireEvent.click(editButtons[0]);
+
+    // Error state from fetchPlanQuotas + Retry button
+    expect(await screen.findByText('Quotas service unavailable')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await waitFor(() => {
+      expect(screen.getByRole('option', { name: /Pro \(USD 29\/month\)/ })).toBeInTheDocument();
+    });
+
+    // Plan defaults to '' ("unchanged") and Save is disabled when nothing changed
+    const planSelect = screen.getByLabelText('Subscription Tier (Feature Access)') as HTMLSelectElement;
+    expect(planSelect.value).toBe('');
+    const saveBtn = screen.getByRole('button', { name: 'Save Access' });
+    expect(saveBtn).toBeDisabled();
+
+    // Role-only edit must send ONLY { role } and omit planId + isActive
+    fireEvent.change(screen.getByLabelText('System Role'), {
+      target: { value: 'regional_manager' },
+    });
+    expect(saveBtn).not.toBeDisabled();
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(apiClient.put).toHaveBeenCalledWith('/users/u-pro', {
+        role: 'regional_manager',
+      });
+    });
+
+    // Switch immediately to User B before User A's 600ms close timer expires
+    fireEvent.keyDown(document.activeElement || document.body, { key: 'Escape', code: 'Escape' });
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit Access' })[1]);
+    const modalB = await screen.findByRole('dialog');
+    expect(within(modalB).getByText(/Peter Karanja/)).toBeInTheDocument();
+
+    // Even after 700ms (past User A's 600ms timer), User B's modal stays open
+    await new Promise(resolve => setTimeout(resolve, 700));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(within(screen.getByRole('dialog')).getByText(/Peter Karanja/)).toBeInTheDocument();
   });
 
   it('hides Edit Access button for non-admin users such as regional managers', async () => {

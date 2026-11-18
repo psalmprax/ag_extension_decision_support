@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { query, getPool } from '@/services/databaseService';
+import type { PoolClient } from 'pg';
+import { query, getPool, withTransaction, type TypedQueryResult } from '@/services/databaseService';
 import type { CountRow, UserRow, UserPublicRow } from '@/types/rowTypes';
 import { mapUserPublicRows, mapUserPublicRow, mapUserRows } from '@/types/dtos';
 import { logger } from '@/utils/logger';
@@ -49,10 +50,125 @@ async function resolveActivePlan(planId: string): Promise<PlanLookupRow | null> 
     return rows[0] ?? null;
 }
 
-async function assignUserPlan(userId: string, plan: PlanLookupRow): Promise<{ periodEnd: Date }> {
+async function txQuery<T = Record<string, unknown>>(
+    client: PoolClient,
+    text: string,
+    params?: unknown[]
+): Promise<TypedQueryResult<T>> {
+    const res = await client.query(text, params);
+    return res as unknown as TypedQueryResult<T>;
+}
+
+async function runWithColumnFallback<T>(
+    client: PoolClient,
+    primary: () => Promise<TypedQueryResult<T>>,
+    fallback: () => Promise<TypedQueryResult<T>>
+): Promise<T[]> {
+    const savepoint = 'sp_users_col_fallback';
+    await client.query(`SAVEPOINT ${savepoint}`);
+    try {
+        const res = await primary();
+        await client.query(`RELEASE SAVEPOINT ${savepoint}`);
+        return res.rows || [];
+    } catch (dbErr: unknown) {
+        await client.query(`ROLLBACK TO SAVEPOINT ${savepoint}`);
+        await client.query(`RELEASE SAVEPOINT ${savepoint}`);
+        if (!isMissingColumnError(dbErr)) throw dbErr;
+        logger.warn('users table lacks country or last_login_at column; using fallback query');
+        const fallbackRes = await fallback();
+        return fallbackRes.rows || [];
+    }
+}
+
+async function upsertUserSubscription(
+    client: PoolClient,
+    userId: string,
+    planId: string,
+    now: Date,
+    periodEnd: Date
+): Promise<string | undefined> {
+    const upserted = await txQuery<{ id: string }>(
+        client,
+        `INSERT INTO subscriptions (
+             user_id, plan_id, status, current_period_start, current_period_end,
+             cancel_at_period_end, stripe_subscription_id, expiry_notification_sent, updated_at
+         )
+         VALUES ($1, $2, 'active', $3, $4, false, NULL, false, NOW())
+         ON CONFLICT (user_id) DO UPDATE
+           SET plan_id = EXCLUDED.plan_id,
+               status = 'active',
+               current_period_start = EXCLUDED.current_period_start,
+               current_period_end = EXCLUDED.current_period_end,
+               cancel_at_period_end = false,
+               stripe_subscription_id = NULL,
+               expiry_notification_sent = false,
+               updated_at = NOW()
+         RETURNING id`,
+        [userId, planId, now, periodEnd]
+    );
+    return upserted.rows[0]?.id;
+}
+
+async function resetSubscriptionUsage(client: PoolClient, subscriptionId: string): Promise<void> {
+    await txQuery(
+        client,
+        `INSERT INTO usage (
+             subscription_id, sms_count, ai_chat_count, report_count,
+             ai_vision_count, speech_count, whatsapp_count, last_reset_at, updated_at
+         )
+         VALUES ($1, 0, 0, 0, 0, 0, 0, NOW(), NOW())
+         ON CONFLICT (subscription_id) DO UPDATE
+           SET sms_count = 0,
+               ai_chat_count = 0,
+               report_count = 0,
+               ai_vision_count = 0,
+               speech_count = 0,
+               whatsapp_count = 0,
+               last_reset_at = NOW(),
+               updated_at = NOW()`,
+        [subscriptionId]
+    );
+}
+
+async function recordPlanChangeEvent(
+    client: PoolClient,
+    subscriptionId: string,
+    existing: { plan_id: string; price?: string | number } | undefined,
+    plan: PlanLookupRow
+): Promise<void> {
+    if (!existing || existing.plan_id === plan.id) return;
+    await txQuery(
+        client,
+        `INSERT INTO subscription_change_events (
+             subscription_id, from_plan_id, to_plan_id, from_price, to_price
+         )
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+            subscriptionId,
+            existing.plan_id,
+            plan.id,
+            existing.price != null ? Number(existing.price) : 0,
+            plan.price != null ? Number(plan.price) : 0,
+        ]
+    );
+}
+
+async function assignUserPlan(
+    client: PoolClient,
+    userId: string,
+    plan: PlanLookupRow
+): Promise<{ periodEnd: Date }> {
+    // Serialize per-user plan mutations so concurrent requests cannot read the
+    // same previous plan and log a stale from_plan_id / from_price change event.
+    await txQuery(
+        client,
+        `SELECT pg_advisory_xact_lock(hashtext('user_plan'), hashtext($1))`,
+        [userId]
+    );
     const now = new Date();
     const periodEnd = computeSubscriptionPeriodEnd(plan.interval, now);
-    const existingRes = await query<{ id: string; plan_id: string; price?: string | number }>(
+    const existingRes = await txQuery<{ id: string; plan_id: string; price?: string | number }>(
+        client,
         `SELECT s.id, s.plan_id, sp.price
          FROM subscriptions s
          LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
@@ -60,50 +176,10 @@ async function assignUserPlan(userId: string, plan: PlanLookupRow): Promise<{ pe
         [userId]
     );
     const existing = existingRes.rows[0];
-    const upserted = await query<{ id: string }>(
-        `INSERT INTO subscriptions (
-             user_id, plan_id, status, current_period_start, current_period_end,
-             cancel_at_period_end, expiry_notification_sent, updated_at
-         )
-         VALUES ($1, $2, 'active', $3, $4, false, false, NOW())
-         ON CONFLICT (user_id) DO UPDATE
-           SET plan_id = EXCLUDED.plan_id,
-               status = 'active',
-               current_period_start = EXCLUDED.current_period_start,
-               current_period_end = EXCLUDED.current_period_end,
-               cancel_at_period_end = false,
-               expiry_notification_sent = false,
-               updated_at = NOW()
-         RETURNING id`,
-        [userId, plan.id, now, periodEnd]
-    );
-    const subscriptionId = upserted.rows[0]?.id;
+    const subscriptionId = await upsertUserSubscription(client, userId, plan.id, now, periodEnd);
     if (subscriptionId) {
-        await query(
-            `INSERT INTO usage (
-                 subscription_id, sms_count, ai_chat_count, report_count,
-                 ai_vision_count, speech_count, whatsapp_count, last_reset_at, updated_at
-             )
-             VALUES ($1, 0, 0, 0, 0, 0, 0, NOW(), NOW())
-             ON CONFLICT (subscription_id) DO UPDATE
-               SET last_reset_at = NOW(), updated_at = NOW()`,
-            [subscriptionId]
-        );
-        if (existing && existing.plan_id !== plan.id) {
-            await query(
-                `INSERT INTO subscription_change_events (
-                     subscription_id, from_plan_id, to_plan_id, from_price, to_price
-                 )
-                 VALUES ($1, $2, $3, $4, $5)`,
-                [
-                    subscriptionId,
-                    existing.plan_id,
-                    plan.id,
-                    existing.price != null ? Number(existing.price) : 0,
-                    plan.price != null ? Number(plan.price) : 0,
-                ]
-            );
-        }
+        await resetSubscriptionUsage(client, subscriptionId);
+        await recordPlanChangeEvent(client, subscriptionId, existing, plan);
     }
     return { periodEnd };
 }
@@ -139,12 +215,13 @@ async function resolveRequestedPlan(body: Record<string, unknown>): Promise<{
 }
 
 async function finalizeUserWithPlan(
+    client: PoolClient,
     userRow: UserPublicRow | undefined,
     targetPlan: PlanLookupRow | null
 ) {
     if (!userRow) return null;
     const rowWithPlan = targetPlan
-        ? mergePlanIntoRow(userRow, targetPlan, (await assignUserPlan(userRow.id, targetPlan)).periodEnd)
+        ? mergePlanIntoRow(userRow, targetPlan, (await assignUserPlan(client, userRow.id, targetPlan)).periodEnd)
         : userRow;
     return mapUserPublicRow(rowWithPlan);
 }
@@ -230,62 +307,74 @@ function extractSafeUserUpdates(body: Record<string, unknown>): Record<string, u
     return safeUpdates;
 }
 
+const SUBSCRIPTION_JOIN_SQL = `
+    LEFT JOIN subscriptions s ON s.user_id = %USER_REF%.id
+    LEFT JOIN subscription_plans sp ON sp.id = s.plan_id`;
+
+const SUBSCRIPTION_SELECT_COLS = `
+    sp.id AS plan_id,
+    sp.name AS plan_name,
+    sp.price AS plan_price,
+    s.status AS subscription_status,
+    s.current_period_end AS subscription_period_end`;
+
 async function executeUserUpdate(
+    client: PoolClient,
     id: string,
     safeUpdates: Record<string, unknown>
 ): Promise<UserPublicRow[]> {
-    try {
-        const updateResult = await query<UserPublicRow>(
-            `UPDATE users SET ${Object.keys(safeUpdates).map((k, i) => `${k} = $${i + 1}`).join(', ')}
-              WHERE id = $${Object.keys(safeUpdates).length + 1}
-          RETURNING id, email, first_name, last_name, role, region, country, phone, is_active,
-                    avatar_url, created_at,
-                    NULL::text AS preferred_language,
-                    last_login_at AS last_login`,
-            Object.values(safeUpdates).concat(id)
-        );
-        return updateResult.rows || [];
-    } catch (dbErr: unknown) {
-        if (!isMissingColumnError(dbErr)) throw dbErr;
-        const filteredKeys = Object.keys(safeUpdates).filter(k => k !== 'country');
-        const fallbackResult = await query<UserPublicRow>(
-            `UPDATE users SET ${filteredKeys.map((k, i) => `${k} = $${i + 1}`).join(', ')}
-              WHERE id = $${filteredKeys.length + 1}
-          RETURNING id, email, first_name, last_name, role, region, NULL::text AS country, phone, is_active,
-                    avatar_url, created_at,
-                    NULL::text AS preferred_language,
-                    NULL::timestamp AS last_login`,
-            filteredKeys.map(k => safeUpdates[k]).concat(id)
-        );
-        return fallbackResult.rows || [];
-    }
+    const allKeys = Object.keys(safeUpdates);
+    const buildUpdateCte = (keys: string[], countryExpr: string, lastLoginExpr: string) => `
+        WITH updated AS (
+            UPDATE users SET ${keys.map((k, i) => `${k} = $${i + 1}`).join(', ')}
+            WHERE id = $${keys.length + 1}
+            RETURNING id, email, first_name, last_name, role, region, ${countryExpr}, phone, is_active,
+                      avatar_url, created_at,
+                      NULL::text AS preferred_language,
+                      ${lastLoginExpr},
+                      COALESCE(is_demo, false) AS is_demo
+        )
+        SELECT updated.*, ${SUBSCRIPTION_SELECT_COLS}
+        FROM updated
+        ${SUBSCRIPTION_JOIN_SQL.replace('%USER_REF%', 'updated')}`;
+
+    const fallbackKeys = allKeys.filter(k => k !== 'country');
+    return runWithColumnFallback(
+        client,
+        () =>
+            txQuery<UserPublicRow>(
+                client,
+                buildUpdateCte(allKeys, 'country', 'last_login_at AS last_login'),
+                Object.values(safeUpdates).concat(id)
+            ),
+        () =>
+            txQuery<UserPublicRow>(
+                client,
+                buildUpdateCte(fallbackKeys, 'NULL::text AS country', 'NULL::timestamp AS last_login'),
+                fallbackKeys.map(k => safeUpdates[k]).concat(id)
+            )
+    );
 }
 
-async function fetchUserRowForPlanUpdate(id: string): Promise<UserPublicRow[]> {
-    try {
-        const res = await query<UserPublicRow>(
-            `SELECT id, email, first_name, last_name, role, region, country, phone, is_active,
-                    avatar_url, created_at,
-                    NULL::text AS preferred_language,
-                    last_login_at AS last_login,
-                    COALESCE(is_demo, false) AS is_demo
-             FROM users WHERE id = $1`,
-            [id]
-        );
-        return res.rows || [];
-    } catch (dbErr: unknown) {
-        if (!isMissingColumnError(dbErr)) throw dbErr;
-        const fallback = await query<UserPublicRow>(
-            `SELECT id, email, first_name, last_name, role, region, NULL::text AS country, phone, is_active,
-                    avatar_url, created_at,
-                    NULL::text AS preferred_language,
-                    NULL::timestamp AS last_login,
-                    COALESCE(is_demo, false) AS is_demo
-             FROM users WHERE id = $1`,
-            [id]
-        );
-        return fallback.rows || [];
-    }
+async function fetchUserRowForPlanUpdate(client: PoolClient, id: string): Promise<UserPublicRow[]> {
+    const buildSelectCte = (countryExpr: string, lastLoginExpr: string) => `
+        WITH target AS (
+            SELECT id, email, first_name, last_name, role, region, ${countryExpr}, phone, is_active,
+                   avatar_url, created_at,
+                   NULL::text AS preferred_language,
+                   ${lastLoginExpr},
+                   COALESCE(is_demo, false) AS is_demo
+            FROM users WHERE id = $1
+        )
+        SELECT target.*, ${SUBSCRIPTION_SELECT_COLS}
+        FROM target
+        ${SUBSCRIPTION_JOIN_SQL.replace('%USER_REF%', 'target')}`;
+
+    return runWithColumnFallback(
+        client,
+        () => txQuery<UserPublicRow>(client, buildSelectCte('country', 'last_login_at AS last_login'), [id]),
+        () => txQuery<UserPublicRow>(client, buildSelectCte('NULL::text AS country', 'NULL::timestamp AS last_login'), [id])
+    );
 }
 
 /**
@@ -397,6 +486,7 @@ router.get('/:id', async (req: Request, res: Response) => {
                             NULL::text AS country, users.phone, users.is_active, users.avatar_url, users.created_at,
                             NULL::text AS preferred_language,
                             NULL::timestamp AS last_login,
+                            COALESCE(is_demo, false) AS is_demo,
                             sp.id AS plan_id,
                             sp.name AS plan_name,
                             sp.price AS plan_price,
@@ -431,36 +521,49 @@ function hasRequiredCreateFields(data: ReturnType<typeof extractCreateUserData>)
 }
 
 async function insertUserWithFallback(
+    client: PoolClient,
     data: ReturnType<typeof extractCreateUserData>,
     passwordHash: string
 ): Promise<UserPublicRow[]> {
-    try {
-        const insertResult = await query<UserPublicRow>(
-            `INSERT INTO users (email, password_hash, first_name, last_name, role, region, country, phone, is_active)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
-             ON CONFLICT (email) DO NOTHING
-             RETURNING id, email, first_name, last_name, role, region, country, phone, is_active,
-                       avatar_url, created_at,
-                       NULL::text AS preferred_language,
-                       NULL::timestamp AS last_login`,
-            [data.email, passwordHash, data.firstName, data.lastName, data.normalizedRole, data.region, data.country, data.phone]
-        );
-        return insertResult.rows || [];
-    } catch (dbErr: unknown) {
-        if (!isMissingColumnError(dbErr)) throw dbErr;
-        logger.warn('users table lacks country column; inserting without country');
-        const fallbackResult = await query<UserPublicRow>(
-            `INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, is_active)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, true)
-             ON CONFLICT (email) DO NOTHING
-             RETURNING id, email, first_name, last_name, role, region, NULL::text AS country, phone, is_active,
-                       avatar_url, created_at,
-                       NULL::text AS preferred_language,
-                       NULL::timestamp AS last_login`,
-            [data.email, passwordHash, data.firstName, data.lastName, data.normalizedRole, data.region, data.phone]
-        );
-        return fallbackResult.rows || [];
-    }
+    return runWithColumnFallback(
+        client,
+        () =>
+            txQuery<UserPublicRow>(
+                client,
+                `INSERT INTO users (email, password_hash, first_name, last_name, role, region, country, phone, is_active)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
+                 ON CONFLICT (email) DO NOTHING
+                 RETURNING id, email, first_name, last_name, role, region, country, phone, is_active,
+                           avatar_url, created_at,
+                           NULL::text AS preferred_language,
+                           NULL::timestamp AS last_login`,
+                [data.email, passwordHash, data.firstName, data.lastName, data.normalizedRole, data.region, data.country, data.phone]
+            ),
+        () =>
+            txQuery<UserPublicRow>(
+                client,
+                `INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, is_active)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, true)
+                 ON CONFLICT (email) DO NOTHING
+                 RETURNING id, email, first_name, last_name, role, region, NULL::text AS country, phone, is_active,
+                           avatar_url, created_at,
+                           NULL::text AS preferred_language,
+                           NULL::timestamp AS last_login`,
+                [data.email, passwordHash, data.firstName, data.lastName, data.normalizedRole, data.region, data.phone]
+            )
+    );
+}
+
+async function createUserInTransaction(
+    data: ReturnType<typeof extractCreateUserData>,
+    passwordHash: string,
+    targetPlan: PlanLookupRow | null
+) {
+    return withTransaction(async client => {
+        const rows = await insertUserWithFallback(client, data, passwordHash);
+        if (rows.length === 0) return null;
+        return finalizeUserWithPlan(client, rows[0], targetPlan);
+    });
 }
 
 function validatePutPayload(
@@ -479,14 +582,27 @@ function validatePutPayload(
 }
 
 async function applyUserUpdateOrFetch(
+    client: PoolClient,
     id: string,
     safeUpdates: Record<string, unknown>
 ): Promise<UserPublicRow[]> {
     if (Object.keys(safeUpdates).length === 0) {
-        return fetchUserRowForPlanUpdate(id);
+        return fetchUserRowForPlanUpdate(client, id);
     }
     safeUpdates.updated_at = new Date();
-    return executeUserUpdate(id, safeUpdates);
+    return executeUserUpdate(client, id, safeUpdates);
+}
+
+async function updateUserInTransaction(
+    id: string,
+    safeUpdates: Record<string, unknown>,
+    targetPlan: PlanLookupRow | null
+) {
+    return withTransaction(async client => {
+        const rows = await applyUserUpdateOrFetch(client, id, safeUpdates);
+        if (rows.length === 0) return null;
+        return finalizeUserWithPlan(client, rows[0], targetPlan);
+    });
 }
 
 /**
@@ -514,12 +630,11 @@ router.post('/', authorize(['admin']), async (req: Request, res: Response) => {
         }
 
         const passwordHash = await bcrypt.hash(data.password, 10);
-        const rows = await insertUserWithFallback(data, passwordHash);
-        if (rows.length === 0) {
+        const dto = await createUserInTransaction(data, passwordHash, planResolution.plan);
+        if (!dto) {
             return res.status(409).json({ success: false, error: 'Email already registered' });
         }
 
-        const dto = await finalizeUserWithPlan(rows[0], planResolution.plan);
         return res.status(201).json({ success: true, data: dto });
     } catch (error) {
         logger.error('Failed to create user:', error);
@@ -550,19 +665,18 @@ router.put('/:id', authorize(['admin']), async (req: Request, res: Response) => 
             return res.status(400).json({ success: false, error: payloadError });
         }
 
-        // Roles are embedded in the JWT, so a role change (demotion included) and
-        // (re)activation must not leave previously issued tokens usable: revoke
-        // every session so the user signs in again and gets the new claims.
-        if (safeUpdates.is_active !== undefined || safeUpdates.role !== undefined) {
-            await revokeAllUserSessions(id);
-        }
-
-        const rows = await applyUserUpdateOrFetch(id, safeUpdates);
-        if (rows.length === 0) {
+        const shouldRevokeSessions = safeUpdates.is_active !== undefined || safeUpdates.role !== undefined;
+        const dto = await updateUserInTransaction(id, safeUpdates, planResolution.plan);
+        if (!dto) {
             return res.status(404).json({ success: false, error: 'User not found' });
         }
 
-        const dto = await finalizeUserWithPlan(rows[0], planResolution.plan);
+        // Roles are embedded in the JWT, so revoke existing sessions post-commit
+        // whenever role or activation changes.
+        if (shouldRevokeSessions) {
+            await revokeAllUserSessions(id);
+        }
+
         return res.json({ success: true, data: dto });
     } catch (error) {
         logger.error('Failed to update user:', error);
