@@ -13,6 +13,7 @@ import type {
   ApiClientRow,
 } from '../rowTypes';
 import { parseCount, parseDecimal, toIso } from './common';
+import { isSubscriptionActive, resolveUserPlan } from '@/services/subscriptionUtils';
 
 // --- Count DTO -------------------------------------------------------------
 
@@ -198,8 +199,29 @@ export interface UserPublicDTO {
   avatarUrl: string | null;
   lastLogin: string | null;
   isDemo: boolean;
+  planId: string | null;
+  planName: string;
+  planStatus: string | null;
+  isFree: boolean;
+  planExpiresAt: string | null;
 }
 export function mapUserPublicRow(row: UserPublicRow): UserPublicDTO {
+  const { planName, isFree } = resolveUserPlan({
+    role: row.role,
+    isDemo: row.is_demo,
+    email: row.email,
+    planName: row.plan_name,
+    planPrice: row.plan_price,
+    subscriptionStatus: row.subscription_status,
+    subscriptionPeriodEnd: row.subscription_period_end,
+  });
+  const hasActiveRecord =
+    row.role === 'admin' ||
+    isSubscriptionActive({
+      status: row.subscription_status,
+      currentPeriodEnd: row.subscription_period_end,
+    });
+
   return {
     id: row.id,
     email: row.email,
@@ -214,6 +236,11 @@ export function mapUserPublicRow(row: UserPublicRow): UserPublicDTO {
     avatarUrl: row.avatar_url,
     lastLogin: toIso(row.last_login) ?? null,
     isDemo: row.is_demo === true,
+    planId: row.plan_id ?? null,
+    planName,
+    planStatus: row.subscription_status ?? (row.role === 'admin' ? 'active' : hasActiveRecord ? 'active' : null),
+    isFree,
+    planExpiresAt: toIso(row.subscription_period_end) ?? null,
   };
 }
 export function mapUserPublicRows(rows: UserPublicRow[]): UserPublicDTO[] {

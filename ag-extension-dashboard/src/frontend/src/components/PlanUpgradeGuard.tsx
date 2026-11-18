@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   MapPin,
   BarChart3,
+  Globe,
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -28,7 +29,8 @@ interface PlanUpgradeGuardProps {
     | 'reports'
     | 'workflows'
     | 'visits'
-    | 'analytics';
+    | 'analytics'
+    | 'worldmonitor';
   children?: React.ReactNode;
 }
 
@@ -137,6 +139,17 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
         'Regional crop outbreak predictive heatmaps',
         'Deep customer satisfaction & survey analytics',
         'Executive data export & real-time telemetry feeds',
+      ],
+    },
+    worldmonitor: {
+      icon: Globe,
+      headline: 'WorldMonitor Spatial Intelligence',
+      desc: 'Multi-layer satellite NDVI vegetation telemetry, SoilGrids organic carbon mapping, and regional pest swarm radar require a Pro or Enterprise subscription.',
+      benefits: [
+        '3D geospatial globe with live NDVI vegetation overlays',
+        'SoilGrids organic carbon, moisture & pH layers',
+        'Regional pest swarm outbreak radar',
+        'County & crop-level spatial filtering',
       ],
     },
   };

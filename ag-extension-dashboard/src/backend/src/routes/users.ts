@@ -9,6 +9,115 @@ import { safeError } from '@/utils/safeResponse';
 import { revokeAllUserSessions } from '@/services/sessionService';
 import { demoSql } from '@/services/demoScope';
 import { validateRecordScope } from '@/services/demoRecordScope';
+import { computeSubscriptionPeriodEnd } from '@/services/subscriptionUtils';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+interface PlanLookupRow {
+    id: string;
+    name: string;
+    price: string | number;
+    interval: string | null;
+}
+
+function extractOptionalPlanId(body: Record<string, unknown>): {
+    provided: boolean;
+    planId: string | null;
+    error?: string;
+} {
+    const raw = body.planId ?? body.plan_id;
+    if (raw === undefined || raw === null || raw === '') {
+        return { provided: false, planId: null };
+    }
+    if (typeof raw !== 'string') {
+        return { provided: true, planId: null, error: 'planId must be a string' };
+    }
+    const trimmed = raw.trim();
+    if (!UUID_RE.test(trimmed)) {
+        return { provided: true, planId: null, error: 'Invalid planId format' };
+    }
+    return { provided: true, planId: trimmed };
+}
+
+async function resolveActivePlan(planId: string): Promise<PlanLookupRow | null> {
+    const { rows } = await query<PlanLookupRow>(
+        `SELECT id, name, price, interval
+         FROM subscription_plans
+         WHERE id = $1 AND is_active = true`,
+        [planId]
+    );
+    return rows[0] ?? null;
+}
+
+async function assignUserPlan(userId: string, plan: PlanLookupRow): Promise<{ periodEnd: Date }> {
+    const now = new Date();
+    const periodEnd = computeSubscriptionPeriodEnd(plan.interval, now);
+    const existingRes = await query<{ id: string; plan_id: string; price?: string | number }>(
+        `SELECT s.id, s.plan_id, sp.price
+         FROM subscriptions s
+         LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
+         WHERE s.user_id = $1`,
+        [userId]
+    );
+    const existing = existingRes.rows[0];
+    const upserted = await query<{ id: string }>(
+        `INSERT INTO subscriptions (
+             user_id, plan_id, status, current_period_start, current_period_end,
+             cancel_at_period_end, expiry_notification_sent, updated_at
+         )
+         VALUES ($1, $2, 'active', $3, $4, false, false, NOW())
+         ON CONFLICT (user_id) DO UPDATE
+           SET plan_id = EXCLUDED.plan_id,
+               status = 'active',
+               current_period_start = EXCLUDED.current_period_start,
+               current_period_end = EXCLUDED.current_period_end,
+               cancel_at_period_end = false,
+               expiry_notification_sent = false,
+               updated_at = NOW()
+         RETURNING id`,
+        [userId, plan.id, now, periodEnd]
+    );
+    const subscriptionId = upserted.rows[0]?.id;
+    if (subscriptionId) {
+        await query(
+            `INSERT INTO usage (
+                 subscription_id, sms_count, ai_chat_count, report_count,
+                 ai_vision_count, speech_count, whatsapp_count, last_reset_at, updated_at
+             )
+             VALUES ($1, 0, 0, 0, 0, 0, 0, NOW(), NOW())
+             ON CONFLICT (subscription_id) DO UPDATE
+               SET last_reset_at = NOW(), updated_at = NOW()`,
+            [subscriptionId]
+        );
+        if (existing && existing.plan_id !== plan.id) {
+            await query(
+                `INSERT INTO subscription_change_events (
+                     subscription_id, from_plan_id, to_plan_id, from_price, to_price
+                 )
+                 VALUES ($1, $2, $3, $4, $5)`,
+                [
+                    subscriptionId,
+                    existing.plan_id,
+                    plan.id,
+                    existing.price != null ? Number(existing.price) : 0,
+                    plan.price != null ? Number(plan.price) : 0,
+                ]
+            );
+        }
+    }
+    return { periodEnd };
+}
+
+function mergePlanIntoRow(row: UserPublicRow, plan: PlanLookupRow, periodEnd: Date): UserPublicRow {
+    return {
+        ...row,
+        plan_id: plan.id,
+        plan_name: plan.name,
+        plan_price: plan.price,
+        subscription_status: 'active',
+        subscription_period_end: periodEnd,
+    };
+}
 
 const router = Router();
 
@@ -122,6 +231,33 @@ async function executeUserUpdate(
     }
 }
 
+async function fetchUserRowForPlanUpdate(id: string): Promise<UserPublicRow[]> {
+    try {
+        const res = await query<UserPublicRow>(
+            `SELECT id, email, first_name, last_name, role, region, country, phone, is_active,
+                    avatar_url, created_at,
+                    NULL::text AS preferred_language,
+                    last_login_at AS last_login,
+                    COALESCE(is_demo, false) AS is_demo
+             FROM users WHERE id = $1`,
+            [id]
+        );
+        return res.rows || [];
+    } catch (dbErr: unknown) {
+        if (!isMissingColumnError(dbErr)) throw dbErr;
+        const fallback = await query<UserPublicRow>(
+            `SELECT id, email, first_name, last_name, role, region, NULL::text AS country, phone, is_active,
+                    avatar_url, created_at,
+                    NULL::text AS preferred_language,
+                    NULL::timestamp AS last_login,
+                    COALESCE(is_demo, false) AS is_demo
+             FROM users WHERE id = $1`,
+            [id]
+        );
+        return fallback.rows || [];
+    }
+}
+
 /**
  * GET /api/users — list users (admin-only).
  */
@@ -135,14 +271,21 @@ router.get('/', validateRecordScope, async (req: Request, res: Response) => {
         let rows: UserPublicRow[] = [];
         try {
             const queryRes = await query<UserPublicRow>(
-                `SELECT id, email, first_name, last_name, role, region, country, phone, is_active,
-                        avatar_url, created_at,
+                `SELECT users.id, users.email, users.first_name, users.last_name, users.role, users.region,
+                        users.country, users.phone, users.is_active, users.avatar_url, users.created_at,
                         NULL::text AS preferred_language,
-                        last_login_at AS last_login,
-                        COALESCE(is_demo, false) AS is_demo
+                        users.last_login_at AS last_login,
+                        COALESCE(is_demo, false) AS is_demo,
+                        sp.id AS plan_id,
+                        sp.name AS plan_name,
+                        sp.price AS plan_price,
+                        s.status AS subscription_status,
+                        s.current_period_end AS subscription_period_end
                  FROM users
+                 LEFT JOIN subscriptions s ON s.user_id = users.id
+                 LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
                  WHERE COALESCE(is_demo, false) = $1
-                 ORDER BY created_at DESC`,
+                 ORDER BY users.created_at DESC`,
                 [req.query.dataset === 'demo']
             );
             rows = queryRes.rows || [];
@@ -150,14 +293,21 @@ router.get('/', validateRecordScope, async (req: Request, res: Response) => {
             if (isMissingColumnError(dbErr)) {
                 logger.warn('users table lacks country or last_login_at column; selecting fallback');
                 const fallbackRes = await query<UserPublicRow>(
-                    `SELECT id, email, first_name, last_name, role, region, NULL::text AS country, phone, is_active,
-                            avatar_url, created_at,
+                    `SELECT users.id, users.email, users.first_name, users.last_name, users.role, users.region,
+                            NULL::text AS country, users.phone, users.is_active, users.avatar_url, users.created_at,
                             NULL::text AS preferred_language,
                             NULL::timestamp AS last_login,
-                            COALESCE(is_demo, false) AS is_demo
+                            COALESCE(is_demo, false) AS is_demo,
+                            sp.id AS plan_id,
+                            sp.name AS plan_name,
+                            sp.price AS plan_price,
+                            s.status AS subscription_status,
+                            s.current_period_end AS subscription_period_end
                      FROM users
+                     LEFT JOIN subscriptions s ON s.user_id = users.id
+                     LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
                      WHERE COALESCE(is_demo, false) = $1
-                     ORDER BY created_at DESC`,
+                     ORDER BY users.created_at DESC`,
                     [req.query.dataset === 'demo']
                 );
                 rows = fallbackRes.rows || [];
@@ -192,12 +342,20 @@ router.get('/:id', async (req: Request, res: Response) => {
         let rows: UserPublicRow[] = [];
         try {
             const queryRes = await query<UserPublicRow>(
-                `SELECT id, email, first_name, last_name, role, region, country, phone, is_active,
-                        avatar_url, created_at,
+                `SELECT users.id, users.email, users.first_name, users.last_name, users.role, users.region,
+                        users.country, users.phone, users.is_active, users.avatar_url, users.created_at,
                         NULL::text AS preferred_language,
-                        last_login_at AS last_login,
-                        COALESCE(is_demo, false) AS is_demo
-                 FROM users WHERE id = $1 ${demoAccountsFilter.replace('WHERE', 'AND')}`,
+                        users.last_login_at AS last_login,
+                        COALESCE(is_demo, false) AS is_demo,
+                        sp.id AS plan_id,
+                        sp.name AS plan_name,
+                        sp.price AS plan_price,
+                        s.status AS subscription_status,
+                        s.current_period_end AS subscription_period_end
+                 FROM users
+                 LEFT JOIN subscriptions s ON s.user_id = users.id
+                 LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
+                 WHERE users.id = $1 ${demoAccountsFilter.replace('WHERE', 'AND')}`,
                 [id]
             );
             rows = queryRes.rows || [];
@@ -205,11 +363,19 @@ router.get('/:id', async (req: Request, res: Response) => {
             if (isMissingColumnError(dbErr)) {
                 logger.warn('users table lacks country or last_login_at column; selecting fallback');
                 const fallbackRes = await query<UserPublicRow>(
-                    `SELECT id, email, first_name, last_name, role, region, NULL::text AS country, phone, is_active,
-                            avatar_url, created_at,
+                    `SELECT users.id, users.email, users.first_name, users.last_name, users.role, users.region,
+                            NULL::text AS country, users.phone, users.is_active, users.avatar_url, users.created_at,
                             NULL::text AS preferred_language,
-                            NULL::timestamp AS last_login
-                     FROM users WHERE id = $1 ${demoAccountsFilter.replace('WHERE', 'AND')}`,
+                            NULL::timestamp AS last_login,
+                            sp.id AS plan_id,
+                            sp.name AS plan_name,
+                            sp.price AS plan_price,
+                            s.status AS subscription_status,
+                            s.current_period_end AS subscription_period_end
+                     FROM users
+                     LEFT JOIN subscriptions s ON s.user_id = users.id
+                     LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
+                     WHERE users.id = $1 ${demoAccountsFilter.replace('WHERE', 'AND')}`,
                     [id]
                 );
                 rows = fallbackRes.rows || [];
@@ -240,13 +406,25 @@ router.post('/', authorize(['admin']), async (req: Request, res: Response) => {
             return res.status(503).json({ success: false, error: 'Database unavailable' });
         }
 
-        const data = extractCreateUserData((req.body || {}) as Record<string, unknown>);
+        const body = (req.body || {}) as Record<string, unknown>;
+        const data = extractCreateUserData(body);
+        const planInput = extractOptionalPlanId(body);
 
         if (!data.email || !data.password || !data.firstName || !data.lastName) {
             return res.status(400).json({
                 success: false,
                 error: 'email, password, first name and last name are required',
             });
+        }
+        if (planInput.error) {
+            return res.status(400).json({ success: false, error: planInput.error });
+        }
+        let targetPlan: PlanLookupRow | null = null;
+        if (planInput.provided && planInput.planId) {
+            targetPlan = await resolveActivePlan(planInput.planId);
+            if (!targetPlan) {
+                return res.status(400).json({ success: false, error: 'Subscription plan not found or inactive' });
+            }
         }
 
         const password_hash = await bcrypt.hash(data.password, 10);
@@ -287,7 +465,11 @@ router.post('/', authorize(['admin']), async (req: Request, res: Response) => {
             return res.status(409).json({ success: false, error: 'Email already registered' });
         }
 
-        const created = rows[0];
+        let created = rows[0];
+        if (created && targetPlan) {
+            const { periodEnd } = await assignUserPlan(created.id, targetPlan);
+            created = mergePlanIntoRow(created, targetPlan, periodEnd);
+        }
         return res.status(201).json({ success: true, data: created ? mapUserPublicRow(created) : null });
     } catch (error) {
         logger.error('Failed to create user:', error);
@@ -312,12 +494,24 @@ router.put('/:id', authorize(['admin']), async (req: Request, res: Response) => 
 
         const updates = (req.body || {}) as Record<string, unknown>;
         const safeUpdates = extractSafeUserUpdates(updates);
-        if (Object.keys(safeUpdates).length === 0) {
+        const planInput = extractOptionalPlanId(updates);
+        if (planInput.error) {
+            return res.status(400).json({ success: false, error: planInput.error });
+        }
+        if (Object.keys(safeUpdates).length === 0 && !planInput.provided) {
             return res.status(400).json({ success: false, error: 'No valid updates supplied' });
         }
         const validationError = validateSensitiveUserUpdates(safeUpdates, id, req.user?.userId);
         if (validationError) {
             return res.status(400).json({ success: false, error: validationError });
+        }
+
+        let targetPlan: PlanLookupRow | null = null;
+        if (planInput.provided && planInput.planId) {
+            targetPlan = await resolveActivePlan(planInput.planId);
+            if (!targetPlan) {
+                return res.status(400).json({ success: false, error: 'Subscription plan not found or inactive' });
+            }
         }
 
         // Roles are embedded in the JWT, so a role change (demotion included) and
@@ -327,15 +521,23 @@ router.put('/:id', authorize(['admin']), async (req: Request, res: Response) => 
             await revokeAllUserSessions(id);
         }
 
-        safeUpdates.updated_at = new Date();
-
-        const rows = await executeUserUpdate(id, safeUpdates);
+        let rows: UserPublicRow[] = [];
+        if (Object.keys(safeUpdates).length > 0) {
+            safeUpdates.updated_at = new Date();
+            rows = await executeUserUpdate(id, safeUpdates);
+        } else {
+            rows = await fetchUserRowForPlanUpdate(id);
+        }
 
         if (rows.length === 0) {
             return res.status(404).json({ success: false, error: 'User not found' });
         }
 
-        const updated = rows[0];
+        let updated = rows[0];
+        if (updated && targetPlan) {
+            const { periodEnd } = await assignUserPlan(id, targetPlan);
+            updated = mergePlanIntoRow(updated, targetPlan, periodEnd);
+        }
         return res.json({ success: true, data: updated ? mapUserPublicRow(updated) : null });
     } catch (error) {
         logger.error('Failed to update user:', error);

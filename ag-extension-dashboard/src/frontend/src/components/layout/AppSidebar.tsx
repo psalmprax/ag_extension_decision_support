@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, HelpCircle } from 'lucide-react';
+import { ChevronDown, HelpCircle, Lock } from 'lucide-react';
 import { NavItem } from '../../config/navItems';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { cn } from '@/lib/cn';
@@ -72,7 +72,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 }) => {
   const { subtextClass } = useThemeClasses();
   const { t } = useLanguage();
-  const { themeName, setThemeName } = useAppStore();
+  const { themeName, setThemeName, user } = useAppStore();
+  const isFreeUser =
+    user?.role !== 'admin' &&
+    (user?.isFree || user?.planName?.toLowerCase() === 'free' || !user?.planName);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => ({
     [getSectionId(activeTab)]: true,
   }));
@@ -174,6 +177,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                               {t(item.labelKey || `nav_${item.id}`, { defaultValue: item.label })}
                             </span>
                           </div>
+                          {isFreeUser && item.requiresPro && (
+                            <Lock
+                              className="w-3.5 h-3.5 text-amber-500/80 dark:text-amber-400/80 shrink-0"
+                              aria-label={t('plan_pro_locked', { defaultValue: 'Pro plan required' })}
+                            />
+                          )}
                         </button>
                       ))}
                     </div>

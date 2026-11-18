@@ -12,6 +12,7 @@ import { setWithTtl, getTtl, delKey } from '@/services/sharedState';
 import { verifyPassword } from '@/utils/password';
 import { safeError } from '@/utils/safeResponse';
 import { credentialVersion } from '@/utils/credentialVersion';
+import { resolveUserPlan } from '@/services/subscriptionUtils';
 
 const router = Router();
 
@@ -121,20 +122,37 @@ async function completeMfaLogin(
 
     setAuthCookie(res, token);
 
-    let planName = 'Free';
+    let subRow: {
+        plan_name?: string | null;
+        plan_price?: string | number | null;
+        subscription_status?: string | null;
+        subscription_period_end?: Date | string | null;
+    } = {};
     try {
         const subResult = await query(`
-            SELECT COALESCE(sp.name, 'Free') as plan_name
+            SELECT sp.name as plan_name,
+                   sp.price as plan_price,
+                   s.status as subscription_status,
+                   s.current_period_end as subscription_period_end
             FROM subscriptions s
             JOIN subscription_plans sp ON sp.id = s.plan_id
             WHERE s.user_id = $1
         `, [user.id]);
         if (subResult.rows.length > 0) {
-            planName = subResult.rows[0].plan_name;
+            subRow = subResult.rows[0];
         }
     } catch {
         // fallback
     }
+
+    const { planName, isFree } = resolveUserPlan({
+        role: user.role,
+        email: user.email,
+        planName: subRow.plan_name,
+        planPrice: subRow.plan_price,
+        subscriptionStatus: subRow.subscription_status,
+        subscriptionPeriodEnd: subRow.subscription_period_end,
+    });
 
     res.json({
         success: true,
@@ -149,7 +167,7 @@ async function completeMfaLogin(
                 region: user.region,
                 mfaEnabled: true,
                 planName,
-                isFree: planName.toLowerCase() === 'free',
+                isFree,
             },
         },
     });

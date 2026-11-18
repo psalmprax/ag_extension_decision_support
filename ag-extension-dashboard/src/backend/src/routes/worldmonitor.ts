@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
 import { authorize, AuthRequest } from '@/middleware/authorize';
+import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
 import { validate } from '@/middleware/validate';
 import { query } from '@/services/databaseService';
 import { safeError } from '@/utils/safeResponse';
@@ -12,6 +13,7 @@ import { demoSql } from '@/services/demoScope';
 
 const router = Router();
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
+router.use(requirePaidPlan('WorldMonitor Spatial Intelligence'));
 
 const layersQuery = z.object({
   region: z.string().optional(),

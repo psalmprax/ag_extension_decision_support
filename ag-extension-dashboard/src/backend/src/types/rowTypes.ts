@@ -301,6 +301,11 @@ export interface UserPublicRow {
   last_login: Date | string | null;
   /** Demo session account; only admins are shown these. */
   is_demo?: boolean | null;
+  plan_id?: string | null;
+  plan_name?: string | null;
+  plan_price?: string | number | null;
+  subscription_status?: string | null;
+  subscription_period_end?: Date | string | null;
 }
 
 // --- Fields routes (fields.ts) ---------------------------------------------

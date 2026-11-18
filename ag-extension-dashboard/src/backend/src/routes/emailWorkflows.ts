@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { authorize, AuthRequest } from '@/middleware/authorize';
+import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
 import { validate } from '@/middleware/validate';
 import { emailWorkflowListSchema, updateEmailTemplateSchema } from '@/utils/schemas';
 import { emailWorkflowService } from '@/services/emailWorkflowService';
@@ -7,8 +8,9 @@ import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
+const requireEmailWorkflowPlan = requirePaidPlan('Automated Email Workflows');
 
-router.get('/templates', authorize(['extension_officer', 'admin', 'farmer']), validate(emailWorkflowListSchema), async (req: Request, res: Response) => {
+router.get('/templates', authorize(['extension_officer', 'admin', 'farmer']), requireEmailWorkflowPlan, validate(emailWorkflowListSchema), async (req: Request, res: Response) => {
     try {
         const category = req.query.category as string | undefined;
         const templates = await emailWorkflowService.getTemplates(category);
@@ -19,7 +21,7 @@ router.get('/templates', authorize(['extension_officer', 'admin', 'farmer']), va
     }
 });
 
-router.put('/templates/:id', authorize(['admin', 'extension_officer']), validate(updateEmailTemplateSchema), async (req: Request, res: Response) => {
+router.put('/templates/:id', authorize(['admin', 'extension_officer']), requireEmailWorkflowPlan, validate(updateEmailTemplateSchema), async (req: Request, res: Response) => {
     try {
         const { subject, body, category, variables } = req.body;
         const success = await emailWorkflowService.updateTemplate(req.params.id, { subject, body, category, variables });
@@ -34,7 +36,7 @@ router.put('/templates/:id', authorize(['admin', 'extension_officer']), validate
     }
 });
 
-router.get('/approvals/pending', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
+router.get('/approvals/pending', authorize(['extension_officer', 'admin', 'farmer']), requireEmailWorkflowPlan, async (req: Request, res: Response) => {
     try {
         const approvals = await emailWorkflowService.getPendingApprovals();
         res.json({ success: true, data: approvals });
@@ -44,7 +46,7 @@ router.get('/approvals/pending', authorize(['extension_officer', 'admin', 'farme
     }
 });
 
-router.post('/approvals/:id/approve', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
+router.post('/approvals/:id/approve', authorize(['extension_officer', 'admin', 'farmer']), requireEmailWorkflowPlan, async (req: Request, res: Response) => {
     try {
         const { comment } = req.body;
         const success = await emailWorkflowService.reviewApproval(req.params.id, 'approved', (req as AuthRequest).user!.userId, comment);
@@ -55,7 +57,7 @@ router.post('/approvals/:id/approve', authorize(['extension_officer', 'admin', '
     }
 });
 
-router.post('/approvals/:id/reject', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
+router.post('/approvals/:id/reject', authorize(['extension_officer', 'admin', 'farmer']), requireEmailWorkflowPlan, async (req: Request, res: Response) => {
     try {
         const { comment } = req.body;
         const success = await emailWorkflowService.reviewApproval(req.params.id, 'rejected', (req as AuthRequest).user!.userId, comment);

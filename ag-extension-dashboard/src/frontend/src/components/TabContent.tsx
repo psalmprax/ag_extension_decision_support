@@ -264,7 +264,11 @@ export function TabContent(props: TabContentProps) {
     case 'system_health':
       return <SystemHealth />;
     case 'disease_diagnosis':
-      return <DiseaseDiagnosisPage />;
+      return (
+        <PlanUpgradeGuard category="vision" featureName="Disease & Soil Diagnostics">
+          <DiseaseDiagnosisPage />
+        </PlanUpgradeGuard>
+      );
     case 'fields':
       return <CropsFields />;
     case 'memory':
@@ -280,7 +284,11 @@ export function TabContent(props: TabContentProps) {
     case 'user_management':
       return <UserManagementPage />;
     case 'worldmonitor':
-      return <WorldMonitor />;
+      return (
+        <PlanUpgradeGuard category="worldmonitor" featureName="WorldMonitor Spatial Intelligence">
+          <WorldMonitor />
+        </PlanUpgradeGuard>
+      );
     case 'advisory_studio':
       return <AdvisoryStudioPage />;
     default:

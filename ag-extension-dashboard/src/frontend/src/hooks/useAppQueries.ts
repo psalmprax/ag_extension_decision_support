@@ -53,6 +53,10 @@ export function useAppQueries(activeTab: string, searchQuery: string) {
   const storeFarmers = useAppStore(s => s.farmers);
   const { isDemo } = useDemoMode();
   const hasUser = Boolean(user);
+  const hasPaidAccess =
+    isDemo ||
+    user?.role === 'admin' ||
+    Boolean(user && !user.isFree && user.planName && user.planName.toLowerCase() !== 'free');
 
   const isDashboard = activeTab === 'dashboard';
   const isPortfolioOrDash = isDashboard || activeTab === 'portfolio';
@@ -84,9 +88,9 @@ export function useAppQueries(activeTab: string, searchQuery: string) {
   );
 
   const { data: visitsResponse, refetch: refetchVisits } = useQuery({
-    queryKey: ['visits', user?.id, isDemo],
+    queryKey: ['visits', user?.id, isDemo, hasPaidAccess],
     queryFn: fetchVisits,
-    enabled: isDemoQueryEnabled(activeTab === 'visits', hasUser, isDemo),
+    enabled: isDemoQueryEnabled(activeTab === 'visits' && hasPaidAccess, hasUser, isDemo),
   });
 
   const { data: reportsResponse, refetch: refetchReports } = useQuery({
@@ -96,9 +100,9 @@ export function useAppQueries(activeTab: string, searchQuery: string) {
   });
 
   const { data: performanceResponse } = useQuery({
-    queryKey: ['performance', user?.id, isDemo],
+    queryKey: ['performance', user?.id, isDemo, hasPaidAccess],
     queryFn: fetchPerformanceData,
-    enabled: isDemoQueryEnabled(isAnalyticsOrDash, hasUser, isDemo),
+    enabled: isDemoQueryEnabled(isAnalyticsOrDash && hasPaidAccess, hasUser, isDemo),
   });
 
   const { data: transactionsResponse } = useQuery({

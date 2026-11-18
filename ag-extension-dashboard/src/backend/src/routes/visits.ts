@@ -15,6 +15,7 @@ import { logger } from '@/utils/logger';
 import { validate } from '@/middleware/validationMiddleware';
 import { createVisitSchema, updateVisitSchema } from '@/utils/schemas';
 import { authorize } from '@/middleware/authorize';
+import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
 import { bulkOperationsService } from '@/services/bulkOperationsService';
 import { safeError } from '@/utils/safeResponse';
 import { executeIdempotentMutation } from '@/services/idempotencyService';
@@ -67,8 +68,9 @@ async function canAccessFarmer(req: Request, farmerId: string): Promise<boolean>
     return Boolean(await getFarmerForPrincipal(farmerId, { userId: req.user.userId, role: req.user.role }));
 }
 
-// Apply authentication to all visits routes
+// Apply authentication and subscription tier gate to all visits routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
+router.use(requirePaidPlan('Field Visits & Tracking'));
 
 // Get all visits — auto-filtered by role
 router.get('/', async (req: Request, res: Response) => {

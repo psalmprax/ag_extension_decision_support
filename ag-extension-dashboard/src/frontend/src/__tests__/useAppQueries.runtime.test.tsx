@@ -78,4 +78,20 @@ describe('useAppQueries runtime orchestration', () => {
     expect(mockedDashboard).not.toHaveBeenCalled();
     analytics.unmount();
   });
+
+  it('skips Pro visits and performance queries for Free users', async () => {
+    useAppStore.setState({
+      user: { id: 'free-1', role: 'extension_officer', planName: 'Free', isFree: true } as never,
+      farmers: [],
+    });
+
+    const dash = renderHook(() => useAppQueries('dashboard', ''), { wrapper: wrapper() });
+    await waitFor(() => expect(mockedDashboard).toHaveBeenCalledTimes(1));
+    expect(mockedPerformance).not.toHaveBeenCalled();
+    dash.unmount();
+
+    const visits = renderHook(() => useAppQueries('visits', ''), { wrapper: wrapper() });
+    expect(mockedVisits).not.toHaveBeenCalled();
+    visits.unmount();
+  });
 });
