@@ -7,6 +7,11 @@ import { getLoginHistory, getLoginStats } from '@/services/loginHistoryService';
 import { createSession, isSessionValid, revokeToken, withUserSessionLock } from '@/services/sessionService';
 import { setAuthCookie, clearAuthCookie, getBearerToken } from '@/middleware/authCookie';
 import { isSubscriptionActive } from '@/services/subscriptionUtils';
+import {
+    buildUserProfileColumns,
+    buildSubscriptionJoin,
+    SUBSCRIPTION_PLAN_COLUMNS,
+} from '@/services/userQueryBuilder';
 import { z } from 'zod';
 import type { NotificationPreferences } from '@/services/notificationPreferences';
 import { validate } from '@/middleware/validationMiddleware';
@@ -170,7 +175,7 @@ router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manage
         const result = await query(
             `UPDATE users SET ${assignments.join(', ')}, updated_at = NOW()
              WHERE id = $${values.length + 1}
-             RETURNING id, email, first_name, last_name, role, region, phone, notification_preferences`,
+             RETURNING ${buildUserProfileColumns({ includeNotificationPreferences: true })}`,
             [...values, userId]
         );
         const user = result.rows[0];
@@ -209,14 +214,14 @@ router.get('/me', async (req: Request, res: Response) => {
         }
 
         const result = await query(`
-            SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.region, u.phone, u.is_demo, u.notification_preferences,
-                   sp.name as plan_name,
-                   sp.price as plan_price,
-                   s.status as subscription_status,
-                   s.current_period_end as subscription_period_end
+            SELECT ${buildUserProfileColumns({
+                source: 'u',
+                includeNotificationPreferences: true,
+                includeDemoFlag: true,
+            })},
+                   ${SUBSCRIPTION_PLAN_COLUMNS}
             FROM users u
-            LEFT JOIN subscriptions s ON s.user_id = u.id
-            LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
+            ${buildSubscriptionJoin('u')}
             WHERE u.id = $1
         `, [decoded.userId]);
         const user = result.rows[0];

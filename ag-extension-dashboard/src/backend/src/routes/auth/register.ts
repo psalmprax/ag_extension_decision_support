@@ -14,6 +14,7 @@ import { incrWindow } from '@/services/sharedState';
 import { createSession } from '@/services/sessionService';
 import { resolveLocationFromHeaders } from '@/services/loginHistoryService';
 import { setAuthCookie } from '@/middleware/authCookie';
+import { buildUserProfileColumns } from '@/services/userQueryBuilder';
 
 const router = Router();
 
@@ -104,7 +105,7 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
         const result = await query(`
             INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, email_verified, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, false, NOW())
-            RETURNING id, email, first_name, last_name, role, region, phone
+            RETURNING ${buildUserProfileColumns()}
         `, [email, passwordHash, firstName, lastName, role || 'extension_officer', region, phone]);
 
         const newUser = result.rows[0];
@@ -200,7 +201,7 @@ router.post('/demo', async (req: Request, res: Response) => {
             const insertResult = await query(`
                 INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, created_at, is_demo)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), true)
-                RETURNING id, email, first_name, last_name, role, region, phone
+                RETURNING ${buildUserProfileColumns()}
             `, [email, passwordHash, 'Demo', 'User', 'extension_officer', 'Kenya', '+254700000000']);
             
             user = insertResult.rows[0];

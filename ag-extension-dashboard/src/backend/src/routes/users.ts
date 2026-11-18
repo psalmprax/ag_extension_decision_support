@@ -11,6 +11,12 @@ import { revokeAllUserSessions } from '@/services/sessionService';
 import { demoSql } from '@/services/demoScope';
 import { validateRecordScope } from '@/services/demoRecordScope';
 import { computeSubscriptionPeriodEnd } from '@/services/subscriptionUtils';
+import {
+    buildUserColumns,
+    buildSubscriptionJoin,
+    buildUserSubscriptionSelect,
+    SUBSCRIPTION_SELECT_COLUMNS,
+} from '@/services/userQueryBuilder';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -307,36 +313,21 @@ function extractSafeUserUpdates(body: Record<string, unknown>): Record<string, u
     return safeUpdates;
 }
 
-const SUBSCRIPTION_JOIN_SQL = `
-    LEFT JOIN subscriptions s ON s.user_id = %USER_REF%.id
-    LEFT JOIN subscription_plans sp ON sp.id = s.plan_id`;
-
-const SUBSCRIPTION_SELECT_COLS = `
-    sp.id AS plan_id,
-    sp.name AS plan_name,
-    sp.price AS plan_price,
-    s.status AS subscription_status,
-    s.current_period_end AS subscription_period_end`;
-
 async function executeUserUpdate(
     client: PoolClient,
     id: string,
     safeUpdates: Record<string, unknown>
 ): Promise<UserPublicRow[]> {
     const allKeys = Object.keys(safeUpdates);
-    const buildUpdateCte = (keys: string[], countryExpr: string, lastLoginExpr: string) => `
+    const buildUpdateCte = (keys: string[], legacySchema: boolean) => `
         WITH updated AS (
             UPDATE users SET ${keys.map((k, i) => `${k} = $${i + 1}`).join(', ')}
             WHERE id = $${keys.length + 1}
-            RETURNING id, email, first_name, last_name, role, region, ${countryExpr}, phone, is_active,
-                      avatar_url, created_at,
-                      NULL::text AS preferred_language,
-                      ${lastLoginExpr},
-                      COALESCE(is_demo, false) AS is_demo
+            RETURNING ${buildUserColumns({ legacySchema })}
         )
-        SELECT updated.*, ${SUBSCRIPTION_SELECT_COLS}
+        SELECT updated.*, ${SUBSCRIPTION_SELECT_COLUMNS}
         FROM updated
-        ${SUBSCRIPTION_JOIN_SQL.replace('%USER_REF%', 'updated')}`;
+        ${buildSubscriptionJoin('updated')}`;
 
     const fallbackKeys = allKeys.filter(k => k !== 'country');
     return runWithColumnFallback(
@@ -344,36 +335,32 @@ async function executeUserUpdate(
         () =>
             txQuery<UserPublicRow>(
                 client,
-                buildUpdateCte(allKeys, 'country', 'last_login_at AS last_login'),
+                buildUpdateCte(allKeys, false),
                 Object.values(safeUpdates).concat(id)
             ),
         () =>
             txQuery<UserPublicRow>(
                 client,
-                buildUpdateCte(fallbackKeys, 'NULL::text AS country', 'NULL::timestamp AS last_login'),
+                buildUpdateCte(fallbackKeys, true),
                 fallbackKeys.map(k => safeUpdates[k]).concat(id)
             )
     );
 }
 
 async function fetchUserRowForPlanUpdate(client: PoolClient, id: string): Promise<UserPublicRow[]> {
-    const buildSelectCte = (countryExpr: string, lastLoginExpr: string) => `
+    const buildSelectCte = (legacySchema: boolean) => `
         WITH target AS (
-            SELECT id, email, first_name, last_name, role, region, ${countryExpr}, phone, is_active,
-                   avatar_url, created_at,
-                   NULL::text AS preferred_language,
-                   ${lastLoginExpr},
-                   COALESCE(is_demo, false) AS is_demo
+            SELECT ${buildUserColumns({ legacySchema })}
             FROM users WHERE id = $1
         )
-        SELECT target.*, ${SUBSCRIPTION_SELECT_COLS}
+        SELECT target.*, ${SUBSCRIPTION_SELECT_COLUMNS}
         FROM target
-        ${SUBSCRIPTION_JOIN_SQL.replace('%USER_REF%', 'target')}`;
+        ${buildSubscriptionJoin('target')}`;
 
     return runWithColumnFallback(
         client,
-        () => txQuery<UserPublicRow>(client, buildSelectCte('country', 'last_login_at AS last_login'), [id]),
-        () => txQuery<UserPublicRow>(client, buildSelectCte('NULL::text AS country', 'NULL::timestamp AS last_login'), [id])
+        () => txQuery<UserPublicRow>(client, buildSelectCte(false), [id]),
+        () => txQuery<UserPublicRow>(client, buildSelectCte(true), [id])
     );
 }
 
@@ -388,47 +375,22 @@ router.get('/', validateRecordScope, async (req: Request, res: Response) => {
         }
 
         let rows: UserPublicRow[] = [];
+        const dataset = req.query.dataset === 'demo';
+        const listQuery = (legacySchema: boolean) =>
+            buildUserSubscriptionSelect({
+                source: 'users',
+                legacySchema,
+                where: 'COALESCE(is_demo, false) = $1',
+                orderBy: 'users.created_at DESC',
+            });
+
         try {
-            const queryRes = await query<UserPublicRow>(
-                `SELECT users.id, users.email, users.first_name, users.last_name, users.role, users.region,
-                        users.country, users.phone, users.is_active, users.avatar_url, users.created_at,
-                        NULL::text AS preferred_language,
-                        users.last_login_at AS last_login,
-                        COALESCE(is_demo, false) AS is_demo,
-                        sp.id AS plan_id,
-                        sp.name AS plan_name,
-                        sp.price AS plan_price,
-                        s.status AS subscription_status,
-                        s.current_period_end AS subscription_period_end
-                 FROM users
-                 LEFT JOIN subscriptions s ON s.user_id = users.id
-                 LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
-                 WHERE COALESCE(is_demo, false) = $1
-                 ORDER BY users.created_at DESC`,
-                [req.query.dataset === 'demo']
-            );
+            const queryRes = await query<UserPublicRow>(listQuery(false), [dataset]);
             rows = queryRes.rows || [];
         } catch (dbErr: unknown) {
             if (isMissingColumnError(dbErr)) {
                 logger.warn('users table lacks country or last_login_at column; selecting fallback');
-                const fallbackRes = await query<UserPublicRow>(
-                    `SELECT users.id, users.email, users.first_name, users.last_name, users.role, users.region,
-                            NULL::text AS country, users.phone, users.is_active, users.avatar_url, users.created_at,
-                            NULL::text AS preferred_language,
-                            NULL::timestamp AS last_login,
-                            COALESCE(is_demo, false) AS is_demo,
-                            sp.id AS plan_id,
-                            sp.name AS plan_name,
-                            sp.price AS plan_price,
-                            s.status AS subscription_status,
-                            s.current_period_end AS subscription_period_end
-                     FROM users
-                     LEFT JOIN subscriptions s ON s.user_id = users.id
-                     LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
-                     WHERE COALESCE(is_demo, false) = $1
-                     ORDER BY users.created_at DESC`,
-                    [req.query.dataset === 'demo']
-                );
+                const fallbackRes = await query<UserPublicRow>(listQuery(true), [dataset]);
                 rows = fallbackRes.rows || [];
             } else {
                 throw dbErr;
@@ -459,45 +421,17 @@ router.get('/:id', async (req: Request, res: Response) => {
         }
 
         let rows: UserPublicRow[] = [];
+        const detailWhere = `users.id = $1 ${demoAccountsFilter.replace('WHERE', 'AND')}`;
+        const detailQuery = (legacySchema: boolean) =>
+            buildUserSubscriptionSelect({ source: 'users', legacySchema, where: detailWhere });
+
         try {
-            const queryRes = await query<UserPublicRow>(
-                `SELECT users.id, users.email, users.first_name, users.last_name, users.role, users.region,
-                        users.country, users.phone, users.is_active, users.avatar_url, users.created_at,
-                        NULL::text AS preferred_language,
-                        users.last_login_at AS last_login,
-                        COALESCE(is_demo, false) AS is_demo,
-                        sp.id AS plan_id,
-                        sp.name AS plan_name,
-                        sp.price AS plan_price,
-                        s.status AS subscription_status,
-                        s.current_period_end AS subscription_period_end
-                 FROM users
-                 LEFT JOIN subscriptions s ON s.user_id = users.id
-                 LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
-                 WHERE users.id = $1 ${demoAccountsFilter.replace('WHERE', 'AND')}`,
-                [id]
-            );
+            const queryRes = await query<UserPublicRow>(detailQuery(false), [id]);
             rows = queryRes.rows || [];
         } catch (dbErr: unknown) {
             if (isMissingColumnError(dbErr)) {
                 logger.warn('users table lacks country or last_login_at column; selecting fallback');
-                const fallbackRes = await query<UserPublicRow>(
-                    `SELECT users.id, users.email, users.first_name, users.last_name, users.role, users.region,
-                            NULL::text AS country, users.phone, users.is_active, users.avatar_url, users.created_at,
-                            NULL::text AS preferred_language,
-                            NULL::timestamp AS last_login,
-                            COALESCE(is_demo, false) AS is_demo,
-                            sp.id AS plan_id,
-                            sp.name AS plan_name,
-                            sp.price AS plan_price,
-                            s.status AS subscription_status,
-                            s.current_period_end AS subscription_period_end
-                     FROM users
-                     LEFT JOIN subscriptions s ON s.user_id = users.id
-                     LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
-                     WHERE users.id = $1 ${demoAccountsFilter.replace('WHERE', 'AND')}`,
-                    [id]
-                );
+                const fallbackRes = await query<UserPublicRow>(detailQuery(true), [id]);
                 rows = fallbackRes.rows || [];
             } else {
                 throw dbErr;
@@ -533,10 +467,7 @@ async function insertUserWithFallback(
                 `INSERT INTO users (email, password_hash, first_name, last_name, role, region, country, phone, is_active)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
                  ON CONFLICT (email) DO NOTHING
-                 RETURNING id, email, first_name, last_name, role, region, country, phone, is_active,
-                           avatar_url, created_at,
-                           NULL::text AS preferred_language,
-                           NULL::timestamp AS last_login`,
+                 RETURNING ${buildUserColumns({ includeDemoFlag: false })}`,
                 [data.email, passwordHash, data.firstName, data.lastName, data.normalizedRole, data.region, data.country, data.phone]
             ),
         () =>
@@ -545,10 +476,7 @@ async function insertUserWithFallback(
                 `INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, is_active)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, true)
                  ON CONFLICT (email) DO NOTHING
-                 RETURNING id, email, first_name, last_name, role, region, NULL::text AS country, phone, is_active,
-                           avatar_url, created_at,
-                           NULL::text AS preferred_language,
-                           NULL::timestamp AS last_login`,
+                 RETURNING ${buildUserColumns({ includeDemoFlag: false, legacySchema: true })}`,
                 [data.email, passwordHash, data.firstName, data.lastName, data.normalizedRole, data.region, data.phone]
             )
     );
