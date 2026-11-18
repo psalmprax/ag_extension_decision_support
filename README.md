@@ -23,6 +23,23 @@ ag-extension-browser-ext/      # WXT browser extension (Manifest V3)
 ag-extension-shared/           # Shared zod schemas — frontend/backend API contract
 ```
 
+## Browser extension requirements
+
+The toolbar content script injects its icons and labels through the HTML Sanitizer
+API (`Element.setHTML()`), so the extension needs a browser that ships it:
+
+| Browser | Minimum version | Manifest pin |
+| --- | --- | --- |
+| Firefox | 148 | `browser_specific_settings.gecko.strict_min_version` |
+| Chrome / Edge | 146 | `minimum_chrome_version` |
+
+Older browsers refuse to install rather than run with silently different
+sanitization. The helper still degrades to text-only labels where the API is
+absent — Chromium forks, or a profile with the feature disabled — and never
+falls back to `innerHTML`. `npm run build:firefox` produces the Firefox bundle;
+see [`docs/PRODUCTION_DEPLOYMENT_GUIDE.md`](./docs/PRODUCTION_DEPLOYMENT_GUIDE.md)
+for the store upload steps.
+
 ## Features
 
 - **AI chat** — conversational assistant for agricultural queries, with multi-provider fallback (OpenAI, Groq, Azure OpenAI, Google Vertex, Anthropic, Ollama)

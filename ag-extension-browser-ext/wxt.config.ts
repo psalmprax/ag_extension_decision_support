@@ -78,6 +78,16 @@ export default defineConfig({
           description: 'Capture photo for analysis',
         },
       },
+      // The toolbar content script renders its icons through Element.setHTML()
+      // and the Sanitizer API; see entrypoints/ag-toolbar.content/sanitize.ts.
+      // Chrome/Edge 146 and Firefox 148 are the first releases that ship them, so
+      // older browsers hide the extension rather than running it.
+      minimum_chrome_version: '146',
+      browser_specific_settings: {
+        gecko: {
+          strict_min_version: '148.0',
+        },
+      },
     };
   },
 });
