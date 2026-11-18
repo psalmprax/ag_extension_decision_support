@@ -106,11 +106,11 @@ vi.mock('@/api/client', () => ({
 
 const renderWithLanguage = async (ui: React.ReactElement) => {
   const result = render(<LanguageProvider>{ui}</LanguageProvider>);
-  // LanguageProvider loads translations asynchronously in useEffect; flush the
-  // pending microtasks inside act so the state updates don't leak outside it.
-  await act(async () => {
-    await new Promise(resolve => setTimeout(resolve, 0));
-  });
+  // LanguageProvider loads its locale through the stubbed fetch, so the only
+  // work to flush is the fetch -> json -> setState promise chain. Awaiting an
+  // empty act() drains exactly that microtask chain; the previous wall-clock
+  // setTimeout(0) made these tests time out whenever the machine was busy.
+  await act(async () => {});
   return result;
 };
 
