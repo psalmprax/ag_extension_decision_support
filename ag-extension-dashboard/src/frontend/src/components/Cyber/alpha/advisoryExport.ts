@@ -11,7 +11,7 @@ export async function exportAdvisoryPdf(messages: ChatMessageItem[]): Promise<vo
   }
   try {
     const { generateReport, downloadReportPdf } = await import('@/api/reportService');
-    const lastQuestion = [...messages].reverse().find(m => m.sender === 'user')?.text;
+    const lastQuestion = messages.toReversed().find(m => m.sender === 'user')?.text;
     const gen = await generateReport(
       'knowledge_factsheet',
       `Advisory: ${(lastQuestion || lastAnswer).slice(0, 80)}`,

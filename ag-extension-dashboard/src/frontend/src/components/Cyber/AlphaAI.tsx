@@ -565,8 +565,8 @@ export const AlphaAI: React.FC = () => {
                   onGraphNodeSelect={setSelectedGraphNode}
                   onDispatchSms={handleDispatchSms}
                   citations={
-                    [...messages]
-                      .reverse()
+                    messages
+                      .toReversed()
                       .find(m => m.sender === 'assistant' && m.citations?.length)?.citations ?? []
                   }
                   lastImageAnalysis={lastImageAnalysis}
