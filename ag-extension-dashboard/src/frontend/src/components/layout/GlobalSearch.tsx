@@ -57,7 +57,13 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchQuery.trim() && globalSearchResults.length === 0) {
+    // Ignore Enter while an IME is composing a candidate (CJK input).
+    if (
+      e.key === 'Enter' &&
+      !e.nativeEvent.isComposing &&
+      searchQuery.trim() &&
+      globalSearchResults.length === 0
+    ) {
       setWeatherLocation(searchQuery);
       addNotification({ message: `Weather now showing for ${searchQuery}`, type: 'info' });
       setSearchQuery('');

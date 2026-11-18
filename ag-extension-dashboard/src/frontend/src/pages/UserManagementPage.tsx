@@ -460,6 +460,7 @@ export function UserManagementPage() {
                   <label className="text-xs font-medium text-white/70">{t('users_form_password', 'Password *')}</label>
                   <input
                     type="password"
+                    autoComplete="new-password"
                     required
                     value={formData.password}
                     onChange={e => setFormData({ ...formData, password: e.target.value })}

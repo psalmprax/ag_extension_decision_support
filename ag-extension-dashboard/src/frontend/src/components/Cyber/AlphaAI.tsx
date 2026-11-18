@@ -484,7 +484,9 @@ export const AlphaAI: React.FC = () => {
                     value={inputPrompt}
                     onChange={e => setInputPrompt(e.target.value)}
                     onKeyDown={e => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      // isComposing: Enter also confirms an IME candidate list (CJK input),
+                      // which must not submit the message.
+                      if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                         e.preventDefault();
                         handleSendMessage();
                       }

@@ -618,6 +618,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       <div className="space-y-2">
                         <input
                           type="password"
+                          autoComplete="current-password"
                           placeholder="Current password"
                           value={passwordState.currentPassword}
                           onChange={e => setPasswordState(p => ({ ...p, currentPassword: e.target.value }))}
@@ -626,6 +627,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <input
                             type="password"
+                            autoComplete="new-password"
                             placeholder="New password (min 10 chars, letter + number)"
                             value={passwordState.newPassword}
                             onChange={e => setPasswordState(p => ({ ...p, newPassword: e.target.value }))}
@@ -633,6 +635,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           />
                           <input
                             type="password"
+                            autoComplete="new-password"
                             placeholder="Confirm new password"
                             value={passwordState.confirmPassword}
                             onChange={e => setPasswordState(p => ({ ...p, confirmPassword: e.target.value }))}

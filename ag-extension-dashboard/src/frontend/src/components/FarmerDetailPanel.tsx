@@ -166,7 +166,8 @@ const CropsSection = ({
             size="sm"
             placeholder="Add crop..."
             onKeyDown={e => {
-              if (e.key === 'Enter') {
+              // Ignore Enter while an IME is composing a candidate (CJK input).
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 const input = e.target as HTMLInputElement;
                 const val = input.value.trim();

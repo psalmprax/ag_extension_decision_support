@@ -81,7 +81,8 @@ const SymptomInputPanel: React.FC<{
             value={currentSymptom}
             onChange={e => setCurrentSymptom(e.target.value)}
             onKeyDown={e => {
-              if (e.key === 'Enter' && currentSymptom.trim()) {
+              // Ignore Enter while an IME is composing a candidate (CJK input).
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing && currentSymptom.trim()) {
                 onAddSymptom(currentSymptom.trim());
               }
             }}

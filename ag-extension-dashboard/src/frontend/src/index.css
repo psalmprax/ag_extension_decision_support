@@ -10,6 +10,9 @@
  * structural/component styles.
  */
 :root {
+  /* Native widgets follow the active theme; <meta name="color-scheme"> is kept
+     in sync by useAppTheme so the page chrome never flashes the wrong scheme. */
+  color-scheme: light;
   /* Design Variant Specific Overrides */
   --font-heading: 'Inter', system-ui, sans-serif;
   --radius-card: 0.25rem;
@@ -30,6 +33,7 @@
 
 /* Dark mode non-color tokens */
 .dark {
+  color-scheme: dark;
   --radius-card: 0.25rem;
   --shadow-premium: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
