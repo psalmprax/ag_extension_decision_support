@@ -28,6 +28,16 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/**/*.d.ts', 'src/**/*.spec.ts', 'src/test/**'],
+      // Ratchet baseline: pinned just under the level measured on the current
+      // suite so a coverage regression fails CI instead of drifting down
+      // silently. Raise these numbers as coverage improves; never lower them to
+      // make a run pass.
+      thresholds: {
+        statements: 32,
+        branches: 26,
+        functions: 27,
+        lines: 33,
+      },
     },
   },
 });
