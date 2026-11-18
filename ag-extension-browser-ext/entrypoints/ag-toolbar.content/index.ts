@@ -37,46 +37,52 @@ const isContentRequestMessage = (message: unknown): message is ContentRequestMes
  * cannot smuggle event handlers, script/style elements, or javascript: URLs
  * into the host page, which runs with the extension's privileges.
  */
-const ALLOWED_HTML_TAGS = new Set([
+const ALLOWED_HTML_TAGS = [
   'div', 'span', 'svg', 'circle', 'path', 'rect', 'line', 'polyline', 'polygon', 'g', 'defs', 'title',
-  'p', 'strong', 'em', 'b', 'i', 'u', 'br', 'small', 'sub', 'sup', 'code', 'pre', 'span',
-]);
-const FORBIDDEN_ATTR_NAMES = /^(?:on[a-z]+|srcdoc|formaction)$/i;
-const FORBIDDEN_URL_ATTRS = new Set(['href', 'xlink:href', 'src', 'action', 'data', 'poster']);
-const FORBIDDEN_URL_VALUES = /^\s*(?:javascript|vbscript|data(?!:image\/(?:png|gif|jpeg|webp);)):/i;
-
-function sanitizeHtml(html: string): string {
-  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
-  const walk = (node: Element): void => {
-    for (const child of Array.from(node.children)) {
-      if (!ALLOWED_HTML_TAGS.has(child.tagName.toLowerCase())) {
-        child.replaceWith(...Array.from(child.childNodes)); // unwrap, keep text
-        continue;
-      }
-      for (const attr of Array.from(child.attributes)) {
-        const name = attr.name.toLowerCase();
-        if (FORBIDDEN_ATTR_NAMES.test(name) ||
-            (FORBIDDEN_URL_ATTRS.has(name) && FORBIDDEN_URL_VALUES.test(attr.value))) {
-          child.removeAttribute(attr.name);
-        }
-      }
-      walk(child);
-    }
-  };
-  const body = doc.body;
-  if (body) walk(body);
-  return body ? body.innerHTML : '';
-}
+  'p', 'strong', 'em', 'b', 'i', 'u', 'br', 'small', 'sub', 'sup', 'code', 'pre',
+];
 
 /**
- * Sanitize, then set HTML content. The old implementation assigned
- * `template.innerHTML` directly — a future template with dynamic interpolation
- * would have executed in the host page. All callers go through the sanitizer.
+ * Element and attribute policy for the toolbar templates: the tag list above,
+ * and the inline `style` blocks plus the SVG presentation attributes the icons
+ * use. The browser's baseline Sanitizer policy still removes event handlers,
+ * `srcdoc`, `formaction` and `javascript:`/`vbscript:` URLs, which is the same
+ * enforcement the former hand-rolled name/value checks provided.
  */
-const safeSetHTML = (el: HTMLElement, html: string) => {
-  const template = document.createElement('template');
-  template.innerHTML = sanitizeHtml(html.trim());
-  el.appendChild(template.content);
+const TOOLBAR_SANITIZER_CONFIG: SanitizerConfig = {
+  allowElements: ALLOWED_HTML_TAGS,
+  allowAttributes: {
+    '*': [
+      'style', 'class', 'id', 'title', 'role',
+      'width', 'height', 'viewBox', 'xmlns', 'preserveAspectRatio',
+      'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin',
+      'd', 'cx', 'cy', 'r', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'points', 'transform', 'opacity',
+    ],
+  },
+};
+
+const toolbarSanitizer =
+  typeof Sanitizer === 'function' ? new Sanitizer(TOOLBAR_SANITIZER_CONFIG) : null;
+
+/**
+ * Replace an element's content with sanitized markup.
+ *
+ * Parsing goes through the native Sanitizer API (`Element.setHTML`), so the
+ * platform filters untrusted markup instead of this file assigning `innerHTML`.
+ * Replacing (rather than appending) is also what the callers intend: the sync
+ * and GPS buttons swap their icon in place, and appending used to stack a new
+ * SVG on every state change.
+ *
+ * On engines without the Sanitizer API the fallback inserts text only, so a
+ * template with dynamic interpolation still cannot execute in the host page.
+ */
+const safeSetHTML = (el: HTMLElement, html: string): void => {
+  if (toolbarSanitizer && typeof el.setHTML === 'function') {
+    el.setHTML(html.trim(), { sanitizer: toolbarSanitizer });
+    return;
+  }
+  console.warn('[ag-toolbar] Sanitizer API unavailable — rendering template as text');
+  el.textContent = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 };
 
 /**
