@@ -119,6 +119,36 @@ function mergePlanIntoRow(row: UserPublicRow, plan: PlanLookupRow, periodEnd: Da
     };
 }
 
+async function resolveRequestedPlan(body: Record<string, unknown>): Promise<{
+    provided: boolean;
+    plan: PlanLookupRow | null;
+    error?: string;
+}> {
+    const planInput = extractOptionalPlanId(body);
+    if (planInput.error) {
+        return { provided: true, plan: null, error: planInput.error };
+    }
+    if (!planInput.provided || !planInput.planId) {
+        return { provided: false, plan: null };
+    }
+    const plan = await resolveActivePlan(planInput.planId);
+    if (!plan) {
+        return { provided: true, plan: null, error: 'Subscription plan not found or inactive' };
+    }
+    return { provided: true, plan };
+}
+
+async function finalizeUserWithPlan(
+    userRow: UserPublicRow | undefined,
+    targetPlan: PlanLookupRow | null
+) {
+    if (!userRow) return null;
+    const rowWithPlan = targetPlan
+        ? mergePlanIntoRow(userRow, targetPlan, (await assignUserPlan(userRow.id, targetPlan)).periodEnd)
+        : userRow;
+    return mapUserPublicRow(rowWithPlan);
+}
+
 const router = Router();
 
 router.use(authorize(['admin', 'regional_manager']));
@@ -396,6 +426,69 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 });
 
+function hasRequiredCreateFields(data: ReturnType<typeof extractCreateUserData>): boolean {
+    return Boolean(data.email && data.password && data.firstName && data.lastName);
+}
+
+async function insertUserWithFallback(
+    data: ReturnType<typeof extractCreateUserData>,
+    passwordHash: string
+): Promise<UserPublicRow[]> {
+    try {
+        const insertResult = await query<UserPublicRow>(
+            `INSERT INTO users (email, password_hash, first_name, last_name, role, region, country, phone, is_active)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
+             ON CONFLICT (email) DO NOTHING
+             RETURNING id, email, first_name, last_name, role, region, country, phone, is_active,
+                       avatar_url, created_at,
+                       NULL::text AS preferred_language,
+                       NULL::timestamp AS last_login`,
+            [data.email, passwordHash, data.firstName, data.lastName, data.normalizedRole, data.region, data.country, data.phone]
+        );
+        return insertResult.rows || [];
+    } catch (dbErr: unknown) {
+        if (!isMissingColumnError(dbErr)) throw dbErr;
+        logger.warn('users table lacks country column; inserting without country');
+        const fallbackResult = await query<UserPublicRow>(
+            `INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, is_active)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, true)
+             ON CONFLICT (email) DO NOTHING
+             RETURNING id, email, first_name, last_name, role, region, NULL::text AS country, phone, is_active,
+                       avatar_url, created_at,
+                       NULL::text AS preferred_language,
+                       NULL::timestamp AS last_login`,
+            [data.email, passwordHash, data.firstName, data.lastName, data.normalizedRole, data.region, data.phone]
+        );
+        return fallbackResult.rows || [];
+    }
+}
+
+function validatePutPayload(
+    safeUpdates: Record<string, unknown>,
+    planResolution: { provided: boolean; error?: string },
+    targetUserId: string,
+    actingUserId: string | undefined
+): string | null {
+    if (planResolution.error) {
+        return planResolution.error;
+    }
+    if (Object.keys(safeUpdates).length === 0 && !planResolution.provided) {
+        return 'No valid updates supplied';
+    }
+    return validateSensitiveUserUpdates(safeUpdates, targetUserId, actingUserId);
+}
+
+async function applyUserUpdateOrFetch(
+    id: string,
+    safeUpdates: Record<string, unknown>
+): Promise<UserPublicRow[]> {
+    if (Object.keys(safeUpdates).length === 0) {
+        return fetchUserRowForPlanUpdate(id);
+    }
+    safeUpdates.updated_at = new Date();
+    return executeUserUpdate(id, safeUpdates);
+}
+
 /**
  * POST /api/users — create a user.
  */
@@ -408,69 +501,26 @@ router.post('/', authorize(['admin']), async (req: Request, res: Response) => {
 
         const body = (req.body || {}) as Record<string, unknown>;
         const data = extractCreateUserData(body);
-        const planInput = extractOptionalPlanId(body);
-
-        if (!data.email || !data.password || !data.firstName || !data.lastName) {
+        if (!hasRequiredCreateFields(data)) {
             return res.status(400).json({
                 success: false,
                 error: 'email, password, first name and last name are required',
             });
         }
-        if (planInput.error) {
-            return res.status(400).json({ success: false, error: planInput.error });
-        }
-        let targetPlan: PlanLookupRow | null = null;
-        if (planInput.provided && planInput.planId) {
-            targetPlan = await resolveActivePlan(planInput.planId);
-            if (!targetPlan) {
-                return res.status(400).json({ success: false, error: 'Subscription plan not found or inactive' });
-            }
+
+        const planResolution = await resolveRequestedPlan(body);
+        if (planResolution.error) {
+            return res.status(400).json({ success: false, error: planResolution.error });
         }
 
-        const password_hash = await bcrypt.hash(data.password, 10);
-
-        let rows: UserPublicRow[] = [];
-        try {
-            const insertResult = await query<UserPublicRow>(
-                `INSERT INTO users (email, password_hash, first_name, last_name, role, region, country, phone, is_active)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
-                 ON CONFLICT (email) DO NOTHING
-                 RETURNING id, email, first_name, last_name, role, region, country, phone, is_active,
-                           avatar_url, created_at,
-                           NULL::text AS preferred_language,
-                           NULL::timestamp AS last_login`,
-                [data.email, password_hash, data.firstName, data.lastName, data.normalizedRole, data.region, data.country, data.phone]
-            );
-            rows = insertResult.rows || [];
-        } catch (dbErr: unknown) {
-            if (isMissingColumnError(dbErr)) {
-                logger.warn('users table lacks country column; inserting without country');
-                const fallbackResult = await query<UserPublicRow>(
-                    `INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, is_active)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, true)
-                     ON CONFLICT (email) DO NOTHING
-                     RETURNING id, email, first_name, last_name, role, region, NULL::text AS country, phone, is_active,
-                               avatar_url, created_at,
-                               NULL::text AS preferred_language,
-                               NULL::timestamp AS last_login`,
-                    [data.email, password_hash, data.firstName, data.lastName, data.normalizedRole, data.region, data.phone]
-                );
-                rows = fallbackResult.rows || [];
-            } else {
-                throw dbErr;
-            }
-        }
-
-        if (!rows || rows.length === 0) {
+        const passwordHash = await bcrypt.hash(data.password, 10);
+        const rows = await insertUserWithFallback(data, passwordHash);
+        if (rows.length === 0) {
             return res.status(409).json({ success: false, error: 'Email already registered' });
         }
 
-        let created = rows[0];
-        if (created && targetPlan) {
-            const { periodEnd } = await assignUserPlan(created.id, targetPlan);
-            created = mergePlanIntoRow(created, targetPlan, periodEnd);
-        }
-        return res.status(201).json({ success: true, data: created ? mapUserPublicRow(created) : null });
+        const dto = await finalizeUserWithPlan(rows[0], planResolution.plan);
+        return res.status(201).json({ success: true, data: dto });
     } catch (error) {
         logger.error('Failed to create user:', error);
         return safeError(res, 500, 'Failed to create user');
@@ -494,24 +544,10 @@ router.put('/:id', authorize(['admin']), async (req: Request, res: Response) => 
 
         const updates = (req.body || {}) as Record<string, unknown>;
         const safeUpdates = extractSafeUserUpdates(updates);
-        const planInput = extractOptionalPlanId(updates);
-        if (planInput.error) {
-            return res.status(400).json({ success: false, error: planInput.error });
-        }
-        if (Object.keys(safeUpdates).length === 0 && !planInput.provided) {
-            return res.status(400).json({ success: false, error: 'No valid updates supplied' });
-        }
-        const validationError = validateSensitiveUserUpdates(safeUpdates, id, req.user?.userId);
-        if (validationError) {
-            return res.status(400).json({ success: false, error: validationError });
-        }
-
-        let targetPlan: PlanLookupRow | null = null;
-        if (planInput.provided && planInput.planId) {
-            targetPlan = await resolveActivePlan(planInput.planId);
-            if (!targetPlan) {
-                return res.status(400).json({ success: false, error: 'Subscription plan not found or inactive' });
-            }
+        const planResolution = await resolveRequestedPlan(updates);
+        const payloadError = validatePutPayload(safeUpdates, planResolution, id, req.user?.userId);
+        if (payloadError) {
+            return res.status(400).json({ success: false, error: payloadError });
         }
 
         // Roles are embedded in the JWT, so a role change (demotion included) and
@@ -521,24 +557,13 @@ router.put('/:id', authorize(['admin']), async (req: Request, res: Response) => 
             await revokeAllUserSessions(id);
         }
 
-        let rows: UserPublicRow[] = [];
-        if (Object.keys(safeUpdates).length > 0) {
-            safeUpdates.updated_at = new Date();
-            rows = await executeUserUpdate(id, safeUpdates);
-        } else {
-            rows = await fetchUserRowForPlanUpdate(id);
-        }
-
+        const rows = await applyUserUpdateOrFetch(id, safeUpdates);
         if (rows.length === 0) {
             return res.status(404).json({ success: false, error: 'User not found' });
         }
 
-        let updated = rows[0];
-        if (updated && targetPlan) {
-            const { periodEnd } = await assignUserPlan(id, targetPlan);
-            updated = mergePlanIntoRow(updated, targetPlan, periodEnd);
-        }
-        return res.json({ success: true, data: updated ? mapUserPublicRow(updated) : null });
+        const dto = await finalizeUserWithPlan(rows[0], planResolution.plan);
+        return res.json({ success: true, data: dto });
     } catch (error) {
         logger.error('Failed to update user:', error);
         return safeError(res, 500, 'Failed to update user');
