@@ -71,7 +71,10 @@ audit_npm_package() {
   local audit_status=0
   echo -e "  🔍 Auditing $name ($dir)..."
   if [ -d "$dir" ] && [ -f "$dir/package.json" ]; then
-    node "$ROOT_DIR/scripts/npm-audit-gate.cjs" --dir "$dir" --level high || audit_status=$?
+    node "$ROOT_DIR/scripts/npm-audit-gate.cjs" --dir "$dir" --level high --omit-dev || audit_status=$?
+    if [ "$audit_status" -eq 0 ]; then
+      node "$ROOT_DIR/scripts/npm-audit-gate.cjs" --dir "$dir" --level high || audit_status=$?
+    fi
 
     if [ "$audit_status" -eq 0 ]; then
       echo -e "    ${GREEN}✅ $name: No unapproved high or critical vulnerabilities.${NC}"

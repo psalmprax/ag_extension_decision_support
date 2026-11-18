@@ -13,7 +13,7 @@
  *
  * Usage:
  *   node scripts/npm-audit-gate.cjs --dir ag-extension-dashboard/src/frontend [--level high]
- *       [--allowlist scripts/audit-allowlist.json]
+ *       [--allowlist scripts/audit-allowlist.json] [--omit-dev]
  */
 'use strict';
 
@@ -51,6 +51,7 @@ function parseArgs(argv) {
   const args = {
     level: 'high',
     allowlist: 'scripts/audit-allowlist.json',
+    omitDev: process.env.AUDIT_GATE_OMIT_DEV === 'true' || process.env.AUDIT_GATE_OMIT_DEV === '1',
     failOnOutage: process.env.AUDIT_GATE_FAIL_ON_OUTAGE === 'true' || process.env.AUDIT_GATE_FAIL_ON_OUTAGE === '1',
     noCache: process.env.AUDIT_GATE_NO_CACHE === 'true' || process.env.AUDIT_GATE_NO_CACHE === '1',
   };
@@ -58,6 +59,7 @@ function parseArgs(argv) {
     if (argv[i] === '--dir') args.dir = argv[++i];
     else if (argv[i] === '--level') args.level = argv[++i];
     else if (argv[i] === '--allowlist') args.allowlist = argv[++i];
+    else if (argv[i] === '--omit-dev') args.omitDev = true;
     else if (argv[i] === '--fail-on-outage') args.failOnOutage = true;
     else if (argv[i] === '--no-cache') args.noCache = true;
     else throw new Error(`Unknown argument: ${argv[i]}`);
@@ -94,13 +96,28 @@ function isOutageMessage(text) {
   return /503|502|504|Service Unavailable|Bad Gateway|Gateway Timeout|timed out|ETIMEDOUT|ECONNRESET|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|audit endpoint returned an error|endpoint is being retired|Invalid package tree/i.test(text);
 }
 
-function runAudit(dir) {
+function buildAuditArgs(dir, repoRoot, omitDev = false) {
+  const auditArgs = ['audit', '--json'];
+  if (omitDev) auditArgs.push('--omit=dev');
+  // Subpackages with their own package-lock.json must be audited standalone;
+  // otherwise npm climbs to the workspace root lockfile and masks subpackage CVEs.
+  const resolvedDir = path.resolve(dir);
+  const resolvedRoot = path.resolve(repoRoot);
+  if (resolvedDir !== resolvedRoot && fs.existsSync(path.join(resolvedDir, 'package-lock.json'))) {
+    auditArgs.push('--workspaces=false');
+  }
+  return auditArgs;
+}
+
+function runAudit(dir, options = {}) {
   const maxRetries = parseInt(process.env.AUDIT_GATE_MAX_RETRIES || '1', 10);
-  const timeoutMs = parseInt(process.env.AUDIT_GATE_TIMEOUT_MS || '15000', 10);
+  const timeoutMs = parseInt(process.env.AUDIT_GATE_TIMEOUT_MS || '120000', 10);
+  const repoRoot = options.repoRoot || path.resolve(__dirname, '..');
+  const auditArgs = buildAuditArgs(dir, repoRoot, Boolean(options.omitDev));
   let attempt = 0;
   while (true) {
     attempt++;
-    const res = spawnSync('npm', ['audit', '--json'], {
+    const res = spawnSync('npm', auditArgs, {
       cwd: dir,
       encoding: 'utf8',
       timeout: timeoutMs,
@@ -253,10 +270,11 @@ function main() {
     }
   }
 
-  const allowlist = loadAllowlist(allowlistFile);
+  // Production runtime checks (--omit-dev) never allow exemptions from the allowlist.
+  const allowlist = args.omitDev ? { entries: [] } : loadAllowlist(allowlistFile);
   let audit;
   try {
-    audit = runAudit(dir);
+    audit = runAudit(dir, { repoRoot, omitDev: args.omitDev });
   } catch (err) {
     if (err.isRegistryOutage && !args.failOnOutage) {
       setCachedOutage(err.message);
@@ -331,7 +349,7 @@ function main() {
 
   const total = (audit.metadata && audit.metadata.vulnerabilities && audit.metadata.vulnerabilities.total) || 0;
   const exempted = [...exemptPackages];
-  console.log(`npm-audit-gate: scope=${scope} level=${args.level} total=${total} exempted=${exempted.length}${exempted.length ? ` (${exempted.join(', ')})` : ''}`);
+  console.log(`npm-audit-gate: scope=${scope} level=${args.level}${args.omitDev ? ' omitDev=true' : ''} total=${total} exempted=${exempted.length}${exempted.length ? ` (${exempted.join(', ')})` : ''}`);
 
   if (errors.length > 0) {
     for (const e of errors) console.error(`✗ ${e}`);
@@ -351,6 +369,7 @@ if (require.main === module) {
 
 module.exports = {
   parseArgs,
+  buildAuditArgs,
   loadAllowlist,
   isOutageMessage,
   getCachedOutage,

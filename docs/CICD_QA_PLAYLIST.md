@@ -92,13 +92,18 @@ some suggested "fixes" downgrade tooling or change dependency APIs. Remaining
 unpatched or major-only advisories must be reported rather than hidden.
 
 As of 2026-11-17, `GHSA-fc5q-39xc-vjpf` affects every published Picomatch
-version through `4.0.7`; upstream lists no patched version. The frontend-only
-exception in `scripts/audit-allowlist.json` expires on 2026-12-01. It accepts
-the residual build/test tooling risk for repository-controlled globs, not
-arbitrary user-supplied patterns. Production nginx receives compiled assets,
-not the Node tooling tree. This does **not** remediate Picomatch: monitor the
-advisory, install a patched release once available, and remove the exception.
-The gate still rejects unrelated advisories and expired/stale exceptions.
+version through `4.0.7`; upstream lists no patched version. The expiring
+exception in `scripts/audit-allowlist.json` (`expires: 2026-12-01`) covers the
+dev/build/test tooling scopes (`ag_extension_decision_support`, `backend`,
+`frontend`, and `ag-extension-browser-ext`). Production runtime dependencies
+are verified separately with `--omit-dev` (which allows no exemptions and has
+zero `picomatch` high/critical findings, while frontend production nginx ships
+compiled assets rather than Node tooling). This does **not** remediate
+Picomatch: monitor the advisory, install a patched release once available, and
+remove the exception. The gate still rejects unrelated advisories, production
+runtime advisories (`--omit-dev`), and expired/stale exceptions, and audits
+subpackages with standalone lockfiles (`--workspaces=false`) so root overrides
+cannot mask subpackage advisories.
 Peer-dependency cycles (such as Vitest and its coverage provider) may inherit
 an exception only when their dependency graph reaches a reviewed exception or
 a below-threshold finding and contains no unreviewed advisory or unknown node.

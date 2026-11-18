@@ -3,25 +3,55 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
-const { areIndirectViasExempt, isAllowlisted, loadAllowlist } = require('./npm-audit-gate.cjs');
+const {
+  areIndirectViasExempt,
+  buildAuditArgs,
+  isAllowlisted,
+  loadAllowlist,
+  parseArgs,
+} = require('./npm-audit-gate.cjs');
 
-describe('frontend unpatched Picomatch exception', () => {
+describe('unpatched Picomatch exception scopes', () => {
   const entries = loadAllowlist(path.join(__dirname, 'audit-allowlist.json')).entries;
   const advisory = { url: 'https://github.com/advisories/GHSA-fc5q-39xc-vjpf' };
 
-  it('covers only the reviewed advisory in the frontend scope', () => {
+  it('covers only the reviewed advisory in the reviewed tooling scopes', () => {
     const vulnerability = { via: [advisory] };
-    const entry = isAllowlisted('picomatch', vulnerability, entries, 'frontend');
-    assert.ok(entry);
-    assert.equal(entry.expires, '2026-12-01');
-    assert.equal(isAllowlisted('picomatch', vulnerability, entries, 'backend'), null);
-    assert.equal(isAllowlisted('picomatch', vulnerability, entries, 'ag_extension_decision_support'), null);
+    for (const scope of ['frontend', 'backend', 'ag_extension_decision_support', 'ag-extension-browser-ext']) {
+      const entry = isAllowlisted('picomatch', vulnerability, entries, scope);
+      assert.ok(entry, `expected picomatch allowlisted in ${scope}`);
+      assert.equal(entry.expires, '2026-12-01');
+    }
+    assert.equal(isAllowlisted('picomatch', vulnerability, entries, 'ag-extension-shared'), null);
   });
 
   it('does not exempt new Picomatch advisories or other dependencies', () => {
     const unrelated = { url: 'https://github.com/advisories/GHSA-unreviewed' };
     assert.equal(isAllowlisted('picomatch', { via: [advisory, unrelated] }, entries, 'frontend'), null);
     assert.equal(isAllowlisted('minimatch', { via: [advisory] }, entries, 'frontend'), null);
+  });
+});
+
+describe('CLI and standalone lockfile audit options', () => {
+  it('parses --omit-dev', () => {
+    const parsed = parseArgs(['--dir', '.', '--level', 'high', '--omit-dev']);
+    assert.equal(parsed.omitDev, true);
+    assert.equal(parsed.dir, '.');
+    assert.equal(parsed.level, 'high');
+  });
+
+  it('adds --workspaces=false only for subdirectories with standalone lockfiles', () => {
+    const repoRoot = path.resolve(__dirname, '..');
+    assert.deepEqual(buildAuditArgs(repoRoot, repoRoot, false), ['audit', '--json']);
+    assert.deepEqual(buildAuditArgs(repoRoot, repoRoot, true), ['audit', '--json', '--omit=dev']);
+    assert.deepEqual(
+      buildAuditArgs(path.join(repoRoot, 'ag-extension-browser-ext'), repoRoot, false),
+      ['audit', '--json', '--workspaces=false'],
+    );
+    assert.deepEqual(
+      buildAuditArgs(path.join(repoRoot, 'ag-extension-dashboard/src/frontend'), repoRoot, true),
+      ['audit', '--json', '--omit=dev'],
+    );
   });
 });
 
