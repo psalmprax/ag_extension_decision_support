@@ -54,7 +54,10 @@ jest.mock('../middleware/authorize', () => ({
 }));
 
 jest.mock('../services/sessionService', () => ({
+    acquireUserSessionLock: jest.fn().mockResolvedValue(undefined),
     revokeAllUserSessions: jest.fn().mockResolvedValue(0),
+    revokeAllUserSessionsInTransaction: jest.fn().mockResolvedValue({ revokedCount: 0, tokenHashes: [] }),
+    publishSessionRevocations: jest.fn(),
 }));
 
 jest.mock('bcryptjs', () => ({
@@ -62,10 +65,18 @@ jest.mock('bcryptjs', () => ({
 }));
 
 import { query, getPool } from '../services/databaseService';
-import { revokeAllUserSessions } from '../services/sessionService';
+import {
+    acquireUserSessionLock,
+    revokeAllUserSessions,
+    revokeAllUserSessionsInTransaction,
+    publishSessionRevocations,
+} from '../services/sessionService';
 const mockQuery = query as jest.Mock;
 const mockGetPool = getPool as jest.Mock;
+const mockAcquireUserSessionLock = acquireUserSessionLock as jest.Mock;
 const mockRevokeAllUserSessions = revokeAllUserSessions as jest.Mock;
+const mockRevokeAllUserSessionsInTransaction = revokeAllUserSessionsInTransaction as jest.Mock;
+const mockPublishSessionRevocations = publishSessionRevocations as jest.Mock;
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
@@ -367,18 +378,42 @@ describe('Users Route — role changes are validated and revoke sessions', () =>
 
     beforeEach(() => {
         mockQuery.mockReset();
+        mockAcquireUserSessionLock.mockReset();
+        mockAcquireUserSessionLock.mockResolvedValue(undefined);
         mockRevokeAllUserSessions.mockClear();
+        mockRevokeAllUserSessionsInTransaction.mockReset();
+        mockRevokeAllUserSessionsInTransaction.mockResolvedValue({ revokedCount: 1, tokenHashes: ['hash-user-2'] });
+        mockPublishSessionRevocations.mockClear();
         mockGetPool.mockImplementation(() => ({ query: jest.fn() }));
         mockQuery.mockResolvedValue({ rows: [updatedRow] });
     });
 
-    it('PUT /:id with a role change revokes every session (JWTs embed the role)', async () => {
+    it('PUT /:id with a role change revokes every session inside the transaction and publishes post-commit', async () => {
         const res = await request(app)
             .put('/api/users/user-2')
             .set('Authorization', `Bearer ${adminToken}`)
             .send({ role: 'farmer' });
         expect(res.status).toBe(200);
-        expect(mockRevokeAllUserSessions).toHaveBeenCalledWith('user-2');
+        expect(mockAcquireUserSessionLock).toHaveBeenCalledWith(
+            expect.objectContaining({ query: expect.any(Function) }),
+            'user-2'
+        );
+        expect(mockRevokeAllUserSessionsInTransaction).toHaveBeenCalledWith(
+            expect.objectContaining({ query: expect.any(Function) }),
+            'user-2'
+        );
+        expect(mockPublishSessionRevocations).toHaveBeenCalledWith(['hash-user-2']);
+        expect(mockRevokeAllUserSessions).not.toHaveBeenCalled();
+    });
+
+    it('PUT /:id does not publish revocation caches when transactional revocation fails', async () => {
+        mockRevokeAllUserSessionsInTransaction.mockRejectedValueOnce(new Error('Session table unavailable'));
+        const res = await request(app)
+            .put('/api/users/user-2')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ role: 'farmer' });
+        expect(res.status).toBe(500);
+        expect(mockPublishSessionRevocations).not.toHaveBeenCalled();
     });
 
     it('PUT /:id without role/is_active changes does not revoke sessions', async () => {
@@ -387,6 +422,9 @@ describe('Users Route — role changes are validated and revoke sessions', () =>
             .set('Authorization', `Bearer ${adminToken}`)
             .send({ firstName: 'New' });
         expect(res.status).toBe(200);
+        expect(mockAcquireUserSessionLock).not.toHaveBeenCalled();
+        expect(mockRevokeAllUserSessionsInTransaction).not.toHaveBeenCalled();
+        expect(mockPublishSessionRevocations).not.toHaveBeenCalled();
         expect(mockRevokeAllUserSessions).not.toHaveBeenCalled();
     });
 
@@ -396,6 +434,8 @@ describe('Users Route — role changes are validated and revoke sessions', () =>
             .set('Authorization', `Bearer ${adminToken}`)
             .send({ role: 'superuser' });
         expect(res.status).toBe(400);
+        expect(mockRevokeAllUserSessionsInTransaction).not.toHaveBeenCalled();
+        expect(mockPublishSessionRevocations).not.toHaveBeenCalled();
         expect(mockRevokeAllUserSessions).not.toHaveBeenCalled();
     });
 
@@ -405,6 +445,8 @@ describe('Users Route — role changes are validated and revoke sessions', () =>
             .set('Authorization', `Bearer ${adminToken}`)
             .send({ role: 'farmer' });
         expect(res.status).toBe(400);
+        expect(mockRevokeAllUserSessionsInTransaction).not.toHaveBeenCalled();
+        expect(mockPublishSessionRevocations).not.toHaveBeenCalled();
         expect(mockRevokeAllUserSessions).not.toHaveBeenCalled();
     });
 

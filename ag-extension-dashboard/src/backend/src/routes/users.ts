@@ -7,7 +7,12 @@ import { mapUserPublicRows, mapUserPublicRow, mapUserRows } from '@/types/dtos';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
-import { revokeAllUserSessions } from '@/services/sessionService';
+import {
+    acquireUserSessionLock,
+    revokeAllUserSessions,
+    revokeAllUserSessionsInTransaction,
+    publishSessionRevocations,
+} from '@/services/sessionService';
 import { demoSql } from '@/services/demoScope';
 import { validateRecordScope } from '@/services/demoRecordScope';
 import { computeSubscriptionPeriodEnd } from '@/services/subscriptionUtils';
@@ -19,12 +24,40 @@ import {
 } from '@/services/userQueryBuilder';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const INACTIVE_STRIPE_SUBSCRIPTION_STATUSES = new Set(['canceled', 'expired', 'incomplete_expired']);
+const STRIPE_MANAGED_PLAN_CONFLICT_MESSAGE =
+    'Cannot reassign plan while the user has an active Stripe-managed subscription. Cancel or update the subscription in Stripe first.';
+
+class PlanAssignmentConflictError extends Error {
+    constructor(message: string = STRIPE_MANAGED_PLAN_CONFLICT_MESSAGE) {
+        super(message);
+        this.name = 'PlanAssignmentConflictError';
+    }
+}
 
 interface PlanLookupRow {
     id: string;
     name: string;
     price: string | number;
     interval: string | null;
+}
+
+interface ExistingSubscriptionRow {
+    id: string;
+    plan_id: string;
+    status?: string | null;
+    stripe_subscription_id?: string | null;
+    price?: string | number;
+}
+
+function hasActiveStripeSubscription(existing: ExistingSubscriptionRow | undefined): boolean {
+    const stripeSubscriptionId =
+        typeof existing?.stripe_subscription_id === 'string'
+            ? existing.stripe_subscription_id.trim()
+            : '';
+    if (!stripeSubscriptionId) return false;
+    const status = typeof existing?.status === 'string' ? existing.status.trim().toLowerCase() : '';
+    return !INACTIVE_STRIPE_SUBSCRIPTION_STATUSES.has(status);
 }
 
 function extractOptionalPlanId(body: Record<string, unknown>): {
@@ -109,6 +142,9 @@ async function upsertUserSubscription(
                stripe_subscription_id = NULL,
                expiry_notification_sent = false,
                updated_at = NOW()
+           WHERE subscriptions.stripe_subscription_id IS NULL
+              OR btrim(subscriptions.stripe_subscription_id) = ''
+              OR lower(btrim(COALESCE(subscriptions.status, ''))) IN ('canceled', 'expired', 'incomplete_expired')
          RETURNING id`,
         [userId, planId, now, periodEnd]
     );
@@ -173,20 +209,25 @@ async function assignUserPlan(
     );
     const now = new Date();
     const periodEnd = computeSubscriptionPeriodEnd(plan.interval, now);
-    const existingRes = await txQuery<{ id: string; plan_id: string; price?: string | number }>(
+    const existingRes = await txQuery<ExistingSubscriptionRow>(
         client,
-        `SELECT s.id, s.plan_id, sp.price
+        `SELECT s.id, s.plan_id, s.status, s.stripe_subscription_id, sp.price
          FROM subscriptions s
          LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
-         WHERE s.user_id = $1`,
+         WHERE s.user_id = $1
+         FOR UPDATE OF s`,
         [userId]
     );
     const existing = existingRes.rows[0];
-    const subscriptionId = await upsertUserSubscription(client, userId, plan.id, now, periodEnd);
-    if (subscriptionId) {
-        await resetSubscriptionUsage(client, subscriptionId);
-        await recordPlanChangeEvent(client, subscriptionId, existing, plan);
+    if (hasActiveStripeSubscription(existing)) {
+        throw new PlanAssignmentConflictError();
     }
+    const subscriptionId = await upsertUserSubscription(client, userId, plan.id, now, periodEnd);
+    if (!subscriptionId) {
+        throw new PlanAssignmentConflictError();
+    }
+    await resetSubscriptionUsage(client, subscriptionId);
+    await recordPlanChangeEvent(client, subscriptionId, existing, plan);
     return { periodEnd };
 }
 
@@ -521,16 +562,53 @@ async function applyUserUpdateOrFetch(
     return executeUserUpdate(client, id, safeUpdates);
 }
 
+interface UserUpdateTransactionResult {
+    dto: ReturnType<typeof mapUserPublicRow>;
+    revokedTokenHashes: string[];
+}
+
 async function updateUserInTransaction(
     id: string,
     safeUpdates: Record<string, unknown>,
-    targetPlan: PlanLookupRow | null
-) {
+    targetPlan: PlanLookupRow | null,
+    shouldRevokeSessions: boolean
+): Promise<UserUpdateTransactionResult | null> {
     return withTransaction(async client => {
+        // Acquire the per-user session advisory lock before touching `users`
+        // (matching login/mfa/refresh/password lock order) so a concurrent
+        // `/auth/refresh` cannot read the uncommitted pre-revocation session
+        // and mint a surviving former-role token.
+        if (shouldRevokeSessions) {
+            await acquireUserSessionLock(client, id);
+        }
         const rows = await applyUserUpdateOrFetch(client, id, safeUpdates);
         if (rows.length === 0) return null;
-        return finalizeUserWithPlan(client, rows[0], targetPlan);
+        const dto = await finalizeUserWithPlan(client, rows[0], targetPlan);
+        if (!dto) return null;
+
+        // Roles are embedded in the JWT, so revoke existing sessions inside the
+        // same transaction whenever role or activation changes. A session UPDATE
+        // failure rolls back the role/activation change instead of leaving old
+        // tokens valid under a former role.
+        const revokedTokenHashes = shouldRevokeSessions
+            ? (await revokeAllUserSessionsInTransaction(client, id)).tokenHashes
+            : [];
+
+        return { dto, revokedTokenHashes };
     });
+}
+
+function handleUserMutationError(
+    res: Response,
+    error: unknown,
+    logContext: string,
+    fallbackMessage: string
+) {
+    if (error instanceof PlanAssignmentConflictError) {
+        return res.status(409).json({ success: false, error: error.message });
+    }
+    logger.error(logContext, error);
+    return safeError(res, 500, fallbackMessage);
 }
 
 /**
@@ -565,8 +643,7 @@ router.post('/', authorize(['admin']), async (req: Request, res: Response) => {
 
         return res.status(201).json({ success: true, data: dto });
     } catch (error) {
-        logger.error('Failed to create user:', error);
-        return safeError(res, 500, 'Failed to create user');
+        return handleUserMutationError(res, error, 'Failed to create user:', 'Failed to create user');
     }
 });
 
@@ -594,21 +671,25 @@ router.put('/:id', authorize(['admin']), async (req: Request, res: Response) => 
         }
 
         const shouldRevokeSessions = safeUpdates.is_active !== undefined || safeUpdates.role !== undefined;
-        const dto = await updateUserInTransaction(id, safeUpdates, planResolution.plan);
-        if (!dto) {
+        const result = await updateUserInTransaction(
+            id,
+            safeUpdates,
+            planResolution.plan,
+            shouldRevokeSessions
+        );
+        if (!result) {
             return res.status(404).json({ success: false, error: 'User not found' });
         }
 
-        // Roles are embedded in the JWT, so revoke existing sessions post-commit
-        // whenever role or activation changes.
-        if (shouldRevokeSessions) {
-            await revokeAllUserSessions(id);
+        // Publish to local/Redis revocation caches strictly post-commit so a
+        // rolled-back transaction never poisons active sessions.
+        if (result.revokedTokenHashes.length > 0) {
+            publishSessionRevocations(result.revokedTokenHashes);
         }
 
-        return res.json({ success: true, data: dto });
+        return res.json({ success: true, data: result.dto });
     } catch (error) {
-        logger.error('Failed to update user:', error);
-        return safeError(res, 500, 'Failed to update user');
+        return handleUserMutationError(res, error, 'Failed to update user:', 'Failed to update user');
     }
 });
 

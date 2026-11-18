@@ -58,13 +58,30 @@ export function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
+const USER_SESSION_LOCK_SQL = "SELECT pg_advisory_xact_lock(hashtext($1))";
+
+/**
+ * Acquire the per-user transaction-scoped session advisory lock on an existing
+ * transaction client. Callers updating user credentials/roles and revoking
+ * sessions inside a transaction MUST acquire this before locking `users` rows
+ * so lock order matches `withUserSessionLock` (`login`, `mfa`, `refresh`,
+ * `account/password`) and prevents concurrent refreshes from surviving
+ * revocation.
+ */
+export async function acquireUserSessionLock(
+  client: PoolClient,
+  userId: string,
+): Promise<void> {
+  await client.query(USER_SESSION_LOCK_SQL, [userId]);
+}
+
 export async function withUserSessionLock<T>(
   userId: string,
   callback: (client: PoolClient) => Promise<T>,
 ): Promise<T> {
   try {
     return await withTransaction(async client => {
-      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [userId]);
+      await acquireUserSessionLock(client, userId);
       return callback(client);
     });
   } catch (error) {
@@ -146,9 +163,15 @@ async function checkSessionInDatabase(tokenHash: string): Promise<boolean> {
 function markRevokedLocally(tokenHash: string): void {
   rememberLocalRevocation(tokenHash);
   // Best-effort publish to other replicas; the DB row is still authoritative.
-  void addToSet(REVOKED_SET, tokenHash, REVOKED_TTL_MS).catch((err: unknown) =>
-    logger.warn("Failed to publish session revocation to shared state:", err),
-  );
+  // Guard both synchronous throws and non-thenable test doubles so post-commit
+  // cache publication can never turn a committed transaction into a 500.
+  try {
+    void Promise.resolve(addToSet(REVOKED_SET, tokenHash, REVOKED_TTL_MS)).catch((err: unknown) =>
+      logger.warn("Failed to publish session revocation to shared state:", err),
+    );
+  } catch (err: unknown) {
+    logger.warn("Failed to publish session revocation to shared state:", err);
+  }
 }
 
 export async function createSession(params: {
@@ -259,18 +282,70 @@ export async function revokeSession(
   }
 }
 
+const REVOKE_ALL_USER_SESSIONS_SQL =
+  "UPDATE user_sessions SET is_revoked = true WHERE user_id = $1 AND is_revoked = false RETURNING token_hash";
+
+export interface TransactionalSessionRevocation {
+  revokedCount: number;
+  tokenHashes: string[];
+}
+
+function extractTokenHashes(rows: Array<{ token_hash?: unknown }>): string[] {
+  const hashes: string[] = [];
+  for (const row of rows) {
+    if (typeof row.token_hash === "string" && row.token_hash.length > 0) {
+      hashes.push(row.token_hash);
+    }
+  }
+  return hashes;
+}
+
+/**
+ * Publish committed session revocations to the in-process fast-path cache and
+ * shared Redis set. Callers executing revocation inside a transaction MUST call
+ * this only after COMMIT succeeds so rolled-back updates never poison caches.
+ */
+export function publishSessionRevocations(tokenHashes: readonly string[]): void {
+  for (const tokenHash of tokenHashes) {
+    if (tokenHash) markRevokedLocally(tokenHash);
+  }
+}
+
+/**
+ * Revoke every active session for a user inside an existing database
+ * transaction without publishing cache entries yet. Pair with
+ * `publishSessionRevocations(result.tokenHashes)` strictly post-commit.
+ */
+export async function revokeAllUserSessionsInTransaction(
+  client: PoolClient,
+  userId: string,
+): Promise<TransactionalSessionRevocation> {
+  try {
+    const res = await client.query<{ token_hash?: string | null }>(
+      REVOKE_ALL_USER_SESSIONS_SQL,
+      [userId],
+    );
+    const rows = res.rows ?? [];
+    return {
+      revokedCount: res.rowCount ?? rows.length,
+      tokenHashes: extractTokenHashes(rows),
+    };
+  } catch (error) {
+    logger.error("Failed to revoke all user sessions:", error);
+    throw error;
+  }
+}
+
 /** Revoke every session for a user (password reset, account deletion, admin lock). */
 export async function revokeAllUserSessions(userId: string): Promise<number> {
   try {
-    const res = await query(
-      `UPDATE user_sessions SET is_revoked = true WHERE user_id = $1 AND is_revoked = false RETURNING token_hash`,
+    const res = await query<{ token_hash?: string | null }>(
+      REVOKE_ALL_USER_SESSIONS_SQL,
       [userId],
     );
-    for (const row of res.rows) {
-      if (row.token_hash) markRevokedLocally(row.token_hash);
-    }
-
-    return res.rowCount ?? res.rows.length ?? 0;
+    const rows = res.rows ?? [];
+    publishSessionRevocations(extractTokenHashes(rows));
+    return res.rowCount ?? rows.length;
   } catch (error) {
     logger.error("Failed to revoke all user sessions:", error);
     throw error;
