@@ -139,6 +139,7 @@
     "multer": "^2.5.0",
     "path-to-regexp": "^0.1.13",
     "picomatch": "^4.0.4",
-    "nodemailer": "^10.2.1"
+    "nodemailer": "^10.2.1",
+    "effect": "^3.22.5"
   }
 }
