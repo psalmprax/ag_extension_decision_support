@@ -19,6 +19,7 @@ const TRIGGER_LABEL: Record<ReviewTrigger, string> = {
   invalid_references: 'Cited sources it was not given',
   no_sources: 'No supporting sources found',
   farmer_request: 'Farmer asked for a human check',
+  officer_edit: 'Officer corrected an AI draft',
 };
 
 const DECISION_LABEL: Record<Decision, string> = { approved: 'approved', dismissed: 'dismissed', escalated: 'escalated' };

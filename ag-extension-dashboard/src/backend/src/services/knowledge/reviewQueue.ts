@@ -7,10 +7,11 @@ import { logger } from '@/utils/logger';
  *   - invalid_references: the answer cited sources it was not given
  *   - no_sources:         nothing was retrieved, so the answer is the model's own
  *   - farmer_request:     the farmer asked for a human to check it
+ *   - officer_edit:       the officer corrected the AI's draft reply before sending it
  */
-export type ReviewTrigger = 'safety_boundary' | 'invalid_references' | 'no_sources' | 'farmer_request';
+export type ReviewTrigger = 'safety_boundary' | 'invalid_references' | 'no_sources' | 'farmer_request' | 'officer_edit';
 
-export const REVIEW_TRIGGERS: readonly ReviewTrigger[] = ['safety_boundary', 'invalid_references', 'no_sources', 'farmer_request'];
+export const REVIEW_TRIGGERS: readonly ReviewTrigger[] = ['safety_boundary', 'invalid_references', 'no_sources', 'farmer_request', 'officer_edit'];
 
 export interface AdvisoryEvidenceSummary {
     status: string;

@@ -8,6 +8,9 @@ import {
   parseFollowUpQuestions,
 } from '@/pages/farmerChatSafety';
 import { useLanguage } from '@/lib/LanguageContext';
+import { rememberCopilotDraft } from '@/lib/copilotDraft';
+import type { CopilotDraft } from '@/api/aiService';
+import { SourceList, UnverifiedNote } from './AnswerSources';
 
 const DRAFT_INSTRUCTION =
   "Draft a short, clear reply from the extension officer to the farmer's latest message in this conversation. " +
@@ -16,7 +19,7 @@ const DRAFT_INSTRUCTION =
 type DraftState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'ready'; text: string }
+  | ({ status: 'ready' } & CopilotDraft)
   | { status: 'error' };
 
 interface OfficerCopilotProps {
@@ -70,8 +73,8 @@ export const OfficerCopilot: React.FC<OfficerCopilotProps> = ({ conversationId, 
   const requestDraft = async () => {
     setDraft({ status: 'loading' });
     try {
-      const text = await getCopilotDraft(conversationId, DRAFT_INSTRUCTION, language);
-      setDraft(text.trim() ? { status: 'ready', text: text.trim() } : { status: 'error' });
+      const result = await getCopilotDraft(conversationId, DRAFT_INSTRUCTION, language);
+      setDraft(result.text.trim() ? { status: 'ready', ...result, text: result.text.trim() } : { status: 'error' });
     } catch (error) {
       console.error('Copilot draft failed:', error);
       setDraft({ status: 'error' });
@@ -114,11 +117,14 @@ export const OfficerCopilot: React.FC<OfficerCopilotProps> = ({ conversationId, 
             {t('ui_officer_copilot_ai_draft_only_you_can_see_this_check')}
           </p>
           <p className="text-xs text-slate-800 dark:text-white/90 whitespace-pre-line">{draft.text}</p>
+          <SourceList sources={draft.sources} className="text-slate-700 dark:text-white/70" />
+          {draft.evidence === 'general' && <UnverifiedNote viewer="officer" />}
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => {
                 onUseText(draft.text);
+                rememberCopilotDraft(conversationId, draft.text);
                 setDraft({ status: 'idle' });
               }}
               className="px-2.5 py-1 rounded-lg text-xxs font-medium bg-emerald-600 hover:bg-emerald-500 text-white"

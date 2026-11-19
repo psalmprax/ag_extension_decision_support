@@ -45,6 +45,8 @@ export interface VisitWithFarmerDTO {
   createdAt: string | null;
   updatedAt: string | null;
   farmerName: string | null;
+  /** Whether the report was filed on the farm; null until the visit is completed. */
+  locationCheck: { status: string; distanceM: number | null; accuracyM: number | null } | null;
 }
 export function mapVisitWithFarmerRow(row: VisitWithFarmerRow): VisitWithFarmerDTO {
   return {
@@ -69,6 +71,9 @@ export function mapVisitWithFarmerRow(row: VisitWithFarmerRow): VisitWithFarmerD
     createdAt: toIso(row.created_at) ?? null,
     updatedAt: toIso(row.updated_at) ?? null,
     farmerName: row.farmer_name,
+    locationCheck: row.location_check
+      ? { status: row.location_check, distanceM: row.location_distance_m ?? null, accuracyM: parseDecimal(row.location_accuracy_m ?? null) }
+      : null,
   };
 }
 export function mapVisitWithFarmerRows(rows: VisitWithFarmerRow[]): VisitWithFarmerDTO[] {

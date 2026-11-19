@@ -52,13 +52,16 @@ export const sendThreadMessage = async (
   conversationId: string,
   content: string,
   language?: string,
-  attachmentIds?: string[]
+  attachmentIds?: string[],
+  /** The copilot draft an officer's reply started from: the server marks the reply as AI-drafted. */
+  aiDraft?: string
 ) => {
   const { data } = await apiClient.post('/chatbot/messages', {
     conversationId,
     content,
     language,
     ...(attachmentIds?.length ? { attachmentIds } : {}),
+    ...(aiDraft ? { aiDraft: { text: aiDraft } } : {}),
   });
   return data;
 };

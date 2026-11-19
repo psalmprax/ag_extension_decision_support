@@ -276,6 +276,12 @@ export const updateVisitSchema = z.object({
     followUpRequired: z.boolean().optional(),
     followUpDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'followUpDate must be YYYY-MM-DD').nullable().optional(),
     attachmentIds: z.array(z.string().uuid()).max(4).optional(),
+    // Where the officer's device was when they completed the report (null: not shared).
+    location: z.object({
+      latitude: z.number().min(-90).max(90),
+      longitude: z.number().min(-180).max(180),
+      accuracy: z.number().nonnegative().max(1_000_000),
+    }).nullable().optional(),
   }).strict(),
 });
 

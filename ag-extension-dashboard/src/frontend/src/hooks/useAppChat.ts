@@ -14,6 +14,7 @@ import { isDemoFarmerId } from '@/demo/demoIds';
 import { Conversation, ChatMessage, Farmer } from '../types/dashboard';
 import { useAppStore } from '@/store/useAppStore';
 import { lacksPaidAccess } from '@/lib/planAccess';
+import { takeCopilotDraft } from '@/lib/copilotDraft';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { queryClient } from '@/lib/queryClient';
 import { UNREAD_CHATS_KEY } from '@/hooks/useUnreadChats';
@@ -287,7 +288,7 @@ export const useAppChat = (language: string) => {
       // A plain message never triggers an AI reply. AI help: the officer's private
       // copilot draft, the farmer's Ask AI button, or the turn-taking fallback.
       const res = via === 'message' && activeFarmerConvId
-        ? await sendThreadMessage(activeFarmerConvId, currentInput, language)
+        ? await sendThreadMessage(activeFarmerConvId, currentInput, language, undefined, takeCopilotDraft(activeFarmerConvId))
         : await getChatCompletion(currentInput, activeFarmerConvId || undefined, language);
       if (res.success && activeFarmerConvId) {
         loadFarmerMessages(activeFarmerConvId);

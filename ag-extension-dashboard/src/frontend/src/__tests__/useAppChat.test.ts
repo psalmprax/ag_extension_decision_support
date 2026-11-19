@@ -268,7 +268,9 @@ describe('useAppChat sending', () => {
     expect(chatApi.sendThreadMessage).toHaveBeenCalledWith(
       't1',
       'My maize has streaks',
-      'en'
+      'en',
+      undefined,
+      undefined // no copilot draft behind this message
     );
     expect(aiApi.getChatCompletion).not.toHaveBeenCalled();
     expect(result.current.farmerChatInput).toBe('');

@@ -65,6 +65,9 @@ const COSIGN_ATTEMPTS_KEY = (visitId: string) => `cosign:attempts:${visitId}`;
 const COSIGN_TTL_MS = 15 * 60 * 1000;
 const COSIGN_MAX_ATTEMPTS = 5;
 
+/** A visit filed further than this from the farm's registered location is not on the farm. */
+export const GEOFENCE_RADIUS_M = 200;
+
 /**
  * Calculates Haversine distance between two GPS coordinates in meters.
  */

@@ -14,6 +14,7 @@ import {
 import { logger } from '@/utils/logger';
 import { validate } from '@/middleware/validationMiddleware';
 import { createVisitSchema, updateVisitSchema } from '@/utils/schemas';
+import { checkVisitLocation, type ReportedPosition } from '@/services/visitLocationCheck';
 import { authorize } from '@/middleware/authorize';
 import { listAttachments } from '@/services/uploadAttachments';
 import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
@@ -404,9 +405,32 @@ interface UpdateVisitParams {
     followUpRequired?: boolean;
     followUpDate?: string | null;
     attachmentIds?: string[];
+    /** Where the officer's device was on completing the report; null = not shared. */
+    location?: ReportedPosition | null;
     /** Who is reporting, and the visit's farmer: attachments must be theirs. */
     userId?: string;
     farmerId?: string;
+}
+
+/** On completion: the reported position and whether it was on the farm (see visitLocationCheck). */
+async function locationColumns(
+    params: UpdateVisitParams,
+    executor: typeof query | PoolClient,
+): Promise<Array<[column: string, value: unknown]>> {
+    if (params.status !== 'completed') return [];
+    const farmSql = 'SELECT location_lat, location_lng FROM farmers WHERE id = $1';
+    const farmRows = executor === query
+        ? (await query<{ location_lat: unknown; location_lng: unknown }>(farmSql, [params.farmerId])).rows
+        : (await (executor as PoolClient).query(farmSql, [params.farmerId])).rows;
+    const farm = farmRows[0] ? { lat: farmRows[0].location_lat, lng: farmRows[0].location_lng } : null;
+    const check = checkVisitLocation(params.location, farm);
+    return [
+        ['location_lat', params.location?.latitude ?? null],
+        ['location_lng', params.location?.longitude ?? null],
+        ['location_accuracy_m', check.accuracyM],
+        ['location_distance_m', check.distanceM],
+        ['location_check', check.status],
+    ];
 }
 
 async function performUpdateVisit(
@@ -464,6 +488,10 @@ async function performUpdateVisit(
     if (followUpDate !== undefined) {
         updates.push(`follow_up_date = $${paramIndex++}`);
         sqlParams.push(followUpDate);
+    }
+    for (const [column, value] of await locationColumns(params, executor)) {
+        updates.push(`${column} = $${paramIndex++}`);
+        sqlParams.push(value);
     }
 
     updates.push('updated_at = NOW()');
@@ -614,6 +642,7 @@ router.patch('/:id', validate(updateVisitSchema), async (req: Request, res: Resp
             followUpRequired: typeof body.followUpRequired === 'boolean' ? body.followUpRequired : undefined,
             followUpDate: body.followUpDate as string | null | undefined,
             attachmentIds: Array.isArray(body.attachmentIds) ? body.attachmentIds as string[] : undefined,
+            location: body.location as ReportedPosition | null | undefined,
             userId: req.user?.userId,
         };
 

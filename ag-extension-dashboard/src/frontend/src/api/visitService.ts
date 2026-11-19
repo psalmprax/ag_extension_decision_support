@@ -1,6 +1,7 @@
 import apiClient from './client';
 import { syncQueue } from './syncQueueService';
 import { randomId } from '@/lib/randomId';
+import type { DevicePosition } from '@/lib/devicePosition';
 
 export interface Visit {
   id: string;
@@ -26,6 +27,8 @@ export interface Visit {
   followUpRequired?: boolean;
   followUpDate?: string | null;
   attachmentIds?: string[];
+  /** Where the officer's device was on completing the report; null = not shared. */
+  location?: DevicePosition | null;
 }
 
 export interface VisitsResponse {

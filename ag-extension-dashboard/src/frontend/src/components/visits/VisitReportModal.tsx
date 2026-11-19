@@ -6,6 +6,7 @@ import { uploadFile } from '@/api/uploadService';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { calendarDateFromToday } from '@/lib/calendarDate';
 import { useLanguage } from '@/lib/LanguageContext';
+import { currentPosition } from '@/lib/devicePosition';
 
 export interface VisitReportTarget {
   visitId: string;
@@ -43,8 +44,13 @@ export const VisitReportModal: React.FC<VisitReportModalProps> = ({ target, onCl
     if (!findings.trim()) return;
     setSaving(true);
     try {
-      const uploads = await Promise.all(photos.map(photo => uploadFile(photo, target.farmerId)));
+      // The position confirms the visit happened on the farm; a refusal never blocks the report.
+      const [uploads, location] = await Promise.all([
+        Promise.all(photos.map(photo => uploadFile(photo, target.farmerId))),
+        currentPosition(),
+      ]);
       await updateVisit(target.visitId, {
+        location,
         status: 'completed',
         outcomes: findings.trim(),
         notes: actions.trim() || undefined,
@@ -136,6 +142,9 @@ export const VisitReportModal: React.FC<VisitReportModalProps> = ({ target, onCl
           )}
         </fieldset>
 
+        <p className="text-xxs text-slate-500 dark:text-white/50">
+          {t('visit_report_location_note', 'Your location is saved with the report to confirm the visit was on the farm.')}
+        </p>
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm text-slate-700 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/5">
             {t('common_cancel')}

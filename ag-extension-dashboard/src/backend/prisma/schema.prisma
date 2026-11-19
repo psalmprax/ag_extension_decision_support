@@ -280,6 +280,11 @@ model Visit {
   durationMinutes      Int?      @map("duration_minutes")
   locationLat          Decimal?  @map("location_lat") @db.Decimal(10, 8)
   locationLng          Decimal?  @map("location_lng") @db.Decimal(11, 8)
+  /// Verified visits: the reported fix's accuracy, the distance to the farm and the check's outcome.
+  locationAccuracyM    Decimal?  @map("location_accuracy_m") @db.Decimal(8, 1)
+  locationDistanceM    Int?      @map("location_distance_m")
+  /// on_farm | away | imprecise | farm_location_unknown | not_shared
+  locationCheck        String?   @map("location_check") @db.VarChar(30)
   notes                String?
   outcomes             String?
   followUpRequired     Boolean?  @default(false) @map("follow_up_required")

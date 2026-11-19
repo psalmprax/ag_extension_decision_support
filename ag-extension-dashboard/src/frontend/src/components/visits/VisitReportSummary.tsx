@@ -3,13 +3,14 @@ import { CalendarClock, ClipboardCheck } from 'lucide-react';
 import type { Visit } from '@/types/dashboard';
 import { formatCalendarDate } from '@/lib/calendarDate';
 import { useLanguage } from '@/lib/LanguageContext';
+import { VisitLocationBadge } from './VisitLocationBadge';
 
 /** A completed visit's findings and follow-up, as the officer reported them. */
 export const VisitReportSummary: React.FC<{ visit: Visit }> = ({ visit }) => {
   const { t } = useLanguage();
   const followUp = visit.followUpDate ?? visit.follow_up_date ?? null;
   const needsFollowUp = Boolean(visit.followUpRequired ?? visit.follow_up_required);
-  if (!visit.outcomes && !(needsFollowUp && followUp)) return null;
+  if (!visit.outcomes && !(needsFollowUp && followUp) && !visit.locationCheck) return null;
 
   return (
     <div className="space-y-1.5 text-xs">
@@ -21,6 +22,7 @@ export const VisitReportSummary: React.FC<{ visit: Visit }> = ({ visit }) => {
           </span>
         </p>
       )}
+      <VisitLocationBadge check={visit.locationCheck} />
       {needsFollowUp && followUp && (
         <p className="flex items-center gap-1.5 text-amber-700 dark:text-amber-300">
           <CalendarClock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />

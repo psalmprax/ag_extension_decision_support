@@ -348,7 +348,11 @@ describe('Visits Route — Mapper-before-response: mapVisitWithFarmerRows + mapV
             .send({ status: 'completed' });
 
         expect(response.status).toBe(200);
-        expect(mockQuery).toHaveBeenLastCalledWith(expect.stringContaining('UPDATE visits'), ['completed', 'visit-1']);
+        // No position was sent with the report, so the visit is recorded as not located.
+        expect(mockQuery).toHaveBeenLastCalledWith(
+            expect.stringContaining('UPDATE visits'),
+            ['completed', null, null, null, null, 'not_shared', 'visit-1'],
+        );
     });
 
     it('POST / rejects completed visit when duration is < 10 minutes (AD-002)', async () => {

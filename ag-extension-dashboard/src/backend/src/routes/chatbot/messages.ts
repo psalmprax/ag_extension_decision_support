@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { query } from '@/services/databaseService';
+import { draftProvenance, scheduleDraftCorrectionReview } from '@/services/chat/draftProvenance';
 import type {
   ChatMessageRow,
   AuthenticatedRequestUser,
@@ -155,6 +156,33 @@ async function messageWithPhotos(row: ChatMessageRow, attachmentIds: string[]) {
   return { ...mapChatMessageRow(row), ...(attachments ? { attachments } : {}) };
 }
 
+/**
+ * Store a message from the signed-in user. An officer's reply that began as the
+ * copilot's AI draft is marked as such, and an edited draft goes to review.
+ */
+async function insertThreadMessage(params: {
+  conversationId: string | null | undefined;
+  senderRole: 'user' | 'officer';
+  content: string;
+  language?: string;
+  senderId?: string;
+  aiDraft?: unknown;
+}): Promise<ChatMessageRow[]> {
+  const { conversationId, senderRole, content, senderId } = params;
+  const fromDraft = senderRole === 'officer' && conversationId ? draftProvenance(params.aiDraft, content) : null;
+  const { rows } = await query<ChatMessageRow>(
+    `INSERT INTO chat_messages (conversation_id, role, content, language, metadata)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING *`,
+    [conversationId ?? null, senderRole, content, params.language ?? null,
+     fromDraft ? JSON.stringify({ aiDraft: { edited: fromDraft.edited } }) : null]
+  );
+  if (fromDraft?.edited && conversationId && senderId) {
+    scheduleDraftCorrectionReview({ conversationId, officerId: senderId, draft: fromDraft.draft, sent: content });
+  }
+  return rows;
+}
+
 const handleMessagePost = async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
@@ -167,6 +195,8 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
       farmer_id?: string;
       language?: string;
       attachmentIds?: unknown;
+      /** The copilot draft this reply started from (officers only). */
+      aiDraft?: { text?: unknown };
     };
 
     const attachmentIds = parseAttachmentIds(body.attachmentIds);
@@ -184,13 +214,9 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
     // The sender is whoever is signed in. A client can never post as the AI,
     // as an officer, or as the farmer.
     const senderRole = user?.role === 'farmer' ? 'user' : 'officer';
-
-    const { rows } = await query<ChatMessageRow>(
-      `INSERT INTO chat_messages (conversation_id, role, content, language)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
-      [conversationId ?? null, senderRole, content, body.language ?? null]
-    );
+    const rows = await insertThreadMessage({
+      conversationId, senderRole, content, language: body.language, senderId: user?.userId, aiDraft: body.aiDraft?.text,
+    });
 
     if (conversationId) {
       await query(

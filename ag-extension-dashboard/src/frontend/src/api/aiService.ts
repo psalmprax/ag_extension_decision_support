@@ -1,4 +1,5 @@
 import apiClient from './client';
+import type { AnswerSource } from '@/types/dashboard';
 
 export interface BoxUpdateData {
   summary: string;
@@ -54,11 +55,28 @@ export interface ImageAnalysisResponse {
   };
 }
 
+/** One retrieved source behind an AI answer (backend AdvisoryCitation). */
+export interface AdvisoryCitationDto {
+  sourceId: string;
+  title: string;
+  sourceUrl?: string;
+}
+
 export interface ChatCompletionResponse {
   success: boolean;
   data: {
     messages: Array<{ role: 'user' | 'assistant'; content: string }>;
+    citations?: AdvisoryCitationDto[];
+    /** status 'general_guidance_only' = nothing was retrieved; invalidReferences = it cited sources it was not given. */
+    advisoryQuality?: { status: string; invalidReferences?: boolean };
   };
+}
+
+/** An officer's copilot draft and what it rests on. */
+export interface CopilotDraft {
+  text: string;
+  sources: AnswerSource[];
+  evidence: 'sourced' | 'general';
 }
 
 export const analyzeImage = async (
@@ -93,14 +111,20 @@ export const getCopilotDraft = async (
   conversationId: string,
   instruction: string,
   language?: string
-): Promise<string> => {
+): Promise<CopilotDraft> => {
   const response = await apiClient.post<ChatCompletionResponse>('/chatbot/completions', {
     message: instruction,
     conversation_id: conversationId,
     language,
     mode: 'draft',
   });
-  return response.data.data.messages.find(message => message.role === 'assistant')?.content ?? '';
+  const { messages, citations = [], advisoryQuality } = response.data.data;
+  const sourced = advisoryQuality?.status !== 'general_guidance_only' && !advisoryQuality?.invalidReferences && citations.length > 0;
+  return {
+    text: messages.find(message => message.role === 'assistant')?.content ?? '',
+    sources: citations.map((citation, index) => ({ n: index + 1, title: citation.title, url: citation.sourceUrl ?? null })),
+    evidence: sourced ? 'sourced' : 'general',
+  };
 };
 
 export const getPublicDemoChatCompletion = async (

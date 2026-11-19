@@ -214,6 +214,9 @@ export interface VisitWithFarmerRow {
   duration_minutes: number | null;
   location_lat: string | number | null;
   location_lng: string | number | null;
+  location_accuracy_m?: string | number | null;
+  location_distance_m?: number | null;
+  location_check?: string | null;
   notes: string | null;
   outcomes: string | null;
   follow_up_required: boolean | null;

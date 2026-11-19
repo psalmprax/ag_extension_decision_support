@@ -3,6 +3,7 @@ import { Loader2, Send, UserCheck } from 'lucide-react';
 import { createConversation, sendThreadMessage } from '@/api/chatbotService';
 import { FarmerAskAi } from '@/components/chat/FarmerAskAi';
 import { ChatPhotoButton, type PhotoTarget } from '@/components/chat/ChatPhotoButton';
+import { ChatVoiceButton } from '@/components/chat/ChatVoiceButton';
 import { FarmerChatMessage } from '@/components/chat/FarmerChatMessage';
 import { useConversationRealtime } from '@/hooks/useConversationRealtime';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -144,6 +145,11 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
               language={language}
               onSent={id => loadFarmerMessages(id)}
               disabled={sending}
+            />
+            <ChatVoiceButton
+              language={language}
+              disabled={sending}
+              onTranscript={text => setFarmerChatInput(farmerChatInput.trim() ? `${farmerChatInput.trim()} ${text}` : text)}
             />
             <label htmlFor="farmer-officer-message" className="sr-only">
               {t('ui_farmer_officer_chat_page_message_to_your_officer')}
