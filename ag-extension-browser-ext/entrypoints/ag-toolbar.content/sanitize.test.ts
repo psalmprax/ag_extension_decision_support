@@ -1,10 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { ToolbarRenderTarget } from './sanitize';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 class FakeSanitizer {
   constructor(readonly config: SanitizerConfig) {}
 }
+
+type SetHTML = (input: string, options?: { sanitizer?: Sanitizer }) => void;
+
+/** A structurally checked render target: no casts, so a signature drift fails to compile. */
+const target = (setHTML?: SetHTML): ToolbarRenderTarget & { setHTML?: SetHTML } => ({ textContent: '', setHTML });
 
 /** Reload the module so the sanitizer is built against the current globals. */
 const importFresh = async () => {
@@ -22,54 +28,56 @@ describe('safeSetHTML', () => {
   it('renders through Element.setHTML with the shared toolbar sanitizer', async () => {
     vi.stubGlobal('Sanitizer', FakeSanitizer);
     const { safeSetHTML } = await importFresh();
-    const setHTML = vi.fn();
-    const el = { setHTML } as unknown as HTMLElement;
+    const setHTML = vi.fn<SetHTML>();
+    const el = target(setHTML);
 
-    safeSetHTML(el, '  <svg viewBox="0 0 1 1"><path d="M0 0"/></svg>  ');
+    safeSetHTML(el, '  <svg viewBox="0 0 1 1"><path d="M0 0"/></svg>  ', 'Sync now');
 
     expect(setHTML).toHaveBeenCalledTimes(1);
-    const [html, options] = setHTML.mock.calls[0] as [string, { sanitizer: unknown }];
+    const [html, options] = setHTML.mock.calls[0];
     expect(html).toBe('<svg viewBox="0 0 1 1"><path d="M0 0"/></svg>');
-    expect(options.sanitizer).toBeInstanceOf(FakeSanitizer);
+    expect(options?.sanitizer).toBeInstanceOf(FakeSanitizer);
+    expect(el.textContent).toBe('');
   });
 
   it('replaces instead of appending, so repeated icon swaps cannot stack', async () => {
     vi.stubGlobal('Sanitizer', FakeSanitizer);
     const { safeSetHTML } = await importFresh();
-    const setHTML = vi.fn();
-    const appendChild = vi.fn();
-    const el = { setHTML, appendChild } as unknown as HTMLElement;
+    const setHTML = vi.fn<SetHTML>();
+    const appendChild = vi.fn<(node: Node) => Node>();
+    const el = { ...target(setHTML), appendChild };
 
-    safeSetHTML(el, '<span>one</span>');
-    safeSetHTML(el, '<span>two</span>');
+    safeSetHTML(el, '<span>one</span>', 'One');
+    safeSetHTML(el, '<span>two</span>', 'Two');
 
     expect(appendChild).not.toHaveBeenCalled();
     expect(setHTML).toHaveBeenCalledTimes(2);
   });
 
-  it('falls back to text when the Sanitizer API is missing', async () => {
+  it('shows the fallback label when the Sanitizer API is missing', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { safeSetHTML, isToolbarSanitizerSupported } = await importFresh();
     expect(isToolbarSanitizerSupported()).toBe(false);
 
-    const setHTML = vi.fn();
-    const el = { setHTML, textContent: '' } as unknown as HTMLElement;
+    const setHTML = vi.fn<SetHTML>();
+    const el = target(setHTML);
 
-    safeSetHTML(el, '<div class="x">  hello  <b>world</b></div>');
+    // An icon-only template has no text: reducing it to text would leave a blank button.
+    safeSetHTML(el, '<svg viewBox="0 0 1 1"><path d="M0 0"/></svg>', 'Capture location');
 
     expect(setHTML).not.toHaveBeenCalled();
-    expect(el.textContent).toBe('hello world');
+    expect(el.textContent).toBe('Capture location');
   });
 
   it('falls back when the target element has no setHTML', async () => {
     vi.stubGlobal('Sanitizer', FakeSanitizer);
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { safeSetHTML } = await importFresh();
-    const el = { textContent: '' } as unknown as HTMLElement;
+    const el = target();
 
-    safeSetHTML(el, '<p>plain</p>');
+    safeSetHTML(el, '<p>plain</p>', 'Log visit');
 
-    expect(el.textContent).toBe('plain');
+    expect(el.textContent).toBe('Log visit');
   });
 
   it('never assigns innerHTML, even when setHTML rejects the input', async () => {
@@ -77,17 +85,16 @@ describe('safeSetHTML', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { safeSetHTML } = await importFresh();
     const el = {
-      setHTML: () => {
+      ...target(() => {
         throw new TypeError('bad markup');
-      },
-      textContent: '',
+      }),
       set innerHTML(_value: string) {
         throw new Error('innerHTML must not be used');
       },
-    } as unknown as HTMLElement;
+    };
 
-    expect(() => safeSetHTML(el, '<b>safe</b>')).not.toThrow();
-    expect(el.textContent).toBe('safe');
+    expect(() => safeSetHTML(el, '<b>safe</b>', 'Sync failed')).not.toThrow();
+    expect(el.textContent).toBe('Sync failed');
   });
 });
 

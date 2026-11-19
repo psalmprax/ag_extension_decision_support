@@ -66,6 +66,12 @@ const createToolbarSanitizer = (): Sanitizer | null => {
 
 const toolbarSanitizer = createToolbarSanitizer();
 
+/** The parts of an element `safeSetHTML` uses; every HTMLElement satisfies it. */
+export interface ToolbarRenderTarget {
+  textContent: string | null;
+  setHTML?: (input: string, options?: { sanitizer?: Sanitizer }) => void;
+}
+
 /**
  * Replace an element's content with sanitized markup.
  *
@@ -75,10 +81,12 @@ const toolbarSanitizer = createToolbarSanitizer();
  * buttons swap their icon in place, and appending used to stack a new SVG on
  * every state change.
  *
- * When the API is unavailable, or rejects the input, the markup is reduced to
- * its text. Nothing here parses HTML as a fallback.
+ * When the API is unavailable, or rejects the input, the element shows
+ * `fallbackLabel` as plain text. The templates are icon-only SVG, so reducing the
+ * markup to its text would leave a blank button; nothing here parses HTML as a
+ * fallback.
  */
-export const safeSetHTML = (el: HTMLElement, html: string): void => {
+export const safeSetHTML = (el: ToolbarRenderTarget, html: string, fallbackLabel: string): void => {
   if (toolbarSanitizer && typeof el.setHTML === 'function') {
     try {
       el.setHTML(html.trim(), { sanitizer: toolbarSanitizer });
@@ -89,5 +97,5 @@ export const safeSetHTML = (el: HTMLElement, html: string): void => {
   } else {
     console.warn('[ag-toolbar] Sanitizer API unavailable — rendering template as text');
   }
-  el.textContent = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  el.textContent = fallbackLabel;
 };
