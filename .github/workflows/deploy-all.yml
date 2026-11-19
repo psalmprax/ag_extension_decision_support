@@ -1114,19 +1114,34 @@ jobs:
       # ── Step 4.5/5: Seed Database (Admin & Initial Users) ─────
       - name: 4.5/5 Idempotent Seed — check and populate seed data
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
+        env:
+          # Repository SECRET (never a variable: variables are plain text). Used by the
+          # seed only while admin@agridemo.com still has the published default password;
+          # see prisma/systemAdministrator.cjs. Masked by Actions, never echoed here.
+          SYSTEM_ADMIN_INITIAL_PASSWORD: ${{ secrets.SYSTEM_ADMIN_INITIAL_PASSWORD }}
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          envs: SYSTEM_ADMIN_INITIAL_PASSWORD
           command_timeout: 3m
           script: |
             cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
-            if docker compose $COMPOSE_FILES exec -T backend node prisma/seed.cjs; then
+            # `-e NAME` (no value) hands the variable from this shell to the seed process
+            # only: it never appears on a command line, in .env or in the output. When the
+            # secret is unset the host .env value (if any) applies.
+            SEED_ENV=""
+            if [ -n "${SYSTEM_ADMIN_INITIAL_PASSWORD:-}" ]; then
+              export SYSTEM_ADMIN_INITIAL_PASSWORD
+              SEED_ENV="-e SYSTEM_ADMIN_INITIAL_PASSWORD"
+            fi
+            if docker compose $COMPOSE_FILES exec -T $SEED_ENV backend node prisma/seed.cjs; then
               echo "Seed completed with the compiled seed script."
             else
-              docker compose $COMPOSE_FILES exec -T backend npx prisma db seed
+              docker compose $COMPOSE_FILES exec -T $SEED_ENV backend npx prisma db seed
             fi
+            unset SYSTEM_ADMIN_INITIAL_PASSWORD
             echo "Purging truncated or poisoned search_cache entries..."
             docker compose $COMPOSE_FILES exec -T app-db psql -U "${DATABASE_USER:-postgres}" -d "${DATABASE_NAME:-ag_extension}" -c "DELETE FROM search_cache WHERE length(answer) < 200 OR answer LIKE '%AI assistant is currently unavailable%';" \
               || echo "::warning title=search_cache purge failed::Truncated or 'assistant unavailable' cached answers may still be served"
