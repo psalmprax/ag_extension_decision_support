@@ -3,6 +3,8 @@ import type { PlanQuotas } from '@/api/billingService';
 import { useLanguage } from '@/lib/LanguageContext';
 
 interface PlanTierSelectorProps {
+  /** Manual plan changes are the system administrator's alone (the server enforces it too). */
+  canChangePlan: boolean;
   planId: string;
   currentPlanName?: string | null;
   role: string;
@@ -17,6 +19,7 @@ interface PlanTierSelectorProps {
 }
 
 export function PlanTierSelector({
+  canChangePlan,
   planId,
   currentPlanName,
   role,
@@ -31,6 +34,17 @@ export function PlanTierSelector({
 }: PlanTierSelectorProps) {
   const { t } = useLanguage();
   const isAdminRole = role === 'admin';
+
+  if (!canChangePlan) {
+    return (
+      <p className="text-[11px] text-white/50">
+        {t(
+          'users_access_plan_system_admin_note',
+          'Only the system administrator can change a subscription plan manually.'
+        )}
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-1.5">
@@ -47,7 +61,9 @@ export function PlanTierSelector({
         <option value="">
           {isAdminRole
             ? t('users_access_admin_full', 'Admin — Full Platform Access')
-            : t('users_access_keep_plan', 'Current: {plan} (unchanged)', { plan: currentPlanName || 'Free' })}
+            : t('users_access_keep_plan', 'Current: {plan} (unchanged)', {
+                plan: currentPlanName || 'Free',
+              })}
         </option>
         {plans.map(plan => (
           <option key={plan.id} value={plan.id}>
@@ -79,8 +95,14 @@ export function PlanTierSelector({
 
       <p className="text-[11px] text-white/50">
         {isAdminRole
-          ? t('users_access_admin_bypass_note', 'Admin accounts bypass subscription tier restrictions automatically.')
-          : t('users_access_plan_hint', 'Pro & Enterprise unlock AI Chat, Visits, Spatial Intelligence, SMS, Diagnostics, and Analytics.')}
+          ? t(
+              'users_access_admin_bypass_note',
+              'Admin accounts bypass subscription tier restrictions automatically.'
+            )
+          : t(
+              'users_access_plan_hint',
+              'Pro & Enterprise unlock AI Chat, Visits, Spatial Intelligence, SMS, Diagnostics, and Analytics.'
+            )}
       </p>
     </div>
   );

@@ -374,6 +374,20 @@ async function regionalManagerScope(req: Request): Promise<ManagerScope | null> 
 }
 
 /**
+ * Upgrading or downgrading an account by hand (no payment) is reserved for the
+ * system administrator. Returns the refusal to send, or null when allowed.
+ */
+async function manualPlanChangeRefusal(req: Request, body: Record<string, unknown>): Promise<GuardFailure | null> {
+    if (!extractOptionalPlanId(body).provided) return null;
+    if (await actorIsSystemAdmin(req)) return null;
+    return {
+        status: 403,
+        error: 'Only a system administrator can change a subscription plan manually',
+        code: SYSTEM_ADMIN_REQUIRED_CODE,
+    };
+}
+
+/**
  * Only a system administrator may create an administrator, promote someone to
  * administrator, or change a system-administrator account. The last active
  * system administrator can never be demoted or deactivated, whatever the
@@ -790,6 +804,11 @@ router.post('/', authorize(['admin']), async (req: Request, res: Response) => {
             });
         }
 
+        const planRefusal = await manualPlanChangeRefusal(req, body);
+        if (planRefusal) {
+            return res.status(planRefusal.status).json({ success: false, error: planRefusal.error, errorCode: planRefusal.code });
+        }
+
         const planResolution = await resolveRequestedPlan(body);
         if (planResolution.error) {
             return res.status(400).json({ success: false, error: planResolution.error });
@@ -823,6 +842,10 @@ router.put('/:id', authorize(['admin']), async (req: Request, res: Response) => 
         }
 
         const updates = (req.body || {}) as Record<string, unknown>;
+        const planRefusal = await manualPlanChangeRefusal(req, updates);
+        if (planRefusal) {
+            return res.status(planRefusal.status).json({ success: false, error: planRefusal.error, errorCode: planRefusal.code });
+        }
         const safeUpdates = extractSafeUserUpdates(updates);
         const planResolution = await resolveRequestedPlan(updates);
 

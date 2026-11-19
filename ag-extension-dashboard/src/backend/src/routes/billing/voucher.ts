@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { voucherService } from '../../services/voucherService';
 import { logger } from '../../utils/logger';
 import { authorize, AuthRequest } from '../../middleware/authorize';
+import { requireSystemAdmin } from '../../middleware/requireSystemAdmin';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
@@ -45,7 +46,8 @@ router.post('/voucher/redeem', authorize(['admin', 'extension_officer', 'farmer'
  *     summary: Generate voucher codes for a plan (Admin only)
  *     tags: [Billing]
  */
-router.post('/voucher/generate', authorize(['admin']), async (req: AuthRequest, res) => {
+// A voucher grants a paid plan without payment: system administrator only.
+router.post('/voucher/generate', authorize(['admin']), requireSystemAdmin, async (req: AuthRequest, res) => {
     try {
         const { planId, count = 1, expiresInDays } = req.body;
 

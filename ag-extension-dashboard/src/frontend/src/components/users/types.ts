@@ -58,3 +58,13 @@ export const getRoleBadge = (role: string) =>
  */
 export const assignableRoles = (actorIsSystemAdmin: boolean | undefined) =>
   actorIsSystemAdmin ? USER_ROLES : USER_ROLES.filter(role => role.value !== 'admin');
+
+/**
+ * Role choices for an existing user: the roles the actor may assign, plus the user's
+ * current role when it is not one of them (so the select can show what is set).
+ */
+export const roleOptionsFor = (actorIsSystemAdmin: boolean | undefined, currentRole: string) => {
+  const choices = assignableRoles(actorIsSystemAdmin);
+  const current = USER_ROLES.find(r => r.value === currentRole);
+  return choices.some(r => r.value === currentRole) || !current ? choices : [...choices, current];
+};

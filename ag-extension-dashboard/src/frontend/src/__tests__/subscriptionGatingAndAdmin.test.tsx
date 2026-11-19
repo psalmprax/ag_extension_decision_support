@@ -189,7 +189,7 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
     expect(await screen.findByTestId('worldmonitor-module')).toBeInTheDocument();
   });
 
-  it('allows admin to upgrade a basic Free user to Pro and change role/status via UserAccessModal', async () => {
+  it('allows the system administrator to upgrade a basic Free user to Pro and change role/status via UserAccessModal', async () => {
     useAppStore.setState({
       user: {
         id: 'admin-1',
@@ -199,6 +199,7 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
         role: 'admin',
         planName: 'Admin',
         isFree: false,
+        isSystemAdmin: true, // manual plan changes are the system administrator's alone
       },
     });
 
@@ -284,6 +285,53 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
     });
   });
 
+  it('an ordinary admin can change role but sees no plan selector and never sends a planId', async () => {
+    useAppStore.setState({
+      user: {
+        id: 'admin-2',
+        email: 'ops@example.org',
+        firstName: 'Ops',
+        lastName: 'Admin',
+        role: 'admin',
+        planName: 'Admin',
+        isFree: false,
+        isSystemAdmin: false,
+      },
+    });
+    vi.mocked(apiClient.get).mockResolvedValue({
+      data: {
+        success: true,
+        data: [
+          {
+            id: 'u-basic', firstName: 'Grace', lastName: 'Wanjiku', email: 'grace@example.org', role: 'farmer',
+            region: 'Central', phone: '', isActive: true, planId: FREE_PLAN_ID, planName: 'Free', isFree: true, lastLogin: null,
+          },
+        ],
+      },
+    });
+    vi.mocked(fetchPlanQuotas).mockClear();
+    vi.mocked(apiClient.put).mockResolvedValue({ data: { success: true } });
+
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <UserManagementPage />
+      </QueryClientProvider>
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit access for Grace Wanjiku' }));
+    expect(await screen.findByText('Manage Access & Subscription')).toBeInTheDocument();
+
+    expect(screen.queryByLabelText('Subscription Tier (Feature Access)')).not.toBeInTheDocument();
+    expect(screen.getByText('Only the system administrator can change a subscription plan manually.')).toBeInTheDocument();
+    // Plans are not even fetched for someone who cannot assign them.
+    expect(fetchPlanQuotas).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText('System Role'), { target: { value: 'extension_officer' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Access' }));
+    await waitFor(() => {
+      expect(apiClient.put).toHaveBeenCalledWith('/users/u-basic', { role: 'extension_officer' });
+    });
+  });
+
   it('worldmonitor upgrade guard describes implemented spatial summaries instead of an unrendered 3D globe', async () => {
     useAppStore.setState({
       user: {
@@ -320,6 +368,7 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
         role: 'admin',
         planName: 'Admin',
         isFree: false,
+        isSystemAdmin: true, // manual plan changes are the system administrator's alone
       },
     });
 

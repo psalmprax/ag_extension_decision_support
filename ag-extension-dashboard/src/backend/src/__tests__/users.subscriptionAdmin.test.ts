@@ -49,6 +49,8 @@ interface FakeState {
   planReadsOutsideLock: number;
   /** Plan locks held, by transaction client: user ids locked with the user_plan namespace. */
   planLocks: Map<string, Set<string>>;
+  /** Accounts holding the system-administrator flag (only they may change plans manually). */
+  systemAdmins: Set<string>;
 }
 
 interface SubscriptionFixture {
@@ -79,6 +81,7 @@ function createState(): FakeState {
     previousPlanReads: 0,
     planReadsOutsideLock: 0,
     planLocks: new Map(),
+    systemAdmins: new Set(['admin-1']),
   };
 }
 
@@ -194,6 +197,9 @@ function writeSubscription(state: FakeState, values: unknown[], reply: ReplyFn):
 }
 
 function handleUserStatement(state: FakeState, sql: string, values: unknown[], reply: ReplyFn): FakeReply {
+  if (sql.includes('SELECT is_system_admin FROM users')) {
+    return reply([{ is_system_admin: state.systemAdmins.has(String(values[0])) }]);
+  }
   if (sql.includes('INSERT INTO users')) return insertUser(state, sql, values, reply);
   if (sql.includes('UPDATE users SET')) return updateUser(state, sql, values, reply);
   if (sql.includes('users.id = $1') || sql.includes('FROM users WHERE id = $1')) {
@@ -460,6 +466,37 @@ describe('Admin user access & subscription tier management', () => {
     expect(state.users.get('u-rollback')?.role).toBe('farmer');
     // Revocation happens post-commit only: a failed write must not log the user out.
     expect((await request(app).get('/protected').set('Authorization', `Bearer ${targetToken}`)).status).toBe(200);
+  });
+
+  it('refuses a manual plan change by an admin who is not the system administrator, writing nothing', async () => {
+    const ordinaryAdmin = tokenFor('admin-2', 'admin');
+    state.users.set('u-basic', userRow({ id: 'u-basic', email: 'basic@example.org' }));
+
+    const put = await request(app)
+      .put('/users/u-basic')
+      .set('Authorization', `Bearer ${ordinaryAdmin}`)
+      .send({ planId: PRO_PLAN_ID });
+    expect(put.status).toBe(403);
+    expect(put.body.errorCode).toBe('SYSTEM_ADMIN_REQUIRED');
+
+    const post = await request(app)
+      .post('/users')
+      .set('Authorization', `Bearer ${ordinaryAdmin}`)
+      .send({
+        email: 'new@example.org', password: 'password123', firstName: 'New', lastName: 'User',
+        role: 'extension_officer', planId: PRO_PLAN_ID,
+      });
+    expect(post.status).toBe(403);
+
+    expect(state.subscriptionWrites).toEqual([]);
+    expect(state.users.has('u-created')).toBe(false);
+
+    // Without a plan, the same admin can still manage the account.
+    const nameOnly = await request(app)
+      .put('/users/u-basic')
+      .set('Authorization', `Bearer ${ordinaryAdmin}`)
+      .send({ firstName: 'Renamed' });
+    expect(nameOnly.status).toBe(200);
   });
 
   it('PUT /users/:id rejects an unknown/inactive or malformed planId (400) and regional managers (403)', async () => {

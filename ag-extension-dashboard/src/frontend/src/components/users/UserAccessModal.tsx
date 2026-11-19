@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ShieldCheck, X, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import apiClient from '@/api/client';
 import { useLanguage } from '@/lib/LanguageContext';
-import { USER_ROLES, assignableRoles, type DirectoryUser } from '@/components/users/types';
+import { roleOptionsFor, type DirectoryUser } from '@/components/users/types';
 import { PlanTierSelector } from '@/components/users/PlanTierSelector';
 import { useAssignablePlans } from '@/components/users/useAssignablePlans';
 import { SystemAdminBadge } from '@/components/users/SystemAdminBadge';
@@ -109,26 +109,31 @@ export function UserAccessModal({
     };
   }, [user, resetMutation]);
 
-  const { plans, isLoadingPlans, isFetchingPlans, plansLoadFailed, plansErrorMessage, refetchPlans } =
-    useAssignablePlans(Boolean(user), isDemo, t('users_access_plans_load_error', 'Unable to load subscription plans.'));
+  const {
+    plans,
+    isLoadingPlans,
+    isFetchingPlans,
+    plansLoadFailed,
+    plansErrorMessage,
+    refetchPlans,
+  } = useAssignablePlans(
+    Boolean(user) && Boolean(actorIsSystemAdmin),
+    isDemo,
+    t('users_access_plans_load_error', 'Unable to load subscription plans.')
+  );
 
   if (!user) return null;
 
   const isEditingSelf = Boolean(currentUserId && user.id === currentUserId);
-  // Admin accounts are editable only by a system administrator (the server also refuses
-  // to demote or deactivate the last active one).
-  const isProtectedTarget = !actorIsSystemAdmin && (user.isSystemAdmin === true || user.role === 'admin');
-  const roleChoices = assignableRoles(actorIsSystemAdmin);
-  const currentRole = USER_ROLES.find(r => r.value === role);
-  const roleOptions =
-    roleChoices.some(r => r.value === role) || !currentRole
-      ? roleChoices
-      : [...roleChoices, currentRole];
+  // Admin accounts: system administrator only (the server also guards the last one).
+  const isProtectedTarget =
+    !actorIsSystemAdmin && (user.isSystemAdmin === true || user.role === 'admin');
+  const roleOptions = roleOptionsFor(actorIsSystemAdmin, role);
 
   const changePayload: Record<string, unknown> = {};
   if (role !== initialRole) changePayload.role = role;
   if (isActive !== initialIsActive) changePayload.isActive = isActive;
-  if (planId && role !== 'admin') changePayload.planId = planId;
+  if (actorIsSystemAdmin && planId && role !== 'admin') changePayload.planId = planId;
   if (role === 'extension_officer' && (managerId ?? null) !== (user.managerId ?? null)) {
     changePayload.managerId = managerId ?? null;
   }
@@ -162,7 +167,11 @@ export function UserAccessModal({
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
-                <HeadlessDialog.Title as="h2" id="user-access-modal-title" className="text-base font-bold">
+                <HeadlessDialog.Title
+                  as="h2"
+                  id="user-access-modal-title"
+                  className="text-base font-bold"
+                >
                   {t('users_access_modal_title', 'Manage Access & Subscription')}
                 </HeadlessDialog.Title>
                 <p className="text-xs text-white/60">
@@ -229,6 +238,7 @@ export function UserAccessModal({
             </div>
 
             <PlanTierSelector
+              canChangePlan={Boolean(actorIsSystemAdmin)}
               planId={planId}
               currentPlanName={user.planName}
               role={role}
@@ -243,7 +253,11 @@ export function UserAccessModal({
             />
 
             {role === 'extension_officer' && (
-              <ManagerAssignmentField managerId={managerId} isDemo={isDemo} onChange={setManagerId} />
+              <ManagerAssignmentField
+                managerId={managerId}
+                isDemo={isDemo}
+                onChange={setManagerId}
+              />
             )}
 
             <AccountActiveToggle
