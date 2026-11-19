@@ -1,3 +1,4 @@
+import { config } from '@/config';
 import { AIRouter } from '@/services/aiProvider/aiProvider';
 import type { ReasoningResult } from '@/services/aiProvider/aiProvider';
 import { VectorService, type SearchResult } from '@/services/vectorService';
@@ -24,6 +25,7 @@ import {
 } from './advisoryPolicy';
 import type { AskOptions, FinalAnswer, KnowledgeAttachment, ReasonOptions } from '@/services/knowledge/types';
 import { AdvisoryTimeoutError, withAdvisoryTimeout } from './advisoryRuntime';
+import { selectEvidence } from './relevanceGate';
 
 /**
  * askQuestion pipeline: cache fast-path → parallel retrieval (categorize,
@@ -351,7 +353,7 @@ async function fetchInitialContext(
         withAdvisoryTimeout(
             () => VectorService.hybridSearch(queryText, 3, {}),
             8000, 'Knowledge vector retrieval'
-        ).catch(error => {
+        ).then(hits => selectEvidence(hits, config.retrieval, hits.length)).catch(error => {
             logger.warn('Knowledge vector retrieval unavailable; continuing without local evidence:', error);
             return [] as SearchResult[];
         }),

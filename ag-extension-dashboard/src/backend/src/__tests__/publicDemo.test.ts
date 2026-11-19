@@ -184,7 +184,8 @@ describe('POST /api/v1/chatbot/public-demo', () => {
   });
 
   it('supports Kiswahili language for agronomic inquiries', async () => {
-    jest.mocked(AIRouter.routeRequest).mockResolvedValueOnce({
+    // First call: English search phrasing of the Swahili question; second: the answer.
+    jest.mocked(AIRouter.routeRequest).mockResolvedValueOnce('What dose should I use for 3 acres?').mockResolvedValueOnce({
       text: 'Tumia mafuta ya mwarobaini mililita 3 kwa lita moja.',
     });
     const res = await request(app)

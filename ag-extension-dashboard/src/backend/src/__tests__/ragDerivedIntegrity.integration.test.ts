@@ -8,6 +8,7 @@ import { VectorService } from '@/services/vectorService';
 
 jest.mock('@/services/databaseService', () => ({ query: jest.fn() }));
 jest.mock('@/services/embeddingCache', () => ({ getEmbedding: jest.fn() }));
+jest.mock('@/services/embeddingDimensions', () => ({ EMBEDDING_DIMENSIONS: 3 }));
 jest.mock('@/services/aiProvider/aiProvider', () => ({ AIRouter: { routeRequest: jest.fn() } }));
 jest.mock('@/utils/logger', () => ({
     logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
@@ -42,10 +43,15 @@ const newContent = 'Rice and powdery mildew occur in the updated article.';
                 source_id text, target_id text, relation_type text, article_id uuid REFERENCES knowledge_articles(id),
                 properties jsonb, UNIQUE (source_id, target_id, relation_type, article_id)
             );
+            CREATE TEMP TABLE search_cache (id serial PRIMARY KEY, embedding vector(3));
         `);
-        const migration = readFileSync(path.resolve(__dirname, '../../prisma/migrations/20261108100000_version_rag_derived_data/migration.sql'), 'utf8');
-        await client.query(migration);
-        await client.query(migration);
+        // Legacy state: columns converted to pgvector by the old boot-time DDL.
+        // The retrieval-index migration must bring them back to double precision[].
+        for (const name of ['20261108100000_version_rag_derived_data', '20261121090000_rag_retrieval_indexes']) {
+            const migration = readFileSync(path.resolve(__dirname, `../../prisma/migrations/${name}/migration.sql`), 'utf8');
+            await client.query(migration);
+            await client.query(migration);
+        }
         jest.mocked(query).mockImplementation(async (sql, params) => {
             const result = await client.query(sql, params);
             return { rows: result.rows, rowCount: result.rowCount ?? 0 };
@@ -66,7 +72,7 @@ const newContent = 'Rice and powdery mildew occur in the updated article.';
         );
         await client.query(
             `INSERT INTO knowledge_chunks (id, article_id, chunk_index, content, embedding)
-             VALUES ('legacy', $1, 0, 'old unversioned content', '[1,0,0]')`,
+             VALUES ('legacy', $1, 0, 'old unversioned content', '{1,0,0}')`,
             [articleId]
         );
         expect(await RAGV2Service.searchChunks('maize')).toEqual([]);
@@ -103,13 +109,10 @@ const newContent = 'Rice and powdery mildew occur in the updated article.';
         const oldRelations = RAGV2Service.extractRelationships(RAGV2Service.extractEntities(oldContent, articleId), articleId);
         await expect(RAGV2Service.storeRelationships(oldRelations, oldContent)).rejects.toThrow('changed during graph indexing');
 
-        jest.spyOn(VectorService, 'hybridSearch').mockResolvedValue([{
-            id: articleId, content: newContent, metadata: { title: 'Guide', category: 'crops' }, score: 0.8,
-        }]);
+        // No current chunk exists: retrieval falls back to the article itself (full-text leg).
         const result = await RAGV2Service.enhancedSearch('rice', { useChunks: true, useGraph: false, useReranking: false });
         expect(result.results[0].content).toBe(newContent);
         expect(result.citations[0].excerpt).toBe(newContent);
-        jest.mocked(VectorService.hybridSearch).mockRestore();
 
         expect(await RAGV2Service.chunkAndEmbedArticle(articleId, newContent, {})).toBe(1);
         await RAGV2Service.buildKnowledgeGraph();
@@ -117,18 +120,26 @@ const newContent = 'Rice and powdery mildew occur in the updated article.';
         expect((await RAGV2Service.getRelatedEntities('rice')).some(entity => entity.name === 'powdery mildew')).toBe(true);
     });
 
-    it.each(['vector', 'array'])('writes and searches %s-backed embeddings', async storage => {
-        if (storage === 'array') {
-            await client.query(`
-                ALTER TABLE knowledge_articles ALTER COLUMN embedding TYPE double precision[] USING embedding::real[]::double precision[];
-                ALTER TABLE knowledge_chunks ALTER COLUMN embedding TYPE double precision[] USING embedding::real[]::double precision[];
-            `);
-        }
-        const id = storage === 'vector' ? 'a1f96d30-4c44-4cc7-92a5-d6bad48b0425' : '4d1841df-0ce6-4fd8-86f3-f66454a121cd';
-        const content = `Cassava nitrogen evidence for ${storage} storage.`;
-        await VectorService.upsertDocument(id, content, { title: 'Evidence', category: storage, crops: ['cassava'] });
-        expect((await VectorService.search('cassava', 5, { category: storage }))[0].content).toBe(content);
-        expect(await RAGV2Service.chunkAndEmbedArticle(id, content, {})).toBe(1);
-        expect((await RAGV2Service.searchChunks('cassava', 5, { category: storage }))[0].content).toBe(content);
+    it('normalizes legacy vector columns and searches the stored arrays', async () => {
+        const { rows } = await client.query(`
+            SELECT c.relname, format_type(a.atttypid, a.atttypmod) AS type
+            FROM pg_attribute a JOIN pg_class c ON c.oid = a.attrelid
+            WHERE a.attname = 'embedding' AND a.attrelid IN (to_regclass('knowledge_articles'), to_regclass('knowledge_chunks'), to_regclass('search_cache'))
+            ORDER BY 1`);
+        expect(rows).toEqual([
+            { relname: 'knowledge_articles', type: 'double precision[]' },
+            { relname: 'knowledge_chunks', type: 'double precision[]' },
+            { relname: 'search_cache', type: 'double precision[]' },
+        ]);
+        const id = '4d1841df-0ce6-4fd8-86f3-f66454a121cd';
+        const content = 'Cassava nitrogen evidence for array storage.';
+        await VectorService.upsertDocument(id, content, { title: 'Evidence', category: 'storage', crops: ['cassava'] });
+        const [hit] = await VectorService.search('cassava', 5, { category: 'storage' });
+        expect(hit.content).toBe(content);
+        expect(hit.metadata.retrieval).toEqual({ vectorSimilarity: 1 });
+        expect(await RAGV2Service.chunkAndEmbedArticle(id, content, { title: 'Evidence' })).toBe(1);
+        expect((await RAGV2Service.searchChunks('cassava', 5, { category: 'storage' }))[0].content).toBe(content);
+        const { rows: [stored] } = await client.query('SELECT content_hash = encode(sha256(convert_to(content, \'UTF8\')), \'hex\') AS current FROM knowledge_articles WHERE id = $1', [id]);
+        expect(stored.current).toBe(true);
     });
 });

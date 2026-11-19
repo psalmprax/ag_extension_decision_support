@@ -1,0 +1,815 @@
+{
+  "description": "Retrieval golden set over the 30 seed articles (src/services/knowledge/seedArticles.ts). 'expected' lists the articles a grounded answer should cite; an empty list marks a question the corpus cannot answer, where the right outcome is no evidence. Swahili and French questions are first drafts: have native speakers review them, and add real farmer questions from the search log as they are collected.",
+  "cases": [
+    {
+      "id": "en-01",
+      "question": "What causes long grey-brown lesions on maize leaves and how do I prevent them?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb01"
+      ]
+    },
+    {
+      "id": "en-02",
+      "question": "How can I prevent southern rust in my corn?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb01"
+      ]
+    },
+    {
+      "id": "en-03",
+      "question": "Should I apply all my nitrogen at once or split it?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb02"
+      ]
+    },
+    {
+      "id": "en-04",
+      "question": "Why should I test my soil before buying fertilizer?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb02"
+      ]
+    },
+    {
+      "id": "en-05",
+      "question": "What are climate-smart farming practices?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb03"
+      ]
+    },
+    {
+      "id": "en-06",
+      "question": "How can my farm adapt to changing rainfall patterns?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb03",
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb17"
+      ]
+    },
+    {
+      "id": "en-07",
+      "question": "How do I control aphids and whiteflies on my vegetables?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb04"
+      ]
+    },
+    {
+      "id": "en-08",
+      "question": "Is neem oil effective against crop pests?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb04",
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb30"
+      ]
+    },
+    {
+      "id": "en-09",
+      "question": "How should I store my harvest so it does not spoil?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb05",
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb19"
+      ]
+    },
+    {
+      "id": "en-10",
+      "question": "What kind of soil does cassava grow best in?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb06"
+      ]
+    },
+    {
+      "id": "en-11",
+      "question": "Can cassava tolerate waterlogged fields?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb06"
+      ]
+    },
+    {
+      "id": "en-12",
+      "question": "How tall should the stakes for yams be?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb07"
+      ]
+    },
+    {
+      "id": "en-13",
+      "question": "What soil pH is best for growing yams?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb07"
+      ]
+    },
+    {
+      "id": "en-14",
+      "question": "How much shade do cocoa trees need?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb08"
+      ]
+    },
+    {
+      "id": "en-15",
+      "question": "Which nutrients are most important for cocoa trees?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb08"
+      ]
+    },
+    {
+      "id": "en-16",
+      "question": "Should I grow arabica or robusta coffee at low altitude?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb09"
+      ]
+    },
+    {
+      "id": "en-17",
+      "question": "What soil does coffee prefer?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb09",
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb14"
+      ]
+    },
+    {
+      "id": "en-18",
+      "question": "What is alternate wetting and drying in rice farming?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb10"
+      ]
+    },
+    {
+      "id": "en-19",
+      "question": "How deep should standing water be in a rice paddy?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb10"
+      ]
+    },
+    {
+      "id": "en-20",
+      "question": "Why are my banana leaves turning yellow?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb11"
+      ]
+    },
+    {
+      "id": "en-21",
+      "question": "How much water do plantains need each month?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb11"
+      ]
+    },
+    {
+      "id": "en-22",
+      "question": "My sandy soil dries out quickly. How should I irrigate it?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb12"
+      ]
+    },
+    {
+      "id": "en-23",
+      "question": "Why does sandy loam lose fertilizer so fast?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb12"
+      ]
+    },
+    {
+      "id": "en-24",
+      "question": "How do I fix compaction and slow drainage in clay soil?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb13"
+      ]
+    },
+    {
+      "id": "en-25",
+      "question": "How much gypsum should I add to heavy clay soil?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb13"
+      ]
+    },
+    {
+      "id": "en-26",
+      "question": "How do I deal with phosphorus fixation in acidic soils?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb14"
+      ]
+    },
+    {
+      "id": "en-27",
+      "question": "How much lime should I apply to an acid soil?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb14"
+      ]
+    },
+    {
+      "id": "en-28",
+      "question": "How do I calculate crop water needs using ETo and the crop coefficient?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb15"
+      ]
+    },
+    {
+      "id": "en-29",
+      "question": "How much poultry manure should I put on one hectare of maize?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb16"
+      ]
+    },
+    {
+      "id": "en-30",
+      "question": "How can I combine livestock and crops on a small farm?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb16"
+      ]
+    },
+    {
+      "id": "en-31",
+      "question": "Which trees can I plant in rows between my maize?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb17"
+      ]
+    },
+    {
+      "id": "en-32",
+      "question": "How do Gliricidia trees add nitrogen to the soil?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb17"
+      ]
+    },
+    {
+      "id": "en-33",
+      "question": "How can a farmer cooperative help me sell to bulk buyers?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb18"
+      ]
+    },
+    {
+      "id": "en-34",
+      "question": "Where can I get daily market prices on my phone?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb18",
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb20"
+      ]
+    },
+    {
+      "id": "en-35",
+      "question": "Do hermetic storage bags kill insects in stored grain?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb19"
+      ]
+    },
+    {
+      "id": "en-36",
+      "question": "Can solar dryers reduce losses of fruit and vegetables?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb19"
+      ]
+    },
+    {
+      "id": "en-37",
+      "question": "Which apps can identify crop diseases from a photo?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb20"
+      ]
+    },
+    {
+      "id": "en-38",
+      "question": "Can SMS services send weather and price alerts to farmers?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb20"
+      ]
+    },
+    {
+      "id": "en-39",
+      "question": "How can extension services reach more women farmers?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb21"
+      ]
+    },
+    {
+      "id": "en-40",
+      "question": "How can young people get started in agribusiness?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb22"
+      ]
+    },
+    {
+      "id": "en-41",
+      "question": "How can smallholder farmers get funding from the Green Climate Fund?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb23"
+      ]
+    },
+    {
+      "id": "en-42",
+      "question": "Can I earn carbon credits from my farm?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb23",
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb24"
+      ]
+    },
+    {
+      "id": "en-43",
+      "question": "How is soil organic carbon measured?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb24"
+      ]
+    },
+    {
+      "id": "en-44",
+      "question": "How do I make biochar from crop residues?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb25"
+      ]
+    },
+    {
+      "id": "en-45",
+      "question": "How much biochar should I apply per hectare?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb25"
+      ]
+    },
+    {
+      "id": "en-46",
+      "question": "What carbon to nitrogen ratio should my compost have?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb26"
+      ]
+    },
+    {
+      "id": "en-47",
+      "question": "How do I start composting with worms?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb26"
+      ]
+    },
+    {
+      "id": "en-48",
+      "question": "Which legumes make good green manure?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb27"
+      ]
+    },
+    {
+      "id": "en-49",
+      "question": "Does mucuna suppress weeds?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb27"
+      ]
+    },
+    {
+      "id": "en-50",
+      "question": "How does weather index insurance decide when to pay out?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb28"
+      ]
+    },
+    {
+      "id": "en-51",
+      "question": "How do I control striga witchweed in my maize?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb29"
+      ]
+    },
+    {
+      "id": "en-52",
+      "question": "Does push-pull with desmodium work against striga?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb29"
+      ]
+    },
+    {
+      "id": "en-53",
+      "question": "What is the action threshold for fall armyworm?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb30"
+      ]
+    },
+    {
+      "id": "en-54",
+      "question": "Which natural enemies can control fall armyworm?",
+      "language": "en",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb30"
+      ]
+    },
+    {
+      "id": "en-55",
+      "question": "How do I vaccinate my chickens against Newcastle disease?",
+      "language": "en",
+      "expected": []
+    },
+    {
+      "id": "en-56",
+      "question": "How do I repair the hydraulic pump on a tractor?",
+      "language": "en",
+      "expected": []
+    },
+    {
+      "id": "en-57",
+      "question": "What is the best way to start keeping bees?",
+      "language": "en",
+      "expected": []
+    },
+    {
+      "id": "en-58",
+      "question": "How do I raise tilapia in a fish pond?",
+      "language": "en",
+      "expected": []
+    },
+    {
+      "id": "en-59",
+      "question": "When should I deworm my goats?",
+      "language": "en",
+      "expected": []
+    },
+    {
+      "id": "en-60",
+      "question": "How do I graft avocado seedlings?",
+      "language": "en",
+      "expected": []
+    },
+    {
+      "id": "en-61",
+      "question": "How do I apply for a passport?",
+      "language": "en",
+      "expected": []
+    },
+    {
+      "id": "en-62",
+      "question": "What is today's exchange rate for the shilling?",
+      "language": "en",
+      "expected": []
+    },
+    {
+      "id": "sw-01",
+      "question": "Ninawezaje kudhibiti viwavijeshi vamizi kwenye mahindi?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb30"
+      ]
+    },
+    {
+      "id": "sw-02",
+      "question": "Mahindi yangu yana madoa marefu ya kahawia kwenye majani, ni ugonjwa gani?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb01"
+      ]
+    },
+    {
+      "id": "sw-03",
+      "question": "Nifanye nini kuhusu gugu la kiduha (striga) shambani mwangu?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb29"
+      ]
+    },
+    {
+      "id": "sw-04",
+      "question": "Muhogo unahitaji maji kiasi gani?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb06"
+      ]
+    },
+    {
+      "id": "sw-05",
+      "question": "Jinsi ya kutengeneza mboji nyumbani",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb26"
+      ]
+    },
+    {
+      "id": "sw-06",
+      "question": "Mpunga unahitaji udongo wa aina gani?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb10"
+      ]
+    },
+    {
+      "id": "sw-07",
+      "question": "Ninawezaje kuhifadhi nafaka bila wadudu baada ya mavuno?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb19",
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb05"
+      ]
+    },
+    {
+      "id": "sw-08",
+      "question": "Bima ya mazao inafanyaje kazi kwa wakulima wadogo?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb28"
+      ]
+    },
+    {
+      "id": "sw-09",
+      "question": "Kahawa aina ya arabika hustawi katika mwinuko gani?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb09"
+      ]
+    },
+    {
+      "id": "sw-10",
+      "question": "Majani ya migomba yangu yanageuka manjano, ninafanya nini?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb11"
+      ]
+    },
+    {
+      "id": "sw-11",
+      "question": "Vijana wanawezaje kupata ardhi ya kilimo?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb22"
+      ]
+    },
+    {
+      "id": "sw-12",
+      "question": "Ninawezaje kuuza mazao yangu kwa bei nzuri kupitia vikundi?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb18"
+      ]
+    },
+    {
+      "id": "sw-13",
+      "question": "Udongo wangu una asidi nyingi, nifanye nini?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb14"
+      ]
+    },
+    {
+      "id": "sw-14",
+      "question": "Kilimo mseto cha miti na mazao kina faida gani?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb17"
+      ]
+    },
+    {
+      "id": "sw-15",
+      "question": "Ninawezaje kutumia samadi ya kuku shambani?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb16"
+      ]
+    },
+    {
+      "id": "sw-16",
+      "question": "Ninahesabuje mahitaji ya maji ya zao kwa umwagiliaji?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb15"
+      ]
+    },
+    {
+      "id": "sw-17",
+      "question": "Ni mimea gani ya jamii ya mikunde inayofaa kama mbolea ya kijani?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb27"
+      ]
+    },
+    {
+      "id": "sw-18",
+      "question": "Ninadhibiti vipi vidukari kwenye mboga?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb04"
+      ]
+    },
+    {
+      "id": "sw-19",
+      "question": "Vigingi vya viazi vikuu vinapaswa kuwa na urefu gani?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb07"
+      ]
+    },
+    {
+      "id": "sw-20",
+      "question": "Miti ya kakao inahitaji kivuli kiasi gani?",
+      "language": "sw",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb08"
+      ]
+    },
+    {
+      "id": "sw-21",
+      "question": "Ninawezaje kupata pasipoti?",
+      "language": "sw",
+      "expected": []
+    },
+    {
+      "id": "sw-22",
+      "question": "Ratiba ya chanjo ya kuku wa kienyeji ni ipi?",
+      "language": "sw",
+      "expected": []
+    },
+    {
+      "id": "sw-23",
+      "question": "Jinsi ya kuanza kufuga nyuki",
+      "language": "sw",
+      "expected": []
+    },
+    {
+      "id": "sw-24",
+      "question": "Ninatengenezaje pampu ya trekta?",
+      "language": "sw",
+      "expected": []
+    },
+    {
+      "id": "fr-01",
+      "question": "Comment lutter contre la chenille légionnaire d'automne sur le maïs ?",
+      "language": "fr",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb30"
+      ]
+    },
+    {
+      "id": "fr-02",
+      "question": "Quelles maladies attaquent les feuilles de maïs ?",
+      "language": "fr",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb01"
+      ]
+    },
+    {
+      "id": "fr-03",
+      "question": "Comment se débarrasser du striga dans mon champ de sorgho ?",
+      "language": "fr",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb29"
+      ]
+    },
+    {
+      "id": "fr-04",
+      "question": "De combien d'eau le manioc a-t-il besoin ?",
+      "language": "fr",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb06"
+      ]
+    },
+    {
+      "id": "fr-05",
+      "question": "Comment faire du compost avec des vers de terre ?",
+      "language": "fr",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb26"
+      ]
+    },
+    {
+      "id": "fr-06",
+      "question": "Quel sol convient au riz inondé ?",
+      "language": "fr",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb10"
+      ]
+    },
+    {
+      "id": "fr-07",
+      "question": "De combien d'ombre le cacaoyer a-t-il besoin ?",
+      "language": "fr",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb08"
+      ]
+    },
+    {
+      "id": "fr-08",
+      "question": "Mon sol est très acide, comment le corriger avec de la chaux ?",
+      "language": "fr",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb14"
+      ]
+    },
+    {
+      "id": "fr-09",
+      "question": "Comment fabriquer du biochar ?",
+      "language": "fr",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb25"
+      ]
+    },
+    {
+      "id": "fr-10",
+      "question": "Comment les petits producteurs peuvent-ils accéder aux financements climatiques ?",
+      "language": "fr",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb23"
+      ]
+    },
+    {
+      "id": "fr-11",
+      "question": "Comment réduire les pertes après récolte ?",
+      "language": "fr",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb19",
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb05"
+      ]
+    },
+    {
+      "id": "fr-12",
+      "question": "Comment calculer les besoins en eau d'irrigation d'une culture ?",
+      "language": "fr",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb15"
+      ]
+    },
+    {
+      "id": "fr-13",
+      "question": "Quelles plantes utiliser comme engrais vert ?",
+      "language": "fr",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb27"
+      ]
+    },
+    {
+      "id": "fr-14",
+      "question": "Comment fonctionne l'assurance indicielle climatique ?",
+      "language": "fr",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb28"
+      ]
+    },
+    {
+      "id": "fr-15",
+      "question": "Comment impliquer davantage les femmes dans la vulgarisation agricole ?",
+      "language": "fr",
+      "expected": [
+        "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb21"
+      ]
+    },
+    {
+      "id": "fr-16",
+      "question": "Comment renouveler mon passeport ?",
+      "language": "fr",
+      "expected": []
+    },
+    {
+      "id": "fr-17",
+      "question": "Quel est le calendrier de vaccination des poulets ?",
+      "language": "fr",
+      "expected": []
+    },
+    {
+      "id": "fr-18",
+      "question": "Comment élever des abeilles ?",
+      "language": "fr",
+      "expected": []
+    }
+  ]
+}

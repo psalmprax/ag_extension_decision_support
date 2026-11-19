@@ -169,7 +169,7 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
             {
                 id: 'doc-1',
                 content: 'Maize requires well-drained soil and regular rainfall of 500-1000mm annually.',
-                metadata: { title: 'Maize Growing Guide', category: 'Agronomy', crop: 'maize', sourceUrl: 'https://example.com', contentType: 'text' },
+                metadata: { retrieval: { vectorSimilarity: 0.8 }, title: 'Maize Growing Guide', category: 'Agronomy', crop: 'maize', sourceUrl: 'https://example.com', contentType: 'text' },
                 score: 0.85,
             },
         ]);
@@ -264,7 +264,7 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
             {
                 id: 'coop-1',
                 content: `Title: Farmer Cooperatives and Collective Marketing - Farming Tips\n\nJoining a farmer cooperative boosts your bargaining power. * Farmer cooperatives enhance bargaining power and access to larger, more profitable markets through collective marketing. * Cooperatives reduce individual costs by negotiating bulk transportation, storage, and processing services. #### farm cooperative marketing tools. At Agrosahas International PVT LTD, we are committed to promoting cooperatives. Kukuchku Animal Feeds and Concentrates recognizes the essential role farmers play [...]`,
-                metadata: {
+                metadata: {retrieval: { vectorSimilarity: 0.8 }, 
                     title: 'Farmer Cooperatives and Collective Marketing - Farming Tips',
                     category: 'cooperatives',
                     crop: 'all',
@@ -317,7 +317,7 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
             {
                 id: 'allcaps-1',
                 content: `### HOW DO COOPERATIVES ADAPT TO MARKET CHANGES?\n\nJOINING A FARMER COOPERATIVE BOOSTS BARGAINING POWER AND INCOME STABILITY FOR ALL PRODUCERS.`,
-                metadata: {
+                metadata: {retrieval: { vectorSimilarity: 0.8 }, 
                     title: 'FARMER COOPERATIVES AND COLLECTIVE MARKETING',
                     category: 'cooperatives',
                     crop: 'all',

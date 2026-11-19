@@ -1,0 +1,9 @@
+{
+  "description": "Minimum retrieval quality for `npm run eval:rag -- --gate` (errors is a maximum). Raise a bound when a change measurably improves it; never lower one to make a change pass.",
+  "overall": { "hitAt5": 0.85, "groundedRate": 0.75, "abstentionRate": 0.6, "errors": 0 },
+  "byLanguage": {
+    "en": { "hitAt5": 0.85, "groundedRate": 0.75 },
+    "sw": { "hitAt5": 0.7 },
+    "fr": { "hitAt5": 0.7 }
+  }
+}

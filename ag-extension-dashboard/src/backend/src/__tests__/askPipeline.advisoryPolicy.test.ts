@@ -30,7 +30,7 @@ jest.mock('@/services/aiProvider/aiProvider', () => ({
 }));
 jest.mock('@/services/vectorService', () => ({
     VectorService: { hybridSearch: jest.fn().mockResolvedValue([
-        { id: 'source-1', content: 'Scout before selecting a treatment.', metadata: { title: 'Extension guidance' }, score: 0.9 },
+        { id: 'source-1', content: 'Scout before selecting a treatment.', metadata: { retrieval: { vectorSimilarity: 0.8 }, title: 'Extension guidance' }, score: 0.9 },
     ]) },
 }));
 jest.mock('@/services/knowledge/webEnrichment', () => ({
@@ -75,7 +75,7 @@ describe('Knowledge advisory policy integration', () => {
         jest.mocked(VectorService.hybridSearch).mockResolvedValueOnce([{
             id: 'threshold-source',
             content: answer,
-            metadata: { title: 'Example scouting guidance', country: 'Kenya' },
+            metadata: { retrieval: { vectorSimilarity: 0.8 }, title: 'Example scouting guidance', country: 'Kenya' },
             score: 0.9,
         }]);
         jest.mocked(callReasoningAgentic).mockResolvedValueOnce({
@@ -220,11 +220,11 @@ describe('Knowledge advisory policy integration', () => {
         jest.mocked(VectorService.hybridSearch).mockResolvedValueOnce([
             {
                 id: 'quarantined', content: 'Unreviewed source content.',
-                metadata: { quarantine: true }, score: 0.99,
+                metadata: { retrieval: { vectorSimilarity: 0.8 }, quarantine: true }, score: 0.99,
             },
             {
                 id: 'foreign', content: 'Foreign-country source content.',
-                metadata: { country: 'India' }, score: 0.99,
+                metadata: { retrieval: { vectorSimilarity: 0.8 }, country: 'India' }, score: 0.99,
             },
         ]);
         jest.mocked(callReasoningAgentic).mockRejectedValueOnce(new Error('Provider unavailable'));

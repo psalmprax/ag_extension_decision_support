@@ -566,50 +566,11 @@ export async function createTables(pool: Pool): Promise<void> {
     $$ LANGUAGE plpgsql IMMUTABLE;
     `;
 
-  const setupVectorsSQL = `
-    -- Convert embedding columns to pgvector native type if still float8[]
-    DO $$ BEGIN
-      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'knowledge_articles' AND column_name = 'embedding' AND data_type = 'ARRAY') THEN
-        ALTER TABLE knowledge_articles ALTER COLUMN embedding TYPE vector(768) USING embedding::real[]::vector;
-      END IF;
-    END $$;
-    DO $$ BEGIN
-      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'search_cache' AND column_name = 'embedding' AND data_type = 'ARRAY') THEN
-        ALTER TABLE search_cache ALTER COLUMN embedding TYPE vector(768) USING embedding::real[]::vector;
-      END IF;
-    END $$;
-    DO $$ BEGIN
-      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'knowledge_chunks' AND column_name = 'embedding' AND data_type = 'ARRAY') THEN
-        ALTER TABLE knowledge_chunks ALTER COLUMN embedding TYPE vector(768) USING embedding::real[]::vector;
-      END IF;
-    END $$;
-  `;
-
-  // IVFFlat indexes for pgvector similarity search (O(log n) vs O(n) sequential scan)
-  const ivfflatIndexSQL = `
-    CREATE INDEX IF NOT EXISTS idx_knowledge_articles_embedding_ivfflat
-        ON knowledge_articles USING ivfflat (embedding vector_cosine_ops)
-        WITH (lists = 100);
-    CREATE INDEX IF NOT EXISTS idx_search_cache_embedding_ivfflat
-        ON search_cache USING ivfflat (embedding vector_cosine_ops)
-        WITH (lists = 100);
-    CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_embedding_ivfflat
-        ON knowledge_chunks USING ivfflat (embedding vector_cosine_ops)
-        WITH (lists = 100);
-  `;
-
+  // Embedding columns stay double precision[] (schema.prisma); the HNSW and
+  // full-text indexes are owned by migration 20261121090000_rag_retrieval_indexes.
   try {
     await pool.query(cosineSimilaritySQL);
-    if (hasVector) {
-      await pool.query(setupVectorsSQL);
-      try {
-        await pool.query(ivfflatIndexSQL);
-        logger.info('IVFFlat indexes created/verified for vector similarity search');
-      } catch (ivfErr) {
-        logger.debug('IVFFlat index creation/verification skipped:', ivfErr);
-      }
-    }
-    logger.info('Database custom vector functions and indexes provisioned');
+    logger.info('Database custom vector functions provisioned');
   } catch (error) {
     logger.warn('Error during database custom provisioning:', error);
   }
