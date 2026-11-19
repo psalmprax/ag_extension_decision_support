@@ -1,6 +1,9 @@
-name: Live smoke (stage, real services)
+name: Live checks (stage smoke, retrieval eval, user stories)
 
-# Calls the real third-party services from the deployed stage backend, using
+# Three independent jobs; choose them with the `suite` input when dispatching.
+#
+# live-smoke (stage only) calls the real third-party services from the
+# deployed stage backend, using
 # the app's own compiled providers and the host's real configuration:
 #   - one short text generation per configured AI provider,
 #   - one embedding from the configured embeddings provider, checked against
@@ -10,9 +13,17 @@ name: Live smoke (stage, real services)
 # Unit tests mock all of these; this is what catches expired keys, retired
 # models, quota exhaustion and config drift. Script: scripts/live-smoke.cjs.
 #
-# The rag-eval job measures retrieval quality (hit@k, grounding, abstention)
-# with the same real embedding and LLM providers, on a disposable pgvector
-# database holding only the seed corpus, and fails below eval/rag-gates.json.
+# rag-eval (neither server) measures retrieval quality (hit@k, grounding,
+# abstention) with the same real embedding and LLM providers, on a disposable
+# pgvector database holding only the seed corpus, and fails below
+# eval/rag-gates.json.
+#
+# user-stories (stage or production, by the `target` input; dispatch only)
+# seeds the test population on that site and runs the Playwright user stories
+# against it. See user-stories-live.yml.
+#
+# The workflow file name stays live-smoke.yml so existing dispatches and links
+# keep working.
 
 on:
   workflow_run:

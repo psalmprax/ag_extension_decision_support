@@ -16,7 +16,7 @@ name: User stories on a live site
 # 3. Runs Playwright against the site and keeps the HTML report.
 #
 # Dispatch from this file once it is on master, or meanwhile through
-# "Live smoke" with suite=user-stories (which calls this workflow).
+# "Live checks" (live-smoke.yml) with suite=user-stories (which calls this workflow).
 
 on:
   workflow_dispatch:
