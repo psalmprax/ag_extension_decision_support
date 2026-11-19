@@ -11,6 +11,8 @@ export interface AdvisoryContext {
     soil?: string;
     water?: string;
     goal?: string;
+    /** Crops the farmer grows: a ranking hint for retrieval, never evidence. */
+    crops?: string[];
 }
 
 export interface AdvisoryCitation {

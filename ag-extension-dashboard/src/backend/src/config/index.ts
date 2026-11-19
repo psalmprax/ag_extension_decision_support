@@ -42,6 +42,16 @@ export interface AppConfig {
         enabled: boolean;
         schedule: 'daily' | 'weekly';
     };
+    retrieval: {
+        /** Cosine similarity at or above which a vector hit counts as relevant evidence. */
+        minVectorSimilarity: number;
+        /** Reranker score (0-1) at or above which a passage counts as relevant evidence. */
+        minRerankScore: number;
+        /** Translate non-English questions to English for the keyword leg. */
+        translateQueries: boolean;
+        /** Optional cross-encoder in the Jina/Cohere `/rerank` format; empty URL keeps the LLM reranker. */
+        rerank: { url: string; model: string; apiKey: string };
+    };
 }
 
 const nodeEnv = process.env.NODE_ENV || 'development';
@@ -237,6 +247,16 @@ export const config: AppConfig = {
         freightDistanceKm: parseInt(getEnv('CROSS_BORDER_FREIGHT_DISTANCE_KM', '650'), 10),
         freightRatePerKm: parseFloat(getEnv('CROSS_BORDER_FREIGHT_RATE_PER_KM', '0.075')),
         borderFeesPerTon: parseFloat(getEnv('CROSS_BORDER_BORDER_FEES_PER_TON', '18.5')),
+    },
+    retrieval: {
+        minVectorSimilarity: parseFloat(getEnv('RAG_MIN_VECTOR_SIMILARITY', '0.35')),
+        minRerankScore: parseFloat(getEnv('RAG_MIN_RERANK_SCORE', '0.4')),
+        translateQueries: getEnv('RAG_TRANSLATE_QUERIES', 'true') !== 'false',
+        rerank: {
+            url: getEnv('RAG_RERANK_URL', ''),
+            model: getEnv('RAG_RERANK_MODEL', 'jina-reranker-v2-base-multilingual'),
+            apiKey: getEnv('RAG_RERANK_API_KEY', ''),
+        },
     },
     ingestion: {
         // Default ON. Disable with INGESTION_ENABLED=false or ENABLE_KNOWLEDGE_INGESTION=false.

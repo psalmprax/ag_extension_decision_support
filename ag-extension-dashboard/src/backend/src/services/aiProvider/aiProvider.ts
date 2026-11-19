@@ -83,16 +83,22 @@ export class AIProviderFactory {
     }
 
     private static healthCache: Map<AIProviderType, { isHealthy: boolean; expiresAt: number }> = new Map();
+    /**
+     * Recent operation failures, per provider and kind of model (chat,
+     * embeddings, speech). A retired chat model must not take the same
+     * provider's embeddings out of rotation, and the reverse.
+     */
+    private static operationFailures: Map<string, number> = new Map();
 
     static async getWithFallback<T>(
         operation: (provider: AICapability) => Promise<T>,
         preferredProvider?: AIProviderType,
-        telemetryContext?: { correlationId?: string; userId?: string; operation?: string; promptText?: string },
+        telemetryContext?: { correlationId?: string; userId?: string; operation?: string; promptText?: string; failureScope?: string },
         requiredCapability?: string
     ): Promise<T | OmniRouteFallbackResult> {
         const allProviders = await this.buildProviderChain(preferredProvider);
         let lastError: Error | null = null;
-        const context = this.resolveAttemptContext(telemetryContext);
+        const context = { ...this.resolveAttemptContext(telemetryContext), failureScope: telemetryContext?.failureScope || 'any' };
 
         for (const [attempt, providerType] of allProviders.entries()) {
             const outcome = await this.tryProviderOperation(providerType, attempt, operation, context, requiredCapability);
@@ -143,10 +149,11 @@ export class AIProviderFactory {
         providerType: AIProviderType,
         attempt: number,
         operation: (provider: AICapability) => Promise<T>,
-        context: { correlationId?: string; userId?: string; operation: string },
+        context: { correlationId?: string; userId?: string; operation: string; failureScope: string },
         requiredCapability?: string
     ): Promise<{ success: true; result: T } | { success: false; error: Error | null }> {
         const startedAt = Date.now();
+        const failureKey = `${providerType}:${context.failureScope}`;
         try {
             const provider = await this.getProvider(providerType);
 
@@ -160,7 +167,9 @@ export class AIProviderFactory {
                 return { success: false, error: null };
             }
 
-            const isHealthy = await this.checkProviderHealth(providerType, provider);
+            const failedUntil = this.operationFailures.get(failureKey);
+            const isHealthy = (failedUntil === undefined || Date.now() >= failedUntil) &&
+                await this.checkProviderHealth(providerType, provider);
             if (!isHealthy) {
                 await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'error', 'provider_unhealthy');
                 logger.warn(`AI provider ${providerType} unhealthy, trying next...`);
@@ -170,6 +179,7 @@ export class AIProviderFactory {
             logger.info(`Using AI provider: ${providerType}`);
             const result = await operation(provider);
             this.healthCache.set(providerType, { isHealthy: true, expiresAt: Date.now() + 120_000 });
+            this.operationFailures.delete(failureKey);
             await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'success', undefined, result);
             if (result && typeof result === 'object') {
                 const tagged = result as { provider?: string };
@@ -177,7 +187,7 @@ export class AIProviderFactory {
             }
             return { success: true, result };
         } catch (error) {
-            this.healthCache.set(providerType, { isHealthy: false, expiresAt: Date.now() + 45_000 });
+            this.operationFailures.set(failureKey, Date.now() + 45_000);
             const err = error instanceof Error ? error : new Error(String(error));
             await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'error', err.message);
             logger.warn(`AI provider ${providerType} failed:`, error);
@@ -393,6 +403,7 @@ export class AIRouter {
             }
         }, params.options?.preferredProvider, {
             promptText: this.getFallbackPrompt(requestType, params),
+            failureScope: requestType === 'embed' ? 'embeddings' : requestType === 'speech' ? 'speech' : 'chat',
         }, requestType === 'vision' || requestType === 'video' ? 'vision' : undefined);
 
         // Normalize OmniRoute free-model fallback result into the standard shape callers expect.

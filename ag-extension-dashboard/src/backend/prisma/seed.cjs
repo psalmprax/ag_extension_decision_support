@@ -415,100 +415,25 @@ async function main() {
   }
   console.log('✅ Regional managers seeded');
 
-  // 4. Subscription Plans
-  const freePlan = await prisma.subscriptionPlan.upsert({
-    where: { id: '00000000-0000-0000-0000-000000000001' },
-    update: {
-      stripePriceId: 'price_free',
-      features: {
-        smsLimit: 0,
-        aiChatLimit: 0,
-        reportLimit: 0,
-        aiVisionLimit: 0,
-        speechLimit: 0,
-        whatsappLimit: 0,
-        knowledgeDailyLimit: 3,
-        prioritySupport: false,
-        advancedAnalytics: false,
+  // 4. Subscription Plans (catalogue shared with seed-realworld: planCatalog.json)
+  const planCatalog = require('./planCatalog.json');
+  const seededPlans = {};
+  for (const plan of planCatalog) {
+    seededPlans[plan.name] = await prisma.subscriptionPlan.upsert({
+      where: { id: plan.id },
+      update: { stripePriceId: plan.stripePriceId, features: plan.features },
+      create: {
+        id: plan.id,
+        name: plan.name,
+        description: plan.description,
+        price: plan.price,
+        stripePriceId: plan.stripePriceId,
+        features: plan.features,
       },
-    },
-    create: {
-      id: '00000000-0000-0000-0000-000000000001',
-      name: 'Free',
-      description: 'Basic plan for individuals',
-      price: 0,
-      stripePriceId: 'price_free',
-      features: {
-        smsLimit: 0,
-        aiChatLimit: 0,
-        reportLimit: 0,
-        aiVisionLimit: 0,
-        speechLimit: 0,
-        whatsappLimit: 0,
-        knowledgeDailyLimit: 3,
-        prioritySupport: false,
-        advancedAnalytics: false,
-      },
-    },
-  });
-
-  const proPlan = await prisma.subscriptionPlan.upsert({
-    where: { id: '00000000-0000-0000-0000-000000000002' },
-    update: {
-      stripePriceId: 'price_pro_monthly',
-      features: {
-        smsLimit: 500,
-        aiChatLimit: 1000,
-        reportLimit: 50,
-        prioritySupport: true,
-        advancedAnalytics: true,
-      },
-    },
-    create: {
-      id: '00000000-0000-0000-0000-000000000002',
-      name: 'Pro',
-      description: 'Advanced features for scaling',
-      price: 29.0,
-      stripePriceId: 'price_pro_monthly',
-      features: {
-        smsLimit: 500,
-        aiChatLimit: 1000,
-        reportLimit: 50,
-        prioritySupport: true,
-        advancedAnalytics: true,
-      },
-    },
-  });
-
-  await prisma.subscriptionPlan.upsert({
-    where: { id: '00000000-0000-0000-0000-000000000003' },
-    update: {
-      stripePriceId: 'price_enterprise',
-      features: {
-        smsLimit: 10000,
-        aiChatLimit: 10000,
-        reportLimit: 1000,
-        prioritySupport: true,
-        advancedAnalytics: true,
-        customIntegrations: true,
-      },
-    },
-    create: {
-      id: '00000000-0000-0000-0000-000000000003',
-      name: 'Enterprise',
-      description: 'Full capabilities for large organizations',
-      price: 99.0,
-      stripePriceId: 'price_enterprise',
-      features: {
-        smsLimit: 10000,
-        aiChatLimit: 10000,
-        reportLimit: 1000,
-        prioritySupport: true,
-        advancedAnalytics: true,
-        customIntegrations: true,
-      },
-    },
-  });
+    });
+  }
+  const freePlan = seededPlans.Free;
+  const proPlan = seededPlans.Pro;
 
   // Assign Free plan to default user (demo/free user gets 3 searches/day)
   const existingSubscription = await prisma.subscription.findUnique({

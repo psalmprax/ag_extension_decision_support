@@ -8,6 +8,7 @@
     "build": "tsc && tsc-alias",
     "start": "node dist/index.js",
     "backfill:embeddings": "ts-node -r tsconfig-paths/register --transpile-only src/scripts/backfillEmbeddings.ts",
+    "eval:rag": "ts-node -r tsconfig-paths/register --transpile-only src/scripts/ragEval.ts",
     "migrate:deploy": "prisma migrate deploy",
     "seed:realworld": "ts-node -r tsconfig-paths/register --transpile-only prisma/seed-realworld.ts",
     "seed:e2e-system-admin": "ts-node -r tsconfig-paths/register --transpile-only prisma/seed-e2e-system-admin.ts",

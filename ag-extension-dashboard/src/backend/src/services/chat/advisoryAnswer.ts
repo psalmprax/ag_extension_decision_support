@@ -203,15 +203,17 @@ const runAssistantTurn = async (systemPrompt: string, message: string, tools: Ch
 
 async function loadAdvisoryContext(userId: string, message: string, conversationId?: string, countryHint?: string, language?: string) {
   const profile = await resolveUserContext(userId, message);
+  let farmerCrops: string[] | undefined = profile.crop ? [profile.crop] : undefined;
   if (conversationId) {
-    const { rows } = await query<{ country: string | null; region: string | null }>(
-      `SELECT f.country, f.region FROM chat_conversations cv
+    const { rows } = await query<{ country: string | null; region: string | null; crops: string[] | null }>(
+      `SELECT f.country, f.region, f.crops FROM chat_conversations cv
        JOIN farmers f ON f.id = cv.farmer_id WHERE cv.id = $1 LIMIT 1`,
       [conversationId]
     );
     if (rows[0]) {
       profile.country = rows[0].country ?? undefined;
       profile.region = rows[0].region ?? undefined;
+      if (rows[0].crops?.length) farmerCrops = rows[0].crops;
     }
   }
   const country = resolveAdvisoryCountry(message, countryHint || profile.country);
@@ -219,6 +221,7 @@ async function loadAdvisoryContext(userId: string, message: string, conversation
     country,
     region: countryHint || country !== profile.country ? undefined : profile.region,
     language,
+    crops: farmerCrops,
   };
 }
 

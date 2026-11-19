@@ -1,0 +1,9 @@
+{
+  "description": "Minimum retrieval quality for `npm run eval:rag -- --gate` (errors is a maximum). Set a little under the first live run (2026-11-19, text-embedding-3-large + LLM reranker: hit@1 1.00, grounded 0.98, evidence precision 0.85, abstention 0.93) to absorb LLM variance. Raise a bound when a change measurably improves it; never lower one to make a change pass.",
+  "overall": { "hitAt1": 0.9, "hitAt5": 0.95, "groundedRate": 0.9, "evidencePrecision": 0.75, "abstentionRate": 0.8, "errors": 0 },
+  "byLanguage": {
+    "en": { "hitAt5": 0.95, "groundedRate": 0.9 },
+    "sw": { "hitAt5": 0.9, "groundedRate": 0.85 },
+    "fr": { "hitAt5": 0.9, "groundedRate": 0.85 }
+  }
+}

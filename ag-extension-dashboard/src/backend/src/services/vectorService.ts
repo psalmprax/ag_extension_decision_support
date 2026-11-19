@@ -2,8 +2,9 @@ import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { getEmbedding } from '@/services/embeddingCache';
 import { normalizeAgronomicQuery } from '@/utils/agronomicQueryNormalizer';
-import { executeIlikeFallback, keywordSearch as runKeywordSearch } from '@/services/vector/keywordSearch';
-import { addToRrfMap, mergeAndSortRrfResults } from '@/services/vector/rrfFusion';
+import { executeIlikeFallback, mapKeywordRows, keywordSearch as runKeywordSearch } from '@/services/vector/keywordSearch';
+import { fuseRankedLegs, type RetrievalSignals } from '@/services/vector/rrfFusion';
+import { cosineDistance, embeddingWidthPredicate, toVectorLiteral } from '@/services/vector/vectorSql';
 import { backfillAllMissingEmbeddings as drainEmbeddings, backfillMissingEmbeddings as fillEmbeddingsBatch } from '@/services/vector/embeddingBackfill';
 
 export interface VectorDocument {
@@ -69,7 +70,9 @@ export class VectorService {
     }
 
     /**
-     * Search for similar documents using pgvector or fallback function
+     * Nearest articles by cosine similarity, through the HNSW index when the
+     * configured width matches it. `score` and `metadata.retrieval.vectorSimilarity`
+     * are the raw cosine similarity.
      */
     static async search(
         queryText: string,
@@ -81,63 +84,57 @@ export class VectorService {
         logger.info(`Searching persistent vector store for: "${queryText}" (normalized: "${normalizedQuery}", minScore: ${minScore})`);
 
         try {
-            // Generate query embedding (uses cache for repeated queries)
             const embedding = await getEmbedding(normalizedQuery);
-
-            // Convert to pgvector format: [val1,val2,val3]
-            const vector = `[${embedding.join(',')}]`;
-
-            const params: Array<string | number> = [vector];
-            const where: string[] = ['embedding IS NOT NULL'];
-
-            if (filters.category) {
-                params.push(filters.category);
-                where.push(`category = $${params.length}`);
-            }
-
-            if (filters.crop) {
-                params.push(filters.crop);
-                where.push(`$${params.length} = ANY(crops)`);
-            }
-
-            params.push(minScore);
-            params.push(limit);
-
-            // Use native pgvector cosine distance operator for O(log n) search with IVFFlat index
-            // Only select needed columns — avoid fetching the large embedding vector
-            const result = await query(`
-                SELECT * FROM (
-                    SELECT id, title, content, category, crops, tags, regions, updated_at, source, source_url, content_type,
-                           (1 - (embedding::vector <=> $1::vector)) as score
-                    FROM knowledge_articles
-                    WHERE ${where.join(' AND ')}
-                ) sub
-                WHERE score >= $${params.length - 1}
-                ORDER BY score DESC
-                LIMIT $${params.length}
-            `, params as unknown as unknown[]);
-
-            type VectorRow = { id: string; content: string; title: unknown; category: unknown; crops: unknown[] | null; tags: unknown; regions: unknown; updated_at: unknown; source: unknown; source_url: unknown; content_type: unknown; score: unknown };
-            return (result.rows as unknown as VectorRow[]).map((row) => ({
-                id: row.id,
-                content: row.content,
-                metadata: {
-                    title: row.title,
-                    category: row.category,
-                    crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
-                    source: row.source,
-                    sourceUrl: row.source_url,
-                    tags: row.tags,
-                    regions: row.regions,
-                    updatedAt: row.updated_at,
-                    contentType: (row.content_type as string) || 'text'
-                },
-                score: Number.parseFloat(String(row.score ?? 0))
-            }));
+            return await this.searchByEmbedding(embedding, limit, filters, minScore);
         } catch (error) {
             logger.error('Database vector search failed:', error);
             return [];
         }
+    }
+
+    /** Vector search with a precomputed query embedding. Throws on database errors. */
+    static async searchByEmbedding(
+        embedding: number[],
+        limit: number,
+        filters: VectorFilters = {},
+        minScore: number = 0
+    ): Promise<SearchResult[]> {
+        const params: Array<string | number> = [toVectorLiteral(embedding)];
+        const where: string[] = [embeddingWidthPredicate('embedding')];
+
+        if (filters.category) {
+            params.push(filters.category);
+            where.push(`category = $${params.length}`);
+        }
+
+        if (filters.crop) {
+            params.push(filters.crop);
+            where.push(`$${params.length} = ANY(crops)`);
+        }
+
+        params.push(limit);
+        const limitParam = params.length;
+        params.push(minScore);
+
+        // ORDER BY the indexed distance expression directly (not an alias or a
+        // filtered subquery) so the planner can walk the HNSW index.
+        const result = await query(`
+            SELECT * FROM (
+                SELECT id, title, content, category, crops, tags, regions, updated_at, source, source_url, content_type,
+                       1 - (${cosineDistance('embedding', 1)}) AS score
+                FROM knowledge_articles
+                WHERE ${where.join(' AND ')}
+                ORDER BY ${cosineDistance('embedding', 1)}
+                LIMIT $${limitParam}
+            ) nearest
+            WHERE score >= $${params.length}
+            ORDER BY score DESC
+        `, params as unknown as unknown[]);
+
+        return mapKeywordRows(result.rows as unknown[]).map(row => ({
+            ...row,
+            metadata: { ...row.metadata, retrieval: { vectorSimilarity: row.score } satisfies RetrievalSignals },
+        }));
     }
 
     /**
@@ -161,46 +158,32 @@ export class VectorService {
     }
 
     /**
-     * Search using both vector and keyword search, merged using Reciprocal Rank Fusion (RRF)
+     * Vector and keyword search fused with Reciprocal Rank Fusion (RRF).
+     * `keywordQuery` lets a caller search the keyword leg with a different
+     * phrasing (an English translation of a non-English question).
      */
     static async hybridSearch(
         queryText: string,
         limit: number = 5,
         filters: VectorFilters = {},
-        minScore: number = 0.4
+        minScore: number = 0.4,
+        options: { keywordQuery?: string } = {}
     ): Promise<SearchResult[]> {
         logger.info(`Performing hybrid search (Vector + Keyword) for: "${queryText}"`);
 
         try {
-            return await this.performHybridSearch(queryText, limit, filters);
+            const [vectorResults, keywordResults] = await Promise.all([
+                this.search(queryText, limit * 2, filters, 0.0),
+                this.keywordSearch(options.keywordQuery || queryText, limit * 2, filters)
+            ]);
+            return fuseRankedLegs([
+                { leg: 'vector', results: vectorResults },
+                { leg: 'keyword', results: keywordResults },
+            ], limit);
         } catch (error) {
             logger.error('Hybrid search execution failed:', error);
-            // Fall back to simple search on error
             return this.search(queryText, limit, filters, minScore);
         }
-    }
-
-    private static async performHybridSearch(
-        queryText: string,
-        limit: number,
-        filters: VectorFilters
-    ): Promise<SearchResult[]> {
-        const [vectorResults, keywordResults] = await Promise.all([
-            this.search(queryText, limit * 2, filters, 0.0),
-            this.keywordSearch(queryText, limit * 2, filters)
-        ]);
-
-        if (vectorResults.length === 0 && keywordResults.length === 0) {
-            return [];
-        }
-
-        const rrfMap = new Map<string, { doc: SearchResult; score: number }>();
-        const k = 60;
-
-        addToRrfMap(rrfMap, vectorResults, k);
-        addToRrfMap(rrfMap, keywordResults, k, 0.5);
-
-        return mergeAndSortRrfResults(rrfMap, limit);
     }
 
     /**

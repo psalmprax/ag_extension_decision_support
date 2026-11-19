@@ -1,0 +1,165 @@
+name: User stories on a live site
+
+# Runs the real-backend user stories (ag-extension-dashboard/src/frontend/
+# tests-e2e) against stage or production, as real users would: in a browser,
+# through the deployed frontend and API.
+#
+# 1. Resets and seeds the real-world test population on that site's database
+#    (2 regional managers, 2 extension officers, 12 farmers on the reserved
+#    @real.agriext.test domain; see prisma/seed-realworld.ts). Only rows on
+#    that domain and the fixture tenant are touched. The accounts stay after
+#    the run so they can be used by hand; their shared password is the one
+#    committed in src/seed/realWorldSeed.ts.
+# 2. Creates a temporary test system administrator (random password, masked)
+#    for the service-access stories, and always disables it at the end.
+# 3. Runs Playwright against the site and keeps the HTML report.
+#
+# Dispatch from this file once it is on master, or meanwhile through
+# "Live smoke" with suite=user-stories (which calls this workflow).
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Site to test
+        type: choice
+        options: [stage, production]
+        default: stage
+  workflow_call:
+    inputs:
+      target:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: user-stories-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  user-stories:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      TARGET: ${{ inputs.target }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Check the target
+        run: |
+          case "$TARGET" in
+            stage|production) echo "Testing $TARGET" ;;
+            *) echo "::error::target must be stage or production (got '$TARGET')"; exit 1 ;;
+          esac
+
+      - name: SSH access to the site's host
+        env:
+          STAGE_KEY: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
+          STAGE_HOST: ${{ secrets.TEST_SERVER_IP }}
+          STAGE_PORT: ${{ secrets.TEST_SERVER_PORT || 22 }}
+          STAGE_USER: ${{ vars.TEST_DEPLOY_SSH_USER || 'root' }}
+          PROD_KEY: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          PROD_HOST: ${{ secrets.PROD_SERVER_IP }}
+          PROD_USER: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
+        run: |
+          install -m 700 -d ~/.ssh
+          if [ "$TARGET" = production ]; then
+            printf '%s\n' "$PROD_KEY" > ~/.ssh/live; host=$PROD_HOST; port=22; user=$PROD_USER
+          else
+            printf '%s\n' "$STAGE_KEY" > ~/.ssh/live; host=$STAGE_HOST; port=$STAGE_PORT; user=$STAGE_USER
+          fi
+          chmod 600 ~/.ssh/live
+          [ -n "$host" ] || { echo "::error::No SSH host secret for $TARGET"; exit 1; }
+          cat > ~/live-ssh <<EOF
+          #!/bin/sh
+          exec ssh -i ~/.ssh/live -p "$port" -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 "$user@$host" "\$@"
+          EOF
+          chmod 700 ~/live-ssh
+          ~/live-ssh "docker inspect --format '{{.State.Running}}' ag-dashboard-backend" | grep -qx true \
+            || { echo "::error::ag-dashboard-backend is not running on the $TARGET host"; exit 1; }
+
+      - name: Site address
+        run: |
+          if [ "$TARGET" = production ]; then
+            echo "E2E_BASE_URL=https://gpexts.com" >> "$GITHUB_ENV"
+          else
+            # The stage frontend is bound to the host's localhost only: tunnel to it.
+            remote=$(~/live-ssh "docker port ag-dashboard-frontend 80/tcp | head -1")
+            ~/live-ssh -f -N -L "7503:$remote"
+            echo "E2E_BASE_URL=http://localhost:7503" >> "$GITHUB_ENV"
+          fi
+
+      - name: Wait for the site
+        run: |
+          for i in $(seq 1 15); do curl -fsS -o /dev/null --max-time 10 "$E2E_BASE_URL/api/health" && break; sleep 4; done
+          curl -fsS --max-time 10 -o /dev/null -w "API: HTTP %{http_code}\n" "$E2E_BASE_URL/api/health"
+          curl -fsS --max-time 10 -o /dev/null -w "Frontend: HTTP %{http_code}\n" "$E2E_BASE_URL/login"
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+
+      - name: Install Playwright and esbuild
+        working-directory: ag-extension-dashboard/src/frontend
+        run: |
+          npm install --no-save --no-audit --no-fund --ignore-scripts @playwright/test@1.63.0 esbuild@0.25.12
+          npx playwright install --with-deps chromium
+
+      # The seeds are TypeScript; the deployed image only carries compiled code.
+      # Each is bundled into one file and run with the container's own node,
+      # pg and bcryptjs, against the container's own DATABASE_URL.
+      - name: Bundle the seed scripts
+        working-directory: ag-extension-dashboard/src/frontend
+        run: |
+          mkdir -p "$RUNNER_TEMP/seeds"
+          for name in seed-realworld seed-e2e-system-admin disable-e2e-system-admin; do
+            npx --no-install esbuild "../backend/prisma/$name.ts" --bundle --platform=node --target=node22 --format=cjs \
+              --external:pg --external:bcryptjs --external:dotenv --log-level=warning --outfile="$RUNNER_TEMP/seeds/$name.cjs"
+          done
+
+      - name: Reset and seed the test population
+        run: ~/live-ssh "docker exec -i ag-dashboard-backend node - --reset" < "$RUNNER_TEMP/seeds/seed-realworld.cjs"
+
+      - name: Temporary test system administrator
+        run: |
+          pw="$(openssl rand -base64 36 | tr -dc 'A-Za-z0-9' | head -c 32)"
+          echo "::add-mask::$pw"
+          echo "E2E_SYSTEM_ADMIN_PASSWORD=$pw" >> "$GITHUB_ENV"
+          # The password travels inside the script on stdin: never on a command line.
+          { printf 'process.env.E2E_SYSTEM_ADMIN_PASSWORD = %s;\nprocess.env.E2E_SYSTEM_ADMIN_TEMPORARY = "removed-after-run";\n' "\"$pw\""
+            cat "$RUNNER_TEMP/seeds/seed-e2e-system-admin.cjs"; } \
+            | ~/live-ssh "docker exec -i ag-dashboard-backend node -"
+
+      - name: Run the user stories
+        working-directory: ag-extension-dashboard/src/frontend
+        run: npx playwright test -c playwright.live-e2e.config.ts
+
+      # The report artifact holds screenshots and traces; the page snapshot of
+      # each failure is also printed here so the log alone explains it.
+      - name: Page snapshots of failed stories
+        if: failure()
+        working-directory: ag-extension-dashboard/src/frontend
+        run: |
+          for f in test-results/*/error-context.md; do
+            [ -f "$f" ] || continue
+            echo "::group::$(dirname "$f" | xargs basename)"
+            head -c 6000 "$f"
+            echo "::endgroup::"
+          done
+
+      - name: Disable the test system administrator
+        if: always()
+        run: |
+          [ -f "$RUNNER_TEMP/seeds/disable-e2e-system-admin.cjs" ] || exit 0
+          ~/live-ssh "docker exec -i ag-dashboard-backend node -" < "$RUNNER_TEMP/seeds/disable-e2e-system-admin.cjs"
+
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: user-stories-${{ inputs.target }}
+          path: ag-extension-dashboard/src/frontend/playwright-report-live
+          if-no-files-found: ignore
+          retention-days: 14

@@ -7,7 +7,7 @@ import {
     mapKeywordRows,
     searchByTsQuery,
 } from '../services/vector/keywordSearch';
-import { addToRrfMap, mergeAndSortRrfResults } from '../services/vector/rrfFusion';
+import { fuseRankedLegs, retrievalSignals } from '../services/vector/rrfFusion';
 import type { SearchResult } from '../services/vectorService';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
@@ -102,11 +102,27 @@ describe('searchByTsQuery', () => {
 });
 
 describe('keywordSearch', () => {
-    it('returns AND results on precision hit', async () => {
-        mockedQuery.mockResolvedValueOnce({ rows: [{ id: 'a', content: 'c', title: 't', category: 'c', crops: [], source_url: 'u', content_type: 'text', score: 1 }], rowCount: 1 });
-        const res = await keywordSearch('maize fertilizer rate', 5, {});
-        expect(res).toHaveLength(1);
+    const row = (id: string) => ({ id, content: 'c', title: 't', category: 'c', crops: [], source_url: 'u', content_type: 'text', score: 1 });
+
+    it('returns AND results alone when they fill the limit', async () => {
+        mockedQuery.mockResolvedValueOnce({ rows: [row('a'), row('b')], rowCount: 2 });
+        const res = await keywordSearch('maize fertilizer rate', 2, {});
+        expect(res.map(r => r.id)).toEqual(['a', 'b']);
+        expect(res.every(r => retrievalSignals(r).keywordMatch === 'all')).toBe(true);
         expect(mockedQuery).toHaveBeenCalledTimes(1);
+    });
+
+    it('tops up full matches with partial matches, full matches first', async () => {
+        mockedQuery
+            .mockResolvedValueOnce({ rows: [row('a')], rowCount: 1 })
+            .mockResolvedValueOnce({ rows: [row('b'), row('a')], rowCount: 2 });
+        const res = await keywordSearch('maize fertilizer rate', 5, {});
+        expect(res.map(r => [r.id, retrievalSignals(r).keywordMatch])).toEqual([['a', 'all'], ['b', 'any']]);
+        expect(String(mockedQuery.mock.calls[1][1]?.[0])).toBe('maize | fertilizer | rate');
+    });
+
+    it('keeps non-ASCII terms (an untranslated French question still matches)', () => {
+        expect(extractKeywordTerms('maïs chenille légionnaire')).toEqual(['maïs', 'chenille', 'légionnaire']);
     });
 
     it('falls back to ILIKE for single-word misses', async () => {
@@ -146,28 +162,41 @@ describe('executeIlikeFallback', () => {
 // ─── RRF fusion ──────────────────────────────────────────────────────────────
 
 describe('rrfFusion', () => {
-    it('ranks shared documents above single-source ones', () => {
-        const rrf = new Map<string, { doc: SearchResult; score: number }>();
-        addToRrfMap(rrf, [doc('a'), doc('b')], 60);
-        addToRrfMap(rrf, [doc('b'), doc('c')], 60);
-        const ranked = mergeAndSortRrfResults(rrf, 3);
-        expect(ranked.map(d => d.id)[0]).toBe('b');
+    it('ranks a document both legs found above documents found by one leg', () => {
+        const ranked = fuseRankedLegs([
+            { leg: 'vector', results: [doc('a'), doc('b')] },
+            { leg: 'keyword', results: [doc('c'), doc('b')] },
+        ], 3);
+        expect(ranked[0].id).toBe('b');
         expect(ranked).toHaveLength(3);
     });
 
-    it('applies the keyword recall bias over vector-only hits', () => {
-        const rrf = new Map<string, { doc: SearchResult; score: number }>();
-        addToRrfMap(rrf, [doc('a')], 60);
-        addToRrfMap(rrf, [doc('b')], 60, 0.5);
-        const ranked = mergeAndSortRrfResults(rrf, 2);
-        expect(ranked.map(d => d.id)[0]).toBe('b');
+    it('does not let a keyword-only hit outrank an agreed hit (old +0.5 bias)', () => {
+        const ranked = fuseRankedLegs([
+            { leg: 'vector', results: [doc('agreed'), doc('vector-only')] },
+            { leg: 'keyword', results: [doc('keyword-only'), doc('agreed')] },
+        ], 3);
+        expect(ranked.map(d => d.id)).toEqual(['agreed', 'keyword-only', 'vector-only']);
     });
 
-    it('respects the limit and rewrites doc scores', () => {
-        const rrf = new Map<string, { doc: SearchResult; score: number }>();
-        addToRrfMap(rrf, [doc('a', 0.1), doc('b', 0.9)], 60);
-        const ranked = mergeAndSortRrfResults(rrf, 1);
+    it('applies leg weights and keeps each leg\'s evidence', () => {
+        const vectorHit = { ...doc('a'), metadata: { ...doc('a').metadata, retrieval: { vectorSimilarity: 0.71 } } };
+        const keywordHit = { ...doc('a'), metadata: { ...doc('a').metadata, retrieval: { keywordMatch: 'any' as const } } };
+        const [fused] = fuseRankedLegs([
+            { leg: 'vector', results: [vectorHit] },
+            { leg: 'keyword', results: [keywordHit] },
+            { leg: 'chunk', results: [{ ...doc('a'), content: 'the matching passage' }], weight: 0.5 },
+        ], 1, { preferContentFrom: 'chunk' });
+        expect(fused.score).toBeCloseTo(2.5 / 61);
+        expect(fused.content).toBe('the matching passage');
+        expect(retrievalSignals(fused)).toMatchObject({
+            vectorSimilarity: 0.71, keywordMatch: 'any', ranks: { vector: 1, keyword: 1, chunk: 1 },
+        });
+    });
+
+    it('respects the limit and replaces scores with the fused score', () => {
+        const ranked = fuseRankedLegs([{ leg: 'vector', results: [doc('a', 0.1), doc('b', 0.9)] }], 1);
         expect(ranked).toHaveLength(1);
-        expect(ranked[0].score).not.toBe(0.9);
+        expect(ranked[0].score).toBeCloseTo(1 / 61);
     });
 });

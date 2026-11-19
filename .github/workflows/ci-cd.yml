@@ -316,7 +316,7 @@ jobs:
         run: npm ci --workspace=ag-extension-dashboard/src/backend
       - name: Test derived-data integrity and distributed locking
         working-directory: ag-extension-dashboard/src/backend
-        run: npx --no-install jest --runInBand src/__tests__/ragDerivedIntegrity.integration.test.ts src/__tests__/knowledgeSyncLock.integration.test.ts
+        run: npx --no-install jest --runInBand src/__tests__/ragDerivedIntegrity.integration.test.ts src/__tests__/ragRetrievalPipeline.integration.test.ts src/__tests__/knowledgeSyncLock.integration.test.ts
         env:
           RAG_INTEGRITY_TEST_DATABASE_URL: postgresql://rag_test:rag_test@localhost:5432/rag_test
           KNOWLEDGE_LOCK_TEST_DATABASE_URL: postgresql://rag_test:rag_test@localhost:5432/rag_test

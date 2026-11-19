@@ -321,6 +321,8 @@ model KnowledgeArticle {
    source      String?   @db.VarChar(255)
    sourceUrl   String?   @map("source_url")
    embedding   Float[]
+   /// sha256 of content, kept by a trigger; derived chunks and graph edges compare against it.
+   contentHash String?   @map("content_hash")
    order       Int?      @default(0) @db.Integer
    createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
    updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)

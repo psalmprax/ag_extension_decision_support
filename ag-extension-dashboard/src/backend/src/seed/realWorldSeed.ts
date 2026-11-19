@@ -15,6 +15,8 @@
 
 /** RFC 2606 reserved TLD — no real mailbox can ever exist here. */
 export const REAL_WORLD_EMAIL_DOMAIN = '@real.agriext.test';
+/** The end-to-end tests' system administrator (prisma/seed-e2e-system-admin.ts). */
+export const E2E_SYSTEM_ADMIN_EMAIL = `e2e.system.admin${REAL_WORLD_EMAIL_DOMAIN}`;
 
 /**
  * Tenant every real-world fixture belongs to. The scoping routes resolve a
