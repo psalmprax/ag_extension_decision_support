@@ -12,6 +12,7 @@ import {
     type RealWorldPlan,
 } from '../src/seed/realWorldSeed';
 import { hasLegacyFixtureIds, resetRealWorldFixtures } from '../src/seed/realWorldReset';
+import planCatalog from './planCatalog.json';
 
 dotenv.config();
 
@@ -103,6 +104,20 @@ async function main(): Promise<void> {
             if (!id) throw new Error(`User upsert returned no id for ${account.email}`);
             return id;
         };
+
+        // The plans the fixtures need. A deployment whose catalogue was never
+        // seeded (stage had none) gets the standard catalogue (planCatalog.json,
+        // the same rows prisma/seed.cjs creates); existing plans are left alone.
+        for (const plan of planCatalog) {
+            const created = await client.query(
+                `INSERT INTO subscription_plans (id, name, description, price, currency, interval, features, stripe_price_id, is_active, created_at, updated_at)
+                 SELECT $1::uuid, $2::text, $3::text, $4::numeric, 'USD', 'month', $5::jsonb, $6::text, true, NOW(), NOW()
+                 WHERE NOT EXISTS (SELECT 1 FROM subscription_plans WHERE LOWER(name) = LOWER($2::text))
+                 ON CONFLICT (id) DO NOTHING`,
+                [plan.id, plan.name, plan.description, plan.price, JSON.stringify(plan.features), plan.stripePriceId]
+            );
+            if (created.rowCount) console.log(`  created the missing ${plan.name} plan`);
+        }
 
         const ensurePlan = async (userId: string, email: string): Promise<void> => {
             // The login handler reads the plan from `subscriptions`; a missing row

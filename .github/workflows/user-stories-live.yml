@@ -136,6 +136,19 @@ jobs:
         working-directory: ag-extension-dashboard/src/frontend
         run: npx playwright test -c playwright.live-e2e.config.ts
 
+      # The report artifact holds screenshots and traces; the page snapshot of
+      # each failure is also printed here so the log alone explains it.
+      - name: Page snapshots of failed stories
+        if: failure()
+        working-directory: ag-extension-dashboard/src/frontend
+        run: |
+          for f in test-results/*/error-context.md; do
+            [ -f "$f" ] || continue
+            echo "::group::$(dirname "$f" | xargs basename)"
+            head -c 6000 "$f"
+            echo "::endgroup::"
+          done
+
       - name: Disable the test system administrator
         if: always()
         run: |
