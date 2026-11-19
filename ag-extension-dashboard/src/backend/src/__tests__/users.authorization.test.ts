@@ -62,41 +62,44 @@ function revokeUserSessions(userId: unknown) {
   return { rows, rowCount: rows.length };
 }
 
+type Reply = { rows: unknown[]; rowCount: number };
+const EMPTY: Reply = { rows: [], rowCount: 0 };
+const one = (row: unknown): Reply => ({ rows: [row], rowCount: 1 });
+
+/** The fake database: the first route whose SQL fragment matches answers the statement. */
+const SQL_ROUTES: Array<[string, (sql: string, params: unknown[]) => Reply]> = [
+  // System-administrator flag, read from the database on every request.
+  ['SELECT is_system_admin FROM users', (_sql, params) => one({ is_system_admin: SYSTEM_ADMINS.has(String(params[0])) })],
+  // A regional manager's directory is scoped to the region on their own account.
+  ['SELECT region FROM users WHERE id = $1', (_sql, params) => (params[0] === 'manager' ? one({ region: 'Rift Valley' }) : EMPTY)],
+  // Guard row loaded before every update or deactivation of a user.
+  ['SELECT id, role, is_active, is_system_admin FROM users', (_sql, params) =>
+    params[0] === 'target'
+      ? one({ id: 'target', role: 'extension_officer', is_active: targetActive, is_system_admin: false })
+      : EMPTY],
+  ['FROM user_sessions', (_sql, params) => {
+    const session = sessions.get(String(params[0]));
+    return session
+      ? one({ is_revoked: session.revoked, is_active: session.userId !== 'target' || targetActive, expires_at: new Date(Date.now() + 3600000) })
+      : EMPTY;
+  }],
+  ['UPDATE user_sessions', (_sql, params) => revokeUserSessions(params[0])],
+  ['INSERT INTO users', (_sql, params) =>
+    one({ id: 'created', email: params[0], role: params[4], first_name: params[2], last_name: params[3], is_active: true })],
+  ['UPDATE users', (sql, params) => {
+    targetActive = sql.includes('is_active = false') ? false : (params.find(p => typeof p === 'boolean') as boolean);
+    return one({ id: 'target', is_active: targetActive });
+  }],
+];
+
 beforeEach(() => {
   targetActive = true;
   revocationFails = false;
   sessions.clear();
   mockQuery.mockReset();
   mockQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
-    // System-administrator flag, read from the database on every request.
-    if (sql.includes('SELECT is_system_admin FROM users')) {
-      return { rows: [{ is_system_admin: SYSTEM_ADMINS.has(String(params[0])) }], rowCount: 1 };
-    }
-    // A regional manager's directory is scoped to the region on their own account.
-    if (sql.includes('SELECT region FROM users WHERE id = $1')) {
-      return params[0] === 'manager' ? { rows: [{ region: 'Rift Valley' }], rowCount: 1 } : { rows: [], rowCount: 0 };
-    }
-    // Guard row loaded before every update or deactivation of a user.
-    if (sql.includes('SELECT id, role, is_active, is_system_admin FROM users')) {
-      return params[0] === 'target'
-        ? { rows: [{ id: 'target', role: 'extension_officer', is_active: targetActive, is_system_admin: false }], rowCount: 1 }
-        : { rows: [], rowCount: 0 };
-    }
-    if (sql.includes('FROM user_sessions')) {
-      const session = sessions.get(String(params[0]));
-      return { rows: session ? [{ is_revoked: session.revoked, is_active: session.userId !== 'target' || targetActive, expires_at: new Date(Date.now() + 3600000) }] : [], rowCount: session ? 1 : 0 };
-    }
-    if (sql.includes('UPDATE user_sessions')) {
-      return revokeUserSessions(params[0]);
-    }
-    if (sql.includes('INSERT INTO users')) {
-      return { rows: [{ id: 'created', email: params[0], role: params[4], first_name: params[2], last_name: params[3], is_active: true }], rowCount: 1 };
-    }
-    if (sql.includes('UPDATE users')) {
-      targetActive = sql.includes('is_active = false') ? false : params.find(p => typeof p === 'boolean') as boolean;
-      return { rows: [{ id: 'target', is_active: targetActive }], rowCount: 1 };
-    }
-    return { rows: [], rowCount: 0 };
+    const route = SQL_ROUTES.find(([needle]) => sql.includes(needle));
+    return route ? route[1](sql, params) : EMPTY;
   });
 });
 
