@@ -125,6 +125,7 @@ jobs:
         working-directory: ag-extension-dashboard/src/backend
         run: |
           PGPASSWORD=rag_eval psql -h localhost -U rag_eval -d rag_eval -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+          npx --no-install prisma generate
           npx --no-install prisma migrate deploy
       - name: Evaluate retrieval against the golden set
         working-directory: ag-extension-dashboard/src/backend
