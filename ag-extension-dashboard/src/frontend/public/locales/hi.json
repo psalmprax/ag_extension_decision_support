@@ -886,5 +886,13 @@
     "farmer_register_manager_no_region": "Your account has no region yet. Ask an administrator to set it before registering farmers.",
     "farmer_tab_progress": "Progress",
     "visit_type_assessment": "Farm assessment",
-    "visit_type_training": "Training"
+    "visit_type_training": "Training",
+    "dash_quick_actions": "Quick actions",
+    "dash_action_diagnose": "Diagnose a crop photo",
+    "dash_action_visits": "Plan visits",
+    "dash_action_messages": "Farmer messages",
+    "dash_zone": "Zone",
+    "dash_zone_all": "All villages",
+    "nav_hub_system": "System",
+    "nav_hub_outreach": "Outreach"
 }

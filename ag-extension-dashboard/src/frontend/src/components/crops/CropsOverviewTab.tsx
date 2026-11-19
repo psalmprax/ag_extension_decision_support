@@ -184,7 +184,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
           <button
             onClick={handleOpenAddField}
             disabled={!isFarmer && !selectedFarmerId}
-            className={`px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-bold transition-all ${btnClass} disabled:opacity-50`}
+            className={`px-6 py-2.5 bg-primary-700 hover:bg-primary-800 text-white font-bold transition-all ${btnClass} disabled:opacity-50`}
           >
             Create First Sector
           </button>

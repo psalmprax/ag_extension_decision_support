@@ -148,17 +148,27 @@ interface ChatRow {
   farmer_region?: string;
 }
 
-async function fetchSmsEvents(userId: string, role: string): Promise<ActivityItem[]> {
-  let scopeClause = '';
-  const params: unknown[] = [];
-
-  if (role === 'farmer') {
-    scopeClause = `AND sh.farmer_id IN (SELECT id FROM farmers WHERE user_id = $1)`;
-    params.push(userId);
-  } else if (role === 'extension_officer') {
-    scopeClause = `AND sh.farmer_id IN (SELECT id FROM farmers WHERE assigned_officer_id = $1)`;
-    params.push(userId);
+/**
+ * Whose activity the caller sees: a farmer their own; an officer their
+ * assigned farmers'; a regional manager the farmers in their region (managers
+ * used to be unscoped and saw every region's messages and phone numbers);
+ * admins everything.
+ */
+function activityScope(alias: string, userId: string, role: string, params: unknown[]): string {
+  if (role === 'admin') return '';
+  params.push(userId);
+  if (role === 'farmer') return `AND ${alias}.farmer_id IN (SELECT id FROM farmers WHERE user_id = $1)`;
+  if (role === 'regional_manager') {
+    return `AND ${alias}.farmer_id IN (SELECT f2.id FROM farmers f2
+              JOIN users mgr ON mgr.id = $1
+             WHERE mgr.region IS NOT NULL AND f2.region = mgr.region)`;
   }
+  return `AND ${alias}.farmer_id IN (SELECT id FROM farmers WHERE assigned_officer_id = $1)`;
+}
+
+async function fetchSmsEvents(userId: string, role: string): Promise<ActivityItem[]> {
+  const params: unknown[] = [];
+  const scopeClause = activityScope('sh', userId, role, params);
 
   const sql = `
     SELECT sh.id, sh.recipient_phone, sh.message, sh.status,
@@ -205,16 +215,8 @@ function mapSmsToActivity(row: SmsRow): ActivityItem {
 }
 
 async function fetchChatEvents(userId: string, role: string): Promise<ActivityItem[]> {
-  let scopeClause = '';
   const params: unknown[] = [];
-
-  if (role === 'farmer') {
-    scopeClause = `AND cc.farmer_id IN (SELECT id FROM farmers WHERE user_id = $1)`;
-    params.push(userId);
-  } else if (role === 'extension_officer') {
-    scopeClause = `AND cc.farmer_id IN (SELECT id FROM farmers WHERE assigned_officer_id = $1)`;
-    params.push(userId);
-  }
+  const scopeClause = activityScope('cc', userId, role, params);
 
   const sql = `
     SELECT cm.id, cm.role, cm.content, COALESCE(cm.language, 'EN') AS language,

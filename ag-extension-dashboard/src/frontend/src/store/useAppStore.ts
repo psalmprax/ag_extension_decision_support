@@ -22,6 +22,16 @@ export interface User {
   /** Above every tenant: may create or promote an admin. */
   isSystemAdmin?: boolean;
   notificationPreferences?: NotificationPreferences;
+  /** Handle, avatar and display units saved on the account (PATCH /auth/me). */
+  profileSettings?: ProfileSettings;
+}
+
+export interface ProfileSettings {
+  handle?: string;
+  avatarId?: string;
+  areaUnit?: 'hectares' | 'acres';
+  tempUnit?: 'celsius' | 'fahrenheit';
+  highContrast?: boolean;
 }
 
 /** Alert channels the user switched on or off in Settings (missing = on). */

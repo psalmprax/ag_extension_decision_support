@@ -88,10 +88,34 @@ function makeDist({ primary = 'aihubmix', fallback = 'openrouter', embeddings = 
     return dir;
 }
 
-function run(dist) {
+/**
+ * Stands in for the running backend's public landing routes: `fetch` is
+ * replaced before the script runs. `landing` picks the behaviour: 'ok', a
+ * 'canned' greeting instead of an answer, or 'deaf' (speech not understood).
+ */
+const FETCH_STUB = path.join(os.tmpdir(), `live-smoke-fetch-stub-${process.pid}.cjs`);
+fs.writeFileSync(FETCH_STUB, `
+const mode = process.env.LIVE_SMOKE_FAKE_LANDING || 'ok';
+globalThis.fetch = async (url) => {
+    const reply = data => ({ ok: true, status: 200, json: async () => ({ success: true, data }) });
+    if (String(url).endsWith('/chatbot/public-demo')) {
+        return reply({ text: mode === 'canned' ? 'How can I help you today?' : 'Top-dress maize with CAN about four to six weeks after planting, when the soil is moist.' });
+    }
+    if (String(url).endsWith('/public-demo/tts')) return reply({ audioBase64: 'SUQz', format: 'mp3' });
+    if (String(url).endsWith('/public-demo/stt')) return reply({ text: mode === 'deaf' ? 'hello' : 'My maize leaves are turning yellow' });
+    return { ok: false, status: 404, json: async () => ({ success: false, error: 'not found' }) };
+};
+`);
+
+function run(dist, landing = 'ok') {
     const res = spawnSync(process.execPath, ['-'], {
         input: SCRIPT,
-        env: { ...process.env, LIVE_SMOKE_DIST: dist },
+        env: {
+            ...process.env,
+            LIVE_SMOKE_DIST: dist,
+            LIVE_SMOKE_FAKE_LANDING: landing,
+            NODE_OPTIONS: `${process.env.NODE_OPTIONS || ''} --require ${FETCH_STUB}`.trim(),
+        },
         encoding: 'utf8',
     });
     return { code: res.status, out: res.stdout + res.stderr };
@@ -181,4 +205,23 @@ test('a missing dist/ is a clear fatal error', () => {
     const { code, out } = run(path.join(os.tmpdir(), 'no-such-dist'));
     assert.equal(code, 1);
     assert.match(out, /FATAL: Cannot find module/);
+});
+
+test('checks the landing assistant answers and its speech round-trips', () => {
+    const { code, out } = run(makeDist({ providers: healthy }));
+    assert.equal(code, 0, out);
+    assert.match(out, /PASS\s+landing: assistant answers/);
+    assert.match(out, /PASS\s+landing: speech round trip\s+heard: "My maize leaves are turning yellow"/);
+});
+
+test('fails when the landing assistant replies with the canned greeting', () => {
+    const { code, out } = run(makeDist({ providers: healthy }), 'canned');
+    assert.equal(code, 1);
+    assert.match(out, /FAIL\s+landing: assistant answers\s+canned greeting instead of an answer/);
+});
+
+test('warns when landing speech is not understood', () => {
+    const { code, out } = run(makeDist({ providers: healthy }), 'deaf');
+    assert.equal(code, 0, out);
+    assert.match(out, /WARN\s+landing: speech round trip\s+transcript did not match/);
 });

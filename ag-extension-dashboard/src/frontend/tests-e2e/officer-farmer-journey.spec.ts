@@ -1,6 +1,6 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { SEEDED } from './helpers/auth';
-import { FARMER_CHAT_MENU, JOURNEY, apiAs, daysFromNow, expectImagesLoaded, openMenu, pngPhoto, signedIn } from './helpers/journey';
+import { FARMER_CHAT_MENU, JOURNEY, MY_OFFICER_MENU, apiAs, daysFromNow, expectImagesLoaded, openMenu, pngPhoto, signedIn } from './helpers/journey';
 
 /**
  * One season between an extension officer and a farmer, end to end against the
@@ -50,7 +50,7 @@ test.describe.serial('officer and farmer through a season', () => {
   });
 
   test('the farmer starts the conversation, describes the farm and sends photos', async () => {
-    await openMenu(farmerPage, 'My officer');
+    await openMenu(farmerPage, MY_OFFICER_MENU);
     await expect(farmerPage.getByRole('heading', { name: 'My extension officer' })).toBeVisible();
 
     const composer = farmerPage.getByLabel('Message to your officer');
@@ -92,7 +92,7 @@ test.describe.serial('officer and farmer through a season', () => {
 
   test('the farmer reads the reply and answers with what has been done', async () => {
     await farmerPage.reload();
-    await openMenu(farmerPage, 'My officer');
+    await openMenu(farmerPage, MY_OFFICER_MENU);
     const fromOfficer = farmerPage.getByRole('group', { name: 'Officer message' });
     await expect(fromOfficer.filter({ hasText: 'top-dress with CAN' })).toBeVisible();
     await expectImagesLoaded(fromOfficer.filter({ hasText: 'yellow V' }).locator(PHOTOS));
@@ -217,7 +217,7 @@ test.describe.serial('officer and farmer through a season', () => {
     await expect(farmerPage.getByText(/Findings:.*Nitrogen deficiency/)).toBeVisible();
     await expect(farmerPage.getByText('Follow up', { exact: false }).first()).toBeVisible();
 
-    await openMenu(farmerPage, 'My officer');
+    await openMenu(farmerPage, MY_OFFICER_MENU);
     await expect(farmerPage.getByRole('group', { name: 'Officer message' }).filter({ hasText: 'top-dressing session' })).toBeVisible();
 
     // The farmer can read their progress log, but recording it is the officer's job.
@@ -238,7 +238,7 @@ test.describe.serial('officer and farmer through a season', () => {
     expect(edited.status()).toBe(200);
 
     await farmerPage.reload();
-    await openMenu(farmerPage, 'My officer');
+    await openMenu(farmerPage, MY_OFFICER_MENU);
     await expect(farmerPage.getByText('Correction: apply 50 kg/acre of CAN')).toBeVisible();
     await expect(farmerPage.getByText('Apply 500 kg/acre of CAN')).toHaveCount(0);
   });

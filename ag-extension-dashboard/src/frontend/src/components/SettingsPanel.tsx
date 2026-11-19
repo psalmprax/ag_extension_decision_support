@@ -5,13 +5,11 @@ import { OrganizationSection } from '@/components/settings/OrganizationSection';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { Map } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Palette, Globe, Monitor, Moon, Sun, Zap, MessageSquare, Droplets } from 'lucide-react';
+import { X, Palette, Globe, Monitor, Moon, Sun, Zap, MessageSquare } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { LanguageSwitcher } from './LanguageSwitcher';
-import { DesignToggle } from './ABTestBanner';
-import { LiquidToggleSwitch } from './canvasui/LiquidToggleSwitch';
 import toast from 'react-hot-toast';
 import { ChannelOnboardingModal } from './channels/ChannelOnboardingModal';
 
@@ -109,32 +107,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                         </span>
                       </div>
                       <LanguageSwitcher />
-                    </div>
-                    {/* Design Preference */}
-                    <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Palette className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {t('settings_design') || 'Design'}
-                        </span>
-                      </div>
-                      <DesignToggle />
-                    </div>
-
-                    {/* Liquid Fluid Dynamics Effect */}
-                    <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <Droplets className="w-4 h-4 text-emerald-500" />
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Liquid Fluid Dynamics
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          CanvasUI GPU fluid simulation on pointer and touch motion
-                        </p>
-                      </div>
-                      <LiquidToggleSwitch />
                     </div>
                   </div>
                 </div>

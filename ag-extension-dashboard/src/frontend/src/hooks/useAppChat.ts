@@ -7,6 +7,7 @@ import {
   deleteConversation,
   createConversation,
   sendThreadMessage,
+  markThreadRead,
 } from '@/api/chatbotService';
 import { getChatCompletion, getPublicDemoChatCompletion } from '@/api/aiService';
 import { isDemoFarmerId } from '@/demo/demoIds';
@@ -14,6 +15,8 @@ import { Conversation, ChatMessage, Farmer } from '../types/dashboard';
 import { useAppStore } from '@/store/useAppStore';
 import { isFreePlanUser } from '@/lib/planAccess';
 import { getApiErrorMessage } from '@/lib/apiError';
+import { queryClient } from '@/lib/queryClient';
+import { UNREAD_CHATS_KEY } from '@/hooks/useUnreadChats';
 
 interface QueuedChatItem {
   conversationId: string | null;
@@ -223,6 +226,10 @@ export const useAppChat = (language: string) => {
       // Drop a stale resolution so the active conversation always shows its own messages.
       if (requestId !== farmerMessagesRequestRef.current) return;
       setFarmerChatMessages(res.data || []);
+      // Opening a thread reads it: clear its unread count and the menu badge.
+      void markThreadRead(id)
+        .then(() => queryClient.invalidateQueries({ queryKey: UNREAD_CHATS_KEY }))
+        .catch(error => console.warn('Could not mark the conversation read:', error));
     } catch (error) {
       if (requestId !== farmerMessagesRequestRef.current) return;
       console.error('Failed to load farmer messages:', error);

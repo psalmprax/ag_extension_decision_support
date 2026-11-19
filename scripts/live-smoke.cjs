@@ -14,9 +14,14 @@
  *     from the selected AI_EMBEDDINGS_PROVIDER.
  *   - PayPal: creates (never executes) a 1.00 USD sandbox payment. Skipped when
  *     PayPal is not configured or the API base is not the sandbox.
+ *   - Landing page assistant, through the running backend's public routes (QA
+ *     v1 landing #2/#3): a typed farming question must get a real answer, and
+ *     speech must round-trip (server speech synthesis, then transcription of
+ *     that audio back to the same words).
  *
  * Exit code: 1 when a REQUIRED check fails (primary text, fallback text, the
- * app's embedding path, PayPal sandbox when configured). Other configured
+ * app's embedding path, PayPal sandbox when configured, the landing chat).
+ * The landing speech round trip is reported as WARN. Other configured
  * providers, and the selected embeddings provider when the router can still
  * serve embeddings without it, are reported as WARN. Output never includes keys, prompts' replies
  * beyond a short preview, or payment ids.
@@ -129,6 +134,49 @@ async function checkPayPal(paymentService) {
     return { status: 'PASS', detail: 'sandbox payment created with a sandbox approval URL (not executed)' };
 }
 
+/** POST to the running backend inside the container (public routes, no auth). */
+async function postLocal(path, body, ms) {
+    const port = process.env.PORT || '3001';
+    const res = await withTimeout(fetch(`http://127.0.0.1:${port}/api${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    }), ms, path);
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || json.success === false) {
+        throw new Error(`HTTP ${res.status} ${json.error || json.message || ''}`.trim());
+    }
+    return json.data || {};
+}
+
+/** The landing page's "Ask Copilot": a farming question gets a real, non-canned answer. */
+async function checkLandingChat() {
+    const data = await postLocal('/chatbot/public-demo', {
+        query: 'When should I top-dress maize with nitrogen fertiliser?',
+        language: 'en',
+    }, 45000);
+    const text = String(data.text || '').trim();
+    if (/how can i help you today/i.test(text)) return { status: 'FAIL', detail: 'canned greeting instead of an answer' };
+    if (text.length < 40) return { status: 'FAIL', detail: `answer too short (${text.length} chars)` };
+    return { status: 'PASS', detail: `${text.length} chars: ${text.slice(0, 60).replace(/\s+/g, ' ')}…` };
+}
+
+/** The landing page's speech: synthesise a sentence, then transcribe that audio back. */
+async function checkLandingSpeech() {
+    const sentence = 'My maize leaves are turning yellow';
+    const spoken = await postLocal('/chatbot/public-demo/tts', { text: sentence, language: 'en' }, 30000);
+    if (!spoken.audioBase64) return { status: 'WARN', detail: 'speech synthesis returned no audio' };
+    const heard = await postLocal('/chatbot/public-demo/stt', {
+        audio: spoken.audioBase64,
+        mimeType: 'audio/mpeg',
+        language: 'en',
+    }, 45000);
+    const text = String(heard.text || '');
+    return /maize/i.test(text) && /yellow/i.test(text)
+        ? { status: 'PASS', detail: `heard: "${text.slice(0, 60)}"` }
+        : { status: 'WARN', detail: `transcript did not match: "${text.slice(0, 60)}"` };
+}
+
 async function main() {
     const { config } = require(`${DIST}/config`);
     const { logger } = require(`${DIST}/utils/logger`);
@@ -174,6 +222,17 @@ async function main() {
         record('paypal: sandbox order', true, await checkPayPal(paymentService));
     } catch (error) {
         record('paypal: sandbox order', true, { status: 'FAIL', detail: describe(error) });
+    }
+
+    try {
+        record('landing: assistant answers', true, await checkLandingChat());
+    } catch (error) {
+        record('landing: assistant answers', true, { status: 'FAIL', detail: describe(error) });
+    }
+    try {
+        record('landing: speech round trip', false, await checkLandingSpeech());
+    } catch (error) {
+        record('landing: speech round trip', false, { status: 'WARN', detail: describe(error) });
     }
 
     // A primary or fallback that is not configured is itself a failure.

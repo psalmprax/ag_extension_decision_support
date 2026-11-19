@@ -1,0 +1,75 @@
+/*
+ * Light-mode legibility (QA v1 #20: "poor text visibility in Light mode in
+ * all pages").
+ *
+ * Many components were written for the dark theme and use pale text colours
+ * (gray-400, emerald-400, white/50 …) without a light-mode variant. On a white
+ * page those measure 1.2–2.6:1 against the background — below WCAG AA (4.5:1),
+ * and the worst are effectively invisible. A scan of every page in light mode
+ * with the real-world officer, manager and farmer accounts found 49 of them.
+ *
+ * In light mode only, and only outside surfaces that are dark in both themes
+ * (a bare bg-slate-900 etc. — not a dark: variant, which is light here), these
+ * colours step down to a darker shade of the same hue: same design, >= 4.5:1.
+ * Generated selector lists: keep the dark-surface list identical in each rule.
+ */
+
+/* Secondary text: gray/slate 400–500 → slate-600 (7.6:1 on white). */
+:root:not(.dark) :is(.text-gray-400, .text-slate-400, .text-gray-500, .text-slate-500):not(:is(
+    .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950, .bg-black,
+    [class^='bg-slate-900/'], [class*=' bg-slate-900/'], [class^='bg-slate-950/'], [class*=' bg-slate-950/'], [class^='bg-gray-900/'], [class*=' bg-gray-900/'], [class^='bg-gray-950/'], [class*=' bg-gray-950/'], [class^='bg-black/'], [class*=' bg-black/']
+  ) *) {
+  color: rgb(71 85 105);
+}
+
+/* Accent text meant for dark backgrounds → the 700/800 shade of the same hue. */
+:root:not(.dark) :is(.text-emerald-300, .text-emerald-400):not(:is(
+    .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950, .bg-black,
+    [class^='bg-slate-900/'], [class*=' bg-slate-900/'], [class^='bg-slate-950/'], [class*=' bg-slate-950/'], [class^='bg-gray-900/'], [class*=' bg-gray-900/'], [class^='bg-gray-950/'], [class*=' bg-gray-950/'], [class^='bg-black/'], [class*=' bg-black/']
+  ) *) {
+  color: rgb(4 120 87);
+}
+:root:not(.dark) :is(.text-sky-300, .text-sky-400):not(:is(
+    .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950, .bg-black,
+    [class^='bg-slate-900/'], [class*=' bg-slate-900/'], [class^='bg-slate-950/'], [class*=' bg-slate-950/'], [class^='bg-gray-900/'], [class*=' bg-gray-900/'], [class^='bg-gray-950/'], [class*=' bg-gray-950/'], [class^='bg-black/'], [class*=' bg-black/']
+  ) *) {
+  color: rgb(3 105 161);
+}
+:root:not(.dark) :is(.text-rose-300, .text-rose-400):not(:is(
+    .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950, .bg-black,
+    [class^='bg-slate-900/'], [class*=' bg-slate-900/'], [class^='bg-slate-950/'], [class*=' bg-slate-950/'], [class^='bg-gray-900/'], [class*=' bg-gray-900/'], [class^='bg-gray-950/'], [class*=' bg-gray-950/'], [class^='bg-black/'], [class*=' bg-black/']
+  ) *) {
+  color: rgb(190 18 60);
+}
+:root:not(.dark) :is(.text-amber-300, .text-amber-400, [class*='text-amber-300/']):not(:is(
+    .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950, .bg-black,
+    [class^='bg-slate-900/'], [class*=' bg-slate-900/'], [class^='bg-slate-950/'], [class*=' bg-slate-950/'], [class^='bg-gray-900/'], [class*=' bg-gray-900/'], [class^='bg-gray-950/'], [class*=' bg-gray-950/'], [class^='bg-black/'], [class*=' bg-black/']
+  ) *) {
+  color: rgb(146 64 14);
+}
+:root:not(.dark) :is(.text-purple-300, .text-purple-400):not(:is(
+    .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950, .bg-black,
+    [class^='bg-slate-900/'], [class*=' bg-slate-900/'], [class^='bg-slate-950/'], [class*=' bg-slate-950/'], [class^='bg-gray-900/'], [class*=' bg-gray-900/'], [class^='bg-gray-950/'], [class*=' bg-gray-950/'], [class^='bg-black/'], [class*=' bg-black/']
+  ) *) {
+  color: rgb(107 33 168);
+}
+:root:not(.dark) :is(.text-primary-400):not(:is(
+    .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950, .bg-black,
+    [class^='bg-slate-900/'], [class*=' bg-slate-900/'], [class^='bg-slate-950/'], [class*=' bg-slate-950/'], [class^='bg-gray-900/'], [class*=' bg-gray-900/'], [class^='bg-gray-950/'], [class*=' bg-gray-950/'], [class^='bg-black/'], [class*=' bg-black/']
+  ) *) {
+  color: rgb(var(--color-primary-700-rgb));
+}
+
+/* Pale text on a light page (white/40–60, slate-200) reads as dark slate instead. */
+:root:not(.dark) :is(.text-white\/40, .text-white\/50, .text-white\/60, .text-slate-200):not(:is(
+    .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950, .bg-black,
+    [class^='bg-slate-900/'], [class*=' bg-slate-900/'], [class^='bg-slate-950/'], [class*=' bg-slate-950/'], [class^='bg-gray-900/'], [class*=' bg-gray-900/'], [class^='bg-gray-950/'], [class*=' bg-gray-950/'], [class^='bg-black/'], [class*=' bg-black/'],
+    [class*='bg-emerald-5'], [class*='bg-emerald-6'], [class*='bg-primary-5'], [class*='bg-primary-6']
+  ) *) {
+  color: rgb(71 85 105) !important;
+}
+
+/* On translucent dark cards (dark-styled forms in light mode), faint white text is lifted. */
+:root:not(.dark) :is([class^='bg-slate-900/'], [class*=' bg-slate-900/'], [class^='bg-slate-950/'], [class*=' bg-slate-950/'], [class^='bg-gray-900/'], [class*=' bg-gray-900/'], [class^='bg-gray-950/'], [class*=' bg-gray-950/'], [class^='bg-black/'], [class*=' bg-black/']) :is(.text-white\/40, .text-white\/50) {
+  color: rgb(255 255 255 / 0.85) !important;
+}

@@ -21,6 +21,8 @@ model User {
   managerId     String?            @map("manager_id") @db.Uuid
   manager       User?              @relation("ManagerOfficers", fields: [managerId], references: [id], onDelete: SetNull)
   managedOfficers User[]           @relation("ManagerOfficers")
+  /// Profile personalisation on the account: handle, avatarId, display units.
+  profileSettings Json?            @map("profile_settings")
   /// Above every tenant: only this account may create or promote another admin.
   isSystemAdmin Boolean            @default(false) @map("is_system_admin")
   /// Diagnoses this account performed, for the per-user diagnosis history.
@@ -334,6 +336,9 @@ model ChatConversation {
   kind                  String        @default("farmer_thread") @db.VarChar(20)
   startedAt             DateTime?     @default(now()) @map("started_at") @db.Timestamp(6)
   endedAt               DateTime?     @map("ended_at") @db.Timestamp(6)
+  /// When each side last read the thread (unread counts and badges)
+  officerReadAt         DateTime?     @map("officer_read_at") @db.Timestamp(6)
+  farmerReadAt          DateTime?     @map("farmer_read_at") @db.Timestamp(6)
   satisfactionScore     Int?          @map("satisfaction_score")
   lowSatisfactionAlertSent Boolean    @default(false) @map("low_satisfaction_alert_sent")
   createdAt             DateTime?     @default(now()) @map("created_at") @db.Timestamp(6)

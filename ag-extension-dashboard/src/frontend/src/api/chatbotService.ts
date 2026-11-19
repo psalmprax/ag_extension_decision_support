@@ -87,3 +87,19 @@ export const saveTurnTakingSettings = async (settings: TurnTakingSettings, tenan
   return data.data as { tenantId: string; settings: TurnTakingSettings };
 };
 
+
+/** Unread messages in the caller's farmer threads (badges). */
+export interface UnreadSummary {
+  total: number;
+  conversations: Record<string, number>;
+}
+
+export const fetchUnreadSummary = async (): Promise<UnreadSummary> => {
+  const { data } = await apiClient.get<{ success: boolean; data: UnreadSummary }>('/chatbot/unread');
+  return data.data ?? { total: 0, conversations: {} };
+};
+
+/** The caller has read this thread up to now. */
+export const markThreadRead = async (conversationId: string): Promise<void> => {
+  await apiClient.post(`/chatbot/conversations/${conversationId}/read`);
+};

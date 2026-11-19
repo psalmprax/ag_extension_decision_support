@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle, Lock } from 'lucide-react';
 import { NavItem } from '../../config/navItems';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { UnreadCount } from '@/components/chat/UnreadCount';
+import { collapseHubs, menuItemIsActive } from '@/config/navHubs';
 import { cn } from '@/lib/cn';
 import { sidebarVariants } from '@/lib/animations';
 import { triggerHaptic } from '@/lib/haptics';
@@ -11,7 +13,9 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { ThemeSwitcher } from '../ThemeSwitcher';
-import { ABTestToggle } from '../ABTestToggle';
+
+/** Menu items that carry the unread-messages badge. */
+const CHAT_TABS = new Set(['farmerchat', 'officerchat']);
 
 const NAV_SECTIONS = [
   {
@@ -96,7 +100,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const sections: Array<{ id: string; label: string; itemIds: readonly string[]; items: NavItem[] }> =
     NAV_SECTIONS.map(section => ({
       ...section,
-      items: navItems.filter(item => (section.itemIds as readonly string[]).includes(item.id)),
+      items: collapseHubs(navItems).filter(item => (section.itemIds as readonly string[]).includes(item.id)),
     })).filter(section => section.items.length > 0);
   const ungroupedItems = navItems.filter(item => getSectionId(item.id) === 'other');
   if (ungroupedItems.length > 0) {
@@ -160,7 +164,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                           className={cn(
                             'flex items-center justify-between px-4 py-3 min-h-[48px] transition-colors text-left group',
                             'rounded-lg',
-                            activeTab === item.id
+                            menuItemIsActive(item, activeTab, navItems)
                               ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-medium border-l-2 border-emerald-500'
                               : cn(
                                   subtextClass,
@@ -171,12 +175,13 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                           <div className="flex items-center gap-3 min-w-0">
                             <item.icon className="w-5 h-5 flex-shrink-0" />
                             <span
-                              className="font-medium text-xs whitespace-normal break-words leading-tight"
+                              className="font-medium text-xs whitespace-normal break-words hyphens-auto leading-tight"
                               title={t(item.labelKey || `nav_${item.id}`, { defaultValue: item.label })}
                             >
                               {t(item.labelKey || `nav_${item.id}`, { defaultValue: item.label })}
                             </span>
                           </div>
+                          {CHAT_TABS.has(item.id) && <UnreadCount className="ml-2" />}
                           {isFreeUser && item.requiresPro && (
                             <Lock
                               className="w-3.5 h-3.5 text-amber-500/80 dark:text-amber-400/80 shrink-0"
@@ -200,9 +205,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               <div className="flex items-center justify-between gap-2">
                 <LanguageSwitcher compact />
                 <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
-              </div>
-              <div className="pt-1">
-                <ABTestToggle />
               </div>
             </div>
 

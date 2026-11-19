@@ -8,7 +8,6 @@ import {
   Radio,
   Send,
   ExternalLink,
-  Smartphone,
   Flame,
   Video,
   X,
@@ -89,52 +88,9 @@ function getChannelBadge(channel: string) {
   }
 }
 
-type FilterSeverity = 'all' | 'critical' | 'moderate';
+import { TriageFilterBar, type FilterSeverity } from './activity/TriageFilterBar';
 
 // ── Sub-components ──────────────────────────────────────────────────
-
-const TriageFilterBar: React.FC<{
-  filterSeverity: FilterSeverity;
-  setFilterSeverity: (f: FilterSeverity) => void;
-  sortByUrgency: boolean;
-  onToggleUrgency: () => void;
-  onOpenUSSDSimulator?: () => void;
-}> = ({ filterSeverity, setFilterSeverity, sortByUrgency, onToggleUrgency, onOpenUSSDSimulator }) => (
-  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-    {onOpenUSSDSimulator && (
-      <button
-        onClick={onOpenUSSDSimulator}
-        className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
-      >
-        <Smartphone className="w-3.5 h-3.5" />
-        <span>USSD Sandbox</span>
-      </button>
-    )}
-    <button
-      onClick={onToggleUrgency}
-      title="Toggle Urgency Heat Ranking"
-      className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 transition-all active:scale-95 ${
-        sortByUrgency ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 shadow-sm' : 'bg-slate-900 text-slate-400 border-slate-800'
-      }`}
-    >
-      <Flame className="w-3.5 h-3.5" />
-      <span>Urgency Heat</span>
-    </button>
-    <div className="flex rounded-lg bg-slate-900/60 p-0.5 border border-slate-800">
-      {(['all', 'critical', 'moderate'] as const).map(f => (
-        <button
-          key={f}
-          onClick={() => setFilterSeverity(f)}
-          className={`px-2 py-1 rounded text-[11px] font-bold uppercase transition-all ${
-            filterSeverity === f ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          {f}
-        </button>
-      ))}
-    </div>
-  </div>
-);
 
 interface ActivityCardProps {
   activity: ActivityItem;
@@ -167,10 +123,10 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
       animate={{ opacity: 1, y: 0 }}
       className={`p-4 rounded-xl border transition-all relative overflow-hidden backdrop-blur-md ${
         activity.isClaimed
-          ? 'bg-emerald-950/20 border-emerald-500/40 shadow-sm'
+          ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-500/40 shadow-sm'
           : isCritical
-          ? 'bg-slate-900/90 border-rose-500/30 hover:border-rose-500/50 shadow-sm'
-          : 'bg-slate-900/80 border-slate-800/80 hover:border-slate-700'
+          ? 'bg-white dark:bg-slate-900/90 border-rose-300 dark:border-rose-500/30 hover:border-rose-500/50 shadow-sm'
+          : 'bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800/80 hover:border-slate-400 dark:hover:border-slate-700'
       }`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
@@ -192,9 +148,9 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xs font-bold text-emerald-400">{activity.crop}</span>
           <span className="text-xs text-slate-500">•</span>
-          <span className="text-xs text-slate-300">{activity.region}</span>
+          <span className="text-xs text-slate-600 dark:text-slate-300">{activity.region}</span>
         </div>
-        <p className="text-xs font-medium text-slate-200">
+        <p className="text-xs font-medium text-slate-800 dark:text-slate-200">
           <span className="text-rose-400 font-bold">{activity.issue}:</span> {activity.aiSummary}
         </p>
       </div>
@@ -546,6 +502,7 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
           sortByUrgency={sortByUrgency}
           onToggleUrgency={() => setSortByUrgency(v => !v)}
           onOpenUSSDSimulator={onOpenUSSDSimulator}
+          disabled={!hasData}
         />
       </div>
 

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { SEEDED, loginThroughUi } from './helpers/auth';
-import { FARMER_CHAT_MENU, JOURNEY, apiAs, daysFromNow, openMenu, pngPhoto } from './helpers/journey';
+import { FARMER_CHAT_MENU, JOURNEY, MY_OFFICER_MENU, apiAs, daysFromNow, openMenu, pngPhoto } from './helpers/journey';
 
 /**
  * An extension officer works only with the farmers in their region. Each
@@ -100,7 +100,7 @@ test.describe('an officer works only with farmers in their region', () => {
   test('a farmer on the Free plan has no officer chat, and the server refuses it', async ({ page }) => {
     // The officer chat is a paid feature: a Free farmer's menu does not offer it…
     await loginThroughUi(page, JOURNEY.freeFarmer.email);
-    await expect(page.getByRole('navigation').first().getByRole('button', { name: 'My officer', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('navigation').first().getByRole('button', { name: MY_OFFICER_MENU })).toHaveCount(0);
 
     // …and the API refuses the thread with an upgrade prompt, not an error.
     const farmer = await apiAs(page.request, JOURNEY.freeFarmer.email);
@@ -120,5 +120,14 @@ test.describe('an officer works only with farmers in their region', () => {
     await openMenu(page, FARMER_CHAT_MENU);
     await expect(page.getByRole('button', { name: new RegExp(other.name) })).toHaveCount(0);
     await expect(page.getByText('my groundnuts are wilting')).toHaveCount(0);
+
+    // Nor does the Rift Valley manager's live activity feed (it used to show every region's messages).
+    const manager = await apiAs(page.request, SEEDED.managerNakuru.email);
+    const feed = (await (await manager.get('/api/v1/activities/triage')).json()) as { data: Array<{ farmerName: string; region: string }> };
+    expect(feed.data.map(item => item.farmerName)).not.toContain(other.name);
+    for (const item of feed.data) expect(item.region).toBe(SEEDED.managerNakuru.region);
+    const otherManager = await apiAs(page.request, SEEDED.managerMzuzu.email);
+    const theirs = (await (await otherManager.get('/api/v1/activities/triage')).json()) as { data: Array<{ farmerName: string }> };
+    expect(theirs.data.map(item => item.farmerName)).toContain(other.name);
   });
 });

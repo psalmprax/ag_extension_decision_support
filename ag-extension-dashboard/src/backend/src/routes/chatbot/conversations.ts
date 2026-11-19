@@ -19,6 +19,7 @@ import { linkedDemoSql } from '@/services/demoScope';
 import { DEFAULT_CONVERSATION_KIND, parseConversationKind, type ConversationKind } from '@/services/chat/conversationKind';
 import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
 import { listAttachments } from '@/services/uploadAttachments';
+import { markThreadRead, unreadSummary } from '@/services/chat/readState';
 
 // Farmer chat, the farmer's "My officer" thread and the officer's AI chats are paid features;
 // admins and the demo are exempt (see requirePaidPlan).
@@ -409,18 +410,36 @@ router.post('/conversations/:id/rate', authorize(['admin', 'regional_manager', '
 });
 
 /**
- * POST /api/chatbot/conversations/:id/read — Mark conversation as read (receipt).
+ * GET /api/chatbot/unread — unread messages in the caller's farmer threads
+ * (an officer: from their farmers; a farmer: from their officer and the AI).
+ */
+router.get('/unread', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
+  try {
+    return res.json({ success: true, data: await unreadSummary(req.user!) });
+  } catch (error) {
+    logger.error('Unread count failed:', error);
+    return safeError(res, 500, 'Unread count failed');
+  }
+});
+
+/**
+ * POST /api/chatbot/conversations/:id/read — the caller has read the thread up
+ * to now. Tells the other side (read receipt) and clears the caller's unread.
  */
 router.post('/conversations/:id/read', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user!;
     const convId = req.params.id;
-    await query(`UPDATE chat_conversations SET ended_at = NOW() WHERE id = $1 AND (farmer_id = $2 OR officer_id = $2)`, [convId, user.userId]);
+    await markThreadRead(user, convId);
     try {
       getRealtimeServer()?.to(`conversation:${convId}`).emit('messages_read', { conversationId: convId, userId: user.userId, at: new Date().toISOString() });
     } catch (e) { logger.debug('messages_read notify skipped:', e); }
     return res.json({ success: true });
-  } catch (e) { logger.error('Read receipt failed:', e); return safeError(res, 500, 'Read failed'); }
+  } catch (e) {
+    if (e instanceof MessageAccessError) return safeError(res, e.statusCode, e.message);
+    logger.error('Read receipt failed:', e);
+    return safeError(res, 500, 'Read failed');
+  }
 });
 
 /**

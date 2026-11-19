@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 import { DiseaseDiagnosis } from './DiseaseDiagnosis';
 
 export function DiagnosisPage() {
@@ -50,7 +49,6 @@ export function DiagnosisPage() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-2.5">
-          <LiquidToggleSwitch compact />
           <LanguageSwitcher compact />
           <Link
             to="/demo"

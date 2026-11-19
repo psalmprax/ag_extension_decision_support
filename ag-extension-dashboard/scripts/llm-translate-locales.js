@@ -28,6 +28,14 @@ if (!GROQ_API_KEY) {
 }
 
 const LANGUAGE_NAMES = {
+  ar: 'Arabic',
+  de: 'German',
+  es: 'Spanish',
+  fr: 'French',
+  hi: 'Hindi',
+  pt: 'Portuguese',
+  sw: 'Kiswahili',
+  zu: 'isiZulu',
   zh: 'Simplified Chinese',
   it: 'Italian',
   ru: 'Russian',
@@ -84,7 +92,7 @@ async function callGroq(prompt, retries = 3) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'qwen/qwen3.6-27b',
+          model: process.env.TRANSLATE_MODEL || 'qwen/qwen3.6-27b',
           max_tokens: 4096,
           messages: [
             {

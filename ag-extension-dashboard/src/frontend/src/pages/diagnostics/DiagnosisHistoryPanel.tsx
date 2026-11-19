@@ -75,7 +75,7 @@ export function DiagnosisHistoryPanel() {
           </button>
         </div>
       ) : !entries?.length ? (
-        <p className="py-6 text-xs text-slate-500">
+        <p className="py-6 text-xs text-slate-400">
           No diagnoses recorded yet. A symptom or image analysis you run will be listed here.
         </p>
       ) : (

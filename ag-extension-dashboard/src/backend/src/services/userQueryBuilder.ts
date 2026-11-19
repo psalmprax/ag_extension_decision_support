@@ -98,6 +98,7 @@ export function buildUserProfileColumns(options: UserProfileColumnsOptions = {})
     const columns: string[] = PROFILE_COLUMNS.map(column => qualify(source, column));
 
     if (includeNotificationPreferences) columns.push(qualify(source, 'notification_preferences'));
+    if (includeNotificationPreferences) columns.push(qualify(source, 'profile_settings'));
     if (includeDemoFlag) columns.push(`COALESCE(${qualify(source, 'is_demo')}, false) AS is_demo`);
     if (includeSystemAdmin) columns.push(qualify(source, 'is_system_admin'));
 

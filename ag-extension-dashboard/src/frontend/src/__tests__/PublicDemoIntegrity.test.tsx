@@ -11,7 +11,6 @@ import { FarmerServices } from '../pages/landing/sections/FarmerServices';
 import { TrustAndSafety } from '../pages/landing/sections/TrustAndSafety';
 import { AgroEcosystemCanvasScrubber } from '../components/canvas-ui/AgroEcosystemCanvasScrubber';
 
-vi.mock('@/components/canvas-ui/CanvasUiLab', () => ({ CanvasUiLab: () => null }));
 vi.mock('@/components/landing/Visuals', () => ({ GlobalConstellationVisualization: () => null }));
 
 describe('public demos', () => {

@@ -28,7 +28,6 @@ import { Invoices } from './billing/Invoices';
 import { AccessAndCostMatrix } from './billing/AccessAndCostMatrix';
 import { ChurnReasons } from './billing/ChurnReasons';
 import { CancelSubscriptionModal } from './billing/CancelSubscriptionModal';
-import { LiquidToggleSwitch } from './canvasui/LiquidToggleSwitch';
 import { triggerHaptic } from '@/lib/haptics';
 import { ManualPlanGrants } from './billing/ManualPlanGrants';
 
@@ -285,9 +284,6 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-3 self-start sm:self-auto shrink-0">
-          <div className="hidden sm:block">
-            <LiquidToggleSwitch compact={true} />
-          </div>
           <div className="flex items-center gap-1 p-1 bg-slate-50 dark:bg-white/[0.03] rounded-xl border border-slate-200 dark:border-white/10">
             <button
               type="button"

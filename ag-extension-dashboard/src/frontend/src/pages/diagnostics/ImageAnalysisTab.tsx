@@ -184,12 +184,12 @@ export const AnalysisResultsHUD: React.FC<{
           <span className="text-xs font-medium text-slate-400">
             Specimen Image Loupe
           </span>
-          <span className="text-xxs font-mono text-slate-500">Standby</span>
+          <span className="text-xxs font-mono text-slate-400">Standby</span>
         </div>
         <div className="rounded-lg overflow-hidden border border-slate-800 bg-slate-950">
           <DiseaseSaliencyCanvas />
         </div>
-        <p className="text-xs font-mono text-center text-slate-500">
+        <p className="text-xs font-mono text-center text-slate-400">
           Upload a specimen photo on the left to inspect it with the image loupe.
         </p>
       </div>

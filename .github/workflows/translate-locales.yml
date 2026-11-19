@@ -1,0 +1,68 @@
+name: Translate locales
+
+# Machine-translates the strings that are still English in the 23 non-English
+# locale files (QA v1 #9: mixed-language pages), with the repository's Groq key.
+# Interpolation tokens and protected terms are checked per string; anything
+# that fails the check stays English. The result is uploaded as an artifact
+# for review and commit — this workflow never pushes.
+on:
+  workflow_dispatch:
+    inputs:
+      languages:
+        description: 'Locale codes to translate, space-separated (empty = all)'
+        required: false
+        default: ''
+  push:
+    branches: [stage]
+    paths:
+      - ag-extension-dashboard/scripts/llm-translate-locales.js
+      - .github/workflows/translate-locales.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: translate-locales-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+
+      - name: Translate English fallbacks
+        working-directory: ag-extension-dashboard
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TRANSLATE_MODEL: ${{ vars.TRANSLATE_MODEL }}
+          TRANSLATE_CHUNK_SIZE: '25'
+          LANGUAGES: ${{ github.event.inputs.languages }}
+        run: |
+          if [ -z "$GROQ_API_KEY" ]; then
+            echo "::error::GROQ_API_KEY is not set as a repository secret"
+            exit 1
+          fi
+          # shellcheck disable=SC2086 # word-splitting the language list is intended
+          node scripts/llm-translate-locales.js $LANGUAGES
+
+      - name: Check the translated files
+        working-directory: ag-extension-dashboard
+        run: |
+          node scripts/audit-locales.js
+          node scripts/validate-locale-content.js
+          git diff --stat -- src/frontend/public/locales
+
+      - name: Upload the translated locale files
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: translated-locales
+          path: ag-extension-dashboard/src/frontend/public/locales/*.json
+          retention-days: 14

@@ -297,7 +297,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
         </span>
       );
     }
-    return <span className="font-semibold text-xs text-slate-200">{val}</span>;
+    return <span className="font-semibold text-xs text-slate-800 dark:text-slate-200">{val}</span>;
   };
 
   return (

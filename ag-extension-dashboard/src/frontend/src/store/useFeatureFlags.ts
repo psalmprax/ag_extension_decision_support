@@ -41,11 +41,15 @@ export const useFeatureFlags = create<FeatureFlags>()(
         const next: DesignVariant = isCurrentlyBase ? 'classic' : 'base';
         get().setDesignVariant(next);
       },
-      shouldShowABTest: true,
+      shouldShowABTest: false,
       setShowABTest: show => set({ shouldShowABTest: show }),
     }),
     {
       name: 'ag-feature-flags',
+      // The design A/B toggle is gone (QA v1 #8: it changed nothing visible).
+      // Everyone is on the base design, including browsers that chose classic.
+      version: 1,
+      migrate: () => ({ designVariant: 'base' as DesignVariant, shouldShowABTest: false }),
     }
   )
 );

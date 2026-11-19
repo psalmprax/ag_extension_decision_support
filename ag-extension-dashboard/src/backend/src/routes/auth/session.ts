@@ -69,12 +69,22 @@ const notificationPreferencesSchema = z.object({
     pushNotifications: z.boolean().optional(),
 }).strict();
 
+/** Personalisation shown on the profile and in the menu; saved on the account. */
+const profileSettingsSchema = z.object({
+    handle: z.string().trim().regex(/^[a-z0-9_.]{3,30}$/i, 'Handles are 3–30 letters, digits, dots or underscores').optional(),
+    avatarId: z.string().regex(/^[a-z_]{2,40}$/).optional(),
+    areaUnit: z.enum(['hectares', 'acres']).optional(),
+    tempUnit: z.enum(['celsius', 'fahrenheit']).optional(),
+    highContrast: z.boolean().optional(),
+}).strict();
+
 const updateProfileSchema = z.object({
     body: z.object({
         firstName: z.string().trim().min(1).max(100).optional(),
         lastName: z.string().trim().min(1).max(100).optional(),
         phone: z.string().trim().max(40).optional(),
         notificationPreferences: notificationPreferencesSchema.optional(),
+        profileSettings: profileSettingsSchema.optional(),
     }).strict().refine(body => Object.keys(body).length > 0, 'At least one profile field is required'),
 });
 
@@ -156,7 +166,10 @@ router.post('/logout', async (req: Request, res: Response) => {
 // Get current user
 router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), perUserRateLimit, validate(updateProfileSchema), auditMiddleware('auth.profile_update'), async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const updates = req.body as { firstName?: string; lastName?: string; phone?: string; notificationPreferences?: NotificationPreferences };
+    const updates = req.body as {
+        firstName?: string; lastName?: string; phone?: string;
+        notificationPreferences?: NotificationPreferences; profileSettings?: Record<string, unknown>;
+    };
     const fields: Array<[string, unknown]> = [
         ['first_name', updates.firstName],
         ['last_name', updates.lastName],
@@ -168,6 +181,10 @@ router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manage
         // Merge, so toggling one channel never resets the others.
         values.push(JSON.stringify(updates.notificationPreferences));
         assignments.push(`notification_preferences = COALESCE(notification_preferences, '{}'::jsonb) || $${values.length}::jsonb`);
+    }
+    if (updates.profileSettings) {
+        values.push(JSON.stringify(updates.profileSettings));
+        assignments.push(`profile_settings = COALESCE(profile_settings, '{}'::jsonb) || $${values.length}::jsonb`);
     }
     try {
         const result = await query(
@@ -192,6 +209,7 @@ router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manage
                 country: user.country,
                 phone: user.phone,
                 notificationPreferences: user.notification_preferences ?? {},
+                profileSettings: user.profile_settings ?? {},
             },
         });
     } catch (error) {
@@ -258,6 +276,7 @@ router.get('/me', async (req: Request, res: Response) => {
                 country: user.country,
                 phone: user.phone,
                 notificationPreferences: user.notification_preferences ?? {},
+                profileSettings: user.profile_settings ?? {},
                 planName,
                 isFree,
             },

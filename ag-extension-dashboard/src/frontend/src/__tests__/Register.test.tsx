@@ -28,9 +28,6 @@ vi.mock('@/components/canvas-ui/AgroEcosystemCanvasScrubber', () => ({
   AgroEcosystemCanvasScrubber: () => <div data-testid="agro-scrubber" />,
 }));
 
-vi.mock('@/components/canvasui/LiquidToggleSwitch', () => ({
-  LiquidToggleSwitch: () => <div data-testid="liquid-toggle" />,
-}));
 
 const mockedPost = apiClient.post as unknown as ReturnType<typeof vi.fn>;
 const mockedRegister = authService.register as unknown as ReturnType<typeof vi.fn>;

@@ -10,9 +10,6 @@ vi.mock('@/components/canvas-ui/AgroEcosystemCanvasScrubber', () => ({
   AgroEcosystemCanvasScrubber: () => <div data-testid="agro-scrubber" />,
 }));
 
-vi.mock('@/components/canvasui/LiquidToggleSwitch', () => ({
-  LiquidToggleSwitch: () => <div data-testid="liquid-toggle" />,
-}));
 
 vi.mock('@/components/canvas-ui/DiseaseSaliencyCanvas', () => ({
   DiseaseSaliencyCanvas: () => <div data-testid="disease-saliency" />,

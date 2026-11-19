@@ -20,12 +20,12 @@ export const DEFAULT_PREFERENCES = {
   areaUnit: 'hectares',
   tempUnit: 'celsius',
   highContrast: false,
-  smsAlerts: true,
-  outbreakPush: true,
-  weeklyDigest: false,
 };
 
-/** Hydrate the profile form from the browser's copy of the user's settings. */
+/**
+ * Hydrate the profile form: the account's saved settings first, then this
+ * browser's older copy (from before they were saved on the account).
+ */
 export const getSavedProfileData = (user: User) => {
   let parsedPrefs: Partial<typeof DEFAULT_PREFERENCES>;
   let savedAvatar = 'agronomist';
@@ -41,5 +41,12 @@ export const getSavedProfileData = (user: User) => {
     parsedPrefs = {};
   }
 
-  return { parsedPrefs, savedAvatar, savedUsername, savedPhone };
+  const account = user.profileSettings ?? {};
+  const { handle, avatarId, ...units } = account;
+  return {
+    parsedPrefs: { ...parsedPrefs, ...units },
+    savedAvatar: avatarId || savedAvatar,
+    savedUsername: handle || savedUsername,
+    savedPhone,
+  };
 };

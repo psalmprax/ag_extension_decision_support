@@ -15,15 +15,14 @@ import {
   Zap,
   Bot,
 } from 'lucide-react';
-import { CanvasUiLab } from '@/components/canvas-ui/CanvasUiLab';
 import { UssdGatewayTester } from '@/components/telecom/UssdGatewayTester';
 import { AgroEcosystemCanvasScrubber } from '@/components/canvas-ui/AgroEcosystemCanvasScrubber';
 
 export function DemoPage({
   initialTab = 'scrubber',
-}: { initialTab?: 'rag' | 'synthesis' | 'telemetry' | 'canvas' | 'telecom' | 'scrubber' } = {}) {
+}: { initialTab?: 'rag' | 'synthesis' | 'telemetry' | 'telecom' | 'scrubber' } = {}) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'rag' | 'synthesis' | 'telemetry' | 'canvas' | 'telecom' | 'scrubber'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'rag' | 'synthesis' | 'telemetry' | 'telecom' | 'scrubber'>(initialTab);
 
   // RAG states
   const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
@@ -415,7 +414,6 @@ export function DemoPage({
           )}
 
           {/* Canvas UI Effects Lab Tab */}
-          {activeTab === 'canvas' && <CanvasUiLab />}
 
           {/* Telecom & USSD Simulator Tab */}
           {activeTab === 'telecom' && <UssdGatewayTester />}

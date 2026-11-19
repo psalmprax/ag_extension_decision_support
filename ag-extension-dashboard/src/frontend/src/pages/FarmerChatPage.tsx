@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Users,
-  Plus,
-  Lock,
-  MessageSquare,
-  Radio,
-  ArrowLeft,
-  Trash2,
-  Mic,
-} from 'lucide-react';
+import { Users, Plus, Lock, MessageSquare, Radio, ArrowLeft, Trash2, Mic } from 'lucide-react';
 import { Conversation, ChatMessage } from '../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -18,6 +9,7 @@ import { useDemoMode } from '@/demo';
 import { FarmerChatMessage } from '@/components/chat/FarmerChatMessage';
 import { OfficerCopilot } from '@/components/chat/OfficerCopilot';
 import { OfficerChatComposer } from '@/components/chat/OfficerChatComposer';
+import { UnreadCount } from '@/components/chat/UnreadCount';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationRealtime } from '@/hooks/useConversationRealtime';
 import { PlotTelemetryDrawer, type DetectedHazard, type HazardEvaluation } from '@/components/chat/PlotTelemetryDrawer';
@@ -278,6 +270,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                         <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
                           {displayName}
                         </span>
+                        <UnreadCount conversationId={conv.id} className="ml-auto mr-2" />
                         <span className="text-[9px] font-mono text-slate-500 dark:text-white/40">
                           {(() => {
                             const rawStarted = conv.startedAt || conv.updatedAt;

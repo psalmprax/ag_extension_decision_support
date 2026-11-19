@@ -41,7 +41,7 @@ export const JourneyBreadcrumbs: React.FC<JourneyBreadcrumbsProps> = ({
               {isActive && <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />}
               <span>{step.label}</span>
               {step.dwellTime && (
-                <span className="text-[9px] text-slate-400 opacity-80 font-normal">
+                <span className="text-[9px] text-slate-400 font-normal">
                   ({step.dwellTime})
                 </span>
               )}

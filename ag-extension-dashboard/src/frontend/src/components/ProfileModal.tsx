@@ -17,9 +17,11 @@ import {
   AlertTriangle,
   Download,
 } from 'lucide-react';
+import { NotificationPreferencesSection } from '@/components/settings/NotificationPreferencesSection';
+import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Language } from '@/lib/i18n';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore, type ProfileSettings } from '@/store/useAppStore';
 import toast from 'react-hot-toast';
 import apiClient from '@/api/client';
 import { logout } from '@/api/authService';
@@ -53,6 +55,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
   // Preferences State
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
+  const notifications = useNotificationPreferences();
 
   // Security State
   const [passwordState, setPasswordState] = useState({
@@ -88,10 +91,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
+      const profileSettings = {
+        handle: formData.username.trim() || undefined,
+        avatarId: formData.avatarId,
+        areaUnit: preferences.areaUnit,
+        tempUnit: preferences.tempUnit,
+        highContrast: preferences.highContrast,
+      } as ProfileSettings;
+      // Saved on the account, so the handle and avatar follow the user to other devices.
       await apiClient.patch('/auth/me', {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
+        profileSettings,
       });
       let personalizationSaved = true;
       try {
@@ -111,6 +123,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           lastName: formData.lastName,
           email: formData.email,
           phone: formData.phone,
+          profileSettings: { ...user.profileSettings, ...profileSettings },
         });
       }
 
@@ -524,42 +537,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
                     </div>
 
-                    {/* Notification Toggles */}
-                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
-                      <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                        Notification Preferences (stored on this device; delivery is not configured here)
-                      </div>
-                      {[
-                        { key: 'outbreakPush' as const, label: 'Immediate Disease Outbreak Radar Alerts', desc: 'Critical alerts within 25km of your assigned farms' },
-                        { key: 'smsAlerts' as const, label: 'SMS Dispatch Mirroring', desc: 'Copy field chat responses to registered officer SIM' },
-                        { key: 'weeklyDigest' as const, label: 'Weekly Cohort Synthesis Email', desc: 'Consolidated performance summary delivered every Monday' },
-                      ].map(item => {
-                        const isChecked = preferences[item.key];
-                        return (
-                          <div key={item.key} className="flex items-center justify-between py-1.5">
-                            <div>
-                              <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{item.label}</p>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400">{item.desc}</p>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setPreferences(p => ({ ...p, [item.key]: !isChecked }))
-                              }
-                              className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none shrink-0 ${
-                                isChecked ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
-                              }`}
-                            >
-                              <span
-                                className={`block w-4 h-4 rounded-full bg-white shadow-md transform transition-transform ${
-                                  isChecked ? 'translate-x-6' : 'translate-x-1'
-                                }`}
-                              />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    {/* Notifications: the account's real delivery settings (same as Settings). */}
+                    <NotificationPreferencesSection {...notifications} />
                   </div>
                 )}
 

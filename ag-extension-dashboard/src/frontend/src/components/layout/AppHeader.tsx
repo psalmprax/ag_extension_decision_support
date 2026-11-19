@@ -4,8 +4,6 @@ import { Sun as SunIcon, Moon as MoonIcon, Menu, Bell, Settings, Leaf, Activity,
 import { WeatherWidget } from '@/components/WeatherWidget';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { ABTestToggle } from '@/components/ABTestToggle';
-import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 import { Farmer } from '../../types/dashboard';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/cn';
@@ -152,12 +150,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         <div className="flex items-center gap-1.5 sm:gap-3 border-r border-gray-200 dark:border-white/10 pr-2 sm:pr-4">
           <div className="hidden lg:flex items-center gap-2 scale-90 origin-right">
-            <ABTestToggle compact />
             <LanguageSwitcher compact />
             <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
-          </div>
-          <div className="hidden sm:block">
-            <LiquidToggleSwitch compact />
           </div>
           <button
             onClick={() => setDarkMode(!darkMode)}
