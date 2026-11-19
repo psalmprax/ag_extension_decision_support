@@ -14,6 +14,11 @@ import { assertConversationAccess, checkMessageAccess, MessageAccessError, resol
 import { getRealtimeServer } from '@/services/realtimeHub';
 import { respondIfUrgent } from '@/services/chat/threadAutoReply';
 import { deliverToFarmerChannel } from '@/services/chat/channelThread';
+import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
+
+// Farmer chat, the farmer's "My officer" thread and the officer's AI chats are paid features;
+// admins and the demo are exempt (see requirePaidPlan).
+const requireChatPlan = requirePaidPlan('Farmer chat & AI assistant');
 
 const router = Router();
 
@@ -175,13 +180,13 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
 };
 
 // A plain message between people: no AI is involved, so no AI quota is used.
-router.post('/message', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), handleMessagePost);
-router.post('/messages', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), handleMessagePost);
+router.post('/message', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, handleMessagePost);
+router.post('/messages', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, handleMessagePost);
 
 /**
  * PATCH /api/chatbot/messages/:id — Edit own message (officer/farmer) within 15m.
  */
-router.patch('/messages/:id', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.patch('/messages/:id', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user!;
     const msgId = req.params.id;
@@ -212,7 +217,7 @@ router.patch('/messages/:id', authorize(['admin', 'regional_manager', 'extension
 /**
  * DELETE /api/chatbot/messages/:id — Soft delete own message.
  */
-router.delete('/messages/:id', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.delete('/messages/:id', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user!;
     const msgId = req.params.id;

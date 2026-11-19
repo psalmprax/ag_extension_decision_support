@@ -15,7 +15,10 @@ const aiApi = vi.hoisted(() => ({
   getPublicDemoChatCompletion: vi.fn(),
 }));
 
-const store = vi.hoisted(() => ({ user: { role: 'officer' } as { role: string } | null }));
+// Chat is a Pro feature: the default user is on a paid plan.
+const store = vi.hoisted(() => ({
+  user: { role: 'officer', planName: 'Pro', isFree: false } as { role: string; planName?: string; isFree?: boolean } | null,
+}));
 
 vi.mock('@/api/chatbotService', () => chatApi);
 vi.mock('@/api/aiService', () => aiApi);
@@ -68,7 +71,7 @@ function setOnline(online: boolean) {
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
-  store.user = { role: 'officer' };
+  store.user = { role: 'officer', planName: 'Pro', isFree: false };
   setOnline(true);
   chatApi.fetchConversations.mockResolvedValue({ data: [] });
   chatApi.fetchMessages.mockResolvedValue({ data: [] });
@@ -103,8 +106,20 @@ describe('useAppChat conversation loading', () => {
     expect(result.current.activeConvId).toBe('c1');
   });
 
+  it('requests no conversations for a free-plan user (the page shows the upgrade card)', async () => {
+    store.user = { role: 'officer', planName: 'Free', isFree: true };
+    const { result } = renderHook(() => useAppChat('en'));
+
+    await act(async () => {
+      await result.current.loadConversations();
+      await result.current.loadFarmerConversations();
+    });
+
+    expect(chatApi.fetchConversations).not.toHaveBeenCalled();
+  });
+
   it('requests farmer threads instead of private copilot chats for a farmer account', async () => {
-    store.user = { role: 'farmer' };
+    store.user = { role: 'farmer', planName: 'Pro', isFree: false };
     const { result } = renderHook(() => useAppChat('en'));
 
     await act(async () => {

@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authorize, AuthRequest } from '@/middleware/authorize';
+import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
+import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 import { autonomousCampaignService } from '@/services/autonomousCampaignService';
 import { regionalSkillService } from '@/services/regionalSkillService';
@@ -21,7 +23,9 @@ router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 /**
  * POST /api/campaigns/goal — Execute an autonomous goal-driven campaign
  */
-router.post('/goal', async (req: AuthRequest, res: Response) => {
+// A paid feature: one AI generation per run (metered here), then each message is
+// charged to the launching officer's SMS/WhatsApp quota as it is sent.
+router.post('/goal', requirePaidPlan('Autonomous outreach campaigns'), checkUsageLimit('ai_chat'), async (req: AuthRequest, res: Response) => {
     try {
         const { goalPrompt, targetRegion, targetCrop, channel, autoScheduleVisits } = req.body;
         if (!goalPrompt || typeof goalPrompt !== 'string') {
@@ -114,7 +118,7 @@ router.get('/skills', async (req: Request, res: Response) => {
 /**
  * POST /api/campaigns/skills/synthesize — Synthesize a skill from field visit notes
  */
-router.post('/skills/synthesize', async (req: AuthRequest, res: Response) => {
+router.post('/skills/synthesize', checkUsageLimit('ai_chat'), async (req: AuthRequest, res: Response) => {
     try {
         const { visitId, region, crop, topic, findings, officerNotes } = req.body;
         if (!region || !crop || !topic || !findings) {

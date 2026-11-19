@@ -237,6 +237,28 @@ class UsageService {
         return this.getFreeTierRejection(type);
     }
 
+    /**
+     * Whether `userId`'s plan allows one more `type` right now, for work done on their
+     * behalf outside a request (campaign messages, automatic AI replies). Same rule as
+     * checkUsageLimit: admins and demo accounts are unlimited; free plans get their free
+     * quota (zero for paid features). Fails closed. Callers count successful use with
+     * incrementUsage.
+     */
+    async hasAllowance(userId: string, type: UsageType): Promise<boolean> {
+        try {
+            const user = await getPrisma().user.findUnique({
+                where: { id: userId },
+                select: { role: true, isDemo: true, email: true }
+            });
+            if (!user) return false;
+            if (user.role === 'admin' || user.isDemo || user.email === 'demo@agridemo.com') return true;
+            return (await this.checkLimit(userId, type)).allowed;
+        } catch (error) {
+            logger.error(`Failed to check ${type} allowance for ${userId}:`, error);
+            return false;
+        }
+    }
+
     async checkLimit(userId: string, type: UsageType): Promise<{ allowed: boolean; current: number; limit: number; message?: string }> {
         try {
             if (type === 'knowledge') {

@@ -17,6 +17,11 @@ import { assertConversationAccess, MessageAccessError, resolveFarmerId, resolveP
 import { getRealtimeServer } from '@/services/realtimeHub';
 import { linkedDemoSql } from '@/services/demoScope';
 import { DEFAULT_CONVERSATION_KIND, parseConversationKind, type ConversationKind } from '@/services/chat/conversationKind';
+import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
+
+// Farmer chat, the farmer's "My officer" thread and the officer's AI chats are paid features;
+// admins and the demo are exempt (see requirePaidPlan).
+const requireChatPlan = requirePaidPlan('Farmer chat & AI assistant');
 
 const router = Router();
 
@@ -53,7 +58,7 @@ async function farmerThreadScope(user: AuthenticatedRequestUser, params: unknown
   return `cv.officer_id = $${params.length}`;
 }
 
-router.get('/conversations', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.get('/conversations', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
     if (!user) {
@@ -126,7 +131,7 @@ router.get('/conversations', authorize(['admin', 'regional_manager', 'extension_
 /**
  * GET /api/chatbot/conversations/:id/messages — message history for one conversation.
  */
-router.get('/conversations/:id/messages', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.get('/conversations/:id/messages', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const conversationId = req.params.id;
     if (!conversationId) {
@@ -273,7 +278,7 @@ const fetchRichConversation = async (conversationId: string) => {
 /**
  * POST /api/chatbot/conversations — Create or retrieve existing 1-to-1 conversation between Officer & Farmer.
  */
-router.post('/conversations', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.post('/conversations', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
     if (!user) {
@@ -323,7 +328,7 @@ router.post('/conversations', authorize(['admin', 'regional_manager', 'extension
 /**
  * DELETE /api/chatbot/conversations/:id — Delete a conversation and its messages.
  */
-router.delete('/conversations/:id', authorize(['admin', 'regional_manager', 'extension_officer']), async (req: AuthedRequest, res: Response) => {
+router.delete('/conversations/:id', authorize(['admin', 'regional_manager', 'extension_officer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
     if (!user) {
@@ -366,7 +371,7 @@ router.delete('/conversations/:id', authorize(['admin', 'regional_manager', 'ext
 /**
  * POST /api/chatbot/conversations/:id/rate — submit a satisfaction score.
  */
-router.post('/conversations/:id/rate', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.post('/conversations/:id/rate', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
     if (!user) {
@@ -400,7 +405,7 @@ router.post('/conversations/:id/rate', authorize(['admin', 'regional_manager', '
 /**
  * POST /api/chatbot/conversations/:id/read — Mark conversation as read (receipt).
  */
-router.post('/conversations/:id/read', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.post('/conversations/:id/read', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user!;
     const convId = req.params.id;
@@ -416,7 +421,7 @@ router.post('/conversations/:id/read', authorize(['admin', 'regional_manager', '
  * PUT /api/chatbot/conversations/:id — Rename a conversation the caller
  * participates in. Serves the chat sidebar rename action.
  */
-router.put('/conversations/:id', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.put('/conversations/:id', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
     if (!user) {

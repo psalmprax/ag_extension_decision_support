@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { isFreePlanUser } from '@/lib/planAccess';
 
 interface PlanUpgradeGuardProps {
   featureName: string;
@@ -43,10 +44,8 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
   const { user, setActiveTab } = useAppStore();
   const { headingClass } = useThemeClasses();
 
-  // If user is not on free plan (e.g. Pro or Enterprise or Admin), render feature content
-  const isFree =
-    user?.role !== 'admin' &&
-    (user?.isFree || user?.planName?.toLowerCase() === 'free' || !user?.planName);
+  // Pro, Enterprise and admins see the feature; the free plan sees the upgrade card.
+  const isFree = isFreePlanUser(user);
 
   if (!isFree) {
     return <>{children}</>;

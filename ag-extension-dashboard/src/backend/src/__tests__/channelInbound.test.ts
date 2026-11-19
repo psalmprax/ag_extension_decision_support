@@ -14,14 +14,16 @@ jest.mock('@/services/chat/threadAutoReply', () => ({
     loadThreadForReply: jest.fn(),
     answerFarmerInThread: jest.fn().mockResolvedValue('answered'),
     respondIfUrgent: jest.fn().mockResolvedValue(undefined),
+    aiAnswersAvailable: jest.fn().mockResolvedValue(true),
 }));
 
 import { query } from '@/services/databaseService';
 import { onboardingEngine } from '@/services/onboardingEngine';
 import { farmerThreadFor, noticeOnChannel, recordChannelMessage } from '@/services/chat/channelThread';
-import { answerFarmerInThread, loadThreadForReply, respondIfUrgent } from '@/services/chat/threadAutoReply';
+import { aiAnswersAvailable, answerFarmerInThread, loadThreadForReply, respondIfUrgent } from '@/services/chat/threadAutoReply';
 import { DEFAULT_TURN_TAKING } from '@/services/chat/turnTaking';
 import {
+    AI_NOT_ON_PLAN,
     ALREADY_ANSWERED,
     ASK_AI_USAGE,
     SMS_LIMIT_REACHED,
@@ -44,7 +46,10 @@ function previousMessage(hoursAgo: number | null) {
     mockQuery.mockResolvedValue({ rows: hoursAgo === null ? [] : [{ created_at: new Date(Date.now() - hoursAgo * 3_600_000) }] });
 }
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+    jest.clearAllMocks();
+    jest.mocked(aiAnswersAvailable).mockResolvedValue(true);
+});
 
 describe("a registered farmer's ordinary message", () => {
     it('goes into their thread, is checked for urgency and acknowledged with the Ask AI option', async () => {
@@ -67,6 +72,15 @@ describe("a registered farmer's ordinary message", () => {
         previousMessage(13);
         await handleRegisteredFarmerChannelMessage({ farmerId: 'farmer-1', channel: 'sms', text: 'New problem' });
         expect(noticeOnChannel).toHaveBeenCalledWith('conv-1', 'sms', expect.stringContaining('send ASK AI'), { askAiButton: true });
+    });
+
+    it("does not offer Ask AI when the officer's plan has no AI answers", async () => {
+        previousMessage(null);
+        jest.mocked(loadThreadForReply).mockResolvedValue(thread() as never);
+        jest.mocked(aiAnswersAvailable).mockResolvedValue(false);
+        await handleRegisteredFarmerChannelMessage({ farmerId: 'farmer-1', channel: 'whatsapp', text: 'Yellow leaves' });
+
+        expect(noticeOnChannel).toHaveBeenCalledWith('conv-1', 'whatsapp', 'Thanks, your officer will reply.', { askAiButton: false });
     });
 
     it('gets no second notice after an urgent safety reply', async () => {
@@ -110,6 +124,13 @@ describe('ASK AI from a channel', () => {
         jest.mocked(answerFarmerInThread).mockResolvedValueOnce('sms_limit');
         await handleRegisteredFarmerChannelMessage({ farmerId: 'farmer-1', channel: 'sms', text: 'ASK AI more help' });
         expect(noticeOnChannel).toHaveBeenCalledWith('conv-1', 'sms', SMS_LIMIT_REACHED);
+    });
+
+    it("tells the farmer when the officer's plan has no AI answers", async () => {
+        jest.mocked(loadThreadForReply).mockResolvedValue(thread() as never);
+        jest.mocked(answerFarmerInThread).mockResolvedValueOnce('not_on_plan');
+        await handleRegisteredFarmerChannelMessage({ farmerId: 'farmer-1', channel: 'telegram', text: 'ASK AI yellow leaves' });
+        expect(noticeOnChannel).toHaveBeenCalledWith('conv-1', 'telegram', AI_NOT_ON_PLAN);
     });
 });
 

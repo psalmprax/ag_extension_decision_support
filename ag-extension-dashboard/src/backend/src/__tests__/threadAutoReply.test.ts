@@ -6,6 +6,9 @@ jest.mock('@/services/chat/advisoryAnswer', () => ({
     persistTurnMessage: jest.fn().mockResolvedValue({ id: 'msg-safety' }),
 }));
 jest.mock('@/services/leaderElection', () => ({ runIfLeader: jest.fn() }));
+jest.mock('@/services/usageService', () => ({
+    usageService: { hasAllowance: jest.fn().mockResolvedValue(true), incrementUsage: jest.fn().mockResolvedValue(undefined) },
+}));
 jest.mock('@/services/chat/channelThread', () => ({
     replyChannelFor: jest.fn().mockResolvedValue(null),
     deliverToFarmerChannel: jest.fn().mockResolvedValue(null),
@@ -18,6 +21,7 @@ import { generateAdvisoryAnswer, persistTurnMessage } from '@/services/chat/advi
 import { deliverToFarmerChannel, replyChannelFor, smsAiAnswersToday } from '@/services/chat/channelThread';
 import { answerFarmerInThread, toThreadForReply } from '@/services/chat/threadAutoReply';
 import { runTurnTakingTick } from '@/workers/turnTakingWorker';
+import { usageService } from '@/services/usageService';
 
 const mockQuery = query as jest.Mock;
 const send = notificationService.send as jest.Mock;
@@ -36,7 +40,52 @@ function row(overrides: Record<string, unknown> = {}) {
     };
 }
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+    jest.clearAllMocks();
+    jest.mocked(usageService.hasAllowance).mockResolvedValue(true);
+});
+
+describe('AI answers follow the plan of whoever is charged for them', () => {
+    it("charges the officer's AI quota for an automatic answer", async () => {
+        await expect(answerFarmerInThread(toThreadForReply(row()), 'officer_unavailable')).resolves.toBe('answered');
+        expect(usageService.hasAllowance).toHaveBeenCalledWith('officer-1', 'ai_chat');
+        expect(usageService.incrementUsage).toHaveBeenCalledWith('officer-1', 'ai_chat');
+    });
+
+    it("charges the farmer's own account when no officer is assigned", async () => {
+        await answerFarmerInThread(toThreadForReply(row({ officer_id: null })), 'officer_unavailable');
+        expect(usageService.hasAllowance).toHaveBeenCalledWith('farmer-user-1', 'ai_chat');
+        expect(usageService.incrementUsage).toHaveBeenCalledWith('farmer-user-1', 'ai_chat');
+    });
+
+    it('sends no AI answer when the plan does not include it (free plan or quota used up)', async () => {
+        jest.mocked(usageService.hasAllowance).mockResolvedValue(false);
+        await expect(answerFarmerInThread(toThreadForReply(row()), 'officer_unavailable')).resolves.toBe('not_on_plan');
+        expect(generateAdvisoryAnswer).not.toHaveBeenCalled();
+        expect(deliverToFarmerChannel).not.toHaveBeenCalled();
+        expect(usageService.incrementUsage).not.toHaveBeenCalled();
+    });
+
+    it('sends no AI answer when nobody can be charged', async () => {
+        const thread = toThreadForReply(row({ officer_id: null, farmer_user_id: null }));
+        await expect(answerFarmerInThread(thread, 'officer_unavailable')).resolves.toBe('not_on_plan');
+        expect(generateAdvisoryAnswer).not.toHaveBeenCalled();
+    });
+
+    it('still sends the fixed safety reply for an urgent message, whatever the plan', async () => {
+        jest.mocked(usageService.hasAllowance).mockResolvedValue(false);
+        const urgent = toThreadForReply(row({ question: 'My child drank pesticide' }));
+        await expect(answerFarmerInThread(urgent, 'officer_unavailable')).resolves.toBe('urgent');
+        expect(persistTurnMessage).toHaveBeenCalledWith('conv-1', 'assistant', expect.stringContaining('nearest health facility'), 'en');
+    });
+
+    it('does not charge twice when the in-app route already charged the farmer', async () => {
+        await answerFarmerInThread(toThreadForReply(row()), 'farmer_request', { planChecked: true });
+        expect(generateAdvisoryAnswer).toHaveBeenCalled();
+        expect(usageService.hasAllowance).not.toHaveBeenCalled();
+        expect(usageService.incrementUsage).not.toHaveBeenCalled();
+    });
+});
 
 describe('answering a farmer in their thread', () => {
     it('answers with the AI, says so, and tells the officer when they were unavailable', async () => {

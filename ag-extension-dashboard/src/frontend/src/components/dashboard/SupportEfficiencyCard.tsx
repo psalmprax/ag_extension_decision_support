@@ -2,12 +2,17 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import type { PerformanceData } from '@/api/analyticsService';
+import { useAppStore } from '@/store/useAppStore';
+import { isFreePlanUser } from '@/lib/planAccess';
 
 export const SupportEfficiencyCard: React.FC<{
   performanceData?: PerformanceData;
   t: (key: string) => string;
   cardClass: string;
 }> = ({ performanceData, t, cardClass }) => {
+  // These figures come from Pro analytics, which the server refuses the free plan:
+  // without this the card would wait for data that never arrives.
+  const freePlan = useAppStore(state => isFreePlanUser(state.user));
   const metrics = performanceData?.metrics;
   // null/undefined means nothing was measured yet: say so rather than drawing 0%.
   const rows = [
@@ -32,7 +37,9 @@ export const SupportEfficiencyCard: React.FC<{
       <h3 className="text-base sm:text-lg font-headline font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">
         {t('analytics_support_efficiency')}
       </h3>
-      {performanceData ? (
+      {freePlan ? (
+        <p className="text-sm text-slate-600 dark:text-white/60">{t('dash_support_efficiency_pro_only')}</p>
+      ) : performanceData ? (
         <div className="space-y-4 sm:space-y-6">
           {rows.map((item, i) => (
             <div key={item.name} className="space-y-1.5 sm:space-y-2">

@@ -12,6 +12,7 @@ import { getChatCompletion, getPublicDemoChatCompletion } from '@/api/aiService'
 import { isDemoFarmerId } from '@/demo/demoIds';
 import { Conversation, ChatMessage, Farmer } from '../types/dashboard';
 import { useAppStore } from '@/store/useAppStore';
+import { isFreePlanUser } from '@/lib/planAccess';
 
 interface QueuedChatItem {
   conversationId: string | null;
@@ -106,6 +107,8 @@ function buildDemoConversation(farmer: Farmer): Conversation {
 
 export const useAppChat = (language: string) => {
   const isFarmerUser = useAppStore(state => state.user?.role) === 'farmer';
+  // Free plan: the chat pages show the upgrade card and the server refuses the calls.
+  const freePlan = useAppStore(state => isFreePlanUser(state.user));
   // AI Assistant Chat State
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
@@ -144,6 +147,7 @@ export const useAppChat = (language: string) => {
   }, [activeFarmerConvId, farmerChatMessages]);
 
   const loadConversations = useCallback(async () => {
+    if (freePlan) return;
     try {
       // Staff: their own private AI chats. Farmers have none: their AI help is their thread.
       const res = await fetchConversations(isFarmerUser ? 'farmer_thread' : 'officer_ai');
@@ -154,7 +158,7 @@ export const useAppChat = (language: string) => {
     } catch (error) {
       console.error('Failed to load conversations:', error);
     }
-  }, [activeConvId, isFarmerUser]);
+  }, [activeConvId, isFarmerUser, freePlan]);
 
   // Guards against out-of-order responses: switching conversations quickly could
   // otherwise render the previous conversation's messages under the newly selected one.
@@ -226,6 +230,7 @@ export const useAppChat = (language: string) => {
 
   // Farmer Chat functions
   const loadFarmerConversations = useCallback(async () => {
+    if (freePlan) return;
     try {
       const res = await fetchConversations('farmer_thread');
       const list = res.data || [];
@@ -239,7 +244,7 @@ export const useAppChat = (language: string) => {
     } catch (error) {
       console.error('Failed to load farmer conversations:', error);
     }
-  }, [activeFarmerConvId, setActiveFarmerConvId, loadFarmerMessages]);
+  }, [activeFarmerConvId, setActiveFarmerConvId, loadFarmerMessages, freePlan]);
 
   const handleFarmerChatSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();

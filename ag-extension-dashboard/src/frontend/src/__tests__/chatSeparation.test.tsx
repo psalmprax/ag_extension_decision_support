@@ -17,7 +17,7 @@ vi.mock('@/api/aiService', () => ({
 }));
 
 const signInAs = (role: string) =>
-  useAppStore.setState({ user: { id: 'u1', email: 'u1@test.dev', role } as never });
+  useAppStore.setState({ user: { id: 'u1', email: 'u1@test.dev', role, planName: 'Pro', isFree: false } as never });
 
 afterEach(() => {
   vi.clearAllMocks();

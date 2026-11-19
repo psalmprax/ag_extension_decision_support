@@ -245,7 +245,8 @@ router.get('/history', async (req: AuthRequest, res: Response) => {
 });
 
 // Translate SMS content
-router.post('/translate', validate({ body: translateSchema }), async (req: AuthRequest, res: Response) => {
+// Translation is an AI call: counted against the AI quota (zero on the free plan).
+router.post('/translate', checkUsageLimit('ai_chat'), validate({ body: translateSchema }), async (req: AuthRequest, res: Response) => {
     try {
         const { text, targetLanguage } = req.body;
 
