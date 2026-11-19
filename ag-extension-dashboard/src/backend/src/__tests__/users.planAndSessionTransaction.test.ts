@@ -280,7 +280,20 @@ function isControlNoop(sql: string): boolean {
     );
 }
 
+// Guard lookups added with the system-administrator rules. No fixture user holds the
+// flag, so every update here runs as an ordinary admin on a non-admin target.
+function handleGuardRowSelect(params: unknown[], state: DbState) {
+    const user = state.users.get(String(params[0]));
+    if (!user) return { rows: [], rowCount: 0 };
+    return {
+        rows: [{ id: user.id, role: user.role, is_active: user.isActive, is_system_admin: false }],
+        rowCount: 1,
+    };
+}
+
 const SQL_ROUTES: Array<[string, SqlHandler]> = [
+    ['SELECT id, role, is_active, is_system_admin FROM users', (_sql, params, state) => handleGuardRowSelect(params, state)],
+    ['SELECT is_system_admin FROM users', () => ({ rows: [{ is_system_admin: false }], rowCount: 1 })],
     ['FROM subscription_plans', (_sql, params, state) => handlePlanSelect(params, state)],
     ['FROM user_sessions', (_sql, params, state) => handleSessionLookupSql(String(params[0]), state)],
     ['UPDATE user_sessions', (_sql, params, state) => handleRevokeSessionsSql(String(params[0]), state, dbOptions.failSessionUpdate)],

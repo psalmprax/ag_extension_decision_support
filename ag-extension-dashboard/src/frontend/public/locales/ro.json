@@ -867,5 +867,9 @@
     "common_preferences": "Preferences",
     "common_selected": "selected",
     "portfolio_broadcast_alert": "Broadcast Alert",
-    "portfolio_export_csv": "Export CSV"
+    "portfolio_export_csv": "Export CSV",
+    "register_country_label": "Country",
+    "register_region_label": "Region",
+    "register_region_placeholder": "Select your region",
+    "users_access_system_admin_note": "Only a system administrator can change this account."
 }
