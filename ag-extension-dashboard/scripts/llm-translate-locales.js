@@ -21,11 +21,19 @@ function getEnvKey(key) {
   return '';
 }
 
-const GROQ_API_KEY = getEnvKey('GROQ_API_KEY');
-if (!GROQ_API_KEY) {
-  console.error('Missing GROQ_API_KEY in environment or .env');
+// Groq when its key is set, otherwise AIHubMix (the provider the app itself uses).
+// Both speak the OpenAI chat-completions protocol.
+const PROVIDERS = [
+  { name: 'Groq', key: getEnvKey('GROQ_API_KEY'), url: 'https://api.groq.com/openai/v1/chat/completions', model: 'qwen/qwen3.6-27b' },
+  { name: 'AIHubMix', key: getEnvKey('AIHUBMIX_API_KEY'), url: 'https://aihubmix.com/v1/chat/completions', model: 'gemini-3.1-flash-lite' },
+];
+const PROVIDER = PROVIDERS.find(provider => provider.key);
+if (!PROVIDER) {
+  console.error('Missing GROQ_API_KEY or AIHUBMIX_API_KEY in environment or .env');
   process.exit(1);
 }
+const MODEL = process.env.TRANSLATE_MODEL || PROVIDER.model;
+console.log(`Translating with ${PROVIDER.name} (${MODEL})`);
 
 const LANGUAGE_NAMES = {
   ar: 'Arabic',
@@ -82,17 +90,17 @@ function checkProtectedTerms(original, translated) {
   return true;
 }
 
-async function callGroq(prompt, retries = 3) {
+async function callModel(prompt, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const res = await fetch(PROVIDER.url, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${GROQ_API_KEY}`,
+          Authorization: `Bearer ${PROVIDER.key}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: process.env.TRANSLATE_MODEL || 'qwen/qwen3.6-27b',
+          model: MODEL,
           max_tokens: 4096,
           messages: [
             {
@@ -109,16 +117,17 @@ async function callGroq(prompt, retries = 3) {
 
       if (!res.ok) {
         const errText = await res.text();
-        console.warn(`  [Groq HTTP ${res.status}] ${errText.slice(0, 150)}`);
+        console.warn(`  [${PROVIDER.name} HTTP ${res.status}] ${errText.slice(0, 150)}`);
         await new Promise(r => setTimeout(r, 2000 * (i + 1)));
         continue;
       }
 
       const data = await res.json();
-      const content = data.choices?.[0]?.message?.content;
-      return JSON.parse(content);
+      const content = String(data.choices?.[0]?.message?.content ?? '');
+      // Some models wrap the object in a ```json fence despite response_format.
+      return JSON.parse(content.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, ''));
     } catch (e) {
-      console.warn(`  [Groq Error attempt ${i + 1}] ${e.message}`);
+      console.warn(`  [${PROVIDER.name} error, attempt ${i + 1}] ${e.message}`);
       await new Promise(r => setTimeout(r, 2000 * (i + 1)));
     }
   }
@@ -138,7 +147,7 @@ CRITICAL CONSTRAINTS:
 Input JSON:
 ${JSON.stringify(chunk, null, 2)}`;
 
-  const result = await callGroq(prompt);
+  const result = await callModel(prompt);
   if (!result) return {};
 
   const validated = {};

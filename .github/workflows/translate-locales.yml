@@ -1,7 +1,8 @@
 name: Translate locales
 
 # Machine-translates the strings that are still English in the 23 non-English
-# locale files (QA v1 #9: mixed-language pages), with the repository's Groq key.
+# locale files (QA v1 #9: mixed-language pages), with the repository's Groq key
+# or, when that is not set, the AIHubMix key the app already uses.
 # Interpolation tokens and protected terms are checked per string; anything
 # that fails the check stays English. The result is uploaded as an artifact
 # for review and commit — this workflow never pushes.
@@ -42,12 +43,13 @@ jobs:
         working-directory: ag-extension-dashboard
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          AIHUBMIX_API_KEY: ${{ secrets.AIHUBMIX_API_KEY || vars.AIHUBMIX_API_KEY || secrets.AIHUBMIX_KEY || vars.AIHUBMIX_KEY || '' }}
           TRANSLATE_MODEL: ${{ vars.TRANSLATE_MODEL }}
           TRANSLATE_CHUNK_SIZE: '25'
           LANGUAGES: ${{ github.event.inputs.languages }}
         run: |
-          if [ -z "$GROQ_API_KEY" ]; then
-            echo "::error::GROQ_API_KEY is not set as a repository secret"
+          if [ -z "$GROQ_API_KEY" ] && [ -z "$AIHUBMIX_API_KEY" ]; then
+            echo "::error::Neither GROQ_API_KEY nor AIHUBMIX_API_KEY is set as a repository secret"
             exit 1
           fi
           # shellcheck disable=SC2086 # word-splitting the language list is intended
