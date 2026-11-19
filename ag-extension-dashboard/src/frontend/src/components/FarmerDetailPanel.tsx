@@ -37,6 +37,7 @@ import { generateSynthesis } from '@/api/chatbotService';
 import { fetchPriorityScore, updateVisit } from '@/api/visitService';
 import { SatelliteInsights } from './SatelliteInsights';
 import { ConfirmModal } from './ConfirmModal';
+import { getLogContent, getLogTypeColor } from './farmerLogFormat';
 
 interface FarmerDetailPanelProps {
   isOpen: boolean;
@@ -46,18 +47,6 @@ interface FarmerDetailPanelProps {
   onFarmerClick?: (farmer: Farmer | null) => void;
 }
 const radiusClass = 'rounded-xl';
-
-const getLogTypeColor = (type: string) => {
-  if (type === 'SMS') return 'bg-blue-100 text-blue-600';
-  if (type === 'CHAT') return 'bg-purple-100 text-purple-600';
-  return 'bg-green-100 text-green-600';
-};
-
-const getLogContent = (log: Record<string, unknown>) => {
-  if (log.content) return log.content as string;
-  if (log.type === 'CALL') return `Outbound call duration: ${log.duration}`;
-  return '';
-};
 
 const HistoryTabContent = ({
   interactions,

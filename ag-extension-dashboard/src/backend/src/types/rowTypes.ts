@@ -303,6 +303,8 @@ export interface UserPublicRow {
   is_demo?: boolean | null;
   /** Above every tenant: may create or promote an admin. */
   is_system_admin?: boolean | null;
+  /** Regional manager an extension officer reports to. */
+  manager_id?: string | null;
   plan_id?: string | null;
   plan_name?: string | null;
   plan_price?: string | number | null;

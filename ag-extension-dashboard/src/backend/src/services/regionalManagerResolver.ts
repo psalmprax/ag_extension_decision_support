@@ -16,6 +16,11 @@ export type ManagerMatchKind = 'exact' | 'normalized' | 'none';
 export interface ManagerResolution {
     managerId: string | null;
     matchedBy: ManagerMatchKind;
+    /**
+     * The matched manager's stored region spelling. New accounts store this
+     * rather than the form's spelling, so region-scoped queries compare equal.
+     */
+    matchedRegion: string | null;
 }
 
 interface RegionalManagerRow {
@@ -24,7 +29,7 @@ interface RegionalManagerRow {
     country: string | null;
 }
 
-const NO_MATCH: ManagerResolution = { managerId: null, matchedBy: 'none' };
+const NO_MATCH: ManagerResolution = { managerId: null, matchedBy: 'none', matchedRegion: null };
 
 /** Lowercase, punctuation-free, single-spaced form used for region comparison. */
 function normalizeRegion(value: string): string {
@@ -61,7 +66,7 @@ export function resolveManagerFromCandidates(
     const exact = candidates.find(
         candidate => candidate.region !== null && normalizeRegion(candidate.region) === target
     );
-    if (exact) return { managerId: exact.id, matchedBy: 'exact' };
+    if (exact) return { managerId: exact.id, matchedBy: 'exact', matchedRegion: exact.region };
 
     const contained = candidates.find(candidate => {
         if (!candidate.region) return false;
@@ -70,7 +75,7 @@ export function resolveManagerFromCandidates(
         if (normalized.length <= 2) return false;
         return target.includes(normalized) || normalized.includes(target);
     });
-    if (contained) return { managerId: contained.id, matchedBy: 'normalized' };
+    if (contained) return { managerId: contained.id, matchedBy: 'normalized', matchedRegion: contained.region };
 
     return NO_MATCH;
 }

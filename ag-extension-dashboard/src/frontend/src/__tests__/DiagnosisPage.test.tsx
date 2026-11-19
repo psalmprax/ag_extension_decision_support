@@ -2,6 +2,7 @@ import React from 'react';
 import { act, render, screen, within } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LanguageProvider } from '@/lib/LanguageContext';
 import { DiagnosisPage } from '../pages/DiagnosisPage';
 
@@ -24,17 +25,22 @@ vi.mock('@/api/diseaseService', () => ({
   analyzeCropVideo: vi.fn(),
   MAX_DIAGNOSIS_VIDEO_BYTES: 30 * 1024 * 1024,
   diagnoseFromSymptoms: vi.fn(),
+  getDiagnosisHistory: vi.fn().mockResolvedValue({ success: true, data: { items: [], limit: 20, offset: 0 } }),
 }));
+
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
 describe('DiagnosisPage Component', () => {
   it('renders the public diagnosis clinic and prominent back navigation', async () => {
     await act(async () => {
       render(
-        <MemoryRouter>
-          <LanguageProvider>
-            <DiagnosisPage />
-          </LanguageProvider>
-        </MemoryRouter>
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter>
+            <LanguageProvider>
+              <DiagnosisPage />
+            </LanguageProvider>
+          </MemoryRouter>
+        </QueryClientProvider>
       );
     });
 

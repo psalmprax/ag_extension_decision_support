@@ -338,6 +338,7 @@ export async function createTables(pool: Pool): Promise<void> {
       CREATE TABLE IF NOT EXISTS diagnosis_events (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         farmer_id UUID REFERENCES farmers(id) ON DELETE SET NULL,
+        user_id UUID REFERENCES users(id) ON DELETE SET NULL,
         district VARCHAR(100),
         crop VARCHAR(100) NOT NULL,
         disease_label VARCHAR(150) NOT NULL,
@@ -347,6 +348,8 @@ export async function createTables(pool: Pool): Promise<void> {
       );
       CREATE INDEX IF NOT EXISTS diagnosis_events_district_crop_idx ON diagnosis_events(district, crop, created_at);
       CREATE INDEX IF NOT EXISTS diagnosis_events_created_at_idx ON diagnosis_events(created_at);
+      ALTER TABLE diagnosis_events ADD COLUMN IF NOT EXISTS user_id UUID;
+      CREATE INDEX IF NOT EXISTS diagnosis_events_user_id_created_at_idx ON diagnosis_events(user_id, created_at);
 
       CREATE TABLE IF NOT EXISTS district_adjacency (
         district VARCHAR(100) NOT NULL,

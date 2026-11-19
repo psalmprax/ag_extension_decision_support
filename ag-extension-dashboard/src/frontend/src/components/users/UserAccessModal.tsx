@@ -7,6 +7,9 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { USER_ROLES, assignableRoles, type DirectoryUser } from '@/components/users/types';
 import { PlanTierSelector } from '@/components/users/PlanTierSelector';
 import { useAssignablePlans } from '@/components/users/useAssignablePlans';
+import { SystemAdminBadge } from '@/components/users/SystemAdminBadge';
+import { AccountActiveToggle } from '@/components/users/AccountActiveToggle';
+import { ManagerAssignmentField } from '@/components/users/ManagerAssignmentField';
 
 interface UserAccessModalProps {
   user: DirectoryUser | null;
@@ -40,6 +43,7 @@ export function UserAccessModal({
   // Default to '' ("keep unchanged") so role/status saves never resend planId and reset usage/periods.
   const [planId, setPlanId] = useState('');
   const [isActive, setIsActive] = useState(initialIsActive);
+  const [managerId, setManagerId] = useState<string | null>(user?.managerId ?? null);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -95,6 +99,7 @@ export function UserAccessModal({
       setRole(user.role || 'extension_officer');
       setPlanId('');
       setIsActive(user.isActive !== false);
+      setManagerId(user.managerId ?? null);
       setErrorMsg('');
       setSuccessMsg('');
     }
@@ -124,6 +129,9 @@ export function UserAccessModal({
   if (role !== initialRole) changePayload.role = role;
   if (isActive !== initialIsActive) changePayload.isActive = isActive;
   if (planId && role !== 'admin') changePayload.planId = planId;
+  if (role === 'extension_officer' && (managerId ?? null) !== (user.managerId ?? null)) {
+    changePayload.managerId = managerId ?? null;
+  }
   const hasChanges = Object.keys(changePayload).length > 0;
 
   const handleRoleChange = (nextRole: string) => {
@@ -160,12 +168,7 @@ export function UserAccessModal({
                 <p className="text-xs text-white/60">
                   {user.firstName} {user.lastName} • {user.email}
                 </p>
-                {user.isSystemAdmin && (
-                  <span className="mt-1 inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
-                    <ShieldCheck className="w-3 h-3" />
-                    System admin
-                  </span>
-                )}
+                {user.isSystemAdmin && <SystemAdminBadge />}
               </div>
             </div>
             <button
@@ -239,23 +242,15 @@ export function UserAccessModal({
               onRetry={() => void refetchPlans()}
             />
 
-            <label className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/10 cursor-pointer">
-              <div>
-                <div className="text-xs font-medium text-white">
-                  {t('users_access_account_active', 'Account Active')}
-                </div>
-                <div className="text-[11px] text-white/50">
-                  {t('users_access_account_active_hint', 'Suspended accounts are immediately signed out and blocked.')}
-                </div>
-              </div>
-              <input
-                type="checkbox"
-                checked={isActive}
-                disabled={isEditingSelf || isProtectedTarget}
-                onChange={e => setIsActive(e.target.checked)}
-                className="w-4 h-4 accent-emerald-500 rounded cursor-pointer disabled:opacity-50"
-              />
-            </label>
+            {role === 'extension_officer' && (
+              <ManagerAssignmentField managerId={managerId} isDemo={isDemo} onChange={setManagerId} />
+            )}
+
+            <AccountActiveToggle
+              checked={isActive}
+              disabled={isEditingSelf || isProtectedTarget}
+              onChange={setIsActive}
+            />
 
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
               <button

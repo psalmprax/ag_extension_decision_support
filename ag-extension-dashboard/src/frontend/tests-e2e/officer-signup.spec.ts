@@ -25,7 +25,7 @@ test.describe('officer signup and manager assignment', () => {
 
     const [response] = await Promise.all([
       page.waitForResponse(
-        res => res.url().includes('/api/v1/auth/register') && res.request().method() === 'POST'
+        res => res.url().includes('/auth/register') && res.request().method() === 'POST'
       ),
       page.locator('form button[type="submit"]').click(),
     ]);

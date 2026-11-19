@@ -42,6 +42,7 @@ export function buildUserColumns(options: UserColumnsOptions = {}): string {
         ...LEADING_COLUMNS.map(column => qualify(source, column)),
         legacySchema ? 'NULL::text AS country' : qualify(source, 'country'),
         legacySchema ? 'false AS is_system_admin' : qualify(source, 'is_system_admin'),
+        legacySchema ? 'NULL::uuid AS manager_id' : qualify(source, 'manager_id'),
         ...TRAILING_COLUMNS.map(column => qualify(source, column)),
         'NULL::text AS preferred_language',
         legacySchema ? 'NULL::timestamp AS last_login' : `${qualify(source, 'last_login_at')} AS last_login`,
@@ -71,7 +72,7 @@ export const SUBSCRIPTION_PLAN_COLUMNS = [
     's.current_period_end AS subscription_period_end',
 ].join(',\n');
 
-const PROFILE_COLUMNS = ['id', 'email', 'first_name', 'last_name', 'role', 'region', 'phone'] as const;
+const PROFILE_COLUMNS = ['id', 'email', 'first_name', 'last_name', 'role', 'region', 'country', 'phone'] as const;
 
 export interface UserProfileColumnsOptions {
     /** Table alias the columns are read from, when the query aliases `users`. */

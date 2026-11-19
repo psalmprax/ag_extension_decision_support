@@ -109,7 +109,13 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
         // Farmers are enrolled by an officer later, so they carry no manager.
         const managerResolution = accountRole === 'extension_officer'
             ? await resolveRegionalManager(accountRegion, accountCountry)
-            : { managerId: null, matchedBy: 'none' as const };
+            : { managerId: null, matchedBy: 'none' as const, matchedRegion: null };
+
+        // Store the manager's own region spelling. Region-scoped queries compare
+        // exact strings, so an officer who signed up with the country-list
+        // spelling must not end up outside their manager's scope. Unmatched
+        // regions keep what the form sent and an administrator links them later.
+        const storedRegion = managerResolution.matchedRegion ?? accountRegion;
 
         if (accountRole === 'extension_officer' && !managerResolution.managerId) {
             logger.info(
@@ -126,7 +132,7 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false, NOW())
             RETURNING ${buildUserProfileColumns()}
         `, [
-            email, passwordHash, firstName, lastName, accountRole, accountRegion, accountCountry,
+            email, passwordHash, firstName, lastName, accountRole, storedRegion, accountCountry,
             accountPhone, managerResolution.managerId,
         ]);
 

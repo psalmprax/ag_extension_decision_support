@@ -12,6 +12,8 @@ export interface DirectoryUser {
   isDemo?: boolean;
   /** Above every tenant: the only flag that may create or promote an admin. */
   isSystemAdmin?: boolean;
+  /** Regional manager an extension officer reports to, when linked. */
+  managerId?: string | null;
   planId?: string | null;
   planName?: string | null;
   planStatus?: string | null;

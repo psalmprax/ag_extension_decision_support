@@ -158,7 +158,7 @@ export function UserManagementPage() {
       setFormError(t('users_create_error_required', 'All required fields must be filled'));
       return;
     }
-    createUser.mutate(formData);
+    createUser.mutate({ ...formData, region: availableRegions.find(region => region.toLowerCase() === formData.region.trim().toLowerCase()) ?? formData.region.trim() });
   };
 
   const usersList = usersData || [];

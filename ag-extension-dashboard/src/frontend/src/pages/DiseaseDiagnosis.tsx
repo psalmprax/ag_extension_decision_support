@@ -21,6 +21,7 @@ import { DiseaseLibraryTab } from './diagnostics/DiseaseLibraryTab';
 import { DiseaseInfoModal } from './diagnostics/DiseaseInfoModal';
 import { EdgeVisionScannerModal } from '@/components/EdgeVisionScannerModal';
 import { VideoAnalysisTab } from './diagnostics/VideoAnalysisTab';
+import { DiagnosisHistoryPanel } from './diagnostics/DiagnosisHistoryPanel';
 
 export function DiseaseDiagnosis() {
   const online = useOnlineStatus();
@@ -211,6 +212,9 @@ export function DiseaseDiagnosis() {
             />
           )}
         </div>
+
+        {/* Everything the signed-in account has concluded so far */}
+        <DiagnosisHistoryPanel />
 
         {/* Disease Info Modal */}
         <DiseaseInfoModal

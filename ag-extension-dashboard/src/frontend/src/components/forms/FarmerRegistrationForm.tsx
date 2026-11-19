@@ -25,54 +25,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { isActionEnter } from '@/lib/keyboard';
 import { createFarmer } from '@/api/farmerService';
 import { InlinePrompt, InfoPromptIcon } from '@/components/ui/InfoPrompt';
-
-const COMMON_CROPS = [
-  'Maize',
-  'Coffee',
-  'Cassava',
-  'Rice',
-  'Tea',
-  'Beans',
-  'Tomato',
-  'Potato',
-  'Sorghum',
-  'Wheat',
-  'Avocado',
-  'Bananas',
-];
-
-const ONBOARDING_PRESETS = [
-  {
-    name: 'Smallholder Maize',
-    crops: ['Maize', 'Beans'],
-    location: 'Nakuru, Rift Valley',
-    farmSize: 2.5,
-    vitalScore: 88,
-    lat: -0.3031,
-    lng: 36.0800,
-    lang: 'sw',
-  },
-  {
-    name: 'Highland Coffee & Tea',
-    crops: ['Coffee', 'Tea'],
-    location: 'Kiambu, Central',
-    farmSize: 4.8,
-    vitalScore: 78,
-    lat: -1.1714,
-    lng: 36.8356,
-    lang: 'en',
-  },
-  {
-    name: 'Irrigation Rice Co-op',
-    crops: ['Rice', 'Tomato'],
-    location: 'Mwea, Kirinyaga',
-    farmSize: 12.0,
-    vitalScore: 92,
-    lat: -0.6591,
-    lng: 37.3582,
-    lang: 'en',
-  },
-];
+import { COMMON_CROPS, ONBOARDING_PRESETS } from './farmerFormPresets';
 
 export const FarmerRegistrationForm: React.FC = () => {
   const { addFarmer, isLoading, setLoading } = useAppStore();

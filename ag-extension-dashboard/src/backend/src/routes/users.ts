@@ -303,6 +303,7 @@ function isMissingColumnError(err: unknown): boolean {
         e.message?.includes('country') ||
         e.message?.includes('last_login_at') ||
         e.message?.includes('is_system_admin') ||
+        e.message?.includes('manager_id') ||
         e.code === '42703'
     );
 }
@@ -318,6 +319,8 @@ const USER_UPDATE_FIELD_MAP: Record<string, string> = {
     is_active: 'is_active',
     isActive: 'is_active',
     role: 'role',
+    manager_id: 'manager_id',
+    managerId: 'manager_id',
 };
 
 const ALLOWED_ROLES = ['farmer', 'extension_officer', 'regional_manager', 'admin'];
@@ -349,6 +352,25 @@ async function loadUserGuardRow(id: string): Promise<UserGuardRow | null> {
 async function actorIsSystemAdmin(req: Request): Promise<boolean> {
     const userId = req.user?.userId;
     return userId ? isSystemAdminUser(userId) : false;
+}
+
+interface ManagerScope {
+    region: string;
+}
+
+/**
+ * A regional manager's directory is their own region. The region is read from
+ * their own account, never from a query parameter, so it cannot be widened by
+ * the caller. `null` means the caller is not a regional manager; a manager with
+ * no region recorded gets an empty region, which matches no rows.
+ */
+async function regionalManagerScope(req: Request): Promise<ManagerScope | null> {
+    if (req.user?.role !== 'regional_manager' || !req.user.userId) return null;
+    const { rows } = await query<{ region: string | null }>(
+        'SELECT region FROM users WHERE id = $1',
+        [req.user.userId]
+    );
+    return { region: rows[0]?.region ?? '' };
 }
 
 /**
@@ -471,6 +493,38 @@ async function executeUserUpdate(
     );
 }
 
+interface ManagerLookupRow {
+    id: string;
+    role: string | null;
+    is_active: boolean | null;
+}
+
+/**
+ * A manager link must point at an active regional manager, and only an
+ * extension officer can carry one. `null` clears the link.
+ */
+async function validateManagerLink(
+    managerId: unknown,
+    targetRole: string | null
+): Promise<string | null> {
+    if (managerId === undefined || managerId === null || managerId === '') return null;
+    if (typeof managerId !== 'string' || !UUID_RE.test(managerId)) {
+        return 'managerId must be a user id or null';
+    }
+    if (targetRole !== 'extension_officer') {
+        return 'Only extension officers report to a regional manager';
+    }
+    const { rows } = await query<ManagerLookupRow>(
+        'SELECT id, role, is_active FROM users WHERE id = $1',
+        [managerId]
+    );
+    const manager = rows[0];
+    if (!manager || manager.role !== 'regional_manager' || manager.is_active === false) {
+        return 'managerId must reference an active regional manager';
+    }
+    return null;
+}
+
 async function fetchUserRowForPlanUpdate(client: PoolClient, id: string): Promise<UserPublicRow[]> {
     const buildSelectCte = (legacySchema: boolean) => `
         WITH target AS (
@@ -500,21 +554,27 @@ router.get('/', validateRecordScope, async (req: Request, res: Response) => {
 
         let rows: UserPublicRow[] = [];
         const dataset = req.query.dataset === 'demo';
+        // A regional manager lists only staff in their own region. Region is a
+        // column on every schema version, so the legacy fallback query can keep
+        // the same predicate.
+        const managerScope = await regionalManagerScope(req);
+        const scopeClause = managerScope ? ' AND users.region = $2' : '';
+        const listParams = managerScope ? [dataset, managerScope.region] : [dataset];
         const listQuery = (legacySchema: boolean) =>
             buildUserSubscriptionSelect({
                 source: 'users',
                 legacySchema,
-                where: 'COALESCE(is_demo, false) = $1',
+                where: `COALESCE(is_demo, false) = $1${scopeClause}`,
                 orderBy: 'users.created_at DESC',
             });
 
         try {
-            const queryRes = await query<UserPublicRow>(listQuery(false), [dataset]);
+            const queryRes = await query<UserPublicRow>(listQuery(false), listParams);
             rows = queryRes.rows || [];
         } catch (dbErr: unknown) {
             if (isMissingColumnError(dbErr)) {
                 logger.warn('users table lacks country or last_login_at column; selecting fallback');
-                const fallbackRes = await query<UserPublicRow>(listQuery(true), [dataset]);
+                const fallbackRes = await query<UserPublicRow>(listQuery(true), listParams);
                 rows = fallbackRes.rows || [];
             } else {
                 throw dbErr;
@@ -563,6 +623,13 @@ router.get('/:id', async (req: Request, res: Response) => {
         }
 
         if (rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+
+        const managerScope = await regionalManagerScope(req);
+        if (managerScope && rows[0].region !== managerScope.region) {
+            // Out-of-region staff are reported as absent rather than forbidden: a
+            // manager has no business learning that the account exists.
             return res.status(404).json({ success: false, error: 'User not found' });
         }
 
@@ -768,6 +835,13 @@ router.put('/:id', authorize(['admin']), async (req: Request, res: Response) => 
         if (!target) {
             return res.status(404).json({ success: false, error: 'User not found' });
         }
+        const managerLinkError = await validateManagerLink(
+            safeUpdates.manager_id,
+            typeof safeUpdates.role === 'string' ? safeUpdates.role : target.role
+        );
+        if (managerLinkError) {
+            return res.status(400).json({ success: false, error: managerLinkError });
+        }
         const guardFailure = await validateSystemAdminChange(
             target,
             safeUpdates,
@@ -870,11 +944,15 @@ router.get('/role/:role', async (req: Request, res: Response) => {
             return res.status(503).json({ success: false, error: 'Database unavailable' });
         }
 
+        // Officer pickers for a regional manager must not offer staff from
+        // another region.
+        const managerScope = await regionalManagerScope(req);
         const { rows } = await query<UserRow>(
             // Pickers (e.g. assigning a farmer to an officer) never offer demo accounts:
             // a real farmer assigned to the demo officer would be visible to the public demo session.
-            `SELECT * FROM users WHERE role = $1 AND is_active = true AND ${demoSql('users')} ORDER BY first_name`,
-            [role]
+            `SELECT * FROM users WHERE role = $1 AND is_active = true AND ${demoSql('users')}
+             ${managerScope ? 'AND region = $2' : ''} ORDER BY first_name`,
+            managerScope ? [role, managerScope.region] : [role]
         );
 
         return res.json({ success: true, data: mapUserRows(rows) });

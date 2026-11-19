@@ -23,6 +23,8 @@ model User {
   managedOfficers User[]           @relation("ManagerOfficers")
   /// Above every tenant: only this account may create or promote another admin.
   isSystemAdmin Boolean            @default(false) @map("is_system_admin")
+  /// Diagnoses this account performed, for the per-user diagnosis history.
+  diagnosisEvents DiagnosisEvent[] @relation("UserDiagnosisEvents")
 
   avatarUrl     String?            @map("avatar_url")
   isActive      Boolean?           @default(true) @map("is_active")
@@ -1146,6 +1148,8 @@ model AdvisoryDispatch {
 model DiagnosisEvent {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   farmerId     String?  @map("farmer_id") @db.Uuid
+  /// The account that performed the diagnosis; drives the per-user history.
+  userId       String?  @map("user_id") @db.Uuid
   district     String?  @db.VarChar(100)
   crop         String   @db.VarChar(100)
   diseaseLabel String   @map("disease_label") @db.VarChar(150)
@@ -1154,9 +1158,11 @@ model DiagnosisEvent {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(6)
 
   farmer Farmer? @relation(fields: [farmerId], references: [id])
+  user   User?   @relation("UserDiagnosisEvents", fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([district, crop, createdAt])
   @@index([createdAt])
+  @@index([userId, createdAt])
   @@map("diagnosis_events")
 }
 

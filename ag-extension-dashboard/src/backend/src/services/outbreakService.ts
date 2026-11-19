@@ -40,6 +40,8 @@ export const ALERT_THRESHOLD = 5;
 
 export interface DiagnosisEventInput {
     farmerId?: string | null;
+    /** The account that performed the diagnosis, for the per-user history. */
+    userId?: string | null;
     district?: string | null;
     crop: string;
     diseaseLabel: string;
@@ -295,9 +297,17 @@ export const outbreakService = {
 
     async recordDiagnosisEvent(input: DiagnosisEventInput): Promise<void> {
         await query(
-            `INSERT INTO diagnosis_events (farmer_id, district, crop, disease_label, confidence, source)
-             VALUES ($1, $2, $3, $4, $5, $6)`,
-            [input.farmerId || null, input.district || null, input.crop, input.diseaseLabel, input.confidence ?? null, input.source || 'extension_tool']
+            `INSERT INTO diagnosis_events (farmer_id, user_id, district, crop, disease_label, confidence, source)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [
+                input.farmerId || null,
+                input.userId || null,
+                input.district || null,
+                input.crop,
+                input.diseaseLabel,
+                input.confidence ?? null,
+                input.source || 'extension_tool',
+            ]
         );
     },
 

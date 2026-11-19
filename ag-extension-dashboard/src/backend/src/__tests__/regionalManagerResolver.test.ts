@@ -28,6 +28,7 @@ describe('resolveManagerFromCandidates', () => {
         expect(resolveManagerFromCandidates('Lilongwe', [LILONGWE, KUMASI])).toEqual({
             managerId: 'rm-lilongwe',
             matchedBy: 'exact',
+            matchedRegion: 'Lilongwe',
         });
     });
 
@@ -36,6 +37,7 @@ describe('resolveManagerFromCandidates', () => {
         expect(resolveManagerFromCandidates('Central Region (Lilongwe)', [KUMASI, LILONGWE])).toEqual({
             managerId: 'rm-lilongwe',
             matchedBy: 'normalized',
+            matchedRegion: 'Lilongwe',
         });
     });
 
@@ -43,18 +45,20 @@ describe('resolveManagerFromCandidates', () => {
         expect(resolveManagerFromCandidates('Nairobi', [LILONGWE, KUMASI])).toEqual({
             managerId: null,
             matchedBy: 'none',
+            matchedRegion: null,
         });
     });
 
     it('returns no manager for a missing or blank region', () => {
-        expect(resolveManagerFromCandidates(null, [LILONGWE])).toEqual({ managerId: null, matchedBy: 'none' });
-        expect(resolveManagerFromCandidates('   ', [LILONGWE])).toEqual({ managerId: null, matchedBy: 'none' });
+        expect(resolveManagerFromCandidates(null, [LILONGWE])).toEqual({ managerId: null, matchedBy: 'none', matchedRegion: null });
+        expect(resolveManagerFromCandidates('   ', [LILONGWE])).toEqual({ managerId: null, matchedBy: 'none', matchedRegion: null });
     });
 
     it('ignores candidates whose region is unset', () => {
         expect(resolveManagerFromCandidates('Lilongwe', [{ id: 'rm-x', region: null, country: null }])).toEqual({
             managerId: null,
             matchedBy: 'none',
+            matchedRegion: null,
         });
     });
 
@@ -62,6 +66,7 @@ describe('resolveManagerFromCandidates', () => {
         expect(resolveManagerFromCandidates('Central Region', [{ id: 'rm-x', region: 'CE', country: null }])).toEqual({
             managerId: null,
             matchedBy: 'none',
+            matchedRegion: null,
         });
     });
 });
@@ -76,7 +81,11 @@ describe('resolveRegionalManager', () => {
 
         const resolution = await resolveRegionalManager('Lilongwe', 'Malawi');
 
-        expect(resolution).toEqual({ managerId: 'rm-lilongwe', matchedBy: 'exact' });
+        expect(resolution).toEqual({
+            managerId: 'rm-lilongwe',
+            matchedBy: 'exact',
+            matchedRegion: 'Lilongwe',
+        });
         const [sql, params] = mockQuery.mock.calls[0];
         expect(String(sql)).toContain("role = 'regional_manager'");
         // Demo managers must never receive a real officer's account.
@@ -88,7 +97,7 @@ describe('resolveRegionalManager', () => {
     it('skips the lookup entirely when no region was supplied', async () => {
         const resolution = await resolveRegionalManager(null, 'Malawi');
 
-        expect(resolution).toEqual({ managerId: null, matchedBy: 'none' });
+        expect(resolution).toEqual({ managerId: null, matchedBy: 'none', matchedRegion: null });
         expect(mockQuery).not.toHaveBeenCalled();
     });
 
@@ -97,7 +106,7 @@ describe('resolveRegionalManager', () => {
 
         const resolution = await resolveRegionalManager('Lilongwe', 'Malawi');
 
-        expect(resolution).toEqual({ managerId: null, matchedBy: 'none' });
+        expect(resolution).toEqual({ managerId: null, matchedBy: 'none', matchedRegion: null });
         expect(logger.warn).toHaveBeenCalledWith(
             expect.stringContaining('Regional manager lookup failed for region "Lilongwe"')
         );

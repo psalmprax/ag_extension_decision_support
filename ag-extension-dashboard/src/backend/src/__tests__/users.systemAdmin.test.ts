@@ -153,11 +153,21 @@ function handleUserWrites(state: FakeState, sql: string, values: unknown[]): Fak
     return reply([updated]);
   }
 
-  if (sql.includes('FROM users WHERE id = $1')) {
+  if (sql.includes('FROM users WHERE id = $1') || /users\.id = \$1/.test(sql)) {
     const user = state.users.get(String(values[0]));
     return reply(user ? [user] : []);
   }
-  if (sql.includes('FROM users')) return reply([...state.users.values()]);
+  if (sql.includes('FROM users')) {
+    // Honour the `role = $n` / `region = $n` predicates so the scoping
+    // assertions exercise the route's filters, not a fake that returns everything.
+    const roleMatch = sql.match(/role = \$(\d+)/);
+    const regionMatch = sql.match(/region = \$(\d+)/);
+    return reply(
+      [...state.users.values()]
+        .filter(user => !roleMatch || user.role === values[Number(roleMatch[1]) - 1])
+        .filter(user => !regionMatch || user.region === values[Number(regionMatch[1]) - 1])
+    );
+  }
 
   return null;
 }
@@ -374,5 +384,131 @@ describe('System administrator gate on user management', () => {
     delete legacyRow.is_system_admin;
 
     expect(mapUserPublicRow(legacyRow).isSystemAdmin).toBe(false);
+  });
+});
+
+describe('Regional manager directory scoping', () => {
+  function regionalManager(id: string, region: string): string {
+    state.users.set(
+      id,
+      userRow({ id, email: `${id}@example.org`, role: 'regional_manager', region })
+    );
+    return tokenFor(id);
+  }
+
+  it('lists only staff in the manager own region', async () => {
+    const token = regionalManager('rm-nakuru', 'Rift Valley');
+    state.users.set('officer-rv', userRow({ id: 'officer-rv', region: 'Rift Valley' }));
+    state.users.set('officer-nr', userRow({ id: 'officer-nr', region: 'Northern Region' }));
+    state.users.set('admin-central', userRow({ id: 'admin-central', role: 'admin', region: 'Central' }));
+
+    const res = await request(app).get('/users').set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    const ids = (res.body.data as Array<{ id: string }>).map(user => user.id).sort();
+    expect(ids).toEqual(['officer-rv', 'rm-nakuru']);
+  });
+
+  it('reports a user from another region as absent', async () => {
+    const token = regionalManager('rm-nakuru', 'Rift Valley');
+    state.users.set('officer-nr', userRow({ id: 'officer-nr', region: 'Northern Region' }));
+
+    const res = await request(app)
+      .get('/users/officer-nr')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+    expect(res.body.success).toBe(false);
+  });
+
+  it('offers only same-region officers in the role picker', async () => {
+    const token = regionalManager('rm-nakuru', 'Rift Valley');
+    state.users.set(
+      'officer-rv',
+      userRow({ id: 'officer-rv', role: 'extension_officer', region: 'Rift Valley' })
+    );
+    state.users.set(
+      'officer-nr',
+      userRow({ id: 'officer-nr', role: 'extension_officer', region: 'Northern Region' })
+    );
+
+    const res = await request(app)
+      .get('/users/role/extension_officer')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    const ids = (res.body.data as Array<{ id: string }>).map(user => user.id);
+    expect(ids).toEqual(['officer-rv']);
+  });
+});
+
+describe('Linking an extension officer to a regional manager', () => {
+  const RM_ID = '11111111-1111-1111-1111-111111111111';
+  const OTHER_OFFICER_ID = '22222222-2222-2222-2222-222222222222';
+
+  it('links the officer to an active regional manager', async () => {
+    const token = plainAdmin();
+    state.users.set(
+      RM_ID,
+      userRow({ id: RM_ID, email: 'rm@example.org', role: 'regional_manager', region: 'Rift Valley' })
+    );
+    state.users.set('officer', userRow({ id: 'officer', role: 'extension_officer' }));
+
+    const res = await request(app)
+      .put('/users/officer')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ managerId: RM_ID });
+
+    expect(res.status).toBe(200);
+    expect(state.users.get('officer')?.manager_id).toBe(RM_ID);
+    expect(res.body.data.managerId).toBe(RM_ID);
+  });
+
+  it('refuses a manager link that points at a non-manager', async () => {
+    const token = plainAdmin();
+    state.users.set('officer', userRow({ id: 'officer', role: 'extension_officer' }));
+    state.users.set(
+      OTHER_OFFICER_ID,
+      userRow({ id: OTHER_OFFICER_ID, role: 'extension_officer' })
+    );
+
+    const res = await request(app)
+      .put('/users/officer')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ managerId: OTHER_OFFICER_ID });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('active regional manager');
+    expect(state.users.get('officer')?.manager_id).toBeUndefined();
+  });
+
+  it('refuses a manager link on a non-officer account', async () => {
+    const token = plainAdmin();
+    state.users.set(RM_ID, userRow({ id: RM_ID, role: 'regional_manager' }));
+    state.users.set('farmer', userRow({ id: 'farmer', role: 'farmer' }));
+
+    const res = await request(app)
+      .put('/users/farmer')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ managerId: RM_ID });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('Only extension officers');
+  });
+
+  it('clears the link when managerId is null', async () => {
+    const token = plainAdmin();
+    state.users.set(
+      'officer',
+      userRow({ id: 'officer', role: 'extension_officer', manager_id: 'rm' })
+    );
+
+    const res = await request(app)
+      .put('/users/officer')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ managerId: null });
+
+    expect(res.status).toBe(200);
+    expect(state.users.get('officer')?.manager_id).toBeNull();
   });
 });

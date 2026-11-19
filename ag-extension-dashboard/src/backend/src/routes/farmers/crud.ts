@@ -332,6 +332,16 @@ const role = String(_role);
 // Create farmer
 router.post('/', validate(createFarmerSchema), async (req: Request, res: Response) => {
     try {
+        // Enrollment is staff work: a farmer account may read and update its own
+        // record, but creating farmer records would let any farmer mint
+        // unassigned records the extension team then has to reconcile.
+        if (req.user?.role === 'farmer') {
+            return res.status(403).json({
+                success: false,
+                error: 'Farmer accounts cannot create farmer records',
+            });
+        }
+
         const {
             firstName, lastName, phone, region, village,
             farmSize, crops, languagePreference,

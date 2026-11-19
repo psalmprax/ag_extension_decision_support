@@ -202,6 +202,8 @@ export interface UserPublicDTO {
   isDemo: boolean;
   /** Above every tenant: may create or promote an admin. */
   isSystemAdmin: boolean;
+  /** Regional manager this officer reports to, when linked. */
+  managerId: string | null;
   planId: string | null;
   planName: string;
   planStatus: string | null;
@@ -240,6 +242,7 @@ export function mapUserPublicRow(row: UserPublicRow): UserPublicDTO {
     lastLogin: toIso(row.last_login) ?? null,
     isDemo: row.is_demo === true,
     isSystemAdmin: reportedSystemAdmin(row),
+    managerId: row.manager_id ?? null,
     planId: row.plan_id ?? null,
     planName,
     planStatus: row.subscription_status ?? (row.role === 'admin' ? 'active' : hasActiveRecord ? 'active' : null),
