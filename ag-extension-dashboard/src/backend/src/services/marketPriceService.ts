@@ -321,21 +321,26 @@ function estimatedPricesFor(country: string): MarketPrice[] {
   return buildBaselinePrices(fallbackExchangeRate(currency), currency, new Date().toISOString());
 }
 
-async function withinBudget(country: string, fetching: Promise<MarketPrice[]>): Promise<MarketPrice[]> {
+/**
+ * Waits at most the lookup budget for `fetching`. `null` means the budget ran
+ * out: the caller serves its labelled fallback while the fetch keeps running
+ * and fills the cache for the next request.
+ */
+async function withinBudget<T>(country: string, fetching: Promise<T>): Promise<T | null> {
   const budgetMs = priceLookupBudgetMs();
   let timer: NodeJS.Timeout | undefined;
   const budget = new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), budgetMs); });
   try {
     const result = await Promise.race([fetching, budget]);
-    if (result) return result;
+    if (result !== null) return result;
   } finally {
     clearTimeout(timer);
   }
-  logger.warn(`Market prices for ${country} not ready after ${budgetMs} ms; serving the baseline estimate meanwhile`);
+  logger.warn(`Market prices for ${country} not ready after ${budgetMs} ms; serving the labelled fallback meanwhile`);
   fetching.catch(error => logger.warn(
     `Background market price fetch for ${country} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
   ));
-  return estimatedPricesFor(country);
+  return null;
 }
 
 async function readCachedPrices(country: string): Promise<MarketPrice[] | null> {
@@ -356,6 +361,7 @@ const LANDING_CROPS = ['0112', '01591', '0115'] as const;
 const FAOSTAT_YEAR_PROBES = 4;
 
 const landingCacheKey = (country: string) => `market-prices:landing:v1:${country}`;
+const inFlightLanding = new Map<string, Promise<LandingMarketPrices>>();
 
 export interface LandingPrice {
   crop: string;
@@ -430,7 +436,8 @@ export const marketPriceService = {
     const country = countryOverride || await getUserCountry(userId);
     const cached = await readCachedPrices(country);
     if (cached) return cached;
-    return withinBudget(country, inFlightPrices.get(country) ?? this.startPriceFetch(country));
+    const fetched = await withinBudget(country, inFlightPrices.get(country) ?? this.startPriceFetch(country));
+    return fetched ?? estimatedPricesFor(country);
   },
 
   /** Fetches upstream once and caches the result (live 6 h, estimates 30 min). */
@@ -462,6 +469,31 @@ export const marketPriceService = {
       }
     }
 
+    // A cold lookup probes four years plus the year before the hit — up to five
+    // 8 s upstream calls, longer than the app's 30 s request budget. Answer
+    // within the lookup budget instead of letting the public card time out.
+    const snapshot = await withinBudget(
+      country,
+      inFlightLanding.get(country) ?? this.startLandingFetch(country)
+    );
+    // The timeout fallback is deliberately not cached: only a real upstream
+    // answer may suppress the next lookup.
+    return snapshot ?? {
+      prices: [],
+      period: null,
+      dataStatus: 'unavailable',
+      fetchedAt: new Date().toISOString(),
+    };
+  },
+
+  /** Runs the landing fetch once per country and caches what upstream returned. */
+  startLandingFetch(country: string): Promise<LandingMarketPrices> {
+    const fetching = this.fetchLandingSnapshot(country).finally(() => inFlightLanding.delete(country));
+    inFlightLanding.set(country, fetching);
+    return fetching;
+  },
+
+  async fetchLandingSnapshot(country: string): Promise<LandingMarketPrices> {
     const areaCode = faostatAreaCode(country);
     const rows = await fetchLatestFaostatYear(areaCode, [...LANDING_CROPS]);
     const period = rows[0]?.year ?? null;

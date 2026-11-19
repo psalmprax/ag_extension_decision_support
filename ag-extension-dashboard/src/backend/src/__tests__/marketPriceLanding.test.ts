@@ -102,6 +102,29 @@ describe('landing producer prices', () => {
         );
     });
 
+    it('answers within the lookup budget when upstream outlasts it', async () => {
+        const previousBudget = process.env.MARKET_PRICE_BUDGET_MS;
+        process.env.MARKET_PRICE_BUDGET_MS = '25';
+        // Each probe outlives the budget, as FAOSTAT does when it is slow. The
+        // route used to hold the request until the app's 30 s timeout (408).
+        mockFetch.mockImplementation(() => new Promise(resolve => {
+            setTimeout(() => resolve([]), 60);
+        }));
+
+        try {
+            const startedAt = Date.now();
+            const snapshot = await marketPriceService.getLandingPrices('Kenya');
+
+            expect(Date.now() - startedAt).toBeLessThan(1000);
+            expect(snapshot).toMatchObject({ prices: [], period: null, dataStatus: 'unavailable' });
+        } finally {
+            // Let the shared background fetch settle so it cannot leak into later tests.
+            await new Promise(resolve => setTimeout(resolve, 600));
+            if (previousBudget === undefined) delete process.env.MARKET_PRICE_BUDGET_MS;
+            else process.env.MARKET_PRICE_BUDGET_MS = previousBudget;
+        }
+    });
+
     it('drops unusable values rather than quoting them', async () => {
         respondByYear({
             [lastYear]: [faoRow('0112', 0, lastYear), faoRow('01591', 900, lastYear)],
