@@ -45,7 +45,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
               {t('billing_admin_transactions') || 'Pending Mobile Money Queue'}
             </h3>
             <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-              Manual USSD / Till Verification
+              {t('ui_manual_plan_grants_manual_ussd_till_verification')}
             </p>
           </div>
         </div>
@@ -136,13 +136,13 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
               {t('billing_admin_vouchers') || 'AgriVoucher Minting Engine'}
             </h3>
             <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-              Batch Generation for Cooperatives & NGOs
+              {t('ui_manual_plan_grants_batch_generation_for_cooperatives_ng')}
             </p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div>
-            <label className="text-xs font-medium text-slate-400 mb-1.5 block">Target Tier</label>
+            <label className="text-xs font-medium text-slate-400 mb-1.5 block">{t('ui_manual_plan_grants_target_tier')}</label>
             <Select
               value={billing.voucherBatch.planId}
               onChange={e =>

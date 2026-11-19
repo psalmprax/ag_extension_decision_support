@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import { Activity, AlertTriangle, Clock, MessageSquare, TrendingUp } from 'lucide-react';
 import type { PerformanceMetrics } from '@/api/analyticsService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface KpiTileProps {
   label: string;
@@ -13,6 +14,7 @@ interface KpiTileProps {
 }
 
 function KpiTile({ label, icon: Icon, tone, value, definition, sample }: KpiTileProps) {
+  const { t } = useLanguage();
   return (
     <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
       <div className="flex items-center justify-between">
@@ -23,7 +25,7 @@ function KpiTile({ label, icon: Icon, tone, value, definition, sample }: KpiTile
       </div>
       <div>
         {value === null ? (
-          <p className="text-sm font-medium text-slate-500 dark:text-white/50 py-1.5">No data yet</p>
+          <p className="text-sm font-medium text-slate-500 dark:text-white/50 py-1.5">{t('ui_kpi_tiles_no_data_yet')}</p>
         ) : (
           <p className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight font-mono tabular-nums">
             {value}

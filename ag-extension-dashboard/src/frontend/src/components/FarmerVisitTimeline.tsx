@@ -60,7 +60,7 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
                   </span>
                 </div>
                 <p className="text-xs-plus text-gray-500 dark:text-gray-400 leading-relaxed italic">
-                  &ldquo;{visit.reason || visit.notes || t('visit_routine_inspection')}&rdquo;
+                  {t('ui_farmer_visit_timeline_ldquo')}{visit.reason || visit.notes || t('visit_routine_inspection')}{t('ui_farmer_visit_timeline_rdquo')}
                 </p>
                 {visit.status === 'scheduled' && (
                   <div className="flex gap-2 mt-3">
@@ -69,7 +69,7 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
                       onClick={() => handleUpdateVisitStatus(visit.id, 'completed')}
                       className="bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 text-micro font-black uppercase tracking-widest border border-green-500/20"
                     >
-                      Complete
+                      {t('ui_farmer_visit_timeline_complete')}
                     </Button>
                     <Button
                       size="sm"
@@ -77,7 +77,7 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
                       onClick={() => handleUpdateVisitStatus(visit.id, 'cancelled')}
                       className="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-micro font-black uppercase tracking-widest border border-red-500/20"
                     >
-                      Cancel
+                      {t('common_cancel')}
                     </Button>
                   </div>
                 )}

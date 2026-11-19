@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { requestPasswordReset } from '@/api/authService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export const ForgotPassword: React.FC = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -39,8 +41,8 @@ export const ForgotPassword: React.FC = () => {
         className={`w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-2xl overflow-hidden`}
       >
         <div className="p-8 bg-gradient-to-br from-primary-500 to-primary-700 text-white">
-          <h1 className="text-2xl font-bold">Reset Password</h1>
-          <p className="text-sm opacity-90 mt-1">Enter your email to receive reset instructions</p>
+          <h1 className="text-2xl font-bold">{t('ui_forgot_password_reset_password')}</h1>
+          <p className="text-sm opacity-90 mt-1">{t('ui_forgot_password_enter_your_email_to_receive_reset_in')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
@@ -55,7 +57,7 @@ export const ForgotPassword: React.FC = () => {
                 onClick={() => navigate('/login')}
                 className={`w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold btn btn-primary w-full transition-colors`}
               >
-                Back to Login
+                {t('ui_forgot_password_back_to_login')}
               </button>
             </div>
           ) : (
@@ -71,7 +73,7 @@ export const ForgotPassword: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Email Address
+                  {t('login_email')}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -101,7 +103,7 @@ export const ForgotPassword: React.FC = () => {
                 className="w-full py-3 text-gray-500 dark:text-gray-400 font-medium text-sm hover:text-gray-700 dark:hover:text-gray-200 transition-colors flex items-center justify-center gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Back to Login
+                {t('ui_forgot_password_back_to_login')}
               </button>
             </>
           )}

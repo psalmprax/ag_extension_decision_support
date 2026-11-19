@@ -185,13 +185,13 @@ export const FarmerRegistrationForm: React.FC = () => {
         <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
           <Lock className="w-6 h-6 text-amber-400" />
         </div>
-        <h2 className="text-xl font-bold tracking-tight text-white mb-2">Register Client</h2>
+        <h2 className="text-xl font-bold tracking-tight text-white mb-2">{t('ui_farmer_registration_form_register_client')}</h2>
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-medium mb-3">
           <Layers className="w-3.5 h-3.5" />
-          <span>Interactive Preview Mode</span>
+          <span>{t('ui_farmer_registration_form_interactive_preview_mode')}</span>
         </div>
         <p className="text-slate-400 text-sm max-w-md mx-auto">
-          Farmer registration is simulated in sandbox demo mode. Sign in to an active tenant account to enroll live farmers into the agricultural telemetry mesh.
+          {t('ui_farmer_registration_form_farmer_registration_is_simulated_in')}
         </p>
       </div>
     );
@@ -220,21 +220,21 @@ export const FarmerRegistrationForm: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Register Client</h1>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">{t('ui_farmer_registration_form_register_client')}</h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <Radio className="w-2.5 h-2.5 text-emerald-400" />
-                  Edge Intake Node
+                  {t('ui_farmer_registration_form_edge_intake_node')}
                 </span>
               </div>
               <p className="text-xs text-white/60 mt-0.5">
-                Enroll smallholders into real-time advisory pipelines, NASA POWER weather radar, and autonomous SMS/WhatsApp campaigns.
+                {t('ui_farmer_registration_form_enroll_smallholders_into_real_time_a')}
               </p>
             </div>
           </div>
 
           {/* Quick-Fill Agronomic Presets */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-medium text-white/50">Quick fill:</span>
+            <span className="text-xs font-medium text-white/50">{t('ui_farmer_registration_form_quick_fill')}</span>
             {ONBOARDING_PRESETS.map(p => (
               <button
                 key={p.name}
@@ -257,7 +257,7 @@ export const FarmerRegistrationForm: React.FC = () => {
         dismissible
         enableAudio
       >
-        Farmers registered in your assigned district are automatically attached to your portfolio with immediate access to chats, field visits, and GPS parcel mapping.
+        {t('ui_farmer_registration_form_farmers_registered_in_your_assigned')}
       </InlinePrompt>
 
       {/* ── Main Bento Grid Form ── */}
@@ -267,7 +267,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           <div className="backdrop-blur-xl bg-slate-900 border border-white/10 rounded-xl p-6 space-y-5 shadow-lg">
             <div className="flex items-center gap-2.5 pb-2 border-b border-white/5">
               <UserPlus className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-sm font-semibold text-white">Identity & communication profile</h2>
+              <h2 className="text-sm font-semibold text-white">{t('ui_farmer_registration_form_identity_communication_profile')}</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -311,8 +311,8 @@ export const FarmerRegistrationForm: React.FC = () => {
                 </label>
                 <div className="flex items-center gap-1.5 text-xxs text-white/40">
                   <span className="px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10">SMS</span>
-                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">WhatsApp</span>
-                  <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">Telegram</span>
+                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{t('ui_farmer_registration_form_whatsapp')}</span>
+                  <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">{t('ui_farmer_registration_form_telegram')}</span>
                 </div>
               </div>
               <div className="relative">
@@ -360,13 +360,13 @@ export const FarmerRegistrationForm: React.FC = () => {
                     {...register('languagePreference')}
                     className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-white/10 bg-slate-900 text-white focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm"
                   >
-                    <option value="en">English (en)</option>
-                    <option value="sw">Kiswahili (sw)</option>
-                    <option value="lug">Luganda (lug)</option>
-                    <option value="ny">Chichewa (ny)</option>
-                    <option value="am">Amharic (am)</option>
-                    <option value="oro">Afaan Oromoo (oro)</option>
-                    <option value="fr">Français (fr)</option>
+                    <option value="en">{t('ui_farmer_registration_form_english_en')}</option>
+                    <option value="sw">{t('ui_farmer_registration_form_kiswahili_sw')}</option>
+                    <option value="lug">{t('ui_farmer_registration_form_luganda_lug')}</option>
+                    <option value="ny">{t('ui_farmer_registration_form_chichewa_ny')}</option>
+                    <option value="am">{t('ui_farmer_registration_form_amharic_am')}</option>
+                    <option value="oro">{t('ui_farmer_registration_form_afaan_oromoo_oro')}</option>
+                    <option value="fr">{t('ui_farmer_registration_form_franc_ais_fr')}</option>
                   </select>
                 </div>
               </div>
@@ -382,16 +382,16 @@ export const FarmerRegistrationForm: React.FC = () => {
           <div className="backdrop-blur-xl bg-slate-900 border border-white/10 rounded-xl p-6 space-y-5 shadow-sm">
             <div className="flex items-center gap-2.5 pb-2 border-b border-white/5">
               <Layers className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-sm font-semibold text-white">Agronomic portfolio & parcel</h2>
+              <h2 className="text-sm font-semibold text-white">{t('ui_farmer_registration_form_agronomic_portfolio_parcel')}</h2>
             </div>
 
             {/* Multi-Crop Tag Chips */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="block text-xs font-medium text-white/70">
-                  Cultivated Crops ({selectedCrops.length} selected)
+                  {t('ui_farmer_registration_form_cultivated_crops_selected', { length: selectedCrops.length })}
                 </label>
-                <span className="text-xxs text-white/40">Click chips to toggle</span>
+                <span className="text-xxs text-white/40">{t('ui_farmer_registration_form_click_chips_to_toggle')}</span>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -431,7 +431,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                   className="px-3 py-1.5 rounded-lg bg-white/[0.05] hover:bg-emerald-500/20 border border-white/10 text-xs font-medium text-white flex items-center gap-1 transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add</span>
+                  <span>{t('common_add')}</span>
                 </button>
               </div>
             </div>
@@ -465,7 +465,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                   className="w-full pl-11 pr-16 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm font-mono tabular-nums"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-white/40">
-                  Hectares
+                  {t('map_hectares')}
                 </span>
               </div>
               {errors.farmSize && (
@@ -482,7 +482,7 @@ export const FarmerRegistrationForm: React.FC = () => {
               <div className="flex items-center gap-2.5">
                 <Compass className="w-4 h-4 text-emerald-400" />
                 <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
-                  Geospatial Telemetry
+                  {t('ui_farmer_registration_form_geospatial_telemetry')}
                   <InfoPromptIcon
                     title="GPS & Earth Observation"
                     content="GPS coordinates connect the farm to Sentinel NDVI satellite vegetation monitoring and localized rainfall forecasting."
@@ -505,7 +505,7 @@ export const FarmerRegistrationForm: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-white/70">
-                  Latitude
+                  {t('latitude')}
                 </label>
                 <input
                   type="number"
@@ -518,7 +518,7 @@ export const FarmerRegistrationForm: React.FC = () => {
 
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-white/70">
-                  Longitude
+                  {t('longitude')}
                 </label>
                 <input
                   type="number"
@@ -536,28 +536,28 @@ export const FarmerRegistrationForm: React.FC = () => {
                 <div className="flex items-center justify-between text-xxs">
                   <span className="font-medium text-emerald-400 flex items-center gap-1.5">
                     <Radio className="w-3 h-3 text-emerald-400" />
-                    Auto-Linked Earth Observation
+                    {t('ui_farmer_registration_form_auto_linked_earth_observation')}
                   </span>
-                  <span className="text-white/40 font-mono">NASA POWER / SoilGrids</span>
+                  <span className="text-white/40 font-mono">{t('ui_farmer_registration_form_nasa_power_soilgrids')}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center text-xs">
                   <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
-                    <div className="text-xxs text-white/40">Estimated pH</div>
-                    <div className="font-semibold text-white mt-0.5 tabular-nums">6.2 (Optimal)</div>
+                    <div className="text-xxs text-white/40">{t('ui_farmer_registration_form_estimated_ph')}</div>
+                    <div className="font-semibold text-white mt-0.5 tabular-nums">{t('ui_farmer_registration_form_6_2_optimal')}</div>
                   </div>
                   <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
-                    <div className="text-xxs text-white/40">Rainfall Risk</div>
-                    <div className="font-semibold text-emerald-400 mt-0.5 tabular-nums">Low (+18mm)</div>
+                    <div className="text-xxs text-white/40">{t('ui_farmer_registration_form_rainfall_risk')}</div>
+                    <div className="font-semibold text-emerald-400 mt-0.5 tabular-nums">{t('ui_farmer_registration_form_low_18mm')}</div>
                   </div>
                   <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
-                    <div className="text-xxs text-white/40">Solar Rad</div>
+                    <div className="text-xxs text-white/40">{t('ui_farmer_registration_form_solar_rad')}</div>
                     <div className="font-semibold text-amber-300 mt-0.5 tabular-nums">21.4 MJ/m²</div>
                   </div>
                 </div>
               </div>
             ) : (
               <p className="text-xxs text-white/40 leading-relaxed italic">
-                Coordinates are optional. Adding GPS coordinates connects this farm to high-resolution NDVI vegetation indices and hyper-local precipitation forecasts.
+                {t('ui_farmer_registration_form_coordinates_are_optional_adding_gps')}
               </p>
             )}
           </div>
@@ -568,7 +568,7 @@ export const FarmerRegistrationForm: React.FC = () => {
               <div className="flex items-center gap-2.5">
                 <Activity className="w-4 h-4 text-emerald-400" />
                 <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
-                  Vital Score Baseline
+                  {t('ui_farmer_registration_form_vital_score_baseline')}
                   <InfoPromptIcon
                     title="Vital Score Health Index"
                     content="Composite score (0–100) reflecting crop vigor, soil moisture level, and pest/disease vulnerability tier."
@@ -584,9 +584,9 @@ export const FarmerRegistrationForm: React.FC = () => {
 
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs text-white/60 font-medium">
-                <span>Critical Risk (&lt;65)</span>
-                <span>Moderate (65–79)</span>
-                <span>Optimal (80–100)</span>
+                <span>{t('ui_farmer_registration_form_critical_risk_65')}</span>
+                <span>{t('ui_farmer_registration_form_moderate_65_79')}</span>
+                <span>{t('ui_farmer_registration_form_optimal_80_100')}</span>
               </div>
               <input
                 type="range"
@@ -599,9 +599,9 @@ export const FarmerRegistrationForm: React.FC = () => {
             </div>
 
             <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 text-xs text-white/70 space-y-1">
-              <div className="font-medium text-white">Dynamic Workflow Dispatch:</div>
+              <div className="font-medium text-white">{t('ui_farmer_registration_form_dynamic_workflow_dispatch')}</div>
               <p className="text-xxs leading-relaxed text-white/50">
-                Farmers registered with a Vital Score below <strong className="text-rose-400 tabular-nums">65</strong> are instantly queued for priority on-site field visits and flagged in the extension officer dispatch roster.
+                {t('ui_farmer_registration_form_farmers_registered_with_a_vital_scor')} <strong className="text-rose-400 tabular-nums">65</strong> {t('ui_farmer_registration_form_are_instantly_queued_for_priority_on')}
               </p>
             </div>
           </div>
@@ -611,7 +611,7 @@ export const FarmerRegistrationForm: React.FC = () => {
         <div className="backdrop-blur-xl bg-slate-900/80 border border-white/10 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
           <div className="flex items-center gap-2 text-xs text-white/60">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>Ready to activate real-time advisory profile & automated onboarding sync.</span>
+            <span>{t('ui_farmer_registration_form_ready_to_activate_real_time_advisory')}</span>
           </div>
 
           <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -623,7 +623,7 @@ export const FarmerRegistrationForm: React.FC = () => {
               }}
               className="px-4 py-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] text-xs font-medium text-white/70 hover:text-white transition-colors border border-white/10"
             >
-              Reset Form
+              {t('ui_farmer_registration_form_reset_form')}
             </button>
 
             <button

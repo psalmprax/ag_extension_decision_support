@@ -23,6 +23,7 @@ import apiClient from '@/api/client';
 import { EncryptedStorageService } from '@/services/encryptedStorageService';
 import { Language, languages } from '@/lib/i18n';
 import { FloatingAssistantShell } from './FloatingAssistantShell';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const LANGUAGE_LOCALE_MAP: Record<Language, string> = {
   en: 'en-US',
@@ -1086,15 +1087,16 @@ interface LanguageSelectorProps {
 const PILOT_LANGUAGES: Language[] = ['en', 'sw', 'fr', 'es', 'pt'];
 
 function LanguageSelector({ selectedLanguage, onSelectLanguage }: LanguageSelectorProps) {
+  const { t } = useLanguage();
   return (
     <div className="w-full mb-1">
       <div className="flex items-center justify-between mb-2 px-0.5">
         <div className="flex items-center gap-2 text-xs font-medium text-white/70">
           <Globe className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="font-mono uppercase tracking-wider">Voice Language</span>
+          <span className="font-mono uppercase tracking-wider">{t('ui_talking_assistant_voice_language')}</span>
         </div>
         <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-          24 Languages
+          {t('ui_talking_assistant_24_languages')}
         </span>
       </div>
       <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-950/70 border border-white/[0.08]">
@@ -1193,11 +1195,12 @@ function VoiceOrbIcon({
   isListening?: boolean;
   isSpeaking?: boolean;
 }) {
+  const { t } = useLanguage();
   if (isTranscribing) {
     return (
       <>
         <Loader2 className="w-9 h-9 animate-spin" />
-        <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Transcribing</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider mt-1">{t('ui_talking_assistant_transcribing')}</span>
       </>
     );
   }
@@ -1205,7 +1208,7 @@ function VoiceOrbIcon({
     return (
       <>
         <Mic className="w-9 h-9 animate-pulse" />
-        <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Listening</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider mt-1">{t('ui_talking_assistant_listening')}</span>
       </>
     );
   }
@@ -1213,14 +1216,14 @@ function VoiceOrbIcon({
     return (
       <>
         <Volume2 className="w-9 h-9 animate-bounce" />
-        <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Speaking</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider mt-1">{t('ui_talking_assistant_speaking')}</span>
       </>
     );
   }
   return (
     <>
       <Mic className="w-9 h-9" />
-      <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Tap to Speak</span>
+      <span className="text-[10px] font-bold uppercase tracking-wider mt-1">{t('ui_talking_assistant_tap_to_speak')}</span>
     </>
   );
 }
@@ -1362,6 +1365,7 @@ interface PersonaSelectorProps {
 }
 
 function PersonaSelector({ selectedPersona, onSelectPersona }: PersonaSelectorProps) {
+  const { t } = useLanguage();
   const personas: Array<{ id: VoicePersona; label: string; icon: React.ElementType; desc: string }> = [
     { id: 'amani', label: 'Amani', icon: Leaf, desc: 'Warm Field Agronomist' },
     { id: 'baraka', label: 'Baraka', icon: Zap, desc: 'Dynamic Extension Lead' },
@@ -1372,10 +1376,10 @@ function PersonaSelector({ selectedPersona, onSelectPersona }: PersonaSelectorPr
     <div className="w-full my-2">
       <div className="flex items-center justify-between mb-1.5 px-0.5">
         <span className="text-[11px] font-medium tracking-wider uppercase text-white/50">
-          Voice Persona
+          {t('ui_talking_assistant_voice_persona')}
         </span>
         <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-          HD Neural
+          {t('ui_talking_assistant_hd_neural')}
         </span>
       </div>
       <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.08]">
@@ -1418,6 +1422,7 @@ function AudioControls({
   onToggleAutoSpeak,
   onStopSpeaking,
 }: AudioControlsProps) {
+  const { t } = useLanguage();
   return (
     <div className="w-full mt-2 pt-2 border-t border-white/[0.08] flex items-center justify-between text-xs text-white/70">
       <div className="flex items-center gap-2">
@@ -1431,7 +1436,7 @@ function AudioControls({
           ) : (
             <VolumeX className="w-4 h-4 text-white/40" />
           )}
-          <span>Auto-Voice Playback: {autoSpeak ? 'ON' : 'OFF'}</span>
+          <span>{t('ui_talking_assistant_auto_voice_playback')} {autoSpeak ? 'ON' : 'OFF'}</span>
         </button>
       </div>
 
@@ -1441,7 +1446,7 @@ function AudioControls({
           onClick={onStopSpeaking}
           className="px-2 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 text-[11px] font-semibold"
         >
-          Stop Audio
+          {t('ui_talking_assistant_stop_audio')}
         </button>
       )}
     </div>
@@ -1454,6 +1459,7 @@ interface ActiveContextBannerProps {
 }
 
 function ActiveContextBanner({ slots, onClear }: ActiveContextBannerProps) {
+  const { t } = useLanguage();
   const activeEntries = Object.entries(slots).filter(([_, v]) => Boolean(v));
   if (activeEntries.length === 0) return null;
 
@@ -1461,7 +1467,7 @@ function ActiveContextBanner({ slots, onClear }: ActiveContextBannerProps) {
     <div className="mb-3 px-3 py-2 rounded-lg bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between gap-2 text-xs">
       <div className="flex items-center gap-1.5 flex-wrap">
         <span className="text-emerald-400 font-semibold uppercase tracking-wider text-[10px]">
-          Active Context:
+          {t('ui_talking_assistant_active_context')}
         </span>
         {slots.crop && (
           <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
@@ -1496,7 +1502,7 @@ function ActiveContextBanner({ slots, onClear }: ActiveContextBannerProps) {
         title="Reset conversation context"
       >
         <RotateCcw className="w-3 h-3" />
-        <span>Reset</span>
+        <span>{t('ui_talking_assistant_reset')}</span>
       </button>
     </div>
   );
@@ -1507,6 +1513,7 @@ interface HandoffCardProps {
 }
 
 function HandoffCard({ onHandoff }: HandoffCardProps) {
+  const { t } = useLanguage();
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -1518,9 +1525,9 @@ function HandoffCard({ onHandoff }: HandoffCardProps) {
           <ShieldCheck className="w-4 h-4" />
         </div>
         <div className="text-xs">
-          <p className="font-semibold text-white">Save this Diagnostic Advisory</p>
+          <p className="font-semibold text-white">{t('ui_talking_assistant_save_this_diagnostic_advisory')}</p>
           <p className="text-white/60 text-[11px]">
-            Generate an official Field Visit Report and persist your consultation history.
+            {t('ui_talking_assistant_generate_an_official_field_visit_rep')}
           </p>
         </div>
       </div>
@@ -1529,7 +1536,7 @@ function HandoffCard({ onHandoff }: HandoffCardProps) {
         onClick={onHandoff}
         className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs transition-colors flex items-center gap-1 shrink-0 shadow-sm"
       >
-        <span>Sign up free</span>
+        <span>{t('ui_talking_assistant_sign_up_free')}</span>
         <ChevronRight className="w-3.5 h-3.5" />
       </button>
     </motion.div>
@@ -1542,6 +1549,7 @@ interface ChatMessageProps {
 }
 
 function ChatMessage({ msg, onSpeak }: ChatMessageProps) {
+  const { t } = useLanguage();
   const isUser = msg.sender === 'user';
   return (
     <motion.div
@@ -1571,7 +1579,7 @@ function ChatMessage({ msg, onSpeak }: ChatMessageProps) {
 
         {msg.sourceBadge && (
           <div className="mt-2 pt-2 border-t border-white/[0.08] flex items-center justify-between text-[11px] text-emerald-400/90 font-mono">
-            <span className="min-w-0 truncate" title={msg.sourceBadge}>Source: {msg.sourceBadge}</span>
+            <span className="min-w-0 truncate" title={msg.sourceBadge}>{t('ui_talking_assistant_source', { sourceBadge: msg.sourceBadge })}</span>
             <button
               type="button"
               onClick={() => onSpeak(msg.text, msg.language ?? 'en')}
@@ -1579,7 +1587,7 @@ function ChatMessage({ msg, onSpeak }: ChatMessageProps) {
               title="Listen to this advisory again"
             >
               <Volume2 className="w-3.5 h-3.5" />
-              <span>Listen</span>
+              <span>{t('ui_talking_assistant_listen')}</span>
             </button>
           </div>
         )}
@@ -1594,11 +1602,12 @@ interface QuestionChipsProps {
 }
 
 function QuestionChips({ onSelect, expanded }: QuestionChipsProps) {
+  const { t } = useLanguage();
   return (
     <details open={expanded} className="mt-4 mb-2">
       <summary className="min-h-[44px] cursor-pointer text-xs font-semibold text-white/70 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400">
         <HelpCircle className="w-3.5 h-3.5 text-emerald-400" />
-        <span>Suggested questions</span>
+        <span>{t('ui_talking_assistant_suggested_questions')}</span>
         <ChevronDown className="ml-auto h-4 w-4" aria-hidden="true" />
       </summary>
       <div className="flex flex-wrap gap-2">
@@ -1721,6 +1730,7 @@ function getNextAssistantTab(tab: 'chat' | 'voice', key: string): 'chat' | 'voic
 }
 
 export function TalkingAssistant({ defaultOpen = false, className = '' }: TalkingAssistantProps = {}) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [activeTab, setActiveTab] = useState<'chat' | 'voice'>('chat');
   const isOpenRef = useRef(isOpen);
@@ -1980,7 +1990,7 @@ export function TalkingAssistant({ defaultOpen = false, className = '' }: Talkin
                 {isLoading && (
                   <div className="flex items-center gap-2 text-xs text-emerald-400 py-1 font-mono">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Agronomic Engine consulting knowledge base...</span>
+                    <span>{t('ui_talking_assistant_agronomic_engine_consulting_knowledg')}</span>
                   </div>
                 )}
         </div>

@@ -4,6 +4,7 @@ import { useDemoMode } from '@/demo';
 import { useAppStore } from '@/store/useAppStore';
 import apiClient from '@/api/client';
 import { liveLayersSummary, pestSwarmLabel, type PestSwarmStatus } from './worldMonitorStatus';
+import { useLanguage } from '@/lib/LanguageContext';
 
 type Filters = { region?: string; crop?: string; county?: string };
 
@@ -15,6 +16,7 @@ type Filters = { region?: string; crop?: string; county?: string };
  * surfaces the live layer data without shipping the deck.gl payload.
  */
 const WorldMonitor: React.FC = () => {
+  const { t } = useLanguage();
   const { isDemo } = useDemoMode();
   const user = useAppStore(s => s.user);
   const isOfficer = user?.role === 'extension_officer' || user?.role === 'admin' || user?.role === 'regional_manager';
@@ -54,8 +56,8 @@ const WorldMonitor: React.FC = () => {
     return (
       <div className="max-w-3xl mx-auto p-8 text-center space-y-3">
         <Globe className="w-10 h-10 text-slate-400 dark:text-white/20 mx-auto" />
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Officer Globe</h2>
-        <p className="text-sm text-slate-500 dark:text-white/60">WorldMonitor is available for extension officers and admins on desktop. Farmers use the lightweight Leaflet map in the dashboard.</p>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('ui_world_monitor_officer_globe')}</h2>
+        <p className="text-sm text-slate-500 dark:text-white/60">{t('ui_world_monitor_worldmonitor_is_available_for_extens')}</p>
       </div>
     );
   }
@@ -65,34 +67,34 @@ const WorldMonitor: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-white/10">
         <div className="flex items-center gap-2.5">
           <Globe className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-          <h1 className="text-base font-semibold text-slate-900 dark:text-white">WorldMonitor — Live Spatial GIS</h1>
-          <span className="px-2 py-0.5 rounded text-xs font-medium bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/20">Live GIS</span>
-          {isDemo && <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">Demo filters</span>}
+          <h1 className="text-base font-semibold text-slate-900 dark:text-white">{t('ui_world_monitor_worldmonitor_live_spatial_gis')}</h1>
+          <span className="px-2 py-0.5 rounded text-xs font-medium bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/20">{t('ui_world_monitor_live_gis')}</span>
+          {isDemo && <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">{t('ui_world_monitor_demo_filters')}</span>}
         </div>
         <div className="flex items-center gap-2">
           <input placeholder="Region" value={filters.region || ''} onChange={e => setFilters(s => ({ ...s, region: e.target.value || undefined }))} className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs w-28 placeholder:text-slate-400 focus:outline-none focus:border-cyan-500" />
           <input placeholder="Crop" value={filters.crop || ''} onChange={e => setFilters(s => ({ ...s, crop: e.target.value || undefined }))} className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs w-28 placeholder:text-slate-400 focus:outline-none focus:border-cyan-500" />
           <input placeholder="County" value={filters.county || ''} onChange={e => setFilters(s => ({ ...s, county: e.target.value || undefined }))} className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs w-28 placeholder:text-slate-400 focus:outline-none focus:border-cyan-500" />
-          <button onClick={() => fetchLayers()} disabled={loading} className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium disabled:opacity-50 transition-colors">Apply</button>
+          <button onClick={() => fetchLayers()} disabled={loading} className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium disabled:opacity-50 transition-colors">{t('ui_world_monitor_apply')}</button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
           <Satellite className="w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
-          <div><div className="text-xs text-slate-500 dark:text-white/50">Satellite orbit</div><div className="text-xs font-medium text-slate-900 dark:text-white">{data ? 'Not connected yet' : '—'}</div></div>
+          <div><div className="text-xs text-slate-500 dark:text-white/50">{t('ui_world_monitor_satellite_orbit')}</div><div className="text-xs font-medium text-slate-900 dark:text-white">{data ? 'Not connected yet' : '—'}</div></div>
         </div>
         <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
           <Layers className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-          <div><div className="text-xs text-slate-500 dark:text-white/50">NDVI stress</div><div className="text-xs font-medium font-mono tabular-nums text-slate-900 dark:text-white">{data?.ndviPoints?.length ?? 0} points (30d)</div></div>
+          <div><div className="text-xs text-slate-500 dark:text-white/50">{t('ui_world_monitor_ndvi_stress')}</div><div className="text-xs font-medium font-mono tabular-nums text-slate-900 dark:text-white">{data?.ndviPoints?.length ?? 0} {t('ui_world_monitor_points_30d')}</div></div>
         </div>
         <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
           <Droplets className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-          <div><div className="text-xs text-slate-500 dark:text-white/50">SoilGrids horizon</div><div className="text-xs font-medium font-mono tabular-nums text-slate-900 dark:text-white">{data?.soilHorizon ? `${data.soilHorizon.baseline?.ph ?? '—'} pH` : '—'}</div></div>
+          <div><div className="text-xs text-slate-500 dark:text-white/50">{t('ui_world_monitor_soilgrids_horizon')}</div><div className="text-xs font-medium font-mono tabular-nums text-slate-900 dark:text-white">{data?.soilHorizon ? `${data.soilHorizon.baseline?.ph ?? '—'} pH` : '—'}</div></div>
         </div>
         <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
           <Bug className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
-          <div><div className="text-xs text-slate-500 dark:text-white/50">Pest swarm</div><div className="text-xs font-medium font-mono tabular-nums text-slate-900 dark:text-white">{pestSwarmLabel(data?.pestSwarm)}</div></div>
+          <div><div className="text-xs text-slate-500 dark:text-white/50">{t('ui_world_monitor_pest_swarm')}</div><div className="text-xs font-medium font-mono tabular-nums text-slate-900 dark:text-white">{pestSwarmLabel(data?.pestSwarm)}</div></div>
         </div>
       </div>
 
@@ -101,18 +103,18 @@ const WorldMonitor: React.FC = () => {
       <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-950 h-[520px] relative">
         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
           <Globe className="w-10 h-10 text-white/20 mb-2" />
-          <p className="text-sm font-semibold text-white">Spatial Layer Status</p>
-          <p className="text-xs text-white/50 mt-1 max-w-md">{liveLayersSummary(data?.pestSwarm?.status)}, filtered by region/crop/county. Globe canvas is officer-desktop only to keep the farmer PWA lightweight.</p>
+          <p className="text-sm font-semibold text-white">{t('ui_world_monitor_spatial_layer_status')}</p>
+          <p className="text-xs text-white/50 mt-1 max-w-md">{liveLayersSummary(data?.pestSwarm?.status)}{t('ui_world_monitor_filtered_by_region_crop_county_globe')}</p>
           <div className="mt-4 grid grid-cols-2 gap-2 text-left text-xs font-mono tabular-nums w-full max-w-2xl">
-            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-emerald-400">Farmers mapped:</span> {data?.farmers?.length ?? 0}</div>
-            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-amber-400">Soil centroid:</span> {data?.soilHorizon ? `${Number(data.soilHorizon.centroid.lat).toFixed(2)}, ${Number(data.soilHorizon.centroid.lon).toFixed(2)}` : '—'}</div>
-            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-rose-400">Swarm clusters:</span> {data?.pestSwarm?.clusters?.map(c => c.clusterId.slice(0, 8)).join(', ') || '—'}</div>
-            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-cyan-400">View:</span> {viewState.longitude.toFixed(1)}, {viewState.latitude.toFixed(1)} z{viewState.zoom}</div>
+            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-emerald-400">{t('ui_world_monitor_farmers_mapped')}</span> {data?.farmers?.length ?? 0}</div>
+            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-amber-400">{t('ui_world_monitor_soil_centroid')}</span> {data?.soilHorizon ? `${Number(data.soilHorizon.centroid.lat).toFixed(2)}, ${Number(data.soilHorizon.centroid.lon).toFixed(2)}` : '—'}</div>
+            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-rose-400">{t('ui_world_monitor_swarm_clusters')}</span> {data?.pestSwarm?.clusters?.map(c => c.clusterId.slice(0, 8)).join(', ') || '—'}</div>
+            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-cyan-400">{t('ui_world_monitor_view')}</span> {viewState.longitude.toFixed(1)}, {viewState.latitude.toFixed(1)} z{viewState.zoom}</div>
           </div>
         </div>
       </div>
 
-      <p className="text-[10px] text-slate-400 dark:text-white/40 text-center">Shows farmers with a saved location, NDVI from diagnoses in the last 30 days, SoilGrids soil at those points, and pest reports from the last 14 days. Add a farmer's location to put them on the map.</p>
+      <p className="text-[10px] text-slate-400 dark:text-white/40 text-center">{t('ui_world_monitor_shows_farmers_with_a_saved_location')}</p>
     </div>
   );
 };

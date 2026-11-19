@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { Layers, Droplets, Activity, Gauge, Flame } from 'lucide-react';
 import { useDemoMode } from '@/demo';
 import { normalizeProbePoint } from '@/lib/canvasProbe';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export type SoilLayerType = 'ph' | 'nitrogen' | 'phosphorus' | 'potassium' | 'moisture' | 'carbon';
 
@@ -342,6 +343,7 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
   realPointsByLayer,
   provenanceOverride,
 }) => {
+  const { t } = useLanguage();
   const { isDemo } = useDemoMode();
   const [activeLayer, setActiveLayer] = useState<SoilLayerType>(initialLayer);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -491,7 +493,7 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
         </div>
 
         <span className="text-xxs font-mono text-gray-500 dark:text-gray-400">
-          IDW Mesh Resolution: 8px
+          {t('ui_soil_nutrient_heatmap_canvas_idw_mesh_resolution_8px')}
         </span>
       </div>
 
@@ -506,8 +508,8 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
         {hasNoData ? (
           <div className="w-full h-[280px] flex flex-col items-center justify-center p-6 text-center bg-slate-900">
             <Layers className="w-10 h-10 text-white/20 mb-2" />
-            <p className="text-sm font-bold text-white">No live soil map yet</p>
-            <p className="text-xs text-white/50 mt-1 max-w-sm">Save this field&apos;s location or add a lab result to grow a live map here. The demo account shows a sample map.</p>
+            <p className="text-sm font-bold text-white">{t('ui_soil_nutrient_heatmap_canvas_no_live_soil_map_yet')}</p>
+            <p className="text-xs text-white/50 mt-1 max-w-sm">{t('ui_soil_nutrient_heatmap_canvas_save_this_field_s_location_or_add_a')}</p>
           </div>
         ) : (
           <canvas

@@ -118,7 +118,7 @@ export function SMSComposerPanel({
             title="Launch Autonomous Agronomy Goal Campaign"
           >
             <Target className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-            <span className="hidden sm:inline">Goal Mode</span>
+            <span className="hidden sm:inline">{t('ui_composer_panel_goal_mode')}</span>
           </button>
           <button
             type="button"
@@ -127,7 +127,7 @@ export function SMSComposerPanel({
             title="Configure SMS, WhatsApp & Telegram Gateways"
           >
             <Zap className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span className="hidden sm:inline">Gateways</span>
+            <span className="hidden sm:inline">{t('ui_composer_panel_gateways')}</span>
           </button>
           <button
             onClick={() => setShowRightPanel(!showRightPanel)}

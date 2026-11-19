@@ -3,8 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { verifyEmail } from '@/api/authService';
 import { getApiErrorMessage } from '@/lib/apiError';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export const VerifyEmail: React.FC = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const token = params.get('token') || '';
@@ -36,7 +38,7 @@ export const VerifyEmail: React.FC = () => {
         {status === 'error' && <AlertCircle className="w-10 h-10 mx-auto text-red-600" />}
         <p className="text-sm text-gray-700 dark:text-gray-300">{message}</p>
         <button type="button" onClick={() => navigate('/login')} className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition-colors">
-          Go to sign in
+          {t('ui_verify_email_go_to_sign_in')}
         </button>
       </div>
     </div>

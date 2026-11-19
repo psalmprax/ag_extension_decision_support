@@ -2,6 +2,7 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CheckCircle, AlertCircle, Info, ExternalLink } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface MarkdownRendererProps {
   content: string;
@@ -9,6 +10,7 @@ interface MarkdownRendererProps {
 }
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className = '' }) => {
+  const { t } = useLanguage();
   return (
     <div className={`markdown-content prose prose-slate dark:prose-invert max-w-none ${className}`}>
       <ReactMarkdown
@@ -92,7 +94,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
           a: ({ href, children }) => {
             const isSafe = href && !/^(?:javascript|data|vbscript):/i.test(href.trim()) && /^(?:https?:\/\/|mailto:|tel:|\/|#)/i.test(href.trim());
             if (!isSafe) {
-              return <span className="text-gray-400 font-mono text-xs italic">[Blocked Link]</span>;
+              return <span className="text-gray-400 font-mono text-xs italic">{t('ui_markdown_renderer_blocked_link')}</span>;
             }
             return (
               <a

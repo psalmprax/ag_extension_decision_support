@@ -170,7 +170,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
           </div>
           <div className="flex flex-col items-end">
             <span className="px-3 py-1 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white/80 font-mono">
-              Tier: <strong className="text-white">{plan.name}</strong>
+              {t('ui_billing_dashboard_tier')} <strong className="text-white">{plan.name}</strong>
             </span>
           </div>
         </div>

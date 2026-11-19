@@ -7,6 +7,7 @@ import { getApiErrorMessage } from '@/lib/apiError';
 import { useAppStore } from '@/store/useAppStore';
 import { MessagePhotos } from '@/components/chat/MessagePhotos';
 import { calendarDateFromToday, formatCalendarDate } from '@/lib/calendarDate';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const PROGRESS_KINDS: { value: ProgressKind; label: string; tone: string }[] = [
   { value: 'success', label: 'Success', tone: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10' },
@@ -20,6 +21,7 @@ const FIELD = 'w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2 t
 
 /** The form an officer uses to add to a farmer's progress log. */
 const ProgressEntryForm: React.FC<{ farmerId: string; crops: string[] }> = ({ farmerId, crops }) => {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [kind, setKind] = useState<ProgressKind>('observation');
   const [title, setTitle] = useState('');
@@ -61,33 +63,33 @@ const ProgressEntryForm: React.FC<{ farmerId: string; crops: string[] }> = ({ fa
     >
       <div className="grid grid-cols-2 gap-3">
         <label className="text-xs text-white/70 space-y-1">
-          <span>Type</span>
+          <span>{t('ui_farmer_progress_log_type')}</span>
           <select value={kind} onChange={e => setKind(e.target.value as ProgressKind)} className={FIELD}>
             {PROGRESS_KINDS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         </label>
         <label className="text-xs text-white/70 space-y-1">
-          <span>Date</span>
+          <span>{t('ui_farmer_progress_log_date')}</span>
           <input type="date" value={occurredOn} max={calendarDateFromToday()} onChange={e => setOccurredOn(e.target.value)} className={FIELD} />
         </label>
       </div>
       <label className="block text-xs text-white/70 space-y-1">
-        <span>What happened *</span>
+        <span>{t('ui_farmer_progress_log_what_happened')}</span>
         <input value={title} maxLength={200} onChange={e => setTitle(e.target.value)} className={FIELD}
           placeholder="e.g. Maize germination 92%, armyworm found in 3 of 20 plants" />
       </label>
       <label className="block text-xs text-white/70 space-y-1">
-        <span>Details</span>
+        <span>{t('ui_farmer_progress_log_details')}</span>
         <textarea value={details} rows={2} onChange={e => setDetails(e.target.value)} className={FIELD} />
       </label>
       <div className="grid grid-cols-2 gap-3">
         <label className="text-xs text-white/70 space-y-1">
-          <span>Crop</span>
+          <span>{t('ui_goal_mode_campaign_modal_crop')}</span>
           <input value={crop} list="progress-crops" onChange={e => setCrop(e.target.value)} className={FIELD} />
           <datalist id="progress-crops">{crops.map(c => <option key={c} value={c} />)}</datalist>
         </label>
         <label className="text-xs text-white/70 space-y-1">
-          <span>Photos (up to 4)</span>
+          <span>{t('ui_farmer_progress_log_photos_up_to_4')}</span>
           <input type="file" accept="image/jpeg,image/png,image/webp" multiple
             onChange={e => setPhotos(Array.from(e.target.files ?? []).slice(0, 4))} className="text-xs" />
         </label>
@@ -106,6 +108,7 @@ const ProgressEntryForm: React.FC<{ farmerId: string; crops: string[] }> = ({ fa
  * farmer can read their own log.
  */
 export const FarmerProgressLog: React.FC<{ farmerId: string; crops?: string[] }> = ({ farmerId, crops = [] }) => {
+  const { t } = useLanguage();
   const role = useAppStore(state => state.user?.role);
   const canRecord = role === 'extension_officer' || role === 'regional_manager' || role === 'admin';
   const { data: entries = [], isLoading, isError } = useQuery({
@@ -125,10 +128,10 @@ export const FarmerProgressLog: React.FC<{ farmerId: string; crops?: string[] }>
         ))}
       </div>
       {canRecord && <ProgressEntryForm farmerId={farmerId} crops={crops} />}
-      {isLoading && <p className="text-xs text-white/50">Loading progress…</p>}
-      {isError && <p role="alert" className="text-xs text-rose-300">The progress log could not be loaded.</p>}
+      {isLoading && <p className="text-xs text-white/50">{t('ui_farmer_progress_log_loading_progress')}</p>}
+      {isError && <p role="alert" className="text-xs text-rose-300">{t('ui_farmer_progress_log_the_progress_log_could_not_be_loaded')}</p>}
       {!isLoading && !isError && entries.length === 0 && (
-        <p className="text-xs text-white/50">No progress recorded yet.</p>
+        <p className="text-xs text-white/50">{t('ui_farmer_progress_log_no_progress_recorded_yet')}</p>
       )}
       <ol className="space-y-3" aria-label="Progress entries">
         {entries.map(entry => {

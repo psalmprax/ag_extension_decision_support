@@ -1,4 +1,5 @@
 import React, { useState, useRef, useLayoutEffect, UIEvent } from 'react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export interface VirtualizedListProps<T> {
   items: T[];
@@ -27,6 +28,7 @@ export function VirtualizedList<T>({
   emptyComponent,
   className = '',
 }: VirtualizedListProps<T>) {
+  const { t } = useLanguage();
   const [scrollTop, setScrollTop] = useState(0);
   const [measuredHeight, setMeasuredHeight] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -67,7 +69,7 @@ export function VirtualizedList<T>({
         className={`flex items-center justify-center ${className}`}
         style={containerHeight !== undefined ? { height: containerHeight } : undefined}
       >
-        {emptyComponent || <p className="text-sm text-stone-500">No items available</p>}
+        {emptyComponent || <p className="text-sm text-stone-500">{t('ui_virtualized_list_no_items_available')}</p>}
       </div>
     );
   }

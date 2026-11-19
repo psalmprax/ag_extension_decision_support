@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { CircleMarker, Popup, Polygon } from 'react-leaflet';
 import { Biohazard, Wind, Loader2 } from 'lucide-react';
 import { outbreakService, OutbreakCluster, AtmosphericDispersalProjection } from '@/api/efficacyService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface ActiveProjectionState {
   clusterKey: string;
@@ -16,6 +17,7 @@ interface ActiveProjectionState {
  * Supports interactive Gaussian plume atmospheric spore dispersal modeling (CE-002).
  */
 export function OutbreakLayer() {
+  const { t } = useLanguage();
   const [enabled, setEnabled] = useState(false);
   const [activeProjection, setActiveProjection] = useState<ActiveProjectionState | null>(null);
   const [projectingCluster, setProjectingCluster] = useState<string | null>(null);
@@ -68,7 +70,7 @@ export function OutbreakLayer() {
       }`}
     >
       <Biohazard className="w-3.5 h-3.5" />
-      Outbreaks
+      {t('ui_outbreak_layer_outbreaks')}
     </button>
   );
 
@@ -103,10 +105,10 @@ export function OutbreakLayer() {
                           {c.diseaseLabel.replace(/_/g, ' ')} — {c.crop}
                         </p>
                         <p className="text-slate-300 text-[11px]">
-                          {c.caseCount} cases · {c.distinctFarmers} farms · {c.district}
+                          {t('ui_outbreak_layer_cases_farms', { caseCount: c.caseCount, distinctFarmers: c.distinctFarmers, district: c.district })}
                         </p>
                         <p className="text-gray-400 text-[10px]">
-                          Last 14 days (anonymized, k≥3{c.differentialPrivacyApplied ? ', ε=1.0 DP' : ''})
+                          {t('ui_outbreak_layer_last_14_days_anonymized_k_3')}{c.differentialPrivacyApplied ? ', ε=1.0 DP' : ''})
                         </p>
                       </div>
 
@@ -124,17 +126,17 @@ export function OutbreakLayer() {
                           {isCalculating ? (
                             <>
                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              <span>Modeling Dispersal...</span>
+                              <span>{t('ui_outbreak_layer_modeling_dispersal')}</span>
                             </>
                           ) : isPlumeActive ? (
                             <>
                               <Wind className="w-3.5 h-3.5" />
-                              <span>Hide Spore Plume</span>
+                              <span>{t('ui_outbreak_layer_hide_spore_plume')}</span>
                             </>
                           ) : (
                             <>
                               <Wind className="w-3.5 h-3.5" />
-                              <span>Project Spore Plume (CE-002)</span>
+                              <span>{t('ui_outbreak_layer_project_spore_plume_ce_002')}</span>
                             </>
                           )}
                         </button>
@@ -170,26 +172,26 @@ export function OutbreakLayer() {
               <Popup>
                 <div className="text-xs space-y-1 font-mono tabular-nums">
                   <p className="font-medium text-amber-300">
-                    Spore Dispersal Cone (CE-002)
+                    {t('ui_outbreak_layer_spore_dispersal_cone_ce_002')}
                   </p>
                   <p className="text-slate-200">
-                    Risk: <span className="font-medium">{activeProjection.projection.riskLevel}</span> (Viability: {Math.round(activeProjection.projection.viabilityScore * 100)}%)
+                    {t('ui_outbreak_layer_risk')} <span className="font-medium">{activeProjection.projection.riskLevel}</span> {t('ui_outbreak_layer_viability')} {Math.round(activeProjection.projection.viabilityScore * 100)}%)
                   </p>
                   <p className="text-slate-300 text-[11px]">
-                    Distance: {activeProjection.projection.dispersionDistanceKm.toFixed(1)} km · Aperture: {activeProjection.projection.apertureDegrees}°
+                    {t('ui_outbreak_layer_distance')} {activeProjection.projection.dispersionDistanceKm.toFixed(1)} {t('ui_outbreak_layer_km_aperture')} {activeProjection.projection.apertureDegrees}°
                   </p>
                   <p className="text-slate-400 text-[10px]">
-                    Wind: {activeProjection.projection.environmentalFactors.windSpeedKmH} km/h @ {activeProjection.projection.environmentalFactors.windBearingDeg}°
+                    {t('ui_outbreak_layer_wind_km_h', { windSpeedKmH: activeProjection.projection.environmentalFactors.windSpeedKmH, windBearingDeg: activeProjection.projection.environmentalFactors.windBearingDeg })}
                   </p>
                   <p className="text-slate-500 text-[9px]">
-                    Model: {activeProjection.projection.modelProvenance.methodology}
+                    {t('ui_outbreak_layer_model', { methodology: activeProjection.projection.modelProvenance.methodology })}
                   </p>
                   <button
                     type="button"
                     onClick={() => setActiveProjection(null)}
                     className="mt-1 text-[11px] text-red-400 hover:text-red-300 underline block cursor-pointer"
                   >
-                    Clear Plume
+                    {t('ui_outbreak_layer_clear_plume')}
                   </button>
                 </div>
               </Popup>

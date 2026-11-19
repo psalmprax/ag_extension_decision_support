@@ -17,10 +17,12 @@ import {
 } from 'lucide-react';
 import { UssdGatewayTester } from '@/components/telecom/UssdGatewayTester';
 import { AgroEcosystemCanvasScrubber } from '@/components/canvas-ui/AgroEcosystemCanvasScrubber';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function DemoPage({
   initialTab = 'scrubber',
 }: { initialTab?: 'rag' | 'synthesis' | 'telemetry' | 'telecom' | 'scrubber' } = {}) {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'rag' | 'synthesis' | 'telemetry' | 'telecom' | 'scrubber'>(initialTab);
 
@@ -104,19 +106,19 @@ export function DemoPage({
               className="flex items-center gap-2 text-sm text-stone-400 hover:text-white transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back
+              {t('common_back')}
             </button>
             <div className="w-px h-5 bg-white/10" />
             <div className="flex items-center gap-2">
               <img src="/logo.png" alt="GPExts Logo" className="w-7 h-7 object-contain rounded-lg" />
-              <span className="font-bold text-sm tracking-tight">GPExts</span>
+              <span className="font-bold text-sm tracking-tight">{t('app_title')}</span>
             </div>
           </div>
           <button
             onClick={() => navigate('/register')}
             className="px-4 py-2 text-sm font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors"
           >
-            Get Started
+            {t('ui_demo_page_get_started')}
           </button>
         </div>
       </nav>
@@ -126,12 +128,11 @@ export function DemoPage({
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 mb-4">
             <Layers className="w-4 h-4 text-emerald-400" />
-            <span className="text-xs font-semibold text-emerald-400">Interactive Sandbox</span>
+            <span className="text-xs font-semibold text-emerald-400">{t('ui_demo_page_interactive_sandbox')}</span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">Experience GPExts</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">{t('ui_demo_page_experience_gpexts')}</h1>
           <p className="text-stone-400 max-w-lg mx-auto">
-            Explore illustrative examples. This sandbox does not retrieve live data, verify sources,
-            send messages or create field records.
+            {t('ui_demo_page_explore_illustrative_examples_this_s')}
           </p>
         </div>
 
@@ -184,7 +185,7 @@ export function DemoPage({
             <div className="h-3 w-3 rounded-full bg-red-500" />
             <div className="h-3 w-3 rounded-full bg-yellow-500" />
             <div className="h-3 w-3 rounded-full bg-green-500" />
-            <span className="text-xs font-mono text-stone-500 ml-2">info@gpfed.com</span>
+            <span className="text-xs font-mono text-stone-500 ml-2">{t('ui_demo_page_info_gpfed_com')}</span>
           </div>
 
           {/* RAG Tab */}
@@ -192,7 +193,7 @@ export function DemoPage({
             <div className="space-y-6">
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3 block">
-                  Select Agronomic Scenario
+                  {t('ui_demo_page_select_agronomic_scenario')}
                 </label>
                 <div className="grid md:grid-cols-3 gap-3">
                   {presets.map((preset, idx) => (
@@ -215,13 +216,13 @@ export function DemoPage({
                 <div className="flex items-center gap-2 border-b border-white/5 pb-3 mb-4">
                   <Bot className="w-4 h-4 text-purple-400" />
                   <span className="text-xs font-bold font-mono text-stone-400">
-                    Example assistant response (scripted)
+                    {t('ui_demo_page_example_assistant_response_scripted')}
                   </span>
                 </div>
 
                 {selectedPreset === null && (
                   <p className="text-sm text-stone-500 italic">
-                    Select a scenario to see a scripted example. No AI or knowledge search is run.
+                    {t('ui_demo_page_select_a_scenario_to_see_a_scripted')}
                   </p>
                 )}
 
@@ -230,7 +231,7 @@ export function DemoPage({
                     <p className="text-sm font-mono leading-relaxed whitespace-pre-line text-stone-200">
                       {presets[selectedPreset].response}
                     </p>
-                    <p className="mt-4 text-xs text-amber-300">Example only; not a diagnosis or verified advice.</p>
+                    <p className="mt-4 text-xs text-amber-300">{t('ui_demo_page_example_only_not_a_diagnosis_or_veri')}</p>
                   </>
                 )}
               </div>
@@ -242,14 +243,13 @@ export function DemoPage({
             <div className="space-y-6">
               <div className="p-5 rounded-xl bg-black/30 border border-white/5 text-center space-y-5">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-mono text-stone-400">Audio Note Transcript Preview:</span>
+                  <span className="font-mono text-stone-400">{t('ui_demo_page_audio_note_transcript_preview')}</span>
                   <span className="text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md font-mono text-xxs">
-                    Scripted example
+                    {t('ui_demo_page_scripted_example')}
                   </span>
                 </div>
                 <p className="text-sm italic text-stone-300 leading-relaxed max-w-lg mx-auto">
-                  Example field note: maize leaves show discoloration. Ask a local extension officer
-                  to assess the symptoms.
+                  {t('ui_demo_page_example_field_note_maize_leaves_show')}
                 </p>
 
                 <div className="flex justify-center gap-3 flex-wrap">
@@ -265,11 +265,11 @@ export function DemoPage({
                   >
                     {isPlayingAudio ? (
                       <>
-                        <Activity className="w-4 h-4 animate-bounce" /> Playing example...
+                        <Activity className="w-4 h-4 animate-bounce" /> {t('ui_demo_page_playing_example')}
                       </>
                     ) : (
                       <>
-                        <Play className="w-4 h-4" /> Play example text
+                        <Play className="w-4 h-4" /> {t('ui_demo_page_play_example_text')}
                       </>
                     )}
                   </button>
@@ -278,7 +278,7 @@ export function DemoPage({
                     onClick={triggerSynthesisToDashboard}
                     className="px-5 py-2.5 rounded-xl text-xs font-bold bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center gap-2 cursor-pointer transition-all"
                   >
-                    <Zap className="w-4 h-4 text-purple-400" /> Preview example summary
+                    <Zap className="w-4 h-4 text-purple-400" /> {t('ui_demo_page_preview_example_summary')}
                   </button>
                 </div>
                 {audioError && <p role="alert" className="text-xs text-amber-300">{audioError}</p>}
@@ -293,16 +293,16 @@ export function DemoPage({
                   >
                     <p className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
                       <CheckCircle className="w-4 h-4" />
-                      Example summary (not saved or dispatched)
+                      {t('ui_demo_page_example_summary_not_saved_or_dispatc')}
                     </p>
                     <div className="grid grid-cols-2 gap-4 text-xs">
                       <div>
-                        <p className="text-stone-500 font-mono text-xxs uppercase mb-0.5">Farmer</p>
+                        <p className="text-stone-500 font-mono text-xxs uppercase mb-0.5">{t('register_role_farmer')}</p>
                         <p className="font-semibold">{synthesisOutput.farmer ?? ''}</p>
                       </div>
                       <div>
                         <p className="text-stone-500 font-mono text-xxs uppercase mb-0.5">
-                          Observation
+                          {t('ui_demo_page_observation')}
                         </p>
                         <p className="font-semibold text-amber-400">
                           {synthesisOutput.status ?? ''}
@@ -324,27 +324,27 @@ export function DemoPage({
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-black/30 border border-white/5">
                   <span className="text-xxs uppercase font-mono text-stone-500 block mb-1">
-                    Bulk Density
+                    {t('ui_demo_page_bulk_density')}
                   </span>
                   <span className="text-2xl font-bold font-mono text-cyan-400">1.25 kg/dm3</span>
                   <span className="text-xxs text-emerald-400 block mt-1.5">
-                    Illustrative value
+                    {t('ui_demo_page_illustrative_value')}
                   </span>
                 </div>
                 <div className="p-4 rounded-xl bg-black/30 border border-white/5">
                   <span className="text-xxs uppercase font-mono text-stone-500 block mb-1">
-                    Organic Carbon
+                    {t('ui_demo_page_organic_carbon')}
                   </span>
                   <span className="text-2xl font-bold font-mono text-amber-400">22 g/kg</span>
                   <span className="text-xxs text-amber-400 block mt-1.5">
-                    Illustrative value
+                    {t('ui_demo_page_illustrative_value')}
                   </span>
                 </div>
               </div>
 
               <div className="p-5 rounded-xl bg-black/40 border border-white/5 space-y-3">
                 <div className="flex justify-between items-center text-xs border-b border-white/5 pb-3">
-                  <span className="font-mono text-stone-400">Illustrative telemetry (not live)</span>
+                  <span className="font-mono text-stone-400">{t('ui_demo_page_illustrative_telemetry_not_live')}</span>
                 </div>
                 <div className="space-y-2 font-mono text-xs-plus text-cyan-400/90 leading-relaxed">
                   {telemetryLogs.map((log, i) => (
@@ -356,7 +356,7 @@ export function DemoPage({
               <div className="flex items-center gap-3 p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
                 <MapPin className="w-5 h-5 text-cyan-400 flex-shrink-0" />
                 <p className="text-xs text-stone-400">
-                  These sample values are not field measurements and are not retrieved from an API.
+                  {t('ui_demo_page_these_sample_values_are_not_field_me')}
                 </p>
               </div>
             </div>
@@ -369,15 +369,15 @@ export function DemoPage({
                 <div>
                   <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     <Layers className="w-4 h-4 text-emerald-400" />
-                    Interactive 3D Agro-Intelligence Scrubber
+                    {t('ui_demo_page_interactive_3d_agro_intelligence_scr')}
                   </h2>
                   <p className="text-xs text-stone-400 mt-1">
-                    Explore an illustrated four-stage concept. No live observations or dispatches are shown.
+                    {t('ui_demo_page_explore_an_illustrated_four_stage_co')}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 font-mono text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/20">
                   <Activity className="w-3.5 h-3.5" />
-                  <span>Illustrative canvas</span>
+                  <span>{t('ui_demo_page_illustrative_canvas')}</span>
                 </div>
               </div>
 
@@ -387,26 +387,26 @@ export function DemoPage({
 
               <div className="grid md:grid-cols-3 gap-4 pt-2">
                 <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1">
-                  <div className="text-xs font-mono text-sky-400">STAGE 01 // ORBITAL</div>
-                  <div className="text-sm font-bold text-white">Atmospheric Flux</div>
+                  <div className="text-xs font-mono text-sky-400">{t('ui_demo_page_stage_01_orbital')}</div>
+                  <div className="text-sm font-bold text-white">{t('ui_demo_page_atmospheric_flux')}</div>
                   <p className="text-xs text-stone-400">
-                    Example of weather data that could inform a field assessment.
+                    {t('ui_demo_page_example_of_weather_data_that_could_i')}
                   </p>
                 </div>
 
                 <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1">
-                  <div className="text-xs font-mono text-emerald-400">STAGE 02 // CANOPY</div>
-                  <div className="text-sm font-bold text-white">Multi-Spectral NDVI</div>
+                  <div className="text-xs font-mono text-emerald-400">{t('ui_demo_page_stage_02_canopy')}</div>
+                  <div className="text-sm font-bold text-white">{t('ui_demo_page_multi_spectral_ndvi')}</div>
                   <p className="text-xs text-stone-400">
-                    Example of vegetation indices used to explore crop conditions.
+                    {t('ui_demo_page_example_of_vegetation_indices_used_t')}
                   </p>
                 </div>
 
                 <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1">
-                  <div className="text-xs font-mono text-purple-400">STAGE 03-04 // SYNTHESIS</div>
-                  <div className="text-sm font-bold text-white">Edge USSD Uplink</div>
+                  <div className="text-xs font-mono text-purple-400">{t('ui_demo_page_stage_03_04_synthesis')}</div>
+                  <div className="text-sm font-bold text-white">{t('ui_demo_page_edge_ussd_uplink')}</div>
                   <p className="text-xs text-stone-400">
-                    Example of how observations and messages might be presented to an officer.
+                    {t('ui_demo_page_example_of_how_observations_and_mess')}
                   </p>
                 </div>
               </div>
@@ -421,12 +421,12 @@ export function DemoPage({
 
         {/* Bottom CTA */}
         <div className="text-center mt-12 space-y-4">
-          <p className="text-stone-400 text-sm">Ready to use these capabilities in the field?</p>
+          <p className="text-stone-400 text-sm">{t('ui_demo_page_ready_to_use_these_capabilities_in_t')}</p>
           <button
             onClick={() => navigate('/register')}
             className="px-6 py-3 text-sm font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors"
           >
-            Create Free Account
+            {t('ui_demo_page_create_free_account')}
           </button>
         </div>
       </div>

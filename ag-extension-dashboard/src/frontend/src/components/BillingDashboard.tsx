@@ -77,7 +77,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
               htmlFor="stripe-secret"
               className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
             >
-              Stripe Secret Key (sk_live_...)
+              {t('ui_billing_dashboard_stripe_secret_key_sk_live')}
             </label>
             <Input
               id="stripe-secret"
@@ -98,7 +98,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
               htmlFor="stripe-webhook"
               className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
             >
-              Stripe Webhook Secret (whsec_...)
+              {t('ui_billing_dashboard_stripe_webhook_secret_whsec')}
             </label>
             <Input
               id="stripe-webhook"
@@ -119,7 +119,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
               htmlFor="paypal-client"
               className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
             >
-              PayPal Client ID
+              {t('ui_billing_dashboard_paypal_client_id')}
             </label>
             <Input
               id="paypal-client"
@@ -139,7 +139,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
               htmlFor="paypal-secret"
               className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
             >
-              PayPal Secret Key
+              {t('ui_billing_dashboard_paypal_secret_key')}
             </label>
             <Input
               id="paypal-secret"
@@ -211,10 +211,10 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2 sm:gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Billing & Subscriptions</h1>
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">{t('ui_billing_dashboard_billing_subscriptions')}</h1>
               <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                 <Radio className="w-2.5 h-2.5 text-emerald-700 dark:text-emerald-400" />
-                Commerce Radar
+                {t('ui_billing_dashboard_commerce_radar')}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -227,13 +227,13 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
           {/* Telemetry Stat Chips */}
           <div className="flex items-center gap-2 overflow-x-auto">
             <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-white/80 font-mono whitespace-nowrap">
-              Tier: <strong className="text-slate-900 dark:text-white font-medium">{currentPlanName}</strong>
+              {t('ui_billing_dashboard_tier')} <strong className="text-slate-900 dark:text-white font-medium">{currentPlanName}</strong>
             </span>
             <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300 font-mono whitespace-nowrap">
-              Status: <strong className="font-medium">{isProActive ? 'Active' : 'Starter'}</strong>
+              {t('ui_billing_dashboard_status')} <strong className="font-medium">{isProActive ? 'Active' : 'Starter'}</strong>
             </span>
             <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 font-mono whitespace-nowrap">
-              Billing: <strong className="font-medium">{isAnnual ? 'Annual (-20%)' : 'Monthly'}</strong>
+              {t('ui_billing_dashboard_billing')} <strong className="font-medium">{isAnnual ? 'Annual (-20%)' : 'Monthly'}</strong>
             </span>
           </div>
 
@@ -250,7 +250,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
             ) : (
               <ExternalLink className="w-4 h-4" />
             )}
-            <span>Customer Portal</span>
+            <span>{t('ui_billing_dashboard_customer_portal')}</span>
           </button>
         </div>
       </div>
@@ -295,7 +295,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
                 !isAnnual ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              Monthly
+              {t('ui_billing_dashboard_monthly')}
             </button>
             <button
               type="button"
@@ -307,7 +307,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
                 isAnnual ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              Annual (-20%)
+              {t('ui_billing_dashboard_annual_20')}
             </button>
           </div>
         </div>
@@ -466,9 +466,9 @@ export const BillingDashboard: React.FC = () => {
           <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between">
             <div className="space-y-0.5">
               <span className="text-xxs font-black uppercase tracking-widest text-slate-500 dark:text-white/50 block">
-                Stripe Customer Portal
+                {t('ui_billing_dashboard_stripe_customer_portal')}
               </span>
-              <span className="text-xs text-slate-600 dark:text-white/70 font-medium">Manage payment methods & invoices</span>
+              <span className="text-xs text-slate-600 dark:text-white/70 font-medium">{t('ui_billing_dashboard_manage_payment_methods_invoices')}</span>
             </div>
             <button
               onClick={() => {
@@ -483,7 +483,7 @@ export const BillingDashboard: React.FC = () => {
               ) : (
                 <ExternalLink className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
               )}
-              <span>Portal</span>
+              <span>{t('ui_billing_dashboard_portal')}</span>
             </button>
           </div>
         </div>
@@ -491,7 +491,7 @@ export const BillingDashboard: React.FC = () => {
         {billing.subscription && !billing.subscription.cancelAtPeriodEnd && (
           <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <p className="text-xxs text-slate-500 dark:text-white/50">
-              Cancelling keeps your plan active until the period ends.
+              {t('ui_billing_dashboard_cancelling_keeps_your_plan_active_un')}
             </p>
             <button
               onClick={() => {
@@ -500,13 +500,13 @@ export const BillingDashboard: React.FC = () => {
               }}
               className="text-xxs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300 hover:text-rose-200 transition-colors self-start sm:self-auto"
             >
-              Cancel subscription
+              {t('ui_billing_dashboard_cancel_subscription')}
             </button>
           </div>
         )}
         {billing.subscription?.cancelAtPeriodEnd && (
           <p className="mt-4 pt-4 border-t border-slate-200 dark:border-white/5 text-xxs text-amber-700 dark:text-amber-300">
-            This subscription is set to end at the close of the current period.
+            {t('ui_billing_dashboard_this_subscription_is_set_to_end_at_t')}
           </p>
         )}
       </section>

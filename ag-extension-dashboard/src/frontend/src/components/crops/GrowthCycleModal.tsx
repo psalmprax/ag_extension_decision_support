@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Sprout } from 'lucide-react';
 import { Field } from '@/api/fieldService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface GrowthCycleModalProps {
   showCycleModal: boolean;
@@ -36,6 +37,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
   handleStartCycle,
   radiusClass,
 }) => {
+  const { t } = useLanguage();
   if (!showCycleModal || !selectedField) return null;
 
   return (
@@ -49,20 +51,20 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
           <div className="flex items-center justify-between pb-2 border-b border-white/5">
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
               <Sprout className="w-5 h-5 text-primary-400" />
-              Plant Crop on: {selectedField.name}
+              {t('ui_growth_cycle_modal_plant_crop_on')} {selectedField.name}
             </h3>
             <button
               onClick={() => setShowCycleModal(false)}
               className="text-slate-400 hover:text-white text-xl font-medium"
             >
-              &times;
+              {t('ui_field_modal_text')}
             </button>
           </div>
 
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
-                Crop Name / Type
+                {t('ui_growth_cycle_modal_crop_name_type')}
               </label>
               <input
                 type="text"
@@ -75,7 +77,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
 
             <div>
               <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
-                Crop Variety
+                {t('ui_growth_cycle_modal_crop_variety')}
               </label>
               <input
                 type="text"
@@ -89,7 +91,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
-                  Planting Date
+                  {t('ui_crop_cycles_table_planting_date')}
                 </label>
                 <input
                   type="date"
@@ -102,7 +104,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
-                  Est. Harvest Date
+                  {t('ui_growth_cycle_modal_est_harvest_date')}
                 </label>
                 <input
                   type="date"
@@ -117,7 +119,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
 
             <div>
               <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
-                Notes / Recommendations
+                {t('ui_growth_cycle_modal_notes_recommendations')}
               </label>
               <textarea
                 value={cycleForm.notes}
@@ -133,13 +135,13 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
                 onClick={handleStartCycle}
                 className="flex-1 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-bold transition-all rounded-xl"
               >
-                Initialize Growth Cycle
+                {t('ui_growth_cycle_modal_initialize_growth_cycle')}
               </button>
               <button
                 onClick={() => setShowCycleModal(false)}
                 className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition-all rounded-xl"
               >
-                Cancel
+                {t('common_cancel')}
               </button>
             </div>
           </div>

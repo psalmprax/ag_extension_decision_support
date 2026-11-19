@@ -40,6 +40,7 @@ import { MessageStream } from './alpha/MessageStream';
 import { NasaPowerBadge, RagMeshBadge } from './alpha/badges';
 import { analyzeLeafImage } from './alpha/utils/leafAnalysis';
 import { startVoiceCapture } from './alpha/voiceCapture';
+import { useLanguage } from '@/lib/LanguageContext';
 
 async function fetchPillarTranscription(base64: string, mimeType: string): Promise<string | null> {
   try {
@@ -113,6 +114,7 @@ async function transcribeVoiceBlob(blob: Blob, mimeType: string): Promise<string
 }
 
 export const AlphaAI: React.FC = () => {
+  const { t } = useLanguage();
   const [activeStudioTab, setActiveStudioTab] = useState<'copilot' | 'agent_ops'>('copilot');
   const [activeCanvasView, setActiveCanvasView] = useState<CanvasViewType>('soil_heatmap');
   const [inputPrompt, setInputPrompt] = useState('');
@@ -344,10 +346,10 @@ export const AlphaAI: React.FC = () => {
             </div>
             <div>
               <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
-                AI Agronomic Co-Pilot
+                {t('ui_alpha_ai_ai_agronomic_co_pilot')}
               </h1>
               <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-                Multi-modal decision engine powered by NASA POWER, SoilGrids v2, and Spatial RAG.
+                {t('ui_alpha_ai_multi_modal_decision_engine_powered')}
               </p>
             </div>
           </div>
@@ -407,7 +409,7 @@ export const AlphaAI: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                       <span className="font-mono text-xs font-medium">
-                        Recording Voice Audio... Speak prompt
+                        {t('ui_alpha_ai_recording_voice_audio_speak_prompt')}
                       </span>
                     </div>
                     {/* Simulated Voice Waveform */}
@@ -512,7 +514,7 @@ export const AlphaAI: React.FC = () => {
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-                  Interactive Canvas
+                  {t('ui_alpha_ai_interactive_canvas')}
                 </span>
               </div>
             </div>
@@ -539,7 +541,7 @@ export const AlphaAI: React.FC = () => {
               <div className="pt-4 mt-4 border-t border-slate-200 dark:border-white/5 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-xxs text-slate-500 dark:text-white/50 font-mono">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Agronomic safety guard on: answers are checked for unsafe advice</span>
+                  <span>{t('ui_alpha_ai_agronomic_safety_guard_on_answers_ar')}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -548,7 +550,7 @@ export const AlphaAI: React.FC = () => {
                     className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 text-xs font-semibold dark:text-white/80 dark:hover:text-white transition-colors flex items-center gap-1.5"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Export PDF</span>
+                    <span>{t('ui_alpha_ai_export_pdf')}</span>
                   </button>
 
                   <button
@@ -556,7 +558,7 @@ export const AlphaAI: React.FC = () => {
                     className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
                   >
                     <Share2 className="w-3.5 h-3.5" />
-                    <span>Dispatch Advisory SMS</span>
+                    <span>{t('ui_alpha_ai_dispatch_advisory_sms')}</span>
                   </button>
                 </div>
               </div>

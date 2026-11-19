@@ -56,7 +56,11 @@ describe('Register Component Session Handoff', () => {
       </MemoryRouter>
     );
 
-    const form = document.querySelector('form')!;
+    const form = await waitFor(() => {
+      const rendered = document.querySelector('form');
+      if (!rendered) throw new Error('the form has not rendered yet');
+      return rendered;
+    });
     fireEvent.submit(form);
 
     await waitFor(() => {
@@ -107,7 +111,11 @@ describe('Register Component Session Handoff', () => {
       </MemoryRouter>
     );
 
-    const form = document.querySelector('form')!;
+    const form = await waitFor(() => {
+      const rendered = document.querySelector('form');
+      if (!rendered) throw new Error('the form has not rendered yet');
+      return rendered;
+    });
     fireEvent.submit(form);
 
     await waitFor(() => {

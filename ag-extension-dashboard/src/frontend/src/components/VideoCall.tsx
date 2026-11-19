@@ -334,7 +334,7 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
             </p>
             <div className="mt-3.5 inline-flex items-center gap-1.5 px-3 py-1 bg-gray-900/80 rounded-md text-xxs font-mono text-gray-300 border border-gray-700/80 shadow-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              Room: {roomId}
+              {t('ui_video_call_room')} {roomId}
             </div>
           </div>
         )}

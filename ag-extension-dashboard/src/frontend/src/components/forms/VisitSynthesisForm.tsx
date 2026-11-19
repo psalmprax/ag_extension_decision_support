@@ -123,6 +123,7 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
   onToggleDropdown,
   onCloseDropdown,
 }) => {
+  const { t } = useLanguage();
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -150,12 +151,12 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
         <div className="flex items-center gap-2">
           <UserCheck className="w-4 h-4 text-emerald-400" />
           <h2 className="text-xs font-medium text-white">
-            Target farmer parcel
+            {t('ui_visit_synthesis_form_target_farmer_parcel')}
           </h2>
         </div>
         {selectedFarmer && (
           <span className="text-xxs text-emerald-400 font-medium flex items-center gap-1">
-            <Check className="w-3 h-3" /> Farmer Linked
+            <Check className="w-3 h-3" /> {t('ui_visit_synthesis_form_farmer_linked')}
           </span>
         )}
       </div>
@@ -227,7 +228,7 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
                 </div>
               ))}
               {filteredFarmers.length === 0 && (
-                <div className="text-center py-3 text-xs text-white/40">No matching farmers found</div>
+                <div className="text-center py-3 text-xs text-white/40">{t('ui_visit_synthesis_form_no_matching_farmers_found')}</div>
               )}
             </div>
           </div>
@@ -250,6 +251,7 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
   isSaving,
   onSaveRecords,
 }) => {
+  const { t } = useLanguage();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -264,7 +266,7 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
             <div className="flex items-center gap-2">
               <Leaf className="w-4 h-4 text-emerald-400" />
               <h3 className="text-sm font-semibold text-white">
-                Diagnostic executive summary
+                {t('ui_visit_synthesis_form_diagnostic_executive_summary')}
               </h3>
             </div>
             <span className={`px-2 py-0.5 rounded text-xs font-medium border ${getStatusBadgeClass(result.cropHealthStatus)}`}>
@@ -279,7 +281,7 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 space-y-1">
               <span className="text-xs font-medium text-white/50">
-                Follow-up required
+                {t('ui_visit_synthesis_form_follow_up_required')}
               </span>
               <div className="text-sm font-medium text-white flex items-center gap-1.5">
                 <div className={`w-2 h-2 rounded-full ${result.followUpRequired ? 'bg-rose-400' : 'bg-emerald-400'}`} />
@@ -289,7 +291,7 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
 
             <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 space-y-1">
               <span className="text-xs font-medium text-white/50">
-                Next visit hint
+                {t('ui_visit_synthesis_form_next_visit_hint')}
               </span>
               <div className="text-sm font-medium text-slate-300 flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-slate-400" />
@@ -301,7 +303,7 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
           <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-1">
             <span className="text-xs font-medium text-amber-300 flex items-center gap-1">
               <AlertCircle className="w-3 h-3" />
-              Pest & disease stress index
+              {t('ui_visit_synthesis_form_pest_disease_stress_index')}
             </span>
             <p className="text-xs font-medium text-amber-200/90">{result.pestIssues}</p>
           </div>
@@ -314,13 +316,13 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
           <div className="flex items-center gap-2 pb-2 border-b border-white/5">
             <Layers className="w-4 h-4 text-emerald-400" />
             <h3 className="text-sm font-semibold text-white">
-              Observations & recommendations
+              {t('ui_visit_synthesis_form_observations_recommendations')}
             </h3>
           </div>
 
           <div>
             <h4 className="text-xs font-medium text-white/50 mb-2">
-              Key agronomic observations
+              {t('ui_visit_synthesis_form_key_agronomic_observations')}
             </h4>
             <ul className="space-y-1.5">
               {result.keyObservations.map((obs, i) => (
@@ -334,7 +336,7 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
 
           <div>
             <h4 className="text-xs font-medium text-white/50 mb-2">
-              Prescribed treatment protocol
+              {t('ui_visit_synthesis_form_prescribed_treatment_protocol')}
             </h4>
             <ul className="space-y-1.5">
               {result.recommendedActions.map((action, i) => (
@@ -350,7 +352,7 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
         {/* 1-Click Save Action */}
         <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-4">
           <span className="text-xxs text-white/40">
-            Logs synthesis to {selectedFarmer ? `${selectedFarmer.firstName}'s` : 'farmer'} record.
+            {t('ui_visit_synthesis_form_logs_synthesis_to')} {selectedFarmer ? `${selectedFarmer.firstName}'s` : 'farmer'} {t('ui_visit_synthesis_form_record')}
           </span>
           <button
             onClick={onSaveRecords}
@@ -518,21 +520,21 @@ export const VisitSynthesisForm: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Visit Synthesis</h1>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">{t('nav_visit_synthesis')}</h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <Radio className="w-2.5 h-2.5 text-emerald-400" />
-                  AI Field Copilot Active
+                  {t('ui_visit_synthesis_form_ai_field_copilot_active')}
                 </span>
               </div>
               <p className="text-xs text-white/60 mt-0.5">
-                Convert unorganized voice dictation and field notes into structured agronomic diagnoses, pest indices, and follow-up itineraries.
+                {t('ui_visit_synthesis_form_convert_unorganized_voice_dictation')}
               </p>
             </div>
           </div>
 
           {/* Quick-Preset Chips */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-medium text-white/50">Presets:</span>
+            <span className="text-xs font-medium text-white/50">{t('ui_visit_synthesis_form_presets')}</span>
             {FIELD_PRESETS.map(p => (
               <button
                 key={p.title}
@@ -573,7 +575,7 @@ export const VisitSynthesisForm: React.FC = () => {
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-emerald-400" />
             <h2 className="text-sm font-semibold text-white">
-              Field observation notes
+              {t('ui_visit_synthesis_form_field_observation_notes')}
             </h2>
           </div>
 
@@ -638,7 +640,7 @@ export const VisitSynthesisForm: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
           <span className="text-xxs text-white/40">
-            Min 10 characters required for multi-factor agronomic decomposition.
+            {t('ui_visit_synthesis_form_min_10_characters_required_for_multi')}
           </span>
           <button
             onClick={handleSynthesize}
@@ -648,12 +650,12 @@ export const VisitSynthesisForm: React.FC = () => {
             {isProcessing ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Synthesizing Pathology & Telemetry...</span>
+                <span>{t('ui_visit_synthesis_form_synthesizing_pathology_telemetry')}</span>
               </>
             ) : (
               <>
                 <FileCheck className="w-4 h-4" />
-                <span>Synthesize Agronomic Report</span>
+                <span>{t('ui_visit_synthesis_form_synthesize_agronomic_report')}</span>
               </>
             )}
           </button>
@@ -673,7 +675,7 @@ export const VisitSynthesisForm: React.FC = () => {
       ) : (
         <div className="p-4 rounded-xl bg-slate-900/60 border border-white/10 text-center text-xs text-white/50 flex items-center justify-center gap-2">
           <AlertCircle className="w-4 h-4 text-purple-400" />
-          <span>Select a registered farmer above to activate zero-trust GPS and biometric parcel verification.</span>
+          <span>{t('ui_visit_synthesis_form_select_a_registered_farmer_above_to')}</span>
         </div>
       )}
 

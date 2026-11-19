@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronRight, Clock, Radio } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export interface JourneyStep {
   label: string;
@@ -16,13 +17,14 @@ export const JourneyBreadcrumbs: React.FC<JourneyBreadcrumbsProps> = ({
   steps,
   className = '',
 }) => {
+  const { t } = useLanguage();
   if (!steps || steps.length === 0) return null;
 
   return (
     <div className={`flex items-center gap-1.5 overflow-x-auto py-1 text-[11px] font-mono no-scrollbar ${className}`}>
       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1 shrink-0">
         <Clock className="w-3 h-3 text-slate-400" />
-        Path:
+        {t('ui_journey_breadcrumbs_path')}
       </span>
 
       {steps.map((step, idx) => {

@@ -8,7 +8,26 @@ import * as matchers from '@testing-library/jest-dom/matchers';
 // depending on internal vitest type names.
 expect.extend(matchers as Parameters<typeof expect.extend>[0]);
 
+import { englishT } from './englishT';
 import defaultTranslations from '../../public/locales/en.json';
+
+// Components rendered on their own (no LanguageProvider) get the English strings
+// the app shows; inside a provider the real context is used. Test files that mock
+// '@/lib/LanguageContext' themselves keep their own mock.
+vi.mock('@/lib/LanguageContext', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/lib/LanguageContext')>();
+  return {
+    ...actual,
+    useLanguage: () => {
+      try {
+        return actual.useLanguage();
+      } catch (error) {
+        if (!(error instanceof Error) || !error.message.includes('LanguageProvider')) throw error;
+        return { language: 'en' as const, setLanguage: () => undefined, t: englishT, isRTL: false };
+      }
+    },
+  };
+});
 import swTranslations from '../../public/locales/sw.json';
 
 const localeData: Record<string, Record<string, string>> = {

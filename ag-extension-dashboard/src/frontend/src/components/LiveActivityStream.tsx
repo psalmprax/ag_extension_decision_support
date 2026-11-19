@@ -160,7 +160,7 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
           <div className="flex items-center gap-2 text-emerald-300 font-medium">
             <UserCheck className="w-4 h-4 text-emerald-400" />
             <span>{activity.claimedBy}</span>
-            <span className="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded font-medium">Live</span>
+            <span className="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded font-medium">{t('ui_live_activity_stream_live')}</span>
           </div>
           <button onClick={() => onRelease(activity.id)} className="text-[11px] text-slate-400 hover:text-rose-400 underline font-medium transition-colors">
             {t('activity_release')}
@@ -206,7 +206,7 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
             className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-slate-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0"
           >
             <Video className="w-3.5 h-3.5 text-emerald-400" />
-            Tele-Call
+            {t('ui_floating_aipill_tele_call')}
           </button>
 
           {isCritical && (
@@ -215,7 +215,7 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
               className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 active:scale-[0.98] border border-amber-500/30 text-amber-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0"
             >
               <Calendar className="w-3.5 h-3.5 text-amber-400" />
-              Dispatch Visit
+              {t('ui_live_activity_stream_dispatch_visit')}
             </button>
           )}
 
@@ -225,7 +225,7 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
               className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-slate-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0"
             >
               <ExternalLink className="w-3 h-3" />
-              Chat View
+              {t('ui_live_activity_stream_chat_view')}
             </button>
           )}
         </div>
@@ -268,6 +268,7 @@ const TeleCallModal: React.FC<{
   call: { farmerName: string; phone: string; issue: string };
   onClose: () => void;
 }> = ({ call, onClose }) => {
+  const { t } = useLanguage();
   const storeUser = useAppStore(s => s.user);
   const roomId = `tele-${call.phone.replace(/\D/g, '')}`;
 
@@ -291,8 +292,8 @@ const TeleCallModal: React.FC<{
               <Video className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="font-bold text-sm text-white">Tele-Agronomy Video Consultation</h4>
-              <p className="text-xs text-slate-400">Live with {call.farmerName} ({call.phone})</p>
+              <h4 className="font-bold text-sm text-white">{t('ui_floating_aipill_tele_agronomy_video_consultation')}</h4>
+              <p className="text-xs text-slate-400">{t('ui_live_activity_stream_live_with', { farmerName: call.farmerName, phone: call.phone })}</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -491,7 +492,7 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Live farmer triage, journey breadcrumbs, and 1-click tele-agronomy handoff
+              {t('ui_live_activity_stream_live_farmer_triage_journey_breadcrum')}
             </p>
           </div>
         </div>
@@ -514,21 +515,21 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <AlertTriangle className="w-8 h-8 text-amber-400 mb-2" />
-            <p className="text-sm font-semibold text-amber-400">Feed unavailable</p>
+            <p className="text-sm font-semibold text-amber-400">{t('ui_live_activity_stream_feed_unavailable')}</p>
             <p className="text-xs text-slate-500 mt-1">{error}</p>
             <button
               onClick={fetchActivities}
               className="mt-3 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-medium text-slate-200 transition-colors"
             >
-              Retry
+              {t('users_access_plans_retry')}
             </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Activity className="w-8 h-8 text-slate-500 mb-2" />
-            <p className="text-sm font-semibold text-slate-400">Awaiting events</p>
+            <p className="text-sm font-semibold text-slate-400">{t('ui_live_activity_stream_awaiting_events')}</p>
             <p className="text-xs text-slate-500 mt-1">
-              Real farmer SMS, USSD, and app activity will appear here automatically as it arrives.
+              {t('ui_live_activity_stream_real_farmer_sms_ussd_and_app_activit')}
             </p>
           </div>
         ) : (

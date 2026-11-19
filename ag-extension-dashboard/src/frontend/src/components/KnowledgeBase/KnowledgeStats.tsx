@@ -14,6 +14,7 @@ import {
 import { TrendingUp, PieChart as PieIcon, BarChart3, Info } from 'lucide-react';
 import { ChartTooltip } from '@/components/charts/ChartTooltip';
 import { CHART_PALETTE, chartGrid, chartTick } from '@/components/charts/chartConfig';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface KnowledgeStatsData {
   crops?: { name: string; count: number }[];
@@ -27,12 +28,13 @@ interface KnowledgeStatsProps {
 }
 
 export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
+  const { t } = useLanguage();
   if (!data)
     return (
       <div className="flex items-center justify-center p-20 text-gray-400">
         <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full mr-3"></div>
         <p className="font-black uppercase tracking-widest text-xs">
-          Analyzing Knowledge Streams...
+          {t('ui_knowledge_stats_analyzing_knowledge_streams')}
         </p>
       </div>
     );
@@ -98,7 +100,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
           <div className="flex items-center gap-2 mb-8">
             <TrendingUp className="w-5 h-5 text-green-500" />
             <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest">
-              Trending Crop Queries
+              {t('ui_knowledge_stats_trending_crop_queries')}
             </h3>
           </div>
           <div className="h-64 mt-auto">
@@ -119,7 +121,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
           <div className="flex items-center gap-2 mb-8">
             <PieIcon className="w-5 h-5 text-blue-500" />
             <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest">
-              Category Distribution
+              {t('ui_knowledge_stats_category_distribution')}
             </h3>
           </div>
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">

@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Select } from '../ui/Select';
 import { Textarea } from '../ui/Textarea';
 import { triggerHaptic } from '@/lib/haptics';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const CANCELLATION_REASON_OPTIONS = [
   { value: '', label: 'Prefer not to say' },
@@ -30,6 +31,7 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
   onConfirm,
   loading,
 }) => {
+  const { t } = useLanguage();
   const [reason, setReason] = useState('');
   const [comment, setComment] = useState('');
 
@@ -61,7 +63,7 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
       footer={
         <div className="flex gap-3">
           <Button variant="ghost" onClick={handleClose} disabled={loading} className="flex-1">
-            Keep subscription
+            {t('ui_cancel_subscription_modal_keep_subscription')}
           </Button>
           <Button
             variant="danger"
@@ -71,15 +73,14 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
             }}
             className="flex-1"
           >
-            Cancel subscription
+            {t('ui_billing_dashboard_cancel_subscription')}
           </Button>
         </div>
       }
     >
       <div className="space-y-4">
         <p className="text-xs text-slate-600 dark:text-white/70 leading-relaxed">
-          Your plan stays active until the current period ends. If you tell us why you are leaving, it is
-          recorded against this subscription and shown only in aggregate churn reporting.
+          {t('ui_cancel_subscription_modal_your_plan_stays_active_until_the_cur')}
         </p>
 
         <div className="space-y-2">
@@ -87,7 +88,7 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
             htmlFor="cancellation-reason"
             className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
           >
-            Reason (optional)
+            {t('ui_cancel_subscription_modal_reason_optional')}
           </label>
           <Select
             id="cancellation-reason"
@@ -103,7 +104,7 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
             htmlFor="cancellation-comment"
             className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
           >
-            Anything else? (optional)
+            {t('ui_cancel_subscription_modal_anything_else_optional')}
           </label>
           <Textarea
             id="cancellation-comment"
@@ -116,7 +117,7 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
           />
           {!reason && (
             <p className="text-xxs text-slate-500 dark:text-white/40 ml-1">
-              Select a reason before adding an optional comment.
+              {t('ui_cancel_subscription_modal_select_a_reason_before_adding_an_opt')}
             </p>
           )}
           <p className="text-xxs text-slate-500 dark:text-white/40 ml-1">{comment.length}/1000</p>

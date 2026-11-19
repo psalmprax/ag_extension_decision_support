@@ -215,21 +215,21 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                       .toLowerCase()
                       .includes(formData.farmerSearch!.toLowerCase())
                   ).length === 0 && (
-                    <div className="px-4 py-2 text-sm text-gray-500">No farmers found</div>
+                    <div className="px-4 py-2 text-sm text-gray-500">{t('chat_no_farmers')}</div>
                   )}
                 </div>
               )}
               {formData.farmerId && (
                 <div className="mt-2 flex items-center gap-2">
                   <span className="text-xs text-primary-600 dark:text-primary-400 font-medium">
-                    Selected: {formData.farmerSearch}
+                    {t('ui_visit_modal_selected', { farmerSearch: formData.farmerSearch })}
                   </span>
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, farmerId: '', farmerSearch: '' })}
                     className="text-xs text-gray-400 hover:text-gray-600"
                   >
-                    Change
+                    {t('ui_visit_modal_change')}
                   </button>
                 </div>
               )}

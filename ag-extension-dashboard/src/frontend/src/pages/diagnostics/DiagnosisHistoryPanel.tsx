@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, History, Loader2 } from 'lucide-react';
 import { getDiagnosisHistory, type DiagnosisHistoryEntry } from '@/api/diseaseService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const formatWhen = (iso: string) => {
   const date = new Date(iso);
@@ -34,6 +35,7 @@ const HistoryRow = ({ entry }: { entry: DiagnosisHistoryEntry }) => (
  * so this panel never needs its own write path.
  */
 export function DiagnosisHistoryPanel() {
+  const { t } = useLanguage();
   const { data: entries, isLoading, isError, refetch } = useQuery({
     queryKey: ['ai', 'diseases', 'history'],
     queryFn: async () => {
@@ -47,11 +49,11 @@ export function DiagnosisHistoryPanel() {
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-semibold text-white flex items-center gap-2">
           <History className="w-4 h-4 text-emerald-400" />
-          Your recent diagnoses
+          {t('ui_diagnosis_history_panel_your_recent_diagnoses')}
         </h2>
         {!!entries?.length && (
           <span className="text-xxs font-mono tabular-nums text-slate-400">
-            {entries.length} recorded
+            {t('ui_diagnosis_history_panel_recorded', { length: entries.length })}
           </span>
         )}
       </div>
@@ -64,19 +66,19 @@ export function DiagnosisHistoryPanel() {
         <div className="py-6 text-center space-y-2">
           <p className="text-xs text-rose-300 flex items-center justify-center gap-1.5">
             <AlertTriangle className="w-3.5 h-3.5" />
-            Diagnosis history could not be loaded.
+            {t('ui_diagnosis_history_panel_diagnosis_history_could_not_be_loade')}
           </p>
           <button
             type="button"
             onClick={() => void refetch()}
             className="text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
           >
-            Try again
+            {t('ui_diagnosis_history_panel_try_again')}
           </button>
         </div>
       ) : !entries?.length ? (
         <p className="py-6 text-xs text-slate-400">
-          No diagnoses recorded yet. A symptom or image analysis you run will be listed here.
+          {t('ui_diagnosis_history_panel_no_diagnoses_recorded_yet_a_symptom')}
         </p>
       ) : (
         <ul className="divide-y divide-slate-800">

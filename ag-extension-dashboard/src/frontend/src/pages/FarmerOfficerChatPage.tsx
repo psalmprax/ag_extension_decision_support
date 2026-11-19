@@ -24,6 +24,7 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
   setFarmerChatInput,
   handleFarmerChatSend,
 }) => {
+  const { t } = useLanguage();
   const { language } = useLanguage();
   const myId = useAppStore(state => state.user?.id);
   const [sending, setSending] = useState(false);
@@ -100,7 +101,7 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
     <div className="flex flex-col h-[calc(100dvh-150px)] md:h-[calc(100vh-140px)] gap-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">My extension officer</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('ui_farmer_officer_chat_page_my_extension_officer')}</h2>
           <p className="text-sm text-slate-500 dark:text-white/60 flex items-center gap-1.5">
             <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
             {thread?.officerName || (thread ? 'Your officer' : 'Your officer will see your first message here')}
@@ -116,14 +117,14 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
         <div className="flex-1 overflow-y-auto p-4 space-y-3" aria-live="polite">
           {farmerChatMessages.length === 0 ? (
             <p className="text-sm text-slate-500 dark:text-white/50 text-center py-12">
-              Ask your officer anything about your farm: crops, pests, weather or markets.
+              {t('ui_farmer_officer_chat_page_ask_your_officer_anything_about_your')}
             </p>
           ) : (
             farmerChatMessages.map((message, index) => (
               <FarmerChatMessage key={`${message.timestamp ?? ''}-${index}`} message={message} viewer="farmer" />
             ))
           )}
-          {officerTyping && <p className="text-xxs text-slate-500 dark:text-white/50">Your officer is typing…</p>}
+          {officerTyping && <p className="text-xxs text-slate-500 dark:text-white/50">{t('ui_farmer_officer_chat_page_your_officer_is_typing')}</p>}
           <div ref={endRef} />
         </div>
 
@@ -145,7 +146,7 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
               disabled={sending}
             />
             <label htmlFor="farmer-officer-message" className="sr-only">
-              Message to your officer
+              {t('ui_farmer_officer_chat_page_message_to_your_officer')}
             </label>
             <input
               id="farmer-officer-message"

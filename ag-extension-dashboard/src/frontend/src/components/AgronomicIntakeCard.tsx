@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export interface AgronomicIntakeParams {
   zone?: string;
@@ -123,6 +124,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
   onBypass,
   compact = false,
 }) => {
+  const { t } = useLanguage();
   const [selectedZone, setSelectedZone] = useState<string>('');
   const [selectedSoil, setSelectedSoil] = useState<string>('');
   const [selectedIrrigation, setSelectedIrrigation] = useState<string>('');
@@ -189,10 +191,10 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
           </div>
           <div>
             <h4 className="text-xs font-medium text-slate-900 dark:text-slate-100">
-              Agronomic precision intake
+              {t('ui_agronomic_intake_card_agronomic_precision_intake')}
             </h4>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              Add only field details you know. Named places in your question take precedence over this optional profile.
+              {t('ui_agronomic_intake_card_add_only_field_details_you_know_name')}
             </p>
           </div>
         </div>
@@ -219,7 +221,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
                   <Compass className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                  1. Growing zone / climate band:
+                  {t('ui_agronomic_intake_card_1_growing_zone_climate_band')}
                 </label>
                 <button
                   onClick={handleAutoGPS}
@@ -252,7 +254,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
 
               {customLocation && (
                 <div className="mt-1 text-[10px] text-slate-600 dark:text-slate-400 flex items-center gap-1 font-mono">
-                  <MapPin className="w-2.5 h-2.5 text-slate-400" /> Selected GPS: {customLocation}
+                  <MapPin className="w-2.5 h-2.5 text-slate-400" /> {t('ui_agronomic_intake_card_selected_gps')} {customLocation}
                 </div>
               )}
             </div>
@@ -261,7 +263,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
             <div>
               <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1 mb-1.5">
                 <Layers className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                2. Soil texture & condition:
+                {t('ui_agronomic_intake_card_2_soil_texture_condition')}
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {SOIL_TYPES.map(soil => {
@@ -288,7 +290,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
               <div>
                 <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1 mb-1.5">
                   <Droplets className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                  3. Water supply:
+                  {t('ui_agronomic_intake_card_3_water_supply')}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                   {IRRIGATION_TYPES.map(irr => {
@@ -313,7 +315,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
               <div>
                 <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1 mb-1.5">
                   <Target className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                  4. Production goal:
+                  {t('ui_agronomic_intake_card_4_production_goal')}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                   {PRODUCTION_GOALS.map(goal => {
@@ -343,7 +345,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
                   onClick={onBypass}
                   className="text-[11px] text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors font-medium"
                 >
-                  Search general overview &rarr;
+                  {t('ui_agronomic_intake_card_search_general_overview')}
                 </button>
               )}
               <div className="flex-1" />
@@ -352,7 +354,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
                 className="px-3.5 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center gap-1.5 transition-colors active:scale-[0.98]"
               >
                 <ArrowRight className="w-3.5 h-3.5" />
-                Generate Precision Advice
+                {t('ui_agronomic_intake_card_generate_precision_advice')}
               </button>
             </div>
           </motion.div>

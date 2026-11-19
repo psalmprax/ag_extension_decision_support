@@ -116,8 +116,9 @@ const queryClient = new QueryClient({
   },
 });
 
-const renderComponent = () => {
-  return render(
+// The language provider renders its children once the (mocked) locale file has loaded.
+const renderComponent = async () => {
+  const view = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <LanguageProvider>
@@ -126,11 +127,13 @@ const renderComponent = () => {
       </MemoryRouter>
     </QueryClientProvider>
   );
+  await waitFor(() => expect(view.container.firstChild).not.toBeNull());
+  return view;
 };
 
 describe('BillingDashboard', () => {
   it('renders loading state initially', async () => {
-    renderComponent();
+    await renderComponent();
     expect(screen.getByRole('status')).toBeInTheDocument();
 
     // Wait for the loading state to disappear to satisfy React state updates
@@ -140,7 +143,7 @@ describe('BillingDashboard', () => {
   });
 
   it('renders subscription details after loading', async () => {
-    renderComponent();
+    await renderComponent();
 
     await waitFor(() => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
@@ -152,11 +155,11 @@ describe('BillingDashboard', () => {
   });
 
   it('keeps the unselected billing period readable in light mode', async () => {
-    renderComponent();
+    await renderComponent();
+    const annual = await screen.findByRole('button', { name: 'Annual (-20%)' });
     await waitFor(() => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
-    const annual = screen.getByRole('button', { name: 'Annual (-20%)' });
     // White text is only for the selected (solid green) option; on the light
     // header an unselected option needs a dark text colour.
     expect(annual.className).toMatch(/(^|\s)text-slate-600(\s|$)/);
@@ -164,7 +167,7 @@ describe('BillingDashboard', () => {
   });
 
   it('renders available plans', async () => {
-    renderComponent();
+    await renderComponent();
 
     await waitFor(() => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument();

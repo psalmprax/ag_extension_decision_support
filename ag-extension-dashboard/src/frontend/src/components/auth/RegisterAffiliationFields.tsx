@@ -113,7 +113,7 @@ export function RegisterAffiliationFields({
           )}
           {regionRequired && (
             <p className="mt-1 text-[11px] text-white/50">
-              Your regional manager is assigned from this region.
+              {t('ui_register_affiliation_fields_your_regional_manager_is_assigned_fr')}
             </p>
           )}
         </div>

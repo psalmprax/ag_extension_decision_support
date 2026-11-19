@@ -1,5 +1,6 @@
 import React from 'react';
 import { Filter } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function EmailWorkflowsCategoryFilter({
   categories,
@@ -12,6 +13,7 @@ export function EmailWorkflowsCategoryFilter({
   onChange: (value: string) => void;
   radiusClass: string;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="flex items-center gap-2">
       <Filter className="w-4 h-4 text-gray-400" />
@@ -20,7 +22,7 @@ export function EmailWorkflowsCategoryFilter({
         onChange={e => onChange(e.target.value)}
         className={`px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
       >
-        <option value="all">All Categories</option>
+        <option value="all">{t('ui_category_filter_all_categories')}</option>
         {categories.map(category => (
           <option key={category} value={category}>
             {category}

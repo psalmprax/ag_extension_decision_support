@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function CTA() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   return (
@@ -36,14 +38,14 @@ export function CTA() {
               variants={fadeUp}
               className="text-2xl sm:text-[clamp(2rem,4vw,3rem)] font-bold tracking-tight mb-4 sm:mb-5 leading-tight px-2 text-white"
             >
-              Ready to protect your crops
+              {t('ui_cta_ready_to_protect_your_crops')}
               <br />
               <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-amber-300 bg-clip-text text-transparent">
-                and harvest more this season?
+                {t('ui_cta_and_harvest_more_this_season')}
               </span>
             </motion.h2>
             <motion.p variants={fadeUp} className="text-sm sm:text-lg text-white/80 mb-6 sm:mb-8 px-2 font-normal">
-              Completely free for smallholder farmers. Queue crop photos offline; automatic AI sync when reconnected.
+              {t('ui_cta_completely_free_for_smallholder_farm')}
             </motion.p>
             <motion.div
               variants={fadeUp}
@@ -56,7 +58,7 @@ export function CTA() {
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
                 <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
                 <span className="relative z-10 flex items-center gap-2">
-                  Get Started Free
+                  {t('ui_cta_get_started_free')}
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform text-white/90" />
                 </span>
               </button>
@@ -64,7 +66,7 @@ export function CTA() {
                 onClick={() => navigate('/demo')}
                 className="w-full sm:w-auto px-7 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-semibold bg-white/[0.06] border border-white/10 text-slate-200 rounded-xl hover:bg-white/[0.12] hover:text-white active:scale-[0.98] transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
               >
-                Try Live Demo
+                {t('ui_cta_try_live_demo')}
               </button>
             </motion.div>
           </motion.div>

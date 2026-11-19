@@ -1,11 +1,15 @@
-import { readdir, stat } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
+import { gzipSync } from 'node:zlib';
 import path from 'node:path';
 
 const distRoot = path.resolve('dist');
 const maxJavaScriptBytes = 700 * 1024;
 const maxTotalBytes = 6 * 1024 * 1024;
-// One translation file is fetched per user (LanguageContext: /locales/<lang>.json).
-const maxLocaleBytes = 100 * 1024;
+// One translation file is fetched per user (LanguageContext: /locales/<lang>.json), and
+// nginx serves it gzipped (nginx.conf: gzip_comp_level 6), so the cap is on those bytes.
+// 80KB leaves room for every UI string translated, including 3-byte scripts (hi, zh, ar).
+const maxLocaleGzipBytes = 80 * 1024;
+const NGINX_GZIP_LEVEL = 6;
 
 async function collectFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -32,7 +36,10 @@ const largestJavaScript = javascript.reduce(
 // own per-file cap instead, so a bloated language file still fails the build.
 const isUnder = dir => item => item.file.includes(`${path.sep}${dir}${path.sep}`);
 const locales = sizes.filter(isUnder('locales'));
-const largestLocale = locales.reduce((largest, item) => (item.bytes > largest.bytes ? item : largest), { file: '', bytes: 0 });
+const gzipped = await Promise.all(
+  locales.map(async item => ({ ...item, gzipBytes: gzipSync(await readFile(item.file), { level: NGINX_GZIP_LEVEL }).length }))
+);
+const largestLocale = gzipped.reduce((largest, item) => (item.gzipBytes > largest.gzipBytes ? item : largest), { file: '', bytes: 0, gzipBytes: 0 });
 const shippedFiles = sizes.filter(
   item => !item.file.endsWith('.map') && !isUnder('models')(item) && !isUnder('locales')(item)
 );
@@ -41,7 +48,7 @@ const totalBytes = shippedFiles.reduce((total, item) => total + item.bytes, 0);
 console.log(`Bundle budget: largest JS ${(largestJavaScript.bytes / 1024).toFixed(1)}KB / ${(maxJavaScriptBytes / 1024).toFixed(0)}KB`);
 console.log(`Bundle budget: total generated assets ${(totalBytes / 1024).toFixed(1)}KB / ${(maxTotalBytes / 1024).toFixed(0)}KB`);
 console.log(
-  `Bundle budget: largest translation ${(largestLocale.bytes / 1024).toFixed(1)}KB / ${(maxLocaleBytes / 1024).toFixed(0)}KB (${path.basename(largestLocale.file) || 'none'})`
+  `Bundle budget: largest translation ${(largestLocale.gzipBytes / 1024).toFixed(1)}KB gzipped / ${(maxLocaleGzipBytes / 1024).toFixed(0)}KB (${path.basename(largestLocale.file) || 'none'}, ${(largestLocale.bytes / 1024).toFixed(0)}KB raw)`
 );
 
 const failures = [];
@@ -51,8 +58,8 @@ if (largestJavaScript.bytes > maxJavaScriptBytes) {
 if (totalBytes > maxTotalBytes) {
   failures.push(`total generated assets exceed ${maxTotalBytes / 1024}KB`);
 }
-if (largestLocale.bytes > maxLocaleBytes) {
-  failures.push(`translation ${path.basename(largestLocale.file)} exceeds ${maxLocaleBytes / 1024}KB`);
+if (largestLocale.gzipBytes > maxLocaleGzipBytes) {
+  failures.push(`translation ${path.basename(largestLocale.file)} exceeds ${maxLocaleGzipBytes / 1024}KB gzipped`);
 }
 if (failures.length > 0) {
   console.error(`Bundle budget failed: ${failures.join('; ')}`);

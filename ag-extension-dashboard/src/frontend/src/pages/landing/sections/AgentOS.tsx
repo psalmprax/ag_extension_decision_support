@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Users, CloudSun, Target, Zap, Sparkles, Radio, CheckCircle2, MessageSquare } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
 import { SANDBOX_PRESETS, type SandboxPreset } from '../data';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export type ChannelTab = 'sms' | 'whatsapp' | 'telegram';
 
@@ -23,6 +24,7 @@ export function AgentOS({
   activeChannelTab: ChannelTab;
   setActiveChannelTab: (c: ChannelTab) => void;
 }) {
+  const { t } = useLanguage();
   return (
         <section id="agent-os" className="relative py-16 sm:py-28 border-t border-white/[0.04] overflow-hidden">
           <div className="max-w-[90rem] w-full mx-auto px-4 sm:px-6 relative z-10">
@@ -30,15 +32,15 @@ export function AgentOS({
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-8 sm:mb-10">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
                 <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                <span>Crop observations</span>
+                <span>{t('ui_diagnosis_page_crop_observations')}</span>
               </div>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
                 <Radio className="w-3.5 h-3.5 shrink-0" />
-                <span>Weather context</span>
+                <span>{t('ui_agent_os_weather_context')}</span>
               </div>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-semibold">
                 <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                <span>Channel examples</span>
+                <span>{t('ui_agent_os_channel_examples')}</span>
               </div>
             </div>
 
@@ -53,23 +55,22 @@ export function AgentOS({
                 variants={fadeUp}
                 className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400 mb-3 sm:mb-4"
               >
-                Interactive Advisory Simulator
+                {t('ui_agent_os_interactive_advisory_simulator')}
               </motion.div>
               <motion.h2
                 variants={fadeUp}
                 className="text-2xl sm:text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight max-w-2xl mx-auto px-2 text-white"
               >
-                Explore an Example Advisory Workflow{' '}
+                {t('ui_agent_os_explore_an_example_advisory_workflow')}{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300">
-                  in a Simulator
+                  {t('ui_agent_os_in_a_simulator')}
                 </span>
               </motion.h2>
               <motion.p
                 variants={fadeUp}
                 className="text-xs sm:text-base text-white/70 max-w-2xl mx-auto mt-3 px-2 leading-relaxed"
               >
-                Select a fictional scenario to explore an illustrative workflow. No live data is checked,
-                no diagnosis is made, and no messages or visits are sent or queued.
+                {t('ui_agent_os_select_a_fictional_scenario_to_explo')}
               </motion.p>
             </motion.div>
 
@@ -84,12 +85,12 @@ export function AgentOS({
                     </div>
                     <div>
                       <div className="font-bold text-sm text-white flex items-center gap-2">
-                        Crop Advisory Simulator
+                        {t('ui_agent_os_crop_advisory_simulator')}
                         <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
-                          Interactive
+                          {t('ui_agent_os_interactive')}
                         </span>
                       </div>
-                      <div className="text-xs text-white/40">Select an example scenario; no real farm data is used</div>
+                      <div className="text-xs text-white/40">{t('ui_agent_os_select_an_example_scenario_no_real_f')}</div>
                     </div>
                   </div>
 
@@ -110,7 +111,7 @@ export function AgentOS({
                 {/* Preset Chips */}
                 <div className="space-y-2">
                   <div className="text-xxs font-bold uppercase tracking-wider text-white/50">
-                    Select Agronomic Goal Scenario:
+                    {t('ui_agent_os_select_agronomic_goal_scenario')}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {SANDBOX_PRESETS.map(preset => (
@@ -136,19 +137,19 @@ export function AgentOS({
                 {/* Goal Prompt Display */}
                 <div className="p-3.5 sm:p-4 rounded-xl bg-slate-950/80 border border-white/[0.08] space-y-1.5 sm:space-y-2">
                   <div className="flex flex-wrap items-center justify-between text-xxs text-emerald-400 font-mono gap-1">
-                    <span>OBJECTIVE PROMPT</span>
-                    <span>REGION: {activePreset.targetRegion}</span>
+                    <span>{t('ui_agent_os_objective_prompt')}</span>
+                    <span>{t('ui_agent_os_region', { targetRegion: activePreset.targetRegion })}</span>
                   </div>
                   <p className="text-xs sm:text-sm text-white/90 leading-relaxed font-mono break-words">
-                    &quot;{activePreset.goalPrompt}&quot;
+                    {t('ui_agent_os_text', { goalPrompt: activePreset.goalPrompt })}
                   </p>
                 </div>
 
                 {/* Execution Trace Stepper */}
                 <div className="space-y-2.5">
                   <div className="text-xxs font-bold uppercase tracking-wider text-white/50 flex items-center justify-between">
-                    <span>Illustrative workflow</span>
-                    <span className="font-mono text-emerald-400">{simProgress}/4 Steps Completed</span>
+                    <span>{t('ui_agent_os_illustrative_workflow')}</span>
+                    <span className="font-mono text-emerald-400">{t('ui_agent_os_4_steps_completed', { simProgress })}</span>
                   </div>
 
                   <div className="space-y-2">
@@ -189,10 +190,10 @@ export function AgentOS({
                   <div className="flex flex-wrap items-center justify-between border-b border-white/[0.08] pb-3 gap-2">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                      <span className="font-bold text-xs text-white">Example guidance card</span>
+                      <span className="font-bold text-xs text-white">{t('ui_agent_os_example_guidance_card')}</span>
                     </div>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shrink-0">
-                      Not verified
+                      {t('ui_agent_os_not_verified')}
                     </span>
                   </div>
 
@@ -202,8 +203,8 @@ export function AgentOS({
                       {activePreset.skillBody}
                     </p>
                     <div className="pt-2 border-t border-white/[0.04] flex flex-wrap items-center justify-between text-[9px] font-mono text-white/40 gap-1">
-                      <span>SOURCE: SCRIPTED EXAMPLE</span>
-                      <span>REGION: {activePreset.targetRegion}</span>
+                      <span>{t('ui_agent_os_source_scripted_example')}</span>
+                      <span>{t('ui_agent_os_region', { targetRegion: activePreset.targetRegion })}</span>
                     </div>
                   </div>
                 </div>
@@ -213,7 +214,7 @@ export function AgentOS({
                   <div className="flex flex-wrap items-center justify-between border-b border-white/[0.08] pb-3 gap-2">
                     <div className="flex items-center gap-2">
                       <MessageSquare className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span className="font-bold text-xs text-white">Multi-channel message preview</span>
+                      <span className="font-bold text-xs text-white">{t('ui_agent_os_multi_channel_message_preview')}</span>
                     </div>
 
                     <div className="flex bg-slate-950 rounded-lg p-0.5 border border-white/[0.06] shrink-0">
@@ -235,8 +236,8 @@ export function AgentOS({
 
                   <div className="p-3.5 sm:p-4 rounded-xl bg-slate-950/90 border border-white/[0.08] space-y-3">
                     <div className="flex items-center justify-between text-xxs font-mono text-white/40">
-                      <span>CHANNEL: {activeChannelTab.toUpperCase()}</span>
-                      <span className="text-amber-300">PREVIEW ONLY — NOT SENT</span>
+                      <span>{t('ui_agent_os_channel')} {activeChannelTab.toUpperCase()}</span>
+                      <span className="text-amber-300">{t('ui_agent_os_preview_only_not_sent')}</span>
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-900/80 border border-white/[0.06] text-xs text-white/90 whitespace-pre-line leading-relaxed font-sans break-words min-h-[140px] flex flex-col justify-start">
@@ -246,15 +247,15 @@ export function AgentOS({
                     <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-center text-xxs font-mono pt-1">
                       <div className="p-2 rounded-lg bg-slate-900/50 border border-white/[0.04]">
                         <div className="text-emerald-400 font-bold">{activePreset.affectedFarmers}</div>
-                        <div className="text-[9px] text-white/40">Example farmers</div>
+                        <div className="text-[9px] text-white/40">{t('ui_agent_os_example_farmers')}</div>
                       </div>
                       <div className="p-2 rounded-lg bg-slate-900/50 border border-white/[0.04]">
                         <div className="text-amber-400 font-bold">{activePreset.alertsDispatched}</div>
-                        <div className="text-[9px] text-white/40">Example alerts</div>
+                        <div className="text-[9px] text-white/40">{t('ui_agent_os_example_alerts')}</div>
                       </div>
                       <div className="p-2 rounded-lg bg-slate-900/50 border border-white/[0.04]">
                         <div className="text-sky-400 font-bold">{activePreset.visitsQueued}</div>
-                        <div className="text-[9px] text-white/40">Example visits</div>
+                        <div className="text-[9px] text-white/40">{t('ui_agent_os_example_visits')}</div>
                       </div>
                     </div>
                   </div>

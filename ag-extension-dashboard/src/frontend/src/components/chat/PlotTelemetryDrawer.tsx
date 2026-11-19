@@ -1,6 +1,7 @@
 import React from 'react';
 import { CheckCircle2, Sprout } from 'lucide-react';
 import type { PlotTelemetry } from '@/pages/farmerChatSafety';
+import { useLanguage } from '@/lib/LanguageContext';
 
 // Forecast thresholds are estimates, not confirmed outbreaks or official alerts.
 
@@ -77,6 +78,7 @@ export const PlotTelemetryDrawer: React.FC<{
   telemetry: TelemetryReading;
   hazardEval: HazardEvaluation;
 }> = ({ farmer, telemetry, hazardEval }) => {
+  const { t } = useLanguage();
   const hazardTone = hazardEval.status === 'ready' && hazardEval.hazards.length > 0
     ? 'text-amber-600 dark:text-amber-400'
     : 'text-emerald-600 dark:text-emerald-400';
@@ -85,31 +87,31 @@ export const PlotTelemetryDrawer: React.FC<{
     <div className="hidden xl:flex w-72 flex-col backdrop-blur-xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/[0.08] rounded-xl p-5 shadow-sm space-y-4 overflow-y-auto">
       <div className="text-xs font-mono font-medium text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
         <Sprout className="w-4 h-4" />
-        <span>Plot Telemetry</span>
+        <span>{t('ui_plot_telemetry_drawer_plot_telemetry')}</span>
       </div>
 
       <div className={CARD}>
-        <div className={LABEL}>NDVI CANOPY VIGOR</div>
+        <div className={LABEL}>{t('ui_plot_telemetry_drawer_ndvi_canopy_vigor')}</div>
         <div className="text-base font-bold text-emerald-600 dark:text-emerald-400">
           {farmer?.ndvi ? `${farmer.ndvi.toFixed(2)} ${ndviBand(farmer.ndvi)}` : '—'}
         </div>
-        <div className={NOTE}>Sentinel-2 Multispectral — add field polygon for NDVI</div>
+        <div className={NOTE}>{t('ui_plot_telemetry_drawer_sentinel_2_multispectral_add_field_p')}</div>
       </div>
 
       <div className={CARD}>
-        <div className={LABEL}>SOIL pH & CARBON</div>
+        <div className={LABEL}>{t('ui_plot_telemetry_drawer_soil_ph_carbon')}</div>
         <div className="text-base font-bold text-amber-600 dark:text-amber-400">{soilValue(telemetry, farmer)}</div>
-        <div className={NOTE}>ISRIC SoilGrids 250m {soilSource(telemetry, farmer)}</div>
+        <div className={NOTE}>{t('ui_plot_telemetry_drawer_isric_soilgrids_250m')} {soilSource(telemetry, farmer)}</div>
       </div>
 
       <div className={CARD}>
-        <div className={LABEL}>NASA POWER WEATHER</div>
+        <div className={LABEL}>{t('ui_plot_telemetry_drawer_nasa_power_weather')}</div>
         <div className="text-base font-bold text-sky-600 dark:text-sky-400">{weatherValue(telemetry, farmer)}</div>
-        <div className={NOTE}>Open-Meteo modeled {telemetry.temp != null ? '• live' : '• no geo'}</div>
+        <div className={NOTE}>{t('ui_plot_telemetry_drawer_open_meteo_modeled')} {telemetry.temp != null ? '• live' : '• no geo'}</div>
       </div>
 
       <div className={CARD}>
-        <div className={LABEL}>FORECAST THRESHOLDS</div>
+        <div className={LABEL}>{t('ui_plot_telemetry_drawer_forecast_thresholds')}</div>
         <div className={`text-base font-bold ${hazardTone} flex items-center gap-1`}>
           <CheckCircle2 className={`w-4 h-4 ${hazardTone}`} />
           <span>{hazardHeadline(hazardEval)}</span>
@@ -117,7 +119,7 @@ export const PlotTelemetryDrawer: React.FC<{
         <div className={NOTE}>{hazardDetail(hazardEval)}</div>
         {hazardEval.status === 'ready' && (
           <div className={NOTE}>
-            Estimated thresholds only • {hazardEval.evaluatedDays}/{hazardEval.totalDays} days evaluated • not an outbreak diagnosis
+            {t('ui_plot_telemetry_drawer_estimated_thresholds_only')} {hazardEval.evaluatedDays}/{hazardEval.totalDays} {t('ui_plot_telemetry_drawer_days_evaluated_not_an_outbreak_diagn')}
           </div>
         )}
       </div>

@@ -20,6 +20,7 @@ import { requestGpsFix } from '@/lib/geo';
 import { SoilNutrientHeatmapCanvas, type SoilHeatmapRealPoints } from '../../components/canvas-ui/SoilNutrientHeatmapCanvas';
 import { useDemoMode } from '@/demo';
 import toast from 'react-hot-toast';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface Props {
   cropType: string;
@@ -169,6 +170,7 @@ const SoilUploadSection: React.FC<{
 );
 
 const SoilNpkGrid: React.FC<{ npk: SoilAnalysisResult['npkDeficiencies'] }> = ({ npk }) => {
+  const { t } = useLanguage();
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'optimal':
@@ -183,14 +185,14 @@ const SoilNpkGrid: React.FC<{ npk: SoilAnalysisResult['npkDeficiencies'] }> = ({
   return (
     <div>
       <h3 className="text-xs font-semibold text-white mb-2">
-        Nutrient Balance Matrix (NPK)
+        {t('ui_soil_diagnostics_tab_nutrient_balance_matrix_npk')}
       </h3>
       <div className="grid grid-cols-3 gap-2.5">
         <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800 text-center">
           <div className="w-7 h-7 rounded-[3px] bg-rose-500/15 border border-rose-500/30 flex items-center justify-center mx-auto mb-1 text-rose-400 font-bold font-mono text-xs">
             N
           </div>
-          <p className="text-[10px] font-mono text-slate-400 uppercase">Nitrogen</p>
+          <p className="text-[10px] font-mono text-slate-400 uppercase">{t('ui_soil_diagnostics_tab_nitrogen')}</p>
           <span className={`inline-block mt-1 px-1.5 py-0.2 rounded-[2px] text-[9px] font-mono font-bold uppercase border ${getStatusBadge(npk.nitrogen)}`}>
             {npk.nitrogen}
           </span>
@@ -200,7 +202,7 @@ const SoilNpkGrid: React.FC<{ npk: SoilAnalysisResult['npkDeficiencies'] }> = ({
           <div className="w-7 h-7 rounded-[3px] bg-sky-500/15 border border-sky-500/30 flex items-center justify-center mx-auto mb-1 text-sky-400 font-bold font-mono text-xs">
             P
           </div>
-          <p className="text-[10px] font-mono text-slate-400 uppercase">Phosphorus</p>
+          <p className="text-[10px] font-mono text-slate-400 uppercase">{t('ui_soil_diagnostics_tab_phosphorus')}</p>
           <span className={`inline-block mt-1 px-1.5 py-0.2 rounded-[2px] text-[9px] font-mono font-bold uppercase border ${getStatusBadge(npk.phosphorus)}`}>
             {npk.phosphorus}
           </span>
@@ -210,7 +212,7 @@ const SoilNpkGrid: React.FC<{ npk: SoilAnalysisResult['npkDeficiencies'] }> = ({
           <div className="w-7 h-7 rounded-[3px] bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mx-auto mb-1 text-amber-400 font-bold font-mono text-xs">
             K
           </div>
-          <p className="text-[10px] font-mono text-slate-400 uppercase">Potassium</p>
+          <p className="text-[10px] font-mono text-slate-400 uppercase">{t('ui_soil_diagnostics_tab_potassium')}</p>
           <span className={`inline-block mt-1 px-1.5 py-0.2 rounded-[2px] text-[9px] font-mono font-bold uppercase border ${getStatusBadge(npk.potassium)}`}>
             {npk.potassium}
           </span>
@@ -225,16 +227,17 @@ const SoilResultsHUD: React.FC<{
   onExport: () => void;
   isExporting: boolean;
 }> = ({ soilAnalysis, onExport, isExporting }) => {
+  const { t } = useLanguage();
   if (!soilAnalysis) {
     return (
       <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 flex flex-col justify-center space-y-4 text-center">
         <div className="py-12 text-slate-500 space-y-2">
           <FlaskConical className="w-10 h-10 mx-auto opacity-30 text-emerald-400" />
           <p className="text-xs font-medium text-slate-400">
-            Awaiting Soil Sample
+            {t('ui_soil_diagnostics_tab_awaiting_soil_sample')}
           </p>
           <p className="text-[11px] font-mono text-slate-500 max-w-xs mx-auto">
-            Upload topsoil photos on the left to infer texture, NPK balance, and moisture retention.
+            {t('ui_soil_diagnostics_tab_upload_topsoil_photos_on_the_left_to')}
           </p>
         </div>
       </div>
@@ -248,7 +251,7 @@ const SoilResultsHUD: React.FC<{
       {analysisUnavailable && (
         <div className="flex items-start gap-2 p-2.5 rounded-[3px] bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono">
           <AlertTriangle className="w-4 h-4 shrink-0" />
-          <span>Analysis unavailable. No soil measurements were generated.</span>
+          <span>{t('ui_soil_diagnostics_tab_analysis_unavailable_no_soil_measure')}</span>
         </div>
       )}
       {/* Overall Health Score Pod */}
@@ -257,11 +260,11 @@ const SoilResultsHUD: React.FC<{
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-emerald-400" />
             <h4 className="text-xs font-semibold text-white">
-              Agronomic Soil Index
+              {t('ui_soil_diagnostics_tab_agronomic_soil_index')}
             </h4>
           </div>
           <span className="text-[10px] font-mono tabular-nums text-emerald-400 font-medium">
-            Confidence: {analysisUnavailable ? 'N/A' : `${(soilAnalysis.confidence * 100).toFixed(1)}%`}
+            {t('ui_disease_saliency_canvas_confidence')} {analysisUnavailable ? 'N/A' : `${(soilAnalysis.confidence * 100).toFixed(1)}%`}
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -282,7 +285,7 @@ const SoilResultsHUD: React.FC<{
         <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800">
           <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 uppercase">
             <Layers className="w-3 h-3 text-emerald-400" />
-            <span>Texture Class</span>
+            <span>{t('ui_soil_diagnostics_tab_texture_class')}</span>
           </div>
           <p className="text-xs font-bold text-white">{soilAnalysis.texture}</p>
         </div>
@@ -290,7 +293,7 @@ const SoilResultsHUD: React.FC<{
         <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800">
           <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 uppercase">
             <Droplet className="w-3 h-3 text-sky-400" />
-            <span>Moisture Level</span>
+            <span>{t('ui_soil_diagnostics_tab_moisture_level')}</span>
           </div>
           <p className="text-xs font-bold text-white">{soilAnalysis.estimatedMoisture}</p>
         </div>
@@ -298,7 +301,7 @@ const SoilResultsHUD: React.FC<{
         <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800">
           <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 uppercase">
             <Activity className="w-3 h-3 text-purple-400" />
-            <span>Drainage Class</span>
+            <span>{t('ui_soil_diagnostics_tab_drainage_class')}</span>
           </div>
           <p className="text-xs font-bold text-white">{soilAnalysis.drainageClass}</p>
         </div>
@@ -306,7 +309,7 @@ const SoilResultsHUD: React.FC<{
         <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800">
           <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 uppercase">
             <AlertTriangle className="w-3 h-3 text-amber-400" />
-            <span>Discoloration</span>
+            <span>{t('ui_soil_diagnostics_tab_discoloration')}</span>
           </div>
           <p className="text-xs font-bold text-white truncate" title={soilAnalysis.colorDiscoloration}>
             {soilAnalysis.colorDiscoloration}
@@ -321,7 +324,7 @@ const SoilResultsHUD: React.FC<{
       {soilAnalysis.cropSuitability.length > 0 && (
         <div>
           <h4 className="text-xs font-semibold text-white mb-1.5">
-            Optimal Crop Suitability
+            {t('ui_soil_diagnostics_tab_optimal_crop_suitability')}
           </h4>
           <div className="flex flex-wrap gap-1.5">
             {soilAnalysis.cropSuitability.map((crop, idx) => (
@@ -359,6 +362,7 @@ export function SoilDiagnosticsTab({
   btnClass: _btnClass,
   addNotification,
 }: Props) {
+  const { t } = useLanguage();
   const { isDemo } = useDemoMode();
   const [selectedSoilImage, setSelectedSoilImage] = useState<File | null>(null);
   const [soilImagePreview, setSoilImagePreview] = useState<string | null>(null);
@@ -552,8 +556,8 @@ export function SoilDiagnosticsTab({
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <h3 className="text-xs font-semibold text-white flex items-center gap-2">
             <Database className="w-4 h-4 text-sky-400" />
-            Field Soil Context
-            <span className="px-1.5 py-0.5 rounded-[2px] text-[9px] font-mono bg-sky-500/10 text-sky-300 border border-sky-500/20">Live</span>
+            {t('ui_soil_diagnostics_tab_field_soil_context')}
+            <span className="px-1.5 py-0.5 rounded-[2px] text-[9px] font-mono bg-sky-500/10 text-sky-300 border border-sky-500/20">{t('ui_live_activity_stream_live')}</span>
           </h3>
           <div className="flex flex-wrap items-center gap-2">
             <select
@@ -561,7 +565,7 @@ export function SoilDiagnosticsTab({
               onChange={e => setSelectedFarmerId(e.target.value)}
               className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white focus:border-sky-500 outline-none"
             >
-              <option value="">Select farmer to load real soil baselines…</option>
+              <option value="">{t('ui_soil_diagnostics_tab_select_farmer_to_load_real_soil_base')}</option>
               {farmersList.map(f => (
                 <option key={f.id} value={f.id}>
                   {f.firstName} {f.lastName}
@@ -593,13 +597,13 @@ export function SoilDiagnosticsTab({
 
         {!selectedFarmerId ? (
           <p className="text-[11px] font-mono text-slate-500">
-            Choose a farmer to load their soil starting point (satellite estimate),{' '}
-            recent topsoil moisture, and the farmer&apos;s real{' '}
-            <span className="text-amber-300">Soil Lab History</span>. Without a farmer, soil photo inference still works as a labeled estimate.
+            {t('ui_soil_diagnostics_tab_choose_a_farmer_to_load_their_soil_s')}{' '}
+            {t('ui_soil_diagnostics_tab_recent_topsoil_moisture_and_the_farm')}{' '}
+            <span className="text-amber-300">{t('ui_soil_diagnostics_tab_soil_lab_history')}</span>{t('ui_soil_diagnostics_tab_without_a_farmer_soil_photo_inferenc')}
           </p>
         ) : isLoadingProfile ? (
           <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Loader2 className="w-4 h-4 animate-spin" /> Loading soil profile…
+            <Loader2 className="w-4 h-4 animate-spin" /> {t('ui_soil_diagnostics_tab_loading_soil_profile')}
           </div>
         ) : profileError ? (
           <p className="text-xs text-rose-400">{profileError}</p>
@@ -608,7 +612,7 @@ export function SoilDiagnosticsTab({
             {/* SoilGrids Baseline */}
             <div className="p-3 rounded-[3px] bg-slate-950 border border-slate-800">
               <div className="flex items-center gap-1.5 text-[10px] font-mono text-sky-400 mb-1">
-                <MapPin className="w-3 h-3" /> ISRIC SoilGrids 250m
+                <MapPin className="w-3 h-3" /> {t('ui_plot_telemetry_drawer_isric_soilgrids_250m')}
               </div>
               {soilProfile.baseline && (soilProfile.baseline as { ph?: number | null }).ph !== undefined ? (
                 <div className="space-y-1 text-xs font-mono">
@@ -621,29 +625,29 @@ export function SoilDiagnosticsTab({
                     <span className="text-white">{(soilProfile.baseline as { organicCarbonGPerKg: number | null }).organicCarbonGPerKg ?? '—'} g/kg</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">N total</span>
+                    <span className="text-slate-400">{t('ui_soil_diagnostics_tab_n_total')}</span>
                     <span className="text-white">{(soilProfile.baseline as { nitrogenMgPerKg: number | null }).nitrogenMgPerKg ?? '—'} mg/kg</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">CEC</span>
-                    <span className="text-white">{(soilProfile.baseline as { cecCmolPerKg: number | null }).cecCmolPerKg ?? '—'} cmol/kg</span>
+                    <span className="text-white">{(soilProfile.baseline as { cecCmolPerKg: number | null }).cecCmolPerKg ?? '—'} {t('ui_soil_diagnostics_tab_cmol_kg')}</span>
                   </div>
                   <p className="text-[10px] text-amber-400/80 leading-tight pt-1 border-t border-slate-800 flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3 shrink-0" />
-                    <span>Satellite estimate for this area — not a lab test.</span>
+                    <span>{t('ui_soil_diagnostics_tab_satellite_estimate_for_this_area_not')}</span>
                   </p>
                 </div>
               ) : soilProfile.location ? (
-                <p className="text-xs text-amber-400">Baseline fetch failed — check connectivity.</p>
+                <p className="text-xs text-amber-400">{t('ui_soil_diagnostics_tab_baseline_fetch_failed_check_connecti')}</p>
               ) : (
-                <p className="text-xs text-slate-500">No field location saved yet — tap “Use my location” above to enable the soil estimate.</p>
+                <p className="text-xs text-slate-500">{t('ui_soil_diagnostics_tab_no_field_location_saved_yet_tap_use')}</p>
               )}
             </div>
 
             {/* Live Moisture */}
             <div className="p-3 rounded-lg bg-slate-950 border border-slate-800">
               <div className="flex items-center gap-1.5 text-xxs font-mono text-emerald-400 mb-1">
-                <Droplet className="w-3 h-3" /> Open-Meteo Soil Moisture
+                <Droplet className="w-3 h-3" /> {t('ui_soil_diagnostics_tab_open_meteo_soil_moisture')}
               </div>
               {soilProfile.moisture && (soilProfile.moisture as { soilMoisture: { avgTop9cm: number | null } }).soilMoisture ? (
                 <div className="space-y-1 text-xs font-mono">
@@ -661,20 +665,20 @@ export function SoilDiagnosticsTab({
                   </div>
                   <p className="text-[10px] text-amber-400/80 leading-tight pt-1 border-t border-slate-800 flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3 shrink-0" />
-                    <span>Modeled ERA5/ECMWF estimate — not a field probe.</span>
+                    <span>{t('ui_soil_diagnostics_tab_modeled_era5_ecmwf_estimate_not_a_fi')}</span>
                   </p>
                 </div>
               ) : soilProfile.location ? (
-                <p className="text-xs text-amber-400">Moisture fetch failed.</p>
+                <p className="text-xs text-amber-400">{t('ui_soil_diagnostics_tab_moisture_fetch_failed')}</p>
               ) : (
-                <p className="text-xs text-slate-500">No field location yet.</p>
+                <p className="text-xs text-slate-500">{t('ui_soil_diagnostics_tab_no_field_location_yet')}</p>
               )}
             </div>
 
             {/* Lab History */}
             <div className="p-3 rounded-[3px] bg-slate-950 border border-slate-800">
               <div className="flex items-center gap-1.5 text-[10px] font-mono text-amber-400 mb-1">
-                <Beaker className="w-3 h-3" /> Soil Lab History
+                <Beaker className="w-3 h-3" /> {t('ui_soil_diagnostics_tab_soil_lab_history')}
               </div>
               {soilProfile.labResults.length > 0 ? (
                 <div className="space-y-1.5 max-h-28 overflow-y-auto pr-1">
@@ -685,13 +689,13 @@ export function SoilDiagnosticsTab({
                         <span className="text-slate-400">{r.testedAt ? new Date(r.testedAt).toLocaleDateString() : '—'}</span>
                       </div>
                       <div className="text-slate-400">
-                        pH {r.ph ?? '—'} • N {r.nitrogenPpm ?? '—'}ppm • P {r.phosphorusPpm ?? '—'} • K {r.potassiumPpm ?? '—'}
+                        pH {r.ph ?? '—'} • N {r.nitrogenPpm ?? '—'}{t('ui_soil_diagnostics_tab_ppm_p')} {r.phosphorusPpm ?? '—'} • K {r.potassiumPpm ?? '—'}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-500">No lab results yet. Import via Field Intel → Soil Lab CSV.</p>
+                <p className="text-xs text-slate-500">{t('ui_soil_diagnostics_tab_no_lab_results_yet_import_via_field')}</p>
               )}
             </div>
           </div>
@@ -704,8 +708,8 @@ export function SoilDiagnosticsTab({
         if (!hasLive && !isDemo) {
           return (
             <div className="p-4 rounded-[4px] bg-slate-900/80 border border-slate-800 text-center">
-              <p className="text-xs font-bold text-white">Live Soil Map — Per Farmer</p>
-              <p className="text-xs text-white/50 mt-1 max-w-md mx-auto">No live soil map yet — tap “Use my location” above or import lab results, then return. The demo account shows a sample map.</p>
+              <p className="text-xs font-bold text-white">{t('ui_soil_diagnostics_tab_live_soil_map_per_farmer')}</p>
+              <p className="text-xs text-white/50 mt-1 max-w-md mx-auto">{t('ui_soil_diagnostics_tab_no_live_soil_map_yet_tap_use_my_loca')}</p>
             </div>
           );
         }
@@ -713,7 +717,7 @@ export function SoilDiagnosticsTab({
           <div className="p-4 rounded-[4px] bg-slate-900/80 border border-slate-800">
             <h4 className="text-xs font-semibold text-white mb-3 flex items-center gap-2">
               <Layers className="w-3.5 h-3.5 text-emerald-400" />
-              Field Map — {hasLive ? 'Live Estimate' : 'Sample Map'}
+              {t('ui_soil_diagnostics_tab_field_map')} {hasLive ? 'Live Estimate' : 'Sample Map'}
               <span className={`ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded border ${hasLive ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-300 bg-amber-500/10 border-amber-500/20'}`}>
                 {hasLive ? 'Live' : 'Sample'}
               </span>

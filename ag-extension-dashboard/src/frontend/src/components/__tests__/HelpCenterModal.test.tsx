@@ -11,10 +11,6 @@ vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('@/lib/LanguageContext', () => ({
-  useLanguage: () => ({ t: () => undefined }),
-}));
-
 vi.mock('@/store/useAppStore', () => ({
   useAppStore: (selector: (state: { setActiveTab: () => void; addNotification: () => void }) => unknown) =>
     selector({ setActiveTab: vi.fn(), addNotification: vi.fn() }),

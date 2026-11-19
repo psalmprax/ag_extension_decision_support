@@ -250,12 +250,12 @@ export function FarmerMap({
               <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-2">
                 <Crosshair className="w-5 h-5" />
               </div>
-              <h4 className="font-bold text-sm text-gray-900 dark:text-white">Your Location</h4>
+              <h4 className="font-bold text-sm text-gray-900 dark:text-white">{t('ui_farmer_map_your_location')}</h4>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Extension Officer / Active GPS Node
+                {t('ui_farmer_map_extension_officer_active_gps_node')}
               </p>
               <span className="text-xxs text-blue-500 font-semibold mt-2 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40">
-                Lat: {currentUserLocation[0].toFixed(4)}, Lng: {currentUserLocation[1].toFixed(4)}
+                {t('ui_farmer_map_lat')} {currentUserLocation[0].toFixed(4)}{t('ui_farmer_map_lng')} {currentUserLocation[1].toFixed(4)}
               </span>
             </div>
           </Popup>
@@ -307,12 +307,12 @@ export function FarmerMap({
                 <div className="p-4 space-y-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                   <div className="grid grid-cols-2 gap-2 text-xxs">
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                      <div className="text-slate-400 font-bold uppercase tracking-wider">Farm Area</div>
+                      <div className="text-slate-400 font-bold uppercase tracking-wider">{t('ui_farmer_map_farm_area')}</div>
                       <div className="text-sm font-black text-slate-800 dark:text-white mt-0.5">{farmer.size} ha</div>
                     </div>
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
                       <div className="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                        Est. Yield
+                        {t('farmer_est_yield')}
                         <InfoPromptIcon
                           title="Estimated Yield"
                           content="Projected seasonal harvest calculated from farm area, crop variety, and historical yield data."
@@ -334,7 +334,7 @@ export function FarmerMap({
                           aria-label={`Call ${farmer.name}`}
                         >
                           <Phone className="w-3.5 h-3.5" />
-                          Call
+                          {t('action_call')}
                         </button>
                       ) : (
                         <InfoPrompt
@@ -351,7 +351,7 @@ export function FarmerMap({
                             aria-label={`Call ${farmer.name}`}
                           >
                             <Phone className="w-3.5 h-3.5" />
-                            Call
+                            {t('action_call')}
                           </button>
                         </InfoPrompt>
                       )
@@ -365,7 +365,7 @@ export function FarmerMap({
                         aria-label={`Chat with ${farmer.name}`}
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
-                        Chat
+                        {t('action_chat')}
                       </button>
                     ) : (
                       <InfoPrompt
@@ -382,7 +382,7 @@ export function FarmerMap({
                           aria-label={`Chat with ${farmer.name}`}
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
-                          Chat
+                          {t('action_chat')}
                         </button>
                       </InfoPrompt>
                     )}
@@ -449,13 +449,13 @@ export function FarmerMap({
           aria-label="Expand Map Fullscreen"
         >
           <Maximize2 className="w-4 h-4 text-emerald-400" />
-          <span className="hidden sm:inline">Expand</span>
+          <span className="hidden sm:inline">{t('ui_farmer_map_expand')}</span>
         </button>
       </div>
 
       {isDemo && (
         <div className="absolute bottom-3 left-3 z-[400] rounded-lg bg-slate-950/85 px-2.5 py-1.5 text-[10px] font-semibold text-amber-200 border border-amber-400/30">
-          Sample demo locations
+          {t('ui_farmer_map_sample_demo_locations')}
         </div>
       )}
 

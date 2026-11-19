@@ -9,6 +9,7 @@ import {
 import { queueSpecimenForAnalysis } from '@/services/offlineDiagnosisQueue';
 import { DiseaseSaliencyCanvas } from '@/components/canvas-ui/DiseaseSaliencyCanvas';
 import toast from 'react-hot-toast';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface Props {
   cropType: string;
@@ -158,20 +159,19 @@ export const AnalysisResultsHUD: React.FC<{
   offlineQueued: boolean;
   getSeverityColor: (s: string) => string;
 }> = ({ imageAnalysis, imagePreview, offlineQueued, getSeverityColor }) => {
+  const { t } = useLanguage();
   if (offlineQueued) {
     return (
       <div className="p-5 rounded-[4px] bg-slate-900/80 border border-amber-500/40 flex flex-col justify-center space-y-4">
         <div className="flex items-center gap-2 p-2.5 rounded-[3px] bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono">
           <CloudOff className="w-4 h-4 text-amber-400 shrink-0" />
-          <span>OFFLINE • DIAGNOSIS PENDING CONNECTIVITY</span>
+          <span>{t('ui_image_analysis_tab_offline_diagnosis_pending_connectivi')}</span>
         </div>
         <p className="text-xs font-mono text-slate-300 leading-relaxed">
-          There is no on-device AI model, so no diagnosis was generated for this specimen.
+          {t('ui_image_analysis_tab_there_is_no_on_device_ai_model_so_no')}
         </p>
         <p className="text-[11px] font-mono text-slate-400 leading-relaxed">
-          The photo has been queued and will be analyzed by the live pathology service automatically
-          when the device reconnects. Until then, do not treat this specimen based on a guess — if
-          the situation is urgent, consult your local extension officer.
+          {t('ui_image_analysis_tab_the_photo_has_been_queued_and_will_b')}
         </p>
       </div>
     );
@@ -182,15 +182,15 @@ export const AnalysisResultsHUD: React.FC<{
       <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 flex flex-col justify-center space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-slate-400">
-            Specimen Image Loupe
+            {t('ui_image_analysis_tab_specimen_image_loupe')}
           </span>
-          <span className="text-xxs font-mono text-slate-400">Standby</span>
+          <span className="text-xxs font-mono text-slate-400">{t('ui_image_analysis_tab_standby')}</span>
         </div>
         <div className="rounded-lg overflow-hidden border border-slate-800 bg-slate-950">
           <DiseaseSaliencyCanvas />
         </div>
         <p className="text-xs font-mono text-center text-slate-400">
-          Upload a specimen photo on the left to inspect it with the image loupe.
+          {t('ui_image_analysis_tab_upload_a_specimen_photo_on_the_left')}
         </p>
       </div>
     );
@@ -208,7 +208,7 @@ export const AnalysisResultsHUD: React.FC<{
       <div className="rounded-lg p-2 bg-slate-950 border border-slate-800">
         <div className="px-2 py-1 mb-2 border-b border-slate-800">
           <span className="text-xs font-medium text-slate-300">
-            Specimen Photo Review
+            {t('ui_image_analysis_tab_specimen_photo_review')}
           </span>
         </div>
         <DiseaseSaliencyCanvas imageSrc={imagePreview || undefined} detections={[]} />
@@ -217,7 +217,7 @@ export const AnalysisResultsHUD: React.FC<{
       {analysisUnavailable ? (
         <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-2 text-amber-300">
           <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
-          <p className="text-xs font-mono">Analysis unavailable. No diagnosis was generated.</p>
+          <p className="text-xs font-mono">{t('ui_image_analysis_tab_analysis_unavailable_no_diagnosis_wa')}</p>
         </div>
       ) : (
         /* Health Metric Banner */
@@ -232,7 +232,7 @@ export const AnalysisResultsHUD: React.FC<{
               </h4>
             </div>
             <p className="text-xxs font-mono text-slate-400 mt-1">
-              Source: {diagnosticSourceLabel(imageAnalysis.provenance)}
+              {t('ui_image_analysis_tab_source')} {diagnosticSourceLabel(imageAnalysis.provenance)}
             </p>
           </div>
           <div className="text-right">
@@ -246,21 +246,20 @@ export const AnalysisResultsHUD: React.FC<{
 
       {!analysisUnavailable && needsReview && (
         <p className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300">
-          Unconfirmed image observations, not a diagnosis. Model confidence is not diagnostic accuracy
-          or treatment authorization. Confirm the cause with a local extension officer before treatment.
+          {t('ui_image_analysis_tab_unconfirmed_image_observations_not_a')}
         </p>
       )}
 
       {!analysisUnavailable && Boolean(imageAnalysis.nutrientDeficiencies?.length) && (
         <div className="space-y-2">
-          <h4 className="text-xs font-medium text-white">Possible nutrient issues (unconfirmed)</h4>
+          <h4 className="text-xs font-medium text-white">{t('ui_image_analysis_tab_possible_nutrient_issues_unconfirmed')}</h4>
           <ul className="list-disc pl-4 space-y-1 text-xs text-slate-300">
             {imageAnalysis.nutrientDeficiencies?.map((observation, index) => (
               <li key={index}>{observation}</li>
             ))}
           </ul>
           <p className="text-xs text-slate-400">
-            Appearance alone cannot confirm a deficiency; soil or leaf-tissue testing may be needed.
+            {t('ui_image_analysis_tab_appearance_alone_cannot_confirm_a_de')}
           </p>
         </div>
       )}
@@ -269,7 +268,7 @@ export const AnalysisResultsHUD: React.FC<{
       {imageAnalysis.diseases.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-xs font-semibold text-white">
-            Possible pathological matches
+            {t('ui_image_analysis_tab_possible_pathological_matches')}
           </h4>
           <div className="space-y-2">
             {imageAnalysis.diseases.map(disease => (
@@ -291,11 +290,11 @@ export const AnalysisResultsHUD: React.FC<{
                   </span>
                 </div>
                 <p className="text-xs font-mono text-emerald-400 tabular-nums">
-                  Model-reported confidence: {(disease.confidence * 100).toFixed(1)}%
+                  {t('ui_image_analysis_tab_model_reported_confidence')} {(disease.confidence * 100).toFixed(1)}%
                 </p>
                 <p className="mt-1 text-xs text-slate-300">{disease.description}</p>
                 {Array.isArray(disease.symptoms) && disease.symptoms.length > 0 && (
-                  <p className="mt-1 text-xs text-slate-400">Reported symptoms: {disease.symptoms.join('; ')}</p>
+                  <p className="mt-1 text-xs text-slate-400">{t('ui_image_analysis_tab_reported_symptoms')} {disease.symptoms.join('; ')}</p>
                 )}
                 <p className="mt-1 text-xs text-amber-300 font-mono flex items-start gap-1">
                   <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
@@ -311,7 +310,7 @@ export const AnalysisResultsHUD: React.FC<{
       {imageAnalysis.recommendations.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-xs font-semibold text-white">
-            Guidance
+            {t('ui_image_analysis_tab_guidance')}
           </h4>
           <div className="grid grid-cols-1 gap-1.5">
             {imageAnalysis.recommendations.map((rec, index) => (

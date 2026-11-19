@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function EmailWorkflowsTabs({
   activeTab,
@@ -13,6 +14,7 @@ export function EmailWorkflowsTabs({
   approvalsCount: number;
   radiusClass: string;
 }) {
+  const { t } = useLanguage();
   const tabClass = (selected: boolean) =>
     `flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
       selected
@@ -26,13 +28,13 @@ export function EmailWorkflowsTabs({
           onClick={() => onChange('templates')}
           className={tabClass(activeTab === 'templates')}
         >
-          Templates ({templatesCount})
+          {t('ui_tabs_templates', { templatesCount })}
         </button>
         <button
           onClick={() => onChange('approvals')}
           className={tabClass(activeTab === 'approvals')}
         >
-          Pending Approvals ({approvalsCount})
+          {t('ui_tabs_pending_approvals', { approvalsCount })}
         </button>
       </div>
     </div>

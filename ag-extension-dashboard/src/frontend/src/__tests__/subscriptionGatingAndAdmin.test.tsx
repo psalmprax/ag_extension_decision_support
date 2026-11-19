@@ -24,22 +24,6 @@ vi.mock('@/api/billingService', async () => {
   };
 });
 vi.mock('@/demo', () => ({ useDemoMode: () => ({ isDemo: false }), DEMO_USERS: [] }));
-vi.mock('@/lib/LanguageContext', () => ({
-  useLanguage: () => ({
-    t: (
-      _key: string,
-      fallbackOrOpts?: string | { defaultValue?: string },
-      vars?: Record<string, string>
-    ) => {
-      const template =
-        typeof fallbackOrOpts === 'string'
-          ? fallbackOrOpts
-          : fallbackOrOpts?.defaultValue || '';
-      return template.replace(/\{(\w+)\}/g, (_m, k) => vars?.[k] ?? '');
-    },
-  }),
-}));
-
 vi.mock('@/pages/DiseaseDiagnosis', () => ({
   DiseaseDiagnosis: () => <div data-testid="disease-diagnosis-module">Disease Diagnosis Live Module</div>,
 }));

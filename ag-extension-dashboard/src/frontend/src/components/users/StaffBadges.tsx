@@ -1,4 +1,5 @@
 import { Shield, Crown } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface StaffBadgesProps {
   roleLabel: string;
@@ -30,6 +31,7 @@ export function StaffBadges({
   isFree,
   isActive,
 }: StaffBadgesProps) {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-wrap items-center gap-1.5 mt-1">
       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium capitalize border ${roleClass}`}>
@@ -46,7 +48,7 @@ export function StaffBadges({
       )}
       {isActive === false && (
         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30">
-          Inactive
+          {t('ui_staff_badges_inactive')}
         </span>
       )}
       {isDemo && (
@@ -54,7 +56,7 @@ export function StaffBadges({
           title="Shared demo login. Its data is hidden from real accounts."
           className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20"
         >
-          Demo
+          {t('ui_index_demo')}
         </span>
       )}
     </div>

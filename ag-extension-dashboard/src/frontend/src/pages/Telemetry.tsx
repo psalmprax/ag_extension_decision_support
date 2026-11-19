@@ -113,7 +113,7 @@ function Telemetry() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className={`text-2xl font-bold tracking-tight text-slate-900 dark:text-white ${headingClass}`}>System Telemetry</h1>
+          <h1 className={`text-2xl font-bold tracking-tight text-slate-900 dark:text-white ${headingClass}`}>{t('nav_telemetry')}</h1>
           <p className="text-slate-600 dark:text-white/60 text-xs sm:text-sm mt-1">{t('telemetry_subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
@@ -122,10 +122,10 @@ function Telemetry() {
             onChange={e => setTimeRange(Number(e.target.value))}
             className={`px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 ${radiusClass} text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-400`}
           >
-            <option value={1}>Last Hour</option>
-            <option value={24}>Last 24 Hours</option>
-            <option value={168}>Last 7 Days</option>
-            <option value={720}>Last 30 Days</option>
+            <option value={1}>{t('ui_telemetry_last_hour')}</option>
+            <option value={24}>{t('ui_telemetry_last_24_hours')}</option>
+            <option value={168}>{t('ui_telemetry_last_7_days')}</option>
+            <option value={720}>{t('ui_telemetry_last_30_days')}</option>
           </select>
           <button
             onClick={handleRefresh}
@@ -133,7 +133,7 @@ function Telemetry() {
             className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50 text-xs sm:text-sm font-bold transition-all shadow-md`}
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
+            <span>{t('ui_farmer_detail_panel_refresh')}</span>
           </button>
         </div>
       </div>
@@ -157,7 +157,7 @@ function Telemetry() {
                   height={28}
                 />
               ) : (
-                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">Live count — sparkline history available in demo account</div>
+                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">{t('ui_telemetry_live_count_sparkline_history_availab')}</div>
               )}
             </div>
           </div>
@@ -189,7 +189,7 @@ function Telemetry() {
                   height={28}
                 />
               ) : (
-                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">Live latency — history in demo</div>
+                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">{t('ui_telemetry_live_latency_history_in_demo')}</div>
               )}
             </div>
           </div>
@@ -210,7 +210,7 @@ function Telemetry() {
                   height={28}
                 />
               ) : (
-                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">Live error rate — history in demo</div>
+                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">{t('ui_telemetry_live_error_rate_history_in_demo')}</div>
               )}
             </div>
           </div>
@@ -231,7 +231,7 @@ function Telemetry() {
                   height={28}
                 />
               ) : (
-                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">Live cost — history in demo</div>
+                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">{t('ui_telemetry_live_cost_history_in_demo')}</div>
               )}
             </div>
           </div>
@@ -243,14 +243,13 @@ function Telemetry() {
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <span>Spatial Soil & Environmental Telemetry Interpolator</span>
+              <span>{t('ui_telemetry_spatial_soil_environmental_telemetry')}</span>
               <span className="px-2 py-0.5 rounded text-xxs font-mono uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                SoilGrids v2 + NASA POWER
+                {t('ui_telemetry_soilgrids_v2_nasa_power')}
               </span>
             </h3>
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-              Hardware-accelerated 2D IDW interpolation mesh for sub-surface acidity, NPK, moisture
-              saturation, and SOC.
+              {t('ui_telemetry_hardware_accelerated_2d_idw_interpol')}
             </p>
           </div>
         </div>
@@ -315,10 +314,10 @@ function Telemetry() {
               onChange={e => setFilterStatus(e.target.value)}
               className={`px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 ${radiusClass} text-sm`}
             >
-              <option value="all">All Status</option>
-              <option value="success">Success</option>
-              <option value="error">Error</option>
-              <option value="pending">Pending</option>
+              <option value="all">{t('ui_telemetry_all_status')}</option>
+              <option value="success">{t('common_success')}</option>
+              <option value="error">{t('common_error')}</option>
+              <option value="pending">{t('telemetry_pending')}</option>
             </select>
           </div>
         </div>

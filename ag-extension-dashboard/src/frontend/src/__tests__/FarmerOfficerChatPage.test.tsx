@@ -14,10 +14,6 @@ vi.mock('@/api/chatbotService', () => ({
 vi.mock('@/hooks/useConversationRealtime', () => ({
   useConversationRealtime: () => ({ connected: true, typingUser: null, notifyTyping: vi.fn() }),
 }));
-vi.mock('@/lib/LanguageContext', () => ({
-  useLanguage: () => ({ language: 'en', t: (_key: string, fallback?: string | { defaultValue?: string }) =>
-    typeof fallback === 'string' ? fallback : fallback?.defaultValue ?? _key }),
-}));
 
 const withQuery = (ui: React.ReactElement) =>
   render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{ui}</QueryClientProvider>);

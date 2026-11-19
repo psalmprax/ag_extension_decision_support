@@ -46,6 +46,7 @@ function SupportTicketForm({
   ticketSubmitted: boolean;
   handleTicketSubmit: (e: React.FormEvent) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -53,7 +54,7 @@ function SupportTicketForm({
       className="space-y-4"
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Submit Support Ticket</h3>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('ui_help_center_modal_submit_support_ticket')}</h3>
         <button
           onClick={() => setShowTicketForm(false)}
           aria-label="Close support ticket form"
@@ -65,14 +66,14 @@ function SupportTicketForm({
       {ticketSubmitted ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
-          <h4 className="text-lg font-bold text-gray-900 dark:text-white">Ticket Submitted</h4>
-          <p className="text-sm text-gray-500">We'll get back to you soon.</p>
+          <h4 className="text-lg font-bold text-gray-900 dark:text-white">{t('ui_help_center_modal_ticket_submitted')}</h4>
+          <p className="text-sm text-gray-500">{t('ui_help_center_modal_we_ll_get_back_to_you_soon')}</p>
         </div>
       ) : (
         <form onSubmit={handleTicketSubmit} className="space-y-4">
           <div>
             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Subject
+              {t('email_workflows_subject')}
             </label>
             <input
               type="text"
@@ -85,25 +86,25 @@ function SupportTicketForm({
           </div>
           <div>
             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Category
+              {t('ui_help_center_modal_category')}
             </label>
             <select
               value={ticketCategory}
               onChange={e => setTicketCategory(e.target.value)}
               className="w-full mt-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-colors"
             >
-              <option value="general">General</option>
-              <option value="feature-request">Feature Request</option>
-              <option value="farmers">Farmer Management</option>
-              <option value="visits">Visits</option>
-              <option value="ai">AI Advisor</option>
-              <option value="billing">Billing</option>
-              <option value="bug">Bug Report</option>
+              <option value="general">{t('ui_help_center_modal_general')}</option>
+              <option value="feature-request">{t('help_feature_request')}</option>
+              <option value="farmers">{t('ui_help_center_modal_farmer_management')}</option>
+              <option value="visits">{t('nav_visits')}</option>
+              <option value="ai">{t('ui_help_center_modal_ai_advisor')}</option>
+              <option value="billing">{t('ui_help_center_modal_billing')}</option>
+              <option value="bug">{t('ui_help_center_modal_bug_report')}</option>
             </select>
           </div>
           <div>
             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Description
+              {t('ui_help_center_modal_description')}
             </label>
             <textarea
               value={ticketDescription}
@@ -315,7 +316,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                           <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
                         </div>
                       ) : faqs.length === 0 ? (
-                        <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">No FAQs available</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">{t('ui_help_center_modal_no_faqs_available')}</p>
                       ) : (
                         faqs.map((faq, i) => (
                           <div

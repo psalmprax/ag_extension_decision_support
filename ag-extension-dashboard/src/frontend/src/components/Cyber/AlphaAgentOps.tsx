@@ -4,6 +4,7 @@ import {
   useAgentOpsController,
   type AgentData,
 } from './alpha/useAgentOpsController';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface TopologyNode {
   id: string;
@@ -117,6 +118,7 @@ export const MultiAgentTopologyCanvas: React.FC<{
   fleet: AgentData[];
   onSelectAgent: (id: string) => void;
 }> = ({ activeAgent, fleet, onSelectAgent }) => {
+  const { t } = useLanguage();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { nodes, links } = React.useMemo(() => buildTopology(fleet), [fleet]);
 
@@ -160,7 +162,7 @@ export const MultiAgentTopologyCanvas: React.FC<{
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
         <span>{nodes.length > 0 ? `${nodes.length} REGISTERED AGENT${nodes.length === 1 ? '' : 'S'}` : 'NO AGENTS REGISTERED'}</span>
       </div>
-      {nodes.length === 0 && <div className="absolute inset-0 flex items-center justify-center text-xs font-mono text-white/40">Agent registry unavailable</div>}
+      {nodes.length === 0 && <div className="absolute inset-0 flex items-center justify-center text-xs font-mono text-white/40">{t('ui_alpha_agent_ops_agent_registry_unavailable')}</div>}
     </div>
   );
 };

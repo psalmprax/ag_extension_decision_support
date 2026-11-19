@@ -5,6 +5,7 @@ import { createVisit, updateVisit } from '@/api/visitService';
 import { uploadFile } from '@/api/uploadService';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { calendarDateFromToday } from '@/lib/calendarDate';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export interface VisitReportTarget {
   visitId: string;
@@ -27,6 +28,7 @@ const LABEL = 'block text-xs font-medium text-slate-700 dark:text-white/70 mb-1'
  * taken, and whether the farmer needs a follow-up — optionally scheduled now.
  */
 export const VisitReportModal: React.FC<VisitReportModalProps> = ({ target, onClose, onSaved }) => {
+  const { t } = useLanguage();
   const [findings, setFindings] = useState('');
   const [actions, setActions] = useState('');
   const [minutes, setMinutes] = useState(30);
@@ -84,7 +86,7 @@ export const VisitReportModal: React.FC<VisitReportModalProps> = ({ target, onCl
         <div className="flex items-start justify-between gap-3">
           <h2 id="visit-report-title" className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <ClipboardCheck className="w-4 h-4 text-emerald-600" aria-hidden="true" />
-            Visit report: {target.farmerName}
+            {t('ui_visit_report_modal_visit_report')} {target.farmerName}
           </h2>
           <button type="button" onClick={onClose} aria-label="Close visit report" className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5">
             <X className="w-4 h-4" />
@@ -92,43 +94,43 @@ export const VisitReportModal: React.FC<VisitReportModalProps> = ({ target, onCl
         </div>
 
         <div>
-          <label htmlFor="visit-findings" className={LABEL}>Findings *</label>
+          <label htmlFor="visit-findings" className={LABEL}>{t('ui_visit_report_modal_findings')}</label>
           <textarea id="visit-findings" required rows={3} value={findings} onChange={e => setFindings(e.target.value)}
             placeholder="What you saw on the farm: crop stage, pests, disease, soil, water" className={FIELD} />
         </div>
         <div>
-          <label htmlFor="visit-actions" className={LABEL}>Actions taken and advice given</label>
+          <label htmlFor="visit-actions" className={LABEL}>{t('ui_visit_report_modal_actions_taken_and_advice_given')}</label>
           <textarea id="visit-actions" rows={2} value={actions} onChange={e => setActions(e.target.value)} className={FIELD} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label htmlFor="visit-minutes" className={LABEL}>Time on farm (minutes)</label>
+            <label htmlFor="visit-minutes" className={LABEL}>{t('ui_visit_report_modal_time_on_farm_minutes')}</label>
             <input id="visit-minutes" type="number" min={10} max={600} required value={minutes}
               onChange={e => setMinutes(Number(e.target.value))} className={FIELD} />
           </div>
           <div>
-            <label htmlFor="visit-photos" className={LABEL}>Photos (up to 4)</label>
+            <label htmlFor="visit-photos" className={LABEL}>{t('ui_farmer_progress_log_photos_up_to_4')}</label>
             <input id="visit-photos" type="file" accept="image/jpeg,image/png,image/webp" multiple
               onChange={e => setPhotos(Array.from(e.target.files ?? []).slice(0, 4))} className="text-xs text-slate-700 dark:text-white/70" />
           </div>
         </div>
 
         <fieldset className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
-          <legend className="px-1 text-xs font-medium text-slate-700 dark:text-white/70">Follow-up</legend>
+          <legend className="px-1 text-xs font-medium text-slate-700 dark:text-white/70">{t('follow_up')}</legend>
           <label className="flex items-center gap-2 text-sm text-slate-800 dark:text-white/80">
             <input type="checkbox" checked={followUp} onChange={e => setFollowUp(e.target.checked)} />
-            The farmer needs a follow-up
+            {t('ui_visit_report_modal_the_farmer_needs_a_follow_up')}
           </label>
           {followUp && (
             <>
               <div>
-                <label htmlFor="visit-follow-up-date" className={LABEL}>Follow up by</label>
+                <label htmlFor="visit-follow-up-date" className={LABEL}>{t('ui_visit_report_modal_follow_up_by')}</label>
                 <input id="visit-follow-up-date" type="date" required min={calendarDateFromToday(0)} value={followUpDate}
                   onChange={e => setFollowUpDate(e.target.value)} className={FIELD} />
               </div>
               <label className="flex items-center gap-2 text-sm text-slate-800 dark:text-white/80">
                 <input type="checkbox" checked={scheduleFollowUp} onChange={e => setScheduleFollowUp(e.target.checked)} />
-                Schedule the follow-up visit on that date
+                {t('ui_visit_report_modal_schedule_the_follow_up_visit_on_that')}
               </label>
             </>
           )}
@@ -136,7 +138,7 @@ export const VisitReportModal: React.FC<VisitReportModalProps> = ({ target, onCl
 
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm text-slate-700 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/5">
-            Cancel
+            {t('common_cancel')}
           </button>
           <button type="submit" disabled={saving || !findings.trim()}
             className="px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50">

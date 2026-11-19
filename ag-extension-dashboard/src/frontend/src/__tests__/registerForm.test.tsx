@@ -29,7 +29,8 @@ vi.mock('@/components/canvas-ui/AgroEcosystemCanvasScrubber', () => ({
 
 const mockedRegister = authService.register as unknown as ReturnType<typeof vi.fn>;
 
-const renderRegister = () =>
+// The provider renders once the (mocked) locale file has loaded.
+const renderRegister = async () => {
   render(
     <MemoryRouter>
       <LanguageProvider>
@@ -37,6 +38,8 @@ const renderRegister = () =>
       </LanguageProvider>
     </MemoryRouter>
   );
+  await waitFor(() => expect(document.querySelector('form')).not.toBeNull());
+};
 
 const field = (name: string) => document.querySelector(`[name="${name}"]`) as HTMLInputElement;
 const select = (name: string) => document.querySelector(`select[name="${name}"]`) as HTMLSelectElement;
@@ -56,8 +59,8 @@ describe('Register form — signup fields and manager assignment', () => {
     localStorage.clear();
   });
 
-  it('offers only the self-registration roles', () => {
-    renderRegister();
+  it('offers only the self-registration roles', async () => {
+    await renderRegister();
 
     const roles = Array.from(select('role').options).map(option => option.value);
     expect(roles).toEqual(['extension_officer', 'farmer']);
@@ -68,7 +71,7 @@ describe('Register form — signup fields and manager assignment', () => {
       data: { token: 'jwt', user: { id: 'usr-1', email: 'amina@example.com' }, managerAssigned: true },
     });
 
-    renderRegister();
+    await renderRegister();
     fillRequiredFields();
     fireEvent.change(field('phone'), { target: { value: '+265991234567' } });
     fireEvent.change(select('country'), { target: { value: 'Malawi' } });
@@ -88,8 +91,8 @@ describe('Register form — signup fields and manager assignment', () => {
     expect(payload).not.toHaveProperty('confirmPassword');
   });
 
-  it('requires a region for extension officers but not for farmers', () => {
-    renderRegister();
+  it('requires a region for extension officers but not for farmers', async () => {
+    await renderRegister();
 
     expect((field('region') as unknown as HTMLSelectElement).required).toBe(true);
 
@@ -98,8 +101,8 @@ describe('Register form — signup fields and manager assignment', () => {
     expect((field('region') as unknown as HTMLSelectElement).required).toBe(false);
   });
 
-  it('clears the region when the country changes', () => {
-    renderRegister();
+  it('clears the region when the country changes', async () => {
+    await renderRegister();
 
     fireEvent.change(select('country'), { target: { value: 'Malawi' } });
     fireEvent.change(select('region'), { target: { value: 'Central Region (Lilongwe)' } });
@@ -115,7 +118,7 @@ describe('Register form — signup fields and manager assignment', () => {
       data: { token: 'jwt', user: { id: 'usr-1', email: 'amina@example.com' }, managerAssigned: false },
     });
 
-    renderRegister();
+    await renderRegister();
     fillRequiredFields();
     fireEvent.change(select('country'), { target: { value: 'Malawi' } });
     fireEvent.change(select('region'), { target: { value: 'Central Region (Lilongwe)' } });
@@ -134,7 +137,7 @@ describe('Register form — signup fields and manager assignment', () => {
       data: { token: 'jwt', user: { id: 'usr-1', email: 'amina@example.com' }, managerAssigned: true },
     });
 
-    renderRegister();
+    await renderRegister();
     fillRequiredFields();
     fireEvent.change(select('country'), { target: { value: 'Malawi' } });
     fireEvent.change(select('region'), { target: { value: 'Central Region (Lilongwe)' } });

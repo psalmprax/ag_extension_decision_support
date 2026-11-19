@@ -4,6 +4,7 @@ import { Clock, ChevronRight, User } from 'lucide-react';
 import type { Visit, Farmer } from '@/types/dashboard';
 import { visitTypeLabel } from '@/lib/visitType';
 import { VisitReportSummary } from './VisitReportSummary';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -34,6 +35,7 @@ export const VisitCard: React.FC<VisitCardProps> = ({
   onCancel,
   onOpenDetail,
 }) => {
+  const { t } = useLanguage();
   const farmerId = visit.farmerId || visit.farmer_id;
   const farmerData = farmers.find(
     f => f.id === farmerId || `${f.firstName} ${f.lastName}` === (visit.farmerName || visit.farmer_name)
@@ -118,7 +120,7 @@ export const VisitCard: React.FC<VisitCardProps> = ({
                 })}
               </>
             ) : (
-              <span className="text-slate-400 dark:text-white/40">Flexible / As Needed</span>
+              <span className="text-slate-400 dark:text-white/40">{t('ui_visit_card_flexible_as_needed')}</span>
             )}
           </p>
         </div>
@@ -146,7 +148,7 @@ export const VisitCard: React.FC<VisitCardProps> = ({
                 }}
                 className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded-md text-xs font-medium transition-colors"
               >
-                Complete
+                {t('ui_farmer_visit_timeline_complete')}
               </button>
               <button
                 aria-label={`Cancel visit for ${farmerDisplayName}`}
@@ -156,7 +158,7 @@ export const VisitCard: React.FC<VisitCardProps> = ({
                 }}
                 className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-700 dark:text-rose-300 rounded-md text-xs font-medium transition-colors"
               >
-                Cancel
+                {t('common_cancel')}
               </button>
             </>
           )}

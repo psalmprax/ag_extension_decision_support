@@ -154,16 +154,16 @@ export function Login({ onDemo }: LoginProps) {
               <img src="/logo.png" alt="GPExts Logo" className="w-9 h-9 object-contain rounded-xl shadow-md" />
               <div>
                 <span className="font-extrabold text-base tracking-tight text-white block leading-none">
-                  GPExts
+                  {t('app_title')}
                 </span>
                 <span className="text-[10px] font-mono text-emerald-400 font-semibold tracking-wider">
-                  DECISION SUPPORT PLATFORM
+                  {t('ui_login_decision_support_platform')}
                 </span>
               </div>
             </div>
             <span className="flex items-center gap-1.5 text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-md">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              LIVE TELEMETRY
+              {t('ui_login_live_telemetry')}
             </span>
           </div>
 
@@ -175,16 +175,16 @@ export function Login({ onDemo }: LoginProps) {
           {/* Bottom Live Feature Badges */}
           <div className="grid grid-cols-3 gap-2 text-center z-10 pt-3 border-t border-white/5">
             <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
-              <div className="text-[10px] font-mono text-sky-400 font-bold">NASA POWER</div>
-              <div className="text-[11px] text-white/80 font-medium">Solar & Rain</div>
+              <div className="text-[10px] font-mono text-sky-400 font-bold">{t('ui_login_nasa_power')}</div>
+              <div className="text-[11px] text-white/80 font-medium">{t('ui_login_solar_rain')}</div>
             </div>
             <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
               <div className="text-[10px] font-mono text-emerald-400 font-bold">SOILGRIDS</div>
-              <div className="text-[11px] text-white/80 font-medium">Stratigraphy</div>
+              <div className="text-[11px] text-white/80 font-medium">{t('ui_login_stratigraphy')}</div>
             </div>
             <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
-              <div className="text-[10px] font-mono text-teal-400 font-bold">OFFLINE USSD</div>
-              <div className="text-[11px] text-white/80 font-medium">Edge Sync</div>
+              <div className="text-[10px] font-mono text-teal-400 font-bold">{t('ui_login_offline_ussd')}</div>
+              <div className="text-[11px] text-white/80 font-medium">{t('ui_login_edge_sync')}</div>
             </div>
           </div>
         </motion.div>

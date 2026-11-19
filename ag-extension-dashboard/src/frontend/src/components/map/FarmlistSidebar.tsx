@@ -3,6 +3,7 @@ import { ChevronLeft, Search } from 'lucide-react';
 import L from 'leaflet';
 import { ThemeName } from '@/theme';
 import { FarmerData, CROP_ICONS } from './mapConstants';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface FarmlistSidebarProps {
   isFarmlistCollapsed: boolean;
@@ -29,6 +30,7 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
   searchQuery,
   themeName,
 }) => {
+  const { t } = useLanguage();
   return (
     <div
       className={`transition-all duration-300 ease-in-out flex flex-col border-r shrink-0 z-20 ${
@@ -49,7 +51,7 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
         }`}
       >
         <div className="text-xs-plus uppercase tracking-wider font-bold text-gray-400">
-          Farmlist ({filteredFarmers.length})
+          {t('ui_farmlist_sidebar_farmlist', { length: filteredFarmers.length })}
         </div>
         <button
           onClick={() => setIsFarmlistCollapsed(true)}
@@ -101,7 +103,7 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
             <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 bg-gray-100 dark:bg-gray-800">
               <Search className="w-6 h-6 text-gray-300" />
             </div>
-            <p className="text-sm text-gray-500">No farmers found for "{searchQuery}"</p>
+            <p className="text-sm text-gray-500">{t('ui_farmlist_sidebar_no_farmers_found_for', { searchQuery })}</p>
           </div>
         )}
       </div>

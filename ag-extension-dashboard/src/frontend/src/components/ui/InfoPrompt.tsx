@@ -12,6 +12,7 @@ import {
   resolveSubscriptionState,
   checkTierMet,
 } from './subscriptionPromptState';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export type { PromptVariant, PromptPlacement, PromptTrigger, SubscriptionTier, SubscriptionState };
 
@@ -119,6 +120,7 @@ const PromptHeader: React.FC<PromptHeaderProps> = ({
   showSubscriptionBadge,
   planName,
 }) => {
+  const { t } = useLanguage();
   const showActiveBadge = showSubscriptionBadge || (requiredPlan && isTierMet);
   return (
     <div className="flex items-center justify-between gap-2 mb-1">
@@ -130,7 +132,7 @@ const PromptHeader: React.FC<PromptHeaderProps> = ({
       {requiredPlan && !isTierMet && (
         <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-3xs font-bold uppercase tracking-wider bg-amber-500/15 text-amber-500 border border-amber-500/30">
           <Zap className="w-2.5 h-2.5" />
-          {requiredPlan.toUpperCase()} Tier
+          {requiredPlan.toUpperCase()} {t('ui_info_prompt_tier')}
         </span>
       )}
       {showActiveBadge && (
@@ -191,6 +193,7 @@ export const InfoPrompt: React.FC<InfoPromptProps> = ({
   enableAudio = false,
   audioLanguage,
 }) => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const promptId = useId();
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -326,7 +329,7 @@ export const InfoPrompt: React.FC<InfoPromptProps> = ({
                         onClick={handleClose}
                         className="px-2.5 py-1 text-xxs font-medium rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
                       >
-                        Got it
+                        {t('ui_info_prompt_got_it')}
                       </button>
                     </div>
                   )}
@@ -463,6 +466,7 @@ export const InlinePrompt: React.FC<InlinePromptProps> = ({
   enableAudio = false,
   audioLanguage,
 }) => {
+  const { t } = useLanguage();
   const [isDismissed, setIsDismissed] = useState(false);
 
   const user = useAppStore(s => s.user);
@@ -519,7 +523,7 @@ export const InlinePrompt: React.FC<InlinePromptProps> = ({
           {requiredPlan && !isTierMet && (
             <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-3xs font-bold uppercase tracking-wider bg-amber-500/15 text-amber-500 border border-amber-500/30">
               <Zap className="w-2.5 h-2.5" />
-              {requiredPlan.toUpperCase()} Tier
+              {requiredPlan.toUpperCase()} {t('ui_info_prompt_tier')}
             </span>
           )}
         </div>
@@ -537,7 +541,7 @@ export const InlinePrompt: React.FC<InlinePromptProps> = ({
               <ArrowRight className="w-2.5 h-2.5" />
             </button>
             <span className="text-xxs text-slate-400">
-              Current plan: <strong>{subState.planName}</strong>
+              {t('ui_info_prompt_current_plan')} <strong>{subState.planName}</strong>
             </span>
           </div>
         )}

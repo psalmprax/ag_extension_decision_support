@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
 import { painPoints } from '../data';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function Problem() {
+  const { t } = useLanguage();
   return (
         <section id="problem" className="relative py-28 border-t border-white/[0.04] overflow-hidden">
       {/* Subtle Farm Reality Backdrop */}
@@ -32,22 +34,22 @@ export function Problem() {
                 variants={fadeUp}
                 className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400 mb-3"
               >
-                Why Farmers Choose GPExts
+                {t('ui_problem_why_farmers_choose_gpexts')}
               </motion.div>
               <motion.h2
                 variants={fadeUp}
                 className="text-2xl sm:text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight text-white mb-3"
               >
-                Farming is hard enough{' '}
+                {t('ui_problem_farming_is_hard_enough')}{' '}
                 <span className="bg-gradient-to-r from-red-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent">
-                  without the guesswork
+                  {t('ui_problem_without_the_guesswork')}
                 </span>
               </motion.h2>
               <motion.p
                 variants={fadeUp}
                 className="text-sm sm:text-base text-white/70 max-w-2xl mx-auto font-normal leading-relaxed"
               >
-                Stop losing harvests to slow advice, misdiagnosed blights, and unpredictable weather. Here is how GPExts protects your family&apos;s yield.
+                {t('ui_problem_stop_losing_harvests_to_slow_advice')}
               </motion.p>
             </motion.div>
 

@@ -246,11 +246,11 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                     </h2>
                     <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-[3px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-mono font-medium">
                       <Radio className="w-2.5 h-2.5" />
-                      Live
+                      {t('ui_live_activity_stream_live')}
                     </span>
                   </div>
                   <p className="text-[10px] font-mono text-slate-400">
-                    {unreadCount} {t('common_unread') || 'Unread'} · {rawNotifications.length} Total
+                    {unreadCount} {t('common_unread') || 'Unread'} · {rawNotifications.length} {t('ui_notification_panel_total')}
                   </p>
                 </div>
               </div>
@@ -328,7 +328,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                 }}
                 className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold rounded border border-slate-800 transition-all uppercase tracking-widest flex items-center justify-center gap-2"
               >
-                <span>{t('notifications_view_history') || 'View Activity Telemetry'} &rarr;</span>
+                <span>{t('notifications_view_history') || 'View Activity Telemetry'} {t('ui_notification_panel_text')}</span>
               </button>
             </div>
           </motion.div>

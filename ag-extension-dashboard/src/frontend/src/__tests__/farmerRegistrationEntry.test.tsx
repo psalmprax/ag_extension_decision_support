@@ -9,9 +9,6 @@ import { useAppStore, type User } from '@/store/useAppStore';
 
 const demo = vi.hoisted(() => ({ isDemo: false }));
 vi.mock('@/demo', () => ({ useDemoMode: () => ({ isDemo: demo.isDemo }) }));
-vi.mock('@/lib/LanguageContext', () => ({
-  useLanguage: () => ({ t: (key: string, fallback?: string) => fallback ?? key }),
-}));
 vi.mock('@/api/client', () => ({ default: { get: vi.fn() } }));
 vi.mock('@/api/farmerService', () => ({ createFarmer: vi.fn() }));
 vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }));

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BaseModal } from './BaseModal';
 import apiClient from '../api/client';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface SessionItem {
   id: string;
@@ -17,6 +18,7 @@ interface SecuritySettingsModalProps {
 }
 
 export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ isOpen, onClose }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'mfa' | 'sessions'>('mfa');
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [setupData, setSetupData] = useState<{ secret: string; otpauthUrl: string; backupCodes: string[] } | null>(null);
@@ -116,7 +118,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
             }`}
             onClick={() => setActiveTab('mfa')}
           >
-            Two-Factor Auth (2FA)
+            {t('ui_security_settings_modal_two_factor_auth_2fa')}
           </button>
           <button
             type="button"
@@ -127,7 +129,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
             }`}
             onClick={() => setActiveTab('sessions')}
           >
-            Active Sessions ({sessions.length})
+            {t('ui_security_settings_modal_active_sessions', { length: sessions.length })}
           </button>
         </div>
 
@@ -149,10 +151,10 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Authenticator App (TOTP)
+                  {t('ui_security_settings_modal_authenticator_app_totp')}
                 </h4>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Protect your extension officer account with Google Authenticator or 1Password.
+                  {t('ui_security_settings_modal_protect_your_extension_officer_accou')}
                 </p>
               </div>
               <span
@@ -173,7 +175,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                 onClick={handleStartMfaSetup}
                 disabled={loading}
               >
-                Set Up Two-Factor Authentication
+                {t('ui_security_settings_modal_set_up_two_factor_authentication')}
               </button>
             )}
 
@@ -181,7 +183,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
               <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-xl border border-emerald-200 dark:border-emerald-800 space-y-4">
                 <div className="text-center">
                   <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 mb-2">
-                    Enter this secret key in your Authenticator app:
+                    {t('ui_security_settings_modal_enter_this_secret_key_in_your_authen')}
                   </p>
                   <code className="px-3 py-1.5 bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-300 font-mono text-sm rounded border tracking-wider">
                     {setupData.secret}
@@ -190,7 +192,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    6-Digit Verification Code
+                    {t('ui_security_settings_modal_6_digit_verification_code')}
                   </label>
                   <input
                     type="text"
@@ -204,7 +206,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
 
                 <div>
                   <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                    Backup Recovery Codes (Save these safely):
+                    {t('ui_security_settings_modal_backup_recovery_codes_save_these_saf')}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     {setupData.backupCodes.map((code, idx) => (
@@ -224,7 +226,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                   onClick={handleConfirmMfa}
                   disabled={totpCode.length !== 6 || loading}
                 >
-                  Confirm & Enable 2FA
+                  {t('ui_security_settings_modal_confirm_enable_2fa')}
                 </button>
               </div>
             )}
@@ -235,14 +237,14 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
         {activeTab === 'sessions' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-500">Active logged-in devices</span>
+              <span className="text-xs text-gray-500">{t('ui_security_settings_modal_active_logged_in_devices')}</span>
               <button
                 type="button"
                 className="text-xs text-red-600 hover:text-red-700 font-medium"
                 onClick={handleRevokeOtherSessions}
                 disabled={loading}
               >
-                Revoke All Other Devices
+                {t('ui_security_settings_modal_revoke_all_other_devices')}
               </button>
             </div>
 
@@ -256,7 +258,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                       </span>
                       {s.isCurrent && (
                         <span className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-full">
-                          Current Device
+                          {t('ui_security_settings_modal_current_device')}
                         </span>
                       )}
                     </div>
@@ -265,7 +267,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                     </p>
                   </div>
                   <span className="text-xs text-gray-400">
-                    Active {new Date(s.lastActiveAt).toLocaleDateString()}
+                    {t('billing_status_active')} {new Date(s.lastActiveAt).toLocaleDateString()}
                   </span>
                 </div>
               ))}

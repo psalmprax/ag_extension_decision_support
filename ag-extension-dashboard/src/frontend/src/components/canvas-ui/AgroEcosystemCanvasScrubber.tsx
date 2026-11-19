@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Activity, Play, Pause, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { playStageChime, playScrubTick, isAudioEnabled, setAudioMuted } from '@/lib/audioHaptics';
 import { AGRO_STAGES, type AgroStageMeta } from './agroStages';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export { type AgroStageMeta };
 
@@ -570,6 +571,7 @@ export function AgroEcosystemCanvasScrubber({
   autoPlay,
   className = '',
 }: AgroEcosystemCanvasScrubberProps) {
+  const { t } = useLanguage();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [internalProgress, setInternalProgress] = useState(externalProgress ?? 0);
@@ -770,7 +772,7 @@ export function AgroEcosystemCanvasScrubber({
 
         <div className="hidden sm:flex items-center gap-2 bg-slate-900/80 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl font-mono tabular-nums text-[11px] text-amber-300">
           <Activity className="w-3.5 h-3.5" />
-          <span>Illustration · stage {currentStage + 1} of {AGRO_STAGES.length}</span>
+          <span>{t('ui_agro_ecosystem_canvas_scrubber_illustration_stage')} {currentStage + 1} of {AGRO_STAGES.length}</span>
         </div>
       </div>
 
@@ -778,7 +780,7 @@ export function AgroEcosystemCanvasScrubber({
         <div className="absolute bottom-4 left-4 right-4 bg-slate-900/90 backdrop-blur-md border border-white/10 p-3 rounded-xl flex flex-col gap-2 shadow-xl z-20">
           <div className="flex items-center justify-between text-xs text-white/70">
             <span className="font-mono text-[11px] text-emerald-400 font-medium">
-              Scrub timeline
+              {t('ui_agro_ecosystem_canvas_scrubber_scrub_timeline')}
             </span>
             <div className="flex items-center gap-2">
               <button

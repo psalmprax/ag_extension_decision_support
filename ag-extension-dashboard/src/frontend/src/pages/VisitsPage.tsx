@@ -81,14 +81,14 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2 sm:gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Field Visits & Itineraries</h1>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{t('ui_visits_page_field_visits_itineraries')}</h1>
                 <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
                   <Radio className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                  Dispatch Radar
+                  {t('ui_visits_page_dispatch_radar')}
                 </span>
               </div>
               <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-                Manage scheduled on-site inspections, priority risk queue appointments, and tele-agronomy calls.
+                {t('ui_visits_page_manage_scheduled_on_site_inspections')}
               </p>
             </div>
           </div>
@@ -97,13 +97,13 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
             {/* Telemetry Stat Chips */}
             <div className="flex items-center gap-2 overflow-x-auto">
               <span className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-slate-600 dark:text-white/80 font-mono whitespace-nowrap">
-                Total: <strong className="text-slate-900 dark:text-white tabular-nums">{visits.length}</strong>
+                {t('ui_visits_page_total')} <strong className="text-slate-900 dark:text-white tabular-nums">{visits.length}</strong>
               </span>
               <span className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 font-mono whitespace-nowrap">
-                Pending: <strong className="tabular-nums">{pendingCount}</strong>
+                {t('ui_visits_page_pending')} <strong className="tabular-nums">{pendingCount}</strong>
               </span>
               <span className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300 font-mono whitespace-nowrap">
-                Done: <strong className="tabular-nums">{completedCount}</strong>
+                {t('ui_visits_page_done')} <strong className="tabular-nums">{completedCount}</strong>
               </span>
             </div>
 
@@ -150,7 +150,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
             <Calendar className="w-6 h-6 opacity-70" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-base font-medium text-slate-900 dark:text-white">No Field Visits Scheduled</h3>
+            <h3 className="text-base font-medium text-slate-900 dark:text-white">{t('ui_visits_page_no_field_visits_scheduled')}</h3>
             <p className="text-xs text-slate-600 dark:text-white/50 max-w-sm mx-auto">
               {filter === 'all'
                 ? 'No farm visits in queue. Dispatch your extension team or schedule an agronomic visit.'
@@ -162,7 +162,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
             className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-medium transition-colors inline-flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            <span>Schedule Field Visit</span>
+            <span>{t('ui_visits_page_schedule_field_visit')}</span>
           </button>
         </div>
       ) : (

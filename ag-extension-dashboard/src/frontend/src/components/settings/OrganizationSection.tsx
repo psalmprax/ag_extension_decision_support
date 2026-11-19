@@ -9,9 +9,11 @@ import {
 } from '@/api/organizationService';
 import { downloadKnowledgePack } from '@/api/knowledgeService';
 import { ChatTurnTakingSection } from '@/components/settings/ChatTurnTakingSection';
+import { useLanguage } from '@/lib/LanguageContext';
 
 /** Organisation name, region, currency and language, plus (admins) the farmer chat rules. */
 export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) => {
+  const { t } = useLanguage();
   const user = useAppStore(state => state.user);
   const [organization, setOrganization] = useState<OrganizationConfig | null>(null);
   const [organizationForm, setOrganizationForm] = useState({
@@ -60,15 +62,15 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
         <div className="space-y-3">
           <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
             <Globe className="w-4 h-4" />
-            Organization & Region
+            {t('ui_organization_section_organization_region')}
           </h3>
           <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-3">
             {isOrganizationLoading ? (
-              <p className="text-sm text-gray-500">Loading organization settings…</p>
+              <p className="text-sm text-gray-500">{t('ui_organization_section_loading_organization_settings')}</p>
             ) : (
               <>
                 <label className="block text-xs font-semibold text-gray-500">
-                  Organization name
+                  {t('ui_organization_section_organization_name')}
                   <input
                     value={organizationForm.name}
                     disabled={user?.role !== 'admin'}
@@ -80,7 +82,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <label className="block text-xs font-semibold text-gray-500">
-                    Region
+                    {t('common_region')}
                     <input
                       value={organizationForm.region}
                       disabled={user?.role !== 'admin'}
@@ -91,7 +93,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                     />
                   </label>
                   <label className="block text-xs font-semibold text-gray-500">
-                    Currency
+                    {t('ui_organization_section_currency')}
                     <select
                       value={organizationForm.currency}
                       disabled={user?.role !== 'admin'}
@@ -109,7 +111,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                   </label>
                 </div>
                 <label className="block text-xs font-semibold text-gray-500">
-                  Default language
+                  {t('ui_organization_section_default_language')}
                   <select
                     value={organizationForm.language}
                     disabled={user?.role !== 'admin'}
@@ -142,7 +144,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                   }
                   className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200"
                 >
-                  Download offline knowledge pack
+                  {t('ui_organization_section_download_offline_knowledge_pack')}
                 </button>
               </>
             )}

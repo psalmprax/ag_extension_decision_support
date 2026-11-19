@@ -39,10 +39,10 @@ export function DiagnosisPage() {
             <img src="/logo.png" alt="GPExts Logo" className="w-7 h-7 object-contain rounded-md" />
             <div>
               <span className="font-semibold text-sm tracking-tight text-white block leading-none">
-                GPExts Crop Doctor
+                {t('ui_diagnosis_page_gpexts_crop_doctor')}
               </span>
               <span className="text-xxs font-mono text-emerald-400 font-medium">
-                Free Smallholder Clinic
+                {t('ui_diagnosis_page_free_smallholder_clinic')}
               </span>
             </div>
           </div>
@@ -80,17 +80,17 @@ export function DiagnosisPage() {
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-xs font-medium">
                   <Radio className="w-3 h-3 text-emerald-400" />
-                  Crop observations
+                  {t('ui_diagnosis_page_crop_observations')}
                 </span>
                 <span className="text-xxs sm:text-xs text-slate-400 font-mono">
-                  Sign in to request an analysis
+                  {t('ui_diagnosis_page_sign_in_to_request_an_analysis')}
                 </span>
               </div>
               <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Instant Crop Disease &amp; Leaf Pathology Doctor
+                {t('ui_diagnosis_page_instant_crop_disease_leaf_pathology')}
               </h1>
               <p className="text-xs sm:text-sm text-slate-300/90 leading-relaxed">
-                Upload a photo or video, or describe symptoms. Results are suggestions, not confirmed diagnoses; consult a qualified local expert.
+                {t('ui_diagnosis_page_upload_a_photo_or_video_or_describe')}
               </p>
             </div>
 
@@ -99,23 +99,23 @@ export function DiagnosisPage() {
               <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
                 <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold mb-0.5">
                   <Cpu className="w-3.5 h-3.5" />
-                  <span>Online analysis</span>
+                  <span>{t('ui_diagnosis_page_online_analysis')}</span>
                 </div>
-                <div className="text-[10px] text-slate-400">Requires a configured service</div>
+                <div className="text-[10px] text-slate-400">{t('ui_diagnosis_page_requires_a_configured_service')}</div>
               </div>
               <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
                 <div className="flex items-center gap-1.5 text-sky-400 text-xs font-bold mb-0.5">
                   <BookOpen className="w-3.5 h-3.5" />
-                  <span>Reference library</span>
+                  <span>{t('ui_diagnosis_page_reference_library')}</span>
                 </div>
-                <div className="text-[10px] text-slate-400">Not a verified diagnosis</div>
+                <div className="text-[10px] text-slate-400">{t('ui_diagnosis_page_not_a_verified_diagnosis')}</div>
               </div>
               <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5 col-span-2 sm:col-span-1">
                 <div className="flex items-center gap-1.5 text-amber-400 text-xs font-bold mb-0.5">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Expert review</span>
+                  <span>{t('ui_diagnosis_page_expert_review')}</span>
                 </div>
-                <div className="text-[10px] text-slate-400">Confirm before treatment</div>
+                <div className="text-[10px] text-slate-400">{t('ui_diagnosis_page_confirm_before_treatment')}</div>
               </div>
             </div>
           </div>
@@ -128,18 +128,18 @@ export function DiagnosisPage() {
       {/* ── Footer ── */}
       <footer className="w-full border-t border-white/5 py-6 px-4 text-center text-xs text-slate-500 relative z-10">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p>© {new Date().getFullYear()} GPExts Decision Support. Free agronomic diagnostics for smallholder farmers.</p>
+          <p>© {new Date().getFullYear()} {t('ui_diagnosis_page_gpexts_decision_support_free_agronom')}</p>
           <div className="flex items-center gap-4 text-slate-400">
             <Link to="/" className="hover:text-white transition-colors">
               {t('common_back_to_landing', { defaultValue: 'Landing Page' })}
             </Link>
             <span>•</span>
             <Link to="/demo" className="hover:text-white transition-colors">
-              Live Demo
+              {t('ui_diagnosis_page_live_demo')}
             </Link>
             <span>•</span>
             <Link to="/login" className="hover:text-white transition-colors">
-              Extension Officer Sign In
+              {t('ui_diagnosis_page_extension_officer_sign_in')}
             </Link>
           </div>
         </div>

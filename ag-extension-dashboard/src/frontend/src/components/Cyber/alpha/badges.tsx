@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 function getHealthStatus(data: { status?: string; services?: { external_apis?: string } } | undefined) {
   if (!data) return { status: 'unknown', healthy: false, degraded: false };
@@ -19,6 +20,7 @@ function getStatusStyles(status: string): { dot: string; text: string } {
  * never claims a specific upstream (e.g. NASA POWER) is synchronized.
  */
 export const NasaPowerBadge: React.FC<{ data: { status?: string; uptime?: number; services?: { external_apis?: string } } | undefined }> = ({ data }) => {
+  const { t } = useLanguage();
   const { status } = getHealthStatus(data);
   const styles = getStatusStyles(status);
   const label = status.toUpperCase();
@@ -29,9 +31,9 @@ export const NasaPowerBadge: React.FC<{ data: { status?: string; uptime?: number
       title={data ? `API status: ${data.status}${ext ? ` · external APIs ${ext}` : ''}` : 'Health check failed or pending'}
     >
       <span className={`w-2 h-2 rounded-full ${styles.dot}`} />
-      <span className="text-slate-600 dark:text-white/70">API:</span>
+      <span className="text-slate-600 dark:text-white/70">{t('ui_badges_api')}</span>
       <span className={`font-bold ${styles.text}`}>{label}</span>
-      {ext && <span className="text-slate-400 dark:text-white/40">· EXT {ext}</span>}
+      {ext && <span className="text-slate-400 dark:text-white/40">{t('ui_badges_ext', { ext })}</span>}
     </div>
   );
 };
@@ -41,6 +43,7 @@ export const NasaPowerBadge: React.FC<{ data: { status?: string; uptime?: number
  * embedding (i.e. are reachable by vector search). Shows "—" when unavailable.
  */
 export const RagMeshBadge: React.FC<{ data: { data?: { totalQueries?: number; totalArticles?: number; embeddedArticles?: number } } | undefined }> = ({ data }) => {
+  const { t } = useLanguage();
   const stats = data?.data;
   const total = stats?.totalArticles;
   const embedded = stats?.embeddedArticles;
@@ -51,7 +54,7 @@ export const RagMeshBadge: React.FC<{ data: { data?: { totalQueries?: number; to
       title={stats ? `${embedded ?? '?'} of ${total ?? '?'} articles embedded · ${stats.totalQueries ?? 0} queries recorded` : 'Knowledge stats unavailable'}
     >
       <span className={`w-2 h-2 rounded-full ${status.dot}`} />
-      <span className="text-slate-600 dark:text-white/70">KNOWLEDGE:</span>
+      <span className="text-slate-600 dark:text-white/70">{t('ui_badges_knowledge')}</span>
       <span className={`${status.text} font-bold`}>
         {typeof total === 'number' ? `${total} ARTICLES` : '—'}
       </span>

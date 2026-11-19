@@ -6,6 +6,7 @@ import {
   ReviewTrigger,
   updateRecommendationReview,
 } from '@/api/recommendationReviewService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface RecommendationReviewQueueProps {
   addNotification: (notification: { type: 'info' | 'warning' | 'error' | 'success'; message: string }) => void;
@@ -39,6 +40,7 @@ function errorMessage(error: unknown, fallback: string): string {
  * cannot decide it (the API enforces this and its message is shown).
  */
 export function RecommendationReviewQueue({ addNotification }: RecommendationReviewQueueProps) {
+  const { t } = useLanguage();
   const [reviews, setReviews] = useState<RecommendationReview[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'hidden' | 'error'>('loading');
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -85,9 +87,9 @@ export function RecommendationReviewQueue({ addNotification }: RecommendationRev
     return (
       <section role="alert" className="mb-8 flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200">
         <AlertTriangle className="h-4 w-4 text-amber-600" aria-hidden="true" />
-        <span>Could not load recommendations awaiting review.</span>
+        <span>{t('ui_recommendation_review_queue_could_not_load_recommendations_await')}</span>
         <button type="button" onClick={() => void loadReviews()} className="ml-auto inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium dark:border-slate-700">
-          <RefreshCw className="h-3 w-3" aria-hidden="true" /> Retry
+          <RefreshCw className="h-3 w-3" aria-hidden="true" /> {t('users_access_plans_retry')}
         </button>
       </section>
     );
@@ -98,8 +100,8 @@ export function RecommendationReviewQueue({ addNotification }: RecommendationRev
       <div className="mb-4 flex items-center gap-3">
         <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
         <div>
-          <h2 id="recommendation-review-heading" className="font-medium text-amber-950 dark:text-amber-100">Recommendations needing review</h2>
-          <p className="text-xs text-amber-800/80 dark:text-amber-200/70">Check AI guidance before it is treated as an operational recommendation. Your reason is saved with the decision.</p>
+          <h2 id="recommendation-review-heading" className="font-medium text-amber-950 dark:text-amber-100">{t('ui_recommendation_review_queue_recommendations_needing_review')}</h2>
+          <p className="text-xs text-amber-800/80 dark:text-amber-200/70">{t('ui_recommendation_review_queue_check_ai_guidance_before_it_is_treat')}</p>
         </div>
         <span className="ml-auto rounded-md bg-amber-200 px-2 py-1 font-mono text-xs font-medium text-amber-900 dark:bg-amber-900/60 dark:text-amber-100">{reviews.length}</span>
       </div>
@@ -116,9 +118,9 @@ export function RecommendationReviewQueue({ addNotification }: RecommendationRev
                 </span>
               </div>
               {item.trigger && (
-                <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">Queued because: {TRIGGER_LABEL[item.trigger]}</p>
+                <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">{t('ui_recommendation_review_queue_queued_because')} {TRIGGER_LABEL[item.trigger]}</p>
               )}
-              <label htmlFor={reasonId} className="mt-3 block text-xs font-medium text-slate-700 dark:text-slate-300">Reason for your decision</label>
+              <label htmlFor={reasonId} className="mt-3 block text-xs font-medium text-slate-700 dark:text-slate-300">{t('ui_recommendation_review_queue_reason_for_your_decision')}</label>
               <textarea
                 id={reasonId}
                 rows={2}
@@ -130,13 +132,13 @@ export function RecommendationReviewQueue({ addNotification }: RecommendationRev
               />
               <div className="mt-3 flex flex-wrap gap-2">
                 <button type="button" disabled={busy} onClick={() => void decide(item, 'approved')} className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50">
-                  {busy ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> : <Check className="h-3 w-3" aria-hidden="true" />} Approve
+                  {busy ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> : <Check className="h-3 w-3" aria-hidden="true" />} {t('ui_recommendation_review_queue_approve')}
                 </button>
                 <button type="button" disabled={busy} onClick={() => void decide(item, 'escalated')} className="inline-flex items-center gap-1 rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-800 disabled:opacity-50 dark:border-amber-700 dark:text-amber-200">
-                  <ChevronUp className="h-3 w-3" aria-hidden="true" /> Escalate
+                  <ChevronUp className="h-3 w-3" aria-hidden="true" /> {t('ui_recommendation_review_queue_escalate')}
                 </button>
                 <button type="button" disabled={busy} onClick={() => void decide(item, 'dismissed')} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200">
-                  <X className="h-3 w-3" aria-hidden="true" /> Dismiss
+                  <X className="h-3 w-3" aria-hidden="true" /> {t('ui_recommendation_review_queue_dismiss')}
                 </button>
               </div>
             </article>

@@ -20,6 +20,7 @@ import { SmsTab } from './SmsTab';
 import { WhatsAppTab } from './WhatsAppTab';
 import { TelegramTab } from './TelegramTab';
 import { SimulatorTab } from './SimulatorTab';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface ChannelOnboardingModalProps {
   isOpen: boolean;
@@ -107,6 +108,7 @@ function extractTelegramForm(data: ChannelConfigsMap) {
 }
 
 export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ isOpen, onClose }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabType>('sms');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -346,13 +348,13 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
               </div>
               <div>
                 <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                  Client & Farmer Channel Onboarding
+                  {t('ui_channel_onboarding_modal_client_farmer_channel_onboarding')}
                   <span className="text-xxs uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    Live Hub
+                    {t('ui_channel_onboarding_modal_live_hub')}
                   </span>
                 </h2>
                 <p className="text-xs text-slate-400">
-                  Configure SMS, WhatsApp Business, and Telegram Bot gateways for automated farmer advisory
+                  {t('ui_channel_onboarding_modal_configure_sms_whatsapp_business_and')}
                 </p>
               </div>
             </div>
@@ -375,7 +377,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
               }`}
             >
               <Smartphone className="w-4 h-4" />
-              <span>SMS & USSD Gateway</span>
+              <span>{t('ui_channel_onboarding_modal_sms_ussd_gateway')}</span>
               <span className="text-xxs px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300">
                 {stats.sms}
               </span>
@@ -390,7 +392,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
               }`}
             >
               <MessageSquare className="w-4 h-4" />
-              <span>WhatsApp Business</span>
+              <span>{t('ui_channel_onboarding_modal_whatsapp_business')}</span>
               <span className="text-xxs px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300">
                 {stats.whatsapp}
               </span>
@@ -405,7 +407,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
               }`}
             >
               <Bot className="w-4 h-4" />
-              <span>Telegram Bot</span>
+              <span>{t('ui_channel_onboarding_modal_telegram_bot')}</span>
               <span className="text-xxs px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300">
                 {stats.telegram}
               </span>
@@ -420,7 +422,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
               }`}
             >
               <Users className="w-4 h-4" />
-              <span>Auto-Enrollment Simulator</span>
+              <span>{t('ui_channel_onboarding_modal_auto_enrollment_simulator')}</span>
             </button>
           </div>
 
@@ -429,7 +431,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
             {isLoading ? (
               <div className="flex items-center justify-center py-16 gap-3 text-slate-400 text-sm">
                 <RefreshCw className="w-5 h-5 animate-spin text-emerald-400" />
-                <span>Loading channel configurations...</span>
+                <span>{t('ui_channel_onboarding_modal_loading_channel_configurations')}</span>
               </div>
             ) : null}
 

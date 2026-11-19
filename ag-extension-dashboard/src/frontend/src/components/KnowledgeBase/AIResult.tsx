@@ -30,6 +30,7 @@ import type { VisualsData } from './types';
 import { MULTILINGUAL_LANGUAGES } from './languages';
 import { synthesizeSpeech } from '@/api/aiService';
 import { cleanTextForSpeech, stopAllAudioPlayback } from '@/components/audio/audioHelpers';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface ContextItem {
   content: string;
@@ -134,6 +135,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
   setDualView,
   onSwitchToEvidence,
 }) => {
+  const { t } = useLanguage();
   const activeContent = translations[activeLang] || result.answer;
   const originalContent = translations['en'] || result.answer;
   const currentLangObj = MULTILINGUAL_LANGUAGES.find(l => l.code === activeLang) || MULTILINGUAL_LANGUAGES[0];
@@ -156,7 +158,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider pr-2 border-r border-slate-200 dark:border-white/10">
             <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Localize ({MULTILINGUAL_LANGUAGES.length} Languages):</span>
+            <span>{t('ui_airesult_localize_languages', { length: MULTILINGUAL_LANGUAGES.length })}</span>
           </div>
 
           {/* Quick-Access Featured Language Badges */}
@@ -190,7 +192,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
               onChange={e => onSelectLanguage(e.target.value)}
               className="appearance-none bg-slate-50 dark:bg-slate-950/90 hover:bg-slate-100 dark:hover:bg-slate-950 text-slate-900 dark:text-white text-xs font-mono font-bold py-1.5 pl-3 pr-8 rounded-xl border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"
             >
-              <option value="" disabled>All Languages ({MULTILINGUAL_LANGUAGES.length}) ▾</option>
+              <option value="" disabled>{t('ui_airesult_all_languages', { length: MULTILINGUAL_LANGUAGES.length })}</option>
               <optgroup label="── African Agricultural & Regional ──">
                 {africanLanguages.map(l => (
                   <option key={l.code} value={l.code}>
@@ -228,7 +230,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
       {isTranslating && (
         <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 text-emerald-700 dark:text-emerald-300 text-xs font-mono animate-pulse">
           <RefreshCw className="w-4 h-4 animate-spin text-emerald-600 dark:text-emerald-400" />
-          <span>Generating precision agricultural translation in {currentLangObj.native}...</span>
+          <span>{t('ui_airesult_generating_precision_agricultural_tr', { native: currentLangObj.native })}</span>
         </div>
       )}
 
@@ -237,7 +239,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
           <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-800 dark:text-amber-200">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider">Evidence Status Notice</p>
+              <p className="text-xs font-bold uppercase tracking-wider">{t('ui_airesult_evidence_status_notice')}</p>
               <p className="mt-1 text-xs text-amber-900 dark:text-amber-100/90">
                 {result.evidenceStatus === 'verified_sources'
                   ? 'Sources were retrieved, but relevance is not proof of accuracy or local treatment authorization. Check the source, country, crop and current product label before acting.'
@@ -256,7 +258,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 space-y-3">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-white/10 text-xs font-mono font-bold text-slate-500 dark:text-slate-400 uppercase">
-                <span>🇺🇸 English (Primary Grounded Context)</span>
+                <span>{t('ui_airesult_english_primary_grounded_context')}</span>
               </div>
               <div className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-sans text-xs">
                 <MarkdownRenderer content={originalContent} />
@@ -265,7 +267,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
 
             <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-emerald-500/30 space-y-3">
               <div className="flex items-center gap-2 pb-2 border-b border-emerald-500/20 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 uppercase">
-                <span>{currentLangObj.flag} {currentLangObj.native} (Localized Farmer Advisory)</span>
+                <span>{t('ui_airesult_localized_farmer_advisory', { flag: currentLangObj.flag, native: currentLangObj.native })}</span>
               </div>
               <div className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-sans text-xs">
                 <MarkdownRenderer content={activeContent} />
@@ -283,13 +285,13 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-xxs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                Retrieved Verification Context
+                {t('ui_airesult_retrieved_verification_context')}
               </span>
               <button
                 onClick={onSwitchToEvidence}
                 className="text-xxs font-bold text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
               >
-                View all ({result.contextUsed.length}) sources &rarr;
+                {t('ui_airesult_view_all_sources', { length: result.contextUsed.length })}
               </button>
             </div>
             <div className="flex flex-wrap gap-2">

@@ -33,6 +33,7 @@ import { SyncQueuePanel } from '@/components/SyncQueuePanel';
 import { RATE_LIMIT_STATUS, CERT_EXPIRY_WARN_DAYS, ERROR_COOLDOWN_MS } from '@/lib/constants';
 
 function IssuesSummary({ issues, summary }: { issues?: string[]; summary?: string }) {
+  const { t } = useLanguage();
   if (!issues || issues.length === 0) {
     return (
       <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-3">
@@ -46,7 +47,7 @@ function IssuesSummary({ issues, summary }: { issues?: string[]; summary?: strin
       <div className="flex items-center gap-2 mb-2">
         <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
         <p className="text-xs font-bold text-rose-700 dark:text-rose-300">
-          {issues.length} Infrastructure Incident(s) Detected
+          {t('ui_system_health_infrastructure_incident_s_detected', { length: issues.length })}
         </p>
       </div>
       <ul className="list-disc list-inside space-y-1 pl-1">
@@ -61,11 +62,12 @@ function IssuesSummary({ issues, summary }: { issues?: string[]; summary?: strin
 }
 
 function DnsSection({ dns }: { dns?: Record<string, Record<string, unknown>> }) {
+  const { t } = useLanguage();
   if (!dns) return null;
   return (
     <div className="mb-4">
       <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1.5">
-        <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> DNS Resolution & Edge Routing
+        <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {t('ui_system_health_dns_resolution_edge_routing')}
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {Object.entries(dns).map(([domain, info]) => {
@@ -94,11 +96,12 @@ function DnsSection({ dns }: { dns?: Record<string, Record<string, unknown>> }) 
 }
 
 function PortsSection({ ports }: { ports?: Array<Record<string, unknown>> }) {
+  const { t } = useLanguage();
   if (!ports) return null;
   return (
     <div className="mb-4">
       <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1.5">
-        <Terminal className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Port Connectivity & Sockets
+        <Terminal className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {t('ui_system_health_port_connectivity_sockets')}
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
         {ports.map(p => (
@@ -122,13 +125,14 @@ function PortsSection({ ports }: { ports?: Array<Record<string, unknown>> }) {
 }
 
 function TraefikSection({ traefik }: { traefik?: Record<string, unknown> }) {
+  const { t } = useLanguage();
   if (!traefik) return null;
   const backendOk = traefik.backend_via_traefik === 'reachable';
   const frontendOk = traefik.frontend_via_traefik === 'reachable';
   return (
     <div className="mb-4">
       <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1.5">
-        <Cpu className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Reverse Proxy Ingress (Traefik)
+        <Cpu className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {t('ui_system_health_reverse_proxy_ingress_traefik')}
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div
@@ -138,9 +142,9 @@ function TraefikSection({ traefik }: { traefik?: Record<string, unknown> }) {
               : 'bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300'
           }`}
         >
-          <p className="font-bold text-slate-900 dark:text-white mb-0.5">Backend API Ingress</p>
+          <p className="font-bold text-slate-900 dark:text-white mb-0.5">{t('ui_system_health_backend_api_ingress')}</p>
           <p className="font-mono text-xxs">
-            {backendOk ? '✓ Reachable & Handshaking' : '✗ Upstream Unreachable'} (HTTP{' '}
+            {backendOk ? '✓ Reachable & Handshaking' : '✗ Upstream Unreachable'} {t('ui_system_health_http')}{' '}
             {String(traefik.backend_http_status ?? '')})
           </p>
         </div>
@@ -151,9 +155,9 @@ function TraefikSection({ traefik }: { traefik?: Record<string, unknown> }) {
               : 'bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300'
           }`}
         >
-          <p className="font-bold text-slate-900 dark:text-white mb-0.5">Frontend SPA Ingress</p>
+          <p className="font-bold text-slate-900 dark:text-white mb-0.5">{t('ui_system_health_frontend_spa_ingress')}</p>
           <p className="font-mono text-xxs">
-            {frontendOk ? '✓ Reachable & Serving' : '✗ Ingress Failed'} (HTTP{' '}
+            {frontendOk ? '✓ Reachable & Serving' : '✗ Ingress Failed'} {t('ui_system_health_http')}{' '}
             {String(traefik.frontend_http_status ?? '')})
           </p>
         </div>
@@ -167,11 +171,12 @@ function ContainerNetworkSection({
 }: {
   container_network?: Array<Record<string, unknown>>;
 }) {
+  const { t } = useLanguage();
   if (!container_network) return null;
   return (
     <div className="mb-4">
       <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1.5">
-        <Server className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Container Mesh Topology
+        <Server className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {t('ui_system_health_container_mesh_topology')}
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
         {container_network.map(c => (
@@ -200,6 +205,7 @@ type SslCert = {
 };
 
 function SslSection({ ssl }: { ssl?: Record<string, unknown> }) {
+  const { t } = useLanguage();
   if (!ssl) return null;
   const isHealthy = Boolean(ssl.ok);
   const cert = ssl.cert as SslCert | undefined;
@@ -207,7 +213,7 @@ function SslSection({ ssl }: { ssl?: Record<string, unknown> }) {
   return (
     <div className="mb-4">
       <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1.5">
-        <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> TLS / SSL Certificate Status
+        <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {t('ui_system_health_tls_ssl_certificate_status')}
       </h4>
       <div
         className={`p-3.5 rounded-xl border text-xs ${
@@ -218,13 +224,13 @@ function SslSection({ ssl }: { ssl?: Record<string, unknown> }) {
       >
         {isHealthy && cert ? (
           <div className="space-y-1 font-mono text-xs">
-            <p><span className="text-slate-500 dark:text-white/60">Issuer:</span> {cert.issuer ?? 'Let\'s Encrypt'}</p>
-            <p><span className="text-slate-500 dark:text-white/60">Subject:</span> {cert.subject ?? 'gpexts.com'}</p>
+            <p><span className="text-slate-500 dark:text-white/60">{t('ui_system_health_issuer')}</span> {cert.issuer ?? 'Let\'s Encrypt'}</p>
+            <p><span className="text-slate-500 dark:text-white/60">{t('ui_system_health_subject')}</span> {cert.subject ?? 'gpexts.com'}</p>
             {cert.validTo && (
               <p>
-                <span className="text-slate-500 dark:text-white/60">Expires:</span> {new Date(cert.validTo).toLocaleDateString()}{' '}
+                <span className="text-slate-500 dark:text-white/60">{t('ui_system_health_expires')}</span> {new Date(cert.validTo).toLocaleDateString()}{' '}
                 <span className={cert.daysLeft != null && cert.daysLeft < CERT_EXPIRY_WARN_DAYS ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-emerald-600 dark:text-emerald-400 font-bold'}>
-                  ({cert.daysLeft ?? '—'} days remaining)
+                  ({cert.daysLeft ?? '—'} {t('ui_system_health_days_remaining')}
                 </span>
               </p>
             )}
@@ -238,6 +244,7 @@ function SslSection({ ssl }: { ssl?: Record<string, unknown> }) {
 }
 
 function DeploymentSection({ deployment }: { deployment?: Record<string, unknown> }) {
+  const { t } = useLanguage();
   if (!deployment) return null;
   const prodOk = Boolean(deployment.prod_override_detected);
   const httpsOk = Boolean(deployment.https_active);
@@ -245,7 +252,7 @@ function DeploymentSection({ deployment }: { deployment?: Record<string, unknown
   return (
     <div className="mb-4">
       <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-        Deployment Runtime Specs
+        {t('ui_system_health_deployment_runtime_specs')}
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="p-3 rounded-xl border bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/10 text-xs">
@@ -253,15 +260,15 @@ function DeploymentSection({ deployment }: { deployment?: Record<string, unknown
           <p className="text-xs font-mono font-bold text-slate-900 dark:text-white mt-0.5">{String(deployment.node_env ?? 'production')}</p>
         </div>
         <div className={`p-3 rounded-xl border text-xs ${prodOk ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300'}`}>
-          <p className="text-xxs font-bold opacity-60 uppercase">Prod Override</p>
+          <p className="text-xxs font-bold opacity-60 uppercase">{t('ui_system_health_prod_override')}</p>
           <p className="text-xs font-bold mt-0.5">{prodOk ? '✓ Active' : '✗ Missing'}</p>
         </div>
         <div className={`p-3 rounded-xl border text-xs ${httpsOk ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300' : 'bg-amber-500/10 border-amber-500/25 text-amber-700 dark:text-amber-300'}`}>
-          <p className="text-xxs font-bold opacity-60 uppercase">HTTPS TLS</p>
+          <p className="text-xxs font-bold opacity-60 uppercase">{t('ui_system_health_https_tls')}</p>
           <p className="text-xs font-bold mt-0.5">{httpsOk ? '✓ Enforced' : '✗ Inactive'}</p>
         </div>
         <div className={`p-3 rounded-xl border text-xs ${acmeOk ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300' : 'bg-amber-500/10 border-amber-500/25 text-amber-700 dark:text-amber-300'}`}>
-          <p className="text-xxs font-bold opacity-60 uppercase">ACME Email</p>
+          <p className="text-xxs font-bold opacity-60 uppercase">{t('ui_system_health_acme_email')}</p>
           <p className="text-xs font-bold mt-0.5">{acmeOk ? '✓ Configured' : '✗ Not set'}</p>
         </div>
       </div>
@@ -270,10 +277,11 @@ function DeploymentSection({ deployment }: { deployment?: Record<string, unknown
 }
 
 function RecommendationsSection({ recommendations }: { recommendations?: string[] }) {
+  const { t } = useLanguage();
   if (!recommendations || recommendations.length === 0) return null;
   return (
     <div className="mt-4 p-4 bg-sky-500/10 border border-sky-500/30 rounded-xl">
-      <p className="text-xs font-bold text-sky-700 dark:text-sky-300 mb-2">Automated SRE Recommendations</p>
+      <p className="text-xs font-bold text-sky-700 dark:text-sky-300 mb-2">{t('ui_system_health_automated_sre_recommendations')}</p>
       <ul className="list-disc list-inside space-y-1">
         {recommendations.map((rec, i) => (
           <li key={i} className="text-xs text-sky-800 dark:text-sky-200 whitespace-pre-wrap font-mono">
@@ -286,14 +294,15 @@ function RecommendationsSection({ recommendations }: { recommendations?: string[
 }
 
 function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
+  const { t } = useLanguage();
   return (
     <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl space-y-6">
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
         <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <Activity className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          Infrastructure Diagnostic Telemetry
+          {t('ui_system_health_infrastructure_diagnostic_telemetry')}
           {diagnostics.cached && (
-            <span className="text-xxs text-slate-500 dark:text-white/40 font-mono">(cached)</span>
+            <span className="text-xxs text-slate-500 dark:text-white/40 font-mono">{t('ui_system_health_cached')}</span>
           )}
         </h3>
         <span className="text-xs text-slate-500 dark:text-white/40 font-mono">
@@ -634,14 +643,14 @@ function SystemHealth() {
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">SRE & Self-Healing Telemetry</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">{t('ui_system_health_sre_self_healing_telemetry')}</h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
                   <Radio className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                  Cluster Online
+                  {t('ui_system_health_cluster_online')}
                 </span>
               </div>
               <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-                Real-time node latency, database connections, and autonomous self-healing monitors.
+                {t('ui_system_health_real_time_node_latency_database_conn')}
               </p>
             </div>
           </div>
@@ -661,7 +670,7 @@ function SystemHealth() {
               className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] dark:text-white border border-slate-200 dark:border-white/10 text-xs font-medium rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
+              <span>{t('ui_farmer_detail_panel_refresh')}</span>
             </button>
           </div>
         </div>
@@ -669,28 +678,28 @@ function SystemHealth() {
         {/* ── Subsystem Metric Tiles ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-200 dark:border-white/5">
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">Healthy Services</span>
+            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">{t('ui_system_health_healthy_services')}</span>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
               <strong className="text-lg font-mono font-bold text-emerald-600 dark:text-emerald-400">{overallHealth.healthy}</strong>
             </div>
           </div>
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">Degraded Nodes</span>
+            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">{t('ui_system_health_degraded_nodes')}</span>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400" />
               <strong className="text-lg font-mono font-bold text-amber-600 dark:text-amber-400">{overallHealth.degraded}</strong>
             </div>
           </div>
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">Unhealthy</span>
+            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">{t('system_health_unhealthy')}</span>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-rose-500 dark:bg-rose-400" />
               <strong className="text-lg font-mono font-bold text-rose-600 dark:text-rose-400">{overallHealth.unhealthy}</strong>
             </div>
           </div>
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">Offline</span>
+            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">{t('system_health_offline')}</span>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-slate-400" />
               <strong className="text-lg font-mono font-bold text-slate-700 dark:text-slate-400">{overallHealth.offline}</strong>
@@ -704,11 +713,11 @@ function SystemHealth() {
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Server className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            Core Infrastructure Nodes ({healthChecks.length})
+            {t('ui_system_health_core_infrastructure_nodes')}{healthChecks.length})
           </h3>
           <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-            Active Mesh
+            {t('ui_system_health_active_mesh')}
           </span>
         </div>
 

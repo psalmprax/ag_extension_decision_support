@@ -238,10 +238,10 @@ export function Register() {
               <img src="/logo.png" alt="GPExts Logo" className="w-9 h-9 object-contain rounded-xl shadow-md" />
               <div>
                 <span className="font-extrabold text-base tracking-tight text-white block leading-none">
-                  GPExts
+                  {t('app_title')}
                 </span>
                 <span className="text-[10px] font-mono text-emerald-400 font-semibold tracking-wider">
-                  ENTERPRISE ENROLLMENT
+                  {t('ui_register_enterprise_enrollment')}
                 </span>
               </div>
             </div>
@@ -260,11 +260,11 @@ export function Register() {
           <div className="space-y-2 z-10 pt-3 border-t border-white/5 text-xs text-stone-300">
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-              <span>Multi-spectral field disease detection models</span>
+              <span>{t('ui_register_multi_spectral_field_disease_detecti')}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
-              <span>NASA POWER weather sync & offline field visit caching</span>
+              <span>{t('ui_register_nasa_power_weather_sync_offline_fiel')}</span>
             </div>
           </div>
         </motion.div>
@@ -308,7 +308,7 @@ export function Register() {
                   onClick={() => navigate('/dashboard')}
                   className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl text-sm transition-all"
                 >
-                  Continue to dashboard
+                  {t('ui_register_continue_to_dashboard')}
                 </button>
               </div>
             )}

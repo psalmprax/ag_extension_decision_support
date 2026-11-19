@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { createVisit } from '@/api/visitService';
 import toast from 'react-hot-toast';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface InlineVisitBookingCardProps {
   farmerName: string;
@@ -49,6 +50,7 @@ export const InlineVisitBookingCard: React.FC<InlineVisitBookingCardProps> = ({
   farmerId,
   onBooked,
 }) => {
+  const { t } = useLanguage();
   const [selectedSlot, setSelectedSlot] = useState<string>(SLOTS[0].label);
   const [isBooking, setIsBooking] = useState<boolean>(false);
   const [isBooked, setIsBooked] = useState<boolean>(false);
@@ -94,15 +96,15 @@ export const InlineVisitBookingCard: React.FC<InlineVisitBookingCardProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
           <Calendar className="w-3.5 h-3.5 text-amber-400" />
-          <span>Priority Field Visit Recommendation</span>
+          <span>{t('ui_inline_visit_booking_card_priority_field_visit_recommendation')}</span>
         </div>
         <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">
-          URGENT TRIAGE
+          {t('ui_inline_visit_booking_card_urgent_triage')}
         </span>
       </div>
 
       <p className="text-[11px] text-slate-300">
-        High severity detected for <strong className="text-white">{farmerName}</strong> ({issue}). Auto-schedule an on-site extension inspection:
+        {t('ui_inline_visit_booking_card_high_severity_detected_for')} <strong className="text-white">{farmerName}</strong> ({issue}{t('ui_inline_visit_booking_card_auto_schedule_an_on_site_extension_i')}
       </p>
 
       {!isBooked ? (
@@ -150,12 +152,12 @@ export const InlineVisitBookingCard: React.FC<InlineVisitBookingCardProps> = ({
               {isBooking ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Scheduling…
+                  {t('ui_inline_visit_booking_card_scheduling')}
                 </>
               ) : (
                 <>
                   <UserCheck className="w-3.5 h-3.5" />
-                  Book &amp; Dispatch Itinerary
+                  {t('ui_inline_visit_booking_card_book_dispatch_itinerary')}
                 </>
               )}
             </button>
@@ -170,7 +172,7 @@ export const InlineVisitBookingCard: React.FC<InlineVisitBookingCardProps> = ({
           <div className="flex items-center gap-2 text-emerald-300">
             <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
             <div>
-              <span className="font-bold">Visit Scheduled for {selectedSlot}</span>
+              <span className="font-bold">{t('ui_inline_visit_booking_card_visit_scheduled_for', { selectedSlot })}</span>
               <p className="text-[10px] text-slate-400">
                 {farmerId
                   ? `Saved to the visit calendar — SMS notification sent to ${farmerPhone}`

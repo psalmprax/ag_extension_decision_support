@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Field } from '@/api/fieldService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface FieldModalProps {
   showFieldModal: boolean;
@@ -37,6 +38,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
   handleSaveField,
   radiusClass,
 }) => {
+  const { t } = useLanguage();
   if (!showFieldModal) return null;
 
   return (
@@ -55,14 +57,14 @@ export const FieldModal: React.FC<FieldModalProps> = ({
               onClick={() => setShowFieldModal(false)}
               className="text-slate-400 hover:text-white text-xl font-medium"
             >
-              &times;
+              {t('ui_field_modal_text')}
             </button>
           </div>
 
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
-                Sector Name
+                {t('ui_crop_cycles_table_sector_name')}
               </label>
               <input
                 type="text"
@@ -76,7 +78,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
-                  Area (Hectares)
+                  {t('ui_field_modal_area_hectares')}
                 </label>
                 <input
                   type="number"
@@ -91,7 +93,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
-                  Soil Type
+                  {t('ui_field_modal_soil_type')}
                 </label>
                 <input
                   type="text"
@@ -106,7 +108,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
-                  Soil pH
+                  {t('ui_crops_overview_tab_soil_ph')}
                 </label>
                 <input
                   type="number"
@@ -119,7 +121,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
-                  Latitude
+                  {t('latitude')}
                 </label>
                 <input
                   type="number"
@@ -132,7 +134,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
-                  Longitude
+                  {t('longitude')}
                 </label>
                 <input
                   type="number"
@@ -156,7 +158,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
                 onClick={() => setShowFieldModal(false)}
                 className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition-all rounded-xl"
               >
-                Cancel
+                {t('common_cancel')}
               </button>
             </div>
           </div>

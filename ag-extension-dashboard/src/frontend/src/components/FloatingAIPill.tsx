@@ -404,6 +404,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
   onOpenUSSDSandbox,
   onNavigateToDiagnosis,
 }) => {
+  const { t } = useLanguage();
   const { language } = useLanguage();
   const storeUser = useAppStore(s => s.user);
   const [isOpen, setIsOpen] = useState(false);
@@ -618,12 +619,12 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
 
               <div className="text-left pr-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-medium text-white">AI Agronomist</span>
+                  <span className="text-xs font-medium text-white">{t('nav_aiassistant')}</span>
                   <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-emerald-950/60 text-emerald-300 border border-emerald-800/40">
                     ONLINE
                   </span>
                 </div>
-                <span className="text-[10px] text-slate-400 font-normal hidden sm:block">Live chat, leaf scan & voice memo</span>
+                <span className="text-[10px] text-slate-400 font-normal hidden sm:block">{t('ui_floating_aipill_live_chat_leaf_scan_voice_memo')}</span>
               </div>
             </button>
           </motion.div>
@@ -648,12 +649,12 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-medium text-white">AI Agronomist</h3>
+                    <h3 className="text-sm font-medium text-white">{t('nav_aiassistant')}</h3>
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-white/[0.08] font-mono">
-                      GPExts Intelligence
+                      {t('ui_floating_aipill_gpexts_intelligence')}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400">Multimodal Decision Support</p>
+                  <p className="text-[11px] text-slate-400">{t('ui_floating_aipill_multimodal_decision_support')}</p>
                 </div>
               </div>
 
@@ -696,7 +697,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                 }`}
               >
                 <MessageSquare className="w-3.5 h-3.5" />
-                Chat
+                {t('action_chat')}
               </button>
               <button
                 onClick={() => setActiveTab('scan')}
@@ -707,7 +708,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                 }`}
               >
                 <Camera className="w-3.5 h-3.5" />
-                Leaf Scan
+                {t('ui_floating_aipill_leaf_scan')}
               </button>
               <button
                 onClick={() => setActiveTab('voice')}
@@ -718,7 +719,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                 }`}
               >
                 <Mic className="w-3.5 h-3.5" />
-                Voice
+                {t('ui_floating_aipill_voice')}
               </button>
               <button
                 onClick={() => setActiveTab('telecall')}
@@ -729,7 +730,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                 }`}
               >
                 <Video className="w-3.5 h-3.5" />
-                Tele-Call
+                {t('ui_floating_aipill_tele_call')}
               </button>
             </div>
 
@@ -875,7 +876,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                 <div className="w-8 h-8 rounded-md bg-slate-800 border border-white/[0.08] flex items-center justify-center text-slate-300">
                   <Video className="w-4 h-4" />
                 </div>
-                <h4 className="font-medium text-sm text-white">Tele-Agronomy Video Consultation</h4>
+                <h4 className="font-medium text-sm text-white">{t('ui_floating_aipill_tele_agronomy_video_consultation')}</h4>
               </div>
               <button
                 onClick={() => {
@@ -899,7 +900,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
             </div>
             <div className="overflow-y-auto max-h-[80vh]">
               <React.Suspense fallback={
-                <div className="p-8 text-center text-xs font-mono text-slate-400">Loading video consultation…</div>
+                <div className="p-8 text-center text-xs font-mono text-slate-400">{t('ui_floating_aipill_loading_video_consultation')}</div>
               }>
                 <VideoCall
                 roomId={callSessionId}

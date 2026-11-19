@@ -699,7 +699,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                   className="font-medium text-xs !rounded-[4px] !bg-slate-800 !hover:bg-slate-700 !text-slate-200 !border-slate-700"
                 >
                   <Activity className="w-3.5 h-3.5" />
-                  Refresh
+                  {t('ui_farmer_detail_panel_refresh')}
                 </Button>
                 <Button
                   loading={isSynthesizing}
@@ -750,7 +750,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
               className="absolute top-4 right-16 z-[110] px-3 py-2 bg-black/50 hover:bg-black/70 text-white text-xs font-bold rounded-xl backdrop-blur-md transition-all flex items-center gap-1.5"
             >
               <Link2 className="w-4 h-4" />
-              Invite
+              {t('ui_farmer_detail_panel_invite')}
             </button>
             <button
               onClick={() => setShowVideoCall(false)}

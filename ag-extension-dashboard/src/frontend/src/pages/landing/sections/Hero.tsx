@@ -11,8 +11,10 @@ import {
 import { stagger, fadeUp, scaleIn } from '../variants';
 import { globalTelemetryNodes } from '../data';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroOpacity: MotionValue<number> }) {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
   const [activeRemedyTab, setActiveRemedyTab] = useState<'organic' | 'standard'>('organic');
@@ -81,7 +83,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
           >
             <Leaf className="w-4 h-4 text-emerald-400 shrink-0" />
             <span className="text-xs sm:text-sm font-semibold tracking-wide text-emerald-300">
-              Free Pocket Crop Doctor for Every Farmer
+              {t('ui_hero_free_pocket_crop_doctor_for_every_fa')}
             </span>
           </motion.div>
 
@@ -90,12 +92,12 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             variants={fadeUp}
             className="text-3xl sm:text-5xl lg:text-[3.6rem] font-extrabold leading-[1.12] sm:leading-[1.08] tracking-tight text-white"
           >
-            Heal Your Crops.
+            {t('ui_hero_heal_your_crops')}
             <br />
-            Protect Your Harvest.
+            {t('ui_hero_protect_your_harvest')}
             <br />
             <span className="text-emerald-400">
-              Grow With Confidence.
+              {t('ui_hero_grow_with_confidence')}
             </span>
           </motion.h1>
 
@@ -104,7 +106,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             variants={fadeUp}
             className="text-sm sm:text-base lg:text-lg text-white/80 leading-relaxed max-w-xl mx-auto sm:mx-0 font-normal"
           >
-            Share a crop photo or symptoms for an assessment. Results are unverified and require expert confirmation.
+            {t('ui_hero_share_a_crop_photo_or_symptoms_for_a')}
           </motion.p>
 
           {/* 4 Farmer Benefit Signifiers */}
@@ -114,8 +116,8 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <Camera className="w-4 h-4 text-emerald-400" />
               </div>
               <div className="text-left min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white truncate">Crop Assessment</div>
-                <div className="text-xxs sm:text-xs text-white/60 truncate">Possible causes, not a diagnosis</div>
+                <div className="text-xs sm:text-sm font-bold text-white truncate">{t('ui_hero_crop_assessment')}</div>
+                <div className="text-xxs sm:text-xs text-white/60 truncate">{t('ui_hero_possible_causes_not_a_diagnosis')}</div>
               </div>
             </div>
 
@@ -124,8 +126,8 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <CloudRain className="w-4 h-4 text-sky-400" />
               </div>
               <div className="text-left min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white truncate">Rain Forecasts</div>
-                <div className="text-xxs sm:text-xs text-white/60 truncate">Check local conditions</div>
+                <div className="text-xs sm:text-sm font-bold text-white truncate">{t('ui_hero_rain_forecasts')}</div>
+                <div className="text-xxs sm:text-xs text-white/60 truncate">{t('ui_hero_check_local_conditions')}</div>
               </div>
             </div>
 
@@ -134,8 +136,8 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <Radio className="w-4 h-4 text-amber-400" />
               </div>
               <div className="text-left min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white truncate">Field Tools</div>
-                <div className="text-xxs sm:text-xs text-white/60 truncate">Availability varies by feature</div>
+                <div className="text-xs sm:text-sm font-bold text-white truncate">{t('ui_hero_field_tools')}</div>
+                <div className="text-xxs sm:text-xs text-white/60 truncate">{t('ui_hero_availability_varies_by_feature')}</div>
               </div>
             </div>
 
@@ -144,8 +146,8 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <BookOpenCheck className="w-4 h-4 text-teal-400" />
               </div>
               <div className="text-left min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white">Text in Local Dialect</div>
-                <div className="text-xxs sm:text-xs text-white/70">Swahili, Luganda, Hindi +20</div>
+                <div className="text-xs sm:text-sm font-bold text-white">{t('ui_hero_text_in_local_dialect')}</div>
+                <div className="text-xxs sm:text-xs text-white/70">{t('ui_hero_swahili_luganda_hindi_20')}</div>
               </div>
             </div>
           </motion.div>
@@ -158,7 +160,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
               className="w-full sm:w-auto relative group overflow-hidden px-8 py-3.5 text-sm sm:text-base font-semibold text-white rounded-xl bg-emerald-600 hover:bg-emerald-500 border border-emerald-500 shadow-sm active:scale-[0.98] transition-colors flex items-center justify-center gap-2.5"
             >
               <Camera className="w-5 h-5 text-emerald-100" />
-              <span>Diagnose a Crop — Free</span>
+              <span>{t('ui_hero_diagnose_a_crop_free')}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
 
@@ -175,12 +177,12 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
               {isTextSampleVisible ? (
                 <>
                   <BookOpenCheck className="w-4 h-4 text-amber-300" />
-                  <span>Hide Text Sample</span>
+                  <span>{t('ui_hero_hide_text_sample')}</span>
                 </>
               ) : (
                 <>
                   <BookOpenCheck className="w-4 h-4 text-amber-400" />
-                  <span>Read in Your Dialect</span>
+                  <span>{t('ui_hero_read_in_your_dialect')}</span>
                 </>
               )}
             </button>
@@ -197,7 +199,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
               >
                 <div className="flex items-center gap-2.5 text-xs text-amber-100">
                   <span>
-                    <strong>Text sample in {textLanguage === 'sw' ? 'Kiswahili' : 'English'}:</strong>{' '}
+                    <strong>{t('ui_hero_text_sample_in')} {textLanguage === 'sw' ? 'Kiswahili' : 'English'}:</strong>{' '}
                     <em>
                       {textLanguage === 'sw'
                         ? '"Wasiliana na afisa ugani wa eneo lako."'
@@ -210,7 +212,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                   onClick={() => setTextLanguage(prev => (prev === 'sw' ? 'en' : 'sw'))}
                   className="text-xs font-semibold text-amber-300 hover:text-white bg-amber-500/20 px-3.5 py-2 min-h-[44px] inline-flex items-center rounded-md border border-amber-400/30 whitespace-nowrap transition-colors"
                 >
-                  Switch text to {textLanguage === 'sw' ? 'English' : 'Kiswahili'}
+                  {t('ui_hero_switch_text_to')} {textLanguage === 'sw' ? 'English' : 'Kiswahili'}
                 </button>
               </motion.div>
             )}
@@ -224,17 +226,17 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             <div className="space-y-0.5 min-w-0">
               <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                Are you an Extension Officer, Cooperative, or Ministry?
+                {t('ui_hero_are_you_an_extension_officer_coopera')}
               </span>
               <p className="text-xxs sm:text-xs text-white/60 leading-snug">
-                Manage thousands of farmers across districts with offline GPS visit logs and regional pest heatmaps.
+                {t('ui_hero_manage_thousands_of_farmers_across_d')}
               </p>
             </div>
             <a
               href="#agent-os"
               className="text-xs font-bold text-emerald-300 hover:text-emerald-200 underline whitespace-nowrap py-1"
             >
-              Explore Organization Tools →
+              {t('ui_hero_explore_organization_tools')}
             </a>
           </motion.div>
         </motion.div>
@@ -256,7 +258,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <span>09:41</span>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  <span className="text-emerald-400 font-semibold">Illustrative preview</span>
+                  <span className="text-emerald-400 font-semibold">{t('ui_hero_illustrative_preview')}</span>
                 </div>
               </div>
 
@@ -267,14 +269,14 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                     <Leaf className="w-3.5 h-3.5 text-emerald-400" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white">GPExts Crop Doctor</div>
-                    <div className="text-[9px] text-emerald-300/80 font-mono">Maize (Zea mays) • Field Plot 2</div>
+                    <div className="text-xs font-bold text-white">{t('ui_diagnosis_page_gpexts_crop_doctor')}</div>
+                    <div className="text-[9px] text-emerald-300/80 font-mono">{t('ui_hero_maize_zea_mays_field_plot_2')}</div>
                   </div>
                 </div>
 
                 <span className="p-1.5 rounded-lg border border-white/10 text-xs flex items-center gap-1 text-white/70">
                   <BookOpenCheck className="w-3.5 h-3.5" />
-                  <span className="text-[9px] font-semibold">Text Sample</span>
+                  <span className="text-[9px] font-semibold">{t('ui_hero_text_sample')}</span>
                 </span>
               </div>
 
@@ -294,22 +296,22 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <div className="absolute top-8 left-10 sm:left-14 w-44 h-28 border-2 border-emerald-400/90 rounded-xl bg-emerald-500/10 flex flex-col justify-between p-2 shadow-[0_0_15px_rgba(16,185,129,0.25)]">
                   <div className="flex justify-between items-start">
                     <span className="text-[9px] font-sans font-bold text-emerald-300 bg-slate-950/85 px-2 py-0.5 rounded border border-emerald-400/30 flex items-center gap-1">
-                      <span>🔍 Affected Leaf Area</span>
+                      <span>{t('ui_hero_affected_leaf_area')}</span>
                     </span>
                     <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
                   </div>
                   <div className="bg-slate-950/90 backdrop-blur-md rounded-lg p-1.5 border border-emerald-400/40 text-left">
                     <div className="text-[10px] font-bold text-white flex items-center gap-1">
-                      <span>Example leaf observation</span>
+                      <span>{t('ui_hero_example_leaf_observation')}</span>
                       <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                     </div>
-                    <div className="text-[9px] text-emerald-400 font-semibold">Illustration, not a diagnosis</div>
+                    <div className="text-[9px] text-emerald-400 font-semibold">{t('ui_hero_illustration_not_a_diagnosis')}</div>
                   </div>
                 </div>
 
                 {/* Floating Location Tag in Plain Language */}
                 <div className="absolute bottom-2.5 left-3 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-[9px] font-medium text-white/90 border border-white/10">
-                  Illustrative sample • No photo was uploaded
+                  {t('ui_hero_illustrative_sample_no_photo_was_upl')}
                 </div>
               </div>
 
@@ -319,13 +321,13 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400 block">
-                      Example next step
+                      {t('ui_hero_example_next_step')}
                     </span>
-                    <h3 className="text-sm font-bold text-white">Unconfirmed leaf symptoms</h3>
+                    <h3 className="text-sm font-bold text-white">{t('ui_hero_unconfirmed_leaf_symptoms')}</h3>
                   </div>
                   <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
-                    Expert review needed
+                    {t('ui_hero_expert_review_needed')}
                   </span>
                 </div>
 
@@ -341,7 +343,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                         : 'text-white/60 hover:text-white'
                     }`}
                   >
-                    Observe
+                    {t('ui_hero_observe')}
                   </button>
                   <button
                     type="button"
@@ -353,7 +355,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                         : 'text-white/60 hover:text-white'
                     }`}
                   >
-                    Consult
+                    {t('ui_hero_consult')}
                   </button>
                 </div>
 
@@ -361,13 +363,13 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5 text-xs text-white/80 leading-relaxed">
                   {activeRemedyTab === 'organic' ? (
                     <div>
-                      <strong className="text-emerald-400 block text-[11px] mb-1">Record symptoms</strong>
-                      Note the crop, symptoms and location to help a local expert assess the cause.
+                      <strong className="text-emerald-400 block text-[11px] mb-1">{t('ui_hero_record_symptoms')}</strong>
+                      {t('ui_hero_note_the_crop_symptoms_and_location')}
                     </div>
                   ) : (
                     <div>
-                      <strong className="text-emerald-400 block text-[11px] mb-1">Seek local advice</strong>
-                      Consult a qualified local expert to confirm the diagnosis and locally authorized options before treatment.
+                      <strong className="text-emerald-400 block text-[11px] mb-1">{t('ui_hero_seek_local_advice')}</strong>
+                      {t('ui_hero_consult_a_qualified_local_expert_to')}
                     </div>
                   )}
                 </div>
@@ -376,7 +378,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <div className="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center gap-2.5 text-xs text-sky-200">
                   <Droplets className="w-4 h-4 text-sky-400 shrink-0" />
                   <div className="leading-tight text-[11px]">
-                    <strong>Weather:</strong> This illustration is not a forecast. Check current local information.
+                    <strong>{t('ui_hero_weather')}</strong> {t('ui_hero_this_illustration_is_not_a_forecast')}
                   </div>
                 </div>
 
@@ -387,7 +389,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                   className="w-full py-2.5 px-3 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-950/40 transition-all active:scale-95 group cursor-pointer"
                 >
                   <Camera className="w-3.5 h-3.5 text-emerald-200" />
-                  <span>Diagnose Your Own Crop Free →</span>
+                  <span>{t('ui_hero_diagnose_your_own_crop_free')}</span>
                 </button>
               </div>
             </div>
@@ -411,7 +413,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             </div>
             <div className="text-left min-w-0">
               <div className="flex items-center gap-1 text-[11px] font-bold text-white">
-                <span className="truncate">Amina M.</span>
+                <span className="truncate">{t('ui_hero_amina_m')}</span>
               </div>
             </div>
           </motion.div>
@@ -428,7 +430,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
         transition={{ delay: 1.5 }}
         className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-20"
       >
-        <span className="text-xxs text-white/40 uppercase tracking-widest font-mono">Scroll for more</span>
+        <span className="text-xxs text-white/40 uppercase tracking-widest font-mono">{t('ui_hero_scroll_for_more')}</span>
         <ChevronDown className="w-4 h-4 text-white/40 animate-bounce" />
       </motion.div>
     </section>

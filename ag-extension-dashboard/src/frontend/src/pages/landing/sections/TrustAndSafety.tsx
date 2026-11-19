@@ -5,8 +5,10 @@ import {
   Leaf, Sparkles, CheckCircle2
 } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function TrustAndSafety() {
+  const { t } = useLanguage();
   return (
     <section id="trust-safety" className="relative py-20 sm:py-28 border-t border-white/[0.06] bg-slate-950 overflow-hidden">
       {/* Subtle Farm Inspection Crop Backdrop */}
@@ -40,22 +42,22 @@ export function TrustAndSafety() {
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-4 shadow-sm"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            Safety &amp; Agronomic Integrity
+            {t('ui_trust_and_safety_safety_agronomic_integrity')}
           </motion.div>
           <motion.h2
             variants={fadeUp}
             className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight"
           >
-            Honest, safe advice you can{' '}
+            {t('ui_trust_and_safety_honest_safe_advice_you_can')}{' '}
             <span className="text-emerald-400">
-              trust in your soil
+              {t('ui_trust_and_safety_trust_in_your_soil')}
             </span>
           </motion.h2>
           <motion.p
             variants={fadeUp}
             className="text-sm sm:text-base lg:text-lg text-white/70 leading-relaxed font-normal"
           >
-            Agricultural technology should acknowledge uncertainty and support qualified local expertise.
+            {t('ui_trust_and_safety_agricultural_technology_should_ackno')}
           </motion.p>
         </motion.div>
 
@@ -73,14 +75,14 @@ export function TrustAndSafety() {
               <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                 <ShieldCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">Clear AI Limits &amp; Human Escalation</h3>
+              <h3 className="text-lg font-bold text-white">{t('ui_trust_and_safety_clear_ai_limits_human_escalation')}</h3>
               <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
-                AI assessments can be wrong or uncertain. Use them as suggestions and consult a qualified local expert to confirm the cause.
+                {t('ui_trust_and_safety_ai_assessments_can_be_wrong_or_uncer')}
               </p>
             </div>
             <div className="pt-4 mt-4 border-t border-white/[0.06] text-xs text-emerald-300 font-semibold flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>Expert confirmation matters</span>
+              <span>{t('ui_trust_and_safety_expert_confirmation_matters')}</span>
             </div>
           </motion.div>
 
@@ -96,14 +98,14 @@ export function TrustAndSafety() {
               <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
                 <BookOpenCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">Check the Evidence</h3>
+              <h3 className="text-lg font-bold text-white">{t('ui_trust_and_safety_check_the_evidence')}</h3>
               <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
-                Retrieved information is not proof of a diagnosis or local product authorization. Check sources and consult an expert before treatment.
+                {t('ui_trust_and_safety_retrieved_information_is_not_proof_o')}
               </p>
             </div>
             <div className="pt-4 mt-4 border-t border-white/[0.06] text-xs text-amber-300 font-semibold flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-amber-400" />
-              <span>Verify sources and local applicability</span>
+              <span>{t('ui_trust_and_safety_verify_sources_and_local_applicabili')}</span>
             </div>
           </motion.div>
 
@@ -119,14 +121,14 @@ export function TrustAndSafety() {
               <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                 <Leaf className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">Protect People and Pollinators</h3>
+              <h3 className="text-lg font-bold text-white">{t('ui_trust_and_safety_protect_people_and_pollinators')}</h3>
               <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
-                Natural or biological products are not automatically safe. Follow locally approved labels and qualified advice to reduce risks to people, animals and pollinators.
+                {t('ui_trust_and_safety_natural_or_biological_products_are_n')}
               </p>
             </div>
             <div className="pt-4 mt-4 border-t border-white/[0.06] text-xs text-emerald-300 font-semibold flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>Soil &amp; pollinator conscious</span>
+              <span>{t('ui_trust_and_safety_soil_pollinator_conscious')}</span>
             </div>
           </motion.div>
         </div>
@@ -145,10 +147,10 @@ export function TrustAndSafety() {
             </div>
             <div>
               <h4 className="text-base sm:text-lg font-bold text-white mb-1">
-                Work with Local Extension Officers
+                {t('ui_trust_and_safety_work_with_local_extension_officers')}
               </h4>
               <p className="text-xs sm:text-sm text-white/70 max-w-2xl leading-relaxed">
-                Where your organization has configured officer workflows, use them to coordinate follow-up. Contact a local extension service if a field inspection is needed.
+                {t('ui_trust_and_safety_where_your_organization_has_configur')}
               </p>
             </div>
           </div>
@@ -159,7 +161,7 @@ export function TrustAndSafety() {
               className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>See Officer Platform</span>
+              <span>{t('ui_trust_and_safety_see_officer_platform')}</span>
             </a>
           </div>
         </motion.div>
