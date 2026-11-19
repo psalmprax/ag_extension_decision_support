@@ -308,7 +308,7 @@ async function main() {
       passwordHash,
       role: 'admin',
       tenantId: globalTenant.id,
-      isSystemAdmin: true,
+      isSystemAdmin: false, // demo accounts never hold the system-admin flag
     },
     create: {
       email: 'admin@agridemo.com',
@@ -318,7 +318,7 @@ async function main() {
       role: 'admin',
       region: 'Global',
       tenantId: globalTenant.id,
-      isSystemAdmin: true,
+      isSystemAdmin: false, // demo accounts never hold the system-admin flag
     },
   });
   console.log('✅ Admin user verified/seeded:', admin.email);

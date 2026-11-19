@@ -34,6 +34,7 @@ jest.mock('../services/cacheService', () => ({ getCache: jest.fn(() => null) }))
 jest.mock('../utils/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } }));
 
 const mockQuery = query as jest.Mock;
+const SYSTEM_ADMINS = new Set(['sysadmin']);
 const sessions = new Map<string, { userId: string; revoked: boolean }>();
 let targetActive: boolean;
 let revocationFails: boolean;
@@ -67,6 +68,16 @@ beforeEach(() => {
   sessions.clear();
   mockQuery.mockReset();
   mockQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
+    // System-administrator flag, read from the database on every request.
+    if (sql.includes('SELECT is_system_admin FROM users')) {
+      return { rows: [{ is_system_admin: SYSTEM_ADMINS.has(String(params[0])) }], rowCount: 1 };
+    }
+    // Guard row loaded before every update or deactivation of a user.
+    if (sql.includes('SELECT id, role, is_active, is_system_admin FROM users')) {
+      return params[0] === 'target'
+        ? { rows: [{ id: 'target', role: 'extension_officer', is_active: targetActive, is_system_admin: false }], rowCount: 1 }
+        : { rows: [], rowCount: 0 };
+    }
     if (sql.includes('FROM user_sessions')) {
       const session = sessions.get(String(params[0]));
       return { rows: session ? [{ is_revoked: session.revoked, is_active: session.userId !== 'target' || targetActive, expires_at: new Date(Date.now() + 3600000) }] : [], rowCount: session ? 1 : 0 };
@@ -100,10 +111,16 @@ describe('user management with real authorization and session validation', () =>
     expect(mockQuery.mock.calls.some(([sql]) => sql.includes('UPDATE users'))).toBe(false);
   });
 
-  it('allows an administrator to create an administrator', async () => {
-    const response = await request(app).post('/users').set('Authorization', `Bearer ${token('admin', 'admin')}`).send(newAdmin);
+  it('allows a system administrator to create an administrator', async () => {
+    const response = await request(app).post('/users').set('Authorization', `Bearer ${token('sysadmin', 'admin')}`).send(newAdmin);
     expect(response.status).toBe(201);
     expect(response.body.data.role).toBe('admin');
+  });
+
+  it('refuses administrator creation by an ordinary administrator before any insert', async () => {
+    const response = await request(app).post('/users').set('Authorization', `Bearer ${token('admin', 'admin')}`).send(newAdmin);
+    expect(response.status).toBe(403);
+    expect(mockQuery.mock.calls.some(([sql]) => sql.includes('INSERT INTO users'))).toBe(false);
   });
 
   it('invalidates both cookie and bearer sessions on deletion', async () => {

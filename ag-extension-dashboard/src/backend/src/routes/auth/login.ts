@@ -14,6 +14,7 @@ import { setAuthCookie } from '@/middleware/authCookie';
 import { verifyPassword } from '@/utils/password';
 import { safeError } from '@/utils/safeResponse';
 import { credentialVersion } from '@/utils/credentialVersion';
+import { reportedSystemAdmin } from '@/services/systemAdminService';
 
 const router = Router();
 
@@ -123,7 +124,7 @@ async function completePasswordLogin(req: Request, res: Response, user: LoginUse
                 lastName: user.last_name,
                 role: user.role,
                 isDemo: user.is_demo === true || user.email?.toLowerCase() === 'demo@agridemo.com',
-                isSystemAdmin: user.is_system_admin === true,
+                isSystemAdmin: reportedSystemAdmin(user),
                 region: user.region,
                 mfaEnabled: !!user.mfa_enabled,
                 planName,

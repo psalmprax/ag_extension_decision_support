@@ -14,6 +14,7 @@ import type {
 } from '../rowTypes';
 import { parseCount, parseDecimal, toIso } from './common';
 import { isSubscriptionActive, resolveUserPlan } from '@/services/subscriptionUtils';
+import { reportedSystemAdmin } from '@/services/systemAdminService';
 
 // --- Count DTO -------------------------------------------------------------
 
@@ -238,7 +239,7 @@ export function mapUserPublicRow(row: UserPublicRow): UserPublicDTO {
     avatarUrl: row.avatar_url,
     lastLogin: toIso(row.last_login) ?? null,
     isDemo: row.is_demo === true,
-    isSystemAdmin: row.is_system_admin === true,
+    isSystemAdmin: reportedSystemAdmin(row),
     planId: row.plan_id ?? null,
     planName,
     planStatus: row.subscription_status ?? (row.role === 'admin' ? 'active' : hasActiveRecord ? 'active' : null),

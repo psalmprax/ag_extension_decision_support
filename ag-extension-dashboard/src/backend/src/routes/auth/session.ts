@@ -19,6 +19,7 @@ import { auditMiddleware } from '@/middleware/auditMiddleware';
 import { authorize } from '@/middleware/authorize';
 import rateLimit from 'express-rate-limit';
 import { perUserRateLimit, SharedStateStore } from '@/middleware/rateLimitMiddleware';
+import { reportedSystemAdmin } from '@/services/systemAdminService';
 
 const router = Router();
 const profileUpdateRateLimit = rateLimit({
@@ -189,7 +190,7 @@ router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manage
                 lastName: user.last_name,
                 role: user.role,
                 isDemo: user.is_demo === true || user.email?.toLowerCase() === 'demo@agridemo.com',
-                isSystemAdmin: user.is_system_admin === true,
+                isSystemAdmin: reportedSystemAdmin(user),
                 region: user.region,
                 phone: user.phone,
                 notificationPreferences: user.notification_preferences ?? {},
@@ -254,7 +255,7 @@ router.get('/me', async (req: Request, res: Response) => {
                 firstName: user.first_name,
                 lastName: user.last_name,
                 role: user.role,
-                isSystemAdmin: user.is_system_admin === true,
+                isSystemAdmin: reportedSystemAdmin(user),
                 region: user.region,
                 phone: user.phone,
                 notificationPreferences: user.notification_preferences ?? {},

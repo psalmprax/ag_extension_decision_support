@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Dialog as HeadlessDialog } from '@headlessui/react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ShieldCheck, X, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import apiClient from '@/api/client';
-import { fetchPlanQuotas, type PlanQuotas } from '@/api/billingService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { USER_ROLES, assignableRoles, type DirectoryUser } from '@/components/users/types';
 import { PlanTierSelector } from '@/components/users/PlanTierSelector';
+import { useAssignablePlans } from '@/components/users/useAssignablePlans';
 
 interface UserAccessModalProps {
   user: DirectoryUser | null;
@@ -104,34 +104,15 @@ export function UserAccessModal({
     };
   }, [user, resetMutation]);
 
-  const {
-    data: quotasResp,
-    isLoading: isLoadingPlans,
-    isError: isQuotasQueryError,
-    isFetching: isFetchingPlans,
-    refetch: refetchPlans,
-  } = useQuery({
-    queryKey: ['plan-quotas'],
-    queryFn: fetchPlanQuotas,
-    enabled: Boolean(user) && !isDemo,
-  });
+  const { plans, isLoadingPlans, isFetchingPlans, plansLoadFailed, plansErrorMessage, refetchPlans } =
+    useAssignablePlans(Boolean(user), isDemo, t('users_access_plans_load_error', 'Unable to load subscription plans.'));
 
   if (!user) return null;
 
-  const plansLoadFailed =
-    !isDemo &&
-    !isLoadingPlans &&
-    (isQuotasQueryError || (quotasResp !== undefined && quotasResp.success === false));
-  const plansErrorMessage =
-    quotasResp?.error || t('users_access_plans_load_error', 'Unable to load subscription plans.');
-  const plans: PlanQuotas[] =
-    quotasResp?.success === true && Array.isArray(quotasResp.data) ? quotasResp.data : [];
-
   const isEditingSelf = Boolean(currentUserId && user.id === currentUserId);
-  // A system administrator's seat is only editable by another system
-  // administrator; an ordinary admin may not touch it at all.
-  const isProtectedTarget =
-    user.isSystemAdmin === true || (user.role === 'admin' && !actorIsSystemAdmin);
+  // Admin accounts are editable only by a system administrator (the server also refuses
+  // to demote or deactivate the last active one).
+  const isProtectedTarget = !actorIsSystemAdmin && (user.isSystemAdmin === true || user.role === 'admin');
   const roleChoices = assignableRoles(actorIsSystemAdmin);
   const currentRole = USER_ROLES.find(r => r.value === role);
   const roleOptions =
