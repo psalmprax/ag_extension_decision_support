@@ -28,22 +28,31 @@ jobs:
       - name: Scan for legacy web platform patterns
         run: |
           set -o pipefail
-          npx --yes modern-web-guidance@1.0.1 legacy-scan | tee "$RUNNER_TEMP/scan.txt"
+          # Structured output (same pinned scanner version) so the verdict never
+          # depends on how the human-readable report is indented.
+          npx --yes modern-web-guidance@1.0.1 legacy-scan --json > "$RUNNER_TEMP/scan.json"
 
       - name: Fail on new findings
         run: |
           set -euo pipefail
-          # The scanner exits 0 whether or not it finds anything, so the verdict
-          # is read from its output. It prints either
-          #   "Found N modernization opportunities across M guides (scanned ...)"
-          # or
-          #   "0 findings from 38 qualified guides."
-          if ! grep -qE '(Found [0-9]+ modernization|[0-9]+ findings? from)' "$RUNNER_TEMP/scan.txt"; then
-            echo "::error::Could not read the scan summary — the scanner failed or its output format changed."
-            exit 1
-          fi
-          if grep -qE '^  - ' "$RUNNER_TEMP/scan.txt"; then
-            echo "::error::Modernization findings detected. See the scan output in the previous step."
-            exit 1
-          fi
-          echo "No modernization findings."
+          node -e '
+            const fs = require("fs");
+            let report;
+            try {
+              report = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+            } catch (err) {
+              console.log("::error::Could not parse the scan report — the scanner failed or its output format changed: " + err.message);
+              process.exit(1);
+            }
+            const total = report.totalFindings;
+            if (!Number.isInteger(total) || total < 0) {
+              console.log("::error::Scan report has no valid totalFindings field (got " + JSON.stringify(total) + ").");
+              process.exit(1);
+            }
+            if (total > 0) {
+              for (const guide of report.guides || []) console.log(JSON.stringify(guide, null, 2));
+              console.log("::error::" + total + " modernization finding(s) detected. Details above.");
+              process.exit(1);
+            }
+            console.log("No modernization findings (" + (report.activeGuideCount ?? "?") + " guides checked).");
+          ' "$RUNNER_TEMP/scan.json"
