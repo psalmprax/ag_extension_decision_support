@@ -25,8 +25,13 @@ on:
       suite:
         description: Which checks to run
         type: choice
-        options: [all, live-smoke, rag-eval]
+        options: [all, live-smoke, rag-eval, user-stories]
         default: all
+      target:
+        description: Site for suite=user-stories (seeds the test population there and runs the Playwright user stories)
+        type: choice
+        options: [stage, production]
+        default: stage
 
 permissions:
   contents: read
@@ -40,7 +45,7 @@ jobs:
     # After a stage deploy only when that deploy succeeded.
     if: >-
       (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') &&
-      (github.event_name != 'workflow_dispatch' || inputs.suite != 'rag-eval')
+      (github.event_name != 'workflow_dispatch' || inputs.suite == 'all' || inputs.suite == 'live-smoke')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -75,7 +80,7 @@ jobs:
   rag-eval:
     if: >-
       (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') &&
-      (github.event_name != 'workflow_dispatch' || inputs.suite != 'live-smoke')
+      (github.event_name != 'workflow_dispatch' || inputs.suite == 'all' || inputs.suite == 'rag-eval')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
@@ -141,3 +146,12 @@ jobs:
           name: rag-eval-report
           path: ag-extension-dashboard/src/backend/rag-eval-report.json
           if-no-files-found: ignore
+
+  # Writes to the chosen site's database (the @real.agriext.test population),
+  # so it only ever runs when dispatched by hand. See user-stories-live.yml.
+  user-stories:
+    if: github.event_name == 'workflow_dispatch' && inputs.suite == 'user-stories'
+    uses: ./.github/workflows/user-stories-live.yml
+    with:
+      target: ${{ inputs.target }}
+    secrets: inherit

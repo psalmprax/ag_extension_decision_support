@@ -1,7 +1,7 @@
 import { Client } from 'pg';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'node:crypto';
-import { REAL_WORLD_EMAIL_DOMAIN, REAL_WORLD_TENANT_ID } from '../src/seed/realWorldSeed';
+import { E2E_SYSTEM_ADMIN_EMAIL, REAL_WORLD_TENANT_ID } from '../src/seed/realWorldSeed';
 
 /**
  * A system administrator for the end-to-end tests only, so they can grant and
@@ -12,8 +12,13 @@ import { REAL_WORLD_EMAIL_DOMAIN, REAL_WORLD_TENANT_ID } from '../src/seed/realW
  * the test run generates fresh each time (it is never written down anywhere).
  * The account sits on the reserved fixture domain, so `seed:realworld --reset`
  * deletes it with the other fixtures.
+ *
+ * The one exception is the live user-story workflow (user-stories-live.yml),
+ * which sets E2E_SYSTEM_ADMIN_TEMPORARY=removed-after-run: it creates the
+ * account for one run and always disables it afterwards
+ * (prisma/disable-e2e-system-admin.ts).
  */
-export const E2E_SYSTEM_ADMIN_EMAIL = `e2e.system.admin${REAL_WORLD_EMAIL_DOMAIN}`;
+export { E2E_SYSTEM_ADMIN_EMAIL };
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 
 async function main(): Promise<void> {
@@ -21,7 +26,10 @@ async function main(): Promise<void> {
     const connectionString = process.env.DATABASE_URL ?? '';
     if (password.length < 16) throw new Error('E2E_SYSTEM_ADMIN_PASSWORD (at least 16 characters) is required');
     const host = new URL(connectionString).hostname;
-    if (!LOCAL_HOSTS.has(host)) throw new Error(`Refusing to create a test system administrator on ${host}: local databases only`);
+    const temporary = process.env.E2E_SYSTEM_ADMIN_TEMPORARY === 'removed-after-run';
+    if (!LOCAL_HOSTS.has(host) && !temporary) {
+        throw new Error(`Refusing to create a test system administrator on ${host}: local databases only`);
+    }
 
     const client = new Client({ connectionString });
     await client.connect();
