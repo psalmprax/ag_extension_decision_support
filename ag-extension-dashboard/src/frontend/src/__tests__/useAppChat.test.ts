@@ -8,6 +8,8 @@ const chatApi = vi.hoisted(() => ({
   deleteConversation: vi.fn(),
   createConversation: vi.fn(),
   sendThreadMessage: vi.fn(),
+  markThreadRead: vi.fn().mockResolvedValue(undefined),
+  fetchUnreadSummary: vi.fn().mockResolvedValue({ total: 0, conversations: {} }),
 }));
 
 const aiApi = vi.hoisted(() => ({

@@ -5,6 +5,7 @@ import { BillingDashboard } from '../BillingDashboard';
 import { LanguageProvider } from '../../lib/LanguageContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
+import { fetchSubscription } from '@/api/billingService';
 
 // Mock billing service to prevent real API calls
 vi.mock('@/api/billingService', () => ({
@@ -133,8 +134,15 @@ const renderComponent = async () => {
 
 describe('BillingDashboard', () => {
   it('renders loading state initially', async () => {
+    // Hold the subscription request so the loading state is still up when checked.
+    let release!: () => void;
+    const held = new Promise<void>(resolve => { release = resolve; });
+    const respond = vi.mocked(fetchSubscription).getMockImplementation()!;
+    vi.mocked(fetchSubscription).mockImplementationOnce(async () => { await held; return respond(); });
+
     await renderComponent();
     expect(screen.getByRole('status')).toBeInTheDocument();
+    release();
 
     // Wait for the loading state to disappear to satisfy React state updates
     await waitFor(() => {

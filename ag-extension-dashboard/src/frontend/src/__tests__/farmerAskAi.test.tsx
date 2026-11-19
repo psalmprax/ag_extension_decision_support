@@ -9,6 +9,7 @@ import { dayRangeLabel, officerReplyExpectation } from '@/lib/turnTakingText';
 
 vi.mock('@/api/chatbotService', () => ({
   askAiInThread: vi.fn(), sendThreadMessage: vi.fn(), fetchTurnTakingSettings: vi.fn(), saveTurnTakingSettings: vi.fn(),
+  markThreadRead: vi.fn().mockResolvedValue(undefined), fetchUnreadSummary: vi.fn().mockResolvedValue({ total: 0, conversations: {} }),
 }));
 vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }));
 

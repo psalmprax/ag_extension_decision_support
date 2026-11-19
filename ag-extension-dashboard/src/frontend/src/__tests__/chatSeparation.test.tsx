@@ -11,6 +11,7 @@ import type { ChatMessage } from '../types/dashboard';
 vi.mock('@/api/chatbotService', () => ({
   fetchConversations: vi.fn(), fetchMessages: vi.fn(), updateConversation: vi.fn(),
   deleteConversation: vi.fn(), createConversation: vi.fn(), sendThreadMessage: vi.fn(),
+  markThreadRead: vi.fn().mockResolvedValue(undefined), fetchUnreadSummary: vi.fn().mockResolvedValue({ total: 0, conversations: {} }),
 }));
 vi.mock('@/api/aiService', () => ({
   getChatCompletion: vi.fn(), getPublicDemoChatCompletion: vi.fn(), getCopilotDraft: vi.fn(),
