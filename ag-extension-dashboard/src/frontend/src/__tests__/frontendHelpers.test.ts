@@ -260,28 +260,27 @@ describe('useReducedMotion', () => {
     window.matchMedia = originalMatchMedia;
   });
 
+  /** A real EventTarget, so the hook's change listener is notified the way the browser does it. */
+  class FakeMediaQueryList extends EventTarget implements MediaQueryList {
+    matches = false;
+    onchange: MediaQueryList['onchange'] = null;
+    addListener: MediaQueryList['addListener'] = () => undefined;
+    removeListener: MediaQueryList['removeListener'] = () => undefined;
+    constructor(readonly media: string) {
+      super();
+    }
+  }
+
   it('follows the OS preference and updates when it changes', () => {
-    let listener: (() => void) | undefined;
-    const mql = {
-      matches: false,
-      media: '(prefers-reduced-motion: reduce)',
-      onchange: null,
-      addEventListener: (_event: string, cb: () => void) => {
-        listener = cb;
-      },
-      removeEventListener: vi.fn(),
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    };
-    window.matchMedia = vi.fn(() => mql) as unknown as typeof window.matchMedia;
+    const mql = new FakeMediaQueryList('(prefers-reduced-motion: reduce)');
+    window.matchMedia = vi.fn<typeof window.matchMedia>(() => mql);
 
     const { result } = renderHook(() => useReducedMotion());
     expect(result.current).toBe(false);
 
     mql.matches = true;
     act(() => {
-      listener?.();
+      mql.dispatchEvent(new Event('change'));
     });
     expect(result.current).toBe(true);
   });

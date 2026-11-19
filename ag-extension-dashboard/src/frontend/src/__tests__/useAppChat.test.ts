@@ -39,11 +39,11 @@ function conversation(id: string, farmerId?: string): Conversation {
     lastMessage: 'hello',
     updatedAt: '2026-01-01T00:00:00Z',
     startedAt: '2026-01-01T00:00:00Z',
-  } as unknown as Conversation;
+  };
 }
 
 function message(content: string, role: 'officer' | 'assistant' = 'officer'): ChatMessage {
-  return { role, content, timestamp: '2026-01-01T00:00:00Z' } as unknown as ChatMessage;
+  return { role, content, timestamp: '2026-01-01T00:00:00Z' };
 }
 
 function farmer(id: string): Farmer {
@@ -52,7 +52,7 @@ function farmer(id: string): Farmer {
     firstName: 'Grace',
     lastName: 'Wanjiru',
     crops: ['maize'],
-  } as unknown as Farmer;
+  };
 }
 
 const originalOnLine = Object.getOwnPropertyDescriptor(navigator, 'onLine');

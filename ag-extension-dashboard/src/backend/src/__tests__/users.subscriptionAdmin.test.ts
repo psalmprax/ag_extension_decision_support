@@ -3,27 +3,22 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
 import { config } from '@/config';
-import { query } from '@/services/databaseService';
+import { query, withTransaction } from '@/services/databaseService';
 import { authorize } from '@/middleware/authorize';
 import { hashToken } from '@/services/sessionService';
 import usersRouter from '@/routes/users';
 import type { UserPublicRow } from '@/types/rowTypes';
 
-jest.mock('@/services/databaseService', () => {
-  const query = jest.fn();
-  const txClient = {
-    query: jest.fn((sql: string, params?: unknown[]) => query(sql, params)),
-  };
-  return {
-    getPool: jest.fn(() => ({})),
-    query,
-    withTransaction: jest.fn(async (cb: (client: typeof txClient) => Promise<unknown>) => cb(txClient)),
-  };
-});
+jest.mock('@/services/databaseService', () => ({
+  getPool: jest.fn(() => ({})),
+  query: jest.fn(),
+  withTransaction: jest.fn(),
+}));
 jest.mock('@/services/cacheService', () => ({ getCache: jest.fn(() => null) }));
 jest.mock('@/utils/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } }));
 
-const mockQuery = query as jest.Mock;
+const mockQuery = jest.mocked(query);
+const mockWithTransaction = jest.mocked(withTransaction);
 
 const FREE_PLAN_ID = '00000000-0000-0000-0000-000000000001';
 const PRO_PLAN_ID = '00000000-0000-0000-0000-000000000002';
@@ -46,13 +41,22 @@ interface FakeState {
   sessions: Map<string, { userId: string; revoked: boolean }>;
   users: Map<string, UserPublicRow>;
   plans: Map<string, PlanFixture>;
-  subscriptions: Map<string, { id: string; plan_id: string; price: string }>;
+  subscriptions: Map<string, SubscriptionFixture>;
   changeEvents: unknown[][];
   usageResets: unknown[][];
   subscriptionWrites: unknown[][];
   previousPlanReads: number;
   planReadsOutsideLock: number;
-  lockHeld: boolean;
+  /** Plan locks held, by transaction client: user ids locked with the user_plan namespace. */
+  planLocks: Map<string, Set<string>>;
+}
+
+interface SubscriptionFixture {
+  id: string;
+  plan_id: string;
+  price: string;
+  status?: string;
+  current_period_end?: string;
 }
 
 interface FakeReply {
@@ -74,7 +78,7 @@ function createState(): FakeState {
     subscriptionWrites: [],
     previousPlanReads: 0,
     planReadsOutsideLock: 0,
-    lockHeld: false,
+    planLocks: new Map(),
   };
 }
 
@@ -101,19 +105,21 @@ type ReplyFn = (rows: unknown[]) => FakeReply;
 
 const EMPTY: FakeReply = { rows: [], rowCount: 0 };
 
-/** Transaction framing: the advisory lock and the savepoint that opens each one. */
-function handleTransactionStatement(state: FakeState, sql: string): FakeReply | null {
-  if (sql.includes('pg_advisory_xact_lock')) {
-    state.lockHeld = true;
+/** The plan lock as the route takes it: transaction-scoped, namespace user_plan, key = user id. */
+const PLAN_LOCK_SQL = "pg_advisory_xact_lock(hashtext('user_plan'), hashtext($1))";
+
+/** Transaction framing: advisory locks and savepoints. */
+function handleTransactionStatement(state: FakeState, sql: string, values: unknown[], clientId?: string): FakeReply | null {
+  if (sql.includes(PLAN_LOCK_SQL)) {
+    if (!clientId) throw new Error('plan lock taken outside a transaction');
+    const held = state.planLocks.get(clientId) ?? new Set<string>();
+    held.add(String(values[0]));
+    state.planLocks.set(clientId, held);
     return EMPTY;
   }
-  // runWithColumnFallback opens a savepoint as the first statement of every
-  // mutating transaction, so the per-user lock guarantee is checked per request.
-  if (sql.startsWith('SAVEPOINT')) {
-    state.lockHeld = false;
-    return EMPTY;
-  }
-  if (sql.startsWith('RELEASE SAVEPOINT') || sql.startsWith('ROLLBACK TO SAVEPOINT')) {
+  // Any other advisory lock (e.g. the per-user session lock) is not the plan lock.
+  if (sql.includes('pg_advisory_xact_lock')) return EMPTY;
+  if (sql.startsWith('SAVEPOINT') || sql.startsWith('RELEASE SAVEPOINT') || sql.startsWith('ROLLBACK TO SAVEPOINT')) {
     return EMPTY;
   }
   return null;
@@ -139,13 +145,14 @@ function handleSubscriptionStatement(
   state: FakeState,
   sql: string,
   values: unknown[],
-  reply: ReplyFn
+  reply: ReplyFn,
+  clientId?: string
 ): FakeReply | null {
   if (sql.includes('FROM subscription_plans')) {
     const plan = state.plans.get(String(values[0]));
     return reply(plan ? [plan] : []);
   }
-  if (sql.includes('FROM subscriptions s')) return readPreviousPlan(state, values, reply);
+  if (sql.includes('FROM subscriptions s')) return readPreviousPlan(state, values, reply, clientId);
   if (sql.includes('INSERT INTO subscriptions')) return writeSubscription(state, values, reply);
   if (sql.includes('INSERT INTO usage')) {
     state.usageResets.push(values);
@@ -157,11 +164,12 @@ function handleSubscriptionStatement(
   return reply([]);
 }
 
-function readPreviousPlan(state: FakeState, values: unknown[], reply: ReplyFn): FakeReply {
+function readPreviousPlan(state: FakeState, values: unknown[], reply: ReplyFn, clientId?: string): FakeReply {
   state.previousPlanReads += 1;
-  // The previous plan must be read while the user's advisory lock is held,
-  // otherwise two concurrent upgrades could log a stale from_plan_id.
-  if (!state.lockHeld) {
+  // The previous plan must be read under this user's plan lock, on the same
+  // transaction, otherwise two concurrent upgrades could log a stale from_plan_id.
+  const userId = String(values[0]);
+  if (!clientId || !state.planLocks.get(clientId)?.has(userId)) {
     state.planReadsOutsideLock += 1;
     throw new Error('previous subscription read happened outside the advisory lock');
   }
@@ -175,47 +183,101 @@ function writeSubscription(state: FakeState, values: unknown[], reply: ReplyFn):
   const existing = state.subscriptions.get(userId);
   const id = existing?.id ?? `sub-${userId}`;
   const plan = state.plans.get(String(values[1]));
-  state.subscriptions.set(userId, { id, plan_id: String(values[1]), price: plan?.price ?? '0.00' });
+  state.subscriptions.set(userId, {
+    id,
+    plan_id: String(values[1]),
+    price: plan?.price ?? '0.00',
+    status: 'active',
+    current_period_end: FUTURE,
+  });
   return reply([{ id }]);
 }
 
 function handleUserStatement(state: FakeState, sql: string, values: unknown[], reply: ReplyFn): FakeReply {
-  if (sql.includes('INSERT INTO users')) {
-    return reply([
-      userRow({
-        id: 'u-created',
-        email: String(values[0]),
-        first_name: String(values[2]),
-        last_name: String(values[3]),
-        role: String(values[4]),
-      }),
-    ]);
-  }
-  if (sql.includes('UPDATE users SET')) return readUser(state, values[values.length - 1], reply);
+  if (sql.includes('INSERT INTO users')) return insertUser(state, sql, values, reply);
+  if (sql.includes('UPDATE users SET')) return updateUser(state, sql, values, reply);
   if (sql.includes('users.id = $1') || sql.includes('FROM users WHERE id = $1')) {
-    return readUser(state, values[0], reply);
+    const user = state.users.get(String(values[0]));
+    return reply(user ? [projectUser(state, sql, user)] : []);
   }
-  if (sql.includes('FROM users')) return reply([...state.users.values()]);
+  if (sql.includes('FROM users')) return reply([...state.users.values()].map(user => projectUser(state, sql, user)));
   return reply([]);
 }
 
-function readUser(state: FakeState, userId: unknown, reply: ReplyFn): FakeReply {
-  const user = state.users.get(String(userId));
-  return reply(user ? [user] : []);
+/** Stores the row (so a rollback can be observed) and honours ON CONFLICT (email) DO NOTHING. */
+function insertUser(state: FakeState, sql: string, values: unknown[], reply: ReplyFn): FakeReply {
+  const email = String(values[0]);
+  if ([...state.users.values()].some(user => user.email === email)) return reply([]);
+  const created = userRow({
+    id: 'u-created',
+    email,
+    first_name: String(values[2]),
+    last_name: String(values[3]),
+    role: String(values[4]),
+  });
+  state.users.set(created.id, created);
+  return reply([projectUser(state, sql, created)]);
+}
+
+/** Applies `UPDATE users SET col = $n, ... WHERE id = $m` to the stored row. */
+function updateUser(state: FakeState, sql: string, values: unknown[], reply: ReplyFn): FakeReply {
+  const match = /UPDATE users SET ([\s\S]+?)\s+WHERE id = \$(\d+)/.exec(sql);
+  if (!match) throw new Error(`Unrecognised user update: ${sql}`);
+  const user = state.users.get(String(values[Number(match[2]) - 1]));
+  if (!user) return reply([]);
+  for (const part of match[1].split(',')) {
+    const assign = /^\s*([a-z_]+)\s*=\s*\$(\d+)\s*$/.exec(part);
+    if (assign) Object.assign(user, { [assign[1]]: values[Number(assign[2]) - 1] });
+  }
+  return reply([projectUser(state, sql, user)]);
+}
+
+/**
+ * The row a statement returns. Plan fields come only from the stored subscription,
+ * and only when the statement joins subscriptions, so skipping the join drops them.
+ */
+function projectUser(state: FakeState, sql: string, user: UserPublicRow): UserPublicRow {
+  if (!sql.includes('LEFT JOIN subscriptions s')) return { ...user };
+  const subscription = state.subscriptions.get(user.id);
+  const plan = subscription ? state.plans.get(subscription.plan_id) : undefined;
+  return {
+    ...user,
+    plan_id: plan?.id ?? null,
+    plan_name: plan?.name ?? null,
+    plan_price: plan?.price ?? null,
+    subscription_status: subscription?.status ?? null,
+    subscription_period_end: subscription?.current_period_end ?? null,
+  };
 }
 
 /** Emulates the statements the route issues, keyed by the shape of each statement. */
-function handle(state: FakeState, text: string, params: unknown[] = []): FakeReply {
+function handle(state: FakeState, text: string, params: unknown[] = [], clientId?: string): FakeReply {
   const sql = String(text);
   const values = params ?? [];
   const reply: ReplyFn = rows => ({ rows, rowCount: rows.length });
 
   return (
-    handleTransactionStatement(state, sql) ??
+    handleTransactionStatement(state, sql, values, clientId) ??
     handleSessionStatement(state, sql, values, reply) ??
-    handleSubscriptionStatement(state, sql, values, reply) ??
+    handleSubscriptionStatement(state, sql, values, reply, clientId) ??
     handleUserStatement(state, sql, values, reply)
   );
+}
+
+type QueryImpl = (sql: string, params?: unknown[], clientId?: string) => Promise<FakeReply>;
+
+let currentImpl: QueryImpl;
+/** Every statement the route ran, pooled or transactional, in order. */
+const executedSql: string[] = [];
+
+/** Single entry point for pooled and transactional statements, so injected failures hit both. */
+function runStatement(sql: string, params: unknown[] = [], clientId?: string): Promise<FakeReply> {
+  executedSql.push(String(sql));
+  return currentImpl(sql, params, clientId);
+}
+
+function useQuery(impl: QueryImpl): void {
+  currentImpl = impl;
 }
 
 const app = express();
@@ -239,27 +301,36 @@ function tokenFor(userId: string, role: string): string {
   return token;
 }
 
+let transactionCount = 0;
+
 beforeEach(() => {
   state = createState();
+  executedSql.length = 0;
   mockQuery.mockReset();
-  mockQuery.mockImplementation(async (sql: string, params: unknown[] = []) => handle(state, sql, params));
+  useQuery(async (sql, params = [], clientId) => handle(state, sql, params, clientId));
+  // The pooled query() mock shares the dispatcher; FakeReply stands in for pg's QueryResult.
+  mockQuery.mockImplementation(((sql: string, params?: unknown[]) => runStatement(sql, params)) as unknown as typeof query);
+  // Each transaction gets its own client id; a throw restores the state it started from.
+  mockWithTransaction.mockImplementation(async callback => {
+    const clientId = `tx-${++transactionCount}`;
+    const snapshot = structuredClone(state);
+    const client = { query: (sql: string, params?: unknown[]) => runStatement(sql, params, clientId) };
+    try {
+      return await callback(client as unknown as Parameters<typeof callback>[0]);
+    } catch (error) {
+      state = snapshot;
+      throw error;
+    }
+  });
 });
 
 describe('Admin user access & subscription tier management', () => {
   it('GET /users reports each user with their current plan tier', async () => {
     const adminToken = tokenFor('admin-1', 'admin');
-    state.users.set(
-      'u-pro',
-      userRow({
-        id: 'u-pro',
-        email: 'pro@example.org',
-        plan_id: PRO_PLAN_ID,
-        plan_name: 'Pro',
-        plan_price: '29.00',
-        subscription_status: 'active',
-        subscription_period_end: FUTURE,
-      })
-    );
+    state.users.set('u-pro', userRow({ id: 'u-pro', email: 'pro@example.org' }));
+    state.subscriptions.set('u-pro', {
+      id: 'sub-pro', plan_id: PRO_PLAN_ID, price: '29.00', status: 'active', current_period_end: FUTURE,
+    });
     state.users.set('u-free', userRow({ id: 'u-free', email: 'free@example.org' }));
 
     const res = await request(app).get('/users').set('Authorization', `Bearer ${adminToken}`);
@@ -325,36 +396,31 @@ describe('Admin user access & subscription tier management', () => {
     expect(state.subscriptions.get('u-pro')).toMatchObject({ id: 'sub-9', plan_id: PRO_PLAN_ID });
   });
 
-  it('PUT /users/:id revokes sessions when the role changes with the plan', async () => {
+  it('PUT /users/:id revokes sessions when the role changes with the plan, leaving the account active', async () => {
     const adminToken = tokenFor('admin-1', 'admin');
-    const targetToken = tokenFor('u-target', 'extension_officer');
-    state.users.set('u-target', userRow({ id: 'u-target', role: 'extension_officer', is_active: false }));
+    const targetToken = tokenFor('u-target', 'farmer');
+    state.users.set('u-target', userRow({ id: 'u-target', role: 'farmer', is_active: true }));
+    expect((await request(app).get('/protected').set('Authorization', `Bearer ${targetToken}`)).status).toBe(200);
 
     const res = await request(app)
       .put('/users/u-target')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ role: 'extension_officer', isActive: false, planId: FREE_PLAN_ID });
+      .send({ role: 'extension_officer', planId: FREE_PLAN_ID });
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toMatchObject({ role: 'extension_officer', isActive: false, planName: 'Free' });
-    // Roles ride inside the JWT, so the target's existing token must stop working.
+    expect(res.body.data).toMatchObject({ role: 'extension_officer', isActive: true, planName: 'Free' });
+    expect(state.users.get('u-target')).toMatchObject({ role: 'extension_officer', is_active: true });
+    // Roles ride inside the JWT, so the target's existing token must stop working
+    // even though the account itself is still active.
     expect((await request(app).get('/protected').set('Authorization', `Bearer ${targetToken}`)).status).toBe(401);
   });
 
   it('PUT /users/:id preserves the joined plan on a field-only update', async () => {
     const adminToken = tokenFor('admin-1', 'admin');
-    state.users.set(
-      'u-pro',
-      userRow({
-        id: 'u-pro',
-        first_name: 'Updated',
-        plan_id: PRO_PLAN_ID,
-        plan_name: 'Pro',
-        plan_price: '29.00',
-        subscription_status: 'active',
-        subscription_period_end: FUTURE,
-      })
-    );
+    state.users.set('u-pro', userRow({ id: 'u-pro', first_name: 'Before' }));
+    state.subscriptions.set('u-pro', {
+      id: 'sub-pro', plan_id: PRO_PLAN_ID, price: '29.00', status: 'active', current_period_end: FUTURE,
+    });
 
     const res = await request(app)
       .put('/users/u-pro')
@@ -362,6 +428,10 @@ describe('Admin user access & subscription tier management', () => {
       .send({ firstName: 'Updated' });
 
     expect(res.status).toBe(200);
+    expect(state.users.get('u-pro')?.first_name).toBe('Updated');
+    // The update returns plan fields by joining the subscription, not from the user row.
+    const updateSql = executedSql.find(sql => sql.includes('UPDATE users SET'));
+    expect(updateSql).toContain('LEFT JOIN subscriptions s');
     expect(res.body.data).toMatchObject({
       firstName: 'Updated',
       planId: PRO_PLAN_ID,
@@ -375,9 +445,9 @@ describe('Admin user access & subscription tier management', () => {
     const adminToken = tokenFor('admin-1', 'admin');
     const targetToken = tokenFor('u-rollback', 'extension_officer');
     state.users.set('u-rollback', userRow({ id: 'u-rollback' }));
-    mockQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
+    useQuery(async (sql, params = [], clientId) => {
       if (String(sql).includes('INSERT INTO subscriptions')) throw new Error('Simulated DB error');
-      return handle(state, sql, params);
+      return handle(state, sql, params, clientId);
     });
 
     const res = await request(app)
@@ -386,6 +456,8 @@ describe('Admin user access & subscription tier management', () => {
       .send({ role: 'regional_manager', planId: PRO_PLAN_ID });
 
     expect(res.status).toBe(500);
+    // The transaction rolled back: the role change did not survive the failed plan write.
+    expect(state.users.get('u-rollback')?.role).toBe('farmer');
     // Revocation happens post-commit only: a failed write must not log the user out.
     expect((await request(app).get('/protected').set('Authorization', `Bearer ${targetToken}`)).status).toBe(200);
   });
@@ -441,11 +513,12 @@ describe('Admin user access & subscription tier management', () => {
     });
     expect(state.subscriptionWrites).toHaveLength(1);
     expect(state.subscriptionWrites[0]?.[1]).toBe(PRO_PLAN_ID);
+    expect([...state.users.values()].map(user => user.email)).toEqual(['new-pro@example.org']);
 
     state.subscriptionWrites.length = 0;
-    mockQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
+    useQuery(async (sql, params = [], clientId) => {
       if (String(sql).includes('INSERT INTO subscriptions')) throw new Error('Subscription write failed');
-      return handle(state, sql, params);
+      return handle(state, sql, params, clientId);
     });
 
     const rolledBack = await request(app)
@@ -460,5 +533,7 @@ describe('Admin user access & subscription tier management', () => {
       });
 
     expect(rolledBack.status).toBe(500);
+    // The insert was rolled back with the failed plan write: no rollback@ user exists.
+    expect([...state.users.values()].map(user => user.email)).toEqual(['new-pro@example.org']);
   });
 });

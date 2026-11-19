@@ -442,9 +442,6 @@ describe('useWebRTC recording', () => {
     expect(result.current.isRecording).toBe(true);
     expect(MockMediaRecorder.isTypeSupported).toHaveBeenCalledWith('video/webm;codecs=vp9');
 
-    const recorder = (result.current as unknown as { isRecording: boolean }).isRecording;
-    expect(recorder).toBe(true);
-
     act(() => result.current.stopRecording());
 
     expect(result.current.isRecording).toBe(false);

@@ -73,10 +73,10 @@ import {
 } from '../services/sessionService';
 const mockQuery = query as jest.Mock;
 const mockGetPool = getPool as jest.Mock;
-const mockAcquireUserSessionLock = acquireUserSessionLock as jest.Mock;
-const mockRevokeAllUserSessions = revokeAllUserSessions as jest.Mock;
-const mockRevokeAllUserSessionsInTransaction = revokeAllUserSessionsInTransaction as jest.Mock;
-const mockPublishSessionRevocations = publishSessionRevocations as jest.Mock;
+const mockAcquireUserSessionLock = jest.mocked(acquireUserSessionLock);
+const mockRevokeAllUserSessions = jest.mocked(revokeAllUserSessions);
+const mockRevokeAllUserSessionsInTransaction = jest.mocked(revokeAllUserSessionsInTransaction);
+const mockPublishSessionRevocations = jest.mocked(publishSessionRevocations);
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 

@@ -3,7 +3,7 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
 import { config } from '../config';
-import { authorize, UserRole } from '../middleware/authorize';
+import { authorize, isUserRole, UserRole } from '../middleware/authorize';
 import { hashToken } from '../services/sessionService';
 import * as sharedState from '../services/sharedState';
 import { getPool } from '../services/db/pool';
@@ -153,7 +153,11 @@ function buildPublicUserRow(user: StoredUser, state: DbState) {
 }
 
 function applyColumnAssignment(user: StoredUser, column: string, value: unknown): void {
-    if (column === 'role' && typeof value === 'string') user.role = value as UserRole;
+    if (column === 'role') {
+        // Reject anything outside the role contract before it reaches fixture state.
+        if (!isUserRole(value)) throw new Error(`Fixture refused unsupported role: ${String(value)}`);
+        user.role = value;
+    }
     if (column === 'is_active' && typeof value === 'boolean') user.isActive = value;
     if (column === 'first_name' && typeof value === 'string') user.firstName = value;
     if (column === 'last_name' && typeof value === 'string') user.lastName = value;
@@ -214,7 +218,13 @@ function handleSubscriptionSelect(params: unknown[], state: DbState) {
 
 function handleSubscriptionUpsertSql(params: unknown[], state: DbState, simulateRace: boolean) {
     if (simulateRace) return { rows: [], rowCount: 0 };
-    const [userId, planId, , periodEnd] = params as [string, string, Date, Date];
+    const [userId, planId, , periodEnd] = params;
+    if (typeof userId !== 'string' || typeof planId !== 'string') {
+        throw new Error(`Subscription upsert expects string user and plan ids, got ${typeof userId}/${typeof planId}`);
+    }
+    if (!(periodEnd instanceof Date) || Number.isNaN(periodEnd.getTime())) {
+        throw new Error(`Subscription upsert expects a valid period-end Date, got ${String(periodEnd)}`);
+    }
     const existing = state.subscriptions.get(userId);
     if (!canOverwriteSubscription(existing)) {
         return { rows: [], rowCount: 0 };
@@ -232,14 +242,18 @@ function handleSubscriptionUpsertSql(params: unknown[], state: DbState, simulate
 }
 
 function handleChangeEventInsert(params: unknown[], state: DbState) {
-    const [subscriptionId, fromPlanId, toPlanId, fromPrice, toPrice] = params as [
-        string,
-        string,
-        string,
-        number,
-        number,
-    ];
-    state.changeEvents.push({ subscriptionId, fromPlanId, toPlanId, fromPrice, toPrice });
+    const [subscriptionId, fromPlanId, toPlanId, fromPrice, toPrice] = params;
+    const ids = [subscriptionId, fromPlanId, toPlanId];
+    if (!ids.every((id): id is string => typeof id === 'string')) {
+        throw new Error(`Change event expects string ids, got ${ids.map(id => typeof id).join('/')}`);
+    }
+    const prices = [Number(fromPrice), Number(toPrice)];
+    if (!prices.every(Number.isFinite)) {
+        throw new Error(`Change event expects numeric prices, got ${String(fromPrice)}/${String(toPrice)}`);
+    }
+    state.changeEvents.push({
+        subscriptionId: ids[0], fromPlanId: ids[1], toPlanId: ids[2], fromPrice: prices[0], toPrice: prices[1],
+    });
     return { rows: [], rowCount: 1 };
 }
 
@@ -812,9 +826,22 @@ describe('Finding 2 — transactional session revocation & post-commit cache pub
                 .send({ role: 'farmer' });
 
             expect(res.status).toBe(200);
+            // Both publication failures leave the committed update intact.
             expect(committedState.users.get(TARGET_USER_ID)?.role).toBe('farmer');
             expect(committedState.sessions.get(hashToken(victimTokenA))?.isRevoked).toBe(true);
             expect(committedState.sessions.get(hashToken(victimTokenB))?.isRevoked).toBe(true);
+
+            // Publication was attempted for both revoked tokens (and failed both times).
+            const publishedHashes = addToSetSpy.mock.calls.map(([, member]) => member);
+            expect(publishedHashes).toEqual(expect.arrayContaining([hashToken(victimTokenA), hashToken(victimTokenB)]));
+
+            // Prove the 401s come from local revocation state, not from the database:
+            // make the committed rows say "valid" again. Shared state holds nothing
+            // (both publications failed), so only the local cache can deny them.
+            for (const token of [victimTokenA, victimTokenB]) {
+                const row = committedState.sessions.get(hashToken(token));
+                if (row) row.isRevoked = false;
+            }
             expect((await request(app).get('/protected').set('Authorization', `Bearer ${victimTokenA}`)).status).toBe(401);
             expect((await request(app).get('/protected').set('Authorization', `Bearer ${victimTokenB}`)).status).toBe(401);
         } finally {
