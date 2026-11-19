@@ -4,7 +4,7 @@ import type {
   VisitInsertRow,
   VisitIdRow,
 } from '../rowTypes';
-import { parseCount, parseDecimal, toIso } from './common';
+import { parseCount, parseDecimal, toIso, toIsoDate } from './common';
 
 // --- Reporting DTOs --------------------------------------------------------
 
@@ -62,7 +62,7 @@ export function mapVisitWithFarmerRow(row: VisitWithFarmerRow): VisitWithFarmerD
     notes: row.notes,
     outcomes: row.outcomes,
     followUpRequired: row.follow_up_required,
-    followUpDate: toIso(row.follow_up_date) ?? null,
+    followUpDate: toIsoDate(row.follow_up_date) ?? null,
     reminderSent: row.reminder_sent,
     overdueAlertSent: row.overdue_alert_sent,
     followUpReminderSent: row.follow_up_reminder_sent,
@@ -113,7 +113,7 @@ export function mapVisitInsertRow(row: VisitInsertRow): VisitInsertDTO {
     notes: row.notes,
     outcomes: row.outcomes,
     followUpRequired: row.follow_up_required,
-    followUpDate: toIso(row.follow_up_date) ?? null,
+    followUpDate: toIsoDate(row.follow_up_date) ?? null,
     reminderSent: row.reminder_sent,
     overdueAlertSent: row.overdue_alert_sent,
     followUpReminderSent: row.follow_up_reminder_sent,

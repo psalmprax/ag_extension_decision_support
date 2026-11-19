@@ -11,7 +11,9 @@ import { defineConfig, devices } from '@playwright/test';
  * Prerequisites:
  *   docker compose up -d app-db          # or any Postgres on DATABASE_URL
  *   cd ../../src/backend && npm run migrate:deploy
- *   npm run seed:realworld               # from the repo root
+ *
+ * The global setup resets and re-seeds the real-world fixtures before each run
+ * (`npm run seed:realworld -- --reset`); E2E_SKIP_RESEED=1 skips it.
  *
  * Then, from `src/frontend`:
  *   npm run test:e2e:real
@@ -23,6 +25,8 @@ const DATABASE_URL =
 
 export default defineConfig({
   testDir: './tests-e2e',
+  /* Reset and re-seed the real-world fixtures, so every run starts from the same data. */
+  globalSetup: './tests-e2e/global-setup.ts',
   /* The specs share one seeded database and one backend; parallel writers would race. */
   fullyParallel: false,
   workers: 1,

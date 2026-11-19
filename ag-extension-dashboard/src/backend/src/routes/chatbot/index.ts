@@ -9,11 +9,25 @@ import { aiRateLimiter } from '@/middleware/rateLimitMiddleware';
 
 const router = Router();
 
-// Generation routes only: messages/completions/publicDemo hit AI providers on
-// every call, so they pass through the dedicated (smaller) AI bucket before
-// their own auth/usage middleware. Read-side sub-routers (conversations,
-// importSession) stay on the general per-user limiter only.
-router.use(aiRateLimiter);
+/**
+ * Routes that call an AI provider: completions, the public demo, and Ask AI in
+ * a thread. Only these use the dedicated (smaller) AI bucket.
+ */
+export function isAiGenerationRoute(req: Pick<Request, 'method' | 'path'>): boolean {
+  if (req.method !== 'POST') return false;
+  return req.path === '/completions'
+    || req.path === '/public-demo'
+    || req.path.startsWith('/public-demo/')
+    || /^\/conversations\/[^/]+\/ask-ai$/.test(req.path);
+}
+
+// Generation routes pass through the AI bucket before their own auth/usage
+// middleware. Everything else — reading threads and plain messages between a
+// farmer and their officer — stays on the general per-user limiter only. It
+// used to share the 60-per-5-minutes AI bucket, so an officer working through
+// their conversations was refused (429) mid-reply and the message was lost.
+router.use((req: Request, res: Response, next: NextFunction) =>
+  (isAiGenerationRoute(req) ? aiRateLimiter(req, res, next) : next()));
 router.use((req: Request, res: Response, next: NextFunction) => {
   const isPublicDemoRoute = req.path === '/public-demo' || req.path.startsWith('/public-demo/');
   if (req.user?.isDemo === true && !isPublicDemoRoute) {

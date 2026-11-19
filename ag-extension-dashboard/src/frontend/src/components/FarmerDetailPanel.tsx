@@ -9,22 +9,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FarmerDetailHeader } from './FarmerDetailHeader';
 import { FarmerYieldChart } from './FarmerYieldChart';
 import { FarmerVisitTimeline } from './FarmerVisitTimeline';
-import {
-  X,
-  TrendingUp,
-  MessageSquare,
-  Phone,
-  Video,
-  Clock,
-  ChevronRight,
-  Sprout,
-  Activity,
-  Mail,
-  History,
-  FileText,
-  Loader2,
-  Link2,
-} from 'lucide-react';
+import { X, TrendingUp, MessageSquare, Phone, Video, Clock, ChevronRight, Sprout } from 'lucide-react';
+import { Activity, Mail, History, FileText, Loader2, Link2, ListChecks } from 'lucide-react';
+import { FarmerProgressLog } from './progress/FarmerProgressLog';
+
+type DetailTab = 'overview' | 'history' | 'progress' | 'insights';
 import toast from 'react-hot-toast';
 import { VideoCall } from './VideoCall';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -368,7 +357,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
   const isCyber = themeName === 'cyber';
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = React.useState<'overview' | 'history' | 'insights'>('overview');
+  const [activeTab, setActiveTab] = React.useState<DetailTab>('overview');
   const [isEditing, setIsEditing] = React.useState(false);
   const [editData, setEditData] = React.useState<Farmer>(farmer!);
   const [interactions, setInteractions] = React.useState<
@@ -628,11 +617,12 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
               {[
                 { id: 'overview', label: t('nav_dashboard') || 'Overview', icon: FileText },
                 { id: 'history', label: t('nav_sms_history') || 'Communication', icon: History },
+                { id: 'progress', label: t('farmer_tab_progress', 'Progress'), icon: ListChecks },
                 { id: 'insights', label: t('nav_analytics') || 'Insights', icon: TrendingUp },
               ].map(tab => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as 'overview' | 'history' | 'insights')}
+                  onClick={() => setActiveTab(tab.id as DetailTab)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                     activeTab === tab.id
                       ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm'
@@ -669,6 +659,8 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                   isLoadingHistory={isLoadingHistory}
                   radiusClass={radiusClass}
                 />
+              ) : activeTab === 'progress' ? (
+                <FarmerProgressLog farmerId={farmer.id} crops={farmer.crops ?? []} />
               ) : (
                 <SatelliteInsights farmerId={farmer.id} isCyber={isCyber} />
               )}

@@ -6,10 +6,12 @@ import { SEEDED, apiToken, loginThroughUi } from './helpers/auth';
  *
  * A regional manager may only see farmers in their own region: the list is
  * filtered by the region stored on the manager's account, and a direct read of
- * a farmer in another region is refused outright.
+ * a farmer in another region is refused outright. Other specs register more
+ * farmers in these regions, so the lists hold every seeded farmer, and every
+ * row — seeded or not — is in the manager's region.
  */
 test.describe('regional manager scoping', () => {
-  test('the Nakuru manager lists exactly the Rift Valley farmers', async ({ page }) => {
+  test('the Nakuru manager lists the Rift Valley farmers and no others', async ({ page }) => {
     await loginThroughUi(page, SEEDED.managerNakuru.email);
 
     const res = await page.request.get('/api/v1/farmers?limit=100');
@@ -21,14 +23,14 @@ test.describe('regional manager scoping', () => {
     const farmers = body.data.farmers;
     const names = farmers.map(farmer => `${farmer.firstName} ${farmer.lastName}`);
 
-    expect(new Set(names)).toEqual(new Set(SEEDED.nakuruFarmers));
+    expect(names).toEqual(expect.arrayContaining([...SEEDED.nakuruFarmers]));
     for (const farmer of farmers) {
       expect(farmer.region).toBe(SEEDED.managerNakuru.region);
     }
     expect(names).not.toContain(SEEDED.mzuzuFarmers[0]);
   });
 
-  test('the Mzuzu manager lists exactly the Northern Region farmers', async ({ page }) => {
+  test('the Mzuzu manager lists the Northern Region farmers and no others', async ({ page }) => {
     await loginThroughUi(page, SEEDED.managerMzuzu.email);
 
     const res = await page.request.get('/api/v1/farmers?limit=100');
@@ -39,7 +41,7 @@ test.describe('regional manager scoping', () => {
     };
     const names = body.data.farmers.map(farmer => `${farmer.firstName} ${farmer.lastName}`);
 
-    expect(new Set(names)).toEqual(new Set(SEEDED.mzuzuFarmers));
+    expect(names).toEqual(expect.arrayContaining([...SEEDED.mzuzuFarmers]));
     for (const farmer of body.data.farmers) {
       expect(farmer.region).toBe(SEEDED.managerMzuzu.region);
     }

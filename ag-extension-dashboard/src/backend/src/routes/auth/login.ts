@@ -15,6 +15,7 @@ import { verifyPassword } from '@/utils/password';
 import { safeError } from '@/utils/safeResponse';
 import { credentialVersion } from '@/utils/credentialVersion';
 import { reportedSystemAdmin } from '@/services/systemAdminService';
+import { signSessionToken } from '@/utils/sessionToken';
 
 const router = Router();
 
@@ -73,11 +74,7 @@ interface LoginUserRow extends LoginUser {
 }
 
 async function completePasswordLogin(req: Request, res: Response, user: LoginUser, clientIp: string | null): Promise<void> {
-    const token = jwt.sign(
-        { userId: user.id, email: user.email, role: user.role },
-        config.jwt.secret as jwt.Secret,
-        { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
-    );
+    const token = signSessionToken({ userId: user.id, email: user.email, role: user.role });
 
     const sessionCreated = await withUserSessionLock(user.id, async client => {
         const current = await client.query<{ password_hash: string | null }>(

@@ -20,6 +20,7 @@ import { authorize } from '@/middleware/authorize';
 import rateLimit from 'express-rate-limit';
 import { perUserRateLimit, SharedStateStore } from '@/middleware/rateLimitMiddleware';
 import { reportedSystemAdmin } from '@/services/systemAdminService';
+import { signSessionToken } from '@/utils/sessionToken';
 
 const router = Router();
 const profileUpdateRateLimit = rateLimit({
@@ -102,11 +103,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'Session has been revoked' });
         }
 
-        const newToken = jwt.sign(
-            { userId: decoded.userId, email: decoded.email, role: decoded.role },
-            config.jwt.secret as jwt.Secret,
-            { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
-        );
+        const newToken = signSessionToken({ userId: decoded.userId, email: decoded.email, role: decoded.role });
 
         // Rotate under the account lock so a concurrent password change cannot
         // revoke the old token and then have this request create a surviving session.

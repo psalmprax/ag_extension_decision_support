@@ -18,6 +18,7 @@ import { getRealtimeServer } from '@/services/realtimeHub';
 import { linkedDemoSql } from '@/services/demoScope';
 import { DEFAULT_CONVERSATION_KIND, parseConversationKind, type ConversationKind } from '@/services/chat/conversationKind';
 import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
+import { listAttachments } from '@/services/uploadAttachments';
 
 // Farmer chat, the farmer's "My officer" thread and the officer's AI chats are paid features;
 // admins and the demo are exempt (see requirePaidPlan).
@@ -161,7 +162,12 @@ router.get('/conversations/:id/messages', authorize(['admin', 'regional_manager'
         ORDER BY m.created_at ASC`,
       params
     );
-    return res.json({ success: true, data: mapChatMessageRows(rows) });
+    const attachments = await listAttachments('chat', rows.map(row => row.id));
+    const messages = mapChatMessageRows(rows).map(message => {
+      const photos = attachments.get(message.id);
+      return photos ? { ...message, attachments: photos } : message;
+    });
+    return res.json({ success: true, data: messages });
   } catch (error) {
     if (error instanceof MessageAccessError) {
       return safeError(res, error.statusCode, error.message);

@@ -149,6 +149,8 @@ describe('Visits Route — Mapper-before-response: mapVisitWithFarmerRows + mapV
             farmer_name: 'Jane Banda',
         };
         mockQuery.mockResolvedValueOnce({ rows: [visitRow], rowCount: 1 });
+        // The visit report's photos.
+        mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
 
         const response = await request(app)
             .get('/api/v1/visits/visit-1')
@@ -160,7 +162,9 @@ describe('Visits Route — Mapper-before-response: mapVisitWithFarmerRows + mapV
         expect(response.body.data.completedAt).toBe('2024-12-20T10:50:00Z');
         expect(response.body.data.outcomes).toBe('Healthy crop');
         expect(response.body.data.followUpRequired).toBe(true);
-        expect(response.body.data.followUpDate).toBe('2025-01-20T10:00:00Z');
+        // follow_up_date is a DATE: reported as the calendar day, never shifted by time zone.
+        expect(response.body.data.followUpDate).toBe('2025-01-20');
+        expect(response.body.data.attachments).toEqual([]);
         expect(response.body.data.reminderSent).toBe(true);
         expect(response.body.data.farmerName).toBe('Jane Banda');
         expect(response.body.data.started_at).toBeUndefined();

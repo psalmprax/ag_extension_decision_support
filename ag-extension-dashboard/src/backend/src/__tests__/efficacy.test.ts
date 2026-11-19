@@ -23,12 +23,19 @@ jest.mock('../middleware/authorize', () => ({
     optionalAuth: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
+jest.mock('../services/dataGovernanceService', () => ({
+    ...jest.requireActual('../services/dataGovernanceService'),
+    getFarmerForPrincipal: jest.fn(),
+}));
+
 const officerAuth = { userId: 'off-1', role: 'extension_officer', email: 'o@e.com' };
 const token = Buffer.from(JSON.stringify(officerAuth)).toString('base64');
 const officerHeader = { Authorization: `Bearer ${token}` };
 
 import { query } from '../services/databaseService';
+import { getFarmerForPrincipal } from '../services/dataGovernanceService';
 const mockQuery = query as jest.Mock;
+const mockFarmerAccess = getFarmerForPrincipal as jest.Mock;
 
 const validOutcome = {
     visitId: crypto.randomUUID(),
@@ -55,11 +62,35 @@ describe('POST /efficacy/outcomes', () => {
         expect(res.status).toBe(400);
     });
 
-    it('records an outcome with the officer from the auth context', async () => {
-        mockQuery.mockResolvedValueOnce({
-            rows: [{ id: 'oc-1', visit_id: validOutcome.visitId, farmer_id: validOutcome.farmerId, crop: 'maize', advice_category: 'fall_armyworm', outcome: 'improved', measured_at: new Date() }],
-            rowCount: 1,
+    /** The visit belongs to the outcome's farmer; the insert returns the stored row. */
+    function databaseWithVisit(visitFarmerId: string) {
+        mockQuery.mockImplementation(async (sql: string) => {
+            if (sql.includes('FROM visits')) return { rows: [{ farmer_id: visitFarmerId }], rowCount: 1 };
+            return {
+                rows: [{ id: 'oc-1', visit_id: validOutcome.visitId, farmer_id: validOutcome.farmerId, crop: 'maize', advice_category: 'fall_armyworm', outcome: 'improved', measured_at: new Date() }],
+                rowCount: 1,
+            };
         });
+    }
+
+    it('refuses an outcome for a farmer the officer does not serve', async () => {
+        databaseWithVisit(validOutcome.farmerId);
+        mockFarmerAccess.mockResolvedValue(null);
+        const res = await request(app).post('/api/v1/efficacy/outcomes').set(officerHeader).send(validOutcome);
+        expect(res.status).toBe(403);
+        expect(mockQuery.mock.calls.some(c => String(c[0]).includes('INSERT INTO recommendation_outcomes'))).toBe(false);
+    });
+
+    it('refuses a visit that belongs to a different farmer', async () => {
+        databaseWithVisit(crypto.randomUUID());
+        mockFarmerAccess.mockResolvedValue({ id: validOutcome.farmerId });
+        const res = await request(app).post('/api/v1/efficacy/outcomes').set(officerHeader).send(validOutcome);
+        expect(res.status).toBe(403);
+    });
+
+    it('records an outcome with the officer from the auth context', async () => {
+        databaseWithVisit(validOutcome.farmerId);
+        mockFarmerAccess.mockResolvedValue({ id: validOutcome.farmerId });
 
         const res = await request(app)
             .post('/api/v1/efficacy/outcomes')

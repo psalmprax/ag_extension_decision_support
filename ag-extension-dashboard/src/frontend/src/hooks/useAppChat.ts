@@ -13,6 +13,7 @@ import { isDemoFarmerId } from '@/demo/demoIds';
 import { Conversation, ChatMessage, Farmer } from '../types/dashboard';
 import { useAppStore } from '@/store/useAppStore';
 import { isFreePlanUser } from '@/lib/planAccess';
+import { getApiErrorMessage } from '@/lib/apiError';
 
 interface QueuedChatItem {
   conversationId: string | null;
@@ -291,7 +292,10 @@ export const useAppChat = (language: string) => {
         enqueueOfflineMessage(queueKey, { conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now(), via });
         console.warn('Chat queued after failure:', currentInput.slice(0, 40));
       } else {
+        // Refused (rate limit, plan, access): give the text back so nothing typed is lost.
         console.error('Failed to send farmer message:', error);
+        setFarmerChatInput(prev => prev || currentInput);
+        toast.error(getApiErrorMessage(error, 'Your message was not sent. Try again.'));
       }
     }
   };

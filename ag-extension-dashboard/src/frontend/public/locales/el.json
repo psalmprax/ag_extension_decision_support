@@ -883,5 +883,8 @@
     "farmer_register_officer_none": "Unassigned for now",
     "farmer_register_officers_failed": "Could not load officers. The farmer can be assigned later.",
     "farmer_register_manager_region": "Registered in your region: {region}",
-    "farmer_register_manager_no_region": "Your account has no region yet. Ask an administrator to set it before registering farmers."
+    "farmer_register_manager_no_region": "Your account has no region yet. Ask an administrator to set it before registering farmers.",
+    "farmer_tab_progress": "Progress",
+    "visit_type_assessment": "Farm assessment",
+    "visit_type_training": "Training"
 }

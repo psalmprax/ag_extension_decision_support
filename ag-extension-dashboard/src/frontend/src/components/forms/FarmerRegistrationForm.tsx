@@ -27,6 +27,7 @@ import { createFarmer } from '@/api/farmerService';
 import { InlinePrompt, InfoPromptIcon } from '@/components/ui/InfoPrompt';
 import { COMMON_CROPS, ONBOARDING_PRESETS } from './farmerFormPresets';
 import { AssignOfficerField } from './AssignOfficerField';
+import { StaffRegionNote } from './StaffRegionNote';
 import { getApiErrorMessage } from '@/lib/apiError';
 
 // Coordinates are optional: a blank number input must mean "not given", not NaN
@@ -38,8 +39,12 @@ export const FarmerRegistrationForm: React.FC = () => {
   const { addFarmer, isLoading, setLoading, user } = useAppStore();
   // Admins and regional managers choose the officer; an officer's farmers are their own.
   const canChooseOfficer = user?.role === 'admin' || user?.role === 'regional_manager';
-  // A regional manager registers farmers in their own region (the server enforces it).
-  const managerRegion = user?.role === 'regional_manager' ? user.region || '' : null;
+  // Officers and regional managers register farmers in their own region (the server
+  // enforces it). '' = a manager with no region on file, who cannot register yet;
+  // null = no fixed region (admins, and officers with no region on file).
+  const staffRegion = user?.role === 'regional_manager'
+    ? user.region || ''
+    : user?.role === 'extension_officer' && user.region ? user.region : null;
   const [assignedOfficerId, setAssignedOfficerId] = useState('');
   const { t } = useLanguage();
   const { isDemo } = useDemoMode();
@@ -138,7 +143,7 @@ export const FarmerRegistrationForm: React.FC = () => {
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone,
-        region: managerRegion ?? data.location,
+        region: staffRegion ?? data.location,
         village: data.location,
         assignedOfficerId: canChooseOfficer && assignedOfficerId ? assignedOfficerId : undefined,
         crops: selectedCrops.length > 0 ? selectedCrops : ['Maize'],
@@ -370,13 +375,7 @@ export const FarmerRegistrationForm: React.FC = () => {
             {canChooseOfficer && (
               <AssignOfficerField value={assignedOfficerId} onChange={setAssignedOfficerId} />
             )}
-            {managerRegion !== null && (
-              <p className="text-xs text-white/50">
-                {managerRegion
-                  ? t('farmer_register_manager_region', 'Registered in your region: {region}').replace('{region}', managerRegion)
-                  : t('farmer_register_manager_no_region', 'Your account has no region yet. Ask an administrator to set it before registering farmers.')}
-              </p>
-            )}
+            <StaffRegionNote region={staffRegion} />
           </div>
 
           {/* Card 2: Agronomic Portfolio & Land Parcel */}

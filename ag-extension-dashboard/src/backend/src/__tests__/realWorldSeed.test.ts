@@ -9,10 +9,15 @@ import {
     REAL_WORLD_EMAIL_DOMAIN,
     REAL_WORLD_PASSWORD,
     REAL_WORLD_REGIONS,
+    REAL_WORLD_TENANT_ID,
     allRealWorldAccounts,
+    realWorldPlanFor,
 } from '@/seed/realWorldSeed';
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// RFC 9562 shape (version 1-8, variant 10xx): the API validates ids with zod's
+// strict uuid(), so a fixture id like e4000000-0000-0000-0000-… was rejected by
+// every route that takes a farmer or officer id (visits, outcomes, assignment).
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 describe('real-world seed accounts can log in', () => {
     const accounts = allRealWorldAccounts();
@@ -82,5 +87,20 @@ describe('real-world seed accounts can log in', () => {
         // exact match (not its normalisation fallback) is what links the officer.
         const regions = REAL_WORLD_REGIONS.map(region => region.manager.region);
         expect(regions).toEqual(['Rift Valley', 'Northern Region (Mzuzu)']);
+    });
+});
+
+describe('real-world seed plans and ids', () => {
+    it('uses an RFC-valid tenant id', () => {
+        expect(REAL_WORLD_TENANT_ID).toMatch(UUID_PATTERN);
+    });
+
+    it('puts staff and the first three farmers of each region on Pro, the rest on Free', () => {
+        for (const region of REAL_WORLD_REGIONS) {
+            expect(realWorldPlanFor(region.manager.email)).toBe('Pro');
+            expect(realWorldPlanFor(region.officer.email)).toBe('Pro');
+            expect(region.farmers.map(f => realWorldPlanFor(f.email)))
+                .toEqual(['Pro', 'Pro', 'Pro', 'Free', 'Free', 'Free']);
+        }
     });
 });

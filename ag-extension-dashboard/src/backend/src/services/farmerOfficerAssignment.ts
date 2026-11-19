@@ -23,9 +23,9 @@ function refuse(status: number, code: string, error: string): OfficerAssignment 
     return { ok: false, status, code, error };
 }
 
-async function managerRegion(prisma: Prisma, managerId: string): Promise<string> {
-    const manager = await prisma.user.findUnique({ where: { id: managerId }, select: { region: true } });
-    return manager?.region ?? '';
+async function accountRegion(prisma: Prisma, userId: string): Promise<string> {
+    const account = await prisma.user.findUnique({ where: { id: userId }, select: { region: true } });
+    return account?.region ?? '';
 }
 
 async function findOfficer(prisma: Prisma, officerId: string): Promise<OfficerRow | null> {
@@ -35,10 +35,21 @@ async function findOfficer(prisma: Prisma, officerId: string): Promise<OfficerRo
     }) as Promise<OfficerRow | null>;
 }
 
+/** An officer's farmers are their own, in the officer's region when one is on file. */
+async function officerOwnFarmer(prisma: Prisma, officerId: string, farmerRegion: unknown): Promise<OfficerAssignment> {
+    const officerRegion = await accountRegion(prisma, officerId);
+    if (officerRegion && farmerRegion !== officerRegion) {
+        return refuse(403, 'FARMER_OUTSIDE_OFFICER_REGION',
+            'Extension officers can only register farmers in their own region');
+    }
+    return { ok: true, officerId };
+}
+
 /**
  * Decides which extension officer a newly registered farmer is assigned to.
  *
- * - An extension officer's farmers are always theirs.
+ * - An extension officer's farmers are always theirs, and registered in the
+ *   officer's own region (an officer with no region on file is not limited).
  * - An admin may name any active, real extension officer.
  * - A regional manager registers farmers in their own region only, and may
  *   name only an active, real extension officer from that region — otherwise
@@ -52,10 +63,10 @@ export async function resolveCreationOfficer(
     farmerRegion: unknown
 ): Promise<OfficerAssignment> {
     const { role, userId } = creator;
-    if (role === 'extension_officer' && userId) return { ok: true, officerId: userId };
+    if (role === 'extension_officer' && userId) return officerOwnFarmer(prisma, userId, farmerRegion);
     if (role !== 'admin' && role !== 'regional_manager') return { ok: true, officerId: null };
 
-    const region = role === 'regional_manager' && userId ? await managerRegion(prisma, userId) : null;
+    const region = role === 'regional_manager' && userId ? await accountRegion(prisma, userId) : null;
     if (region !== null && (!region || farmerRegion !== region)) {
         return refuse(403, 'FARMER_OUTSIDE_MANAGER_REGION',
             'Regional managers can only register farmers in their own region');

@@ -28,3 +28,17 @@ export function toIso(v: Date | string | null | undefined): string | undefined {
   if (v instanceof Date) return v.toISOString();
   return v;
 }
+
+/**
+ * A pg DATE column as YYYY-MM-DD. node-postgres turns a DATE into a Date at
+ * local midnight, so toIso() shifted it a day back on any server east of UTC
+ * (a follow-up due 4 December read as 3 December at 23:00Z).
+ */
+export function toIsoDate(v: Date | string | null | undefined): string | undefined {
+  if (v == null) return undefined;
+  if (v instanceof Date) {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${v.getFullYear()}-${pad(v.getMonth() + 1)}-${pad(v.getDate())}`;
+  }
+  return v.slice(0, 10);
+}

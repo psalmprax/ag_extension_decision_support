@@ -22,6 +22,10 @@ export interface Visit {
   completedAt?: string;
   duration_minutes?: number;
   durationMinutes?: number;
+  /** Visit report fields, sent when completing a visit. */
+  followUpRequired?: boolean;
+  followUpDate?: string | null;
+  attachmentIds?: string[];
 }
 
 export interface VisitsResponse {

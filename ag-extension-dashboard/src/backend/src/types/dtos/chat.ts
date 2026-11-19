@@ -1,3 +1,4 @@
+import type { AttachmentDto } from '@/services/uploadAttachments';
 import type {
   ConversationStatsRow,
   ChatMessageRow,
@@ -35,6 +36,8 @@ export interface ChatMessageDTO {
   /** null = the app; sms / whatsapp / telegram. */
   channel: string | null;
   createdAt: string | null;
+  /** Photos attached in the app; present only when there are any. */
+  attachments?: AttachmentDto[];
 }
 export function mapChatMessageRow(row: ChatMessageRow): ChatMessageDTO {
   return {

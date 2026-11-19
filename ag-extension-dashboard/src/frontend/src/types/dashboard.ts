@@ -34,6 +34,16 @@ export interface ChatMessage {
   // `timestamp`. Either may be absent — renderers must tolerate both.
   timestamp?: string;
   createdAt?: string | null;
+  /** Photos sent with the message in the app. */
+  attachments?: ChatAttachment[];
+}
+
+/** A photo on a chat message, visit report or progress entry; `url` needs the signed-in session. */
+export interface ChatAttachment {
+  id: string;
+  url: string;
+  name: string;
+  mimeType: string;
 }
 
 export interface Farmer {
@@ -76,6 +86,12 @@ export interface Visit {
   startedAt?: string;
   completed_at?: string;
   completedAt?: string;
+  /** Visit report: whether the farmer needs a follow-up, and by when (YYYY-MM-DD). */
+  followUpRequired?: boolean | null;
+  follow_up_required?: boolean | null;
+  followUpDate?: string | null;
+  follow_up_date?: string | null;
+  durationMinutes?: number | null;
 }
 
 export interface DashboardData {

@@ -190,7 +190,7 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'http://backend:3001',
+        target: process.env.VITE_API_PROXY_TARGET ?? 'http://backend:3001',
         ws: true,
         changeOrigin: true,
       },

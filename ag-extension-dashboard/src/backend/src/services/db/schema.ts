@@ -106,6 +106,8 @@ export async function createTables(pool: Pool): Promise<void> {
       ALTER TABLE chat_conversations ADD COLUMN IF NOT EXISTS tenant_id UUID;
       ALTER TABLE chat_conversations ADD COLUMN IF NOT EXISTS kind VARCHAR(20) NOT NULL DEFAULT 'farmer_thread';
       ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS channel VARCHAR(20);
+      -- Written by message edit/withdraw (migration 20261120090000).
+      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS metadata JSONB;
       ALTER TABLE alerts ADD COLUMN IF NOT EXISTS tenant_id UUID;
       ALTER TABLE notifications ADD COLUMN IF NOT EXISTS tenant_id UUID;
       ALTER TABLE reports ADD COLUMN IF NOT EXISTS tenant_id UUID;

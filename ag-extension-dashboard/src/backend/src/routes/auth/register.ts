@@ -1,5 +1,4 @@
 import { Router, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { config } from '@/config';
 import { query } from '@/services/databaseService';
@@ -16,6 +15,7 @@ import { resolveLocationFromHeaders } from '@/services/loginHistoryService';
 import { setAuthCookie } from '@/middleware/authCookie';
 import { buildUserProfileColumns } from '@/services/userQueryBuilder';
 import { resolveRegionalManager } from '@/services/regionalManagerResolver';
+import { signSessionToken } from '@/utils/sessionToken';
 
 const router = Router();
 
@@ -147,11 +147,7 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
         );
 
         // Generate JWT token
-        const token = jwt.sign(
-            { userId: newUser.id, email: newUser.email, role: newUser.role },
-            config.jwt.secret as jwt.Secret,
-            { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
-        );
+        const token = signSessionToken({ userId: newUser.id, email: newUser.email, role: newUser.role });
 
         // Record initial user session for active session visibility and revocation support
         const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.ip || null;
@@ -245,11 +241,7 @@ router.post('/demo', async (req: Request, res: Response) => {
 
         
 
-        const token = jwt.sign(
-            { userId: user.id, email: user.email, role: user.role },
-            config.jwt.secret as jwt.Secret,
-            { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
-        );
+        const token = signSessionToken({ userId: user.id, email: user.email, role: user.role });
 
         createSession({
             userId: user.id,

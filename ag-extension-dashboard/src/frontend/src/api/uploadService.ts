@@ -26,7 +26,6 @@ export const fetchStorageInfo = async (): Promise<StorageInfo> => {
   return data.data;
 };
 
-// fallow-ignore-next-line unused-export
 export const uploadFile = async (file: File, farmerId?: string): Promise<UploadedFile> => {
   const formData = new FormData();
   formData.append('file', file);

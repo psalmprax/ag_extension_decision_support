@@ -29,18 +29,16 @@ test.describe('farmer record creation', () => {
     expect(body.error).toContain('cannot create farmer records');
   });
 
-  test('an extension officer may still enroll a farmer', async ({ request }) => {
+  test('an extension officer may still enroll a farmer in their own region', async ({ request }) => {
     const token = await apiToken(request, 'officer.nakuru@real.agriext.test');
 
-    // Enrolled in Coast, which no seeded manager covers: the manager-scoping
-    // spec asserts an exact Rift Valley set, and this row must not join it.
     const res = await request.post('/api/v1/farmers', {
       headers: { Authorization: `Bearer ${token}` },
       data: {
         firstName: 'E2E',
-        lastName: 'Enrolled',
-        region: 'Coast',
-        village: 'Malindi',
+        lastName: `Enrolled${Date.now()}`,
+        region: 'Rift Valley',
+        village: 'Bahati',
         farmSize: 1.5,
         crops: ['maize'],
       },
@@ -49,9 +47,29 @@ test.describe('farmer record creation', () => {
     expect(res.status()).toBe(201);
     const body = (await res.json()) as {
       success: boolean;
-      data: { assignedOfficerId?: string | null };
+      data: { assignedOfficerId?: string | null; region?: string };
     };
     expect(body.success).toBe(true);
     expect(body.data.assignedOfficerId).toBeTruthy();
+    expect(body.data.region).toBe('Rift Valley');
+  });
+
+  test('an extension officer cannot enroll a farmer outside their region', async ({ request }) => {
+    const token = await apiToken(request, 'officer.nakuru@real.agriext.test');
+
+    // Coast is not the officer's region (Rift Valley), so the record is refused.
+    const res = await request.post('/api/v1/farmers', {
+      headers: { Authorization: `Bearer ${token}` },
+      data: {
+        firstName: 'E2E',
+        lastName: 'Elsewhere',
+        region: 'Coast',
+        village: 'Malindi',
+        farmSize: 1.5,
+        crops: ['maize'],
+      },
+    });
+
+    expect(res.status()).toBe(403);
   });
 });

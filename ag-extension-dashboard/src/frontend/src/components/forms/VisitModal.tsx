@@ -164,7 +164,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
             </label>
             <div className="relative">
               <input
-                type="text"
+                type="text" aria-label="Search farmer"
                 value={formData.farmerSearch || ''}
                 onChange={e => setFormData({ ...formData, farmerSearch: e.target.value })}
                 placeholder={
@@ -246,8 +246,8 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
               {[
                 { value: 'routine', label: t('visit_type_routine') || 'Routine' },
                 { value: 'follow_up', label: t('visit_type_followup') || 'Follow-up' },
-                { value: 'new_registration', label: t('visit_type_new') || 'New Farmer' },
-                { value: 'query', label: t('visit_type_query') || 'Query' },
+                { value: 'assessment', label: t('visit_type_assessment', 'Farm assessment') },
+                { value: 'training', label: t('visit_type_training', 'Training') },
                 { value: 'emergency', label: t('visit_type_emergency') || 'Emergency' },
               ].map(type => (
                 <button
@@ -273,7 +273,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
               {t('visit_date_time') || 'Date & Time'} *
             </label>
             <Input
-              type="datetime-local"
+              type="datetime-local" aria-label="Visit date and time"
               value={formData.scheduledAt}
               onChange={e => setFormData({ ...formData, scheduledAt: e.target.value })}
               required
@@ -287,7 +287,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
               <FileText className="w-4 h-4 inline mr-1" />
               {t('visit_notes') || 'Notes'} ({t('common_optional') || 'Optional'})
             </label>
-            <textarea
+            <textarea aria-label="Visit notes"
               value={formData.notes}
               onChange={e => setFormData({ ...formData, notes: e.target.value })}
               rows={3}

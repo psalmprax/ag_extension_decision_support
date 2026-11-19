@@ -17,6 +17,8 @@ export const SEEDED = {
   },
   officerNakuru: 'officer.nakuru@real.agriext.test',
   officerMzuzu: 'officer.mzuzu@real.agriext.test',
+  officerNakuruName: 'Daniel Kiptoo',
+  officerMzuzuName: 'Chisomo Banda',
   nakuruFarmers: [
     'Mary Njeri',
     'Samuel Kipchumba',
@@ -34,7 +36,7 @@ export const SEEDED = {
     'Blessings Chavula',
   ],
   /** Loveness Phiri — used to prove cross-region reads are refused. */
-  mzuzuFarmerId: 'e4000000-0000-0000-0000-000000000011',
+  mzuzuFarmerId: 'e4000000-0000-4000-8000-000000000011',
 } as const;
 
 /** A fresh address per run: `@real.agriext.test` is the reserved seed domain. */

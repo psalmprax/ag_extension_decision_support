@@ -84,6 +84,7 @@ model User {
   tenantId       String?            @map("tenant_id") @db.Uuid
   tenant         Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   tenantMemberships TenantMembership[]
+  progressEntries   FarmerProgressEntry[] @relation("OfficerProgressEntries")
 
   @@index([tenantId])
   @@map("users")
@@ -250,6 +251,7 @@ model Farmer {
    smsHistory               SmsHistory[] @relation("SmsFarmer")
    exportRequests           DataExportRequest[]
    uploads                  UploadRecord[]
+   progressEntries          FarmerProgressEntry[]
    whatsappMessages         WhatsappMessage[]
    smsFeedbacks             SmsFeedback[]
 
@@ -287,6 +289,7 @@ model Visit {
   farmer               Farmer?   @relation(fields: [farmerId], references: [id])
   attachments          VisitAttachment[]
   recommendationOutcomes RecommendationOutcome[]
+  progressEntries      FarmerProgressEntry[]
 
   @@index([farmerId])
   @@index([officerId])
@@ -357,11 +360,27 @@ model ChatMessage {
   audioUrl          String?          @map("audio_url")
   /// null = the app; sms / whatsapp / telegram = received or delivered on that channel
   channel           String?          @db.VarChar(20)
+  /// editedAt / deletedAt / deletedBy for edited and withdrawn messages
+  metadata          Json?
   createdAt         DateTime?        @default(now()) @map("created_at") @db.Timestamp(6)
   conversation      ChatConversation? @relation(fields: [conversationId], references: [id])
+  attachments       ChatMessageAttachment[]
 
   @@index([conversationId])
   @@map("chat_messages")
+}
+
+/// Photos attached to a farmer–officer chat message (uploads tagged with the thread's farmer).
+model ChatMessageAttachment {
+  messageId String       @map("message_id") @db.Uuid
+  uploadId  String       @map("upload_id") @db.Uuid
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  message   ChatMessage  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  upload    UploadRecord @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, uploadId])
+  @@index([uploadId])
+  @@map("chat_message_attachments")
 }
 
 model Report {
@@ -1004,6 +1023,8 @@ model UploadRecord {
   @@index([ownerUserId])
   @@index([farmerId])
   visitAttachments VisitAttachment[]
+  chatMessageAttachments ChatMessageAttachment[]
+  progressAttachments    FarmerProgressAttachment[]
 
   @@index([tenantId])
   @@map("upload_records")
@@ -1341,4 +1362,41 @@ model AdvisoryWorkflow {
   @@map("advisory_workflows")
 }
 
+/// An extension officer's record of a farmer's progress: a success or failure,
+/// a field event (planting, spraying, harvest…), an action the officer took, or
+/// an observation, with optional photos and the visit it came from.
+model FarmerProgressEntry {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmerId    String    @map("farmer_id") @db.Uuid
+  officerId   String?   @map("officer_id") @db.Uuid
+  visitId     String?   @map("visit_id") @db.Uuid
+  tenantId    String?   @map("tenant_id") @db.Uuid
+  /// success | failure | field_event | action | observation
+  kind        String    @db.VarChar(20)
+  title       String    @db.VarChar(200)
+  details     String?
+  crop        String?   @db.VarChar(100)
+  occurredOn  DateTime  @map("occurred_on") @db.Date
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  farmer      Farmer    @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  officer     User?     @relation("OfficerProgressEntries", fields: [officerId], references: [id], onDelete: SetNull)
+  visit       Visit?    @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  attachments FarmerProgressAttachment[]
 
+  @@index([farmerId, occurredOn])
+  @@index([officerId])
+  @@index([visitId])
+  @@map("farmer_progress_entries")
+}
+
+model FarmerProgressAttachment {
+  entryId   String              @map("entry_id") @db.Uuid
+  uploadId  String              @map("upload_id") @db.Uuid
+  createdAt DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  entry     FarmerProgressEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  upload    UploadRecord        @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  @@id([entryId, uploadId])
+  @@index([uploadId])
+  @@map("farmer_progress_attachments")
+}

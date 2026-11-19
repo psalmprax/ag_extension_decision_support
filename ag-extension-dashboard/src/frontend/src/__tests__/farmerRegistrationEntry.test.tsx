@@ -105,7 +105,8 @@ describe('FarmerRegistrationForm officer assignment', () => {
     expect(screen.queryByLabelText('Assigned extension officer')).not.toBeInTheDocument();
     expect(apiClient.get).not.toHaveBeenCalled();
     expect(createFarmer).toHaveBeenCalledWith(expect.objectContaining({
-      region: 'Rongai', assignedOfficerId: undefined, locationLat: undefined, locationLng: undefined,
+      // An officer registers farmers in their own region; the typed location is the village.
+      region: 'Rift Valley', village: 'Rongai', assignedOfficerId: undefined, locationLat: undefined, locationLng: undefined,
     }));
   });
 });

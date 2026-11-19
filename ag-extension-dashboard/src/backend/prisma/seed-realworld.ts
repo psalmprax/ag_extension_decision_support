@@ -8,7 +8,10 @@ import {
     REAL_WORLD_TENANT_ID,
     REAL_WORLD_TENANT_NAME,
     allRealWorldAccounts,
+    realWorldPlanFor,
+    type RealWorldPlan,
 } from '../src/seed/realWorldSeed';
+import { hasLegacyFixtureIds, resetRealWorldFixtures } from '../src/seed/realWorldReset';
 
 dotenv.config();
 
@@ -23,7 +26,11 @@ dotenv.config();
  *
  * Usage:
  *   npm run seed:realworld            # upsert the fixtures
- *   npm run seed:realworld -- --reset # delete these fixtures first
+ *   npm run seed:realworld -- --reset # delete these fixtures (and everything
+ *                                     # recorded against them) first
+ *
+ * Managers, officers and the first three farmers per region are put on Pro,
+ * the other farmers on Free (see realWorldPlanFor).
  *
  * Only rows on the reserved `@real.agriext.test` domain are ever touched;
  * demo seeds are left alone.
@@ -48,14 +55,12 @@ async function main(): Promise<void> {
             [REAL_WORLD_TENANT_ID, REAL_WORLD_TENANT_NAME]
         );
 
-        if (reset) {
-            const domainPattern = `%${REAL_WORLD_EMAIL_DOMAIN}`;
-            await client.query(
-                `DELETE FROM farmers WHERE user_id IN (SELECT id FROM users WHERE email LIKE $1)`,
-                [domainPattern]
-            );
-            await client.query(`DELETE FROM users WHERE email LIKE $1`, [domainPattern]);
-            console.log('Removed the existing real-world fixtures.');
+        const legacy = !reset && await hasLegacyFixtureIds(client);
+        if (reset || legacy) {
+            await resetRealWorldFixtures(client);
+            console.log(legacy
+                ? 'Replaced fixtures created with non-RFC ids (the API rejected them), and everything recorded against them.'
+                : 'Removed the existing real-world fixtures and everything recorded against them.');
         }
 
         const passwordHash = await bcrypt.hash(REAL_WORLD_PASSWORD, 10);
@@ -99,31 +104,39 @@ async function main(): Promise<void> {
             return id;
         };
 
-        const ensureFreePlan = async (userId: string): Promise<void> => {
+        const ensurePlan = async (userId: string, email: string): Promise<void> => {
             // The login handler reads the plan from `subscriptions`; a missing row
-            // is not fatal, so an absent Free plan is reported rather than invented.
+            // is not fatal, so an absent plan is reported rather than invented.
+            const planName: RealWorldPlan = realWorldPlanFor(email);
             const plan = await client.query<{ id: string }>(
-                `SELECT id FROM subscription_plans WHERE LOWER(name) = 'free' ORDER BY price ASC LIMIT 1`
+                `SELECT id FROM subscription_plans WHERE LOWER(name) = LOWER($1) ORDER BY price ASC LIMIT 1`,
+                [planName]
             );
             const planId = plan.rows[0]?.id;
             if (!planId) {
-                console.warn(`  no Free plan found; ${userId} will log in without a plan row`);
+                console.warn(`  no ${planName} plan found; ${email} will log in without a plan row`);
                 return;
             }
+            // Fixtures are reset to their plan on every run, so a test that
+            // changed a plan cannot leak into the next run.
             await client.query(
                 `INSERT INTO subscriptions (user_id, plan_id, status, current_period_start, current_period_end, created_at, updated_at)
                  VALUES ($1, $2, 'active', NOW(), NOW() + INTERVAL '30 days', NOW(), NOW())
-                 ON CONFLICT (user_id) DO NOTHING`,
+                 ON CONFLICT (user_id) DO UPDATE SET
+                    plan_id = EXCLUDED.plan_id,
+                    status = 'active',
+                    current_period_end = GREATEST(subscriptions.current_period_end, EXCLUDED.current_period_end),
+                    updated_at = NOW()`,
                 [userId, planId]
             );
         };
 
         for (const region of REAL_WORLD_REGIONS) {
             const managerId = await upsertUser(region.manager, 'regional_manager', null);
-            await ensureFreePlan(managerId);
+            await ensurePlan(managerId, region.manager.email);
 
             const officerId = await upsertUser(region.officer, 'extension_officer', managerId);
-            await ensureFreePlan(officerId);
+            await ensurePlan(officerId, region.officer.email);
 
             for (const seed of region.farmers) {
                 const farmerUserId = await upsertUser(
@@ -139,7 +152,7 @@ async function main(): Promise<void> {
                     'farmer',
                     managerId
                 );
-                await ensureFreePlan(farmerUserId);
+                await ensurePlan(farmerUserId, seed.email);
 
                 await client.query(
                     `INSERT INTO farmers (
@@ -209,7 +222,7 @@ async function main(): Promise<void> {
         console.log('\nReal-world seed complete. Log in with these credentials:\n');
         console.log('  password for every account: ' + REAL_WORLD_PASSWORD + '\n');
         for (const account of accounts) {
-            console.log(`  ${account.role.padEnd(17)} ${account.email.padEnd(46)} ${account.firstName} ${account.lastName}`);
+            console.log(`  ${account.role.padEnd(17)} ${account.email.padEnd(46)} ${realWorldPlanFor(account.email).padEnd(5)} ${account.firstName} ${account.lastName}`);
         }
         console.log(`\n  ${accounts.length} accounts, ${verification.rows.length} rows verify as active and email-verified.`);
     } finally {

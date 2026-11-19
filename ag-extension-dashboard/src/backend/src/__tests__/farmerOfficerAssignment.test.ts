@@ -16,8 +16,20 @@ const officer = (over: Partial<Row> = {}): Row => ({
 });
 
 describe('resolveCreationOfficer', () => {
+    const fieldOfficer: Row = { id: 'off-1', role: 'extension_officer', region: 'Rift Valley', isActive: true, isDemo: false };
+
     it('assigns an extension officer\'s farmer to that officer, ignoring any requested officer', async () => {
-        const result = await resolveCreationOfficer(prismaWith([]), { userId: 'off-1', role: 'extension_officer' }, OFFICER_ID, 'Central');
+        const result = await resolveCreationOfficer(prismaWith([fieldOfficer]), { userId: 'off-1', role: 'extension_officer' }, OFFICER_ID, 'Rift Valley');
+        expect(result).toEqual({ ok: true, officerId: 'off-1' });
+    });
+
+    it('refuses an extension officer registering a farmer outside their region', async () => {
+        const result = await resolveCreationOfficer(prismaWith([fieldOfficer]), { userId: 'off-1', role: 'extension_officer' }, undefined, 'Coast');
+        expect(result).toMatchObject({ ok: false, status: 403, code: 'FARMER_OUTSIDE_OFFICER_REGION' });
+    });
+
+    it('does not limit an officer who has no region on file', async () => {
+        const result = await resolveCreationOfficer(prismaWith([{ ...fieldOfficer, region: null }]), { userId: 'off-1', role: 'extension_officer' }, undefined, 'Coast');
         expect(result).toEqual({ ok: true, officerId: 'off-1' });
     });
 

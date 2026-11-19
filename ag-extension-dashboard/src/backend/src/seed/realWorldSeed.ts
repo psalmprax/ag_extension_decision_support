@@ -20,7 +20,7 @@ export const REAL_WORLD_EMAIL_DOMAIN = '@real.agriext.test';
  * Tenant every real-world fixture belongs to. The scoping routes resolve a
  * principal tenant before filtering, so an account without one is refused.
  */
-export const REAL_WORLD_TENANT_ID = 'e0000000-0000-0000-0000-000000000001';
+export const REAL_WORLD_TENANT_ID = 'e0000000-0000-4000-8000-000000000001';
 export const REAL_WORLD_TENANT_NAME = 'Real-world extension fixtures';
 
 /** Shared password for every seeded account. Satisfies the live password policy. */
@@ -96,8 +96,8 @@ function farmer(
     emailSlug: string
 ): RealWorldFarmerSeed {
     return {
-        id: `e4000000-0000-0000-0000-${idSuffix}`,
-        userId: `e3000000-0000-0000-0000-${idSuffix}`,
+        id: `e4000000-0000-4000-8000-${idSuffix}`,
+        userId: `e3000000-0000-4000-8000-${idSuffix}`,
         email: `farmer.${emailSlug}${REAL_WORLD_EMAIL_DOMAIN}`,
         phone,
         ...detail,
@@ -111,7 +111,7 @@ const MALAWI_REGION = 'Northern Region (Mzuzu)';
 export const REAL_WORLD_REGIONS: RealWorldRegionSeed[] = [
     {
         manager: {
-            id: 'e1000000-0000-0000-0000-000000000001',
+            id: 'e1000000-0000-4000-8000-000000000001',
             email: `rm.nakuru${REAL_WORLD_EMAIL_DOMAIN}`,
             firstName: 'Wanjiru',
             lastName: 'Kamau',
@@ -120,7 +120,7 @@ export const REAL_WORLD_REGIONS: RealWorldRegionSeed[] = [
             country: 'Kenya',
         },
         officer: {
-            id: 'e2000000-0000-0000-0000-000000000001',
+            id: 'e2000000-0000-4000-8000-000000000001',
             email: `officer.nakuru${REAL_WORLD_EMAIL_DOMAIN}`,
             firstName: 'Daniel',
             lastName: 'Kiptoo',
@@ -169,7 +169,7 @@ export const REAL_WORLD_REGIONS: RealWorldRegionSeed[] = [
     },
     {
         manager: {
-            id: 'e1000000-0000-0000-0000-000000000002',
+            id: 'e1000000-0000-4000-8000-000000000002',
             email: `rm.mzuzu${REAL_WORLD_EMAIL_DOMAIN}`,
             firstName: 'Thokozani',
             lastName: 'Mvula',
@@ -178,7 +178,7 @@ export const REAL_WORLD_REGIONS: RealWorldRegionSeed[] = [
             country: 'Malawi',
         },
         officer: {
-            id: 'e2000000-0000-0000-0000-000000000002',
+            id: 'e2000000-0000-4000-8000-000000000002',
             email: `officer.mzuzu${REAL_WORLD_EMAIL_DOMAIN}`,
             firstName: 'Chisomo',
             lastName: 'Banda',
@@ -226,6 +226,28 @@ export const REAL_WORLD_REGIONS: RealWorldRegionSeed[] = [
         ],
     },
 ];
+
+/** Subscription plans the fixtures are put on. */
+export type RealWorldPlan = 'Free' | 'Pro';
+
+/**
+ * How many farmers per region are on Pro. Farmer chat, "My officer" and field
+ * visits are paid features, so managers, officers and the first farmers of
+ * each region get Pro (the end-to-end journeys run on them) and the rest stay
+ * on Free (the journeys also check that a free farmer is shown the upgrade
+ * prompt instead of the officer chat).
+ */
+export const REAL_WORLD_PRO_FARMERS_PER_REGION = 3;
+
+/** The plan a fixture account is seeded with. */
+export function realWorldPlanFor(email: string): RealWorldPlan {
+    for (const region of REAL_WORLD_REGIONS) {
+        if (email === region.manager.email || email === region.officer.email) return 'Pro';
+        const index = region.farmers.findIndex(f => f.email === email);
+        if (index >= 0) return index < REAL_WORLD_PRO_FARMERS_PER_REGION ? 'Pro' : 'Free';
+    }
+    return 'Free';
+}
 
 /** Every seeded account, for credential printing and login verification. */
 export function allRealWorldAccounts(): Array<RealWorldAccountSeed & { role: 'regional_manager' | 'extension_officer' | 'farmer' }> {

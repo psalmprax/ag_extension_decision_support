@@ -48,8 +48,18 @@ export const deleteConversation = async (id: string) => {
 };
 
 /** A plain message from the signed-in user into a thread. No AI reply is triggered. */
-export const sendThreadMessage = async (conversationId: string, content: string, language?: string) => {
-  const { data } = await apiClient.post('/chatbot/messages', { conversationId, content, language });
+export const sendThreadMessage = async (
+  conversationId: string,
+  content: string,
+  language?: string,
+  attachmentIds?: string[]
+) => {
+  const { data } = await apiClient.post('/chatbot/messages', {
+    conversationId,
+    content,
+    language,
+    ...(attachmentIds?.length ? { attachmentIds } : {}),
+  });
   return data;
 };
 

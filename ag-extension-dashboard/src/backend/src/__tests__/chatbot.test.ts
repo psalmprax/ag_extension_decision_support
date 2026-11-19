@@ -155,7 +155,9 @@ describe('Chatbot Route — Mapper-before-response: mapChatMessageRow + mapChatC
         };
         mockQuery
             .mockResolvedValueOnce({ rows: [{ farmer_id: 'farm-uuid-1', officer_id: 'off-1', region: 'North' }], rowCount: 1 })
-            .mockResolvedValueOnce({ rows: [msgRow], rowCount: 1 });
+            .mockResolvedValueOnce({ rows: [msgRow], rowCount: 1 })
+            // No photos attached to these messages.
+            .mockResolvedValueOnce({ rows: [], rowCount: 0 });
 
         const response = await request(app)
             .get('/api/v1/chatbot/conversations/conv-1/messages')

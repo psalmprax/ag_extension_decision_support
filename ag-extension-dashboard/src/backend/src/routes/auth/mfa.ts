@@ -13,6 +13,7 @@ import { verifyPassword } from '@/utils/password';
 import { safeError } from '@/utils/safeResponse';
 import { credentialVersion } from '@/utils/credentialVersion';
 import { resolveUserPlan } from '@/services/subscriptionUtils';
+import { signSessionToken } from '@/utils/sessionToken';
 
 const router = Router();
 
@@ -83,11 +84,7 @@ async function completeMfaLogin(
     clientIp: string | null,
     expectedCredentialVersion?: string
 ): Promise<void> {
-    const token = jwt.sign(
-        { userId: user.id, email: user.email, role: user.role },
-        config.jwt.secret as jwt.Secret,
-        { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
-    );
+    const token = signSessionToken({ userId: user.id, email: user.email, role: user.role });
 
     const sessionCreated = await withUserSessionLock(user.id, async client => {
         const current = await client.query<{ password_hash: string | null }>(

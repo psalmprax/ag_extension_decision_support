@@ -272,6 +272,10 @@ export const updateVisitSchema = z.object({
     completedAt: z.string().datetime().optional(),
     duration: z.number().positive().optional(),
     durationMinutes: z.number().positive().optional(),
+    // Visit report: whether the farmer needs a follow-up, by when, and photos taken on the farm.
+    followUpRequired: z.boolean().optional(),
+    followUpDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'followUpDate must be YYYY-MM-DD').nullable().optional(),
+    attachmentIds: z.array(z.string().uuid()).max(4).optional(),
   }).strict(),
 });
 

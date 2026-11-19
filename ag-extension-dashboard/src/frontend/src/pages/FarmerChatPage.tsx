@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Users,
   Plus,
-  Send,
   Lock,
   MessageSquare,
   Radio,
@@ -18,6 +17,7 @@ import { VirtualizedList } from '@/components/common/VirtualizedList';
 import { useDemoMode } from '@/demo';
 import { FarmerChatMessage } from '@/components/chat/FarmerChatMessage';
 import { OfficerCopilot } from '@/components/chat/OfficerCopilot';
+import { OfficerChatComposer } from '@/components/chat/OfficerChatComposer';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationRealtime } from '@/hooks/useConversationRealtime';
 import { PlotTelemetryDrawer, type DetectedHazard, type HazardEvaluation } from '@/components/chat/PlotTelemetryDrawer';
@@ -57,7 +57,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 }) => {
   const { t, language } = useLanguage();
   const isFarmerUser = useAppStore(state => state.user?.role) === 'farmer';
-  const { headingClass, btnClass } = useThemeClasses();
+  const { headingClass } = useThemeClasses();
   const { isLowEndDevice } = useDeviceThermalMemoryBudget();
   const { isDemo } = useDemoMode();
   const [selectedChannel, setSelectedChannel] = useState<'all' | 'sms' | 'whatsapp' | 'telegram'>('all');
@@ -426,42 +426,16 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 </div>
               )}
 
-              {/* Chat Input Form */}
-              <form
+              <OfficerChatComposer
+                value={farmerChatInput}
+                onType={handleTyping}
+                clear={() => setFarmerChatInput('')}
                 onSubmit={handleFarmerChatSend}
-                className="p-4 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-200/80 dark:border-white/[0.08]"
-              >
-                <div className="relative flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowVoiceComposer(prev => !prev)}
-                    className={`p-3 rounded-xl border transition-all ${
-                      showVoiceComposer
-                        ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-500/40'
-                        : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white border-slate-200 dark:border-white/[0.1] hover:border-slate-300 dark:hover:border-white/20'
-                    }`}
-                    title="Dictate voice note (multilingual STT)"
-                    aria-label="Dictate voice note"
-                  >
-                    <Mic className="w-4 h-4" />
-                  </button>
-                  <input
-                    type="text"
-                    value={farmerChatInput}
-                    onChange={e => handleTyping(e.target.value)}
-                    placeholder={t('farmer_chat_placeholder') || 'Type agronomic guidance or broadcast prompt...'}
-                    className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.1] rounded-xl px-4 py-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:ring-2 focus:ring-emerald-500/40 focus:outline-none transition-all"
-                  />
-                  <button
-                    type="submit"
-                    aria-label="Send message"
-                    disabled={!farmerChatInput.trim()}
-                    className={`p-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors disabled:opacity-40 ${btnClass}`}
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                </div>
-              </form>
+                voiceOpen={showVoiceComposer}
+                toggleVoice={() => setShowVoiceComposer(prev => !prev)}
+                photoTarget={activeConv?.farmerId ? { conversationId: activeConv.id, farmerId: activeConv.farmerId } : null}
+                onPhotoSent={id => loadFarmerMessages(id)}
+              />
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-3">
