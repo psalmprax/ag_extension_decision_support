@@ -2,18 +2,18 @@
 """Automated verification tests for the Investor Monthly Operating Cost Model."""
 
 import sys
+import tempfile
 import unittest
 from decimal import Decimal
 from pathlib import Path
 
 import numpy as np
+from pptx import Presentation
 from pypdf import PdfReader
 
-_TMP_DEPS = Path("/tmp/pptx_deps")
-if _TMP_DEPS.is_dir() and str(_TMP_DEPS) not in sys.path:
-    sys.path.insert(0, str(_TMP_DEPS))
-
-from pptx import Presentation
+# Dependencies come from the controlled environment only (pip install -r
+# scripts/requirements-deck.txt in a virtualenv). Never prepend a shared temp
+# directory to sys.path: anyone who can write there could replace an import.
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
@@ -122,14 +122,41 @@ class TestCostModelInvariants(unittest.TestCase):
         self.assertEqual(specs["ramp_stage_colors"]["Scale"], "#14532D")
 
 
+def slide_texts(pptx_path: Path) -> list:
+    """Every text frame and table cell, slide by slide: the deck's content."""
+    texts = []
+    for slide in Presentation(str(pptx_path)).slides:
+        parts = []
+        for shp in slide.shapes:
+            if shp.has_text_frame:
+                parts.append(shp.text_frame.text)
+            if getattr(shp, "has_table", False) and shp.has_table:
+                parts.extend(cell.text for row in shp.table.rows for cell in row.cells)
+        texts.append(parts)
+    return texts
+
+
 class TestGeneratedArtifacts(unittest.TestCase):
+    """Builds the deck from the current generator into a private temporary directory
+    (the enforced prerequisite), checks that output, then checks the committed deck
+    in docs/ still matches it. File timestamps are not used: git does not keep them."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory(prefix="ag_cost_deck_test_")
+        cls.pptx, cls.pdf = deck.generate_deck(Path(cls._tmp.name))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
+
     def test_pptx_exists_and_has_12_slides(self):
-        self.assertTrue(deck.OUT_PPTX.is_file(), f"Missing {deck.OUT_PPTX}")
-        prs = Presentation(str(deck.OUT_PPTX))
+        self.assertTrue(self.pptx.is_file(), f"Missing {self.pptx}")
+        prs = Presentation(str(self.pptx))
         self.assertEqual(len(prs.slides), 12)
 
     def test_pptx_shapes_have_no_drop_shadows(self):
-        prs = Presentation(str(deck.OUT_PPTX))
+        prs = Presentation(str(self.pptx))
         for s_idx, slide in enumerate(prs.slides, start=1):
             for shp in slide.shapes:
                 sp_pr = getattr(shp._element, "spPr", None)
@@ -155,10 +182,23 @@ class TestGeneratedArtifacts(unittest.TestCase):
                                     f"Slide {s_idx} shape '{shp.name}' has non-zero effectRef idx",
                                 )
 
-    def test_artifacts_fresher_than_generator(self):
-        gen_mtime = Path(deck.__file__).stat().st_mtime
-        self.assertGreaterEqual(deck.OUT_PPTX.stat().st_mtime, gen_mtime)
-        self.assertGreaterEqual(deck.OUT_PDF.stat().st_mtime, gen_mtime)
+    def test_committed_deck_matches_generator(self):
+        for committed in (deck.OUT_PPTX, deck.OUT_PDF):
+            self.assertTrue(committed.is_file(), f"Missing {committed}; run scripts/generate_cost_deck.py")
+        self.assertEqual(
+            slide_texts(deck.OUT_PPTX),
+            slide_texts(self.pptx),
+            "docs/ deck is stale: run scripts/generate_cost_deck.py and commit the result",
+        )
+        committed_pages = len(PdfReader(str(deck.OUT_PDF)).pages)
+        self.assertEqual(committed_pages, len(PdfReader(str(self.pdf)).pages))
+
+    def test_hr_slide_figures_come_from_the_ledger(self):
+        hr_text = " ".join(slide_texts(self.pptx)[3])
+        self.assertIn("$2.5k–$2.8k per FTE blended across the team", hr_text)
+        self.assertIn("platform and AI/ML engineers $3.8k–$4.8k", hr_text)
+        self.assertIn("does not cover the $7,400/mo HR cost", hr_text)
+        self.assertNotIn("without outgrowing pilot revenue", hr_text)
 
     def test_source_chart_formatting_uses_commas(self):
         src = Path(deck.__file__).read_text(encoding="utf-8")
@@ -166,8 +206,8 @@ class TestGeneratedArtifacts(unittest.TestCase):
         self.assertIn('f"${int(labeling[i]):,}"', src)
 
     def test_pdf_exists_and_contains_key_figures(self):
-        self.assertTrue(deck.OUT_PDF.is_file(), f"Missing {deck.OUT_PDF}")
-        reader = PdfReader(str(deck.OUT_PDF))
+        self.assertTrue(self.pdf.is_file(), f"Missing {self.pdf}")
+        reader = PdfReader(str(self.pdf))
         self.assertEqual(len(reader.pages), 12)
         full_text = "\n".join(page.extract_text() or "" for page in reader.pages)
         for expected in [

@@ -15,18 +15,16 @@ Usage:
 
 from __future__ import annotations
 
-import shutil
 import subprocess
-import sys
+import tempfile
 from dataclasses import dataclass
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-# Allow running cleanly whether python-pptx is in site-packages or /tmp/pptx_deps
-_TMP_DEPS = Path("/tmp/pptx_deps")
-if _TMP_DEPS.is_dir() and str(_TMP_DEPS) not in sys.path:
-    sys.path.insert(0, str(_TMP_DEPS))
+# Dependencies come from the controlled environment only (pip install -r
+# scripts/requirements-deck.txt in a virtualenv). Never prepend a shared temp
+# directory to sys.path: anyone who can write there could replace an import.
 
 import matplotlib
 matplotlib.use("Agg")
@@ -47,7 +45,8 @@ from pptx.util import Inches, Pt
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DOCS_DIR = REPO_ROOT / "docs"
 LOGO_PATH = REPO_ROOT / "ag-extension-dashboard" / "src" / "frontend" / "public" / "logo.png"
-CHART_DIR = Path("/tmp/ag_cost_deck_charts")
+# Roles the "specialist" per-FTE rate on the HR slide refers to.
+ENGINEERING_SPECIALIST_ROLES = ("Platform, Product & Backend Eng.", "AI / ML & Computer Vision Eng.")
 
 OUT_PPTX = DOCS_DIR / "Ag_Extension_Monthly_Cost_Model.pptx"
 OUT_PDF = DOCS_DIR / "Ag_Extension_Monthly_Cost_Model.pdf"
@@ -455,13 +454,11 @@ def _configure_matplotlib():
     })
 
 
-def generate_charts(summary: Dict[str, Any], specs: Dict[str, Any] | None = None) -> Dict[str, Path]:
+def generate_charts(summary: Dict[str, Any], chart_dir: Path, specs: Dict[str, Any] | None = None) -> Dict[str, Path]:
+    """Render every chart into `chart_dir`, a directory owned by this run (see main)."""
     _configure_matplotlib()
     if specs is None:
         specs = build_chart_specs(summary)
-    if CHART_DIR.exists():
-        shutil.rmtree(CHART_DIR)
-    CHART_DIR.mkdir(parents=True, exist_ok=True)
     paths: Dict[str, Path] = {}
 
     cat_totals: Dict[str, Tuple[int, int, int]] = summary["cat_totals"]
@@ -508,7 +505,7 @@ def generate_charts(summary: Dict[str, Any], specs: Dict[str, Any] | None = None
     ax1.set_ylabel("Monthly Operating Burn (USD)", fontsize=9.5, fontweight="bold")
     ax1.legend(loc="upper left", frameon=True, facecolor="#F8FAF9", edgecolor="#E2E8F0", fontsize=7.8)
     fig.tight_layout(pad=0.8)
-    p = CHART_DIR / "chart_total_burn_scaling.png"
+    p = chart_dir / "chart_total_burn_scaling.png"
     fig.savefig(p, dpi=300)
     plt.close(fig)
     paths["burn_scaling"] = p
@@ -539,7 +536,7 @@ def generate_charts(summary: Dict[str, Any], specs: Dict[str, Any] | None = None
     ax.set_title("Role Cost Progression by Phase", fontsize=10.5, fontweight="bold", pad=8)
     ax.legend(loc="lower right", frameon=True, facecolor="#F8FAF9", edgecolor="#E2E8F0", fontsize=8)
     fig.tight_layout(pad=0.8)
-    p = CHART_DIR / "chart_hr_composition.png"
+    p = chart_dir / "chart_hr_composition.png"
     fig.savefig(p, dpi=300)
     plt.close(fig)
     paths["hr_comp"] = p
@@ -579,7 +576,7 @@ def generate_charts(summary: Dict[str, Any], specs: Dict[str, Any] | None = None
     ax.set_title("Zero-Egress Media Architecture vs. Standard S3", fontsize=10.5, fontweight="bold", pad=8)
     ax.legend(loc="upper left", frameon=True, facecolor="#F8FAF9", edgecolor="#E2E8F0", fontsize=8)
     fig.tight_layout(pad=0.8)
-    p = CHART_DIR / "chart_storage_egress_savings.png"
+    p = chart_dir / "chart_storage_egress_savings.png"
     fig.savefig(p, dpi=300)
     plt.close(fig)
     paths["storage_savings"] = p
@@ -612,7 +609,7 @@ def generate_charts(summary: Dict[str, Any], specs: Dict[str, Any] | None = None
     ax.set_title(f"Production AI Cost Avoidance ({specs['ai_savings_range_lbl']} Savings)", fontsize=10.5, fontweight="bold", pad=8)
     ax.legend(loc="upper left", frameon=True, facecolor="#F8FAF9", edgecolor="#E2E8F0", fontsize=7.5)
     fig.tight_layout(pad=0.8)
-    p = CHART_DIR / "chart_ai_cost_efficiency.png"
+    p = chart_dir / "chart_ai_cost_efficiency.png"
     fig.savefig(p, dpi=300)
     plt.close(fig)
     paths["ai_efficiency"] = p
@@ -640,7 +637,7 @@ def generate_charts(summary: Dict[str, Any], specs: Dict[str, Any] | None = None
     ax.set_title("Custom Model Training & Calibration Allocation", fontsize=10.5, fontweight="bold", pad=8)
     ax.legend(loc="upper left", frameon=True, facecolor="#F8FAF9", edgecolor="#E2E8F0", fontsize=8)
     fig.tight_layout(pad=0.8)
-    p = CHART_DIR / "chart_custom_ai_split.png"
+    p = chart_dir / "chart_custom_ai_split.png"
     fig.savefig(p, dpi=300)
     plt.close(fig)
     paths["custom_ai"] = p
@@ -686,7 +683,7 @@ def generate_charts(summary: Dict[str, Any], specs: Dict[str, Any] | None = None
     ax.set_title("Operating Leverage & Illustrative Break-Even Curve", fontsize=10.5, fontweight="bold", pad=8)
     ax.legend(loc="upper left", frameon=True, facecolor="#F8FAF9", edgecolor="#E2E8F0", fontsize=7.8)
     fig.tight_layout(pad=0.8)
-    p = CHART_DIR / "chart_unit_economics_breakeven.png"
+    p = chart_dir / "chart_unit_economics_breakeven.png"
     fig.savefig(p, dpi=300)
     plt.close(fig)
     paths["breakeven"] = p
@@ -726,7 +723,7 @@ def generate_charts(summary: Dict[str, Any], specs: Dict[str, Any] | None = None
     legend_handles.append(Line2D([0], [0], color="#991B1B", linestyle=":", linewidth=1.4, label="$50k Monthly Ceiling"))
     ax.legend(handles=legend_handles, loc="upper left", ncol=2, frameon=True, facecolor="#F8FAF9", edgecolor="#E2E8F0", fontsize=7.2)
     fig.tight_layout(pad=0.8)
-    p = CHART_DIR / "chart_12mo_runway.png"
+    p = chart_dir / "chart_12mo_runway.png"
     fig.savefig(p, dpi=300)
     plt.close(fig)
     paths["runway"] = p
@@ -910,7 +907,8 @@ def add_bullet_card(slide, x, y, w, h, title: str, items: List[Tuple[str, str]],
 # Slide Builders (12 Slides)
 # ---------------------------------------------------------------------------
 
-def build_presentation(summary: Dict[str, Any], charts: Dict[str, Path], specs: Dict[str, Any] | None = None) -> Path:
+def build_presentation(summary: Dict[str, Any], charts: Dict[str, Path], specs: Dict[str, Any] | None = None,
+                       out_pptx: Path = OUT_PPTX) -> Path:
     if specs is None:
         specs = build_chart_specs(summary)
     prs = Presentation()
@@ -1099,12 +1097,25 @@ def build_presentation(summary: Dict[str, Any], charts: Dict[str, Path], specs: 
     s4 = prs.slides.add_slide(blank)
     hr_cat = cat_totals["1. Human Resources"]
     hr_shares = [pct_value(hr_cat[idx], totals[idx], 1) for idx in range(3)]
+    pilot_rev_lo = Decimal("1.50") * PHASES[0]["farmers"]
+    pilot_rev_hi = Decimal("2.00") * PHASES[0]["farmers"]
     add_header_and_footer(
         s4, prs, 4, total_slides,
         "Pillar 1  |  Human resources",
         f"Blended Engineering, AI, Product & GTM Team (${hr_cat[0] / 1000:.1f}k to ${hr_cat[2] / 1000:.1f}k / Mo)",
         "Lean core team pairing blended global/regional EOR & contractor engineering rates with in-country agronomists and co-op GTM leads."
     )
+
+    # Per-FTE monthly cost, derived from the ledger (not typed in): the whole team,
+    # and the platform and AI/ML engineering roles the specialist rate refers to.
+    per_fte = [Decimal(hr_cat[idx]) / hr_ftes[idx] for idx in range(3)]
+    eng_per_fte = [
+        Decimal(cost) / Decimal(str(fte))
+        for it in COST_ITEMS
+        if it.category == "1. Human Resources" and it.name in ENGINEERING_SPECIALIST_ROLES and it.fte
+        for cost, fte in zip((it.p1, it.p2, it.p3), it.fte)
+        if fte
+    ]
 
     hr_rows = []
     for it in COST_ITEMS:
@@ -1135,7 +1146,7 @@ def build_presentation(summary: Dict[str, Any], charts: Dict[str, Path], specs: 
         s4, 0.55, 4.88, 6.80, 2.00,
         "Compensation Model, GTM Coverage & Non-Dilutive Upside",
         [
-            ("Blended EOR & Contractors", "Uses global/regional EOR & fractional specialist rates ($3.8k–$4.8k/FTE blended) rather than full-market North American payroll."),
+            ("Blended EOR & Contractors", f"Global/regional EOR & fractional contractor rates: ${min(per_fte) / 1000:.1f}k–${max(per_fte) / 1000:.1f}k per FTE blended across the team (platform and AI/ML engineers ${min(eng_per_fte) / 1000:.1f}k–${max(eng_per_fte) / 1000:.1f}k), not full-market North American payroll."),
             ("Product, Ops & Co-op GTM", "Product spec, SRE/ops, and B2B co-op partnerships/sales sit inside the core team while partner co-ops employ field officers directly."),
             ("Grant Upside (Entity-Gated)", "Canadian NRC-IRAP / SR&ED co-funding (up to 50–70% of eligible R&D payroll) is excluded from baseline burn and requires incorporating a Canadian-controlled SME."),
         ],
@@ -1145,7 +1156,9 @@ def build_presentation(summary: Dict[str, Any], charts: Dict[str, Path], specs: 
     add_rect(s4, 7.55, 1.48, 5.23, 5.40, HEX_CARD_BG, HEX_BORDER, 0.75, rounded=True)
     add_picture_clean(s4, charts["hr_comp"], 7.65, 1.58, 5.03)
     add_textbox(s4, 7.75, 5.86, 4.85, 0.85,
-                f"HR share stays disciplined at {min(hr_shares):.1f}%–{max(hr_shares):.1f}% of total OpEx across all phases, preserving engineering and co-op GTM velocity without outgrowing pilot revenue.",
+                f"HR share holds at {min(hr_shares):.1f}%–{max(hr_shares):.1f}% of total OpEx across all phases. "
+                f"In the pilot, modeled revenue (${pilot_rev_lo / 1000:.1f}k–${pilot_rev_hi / 1000:.1f}k/mo at $1.50–$2.00 per farmer) "
+                f"does not cover the ${hr_cat[0]:,}/mo HR cost.",
                 font_size=9.2, color_hex=HEX_INK_SEC, line_spacing=1.2)
 
     # =========================================================================
@@ -1596,12 +1609,16 @@ def build_presentation(summary: Dict[str, Any], charts: Dict[str, Path], specs: 
                 f"12 / {total_slides:02d}",
                 font_size=8.5, bold=True, color_hex="#9CC5B0", align=PP_ALIGN.RIGHT, font_name=FONT_MONO)
 
-    DOCS_DIR.mkdir(parents=True, exist_ok=True)
-    prs.save(str(OUT_PPTX))
-    return OUT_PPTX
+    out_pptx.parent.mkdir(parents=True, exist_ok=True)
+    prs.save(str(out_pptx))
+    return out_pptx
 
 
 def convert_pptx_to_pdf(pptx_path: Path) -> Path:
+    pdf_path = pptx_path.with_suffix(".pdf")
+    # soffice can exit 0 without writing anything; remove the old PDF first so the
+    # check below only passes for a PDF this run produced.
+    pdf_path.unlink(missing_ok=True)
     cmd = [
         "soffice",
         "--headless",
@@ -1614,18 +1631,25 @@ def convert_pptx_to_pdf(pptx_path: Path) -> Path:
     res = subprocess.run(cmd, capture_output=True, text=True, check=False)
     if res.returncode != 0:
         raise RuntimeError(f"LibreOffice PDF conversion failed ({res.returncode}): {res.stderr}\n{res.stdout}")
-    pdf_path = pptx_path.with_suffix(".pdf")
     if not pdf_path.is_file():
         raise RuntimeError(f"Expected PDF not produced at {pdf_path}")
     return pdf_path
 
 
-def main() -> int:
+def generate_deck(out_dir: Path = DOCS_DIR) -> Tuple[Path, Path]:
+    """Build the PPTX and PDF into `out_dir`. Charts live in a private temporary
+    directory created for this run and removed afterwards, on success or failure."""
     summary = validate_model()
     specs = build_chart_specs(summary)
-    charts = generate_charts(summary, specs)
-    pptx_path = build_presentation(summary, charts, specs)
+    with tempfile.TemporaryDirectory(prefix="ag_cost_deck_charts_") as tmp:
+        charts = generate_charts(summary, Path(tmp), specs)
+        pptx_path = build_presentation(summary, charts, specs, out_pptx=out_dir / OUT_PPTX.name)
     pdf_path = convert_pptx_to_pdf(pptx_path)
+    return pptx_path, pdf_path
+
+
+def main() -> int:
+    pptx_path, pdf_path = generate_deck()
     print(f"Generated PPTX: {pptx_path} ({pptx_path.stat().st_size:,} bytes)")
     print(f"Generated PDF : {pdf_path} ({pdf_path.stat().st_size:,} bytes)")
     return 0
