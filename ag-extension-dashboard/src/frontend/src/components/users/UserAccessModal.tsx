@@ -10,6 +10,7 @@ import { useAssignablePlans } from '@/components/users/useAssignablePlans';
 import { SystemAdminBadge } from '@/components/users/SystemAdminBadge';
 import { AccountActiveToggle } from '@/components/users/AccountActiveToggle';
 import { ManagerAssignmentField } from '@/components/users/ManagerAssignmentField';
+import { ServiceAccessSection } from '@/components/users/ServiceAccessSection';
 
 interface UserAccessModalProps {
   user: DirectoryUser | null;
@@ -265,6 +266,7 @@ export function UserAccessModal({
               disabled={isEditingSelf || isProtectedTarget}
               onChange={setIsActive}
             />
+            {actorIsSystemAdmin && !isDemo && role !== 'admin' && <ServiceAccessSection userId={user.id} />}
 
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
               <button

@@ -87,6 +87,9 @@ model User {
   tenant         Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   tenantMemberships TenantMembership[]
   progressEntries   FarmerProgressEntry[] @relation("OfficerProgressEntries")
+  serviceAccess        ServiceAccessGrant[] @relation("ServiceAccessHolder")
+  serviceAccessGranted ServiceAccessGrant[] @relation("ServiceAccessGrantedBy")
+  serviceAccessRevoked ServiceAccessGrant[] @relation("ServiceAccessRevokedBy")
 
   @@index([tenantId])
   @@map("users")
@@ -1404,4 +1407,24 @@ model FarmerProgressAttachment {
   @@id([entryId, uploadId])
   @@index([uploadId])
   @@map("farmer_progress_attachments")
+}
+
+/// A paid service the system administrator lets one account use without changing its plan.
+model ServiceAccessGrant {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  /// chat | field_visits | analytics | campaigns | email_workflows | worldmonitor
+  service   String    @db.VarChar(40)
+  grantedBy String?   @map("granted_by") @db.Uuid
+  grantedAt DateTime  @default(now()) @map("granted_at") @db.Timestamp(6)
+  expiresAt DateTime? @map("expires_at") @db.Timestamp(6)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamp(6)
+  revokedBy String?   @map("revoked_by") @db.Uuid
+  note      String?   @db.VarChar(500)
+  user      User      @relation("ServiceAccessHolder", fields: [userId], references: [id], onDelete: Cascade)
+  granter   User?     @relation("ServiceAccessGrantedBy", fields: [grantedBy], references: [id], onDelete: SetNull)
+  revoker   User?     @relation("ServiceAccessRevokedBy", fields: [revokedBy], references: [id], onDelete: SetNull)
+
+  @@unique([userId, service])
+  @@map("service_access_grants")
 }

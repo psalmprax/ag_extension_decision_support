@@ -277,7 +277,8 @@ export class AIHubMixProvider extends BaseAIProvider {
     this.accountService = new AIHubMixAccountService();
   }
 
-  private async resolveApiKey(): Promise<string> {
+  /** The sk- key for model calls: configured directly, or found or issued with the access key. Empty when neither is set. */
+  async resolveApiKey(): Promise<string> {
     if (this.apiKey) return this.apiKey;
     if (process.env.AIHUBMIX_API_KEY) return process.env.AIHUBMIX_API_KEY;
     if (config.aihubmix?.apiKey) return config.aihubmix.apiKey;

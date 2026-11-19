@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
-import { isFreePlanUser } from '@/lib/planAccess';
+import { lacksPaidAccess, type PaidService } from '@/lib/planAccess';
 import { useLanguage } from '@/lib/LanguageContext';
 
 interface PlanUpgradeGuardProps {
@@ -36,6 +36,11 @@ interface PlanUpgradeGuardProps {
   children?: React.ReactNode;
 }
 
+// The server-side service behind each category (a system-administrator grant unlocks it).
+const SERVICE_FOR_CATEGORY: Partial<Record<NonNullable<PlanUpgradeGuardProps['category']>, PaidService>> = {
+  chat: 'chat', visits: 'field_visits', analytics: 'analytics', worldmonitor: 'worldmonitor', workflows: 'email_workflows',
+};
+
 export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
   featureName,
   featureDescription,
@@ -46,8 +51,8 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
   const { user, setActiveTab } = useAppStore();
   const { headingClass } = useThemeClasses();
 
-  // Pro, Enterprise and admins see the feature; the free plan sees the upgrade card.
-  const isFree = isFreePlanUser(user);
+  // Pro, Enterprise, admins and accounts granted this service see the feature; the rest see the upgrade card.
+  const isFree = lacksPaidAccess(user, SERVICE_FOR_CATEGORY[category]);
 
   if (!isFree) {
     return <>{children}</>;

@@ -21,6 +21,7 @@ import rateLimit from 'express-rate-limit';
 import { perUserRateLimit, SharedStateStore } from '@/middleware/rateLimitMiddleware';
 import { reportedSystemAdmin } from '@/services/systemAdminService';
 import { signSessionToken } from '@/utils/sessionToken';
+import { activeServicesFor } from '@/services/serviceAccessService';
 
 const router = Router();
 const profileUpdateRateLimit = rateLimit({
@@ -279,6 +280,8 @@ router.get('/me', async (req: Request, res: Response) => {
                 profileSettings: user.profile_settings ?? {},
                 planName,
                 isFree,
+                // Paid services the system administrator opened to this account beyond its plan.
+                serviceAccess: isFree ? await activeServicesFor(user.id) : [],
             },
         });
     } catch (error) {

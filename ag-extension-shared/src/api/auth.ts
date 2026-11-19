@@ -28,6 +28,8 @@ export const userSchema = z.object({
   isDemo: z.boolean().optional(),
   /** Above every tenant: the only flag that may create or promote an admin. */
   isSystemAdmin: z.boolean().optional(),
+  /** Paid services the system administrator opened to this Free account. */
+  serviceAccess: z.array(z.string()).optional(),
 });
 
 export const loginCredentialsSchema = z.object({

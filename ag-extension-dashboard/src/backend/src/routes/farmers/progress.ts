@@ -16,7 +16,7 @@ import { safeError } from '@/utils/safeResponse';
 const router = Router();
 
 /** Progress records belong with field visits: the same paid feature. */
-const requireProgressPlan = requirePaidPlan('Field Visits & Tracking');
+const requireProgressPlan = requirePaidPlan('field_visits');
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 

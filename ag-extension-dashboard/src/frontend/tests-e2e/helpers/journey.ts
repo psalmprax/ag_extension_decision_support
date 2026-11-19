@@ -67,17 +67,24 @@ export function pngPhoto(name: string, rgb: [number, number, number] = [72, 140,
 }
 
 /** A signed-in browser for one person, separate from everyone else's cookies. */
-export async function signedIn(browser: Browser, email: string): Promise<{ context: BrowserContext; page: Page }> {
+export async function signedIn(browser: Browser, email: string, password?: string): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext();
   const page = await context.newPage();
-  await loginThroughUi(page, email);
+  await loginThroughUi(page, email, password);
   return { context, page };
 }
 
 /** Opens a page from the side menu by its visible label. */
 export async function openMenu(page: Page, label: string | RegExp): Promise<void> {
   const nav = page.getByRole('navigation').first();
-  await nav.getByRole('button', typeof label === 'string' ? { name: label, exact: true } : { name: label }).first().click({ timeout: 30_000 });
+  const item = nav.getByRole('button', typeof label === 'string' ? { name: label, exact: true } : { name: label }).first();
+  await nav.getByRole('button').first().waitFor({ timeout: 30_000 });
+  // Menu sections other than the current one start collapsed: open them until the item shows.
+  const collapsed = nav.locator('button[aria-expanded="false"]');
+  while (!(await item.isVisible()) && (await collapsed.count()) > 0) {
+    await collapsed.first().click();
+  }
+  await item.click({ timeout: 30_000 });
 }
 
 /** The officer's chat with farmers ("Farmer Direct Chat" in the side menu), with or without its unread badge. */
@@ -86,6 +93,22 @@ export const FARMER_CHAT_MENU = /^Farmer (Direct )?Chat( \d+ unread messages?)?$
 /** The farmer's chat with their officer ("My officer"), with or without its unread badge. */
 export const MY_OFFICER_MENU = /^My officer( \d+ unread messages?)?$/;
 
+/** The same item when it is locked for the Free plan (its lock reads "Pro plan required"). */
+export const MY_OFFICER_LOCKED_MENU = /^My officer.*Pro plan required$/;
+
+/**
+ * The test system administrator that global-setup creates with a password
+ * generated for this run (prisma/seed-e2e-system-admin.ts).
+ */
+export const E2E_SYSTEM_ADMIN = {
+  email: 'e2e.system.admin@real.agriext.test',
+  password: (): string => {
+    const password = process.env.E2E_SYSTEM_ADMIN_PASSWORD;
+    if (!password) throw new Error('E2E_SYSTEM_ADMIN_PASSWORD is set by global-setup');
+    return password;
+  },
+};
+
 /** Bearer-token API access as one seeded account. */
 export async function apiAs(request: APIRequestContext, email: string) {
   const headers = { Authorization: `Bearer ${await apiToken(request, email)}` };
@@ -93,6 +116,8 @@ export async function apiAs(request: APIRequestContext, email: string) {
     get: (url: string) => request.get(url, { headers }),
     post: (url: string, data: unknown) => request.post(url, { headers, data }),
     patch: (url: string, data: unknown) => request.patch(url, { headers, data }),
+    put: (url: string, data: unknown) => request.put(url, { headers, data }),
+    delete: (url: string) => request.delete(url, { headers }),
     upload: (farmerId: string, photo: ReturnType<typeof pngPhoto>) =>
       request.post('/api/v1/upload/upload', { headers, multipart: { file: photo, farmerId } }),
   };

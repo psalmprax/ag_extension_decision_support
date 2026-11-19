@@ -364,7 +364,7 @@ function formatOfficerData(officerData: Record<string, unknown>[]) {
 }
 
 // Performance metrics (Pro/Enterprise)
-const requireAnalyticsPlan = requirePaidPlan('Operational Analytics & Telemetry');
+const requireAnalyticsPlan = requirePaidPlan('analytics');
 router.get('/performance', requireAnalyticsPlan, async (req: Request, res: Response) => {
     try {
         const tenantId = await getSafeAnalyticsTenantId(req);

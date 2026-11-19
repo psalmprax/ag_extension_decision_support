@@ -23,7 +23,7 @@ import { markThreadRead, unreadSummary } from '@/services/chat/readState';
 
 // Farmer chat, the farmer's "My officer" thread and the officer's AI chats are paid features;
 // admins and the demo are exempt (see requirePaidPlan).
-const requireChatPlan = requirePaidPlan('Farmer chat & AI assistant');
+const requireChatPlan = requirePaidPlan('chat');
 
 const router = Router();
 

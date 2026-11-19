@@ -13,7 +13,7 @@ import { demoSql } from '@/services/demoScope';
 
 const router = Router();
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
-router.use(requirePaidPlan('WorldMonitor Spatial Intelligence'));
+router.use(requirePaidPlan('worldmonitor'));
 
 const layersQuery = z.object({
   region: z.string().optional(),

@@ -13,6 +13,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { ThemeSwitcher } from '../ThemeSwitcher';
+import { isMenuItemLocked } from '@/lib/planAccess';
 
 /** Menu items that carry the unread-messages badge. */
 const CHAT_TABS = new Set(['farmerchat', 'officerchat']);
@@ -77,9 +78,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const { subtextClass } = useThemeClasses();
   const { t } = useLanguage();
   const { themeName, setThemeName, user } = useAppStore();
-  const isFreeUser =
-    user?.role !== 'admin' &&
-    (user?.isFree || user?.planName?.toLowerCase() === 'free' || !user?.planName);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => ({
     [getSectionId(activeTab)]: true,
   }));
@@ -182,7 +180,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                             </span>
                           </div>
                           {CHAT_TABS.has(item.id) && <UnreadCount className="ml-2" />}
-                          {isFreeUser && item.requiresPro && (
+                          {isMenuItemLocked(user, item) && (
                             <Lock
                               className="w-3.5 h-3.5 text-amber-500/80 dark:text-amber-400/80 shrink-0"
                               aria-label={t('plan_pro_locked', { defaultValue: 'Pro plan required' })}

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchUnreadSummary, type UnreadSummary } from '@/api/chatbotService';
 import { useAppStore } from '@/store/useAppStore';
-import { isFreePlanUser } from '@/lib/planAccess';
+import { lacksPaidAccess } from '@/lib/planAccess';
 import { queryClient } from '@/lib/queryClient';
 
 export const UNREAD_CHATS_KEY = ['chat-unread'] as const;
@@ -14,7 +14,7 @@ const NONE: UnreadSummary = { total: 0, conversations: {} };
  */
 export function useUnreadChats(): UnreadSummary {
   const user = useAppStore(state => state.user);
-  const enabled = Boolean(user && !user.isDemo && !isFreePlanUser(user)
+  const enabled = Boolean(user && !user.isDemo && !lacksPaidAccess(user, 'chat')
     && (user.role === 'extension_officer' || user.role === 'farmer'));
   const { data } = useQuery({
     queryKey: UNREAD_CHATS_KEY,

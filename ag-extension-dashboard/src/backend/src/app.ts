@@ -50,6 +50,7 @@ import reportingRoutes from './routes/reporting';
 import analyticsRoutes from './routes/analytics';
 import portfolioRoutes from './routes/portfolio';
 import usersRoutes from './routes/users';
+import serviceAccessRoutes from './routes/serviceAccess';
 import farmersRoutes from './routes/farmers';
 import fieldsRoutes from './routes/fields';
 import visitsRoutes from './routes/visits';
@@ -573,6 +574,7 @@ const routeMounts: RouteMount[] = [
   { path: '/reporting', router: reportingRoutes },
   { path: '/analytics', router: analyticsRoutes },
   { path: '/portfolio', router: portfolioRoutes },
+  { path: '/users', router: serviceAccessRoutes }, // /:id/service-access (system administrator)
   { path: '/users', router: usersRoutes },
   { path: '/farmers', router: farmersRoutes },
   { path: '/fields', router: fieldsRoutes },

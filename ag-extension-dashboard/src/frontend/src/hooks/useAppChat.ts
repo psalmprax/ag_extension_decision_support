@@ -13,7 +13,7 @@ import { getChatCompletion, getPublicDemoChatCompletion } from '@/api/aiService'
 import { isDemoFarmerId } from '@/demo/demoIds';
 import { Conversation, ChatMessage, Farmer } from '../types/dashboard';
 import { useAppStore } from '@/store/useAppStore';
-import { isFreePlanUser } from '@/lib/planAccess';
+import { lacksPaidAccess } from '@/lib/planAccess';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { queryClient } from '@/lib/queryClient';
 import { UNREAD_CHATS_KEY } from '@/hooks/useUnreadChats';
@@ -111,8 +111,8 @@ function buildDemoConversation(farmer: Farmer): Conversation {
 
 export const useAppChat = (language: string) => {
   const isFarmerUser = useAppStore(state => state.user?.role) === 'farmer';
-  // Free plan: the chat pages show the upgrade card and the server refuses the calls.
-  const freePlan = useAppStore(state => isFreePlanUser(state.user));
+  // Free plan without a chat grant: the chat pages show the upgrade card and the server refuses the calls.
+  const freePlan = useAppStore(state => lacksPaidAccess(state.user, 'chat'));
   // AI Assistant Chat State
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);

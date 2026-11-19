@@ -3,16 +3,16 @@ import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import type { PerformanceData } from '@/api/analyticsService';
 import { useAppStore } from '@/store/useAppStore';
-import { isFreePlanUser } from '@/lib/planAccess';
+import { lacksPaidAccess } from '@/lib/planAccess';
 
 export const SupportEfficiencyCard: React.FC<{
   performanceData?: PerformanceData;
   t: (key: string) => string;
   cardClass: string;
 }> = ({ performanceData, t, cardClass }) => {
-  // These figures come from Pro analytics, which the server refuses the free plan:
-  // without this the card would wait for data that never arrives.
-  const freePlan = useAppStore(state => isFreePlanUser(state.user));
+  // These figures come from Pro analytics, which the server refuses the free plan
+  // (unless analytics was granted): without this the card would wait for data that never arrives.
+  const freePlan = useAppStore(state => lacksPaidAccess(state.user, 'analytics'));
   const metrics = performanceData?.metrics;
   // null/undefined means nothing was measured yet: say so rather than drawing 0%.
   const rows = [

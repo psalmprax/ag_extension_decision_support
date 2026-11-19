@@ -25,7 +25,7 @@ router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
  */
 // A paid feature: one AI generation per run (metered here), then each message is
 // charged to the launching officer's SMS/WhatsApp quota as it is sent.
-router.post('/goal', requirePaidPlan('Autonomous outreach campaigns'), checkUsageLimit('ai_chat'), async (req: AuthRequest, res: Response) => {
+router.post('/goal', requirePaidPlan('campaigns'), checkUsageLimit('ai_chat'), async (req: AuthRequest, res: Response) => {
     try {
         const { goalPrompt, targetRegion, targetCrop, channel, autoScheduleVisits } = req.body;
         if (!goalPrompt || typeof goalPrompt !== 'string') {

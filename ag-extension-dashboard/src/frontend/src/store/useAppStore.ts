@@ -24,6 +24,8 @@ export interface User {
   notificationPreferences?: NotificationPreferences;
   /** Handle, avatar and display units saved on the account (PATCH /auth/me). */
   profileSettings?: ProfileSettings;
+  /** Paid services the system administrator opened to this Free account (GET /auth/me). */
+  serviceAccess?: string[];
 }
 
 export interface ProfileSettings {

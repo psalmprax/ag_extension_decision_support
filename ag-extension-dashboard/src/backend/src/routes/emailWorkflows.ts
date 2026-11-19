@@ -8,7 +8,7 @@ import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
-const requireEmailWorkflowPlan = requirePaidPlan('Automated Email Workflows');
+const requireEmailWorkflowPlan = requirePaidPlan('email_workflows');
 
 router.get('/templates', authorize(['extension_officer', 'admin', 'farmer']), requireEmailWorkflowPlan, validate(emailWorkflowListSchema), async (req: Request, res: Response) => {
     try {

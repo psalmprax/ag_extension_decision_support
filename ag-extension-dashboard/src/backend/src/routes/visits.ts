@@ -71,7 +71,7 @@ async function canAccessFarmer(req: Request, farmerId: string): Promise<boolean>
 
 // Apply authentication and subscription tier gate to all visits routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
-router.use(requirePaidPlan('Field Visits & Tracking'));
+router.use(requirePaidPlan('field_visits'));
 
 // Get all visits — auto-filtered by role
 router.get('/', async (req: Request, res: Response) => {

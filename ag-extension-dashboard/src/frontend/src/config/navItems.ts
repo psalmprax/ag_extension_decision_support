@@ -19,6 +19,7 @@ import {
   Globe,
   Layers,
 } from 'lucide-react';
+import type { PaidService } from '@/lib/planAccess';
 
 export interface NavItem {
   id: string;
@@ -30,6 +31,8 @@ export interface NavItem {
   hiddenInDemo?: boolean;
   /** When true, this feature requires a Pro or Enterprise subscription tier */
   requiresPro?: boolean;
+  /** The paid service behind this item; a system-administrator grant of it unlocks the item. */
+  service?: PaidService;
 }
 
 export const getNavItems = (): NavItem[] => [
@@ -55,6 +58,7 @@ export const getNavItems = (): NavItem[] => [
     roles: ['extension_officer', 'admin', 'farmer'],
     hiddenInDemo: true,
     requiresPro: true,
+    service: 'chat',
   },
   {
     id: 'farmerchat',
@@ -63,6 +67,7 @@ export const getNavItems = (): NavItem[] => [
     icon: Users,
     roles: ['extension_officer', 'admin'],
     requiresPro: true,
+    service: 'chat',
   },
   {
     // The farmer's own chat with their officer (the in-app counterpart of SMS,
@@ -74,6 +79,7 @@ export const getNavItems = (): NavItem[] => [
     roles: ['farmer'],
     hiddenInDemo: true,
     requiresPro: true,
+    service: 'chat',
   },
   {
     id: 'knowledge',
@@ -96,6 +102,7 @@ export const getNavItems = (): NavItem[] => [
     icon: MapPin,
     roles: ['extension_officer', 'admin', 'farmer', 'regional_manager'],
     requiresPro: true,
+    service: 'field_visits',
   },
   {
     id: 'reports',
@@ -119,6 +126,7 @@ export const getNavItems = (): NavItem[] => [
     icon: BarChart3,
     roles: ['extension_officer', 'admin', 'regional_manager'],
     requiresPro: true,
+    service: 'analytics',
   },
   {
     id: 'billing',
@@ -184,6 +192,7 @@ export const getNavItems = (): NavItem[] => [
     icon: Mail,
     roles: ['admin'],
     requiresPro: true,
+    service: 'email_workflows',
   },
   {
     id: 'mcp_tools',
@@ -206,5 +215,6 @@ export const getNavItems = (): NavItem[] => [
     icon: Globe,
     roles: ['extension_officer', 'admin', 'regional_manager'],
     requiresPro: true,
+    service: 'worldmonitor',
   },
 ];

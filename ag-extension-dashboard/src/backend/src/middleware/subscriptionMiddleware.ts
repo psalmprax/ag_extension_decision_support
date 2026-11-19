@@ -2,6 +2,8 @@ import { Response, NextFunction } from 'express';
 import { usageService } from '../services/usageService';
 import { AuthRequest } from './authorize';
 import { logger } from '../utils/logger';
+import { PAID_SERVICES, type PaidService } from '../services/paidServices';
+import { hasServiceAccess } from '../services/serviceAccessService';
 
 function isDemoPrincipal(user: NonNullable<AuthRequest['user']>): boolean {
     return Boolean(user.isDemo || user.email === 'demo@agridemo.com');
@@ -9,9 +11,11 @@ function isDemoPrincipal(user: NonNullable<AuthRequest['user']>): boolean {
 
 /**
  * Middleware to gate Pro/Enterprise feature routers and endpoints behind an
- * active paid subscription (admins and demo accounts are exempted).
+ * active paid subscription (admins and demo accounts are exempted). A Free
+ * account also passes when the system administrator granted it this service.
  */
-export const requirePaidPlan = (featureLabel: string) => {
+export const requirePaidPlan = (service: PaidService) => {
+    const featureLabel = PAID_SERVICES[service].label;
     return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
         if (!req.user) {
             res.status(401).json({
@@ -27,7 +31,7 @@ export const requirePaidPlan = (featureLabel: string) => {
 
         try {
             const isFree = await usageService.isFreeUser(req.user.userId, req.user.role);
-            if (isFree) {
+            if (isFree && !(await hasServiceAccess(req.user.userId, service))) {
                 res.status(403).json({
                     success: false,
                     limitReached: true,

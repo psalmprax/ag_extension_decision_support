@@ -34,6 +34,8 @@ jest.mock('@/utils/logger', () => ({
 const mockQuery = query as jest.Mock;
 const mockIsFreeUser = usageService.isFreeUser as jest.Mock;
 const sessions = new Map<string, { userId: string }>();
+/** Active service grants, as `${userId}:${service}` (the SQL filters out revoked and expired ones). */
+const grants = new Set<string>();
 
 function issueToken(claims: { userId: string; role: string; email?: string; isDemo?: boolean }): string {
   const token = jwt.sign(
@@ -53,10 +55,10 @@ function issueToken(claims: { userId: string; role: string; email?: string; isDe
 
 const app = express();
 app.use(express.json());
-app.get('/gated', authorize(['admin', 'extension_officer', 'farmer']), requirePaidPlan('Test Feature'), (_req: Request, res: Response) => {
+app.get('/gated', authorize(['admin', 'extension_officer', 'farmer']), requirePaidPlan('analytics'), (_req: Request, res: Response) => {
   res.json({ success: true });
 });
-app.get('/gated-unauthenticated', requirePaidPlan('Field Visits'), (_req: Request, res: Response) => {
+app.get('/gated-unauthenticated', requirePaidPlan('field_visits'), (_req: Request, res: Response) => {
   res.json({ success: true });
 });
 app.use('/visits', visitsRouter);
@@ -67,6 +69,7 @@ app.use('/email-workflows', emailWorkflowsRouter);
 describe('requirePaidPlan & backend Pro route gating', () => {
   beforeEach(() => {
     sessions.clear();
+    grants.clear();
     mockQuery.mockReset();
     mockIsFreeUser.mockReset();
     mockQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
@@ -77,11 +80,34 @@ describe('requirePaidPlan & backend Pro route gating', () => {
           rowCount: hit ? 1 : 0,
         };
       }
+      if (sql.includes('FROM service_access_grants')) {
+        const hit = grants.has(`${params[0]}:${params[1]}`);
+        return { rows: hit ? [{ '?column?': 1 }] : [], rowCount: hit ? 1 : 0 };
+      }
       if (sql.includes('FROM tenants')) {
         return { rows: [], rowCount: 0 };
       }
       return { rows: [{ total: '0', active: '0', avg_farm_size: '0', count: '0', avg_yield: '0', total_hectares: '0' }], rowCount: 1 };
     });
+  });
+
+  it('lets a Free account through only the service the system administrator granted it', async () => {
+    mockIsFreeUser.mockResolvedValue(true);
+    grants.add('off-granted:field_visits');
+    const token = issueToken({ userId: 'off-granted', role: 'extension_officer' });
+
+    // Past the plan gate (this fake has no tenant, so the visits route itself then refuses).
+    const visitsRes = await request(app).get('/visits').set('Authorization', `Bearer ${token}`);
+    expect(visitsRes.body.upgradeRequired).toBeUndefined();
+    expect(visitsRes.body.error).toBe('Tenant membership required');
+
+    const analyticsRes = await request(app).get('/gated').set('Authorization', `Bearer ${token}`);
+    expect(analyticsRes.status).toBe(403);
+    expect(analyticsRes.body.upgradeRequired).toBe(true);
+    // The grant lookup asks only for active grants (not revoked, not past their end date).
+    const grantSql = mockQuery.mock.calls.map(([sql]) => String(sql)).find(sql => sql.includes('FROM service_access_grants'));
+    expect(grantSql).toMatch(/revoked_at IS NULL/);
+    expect(grantSql).toMatch(/expires_at IS NULL OR expires_at > NOW\(\)/);
   });
 
   it('rejects unauthenticated requests at middleware boundary (401)', async () => {

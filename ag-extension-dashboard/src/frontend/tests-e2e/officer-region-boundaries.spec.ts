@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { SEEDED, loginThroughUi } from './helpers/auth';
-import { FARMER_CHAT_MENU, JOURNEY, MY_OFFICER_MENU, apiAs, daysFromNow, openMenu, pngPhoto } from './helpers/journey';
+import { FARMER_CHAT_MENU, JOURNEY, MY_OFFICER_LOCKED_MENU, MY_OFFICER_MENU, apiAs, daysFromNow, openMenu, pngPhoto } from './helpers/journey';
 
 /**
  * An extension officer works only with the farmers in their region. Each
@@ -97,10 +97,12 @@ test.describe('an officer works only with farmers in their region', () => {
     expect(res.status()).toBe(400);
   });
 
-  test('a farmer on the Free plan has no officer chat, and the server refuses it', async ({ page }) => {
-    // The officer chat is a paid feature: a Free farmer's menu does not offer it…
+  test('a farmer on the Free plan has the officer chat locked, and the server refuses it', async ({ page }) => {
+    // The officer chat is a paid feature: a Free farmer's menu shows it locked…
     await loginThroughUi(page, JOURNEY.freeFarmer.email);
-    await expect(page.getByRole('navigation').first().getByRole('button', { name: MY_OFFICER_MENU })).toHaveCount(0);
+    const nav = page.getByRole('navigation').first();
+    await expect(nav.getByRole('button', { name: MY_OFFICER_LOCKED_MENU })).toBeVisible();
+    await expect(nav.getByRole('button', { name: MY_OFFICER_MENU })).toHaveCount(0);
 
     // …and the API refuses the thread with an upgrade prompt, not an error.
     const farmer = await apiAs(page.request, JOURNEY.freeFarmer.email);
