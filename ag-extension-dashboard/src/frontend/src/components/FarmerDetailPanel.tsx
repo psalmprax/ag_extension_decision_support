@@ -28,6 +28,7 @@ import {
 import toast from 'react-hot-toast';
 import { VideoCall } from './VideoCall';
 import { useLanguage } from '@/lib/LanguageContext';
+import { isActionEnter } from '@/lib/keyboard';
 import { useAppStore } from '@/store/useAppStore';
 import { useNavigate } from 'react-router-dom';
 
@@ -166,18 +167,14 @@ const CropsSection = ({
             size="sm"
             placeholder="Add crop..."
             onKeyDown={e => {
-              // Ignore Enter while an IME is composing a candidate (CJK input).
-              if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
-                e.preventDefault();
-                const input = e.target as HTMLInputElement;
-                const val = input.value.trim();
-                if (val && !((editData.crops as string[]) || []).includes(val)) {
-                  setEditData({
-                    ...editData,
-                    crops: [...((editData.crops as string[]) || []), val],
-                  });
-                  input.value = '';
-                }
+              if (!isActionEnter(e)) return;
+              e.preventDefault();
+              const input = e.target as HTMLInputElement;
+              const val = input.value.trim();
+              const crops = (editData.crops as string[]) || [];
+              if (val && !crops.includes(val)) {
+                setEditData({ ...editData, crops: [...crops, val] });
+                input.value = '';
               }
             }}
           />

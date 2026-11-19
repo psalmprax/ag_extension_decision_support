@@ -23,6 +23,7 @@ import { useAppStore, type User } from '@/store/useAppStore';
 import toast from 'react-hot-toast';
 import apiClient from '@/api/client';
 import { logout } from '@/api/authService';
+import { PasswordChangeInput } from '@/components/profile/PasswordChangeInput';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -616,30 +617,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
 
                       <div className="space-y-2">
-                        <input
-                          type="password"
+                        <PasswordChangeInput
                           autoComplete="current-password"
                           placeholder="Current password"
                           value={passwordState.currentPassword}
-                          onChange={e => setPasswordState(p => ({ ...p, currentPassword: e.target.value }))}
-                          className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                          onChange={v => setPasswordState(p => ({ ...p, currentPassword: v }))}
                         />
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <input
-                            type="password"
+                          <PasswordChangeInput
                             autoComplete="new-password"
                             placeholder="New password (min 10 chars, letter + number)"
                             value={passwordState.newPassword}
-                            onChange={e => setPasswordState(p => ({ ...p, newPassword: e.target.value }))}
-                            className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                            onChange={v => setPasswordState(p => ({ ...p, newPassword: v }))}
                           />
-                          <input
-                            type="password"
+                          <PasswordChangeInput
                             autoComplete="new-password"
                             placeholder="Confirm new password"
                             value={passwordState.confirmPassword}
-                            onChange={e => setPasswordState(p => ({ ...p, confirmPassword: e.target.value }))}
-                            className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                            onChange={v => setPasswordState(p => ({ ...p, confirmPassword: v }))}
                           />
                         </div>
                       </div>

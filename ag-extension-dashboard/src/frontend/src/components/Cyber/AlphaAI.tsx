@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Brain,
@@ -34,6 +34,7 @@ import {
   WELCOME_MESSAGE_ID,
 } from './alpha/response';
 import { exportAdvisoryPdf } from './alpha/advisoryExport';
+import { isActionEnter } from '@/lib/keyboard';
 import { StudioTabSwitcher, CanvasWorkbench, type LastImageAnalysis } from './alpha/StudioTabs';
 import { MessageStream } from './alpha/MessageStream';
 import { NasaPowerBadge, RagMeshBadge } from './alpha/badges';
@@ -334,10 +335,9 @@ export const AlphaAI: React.FC = () => {
     input.click();
   };
 
-  const lastAdvisoryText = useCallback(() => latestAdvisoryText(messages), [messages]);
 
   const handleDispatchSms = async () => {
-    const lastAnswer = lastAdvisoryText();
+    const lastAnswer = latestAdvisoryText(messages);
     if (!lastAnswer) {
       toast.error('No advisory to dispatch — ask a question first');
       return;
@@ -484,9 +484,7 @@ export const AlphaAI: React.FC = () => {
                     value={inputPrompt}
                     onChange={e => setInputPrompt(e.target.value)}
                     onKeyDown={e => {
-                      // isComposing: Enter also confirms an IME candidate list (CJK input),
-                      // which must not submit the message.
-                      if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                      if (isActionEnter(e) && !e.shiftKey) {
                         e.preventDefault();
                         handleSendMessage();
                       }

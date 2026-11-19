@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Loader2, Leaf, X, Plus, ShieldAlert, Activity, FileCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { diagnoseFromSymptoms, type DiseaseDiagnosis } from '../../api/diseaseService';
+import { isActionEnter } from '@/lib/keyboard';
 
 interface Props {
   cropType: string;
@@ -80,12 +81,7 @@ const SymptomInputPanel: React.FC<{
             type="text"
             value={currentSymptom}
             onChange={e => setCurrentSymptom(e.target.value)}
-            onKeyDown={e => {
-              // Ignore Enter while an IME is composing a candidate (CJK input).
-              if (e.key === 'Enter' && !e.nativeEvent.isComposing && currentSymptom.trim()) {
-                onAddSymptom(currentSymptom.trim());
-              }
-            }}
+            onKeyDown={e => isActionEnter(e) && currentSymptom.trim() && onAddSymptom(currentSymptom.trim())}
             placeholder="Type custom symptom and press Add or Enter..."
             className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-md text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 font-mono transition-colors"
           />

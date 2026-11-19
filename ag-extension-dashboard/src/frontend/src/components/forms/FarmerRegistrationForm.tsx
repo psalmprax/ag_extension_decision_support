@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
+import { isActionEnter } from '@/lib/keyboard';
 import { createFarmer } from '@/api/farmerService';
 import { InlinePrompt, InfoPromptIcon } from '@/components/ui/InfoPrompt';
 
@@ -445,13 +446,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                   onChange={e => setCustomCropInput(e.target.value)}
                   placeholder="Add custom crop..."
                   className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-white/10 bg-white/[0.02] text-white placeholder-white/30 focus:ring-1 focus:ring-emerald-400 outline-none"
-                  onKeyDown={e => {
-                    // Ignore Enter while an IME is composing a candidate (CJK input).
-                    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
-                      e.preventDefault();
-                      addCustomCrop(e);
-                    }
-                  }}
+                  onKeyDown={e => isActionEnter(e) && addCustomCrop(e)}
                 />
                 <button
                   type="button"
