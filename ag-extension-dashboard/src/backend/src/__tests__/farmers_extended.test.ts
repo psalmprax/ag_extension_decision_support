@@ -30,6 +30,14 @@ jest.mock('../services/prismaService', () => ({
             findUnique: jest.fn().mockResolvedValue(null),
             upsert: jest.fn().mockResolvedValue({})
         },
+        user: {
+            // The admin test below names this officer; creation checks it is a real, active officer.
+            findUnique: jest.fn(({ where }: { where: { id: string } }) => Promise.resolve(
+                where.id === '11111111-1111-4111-8111-111111111111'
+                    ? { id: where.id, role: 'extension_officer', region: 'Central', isActive: true, isDemo: false }
+                    : null
+            )),
+        },
         farmerAssignmentHistory: {
             create: jest.fn().mockResolvedValue({ id: 'hist-1' })
         },

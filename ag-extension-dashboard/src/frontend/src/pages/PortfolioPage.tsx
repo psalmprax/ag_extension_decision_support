@@ -1,19 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Users,
-  Send,
-  FileText,
-  Trash2,
-  X,
-  Lock,
-  Radio,
-  Search,
-  ChevronRight,
-} from 'lucide-react';
+import { Users, Send, FileText, Trash2, X, Lock, Radio, Search, ChevronRight } from 'lucide-react';
 import { Farmer } from '../types/dashboard';
 import { useDemoMode } from '@/demo';
 import { useLanguage } from '../lib/LanguageContext';
+import { RegisterFarmerButton } from '@/components/portfolio/RegisterFarmerButton';
 
 interface PortfolioPageProps {
   effectiveFarmers: Farmer[];
@@ -120,6 +111,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+            <RegisterFarmerButton />
             <button
               onClick={toggleSelectAll}
               className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-xs font-medium text-slate-700 hover:text-slate-900 dark:text-white/80 dark:hover:text-white transition-colors"

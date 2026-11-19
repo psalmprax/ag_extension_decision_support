@@ -877,5 +877,11 @@
     "register_country_label": "Country",
     "register_region_label": "Region",
     "register_region_placeholder": "Select your region",
-    "users_access_system_admin_note": "Only a system administrator can change this account."
+    "users_access_system_admin_note": "Only a system administrator can change this account.",
+    "portfolio_register_farmer": "Register farmer",
+    "farmer_register_assign_officer": "Assigned extension officer",
+    "farmer_register_officer_none": "Unassigned for now",
+    "farmer_register_officers_failed": "Could not load officers. The farmer can be assigned later.",
+    "farmer_register_manager_region": "Registered in your region: {region}",
+    "farmer_register_manager_no_region": "Your account has no region yet. Ask an administrator to set it before registering farmers."
 }

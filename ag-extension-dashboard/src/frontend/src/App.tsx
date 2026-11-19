@@ -63,6 +63,7 @@ const DiagnosisPage = lazy(() =>
 const TAB_TO_PATH: Record<string, string> = {
   dashboard: '/dashboard',
   portfolio: '/portfolio',
+  register_farmer: '/register-farmer',
   visits: '/visits',
   reports: '/reports',
   analytics: '/analytics',
@@ -403,10 +404,7 @@ function App() {
               element={<Register />}
             />
             <Route path="/signup" element={<Navigate to="/register" replace />} />
-            <Route
-              path="/forgot-password"
-              element={<ForgotPassword />}
-            />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route

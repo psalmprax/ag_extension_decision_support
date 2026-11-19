@@ -21,7 +21,7 @@ import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import { EMBEDDING_DIMENSIONS } from '@/services/embeddingDimensions';
-import { selectedModelFor } from '../selectedModel';
+import { selectedModelFor, visionModelFor } from '../selectedModel';
 
 const GOOGLE_DEFAULT_MODEL = 'gemini-flash-latest';
 
@@ -247,7 +247,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
 
     async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
         const client = await this.getClient();
-        const modelName = options?.model || selectedModelFor('google_vertex') || GOOGLE_DEFAULT_MODEL;
+        const modelName = options?.model || visionModelFor('google_vertex') || selectedModelFor('google_vertex') || GOOGLE_DEFAULT_MODEL;
 
         try {
             let base64Image: string;

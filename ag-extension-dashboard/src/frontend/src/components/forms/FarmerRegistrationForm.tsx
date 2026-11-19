@@ -26,9 +26,21 @@ import { isActionEnter } from '@/lib/keyboard';
 import { createFarmer } from '@/api/farmerService';
 import { InlinePrompt, InfoPromptIcon } from '@/components/ui/InfoPrompt';
 import { COMMON_CROPS, ONBOARDING_PRESETS } from './farmerFormPresets';
+import { AssignOfficerField } from './AssignOfficerField';
+import { getApiErrorMessage } from '@/lib/apiError';
+
+// Coordinates are optional: a blank number input must mean "not given", not NaN
+// (which failed validation silently and blocked registration without GPS).
+const optionalNumber = (value: unknown) =>
+  value === '' || value === null || value === undefined ? undefined : Number(value);
 
 export const FarmerRegistrationForm: React.FC = () => {
-  const { addFarmer, isLoading, setLoading } = useAppStore();
+  const { addFarmer, isLoading, setLoading, user } = useAppStore();
+  // Admins and regional managers choose the officer; an officer's farmers are their own.
+  const canChooseOfficer = user?.role === 'admin' || user?.role === 'regional_manager';
+  // A regional manager registers farmers in their own region (the server enforces it).
+  const managerRegion = user?.role === 'regional_manager' ? user.region || '' : null;
+  const [assignedOfficerId, setAssignedOfficerId] = useState('');
   const { t } = useLanguage();
   const { isDemo } = useDemoMode();
 
@@ -126,8 +138,9 @@ export const FarmerRegistrationForm: React.FC = () => {
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone,
-        region: data.location,
+        region: managerRegion ?? data.location,
         village: data.location,
+        assignedOfficerId: canChooseOfficer && assignedOfficerId ? assignedOfficerId : undefined,
         crops: selectedCrops.length > 0 ? selectedCrops : ['Maize'],
         farmSize: data.farmSize || 0,
         locationLat: data.latitude,
@@ -151,9 +164,10 @@ export const FarmerRegistrationForm: React.FC = () => {
         toast.success(t('farmer_register_success') || 'Farmer client registered successfully!');
         reset();
         setSelectedCrops(['Maize']);
+        setAssignedOfficerId('');
       }
     } catch (error) {
-      toast.error(t('farmer_register_failed') || 'Failed to register client');
+      toast.error(getApiErrorMessage(error, t('farmer_register_failed') || 'Failed to register client'));
       console.error(error);
     } finally {
       setLoading(false);
@@ -352,6 +366,17 @@ export const FarmerRegistrationForm: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {canChooseOfficer && (
+              <AssignOfficerField value={assignedOfficerId} onChange={setAssignedOfficerId} />
+            )}
+            {managerRegion !== null && (
+              <p className="text-xs text-white/50">
+                {managerRegion
+                  ? t('farmer_register_manager_region', 'Registered in your region: {region}').replace('{region}', managerRegion)
+                  : t('farmer_register_manager_no_region', 'Your account has no region yet. Ask an administrator to set it before registering farmers.')}
+              </p>
+            )}
           </div>
 
           {/* Card 2: Agronomic Portfolio & Land Parcel */}
@@ -486,7 +511,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                 <input
                   type="number"
                   step="0.000001"
-                  {...register('latitude', { valueAsNumber: true })}
+                  {...register('latitude', { setValueAs: optionalNumber })}
                   placeholder="-0.303099"
                   className="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 outline-none text-sm font-mono tabular-nums"
                 />
@@ -499,7 +524,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                 <input
                   type="number"
                   step="0.000001"
-                  {...register('longitude', { valueAsNumber: true })}
+                  {...register('longitude', { setValueAs: optionalNumber })}
                   placeholder="36.080025"
                   className="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 outline-none text-sm font-mono tabular-nums"
                 />

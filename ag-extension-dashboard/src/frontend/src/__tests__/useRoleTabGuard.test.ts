@@ -21,6 +21,12 @@ describe('useRoleTabGuard', () => {
     expect(setActiveTab).not.toHaveBeenCalled();
   });
 
+  it('sends a role without the Farmers page away from farmer registration', () => {
+    const setActiveTab = vi.fn();
+    renderHook(() => useRoleTabGuard('register_farmer', setActiveTab, ['farmer_dashboard', 'visits'], true));
+    expect(setActiveTab).toHaveBeenCalledWith('farmer_dashboard');
+  });
+
   it('does nothing before sign-in or while the menu is empty', () => {
     const setActiveTab = vi.fn();
     renderHook(() => useRoleTabGuard('dashboard', setActiveTab, ['farmer_dashboard'], false));

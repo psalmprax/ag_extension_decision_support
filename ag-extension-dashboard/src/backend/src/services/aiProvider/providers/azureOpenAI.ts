@@ -19,6 +19,7 @@ import {
 } from '../types';
 import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 import { config } from '@/config';
+import { visionModelFor } from '../selectedModel';
 import { logger } from '@/utils/logger';
 import { EMBEDDING_DIMENSIONS } from '@/services/embeddingDimensions';
 
@@ -248,7 +249,7 @@ export class AzureOpenAIProvider extends BaseAIProvider {
 
     async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
         const client = await this.getClient();
-        const model = options?.model || config.ai.primary.model;
+        const model = options?.model || visionModelFor('azure_openai') || config.ai.primary.model;
 
         try {
             let base64Image: string;

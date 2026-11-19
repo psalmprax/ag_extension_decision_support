@@ -19,7 +19,7 @@ import {
 } from '../types';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
-import { selectedModelFor } from '../selectedModel';
+import { selectedModelFor, visionModelFor } from '../selectedModel';
 
 import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt } from '../assetLibrary';
 import { normalizeToolDefinitions, normalizeMessages, normalizeToolCalls } from '../toolCalling';
@@ -288,7 +288,7 @@ export class OpenAIProvider extends BaseAIProvider {
 
     async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
         const client = await this.getClient();
-        const model = options?.model || 'gpt-4o';
+        const model = options?.model || visionModelFor('openai') || 'gpt-4o';
 
         try {
             let base64Image: string;

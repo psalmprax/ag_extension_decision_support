@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { logger } from '../../../utils/logger';
 import { config } from '@/config';
-import { selectedModelFor } from '../selectedModel';
+import { selectedModelFor, visionModelFor } from '../selectedModel';
 import { normalizeToolDefinitions, normalizeMessages, normalizeToolCalls } from '../toolCalling';
 import {
   BaseAIProvider,
@@ -581,7 +581,10 @@ export class AIHubMixProvider extends BaseAIProvider {
       throw new Error('AIHubMix API key not configured (AIHUBMIX_API_KEY or AIHUBMIX_ACCESS_KEY missing).');
     }
 
-    const model = options?.model || selectedModelFor('aihubmix') || 'gemini-3.1-flash-lite';
+    // An explicit model wins; otherwise images use the vision model, falling
+    // back to the general model if AIHubMix does not serve the vision model.
+    const generalModel = options?.model || selectedModelFor('aihubmix') || 'gemini-3.1-flash-lite';
+    const visionModel = options?.model ? undefined : visionModelFor('aihubmix');
 
     const base64Image = this.encodeImage(imageData);
 
@@ -600,6 +603,25 @@ export class AIHubMixProvider extends BaseAIProvider {
       },
     ];
 
+    if (!visionModel || visionModel === generalModel) {
+      return this.requestImageAnalysis(key, generalModel, messages, options);
+    }
+    try {
+      return await this.requestImageAnalysis(key, visionModel, messages, options);
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } }).response?.status;
+      if (status !== 400 && status !== 404) throw err;
+      logger.warn(`AIHubMix rejected vision model ${visionModel} (${status}); retrying with ${generalModel}`);
+      return this.requestImageAnalysis(key, generalModel, messages, options);
+    }
+  }
+
+  private async requestImageAnalysis(
+    key: string,
+    model: string,
+    messages: unknown[],
+    options?: ImageAnalysisOptions
+  ): Promise<ImageAnalysisResult> {
     try {
       const response = await axios.post<AIHubMixResponse>(
         `${this.baseUrl}/chat/completions`,
