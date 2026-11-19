@@ -5,7 +5,8 @@ name: Translate locales
 # or, when that is not set, the AIHubMix key the app already uses.
 # Interpolation tokens and protected terms are checked per string; anything
 # that fails the check stays English. The result is uploaded as an artifact
-# for review and commit — this workflow never pushes.
+# for review and commit — this workflow never pushes. Dispatch only: a full run
+# makes about 1,400 model calls, too many to start on every edit.
 on:
   workflow_dispatch:
     inputs:
@@ -13,14 +14,14 @@ on:
         description: 'Locale codes to translate, space-separated (empty = all)'
         required: false
         default: ''
-  push:
-    branches: [stage]
-    paths:
-      - ag-extension-dashboard/scripts/llm-translate-locales.js
-      - .github/workflows/translate-locales.yml
+      export_run_id:
+        description: 'Instead of translating: print the locale files of this earlier run into the log (for environments that can read run logs but not artifact storage)'
+        required: false
+        default: ''
 
 permissions:
   contents: read
+  actions: read
 
 # A run takes over an hour; a new push must not cancel one that is half done.
 concurrency:
@@ -29,6 +30,7 @@ concurrency:
 
 jobs:
   translate:
+    if: ${{ !github.event.inputs.export_run_id }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     # One model call per 25 strings per language: all 23 languages in one job
@@ -100,3 +102,26 @@ jobs:
           path: ${{ runner.temp }}/translated/*.json
           if-no-files-found: ignore
           retention-days: 14
+
+  # Read-only: gh run view <run> --log | sed -n '/BEGIN-LOCALES/,/END-LOCALES/p'
+  export:
+    if: ${{ github.event.inputs.export_run_id }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download the translated locale files
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: translated-locales*
+          merge-multiple: true
+          run-id: ${{ github.event.inputs.export_run_id }}
+          github-token: ${{ github.token }}
+          path: locales
+
+      - name: Print them as a tarball
+        run: |
+          ls locales/*.json | wc -l
+          sha256sum locales/*.json
+          echo BEGIN-LOCALES
+          tar -C locales -czf - . | base64 -w 120
+          echo END-LOCALES
