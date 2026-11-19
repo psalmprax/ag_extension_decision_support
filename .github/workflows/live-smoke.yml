@@ -101,9 +101,13 @@ jobs:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       AIHUBMIX_API_KEY: ${{ secrets.AIHUBMIX_API_KEY || vars.AIHUBMIX_API_KEY || secrets.AIHUBMIX_KEY || vars.AIHUBMIX_KEY || '' }}
       AI_PRIMARY_PROVIDER: ${{ secrets.AI_PRIMARY_PROVIDER || vars.AI_PRIMARY_PROVIDER || 'aihubmix' }}
-      AI_PRIMARY_MODEL: ${{ secrets.AI_PRIMARY_MODEL || vars.AI_PRIMARY_MODEL || 'gemini-3.1-flash-lite' }}
-      AI_FALLBACK_PROVIDER: ${{ secrets.AI_FALLBACK_PROVIDER || vars.AI_FALLBACK_PROVIDER || 'openrouter' }}
-      AI_FALLBACK_MODEL: ${{ secrets.AI_FALLBACK_MODEL || vars.AI_FALLBACK_MODEL || 'nvidia/nemotron-3.5-lightning:free' }}
+      # The repo-level AI_PRIMARY_MODEL var is not what the stage host runs (its
+      # .env selects gemini-3.1-flash-lite, per the live-smoke job), so the
+      # evaluation takes its own setting, defaulting to the host's model.
+      AI_PRIMARY_MODEL: ${{ vars.RAG_EVAL_PRIMARY_MODEL || 'gemini-3.1-flash-lite' }}
+      AI_FALLBACK_PROVIDER: ${{ vars.RAG_EVAL_FALLBACK_PROVIDER || 'nvidia' }}
+      AI_FALLBACK_MODEL: ${{ vars.RAG_EVAL_FALLBACK_MODEL || 'nvidia/nemotron-3.5-lightning-30b-a3b' }}
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
       AI_EMBEDDINGS_PROVIDER: ${{ secrets.AI_EMBEDDINGS_PROVIDER || vars.AI_EMBEDDINGS_PROVIDER || 'aihubmix' }}
       AI_EMBEDDINGS_MODEL: ${{ secrets.AI_EMBEDDINGS_MODEL || vars.AI_EMBEDDINGS_MODEL || 'text-embedding-3-large' }}
       RAG_RERANK_URL: ${{ vars.RAG_RERANK_URL || '' }}
