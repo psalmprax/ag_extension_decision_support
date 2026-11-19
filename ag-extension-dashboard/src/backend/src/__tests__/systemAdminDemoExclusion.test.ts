@@ -34,11 +34,10 @@ describe('system administrator flag excludes demo accounts', () => {
   });
 
   it.each([
-    [{ is_system_admin: true, is_demo: true, email: 'admin@agridemo.com' }, false],
-    [{ is_system_admin: true, is_demo: false, email: 'admin@agridemo.com' }, false],
-    [{ is_system_admin: true, is_demo: false, email: 'ops@example.org' }, true],
-    [{ is_system_admin: false, is_demo: false, email: 'ops@example.org' }, false],
-    [{ is_system_admin: null, is_demo: null, email: null }, false],
+    [{ is_system_admin: true, is_demo: true }, false],
+    [{ is_system_admin: true, is_demo: false }, true],
+    [{ is_system_admin: false, is_demo: false }, false],
+    [{ is_system_admin: null, is_demo: null }, false],
   ])('reports %o to clients as %s', (row, expected) => {
     expect(reportedSystemAdmin(row)).toBe(expected);
   });

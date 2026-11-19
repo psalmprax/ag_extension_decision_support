@@ -96,22 +96,10 @@ export async function createTables(pool: Pool): Promise<void> {
       UPDATE users SET is_demo = true WHERE lower(COALESCE(email,'')) = 'demo@agridemo.com';
       UPDATE users SET is_demo = true WHERE lower(COALESCE(first_name,'')) = 'demo' OR lower(COALESCE(last_name,'')) = 'demo';
       UPDATE farmers SET is_demo = true WHERE id = '00000000-0000-0000-0000-000000000002';
-      -- Promote exactly one real administrator (oldest active non-demo admin), only
-      -- while no real system administrator exists, so a deliberate demotion is never
-      -- undone on boot. Same rule as migration 20261118120000_add_system_admin; it
-      -- runs after the demo markers above so a demo account can never qualify.
+      -- A demo account never holds the system-admin flag. Who holds it is decided by
+      -- the seed (prisma/systemAdministrator.cjs), same as migration 20261118120000.
       UPDATE users SET is_system_admin = false
-      WHERE is_system_admin = true
-        AND (COALESCE(is_demo, false) = true OR lower(COALESCE(email, '')) LIKE '%@agridemo.com');
-      UPDATE users SET is_system_admin = true
-      WHERE id = (
-        SELECT id FROM users
-        WHERE role = 'admin' AND COALESCE(is_demo, false) = false
-          AND lower(COALESCE(email, '')) NOT LIKE '%@agridemo.com'
-          AND COALESCE(is_active, true) = true
-        ORDER BY created_at ASC NULLS LAST, id ASC LIMIT 1
-      )
-      AND NOT EXISTS (SELECT 1 FROM users WHERE is_system_admin = true AND COALESCE(is_demo, false) = false);
+      WHERE is_system_admin = true AND COALESCE(is_demo, false) = true;
 
       -- Tenant-scoping + relationship-gap columns (legacy bootstrap parity).
       ALTER TABLE visits ADD COLUMN IF NOT EXISTS tenant_id UUID;

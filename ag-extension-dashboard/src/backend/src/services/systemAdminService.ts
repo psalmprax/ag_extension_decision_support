@@ -35,11 +35,6 @@ export async function countActiveSystemAdmins(): Promise<number> {
  * The flag as reported to clients. A demo row never reports it, so the app never
  * shows admin-creation controls to a session the server would refuse anyway.
  */
-export function reportedSystemAdmin(row: {
-    is_system_admin?: boolean | null;
-    is_demo?: boolean | null;
-    email?: string | null;
-}): boolean {
-    if (row.is_demo === true || row.email?.toLowerCase().endsWith('@agridemo.com')) return false;
-    return row.is_system_admin === true;
+export function reportedSystemAdmin(row: { is_system_admin?: boolean | null; is_demo?: boolean | null }): boolean {
+    return row.is_demo !== true && row.is_system_admin === true;
 }

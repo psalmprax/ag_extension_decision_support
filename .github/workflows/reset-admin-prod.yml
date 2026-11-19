@@ -119,6 +119,10 @@ jobs:
                   }
                 });
                 console.log('✅ Admin user successfully verified/updated:', user.email, 'Role:', user.role);
+                // Same rule as the deploy seed: admin@agridemo.com becomes the system
+                // administrator once its password is private (it now is). No-op otherwise.
+                const { ensureSystemAdministrator } = require('./prisma/systemAdministrator.cjs');
+                await ensureSystemAdministrator({ prisma, bcrypt });
                 await prisma.\$disconnect();
               }
               run().catch(err => { console.error('❌ Error updating admin:', err); process.exit(1); });
