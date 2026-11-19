@@ -13,9 +13,12 @@ import {
   CheckCircle2,
   MapPin,
   BarChart3,
+  Globe,
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { lacksPaidAccess, type PaidService } from '@/lib/planAccess';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface PlanUpgradeGuardProps {
   featureName: string;
@@ -28,9 +31,15 @@ interface PlanUpgradeGuardProps {
     | 'reports'
     | 'workflows'
     | 'visits'
-    | 'analytics';
+    | 'analytics'
+    | 'worldmonitor';
   children?: React.ReactNode;
 }
+
+// The server-side service behind each category (a system-administrator grant unlocks it).
+const SERVICE_FOR_CATEGORY: Partial<Record<NonNullable<PlanUpgradeGuardProps['category']>, PaidService>> = {
+  chat: 'chat', visits: 'field_visits', analytics: 'analytics', worldmonitor: 'worldmonitor', workflows: 'email_workflows',
+};
 
 export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
   featureName,
@@ -38,13 +47,12 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
   category = 'sms',
   children,
 }) => {
+  const { t } = useLanguage();
   const { user, setActiveTab } = useAppStore();
   const { headingClass } = useThemeClasses();
 
-  // If user is not on free plan (e.g. Pro or Enterprise or Admin), render feature content
-  const isFree =
-    user?.role !== 'admin' &&
-    (user?.isFree || user?.planName?.toLowerCase() === 'free' || !user?.planName);
+  // Pro, Enterprise, admins and accounts granted this service see the feature; the rest see the upgrade card.
+  const isFree = lacksPaidAccess(user, SERVICE_FOR_CATEGORY[category]);
 
   if (!isFree) {
     return <>{children}</>;
@@ -139,6 +147,17 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
         'Executive data export & real-time telemetry feeds',
       ],
     },
+    worldmonitor: {
+      icon: Globe,
+      headline: 'WorldMonitor Spatial Intelligence',
+      desc: 'Live spatial layer summaries combining 30-day NDVI crop stress diagnosis counts, SoilGrids regional pH baselines, and pest swarm cluster radar require a Pro or Enterprise subscription.',
+      benefits: [
+        '30-day NDVI stress diagnosis counts & mapped farmer cohorts',
+        'SoilGrids regional soil pH baseline & centroid telemetry',
+        '14-day regional pest swarm outbreak cluster radar',
+        'County, crop & region spatial filtering',
+      ],
+    },
   };
 
   const details = categoryDetails[category] || categoryDetails.sms;
@@ -165,7 +184,7 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-medium mb-3">
             <ShieldCheck className="w-3.5 h-3.5" />
-            Pro Feature Locked
+            {t('ui_plan_upgrade_guard_pro_feature_locked')}
           </div>
 
           <h2 className={`text-xl md:text-2xl font-semibold mb-3 tracking-tight ${headingClass}`}>
@@ -179,7 +198,7 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
           {/* Benefits Grid */}
           <div className="bg-gray-50 dark:bg-white/[0.03] border border-gray-200/80 dark:border-white/5 rounded-xl p-5 mb-8 text-left">
             <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">
-              Included in Pro & Enterprise Plans:
+              {t('ui_plan_upgrade_guard_included_in_pro_enterprise_plans')}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {details.benefits.map((benefit, i) => (
@@ -200,14 +219,14 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
               onClick={() => setActiveTab('billing')}
               className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs transition-colors flex items-center justify-center gap-2 group cursor-pointer"
             >
-              <span>Upgrade to Pro Plan</span>
+              <span>{t('billing_matrix_upgrade_pro')}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
             <button
               onClick={() => setActiveTab('billing')}
               className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 font-medium text-xs transition-colors"
             >
-              View Full Cost & Access Matrix
+              {t('ui_plan_upgrade_guard_view_full_cost_access_matrix')}
             </button>
           </div>
         </div>

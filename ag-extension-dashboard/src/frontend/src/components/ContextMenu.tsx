@@ -20,6 +20,7 @@ import {
   MoreVertical,
 } from 'lucide-react';
 import { fetchContextMenu, getDefaultContextMenu } from '@/api/contextMenuService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface ContextMenuItem {
   id: string;
@@ -79,6 +80,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onClose,
   onAction,
 }) => {
+  const { t } = useLanguage();
   const [menuData, setMenuData] = useState<ContextMenuData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -136,7 +138,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             <RefreshCcw className="w-5 h-5 text-primary-500 animate-spin" />
           </div>
         ) : menuData?.sections.length === 0 ? (
-          <div className="px-4 py-3 text-sm text-gray-500 italic">No actions available</div>
+          <div className="px-4 py-3 text-sm text-gray-500 italic">{t('ui_context_menu_no_actions_available')}</div>
         ) : (
           menuData?.sections.map(section => (
             <div

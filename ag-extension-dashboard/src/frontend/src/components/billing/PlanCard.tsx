@@ -111,7 +111,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
             </div>
             {isAnnual && baseMonthly > 0 && (
               <span className="text-xs text-emerald-700 dark:text-emerald-400 font-mono tabular-nums mt-0.5">
-                Billed ${annualTotal}/yr (20% saved)
+                {t('ui_plan_card_billed_yr_20_saved', { annualTotal })}
               </span>
             )}
           </div>

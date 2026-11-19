@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import apiClient from '@/api/client';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface SystemIndicator {
   label: string;
@@ -98,6 +99,7 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({
   healthScore: externalHealthScore,
   indicators: externalIndicators,
 }) => {
+  const { t } = useLanguage();
   const { healthScore, indicators, uptime } = useSystemHealth(
     externalHealthScore,
     externalIndicators
@@ -107,7 +109,7 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({
     <div className="glass-premium p-8 rounded-xl border border-white/5 h-full flex flex-col justify-between">
       <div>
         <h3 className="text-xs font-medium text-slate-400 mb-6">
-          System Health
+          {t('ui_system_overview_system_health')}
         </h3>
         <div className="space-y-4">
           {indicators.map((indicator, idx) => (
@@ -122,12 +124,12 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({
         <div className="flex items-end justify-between">
           <div>
             <p className="text-xxs font-medium text-slate-400 mb-1">
-              Health Score
+              {t('ui_system_overview_health_score')}
             </p>
             <p className="text-3xl font-semibold text-white tabular-nums tracking-normal">
               {healthScore !== undefined ? healthScore : '—'}
             </p>
-            {uptime && <p className="text-xxs font-mono tabular-nums text-white/40 mt-1">Uptime: {uptime}</p>}
+            {uptime && <p className="text-xxs font-mono tabular-nums text-white/40 mt-1">{t('ui_system_overview_uptime', { uptime })}</p>}
           </div>
           <div className="w-14 h-14 rounded-xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20">
             <span className="text-primary-400 font-semibold text-lg font-mono">

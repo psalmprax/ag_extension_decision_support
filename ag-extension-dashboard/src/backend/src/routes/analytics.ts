@@ -3,6 +3,7 @@ import { query, getPool } from '@/services/databaseService';
 import { cacheGet, cacheSet } from '@/services/cacheService';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
+import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
 import { safeError } from '@/utils/safeResponse';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 import { formatPerformanceMetrics } from '@/services/analytics/performanceMetrics';
@@ -362,8 +363,9 @@ function formatOfficerData(officerData: Record<string, unknown>[]) {
     })) : [];
 }
 
-// Performance metrics
-router.get('/performance', async (req: Request, res: Response) => {
+// Performance metrics (Pro/Enterprise)
+const requireAnalyticsPlan = requirePaidPlan('analytics');
+router.get('/performance', requireAnalyticsPlan, async (req: Request, res: Response) => {
     try {
         const tenantId = await getSafeAnalyticsTenantId(req);
         const { period = 'month', officerId, region } = req.query;
@@ -480,8 +482,8 @@ router.get('/performance', async (req: Request, res: Response) => {
     }
 });
 
-// Query analytics
-router.get('/queries', async (req: Request, res: Response) => {
+// Query analytics (Pro/Enterprise)
+router.get('/queries', requireAnalyticsPlan, async (req: Request, res: Response) => {
     try {
         const tenantId = await getSafeAnalyticsTenantId(req);
         const conversationTenant = `${tenantPredicate(tenantId, 'c')}${FARMER_THREADS}`;
@@ -592,8 +594,8 @@ function formatChatbotLanguages(languageData: Record<string, unknown>[], total: 
     }));
 }
 
-// Chatbot metrics
-router.get('/chatbot', async (req: Request, res: Response) => {
+// Chatbot metrics (Pro/Enterprise)
+router.get('/chatbot', requireAnalyticsPlan, async (req: Request, res: Response) => {
     try {
         const tenantId = await getSafeAnalyticsTenantId(req);
         const conversationTenant = `${tenantPredicate(tenantId, 'c')}${FARMER_THREADS}`;

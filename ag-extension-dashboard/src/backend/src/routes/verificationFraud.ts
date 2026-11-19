@@ -9,7 +9,7 @@ import {
   verifyFarmerCoSignToken,
   calculateInputQuota,
   generateAuditIntegrityHash,
-  calculateHaversineDistance,
+  calculateHaversineDistance, GEOFENCE_RADIUS_M,
   verifyParcelDwellTime,
 } from '@/services/verificationFraudService';
 import { logger } from '@/utils/logger';
@@ -256,7 +256,7 @@ function buildVisitFraudAlerts(row: GeofenceEvidenceRow) {
     Number(row.farmer_lat),
     Number(row.farmer_lng),
   );
-  if (distanceMeters > 200) {
+  if (distanceMeters > GEOFENCE_RADIUS_M) {
     generated.push({
       id: `visit-geofence-${row.visit_id}`,
       type: 'GEOFENCE_BREACH',

@@ -3,6 +3,7 @@ import { Radio } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { advisoryService, AdvisoryPreference } from '@/api/efficacyService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const CATEGORIES = [
     { key: 'planting_window', label: 'Planting windows' },
@@ -17,6 +18,7 @@ const CHANNELS = [
 ];
 
 export function AdvisoryPreferencesSection({ farmerId }: { farmerId: string }) {
+    const { t } = useLanguage();
     const queryClient = useQueryClient();
     const { data } = useQuery({
         queryKey: ['advisory-preference', farmerId],
@@ -46,7 +48,7 @@ export function AdvisoryPreferencesSection({ farmerId }: { farmerId: string }) {
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                     <Radio className="w-4 h-4 text-primary-500" />
-                    <h4 className="text-xs font-black uppercase tracking-widest">Proactive Advisories</h4>
+                    <h4 className="text-xs font-black uppercase tracking-widest">{t('ui_advisory_preferences_section_proactive_advisories')}</h4>
                 </div>
                 <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
                     <input
@@ -55,7 +57,7 @@ export function AdvisoryPreferencesSection({ farmerId }: { farmerId: string }) {
                         onChange={e => setDraft({ ...prefs, optIn: e.target.checked })}
                         className="accent-primary-600"
                     />
-                    Opted in
+                    {t('ui_advisory_preferences_section_opted_in')}
                 </label>
             </div>
 

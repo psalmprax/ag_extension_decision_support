@@ -6,10 +6,15 @@ import {
   ArrowRight, Check, Sparkles, Volume2
 } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
+import { MarketPriceCard } from './MarketPriceCard';
+import { useLandingPrices } from './useLandingPrices';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function FarmerServices() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [activeDialect, setActiveDialect] = useState<'sw' | 'lg' | 'en'>('sw');
+  const livePrices = useLandingPrices();
 
   const selectDialect = (lang: 'sw' | 'lg' | 'en') => {
     setActiveDialect(lang);
@@ -48,22 +53,22 @@ export function FarmerServices() {
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-4 shadow-sm"
           >
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            Four Essential Farmer Services
+            {t('ui_farmer_services_four_essential_farmer_services')}
           </motion.div>
           <motion.h2
             variants={fadeUp}
             className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight"
           >
-            Everything you need to{' '}
+            {t('ui_farmer_services_everything_you_need_to')}{' '}
             <span className="text-emerald-400">
-              protect your family’s yield
+              {t('ui_farmer_services_protect_your_family_s_yield')}
             </span>
           </motion.h2>
           <motion.p
             variants={fadeUp}
             className="text-sm sm:text-base lg:text-lg text-white/70 leading-relaxed font-normal"
           >
-            Designed for smallholder farms, with plain-language tools and selected offline workflows.
+            {t('ui_farmer_services_designed_for_smallholder_farms_with')}
           </motion.p>
         </motion.div>
 
@@ -83,16 +88,16 @@ export function FarmerServices() {
                   <Camera className="w-7 h-7" />
                 </div>
                 <span className="text-xs font-bold font-mono uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
-                  Crop assessment
+                  {t('ui_farmer_services_crop_assessment')}
                 </span>
               </div>
 
               <div>
                 <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-emerald-300 transition-colors">
-                  Diagnose My Crop
+                  {t('ui_farmer_services_diagnose_my_crop')}
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Share a crop photo or symptoms for an assessment. Results require confirmation by a local expert.
+                  {t('ui_farmer_services_share_a_crop_photo_or_symptoms_for_a')}
                 </p>
               </div>
 
@@ -101,19 +106,19 @@ export function FarmerServices() {
                   <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Explore possible causes of visible symptoms</span>
+                  <span>{t('ui_farmer_services_explore_possible_causes_of_visible_s')}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Consult a local expert before treatment</span>
+                  <span>{t('ui_farmer_services_consult_a_local_expert_before_treatm')}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Cloud analysis requires connectivity and a configured provider</span>
+                  <span>{t('ui_farmer_services_cloud_analysis_requires_connectivity')}</span>
                 </div>
               </div>
             </div>
@@ -125,7 +130,7 @@ export function FarmerServices() {
                 className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 transition-all active:scale-[0.98]"
               >
                 <Camera className="w-4 h-4" />
-                <span>Diagnose a Crop Free</span>
+                <span>{t('ui_farmer_services_diagnose_a_crop_free')}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
@@ -145,16 +150,16 @@ export function FarmerServices() {
                   <CloudRain className="w-7 h-7" />
                 </div>
                 <span className="text-xs font-bold font-mono uppercase tracking-wider text-sky-400 bg-sky-500/10 border border-sky-500/20 px-3 py-1 rounded-full">
-                  Weather information
+                  {t('ui_farmer_services_weather_information')}
                 </span>
               </div>
 
               <div>
                 <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-sky-300 transition-colors">
-                  Check the Weather
+                  {t('ui_farmer_services_check_the_weather')}
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Review available forecasts alongside local conditions when planning farm activities.
+                  {t('ui_farmer_services_review_available_forecasts_alongside')}
                 </p>
               </div>
 
@@ -163,19 +168,19 @@ export function FarmerServices() {
                   <div className="w-4 h-4 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Weather coverage and detail depend on the configured provider</span>
+                  <span>{t('ui_farmer_services_weather_coverage_and_detail_depend_o')}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Forecasts can change and should not be treated as guarantees</span>
+                  <span>{t('ui_farmer_services_forecasts_can_change_and_should_not')}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Messaging availability depends on your organization&apos;s configuration</span>
+                  <span>{t('ui_farmer_services_messaging_availability_depends_on_yo')}</span>
                 </div>
               </div>
             </div>
@@ -187,7 +192,7 @@ export function FarmerServices() {
                 className="w-full sm:w-auto px-6 py-3 rounded-xl bg-sky-600/90 hover:bg-sky-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-sky-950/40 transition-all active:scale-[0.98]"
               >
                 <CloudRain className="w-4 h-4" />
-                <span>Explore Platform Demo</span>
+                <span>{t('ui_farmer_services_explore_platform_demo')}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
@@ -207,62 +212,42 @@ export function FarmerServices() {
                   <TrendingUp className="w-7 h-7" />
                 </div>
                 <span className="text-xs font-bold font-mono uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
-                  Regional Commodity Tracking
+                  {t('ui_farmer_services_regional_commodity_tracking')}
                 </span>
               </div>
 
               <div>
                 <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-amber-300 transition-colors">
-                  Check Fair Market Prices
+                  {t('ui_farmer_services_check_fair_market_prices')}
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Preview how regional commodity prices could be shown. The figures below are illustrative demo data, not current market observations.
+                  {livePrices
+                    ? 'Annual national producer prices for maize, dry beans and sorghum, published by FAOSTAT.'
+                    : 'Preview how regional commodity prices could be shown. The figures below are illustrative demo data, not current market observations.'}
                 </p>
               </div>
 
               {/* Commodity Price Preview Snippet */}
-              <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2.5">
-                <div className="text-xs font-semibold text-amber-300 flex items-center justify-between">
-                  <span>Illustrative demo data</span>
-                  <span className="text-[10px] font-mono text-white/50">Not live prices</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="p-2 rounded-lg bg-white/[0.04] border border-white/5">
-                    <div className="text-[11px] text-white/60">Maize</div>
-                    <div className="text-xs sm:text-sm font-bold text-white mt-0.5">KES 3,850</div>
-                    <div className="text-[10px] text-emerald-400 font-mono">+2.4% / bag</div>
-                  </div>
-                  <div className="p-2 rounded-lg bg-white/[0.04] border border-white/5">
-                    <div className="text-[11px] text-white/60">Dry Beans</div>
-                    <div className="text-xs sm:text-sm font-bold text-white mt-0.5">UGX 4,200</div>
-                    <div className="text-[10px] text-emerald-400 font-mono">+1.8% / kg</div>
-                  </div>
-                  <div className="p-2 rounded-lg bg-white/[0.04] border border-white/5">
-                    <div className="text-[11px] text-white/60">Sorghum</div>
-                    <div className="text-xs sm:text-sm font-bold text-white mt-0.5">TZS 1,450</div>
-                    <div className="text-[10px] text-amber-400 font-mono">Stable / kg</div>
-                  </div>
-                </div>
-              </div>
+              <MarketPriceCard snapshot={livePrices} />
 
               <div className="pt-2 space-y-2 text-xs sm:text-sm text-white/80">
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Example prices for maize, beans &amp; sorghum</span>
+                  <span>{livePrices ? 'Producer prices for maize, dry beans & sorghum' : 'Example prices for maize, beans & sorghum'}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>No live market feed is connected to this preview</span>
+                  <span>{livePrices ? 'Annual national averages from FAOSTAT, republished yearly' : 'No live market feed is connected to this preview'}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>Local currency conversions &amp; retail median trend graphs</span>
+                  <span>{livePrices ? 'Year-on-year change against the previous published year' : 'Local currency conversions & retail median trend graphs'}</span>
                 </div>
               </div>
             </div>
@@ -274,7 +259,7 @@ export function FarmerServices() {
                 className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-600/90 hover:bg-amber-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40 transition-all active:scale-[0.98]"
               >
                 <TrendingUp className="w-4 h-4" />
-                <span>Open market demo</span>
+                <span>{t('ui_farmer_services_open_market_demo')}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
@@ -294,24 +279,24 @@ export function FarmerServices() {
                   <BookOpenCheck className="w-7 h-7" />
                 </div>
                 <span className="text-xs font-bold font-mono uppercase tracking-wider text-teal-400 bg-teal-500/10 border border-teal-500/20 px-3 py-1 rounded-full">
-                  Text & Voice
+                  {t('ui_farmer_services_text_voice')}
                 </span>
               </div>
 
               <div>
                 <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-teal-300 transition-colors">
-                  Read Advice in Your Dialect
+                  {t('ui_farmer_services_read_advice_in_your_dialect')}
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Choose a language to read a sample of clear, plain-language crop advice.
+                  {t('ui_farmer_services_choose_a_language_to_read_a_sample_o')}
                 </p>
               </div>
 
               {/* Interactive Dialect Transcript Card */}
               <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2.5">
                 <div className="text-xs font-semibold text-teal-300 flex items-center justify-between">
-                  <span>Advice text preview:</span>
-                  <span className="text-xxs font-mono text-white/60">Select a language</span>
+                  <span>{t('ui_farmer_services_advice_text_preview')}</span>
+                  <span className="text-xxs font-mono text-white/60">{t('ui_farmer_services_select_a_language')}</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
@@ -324,7 +309,7 @@ export function FarmerServices() {
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
                     }`}
                   >
-                    <span>Swahili (Kiswahili)</span>
+                    <span>{t('ui_farmer_services_swahili_kiswahili')}</span>
                   </button>
                   <button
                     type="button"
@@ -336,7 +321,7 @@ export function FarmerServices() {
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
                     }`}
                   >
-                    <span>Luganda</span>
+                    <span>{t('ui_farmer_services_luganda')}</span>
                   </button>
                   <button
                     type="button"
@@ -348,7 +333,7 @@ export function FarmerServices() {
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
                     }`}
                   >
-                    <span>English</span>
+                    <span>{t('ui_bulk_update_modal_english')}</span>
                   </button>
                 </div>
                 <div className="p-2.5 rounded-lg bg-teal-950/40 border border-teal-500/30 text-xs text-teal-200">
@@ -371,7 +356,7 @@ export function FarmerServices() {
                 className="w-full sm:w-auto px-6 py-3 rounded-xl bg-teal-600/90 hover:bg-teal-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-teal-950/40 transition-all active:scale-[0.98]"
               >
                 <Volume2 className="w-4 h-4" />
-                <span>Open Talking Assistant</span>
+                <span>{t('ui_farmer_services_open_talking_assistant')}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>

@@ -76,7 +76,7 @@ function twoOptImprove(start: { lat: number; lng: number }, route: RouteStop[]):
         for (let i = 0; i < route.length - 1; i++) {
             for (let k = i + 1; k < route.length; k++) {
                 const before = routeDistance(start, route);
-                const candidate = [...route.slice(0, i), ...route.slice(i, k + 1).reverse(), ...route.slice(k + 1)];
+                const candidate = [...route.slice(0, i), ...route.slice(i, k + 1).toReversed(), ...route.slice(k + 1)];
                 if (routeDistance(start, candidate) + 0.001 < before) {
                     route.splice(0, route.length, ...candidate);
                     improved = true;
@@ -112,8 +112,8 @@ export function optimizeRoute(
     const maxStops = options.maxStops ?? 12;
     const pull = options.priorityPullKm ?? 15;
 
-    const remaining = [...stops]
-        .sort((a, b) => stopPriority(b) - stopPriority(a))
+    const remaining = stops
+        .toSorted((a, b) => stopPriority(b) - stopPriority(a))
         .slice(0, maxStops);
 
     const route = greedyNearest(start, remaining, pull);

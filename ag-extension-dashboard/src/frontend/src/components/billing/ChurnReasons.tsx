@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { AlertCircle, BarChart3, Info } from 'lucide-react';
 import { fetchChurnAnalytics, ChurnAnalytics } from '@/api/billingService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const REASON_LABELS: Record<string, string> = {
   too_expensive: 'Too expensive',
@@ -17,6 +18,7 @@ const formatReason = (reason: string) =>
   REASON_LABELS[reason] ?? reason.replace(/_/g, ' ');
 
 export const ChurnReasons: React.FC = () => {
+  const { t } = useLanguage();
   const [data, setData] = useState<ChurnAnalytics | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,10 +63,10 @@ export const ChurnReasons: React.FC = () => {
         </div>
         <div>
           <h3 id="churn-reasons-title" className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Cancellation reasons
+            {t('ui_churn_reasons_cancellation_reasons')}
           </h3>
           <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-            Self-reported by subscribers at cancellation, last 30 days
+            {t('ui_churn_reasons_self_reported_by_subscribers_at_canc')}
           </p>
         </div>
       </div>
@@ -72,7 +74,7 @@ export const ChurnReasons: React.FC = () => {
       {loading && (
         <div role="status" className="flex items-center gap-3 text-xs text-slate-600 dark:text-white/60">
           <div className="w-4 h-4 border-2 border-slate-300 dark:border-white/20 border-t-white rounded-full animate-spin" />
-          <span>Loading churn reasons...</span>
+          <span>{t('ui_churn_reasons_loading_churn_reasons')}</span>
         </div>
       )}
 
@@ -87,8 +89,7 @@ export const ChurnReasons: React.FC = () => {
         <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
           <Info className="w-5 h-5 text-slate-500 dark:text-white/50 shrink-0" />
           <p className="text-xs text-slate-600 dark:text-white/60 leading-relaxed">
-            No cancellation reasons have been recorded in this period. Reasons are only collected when a
-            subscriber selects one while cancelling, so this list stays empty until then.
+            {t('ui_churn_reasons_no_cancellation_reasons_have_been_re')}
           </p>
         </div>
       )}
@@ -118,9 +119,8 @@ export const ChurnReasons: React.FC = () => {
 
       {!loading && !error && coverage && (
         <p className="mt-5 pt-4 border-t border-slate-200 dark:border-white/10 text-xxs text-slate-500 dark:text-white/50 leading-relaxed">
-          Based on {coverage.recorded} recorded {coverage.recorded === 1 ? 'reason' : 'reasons'} out of{' '}
-          {coverage.cancellationsLast30Days} cancellations in the last 30 days. Shares describe the
-          feedback received, not all churn.
+          {t('ui_churn_reasons_based_on')} {coverage.recorded} {t('ui_churn_reasons_recorded')} {coverage.recorded === 1 ? 'reason' : 'reasons'} {t('ui_churn_reasons_out_of')}{' '}
+          {coverage.cancellationsLast30Days} {t('ui_churn_reasons_cancellations_in_the_last_30_days_sh')}
         </p>
       )}
     </motion.section>

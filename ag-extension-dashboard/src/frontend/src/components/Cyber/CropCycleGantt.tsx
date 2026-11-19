@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface GanttItem {
   id: string;
@@ -20,6 +21,7 @@ interface CropCycleGanttProps {
 }
 
 const CropCycleGantt: React.FC<CropCycleGanttProps> = ({ items, visits = [], farmers = [] }) => {
+  const { t } = useLanguage();
   const displayItems = useMemo(() => {
     if (items && items.length > 0) return items;
 
@@ -75,7 +77,7 @@ const CropCycleGantt: React.FC<CropCycleGanttProps> = ({ items, visits = [], far
     <div className="glass-premium p-8 rounded-xl border-white/5 h-full">
       <div className="flex justify-between items-center mb-8">
         <h3 className="text-xs font-black text-primary-300/40 uppercase tracking-[0.3em]">
-          CROP CYCLE TIMELINE
+          {t('ui_crop_cycle_gantt_crop_cycle_timeline')}
         </h3>
         <div className="flex gap-1">
           {[1, 2, 3].map(i => (
@@ -102,7 +104,7 @@ const CropCycleGantt: React.FC<CropCycleGanttProps> = ({ items, visits = [], far
           ))
         ) : (
           <div className="text-xxs font-bold text-primary-300/20 uppercase tracking-widest text-center py-10">
-            No active cycles found
+            {t('ui_crop_cycle_gantt_no_active_cycles_found')}
           </div>
         )}
       </div>

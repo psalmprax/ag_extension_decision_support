@@ -18,3 +18,54 @@ export function isSubscriptionActive(
     if (sub.currentPeriodEnd === undefined || sub.currentPeriodEnd === null) return false;
     return new Date(sub.currentPeriodEnd).getTime() > Date.now();
 }
+
+export interface PlanEntitlementInput {
+    role?: string | null;
+    isDemo?: boolean | null;
+    email?: string | null;
+    planName?: string | null;
+    planPrice?: string | number | null;
+    subscriptionStatus?: string | null;
+    subscriptionPeriodEnd?: Date | string | null;
+}
+
+/**
+ * Resolves effective plan display name and whether the user is restricted to
+ * the Free tier across auth responses, /me, and user directory listings.
+ */
+export function resolveUserPlan(input: PlanEntitlementInput): { planName: string; isFree: boolean } {
+    if (input.role === 'admin') {
+        return { planName: 'Admin', isFree: false };
+    }
+    if (input.isDemo || input.email === 'demo@agridemo.com') {
+        return { planName: 'Free', isFree: true };
+    }
+    if (
+        input.planName &&
+        isSubscriptionActive({
+            status: input.subscriptionStatus,
+            currentPeriodEnd: input.subscriptionPeriodEnd,
+        })
+    ) {
+        const price = input.planPrice != null ? Number(input.planPrice) : 0;
+        const normalizedName = input.planName.trim();
+        const isFree = price === 0 || normalizedName.toLowerCase().includes('free');
+        return { planName: normalizedName, isFree };
+    }
+    return { planName: 'Free', isFree: true };
+}
+
+/**
+ * Computes the next billing period end for an admin-assigned or activated
+ * subscription from its plan billing interval.
+ */
+export function computeSubscriptionPeriodEnd(interval?: string | null, from: Date = new Date()): Date {
+    const end = new Date(from.getTime());
+    const normalized = (interval || 'month').trim().toLowerCase();
+    if (normalized === 'year' || normalized === 'annual' || normalized === 'yearly') {
+        end.setUTCFullYear(end.getUTCFullYear() + 1);
+    } else {
+        end.setUTCMonth(end.getUTCMonth() + 1);
+    }
+    return end;
+}

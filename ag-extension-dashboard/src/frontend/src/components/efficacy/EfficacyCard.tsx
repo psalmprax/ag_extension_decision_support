@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { efficacyService, OutcomeVerdict } from '@/api/efficacyService';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const VERDICTS: { key: OutcomeVerdict; label: string; tone: string }[] = [
     { key: 'resolved', label: 'Resolved', tone: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30' },
@@ -14,6 +15,7 @@ const VERDICTS: { key: OutcomeVerdict; label: string; tone: string }[] = [
 ];
 
 function OutcomeModal({ item, onClose }: { item: { visitId: string; farmerName: string | null; notes: string | null }; onClose: () => void }) {
+    const { t } = useLanguage();
     const queryClient = useQueryClient();
     const [verdict, setVerdict] = useState<OutcomeVerdict | null>(null);
     const [crop, setCrop] = useState('');
@@ -47,13 +49,13 @@ function OutcomeModal({ item, onClose }: { item: { visitId: string; farmerName: 
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div className={`${cardClass} relative w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto p-5 space-y-4`}>
                 <div className="flex items-center justify-between">
-                    <h3 className="text-base font-bold">Record Advice Outcome</h3>
+                    <h3 className="text-base font-bold">{t('ui_efficacy_card_record_advice_outcome')}</h3>
                     <button onClick={onClose} aria-label="Close" className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Follow-up for <span className="font-semibold">{item.farmerName || 'farmer'}</span>
+                    {t('ui_efficacy_card_follow_up_for')} <span className="font-semibold">{item.farmerName || 'farmer'}</span>
                     {item.notes ? ` — ${item.notes.slice(0, 90)}` : ''}
                 </p>
 
@@ -96,6 +98,7 @@ function OutcomeModal({ item, onClose }: { item: { visitId: string; farmerName: 
 }
 
 export function EfficacyCard() {
+    const { t } = useLanguage();
     const [selected, setSelected] = useState<{ visitId: string; farmerName: string | null; notes: string | null } | null>(null);
     const { cardClass } = useThemeClasses();
 
@@ -106,7 +109,7 @@ export function EfficacyCard() {
         <div className={`${cardClass} p-4 sm:p-5`}>
             <div className="flex items-center gap-2 mb-3">
                 <TrendingUp className="w-4 h-4 text-primary-500" />
-                <h3 className="text-sm font-black uppercase tracking-widest">Advice Efficacy</h3>
+                <h3 className="text-sm font-black uppercase tracking-widest">{t('ui_efficacy_card_advice_efficacy')}</h3>
             </div>
 
             {summary.isLoading ? (
@@ -117,11 +120,11 @@ export function EfficacyCard() {
                         <CheckCircle2 className="w-8 h-8 text-green-500" />
                         <div>
                             <p className="text-2xl font-black leading-none">{summary.data.overallSuccessRate}%</p>
-                            <p className="text-xxs uppercase tracking-widest text-gray-400">success rate</p>
+                            <p className="text-xxs uppercase tracking-widest text-gray-400">{t('ui_efficacy_card_success_rate')}</p>
                         </div>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {summary.data.successCount} of {summary.data.totalOutcomes} tracked outcomes improved or resolved (90d)
+                        {t('ui_efficacy_card_of_tracked_outcomes_improved_or_reso', { successCount: summary.data.successCount, totalOutcomes: summary.data.totalOutcomes })}
                     </p>
                 </div>
             ) : null}
@@ -131,7 +134,7 @@ export function EfficacyCard() {
                     <div className="flex items-center gap-2 mb-2">
                         <ClipboardList className="w-3.5 h-3.5 text-amber-500" />
                         <p className="text-xs font-bold">
-                            {followups.data!.length} follow-up{followups.data!.length > 1 ? 's' : ''} due
+                            {followups.data!.length} {t('ui_efficacy_card_follow_up')}{followups.data!.length > 1 ? 's' : ''} {t('ui_efficacy_card_due')}
                         </p>
                     </div>
                     <ul className="space-y-1.5 max-h-40 overflow-y-auto">
@@ -139,13 +142,13 @@ export function EfficacyCard() {
                             <li key={f.visitId} className="flex items-center justify-between gap-2 text-xs">
                                 <span className="truncate">
                                     <span className="font-semibold">{f.farmerName || 'Farmer'}</span>
-                                    <span className="text-gray-400"> · {f.daysOverdue}d ago</span>
+                                    <span className="text-gray-400"> {t('ui_efficacy_card_d_ago', { daysOverdue: f.daysOverdue })}</span>
                                 </span>
                                 <button
                                     onClick={() => setSelected({ visitId: f.visitId, farmerName: f.farmerName, notes: f.notes })}
                                     className="shrink-0 px-2.5 py-1 rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 font-bold hover:bg-primary-500/20"
                                 >
-                                    Record
+                                    {t('ui_efficacy_card_record')}
                                 </button>
                             </li>
                         ))}

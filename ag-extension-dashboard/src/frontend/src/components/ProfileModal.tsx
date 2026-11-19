@@ -17,12 +17,16 @@ import {
   AlertTriangle,
   Download,
 } from 'lucide-react';
+import { NotificationPreferencesSection } from '@/components/settings/NotificationPreferencesSection';
+import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Language } from '@/lib/i18n';
-import { useAppStore, type User } from '@/store/useAppStore';
+import { useAppStore, type ProfileSettings } from '@/store/useAppStore';
 import toast from 'react-hot-toast';
 import apiClient from '@/api/client';
 import { logout } from '@/api/authService';
+import { PasswordChangeInput } from '@/components/profile/PasswordChangeInput';
+import { AVATAR_PRESETS, DEFAULT_PREFERENCES, getSavedProfileData } from './profileDefaults';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -30,49 +34,6 @@ interface ProfileModalProps {
 }
 
 type TabType = 'profile' | 'preferences' | 'security';
-
-interface AvatarPreset {
-  id: string;
-  label: string;
-  emoji: string;
-  gradient: string;
-}
-
-const AVATAR_PRESETS: AvatarPreset[] = [
-  { id: 'agronomist', label: 'Agronomist', emoji: '🌾', gradient: 'from-emerald-600 to-teal-700' },
-  { id: 'lead_farmer', label: 'Lead Farmer', emoji: '🧑‍🌾', gradient: 'from-amber-600 to-orange-700' },
-  { id: 'field_officer', label: 'Field Officer', emoji: '🚜', gradient: 'from-blue-600 to-indigo-700' },
-  { id: 'crop_scout', label: 'Crop Scout', emoji: '🌱', gradient: 'from-lime-600 to-emerald-700' },
-  { id: 'soil_expert', label: 'Soil Scientist', emoji: '🔬', gradient: 'from-cyan-600 to-blue-700' },
-  { id: 'satellite_analyst', label: 'Remote Sensing', emoji: '🛰️', gradient: 'from-purple-600 to-indigo-800' },
-];
-
-const DEFAULT_PREFERENCES = {
-  areaUnit: 'hectares',
-  tempUnit: 'celsius',
-  highContrast: false,
-  smsAlerts: true,
-  outbreakPush: true,
-  weeklyDigest: false,
-};
-
-const getSavedProfileData = (user: User) => {
-  let parsedPrefs: Partial<typeof DEFAULT_PREFERENCES>;
-  let savedAvatar = 'agronomist';
-  let savedUsername = `${(user.firstName || 'user').toLowerCase()}_${(user.lastName || 'officer').toLowerCase()}`;
-  let savedPhone = '';
-  try {
-    const storedPrefs = localStorage.getItem(`gpexts_user_preferences:${user.id}`);
-    parsedPrefs = storedPrefs ? JSON.parse(storedPrefs) as Partial<typeof DEFAULT_PREFERENCES> : {};
-    savedAvatar = localStorage.getItem(`gpexts_user_avatar:${user.id}`) || savedAvatar;
-    savedUsername = localStorage.getItem(`gpexts_user_handle:${user.id}`) || savedUsername;
-    savedPhone = localStorage.getItem(`gpexts_user_phone:${user.id}`) || '';
-  } catch {
-    parsedPrefs = {};
-  }
-
-  return { parsedPrefs, savedAvatar, savedUsername, savedPhone };
-};
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
   const { t, language, setLanguage } = useLanguage();
@@ -94,6 +55,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
   // Preferences State
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
+  const notifications = useNotificationPreferences();
 
   // Security State
   const [passwordState, setPasswordState] = useState({
@@ -129,10 +91,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
+      const profileSettings = {
+        handle: formData.username.trim() || undefined,
+        avatarId: formData.avatarId,
+        areaUnit: preferences.areaUnit,
+        tempUnit: preferences.tempUnit,
+        highContrast: preferences.highContrast,
+      } as ProfileSettings;
+      // Saved on the account, so the handle and avatar follow the user to other devices.
       await apiClient.patch('/auth/me', {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
+        profileSettings,
       });
       let personalizationSaved = true;
       try {
@@ -152,6 +123,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           lastName: formData.lastName,
           email: formData.email,
           phone: formData.phone,
+          profileSettings: { ...user.profileSettings, ...profileSettings },
         });
       }
 
@@ -314,7 +286,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     }`}
                   >
                     <UserIcon className="w-3.5 h-3.5" />
-                    <span>Profile & Avatar</span>
+                    <span>{t('ui_profile_modal_profile_avatar')}</span>
                   </button>
                   <button
                     onClick={() => setActiveTab('preferences')}
@@ -325,7 +297,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     }`}
                   >
                     <Sliders className="w-3.5 h-3.5" />
-                    <span>Preferences</span>
+                    <span>{t('common_preferences')}</span>
                   </button>
                   <button
                     onClick={() => setActiveTab('security')}
@@ -336,7 +308,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     }`}
                   >
                     <Lock className="w-3.5 h-3.5" />
-                    <span>Security & Account</span>
+                    <span>{t('ui_profile_modal_security_account')}</span>
                   </button>
                 </div>
               </div>
@@ -348,7 +320,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     {/* Avatar Picker (QA #23) */}
                     <div>
                       <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block mb-2">
-                        Select Field Avatar Persona
+                        {t('ui_profile_modal_select_field_avatar_persona')}
                       </label>
                       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
                         {AVATAR_PRESETS.map(preset => {
@@ -407,7 +379,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
                       <div>
                         <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                          Custom handle (this device)
+                          {t('ui_profile_modal_custom_handle_this_device')}
                         </label>
                         <div className="relative mt-1">
                           <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm">@</span>
@@ -423,7 +395,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
                       <div>
                         <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                          Email Address
+                          {t('login_email')}
                         </label>
                         <div className="relative mt-1">
                           <input
@@ -441,7 +413,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
                       <div>
                         <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                          Field Mobile Number (SMS Bot Link)
+                          {t('ui_profile_modal_field_mobile_number_sms_bot_link')}
                         </label>
                         <div className="relative mt-1">
                           <input
@@ -482,7 +454,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     {/* Language Preference */}
                     <div>
                       <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block mb-2">
-                        System Interface Language (this device)
+                        {t('ui_profile_modal_system_interface_language_this_devic')}
                       </label>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {[
@@ -519,7 +491,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
                         <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block">
-                          Land Area Measurement
+                          {t('ui_profile_modal_land_area_measurement')}
                         </label>
                         <div className="flex gap-2">
                           {['hectares', 'acres'].map(u => (
@@ -541,7 +513,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
                       <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
                         <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block">
-                          Temperature Scale
+                          {t('ui_profile_modal_temperature_scale')}
                         </label>
                         <div className="flex gap-2">
                           {[
@@ -565,42 +537,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
                     </div>
 
-                    {/* Notification Toggles */}
-                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
-                      <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                        Notification Preferences (stored on this device; delivery is not configured here)
-                      </div>
-                      {[
-                        { key: 'outbreakPush' as const, label: 'Immediate Disease Outbreak Radar Alerts', desc: 'Critical alerts within 25km of your assigned farms' },
-                        { key: 'smsAlerts' as const, label: 'SMS Dispatch Mirroring', desc: 'Copy field chat responses to registered officer SIM' },
-                        { key: 'weeklyDigest' as const, label: 'Weekly Cohort Synthesis Email', desc: 'Consolidated performance summary delivered every Monday' },
-                      ].map(item => {
-                        const isChecked = preferences[item.key];
-                        return (
-                          <div key={item.key} className="flex items-center justify-between py-1.5">
-                            <div>
-                              <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{item.label}</p>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400">{item.desc}</p>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setPreferences(p => ({ ...p, [item.key]: !isChecked }))
-                              }
-                              className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none shrink-0 ${
-                                isChecked ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
-                              }`}
-                            >
-                              <span
-                                className={`block w-4 h-4 rounded-full bg-white shadow-md transform transition-transform ${
-                                  isChecked ? 'translate-x-6' : 'translate-x-1'
-                                }`}
-                              />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    {/* Notifications: the account's real delivery settings (same as Settings). */}
+                    <NotificationPreferencesSection {...notifications} />
                   </div>
                 )}
 
@@ -611,32 +549,29 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       <div className="flex items-center gap-2 mb-2">
                         <KeyRound className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                         <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                          Change Account Password
+                          {t('ui_profile_modal_change_account_password')}
                         </h4>
                       </div>
 
                       <div className="space-y-2">
-                        <input
-                          type="password"
+                        <PasswordChangeInput
+                          autoComplete="current-password"
                           placeholder="Current password"
                           value={passwordState.currentPassword}
-                          onChange={e => setPasswordState(p => ({ ...p, currentPassword: e.target.value }))}
-                          className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                          onChange={v => setPasswordState(p => ({ ...p, currentPassword: v }))}
                         />
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <input
-                            type="password"
+                          <PasswordChangeInput
+                            autoComplete="new-password"
                             placeholder="New password (min 10 chars, letter + number)"
                             value={passwordState.newPassword}
-                            onChange={e => setPasswordState(p => ({ ...p, newPassword: e.target.value }))}
-                            className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                            onChange={v => setPasswordState(p => ({ ...p, newPassword: v }))}
                           />
-                          <input
-                            type="password"
+                          <PasswordChangeInput
+                            autoComplete="new-password"
                             placeholder="Confirm new password"
                             value={passwordState.confirmPassword}
-                            onChange={e => setPasswordState(p => ({ ...p, confirmPassword: e.target.value }))}
-                            className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                            onChange={v => setPasswordState(p => ({ ...p, confirmPassword: v }))}
                           />
                         </div>
                       </div>
@@ -646,7 +581,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           type="submit"
                           className="px-4 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs rounded-xl hover:opacity-90 transition-opacity"
                         >
-                          Update Password
+                          {t('ui_profile_modal_update_password')}
                         </button>
                       </div>
                     </form>
@@ -655,23 +590,23 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                       <div>
                         <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                          Two-Factor Authentication (2FA)
+                          {t('ui_profile_modal_two_factor_authentication_2fa')}
                         </div>
                         <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                          Two-factor enrollment is managed by your administrator.
+                          {t('ui_profile_modal_two_factor_enrollment_is_managed_by')}
                         </div>
                       </div>
-                      <span className="text-[11px] text-slate-600 dark:text-slate-300">Managed by administrator</span>
+                      <span className="text-[11px] text-slate-600 dark:text-slate-300">{t('ui_profile_modal_managed_by_administrator')}</span>
                     </div>
 
                     {/* Danger Zone */}
                     <div className="p-4 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/20 space-y-3">
                       <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
                         <AlertTriangle className="w-4 h-4" />
-                        <h4 className="text-xs font-semibold">Account Data & Danger Zone</h4>
+                        <h4 className="text-xs font-semibold">{t('ui_profile_modal_account_data_danger_zone')}</h4>
                       </div>
                       <p className="text-xs text-rose-900 dark:text-rose-200">
-                        Export your personal data or request account erasure. Erasure anonymizes your profile; some financial and audit records may be retained as required by law.
+                        {t('ui_profile_modal_export_your_personal_data_or_request')}
                       </p>
                       <button
                         type="button"
@@ -685,14 +620,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
                       {showDeleteConfirm ? (
                         <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-rose-300 dark:border-rose-800 space-y-2">
-                          <p className="text-xs font-bold text-rose-600">Are you sure? This cannot be undone.</p>
+                          <p className="text-xs font-bold text-rose-600">{t('ui_profile_modal_are_you_sure_this_cannot_be_undone')}</p>
                           <div className="flex gap-2">
                             <button
                               type="button"
                               onClick={() => setShowDeleteConfirm(false)}
                               className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-xs font-bold rounded-lg text-slate-700 dark:text-slate-300"
                             >
-                              Cancel
+                              {t('common_cancel')}
                             </button>
                             <button
                               type="button"
@@ -727,7 +662,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                          <span>Request Account Deletion</span>
+                          <span>{t('ui_profile_modal_request_account_deletion')}</span>
                         </button>
                       )}
                     </div>
@@ -738,7 +673,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               {/* Bottom Actions */}
               <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between shrink-0">
                 <span className="text-[11px] text-slate-500 font-mono">
-                  GPExts ID: {user.id?.slice(0, 8) || 'active-session'}
+                  {t('ui_profile_modal_gpexts_id')} {user.id?.slice(0, 8) || 'active-session'}
                 </span>
 
                 <div className="flex gap-2.5">
@@ -749,7 +684,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         onClick={() => setIsEditing(false)}
                         className="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
                       >
-                        Cancel
+                        {t('common_cancel')}
                       </button>
                       <button
                         type="button"
@@ -758,7 +693,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         className="px-5 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-1.5 disabled:opacity-50 shadow-md shadow-emerald-950/20"
                       >
                         {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                        <span>Save Changes</span>
+                        <span>{t('ui_profile_modal_save_changes')}</span>
                       </button>
                     </>
                   ) : (
@@ -770,7 +705,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       }}
                       className="px-5 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-950/20"
                     >
-                      Edit Profile
+                      {t('ui_profile_modal_edit_profile')}
                     </button>
                   )}
                 </div>

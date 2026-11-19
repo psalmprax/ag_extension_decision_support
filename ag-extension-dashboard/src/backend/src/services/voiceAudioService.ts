@@ -1,9 +1,10 @@
 /**
  * Voice transcription/synthesis — wired via POST /api/pillars/voice/* and /api/chatbot/speech.
- * Uses local whisper.cpp when configured, then OpenAI's transcription API.
+ * Uses local whisper.cpp when configured, then OpenAI's and AIHubMix's speech APIs.
  */
 import { logger } from '../utils/logger';
 import { whisperTranscriptionService } from './whisperTranscriptionService';
+import { SPEECH_PROVIDERS, speechClient } from './speechProviders';
 
 export interface VoiceTranscriptionResult {
   transcription: string;
@@ -113,37 +114,36 @@ export function getAudioMimeType(audioData: string): string | undefined {
   return audioData.match(/^data:([^;,]+(?:;[^,]+)?);base64,/i)?.[1];
 }
 
-/** Strategy 2: OpenAI Whisper API. Returns null when unconfigured, unauthenticated audio, or on failure. */
-async function transcribeWithOpenAI(audioBuffer: Buffer | undefined, mimeType: string | undefined, languageHint: string): Promise<VoiceTranscriptionResult | null> {
-  const whisperApiKey = process.env.OPENAI_API_KEY;
-  if (!whisperApiKey || !audioBuffer) return null;
+/** Strategy 2: speech APIs (OpenAI, then AIHubMix). Returns null when none is configured or all fail. */
+async function transcribeWithSpeechApi(audioBuffer: Buffer | undefined, mimeType: string | undefined, languageHint: string): Promise<VoiceTranscriptionResult | null> {
+  if (!audioBuffer) return null;
+  const language = toWhisperLanguage(languageHint);
+  for (const provider of SPEECH_PROVIDERS) {
+    try {
+      const client = await speechClient(provider, 30000);
+      if (!client) continue;
+      const { toFile } = await import('openai/uploads');
+      const file = await toFile(audioBuffer, `voice-note.${resolveAudioFileExtension(mimeType)}`, { type: mimeType || 'audio/ogg' });
+      const tr = await client.audio.transcriptions.create({
+        file,
+        model: provider.sttModel(),
+        language: language === 'auto' ? undefined : language,
+      });
+      const text = (tr as unknown as { text: string }).text?.trim();
+      if (!text) throw new Error('Speech provider returned an empty transcript');
 
-  try {
-    const OpenAI = (await import('openai')).default;
-    const { toFile } = await import('openai/uploads');
-    const client = new OpenAI({ apiKey: whisperApiKey, timeout: 30000, maxRetries: 0 });
-    const ext = resolveAudioFileExtension(mimeType);
-    const file = await toFile(audioBuffer, `voice-note.${ext}`, { type: mimeType || 'audio/ogg' });
-    const tr = await client.audio.transcriptions.create({
-      file,
-      model: process.env.WHISPER_MODEL || 'gpt-4o-transcribe',
-      language: toWhisperLanguage(languageHint) === 'auto' ? undefined : toWhisperLanguage(languageHint),
-    });
-
-    const text = (tr as unknown as { text: string }).text?.trim();
-    if (!text) throw new Error('Speech provider returned an empty transcript');
-
-    const { keywords } = detectVernacularKeywords(text);
-    logger.info(`OpenAI Whisper transcription succeeded (${text.length} chars)`);
-    return {
-      transcription: text,
-      detectedLanguage: toWhisperLanguage(languageHint) === 'auto' ? 'unknown' : toWhisperLanguage(languageHint),
-      agronomicKeywords: keywords,
-    };
-  } catch (err) {
-    logger.warn('OpenAI Whisper API call failed:', err);
-    return null;
+      const { keywords } = detectVernacularKeywords(text);
+      logger.info(`${provider.name} transcription succeeded (${text.length} chars)`);
+      return {
+        transcription: text,
+        detectedLanguage: language === 'auto' ? 'unknown' : language,
+        agronomicKeywords: keywords,
+      };
+    } catch (err) {
+      logger.warn(`${provider.name} transcription failed:`, err);
+    }
   }
+  return null;
 }
 
 /** Test/no-audio fallback: deterministic sample so pillar tests stay green in offline CI. Clearly marked as stub. */
@@ -185,12 +185,12 @@ export async function transcribeVoiceNote(params: {
     try {
       return await transcribeWithLocalWhisper(audioBuffer, effectiveHint);
     } catch (err) {
-      logger.warn('Local Whisper transcription failed, falling back to OpenAI:', err);
+      logger.warn('Local Whisper transcription failed, falling back to the speech APIs:', err);
     }
   }
 
-  const openAiResult = await transcribeWithOpenAI(audioBuffer, mimeType, effectiveHint);
-  if (openAiResult) return openAiResult;
+  const apiResult = await transcribeWithSpeechApi(audioBuffer, mimeType, effectiveHint);
+  if (apiResult) return apiResult;
 
   // Test/no-audio fallback: deterministic sample so pillar tests stay green in offline CI.
   // Clearly marked as stub — not a real STT result; never used when a real buffer is provided.
@@ -200,7 +200,7 @@ export async function transcribeVoiceNote(params: {
 
   // In production with an audio buffer but no STT key configured, fail loudly — returning a fake
   // transcript would silently corrupt agronomic advice and hide an ops misconfiguration.
-  throw new Error('Voice transcription unavailable: neither local Whisper nor OpenAI Whisper API configured. Audio length=' + (audioBuffer?.length || 0));
+  throw new Error('Voice transcription unavailable: local Whisper, OpenAI and AIHubMix all unavailable. Audio length=' + (audioBuffer?.length || 0));
 }
 
 export async function synthesizeVoiceAdvisory(params: {
@@ -215,25 +215,21 @@ export async function synthesizeVoiceAdvisory(params: {
 
   logger.info(`Synthesizing voice advisory (${text.length} chars, lang=${language})`);
 
-  // Prefer OpenAI TTS when key is configured; otherwise return dummy header (keeps pillar tests stable)
-  const ttsKey = process.env.OPENAI_API_KEY;
-  if (ttsKey && text) {
+  // OpenAI, then AIHubMix; when both fail the caller answers 503 and the browser speaks instead.
+  for (const provider of SPEECH_PROVIDERS) {
     try {
-      const OpenAI = (await import('openai')).default;
-      const client = new OpenAI({ apiKey: ttsKey, timeout: 15000, maxRetries: 0 });
-      const mp3 = await client.audio.speech.create({
-        model: process.env.TTS_MODEL || 'tts-1-hd',
-        voice,
-        input: text,
-      });
+      const client = await speechClient(provider, 15000);
+      if (!client) continue;
+      const mp3 = await client.audio.speech.create({ model: provider.ttsModel(), voice, input: text });
       const buffer = Buffer.from(await mp3.arrayBuffer());
+      logger.info(`${provider.name} speech synthesis succeeded (${buffer.length} bytes)`);
       return {
         audioBase64: buffer.toString('base64'),
         format: 'audio/mp3',
         durationSeconds: Math.ceil(text.split(' ').length / 2.5),
       };
     } catch (err) {
-      logger.warn('OpenAI TTS failed:', err);
+      logger.warn(`${provider.name} speech synthesis failed:`, err);
     }
   }
 
@@ -245,5 +241,5 @@ export async function synthesizeVoiceAdvisory(params: {
       durationSeconds: Math.ceil(text.split(' ').length / 2.5),
     };
   }
-  throw new Error('Voice synthesis unavailable: OPENAI_API_KEY / TTS_MODEL not configured and no fallback TTS provider is available.');
+  throw new Error('Voice synthesis unavailable: neither OpenAI nor AIHubMix speech is configured or reachable.');
 }

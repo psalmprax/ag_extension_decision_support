@@ -18,7 +18,7 @@ const avatarEmojis: Record<string, string> = {
 interface ProfileMenuProps {
   isProfileMenuOpen: boolean;
   setIsProfileMenuOpen: (open: boolean) => void;
-  storeUser: { id?: string; firstName?: string; lastName?: string; email?: string } | null;
+  storeUser: { id?: string; firstName?: string; lastName?: string; email?: string; profileSettings?: { avatarId?: string } } | null;
   setShowProfileModal: (show: boolean) => void;
   handleLogout: () => void;
 }
@@ -37,7 +37,9 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
   useEffect(() => {
     const updateAvatar = () => {
       try {
-        setAvatarId(storeUser?.id ? localStorage.getItem(`gpexts_user_avatar:${storeUser.id}`) || '' : '');
+        // The account's avatar, else this browser's older copy.
+        setAvatarId(storeUser?.profileSettings?.avatarId
+          || (storeUser?.id ? localStorage.getItem(`gpexts_user_avatar:${storeUser.id}`) || '' : ''));
       } catch {
         setAvatarId('');
       }
@@ -45,7 +47,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
     window.addEventListener('gpexts:avatar-updated', updateAvatar);
     updateAvatar();
     return () => window.removeEventListener('gpexts:avatar-updated', updateAvatar);
-  }, [storeUser?.id]);
+  }, [storeUser?.id, storeUser?.profileSettings?.avatarId]);
 
   return (
     <div className="relative">

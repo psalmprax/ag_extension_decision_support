@@ -77,6 +77,33 @@ describe('PATCH /api/auth/me', () => {
         expect(params).toEqual([JSON.stringify({ smsAlerts: false }), 'user-1']);
     });
 
+    it('saves the handle and avatar on the account, so they follow the user to other devices', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 'user-1', email: 'user@example.com', first_name: 'Jordan', last_name: 'Farmer',
+                role: 'extension_officer', region: 'Nakuru', phone: null,
+                profile_settings: { handle: 'jordan.f', avatarId: 'crop_scout' },
+            }],
+            rowCount: 1,
+        });
+
+        const response = await request(app)
+            .patch('/api/auth/me')
+            .send({ profileSettings: { handle: 'jordan.f', avatarId: 'crop_scout' } })
+            .expect(200);
+
+        expect(response.body.data.profileSettings).toEqual({ handle: 'jordan.f', avatarId: 'crop_scout' });
+        const [sql, params] = mockQuery.mock.calls[0];
+        expect(sql).toContain(`profile_settings = COALESCE(profile_settings, '{}'::jsonb) || $1::jsonb`);
+        expect(params).toEqual([JSON.stringify({ handle: 'jordan.f', avatarId: 'crop_scout' }), 'user-1']);
+    });
+
+    it('rejects an invalid handle or unknown profile settings', async () => {
+        await request(app).patch('/api/auth/me').send({ profileSettings: { handle: 'no spaces allowed' } }).expect(400);
+        await request(app).patch('/api/auth/me').send({ profileSettings: { role: 'admin' } }).expect(400);
+        expect(mockQuery).not.toHaveBeenCalled();
+    });
+
     it('rejects unknown or non-boolean alert preferences', async () => {
         await request(app).patch('/api/auth/me').send({ notificationPreferences: { smsAlerts: 'no' } }).expect(400);
         await request(app).patch('/api/auth/me').send({ notificationPreferences: { marketingCalls: true } }).expect(400);

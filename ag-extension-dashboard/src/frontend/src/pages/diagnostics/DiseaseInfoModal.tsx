@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Loader2, Leaf, ShieldAlert, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import type { DiseaseInfo } from '../../api/diseaseService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface Props {
   selectedDisease: string | null;
@@ -17,6 +18,7 @@ export function DiseaseInfoModal({
   diseaseInfo,
   radiusClass: _radiusClass,
 }: Props) {
+  const { t } = useLanguage();
   if (!selectedDisease) return null;
 
   return (
@@ -31,7 +33,7 @@ export function DiseaseInfoModal({
               </div>
               <div>
                 <span className="text-[10px] font-mono text-emerald-400 font-medium">
-                  Pathology Protocol Dossier
+                  {t('ui_disease_info_modal_pathology_protocol_dossier')}
                 </span>
                 <h3 className="text-sm font-semibold text-white">
                   {selectedDisease}
@@ -55,7 +57,7 @@ export function DiseaseInfoModal({
               {/* Description Pod */}
               <div className="p-3.5 rounded-[4px] bg-slate-900/80 border border-slate-800 space-y-1">
                 <h4 className="text-xs font-mono font-medium text-slate-400">
-                  Agronomic Pathology Summary
+                  {t('ui_disease_info_modal_agronomic_pathology_summary')}
                 </h4>
                 <p className="text-xs text-slate-200 leading-relaxed">{diseaseInfo.description}</p>
               </div>
@@ -64,7 +66,7 @@ export function DiseaseInfoModal({
               <div className="p-3.5 rounded-[4px] bg-slate-900/80 border border-slate-800 space-y-2">
                 <h4 className="text-xs font-mono font-medium text-slate-400 flex items-center gap-1.5">
                   <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-                  Key Identifying Symptoms
+                  {t('ui_disease_info_modal_key_identifying_symptoms')}
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                   {diseaseInfo.symptoms.map((symptom, index) => (
@@ -83,7 +85,7 @@ export function DiseaseInfoModal({
               <div className="p-3.5 rounded-[4px] bg-slate-900/80 border border-slate-800 space-y-2">
                 <h4 className="text-xs font-mono font-medium text-slate-400 flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  Treatment guidance
+                  {t('ui_disease_info_modal_treatment_guidance')}
                 </h4>
                 <div className="space-y-1.5">
                   {diseaseInfo.treatment.map((treatment, index) => (
@@ -101,7 +103,7 @@ export function DiseaseInfoModal({
               {/* Prevention Pod */}
               <div className="p-3.5 rounded-[4px] bg-slate-900/80 border border-slate-800 space-y-2">
                 <h4 className="text-xs font-mono font-medium text-slate-400">
-                  Prevention guidance
+                  {t('ui_disease_info_modal_prevention_guidance')}
                 </h4>
                 <div className="space-y-1.5">
                   {diseaseInfo.prevention.map((prevent, index) => (
@@ -118,7 +120,7 @@ export function DiseaseInfoModal({
             </div>
           ) : (
             <p className="text-xs font-mono text-center text-rose-400 py-8">
-              Failed to load pathology dossier information
+              {t('ui_disease_info_modal_failed_to_load_pathology_dossier_inf')}
             </p>
           )}
 
@@ -128,7 +130,7 @@ export function DiseaseInfoModal({
               onClick={() => setSelectedDisease(null)}
               className="px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-medium rounded-[3px] transition-colors"
             >
-              Dismiss
+              {t('ui_recommendation_review_queue_dismiss')}
             </button>
           </div>
         </div>

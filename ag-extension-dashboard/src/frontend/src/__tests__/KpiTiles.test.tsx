@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { KpiTiles } from '@/pages/analytics/KpiTiles';
 import { SupportEfficiencyCard } from '@/components/dashboard/SupportEfficiencyCard';
+import { useAppStore } from '@/store/useAppStore';
 
 const t = (key: string, fallback?: string) => fallback ?? key;
 
@@ -68,5 +69,14 @@ describe('SupportEfficiencyCard', () => {
     );
     expect(screen.getByText('82%')).toBeInTheDocument();
     expect(screen.getByText('4.6 / 5')).toBeInTheDocument();
+  });
+
+  afterEach(() => useAppStore.setState({ user: null } as never));
+
+  it('tells a free-plan user the figures are Pro analytics instead of loading forever', () => {
+    useAppStore.setState({ user: { id: 'o1', role: 'extension_officer', planName: 'Free', isFree: true } } as never);
+    render(<SupportEfficiencyCard t={key => key} cardClass="" performanceData={undefined} />);
+    expect(screen.getByText('dash_support_efficiency_pro_only')).toBeInTheDocument();
+    expect(document.querySelector('.animate-spin')).toBeNull();
   });
 });

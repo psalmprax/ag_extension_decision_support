@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Lock, Loader2, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import { resetPassword } from '@/api/authService';
 import { getApiErrorMessage } from '@/lib/apiError';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const MIN_LEN = 10;
 
@@ -15,6 +16,7 @@ function localProblems(pw: string): string[] {
 }
 
 export const ResetPassword: React.FC = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const token = params.get('token') || '';
@@ -53,15 +55,15 @@ export const ResetPassword: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-2xl overflow-hidden">
         <div className="p-8 bg-gradient-to-br from-primary-500 to-primary-700 text-white">
-          <h1 className="text-2xl font-bold">Choose a new password</h1>
-          <p className="text-sm opacity-90 mt-1">At least {MIN_LEN} characters with a letter and a number</p>
+          <h1 className="text-2xl font-bold">{t('ui_reset_password_choose_a_new_password')}</h1>
+          <p className="text-sm opacity-90 mt-1">{t('ui_reset_password_at_least_characters_with_a_letter_an', { MIN_LEN })}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-5">
           {!token && (
             <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm">
               <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-              This reset link is missing its token. Request a new one from the sign-in page.
+              {t('ui_reset_password_this_reset_link_is_missing_its_token')}
             </div>
           )}
 
@@ -72,13 +74,13 @@ export const ResetPassword: React.FC = () => {
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">{message}</p>
               <button type="button" onClick={() => navigate('/login')} className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition-colors">
-                Sign in
+                {t('ui_reset_password_sign_in')}
               </button>
             </div>
           ) : (
             <>
               <label className="block">
-                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">New password</span>
+                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{t('ui_reset_password_new_password')}</span>
                 <div className="relative mt-1">
                   <Lock className="w-4 h-4 absolute left-3 top-3.5 text-gray-400" />
                   <input
@@ -91,11 +93,11 @@ export const ResetPassword: React.FC = () => {
                   />
                 </div>
                 {password && problems.length > 0 && (
-                  <p className="text-xs text-amber-600 mt-1">Needs {problems.join(', ')}</p>
+                  <p className="text-xs text-amber-600 mt-1">{t('ui_reset_password_needs')} {problems.join(', ')}</p>
                 )}
               </label>
               <label className="block">
-                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">Confirm password</span>
+                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{t('ui_reset_password_confirm_password')}</span>
                 <input
                   type="password"
                   value={confirm}
@@ -104,7 +106,7 @@ export const ResetPassword: React.FC = () => {
                   className="w-full mt-1 px-3 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm"
                   required
                 />
-                {confirm && confirm !== password && <p className="text-xs text-amber-600 mt-1">Passwords do not match</p>}
+                {confirm && confirm !== password && <p className="text-xs text-amber-600 mt-1">{t('register_passwords_not_match')}</p>}
               </label>
 
               {status === 'error' && (
@@ -120,10 +122,10 @@ export const ResetPassword: React.FC = () => {
                 className="w-full py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
               >
                 {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                Update password
+                {t('ui_reset_password_update_password')}
               </button>
               <button type="button" onClick={() => navigate('/login')} className="w-full text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center gap-1">
-                <ArrowLeft className="w-3.5 h-3.5" /> Back to sign in
+                <ArrowLeft className="w-3.5 h-3.5" /> {t('ui_reset_password_back_to_sign_in')}
               </button>
             </>
           )}

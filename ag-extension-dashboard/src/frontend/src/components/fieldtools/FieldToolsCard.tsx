@@ -116,8 +116,8 @@ export function FieldToolsCard() {
                     </div>
                     {tankResult.ok && (
                         <div className="p-3 bg-primary-500/5 rounded-xl text-xs space-y-1">
-                            <p><span className="font-bold">{tankResult.productPerTank}</span> product per {tank}L tank · <span className="font-bold">{tankResult.herbicide.mlPerTank}ml</span>/tank</p>
-                            <p className="text-gray-500 dark:text-gray-400">{tankResult.tanksNeeded} tanks · {tankResult.waterTotalL}L water total · {tankResult.productTotal} product total</p>
+                            <p><span className="font-bold">{tankResult.productPerTank}</span> {t('ui_field_tools_card_product_per')} {tank}{t('ui_field_tools_card_l_tank')} <span className="font-bold">{tankResult.herbicide.mlPerTank}ml</span>{t('ui_field_tools_card_tank')}</p>
+                            <p className="text-gray-500 dark:text-gray-400">{t('ui_field_tools_card_tanks_l_water_total_product_total', { tanksNeeded: tankResult.tanksNeeded, waterTotalL: tankResult.waterTotalL, productTotal: tankResult.productTotal })}</p>
                         </div>
                     )}
                 </div>
@@ -133,9 +133,9 @@ export function FieldToolsCard() {
                     </div>
                     {blendResult.ok && (
                         <div className="p-3 bg-primary-500/5 rounded-xl text-xs space-y-1">
-                            <p>Urea 46-0-0: <span className="font-bold">{blendResult.ureaKg} kg</span></p>
-                            <p>TSP 0-46-0: <span className="font-bold">{blendResult.tspKg} kg</span></p>
-                            <p>MOP 0-0-60: <span className="font-bold">{blendResult.mopKg} kg</span></p>
+                            <p>{t('ui_field_tools_card_urea_46_0_0')} <span className="font-bold">{blendResult.ureaKg} kg</span></p>
+                            <p>{t('ui_field_tools_card_tsp_0_46_0')} <span className="font-bold">{blendResult.tspKg} kg</span></p>
+                            <p>{t('ui_field_tools_card_mop_0_0_60')} <span className="font-bold">{blendResult.mopKg} kg</span></p>
                         </div>
                     )}
                 </div>
@@ -150,8 +150,8 @@ export function FieldToolsCard() {
                     </div>
                     {densityResult.ok && (
                         <div className="p-3 bg-primary-500/5 rounded-xl text-xs space-y-1">
-                            <p><span className="font-bold">{densityResult.plantsPerHa.toLocaleString()}</span> plants/ha</p>
-                            <p className="text-gray-500 dark:text-gray-400">{densityResult.plantsTotal.toLocaleString()} plants · ~{densityResult.seedKgApprox} kg seed (15% oversow)</p>
+                            <p><span className="font-bold">{densityResult.plantsPerHa.toLocaleString()}</span> {t('ui_field_tools_card_plants_ha')}</p>
+                            <p className="text-gray-500 dark:text-gray-400">{densityResult.plantsTotal.toLocaleString()} {t('ui_field_tools_card_plants')}{densityResult.seedKgApprox} {t('ui_field_tools_card_kg_seed_15_oversow')}</p>
                         </div>
                     )}
                 </div>

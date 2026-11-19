@@ -4,6 +4,7 @@ import { fieldIntelService } from '@/api/fieldIntelService';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useDemoMode } from '@/demo';
 import { DEMO_LEADERBOARD } from '@/demo/demoMode';
+import { useLanguage } from '@/lib/LanguageContext';
 
 // ── Route planner ────────────────────────────────────────────────────────────
 
@@ -11,6 +12,7 @@ import { DEMO_LEADERBOARD } from '@/demo/demoMode';
 // ── Leaderboard ──────────────────────────────────────────────────────────────
 
 export function LeaderboardCard() {
+    const { t } = useLanguage();
     const { cardClass } = useThemeClasses();
     const { isDemo } = useDemoMode();
     const { data } = useQuery({
@@ -25,11 +27,11 @@ export function LeaderboardCard() {
         <div className={`${cardClass} p-4 sm:p-5`}>
             <div className="flex items-center gap-2 mb-3">
                 <Award className="w-4 h-4 text-amber-500" />
-                <h3 className="text-sm font-black uppercase tracking-widest">Officer Leaderboard</h3>
-                <span className="text-xxs text-gray-400 ml-auto">30 days</span>
+                <h3 className="text-sm font-black uppercase tracking-widest">{t('ui_field_intel_cards_officer_leaderboard')}</h3>
+                <span className="text-xxs text-gray-400 ml-auto">{t('ui_field_intel_cards_30_days')}</span>
             </div>
             {!data || data.length === 0 ? (
-                <p className="text-xs text-gray-400">No officer activity in the last 30 days.</p>
+                <p className="text-xs text-gray-400">{t('ui_field_intel_cards_no_officer_activity_in_the_last_30_d')}</p>
             ) : (
                 <ol className="space-y-2">
                     {data.slice(0, 5).map((o, idx) => (
@@ -39,7 +41,7 @@ export function LeaderboardCard() {
                             </span>
                             <span className="min-w-0 flex-1 truncate">
                                 <span className="font-semibold">{o.officerName}</span>
-                                <span className="text-gray-400"> · {o.visitsCompleted} visits · {o.efficacySuccessRate !== null ? `${o.efficacySuccessRate}% efficacy` : 'no outcomes yet'}</span>
+                                <span className="text-gray-400"> · {o.visitsCompleted} {t('ui_field_intel_cards_visits')} {o.efficacySuccessRate !== null ? `${o.efficacySuccessRate}% efficacy` : 'no outcomes yet'}</span>
                             </span>
                             <span className="flex gap-1 shrink-0">
                                 {o.badges.slice(0, 2).map(b => (

@@ -16,6 +16,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { useRoleTabGuard } from '@/hooks/useRoleTabGuard';
 import ErrorBoundary from '@ag-extension/shared';
 import { getNavItems } from './config/navItems';
+import { HubTabs } from '@/components/layout/HubTabs';
 import { useDemoMode } from '@/demo';
 import { AppHeader } from './components/layout/AppHeader';
 import { AppSidebar } from './components/layout/AppSidebar';
@@ -63,6 +64,7 @@ const DiagnosisPage = lazy(() =>
 const TAB_TO_PATH: Record<string, string> = {
   dashboard: '/dashboard',
   portfolio: '/portfolio',
+  register_farmer: '/register-farmer',
   visits: '/visits',
   reports: '/reports',
   analytics: '/analytics',
@@ -403,10 +405,7 @@ function App() {
               element={<Register />}
             />
             <Route path="/signup" element={<Navigate to="/register" replace />} />
-            <Route
-              path="/forgot-password"
-              element={<ForgotPassword />}
-            />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route
@@ -421,14 +420,7 @@ function App() {
             <Route path="/demo/rag" element={<DemoPage initialTab="rag" />} />
             <Route path="/demo/synthesis" element={<DemoPage initialTab="synthesis" />} />
             <Route path="/demo/telemetry" element={<DemoPage initialTab="telemetry" />} />
-            <Route
-              path="/knowledge"
-              element={
-                <div className="min-h-screen bg-theme-bg-primary">
-                  <KnowledgeBase />
-                </div>
-              }
-            />
+            <Route path="/knowledge" element={<div className="min-h-screen bg-theme-bg-primary"><KnowledgeBase /></div>} />
             <Route path="/advisory-studio" element={<AdvisoryStudioPage />} />
             <Route path="/diagnosis" element={<DiagnosisPage />} />
             <Route path="/disease-diagnosis" element={<DiagnosisPage />} />
@@ -520,6 +512,7 @@ function App() {
                 }
               >
                 <div className="p-3 sm:p-6 max-w-full overflow-x-hidden">
+                  <HubTabs activeTab={activeTab} navItems={navItems} setActiveTab={setActiveTab} />
                   <TabContent
                     activeTab={activeTab}
                     headingClass={headingClass}

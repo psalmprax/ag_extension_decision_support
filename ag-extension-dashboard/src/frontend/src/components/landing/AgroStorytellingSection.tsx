@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { playStageChime } from '@/lib/audioHaptics';
+import { useLanguage } from '@/lib/LanguageContext';
 
 type AudiencePersona = 'officers' | 'agribusiness' | 'donors';
 
@@ -221,6 +222,7 @@ const STAGE_DATA_BY_PERSONA: Record<AudiencePersona, StageStoryItem[]> = {
 };
 
 export function AgroStorytellingSection() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [activeStage, setActiveStage] = useState(0);
   const [persona, setPersona] = useState<AudiencePersona>('officers');
@@ -261,10 +263,10 @@ export function AgroStorytellingSection() {
           <div>
             <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-widest text-emerald-400 uppercase mb-1.5">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Agronomic Intelligence Pipeline</span>
+              <span>{t('ui_agro_storytelling_section_agronomic_intelligence_pipeline')}</span>
             </div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
-              From Satellite Orbit to Soil Root Zone
+              {t('ui_agro_storytelling_section_from_satellite_orbit_to_soil_root_zo')}
             </h2>
           </div>
 
@@ -334,7 +336,7 @@ export function AgroStorytellingSection() {
                         </span>
                       </div>
                       <span className="px-3 py-1 rounded-md text-xs font-mono font-bold bg-white/10 text-white/90 border border-white/10">
-                        STEP {activeStoryItem.num} // 04
+                        {t('ui_agro_storytelling_section_step_04', { num: activeStoryItem.num })}
                       </span>
                     </div>
 
@@ -365,7 +367,7 @@ export function AgroStorytellingSection() {
                       onClick={() => navigate('/demo')}
                       className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20"
                     >
-                      <span>Try Demo</span>
+                      <span>{t('ui_agro_storytelling_section_try_demo')}</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>

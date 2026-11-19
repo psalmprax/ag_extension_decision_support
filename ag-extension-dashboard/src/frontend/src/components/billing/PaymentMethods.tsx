@@ -110,10 +110,10 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
               </div>
               <div>
                 <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
-                  M-Pesa / Airtel Money
+                  {t('ui_payment_methods_m_pesa_airtel_money')}
                 </p>
                 <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 mt-0.5">
-                  Direct USSD / Till
+                  {t('ui_payment_methods_direct_ussd_till')}
                 </span>
               </div>
             </div>
@@ -173,7 +173,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
               />
               <div className="flex items-center justify-between gap-3 pt-1">
                 <p className="text-[11px] text-slate-500 dark:text-white/50 leading-tight">
-                  Instant webhook activation upon automated mobile money reconciliation.
+                  {t('ui_payment_methods_instant_webhook_activation_upon_auto')}
                 </p>
                 <button
                   disabled={!mobilePayData.transactionId || !mobilePayData.planId || actionLoading === 'mobile-pay'}
@@ -183,7 +183,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                   }}
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs rounded-lg shadow-sm transition-all shrink-0"
                 >
-                  Confirm Payment
+                  {t('ui_payment_methods_confirm_payment')}
                 </button>
               </div>
               {formMessage && (
@@ -237,7 +237,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                 className="font-mono tracking-wider text-xs bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl"
               />
               <div className="flex items-center justify-between gap-3 pt-1">
-                <p className="text-[11px] text-slate-500 dark:text-white/50">Instantly unlocks agronomist quota.</p>
+                <p className="text-[11px] text-slate-500 dark:text-white/50">{t('ui_payment_methods_instantly_unlocks_agronomist_quota')}</p>
                 <button
                   disabled={!voucherCode.trim() || actionLoading === 'voucher'}
                   onClick={() => {
@@ -246,7 +246,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                   }}
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs rounded-lg shadow-sm transition-all shrink-0"
                 >
-                  Activate Token
+                  {t('ui_payment_methods_activate_token')}
                 </button>
               </div>
               {formMessage && (

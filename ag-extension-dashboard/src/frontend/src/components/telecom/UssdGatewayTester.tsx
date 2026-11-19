@@ -1,7 +1,9 @@
 import React, { useRef, useState } from 'react';
 import { PhoneCall, Send, Radio, CheckCircle2, Smartphone, RotateCcw } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export const UssdGatewayTester: React.FC = () => {
+  const { t } = useLanguage();
   const [activeChannel, setActiveChannel] = useState<'ussd' | 'sms'>('ussd');
   const nextPreviewId = useRef(0);
 
@@ -91,11 +93,10 @@ export const UssdGatewayTester: React.FC = () => {
         <div>
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
             <Radio className="w-4 h-4 text-emerald-400" />
-            Telecom Gateway & USSD/SMS Simulator
+            {t('ui_ussd_gateway_tester_telecom_gateway_ussd_sms_simulator')}
           </h3>
           <p className="text-xs text-stone-400 mt-0.5">
-            Local simulation only. No gateway is contacted, messages sent, or visits scheduled.
-            Do not enter real phone numbers or personal information.
+            {t('ui_ussd_gateway_tester_local_simulation_only_no_gateway_is')}
           </p>
         </div>
 
@@ -109,7 +110,7 @@ export const UssdGatewayTester: React.FC = () => {
             }`}
           >
             <Smartphone className="w-3.5 h-3.5" />
-            <span>USSD Session</span>
+            <span>{t('ui_ussd_gateway_tester_ussd_session')}</span>
           </button>
           <button
             onClick={() => setActiveChannel('sms')}
@@ -120,7 +121,7 @@ export const UssdGatewayTester: React.FC = () => {
             }`}
           >
             <Send className="w-3.5 h-3.5" />
-            <span>SMS Broadcaster</span>
+            <span>{t('ui_ussd_gateway_tester_sms_broadcaster')}</span>
           </button>
         </div>
       </div>
@@ -159,7 +160,7 @@ export const UssdGatewayTester: React.FC = () => {
                             type="submit"
                             className="bg-black text-[#8fa781] px-2 py-1 rounded text-xxs font-bold cursor-pointer"
                           >
-                            Send
+                            {t('common_send')}
                           </button>
                         </div>
                       </form>
@@ -168,8 +169,8 @@ export const UssdGatewayTester: React.FC = () => {
                 ) : (
                   <div className="flex flex-col items-center justify-center h-[180px] text-center">
                     <Radio className="w-8 h-8 opacity-40 mb-2" />
-                    <span className="font-bold text-sm">Simulated phone</span>
-                    <span className="text-xs opacity-75 mt-1">Example code {ussdDialCode} (not a live service)</span>
+                    <span className="font-bold text-sm">{t('ui_ussd_gateway_tester_simulated_phone')}</span>
+                    <span className="text-xs opacity-75 mt-1">{t('ui_ussd_gateway_tester_example_code_not_a_live_service', { ussdDialCode })}</span>
                   </div>
                 )}
               </div>
@@ -182,7 +183,7 @@ export const UssdGatewayTester: React.FC = () => {
                     className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-900/30"
                   >
                     <PhoneCall className="w-3.5 h-3.5" />
-                    Simulate dialing {ussdDialCode}
+                    {t('ui_ussd_gateway_tester_simulate_dialing')} {ussdDialCode}
                   </button>
                 ) : (
                   <button
@@ -190,7 +191,7 @@ export const UssdGatewayTester: React.FC = () => {
                     className="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-stone-300 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <RotateCcw className="w-3 h-3" />
-                    End Session
+                    {t('ui_ussd_gateway_tester_end_session')}
                   </button>
                 )}
               </div>
@@ -202,16 +203,16 @@ export const UssdGatewayTester: React.FC = () => {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xxs font-mono uppercase text-emerald-400 font-bold">
-                  Simulated USSD Session Trace
+                  {t('ui_ussd_gateway_tester_simulated_ussd_session_trace')}
                 </span>
                 <span className="text-xxs text-stone-400">
-                  No provider connected
+                  {t('ui_ussd_gateway_tester_no_provider_connected')}
                 </span>
               </div>
               <div className="bg-slate-950 p-4 rounded-xl font-mono text-xs text-stone-300 min-h-[160px] space-y-1.5 border border-white/5">
                 {ussdHistory.length === 0 ? (
                   <span className="text-stone-500 italic">
-                    No active session. Click Dial on the virtual phone.
+                    {t('ui_ussd_gateway_tester_no_active_session_click_dial_on_the')}
                   </span>
                 ) : (
                   ussdHistory.map((h, i) => (
@@ -224,8 +225,7 @@ export const UssdGatewayTester: React.FC = () => {
             </div>
 
             <div className="mt-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-stone-300">
-              <span className="font-bold text-emerald-400">Smallholder Inclusivity:</span> USSD
-              can work on basic phones when a supported carrier and service are configured.
+              <span className="font-bold text-emerald-400">{t('ui_ussd_gateway_tester_smallholder_inclusivity')}</span> {t('ui_ussd_gateway_tester_ussd_can_work_on_basic_phones_when_a')}
             </div>
           </div>
         </div>
@@ -240,7 +240,7 @@ export const UssdGatewayTester: React.FC = () => {
           >
             <div>
               <label htmlFor="demo-phone" className="text-xs font-bold text-stone-300 block mb-1.5">
-                Example recipient (do not enter a real number)
+                {t('ui_ussd_gateway_tester_example_recipient_do_not_enter_a_rea')}
               </label>
               <input
                 id="demo-phone"
@@ -252,9 +252,9 @@ export const UssdGatewayTester: React.FC = () => {
             </div>
             <div>
               <div className="flex justify-between items-center mb-1.5">
-                <label htmlFor="demo-message" className="text-xs font-bold text-stone-300">Example message</label>
+                <label htmlFor="demo-message" className="text-xs font-bold text-stone-300">{t('ui_ussd_gateway_tester_example_message')}</label>
                 <span className="text-xxs font-mono text-stone-400">
-                  {smsMessage.length} characters
+                  {t('ui_ussd_gateway_tester_characters', { length: smsMessage.length })}
                 </span>
               </div>
               <textarea
@@ -270,14 +270,14 @@ export const UssdGatewayTester: React.FC = () => {
               className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center justify-center gap-2 cursor-pointer border border-white/10 shadow-sm"
             >
               <Send className="w-3.5 h-3.5" />
-              Add local preview
+              {t('ui_ussd_gateway_tester_add_local_preview')}
             </button>
           </form>
 
           {/* SMS Logs */}
           <div className="p-6 rounded-xl bg-black/40 border border-white/10 space-y-3">
             <h4 className="text-xs font-medium text-stone-400">
-              Local previews (not sent)
+              {t('ui_ussd_gateway_tester_local_previews_not_sent')}
             </h4>
             <div className="space-y-2.5 max-h-[260px] overflow-y-auto">
               {smsLogs.map(log => (

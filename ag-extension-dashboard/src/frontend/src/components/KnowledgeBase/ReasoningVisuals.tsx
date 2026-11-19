@@ -32,6 +32,7 @@ import {
 import { EMPTY_VISUALS, type Chart, type KPI, type MediaAsset, type VisualsData } from './types';
 import { ChartTooltip } from '@/components/charts/ChartTooltip';
 import { CHART_PALETTE } from '@/components/charts/chartConfig';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface ReasoningVisualsProps {
   visuals: VisualsData;
@@ -137,6 +138,7 @@ const MediaAssetsSection = ({
   setSelectedImage: (url: string) => void;
   getYoutubeEmbedUrl: (url: string) => string;
 }) => {
+  const { t } = useLanguage();
   const images = (safeVisuals.images ?? []) as MediaAsset[];
   const videos = (safeVisuals.videos ?? []) as MediaAsset[];
   if (!(images.length > 0 || videos.length > 0)) {
@@ -166,18 +168,18 @@ const MediaAssetsSection = ({
             </div>
             <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xxs font-black uppercase tracking-widest">
               <ImageIcon className="w-3 h-3" />
-              Image
+              {t('ui_reasoning_visuals_image')}
             </div>
             <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xs font-black uppercase tracking-widest">
               <CheckCircle2 className="w-2.5 h-2.5" />
-              Verified ALFA Asset
+              {t('ui_reasoning_visuals_verified_alfa_asset')}
             </div>
           </div>
           {img.caption && (
             <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2 flex items-center justify-between">
               <span>{img.caption}</span>
               <span className="text-xxs text-primary-500 uppercase font-black opacity-0 group-hover:opacity-100 transition-opacity">
-                Click to Enlarge
+                {t('ui_reasoning_visuals_click_to_enlarge')}
               </span>
             </p>
           )}
@@ -207,7 +209,7 @@ const MediaAssetsSection = ({
                 </div>
                 <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xxs font-black uppercase tracking-widest">
                   <Play className="w-3 h-3" />
-                  External Video
+                  {t('ui_reasoning_visuals_external_video')}
                 </div>
                 <a
                   href={vid.url}
@@ -221,7 +223,7 @@ const MediaAssetsSection = ({
             )}
             <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xs font-black uppercase tracking-widest pointer-events-none">
               <CheckCircle2 className="w-2.5 h-2.5" />
-              Verified Source
+              {t('ui_reasoning_visuals_verified_source')}
             </div>
           </div>
           {vid.caption && (
@@ -246,6 +248,7 @@ const AudioSynthesisSection = ({
   togglePlayback: () => void;
   setIsPlaying: (val: boolean) => void;
 }) => {
+  const { t } = useLanguage();
   if (!audio) return null;
   return (
     <div className="p-8 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-xl text-white overflow-hidden relative group shadow-2xl shadow-primary-500/20">
@@ -261,10 +264,10 @@ const AudioSynthesisSection = ({
         </motion.button>
         <div className="flex-1 text-center md:text-left">
           <h4 className="text-xxs font-black uppercase tracking-[0.3em] opacity-70 mb-2">
-            ALFA Voice Synthesis
+            {t('ui_reasoning_visuals_alfa_voice_synthesis')}
           </h4>
           <p className="text-xl font-bold leading-tight mb-4">
-            Listen to the AI's synthesized expert recommendation.
+            {t('ui_reasoning_visuals_listen_to_the_ai_s_synthesized_exper')}
           </p>
           <div className="flex items-center gap-4 justify-center md:justify-start">
             <div className="h-1 flex-1 bg-white/20 rounded-full overflow-hidden max-w-[200px]">
@@ -292,6 +295,7 @@ const AudioSynthesisSection = ({
 };
 
 export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, audio }) => {
+  const { t } = useLanguage();
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -483,7 +487,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
             </div>
             <div className="flex-1">
               <h4 className="text-sm font-black uppercase tracking-[0.2em] opacity-70 mb-1">
-                Expert Decision Insight
+                {t('ui_reasoning_visuals_expert_decision_insight')}
               </h4>
               <p className="text-lg font-bold leading-tight">
                 {safeVisuals.kpis && safeVisuals.kpis.length > 0
@@ -493,7 +497,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
             </div>
             <div className="hidden md:block">
               <div className="px-6 py-2 bg-white text-primary-600 rounded-xl font-black shadow-xl shadow-black/10">
-                ALFA v2.2
+                {t('ui_reasoning_visuals_alfa_v2_2')}
               </div>
             </div>
           </div>

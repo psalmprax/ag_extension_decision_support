@@ -91,6 +91,34 @@ export const analyzePlantImage = async (
   return response.data;
 };
 
+export interface DiagnosisHistoryEntry {
+  id: string;
+  farmerId: string | null;
+  district: string | null;
+  crop: string | null;
+  diseaseLabel: string;
+  confidence: number | null;
+  source: string | null;
+  createdAt: string;
+}
+
+export interface DiagnosisHistoryPage {
+  items: DiagnosisHistoryEntry[];
+  limit: number;
+  offset: number;
+}
+
+/** The caller's own diagnosis events; administrators may audit another account by id. */
+export const getDiagnosisHistory = async (
+  limit = 20,
+  userId?: string
+): Promise<{ success: boolean; data: DiagnosisHistoryPage }> => {
+  const response = await apiClient.get('/ai/diseases/history', {
+    params: userId ? { limit, userId } : { limit },
+  });
+  return response.data;
+};
+
 export interface SoilAnalysisResult {
   overallHealthScore: number | null;
   texture: string;

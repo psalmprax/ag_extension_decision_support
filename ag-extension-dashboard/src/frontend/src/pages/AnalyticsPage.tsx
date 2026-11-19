@@ -26,14 +26,14 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">System Analytics</h1>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{t('ui_analytics_page_system_analytics')}</h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
                   <Radio className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                  Last 30 days
+                  {t('ui_analytics_page_last_30_days')}
                 </span>
               </div>
               <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-                Support performance, commodity prices and daily activity for your farmers.
+                {t('ui_analytics_page_support_performance_commodity_prices')}
               </p>
             </div>
           </div>
@@ -56,18 +56,18 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
                   {t('analytics_activity_timeline') || 'Activity & Advisory Timeline'}
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-white/50">
-                  Completed field visits and new farmer conversations per day, all channels.
+                  {t('ui_analytics_page_completed_field_visits_and_new_farme')}
                 </p>
               </div>
 
               <div className="flex items-center gap-3 text-xs">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-                  <span className="text-slate-700 dark:text-white/70">Field visits</span>
+                  <span className="text-slate-700 dark:text-white/70">{t('ui_analytics_page_field_visits')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-sky-500 dark:bg-sky-400" />
-                  <span className="text-slate-700 dark:text-white/70">Conversations</span>
+                  <span className="text-slate-700 dark:text-white/70">{t('ui_analytics_page_conversations')}</span>
                 </div>
               </div>
             </div>

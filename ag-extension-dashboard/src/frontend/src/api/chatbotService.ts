@@ -48,8 +48,21 @@ export const deleteConversation = async (id: string) => {
 };
 
 /** A plain message from the signed-in user into a thread. No AI reply is triggered. */
-export const sendThreadMessage = async (conversationId: string, content: string, language?: string) => {
-  const { data } = await apiClient.post('/chatbot/messages', { conversationId, content, language });
+export const sendThreadMessage = async (
+  conversationId: string,
+  content: string,
+  language?: string,
+  attachmentIds?: string[],
+  /** The copilot draft an officer's reply started from: the server marks the reply as AI-drafted. */
+  aiDraft?: string
+) => {
+  const { data } = await apiClient.post('/chatbot/messages', {
+    conversationId,
+    content,
+    language,
+    ...(attachmentIds?.length ? { attachmentIds } : {}),
+    ...(aiDraft ? { aiDraft: { text: aiDraft } } : {}),
+  });
   return data;
 };
 
@@ -77,3 +90,19 @@ export const saveTurnTakingSettings = async (settings: TurnTakingSettings, tenan
   return data.data as { tenantId: string; settings: TurnTakingSettings };
 };
 
+
+/** Unread messages in the caller's farmer threads (badges). */
+export interface UnreadSummary {
+  total: number;
+  conversations: Record<string, number>;
+}
+
+export const fetchUnreadSummary = async (): Promise<UnreadSummary> => {
+  const { data } = await apiClient.get<{ success: boolean; data: UnreadSummary }>('/chatbot/unread');
+  return data.data ?? { total: 0, conversations: {} };
+};
+
+/** The caller has read this thread up to now. */
+export const markThreadRead = async (conversationId: string): Promise<void> => {
+  await apiClient.post(`/chatbot/conversations/${conversationId}/read`);
+};

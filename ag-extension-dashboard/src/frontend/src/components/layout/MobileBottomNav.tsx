@@ -4,6 +4,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
 import { triggerHaptic } from '@/lib/haptics';
+import { isMenuItemLocked, type PaidService } from '@/lib/planAccess';
 
 interface MobileBottomNavProps {
   activeTab: string;
@@ -18,6 +19,7 @@ interface NavItemConfig {
   icon: React.ElementType;
   isSpecial?: boolean;
   requiresPro?: boolean;
+  service?: PaidService;
 }
 
 const SpecialCenterButton: React.FC<{
@@ -109,9 +111,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const { designVariant } = useFeatureFlags();
   const isBase = designVariant === 'base' || designVariant === 'new';
 
-  const isFreeUser =
-    user?.role !== 'admin' &&
-    (user?.isFree || user?.planName?.toLowerCase() === 'free' || !user?.planName);
 
   const handleTabClick = (id: string) => {
     triggerHaptic('light');
@@ -121,7 +120,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   // Farmers get their own tabs; the officers' ones would bounce back to their menu.
   const farmerItems: NavItemConfig[] = [
     { id: 'farmer_dashboard', label: t('nav_home', { defaultValue: 'Home' }), icon: LayoutDashboard },
-    { id: 'officerchat', label: t('nav_officerchat', { defaultValue: 'My officer' }), icon: MessageSquare, requiresPro: true },
+    { id: 'officerchat', label: t('nav_officerchat', { defaultValue: 'My officer' }), icon: MessageSquare, requiresPro: true, service: 'chat' },
     { id: 'knowledge', label: t('nav_knowledge', { defaultValue: 'Knowledge' }), icon: BookOpen },
   ];
 
@@ -163,7 +162,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       <div className="flex items-center justify-around max-w-lg mx-auto w-full">
         {navItems.map(item => {
           const isActive = activeTab === item.id;
-          const isLocked = isFreeUser && item.requiresPro;
+          const isLocked = isMenuItemLocked(user, item);
 
           return item.isSpecial ? (
             <SpecialCenterButton

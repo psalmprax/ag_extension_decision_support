@@ -66,10 +66,10 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
                   </div>
                   <div>
                     <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                      Bulk SMS Composer
+                      {t('ui_bulk_sms_modal_bulk_sms_composer')}
                     </h3>
                     <p className="text-xs font-medium text-primary-600 dark:text-primary-400 font-mono tabular-nums">
-                      Sending to {selectedCount} farmers
+                      {t('ui_bulk_sms_modal_sending_to_farmers', { selectedCount })}
                     </p>
                   </div>
                 </div>
@@ -86,7 +86,7 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
               <div className="space-y-3">
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
                   <MessageSquare className="w-3.5 h-3.5" />
-                  Quick Templates
+                  {t('ui_bulk_sms_modal_quick_templates')}
                 </label>
                 <div className="grid grid-cols-1 gap-2">
                   {templates.map(tpl => (
@@ -107,12 +107,12 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                    Custom Message
+                    {t('ui_bulk_sms_modal_custom_message')}
                   </label>
                   <span
                     className={`text-xs font-mono tabular-nums ${message.length > 160 ? 'text-amber-500' : 'text-gray-400'}`}
                   >
-                    {message.length} / 160 chars
+                    {t('ui_bulk_sms_modal_160_chars', { length: message.length })}
                   </span>
                 </div>
                 <textarea
@@ -125,7 +125,7 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
                   <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800">
                     <AlertCircle className="w-4 h-4 text-amber-600" />
                     <p className="text-xs text-amber-700 dark:text-amber-400 leading-tight">
-                      Warning: Messages over 160 characters may be split into multiple SMS.
+                      {t('ui_bulk_sms_modal_warning_messages_over_160_characters')}
                     </p>
                   </div>
                 )}

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { transactionService } from '../../services/transactionService';
 import { logger } from '../../utils/logger';
 import { authorize, AuthRequest } from '../../middleware/authorize';
+import { requireSystemAdmin } from '../../middleware/requireSystemAdmin';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
@@ -95,7 +96,8 @@ router.get('/transaction/list', authorize(['admin']), async (req: AuthRequest, r
  *     summary: Verify (approve) a transaction submission (Admin only)
  *     tags: [Billing]
  */
-router.post('/transaction/verify/:id', authorize(['admin']), async (req: AuthRequest, res) => {
+// Approving a manual payment activates a plan: a manual upgrade, system administrator only.
+router.post('/transaction/verify/:id', authorize(['admin']), requireSystemAdmin, async (req: AuthRequest, res) => {
     try {
         const { id } = req.params;
         const adminUserId = req.user!.userId;
@@ -119,7 +121,7 @@ router.post('/transaction/verify/:id', authorize(['admin']), async (req: AuthReq
  *     summary: Reject a transaction submission (Admin only)
  *     tags: [Billing]
  */
-router.post('/transaction/reject/:id', authorize(['admin']), async (req: AuthRequest, res) => {
+router.post('/transaction/reject/:id', authorize(['admin']), requireSystemAdmin, async (req: AuthRequest, res) => {
     try {
         const { id } = req.params;
         const { reason } = req.body;

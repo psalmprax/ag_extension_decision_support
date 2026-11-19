@@ -6,6 +6,7 @@ import {
   User,
   Bot,
 } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export interface SimulatorTabProps {
   simulatorMessages: Array<{ sender: 'farmer' | 'bot'; text: string }>;
@@ -22,17 +23,16 @@ export const SimulatorTab: React.FC<SimulatorTabProps> = ({
   handleSimulatorSend,
   onResetSimulator,
 }) => {
+  const { t } = useLanguage();
   return (
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-slate-900/60 border border-white/[0.08]">
         <div className="flex items-center gap-2 text-emerald-400 font-medium text-sm mb-1">
           <MessageSquare className="w-4 h-4" />
-          <span>How Multi-Channel Self-Enrollment Works</span>
+          <span>{t('ui_simulator_tab_how_multi_channel_self_enrollment_wo')}</span>
         </div>
         <p className="text-xs text-slate-300 leading-relaxed">
-          When an unregistered farmer texts your SMS number, WhatsApp Business account, or Telegram Bot, the system
-          automatically walks them through interactive conversational registration. Once finished, their profile is
-          instantly added to your dashboard with real regional GPS coordinates!
+          {t('ui_simulator_tab_when_an_unregistered_farmer_texts_yo')}
         </p>
       </div>
 
@@ -40,14 +40,14 @@ export const SimulatorTab: React.FC<SimulatorTabProps> = ({
         <div className="px-4 py-2.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-            <span className="text-xs font-medium text-slate-300">Live Conversational Simulation</span>
+            <span className="text-xs font-medium text-slate-300">{t('ui_simulator_tab_live_conversational_simulation')}</span>
           </div>
           <button
             onClick={onResetSimulator}
             className="text-xxs text-slate-400 hover:text-white flex items-center gap-1"
           >
             <RefreshCw className="w-3 h-3" />
-            <span>Reset Simulator</span>
+            <span>{t('ui_simulator_tab_reset_simulator')}</span>
           </button>
         </div>
 
@@ -64,13 +64,13 @@ export const SimulatorTab: React.FC<SimulatorTabProps> = ({
                 <div className="text-xxs opacity-60 mb-0.5 font-bold flex items-center gap-1">
                   {m.sender === 'farmer' ? (
                     <>
-                      <span>Farmer Phone</span>
+                      <span>{t('ui_simulator_tab_farmer_phone')}</span>
                       <User className="w-2.5 h-2.5" />
                     </>
                   ) : (
                     <>
                       <Bot className="w-2.5 h-2.5" />
-                      <span>Ag-Advisory Bot</span>
+                      <span>{t('ui_simulator_tab_ag_advisory_bot')}</span>
                     </>
                   )}
                 </div>
@@ -94,7 +94,7 @@ export const SimulatorTab: React.FC<SimulatorTabProps> = ({
             className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all"
           >
             <Send className="w-3.5 h-3.5" />
-            <span>Reply</span>
+            <span>{t('ui_simulator_tab_reply')}</span>
           </button>
         </div>
       </div>

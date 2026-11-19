@@ -133,7 +133,7 @@ describe('recording a channel message', () => {
         await expect(recordChannelMessage({ farmerId: 'farmer-1', channel: 'sms', content: 'Yellow leaves' })).resolves.toBe('conv-1');
 
         const insert = mockQuery.mock.calls.find(([sql]) => String(sql).includes('INSERT INTO chat_messages'))!;
-        expect(insert[1]).toEqual(['conv-1', 'user', 'Yellow leaves', null, 'sms', false]);
+        expect(insert[1]).toEqual(['conv-1', 'user', 'Yellow leaves', null, 'sms', false, null]);
     });
 
     it('starts a thread with the assigned officer on first contact', async () => {

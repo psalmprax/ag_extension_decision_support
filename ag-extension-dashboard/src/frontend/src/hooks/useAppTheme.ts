@@ -8,7 +8,9 @@ export const useAppTheme = (themeName: ThemeName, darkMode: boolean) => {
     localStorage.setItem('ag-theme-name', themeName);
   }, [themeName]);
 
-  // Apply dark mode class
+  // Apply dark mode class. Native widgets (scrollbars, form controls, the
+  // canvas background) are painted from <meta name="color-scheme">, so it has
+  // to follow the override rather than staying at the document-wide default.
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -17,5 +19,8 @@ export const useAppTheme = (themeName: ThemeName, darkMode: boolean) => {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
+    document
+      .querySelector('meta[name="color-scheme"]')
+      ?.setAttribute('content', darkMode ? 'dark' : 'light');
   }, [darkMode]);
 };

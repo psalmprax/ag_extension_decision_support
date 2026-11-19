@@ -3,6 +3,7 @@ import { authorize } from '@/middleware/authorize';
 import crudRouter from './crud';
 import bulkRouter from './bulk';
 import importExportRouter from './importExport';
+import progressRouter from './progress';
 import { createShareRoute } from '../shareRouteFactory';
 
 const router = Router();
@@ -11,6 +12,7 @@ const router = Router();
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 router.use(importExportRouter);
+router.use(progressRouter);
 router.use(crudRouter);
 
 /**

@@ -30,8 +30,10 @@ import { CropCyclesTable } from '@/components/crops/CropCyclesTable';
 import { FieldModal } from '@/components/crops/FieldModal';
 import { GrowthCycleModal } from '@/components/crops/GrowthCycleModal';
 import { HarvestModal } from '@/components/crops/HarvestModal';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function CropsFields() {
+  const { t } = useLanguage();
   const { radiusClass, btnClass, cardClass } = useThemeClasses();
   const { addNotification, user } = useAppStore();
   const { isDemo } = useDemoMode();
@@ -366,10 +368,10 @@ export function CropsFields() {
             </div>
             <div>
               <div className="flex items-center gap-2 sm:gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Fields & Geospatial Parcels</h1>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{t('ui_crops_fields_fields_geospatial_parcels')}</h1>
                 <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
                   <Sprout className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                  Growth Cycles Active
+                  {t('ui_crops_fields_growth_cycles_active')}
                 </span>
               </div>
               <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
@@ -404,7 +406,7 @@ export function CropsFields() {
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg transition-colors active:scale-95 disabled:opacity-50"
             >
               <Plus className="w-4 h-4" />
-              <span>Add Field Sector</span>
+              <span>{t('ui_crops_fields_add_field_sector')}</span>
             </button>
           </div>
         </div>
@@ -414,7 +416,7 @@ export function CropsFields() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Sectors</span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('ui_crops_fields_total_sectors')}</span>
             <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
               <Map className="w-4 h-4" />
             </div>
@@ -424,7 +426,7 @@ export function CropsFields() {
 
         <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Cultivated Area</span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('ui_crops_fields_total_cultivated_area')}</span>
             <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               <Sliders className="w-4 h-4" />
             </div>
@@ -434,7 +436,7 @@ export function CropsFields() {
 
         <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Active Timelines</span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('ui_crops_fields_active_timelines')}</span>
             <div className="p-2 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
               <Sprout className="w-4 h-4" />
             </div>
@@ -444,12 +446,12 @@ export function CropsFields() {
 
         <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Harvested Yield</span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('ui_crops_fields_harvested_yield')}</span>
             <div className="p-2 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-purple-600 dark:text-purple-300 font-mono tabular-nums">{((Number(totalYieldKg) || 0) / 1000).toFixed(1)} tons</p>
+          <p className="text-2xl font-bold text-purple-600 dark:text-purple-300 font-mono tabular-nums">{((Number(totalYieldKg) || 0) / 1000).toFixed(1)} {t('ui_crops_fields_tons')}</p>
         </div>
       </div>
 
@@ -483,7 +485,7 @@ export function CropsFields() {
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <Loader2 className="w-10 h-10 animate-spin text-primary-400" />
           <p className="text-slate-400 text-sm font-semibold tracking-wide">
-            Retrieving Agronomic Data...
+            {t('ui_crops_fields_retrieving_agronomic_data')}
           </p>
         </div>
       ) : (

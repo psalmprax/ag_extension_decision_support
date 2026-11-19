@@ -11,6 +11,8 @@ __pycache__/
 !.env.*.example
 *.bak
 *.log
+# Redis snapshots written by a local redis-server
+dump.rdb
 *.tsbuildinfo
 server.log
 coverage/

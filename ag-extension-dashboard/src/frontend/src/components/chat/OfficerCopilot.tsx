@@ -7,6 +7,10 @@ import {
   defaultFollowUpQuestions,
   parseFollowUpQuestions,
 } from '@/pages/farmerChatSafety';
+import { useLanguage } from '@/lib/LanguageContext';
+import { rememberCopilotDraft } from '@/lib/copilotDraft';
+import type { CopilotDraft } from '@/api/aiService';
+import { SourceList, UnverifiedNote } from './AnswerSources';
 
 const DRAFT_INSTRUCTION =
   "Draft a short, clear reply from the extension officer to the farmer's latest message in this conversation. " +
@@ -15,7 +19,7 @@ const DRAFT_INSTRUCTION =
 type DraftState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'ready'; text: string }
+  | ({ status: 'ready' } & CopilotDraft)
   | { status: 'error' };
 
 interface OfficerCopilotProps {
@@ -32,6 +36,7 @@ interface OfficerCopilotProps {
  * only fill the message box. The farmer sees nothing until the officer sends.
  */
 export const OfficerCopilot: React.FC<OfficerCopilotProps> = ({ conversationId, messages, language, onUseText }) => {
+  const { t } = useLanguage();
   const farmerSaid = useMemo(() => lastFarmerMessage(messages), [messages]);
   const [suggestions, setSuggestions] = useState<{ key: string; lines: string[] } | null>(null);
   const [draft, setDraft] = useState<DraftState>({ status: 'idle' });
@@ -68,8 +73,8 @@ export const OfficerCopilot: React.FC<OfficerCopilotProps> = ({ conversationId, 
   const requestDraft = async () => {
     setDraft({ status: 'loading' });
     try {
-      const text = await getCopilotDraft(conversationId, DRAFT_INSTRUCTION, language);
-      setDraft(text.trim() ? { status: 'ready', text: text.trim() } : { status: 'error' });
+      const result = await getCopilotDraft(conversationId, DRAFT_INSTRUCTION, language);
+      setDraft(result.text.trim() ? { status: 'ready', ...result, text: result.text.trim() } : { status: 'error' });
     } catch (error) {
       console.error('Copilot draft failed:', error);
       setDraft({ status: 'error' });
@@ -98,7 +103,7 @@ export const OfficerCopilot: React.FC<OfficerCopilotProps> = ({ conversationId, 
           ) : (
             <PenLine className="w-3 h-3" aria-hidden="true" />
           )}
-          Copilot: draft a reply
+          {t('ui_officer_copilot_copilot_draft_a_reply')}
         </button>
       </div>
 
@@ -109,19 +114,22 @@ export const OfficerCopilot: React.FC<OfficerCopilotProps> = ({ conversationId, 
           className="rounded-lg border border-sky-200 dark:border-sky-400/20 bg-sky-50 dark:bg-sky-950/40 p-3 space-y-2"
         >
           <p className="text-xxs font-medium text-sky-800 dark:text-sky-200">
-            AI draft, only you can see this. Check it before sending.
+            {t('ui_officer_copilot_ai_draft_only_you_can_see_this_check')}
           </p>
           <p className="text-xs text-slate-800 dark:text-white/90 whitespace-pre-line">{draft.text}</p>
+          <SourceList sources={draft.sources} className="text-slate-700 dark:text-white/70" />
+          {draft.evidence === 'general' && <UnverifiedNote viewer="officer" />}
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => {
                 onUseText(draft.text);
+                rememberCopilotDraft(conversationId, draft.text);
                 setDraft({ status: 'idle' });
               }}
               className="px-2.5 py-1 rounded-lg text-xxs font-medium bg-emerald-600 hover:bg-emerald-500 text-white"
             >
-              Use draft
+              {t('ui_officer_copilot_use_draft')}
             </button>
             <button
               type="button"
@@ -129,14 +137,14 @@ export const OfficerCopilot: React.FC<OfficerCopilotProps> = ({ conversationId, 
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xxs text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white"
             >
               <X className="w-3 h-3" aria-hidden="true" />
-              Discard
+              {t('ui_officer_copilot_discard')}
             </button>
           </div>
         </div>
       )}
       {draft.status === 'error' && (
         <p role="alert" className="text-xxs text-rose-700 dark:text-rose-300">
-          The copilot could not draft a reply just now. Try again, or write your own.
+          {t('ui_officer_copilot_the_copilot_could_not_draft_a_reply')}
         </p>
       )}
 

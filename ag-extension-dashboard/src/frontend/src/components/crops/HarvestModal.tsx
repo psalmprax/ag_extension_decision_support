@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle } from 'lucide-react';
 import { Field, CropCycle } from '@/api/fieldService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface HarvestModalProps {
   showHarvestModal: boolean;
@@ -36,6 +37,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
   handleHarvestCycle,
   radiusClass,
 }) => {
+  const { t } = useLanguage();
   if (!showHarvestModal || !selectedField || !selectedCycle) return null;
 
   return (
@@ -49,20 +51,20 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
           <div className="flex items-center justify-between pb-2 border-b border-white/5">
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-emerald-400" />
-              Conclude Cycle: {selectedCycle.cropName}
+              {t('ui_harvest_modal_conclude_cycle')} {selectedCycle.cropName}
             </h3>
             <button
               onClick={() => setShowHarvestModal(false)}
               className="text-slate-400 hover:text-white text-xl font-medium"
             >
-              &times;
+              {t('ui_field_modal_text')}
             </button>
           </div>
 
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
-                Status Result
+                {t('ui_harvest_modal_status_result')}
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <button
@@ -74,7 +76,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
                       : 'bg-slate-950 text-slate-400 border-white/5'
                   }`}
                 >
-                  Successful Harvest
+                  {t('ui_harvest_modal_successful_harvest')}
                 </button>
                 <button
                   type="button"
@@ -85,7 +87,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
                       : 'bg-slate-950 text-slate-400 border-white/5'
                   }`}
                 >
-                  Crop Failure
+                  {t('ui_harvest_modal_crop_failure')}
                 </button>
               </div>
             </div>
@@ -93,7 +95,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
-                  Harvest Date
+                  {t('ui_harvest_modal_harvest_date')}
                 </label>
                 <input
                   type="date"
@@ -106,7 +108,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
-                  Yield (Kilograms)
+                  {t('ui_harvest_modal_yield_kilograms')}
                 </label>
                 <input
                   type="number"
@@ -121,7 +123,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
 
             <div>
               <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
-                Harvest Notes / Remarks
+                {t('ui_harvest_modal_harvest_notes_remarks')}
               </label>
               <textarea
                 value={harvestForm.notes}
@@ -141,13 +143,13 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
                     : 'bg-red-500 hover:bg-red-600 text-white'
                 }`}
               >
-                Conclude Growth Cycle
+                {t('ui_harvest_modal_conclude_growth_cycle')}
               </button>
               <button
                 onClick={() => setShowHarvestModal(false)}
                 className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition-all rounded-xl"
               >
-                Cancel
+                {t('common_cancel')}
               </button>
             </div>
           </div>

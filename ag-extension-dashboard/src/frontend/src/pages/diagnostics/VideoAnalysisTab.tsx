@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { analyzeCropVideo, MAX_DIAGNOSIS_VIDEO_BYTES } from '../../api/diseaseService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 function readVideo(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -14,6 +15,7 @@ function readVideo(file: File): Promise<string> {
 }
 
 export function VideoAnalysisTab() {
+  const { t } = useLanguage();
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<{ analysis: string; framesAnalyzed: number } | null>(null);
   const [error, setError] = useState('');
@@ -61,15 +63,14 @@ export function VideoAnalysisTab() {
 
   return (
     <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 space-y-4 text-slate-200">
-      <h3 className="text-sm font-semibold">Video observations</h3>
+      <h3 className="text-sm font-semibold">{t('ui_video_analysis_tab_video_observations')}</h3>
       <p className="text-xs text-slate-300">
-        Upload an MP4, WebM or MOV video up to 30 MB. Selected frames are sent to a configured AI provider.
-        Observations are not a diagnosis; confirm concerns with a local expert before treatment.
+        {t('ui_video_analysis_tab_upload_an_mp4_webm_or_mov_video_up_t')}
       </p>
-      <label htmlFor="diagnosis-video" className="block text-xs font-medium">Choose a plant video</label>
+      <label htmlFor="diagnosis-video" className="block text-xs font-medium">{t('ui_video_analysis_tab_choose_a_plant_video')}</label>
       <input id="diagnosis-video" type="file" accept="video/mp4,video/webm,video/quicktime" disabled={loading}
         onChange={event => selectFile(event.target.files?.[0])} className="block w-full text-xs" />
-      {file && <p className="text-xs">Selected: {file.name}</p>}
+      {file && <p className="text-xs">{t('ui_video_analysis_tab_selected', { name: file.name })}</p>}
       <button type="button" onClick={analyze} disabled={!file || loading}
         className="px-4 py-2 bg-emerald-800 text-white rounded text-sm disabled:opacity-40">
         {loading ? 'Analyzing video...' : 'Analyze video'}
@@ -77,9 +78,9 @@ export function VideoAnalysisTab() {
       {error && <p role="alert" className="text-xs text-rose-300">{error}</p>}
       {result && (
         <section aria-label="Video observation results" className="space-y-2 border-t border-slate-700 pt-4">
-          <h4 className="text-sm font-medium">Unverified observations from {result.framesAnalyzed} frame(s)</h4>
+          <h4 className="text-sm font-medium">{t('ui_video_analysis_tab_unverified_observations_from_frame_s', { framesAnalyzed: result.framesAnalyzed })}</h4>
           <p className="text-xs whitespace-pre-wrap">{result.analysis}</p>
-          <p className="text-xs text-amber-300">Not a diagnosis. Consult a qualified local expert before treatment.</p>
+          <p className="text-xs text-amber-300">{t('ui_video_analysis_tab_not_a_diagnosis_consult_a_qualified')}</p>
         </section>
       )}
     </div>

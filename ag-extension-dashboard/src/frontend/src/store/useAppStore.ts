@@ -19,7 +19,21 @@ export interface User {
   planName?: string;
   isFree?: boolean;
   isDemo?: boolean;
+  /** Above every tenant: may create or promote an admin. */
+  isSystemAdmin?: boolean;
   notificationPreferences?: NotificationPreferences;
+  /** Handle, avatar and display units saved on the account (PATCH /auth/me). */
+  profileSettings?: ProfileSettings;
+  /** Paid services the system administrator opened to this Free account (GET /auth/me). */
+  serviceAccess?: string[];
+}
+
+export interface ProfileSettings {
+  handle?: string;
+  avatarId?: string;
+  areaUnit?: 'hectares' | 'acres';
+  tempUnit?: 'celsius' | 'fahrenheit';
+  highContrast?: boolean;
 }
 
 /** Alert channels the user switched on or off in Settings (missing = on). */

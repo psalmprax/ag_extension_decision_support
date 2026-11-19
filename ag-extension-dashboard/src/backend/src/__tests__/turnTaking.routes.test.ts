@@ -121,7 +121,8 @@ describe('farmer and AI taking turns', () => {
                 .set('Authorization', `Bearer ${tokenFor(FARMER_USER_ID, 'farmer')}`);
 
             expect(res.status).toBe(200);
-            expect(answerFarmerInThread).toHaveBeenCalledWith(expect.objectContaining({ conversationId: THREAD_ID }), 'farmer_request');
+            // The route's checkUsageLimit charged the farmer's own plan; the answer is not charged again.
+            expect(answerFarmerInThread).toHaveBeenCalledWith(expect.objectContaining({ conversationId: THREAD_ID }), 'farmer_request', { planChecked: true });
         });
 
         it('asks the farmer to write their question first', async () => {

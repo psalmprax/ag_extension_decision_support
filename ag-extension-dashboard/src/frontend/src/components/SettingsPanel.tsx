@@ -5,13 +5,11 @@ import { OrganizationSection } from '@/components/settings/OrganizationSection';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { Map } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Palette, Globe, Monitor, Moon, Sun, Zap, MessageSquare, Droplets } from 'lucide-react';
+import { X, Palette, Globe, Monitor, Moon, Sun, Zap, MessageSquare } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { LanguageSwitcher } from './LanguageSwitcher';
-import { DesignToggle } from './ABTestBanner';
-import { LiquidToggleSwitch } from './canvasui/LiquidToggleSwitch';
 import toast from 'react-hot-toast';
 import { ChannelOnboardingModal } from './channels/ChannelOnboardingModal';
 
@@ -110,38 +108,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                       </div>
                       <LanguageSwitcher />
                     </div>
-                    {/* Design Preference */}
-                    <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Palette className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {t('settings_design') || 'Design'}
-                        </span>
-                      </div>
-                      <DesignToggle />
-                    </div>
-
-                    {/* Liquid Fluid Dynamics Effect */}
-                    <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <Droplets className="w-4 h-4 text-emerald-500" />
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Liquid Fluid Dynamics
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          CanvasUI GPU fluid simulation on pointer and touch motion
-                        </p>
-                      </div>
-                      <LiquidToggleSwitch />
-                    </div>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
                     <Map className="w-4 h-4" />
-                    Offline maps
+                    {t('ui_settings_panel_offline_maps')}
                   </h3>
                   <OfflineMapsSection />
                 </div>
@@ -153,11 +125,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                 <div className="space-y-3">
                   <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
                     <MessageSquare className="w-4 h-4 text-emerald-500" />
-                    <span>Communication Gateways & Onboarding</span>
+                    <span>{t('ui_settings_panel_communication_gateways_onboarding')}</span>
                   </h3>
                   <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-3 border border-gray-100 dark:border-gray-700">
                     <div className="text-xs text-gray-600 dark:text-gray-300">
-                      Manage SMS (Africa's Talking / Twilio), WhatsApp Business Cloud API, and Telegram Bot credentials for automated farmer advisory and self-registration.
+                      {t('ui_settings_panel_manage_sms_africa_s_talking_twilio_w')}
                     </div>
                     <button
                       type="button"
@@ -165,7 +137,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                       className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-900/20"
                     >
                       <Zap className="w-4 h-4" />
-                      <span>Configure Channels & Onboarding Wizard</span>
+                      <span>{t('ui_settings_panel_configure_channels_onboarding_wizard')}</span>
                     </button>
                   </div>
                 </div>
@@ -226,7 +198,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                     className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   >
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Reset alert settings
+                      {t('ui_settings_panel_reset_alert_settings')}
                     </span>
                   </button>
                 </div>

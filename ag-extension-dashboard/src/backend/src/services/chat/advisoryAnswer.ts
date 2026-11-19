@@ -15,6 +15,7 @@ import { logger } from '@/utils/logger';
 import { retrieveAdvisoryEvidence } from '@/services/knowledge/advisoryRetrieval';
 import { buildAdvisoryDirective, resolveAdvisoryCountry, validateAdvisoryCitations } from '@/services/knowledge/advisoryPolicy';
 import { enqueueAdvisoryReview, reviewTriggerFor, type ReviewTrigger } from '@/services/knowledge/reviewQueue';
+import { answerSourceMetadata } from '@/services/chat/answerSources';
 import { resolveUserContext } from '@/services/knowledge/userContext';
 import { callAdvisoryTool, getAdvisoryTools } from '@/services/knowledge/advisoryTools';
 import { AdvisoryTimeoutError, withAdvisoryTimeout } from '@/services/knowledge/advisoryRuntime';
@@ -97,13 +98,14 @@ export async function persistTurnMessage(
   role: string,
   content: string,
   language?: string,
-  extra: { channel?: 'sms' | 'whatsapp' | 'telegram'; isVoice?: boolean } = {},
+  extra: { channel?: 'sms' | 'whatsapp' | 'telegram'; isVoice?: boolean; metadata?: object } = {},
 ): Promise<ChatMessageRow | null> {
   if (!conversationId) return null;
   const { rows } = await query<ChatMessageRow>(
-    `INSERT INTO chat_messages (conversation_id, role, content, language, channel, is_voice)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-    [conversationId, role, content, language ?? null, extra.channel ?? null, extra.isVoice ?? false]
+    `INSERT INTO chat_messages (conversation_id, role, content, language, channel, is_voice, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+    [conversationId, role, content, language ?? null, extra.channel ?? null, extra.isVoice ?? false,
+     extra.metadata ? JSON.stringify(extra.metadata) : null]
   );
   if (rows[0]) fanoutMessage(conversationId, rows[0]);
   return rows[0] ?? null;
@@ -300,16 +302,13 @@ export async function generateAdvisoryAnswer(req: AdvisoryAnswerRequest): Promis
   const validated = validateAdvisoryCitations(guardedText, ragResult.citations, req.language);
   const text = req.footer ? `${validated.answer}\n\n${req.footer}` : validated.answer;
 
-  const stored = await persistTurnMessage(req.storeIn, 'assistant', text, req.language);
-
   // Unsourced, mis-cited or safety-flagged advice in a farmer's thread goes to
   // the agronomic review queue; the answer itself is not held back.
-  const reviewTrigger = scheduleAdvisoryReview(
-    req.storeIn,
-    requester.userId,
-    validated.answer,
-    reviewTriggerFor(validated.evidence, boundaryCheck.safe),
-  );
+  const trigger = reviewTriggerFor(validated.evidence, boundaryCheck.safe);
+  const stored = await persistTurnMessage(req.storeIn, 'assistant', text, req.language, {
+    metadata: answerSourceMetadata(ragResult.citations, validated.evidence, req.storeIn ? trigger : null),
+  });
+  const reviewTrigger = scheduleAdvisoryReview(req.storeIn, requester.userId, validated.answer, trigger);
 
   return {
     text,

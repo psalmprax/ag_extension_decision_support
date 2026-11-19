@@ -15,6 +15,7 @@ import {
   RefreshCcw,
 } from 'lucide-react';
 import { createShare, ShareResponse } from '@/api/shareService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   entityId,
   entityName,
 }) => {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [shareData, setShareData] = useState<ShareResponse['data'] | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -117,7 +119,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               </div>
               <div className="min-w-0">
                 <h2 className="text-lg sm:text-xl font-bold text-white uppercase tracking-tight truncate">
-                  Share {entityType}
+                  {t('ui_share_modal_share', { entityType })}
                 </h2>
                 <p className="text-xs text-white/50 truncate">
                   {entityName || `Entity ID: ${entityId}`}
@@ -140,7 +142,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               {/* Access Settings */}
               <div className="space-y-4">
                 <label className="text-xxs font-black text-gray-400 uppercase tracking-[0.2em]">
-                  Access Level
+                  {t('ui_share_modal_access_level')}
                 </label>
                 <div className="grid grid-cols-1 gap-3">
                   {[
@@ -192,22 +194,22 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xxs font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
-                    <Clock className="w-3 h-3" /> Expiration
+                    <Clock className="w-3 h-3" /> {t('ui_share_modal_expiration')}
                   </label>
                   <select
                     value={settings.expiresIn}
                     onChange={e => setSettings({ ...settings, expiresIn: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary-500/20"
                   >
-                    <option value="1">24 Hours</option>
-                    <option value="7">7 Days</option>
-                    <option value="30">30 Days</option>
-                    <option value="0">Never</option>
+                    <option value="1">{t('ui_share_modal_24_hours')}</option>
+                    <option value="7">{t('ui_share_modal_7_days')}</option>
+                    <option value="30">{t('ui_share_modal_30_days')}</option>
+                    <option value="0">{t('ui_share_modal_never')}</option>
                   </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-xxs font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
-                    <Calendar className="w-3 h-3" /> Permissions
+                    <Calendar className="w-3 h-3" /> {t('ui_share_modal_permissions')}
                   </label>
                   <button
                     onClick={() => setSettings({ ...settings, allowExport: !settings.allowExport })}
@@ -217,7 +219,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                         : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-800 text-gray-400'
                     }`}
                   >
-                    Allow Export
+                    {t('ui_share_modal_allow_export')}
                   </button>
                 </div>
               </div>
@@ -239,7 +241,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 ) : (
                   <>
                     <Link className="w-5 h-5" />
-                    GENERATE SECURE LINK
+                    {t('ui_share_modal_generate_secure_link')}
                   </>
                 )}
               </button>
@@ -251,16 +253,16 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   <Check className="w-6 h-6" />
                 </div>
                 <h3 className="text-lg font-black text-emerald-900 dark:text-emerald-400 uppercase italic">
-                  Link Ready!
+                  {t('ui_share_modal_link_ready')}
                 </h3>
                 <p className="text-sm text-emerald-700 dark:text-emerald-500 mt-1">
-                  This link is encrypted and active.
+                  {t('ui_share_modal_this_link_is_encrypted_and_active')}
                 </p>
               </div>
 
               <div className="space-y-2">
                 <label className="text-xxs font-black text-gray-400 uppercase tracking-[0.2em]">
-                  Shareable URL
+                  {t('ui_share_modal_shareable_url')}
                 </label>
                 <div className="relative">
                   <input
@@ -284,9 +286,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               <div className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-100 dark:border-amber-800 flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
                 <p className="text-xs text-amber-700 dark:text-amber-500 leading-relaxed font-medium">
-                  This link will expire on{' '}
-                  <strong>{new Date(shareData.expiresAt || '').toLocaleDateString()}</strong>.
-                  Access is logged for security auditing.
+                  {t('ui_share_modal_this_link_will_expire_on')}{' '}
+                  <strong>{new Date(shareData.expiresAt || '').toLocaleDateString()}</strong>{t('ui_share_modal_access_is_logged_for_security_auditi')}
                 </p>
               </div>
 
@@ -295,13 +296,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   onClick={() => setShareData(null)}
                   className="flex-1 py-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-xl transition-all"
                 >
-                  Regenerate
+                  {t('ui_share_modal_regenerate')}
                 </button>
                 <button
                   onClick={onClose}
                   className="flex-1 py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-lg shadow-primary-500/10 transition-all"
                 >
-                  Done
+                  {t('ui_share_modal_done')}
                 </button>
               </div>
             </div>

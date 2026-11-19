@@ -17,6 +17,13 @@ import { assertConversationAccess, MessageAccessError, resolveFarmerId, resolveP
 import { getRealtimeServer } from '@/services/realtimeHub';
 import { linkedDemoSql } from '@/services/demoScope';
 import { DEFAULT_CONVERSATION_KIND, parseConversationKind, type ConversationKind } from '@/services/chat/conversationKind';
+import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
+import { listAttachments } from '@/services/uploadAttachments';
+import { markThreadRead, unreadSummary } from '@/services/chat/readState';
+
+// Farmer chat, the farmer's "My officer" thread and the officer's AI chats are paid features;
+// admins and the demo are exempt (see requirePaidPlan).
+const requireChatPlan = requirePaidPlan('chat');
 
 const router = Router();
 
@@ -53,7 +60,7 @@ async function farmerThreadScope(user: AuthenticatedRequestUser, params: unknown
   return `cv.officer_id = $${params.length}`;
 }
 
-router.get('/conversations', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.get('/conversations', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
     if (!user) {
@@ -126,7 +133,7 @@ router.get('/conversations', authorize(['admin', 'regional_manager', 'extension_
 /**
  * GET /api/chatbot/conversations/:id/messages — message history for one conversation.
  */
-router.get('/conversations/:id/messages', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.get('/conversations/:id/messages', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const conversationId = req.params.id;
     if (!conversationId) {
@@ -156,7 +163,12 @@ router.get('/conversations/:id/messages', authorize(['admin', 'regional_manager'
         ORDER BY m.created_at ASC`,
       params
     );
-    return res.json({ success: true, data: mapChatMessageRows(rows) });
+    const attachments = await listAttachments('chat', rows.map(row => row.id));
+    const messages = mapChatMessageRows(rows).map(message => {
+      const photos = attachments.get(message.id);
+      return photos ? { ...message, attachments: photos } : message;
+    });
+    return res.json({ success: true, data: messages });
   } catch (error) {
     if (error instanceof MessageAccessError) {
       return safeError(res, error.statusCode, error.message);
@@ -273,7 +285,7 @@ const fetchRichConversation = async (conversationId: string) => {
 /**
  * POST /api/chatbot/conversations — Create or retrieve existing 1-to-1 conversation between Officer & Farmer.
  */
-router.post('/conversations', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.post('/conversations', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
     if (!user) {
@@ -323,7 +335,7 @@ router.post('/conversations', authorize(['admin', 'regional_manager', 'extension
 /**
  * DELETE /api/chatbot/conversations/:id — Delete a conversation and its messages.
  */
-router.delete('/conversations/:id', authorize(['admin', 'regional_manager', 'extension_officer']), async (req: AuthedRequest, res: Response) => {
+router.delete('/conversations/:id', authorize(['admin', 'regional_manager', 'extension_officer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
     if (!user) {
@@ -366,7 +378,7 @@ router.delete('/conversations/:id', authorize(['admin', 'regional_manager', 'ext
 /**
  * POST /api/chatbot/conversations/:id/rate — submit a satisfaction score.
  */
-router.post('/conversations/:id/rate', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.post('/conversations/:id/rate', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
     if (!user) {
@@ -398,25 +410,43 @@ router.post('/conversations/:id/rate', authorize(['admin', 'regional_manager', '
 });
 
 /**
- * POST /api/chatbot/conversations/:id/read — Mark conversation as read (receipt).
+ * GET /api/chatbot/unread — unread messages in the caller's farmer threads
+ * (an officer: from their farmers; a farmer: from their officer and the AI).
  */
-router.post('/conversations/:id/read', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.get('/unread', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
+  try {
+    return res.json({ success: true, data: await unreadSummary(req.user!) });
+  } catch (error) {
+    logger.error('Unread count failed:', error);
+    return safeError(res, 500, 'Unread count failed');
+  }
+});
+
+/**
+ * POST /api/chatbot/conversations/:id/read — the caller has read the thread up
+ * to now. Tells the other side (read receipt) and clears the caller's unread.
+ */
+router.post('/conversations/:id/read', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user!;
     const convId = req.params.id;
-    await query(`UPDATE chat_conversations SET ended_at = NOW() WHERE id = $1 AND (farmer_id = $2 OR officer_id = $2)`, [convId, user.userId]);
+    await markThreadRead(user, convId);
     try {
       getRealtimeServer()?.to(`conversation:${convId}`).emit('messages_read', { conversationId: convId, userId: user.userId, at: new Date().toISOString() });
     } catch (e) { logger.debug('messages_read notify skipped:', e); }
     return res.json({ success: true });
-  } catch (e) { logger.error('Read receipt failed:', e); return safeError(res, 500, 'Read failed'); }
+  } catch (e) {
+    if (e instanceof MessageAccessError) return safeError(res, e.statusCode, e.message);
+    logger.error('Read receipt failed:', e);
+    return safeError(res, 500, 'Read failed');
+  }
 });
 
 /**
  * PUT /api/chatbot/conversations/:id — Rename a conversation the caller
  * participates in. Serves the chat sidebar rename action.
  */
-router.put('/conversations/:id', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.put('/conversations/:id', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
     if (!user) {

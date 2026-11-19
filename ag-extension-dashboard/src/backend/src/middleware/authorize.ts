@@ -6,7 +6,13 @@ import { isSessionValid } from '@/services/sessionService';
 import { getBearerToken } from '@/middleware/authCookie';
 import { tokenIsDemo } from '@/services/demoScope';
 
-export type UserRole = 'admin' | 'regional_manager' | 'extension_officer' | 'farmer';
+/** Every role a signed-in user can hold; the type below is derived from it. */
+export const USER_ROLES = ['admin', 'regional_manager', 'extension_officer', 'farmer'] as const;
+export type UserRole = (typeof USER_ROLES)[number];
+
+export function isUserRole(value: unknown): value is UserRole {
+    return typeof value === 'string' && (USER_ROLES as readonly string[]).includes(value);
+}
 
 // AuthRequest is now a type alias for Request because Request is augmented globally in types.d.ts
 export type AuthRequest = Request;

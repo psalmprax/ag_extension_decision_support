@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
 import { faqItems } from '../data';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function FAQ() {
+  const { t } = useLanguage();
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   const toggleFaq = (index: number) => {
@@ -25,23 +27,22 @@ export function FAQ() {
                 variants={fadeUp}
                 className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/80 mb-4"
               >
-                Frequently Asked Questions
+                {t('help_faq')}
               </motion.div>
               <motion.h2
                 variants={fadeUp}
                 className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-bold tracking-tight"
               >
-                Everything you need to know about{' '}
+                {t('ui_faq_everything_you_need_to_know_about')}{' '}
                 <span className="bg-gradient-to-r from-emerald-300 to-amber-400 bg-clip-text text-transparent">
-                  GPExts
+                  {t('app_title')}
                 </span>
               </motion.h2>
               <motion.p
                 variants={fadeUp}
                 className="text-sm sm:text-base text-white/60 max-w-xl mx-auto mt-3 font-normal"
               >
-                Transparent answers on data ownership, offline reliability, agronomic accuracy, and
-                institutional rollout.
+                {t('ui_faq_transparent_answers_on_data_ownershi')}
               </motion.p>
             </motion.div>
 

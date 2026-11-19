@@ -50,6 +50,7 @@ import reportingRoutes from './routes/reporting';
 import analyticsRoutes from './routes/analytics';
 import portfolioRoutes from './routes/portfolio';
 import usersRoutes from './routes/users';
+import serviceAccessRoutes from './routes/serviceAccess';
 import farmersRoutes from './routes/farmers';
 import fieldsRoutes from './routes/fields';
 import visitsRoutes from './routes/visits';
@@ -69,6 +70,7 @@ import smsRoutes from './routes/sms';
 import billingRoutes from './routes/billing';
 import contextMenuRoutes from './routes/contextMenus';
 import { shareRouter, publicShareRouter } from './routes/shares';
+import publicMarketPricesRouter from './routes/publicMarketPrices';
 import alertRoutes from './routes/alerts';
 import supportRoutes from './routes/support';
 // MCP router will be created dynamically to avoid path alias issues in production
@@ -572,6 +574,7 @@ const routeMounts: RouteMount[] = [
   { path: '/reporting', router: reportingRoutes },
   { path: '/analytics', router: analyticsRoutes },
   { path: '/portfolio', router: portfolioRoutes },
+  { path: '/users', router: serviceAccessRoutes }, // /:id/service-access (system administrator)
   { path: '/users', router: usersRoutes },
   { path: '/farmers', router: farmersRoutes },
   { path: '/fields', router: fieldsRoutes },
@@ -626,6 +629,9 @@ routeMounts.forEach(m => app.use(`/api/v1${m.path}`, m.router));
 
 // Also mount public shares (no v1 prefix needed)
 app.use('/api/public/shares', publicShareRouter);
+
+// Public landing-page producer prices (no auth: national annual statistics)
+app.use('/api/public/market-prices', publicMarketPricesRouter);
 
 // Create MCP router dynamically to support modern module standards and tree-shaking
 let mcpRouter: Router | null = null;

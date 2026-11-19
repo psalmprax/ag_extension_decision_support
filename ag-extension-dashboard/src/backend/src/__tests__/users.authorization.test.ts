@@ -9,11 +9,32 @@ import { query } from '../services/databaseService';
 import { hashToken } from '../services/sessionService';
 import usersRouter from '../routes/users';
 
-jest.mock('../services/databaseService', () => ({ getPool: jest.fn(() => ({})), query: jest.fn() }));
+jest.mock('../services/databaseService', () => {
+  const query = jest.fn();
+  const txClient = {
+    query: jest.fn((sql: string, params?: unknown[]) => {
+      if (
+        sql.startsWith('SAVEPOINT') ||
+        sql.startsWith('RELEASE SAVEPOINT') ||
+        sql.startsWith('ROLLBACK TO SAVEPOINT') ||
+        sql.includes('pg_advisory_xact_lock')
+      ) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+      return query(sql, params);
+    }),
+  };
+  return {
+    getPool: jest.fn(() => ({})),
+    query,
+    withTransaction: jest.fn(async (cb: (client: typeof txClient) => Promise<unknown>) => cb(txClient)),
+  };
+});
 jest.mock('../services/cacheService', () => ({ getCache: jest.fn(() => null) }));
 jest.mock('../utils/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } }));
 
 const mockQuery = query as jest.Mock;
+const SYSTEM_ADMINS = new Set(['sysadmin']);
 const sessions = new Map<string, { userId: string; revoked: boolean }>();
 let targetActive: boolean;
 let revocationFails: boolean;
@@ -41,27 +62,44 @@ function revokeUserSessions(userId: unknown) {
   return { rows, rowCount: rows.length };
 }
 
+type Reply = { rows: unknown[]; rowCount: number };
+const EMPTY: Reply = { rows: [], rowCount: 0 };
+const one = (row: unknown): Reply => ({ rows: [row], rowCount: 1 });
+
+/** The fake database: the first route whose SQL fragment matches answers the statement. */
+const SQL_ROUTES: Array<[string, (sql: string, params: unknown[]) => Reply]> = [
+  // System-administrator flag, read from the database on every request.
+  ['SELECT is_system_admin FROM users', (_sql, params) => one({ is_system_admin: SYSTEM_ADMINS.has(String(params[0])) })],
+  // A regional manager's directory is scoped to the region on their own account.
+  ['SELECT region FROM users WHERE id = $1', (_sql, params) => (params[0] === 'manager' ? one({ region: 'Rift Valley' }) : EMPTY)],
+  // Guard row loaded before every update or deactivation of a user.
+  ['SELECT id, role, is_active, is_system_admin FROM users', (_sql, params) =>
+    params[0] === 'target'
+      ? one({ id: 'target', role: 'extension_officer', is_active: targetActive, is_system_admin: false })
+      : EMPTY],
+  ['FROM user_sessions', (_sql, params) => {
+    const session = sessions.get(String(params[0]));
+    return session
+      ? one({ is_revoked: session.revoked, is_active: session.userId !== 'target' || targetActive, expires_at: new Date(Date.now() + 3600000) })
+      : EMPTY;
+  }],
+  ['UPDATE user_sessions', (_sql, params) => revokeUserSessions(params[0])],
+  ['INSERT INTO users', (_sql, params) =>
+    one({ id: 'created', email: params[0], role: params[4], first_name: params[2], last_name: params[3], is_active: true })],
+  ['UPDATE users', (sql, params) => {
+    targetActive = sql.includes('is_active = false') ? false : (params.find(p => typeof p === 'boolean') as boolean);
+    return one({ id: 'target', is_active: targetActive });
+  }],
+];
+
 beforeEach(() => {
   targetActive = true;
   revocationFails = false;
   sessions.clear();
   mockQuery.mockReset();
   mockQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
-    if (sql.includes('FROM user_sessions')) {
-      const session = sessions.get(String(params[0]));
-      return { rows: session ? [{ is_revoked: session.revoked, is_active: session.userId !== 'target' || targetActive, expires_at: new Date(Date.now() + 3600000) }] : [], rowCount: session ? 1 : 0 };
-    }
-    if (sql.includes('UPDATE user_sessions')) {
-      return revokeUserSessions(params[0]);
-    }
-    if (sql.includes('INSERT INTO users')) {
-      return { rows: [{ id: 'created', email: params[0], role: params[4], first_name: params[2], last_name: params[3], is_active: true }], rowCount: 1 };
-    }
-    if (sql.includes('UPDATE users')) {
-      targetActive = sql.includes('is_active = false') ? false : params.find(p => typeof p === 'boolean') as boolean;
-      return { rows: [{ id: 'target', is_active: targetActive }], rowCount: 1 };
-    }
-    return { rows: [], rowCount: 0 };
+    const route = SQL_ROUTES.find(([needle]) => sql.includes(needle));
+    return route ? route[1](sql, params) : EMPTY;
   });
 });
 
@@ -80,10 +118,16 @@ describe('user management with real authorization and session validation', () =>
     expect(mockQuery.mock.calls.some(([sql]) => sql.includes('UPDATE users'))).toBe(false);
   });
 
-  it('allows an administrator to create an administrator', async () => {
-    const response = await request(app).post('/users').set('Authorization', `Bearer ${token('admin', 'admin')}`).send(newAdmin);
+  it('allows a system administrator to create an administrator', async () => {
+    const response = await request(app).post('/users').set('Authorization', `Bearer ${token('sysadmin', 'admin')}`).send(newAdmin);
     expect(response.status).toBe(201);
     expect(response.body.data.role).toBe('admin');
+  });
+
+  it('refuses administrator creation by an ordinary administrator before any insert', async () => {
+    const response = await request(app).post('/users').set('Authorization', `Bearer ${token('admin', 'admin')}`).send(newAdmin);
+    expect(response.status).toBe(403);
+    expect(mockQuery.mock.calls.some(([sql]) => sql.includes('INSERT INTO users'))).toBe(false);
   });
 
   it('invalidates both cookie and bearer sessions on deletion', async () => {
@@ -136,11 +180,12 @@ describe('demo accounts in the staff directory', () => {
     expect(mockQuery.mock.calls.find(([sql]) => String(sql).includes('AS is_demo'))?.[1]).toEqual([true]);
   });
 
-  it('hides demo accounts from regional managers', async () => {
+  it('hides demo accounts from regional managers and scopes them to their own region', async () => {
     const res = await request(app).get('/users').set('Authorization', `Bearer ${token('manager', 'regional_manager')}`);
     expect(res.status).toBe(200);
-    expect(sqlMatching('AS is_demo')).toContain('WHERE COALESCE(is_demo, false) = $1');
-    expect(mockQuery.mock.calls.find(([sql]) => String(sql).includes('AS is_demo'))?.[1]).toEqual([false]);
+    expect(sqlMatching('AS is_demo')).toContain('WHERE COALESCE(is_demo, false) = $1 AND users.region = $2');
+    // Real accounts only, and the region comes from the manager's own account, not the request.
+    expect(mockQuery.mock.calls.find(([sql]) => String(sql).includes('AS is_demo'))?.[1]).toEqual([false, 'Rift Valley']);
   });
 
   it('never offers demo accounts when picking an officer', async () => {

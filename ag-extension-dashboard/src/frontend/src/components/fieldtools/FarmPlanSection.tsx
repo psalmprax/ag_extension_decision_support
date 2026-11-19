@@ -3,12 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListChecks, FileText, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fieldIntelService, PlanMilestone } from '@/api/fieldIntelService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 /**
  * Season plan for a field's current crop cycle — AI/rule-generated milestones
  * with completion tracking. Rendered inside the field card in CropsFields.
  */
 export function FarmPlanSection({ cropCycleId }: { cropCycleId: string }) {
+    const { t } = useLanguage();
     const queryClient = useQueryClient();
     const [expanded, setExpanded] = useState(false);
 
@@ -42,13 +44,13 @@ export function FarmPlanSection({ cropCycleId }: { cropCycleId: string }) {
                 className="flex items-center gap-2 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-500"
             >
                 <ListChecks className="w-4 h-4" />
-                Season Plan
-                {expanded && <span className="text-xxs text-slate-500 font-normal">(click to collapse)</span>}
+                {t('ui_farm_plan_section_season_plan')}
+                {expanded && <span className="text-xxs text-slate-500 font-normal">{t('ui_farm_plan_section_click_to_collapse')}</span>}
             </button>
 
             {expanded && (
                 <div className="mt-2">
-                    {plan.isLoading && <p className="text-xs text-slate-500">Loading plan…</p>}
+                    {plan.isLoading && <p className="text-xs text-slate-500">{t('ui_farm_plan_section_loading_plan')}</p>}
                     {plan.data && plan.data.length === 0 && (
                         <button
                             onClick={() => generate.mutate()}

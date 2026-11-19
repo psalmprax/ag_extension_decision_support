@@ -42,7 +42,9 @@ import {
  *           type: string
  *         role:
  *           type: string
- *           enum: [extension_officer, regional_manager, admin, farmer]
+ *           enum: [extension_officer, farmer]
+ *         country:
+ *           type: string
  *         region:
  *           type: string
  *         phone:
@@ -114,15 +116,32 @@ export const loginSchema = z.object({
   }),
 });
 
+/**
+ * Public signup roles. Admin and regional manager accounts are created inside
+ * the product; letting the form name them was the source of a guaranteed 403.
+ */
 export const registerSchema = z.object({
   body: z.object({
     email: z.string().email('Invalid email format'),
     password: passwordSchema,
     firstName: z.string().min(2, 'First name is required'),
     lastName: z.string().min(2, 'Last name is required'),
-    role: z.enum(['extension_officer', 'regional_manager', 'admin', 'farmer']).optional(),
-    region: z.string().optional(),
-    phone: z.string().optional(),
+    role: z.enum(['extension_officer', 'farmer']).optional(),
+    country: z.string().min(2).max(64).optional(),
+    region: z.string().max(100).optional(),
+    phone: z.string().max(32).optional(),
+    /** Older clients send `phoneNumber`; the handler normalises it to `phone`. */
+    phoneNumber: z.string().max(32).optional(),
+  }).superRefine((data, ctx) => {
+    // The region is what the manager assignment resolves from, so an officer
+    // account without one can never be linked to a regional manager.
+    if (data.role === 'extension_officer' && !data.region?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['region'],
+        message: 'Region is required for extension officer accounts',
+      });
+    }
   }),
 });
 
@@ -253,6 +272,16 @@ export const updateVisitSchema = z.object({
     completedAt: z.string().datetime().optional(),
     duration: z.number().positive().optional(),
     durationMinutes: z.number().positive().optional(),
+    // Visit report: whether the farmer needs a follow-up, by when, and photos taken on the farm.
+    followUpRequired: z.boolean().optional(),
+    followUpDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'followUpDate must be YYYY-MM-DD').nullable().optional(),
+    attachmentIds: z.array(z.string().uuid()).max(4).optional(),
+    // Where the officer's device was when they completed the report (null: not shared).
+    location: z.object({
+      latitude: z.number().min(-90).max(90),
+      longitude: z.number().min(-180).max(180),
+      accuracy: z.number().nonnegative().max(1_000_000),
+    }).nullable().optional(),
   }).strict(),
 });
 

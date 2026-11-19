@@ -2,8 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { stagger, fadeUp } from '../variants';
 import { steps } from '../data';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function HowItWorks() {
+  const { t } = useLanguage();
   return (
         <section id="how-it-works" className="relative py-28 border-t border-white/[0.04] overflow-hidden">
       {/* Subtle Crop Scanning Field Backdrop */}
@@ -31,22 +33,22 @@ export function HowItWorks() {
                 variants={fadeUp}
                 className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400 mb-3"
               >
-                Simple 3-Step Process
+                {t('ui_how_it_works_simple_3_step_process')}
               </motion.div>
               <motion.h2
                 variants={fadeUp}
                 className="text-2xl sm:text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight text-white mb-3"
               >
-                Heal your crops in{' '}
+                {t('ui_how_it_works_heal_your_crops_in')}{' '}
                 <span className="bg-gradient-to-r from-emerald-300 to-amber-300 bg-clip-text text-transparent">
-                  three simple steps
+                  {t('ui_how_it_works_three_simple_steps')}
                 </span>
               </motion.h2>
               <motion.p
                 variants={fadeUp}
                 className="text-sm sm:text-base text-white/70 max-w-xl mx-auto font-normal leading-relaxed"
               >
-                No expensive equipment, no technical training. Just point, scan, and protect your harvest.
+                {t('ui_how_it_works_no_expensive_equipment_no_technical')}
               </motion.p>
             </motion.div>
 

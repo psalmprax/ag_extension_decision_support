@@ -1,0 +1,127 @@
+name: Translate locales
+
+# Machine-translates the strings that are still English in the 23 non-English
+# locale files (QA v1 #9: mixed-language pages), with the repository's Groq key
+# or, when that is not set, the AIHubMix key the app already uses.
+# Interpolation tokens and protected terms are checked per string; anything
+# that fails the check stays English. The result is uploaded as an artifact
+# for review and commit — this workflow never pushes. Dispatch only: a full run
+# makes about 1,400 model calls, too many to start on every edit.
+on:
+  workflow_dispatch:
+    inputs:
+      languages:
+        description: 'Locale codes to translate, space-separated (empty = all)'
+        required: false
+        default: ''
+      export_run_id:
+        description: 'Instead of translating: print the locale files of this earlier run into the log (for environments that can read run logs but not artifact storage)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  actions: read
+
+# A run takes over an hour; a new push must not cancel one that is half done.
+concurrency:
+  group: translate-locales-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  translate:
+    if: ${{ !github.event.inputs.export_run_id }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    # One model call per 25 strings per language: all 23 languages in one job
+    # takes close to two hours, so groups run in parallel. With a `languages`
+    # input only the first group's job translates (those languages).
+    strategy:
+      fail-fast: false
+      matrix:
+        group: ['ar de es fr', 'hi pt sw zu', 'zh it ru tr', 'nl pl el cs', 'hu ro bg da', 'sk uk ug']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+
+      - name: Translate English fallbacks
+        working-directory: ag-extension-dashboard
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          AIHUBMIX_API_KEY: ${{ secrets.AIHUBMIX_API_KEY || vars.AIHUBMIX_API_KEY || secrets.AIHUBMIX_KEY || vars.AIHUBMIX_KEY || '' }}
+          TRANSLATE_MODEL: ${{ vars.TRANSLATE_MODEL }}
+          TRANSLATE_CHUNK_SIZE: '25'
+          LANGUAGES: ${{ github.event.inputs.languages || matrix.group }}
+          CUSTOM_LANGUAGES: ${{ github.event.inputs.languages }}
+          FIRST_GROUP: ${{ strategy.job-index == 0 }}
+        run: |
+          if [ -n "$CUSTOM_LANGUAGES" ] && [ "$FIRST_GROUP" != "true" ]; then
+            echo "Custom language list: translated by the first group's job only."
+            exit 0
+          fi
+          if [ -z "$GROQ_API_KEY" ] && [ -z "$AIHUBMIX_API_KEY" ]; then
+            echo "::error::Neither GROQ_API_KEY nor AIHUBMIX_API_KEY is set as a repository secret"
+            exit 1
+          fi
+          # shellcheck disable=SC2086 # word-splitting the language list is intended
+          node scripts/llm-translate-locales.js $LANGUAGES
+
+      - name: Check the translated files
+        working-directory: ag-extension-dashboard
+        run: |
+          node scripts/audit-locales.js
+          node scripts/validate-locale-content.js
+          git diff --stat -- src/frontend/public/locales
+
+      # Each language is saved as soon as it is done, so upload even after a failure or
+      # timeout. Only this job's languages, so the groups' artifacts can be merged.
+      - name: Collect this group's locale files
+        if: always()
+        working-directory: ag-extension-dashboard/src/frontend/public/locales
+        env:
+          LANGUAGES: ${{ github.event.inputs.languages || matrix.group }}
+          CUSTOM_LANGUAGES: ${{ github.event.inputs.languages }}
+          FIRST_GROUP: ${{ strategy.job-index == 0 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/translated"
+          if [ -n "$CUSTOM_LANGUAGES" ] && [ "$FIRST_GROUP" != "true" ]; then exit 0; fi
+          for code in $LANGUAGES; do
+            if [ -f "$code.json" ]; then cp "$code.json" "$RUNNER_TEMP/translated/"; fi
+          done
+
+      - name: Upload the translated locale files
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: translated-locales-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/translated/*.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # Read-only: gh run view <run> --log | sed -n '/BEGIN-LOCALES/,/END-LOCALES/p'
+  export:
+    if: ${{ github.event.inputs.export_run_id }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download the translated locale files
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: translated-locales*
+          merge-multiple: true
+          run-id: ${{ github.event.inputs.export_run_id }}
+          github-token: ${{ github.token }}
+          path: locales
+
+      - name: Print them as a tarball
+        run: |
+          ls locales/*.json | wc -l
+          sha256sum locales/*.json
+          echo BEGIN-LOCALES
+          tar -C locales -czf - . | base64 -w 120
+          echo END-LOCALES

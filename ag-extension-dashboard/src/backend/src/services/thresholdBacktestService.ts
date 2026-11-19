@@ -44,5 +44,5 @@ export function sweepThresholds(samples: LabeledSample[], candidates: number[]):
 }
 
 export function bestThreshold(metrics: ThresholdMetrics[]): ThresholdMetrics {
-  return [...metrics].sort((a, b) => b.f1 - a.f1 || b.threshold - a.threshold)[0];
+  return metrics.toSorted((a, b) => b.f1 - a.f1 || b.threshold - a.threshold)[0];
 }

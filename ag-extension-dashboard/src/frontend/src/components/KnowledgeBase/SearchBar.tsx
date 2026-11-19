@@ -3,6 +3,7 @@ import { Search, Paperclip, Mic, BarChart3, ArrowRight, X, File as FileIcon } fr
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { Attachment } from '@/api/knowledgeService';
 import toast from 'react-hot-toast';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface SearchBarProps {
   searchQuery: string;
@@ -29,6 +30,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   setShowStats,
   onSearch,
 }) => {
+  const { t } = useLanguage();
   const originalQueryRef = useRef('');
 
   const {
@@ -126,7 +128,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         {isRecording && (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-50 dark:bg-rose-950/40 border-b border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs font-mono">
             <span className="w-2 h-2 rounded-full bg-rose-500" />
-            <span>Listening for agronomic inquiry... Speak now</span>
+            <span>{t('ui_search_bar_listening_for_agronomic_inquiry_spea')}</span>
             <div className="flex items-center gap-0.5 ml-auto">
               {[4, 12, 8, 16, 10, 14, 6].map((h, i) => (
                 <span
@@ -194,7 +196,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
               onClick={onSearch}
               className="h-8 sm:h-9 px-3 sm:px-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-bold rounded-xl shadow-lg shadow-emerald-950/40 text-xs shrink-0 flex items-center justify-center gap-1.5 transition-all"
             >
-              <span className="hidden sm:inline">Search RAG</span>
+              <span className="hidden sm:inline">{t('ui_search_bar_search_rag')}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

@@ -18,6 +18,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useDemoMode } from '@/demo';
 import { logout as apiLogout } from '@/api/authService';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface HistoryItem {
   id: string;
@@ -44,6 +45,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
   onSelect,
   onNewQuery,
 }) => {
+  const { t } = useLanguage();
   const { user } = useAppStore();
   const { isDemo } = useDemoMode();
   const { radiusClass } = useThemeClasses();
@@ -74,7 +76,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
             }`}
           >
             {isDemo ? <Lock className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-            New Expert Query
+            {t('ui_knowledge_sidebar_new_expert_query')}
           </button>
 
           {/* History Section */}
@@ -82,7 +84,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
             <div className="flex items-center gap-2 text-gray-400 px-2">
               <History className="w-4 h-4" />
               <span className="text-xxs font-black uppercase tracking-widest">
-                Recent Search Retainer
+                {t('ui_knowledge_sidebar_recent_search_retainer')}
               </span>
             </div>
 
@@ -90,7 +92,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
               {history.length === 0 ? (
                 <div className="text-center py-8 px-4">
                   <Search className="w-8 h-8 text-gray-200 dark:text-gray-700 mx-auto mb-3" />
-                  <p className="text-xs font-bold text-gray-400">No recent queries found</p>
+                  <p className="text-xs font-bold text-gray-400">{t('ui_knowledge_sidebar_no_recent_queries_found')}</p>
                 </div>
               ) : (
                 history.map((h, i) => (

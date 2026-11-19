@@ -8,6 +8,7 @@ import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 import { safeError } from '@/utils/safeResponse';
 import { demoWhere } from '@/services/demoScope';
 import { farmerRecordFilter, validateRecordScope } from '@/services/demoRecordScope';
+import { resolveCreationOfficer } from '@/services/farmerOfficerAssignment';
 
 const router = Router();
 
@@ -332,6 +333,16 @@ const role = String(_role);
 // Create farmer
 router.post('/', validate(createFarmerSchema), async (req: Request, res: Response) => {
     try {
+        // Enrollment is staff work: a farmer account may read and update its own
+        // record, but creating farmer records would let any farmer mint
+        // unassigned records the extension team then has to reconcile.
+        if (req.user?.role === 'farmer') {
+            return res.status(403).json({
+                success: false,
+                error: 'Farmer accounts cannot create farmer records',
+            });
+        }
+
         const {
             firstName, lastName, phone, region, village,
             farmSize, crops, languagePreference,
@@ -348,14 +359,11 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
         const userRole = user?.role ? String(user.role) : undefined;
         const userId = user?.userId ? String(user.userId) : undefined;
 
-        // Auto-assign: if creator is an extension officer, assign to themselves by default.
-        // If creator is admin or regional manager, allow requestedOfficerId if provided.
-        let assignedOfficerId: string | null = null;
-        if (userRole === 'extension_officer' && userId) {
-            assignedOfficerId = userId;
-        } else if ((userRole === 'admin' || userRole === 'regional_manager') && requestedOfficerId) {
-            assignedOfficerId = requestedOfficerId;
+        const assignment = await resolveCreationOfficer(prisma, { userId, role: userRole }, requestedOfficerId, region);
+        if (!assignment.ok) {
+            return res.status(assignment.status).json({ success: false, error: assignment.error, code: assignment.code });
         }
+        const assignedOfficerId = assignment.officerId;
 
         const farmer = await prisma.farmer.create({
             data: {

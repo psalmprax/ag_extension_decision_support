@@ -4,7 +4,7 @@ import type {
   VisitInsertRow,
   VisitIdRow,
 } from '../rowTypes';
-import { parseCount, parseDecimal, toIso } from './common';
+import { parseCount, parseDecimal, toIso, toIsoDate } from './common';
 
 // --- Reporting DTOs --------------------------------------------------------
 
@@ -45,6 +45,8 @@ export interface VisitWithFarmerDTO {
   createdAt: string | null;
   updatedAt: string | null;
   farmerName: string | null;
+  /** Whether the report was filed on the farm; null until the visit is completed. */
+  locationCheck: { status: string; distanceM: number | null; accuracyM: number | null } | null;
 }
 export function mapVisitWithFarmerRow(row: VisitWithFarmerRow): VisitWithFarmerDTO {
   return {
@@ -62,13 +64,16 @@ export function mapVisitWithFarmerRow(row: VisitWithFarmerRow): VisitWithFarmerD
     notes: row.notes,
     outcomes: row.outcomes,
     followUpRequired: row.follow_up_required,
-    followUpDate: toIso(row.follow_up_date) ?? null,
+    followUpDate: toIsoDate(row.follow_up_date) ?? null,
     reminderSent: row.reminder_sent,
     overdueAlertSent: row.overdue_alert_sent,
     followUpReminderSent: row.follow_up_reminder_sent,
     createdAt: toIso(row.created_at) ?? null,
     updatedAt: toIso(row.updated_at) ?? null,
     farmerName: row.farmer_name,
+    locationCheck: row.location_check
+      ? { status: row.location_check, distanceM: row.location_distance_m ?? null, accuracyM: parseDecimal(row.location_accuracy_m ?? null) }
+      : null,
   };
 }
 export function mapVisitWithFarmerRows(rows: VisitWithFarmerRow[]): VisitWithFarmerDTO[] {
@@ -113,7 +118,7 @@ export function mapVisitInsertRow(row: VisitInsertRow): VisitInsertDTO {
     notes: row.notes,
     outcomes: row.outcomes,
     followUpRequired: row.follow_up_required,
-    followUpDate: toIso(row.follow_up_date) ?? null,
+    followUpDate: toIsoDate(row.follow_up_date) ?? null,
     reminderSent: row.reminder_sent,
     overdueAlertSent: row.overdue_alert_sent,
     followUpReminderSent: row.follow_up_reminder_sent,

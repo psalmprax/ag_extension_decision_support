@@ -5,6 +5,7 @@ import {
   exportToGeoJsonPolygon,
   saveParcelOffline,
 } from '../../services/parcelGeoService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface ParcelPolygonDrawerProps {
   farmerId?: string;
@@ -17,6 +18,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
   defaultCrop = 'Maize',
   onSavePolygon,
 }) => {
+  const { t } = useLanguage();
   const [vertices, setVertices] = useState<GeoVertex[]>([]);
   const [parcelName, setParcelName] = useState('My Field Block 1');
   const [cropType, setCropType] = useState(defaultCrop);
@@ -90,39 +92,39 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-            Field Boundary Polygon & Acreage Tracer
+            {t('ui_parcel_polygon_drawer_field_boundary_polygon_acreage_trace')}
           </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            Walk the perimeter of the field to measure exact geodesic acreage and trace boundary polygons.
+            {t('ui_parcel_polygon_drawer_walk_the_perimeter_of_the_field_to_m')}
           </p>
         </div>
         <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-full">
-          WGS-84 Geodesic
+          {t('ui_parcel_polygon_drawer_wgs_84_geodesic')}
         </span>
       </div>
 
       {/* Metrics Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
         <div>
-          <span className="text-xs text-gray-500 font-medium">Measured Acreage</span>
+          <span className="text-xs text-gray-500 font-medium">{t('ui_parcel_polygon_drawer_measured_acreage')}</span>
           <p className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
-            {metrics.acres} <span className="text-xs font-normal text-gray-500">Acres</span>
+            {metrics.acres} <span className="text-xs font-normal text-gray-500">{t('ui_parcel_polygon_drawer_acres')}</span>
           </p>
         </div>
         <div>
-          <span className="text-xs text-gray-500 font-medium">Metric Area</span>
+          <span className="text-xs text-gray-500 font-medium">{t('ui_parcel_polygon_drawer_metric_area')}</span>
           <p className="text-xl font-extrabold text-gray-900 dark:text-white mt-1">
             {metrics.hectares} <span className="text-xs font-normal text-gray-500">ha</span>
           </p>
         </div>
         <div>
-          <span className="text-xs text-gray-500 font-medium">Perimeter</span>
+          <span className="text-xs text-gray-500 font-medium">{t('ui_parcel_polygon_drawer_perimeter')}</span>
           <p className="text-xl font-extrabold text-gray-900 dark:text-white mt-1">
             {metrics.perimeterMeters} <span className="text-xs font-normal text-gray-500">m</span>
           </p>
         </div>
         <div>
-          <span className="text-xs text-gray-500 font-medium">Boundary Vertices</span>
+          <span className="text-xs text-gray-500 font-medium">{t('ui_parcel_polygon_drawer_boundary_vertices')}</span>
           <p className="text-xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-1">
             {metrics.vertexCount}
           </p>
@@ -133,7 +135,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Parcel / Plot Name
+            {t('ui_parcel_polygon_drawer_parcel_plot_name')}
           </label>
           <input
             type="text"
@@ -144,7 +146,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Primary Crop
+            {t('ui_parcel_polygon_drawer_primary_crop')}
           </label>
           <input
             type="text"
@@ -178,7 +180,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
           disabled={vertices.length < 3}
           className="py-3 px-5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow disabled:opacity-50 transition"
         >
-          Export GeoJSON & Save
+          {t('ui_parcel_polygon_drawer_export_geojson_save')}
         </button>
 
         <button
@@ -187,7 +189,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
           disabled={vertices.length === 0}
           className="py-3 px-4 border border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition"
         >
-          Clear Points
+          {t('ui_parcel_polygon_drawer_clear_points')}
         </button>
       </div>
 
@@ -198,9 +200,9 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
             <thead className="bg-gray-50 dark:bg-gray-900 text-gray-500">
               <tr>
                 <th className="p-2">#</th>
-                <th className="p-2">Latitude</th>
-                <th className="p-2">Longitude</th>
-                <th className="p-2">Accuracy</th>
+                <th className="p-2">{t('latitude')}</th>
+                <th className="p-2">{t('longitude')}</th>
+                <th className="p-2">{t('ui_parcel_polygon_drawer_accuracy')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">

@@ -214,6 +214,9 @@ export interface VisitWithFarmerRow {
   duration_minutes: number | null;
   location_lat: string | number | null;
   location_lng: string | number | null;
+  location_accuracy_m?: string | number | null;
+  location_distance_m?: number | null;
+  location_check?: string | null;
   notes: string | null;
   outcomes: string | null;
   follow_up_required: boolean | null;
@@ -301,6 +304,15 @@ export interface UserPublicRow {
   last_login: Date | string | null;
   /** Demo session account; only admins are shown these. */
   is_demo?: boolean | null;
+  /** Above every tenant: may create or promote an admin. */
+  is_system_admin?: boolean | null;
+  /** Regional manager an extension officer reports to. */
+  manager_id?: string | null;
+  plan_id?: string | null;
+  plan_name?: string | null;
+  plan_price?: string | number | null;
+  subscription_status?: string | null;
+  subscription_period_end?: Date | string | null;
 }
 
 // --- Fields routes (fields.ts) ---------------------------------------------

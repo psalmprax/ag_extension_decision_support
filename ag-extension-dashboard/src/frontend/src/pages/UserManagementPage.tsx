@@ -29,47 +29,27 @@ import {
 } from '@/lib/countries';
 import { useLanguage } from '@/lib/LanguageContext';
 import { StaffBadges } from '@/components/users/StaffBadges';
+import { UserAccessModal } from '@/components/users/UserAccessModal';
 import { AdminDemoRecords } from '@/components/AdminDemoRecords';
 import { useAppStore } from '@/store/useAppStore';
-import type { DirectoryUser as User } from '@/components/users/types';
-
-const ROLES = [
-  {
-    value: 'admin',
-    label: 'Admin',
-    labelKey: 'users_role_admin',
-    color: 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30',
-  },
-  {
-    value: 'regional_manager',
-    label: 'Regional Manager',
-    labelKey: 'users_role_regional_manager',
-    color: 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30',
-  },
-  {
-    value: 'extension_officer',
-    label: 'Extension Officer',
-    labelKey: 'users_role_extension_officer',
-    color: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
-  },
-  {
-    value: 'farmer',
-    label: 'Farmer',
-    labelKey: 'users_role_farmer',
-    color: 'bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30',
-  },
-];
-
-const getRoleBadge = (role: string) => ROLES.find(r => r.value === role) || ROLES[2];
+import {
+  USER_ROLES as ROLES,
+  assignableRoles,
+  getRoleBadge,
+  type DirectoryUser as User,
+} from '@/components/users/types';
 
 export function UserManagementPage() {
   const { t } = useLanguage();
   const { isDemo } = useDemoMode();
   const currentUserId = useAppStore(state => state.user?.id);
+  const currentUserRole = useAppStore(state => state.user?.role);
+  const currentUserIsSystemAdmin = useAppStore(state => state.user?.isSystemAdmin);
   const queryClient = useQueryClient();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedUserForHistory, setSelectedUserForHistory] = useState<User | null>(null);
+  const [selectedUserForAccess, setSelectedUserForAccess] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [formData, setFormData] = useState({
@@ -178,21 +158,15 @@ export function UserManagementPage() {
       setFormError(t('users_create_error_required', 'All required fields must be filled'));
       return;
     }
-    createUser.mutate(formData);
+    createUser.mutate({ ...formData, region: availableRegions.find(region => region.toLowerCase() === formData.region.trim().toLowerCase()) ?? formData.region.trim() });
   };
 
   const usersList = usersData || [];
-  const filteredUsers = usersList.filter(u => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      u.firstName?.toLowerCase().includes(term) ||
-      u.lastName?.toLowerCase().includes(term) ||
-      u.email?.toLowerCase().includes(term) ||
-      u.region?.toLowerCase().includes(term) ||
-      u.country?.toLowerCase().includes(term)
-    );
-  });
+  const searchNeedle = searchTerm.toLowerCase();
+  const filteredUsers = usersList.filter(u =>
+    !searchNeedle ||
+    [u.firstName, u.lastName, u.email, u.region, u.country].some(v => v?.toLowerCase().includes(searchNeedle))
+  );
 
   const officersCount = usersList.filter(u => u.role === 'extension_officer').length;
   const uniqueRegions = new Set(usersList.map(u => u.region).filter(Boolean)).size;
@@ -333,7 +307,14 @@ export function UserManagementPage() {
                       <h3 className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
                         {user.firstName} {user.lastName}
                       </h3>
-                      <StaffBadges roleLabel={t(roleBadge.labelKey, roleBadge.label)} roleClass={roleBadge.color} isDemo={user.isDemo} />
+                      <StaffBadges
+                        roleLabel={t(roleBadge.labelKey, roleBadge.label)}
+                        roleClass={roleBadge.color}
+                        isDemo={user.isDemo}
+                        planName={user.planName}
+                        isFree={user.isFree}
+                        isActive={user.isActive}
+                      />
                     </div>
                   </div>
                 </div>
@@ -363,13 +344,24 @@ export function UserManagementPage() {
                         ? t('users_last_login', 'Last: {date}', { date: new Date(user.lastLogin).toLocaleDateString() })
                         : t('users_no_recent_login', 'No recent login')}
                     </span>
-                    <button
-                      onClick={() => setSelectedUserForHistory(user)}
-                      className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors flex items-center gap-1 shrink-0"
-                    >
-                      <History className="w-3 h-3" />
-                      <span>{t('users_btn_history', 'History')}</span>
-                    </button>
+                    <div className="flex items-center gap-3 shrink-0">
+                      {currentUserRole === 'admin' && (
+                        <button
+                          onClick={() => setSelectedUserForAccess(user)}
+                          aria-label={t('users_btn_manage_access_for', 'Edit access for {name}', { name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email })}
+                          className="text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
+                        >
+                          {t('users_btn_manage_access', 'Edit Access')}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setSelectedUserForHistory(user)}
+                        className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors flex items-center gap-1"
+                      >
+                        <History className="w-3 h-3" />
+                        <span>{t('users_btn_history', 'History')}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -469,6 +461,7 @@ export function UserManagementPage() {
                   <label className="text-xs font-medium text-white/70">{t('users_form_password', 'Password *')}</label>
                   <input
                     type="password"
+                    autoComplete="new-password"
                     required
                     value={formData.password}
                     onChange={e => setFormData({ ...formData, password: e.target.value })}
@@ -485,7 +478,7 @@ export function UserManagementPage() {
                       onChange={e => setFormData({ ...formData, role: e.target.value })}
                       className="w-full px-3 py-2 rounded-lg border border-white/10 bg-slate-900 text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                     >
-                      {ROLES.map(r => (
+                      {assignableRoles(currentUserIsSystemAdmin).map(r => (
                         <option key={r.value} value={r.value}>
                           {t(r.labelKey, r.label)}
                         </option>
@@ -690,6 +683,14 @@ export function UserManagementPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <UserAccessModal
+        user={selectedUserForAccess}
+        currentUserId={currentUserId}
+        actorIsSystemAdmin={currentUserIsSystemAdmin}
+        isDemo={isDemo}
+        onClose={() => setSelectedUserForAccess(null)}
+      />
     </div>
   );
 }

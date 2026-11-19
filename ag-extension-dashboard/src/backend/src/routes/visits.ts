@@ -14,7 +14,10 @@ import {
 import { logger } from '@/utils/logger';
 import { validate } from '@/middleware/validationMiddleware';
 import { createVisitSchema, updateVisitSchema } from '@/utils/schemas';
+import { checkVisitLocation, type ReportedPosition } from '@/services/visitLocationCheck';
 import { authorize } from '@/middleware/authorize';
+import { listAttachments } from '@/services/uploadAttachments';
+import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
 import { bulkOperationsService } from '@/services/bulkOperationsService';
 import { safeError } from '@/utils/safeResponse';
 import { executeIdempotentMutation } from '@/services/idempotencyService';
@@ -67,8 +70,9 @@ async function canAccessFarmer(req: Request, farmerId: string): Promise<boolean>
     return Boolean(await getFarmerForPrincipal(farmerId, { userId: req.user.userId, role: req.user.role }));
 }
 
-// Apply authentication to all visits routes
+// Apply authentication and subscription tier gate to all visits routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
+router.use(requirePaidPlan('field_visits'));
 
 // Get all visits — auto-filtered by role
 router.get('/', async (req: Request, res: Response) => {
@@ -153,7 +157,8 @@ router.get('/:id', async (req: Request, res: Response) => {
             return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
-        res.json({ success: true, data: mapVisitWithFarmerRow(visit) });
+        const attachments = (await listAttachments('visit', [visit.id])).get(visit.id) ?? [];
+        res.json({ success: true, data: { ...mapVisitWithFarmerRow(visit), attachments } });
     } catch (error) {
         logger.error('Get visit error:', error);
         safeError(res, 500, 'Failed to get visit');
@@ -397,6 +402,35 @@ interface UpdateVisitParams {
     completedAt?: string;
     duration?: number;
     durationMinutes?: number;
+    followUpRequired?: boolean;
+    followUpDate?: string | null;
+    attachmentIds?: string[];
+    /** Where the officer's device was on completing the report; null = not shared. */
+    location?: ReportedPosition | null;
+    /** Who is reporting, and the visit's farmer: attachments must be theirs. */
+    userId?: string;
+    farmerId?: string;
+}
+
+/** On completion: the reported position and whether it was on the farm (see visitLocationCheck). */
+async function locationColumns(
+    params: UpdateVisitParams,
+    executor: typeof query | PoolClient,
+): Promise<Array<[column: string, value: unknown]>> {
+    if (params.status !== 'completed') return [];
+    const farmSql = 'SELECT location_lat, location_lng FROM farmers WHERE id = $1';
+    const farmRows = executor === query
+        ? (await query<{ location_lat: unknown; location_lng: unknown }>(farmSql, [params.farmerId])).rows
+        : (await (executor as PoolClient).query(farmSql, [params.farmerId])).rows;
+    const farm = farmRows[0] ? { lat: farmRows[0].location_lat, lng: farmRows[0].location_lng } : null;
+    const check = checkVisitLocation(params.location, farm);
+    return [
+        ['location_lat', params.location?.latitude ?? null],
+        ['location_lng', params.location?.longitude ?? null],
+        ['location_accuracy_m', check.accuracyM],
+        ['location_distance_m', check.distanceM],
+        ['location_check', check.status],
+    ];
 }
 
 async function performUpdateVisit(
@@ -404,7 +438,11 @@ async function performUpdateVisit(
     executor: typeof query | PoolClient,
     existingRecord?: { duration_minutes?: number | null; started_at?: string | null; completed_at?: string | null }
 ) {
-    const { id, status, notes, outcomes, startedAt, completedAt, duration, durationMinutes } = params;
+    const { id, status, notes, outcomes, startedAt, completedAt, duration, durationMinutes, followUpRequired, followUpDate } = params;
+    const attachmentIds = params.attachmentIds ?? [];
+    if (attachmentIds.length > 0) {
+        await validateAttachments(attachmentIds, params.userId, params.farmerId ?? '', executor);
+    }
 
     // AD-002: Mandate minimum 10-minute parcel dwell time on completing visits
     if (status === 'completed') {
@@ -443,6 +481,18 @@ async function performUpdateVisit(
         updates.push(`duration_minutes = $${paramIndex++}`);
         sqlParams.push(finalDuration);
     }
+    if (followUpRequired !== undefined) {
+        updates.push(`follow_up_required = $${paramIndex++}`);
+        sqlParams.push(followUpRequired);
+    }
+    if (followUpDate !== undefined) {
+        updates.push(`follow_up_date = $${paramIndex++}`);
+        sqlParams.push(followUpDate);
+    }
+    for (const [column, value] of await locationColumns(params, executor)) {
+        updates.push(`${column} = $${paramIndex++}`);
+        sqlParams.push(value);
+    }
 
     updates.push('updated_at = NOW()');
     sqlParams.push(id);
@@ -453,6 +503,7 @@ async function performUpdateVisit(
     } else {
         await (executor as PoolClient).query(sql, sqlParams);
     }
+    await linkAttachments(id, attachmentIds, executor);
 
     return {
         success: true,
@@ -464,6 +515,9 @@ async function performUpdateVisit(
             startedAt,
             completedAt,
             duration,
+            followUpRequired,
+            followUpDate,
+            attachmentIds,
             updatedAt: new Date().toISOString(),
         },
     };
@@ -585,6 +639,11 @@ router.patch('/:id', validate(updateVisitSchema), async (req: Request, res: Resp
             completedAt: body.completedAt as string | undefined,
             duration: typeof body.duration === 'number' ? body.duration : undefined,
             durationMinutes: typeof body.durationMinutes === 'number' ? body.durationMinutes : undefined,
+            followUpRequired: typeof body.followUpRequired === 'boolean' ? body.followUpRequired : undefined,
+            followUpDate: body.followUpDate as string | null | undefined,
+            attachmentIds: Array.isArray(body.attachmentIds) ? body.attachmentIds as string[] : undefined,
+            location: body.location as ReportedPosition | null | undefined,
+            userId: req.user?.userId,
         };
 
         if (!getPool()) {
@@ -600,6 +659,7 @@ router.patch('/:id', validate(updateVisitSchema), async (req: Request, res: Resp
         if (!existingFarmerId || !(await canAccessFarmer(req, existingFarmerId))) {
             return res.status(403).json({ success: false, error: 'Access denied to visit' });
         }
+        updateParams.farmerId = existingFarmerId;
 
         const result = await executeVisitMutation(
             req,
@@ -612,6 +672,9 @@ router.patch('/:id', validate(updateVisitSchema), async (req: Request, res: Resp
     } catch (error) {
         if (error instanceof Error && error.message.startsWith('STATIONARY_FRAUD_DETECTED')) {
             return res.status(422).json({ success: false, error: error.message });
+        }
+        if (error instanceof Error && error.message.startsWith('One or more attachments')) {
+            return res.status(400).json({ success: false, error: error.message });
         }
         logger.error('Update visit error:', error);
         safeError(res, 500, 'Failed to update visit');

@@ -28,6 +28,7 @@ import {
 } from '@/api/diseaseService';
 import toast from 'react-hot-toast';
 import { CROP_PRESETS } from './cropPresets';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface CropPillScrubberProps {
   selectedCrop: string;
@@ -40,6 +41,7 @@ const CropPillScrubber: React.FC<CropPillScrubberProps> = ({
   onSelectCrop,
   disabled = false,
 }) => {
+  const { t } = useLanguage();
   const { designVariant } = useFeatureFlags();
   const isBase = designVariant === 'base' || designVariant === 'new';
 
@@ -50,10 +52,10 @@ const CropPillScrubber: React.FC<CropPillScrubberProps> = ({
           htmlFor="edge-target-crop-select"
           className="block text-xs font-bold font-mono uppercase text-slate-300"
         >
-          Target Crop Specimen
+          {t('ui_edge_vision_scanner_modal_target_crop_specimen')}
         </label>
         <span className="text-[10px] font-mono text-slate-400">
-          Thumb Scrubber
+          {t('ui_edge_vision_scanner_modal_thumb_scrubber')}
         </span>
       </div>
 
@@ -327,6 +329,7 @@ const VerifiedCloudCard: React.FC<{
   cropData?: { overallHealth: string; diseases: DiseaseDiagnosis[]; recommendations: string[] } | null;
   soilData?: SoilAnalysisResult | null;
 }> = ({ cropData, soilData }) => {
+  const { t } = useLanguage();
   if (!cropData && !soilData) return null;
 
   return (
@@ -334,7 +337,7 @@ const VerifiedCloudCard: React.FC<{
       <div className="flex items-center gap-2 text-emerald-400">
         <ShieldCheck className="w-4 h-4" />
         <span className="text-xs font-medium font-mono">
-          Cloud AI observation — not a confirmed diagnosis
+          {t('ui_edge_vision_scanner_modal_cloud_ai_observation_not_a_confirmed')}
         </span>
       </div>
 
@@ -346,13 +349,13 @@ const VerifiedCloudCard: React.FC<{
             </span>
             {cropData.diseases[0] && (
               <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px]">
-                {Math.round(cropData.diseases[0].confidence * 100)}% model confidence
+                {Math.round(cropData.diseases[0].confidence * 100)}{t('ui_edge_vision_scanner_modal_model_confidence')}
               </span>
             )}
           </div>
           {cropData.diseases[0]?.treatment && cropData.diseases[0].treatment.length > 0 && (
             <p className="text-slate-300 text-[11px]">
-              <strong className="text-emerald-400">Guidance:</strong>{' '}
+              <strong className="text-emerald-400">{t('ui_edge_vision_scanner_modal_guidance')}</strong>{' '}
               {cropData.diseases[0].treatment.join('; ')}
             </p>
           )}
@@ -364,7 +367,7 @@ const VerifiedCloudCard: React.FC<{
           <div className="flex justify-between items-center">
             <span className="font-bold text-white">{soilData.texture}</span>
             <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px]">
-              Score: {soilData.overallHealthScore}/100
+              {t('ui_edge_vision_scanner_modal_score')} {soilData.overallHealthScore}/100
             </span>
           </div>
           <div className="grid grid-cols-3 gap-1.5 text-center font-mono text-[10px] pt-1">
@@ -623,6 +626,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
   onClose,
   defaultCrop = 'Maize',
 }) => {
+  const { t } = useLanguage();
   const [scanMode, setScanMode] = useState<ScanTargetMode>('crop');
   const [crop, setCrop] = useState(defaultCrop);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -830,7 +834,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                 : 'Take Soil Clod Photo or Upload Profile'}
             </p>
             <p className="text-xs text-slate-400 mt-1">
-              Runs 100% on-device without internet. Instant offline texture & pathology triage.
+              {t('ui_edge_vision_scanner_modal_runs_100_on_device_without_internet')}
             </p>
           </div>
         )}
@@ -878,7 +882,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white">
                   <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mb-2" />
                   <span className="text-xs font-mono font-bold tracking-wider uppercase">
-                    Stage 1 YOLO Detection & Stage 2 MobileViT Analysis...
+                    {t('ui_edge_vision_scanner_modal_stage_1_yolo_detection_stage_2_mobil')}
                   </span>
                 </div>
               )}
@@ -888,7 +892,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
             {scanMode === 'crop' && cropResult?.twoStage?.stage1Detector.boxes && (
               <div className="flex flex-wrap justify-between items-center gap-2 text-xs px-1">
                 <span className="text-slate-400 font-mono text-[11px]">
-                  YOLO Detections: {cropResult.twoStage.stage1Detector.boxes.filter(b => b.label !== 'crop_leaf').length} lesion/damage sites
+                  {t('ui_edge_vision_scanner_modal_yolo_detections_lesion_damage_sites', { length: cropResult.twoStage.stage1Detector.boxes.filter(b => b.label !== 'crop_leaf').length })}
                 </span>
                 <div className="flex items-center gap-2">
                   <button
@@ -925,7 +929,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
               <div className="p-3.5 bg-rose-950/60 border border-rose-500/40 rounded-xl space-y-1 text-rose-200">
                 <div className="flex items-center gap-2 font-bold text-xs">
                   <span className="text-rose-400 text-sm">⚠️</span>
-                  <span>Specimen Rejected by YOLOv8 Leaf Guard</span>
+                  <span>{t('ui_edge_vision_scanner_modal_specimen_rejected_by_yolov8_leaf_gua')}</span>
                 </div>
                 <p className="text-[11px] text-rose-300/90 leading-relaxed">
                   {cropResult.rejectionMessage || 'No identifiable leaf blade or foliage was detected. Please photograph crop foliage against a neutral backdrop.'}
@@ -951,12 +955,12 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                 {isVerifying ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Requesting Cloud Vision AI...</span>
+                    <span>{t('ui_edge_vision_scanner_modal_requesting_cloud_vision_ai')}</span>
                   </>
                 ) : (
                   <>
                     <Eye className="w-4 h-4" />
-                    <span>Request Cloud AI Analysis</span>
+                    <span>{t('ui_edge_vision_scanner_modal_request_cloud_ai_analysis')}</span>
                   </>
                 )}
               </button>
@@ -974,12 +978,12 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                 {loggedToMap ? (
                   <>
                     <CheckCircle className="w-4 h-4 text-emerald-400" />
-                    <span>Plotted on WorldMonitor Layer</span>
+                    <span>{t('ui_edge_vision_scanner_modal_plotted_on_worldmonitor_layer')}</span>
                   </>
                 ) : (
                   <>
                     <MapPin className="w-4 h-4 text-sky-400" />
-                    <span>Plot to WorldMonitor Outbreak Map</span>
+                    <span>{t('ui_edge_vision_scanner_modal_plot_to_worldmonitor_outbreak_map')}</span>
                   </>
                 )}
               </button>
@@ -990,7 +994,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                 className="w-full py-2.5 border border-white/10 hover:bg-white/5 text-xs font-medium text-slate-300 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
               >
                 <Copy className="w-3.5 h-3.5 text-blue-400" />
-                <span>Copy Finding Summary</span>
+                <span>{t('ui_edge_vision_scanner_modal_copy_finding_summary')}</span>
               </button>
 
               <button
@@ -999,7 +1003,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                 className="w-full py-2 border border-white/10 hover:bg-white/5 text-xs font-medium text-slate-400 rounded-xl transition flex items-center justify-center gap-1.5"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                <span>Scan Another Specimen</span>
+                <span>{t('ui_edge_vision_scanner_modal_scan_another_specimen')}</span>
               </button>
             </div>
           </div>

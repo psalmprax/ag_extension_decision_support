@@ -2,6 +2,8 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import { DEMO_SEED_FARMERS } from './demoFarmers';
+// Plain CommonJS so the deployed seed.cjs and this file share one implementation.
+const { SYSTEM_ADMIN_EMAIL, ensureSystemAdministrator } = require('./systemAdministrator.cjs');
 
 dotenv.config();
 
@@ -13,24 +15,25 @@ async function main() {
   const passwordHash = await bcrypt.hash('password123', 10);
 
   // Users
-  // 1. System Administrator
+  // 1. System Administrator: same rules as seed.cjs (see prisma/systemAdministrator.cjs).
+  // The password is never reset on update; a new account starts read-only.
   await prisma.user.upsert({
-    where: { email: 'admin@agridemo.com' },
+    where: { email: SYSTEM_ADMIN_EMAIL },
     update: {
-      passwordHash,
       role: 'admin',
-      isDemo: true,
     },
     create: {
-      email: 'admin@agridemo.com',
+      email: SYSTEM_ADMIN_EMAIL,
       passwordHash,
       firstName: 'System',
       lastName: 'Administrator',
       role: 'admin',
       region: 'Global',
       isDemo: true,
+      isSystemAdmin: false,
     },
   });
+  await ensureSystemAdministrator({ prisma, bcrypt });
 
   // 2. Demo Extension Officer
   const user = await prisma.user.upsert({

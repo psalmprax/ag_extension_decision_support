@@ -43,7 +43,7 @@ describe('outbreakService', () => {
         });
         const call = mockQuery.mock.calls[0];
         expect(String(call[0])).toMatch(/INSERT INTO diagnosis_events/);
-        expect(call[1]).toEqual(['f-1', 'Lilongwe', 'maize', 'fall_armyworm', 0.92, 'extension_tool']);
+        expect(call[1]).toEqual(['f-1', null, 'Lilongwe', 'maize', 'fall_armyworm', 0.92, 'extension_tool']);
     });
 
     it('enforces the k-anonymity floor in SQL and never surfaces smaller clusters', async () => {

@@ -14,6 +14,7 @@ import {
     ImageAnalysisResult,
 } from '../types';
 import { config } from '@/config';
+import { visionModelFor } from '../selectedModel';
 import { logger } from '@/utils/logger';
 import { extractVisuals } from '../assetLibrary';
 
@@ -180,7 +181,7 @@ export class AnthropicProvider extends BaseAIProvider {
 
     async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
         const client = await this.getClient();
-        const model = options?.model || config.anthropic.model;
+        const model = options?.model || visionModelFor('anthropic') || config.anthropic.model;
 
         try {
             let base64Image: string;

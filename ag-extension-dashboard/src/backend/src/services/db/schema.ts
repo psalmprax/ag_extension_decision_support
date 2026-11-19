@@ -90,17 +90,24 @@ export async function createTables(pool: Pool): Promise<void> {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT false;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS manager_id UUID;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS country VARCHAR(100) DEFAULT 'Kenya';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS is_system_admin BOOLEAN NOT NULL DEFAULT false;
       ALTER TABLE farmers ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT false;
       UPDATE users SET is_demo = true WHERE id = '00000000-0000-0000-0000-000000000001';
       UPDATE users SET is_demo = true WHERE lower(COALESCE(email,'')) = 'demo@agridemo.com';
       UPDATE users SET is_demo = true WHERE lower(COALESCE(first_name,'')) = 'demo' OR lower(COALESCE(last_name,'')) = 'demo';
       UPDATE farmers SET is_demo = true WHERE id = '00000000-0000-0000-0000-000000000002';
+      -- A demo account never holds the system-admin flag. Who holds it is decided by
+      -- the seed (prisma/systemAdministrator.cjs), same as migration 20261118120000.
+      UPDATE users SET is_system_admin = false
+      WHERE is_system_admin = true AND COALESCE(is_demo, false) = true;
 
       -- Tenant-scoping + relationship-gap columns (legacy bootstrap parity).
       ALTER TABLE visits ADD COLUMN IF NOT EXISTS tenant_id UUID;
       ALTER TABLE chat_conversations ADD COLUMN IF NOT EXISTS tenant_id UUID;
       ALTER TABLE chat_conversations ADD COLUMN IF NOT EXISTS kind VARCHAR(20) NOT NULL DEFAULT 'farmer_thread';
       ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS channel VARCHAR(20);
+      -- Written by message edit/withdraw (migration 20261120090000).
+      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS metadata JSONB;
       ALTER TABLE alerts ADD COLUMN IF NOT EXISTS tenant_id UUID;
       ALTER TABLE notifications ADD COLUMN IF NOT EXISTS tenant_id UUID;
       ALTER TABLE reports ADD COLUMN IF NOT EXISTS tenant_id UUID;
@@ -333,6 +340,7 @@ export async function createTables(pool: Pool): Promise<void> {
       CREATE TABLE IF NOT EXISTS diagnosis_events (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         farmer_id UUID REFERENCES farmers(id) ON DELETE SET NULL,
+        user_id UUID REFERENCES users(id) ON DELETE SET NULL,
         district VARCHAR(100),
         crop VARCHAR(100) NOT NULL,
         disease_label VARCHAR(150) NOT NULL,
@@ -342,6 +350,8 @@ export async function createTables(pool: Pool): Promise<void> {
       );
       CREATE INDEX IF NOT EXISTS diagnosis_events_district_crop_idx ON diagnosis_events(district, crop, created_at);
       CREATE INDEX IF NOT EXISTS diagnosis_events_created_at_idx ON diagnosis_events(created_at);
+      ALTER TABLE diagnosis_events ADD COLUMN IF NOT EXISTS user_id UUID;
+      CREATE INDEX IF NOT EXISTS diagnosis_events_user_id_created_at_idx ON diagnosis_events(user_id, created_at);
 
       CREATE TABLE IF NOT EXISTS district_adjacency (
         district VARCHAR(100) NOT NULL,

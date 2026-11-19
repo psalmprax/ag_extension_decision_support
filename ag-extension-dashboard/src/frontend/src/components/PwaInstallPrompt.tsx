@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, X, Smartphone, Share, PlusSquare, ShieldCheck, WifiOff } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -9,6 +10,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export const PwaInstallPrompt: React.FC = () => {
+  const { t } = useLanguage();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState<boolean>(false);
   const [isIOS, setIsIOS] = useState<boolean>(false);
@@ -117,13 +119,13 @@ export const PwaInstallPrompt: React.FC = () => {
               </div>
               <div>
                 <h4 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
-                  Install GPExts App
+                  {t('ui_pwa_install_prompt_install_gpexts_app')}
                   <span className="px-1.5 py-0.5 rounded text-xs font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    Mobile
+                    {t('ui_pwa_install_prompt_mobile')}
                   </span>
                 </h4>
                 <p className="text-xs text-slate-300 font-medium mt-0.5">
-                  Offline field records, instant camera diagnostics & push alerts.
+                  {t('ui_pwa_install_prompt_offline_field_records_instant_camera')}
                 </p>
               </div>
             </div>
@@ -141,11 +143,11 @@ export const PwaInstallPrompt: React.FC = () => {
           <div className="grid grid-cols-2 gap-2 my-3 text-xs font-medium text-slate-300 bg-white/[0.03] p-2.5 rounded-xl border border-white/5">
             <div className="flex items-center gap-1.5">
               <WifiOff className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Works Offline in Field</span>
+              <span>{t('ui_pwa_install_prompt_works_offline_in_field')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Instant AI Camera</span>
+              <span>{t('ui_pwa_install_prompt_instant_ai_camera')}</span>
             </div>
           </div>
 
@@ -154,15 +156,14 @@ export const PwaInstallPrompt: React.FC = () => {
             <div className="mb-3 p-3 bg-white/5 border border-white/10 rounded-xl text-xs space-y-2 text-slate-200">
               <div className="font-bold text-emerald-400 flex items-center gap-1.5">
                 <Smartphone className="w-3.5 h-3.5" />
-                How to install on iOS Safari:
+                {t('ui_pwa_install_prompt_how_to_install_on_ios_safari')}
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center font-bold text-xxs shrink-0">
                   1
                 </span>
                 <span>
-                  Tap the <Share className="w-3.5 h-3.5 inline mx-1 text-primary-400" /> Share
-                  button in Safari menu.
+                  {t('ui_pwa_install_prompt_tap_the')} <Share className="w-3.5 h-3.5 inline mx-1 text-primary-400" /> {t('ui_pwa_install_prompt_share_button_in_safari_menu')}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -170,9 +171,9 @@ export const PwaInstallPrompt: React.FC = () => {
                   2
                 </span>
                 <span>
-                  Scroll down and tap{' '}
+                  {t('ui_pwa_install_prompt_scroll_down_and_tap')}{' '}
                   <span className="font-semibold text-emerald-400">
-                    <PlusSquare className="w-3.5 h-3.5 inline mx-1" /> Add to Home Screen
+                    <PlusSquare className="w-3.5 h-3.5 inline mx-1" /> {t('ui_pwa_install_prompt_add_to_home_screen')}
                   </span>
                   .
                 </span>
@@ -193,7 +194,7 @@ export const PwaInstallPrompt: React.FC = () => {
               onClick={handleDismiss}
               className="py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 text-xs font-semibold transition-all"
             >
-              Not Now
+              {t('ui_pwa_install_prompt_not_now')}
             </button>
           </div>
         </div>

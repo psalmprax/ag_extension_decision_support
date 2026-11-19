@@ -7,6 +7,12 @@ import { cacheGet, cacheSet } from './cacheService';
 
 export type MarketDataStatus = 'live' | 'estimated' | 'unavailable';
 
+/**
+ * Where the price sits in the value chain. Never mix them in one series: a
+ * producer price and a retail median are different quantities, not revisions.
+ */
+export type PriceType = 'producer' | 'wholesale' | 'retail';
+
 export interface MarketPrice {
   id: string;
   crop: string;
@@ -19,6 +25,14 @@ export interface MarketPrice {
   fetchedAt: string;
   exchangeRateSource: 'live' | 'fallback' | 'native';
   currency: string;
+  /** Year the FAOSTAT producer price refers to — a yearly series, not a spot quote. */
+  period?: string | null;
+  /** Native USD producer price per tonne, before any currency conversion. */
+  usdPerTonne?: number | null;
+  /** Change against the previous published year. */
+  yoyPct?: number | null;
+  /** Value-chain stage the figure belongs to. */
+  priceType?: PriceType | null;
 }
 
 interface ExchangeRateResult {
@@ -108,6 +122,16 @@ export async function getUserCountry(userId?: string): Promise<string> {
 export async function resolveUserAreaCode(userId?: string): Promise<string> {
   const country = await getUserCountry(userId);
   return faostatAreaCode(country);
+}
+
+/** True when a producer-price feed exists for this country (public routes use it to answer 400). */
+export function isPriceCountrySupported(country: string): boolean {
+  try {
+    faostatAreaCode(country);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function getCurrencyForCountry(country: string): string {
@@ -297,21 +321,26 @@ function estimatedPricesFor(country: string): MarketPrice[] {
   return buildBaselinePrices(fallbackExchangeRate(currency), currency, new Date().toISOString());
 }
 
-async function withinBudget(country: string, fetching: Promise<MarketPrice[]>): Promise<MarketPrice[]> {
+/**
+ * Waits at most the lookup budget for `fetching`. `null` means the budget ran
+ * out: the caller serves its labelled fallback while the fetch keeps running
+ * and fills the cache for the next request.
+ */
+async function withinBudget<T>(country: string, fetching: Promise<T>): Promise<T | null> {
   const budgetMs = priceLookupBudgetMs();
   let timer: NodeJS.Timeout | undefined;
   const budget = new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), budgetMs); });
   try {
     const result = await Promise.race([fetching, budget]);
-    if (result) return result;
+    if (result !== null) return result;
   } finally {
     clearTimeout(timer);
   }
-  logger.warn(`Market prices for ${country} not ready after ${budgetMs} ms; serving the baseline estimate meanwhile`);
+  logger.warn(`Market prices for ${country} not ready after ${budgetMs} ms; serving the labelled fallback meanwhile`);
   fetching.catch(error => logger.warn(
     `Background market price fetch for ${country} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
   ));
-  return estimatedPricesFor(country);
+  return null;
 }
 
 async function readCachedPrices(country: string): Promise<MarketPrice[] | null> {
@@ -325,6 +354,79 @@ async function readCachedPrices(country: string): Promise<MarketPrice[] | null> 
   }
 }
 
+/** The three crops the public landing card shows, in display order. */
+const LANDING_CROPS = ['0112', '01591', '0115'] as const;
+
+/** Annual series lag a year or two; probe back this far before giving up. */
+const FAOSTAT_YEAR_PROBES = 4;
+
+const landingCacheKey = (country: string) => `market-prices:landing:v1:${country}`;
+const inFlightLanding = new Map<string, Promise<LandingMarketPrices>>();
+
+export interface LandingPrice {
+  crop: string;
+  cropCode: string;
+  usdPerTonne: number;
+  usdPerKg: number;
+  /** Derived at 90 kg per bag — the unit the card quotes. */
+  usdPerBag90kg: number;
+  yoyPct: number | null;
+  priceType: 'producer';
+}
+
+export interface LandingMarketPrices {
+  prices: LandingPrice[];
+  /** Published year of the figures — never present them as a current quote. */
+  period: string | null;
+  dataStatus: 'live' | 'unavailable';
+  fetchedAt: string;
+}
+
+/** Newest published year wins; returns [] when none of the probed years has data. */
+async function fetchLatestFaostatYear(areaCode: string, itemCodes: string[]): Promise<FaostatPriceRow[]> {
+  const currentYear = new Date().getFullYear();
+  for (let offset = 0; offset < FAOSTAT_YEAR_PROBES; offset++) {
+    const rows = await fetchFaostatProducerPrices(areaCode, itemCodes, String(currentYear - offset));
+    if (rows.length > 0) return rows;
+  }
+  return [];
+}
+
+/** FAOSTAT already reports USD/tonne (element 5532), so no FX conversion is applied. */
+function toLandingPrices(rows: FaostatPriceRow[], previousYearRows: FaostatPriceRow[]): LandingPrice[] {
+  const previous = new Map<string, number>();
+  for (const row of previousYearRows) {
+    const value = Number(row.value);
+    if (value > 0) previous.set(row.item_code, value);
+  }
+
+  const order = new Map<string, number>(LANDING_CROPS.map((code, index) => [code, index]));
+  const seen = new Set<string>();
+  const prices: LandingPrice[] = [];
+
+  for (const row of rows) {
+    if (seen.has(row.item_code)) continue;
+    const usdPerTonne = Number(row.value);
+    if (!Number.isFinite(usdPerTonne) || usdPerTonne <= 0) continue;
+    seen.add(row.item_code);
+    const previousValue = previous.get(row.item_code);
+
+    prices.push({
+      crop: FAOSTAT_CROP_CODE[row.item_code] || row.item_code,
+      cropCode: row.item_code,
+      usdPerTonne: Math.round(usdPerTonne * 100) / 100,
+      usdPerKg: Math.round((usdPerTonne / 1000) * 10000) / 10000,
+      usdPerBag90kg: Math.round(usdPerTonne * 0.09 * 100) / 100,
+      yoyPct: previousValue
+        ? Math.round(((usdPerTonne - previousValue) / previousValue) * 1000) / 10
+        : null,
+      priceType: 'producer',
+    });
+  }
+
+  return prices.sort((a, b) => (order.get(a.cropCode) ?? 99) - (order.get(b.cropCode) ?? 99));
+}
+
 export const marketPriceService = {
   /**
    * Latest prices for the user's country: cached, one upstream fetch at a time
@@ -334,7 +436,8 @@ export const marketPriceService = {
     const country = countryOverride || await getUserCountry(userId);
     const cached = await readCachedPrices(country);
     if (cached) return cached;
-    return withinBudget(country, inFlightPrices.get(country) ?? this.startPriceFetch(country));
+    const fetched = await withinBudget(country, inFlightPrices.get(country) ?? this.startPriceFetch(country));
+    return fetched ?? estimatedPricesFor(country);
   },
 
   /** Fetches upstream once and caches the result (live 6 h, estimates 30 min). */
@@ -350,21 +453,82 @@ export const marketPriceService = {
     return fetching;
   },
 
+  /**
+   * Public landing-card prices: the three priority crops, in native USD, with
+   * the published year attached. Never invents a number when upstream is empty.
+   */
+  async getLandingPrices(country: string): Promise<LandingMarketPrices> {
+    const cached = await cacheGet(landingCacheKey(country));
+    if (cached) {
+      try {
+        return JSON.parse(cached) as LandingMarketPrices;
+      } catch (error) {
+        logger.warn(
+          `Ignoring unreadable cached landing prices for ${country}: ${error instanceof Error ? error.message : 'parse error'}`
+        );
+      }
+    }
+
+    // A cold lookup probes four years plus the year before the hit — up to five
+    // 8 s upstream calls, longer than the app's 30 s request budget. Answer
+    // within the lookup budget instead of letting the public card time out.
+    const snapshot = await withinBudget(
+      country,
+      inFlightLanding.get(country) ?? this.startLandingFetch(country)
+    );
+    // The timeout fallback is deliberately not cached: only a real upstream
+    // answer may suppress the next lookup.
+    return snapshot ?? {
+      prices: [],
+      period: null,
+      dataStatus: 'unavailable',
+      fetchedAt: new Date().toISOString(),
+    };
+  },
+
+  /** Runs the landing fetch once per country and caches what upstream returned. */
+  startLandingFetch(country: string): Promise<LandingMarketPrices> {
+    const fetching = this.fetchLandingSnapshot(country).finally(() => inFlightLanding.delete(country));
+    inFlightLanding.set(country, fetching);
+    return fetching;
+  },
+
+  async fetchLandingSnapshot(country: string): Promise<LandingMarketPrices> {
+    const areaCode = faostatAreaCode(country);
+    const rows = await fetchLatestFaostatYear(areaCode, [...LANDING_CROPS]);
+    const period = rows[0]?.year ?? null;
+    const previousYearRows = period
+      ? await fetchFaostatProducerPrices(areaCode, [...LANDING_CROPS], String(Number(period) - 1))
+      : [];
+    const prices = toLandingPrices(rows, previousYearRows);
+
+    const snapshot: LandingMarketPrices = {
+      prices,
+      period,
+      dataStatus: prices.length > 0 ? 'live' : 'unavailable',
+      fetchedAt: new Date().toISOString(),
+    };
+
+    await cacheSet(
+      landingCacheKey(country),
+      JSON.stringify(snapshot),
+      prices.length > 0 ? PRICE_CACHE_TTL_LIVE_S : PRICE_CACHE_TTL_ESTIMATE_S
+    );
+    return snapshot;
+  },
+
   async fetchLatestPrices(country: string): Promise<MarketPrice[]> {
     const areaCode = faostatAreaCode(country);
     const targetCurrency = getCurrencyForCountry(country);
     const exchangeRate = await fetchExchangeRate(targetCurrency);
     const fetchedAt = new Date().toISOString();
-    const currentYear = String(new Date().getFullYear());
-    const previousYear = String(Number(currentYear) - 1);
-
-    // Try FAOSTAT Producer Prices first
-    const faoPrices = await fetchFaostatProducerPrices(areaCode, PRIORITY_CROPS, currentYear);
-    const previousYearPrices = faoPrices.length === 0
-      ? await fetchFaostatProducerPrices(areaCode, PRIORITY_CROPS, previousYear)
+    // Producer prices are annual and published with a lag, so the current year
+    // is usually empty. Probe back until a published year answers.
+    const prices = await fetchLatestFaostatYear(areaCode, PRIORITY_CROPS);
+    const previousYearPrices = prices.length > 0
+      ? await fetchFaostatProducerPrices(areaCode, PRIORITY_CROPS, String(Number(prices[0].year) - 1))
       : [];
 
-    const prices = faoPrices.length > 0 ? faoPrices : previousYearPrices;
     const result = prices.length > 0
       ? mapFaostatPrices(prices, previousYearPrices, exchangeRate, targetCurrency, areaCode, fetchedAt)
       : await resolveGiewsOrBaseline(country, exchangeRate, targetCurrency, fetchedAt);
@@ -383,7 +547,7 @@ export const marketPriceService = {
 function buildFaostatPriceRow(
   code: string, value: number, unit: string, prevMap: Map<string, number>,
   exchangeRate: ExchangeRateResult, areaCode: string, targetCurrency: string,
-  fetchedAt: string, index: number,
+  fetchedAt: string, index: number, year: string | null,
 ): MarketPrice {
   const displayName = FAOSTAT_CROP_CODE[code] || code;
   const localPrice = roundPrice(value * exchangeRate.rate / 1000, targetCurrency);
@@ -398,6 +562,10 @@ function buildFaostatPriceRow(
     priceValue: localPrice,
     trend,
     updatedAt: new Date(fetchedAt),
+    period: year,
+    usdPerTonne: value,
+    yoyPct: trendPct !== null ? Number(trendPct) : null,
+    priceType: 'producer',
     source: 'faostat_producer_prices' as const,
     // A FAOSTAT price converted with estimated FX is not a live quote.
     dataStatus: (exchangeRate.estimated ? 'estimated' : 'live') as MarketDataStatus,
@@ -429,11 +597,13 @@ function mapFaostatPrices(
     if (val > 0) prevMap.set(row.item_code, val);
   }
 
+  // Every row of a yearly series carries the same published year.
+  const year = prices[0]?.year ?? null;
   let index = 0;
   const result: MarketPrice[] = [];
   for (const [code, { value }] of cropMap.entries()) {
     if (index >= 6) break;
-    result.push(buildFaostatPriceRow(code, value, 'USD/tonne', prevMap, exchangeRate, areaCode, targetCurrency, fetchedAt, index));
+    result.push(buildFaostatPriceRow(code, value, 'USD/tonne', prevMap, exchangeRate, areaCode, targetCurrency, fetchedAt, index, year));
     index++;
   }
   return result;
@@ -460,6 +630,7 @@ function mapGiewsPrices(
       fetchedAt,
       exchangeRateSource: exchangeRate.source,
       currency: targetCurrency,
+      priceType: 'wholesale' as const,
     };
   });
 }

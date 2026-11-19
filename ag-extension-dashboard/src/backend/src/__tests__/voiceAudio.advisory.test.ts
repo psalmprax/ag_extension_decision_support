@@ -8,8 +8,17 @@ jest.mock('@/services/whisperTranscriptionService', () => ({
 describe('Advisory speech integrity', () => {
     const originalEnvironment = process.env.NODE_ENV;
     const originalKey = process.env.OPENAI_API_KEY;
+    const originalHub = { api: process.env.AIHUBMIX_API_KEY, access: process.env.AIHUBMIX_ACCESS_KEY };
+
+    // Neither speech API is configured in these cases (AIHubMix is the second provider).
+    beforeEach(() => {
+        delete process.env.AIHUBMIX_API_KEY;
+        delete process.env.AIHUBMIX_ACCESS_KEY;
+    });
 
     afterEach(() => {
+        if (originalHub.api !== undefined) process.env.AIHUBMIX_API_KEY = originalHub.api;
+        if (originalHub.access !== undefined) process.env.AIHUBMIX_ACCESS_KEY = originalHub.access;
         process.env.NODE_ENV = originalEnvironment;
         if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
         else process.env.OPENAI_API_KEY = originalKey;

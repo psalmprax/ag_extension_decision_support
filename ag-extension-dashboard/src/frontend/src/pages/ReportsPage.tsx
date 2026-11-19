@@ -134,7 +134,7 @@ function ReportCard({
         {/* Live cohort metric — derived from report metadata when available */}
         <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-white/[0.04] space-y-1.5">
           <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-white/40">
-            <span>REPORT STATUS</span>
+            <span>{t('ui_reports_page_report_status')}</span>
             <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase">{report.status || 'ready'}</span>
           </div>
           <div className="text-[10px] font-mono text-slate-600 dark:text-white/50 truncate">
@@ -217,7 +217,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
   return (
     <div className="space-y-8">
       <section className="mb-6" aria-label="Government MIS exports">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-gray-400 mb-2">Government MIS exports (CSV)</h3>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-gray-400 mb-2">{t('ui_reports_page_government_mis_exports_csv')}</h3>
         <MisExportButtons />
       </section>
       {/* Header & Generate Button */}
@@ -226,14 +226,14 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           <div className="flex items-center gap-2 mb-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             <span className="text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400">
-              Agronomic Audit & Analytics
+              {t('ui_reports_page_agronomic_audit_analytics')}
             </span>
           </div>
           <h1 className={`text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
-            Data Reports
+            {t('ui_reports_page_data_reports')}
           </h1>
           <p className="text-slate-600 dark:text-white/60 text-sm mt-1">
-            Verified field synthesis, farmer cohort outcomes, and institutional audit logs.
+            {t('ui_reports_page_verified_field_synthesis_farmer_coho')}
           </p>
         </div>
 
@@ -258,29 +258,29 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         <div className="p-4 rounded-xl backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
           <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
             <Layers className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Reports Generated</span>
+            <span>{t('ui_reports_page_reports_generated')}</span>
           </div>
           <div className="text-xl font-bold text-slate-900 dark:text-white flex items-baseline gap-2">
             {reports.length}
-            <span className="text-xxs font-normal text-emerald-600 dark:text-emerald-400">Active</span>
+            <span className="text-xxs font-normal text-emerald-600 dark:text-emerald-400">{t('billing_status_active')}</span>
           </div>
         </div>
 
         <div className="p-4 rounded-xl backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
           <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
             <Users className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-            <span>Reports Archive</span>
+            <span>{t('ui_reports_page_reports_archive')}</span>
           </div>
           <div className="text-xl font-bold text-slate-900 dark:text-white flex items-baseline gap-2">
             {reports.length}
-            <span className="text-xxs font-normal text-slate-400 dark:text-white/40">Total</span>
+            <span className="text-xxs font-normal text-slate-400 dark:text-white/40">{t('ui_notification_panel_total')}</span>
           </div>
         </div>
 
         <div className="p-4 rounded-xl backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
           <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
             <TrendingUp className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            <span>Latest Report</span>
+            <span>{t('ui_reports_page_latest_report')}</span>
           </div>
           <div className="text-sm font-bold text-slate-900 dark:text-white truncate">
             {reports[0]?.title || '—'}
@@ -290,10 +290,10 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         <div className="p-4 rounded-xl backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
           <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Data Source</span>
+            <span>{t('ui_reports_page_data_source')}</span>
           </div>
           <div className="text-xs font-mono font-bold text-slate-700 dark:text-white/80 truncate">
-            System Generated
+            {t('ui_reports_page_system_generated')}
           </div>
         </div>
       </div>
@@ -304,9 +304,9 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
       {/* Filter / Search Bar */}
       <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/[0.06]">
         <div className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <span>Audit Log Archive</span>
+          <span>{t('ui_reports_page_audit_log_archive')}</span>
           <span className="text-xxs font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white/60 border border-slate-200 dark:border-white/10">
-            {filteredReports.length} Available
+            {t('ui_reports_page_available', { length: filteredReports.length })}
           </span>
         </div>
         <input
@@ -322,9 +322,9 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
       {filteredReports.length === 0 ? (
         <div className="text-center py-16 backdrop-blur-xl bg-white dark:bg-slate-900/30 border border-slate-200 dark:border-white/[0.06] rounded-xl space-y-3">
           <FileText className="w-10 h-10 text-slate-400 dark:text-white/20 mx-auto" />
-          <div className="text-sm font-bold text-slate-700 dark:text-white/60">No reports found</div>
+          <div className="text-sm font-bold text-slate-700 dark:text-white/60">{t('ui_reports_page_no_reports_found')}</div>
           <p className="text-xs text-slate-500 dark:text-white/40 max-w-sm mx-auto">
-            Click &quot;Generate AI Report&quot; to synthesize field data into an operational report.
+            {t('ui_reports_page_click_generate_ai_report_to_synthesi')}
           </p>
         </div>
       ) : (
@@ -372,8 +372,8 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                   <div>
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">{viewingReport.title}</h3>
                     <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-white/50 font-mono mt-0.5">
-                      <span>DATE: {new Date(viewingReport.generatedAt).toLocaleString()}</span>
-                      <span>STATUS: {viewingReport.status || 'READY'}</span>
+                      <span>{t('ui_reports_page_date')} {new Date(viewingReport.generatedAt).toLocaleString()}</span>
+                      <span>{t('ui_reports_page_status')} {viewingReport.status || 'READY'}</span>
                     </div>
                   </div>
                 </div>
@@ -388,7 +388,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                     className="px-3.5 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 hover:bg-emerald-400 transition-colors"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Download PDF</span>
+                    <span>{t('ui_reports_page_download_pdf')}</span>
                   </button>
                   <button
                     onClick={() => setViewingReport(null)}
@@ -404,7 +404,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                 {/* Left Pane: Report Document Content */}
                 <div className="p-6 space-y-4">
                   <div className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                    Document Synthesis & Observations
+                    {t('ui_reports_page_document_synthesis_observations')}
                   </div>
                   {isLoadingReport ? (
                     <div className="flex items-center justify-center py-20">
@@ -418,7 +418,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                         </div>
                       ) : (
                         <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/[0.06]">
-                          <p className="font-semibold text-slate-800 dark:text-white">Report content unavailable.</p>
+                          <p className="font-semibold text-slate-800 dark:text-white">{t('ui_reports_page_report_content_unavailable')}</p>
                         </div>
                       )}
                     </div>
@@ -428,27 +428,27 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                 {/* Right Pane: Telemetry Metrics & Action Breakdown */}
                 <div className="p-6 bg-slate-50 dark:bg-slate-950/40 space-y-5">
                   <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-white/50">
-                    Telemetry Metadata & Audit Trail
+                    {t('ui_reports_page_telemetry_metadata_audit_trail')}
                   </div>
 
                   <div className="space-y-3">
                     <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/[0.06] shadow-sm space-y-1">
-                      <div className="text-[10px] font-mono text-slate-500 dark:text-white/40 uppercase">DATASET INTEGRITY</div>
+                      <div className="text-[10px] font-mono text-slate-500 dark:text-white/40 uppercase">{t('ui_reports_page_dataset_integrity')}</div>
                       <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>ISRIC SoilGrids & NASA POWER Verified</span>
+                        <span>{t('ui_reports_page_isric_soilgrids_nasa_power_verified')}</span>
                       </div>
                     </div>
 
                     <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/[0.06] shadow-sm space-y-1">
-                      <div className="text-[10px] font-mono text-slate-500 dark:text-white/40 uppercase">AUTHOR PROVENANCE</div>
+                      <div className="text-[10px] font-mono text-slate-500 dark:text-white/40 uppercase">{t('ui_reports_page_author_provenance')}</div>
                       <div className="text-xs font-bold text-slate-900 dark:text-white">
                         {viewingReport.createdBy || `${user?.firstName || 'Extension'} ${user?.lastName || 'Officer'}`}
                       </div>
                     </div>
 
                     <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/[0.06] shadow-sm space-y-1">
-                      <div className="text-[10px] font-mono text-slate-500 dark:text-white/40 uppercase">EXPORT FORMATS</div>
+                      <div className="text-[10px] font-mono text-slate-500 dark:text-white/40 uppercase">{t('ui_reports_page_export_formats')}</div>
                       <div className="flex gap-2 pt-1">
                         {['PDF', 'CSV', 'GeoJSON'].map(fmt => (
                           <span

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Loader2, Leaf, BookOpen, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface Props {
   allDiseases: string[];
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onViewDiseaseInfo }: Props) {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredDiseases = allDiseases.filter(d =>
@@ -22,11 +24,11 @@ export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onVi
           <div className="flex items-center gap-2 mb-1">
             <BookOpen className="w-4 h-4 text-emerald-400" />
             <h3 className="text-xs font-semibold text-white">
-              Pathology Encyclopedia & Protocols
+              {t('ui_disease_library_tab_pathology_encyclopedia_protocols')}
             </h3>
           </div>
           <p className="text-[11px] font-mono text-slate-400">
-            Browse the internal disease reference. Entries are not verified treatment protocols.
+            {t('ui_disease_library_tab_browse_the_internal_disease_referenc')}
           </p>
         </div>
 
@@ -62,7 +64,7 @@ export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onVi
                     {disease}
                   </h4>
                   <span className="text-[10px] font-mono text-slate-500 font-medium">
-                    Reference information
+                    {t('ui_disease_library_tab_reference_information')}
                   </span>
                 </div>
               </div>
@@ -72,8 +74,8 @@ export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onVi
 
           {filteredDiseases.length === 0 && (
             <div className="col-span-full text-center py-12 text-slate-500">
-              <p className="text-xs font-medium text-slate-400">No matching pathology dossiers</p>
-              <p className="text-[10px] font-mono mt-1">Try a different crop or disease keyword</p>
+              <p className="text-xs font-medium text-slate-400">{t('ui_disease_library_tab_no_matching_pathology_dossiers')}</p>
+              <p className="text-[10px] font-mono mt-1">{t('ui_disease_library_tab_try_a_different_crop_or_disease_keyw')}</p>
             </div>
           )}
         </div>

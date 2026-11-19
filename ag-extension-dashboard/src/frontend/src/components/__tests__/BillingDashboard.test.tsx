@@ -5,6 +5,7 @@ import { BillingDashboard } from '../BillingDashboard';
 import { LanguageProvider } from '../../lib/LanguageContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
+import { fetchSubscription } from '@/api/billingService';
 
 // Mock billing service to prevent real API calls
 vi.mock('@/api/billingService', () => ({
@@ -116,8 +117,9 @@ const queryClient = new QueryClient({
   },
 });
 
-const renderComponent = () => {
-  return render(
+// The language provider renders its children once the (mocked) locale file has loaded.
+const renderComponent = async () => {
+  const view = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <LanguageProvider>
@@ -126,12 +128,21 @@ const renderComponent = () => {
       </MemoryRouter>
     </QueryClientProvider>
   );
+  await waitFor(() => expect(view.container.firstChild).not.toBeNull());
+  return view;
 };
 
 describe('BillingDashboard', () => {
   it('renders loading state initially', async () => {
-    renderComponent();
+    // Hold the subscription request so the loading state is still up when checked.
+    let release!: () => void;
+    const held = new Promise<void>(resolve => { release = resolve; });
+    const respond = vi.mocked(fetchSubscription).getMockImplementation()!;
+    vi.mocked(fetchSubscription).mockImplementationOnce(async () => { await held; return respond(); });
+
+    await renderComponent();
     expect(screen.getByRole('status')).toBeInTheDocument();
+    release();
 
     // Wait for the loading state to disappear to satisfy React state updates
     await waitFor(() => {
@@ -140,7 +151,7 @@ describe('BillingDashboard', () => {
   });
 
   it('renders subscription details after loading', async () => {
-    renderComponent();
+    await renderComponent();
 
     await waitFor(() => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
@@ -152,11 +163,11 @@ describe('BillingDashboard', () => {
   });
 
   it('keeps the unselected billing period readable in light mode', async () => {
-    renderComponent();
+    await renderComponent();
+    const annual = await screen.findByRole('button', { name: 'Annual (-20%)' });
     await waitFor(() => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
-    const annual = screen.getByRole('button', { name: 'Annual (-20%)' });
     // White text is only for the selected (solid green) option; on the light
     // header an unselected option needs a dark text colour.
     expect(annual.className).toMatch(/(^|\s)text-slate-600(\s|$)/);
@@ -164,7 +175,7 @@ describe('BillingDashboard', () => {
   });
 
   it('renders available plans', async () => {
-    renderComponent();
+    await renderComponent();
 
     await waitFor(() => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument();

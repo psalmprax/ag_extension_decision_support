@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal } from '@/components/Modal';
 import type { EmailTemplate } from '@/api/emailWorkflowService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const TEMPLATE_PREVIEW_SAMPLE_DATA: Record<string, string> = {
   farmerName: 'John Doe',
@@ -47,6 +48,7 @@ export function EmailWorkflowsPreviewModal({
   template: EmailTemplate;
   onClose: () => void;
 }) {
+  const { t } = useLanguage();
   const preview = renderTemplatePreview(template);
   return (
     <Modal
@@ -57,7 +59,7 @@ export function EmailWorkflowsPreviewModal({
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Subject
+            {t('email_workflows_subject')}
           </label>
           <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded border font-medium">
             {preview.subject}
@@ -66,7 +68,7 @@ export function EmailWorkflowsPreviewModal({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Body
+            {t('ui_edit_modal_body')}
           </label>
           <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded border whitespace-pre-wrap font-mono text-sm">
             {preview.body}
@@ -74,8 +76,7 @@ export function EmailWorkflowsPreviewModal({
         </div>
 
         <div className="text-xs text-gray-500 dark:text-gray-400">
-          <strong>Note:</strong> Variables in {'{{'}brackets{'}}'} have been replaced with sample
-          data for preview.
+          <strong>{t('ui_preview_modal_note')}</strong> {t('ui_preview_modal_variables_in')} {'{{'}{t('ui_preview_modal_brackets')}{'}}'} {t('ui_preview_modal_have_been_replaced_with_sample_data')}
         </div>
       </div>
 
@@ -84,7 +85,7 @@ export function EmailWorkflowsPreviewModal({
           onClick={onClose}
           className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
         >
-          Close
+          {t('common_close')}
         </button>
       </div>
     </Modal>

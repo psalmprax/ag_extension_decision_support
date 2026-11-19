@@ -44,7 +44,7 @@ export function SMSRightPanel({
             onClick={onClose}
             className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400 dark:text-white/40 hover:text-slate-700 dark:hover:text-white transition-colors"
           >
-            &times;
+            {t('ui_field_modal_text')}
           </button>
         </div>
 

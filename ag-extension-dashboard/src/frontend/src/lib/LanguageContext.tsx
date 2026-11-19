@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Language } from './i18n';
+import { interpolate } from './interpolate';
 
 interface LanguageContextType {
   language: Language;
@@ -18,16 +19,6 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 // Languages that use Right-to-Left direction
 const RTL_LANGUAGES: Language[] = ['ar'];
-
-function interpolate(template: string, params: Record<string, unknown>): string {
-  let result = template;
-  for (const [key, value] of Object.entries(params)) {
-    if (key !== 'defaultValue' && value !== undefined && value !== null) {
-      result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), String(value));
-    }
-  }
-  return result;
-}
 
 function resolveTranslation(
   key: string,
@@ -82,7 +73,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const setLanguage = async (lang: Language) => {
-    setIsLoaded(false); // Show loading during transition or handle smoothly
+    // The current language stays on screen until the new one has loaded.
     await loadLanguage(lang);
     setLanguageState(lang);
     localStorage.setItem('preferred_language', lang);
@@ -116,24 +107,9 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
   }, [language, isRTL]);
 
-  // Provide a default value during loading
-  if (!isLoaded) {
-    return (
-      <LanguageContext.Provider
-        value={{
-          language: 'en',
-          setLanguage: () => {},
-          t: (
-            key: string,
-            options?: string | ({ defaultValue?: string } & Record<string, unknown>)
-          ) => (typeof options === 'string' ? options : options?.defaultValue) || key,
-          isRTL: false,
-        }}
-      >
-        {children}
-      </LanguageContext.Provider>
-    );
-  }
+  // Screen text comes from the locale file; until it has loaded there is nothing
+  // to show but raw keys, so render nothing (index.html preloads en.json).
+  if (!isLoaded) return null;
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t, isRTL }}>

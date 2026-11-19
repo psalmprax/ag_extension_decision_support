@@ -9,25 +9,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FarmerDetailHeader } from './FarmerDetailHeader';
 import { FarmerYieldChart } from './FarmerYieldChart';
 import { FarmerVisitTimeline } from './FarmerVisitTimeline';
-import {
-  X,
-  TrendingUp,
-  MessageSquare,
-  Phone,
-  Video,
-  Clock,
-  ChevronRight,
-  Sprout,
-  Activity,
-  Mail,
-  History,
-  FileText,
-  Loader2,
-  Link2,
-} from 'lucide-react';
+import { X, TrendingUp, MessageSquare, Phone, Video, Clock, ChevronRight, Sprout } from 'lucide-react';
+import { Activity, Mail, History, FileText, Loader2, Link2, ListChecks } from 'lucide-react';
+import { FarmerProgressLog } from './progress/FarmerProgressLog';
+
+type DetailTab = 'overview' | 'history' | 'progress' | 'insights';
 import toast from 'react-hot-toast';
 import { VideoCall } from './VideoCall';
 import { useLanguage } from '@/lib/LanguageContext';
+import { isActionEnter } from '@/lib/keyboard';
 import { useAppStore } from '@/store/useAppStore';
 import { useNavigate } from 'react-router-dom';
 
@@ -36,6 +26,7 @@ import { generateSynthesis } from '@/api/chatbotService';
 import { fetchPriorityScore, updateVisit } from '@/api/visitService';
 import { SatelliteInsights } from './SatelliteInsights';
 import { ConfirmModal } from './ConfirmModal';
+import { getLogContent, getLogTypeColor } from './farmerLogFormat';
 
 interface FarmerDetailPanelProps {
   isOpen: boolean;
@@ -45,18 +36,6 @@ interface FarmerDetailPanelProps {
   onFarmerClick?: (farmer: Farmer | null) => void;
 }
 const radiusClass = 'rounded-xl';
-
-const getLogTypeColor = (type: string) => {
-  if (type === 'SMS') return 'bg-blue-100 text-blue-600';
-  if (type === 'CHAT') return 'bg-purple-100 text-purple-600';
-  return 'bg-green-100 text-green-600';
-};
-
-const getLogContent = (log: Record<string, unknown>) => {
-  if (log.content) return log.content as string;
-  if (log.type === 'CALL') return `Outbound call duration: ${log.duration}`;
-  return '';
-};
 
 const HistoryTabContent = ({
   interactions,
@@ -166,17 +145,14 @@ const CropsSection = ({
             size="sm"
             placeholder="Add crop..."
             onKeyDown={e => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                const input = e.target as HTMLInputElement;
-                const val = input.value.trim();
-                if (val && !((editData.crops as string[]) || []).includes(val)) {
-                  setEditData({
-                    ...editData,
-                    crops: [...((editData.crops as string[]) || []), val],
-                  });
-                  input.value = '';
-                }
+              if (!isActionEnter(e)) return;
+              e.preventDefault();
+              const input = e.target as HTMLInputElement;
+              const val = input.value.trim();
+              const crops = (editData.crops as string[]) || [];
+              if (val && !crops.includes(val)) {
+                setEditData({ ...editData, crops: [...crops, val] });
+                input.value = '';
               }
             }}
           />
@@ -381,7 +357,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
   const isCyber = themeName === 'cyber';
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = React.useState<'overview' | 'history' | 'insights'>('overview');
+  const [activeTab, setActiveTab] = React.useState<DetailTab>('overview');
   const [isEditing, setIsEditing] = React.useState(false);
   const [editData, setEditData] = React.useState<Farmer>(farmer!);
   const [interactions, setInteractions] = React.useState<
@@ -641,11 +617,12 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
               {[
                 { id: 'overview', label: t('nav_dashboard') || 'Overview', icon: FileText },
                 { id: 'history', label: t('nav_sms_history') || 'Communication', icon: History },
+                { id: 'progress', label: t('farmer_tab_progress', 'Progress'), icon: ListChecks },
                 { id: 'insights', label: t('nav_analytics') || 'Insights', icon: TrendingUp },
               ].map(tab => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as 'overview' | 'history' | 'insights')}
+                  onClick={() => setActiveTab(tab.id as DetailTab)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                     activeTab === tab.id
                       ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm'
@@ -682,6 +659,8 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                   isLoadingHistory={isLoadingHistory}
                   radiusClass={radiusClass}
                 />
+              ) : activeTab === 'progress' ? (
+                <FarmerProgressLog farmerId={farmer.id} crops={farmer.crops ?? []} />
               ) : (
                 <SatelliteInsights farmerId={farmer.id} isCyber={isCyber} />
               )}
@@ -720,7 +699,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                   className="font-medium text-xs !rounded-[4px] !bg-slate-800 !hover:bg-slate-700 !text-slate-200 !border-slate-700"
                 >
                   <Activity className="w-3.5 h-3.5" />
-                  Refresh
+                  {t('ui_farmer_detail_panel_refresh')}
                 </Button>
                 <Button
                   loading={isSynthesizing}
@@ -771,7 +750,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
               className="absolute top-4 right-16 z-[110] px-3 py-2 bg-black/50 hover:bg-black/70 text-white text-xs font-bold rounded-xl backdrop-blur-md transition-all flex items-center gap-1.5"
             >
               <Link2 className="w-4 h-4" />
-              Invite
+              {t('ui_farmer_detail_panel_invite')}
             </button>
             <button
               onClick={() => setShowVideoCall(false)}

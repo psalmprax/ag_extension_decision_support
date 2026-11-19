@@ -2,8 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Brain, Wifi, CloudSun, Layers, Sprout, Activity } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function Demo() {
+  const { t } = useLanguage();
   return (
         <section
           id="capabilities"
@@ -23,20 +25,19 @@ export function Demo() {
                 variants={fadeUp}
                 className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-400 mb-3"
               >
-                Integrated Decision Ecosystem
+                {t('ui_demo_integrated_decision_ecosystem')}
               </motion.div>
               <motion.h2
                 variants={fadeUp}
                 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white/90"
               >
-                Engineered for precision, resilience, and field reality
+                {t('ui_demo_engineered_for_precision_resilience')}
               </motion.h2>
               <motion.p
                 variants={fadeUp}
                 className="text-sm sm:text-base text-white/65 max-w-2xl mx-auto mt-3 font-normal leading-relaxed"
               >
-                Supporting field workflows with available agricultural data and AI-assisted tools.
-                Availability and evidence quality vary by deployment.
+                {t('ui_demo_supporting_field_workflows_with_avai')}
               </motion.p>
             </motion.div>
 
@@ -106,59 +107,58 @@ export function Demo() {
                   </div>
                   <div>
                     <div className="text-sm font-bold text-white/90 flex items-center gap-2">
-                      Agronomic Intelligence Trail
+                      {t('ui_demo_agronomic_intelligence_trail')}
                       <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/25">
-                        Illustrative sample
+                        {t('ui_demo_illustrative_sample')}
                       </span>
                     </div>
                     <div className="text-xs text-white/50">
-                      Multi-parameter field data stream synthesized into evidence-backed
-                      recommendations
+                      {t('ui_demo_multi_parameter_field_data_stream_sy')}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-xs font-medium text-white/60">
                   <Activity className="w-4 h-4 text-white/40" />
-                  <span>Example values — not a live feed</span>
+                  <span>{t('ui_demo_example_values_not_a_live_feed')}</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
                 <div className="p-3.5 rounded-xl backdrop-blur-sm bg-slate-950/60 border border-white/[0.06]">
                   <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">
-                    NDVI Canopy Vigor
+                    {t('ui_demo_ndvi_canopy_vigor')}
                   </div>
                   <div className="text-lg font-bold text-emerald-400">
-                    0.78 <span className="text-xs font-normal text-white/50">High</span>
+                    0.78 <span className="text-xs font-normal text-white/50">{t('ui_demo_high')}</span>
                   </div>
-                  <div className="text-[10px] text-white/40 mt-1">Sentinel-2 Multispectral</div>
+                  <div className="text-[10px] text-white/40 mt-1">{t('ui_demo_sentinel_2_multispectral')}</div>
                 </div>
                 <div className="p-3.5 rounded-xl backdrop-blur-sm bg-slate-950/60 border border-white/[0.06]">
                   <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">
-                    Soil pH & Carbon
+                    {t('ui_demo_soil_ph_carbon')}
                   </div>
                   <div className="text-lg font-bold text-amber-400">
-                    6.4 pH <span className="text-xs font-normal text-white/50">Optimal</span>
+                    6.4 pH <span className="text-xs font-normal text-white/50">{t('ui_demo_optimal')}</span>
                   </div>
-                  <div className="text-[10px] text-white/40 mt-1">SoilGrids 0-30cm Depth</div>
+                  <div className="text-[10px] text-white/40 mt-1">{t('ui_demo_soilgrids_0_30cm_depth')}</div>
                 </div>
                 <div className="p-3.5 rounded-xl backdrop-blur-sm bg-slate-950/60 border border-white/[0.06]">
                   <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">
-                    Soil Moisture
+                    {t('ui_soil_climate_sample_card_soil_moisture')}
                   </div>
                   <div className="text-lg font-bold text-blue-400">
-                    31.2% <span className="text-xs font-normal text-white/50">Field Cap.</span>
+                    31.2% <span className="text-xs font-normal text-white/50">{t('ui_demo_field_cap')}</span>
                   </div>
-                  <div className="text-[10px] text-white/40 mt-1">NASA POWER 7-Day Model</div>
+                  <div className="text-[10px] text-white/40 mt-1">{t('ui_demo_nasa_power_7_day_model')}</div>
                 </div>
                 <div className="p-3.5 rounded-xl backdrop-blur-sm bg-slate-950/60 border border-white/[0.06]">
                   <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">
-                    Pest Risk Index
+                    {t('ui_demo_pest_risk_index')}
                   </div>
                   <div className="text-lg font-bold text-emerald-400">
-                    Low Risk <span className="text-xs font-normal text-white/50">9%</span>
+                    {t('ui_demo_low_risk')} <span className="text-xs font-normal text-white/50">9%</span>
                   </div>
-                  <div className="text-[10px] text-white/40 mt-1">FAO Early-Warning Vector</div>
+                  <div className="text-[10px] text-white/40 mt-1">{t('ui_demo_fao_early_warning_vector')}</div>
                 </div>
               </div>
             </motion.div>

@@ -4,7 +4,6 @@ import {
   AlertCircle,
   Settings,
   Shield,
-  Ticket,
   Layers,
   Activity,
   Receipt,
@@ -22,7 +21,6 @@ import { ConfirmModal } from './ConfirmModal';
 import { BaseModal } from './BaseModal';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { Select } from './ui/Select';
 import { Textarea } from './ui/Textarea';
 import { PlanCard } from './billing/PlanCard';
 import { PaymentMethods } from './billing/PaymentMethods';
@@ -30,8 +28,8 @@ import { Invoices } from './billing/Invoices';
 import { AccessAndCostMatrix } from './billing/AccessAndCostMatrix';
 import { ChurnReasons } from './billing/ChurnReasons';
 import { CancelSubscriptionModal } from './billing/CancelSubscriptionModal';
-import { LiquidToggleSwitch } from './canvasui/LiquidToggleSwitch';
 import { triggerHaptic } from '@/lib/haptics';
+import { ManualPlanGrants } from './billing/ManualPlanGrants';
 
 interface AdminVaultProps {
   billing: ReturnType<typeof useBillingActions>;
@@ -79,7 +77,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
               htmlFor="stripe-secret"
               className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
             >
-              Stripe Secret Key (sk_live_...)
+              {t('ui_billing_dashboard_stripe_secret_key_sk_live')}
             </label>
             <Input
               id="stripe-secret"
@@ -100,7 +98,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
               htmlFor="stripe-webhook"
               className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
             >
-              Stripe Webhook Secret (whsec_...)
+              {t('ui_billing_dashboard_stripe_webhook_secret_whsec')}
             </label>
             <Input
               id="stripe-webhook"
@@ -121,7 +119,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
               htmlFor="paypal-client"
               className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
             >
-              PayPal Client ID
+              {t('ui_billing_dashboard_paypal_client_id')}
             </label>
             <Input
               id="paypal-client"
@@ -141,7 +139,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
               htmlFor="paypal-secret"
               className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
             >
-              PayPal Secret Key
+              {t('ui_billing_dashboard_paypal_secret_key')}
             </label>
             <Input
               id="paypal-secret"
@@ -174,170 +172,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
         </div>
       </section>
 
-      {/* Admin Mobile Money Verification Queue */}
-      <section className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl overflow-hidden">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center">
-            <AlertCircle className="w-5 h-5 text-amber-700 dark:text-amber-400" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {t('billing_admin_transactions') || 'Pending Mobile Money Queue'}
-            </h3>
-            <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-              Manual USSD / Till Verification
-            </p>
-          </div>
-        </div>
-        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/10">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/10">
-                {['User', 'Method', 'TX ID', 'Amount', 'Plan', 'Actions'].map(h => (
-                  <th
-                    key={h}
-                    className="px-6 py-4 text-xxs font-bold uppercase tracking-wider text-slate-600 dark:text-white/60"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
-              {billing.adminTransactions.length > 0 ? (
-                billing.adminTransactions.map(tx => (
-                  <tr
-                    key={tx.id}
-                    className="hover:bg-slate-100 dark:hover:bg-white/[0.02] transition-colors"
-                  >
-                    <td className="px-6 py-4 text-xs font-bold text-slate-900 dark:text-white">{tx.userEmail}</td>
-                    <td className="px-6 py-4 text-xs font-black uppercase text-amber-700 dark:text-amber-400">
-                      {tx.method}
-                    </td>
-                    <td className="px-6 py-4 text-xs font-mono text-slate-700 dark:text-white/80">{tx.transactionId}</td>
-                    <td className="px-6 py-4 text-xs font-bold text-slate-900 dark:text-white">
-                      {tx.amount} {tx.currency}
-                    </td>
-                    <td className="px-6 py-4 text-xs uppercase text-slate-600 dark:text-white/60 font-bold">
-                      {tx.planId?.split('_')[1]}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            triggerHaptic('medium');
-                            billing.handleVerifyTransaction(tx.id);
-                          }}
-                          disabled={billing.actionLoading === `verify-${tx.id}`}
-                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xxs font-bold rounded-lg shadow-sm"
-                        >
-                          {t('billing_admin_verify') || 'Verify'}
-                        </button>
-                        <button
-                          onClick={() => {
-                            triggerHaptic('light');
-                            billing.setSelectedTransactionId(tx.id);
-                          }}
-                          className="px-3.5 py-1.5 bg-rose-600/80 hover:bg-rose-500 text-white text-xxs font-bold rounded-lg shadow-sm"
-                        >
-                          {t('billing_admin_reject') || 'Reject'}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-12 text-center text-xs text-slate-500 dark:text-white/40 font-semibold uppercase tracking-widest italic"
-                  >
-                    {t('billing_admin_no_pending') || 'No pending mobile money transactions'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Admin Voucher Generator */}
-      <section className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl overflow-hidden">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center">
-            <Ticket className="w-5 h-5 text-purple-400" />
-          </div>
-          <div>
-            <h3 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
-              {t('billing_admin_vouchers') || 'AgriVoucher Minting Engine'}
-            </h3>
-            <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-              Batch Generation for Cooperatives & NGOs
-            </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div>
-            <label className="text-xs font-medium text-slate-400 mb-1.5 block">
-              Target Tier
-            </label>
-            <Select
-              value={billing.voucherBatch.planId}
-              onChange={e =>
-                billing.setVoucherBatch({ ...billing.voucherBatch, planId: e.target.value })
-              }
-              options={[
-                { value: 'price_pro_monthly', label: 'Pro Officer (Monthly)' },
-                { value: 'price_pro_yearly', label: 'Pro Officer (Yearly)' },
-                { value: 'price_enterprise_monthly', label: 'Enterprise Cooperative' },
-              ]}
-              className="font-medium bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-slate-400 mb-1.5 block">
-              {t('billing_admin_batch_count') || 'Tokens Count'}
-            </label>
-            <Input
-              type="number"
-              value={billing.voucherBatch.count}
-              onChange={e =>
-                billing.setVoucherBatch({
-                  ...billing.voucherBatch,
-                  count: parseInt(e.target.value),
-                })
-              }
-              className="bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-slate-400 mb-1.5 block">
-              {t('billing_admin_expiry_days') || 'Expiry (Days)'}
-            </label>
-            <Input
-              type="number"
-              value={billing.voucherBatch.expiresInDays}
-              onChange={e =>
-                billing.setVoucherBatch({
-                  ...billing.voucherBatch,
-                  expiresInDays: parseInt(e.target.value),
-                })
-              }
-              className="bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
-            />
-          </div>
-        </div>
-        <button
-          onClick={() => {
-            triggerHaptic('medium');
-            billing.handleGenerateVouchers();
-          }}
-          disabled={billing.actionLoading === 'generate-vouchers'}
-          className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-xl border border-slate-200 dark:border-white/10 transition-colors flex items-center justify-center gap-2"
-        >
-          {t('billing_admin_generate_vouchers') || 'Mint Batch Vouchers'}
-        </button>
-      </section>
+      <ManualPlanGrants billing={billing} />
     </motion.div>
   );
 };
@@ -376,10 +211,10 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2 sm:gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Billing & Subscriptions</h1>
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">{t('ui_billing_dashboard_billing_subscriptions')}</h1>
               <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                 <Radio className="w-2.5 h-2.5 text-emerald-700 dark:text-emerald-400" />
-                Commerce Radar
+                {t('ui_billing_dashboard_commerce_radar')}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -392,13 +227,13 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
           {/* Telemetry Stat Chips */}
           <div className="flex items-center gap-2 overflow-x-auto">
             <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-white/80 font-mono whitespace-nowrap">
-              Tier: <strong className="text-slate-900 dark:text-white font-medium">{currentPlanName}</strong>
+              {t('ui_billing_dashboard_tier')} <strong className="text-slate-900 dark:text-white font-medium">{currentPlanName}</strong>
             </span>
             <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300 font-mono whitespace-nowrap">
-              Status: <strong className="font-medium">{isProActive ? 'Active' : 'Starter'}</strong>
+              {t('ui_billing_dashboard_status')} <strong className="font-medium">{isProActive ? 'Active' : 'Starter'}</strong>
             </span>
             <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 font-mono whitespace-nowrap">
-              Billing: <strong className="font-medium">{isAnnual ? 'Annual (-20%)' : 'Monthly'}</strong>
+              {t('ui_billing_dashboard_billing')} <strong className="font-medium">{isAnnual ? 'Annual (-20%)' : 'Monthly'}</strong>
             </span>
           </div>
 
@@ -415,7 +250,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
             ) : (
               <ExternalLink className="w-4 h-4" />
             )}
-            <span>Customer Portal</span>
+            <span>{t('ui_billing_dashboard_customer_portal')}</span>
           </button>
         </div>
       </div>
@@ -449,9 +284,6 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-3 self-start sm:self-auto shrink-0">
-          <div className="hidden sm:block">
-            <LiquidToggleSwitch compact={true} />
-          </div>
           <div className="flex items-center gap-1 p-1 bg-slate-50 dark:bg-white/[0.03] rounded-xl border border-slate-200 dark:border-white/10">
             <button
               type="button"
@@ -463,7 +295,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
                 !isAnnual ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              Monthly
+              {t('ui_billing_dashboard_monthly')}
             </button>
             <button
               type="button"
@@ -475,7 +307,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
                 isAnnual ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              Annual (-20%)
+              {t('ui_billing_dashboard_annual_20')}
             </button>
           </div>
         </div>
@@ -634,9 +466,9 @@ export const BillingDashboard: React.FC = () => {
           <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between">
             <div className="space-y-0.5">
               <span className="text-xxs font-black uppercase tracking-widest text-slate-500 dark:text-white/50 block">
-                Stripe Customer Portal
+                {t('ui_billing_dashboard_stripe_customer_portal')}
               </span>
-              <span className="text-xs text-slate-600 dark:text-white/70 font-medium">Manage payment methods & invoices</span>
+              <span className="text-xs text-slate-600 dark:text-white/70 font-medium">{t('ui_billing_dashboard_manage_payment_methods_invoices')}</span>
             </div>
             <button
               onClick={() => {
@@ -651,7 +483,7 @@ export const BillingDashboard: React.FC = () => {
               ) : (
                 <ExternalLink className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
               )}
-              <span>Portal</span>
+              <span>{t('ui_billing_dashboard_portal')}</span>
             </button>
           </div>
         </div>
@@ -659,7 +491,7 @@ export const BillingDashboard: React.FC = () => {
         {billing.subscription && !billing.subscription.cancelAtPeriodEnd && (
           <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <p className="text-xxs text-slate-500 dark:text-white/50">
-              Cancelling keeps your plan active until the period ends.
+              {t('ui_billing_dashboard_cancelling_keeps_your_plan_active_un')}
             </p>
             <button
               onClick={() => {
@@ -668,13 +500,13 @@ export const BillingDashboard: React.FC = () => {
               }}
               className="text-xxs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300 hover:text-rose-200 transition-colors self-start sm:self-auto"
             >
-              Cancel subscription
+              {t('ui_billing_dashboard_cancel_subscription')}
             </button>
           </div>
         )}
         {billing.subscription?.cancelAtPeriodEnd && (
           <p className="mt-4 pt-4 border-t border-slate-200 dark:border-white/5 text-xxs text-amber-700 dark:text-amber-300">
-            This subscription is set to end at the close of the current period.
+            {t('ui_billing_dashboard_this_subscription_is_set_to_end_at_t')}
           </p>
         )}
       </section>

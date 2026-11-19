@@ -6,6 +6,7 @@
  */
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
+import { usageService } from '@/services/usageService';
 import { notificationService } from '@/services/notificationService';
 import { generateAdvisoryAnswer, persistTurnMessage } from '@/services/chat/advisoryAnswer';
 import { deliverToFarmerChannel, replyChannelFor, smsAiAnswersToday } from '@/services/chat/channelThread';
@@ -146,16 +147,39 @@ export async function sendUrgentSafetyReply(thread: ThreadForReply): Promise<voi
 }
 
 /** What happened when the AI was asked to answer. */
-export type AnswerOutcome = 'answered' | 'urgent' | 'sms_limit' | 'no_question';
+export type AnswerOutcome = 'answered' | 'urgent' | 'sms_limit' | 'no_question' | 'not_on_plan';
 
 /**
  * The AI answers the farmer's latest message in their thread, and the answer
  * goes out on the channel the farmer used. Urgent messages get the fixed
  * safety reply instead. By SMS, the organisation's daily limit applies.
  */
-export async function answerFarmerInThread(thread: ThreadForReply, reason: AnswerReason): Promise<AnswerOutcome> {
+/**
+ * Who an AI answer in this thread is charged to: the officer responsible for it, or,
+ * with no officer assigned, the farmer's own app account. Null when nobody can be.
+ */
+export function aiAnswerPayer(thread: Pick<ThreadForReply, 'officerId' | 'farmerUserId'>): string | null {
+    return thread.officerId ?? thread.farmerUserId ?? null;
+}
+
+/** Whether this thread's payer can get AI answers right now (plan and quota). */
+export async function aiAnswersAvailable(thread: Pick<ThreadForReply, 'officerId' | 'farmerUserId'>): Promise<boolean> {
+    const payer = aiAnswerPayer(thread);
+    return payer !== null && (await usageService.hasAllowance(payer, 'ai_chat'));
+}
+
+/**
+ * @param options.planChecked set when the caller already checked and meters the plan
+ *   (the in-app Ask AI route charges the farmer's own plan through checkUsageLimit).
+ */
+export async function answerFarmerInThread(
+    thread: ThreadForReply,
+    reason: AnswerReason,
+    options: { planChecked?: boolean } = {},
+): Promise<AnswerOutcome> {
     const question = thread.question;
     if (!question) return 'no_question';
+    // Safety first: the fixed urgent reply is not an AI answer and is never withheld.
     if (isUrgentMessage(question.content)) {
         await sendUrgentSafetyReply(thread);
         return 'urgent';
@@ -164,6 +188,9 @@ export async function answerFarmerInThread(thread: ThreadForReply, reason: Answe
     if (channel === 'sms' && (await smsAiAnswersToday(thread.farmerId)) >= thread.settings.smsAiDailyLimit) {
         return 'sms_limit';
     }
+    // AI answers are a paid feature: charged to the payer's AI quota (zero on the free plan).
+    const payer = options.planChecked ? null : aiAnswerPayer(thread);
+    if (!options.planChecked && !(await aiAnswersAvailable(thread))) return 'not_on_plan';
     const language = question.language ?? undefined;
     const answer = await generateAdvisoryAnswer({
         message: question.content,
@@ -177,6 +204,9 @@ export async function answerFarmerInThread(thread: ThreadForReply, reason: Answe
         brevity: channel === 'sms' ? 'sms' : undefined,
     });
     await deliverToFarmerChannel(thread.conversationId, answer.storedMessageId, answer.text);
+    if (payer) {
+        await usageService.incrementUsage(payer, 'ai_chat').catch(err => logger.warn('Failed to meter AI answer:', err));
+    }
     if (reason !== 'farmer_request') {
         await notifyOfficer(
             thread,

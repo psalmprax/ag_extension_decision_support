@@ -35,6 +35,8 @@ import { DashboardHeader } from './DashboardHeader';
 import type { PerformanceData } from '@/api/analyticsService';
 import { SupportEfficiencyCard } from '@/components/dashboard/SupportEfficiencyCard';
 import { DistributionPanels } from '@/components/dashboard/DistributionPanels';
+import { DashboardToolbar } from '@/components/dashboard/DashboardToolbar';
+import { useZoneFarmers } from '@/hooks/useDashboardZone';
 import { SoilClimateSampleCard } from '@/components/dashboard/SoilClimateSampleCard';
 
 const REGION_MAP_MAX_RETRIES = 3;
@@ -323,13 +325,8 @@ const DashboardMapSection: React.FC<{
   const mappedFarmers = useMemo(
     () =>
       effectiveFarmers
-        .filter(
-          f =>
-            typeof f.latitude === 'number' &&
-            Number.isFinite(f.latitude) &&
-            typeof f.longitude === 'number' &&
-            Number.isFinite(f.longitude)
-        )
+        .filter(f => typeof f.latitude === 'number' && Number.isFinite(f.latitude)
+          && typeof f.longitude === 'number' && Number.isFinite(f.longitude))
         .map(f => ({
           id: f.id,
           name: `${f.firstName} ${f.lastName}`,
@@ -543,11 +540,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const isAdmin = effectiveUser?.role === 'admin' || effectiveUser?.role === 'superadmin';
   const { isDemo } = useDemoMode();
   const openFarmerChat = useOpenFarmerChat({ role: effectiveUser?.role, handleStartConversation, handleOpenFarmerDetail });
+  const zoneFarmers = useZoneFarmers(effectiveFarmers);
 
   return (
     <div className="animate-in fade-in duration-500">
       <OutbreakBanner />
       <DashboardHeader userName={effectiveUser?.firstName} t={t} headingClass={headingClass} />
+      <DashboardToolbar farmers={effectiveFarmers} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <DashboardStats
@@ -561,7 +560,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <DashboardMapSection
-          effectiveFarmers={effectiveFarmers}
+          effectiveFarmers={zoneFarmers}
           isMapExpanded={isMapExpanded}
           setIsMapExpanded={setIsMapExpanded}
           handleStartConversation={handleStartConversation}

@@ -136,14 +136,14 @@ function Agents() {
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              Autonomous Mesh Fleet
+              {t('ui_agents_autonomous_mesh_fleet')}
             </span>
           </div>
           <h1 className={`text-2xl font-semibold text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
-            Agent Orchestration
+            {t('ui_agents_agent_orchestration')}
           </h1>
           <p className="text-slate-600 dark:text-white/60 text-sm mt-1">
-            Real-time telemetry, auto-handoff coordination, and execution matrix.
+            {t('ui_agents_real_time_telemetry_auto_handoff_coo')}
           </p>
         </div>
 
@@ -151,7 +151,7 @@ function Agents() {
           {agents.length > 0 && (
             <div className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-mono">
               <Radio className="w-3.5 h-3.5" />
-              <span>{agents.filter(a => a.health === 'healthy').length}/{agents.length} nodes healthy</span>
+              <span>{t('ui_agents_nodes_healthy', { length: agents.filter(a => a.health === 'healthy').length, length2: agents.length })}</span>
             </div>
           )}
 
@@ -161,7 +161,7 @@ function Agents() {
             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.1] text-slate-800 dark:text-white hover:border-slate-300 dark:hover:border-white/20 text-xs font-medium transition-colors disabled:opacity-50 shadow-sm ${btnClass}`}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-600 dark:text-emerald-400' : ''}`} />
-            <span>Refresh</span>
+            <span>{t('ui_farmer_detail_panel_refresh')}</span>
           </button>
         </div>
       </div>
@@ -173,12 +173,12 @@ function Agents() {
         <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/[0.06]">
           <div className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Server className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Active Agent Nodes</span>
+            <span>{t('ui_agents_active_agent_nodes')}</span>
           </div>
         </div>
         {agents.length === 0 && (
           <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-6 text-sm text-amber-700 dark:text-amber-200">
-            Agent status is unavailable. Refresh to retry the live orchestration service.
+            {t('ui_agents_agent_status_is_unavailable_refresh')}
           </div>
         )}
 
@@ -229,7 +229,7 @@ function Agents() {
                   {/* Load Progress Bar */}
                   <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] space-y-2">
                     <div className="flex justify-between text-xs font-mono">
-                      <span className="text-slate-600 dark:text-white/50">Concurrency load</span>
+                      <span className="text-slate-600 dark:text-white/50">{t('ui_agents_concurrency_load')}</span>
                       <span className="text-emerald-600 dark:text-emerald-400 font-medium font-mono tabular-nums">
                         {agent.currentLoad} / {agent.maxConcurrentTasks} ({loadPercent}%)
                       </span>
@@ -244,7 +244,7 @@ function Agents() {
 
                   {/* Capabilities Chips */}
                   <div className="space-y-1.5">
-                    <div className="text-xs text-slate-500 dark:text-white/40">Capabilities</div>
+                    <div className="text-xs text-slate-500 dark:text-white/40">{t('ui_agents_capabilities')}</div>
                     <div className="flex flex-wrap gap-1.5">
                       {agent.capabilities.map(cap => (
                         <span
@@ -261,7 +261,7 @@ function Agents() {
                 {/* Dispatch Trigger Button */}
                 <div className="pt-4 border-t border-slate-200 dark:border-white/[0.06] space-y-2">
                   <div className="text-xs font-mono tabular-nums text-slate-400 dark:text-white/30 truncate">
-                    Heartbeat: {new Date(agent.lastHeartbeat).toLocaleTimeString()}
+                    {t('ui_agents_heartbeat')} {new Date(agent.lastHeartbeat).toLocaleTimeString()}
                   </div>
                   <button
                     onClick={() => handleDispatch(agent.agentId)}
@@ -273,7 +273,7 @@ function Agents() {
                     ) : (
                       <Send className="w-3.5 h-3.5" />
                     )}
-                    <span>Dispatch Probe</span>
+                    <span>{t('ui_agents_dispatch_probe')}</span>
                   </button>
                 </div>
               </motion.div>
@@ -289,9 +289,9 @@ function Agents() {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
               <Cpu className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Queue Status Telemetry</span>
+              <span>{t('ui_agents_queue_status_telemetry')}</span>
             </h3>
-            <span className="text-xs font-mono text-slate-500 dark:text-white/40">Real-time density</span>
+            <span className="text-xs font-mono text-slate-500 dark:text-white/40">{t('ui_agents_real_time_density')}</span>
           </div>
 
           <ResponsiveContainer width="100%" height={240}>
@@ -320,9 +320,9 @@ function Agents() {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-              <span>Autonomous Handoff Stream</span>
+              <span>{t('ui_agents_autonomous_handoff_stream')}</span>
             </h3>
-            <span className="text-xxs font-mono text-emerald-600 dark:text-emerald-400">0 ERRORS</span>
+            <span className="text-xxs font-mono text-emerald-600 dark:text-emerald-400">{t('ui_agents_0_errors')}</span>
           </div>
 
           <div className="space-y-2.5 max-h-60 overflow-y-auto font-mono text-xs pr-1">
@@ -338,7 +338,7 @@ function Agents() {
                     <span className="text-sky-600 dark:text-sky-400">{handoff.to}</span>
                   </div>
                   <div className="text-[10px] text-slate-500 dark:text-white/50 truncate">
-                    TASK: {handoff.taskId} • {handoff.reason}
+                    {t('ui_agents_task', { taskId: handoff.taskId, reason: handoff.reason })}
                   </div>
                 </div>
 

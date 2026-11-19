@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Brain,
@@ -34,42 +34,13 @@ import {
   WELCOME_MESSAGE_ID,
 } from './alpha/response';
 import { exportAdvisoryPdf } from './alpha/advisoryExport';
+import { isActionEnter } from '@/lib/keyboard';
 import { StudioTabSwitcher, CanvasWorkbench, type LastImageAnalysis } from './alpha/StudioTabs';
 import { MessageStream } from './alpha/MessageStream';
 import { NasaPowerBadge, RagMeshBadge } from './alpha/badges';
 import { analyzeLeafImage } from './alpha/utils/leafAnalysis';
-
-/** Begin voice capture and hand the recorded blob to onReady; null when unsupported. */
-function getSupportedMimeType(): string {
-  if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
-  const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus', 'audio/ogg', 'audio/wav'];
-  for (const c of candidates) {
-    if (MediaRecorder.isTypeSupported(c)) return c;
-  }
-  return '';
-}
-
-async function startVoiceCapture(onReady: (blob: Blob, mimeType: string) => Promise<void>): Promise<MediaRecorder | null> {
-  if (!navigator.mediaDevices?.getUserMedia) {
-    toast.error('Voice input unavailable in this browser');
-    return null;
-  }
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  const mimeType = getSupportedMimeType();
-  const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-  const chunks: BlobPart[] = [];
-  recorder.ondataavailable = e => {
-    if (e.data.size > 0) chunks.push(e.data);
-  };
-
-  recorder.onstop = async () => {
-    stream.getTracks().forEach(t => t.stop());
-    const effectiveType = recorder.mimeType || mimeType || 'audio/webm';
-    await onReady(new Blob(chunks, { type: effectiveType }), effectiveType);
-  };
-  recorder.start();
-  return recorder;
-}
+import { startVoiceCapture } from './alpha/voiceCapture';
+import { useLanguage } from '@/lib/LanguageContext';
 
 async function fetchPillarTranscription(base64: string, mimeType: string): Promise<string | null> {
   try {
@@ -143,6 +114,7 @@ async function transcribeVoiceBlob(blob: Blob, mimeType: string): Promise<string
 }
 
 export const AlphaAI: React.FC = () => {
+  const { t } = useLanguage();
   const [activeStudioTab, setActiveStudioTab] = useState<'copilot' | 'agent_ops'>('copilot');
   const [activeCanvasView, setActiveCanvasView] = useState<CanvasViewType>('soil_heatmap');
   const [inputPrompt, setInputPrompt] = useState('');
@@ -334,10 +306,9 @@ export const AlphaAI: React.FC = () => {
     input.click();
   };
 
-  const lastAdvisoryText = useCallback(() => latestAdvisoryText(messages), [messages]);
 
   const handleDispatchSms = async () => {
-    const lastAnswer = lastAdvisoryText();
+    const lastAnswer = latestAdvisoryText(messages);
     if (!lastAnswer) {
       toast.error('No advisory to dispatch — ask a question first');
       return;
@@ -375,10 +346,10 @@ export const AlphaAI: React.FC = () => {
             </div>
             <div>
               <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
-                AI Agronomic Co-Pilot
+                {t('ui_alpha_ai_ai_agronomic_co_pilot')}
               </h1>
               <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-                Multi-modal decision engine powered by NASA POWER, SoilGrids v2, and Spatial RAG.
+                {t('ui_alpha_ai_multi_modal_decision_engine_powered')}
               </p>
             </div>
           </div>
@@ -438,7 +409,7 @@ export const AlphaAI: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                       <span className="font-mono text-xs font-medium">
-                        Recording Voice Audio... Speak prompt
+                        {t('ui_alpha_ai_recording_voice_audio_speak_prompt')}
                       </span>
                     </div>
                     {/* Simulated Voice Waveform */}
@@ -484,7 +455,7 @@ export const AlphaAI: React.FC = () => {
                     value={inputPrompt}
                     onChange={e => setInputPrompt(e.target.value)}
                     onKeyDown={e => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      if (isActionEnter(e) && !e.shiftKey) {
                         e.preventDefault();
                         handleSendMessage();
                       }
@@ -543,7 +514,7 @@ export const AlphaAI: React.FC = () => {
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-                  Interactive Canvas
+                  {t('ui_alpha_ai_interactive_canvas')}
                 </span>
               </div>
             </div>
@@ -562,11 +533,7 @@ export const AlphaAI: React.FC = () => {
                   selectedGraphNode={selectedGraphNode}
                   onGraphNodeSelect={setSelectedGraphNode}
                   onDispatchSms={handleDispatchSms}
-                  citations={
-                    [...messages]
-                      .reverse()
-                      .find(m => m.sender === 'assistant' && m.citations?.length)?.citations ?? []
-                  }
+                  citations={messages.findLast(m => m.sender === 'assistant' && m.citations?.length)?.citations ?? []}
                   lastImageAnalysis={lastImageAnalysis}
                 />
               </div>
@@ -574,7 +541,7 @@ export const AlphaAI: React.FC = () => {
               <div className="pt-4 mt-4 border-t border-slate-200 dark:border-white/5 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-xxs text-slate-500 dark:text-white/50 font-mono">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Agronomic safety guard on: answers are checked for unsafe advice</span>
+                  <span>{t('ui_alpha_ai_agronomic_safety_guard_on_answers_ar')}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -583,7 +550,7 @@ export const AlphaAI: React.FC = () => {
                     className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 text-xs font-semibold dark:text-white/80 dark:hover:text-white transition-colors flex items-center gap-1.5"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Export PDF</span>
+                    <span>{t('ui_alpha_ai_export_pdf')}</span>
                   </button>
 
                   <button
@@ -591,7 +558,7 @@ export const AlphaAI: React.FC = () => {
                     className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
                   >
                     <Share2 className="w-3.5 h-3.5" />
-                    <span>Dispatch Advisory SMS</span>
+                    <span>{t('ui_alpha_ai_dispatch_advisory_sms')}</span>
                   </button>
                 </div>
               </div>

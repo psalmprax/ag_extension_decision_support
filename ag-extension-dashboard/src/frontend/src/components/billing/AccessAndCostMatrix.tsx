@@ -297,7 +297,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
         </span>
       );
     }
-    return <span className="font-semibold text-xs text-slate-200">{val}</span>;
+    return <span className="font-semibold text-xs text-slate-800 dark:text-slate-200">{val}</span>;
   };
 
   return (
@@ -308,14 +308,14 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
           <div className="flex items-center gap-2 mb-1.5">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
               <Radio className="w-2.5 h-2.5 text-emerald-700 dark:text-emerald-400" />
-              Transparent Unit Rates
+              {t('ui_access_and_cost_matrix_transparent_unit_rates')}
             </span>
           </div>
           <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Feature Access & Cost Matrix
+            {t('ui_access_and_cost_matrix_feature_access_cost_matrix')}
           </h2>
           <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5 max-w-2xl leading-relaxed">
-            Transparent breakdown of tier quotas, unit rates, and interactive cooperative budget simulator for SMS, LLM reasoning, WhatsApp, AI Vision, and Speech synthesis.
+            {t('ui_access_and_cost_matrix_transparent_breakdown_of_tier_quotas')}
           </p>
         </div>
 
@@ -378,13 +378,13 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
               <thead>
                 <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03]">
                   <th className="p-4 md:p-5 text-xs font-medium text-slate-600 dark:text-white/70 w-[40%]">
-                    Platform Capability / Service
+                    {t('ui_access_and_cost_matrix_platform_capability_service')}
                   </th>
                   <th className="p-4 md:p-5 text-xs font-medium text-center w-[20%] text-slate-600 dark:text-white/70">
                     <div className="flex flex-col items-center gap-1">
-                      <span>Free Starter</span>
+                      <span>{t('ui_access_and_cost_matrix_free_starter')}</span>
                       <span className="text-xs px-2.5 py-0.5 rounded-md bg-slate-50 dark:bg-white/[0.05] text-slate-700 dark:text-white/80 font-mono">
-                        $0 / month
+                        {t('ui_access_and_cost_matrix_0_month')}
                       </span>
                     </div>
                   </th>
@@ -395,7 +395,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                         <span>{t('billing_matrix_tier_pro')}</span>
                       </div>
                       <span className="text-xs px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 font-medium font-mono">
-                        $29 / month
+                        {t('ui_access_and_cost_matrix_29_month')}
                       </span>
                     </div>
                   </th>
@@ -406,7 +406,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                         <span>{t('billing_matrix_tier_enterprise')}</span>
                       </div>
                       <span className="text-xs px-2.5 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30 font-medium">
-                        Custom Tier
+                        {t('ui_access_and_cost_matrix_custom_tier')}
                       </span>
                     </div>
                   </th>
@@ -462,9 +462,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             <div className="flex items-center gap-3">
               <Info className="w-5 h-5 text-emerald-700 dark:text-emerald-400 shrink-0" />
               <p className="text-xs text-slate-600 dark:text-white/70">
-                <strong className="text-slate-900 dark:text-white">Free tier restrictions:</strong> Paid consumable services (SMS, LLM,
-                WhatsApp, AI Vision diagnostics) require an active Pro subscription to prevent API
-                overuse. Knowledge Base is limited to 3 queries/day on Free.
+                <strong className="text-slate-900 dark:text-white">{t('ui_access_and_cost_matrix_free_tier_restrictions')}</strong> {t('ui_access_and_cost_matrix_paid_consumable_services_sms_llm_wha')}
               </p>
             </div>
             {onSelectPlan && (
@@ -527,17 +525,17 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
 
                   <div className="pt-4 border-t border-slate-200 dark:border-white/5 space-y-2 text-xs">
                     <div className="flex justify-between items-center text-slate-600 dark:text-white/60">
-                      <span>Free Tier Allowance:</span>
-                      <span className="font-semibold text-rose-700 dark:text-rose-400 font-mono">0 (Locked)</span>
+                      <span>{t('ui_access_and_cost_matrix_free_tier_allowance')}</span>
+                      <span className="font-semibold text-rose-700 dark:text-rose-400 font-mono">{t('ui_access_and_cost_matrix_0_locked')}</span>
                     </div>
                     <div className="flex justify-between items-center text-slate-600 dark:text-white/60">
-                      <span>Pro Plan Included:</span>
+                      <span>{t('ui_access_and_cost_matrix_pro_plan_included')}</span>
                       <span className="font-semibold text-emerald-700 dark:text-emerald-400 font-mono">
                         {svc.proQuota} / mo
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-slate-600 dark:text-white/60">
-                      <span>Enterprise Quota:</span>
+                      <span>{t('ui_access_and_cost_matrix_enterprise_quota')}</span>
                       <span className="font-semibold text-purple-400 font-mono">
                         {svc.enterpriseQuota}
                       </span>
@@ -553,11 +551,10 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
               <div>
                 <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
-                  Pre-purchased Volume Packages Available
+                  {t('ui_access_and_cost_matrix_pre_purchased_volume_packages_availa')}
                 </h4>
                 <p className="text-xs text-slate-600 dark:text-white/60 mt-1 max-w-xl leading-relaxed">
-                  Organizations managing over 10,000 farmers can activate dedicated Twilio /
-                  Africa’s Talking carrier routes with wholesale SMS rates under $0.009/SMS.
+                  {t('ui_access_and_cost_matrix_organizations_managing_over_10_000_f')}
                 </p>
               </div>
               <a
@@ -565,7 +562,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 onClick={() => triggerHaptic('light')}
                 className="px-4 py-2 text-xs font-medium rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-colors whitespace-nowrap"
               >
-                Inquire for Enterprise Rates
+                {t('ui_access_and_cost_matrix_inquire_for_enterprise_rates')}
               </a>
             </div>
           </div>
@@ -584,7 +581,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             <div className="flex items-center gap-2 pb-4 border-b border-slate-200 dark:border-white/10">
               <Sliders className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                Monthly Usage Estimator & Cost Simulator
+                {t('ui_access_and_cost_matrix_monthly_usage_estimator_cost_simulat')}
               </h3>
             </div>
 
@@ -592,10 +589,10 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
                 <label className="font-semibold text-slate-700 dark:text-white/80">
-                  Target Registered Farmers
+                  {t('ui_access_and_cost_matrix_target_registered_farmers')}
                 </label>
                 <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                  {calcFarmers.toLocaleString()} Farmers
+                  {calcFarmers.toLocaleString()} {t('nav_farmers')}
                 </span>
               </div>
               <input
@@ -613,7 +610,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
                 <label className="font-semibold text-slate-700 dark:text-white/80">
-                  Monthly SMS Broadcasts
+                  {t('ui_access_and_cost_matrix_monthly_sms_broadcasts')}
                 </label>
                 <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">
                   {calcSms.toLocaleString()} SMS
@@ -629,7 +626,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 className="w-full h-2 bg-slate-50 dark:bg-white/[0.05] rounded-lg appearance-none cursor-pointer accent-emerald-400"
               />
               <span className="text-xxs text-slate-500 dark:text-white/40 block font-mono">
-                500 included with Pro. Additional: $0.018/SMS.
+                {t('ui_access_and_cost_matrix_500_included_with_pro_additional_0_0')}
               </span>
             </div>
 
@@ -637,10 +634,10 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
                 <label className="font-semibold text-slate-700 dark:text-white/80">
-                  AI Generative Assistant Reasoning Queries
+                  {t('ui_access_and_cost_matrix_ai_generative_assistant_reasoning_qu')}
                 </label>
                 <span className="font-mono font-bold text-purple-400">
-                  {calcAiChat.toLocaleString()} Chats
+                  {calcAiChat.toLocaleString()} {t('ui_access_and_cost_matrix_chats')}
                 </span>
               </div>
               <input
@@ -653,7 +650,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 className="w-full h-2 bg-slate-50 dark:bg-white/[0.05] rounded-lg appearance-none cursor-pointer accent-purple-400"
               />
               <span className="text-xxs text-slate-500 dark:text-white/40 block font-mono">
-                1,000 included with Pro. Additional: $0.005/chat.
+                {t('ui_access_and_cost_matrix_1_000_included_with_pro_additional_0')}
               </span>
             </div>
 
@@ -661,10 +658,10 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
                 <label className="font-semibold text-slate-700 dark:text-white/80">
-                  AI Crop & Soil Photo Diagnoses
+                  {t('ui_access_and_cost_matrix_ai_crop_soil_photo_diagnoses')}
                 </label>
                 <span className="font-mono font-bold text-cyan-400">
-                  {calcVision.toLocaleString()} Scans
+                  {calcVision.toLocaleString()} {t('ui_access_and_cost_matrix_scans')}
                 </span>
               </div>
               <input
@@ -677,7 +674,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 className="w-full h-2 bg-slate-50 dark:bg-white/[0.05] rounded-lg appearance-none cursor-pointer accent-cyan-400"
               />
               <span className="text-xxs text-slate-500 dark:text-white/40 block font-mono">
-                100 included with Pro. Additional: $0.05/scan.
+                {t('ui_access_and_cost_matrix_100_included_with_pro_additional_0_0')}
               </span>
             </div>
 
@@ -685,10 +682,10 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
                 <label className="font-semibold text-slate-700 dark:text-white/80">
-                  WhatsApp & Telegram Broadcasts
+                  {t('ui_access_and_cost_matrix_whatsapp_telegram_broadcasts')}
                 </label>
                 <span className="font-mono font-bold text-teal-700 dark:text-teal-400">
-                  {calcWhatsapp.toLocaleString()} Broadcasts
+                  {calcWhatsapp.toLocaleString()} {t('ui_access_and_cost_matrix_broadcasts')}
                 </span>
               </div>
               <input
@@ -701,7 +698,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 className="w-full h-2 bg-slate-50 dark:bg-white/[0.05] rounded-lg appearance-none cursor-pointer accent-teal-400"
               />
               <span className="text-xxs text-slate-500 dark:text-white/40 block font-mono">
-                500 included with Pro. Additional: $0.015/broadcast.
+                {t('ui_access_and_cost_matrix_500_included_with_pro_additional_0_0_2')}
               </span>
             </div>
           </div>

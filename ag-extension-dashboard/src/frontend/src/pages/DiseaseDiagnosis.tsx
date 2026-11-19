@@ -21,6 +21,7 @@ import { DiseaseLibraryTab } from './diagnostics/DiseaseLibraryTab';
 import { DiseaseInfoModal } from './diagnostics/DiseaseInfoModal';
 import { EdgeVisionScannerModal } from '@/components/EdgeVisionScannerModal';
 import { VideoAnalysisTab } from './diagnostics/VideoAnalysisTab';
+import { DiagnosisHistoryPanel } from './diagnostics/DiagnosisHistoryPanel';
 
 export function DiseaseDiagnosis() {
   const online = useOnlineStatus();
@@ -92,17 +93,17 @@ export function DiseaseDiagnosis() {
             <div className="flex items-center gap-2 mb-1.5">
               <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 dark:border-emerald-500/30 text-xs font-medium">
                 <Radio className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                Crop Doctor &amp; Pathology
+                {t('ui_disease_diagnosis_crop_doctor_pathology')}
               </span>
               <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Image, video and symptom assessment
+                {t('ui_disease_diagnosis_image_video_and_symptom_assessment')}
               </span>
             </div>
             <h1 className={`text-2xl font-semibold text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
-              Crop Doctor &amp; Plant Pathology Clinic
+              {t('ui_disease_diagnosis_crop_doctor_plant_pathology_clinic')}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-xs mt-1">
-              Upload a photo or video, or describe symptoms. Results require expert confirmation.
+              {t('ui_disease_diagnosis_upload_a_photo_or_video_or_describe')}
             </p>
           </div>
 
@@ -112,7 +113,7 @@ export function DiseaseDiagnosis() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium shadow-sm transition-colors cursor-pointer"
             >
               <Camera className="w-4 h-4" />
-              <span>Camera Scan Leaf</span>
+              <span>{t('ui_disease_diagnosis_camera_scan_leaf')}</span>
             </button>
             <span
               role="status"
@@ -211,6 +212,9 @@ export function DiseaseDiagnosis() {
             />
           )}
         </div>
+
+        {/* Everything the signed-in account has concluded so far */}
+        <DiagnosisHistoryPanel />
 
         {/* Disease Info Modal */}
         <DiseaseInfoModal

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, ChevronRight, Loader2, X } from 'lucide-react';
 import { Farmer } from '../../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
+import { isActionEnter } from '@/lib/keyboard';
 
 interface GlobalSearchProps {
   searchQuery: string;
@@ -57,7 +58,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchQuery.trim() && globalSearchResults.length === 0) {
+    if (isActionEnter(e) && searchQuery.trim() && globalSearchResults.length === 0) {
       setWeatherLocation(searchQuery);
       addNotification({ message: `Weather now showing for ${searchQuery}`, type: 'info' });
       setSearchQuery('');

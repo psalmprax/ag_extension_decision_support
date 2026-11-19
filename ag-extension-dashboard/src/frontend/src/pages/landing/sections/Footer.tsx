@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Shield, X } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function Footer() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [legalModal, setLegalModal] = useState<'privacy' | 'terms' | null>(null);
 
@@ -24,23 +26,22 @@ export function Footer() {
                   height={36}
                   className="w-9 h-9 object-contain rounded-lg group-hover:scale-105 transition-transform"
                 />
-                <span className="text-lg font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">GPExts</span>
+                <span className="text-lg font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">{t('app_title')}</span>
               </button>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-xs mb-4 font-normal break-words">
-                Empowering agricultural extension officers with AI-driven decision support across
-                the Globe.
+                {t('ui_footer_empowering_agricultural_extension_of')}
               </p>
               <a
                 href="mailto:info@gpfed.com"
                 className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-300 hover:text-emerald-200 active:scale-[0.98] transition-colors bg-emerald-500/15 border border-emerald-500/30 px-3.5 py-2 rounded-xl"
               >
                 <Mail className="w-4 h-4" />
-                info@gpfed.com
+                {t('ui_demo_page_info_gpfed_com')}
               </a>
             </div>
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-100 mb-4 sm:mb-5">
-                Product &amp; Features
+                {t('ui_footer_product_features')}
               </h4>
               <ul className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm font-normal">
                 <li>
@@ -48,7 +49,7 @@ export function Footer() {
                     href="#features"
                     className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
-                    Features
+                    {t('billing_features')}
                   </a>
                 </li>
                 <li>
@@ -56,7 +57,7 @@ export function Footer() {
                     href="#agent-os"
                     className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
-                    Agent OS
+                    {t('ui_goal_mode_campaign_modal_agent_os')}
                   </a>
                 </li>
                 <li>
@@ -64,7 +65,7 @@ export function Footer() {
                     href="#how-it-works"
                     className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
-                    How It Works
+                    {t('ui_footer_how_it_works')}
                   </a>
                 </li>
                 <li>
@@ -72,7 +73,7 @@ export function Footer() {
                     href="#capabilities"
                     className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
-                    Ecosystem &amp; Soil
+                    {t('ui_footer_ecosystem_soil')}
                   </a>
                 </li>
                 <li>
@@ -80,7 +81,7 @@ export function Footer() {
                     href="#architecture"
                     className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
-                    Architecture
+                    {t('ui_footer_architecture')}
                   </a>
                 </li>
                 <li>
@@ -88,7 +89,7 @@ export function Footer() {
                     href="#roi"
                     className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
-                    Impact &amp; ROI
+                    {t('ui_footer_impact_roi')}
                   </a>
                 </li>
                 <li>
@@ -100,7 +101,7 @@ export function Footer() {
             </div>
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-100 mb-4 sm:mb-5">
-                Overview &amp; Contact
+                {t('ui_footer_overview_contact')}
               </h4>
               <ul className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm font-normal">
                 <li>
@@ -108,7 +109,7 @@ export function Footer() {
                     href="#problem"
                     className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
-                    Why Us
+                    {t('ui_footer_why_us')}
                   </a>
                 </li>
                 <li>
@@ -116,7 +117,7 @@ export function Footer() {
                     href="#mission"
                     className="text-slate-300 hover:text-emerald-300 font-medium transition-colors"
                   >
-                    Our Mission
+                    {t('ui_footer_our_mission')}
                   </a>
                 </li>
                 <li>
@@ -125,7 +126,7 @@ export function Footer() {
                     onClick={() => navigate('/demo')}
                     className="text-slate-300 hover:text-emerald-300 font-medium transition-colors text-left"
                   >
-                    Live Interactive Demo
+                    {t('ui_footer_live_interactive_demo')}
                   </button>
                 </li>
                 <li>
@@ -133,14 +134,14 @@ export function Footer() {
                     href="mailto:info@gpfed.com"
                     className="text-emerald-300 hover:text-emerald-200 transition-colors font-semibold"
                   >
-                    info@gpfed.com
+                    {t('ui_demo_page_info_gpfed_com')}
                   </a>
                 </li>
               </ul>
             </div>
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-100 mb-4 sm:mb-5">
-                Get Started
+                {t('ui_demo_page_get_started')}
               </h4>
               <ul className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm font-normal">
                 <li>
@@ -149,7 +150,7 @@ export function Footer() {
                     onClick={() => navigate('/register')}
                     className="text-slate-300 hover:text-emerald-300 font-medium transition-colors text-left"
                   >
-                    Create Account
+                    {t('register_button')}
                   </button>
                 </li>
                 <li>
@@ -158,7 +159,7 @@ export function Footer() {
                     onClick={() => navigate('/login')}
                     className="text-slate-300 hover:text-emerald-300 font-medium transition-colors text-left"
                   >
-                    Sign In
+                    {t('login_sign_in')}
                   </button>
                 </li>
               </ul>
@@ -166,7 +167,7 @@ export function Footer() {
           </div>
           <div className="max-w-[90rem] w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 text-center sm:text-left">
             <span className="text-xs sm:text-sm text-slate-300 font-normal">
-              &copy; {new Date().getFullYear()} GPExts. All rights reserved.
+              {t('ui_footer_copy')} {new Date().getFullYear()} {t('ui_footer_gpexts_all_rights_reserved')}
             </span>
             <div className="flex flex-wrap justify-center sm:justify-end gap-4 sm:gap-5 text-xs sm:text-sm">
               <button
@@ -174,14 +175,14 @@ export function Footer() {
                 onClick={() => setLegalModal('privacy')}
                 className="text-slate-300 hover:text-emerald-300 transition-colors cursor-pointer font-medium"
               >
-                Privacy Policy
+                {t('ui_footer_privacy_policy')}
               </button>
               <button
                 type="button"
                 onClick={() => setLegalModal('terms')}
                 className="text-slate-300 hover:text-emerald-300 transition-colors cursor-pointer font-medium"
               >
-                Terms of Service
+                {t('ui_footer_terms_of_service')}
               </button>
             </div>
           </div>
@@ -226,37 +227,37 @@ export function Footer() {
                 {legalModal === 'privacy' ? (
                   <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-slate-200 leading-relaxed font-normal break-words">
                     <p>
-                      <strong className="text-white">1. Data Ownership &amp; OCAP Compliance:</strong> Your organization retains 100% legal ownership and control of all farmer registries, field visit logs, geospatial coordinates, and diagnostic imagery. GPExts strictly adheres to the OCAP (Ownership, Control, Access, and Possession) principles.
+                      <strong className="text-white">{t('ui_footer_1_data_ownership_ocap_compliance')}</strong> {t('ui_footer_your_organization_retains_100_legal')}
                     </p>
                     <p>
-                      <strong className="text-white">2. Encryption Standards:</strong> All data is encrypted at rest using AES-256 and in transit via TLS 1.3. Tenant databases are strictly isolated to prevent cross-organizational data leakage.
+                      <strong className="text-white">{t('ui_footer_2_encryption_standards')}</strong> {t('ui_footer_all_data_is_encrypted_at_rest_using')}
                     </p>
                     <p>
-                      <strong className="text-white">3. Offline-First Caching:</strong> Agronomic manuals and farmer logs cached on field officer devices remain encrypted locally and synchronize securely upon cellular re-connection with conflict-free cryptographic reconciliation.
+                      <strong className="text-white">{t('ui_footer_3_offline_first_caching')}</strong> {t('ui_footer_agronomic_manuals_and_farmer_logs_ca')}
                     </p>
                     <p>
-                      <strong className="text-white">4. External Telemetry:</strong> Integrations with NASA POWER weather and SoilGrids ISRIC querying only submit bounding GPS coordinates to fetch environmental telemetry, and never transmit identifying personal farmer records.
+                      <strong className="text-white">{t('ui_footer_4_external_telemetry')}</strong> {t('ui_footer_integrations_with_nasa_power_weather')}
                     </p>
                     <p>
-                      <strong className="text-white">5. Right to Erasure &amp; Portability:</strong> Administrators can export full tenant datasets as encrypted JSON/CSV archives or trigger audited record erasure at any time via the User Management and System Settings panel.
+                      <strong className="text-white">{t('ui_footer_5_right_to_erasure_portability')}</strong> {t('ui_footer_administrators_can_export_full_tenan')}
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-slate-200 leading-relaxed font-normal break-words">
                     <p>
-                      <strong className="text-white">1. Purpose &amp; Agricultural Decision Support:</strong> GPExts provides agronomic insights, soil recommendations, and disease diagnostics for agricultural extension officers and institutions. Recommendations are designed to support, not replace, certified agronomic judgment.
+                      <strong className="text-white">{t('ui_footer_1_purpose_agricultural_decision_supp')}</strong> {t('ui_footer_gpexts_provides_agronomic_insights_s')}
                     </p>
                     <p>
-                      <strong className="text-white">2. Account Responsibility:</strong> Organizations are responsible for maintaining the confidentiality of officer authentication tokens and assigning appropriate Role-Based Access Control (RBAC) permissions.
+                      <strong className="text-white">{t('ui_footer_2_account_responsibility')}</strong> {t('ui_footer_organizations_are_responsible_for_ma')}
                     </p>
                     <p>
-                      <strong className="text-white">3. Offline &amp; PWA Usage:</strong> The Progressive Web App (PWA) operates in disconnected environments; officers are responsible for periodic syncing to ensure institutional records remain updated.
+                      <strong className="text-white">{t('ui_footer_3_offline_pwa_usage')}</strong> {t('ui_footer_the_progressive_web_app_pwa_operates')}
                     </p>
                     <p>
-                      <strong className="text-white">4. Service Availability &amp; Telemetry SLAs:</strong> While core platform operations feature 99.9% uptime and offline continuity, third-party satellite telemetry availability (e.g. NASA POWER) depends on upstream agency feeds.
+                      <strong className="text-white">{t('ui_footer_4_service_availability_telemetry_sla')}</strong> {t('ui_footer_while_core_platform_operations_featu')}
                     </p>
                     <p>
-                      <strong className="text-white">5. Institutional Inquiries:</strong> For multi-district deployment contracts or custom data hosting terms, please contact <a href="mailto:info@gpfed.com" className="text-emerald-400 hover:underline">info@gpfed.com</a>.
+                      <strong className="text-white">{t('ui_footer_5_institutional_inquiries')}</strong> {t('ui_footer_for_multi_district_deployment_contra')} <a href="mailto:info@gpfed.com" className="text-emerald-400 hover:underline">{t('ui_demo_page_info_gpfed_com')}</a>.
                     </p>
                   </div>
                 )}
@@ -267,7 +268,7 @@ export function Footer() {
                     onClick={() => setLegalModal(null)}
                     className="w-full sm:w-auto px-5 py-2.5 text-xs font-semibold bg-emerald-700 text-white rounded-xl hover:bg-emerald-600 active:scale-[0.98] transition-colors"
                   >
-                    Close
+                    {t('common_close')}
                   </button>
                 </div>
               </motion.div>

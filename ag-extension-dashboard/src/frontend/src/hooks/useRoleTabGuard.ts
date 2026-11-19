@@ -1,7 +1,14 @@
 import { useEffect } from 'react';
 
-/** Tabs opened from inside a page rather than the menu (officer and admin flows). */
-const FLOW_TABS = new Set(['register_farmer', 'visit_synthesis']);
+/**
+ * Tabs opened from inside a page rather than the menu, keyed to the menu page
+ * they belong to: a role may open the flow only if it can open that page (a
+ * farmer has no Farmers page, so cannot reach farmer registration).
+ */
+const FLOW_TABS: Record<string, string> = {
+  register_farmer: 'portfolio',
+  visit_synthesis: 'visits',
+};
 
 /**
  * Keeps the user on a tab their role can open. Everyone lands on /dashboard
@@ -21,7 +28,8 @@ export function useRoleTabGuard(
   useEffect(() => {
     const ids = menuKey ? menuKey.split('|') : [];
     if (!signedIn || ids.length === 0) return;
-    if (ids.includes(activeTab) || FLOW_TABS.has(activeTab)) return;
+    const flowPage = FLOW_TABS[activeTab];
+    if (ids.includes(activeTab) || (flowPage !== undefined && ids.includes(flowPage))) return;
     setActiveTab(ids[0]);
   }, [activeTab, setActiveTab, menuKey, signedIn]);
 }

@@ -91,7 +91,7 @@ export function SMSContactsPanel({
         )}
         {!isLoadingContacts && recentContacts.length === 0 && (
           <div className="text-center py-10 text-slate-400 dark:text-white/30 text-xs uppercase font-bold tracking-widest">
-            No contacts found
+            {t('ui_contacts_panel_no_contacts_found')}
           </div>
         )}
       </div>

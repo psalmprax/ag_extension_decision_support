@@ -4,6 +4,7 @@ import { logger } from '../utils/logger';
 import { smsService } from './smsService';
 import { whatsappService } from './whatsappService';
 import { telegramService } from './telegramService';
+import { usageService } from './usageService';
 import { AIProviderFactory } from './aiProvider/aiProvider';
 import type { AutonomousCampaignRunRow, RegionalAgronomySkillRow } from '../types/rowTypes';
 import { demoSql } from '@/services/demoScope';
@@ -141,14 +142,33 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
         return dispatched;
     }
 
+    /**
+     * Each message is charged to the officer who launched the campaign: sent only while
+     * their plan has quota left, and counted once delivered. System runs (no userId) are
+     * not charged to anyone.
+     */
+    private async withinQuota(userId: string | null | undefined, type: 'sms' | 'whatsapp'): Promise<boolean> {
+        if (!userId) return true;
+        const allowed = await usageService.hasAllowance(userId, type);
+        if (!allowed) logger.warn(`Campaign message skipped: ${type} quota exhausted or plan does not include it (user ${userId})`);
+        return allowed;
+    }
+
+    private async countUsage(userId: string | null | undefined, type: 'sms' | 'whatsapp'): Promise<void> {
+        if (!userId) return;
+        await usageService.incrementUsage(userId, type).catch(err => logger.warn(`Failed to meter campaign ${type} usage:`, err));
+    }
+
     private async dispatchSms(farmer: any, message: string, userId?: string | null): Promise<number> {
         try {
+            if (!(await this.withinQuota(userId, 'sms'))) return 0;
             const sent = await smsService.sendSMS({
                 to: farmer.phone,
                 message,
                 farmerId: farmer.id,
                 senderId: userId || undefined,
             });
+            if (sent) await this.countUsage(userId, 'sms');
             return sent ? 1 : 0;
         } catch (dispatchErr) {
             logger.warn(`Failed to dispatch SMS to farmer ${farmer.id}:`, dispatchErr);
@@ -158,12 +178,14 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
 
     private async dispatchWhatsApp(farmer: any, message: string, userId?: string | null): Promise<number> {
         try {
+            if (!(await this.withinQuota(userId, 'whatsapp'))) return 0;
             const result = await whatsappService.sendMessage({
                 to: farmer.phone,
                 message,
                 farmerId: farmer.id,
                 senderId: userId || undefined,
             });
+            if (result.success) await this.countUsage(userId, 'whatsapp');
             return result.success ? 1 : 0;
         } catch (dispatchErr) {
             logger.warn(`Failed to dispatch WhatsApp message to farmer ${farmer.id}:`, dispatchErr);
@@ -175,12 +197,15 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
         const tgChatId = farmer.notes?.match(/tg:(\d+)/)?.[1];
         if (!tgChatId) return 0;
         try {
+            // Telegram falls under the WhatsApp & Telegram broadcasting quota.
+            if (!(await this.withinQuota(userId, 'whatsapp'))) return 0;
             const result = await telegramService.sendMessage({
                 chatId: tgChatId,
                 text: message,
                 farmerId: farmer.id,
                 senderId: userId || undefined,
             });
+            if (result.success) await this.countUsage(userId, 'whatsapp');
             return result.success ? 1 : 0;
         } catch (dispatchErr) {
             logger.warn(`Failed to dispatch Telegram message to farmer ${farmer.id}:`, dispatchErr);

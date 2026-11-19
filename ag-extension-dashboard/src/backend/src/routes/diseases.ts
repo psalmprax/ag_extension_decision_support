@@ -26,6 +26,77 @@ router.get('/', optionalAuth, async (_req: Request, res: Response) => {
     }
 });
 
+interface DiagnosisHistoryRow {
+    id: string;
+    farmer_id: string | null;
+    district: string | null;
+    crop: string;
+    disease_label: string;
+    confidence: string | number | null;
+    source: string;
+    created_at: Date | string;
+}
+
+/**
+ * GET /history — the caller's own diagnosis history.
+ *
+ * `diagnosis_events` previously fed outbreak clusters only: nobody could read
+ * back what they had concluded. The rows now record the account that performed
+ * the diagnosis, so an officer or farmer can review their own history.
+ * Administrators may pass `userId` to audit another account; every other role
+ * sees only its own rows, whatever it asks for.
+ */
+router.get('/history', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthRequest, res: Response) => {
+    try {
+        const requestedUserId = typeof req.query.userId === 'string' ? req.query.userId.trim() : '';
+        if (requestedUserId && req.user?.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                error: 'Only administrators can read another user\'s diagnosis history',
+            });
+        }
+        const targetUserId = requestedUserId || req.user?.userId;
+        if (!targetUserId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+
+        const parsedLimit = parseInt(String(req.query.limit ?? '25'), 10);
+        const limit = Number.isFinite(parsedLimit) ? Math.min(100, Math.max(1, parsedLimit)) : 25;
+        const parsedOffset = parseInt(String(req.query.offset ?? '0'), 10);
+        const offset = Number.isFinite(parsedOffset) ? Math.max(0, parsedOffset) : 0;
+
+        const { rows } = await query<DiagnosisHistoryRow>(
+            `SELECT id, farmer_id, district, crop, disease_label, confidence, source, created_at
+               FROM diagnosis_events
+              WHERE user_id = $1
+              ORDER BY created_at DESC
+              LIMIT $2 OFFSET $3`,
+            [targetUserId, limit, offset]
+        );
+
+        res.json({
+            success: true,
+            data: {
+                items: rows.map(row => ({
+                    id: row.id,
+                    farmerId: row.farmer_id,
+                    district: row.district,
+                    crop: row.crop,
+                    diseaseLabel: row.disease_label,
+                    confidence: row.confidence === null ? null : Number(row.confidence),
+                    source: row.source,
+                    createdAt: row.created_at,
+                })),
+                limit,
+                offset,
+            },
+        });
+    } catch (error) {
+        logger.error('Failed to read diagnosis history:', error);
+        safeError(res, 500, 'Failed to read diagnosis history');
+    }
+});
+
 // Get specific disease information (public reference library)
 router.get('/:diseaseName', optionalAuth, async (req: Request, res: Response) => {
     try {
@@ -84,6 +155,7 @@ function recordSymptomOutbreakEvents(req: AuthRequest, diagnosis: DiseaseDiagnos
                 void outbreakService
                     .recordDiagnosisEvent({
                         farmerId: resolvedFarmerId,
+                        userId: req.user?.userId ?? null,
                         district: resolvedDistrict,
                         crop: cropType || 'unspecified',
                         diseaseLabel: item.disease,
@@ -167,6 +239,7 @@ function recordImageOutbreakEvents(req: AuthRequest, analysis: PlantImageAnalysi
                 void outbreakService
                     .recordDiagnosisEvent({
                         farmerId: resolvedFarmerId,
+                        userId: req.user?.userId ?? null,
                         district: resolvedDistrict,
                         crop: cropType || 'unspecified',
                         diseaseLabel: item.disease,

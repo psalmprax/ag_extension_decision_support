@@ -10,13 +10,10 @@ import type { ThreadPageProps } from '@/components/chat/threadProps';
 vi.mock('@/api/chatbotService', () => ({
   createConversation: vi.fn(), sendThreadMessage: vi.fn(), askAiInThread: vi.fn(),
   fetchTurnTakingSettings: vi.fn(),
+  markThreadRead: vi.fn().mockResolvedValue(undefined), fetchUnreadSummary: vi.fn().mockResolvedValue({ total: 0, conversations: {} }),
 }));
 vi.mock('@/hooks/useConversationRealtime', () => ({
   useConversationRealtime: () => ({ connected: true, typingUser: null, notifyTyping: vi.fn() }),
-}));
-vi.mock('@/lib/LanguageContext', () => ({
-  useLanguage: () => ({ language: 'en', t: (_key: string, fallback?: string | { defaultValue?: string }) =>
-    typeof fallback === 'string' ? fallback : fallback?.defaultValue ?? _key }),
 }));
 
 const withQuery = (ui: React.ReactElement) =>

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Map as MapIcon, Download, Trash2 } from 'lucide-react';
 import { prefetchDistrictTiles, getTileCacheSize, clearTileCache, estimateDownload } from '@/lib/offlineTiles';
+import { useLanguage } from '@/lib/LanguageContext';
 
 // Default country bbox (Malawi) — users can override with custom district bounds.
 const DEFAULT_BBOX = { minLat: -17.2, minLng: 32.6, maxLat: -9.3, maxLng: 36.0 };
 
 export function OfflineMapsSection() {
+    const { t } = useLanguage();
     const [status, setStatus] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
     const [bbox, setBbox] = useState(DEFAULT_BBOX);
@@ -38,7 +40,7 @@ export function OfflineMapsSection() {
                 <div className="flex items-center gap-3 min-w-0">
                     <MapIcon className="w-4 h-4 text-primary-500 shrink-0" />
                     <div className="min-w-0">
-                        <p className="text-sm font-semibold">Offline maps</p>
+                        <p className="text-sm font-semibold">{t('ui_settings_panel_offline_maps')}</p>
                         <p className="text-xs text-gray-400 truncate">
                             {customMode ? `Custom bbox, zoom 8–12 · ~${Math.round(estimate.approxKb / 1024)} MB` : `Country-wide tiles, zoom 8–12 · ~${Math.round(estimate.approxKb / 1024)} MB`}
                         </p>
@@ -66,7 +68,7 @@ export function OfflineMapsSection() {
             </div>
             <div className="flex items-center gap-2">
                 <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
-                    <input type="checkbox" checked={customMode} onChange={e => setCustomMode(e.target.checked)} className="rounded" /> Custom bbox
+                    <input type="checkbox" checked={customMode} onChange={e => setCustomMode(e.target.checked)} className="rounded" /> {t('ui_offline_maps_section_custom_bbox')}
                 </label>
             </div>
             {customMode && (

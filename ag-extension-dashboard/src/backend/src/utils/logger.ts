@@ -15,6 +15,11 @@ const logFormat = winston.format.combine(
     })
 );
 
+// Unbounded file transports grew to ~9 GB each in a few days of local runs and
+// would fill a server disk the same way. Cap each file and keep a few rotations;
+// the console transport (docker logs) remains the full record.
+const FILE_ROTATION = { maxsize: 20 * 1024 * 1024, maxFiles: 5, tailable: true } as const;
+
 export const logger = winston.createLogger({
     level: process.env.LOG_LEVEL || 'info',
     format: logFormat,
@@ -31,8 +36,8 @@ export const logger = winston.createLogger({
                 })
             ),
         }),
-        new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-        new winston.transports.File({ filename: 'logs/combined.log' }),
+        new winston.transports.File({ filename: 'logs/error.log', level: 'error', ...FILE_ROTATION }),
+        new winston.transports.File({ filename: 'logs/combined.log', ...FILE_ROTATION }),
     ],
 }) as winston.Logger & { crit: (message: string, ...meta: unknown[]) => winston.Logger };
 

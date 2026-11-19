@@ -90,7 +90,8 @@ router.post('/conversations/:id/ask-ai', authorize(['farmer']), checkUsageLimit(
     if (thread.aiAnsweredSinceFarmer) {
       return res.status(409).json({ success: false, error: 'The AI has already answered your latest message.' });
     }
-    await answerFarmerInThread(thread, 'farmer_request');
+    // checkUsageLimit above charged the farmer's own plan.
+    await answerFarmerInThread(thread, 'farmer_request', { planChecked: true });
     return res.json({ success: true });
   } catch (error) {
     if (error instanceof MessageAccessError) {

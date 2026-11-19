@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Menu, X, Sparkles, Mic } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function Navbar() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -24,7 +26,7 @@ export function Navbar() {
             className="flex items-center gap-3 cursor-pointer group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-lg"
           >
             <img src="/logo.png" alt="GPExts Logo" width={36} height={36} className="w-9 h-9 object-contain rounded-lg group-hover:scale-105 transition-transform" />
-            <span className="text-lg font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">GPExts</span>
+            <span className="text-lg font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">{t('app_title')}</span>
           </button>
 
           <div className="hidden md:flex items-center gap-6">
@@ -32,38 +34,38 @@ export function Navbar() {
               href="#services"
               className="text-sm font-medium text-white/80 hover:text-white transition-colors"
             >
-              Services
+              {t('ui_navbar_services')}
             </a>
             <a
               href="#how-it-works"
               className="text-sm font-medium text-white/80 hover:text-white transition-colors"
             >
-              How It Works
+              {t('ui_footer_how_it_works')}
             </a>
             <a
               href="#problem"
               className="text-sm font-medium text-white/80 hover:text-white transition-colors"
             >
-              Why GPExts
+              {t('ui_navbar_why_gpexts')}
             </a>
             <a
               href="#features"
               className="text-sm font-medium text-white/80 hover:text-white transition-colors"
             >
-              Built for Fields
+              {t('ui_navbar_built_for_fields')}
             </a>
             <a
               href="#trust-safety"
               className="text-sm font-medium text-white/80 hover:text-white transition-colors"
             >
-              Trust &amp; Safety
+              {t('ui_navbar_trust_safety')}
             </a>
             <a
               href="#agent-os"
               className="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              For Organisations
+              {t('ui_navbar_for_organisations')}
             </a>
             <a
               href="#talking-assistant"
@@ -71,7 +73,7 @@ export function Navbar() {
               className="text-sm font-medium text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1.5"
             >
               <Mic className="w-3.5 h-3.5" />
-              Voice Advisor
+              {t('ui_navbar_voice_advisor')}
             </a>
             <a
               href="#faq"
@@ -87,14 +89,14 @@ export function Navbar() {
               onClick={() => navigate('/login')}
               className="hidden sm:inline-flex text-sm font-medium text-white/70 hover:text-white transition-colors px-3 py-1.5"
             >
-              Sign In
+              {t('login_sign_in')}
             </button>
             <button
               type="button"
               onClick={() => navigate('/register')}
               className="px-4 py-2 text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 border border-emerald-400/40 text-white rounded-lg transition-all shadow-md shadow-emerald-950/20 active:scale-95"
             >
-              Get Started
+              {t('ui_demo_page_get_started')}
             </button>
             <button
               type="button"
@@ -153,7 +155,7 @@ export function Navbar() {
                   }}
                   className="w-full py-2.5 text-sm font-medium text-white/80 hover:text-white bg-white/[0.05] border border-white/[0.08] rounded-xl text-center"
                 >
-                  Sign In
+                  {t('login_sign_in')}
                 </button>
                 <button
                   onClick={() => {
@@ -164,7 +166,7 @@ export function Navbar() {
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
                   <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
-                  <span className="relative z-10">Get Started</span>
+                  <span className="relative z-10">{t('ui_demo_page_get_started')}</span>
                 </button>
               </div>
             </motion.div>

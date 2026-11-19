@@ -161,7 +161,7 @@ function MCPTools() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className={`text-2xl font-bold tracking-tight text-slate-900 dark:text-white ${headingClass}`}>System Tools</h1>
+          <h1 className={`text-2xl font-bold tracking-tight text-slate-900 dark:text-white ${headingClass}`}>{t('ui_mcptools_system_tools')}</h1>
           <p className="text-slate-600 dark:text-white/60 text-xs sm:text-sm mt-1">{t('mcp_tools_subtitle')}</p>
         </div>
         <button
@@ -170,7 +170,7 @@ function MCPTools() {
           className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50 text-xs sm:text-sm font-bold rounded-xl transition-all shadow-md self-start sm:self-auto`}
         >
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          <span>Refresh</span>
+          <span>{t('ui_farmer_detail_panel_refresh')}</span>
         </button>
       </div>
 
@@ -232,10 +232,10 @@ function MCPTools() {
             <div className="text-center py-12">
               <Wrench className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Select a Tool
+                {t('mcp_tools_select_tool')}
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Choose a tool from the list to execute
+                {t('mcp_tools_choose_tool')}
               </p>
             </div>
           </div>

@@ -11,13 +11,14 @@ import type { ChatMessage } from '../types/dashboard';
 vi.mock('@/api/chatbotService', () => ({
   fetchConversations: vi.fn(), fetchMessages: vi.fn(), updateConversation: vi.fn(),
   deleteConversation: vi.fn(), createConversation: vi.fn(), sendThreadMessage: vi.fn(),
+  markThreadRead: vi.fn().mockResolvedValue(undefined), fetchUnreadSummary: vi.fn().mockResolvedValue({ total: 0, conversations: {} }),
 }));
 vi.mock('@/api/aiService', () => ({
   getChatCompletion: vi.fn(), getPublicDemoChatCompletion: vi.fn(), getCopilotDraft: vi.fn(),
 }));
 
 const signInAs = (role: string) =>
-  useAppStore.setState({ user: { id: 'u1', email: 'u1@test.dev', role } as never });
+  useAppStore.setState({ user: { id: 'u1', email: 'u1@test.dev', role, planName: 'Pro', isFree: false } as never });
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -42,7 +43,7 @@ describe('messages in a farmer thread', () => {
     vi.mocked(sendThreadMessage).mockResolvedValue({ success: true });
     await sendInThread('How many acres did you plant?');
 
-    expect(sendThreadMessage).toHaveBeenCalledWith('thread-1', 'How many acres did you plant?', 'en');
+    expect(sendThreadMessage).toHaveBeenCalledWith('thread-1', 'How many acres did you plant?', 'en', undefined, undefined);
     expect(getChatCompletion).not.toHaveBeenCalled();
   });
 
@@ -51,7 +52,7 @@ describe('messages in a farmer thread', () => {
     vi.mocked(sendThreadMessage).mockResolvedValue({ success: true });
     await sendInThread('My maize leaves are yellow');
 
-    expect(sendThreadMessage).toHaveBeenCalledWith('thread-1', 'My maize leaves are yellow', 'en');
+    expect(sendThreadMessage).toHaveBeenCalledWith('thread-1', 'My maize leaves are yellow', 'en', undefined, undefined);
     expect(getChatCompletion).not.toHaveBeenCalled();
   });
 });
@@ -86,7 +87,7 @@ describe('officer copilot', () => {
 
   it('shows a private draft that only fills the message box', async () => {
     vi.mocked(getChatCompletion).mockRejectedValue(new Error('no suggestions in this test'));
-    vi.mocked(getCopilotDraft).mockResolvedValue('Thanks. When did the yellowing start, and on which leaves?');
+    vi.mocked(getCopilotDraft).mockResolvedValue({ text: 'Thanks. When did the yellowing start, and on which leaves?', sources: [], evidence: 'general' });
     const onUseText = vi.fn();
     render(<OfficerCopilot conversationId="thread-1" messages={thread} language="en" onUseText={onUseText} />);
 

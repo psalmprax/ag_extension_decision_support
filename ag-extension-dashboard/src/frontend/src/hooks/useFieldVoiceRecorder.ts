@@ -5,6 +5,12 @@ import toast from 'react-hot-toast';
 export interface UseFieldVoiceRecorderOptions {
   language: string;
   onTranscriptChunk: (chunk: string) => void;
+  /**
+   * Record and transcribe on the server first (OpenAI, then AIHubMix), and use the
+   * browser's own dictation only if recording is unavailable. Browser dictation is
+   * weak for many African languages, so farmers' voice messages go to the server.
+   */
+  preferServer?: boolean;
 }
 
 const SPEECH_LANG_MAP: Record<string, string> = {
@@ -85,7 +91,7 @@ async function executeTranscription(
   }
 }
 
-export function useFieldVoiceRecorder({ language, onTranscriptChunk }: UseFieldVoiceRecorderOptions) {
+export function useFieldVoiceRecorder({ language, onTranscriptChunk, preferServer = false }: UseFieldVoiceRecorderOptions) {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -263,11 +269,15 @@ export function useFieldVoiceRecorder({ language, onTranscriptChunk }: UseFieldV
       return;
     }
 
+    if (preferServer) {
+      if (!(await startMediaRecorder())) startWebSpeech();
+      return;
+    }
     const startedWebSpeech = startWebSpeech();
     if (!startedWebSpeech) {
       await startMediaRecorder();
     }
-  }, [isRecording, startWebSpeech, startMediaRecorder, stopMediaRecorder, stopWebSpeech]);
+  }, [isRecording, preferServer, startWebSpeech, startMediaRecorder, stopMediaRecorder, stopWebSpeech]);
 
   // Upload an existing audio file (.mp3, .wav, .m4a, .ogg, .webm)
   const uploadAudioFile = useCallback(

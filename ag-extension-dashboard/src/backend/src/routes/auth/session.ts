@@ -7,6 +7,11 @@ import { getLoginHistory, getLoginStats } from '@/services/loginHistoryService';
 import { createSession, isSessionValid, revokeToken, withUserSessionLock } from '@/services/sessionService';
 import { setAuthCookie, clearAuthCookie, getBearerToken } from '@/middleware/authCookie';
 import { isSubscriptionActive } from '@/services/subscriptionUtils';
+import {
+    buildUserProfileColumns,
+    buildSubscriptionJoin,
+    SUBSCRIPTION_PLAN_COLUMNS,
+} from '@/services/userQueryBuilder';
 import { z } from 'zod';
 import type { NotificationPreferences } from '@/services/notificationPreferences';
 import { validate } from '@/middleware/validationMiddleware';
@@ -14,6 +19,9 @@ import { auditMiddleware } from '@/middleware/auditMiddleware';
 import { authorize } from '@/middleware/authorize';
 import rateLimit from 'express-rate-limit';
 import { perUserRateLimit, SharedStateStore } from '@/middleware/rateLimitMiddleware';
+import { reportedSystemAdmin } from '@/services/systemAdminService';
+import { signSessionToken } from '@/utils/sessionToken';
+import { activeServicesFor } from '@/services/serviceAccessService';
 
 const router = Router();
 const profileUpdateRateLimit = rateLimit({
@@ -62,12 +70,22 @@ const notificationPreferencesSchema = z.object({
     pushNotifications: z.boolean().optional(),
 }).strict();
 
+/** Personalisation shown on the profile and in the menu; saved on the account. */
+const profileSettingsSchema = z.object({
+    handle: z.string().trim().regex(/^[a-z0-9_.]{3,30}$/i, 'Handles are 3–30 letters, digits, dots or underscores').optional(),
+    avatarId: z.string().regex(/^[a-z_]{2,40}$/).optional(),
+    areaUnit: z.enum(['hectares', 'acres']).optional(),
+    tempUnit: z.enum(['celsius', 'fahrenheit']).optional(),
+    highContrast: z.boolean().optional(),
+}).strict();
+
 const updateProfileSchema = z.object({
     body: z.object({
         firstName: z.string().trim().min(1).max(100).optional(),
         lastName: z.string().trim().min(1).max(100).optional(),
         phone: z.string().trim().max(40).optional(),
         notificationPreferences: notificationPreferencesSchema.optional(),
+        profileSettings: profileSettingsSchema.optional(),
     }).strict().refine(body => Object.keys(body).length > 0, 'At least one profile field is required'),
 });
 
@@ -96,11 +114,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'Session has been revoked' });
         }
 
-        const newToken = jwt.sign(
-            { userId: decoded.userId, email: decoded.email, role: decoded.role },
-            config.jwt.secret as jwt.Secret,
-            { algorithm: 'HS256', expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
-        );
+        const newToken = signSessionToken({ userId: decoded.userId, email: decoded.email, role: decoded.role });
 
         // Rotate under the account lock so a concurrent password change cannot
         // revoke the old token and then have this request create a surviving session.
@@ -153,7 +167,10 @@ router.post('/logout', async (req: Request, res: Response) => {
 // Get current user
 router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), perUserRateLimit, validate(updateProfileSchema), auditMiddleware('auth.profile_update'), async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const updates = req.body as { firstName?: string; lastName?: string; phone?: string; notificationPreferences?: NotificationPreferences };
+    const updates = req.body as {
+        firstName?: string; lastName?: string; phone?: string;
+        notificationPreferences?: NotificationPreferences; profileSettings?: Record<string, unknown>;
+    };
     const fields: Array<[string, unknown]> = [
         ['first_name', updates.firstName],
         ['last_name', updates.lastName],
@@ -166,11 +183,15 @@ router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manage
         values.push(JSON.stringify(updates.notificationPreferences));
         assignments.push(`notification_preferences = COALESCE(notification_preferences, '{}'::jsonb) || $${values.length}::jsonb`);
     }
+    if (updates.profileSettings) {
+        values.push(JSON.stringify(updates.profileSettings));
+        assignments.push(`profile_settings = COALESCE(profile_settings, '{}'::jsonb) || $${values.length}::jsonb`);
+    }
     try {
         const result = await query(
             `UPDATE users SET ${assignments.join(', ')}, updated_at = NOW()
              WHERE id = $${values.length + 1}
-             RETURNING id, email, first_name, last_name, role, region, phone, notification_preferences`,
+             RETURNING ${buildUserProfileColumns({ includeNotificationPreferences: true, includeSystemAdmin: true })}`,
             [...values, userId]
         );
         const user = result.rows[0];
@@ -184,9 +205,12 @@ router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manage
                 lastName: user.last_name,
                 role: user.role,
                 isDemo: user.is_demo === true || user.email?.toLowerCase() === 'demo@agridemo.com',
+                isSystemAdmin: reportedSystemAdmin(user),
                 region: user.region,
+                country: user.country,
                 phone: user.phone,
                 notificationPreferences: user.notification_preferences ?? {},
+                profileSettings: user.profile_settings ?? {},
             },
         });
     } catch (error) {
@@ -209,14 +233,15 @@ router.get('/me', async (req: Request, res: Response) => {
         }
 
         const result = await query(`
-            SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.region, u.phone, u.is_demo, u.notification_preferences,
-                   sp.name as plan_name,
-                   sp.price as plan_price,
-                   s.status as subscription_status,
-                   s.current_period_end as subscription_period_end
+            SELECT ${buildUserProfileColumns({
+                source: 'u',
+                includeNotificationPreferences: true,
+                includeDemoFlag: true,
+                includeSystemAdmin: true,
+            })},
+                   ${SUBSCRIPTION_PLAN_COLUMNS}
             FROM users u
-            LEFT JOIN subscriptions s ON s.user_id = u.id
-            LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
+            ${buildSubscriptionJoin('u')}
             WHERE u.id = $1
         `, [decoded.userId]);
         const user = result.rows[0];
@@ -247,11 +272,16 @@ router.get('/me', async (req: Request, res: Response) => {
                 firstName: user.first_name,
                 lastName: user.last_name,
                 role: user.role,
+                isSystemAdmin: reportedSystemAdmin(user),
                 region: user.region,
+                country: user.country,
                 phone: user.phone,
                 notificationPreferences: user.notification_preferences ?? {},
+                profileSettings: user.profile_settings ?? {},
                 planName,
                 isFree,
+                // Paid services the system administrator opened to this account beyond its plan.
+                serviceAccess: isFree ? await activeServicesFor(user.id) : [],
             },
         });
     } catch (error) {

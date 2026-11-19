@@ -13,6 +13,7 @@ import {
 } from '../types';
 import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt } from '../assetLibrary';
 import { config } from '@/config';
+import { visionModelFor } from '../selectedModel';
 import { logger } from '@/utils/logger';
 import Groq from 'groq-sdk';
 import { normalizeToolDefinitions, normalizeMessages, normalizeToolCalls } from '../toolCalling';
@@ -93,7 +94,7 @@ export class GroqProvider extends BaseAIProvider {
     }
 
     async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
-        const model = options?.model || 'llama-3.2-11b-vision-preview';
+        const model = options?.model || visionModelFor('groq') || 'llama-3.2-11b-vision-preview';
         try {
             let base64Image: string;
             if (Buffer.isBuffer(imageData)) {

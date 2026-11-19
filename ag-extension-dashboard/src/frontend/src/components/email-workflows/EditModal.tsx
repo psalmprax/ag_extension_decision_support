@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal } from '@/components/Modal';
 import type { EmailTemplate } from '@/api/emailWorkflowService';
 import type { EditForm } from '@/types/emailWorkflows';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function EmailWorkflowsEditModal({
   template,
@@ -16,6 +17,7 @@ export function EmailWorkflowsEditModal({
   onSave: () => void;
   onClose: () => void;
 }) {
+  const { t } = useLanguage();
   return (
     <Modal
       title={`Edit Template: ${template.displayName || template.name}`}
@@ -25,24 +27,24 @@ export function EmailWorkflowsEditModal({
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Category
+            {t('ui_help_center_modal_category')}
           </label>
           <select
             value={editForm.category}
             onChange={e => onChange({ ...editForm, category: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
-            <option value="visits">Visits</option>
-            <option value="alerts">Alerts</option>
-            <option value="market">Market</option>
-            <option value="weather">Weather</option>
-            <option value="training">Training</option>
+            <option value="visits">{t('nav_visits')}</option>
+            <option value="alerts">{t('farmer_alerts')}</option>
+            <option value="market">{t('ui_edit_modal_market')}</option>
+            <option value="weather">{t('chat_weather')}</option>
+            <option value="training">{t('visit_type_training')}</option>
           </select>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Subject
+            {t('email_workflows_subject')}
           </label>
           <input
             type="text"
@@ -55,7 +57,7 @@ export function EmailWorkflowsEditModal({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Body
+            {t('ui_edit_modal_body')}
           </label>
           <textarea
             value={editForm.body}
@@ -68,7 +70,7 @@ export function EmailWorkflowsEditModal({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Variables (comma-separated)
+            {t('ui_edit_modal_variables_comma_separated')}
           </label>
           <input
             type="text"
@@ -93,13 +95,13 @@ export function EmailWorkflowsEditModal({
           onClick={onClose}
           className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
         >
-          Cancel
+          {t('common_cancel')}
         </button>
         <button
           onClick={onSave}
           className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
         >
-          Save Changes
+          {t('ui_profile_modal_save_changes')}
         </button>
       </div>
     </Modal>

@@ -1,0 +1,96 @@
+name: Real-backend E2E
+
+# The officer–farmer journeys against the real Express backend, Postgres and
+# file storage, using the real-world test accounts (no demo data, no mocked
+# API): farmer registration in and out of region, farmer-initiated chat with
+# photos, visit scheduling, visit reports with follow-ups, progress records,
+# and the region boundaries an officer must not cross.
+on:
+  push:
+    branches: [stage]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-real-backend-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  journeys:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        # Parity with production (postgis/postgis:15).
+        image: postgis/postgis:15-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ag_extension
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ag_extension"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 7501:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    env:
+      # Matches the default in playwright.e2e.config.ts. Disposable CI database.
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:7501/ag_extension
+      REDIS_URL: redis://127.0.0.1:6379
+      CI: 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare the database (migrations, plans, real-world accounts)
+        working-directory: ag-extension-dashboard/src/backend
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
+          node prisma/seed.cjs
+          npm run seed:realworld
+
+      - name: Install Playwright browser (chromium)
+        working-directory: ag-extension-dashboard/src/frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run the officer–farmer journeys
+        working-directory: ag-extension-dashboard/src/frontend
+        run: npm run test:e2e:real
+
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: real-backend-e2e-report
+          path: |
+            ag-extension-dashboard/src/frontend/playwright-report
+            ag-extension-dashboard/src/frontend/test-results
+          retention-days: 7

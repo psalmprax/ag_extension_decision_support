@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
+const { SYSTEM_ADMIN_EMAIL, ensureSystemAdministrator } = require('./systemAdministrator.cjs');
 
 const prisma = new PrismaClient({
   datasourceUrl: process.env.DATABASE_URL,
@@ -301,24 +302,28 @@ async function main() {
   });
   console.log('✅ Global Tenant seeded:', globalTenant.id);
 
-  // 1. System Administrator
+  // 1. System Administrator. Its password is never reset here: the owner sets it once
+  // (SYSTEM_ADMIN_INITIAL_PASSWORD) and changes it in the app. A new account starts
+  // read-only; ensureSystemAdministrator enables it only once its password is private.
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@agridemo.com' },
+    where: { email: SYSTEM_ADMIN_EMAIL },
     update: {
-      passwordHash,
       role: 'admin',
       tenantId: globalTenant.id,
     },
     create: {
-      email: 'admin@agridemo.com',
+      email: SYSTEM_ADMIN_EMAIL,
       passwordHash,
       firstName: 'System',
       lastName: 'Administrator',
       role: 'admin',
       region: 'Global',
       tenantId: globalTenant.id,
+      isDemo: true,
+      isSystemAdmin: false,
     },
   });
+  await ensureSystemAdministrator({ prisma, bcrypt });
   console.log('✅ Admin user verified/seeded:', admin.email);
 
   await prisma.tenantMembership.upsert({
@@ -411,7 +416,7 @@ async function main() {
   console.log('✅ Regional managers seeded');
 
   // 4. Subscription Plans
-  await prisma.subscriptionPlan.upsert({
+  const freePlan = await prisma.subscriptionPlan.upsert({
     where: { id: '00000000-0000-0000-0000-000000000001' },
     update: {
       stripePriceId: 'price_free',

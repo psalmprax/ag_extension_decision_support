@@ -8,7 +8,26 @@ import * as matchers from '@testing-library/jest-dom/matchers';
 // depending on internal vitest type names.
 expect.extend(matchers as Parameters<typeof expect.extend>[0]);
 
+import { englishT } from './englishT';
 import defaultTranslations from '../../public/locales/en.json';
+
+// Components rendered on their own (no LanguageProvider) get the English strings
+// the app shows; inside a provider the real context is used. Test files that mock
+// '@/lib/LanguageContext' themselves keep their own mock.
+vi.mock('@/lib/LanguageContext', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/lib/LanguageContext')>();
+  return {
+    ...actual,
+    useLanguage: () => {
+      try {
+        return actual.useLanguage();
+      } catch (error) {
+        if (!(error instanceof Error) || !error.message.includes('LanguageProvider')) throw error;
+        return { language: 'en' as const, setLanguage: () => undefined, t: englishT, isRTL: false };
+      }
+    },
+  };
+});
 import swTranslations from '../../public/locales/sw.json';
 
 const localeData: Record<string, Record<string, string>> = {
@@ -85,6 +104,16 @@ class MockIntersectionObserver implements IntersectionObserver {
   }
 }
 vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
+
+// Pure no-op ResizeObserver stub required by Headless UI v1 Dialog in jsdom
+// (invoking the callback on observe() would read zero getBoundingClientRect()
+// bounds and immediately trigger Dialog onClose).
+class MockResizeObserver implements ResizeObserver {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+vi.stubGlobal('ResizeObserver', MockResizeObserver);
 
 if (!window.matchMedia) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({

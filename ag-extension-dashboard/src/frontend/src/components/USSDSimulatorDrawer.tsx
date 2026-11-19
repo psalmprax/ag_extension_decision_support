@@ -24,6 +24,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { t } = useLanguage();
   useLanguage();
   const [dialCode, setDialCode] = useState('*123#');
   const [ussdStep, setUssdStep] = useState<USSDStep>('idle');
@@ -202,12 +203,12 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-sm text-white tracking-wide">USSD & SMS Sandbox</h3>
+                    <h3 className="font-bold text-sm text-white tracking-wide">{t('ui_ussdsimulator_drawer_ussd_sms_sandbox')}</h3>
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                       SIMULATION
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400">Local example only; no messages or requests are sent. Do not enter personal information.</p>
+                  <p className="text-xs text-slate-400">{t('ui_ussdsimulator_drawer_local_example_only_no_messages_or_re')}</p>
                 </div>
               </div>
 
@@ -232,7 +233,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
             <div className="px-4 py-2 bg-slate-900/40 border-b border-slate-800/50 flex items-center justify-between text-xs">
               <span className="text-slate-400 flex items-center gap-1.5 font-medium">
                 <Globe className="w-3.5 h-3.5 text-emerald-400" />
-                Simulation Locale:
+                {t('ui_ussdsimulator_drawer_simulation_locale')}
               </span>
               <div className="flex gap-1">
                 {(['en', 'sw', 'fr'] as const).map(lang => (
@@ -259,7 +260,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                 <div className="flex justify-between items-center text-xs text-slate-400 pb-2 border-b border-slate-800/60 mb-3">
                   <span className="flex items-center gap-1.5">
                     <Radio className="w-3 h-3 text-emerald-400" />
-                    Example network
+                    {t('ui_ussdsimulator_drawer_example_network')}
                   </span>
                   <span className="flex items-center gap-1 font-mono text-xs">
                     <Battery className="w-3.5 h-3.5 text-slate-400" />
@@ -273,9 +274,9 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                     <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3">
                       <PhoneCall className="w-5 h-5" />
                     </div>
-                    <p className="text-sm font-semibold text-white mb-1">Ready to Dial</p>
+                    <p className="text-sm font-semibold text-white mb-1">{t('ui_ussdsimulator_drawer_ready_to_dial')}</p>
                     <p className="text-xs text-slate-400 mb-4 max-w-[200px]">
-                      Example code <code className="text-emerald-400 font-mono">*123#</code> is not a live service.
+                      {t('ui_ussdsimulator_drawer_example_code')} <code className="text-emerald-400 font-mono">*123#</code> {t('ui_ussdsimulator_drawer_is_not_a_live_service')}
                     </p>
                     <div className="font-mono text-xl font-semibold text-emerald-400 tabular-nums bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 mb-4">
                       {dialCode || '---'}
@@ -285,7 +286,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                       className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs rounded-xl flex items-center gap-2 transition-colors"
                     >
                       <PhoneCall className="w-4 h-4" />
-                      Start simulation
+                      {t('ui_ussdsimulator_drawer_start_simulation')}
                     </button>
                   </div>
                 ) : (
@@ -294,8 +295,8 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                     <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 shadow-sm flex-1 flex flex-col justify-between">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
-                          <span className="text-xs font-medium text-emerald-400">USSD Dialog</span>
-                          <span className="text-xs font-mono text-slate-500">Session ID: #8841</span>
+                          <span className="text-xs font-medium text-emerald-400">{t('ui_ussdsimulator_drawer_ussd_dialog')}</span>
+                          <span className="text-xs font-mono text-slate-500">{t('ui_ussdsimulator_drawer_session_id_8841')}</span>
                         </div>
                         <div className="text-xs font-mono text-slate-200 whitespace-pre-line leading-relaxed">
                           {sessionLogs[sessionLogs.length - 1]?.text}
@@ -318,7 +319,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                               className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
                             >
                               <Send className="w-3.5 h-3.5" />
-                              Send
+                              {t('common_send')}
                             </button>
                           </div>
                         </form>
@@ -328,7 +329,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                             onClick={resetSession}
                             className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold transition-all"
                           >
-                            Dismiss / OK
+                            {t('ui_ussdsimulator_drawer_dismiss_ok')}
                           </button>
                         </div>
                       )}
@@ -354,7 +355,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
               <div className="bg-slate-900/40 rounded-xl p-3 border border-slate-800 space-y-2">
                 <div className="flex items-center gap-1.5 text-xs font-medium text-slate-300">
                   <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
-                  Quick Test Scenarios
+                  {t('ui_ussdsimulator_drawer_quick_test_scenarios')}
                 </div>
                 <div className="grid grid-cols-1 gap-1.5 text-xs">
                   <button
@@ -370,8 +371,8 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                     }}
                     className="text-left p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-slate-300 text-[11px] transition-colors flex justify-between items-center"
                   >
-                    <span>🇹🇿 Swahili Diagnosis Flow</span>
-                    <span className="text-emerald-400 font-mono text-[10px]">Test &rarr;</span>
+                    <span>{t('ui_ussdsimulator_drawer_swahili_diagnosis_flow')}</span>
+                    <span className="text-emerald-400 font-mono text-[10px]">{t('ui_ussdsimulator_drawer_test')}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -386,8 +387,8 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                     }}
                     className="text-left p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-slate-300 text-[11px] transition-colors flex justify-between items-center"
                   >
-                    <span>🌽 Gray Leaf Spot (Maize)</span>
-                    <span className="text-emerald-400 font-mono text-[10px]">Test &rarr;</span>
+                    <span>{t('ui_ussdsimulator_drawer_gray_leaf_spot_maize')}</span>
+                    <span className="text-emerald-400 font-mono text-[10px]">{t('ui_ussdsimulator_drawer_test')}</span>
                   </button>
                 </div>
               </div>
@@ -395,9 +396,9 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
 
             {/* Session Debug Log Footer */}
             <div className="p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-slate-950 border-t border-slate-800 text-[10px] font-mono text-slate-500 flex justify-between items-center">
-              <span>No gateway connected</span>
+              <span>{t('ui_ussdsimulator_drawer_no_gateway_connected')}</span>
               <span className="text-emerald-400 flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" /> Simulation
+                <CheckCircle className="w-3 h-3" /> {t('ui_ussdsimulator_drawer_simulation')}
               </span>
             </div>
           </motion.div>

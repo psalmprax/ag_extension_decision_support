@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { RefreshCw, Trash2, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { syncQueue, type SyncQueueItem } from '@/api/syncQueueService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 /**
  * Operator view of the offline write queue. Surfaces items that exhausted
@@ -9,6 +10,7 @@ import { syncQueue, type SyncQueueItem } from '@/api/syncQueueService';
  * discarded deliberately instead of sitting in IndexedDB forever.
  */
 export const SyncQueuePanel: React.FC = () => {
+  const { t } = useLanguage();
   const [items, setItems] = useState<SyncQueueItem[]>(syncQueue.getQueue());
   const [nextRetryAt, setNextRetryAt] = useState<number | null>(syncQueue.getNextRetryAt());
   const [busy, setBusy] = useState(false);
@@ -25,7 +27,7 @@ export const SyncQueuePanel: React.FC = () => {
     return (
       <div className="rounded-xl border border-white/10 bg-slate-900/60 p-5 flex items-center gap-3 text-sm text-white/60">
         <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-        Offline sync queue is empty.
+        {t('ui_sync_queue_panel_offline_sync_queue_is_empty')}
       </div>
     );
   }
@@ -53,9 +55,9 @@ export const SyncQueuePanel: React.FC = () => {
     <div className="rounded-xl border border-white/10 bg-slate-900/60 p-5 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-bold text-white">Offline Sync Queue</h3>
+          <h3 className="text-sm font-bold text-white">{t('ui_sync_queue_panel_offline_sync_queue')}</h3>
           <p className="text-xs text-white/50">
-            {pending.length} pending{nextRetryAt ? ` · next automatic retry ${new Date(nextRetryAt).toLocaleTimeString()}` : ''} · {stuck.length} need attention
+            {pending.length} {t('ui_sync_queue_panel_pending')}{nextRetryAt ? ` · next automatic retry ${new Date(nextRetryAt).toLocaleTimeString()}` : ''} · {stuck.length} {t('ui_sync_queue_panel_need_attention')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -64,7 +66,7 @@ export const SyncQueuePanel: React.FC = () => {
             disabled={busy || !navigator.onLine}
             className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 flex items-center gap-1.5 disabled:opacity-40"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${busy ? 'animate-spin' : ''}`} /> Sync now
+            <RefreshCw className={`w-3.5 h-3.5 ${busy ? 'animate-spin' : ''}`} /> {t('ui_sync_queue_panel_sync_now')}
           </button>
           {stuck.length > 0 && (
             <button
@@ -72,7 +74,7 @@ export const SyncQueuePanel: React.FC = () => {
               disabled={busy || !navigator.onLine}
               className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-xs text-amber-200 flex items-center gap-1.5 disabled:opacity-40"
             >
-              <AlertTriangle className="w-3.5 h-3.5" /> Retry {stuck.length} stuck
+              <AlertTriangle className="w-3.5 h-3.5" /> {t('users_access_plans_retry')} {stuck.length} {t('ui_sync_queue_panel_stuck')}
             </button>
           )}
         </div>
@@ -91,11 +93,11 @@ export const SyncQueuePanel: React.FC = () => {
                 <span className="text-white/80 font-semibold truncate">{item.method} {item.endpoint}</span>
               </div>
               <div className="text-white/40 mt-0.5 flex flex-wrap items-center gap-2">
-                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> queued {new Date(item.timestamp).toLocaleString()} · attempts {item.retryCount}</span>
+                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {t('ui_sync_queue_panel_queued')} {new Date(item.timestamp).toLocaleString()} {t('ui_sync_queue_panel_attempts')} {item.retryCount}</span>
                 {item.lastError && <span className="text-rose-300/80 truncate">· {item.lastError}</span>}
                 {item.conflicts && item.conflicts.length > 0 && (
                   <span className="text-amber-300/90 font-mono text-[10px]">
-                    · {item.conflicts.length} conflict(s): {item.conflicts.map(c => c.field).join(', ')}
+                    · {item.conflicts.length} {t('ui_sync_queue_panel_conflict_s')} {item.conflicts.map(c => c.field).join(', ')}
                   </span>
                 )}
               </div>

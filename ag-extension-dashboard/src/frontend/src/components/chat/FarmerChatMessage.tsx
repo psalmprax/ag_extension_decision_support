@@ -5,6 +5,8 @@ import type { ChatMessage } from '@/types/dashboard';
 import { AudioReaderButton } from '@/components/audio/AudioReaderButton';
 import { formatChatTime } from '@/lib/chatTime';
 import { farmerChatSender, type FarmerChatSender } from '@/lib/farmerChatSender';
+import { MessagePhotos } from './MessagePhotos';
+import { MessageProvenance } from './AnswerSources';
 
 const CHANNEL_LABEL = { sms: 'SMS', whatsapp: 'WhatsApp', telegram: 'Telegram' } as const;
 
@@ -53,6 +55,8 @@ export const FarmerChatMessage: React.FC<{ message: ChatMessage; viewer?: 'offic
         ) : (
           <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-line">{message.content}</p>
         )}
+        <MessagePhotos photos={message.attachments} label={`Photo from ${label}`} />
+        <MessageProvenance metadata={message.metadata} sender={look.sender} viewer={viewer} />
         <div className={`flex items-center justify-between gap-3 text-xxs font-mono pt-1 border-t ${look.metaClass}`}>
           <AudioReaderButton
             text={message.content}

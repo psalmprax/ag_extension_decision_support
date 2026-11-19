@@ -2,6 +2,9 @@ import apiClient from './client';
 
 export type MarketDataStatus = 'live' | 'estimated' | 'unavailable';
 
+/** Value-chain stage: producer, wholesale and retail series are never merged. */
+export type PriceType = 'producer' | 'wholesale' | 'retail';
+
 export interface MarketPrice {
   id: string;
   crop: string;
@@ -14,6 +17,9 @@ export interface MarketPrice {
   fetchedAt: string;
   exchangeRateSource: 'live' | 'fallback' | 'native';
   currency: string;
+  /** Publication period of the figure (a year, or YYYY-MM for monthly series). */
+  period?: string | null;
+  priceType?: PriceType | null;
 }
 
 export interface PriceHistoryPoint {
@@ -26,6 +32,9 @@ export interface PriceHistorySeries {
   currency: string;
   source: string;
   dataStatus: MarketDataStatus;
+  /** Period the observations describe — not the date they were recorded. */
+  observedPeriod: string | null;
+  priceType: PriceType | null;
   series: PriceHistoryPoint[];
 }
 

@@ -7,11 +7,17 @@ import {
   deleteConversation,
   createConversation,
   sendThreadMessage,
+  markThreadRead,
 } from '@/api/chatbotService';
 import { getChatCompletion, getPublicDemoChatCompletion } from '@/api/aiService';
 import { isDemoFarmerId } from '@/demo/demoIds';
 import { Conversation, ChatMessage, Farmer } from '../types/dashboard';
 import { useAppStore } from '@/store/useAppStore';
+import { lacksPaidAccess } from '@/lib/planAccess';
+import { takeCopilotDraft } from '@/lib/copilotDraft';
+import { getApiErrorMessage } from '@/lib/apiError';
+import { queryClient } from '@/lib/queryClient';
+import { UNREAD_CHATS_KEY } from '@/hooks/useUnreadChats';
 
 interface QueuedChatItem {
   conversationId: string | null;
@@ -106,6 +112,8 @@ function buildDemoConversation(farmer: Farmer): Conversation {
 
 export const useAppChat = (language: string) => {
   const isFarmerUser = useAppStore(state => state.user?.role) === 'farmer';
+  // Free plan without a chat grant: the chat pages show the upgrade card and the server refuses the calls.
+  const freePlan = useAppStore(state => lacksPaidAccess(state.user, 'chat'));
   // AI Assistant Chat State
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
@@ -144,6 +152,7 @@ export const useAppChat = (language: string) => {
   }, [activeFarmerConvId, farmerChatMessages]);
 
   const loadConversations = useCallback(async () => {
+    if (freePlan) return;
     try {
       // Staff: their own private AI chats. Farmers have none: their AI help is their thread.
       const res = await fetchConversations(isFarmerUser ? 'farmer_thread' : 'officer_ai');
@@ -154,7 +163,7 @@ export const useAppChat = (language: string) => {
     } catch (error) {
       console.error('Failed to load conversations:', error);
     }
-  }, [activeConvId, isFarmerUser]);
+  }, [activeConvId, isFarmerUser, freePlan]);
 
   // Guards against out-of-order responses: switching conversations quickly could
   // otherwise render the previous conversation's messages under the newly selected one.
@@ -218,6 +227,10 @@ export const useAppChat = (language: string) => {
       // Drop a stale resolution so the active conversation always shows its own messages.
       if (requestId !== farmerMessagesRequestRef.current) return;
       setFarmerChatMessages(res.data || []);
+      // Opening a thread reads it: clear its unread count and the menu badge.
+      void markThreadRead(id)
+        .then(() => queryClient.invalidateQueries({ queryKey: UNREAD_CHATS_KEY }))
+        .catch(error => console.warn('Could not mark the conversation read:', error));
     } catch (error) {
       if (requestId !== farmerMessagesRequestRef.current) return;
       console.error('Failed to load farmer messages:', error);
@@ -226,6 +239,7 @@ export const useAppChat = (language: string) => {
 
   // Farmer Chat functions
   const loadFarmerConversations = useCallback(async () => {
+    if (freePlan) return;
     try {
       const res = await fetchConversations('farmer_thread');
       const list = res.data || [];
@@ -239,7 +253,7 @@ export const useAppChat = (language: string) => {
     } catch (error) {
       console.error('Failed to load farmer conversations:', error);
     }
-  }, [activeFarmerConvId, setActiveFarmerConvId, loadFarmerMessages]);
+  }, [activeFarmerConvId, setActiveFarmerConvId, loadFarmerMessages, freePlan]);
 
   const handleFarmerChatSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -274,7 +288,7 @@ export const useAppChat = (language: string) => {
       // A plain message never triggers an AI reply. AI help: the officer's private
       // copilot draft, the farmer's Ask AI button, or the turn-taking fallback.
       const res = via === 'message' && activeFarmerConvId
-        ? await sendThreadMessage(activeFarmerConvId, currentInput, language)
+        ? await sendThreadMessage(activeFarmerConvId, currentInput, language, undefined, takeCopilotDraft(activeFarmerConvId))
         : await getChatCompletion(currentInput, activeFarmerConvId || undefined, language);
       if (res.success && activeFarmerConvId) {
         loadFarmerMessages(activeFarmerConvId);
@@ -286,7 +300,10 @@ export const useAppChat = (language: string) => {
         enqueueOfflineMessage(queueKey, { conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now(), via });
         console.warn('Chat queued after failure:', currentInput.slice(0, 40));
       } else {
+        // Refused (rate limit, plan, access): give the text back so nothing typed is lost.
         console.error('Failed to send farmer message:', error);
+        setFarmerChatInput(prev => prev || currentInput);
+        toast.error(getApiErrorMessage(error, 'Your message was not sent. Try again.'));
       }
     }
   };

@@ -11,8 +11,18 @@ const {
   parseArgs,
 } = require('./npm-audit-gate.cjs');
 
-describe('unpatched Picomatch exception scopes', () => {
-  const entries = loadAllowlist(path.join(__dirname, 'audit-allowlist.json')).entries;
+describe('allowlist scope and advisory matching', () => {
+  // A fixture entry, not the live allowlist: entries are retired as advisories are
+  // fixed or withdrawn, and the matching rules must stay tested after that.
+  const entries = [
+    {
+      package: 'picomatch',
+      scope: ['ag_extension_decision_support', 'backend', 'frontend', 'ag-extension-browser-ext'],
+      advisories: ['GHSA-fc5q-39xc-vjpf'],
+      reason: 'fixture',
+      expires: '2026-12-01',
+    },
+  ];
   const advisory = { url: 'https://github.com/advisories/GHSA-fc5q-39xc-vjpf' };
 
   it('covers only the reviewed advisory in the reviewed tooling scopes', () => {
@@ -23,6 +33,14 @@ describe('unpatched Picomatch exception scopes', () => {
       assert.equal(entry.expires, '2026-12-01');
     }
     assert.equal(isAllowlisted('picomatch', vulnerability, entries, 'ag-extension-shared'), null);
+  });
+
+  it('loads the live allowlist with every required field', () => {
+    const live = loadAllowlist(path.join(__dirname, 'audit-allowlist.json')).entries;
+    for (const entry of live) {
+      assert.ok(Array.isArray(entry.advisories) && entry.advisories.length > 0, entry.package);
+      assert.ok(!Number.isNaN(new Date(entry.expires).getTime()), `${entry.package} expiry`);
+    }
   });
 
   it('does not exempt new Picomatch advisories or other dependencies', () => {

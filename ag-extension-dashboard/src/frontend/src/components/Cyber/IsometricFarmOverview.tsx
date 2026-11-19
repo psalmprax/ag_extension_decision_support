@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import apiClient from '@/api/client';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface IsometricFarmOverviewProps {
   farmSize?: number;
@@ -12,6 +13,7 @@ const IsometricFarmOverview: React.FC<IsometricFarmOverviewProps> = ({
   crops: externalCrops = [],
   farmerId,
 }) => {
+  const { t } = useLanguage();
   const [satelliteData, setSatelliteData] = useState<{
     ndvi?: number;
     soilMoisture?: number;
@@ -61,7 +63,7 @@ const IsometricFarmOverview: React.FC<IsometricFarmOverviewProps> = ({
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center">
           <p className="text-2xl font-semibold text-white/40 tracking-normal mb-3">
-            {crops.length > 0 ? crops[0] : 'Farm'} Sector
+            {crops.length > 0 ? crops[0] : 'Farm'} {t('ui_isometric_farm_overview_sector')}
           </p>
           <p className="text-xs font-medium text-slate-400">
             {farmSize > 0
@@ -72,17 +74,17 @@ const IsometricFarmOverview: React.FC<IsometricFarmOverviewProps> = ({
             <div className="mt-4 space-y-1">
               {satelliteData.ndvi !== undefined && (
                 <p className={`text-xs font-medium font-mono tabular-nums ${ndviColor}`}>
-                  NDVI: {satelliteData.ndvi.toFixed(2)}
+                  {t('ui_isometric_farm_overview_ndvi')} {satelliteData.ndvi.toFixed(2)}
                 </p>
               )}
               {satelliteData.soilMoisture !== undefined && (
                 <p className="text-xs font-medium font-mono tabular-nums text-blue-400/60">
-                  Soil Moisture: {satelliteData.soilMoisture.toFixed(1)}%
+                  {t('ui_isometric_farm_overview_soil_moisture')} {satelliteData.soilMoisture.toFixed(1)}%
                 </p>
               )}
               {satelliteData.lastUpdated && (
                 <p className="text-xs font-medium font-mono tabular-nums text-white/40">
-                  Updated: {new Date(satelliteData.lastUpdated).toLocaleDateString()}
+                  {t('ui_isometric_farm_overview_updated')} {new Date(satelliteData.lastUpdated).toLocaleDateString()}
                 </p>
               )}
             </div>

@@ -3,6 +3,7 @@ import { Navigate, useLocation, useParams } from 'react-router-dom';
 import { Video, AlertCircle } from 'lucide-react';
 import { VideoCall } from '@/components/VideoCall';
 import { useAppStore } from '@/store/useAppStore';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const ROOM_ID_PATTERN = /^[a-zA-Z0-9_-]{3,64}$/;
 
@@ -12,6 +13,7 @@ const ROOM_ID_PATTERN = /^[a-zA-Z0-9_-]{3,64}$/;
  * signs in if needed, and joins the live WebRTC room as a guest.
  */
 export function TeleCallJoinPage() {
+  const { t } = useLanguage();
   const { roomId } = useParams<{ roomId: string }>();
   const location = useLocation();
   const user = useAppStore(s => s.user);
@@ -21,10 +23,9 @@ export function TeleCallJoinPage() {
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-xl p-6 text-center space-y-3">
           <AlertCircle className="w-10 h-10 text-amber-400 mx-auto" />
-          <h1 className="text-base font-bold text-white">Invalid call link</h1>
+          <h1 className="text-base font-bold text-white">{t('ui_tele_call_join_page_invalid_call_link')}</h1>
           <p className="text-xs text-slate-400">
-            This tele-agronomy link is malformed. Please ask your extension officer to share the
-            invite link again.
+            {t('ui_tele_call_join_page_this_tele_agronomy_link_is_malformed')}
           </p>
         </div>
       </div>
@@ -45,9 +46,9 @@ export function TeleCallJoinPage() {
             <Video className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="font-bold text-sm text-white">Tele-Agronomy Consultation</h1>
+            <h1 className="font-bold text-sm text-white">{t('ui_tele_call_join_page_tele_agronomy_consultation')}</h1>
             <p className="text-xs text-slate-400">
-              Joining as {user.firstName} {user.lastName} · Room {roomId}
+              {t('ui_tele_call_join_page_joining_as_room', { firstName: user.firstName, lastName: user.lastName, roomId })}
             </p>
           </div>
         </div>

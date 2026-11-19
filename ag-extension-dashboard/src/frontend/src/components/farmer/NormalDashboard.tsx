@@ -305,7 +305,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
               ))
             ) : (
               <div className="text-center py-10 text-gray-500 text-xs font-medium">
-                No price data available
+                {t('ui_normal_dashboard_no_price_data_available')}
               </div>
             )}
           </div>

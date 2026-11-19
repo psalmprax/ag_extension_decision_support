@@ -8,7 +8,6 @@ import { useAppStore, type User } from '@/store/useAppStore';
 import { DEMO_FARMERS } from '@/demo';
 
 vi.mock('@/api/farmerService', () => ({ fetchFarmers: vi.fn() }));
-vi.mock('@/lib/LanguageContext', () => ({ useLanguage: () => ({ t: (key: string) => key }) }));
 
 const admin: User = {
   id: 'real-admin', firstName: 'Real', lastName: 'Admin', email: 'admin@example.test', role: 'admin',

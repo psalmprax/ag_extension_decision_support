@@ -21,6 +21,12 @@ model User {
   managerId     String?            @map("manager_id") @db.Uuid
   manager       User?              @relation("ManagerOfficers", fields: [managerId], references: [id], onDelete: SetNull)
   managedOfficers User[]           @relation("ManagerOfficers")
+  /// Profile personalisation on the account: handle, avatarId, display units.
+  profileSettings Json?            @map("profile_settings")
+  /// Above every tenant: only this account may create or promote another admin.
+  isSystemAdmin Boolean            @default(false) @map("is_system_admin")
+  /// Diagnoses this account performed, for the per-user diagnosis history.
+  diagnosisEvents DiagnosisEvent[] @relation("UserDiagnosisEvents")
 
   avatarUrl     String?            @map("avatar_url")
   isActive      Boolean?           @default(true) @map("is_active")
@@ -80,6 +86,10 @@ model User {
   tenantId       String?            @map("tenant_id") @db.Uuid
   tenant         Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   tenantMemberships TenantMembership[]
+  progressEntries   FarmerProgressEntry[] @relation("OfficerProgressEntries")
+  serviceAccess        ServiceAccessGrant[] @relation("ServiceAccessHolder")
+  serviceAccessGranted ServiceAccessGrant[] @relation("ServiceAccessGrantedBy")
+  serviceAccessRevoked ServiceAccessGrant[] @relation("ServiceAccessRevokedBy")
 
   @@index([tenantId])
   @@map("users")
@@ -246,6 +256,7 @@ model Farmer {
    smsHistory               SmsHistory[] @relation("SmsFarmer")
    exportRequests           DataExportRequest[]
    uploads                  UploadRecord[]
+   progressEntries          FarmerProgressEntry[]
    whatsappMessages         WhatsappMessage[]
    smsFeedbacks             SmsFeedback[]
 
@@ -269,6 +280,11 @@ model Visit {
   durationMinutes      Int?      @map("duration_minutes")
   locationLat          Decimal?  @map("location_lat") @db.Decimal(10, 8)
   locationLng          Decimal?  @map("location_lng") @db.Decimal(11, 8)
+  /// Verified visits: the reported fix's accuracy, the distance to the farm and the check's outcome.
+  locationAccuracyM    Decimal?  @map("location_accuracy_m") @db.Decimal(8, 1)
+  locationDistanceM    Int?      @map("location_distance_m")
+  /// on_farm | away | imprecise | farm_location_unknown | not_shared
+  locationCheck        String?   @map("location_check") @db.VarChar(30)
   notes                String?
   outcomes             String?
   followUpRequired     Boolean?  @default(false) @map("follow_up_required")
@@ -283,6 +299,7 @@ model Visit {
   farmer               Farmer?   @relation(fields: [farmerId], references: [id])
   attachments          VisitAttachment[]
   recommendationOutcomes RecommendationOutcome[]
+  progressEntries      FarmerProgressEntry[]
 
   @@index([farmerId])
   @@index([officerId])
@@ -327,6 +344,9 @@ model ChatConversation {
   kind                  String        @default("farmer_thread") @db.VarChar(20)
   startedAt             DateTime?     @default(now()) @map("started_at") @db.Timestamp(6)
   endedAt               DateTime?     @map("ended_at") @db.Timestamp(6)
+  /// When each side last read the thread (unread counts and badges)
+  officerReadAt         DateTime?     @map("officer_read_at") @db.Timestamp(6)
+  farmerReadAt          DateTime?     @map("farmer_read_at") @db.Timestamp(6)
   satisfactionScore     Int?          @map("satisfaction_score")
   lowSatisfactionAlertSent Boolean    @default(false) @map("low_satisfaction_alert_sent")
   createdAt             DateTime?     @default(now()) @map("created_at") @db.Timestamp(6)
@@ -353,11 +373,27 @@ model ChatMessage {
   audioUrl          String?          @map("audio_url")
   /// null = the app; sms / whatsapp / telegram = received or delivered on that channel
   channel           String?          @db.VarChar(20)
+  /// editedAt / deletedAt / deletedBy for edited and withdrawn messages
+  metadata          Json?
   createdAt         DateTime?        @default(now()) @map("created_at") @db.Timestamp(6)
   conversation      ChatConversation? @relation(fields: [conversationId], references: [id])
+  attachments       ChatMessageAttachment[]
 
   @@index([conversationId])
   @@map("chat_messages")
+}
+
+/// Photos attached to a farmer–officer chat message (uploads tagged with the thread's farmer).
+model ChatMessageAttachment {
+  messageId String       @map("message_id") @db.Uuid
+  uploadId  String       @map("upload_id") @db.Uuid
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  message   ChatMessage  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  upload    UploadRecord @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, uploadId])
+  @@index([uploadId])
+  @@map("chat_message_attachments")
 }
 
 model Report {
@@ -1000,6 +1036,8 @@ model UploadRecord {
   @@index([ownerUserId])
   @@index([farmerId])
   visitAttachments VisitAttachment[]
+  chatMessageAttachments ChatMessageAttachment[]
+  progressAttachments    FarmerProgressAttachment[]
 
   @@index([tenantId])
   @@map("upload_records")
@@ -1144,6 +1182,8 @@ model AdvisoryDispatch {
 model DiagnosisEvent {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   farmerId     String?  @map("farmer_id") @db.Uuid
+  /// The account that performed the diagnosis; drives the per-user history.
+  userId       String?  @map("user_id") @db.Uuid
   district     String?  @db.VarChar(100)
   crop         String   @db.VarChar(100)
   diseaseLabel String   @map("disease_label") @db.VarChar(150)
@@ -1152,9 +1192,11 @@ model DiagnosisEvent {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(6)
 
   farmer Farmer? @relation(fields: [farmerId], references: [id])
+  user   User?   @relation("UserDiagnosisEvents", fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([district, crop, createdAt])
   @@index([createdAt])
+  @@index([userId, createdAt])
   @@map("diagnosis_events")
 }
 
@@ -1333,4 +1375,61 @@ model AdvisoryWorkflow {
   @@map("advisory_workflows")
 }
 
+/// An extension officer's record of a farmer's progress: a success or failure,
+/// a field event (planting, spraying, harvest…), an action the officer took, or
+/// an observation, with optional photos and the visit it came from.
+model FarmerProgressEntry {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmerId    String    @map("farmer_id") @db.Uuid
+  officerId   String?   @map("officer_id") @db.Uuid
+  visitId     String?   @map("visit_id") @db.Uuid
+  tenantId    String?   @map("tenant_id") @db.Uuid
+  /// success | failure | field_event | action | observation
+  kind        String    @db.VarChar(20)
+  title       String    @db.VarChar(200)
+  details     String?
+  crop        String?   @db.VarChar(100)
+  occurredOn  DateTime  @map("occurred_on") @db.Date
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  farmer      Farmer    @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  officer     User?     @relation("OfficerProgressEntries", fields: [officerId], references: [id], onDelete: SetNull)
+  visit       Visit?    @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  attachments FarmerProgressAttachment[]
 
+  @@index([farmerId, occurredOn])
+  @@index([officerId])
+  @@index([visitId])
+  @@map("farmer_progress_entries")
+}
+
+model FarmerProgressAttachment {
+  entryId   String              @map("entry_id") @db.Uuid
+  uploadId  String              @map("upload_id") @db.Uuid
+  createdAt DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  entry     FarmerProgressEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  upload    UploadRecord        @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  @@id([entryId, uploadId])
+  @@index([uploadId])
+  @@map("farmer_progress_attachments")
+}
+
+/// A paid service the system administrator lets one account use without changing its plan.
+model ServiceAccessGrant {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  /// chat | field_visits | analytics | campaigns | email_workflows | worldmonitor
+  service   String    @db.VarChar(40)
+  grantedBy String?   @map("granted_by") @db.Uuid
+  grantedAt DateTime  @default(now()) @map("granted_at") @db.Timestamp(6)
+  expiresAt DateTime? @map("expires_at") @db.Timestamp(6)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamp(6)
+  revokedBy String?   @map("revoked_by") @db.Uuid
+  note      String?   @db.VarChar(500)
+  user      User      @relation("ServiceAccessHolder", fields: [userId], references: [id], onDelete: Cascade)
+  granter   User?     @relation("ServiceAccessGrantedBy", fields: [grantedBy], references: [id], onDelete: SetNull)
+  revoker   User?     @relation("ServiceAccessRevokedBy", fields: [revokedBy], references: [id], onDelete: SetNull)
+
+  @@unique([userId, service])
+  @@map("service_access_grants")
+}

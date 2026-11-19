@@ -18,6 +18,7 @@
     "test:frontend": "cd ag-extension-dashboard/src/frontend && npm run test",
     "test": "npm run test:backend && npm run test:frontend",
     "test:e2e": "npx playwright test",
+    "seed:realworld": "cd ag-extension-dashboard/src/backend && npm run seed:realworld",
     "check:component-size": "node scripts/component-size-ratchet.cjs",
     "check:explicit-any": "node scripts/explicit-any-ratchet.cjs",
     "prepare": "husky || true",

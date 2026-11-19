@@ -2,6 +2,7 @@ import { defineContentScript } from 'wxt/utils/define-content-script';
 import { createShadowRootUi } from 'wxt/utils/content-script-ui/shadow-root';
 import { browser } from 'wxt/browser';
 import type { ContentScriptContext } from 'wxt/utils/content-script-context';
+import { safeSetHTML } from './sanitize';
 
 type ContentRequestMessage =
     | { action: 'get_page_context' }
@@ -26,57 +27,6 @@ const isContentRequestMessage = (message: unknown): message is ContentRequestMes
         action === 'clear_highlights' ||
         action === 'highlight_terms'
     );
-};
-
-/**
- * HTML sanitizer for toolbar templates.
- *
- * All HTML rendered in the content script passes through here. The toolbar
- * templates are static (built-in SVG + text), but a sanitizer — not trust —
- * is the enforcement point: anything dynamic that ever flows into a template
- * cannot smuggle event handlers, script/style elements, or javascript: URLs
- * into the host page, which runs with the extension's privileges.
- */
-const ALLOWED_HTML_TAGS = new Set([
-  'div', 'span', 'svg', 'circle', 'path', 'rect', 'line', 'polyline', 'polygon', 'g', 'defs', 'title',
-  'p', 'strong', 'em', 'b', 'i', 'u', 'br', 'small', 'sub', 'sup', 'code', 'pre', 'span',
-]);
-const FORBIDDEN_ATTR_NAMES = /^(?:on[a-z]+|srcdoc|formaction)$/i;
-const FORBIDDEN_URL_ATTRS = new Set(['href', 'xlink:href', 'src', 'action', 'data', 'poster']);
-const FORBIDDEN_URL_VALUES = /^\s*(?:javascript|vbscript|data(?!:image\/(?:png|gif|jpeg|webp);)):/i;
-
-function sanitizeHtml(html: string): string {
-  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
-  const walk = (node: Element): void => {
-    for (const child of Array.from(node.children)) {
-      if (!ALLOWED_HTML_TAGS.has(child.tagName.toLowerCase())) {
-        child.replaceWith(...Array.from(child.childNodes)); // unwrap, keep text
-        continue;
-      }
-      for (const attr of Array.from(child.attributes)) {
-        const name = attr.name.toLowerCase();
-        if (FORBIDDEN_ATTR_NAMES.test(name) ||
-            (FORBIDDEN_URL_ATTRS.has(name) && FORBIDDEN_URL_VALUES.test(attr.value))) {
-          child.removeAttribute(attr.name);
-        }
-      }
-      walk(child);
-    }
-  };
-  const body = doc.body;
-  if (body) walk(body);
-  return body ? body.innerHTML : '';
-}
-
-/**
- * Sanitize, then set HTML content. The old implementation assigned
- * `template.innerHTML` directly — a future template with dynamic interpolation
- * would have executed in the host page. All callers go through the sanitizer.
- */
-const safeSetHTML = (el: HTMLElement, html: string) => {
-  const template = document.createElement('template');
-  template.innerHTML = sanitizeHtml(html.trim());
-  el.appendChild(template.content);
 };
 
 /**
@@ -135,7 +85,7 @@ export default defineContentScript({
           ">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6"/></svg>
           </div>
-        `);
+        `, 'Capture photo');
 
         photoBtn.onclick = async () => {
           try {
@@ -216,7 +166,7 @@ export default defineContentScript({
           ">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
           </div>
-        `);
+        `, 'Open AG Extension');
 
         fab.onclick = () => {
           browser.runtime.sendMessage({ action: 'open_sidepanel' });
@@ -240,7 +190,7 @@ export default defineContentScript({
           ">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
           </div>
-        `);
+        `, 'Sync now');
 
         syncBtn.onclick = async () => {
           try {
@@ -252,7 +202,7 @@ export default defineContentScript({
                   <circle cx="12" cy="12" r="10"/>
                   <path d="M12 6v6l4 2"/>
                 </svg>
-              `);
+              `, 'Syncing…');
             }
 
             await browser.runtime.sendMessage({ action: 'sync_now' });
@@ -263,14 +213,14 @@ export default defineContentScript({
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 6L9 17l-5-5"/>
                   </svg>
-                `);
+                `, 'Synced');
               }
 
               setTimeout(() => {
                 if (originalIcon) {
                   safeSetHTML(originalIcon, `
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                  `);
+                  `, 'Sync now');
                 }
               }, 2000);
           } catch (error) {
@@ -284,11 +234,11 @@ export default defineContentScript({
                   <path d="M15 9l-6 6"/>
                   <path d="M9 9l6 6"/>
                 </svg>
-              `);
+              `, 'Sync failed');
               setTimeout(() => {
                 safeSetHTML(iconDiv, `
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                `);
+                `, 'Sync now');
               }, 2000);
             }
           }
@@ -312,7 +262,7 @@ export default defineContentScript({
           ">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6"/></svg>
           </div>
-        `);
+        `, 'Capture location');
 
         gpsBtn.onclick = async () => {
           try {
@@ -329,7 +279,7 @@ export default defineContentScript({
                   <circle cx="12" cy="12" r="10"/>
                   <path d="M12 6v6l4 2"/>
                 </svg>
-              `);
+              `, 'Locating…');
             }
 
             const position = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -375,7 +325,7 @@ export default defineContentScript({
             if (iconDiv) {
               safeSetHTML(iconDiv, `
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6"/></svg>
-              `);
+              `, 'Capture location');
             }
           }
         };
@@ -398,7 +348,7 @@ export default defineContentScript({
           ">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
-        `);
+        `, 'Log visit');
 
         logVisitBtn.onclick = () => {
           browser.runtime.sendMessage({ action: 'open_sidepanel', tab: 'log' });
@@ -504,7 +454,7 @@ export default defineContentScript({
       safeSetHTML(bubble, `
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
         <span>ANALYZE WITH AI</span>
-      `);
+      `, 'Analyze with AI');
 
       bubble.onmousedown = (e) => {
         e.preventDefault(); // Prevent losing selection

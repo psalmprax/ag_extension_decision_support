@@ -2,6 +2,7 @@ import React from 'react';
 import { Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Field } from '@/api/fieldService';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface CropCyclesTableProps {
   fields: Field[];
@@ -32,6 +33,7 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
   fields,
   handleDeleteCycle,
 }) => {
+  const { t } = useLanguage();
   const allCycles = fields.flatMap(field =>
     (field.cropCycles || []).map(cycle => ({ field, cycle }))
   );
@@ -46,7 +48,7 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
     >
       {allCycles.length === 0 ? (
         <div className="p-8 text-center text-xs text-slate-500">
-          No crop cycles registered for these fields yet.
+          {t('ui_crop_cycles_table_no_crop_cycles_registered_for_these')}
         </div>
       ) : (
         <>
@@ -58,7 +60,7 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
                   <div>
                     <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{cycle.cropName}</h4>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Sector: <span className="text-slate-800 dark:text-slate-200 font-semibold">{field.name}</span>
+                      {t('ui_crop_cycles_table_sector')} <span className="text-slate-800 dark:text-slate-200 font-semibold">{field.name}</span>
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -82,21 +84,21 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
 
                 <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 dark:bg-slate-950/40 p-2.5 rounded-lg border border-slate-200 dark:border-white/5">
                   <div>
-                    <span className="text-xxs text-slate-500 dark:text-slate-400 font-medium block">Variety</span>
+                    <span className="text-xxs text-slate-500 dark:text-slate-400 font-medium block">{t('ui_crop_cycles_table_variety')}</span>
                     <span className="text-slate-700 dark:text-slate-300 font-medium">{cycle.variety || 'N/A'}</span>
                   </div>
                   <div>
-                    <span className="text-xxs text-slate-500 dark:text-slate-400 font-medium block">Yield Output</span>
+                    <span className="text-xxs text-slate-500 dark:text-slate-400 font-medium block">{t('ui_crop_cycles_table_yield_output')}</span>
                     <span className="text-emerald-600 dark:text-emerald-400 font-medium font-mono tabular-nums">{formatYield(cycle.yieldKg)}</span>
                   </div>
                   <div>
-                    <span className="text-xxs text-slate-500 dark:text-slate-400 font-medium block">Planting Date</span>
+                    <span className="text-xxs text-slate-500 dark:text-slate-400 font-medium block">{t('ui_crop_cycles_table_planting_date')}</span>
                     <span className="text-slate-600 dark:text-slate-400">
                       {cycle.plantingDate ? new Date(cycle.plantingDate).toLocaleDateString() : 'N/A'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-xxs text-slate-500 dark:text-slate-400 font-medium block">Projected Harvest</span>
+                    <span className="text-xxs text-slate-500 dark:text-slate-400 font-medium block">{t('ui_crop_cycles_table_projected_harvest')}</span>
                     <span className="text-slate-600 dark:text-slate-400">{formatHarvestDate(cycle)}</span>
                   </div>
                 </div>
@@ -109,14 +111,14 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
             <table className="w-full text-left border-collapse text-sm">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-950/40 text-xs font-medium text-slate-500 dark:text-slate-400">
-                  <th className="p-4 pl-6">Sector Name</th>
-                  <th className="p-4">Crop Name</th>
-                  <th className="p-4">Variety</th>
-                  <th className="p-4">Growth Phase</th>
-                  <th className="p-4">Planting Date</th>
-                  <th className="p-4">Projected Harvest</th>
-                  <th className="p-4">Yield Output</th>
-                  <th className="p-4 pr-6 text-right">Actions</th>
+                  <th className="p-4 pl-6">{t('ui_crop_cycles_table_sector_name')}</th>
+                  <th className="p-4">{t('ui_crop_cycles_table_crop_name')}</th>
+                  <th className="p-4">{t('ui_crop_cycles_table_variety')}</th>
+                  <th className="p-4">{t('ui_crop_cycles_table_growth_phase')}</th>
+                  <th className="p-4">{t('ui_crop_cycles_table_planting_date')}</th>
+                  <th className="p-4">{t('ui_crop_cycles_table_projected_harvest')}</th>
+                  <th className="p-4">{t('ui_crop_cycles_table_yield_output')}</th>
+                  <th className="p-4 pr-6 text-right">{t('ui_crop_cycles_table_actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-white/5">

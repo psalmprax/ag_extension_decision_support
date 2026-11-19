@@ -223,7 +223,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                   {props.viewingReport.title}
                 </h3>
                 <p className="text-xs text-gray-500 mt-1">
-                  Generated: {new Date(props.viewingReport.generatedAt).toLocaleString()} · Status:{' '}
+                  {t('ui_app_modals_generated')} {new Date(props.viewingReport.generatedAt).toLocaleString()} {t('ui_app_modals_status')}{' '}
                   {props.viewingReport.status}
                 </p>
               </div>
@@ -251,7 +251,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
               ) : (
                 <div className="text-center py-12">
                   <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">No content available for this report.</p>
+                  <p className="text-gray-500">{t('ui_app_modals_no_content_available_for_this_report')}</p>
                   <button
                     onClick={async () => {
                       try {
@@ -262,7 +262,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                     }}
                     className={`mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 ${btnClass} text-sm font-bold`}
                   >
-                    Download Report
+                    {t('ui_app_modals_download_report')}
                   </button>
                 </div>
               )}
@@ -278,7 +278,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                 }}
                 className={`px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 ${btnClass} text-sm font-bold transition-colors`}
               >
-                Download
+                {t('billing_download')}
               </button>
               <button
                 onClick={() => {
@@ -287,7 +287,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                 }}
                 className={`px-4 py-2 bg-primary-600 hover:bg-primary-700 ${btnClass} text-sm font-bold transition-colors`}
               >
-                Close
+                {t('common_close')}
               </button>
             </div>
           </motion.div>

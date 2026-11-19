@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Users,
-  Plus,
-  Send,
-  Lock,
-  MessageSquare,
-  Radio,
-  ArrowLeft,
-  Trash2,
-  Mic,
-} from 'lucide-react';
+import { Users, Plus, Lock, MessageSquare, Radio, ArrowLeft, Trash2, Mic } from 'lucide-react';
 import { Conversation, ChatMessage } from '../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -18,6 +8,8 @@ import { VirtualizedList } from '@/components/common/VirtualizedList';
 import { useDemoMode } from '@/demo';
 import { FarmerChatMessage } from '@/components/chat/FarmerChatMessage';
 import { OfficerCopilot } from '@/components/chat/OfficerCopilot';
+import { OfficerChatComposer } from '@/components/chat/OfficerChatComposer';
+import { UnreadCount } from '@/components/chat/UnreadCount';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationRealtime } from '@/hooks/useConversationRealtime';
 import { PlotTelemetryDrawer, type DetectedHazard, type HazardEvaluation } from '@/components/chat/PlotTelemetryDrawer';
@@ -57,7 +49,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 }) => {
   const { t, language } = useLanguage();
   const isFarmerUser = useAppStore(state => state.user?.role) === 'farmer';
-  const { headingClass, btnClass } = useThemeClasses();
+  const { headingClass } = useThemeClasses();
   const { isLowEndDevice } = useDeviceThermalMemoryBudget();
   const { isDemo } = useDemoMode();
   const [selectedChannel, setSelectedChannel] = useState<'all' | 'sms' | 'whatsapp' | 'telegram'>('all');
@@ -158,11 +150,11 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
           <div className="flex items-center gap-2 mb-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
             <span className="text-xs font-mono font-medium text-emerald-700 dark:text-emerald-400">
-              Multi-Channel Advisory Bridge
+              {t('ui_farmer_chat_page_multi_channel_advisory_bridge')}
             </span>
           </div>
           <h1 className={`text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
-            Farmer Chat
+            {t('ui_farmer_chat_page_farmer_chat')}
           </h1>
           <p className="text-slate-600 dark:text-white/60 text-xs sm:text-sm mt-1 font-medium">
             {t('chat_subtitle') || 'Bi-directional advisory across SMS, WhatsApp, Telegram, and USSD.'}
@@ -194,7 +186,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
           <div className="p-4 border-b border-slate-200/80 dark:border-white/[0.08] flex justify-between items-center bg-slate-50/80 dark:bg-slate-950/40">
             <div>
               <h3 className="font-bold text-sm text-slate-900 dark:text-white">{t('chat_farmer_chats') || 'Conversations'}</h3>
-              <div className="text-[10px] font-mono text-slate-500 dark:text-white/40">{farmerConversations.length} Active Smallholders</div>
+              <div className="text-[10px] font-mono text-slate-500 dark:text-white/40">{t('ui_farmer_chat_page_active_smallholders', { length: farmerConversations.length })}</div>
             </div>
 
             {isDemo ? (
@@ -203,7 +195,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 title={t('demo_not_available') ?? 'Not available in demo version'}
               >
                 <Lock className="w-3.5 h-3.5" />
-                <span>Demo</span>
+                <span>{t('ui_index_demo')}</span>
               </span>
             ) : (
               <button
@@ -278,6 +270,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                         <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
                           {displayName}
                         </span>
+                        <UnreadCount conversationId={conv.id} className="ml-auto mr-2" />
                         <span className="text-[9px] font-mono text-slate-500 dark:text-white/40">
                           {(() => {
                             const rawStarted = conv.startedAt || conv.updatedAt;
@@ -345,7 +338,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                       {activeConv.farmerName || activeConv.title || 'Smallholder Client'}
                     </h4>
                     <div className="flex items-center gap-2 text-xxs text-slate-500 dark:text-white/40 font-mono">
-                      <span>1-to-1 Advisory</span>
+                      <span>{t('ui_farmer_chat_page_1_to_1_advisory')}</span>
                       <span>•</span>
                       <span className="truncate">{activeConv?.farmerRegion || 'ACTIVE REGION'}</span>
                     </div>
@@ -365,7 +358,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                       title="Delete Conversation"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Delete</span>
+                      <span className="hidden sm:inline">{t('common_delete')}</span>
                     </button>
                   )}
                   <span className={`w-1.5 h-1.5 rounded-full ${socketConnected ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-slate-400'}`} aria-hidden="true" />
@@ -380,7 +373,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 {typingUser && (
                   <div className="flex justify-start">
                     <div className="px-3 py-1.5 rounded-full bg-slate-200/80 dark:bg-slate-800/80 border border-slate-300/60 dark:border-white/[0.06] text-xxs font-mono text-slate-600 dark:text-white/60">
-                      Typing…
+                      {t('ui_farmer_chat_page_typing')}
                     </div>
                   </div>
                 )}
@@ -405,14 +398,14 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xxs font-mono text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 font-medium">
                       <Mic className="w-3 h-3" />
-                      Multilingual Voice Dictation
+                      {t('ui_farmer_chat_page_multilingual_voice_dictation')}
                     </span>
                     <button
                       type="button"
                       onClick={() => setShowVoiceComposer(false)}
                       className="text-slate-500 hover:text-slate-800 dark:text-white/40 dark:hover:text-white text-xxs px-2 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-white/10"
                     >
-                      Close
+                      {t('common_close')}
                     </button>
                   </div>
                   <VoiceNoteTaker
@@ -426,42 +419,16 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 </div>
               )}
 
-              {/* Chat Input Form */}
-              <form
+              <OfficerChatComposer
+                value={farmerChatInput}
+                onType={handleTyping}
+                clear={() => setFarmerChatInput('')}
                 onSubmit={handleFarmerChatSend}
-                className="p-4 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-200/80 dark:border-white/[0.08]"
-              >
-                <div className="relative flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowVoiceComposer(prev => !prev)}
-                    className={`p-3 rounded-xl border transition-all ${
-                      showVoiceComposer
-                        ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-500/40'
-                        : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white border-slate-200 dark:border-white/[0.1] hover:border-slate-300 dark:hover:border-white/20'
-                    }`}
-                    title="Dictate voice note (multilingual STT)"
-                    aria-label="Dictate voice note"
-                  >
-                    <Mic className="w-4 h-4" />
-                  </button>
-                  <input
-                    type="text"
-                    value={farmerChatInput}
-                    onChange={e => handleTyping(e.target.value)}
-                    placeholder={t('farmer_chat_placeholder') || 'Type agronomic guidance or broadcast prompt...'}
-                    className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.1] rounded-xl px-4 py-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:ring-2 focus:ring-emerald-500/40 focus:outline-none transition-all"
-                  />
-                  <button
-                    type="submit"
-                    aria-label="Send message"
-                    disabled={!farmerChatInput.trim()}
-                    className={`p-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors disabled:opacity-40 ${btnClass}`}
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                </div>
-              </form>
+                voiceOpen={showVoiceComposer}
+                toggleVoice={() => setShowVoiceComposer(prev => !prev)}
+                photoTarget={activeConv?.farmerId ? { conversationId: activeConv.id, farmerId: activeConv.farmerId } : null}
+                onPhotoSent={id => loadFarmerMessages(id)}
+              />
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-3">

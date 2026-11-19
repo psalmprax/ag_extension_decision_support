@@ -18,9 +18,11 @@ import { FAQ } from './landing/sections/FAQ';
 import { Mission } from './landing/sections/Mission';
 import { CTA } from './landing/sections/CTA';
 import { Footer } from './landing/sections/Footer';
+import { useLanguage } from '@/lib/LanguageContext';
 
 // ─── Main component ─────────────────────────────────────────────
 export function LandingPage() {
+  const { t } = useLanguage();
   const pageRef = useRef<HTMLDivElement>(null);
 
   // Agent OS Sandbox Interactive State
@@ -126,7 +128,7 @@ export function LandingPage() {
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[9999] focus:px-4 focus:py-2.5 focus:bg-emerald-600 focus:text-white focus:font-semibold focus:text-sm focus:rounded-lg focus:shadow-2xl focus:ring-2 focus:ring-white focus:outline-none transition-all"
       >
-        Skip to main content
+        {t('skip_to_main_content')}
       </a>
 
 
@@ -157,13 +159,13 @@ export function LandingPage() {
             <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-slate-900/80 to-amber-950/30 border border-emerald-500/30 flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
                 <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 block mb-1">
-                  Institutional &amp; Government Operations
+                  {t('ui_landing_page_institutional_government_operations')}
                 </span>
                 <h3 className="text-base sm:text-lg font-bold text-white">
-                  Autonomous Multi-Agent Extension OS for Districts &amp; Cooperatives
+                  {t('ui_landing_page_autonomous_multi_agent_extension_os')}
                 </h3>
                 <p className="text-xs sm:text-sm text-white/70">
-                  Simulate regional pest intervention campaigns, automate multi-channel farmer alerts (SMS, WhatsApp, Telegram), and dispatch extension visits.
+                  {t('ui_landing_page_simulate_regional_pest_intervention')}
                 </p>
               </div>
             </div>

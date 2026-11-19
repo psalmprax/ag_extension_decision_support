@@ -9,6 +9,8 @@
     "start": "node dist/index.js",
     "backfill:embeddings": "ts-node -r tsconfig-paths/register --transpile-only src/scripts/backfillEmbeddings.ts",
     "migrate:deploy": "prisma migrate deploy",
+    "seed:realworld": "ts-node -r tsconfig-paths/register --transpile-only prisma/seed-realworld.ts",
+    "seed:e2e-system-admin": "ts-node -r tsconfig-paths/register --transpile-only prisma/seed-e2e-system-admin.ts",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "lint": "eslint \"src/**/*.ts\" --max-warnings 0",
@@ -78,6 +80,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
+    "@eslint/js": "^10.0.1",
     "@types/babel__core": "^7.20.5",
     "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.8.1",
@@ -98,10 +101,8 @@
     "@types/web-push": "^3.6.4",
     "@types/ws": "^8.5.10",
     "eslint": "^10.15.0",
-    "@eslint/js": "^10.0.1",
-    "typescript-eslint": "^8.72.2",
-    "globals": "^17.14.0",
     "eslint-plugin-sonarjs": "^4.2.2",
+    "globals": "^17.14.0",
     "husky": "^9.1.7",
     "jest": "^29.7.0",
     "lint-staged": "^16.3.2",
@@ -111,7 +112,9 @@
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsc-alias": "^1.8.16",
-    "typescript": "^5.3.3"
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.3.3",
+    "typescript-eslint": "^8.72.2"
   },
   "engines": {
     "node": ">=22.0.0"

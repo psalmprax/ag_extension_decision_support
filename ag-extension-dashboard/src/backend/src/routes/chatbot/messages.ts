@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { query } from '@/services/databaseService';
+import { draftProvenance, scheduleDraftCorrectionReview } from '@/services/chat/draftProvenance';
 import type {
   ChatMessageRow,
   AuthenticatedRequestUser,
@@ -14,6 +15,18 @@ import { assertConversationAccess, checkMessageAccess, MessageAccessError, resol
 import { getRealtimeServer } from '@/services/realtimeHub';
 import { respondIfUrgent } from '@/services/chat/threadAutoReply';
 import { deliverToFarmerChannel } from '@/services/chat/channelThread';
+import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
+import {
+  AttachmentError,
+  assertAttachableImages,
+  linkAttachments,
+  listAttachments,
+  parseAttachmentIds,
+} from '@/services/uploadAttachments';
+
+// Farmer chat, the farmer's "My officer" thread and the officer's AI chats are paid features;
+// admins and the demo are exempt (see requirePaidPlan).
+const requireChatPlan = requirePaidPlan('chat');
 
 const router = Router();
 
@@ -119,6 +132,57 @@ function scheduleUrgentCheck(conversationId: string): void {
   });
 }
 
+/** Stored as the text of a message that is only a photo. */
+const PHOTO_ONLY_CONTENT = 'Shared a photo';
+
+async function conversationFarmerId(conversationId: string): Promise<string | null> {
+  const { rows } = await query<{ farmer_id: string | null }>(
+    'SELECT farmer_id FROM chat_conversations WHERE id = $1',
+    [conversationId]
+  );
+  return rows[0]?.farmer_id ?? null;
+}
+
+/** Photos may only go into a farmer conversation, and must be the sender's uploads for that farmer. */
+async function assertMessagePhotos(attachmentIds: string[], senderId: string | undefined, conversationId: string | null | undefined): Promise<void> {
+  if (attachmentIds.length === 0) return;
+  const threadFarmerId = conversationId ? await conversationFarmerId(conversationId) : null;
+  if (!threadFarmerId || !senderId) throw new AttachmentError('Photos can only be sent in a farmer conversation');
+  await assertAttachableImages(attachmentIds, senderId, threadFarmerId);
+}
+
+async function messageWithPhotos(row: ChatMessageRow, attachmentIds: string[]) {
+  const attachments = attachmentIds.length > 0 ? (await listAttachments('chat', [row.id])).get(row.id) : undefined;
+  return { ...mapChatMessageRow(row), ...(attachments ? { attachments } : {}) };
+}
+
+/**
+ * Store a message from the signed-in user. An officer's reply that began as the
+ * copilot's AI draft is marked as such, and an edited draft goes to review.
+ */
+async function insertThreadMessage(params: {
+  conversationId: string | null | undefined;
+  senderRole: 'user' | 'officer';
+  content: string;
+  language?: string;
+  senderId?: string;
+  aiDraft?: unknown;
+}): Promise<ChatMessageRow[]> {
+  const { conversationId, senderRole, content, senderId } = params;
+  const fromDraft = senderRole === 'officer' && conversationId ? draftProvenance(params.aiDraft, content) : null;
+  const { rows } = await query<ChatMessageRow>(
+    `INSERT INTO chat_messages (conversation_id, role, content, language, metadata)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING *`,
+    [conversationId ?? null, senderRole, content, params.language ?? null,
+     fromDraft ? JSON.stringify({ aiDraft: { edited: fromDraft.edited } }) : null]
+  );
+  if (fromDraft?.edited && conversationId && senderId) {
+    scheduleDraftCorrectionReview({ conversationId, officerId: senderId, draft: fromDraft.draft, sent: content });
+  }
+  return rows;
+}
+
 const handleMessagePost = async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
@@ -130,26 +194,29 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
       farmerId?: string;
       farmer_id?: string;
       language?: string;
+      attachmentIds?: unknown;
+      /** The copilot draft this reply started from (officers only). */
+      aiDraft?: { text?: unknown };
     };
 
-    const content = (body.content || body.message || '').trim();
-    if (!content) {
+    const attachmentIds = parseAttachmentIds(body.attachmentIds);
+    const typed = (body.content || body.message || '').trim();
+    if (!typed && attachmentIds.length === 0) {
       return res.status(400).json({ success: false, error: 'content is required' });
     }
+    // A photo sent without a caption still reads sensibly in previews and on SMS.
+    const content = typed || PHOTO_ONLY_CONTENT;
 
     const targetFarmerId = body.farmerId ?? body.farmer_id;
     const conversationId = await resolveConversationIdForPost(user, targetFarmerId, body.conversation_id ?? body.conversationId, body.language);
+    await assertMessagePhotos(attachmentIds, user?.userId, conversationId);
 
     // The sender is whoever is signed in. A client can never post as the AI,
     // as an officer, or as the farmer.
     const senderRole = user?.role === 'farmer' ? 'user' : 'officer';
-
-    const { rows } = await query<ChatMessageRow>(
-      `INSERT INTO chat_messages (conversation_id, role, content, language)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
-      [conversationId ?? null, senderRole, content, body.language ?? null]
-    );
+    const rows = await insertThreadMessage({
+      conversationId, senderRole, content, language: body.language, senderId: user?.userId, aiDraft: body.aiDraft?.text,
+    });
 
     if (conversationId) {
       await query(
@@ -159,14 +226,17 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
     }
 
     const created = rows[0];
+    if (created && attachmentIds.length > 0) {
+      await linkAttachments('chat', created.id, attachmentIds);
+    }
     if (created && conversationId) {
       await fanoutNewMessage(conversationId, created);
       if (senderRole === 'user') scheduleUrgentCheck(conversationId);
       else scheduleChannelDelivery(conversationId, created.id, created.content);
     }
-    return res.status(201).json({ success: true, data: created ? mapChatMessageRow(created) : null });
+    return res.status(201).json({ success: true, data: created ? await messageWithPhotos(created, attachmentIds) : null });
   } catch (error) {
-    if (error instanceof MessageAccessError) {
+    if (error instanceof MessageAccessError || error instanceof AttachmentError) {
       return safeError(res, error.statusCode, error.message);
     }
     logger.error('Failed to persist chat message:', error);
@@ -175,13 +245,13 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
 };
 
 // A plain message between people: no AI is involved, so no AI quota is used.
-router.post('/message', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), handleMessagePost);
-router.post('/messages', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), handleMessagePost);
+router.post('/message', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, handleMessagePost);
+router.post('/messages', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, handleMessagePost);
 
 /**
  * PATCH /api/chatbot/messages/:id — Edit own message (officer/farmer) within 15m.
  */
-router.patch('/messages/:id', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.patch('/messages/:id', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user!;
     const msgId = req.params.id;
@@ -212,7 +282,7 @@ router.patch('/messages/:id', authorize(['admin', 'regional_manager', 'extension
 /**
  * DELETE /api/chatbot/messages/:id — Soft delete own message.
  */
-router.delete('/messages/:id', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.delete('/messages/:id', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user!;
     const msgId = req.params.id;
@@ -226,6 +296,8 @@ router.delete('/messages/:id', authorize(['admin', 'regional_manager', 'extensio
     const isOwner = rows[0].role === (user.role === 'farmer' ? 'user' : 'officer') || user.role === 'admin';
     if (!isOwner) return res.status(403).json({ success: false, error: 'Not owner' });
     const { rows: updated } = await query<ChatMessageRow>(`UPDATE chat_messages SET content='[deleted]', metadata=COALESCE(metadata,'{}'::jsonb) || $1::jsonb WHERE id=$2 RETURNING *`, [JSON.stringify({ deletedAt: new Date().toISOString(), deletedBy: user.userId }), msgId]);
+    // A withdrawn message takes its photos with it.
+    await query('DELETE FROM chat_message_attachments WHERE message_id = $1', [msgId]);
     if (updated[0]) await fanoutNewMessage(updated[0].conversation_id!, updated[0]);
     return res.json({ success: true });
   } catch (e) {

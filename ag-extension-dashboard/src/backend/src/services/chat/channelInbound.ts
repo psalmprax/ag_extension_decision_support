@@ -16,7 +16,7 @@ import {
     recordChannelMessage,
     type FarmerChannel,
 } from '@/services/chat/channelThread';
-import { answerFarmerInThread, loadThreadForReply, respondIfUrgent } from '@/services/chat/threadAutoReply';
+import { aiAnswersAvailable, answerFarmerInThread, loadThreadForReply, respondIfUrgent } from '@/services/chat/threadAutoReply';
 import type { TurnTakingSettings } from '@/services/chat/turnTaking';
 
 /** A new conversation, worth an acknowledgement: SMS costs money, so less often there. */
@@ -26,7 +26,9 @@ const ACK_GAP_MS: Record<FarmerChannel, number> = {
     telegram: 60 * 60 * 1000,
 };
 
-export function acknowledgementText(channel: FarmerChannel, settings: TurnTakingSettings): string {
+export function acknowledgementText(channel: FarmerChannel, settings: TurnTakingSettings, aiAvailable = true): string {
+    // Never promise an AI answer the officer's plan does not include.
+    if (!aiAvailable) return 'Thanks, your officer will reply.';
     if (channel === 'sms') {
         return 'Thanks, your officer will reply. For an AI answer now, send ASK AI and your question.';
     }
@@ -40,6 +42,8 @@ export const ALREADY_ANSWERED =
     'The AI has already answered your last question. Your officer will follow up.';
 export const SMS_LIMIT_REACHED =
     "You have used today's AI answers by SMS. Your officer will reply.";
+export const AI_NOT_ON_PLAN =
+    'AI answers are not included in your service plan. Your officer will reply.';
 
 /** Whether the farmer's previous message (before this one) is older than the channel's gap. */
 async function startsNewConversation(conversationId: string, channel: FarmerChannel): Promise<boolean> {
@@ -63,9 +67,9 @@ async function answerWithAi(conversationId: string, channel: FarmerChannel): Pro
         await noticeOnChannel(conversationId, channel, ALREADY_ANSWERED);
         return;
     }
-    if ((await answerFarmerInThread(thread, 'farmer_request')) === 'sms_limit') {
-        await noticeOnChannel(conversationId, channel, SMS_LIMIT_REACHED);
-    }
+    const outcome = await answerFarmerInThread(thread, 'farmer_request');
+    if (outcome === 'sms_limit') await noticeOnChannel(conversationId, channel, SMS_LIMIT_REACHED);
+    if (outcome === 'not_on_plan') await noticeOnChannel(conversationId, channel, AI_NOT_ON_PLAN);
 }
 
 /** Handle one message from a registered farmer (runs in the background). */
@@ -86,7 +90,10 @@ export async function handleRegisteredFarmerChannelMessage(params: {
             const thread = await loadThreadForReply(conversationId);
             // An urgent message has had its safety reply; no second notice.
             if (thread && !thread.state.answeredSinceFarmer) {
-                await noticeOnChannel(conversationId, channel, acknowledgementText(channel, thread.settings), { askAiButton: true });
+                const aiAvailable = await aiAnswersAvailable(thread);
+                await noticeOnChannel(conversationId, channel, acknowledgementText(channel, thread.settings, aiAvailable), {
+                    askAiButton: aiAvailable,
+                });
             }
         }
         return;

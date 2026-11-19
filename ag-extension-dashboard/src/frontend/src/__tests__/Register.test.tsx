@@ -28,9 +28,6 @@ vi.mock('@/components/canvas-ui/AgroEcosystemCanvasScrubber', () => ({
   AgroEcosystemCanvasScrubber: () => <div data-testid="agro-scrubber" />,
 }));
 
-vi.mock('@/components/canvasui/LiquidToggleSwitch', () => ({
-  LiquidToggleSwitch: () => <div data-testid="liquid-toggle" />,
-}));
 
 const mockedPost = apiClient.post as unknown as ReturnType<typeof vi.fn>;
 const mockedRegister = authService.register as unknown as ReturnType<typeof vi.fn>;
@@ -59,7 +56,11 @@ describe('Register Component Session Handoff', () => {
       </MemoryRouter>
     );
 
-    const form = document.querySelector('form')!;
+    const form = await waitFor(() => {
+      const rendered = document.querySelector('form');
+      if (!rendered) throw new Error('the form has not rendered yet');
+      return rendered;
+    });
     fireEvent.submit(form);
 
     await waitFor(() => {
@@ -110,7 +111,11 @@ describe('Register Component Session Handoff', () => {
       </MemoryRouter>
     );
 
-    const form = document.querySelector('form')!;
+    const form = await waitFor(() => {
+      const rendered = document.querySelector('form');
+      if (!rendered) throw new Error('the form has not rendered yet');
+      return rendered;
+    });
     fireEvent.submit(form);
 
     await waitFor(() => {

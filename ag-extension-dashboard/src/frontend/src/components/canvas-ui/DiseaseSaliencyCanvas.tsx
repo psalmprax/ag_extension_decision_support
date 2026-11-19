@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Eye, ZoomIn, Sliders, AlertCircle } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export interface LesionDetectionZone {
   id: string;
@@ -158,6 +159,7 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
   className = '',
   onSelectZone,
 }) => {
+  const { t } = useLanguage();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [showHeatmap, setShowHeatmap] = useState(true);
   const [showLoupe, setShowLoupe] = useState(true);
@@ -253,7 +255,7 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
         <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>
-            No lesion regions were provided for this image. The loupe can inspect pixels, but no saliency overlay is available.
+            {t('ui_disease_saliency_canvas_no_lesion_regions_were_provided_for')}
           </span>
         </div>
       )}
@@ -269,7 +271,7 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
               }`}
             >
               <Eye className="w-3.5 h-3.5" />
-              <span>Thermal Saliency</span>
+              <span>{t('ui_disease_saliency_canvas_thermal_saliency')}</span>
             </button>
           )}
 
@@ -282,14 +284,14 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
             }`}
           >
             <ZoomIn className="w-3.5 h-3.5" />
-            <span>2.5x Loupe Lens</span>
+            <span>{t('ui_disease_saliency_canvas_2_5x_loupe_lens')}</span>
           </button>
         </div>
 
         {hasLiveDetections && (
           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
             <Sliders className="w-3.5 h-3.5" />
-            <span className="text-xxs uppercase tracking-wider">Heatmap Alpha:</span>
+            <span className="text-xxs uppercase tracking-wider">{t('ui_disease_saliency_canvas_heatmap_alpha')}</span>
             <input
               type="range"
               min={0.2}
@@ -318,7 +320,7 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
               <span>{selectedZone.label}</span>
             </div>
             <div className="flex items-center justify-between text-xxs font-mono text-gray-300">
-              <span>Confidence: {(selectedZone.confidence * 100).toFixed(1)}%</span>
+              <span>{t('ui_disease_saliency_canvas_confidence')} {(selectedZone.confidence * 100).toFixed(1)}%</span>
               <span className="uppercase text-amber-400 font-bold">{selectedZone.severity}</span>
             </div>
           </div>

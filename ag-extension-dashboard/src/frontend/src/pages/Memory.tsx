@@ -153,14 +153,14 @@ function Memory() {
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Agent Memory & Knowledge Engine</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">{t('ui_memory_agent_memory_knowledge_engine')}</h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20">
                   <Radio className="w-2.5 h-2.5 text-indigo-600 dark:text-indigo-400" />
-                  RAG Vector Store Synced
+                  {t('ui_memory_rag_vector_store_synced')}
                 </span>
               </div>
               <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-                Dynamic conversational memory, regional skill cards, and semantic recall embeddings.
+                {t('ui_memory_dynamic_conversational_memory_region')}
               </p>
             </div>
           </div>
@@ -169,15 +169,15 @@ function Memory() {
             {/* KPI Telemetry Chips */}
             <div className="grid grid-cols-3 sm:flex items-center gap-2 w-full sm:w-auto">
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xs text-slate-500 dark:text-white/40 block">Vectors</span>
+                <span className="text-xs text-slate-500 dark:text-white/40 block">{t('ui_memory_vectors')}</span>
                 <strong className="text-sm font-semibold text-slate-900 dark:text-white font-mono tabular-nums">{memories.length}</strong>
               </div>
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xs text-slate-500 dark:text-white/40 block">Categories</span>
+                <span className="text-xs text-slate-500 dark:text-white/40 block">{t('email_workflows_categories')}</span>
                 <strong className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 font-mono tabular-nums">{categories.length}</strong>
               </div>
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xs text-slate-500 dark:text-white/40 block">Mean Score</span>
+                <span className="text-xs text-slate-500 dark:text-white/40 block">{t('ui_memory_mean_score')}</span>
                 <strong className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">{avgImportanceScore.toFixed(0)}%</strong>
               </div>
             </div>
@@ -192,7 +192,7 @@ function Memory() {
                 className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-xl border border-white/10 transition-colors flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
-                <span>Add Memory</span>
+                <span>{t('ui_memory_add_memory')}</span>
               </button>
               <button
                 onClick={() => reload()}
@@ -224,7 +224,7 @@ function Memory() {
               onChange={e => setSelectedCategory(e.target.value)}
               className="w-full appearance-none pl-3.5 pr-9 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-purple-400 outline-none"
             >
-              <option value="all">All Vector Categories ({memories.length})</option>
+              <option value="all">{t('ui_memory_all_vector_categories', { length: memories.length })}</option>
               {categories.map(c => (
                 <option key={c} value={c}>
                   {c}
@@ -241,10 +241,10 @@ function Memory() {
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
           <div className="flex items-center gap-2">
             <Database className="w-4 h-4 text-indigo-500" />
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Dynamic RAG Semantic Mesh</h3>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{t('ui_memory_dynamic_rag_semantic_mesh')}</h3>
           </div>
           <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20">
-            Real-Time Impulse Graph
+            {t('ui_memory_real_time_impulse_graph')}
           </span>
         </div>
         <RagKnowledgeGraphCanvas
@@ -273,9 +273,9 @@ function Memory() {
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
           <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Layers className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-            Indexed Memories & Knowledge Vectors ({filteredMemories.length})
+            {t('ui_memory_indexed_memories_knowledge_vectors')}{filteredMemories.length})
           </h3>
-          <span className="text-xs text-slate-500 dark:text-white/40 font-mono">Total Accesses: {totalAccesses}</span>
+          <span className="text-xs text-slate-500 dark:text-white/40 font-mono">{t('ui_memory_total_accesses', { totalAccesses })}</span>
         </div>
 
         {filteredMemories.length === 0 ? (
@@ -284,7 +284,7 @@ function Memory() {
               <Brain className="w-8 h-8 opacity-70" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">No Memory Vectors Found</h3>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">{t('ui_memory_no_memory_vectors_found')}</h3>
               <p className="text-xs text-slate-600 dark:text-white/50 max-w-sm mx-auto">
                 {searchQuery || selectedCategory !== 'all'
                   ? 'No vector entries match the current search query or category filter.'
@@ -300,7 +300,7 @@ function Memory() {
               className="px-5 py-2.5 bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              <span>Add First Knowledge Vector</span>
+              <span>{t('ui_memory_add_first_knowledge_vector')}</span>
             </button>
           </div>
         ) : (
@@ -348,8 +348,8 @@ function Memory() {
                 {/* Importance Bar & Telemetry */}
                 <div className="space-y-1.5 pt-1">
                   <div className="flex justify-between text-xs font-mono tabular-nums text-slate-500 dark:text-white/40">
-                    <span>Importance: {((memory.importance || 0.5) * 100).toFixed(0)}%</span>
-                    <span>Accesses: {memory.accessCount || 0}</span>
+                    <span>{t('ui_memory_importance')} {((memory.importance || 0.5) * 100).toFixed(0)}%</span>
+                    <span>{t('ui_memory_accesses')} {memory.accessCount || 0}</span>
                     <span>{new Date(memory.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div className="w-full bg-slate-200 dark:bg-white/5 rounded-full h-1.5 overflow-hidden">
@@ -370,7 +370,7 @@ function Memory() {
         <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl space-y-4">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Layers className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            Category Vector Distribution & Cluster Strength
+            {t('ui_memory_category_vector_distribution_cluster')}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {memorySummary.map(category => (
@@ -381,7 +381,7 @@ function Memory() {
                 <div>
                   <h4 className="font-medium text-xs text-slate-900 dark:text-white">{category.category}</h4>
                   <p className="text-xs font-mono tabular-nums text-slate-500 dark:text-white/40 mt-0.5">
-                    Mean recall: {(category.avgImportance * 100).toFixed(0)}%
+                    {t('ui_memory_mean_recall')} {(category.avgImportance * 100).toFixed(0)}%
                   </p>
                 </div>
                 <span className="text-lg font-mono font-bold text-purple-600 dark:text-purple-400">{category.count}</span>
@@ -420,7 +420,7 @@ function Memory() {
                     <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                       {editingMemory ? 'Edit Knowledge Vector' : 'Inject New Knowledge Vector'}
                     </h2>
-                    <p className="text-xs text-slate-500 dark:text-white/50">Store regional agronomy facts in agent RAG</p>
+                    <p className="text-xs text-slate-500 dark:text-white/50">{t('ui_memory_store_regional_agronomy_facts_in_age')}</p>
                   </div>
                 </div>
                 <button
@@ -436,7 +436,7 @@ function Memory() {
 
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Category *</label>
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">{t('ui_memory_category')}</label>
                   <input
                     type="text"
                     value={newMemory.category}
@@ -447,7 +447,7 @@ function Memory() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Vector Key *</label>
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">{t('ui_memory_vector_key')}</label>
                   <input
                     type="text"
                     value={newMemory.key}
@@ -458,7 +458,7 @@ function Memory() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Knowledge Value / Fact *</label>
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">{t('ui_memory_knowledge_value_fact')}</label>
                   <textarea
                     rows={4}
                     value={newMemory.value}
@@ -470,7 +470,7 @@ function Memory() {
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
-                    <span>Recall Importance Weight</span>
+                    <span>{t('ui_memory_recall_importance_weight')}</span>
                     <span className="text-emerald-600 dark:text-emerald-400 font-mono font-medium">{(newMemory.importance * 100).toFixed(0)}%</span>
                   </div>
                   <input
@@ -493,7 +493,7 @@ function Memory() {
                     }}
                     className="px-4 py-2 text-xs font-medium text-slate-500 dark:text-white/60 hover:text-slate-800 dark:hover:text-white transition-colors"
                   >
-                    Cancel
+                    {t('common_cancel')}
                   </button>
                   <button
                     type="button"

@@ -2,8 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { stagger, fadeUp } from '../variants';
 import { audiences } from '../data';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export function ROI() {
+  const { t } = useLanguage();
   return (
         <section id="roi" className="relative py-28 overflow-hidden scroll-mt-10">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/[0.02] to-transparent pointer-events-none" />
@@ -19,22 +21,22 @@ export function ROI() {
                 variants={fadeUp}
                 className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400 mb-3"
               >
-                Community &amp; Partners
+                {t('ui_roi_community_partners')}
               </motion.div>
               <motion.h2
                 variants={fadeUp}
                 className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-bold tracking-tight text-white mb-3"
               >
-                Supporting every tier of{' '}
+                {t('ui_roi_supporting_every_tier_of')}{' '}
                 <span className="bg-gradient-to-r from-emerald-300 to-amber-300 bg-clip-text text-transparent">
-                  food production
+                  {t('ui_roi_food_production')}
                 </span>
               </motion.h2>
               <motion.p
                 variants={fadeUp}
                 className="text-sm sm:text-base text-white/70 max-w-xl mx-auto font-normal leading-relaxed"
               >
-                From smallholder plots to extension networks, our tools can help officers organize field information and consult relevant evidence.
+                {t('ui_roi_from_smallholder_plots_to_extension')}
               </motion.p>
             </motion.div>
 

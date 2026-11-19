@@ -112,7 +112,7 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
                 className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xxs font-mono text-slate-300"
               >
                 {ch.channel}: <span className="text-emerald-400">{ch.sent}</span>
-                {ch.failed > 0 && <> / <span className="text-rose-400">{ch.failed} failed</span></>}
+                {ch.failed > 0 && <> / <span className="text-rose-400">{t('ui_outreach_delivery_status_card_failed', { failed: ch.failed })}</span></>}
               </span>
             ))}
           </div>
@@ -122,7 +122,7 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5 text-xxs font-bold text-rose-400 uppercase tracking-wider">
               <AlertTriangle className="w-3 h-3" />
-              Recent Failures
+              {t('ui_outreach_delivery_status_card_recent_failures')}
             </div>
             {stats.recentFailures.slice(0, 5).map(f => (
               <div key={f.id} className="p-2 rounded-lg bg-slate-900/60 border border-slate-800 text-xxs text-slate-300">
@@ -132,7 +132,7 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
                 </div>
                 <div className="mt-1 flex items-center justify-between gap-2">
                   <span className="text-slate-400">
-                    {f.lastError || 'Unknown error'} <span className="text-slate-500">(attempt {f.attempts})</span>
+                    {f.lastError || 'Unknown error'} <span className="text-slate-500">{t('ui_outreach_delivery_status_card_attempt', { attempts: f.attempts })}</span>
                   </span>
                   <button
                     type="button"
@@ -142,7 +142,7 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
                     title="Requeue this message for delivery"
                   >
                     <RotateCcw className={`w-3 h-3 ${retryingId === f.id ? 'animate-spin' : ''}`} />
-                    Retry
+                    {t('users_access_plans_retry')}
                   </button>
                 </div>
               </div>

@@ -77,10 +77,10 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
                   </div>
                   <div>
                     <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                      Bulk Update Farmers
+                      {t('ui_bulk_update_modal_bulk_update_farmers')}
                     </h3>
                     <p className="text-xs font-medium text-amber-600 dark:text-amber-400 font-mono tabular-nums">
-                      Updating {selectedCount} farmers
+                      {t('ui_bulk_update_modal_updating_farmers', { selectedCount })}
                     </p>
                   </div>
                 </div>
@@ -97,8 +97,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
               <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 flex gap-3">
                 <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
                 <p className="text-xs text-blue-700 dark:text-blue-300">
-                  Selected fields will be updated for <strong>all</strong> {selectedCount} selected
-                  farmers. Leave fields empty to keep their current values.
+                  {t('ui_bulk_update_modal_selected_fields_will_be_updated_for')} <strong>{t('ui_bulk_update_modal_all')}</strong> {selectedCount} {t('ui_bulk_update_modal_selected_farmers_leave_fields_empty')}
                 </p>
               </div>
 
@@ -106,21 +105,21 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
               <div className="space-y-2">
                 <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
                   <MapPin className="w-3.5 h-3.5" />
-                  Region
+                  {t('common_region')}
                 </label>
                 <select
                   value={updates.region}
                   onChange={e => setUpdates(prev => ({ ...prev, region: e.target.value }))}
                   className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white"
                 >
-                  <option value="">Keep existing region...</option>
-                  <option value="Central">Central</option>
-                  <option value="Rift Valley">Rift Valley</option>
-                  <option value="Eastern">Eastern</option>
-                  <option value="Nyanza">Nyanza</option>
-                  <option value="Western">Western</option>
-                  <option value="Coast">Coast</option>
-                  <option value="North Eastern">North Eastern</option>
+                  <option value="">{t('ui_bulk_update_modal_keep_existing_region')}</option>
+                  <option value="Central">{t('ui_bulk_update_modal_central')}</option>
+                  <option value="Rift Valley">{t('ui_bulk_update_modal_rift_valley')}</option>
+                  <option value="Eastern">{t('ui_bulk_update_modal_eastern')}</option>
+                  <option value="Nyanza">{t('ui_bulk_update_modal_nyanza')}</option>
+                  <option value="Western">{t('ui_bulk_update_modal_western')}</option>
+                  <option value="Coast">{t('ui_bulk_update_modal_coast')}</option>
+                  <option value="North Eastern">{t('ui_bulk_update_modal_north_eastern')}</option>
                 </select>
               </div>
 
@@ -128,7 +127,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
               <div className="space-y-2">
                 <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
                   <Languages className="w-3.5 h-3.5" />
-                  Language Preference
+                  {t('ui_bulk_update_modal_language_preference')}
                 </label>
                 <select
                   value={updates.languagePreference}
@@ -137,10 +136,10 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
                   }
                   className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white"
                 >
-                  <option value="">Keep existing language...</option>
-                  <option value="en">English</option>
-                  <option value="sw">Swahili</option>
-                  <option value="fr">French</option>
+                  <option value="">{t('ui_bulk_update_modal_keep_existing_language')}</option>
+                  <option value="en">{t('ui_bulk_update_modal_english')}</option>
+                  <option value="sw">{t('ui_bulk_update_modal_swahili')}</option>
+                  <option value="fr">{t('ui_bulk_update_modal_french')}</option>
                 </select>
               </div>
 
@@ -148,7 +147,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
               <div className="space-y-2">
                 <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
                   <Sprout className="w-3.5 h-3.5" />
-                  Crop Types (Overrides existing)
+                  {t('ui_bulk_update_modal_crop_types_overrides_existing')}
                 </label>
                 <form onSubmit={handleAddCrop} className="flex gap-2">
                   <input
@@ -162,7 +161,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
                     type="submit"
                     className="px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-medium hover:bg-gray-200 transition-all"
                   >
-                    Add
+                    {t('common_add')}
                   </button>
                 </form>
                 <div className="flex flex-wrap gap-2 mt-2">

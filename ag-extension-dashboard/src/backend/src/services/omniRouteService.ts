@@ -60,7 +60,7 @@ export class OmniRouteService {
       const remaining = [
         ...freeModels.slice(2),
         ...paidModels,
-      ].sort((a, b) => b.score - a.score);
+      ].toSorted((a, b) => b.score - a.score);
       this.secondaryCandidates = remaining.slice(0, 2);
 
       logger.info(`[OmniRoute] Free-model priority switching initialized`);
@@ -270,7 +270,7 @@ export class OmniRouteService {
       this.initializeDynamicSwitching(candidates);
     }
 
-    const sorted = [...candidates].sort((a, b) => b.score - a.score);
+    const sorted = candidates.toSorted((a, b) => b.score - a.score);
     const spend = { maxPaidAttempts: Math.max(0, Number(process.env.OMNIROUTE_MAX_PAID_ATTEMPTS ?? 2) || 0), paidAttempts: 0 };
 
     // Try dynamic primary first

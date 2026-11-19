@@ -15,6 +15,7 @@ import {
 import { ChartTooltip } from '@/components/charts/ChartTooltip';
 import { chartTick } from '@/components/charts/chartConfig';
 import { CH_COLORS } from '@/lib/colors';
+import { useLanguage } from '@/lib/LanguageContext';
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -111,17 +112,18 @@ const RetailSnapshotSection: React.FC<{ rows: PriceChartRow[]; country?: string 
   periodDate,
   source,
 }) => {
+  const { t } = useLanguage();
   if (rows.length === 0) return null;
   const sourceTag = source === 'wfp' ? 'WFP' : 'FEWS NET';
   return (
     <div className="pt-2 space-y-2">
       <div>
         <p className="text-xs font-medium text-slate-900 dark:text-white">
-          Retail Snapshot{country ? ` — ${country}` : ''} ({sourceTag})
+          {t('ui_market_price_trend_card_retail_snapshot')}{country ? ` — ${country}` : ''} ({sourceTag})
         </p>
         <p className="text-xxs text-slate-500 dark:text-white/40 mt-0.5">
-          Per-kg retail medians across markets
-          {periodDate ? ` — ${periodDate.slice(0, 7)}` : ''} — monthly, not comparable with per-bag bars above.
+          {t('ui_market_price_trend_card_per_kg_retail_medians_across_markets')}
+          {periodDate ? ` — ${periodDate.slice(0, 7)}` : ''} {t('ui_market_price_trend_card_monthly_not_comparable_with_per_bag')}
         </p>
       </div>
       <PriceSummaryGrid rows={rows} />
@@ -157,6 +159,7 @@ const PriceSummaryGrid: React.FC<{ rows: PriceChartRow[] }> = ({ rows }) => (
 );
 
 const PriceHistorySection: React.FC = () => {
+  const { t } = useLanguage();
   const { data: historyData, isLoading } = useQuery<PriceHistorySeries[]>({
     queryKey: ['analytics-price-history'],
     queryFn: () => fetchPriceHistory(30),
@@ -174,9 +177,9 @@ const PriceHistorySection: React.FC = () => {
           <History className="w-3.5 h-3.5" />
         </div>
         <div>
-          <h4 className="text-sm font-medium text-slate-900 dark:text-white">30-day price history</h4>
+          <h4 className="text-sm font-medium text-slate-900 dark:text-white">{t('ui_market_price_trend_card_30_day_price_history')}</h4>
           <p className="text-xxs text-slate-500 dark:text-white/40">
-            Local-currency snapshots — daily movement reflects FX conversion of FAOSTAT/GIEWS baselines.
+            {t('ui_market_price_trend_card_local_currency_snapshots_of_publishe')}
           </p>
         </div>
       </div>
@@ -188,9 +191,9 @@ const PriceHistorySection: React.FC = () => {
       ) : !hasHistory ? (
         <div className="flex flex-col items-center justify-center py-10 text-center">
           <History className="w-8 h-8 text-slate-300 dark:text-white/20 mb-2" />
-          <p className="text-xs font-medium text-slate-400">History building</p>
+          <p className="text-xs font-medium text-slate-400">{t('ui_market_price_trend_card_history_building')}</p>
           <p className="text-xxs text-slate-400 dark:text-white/30 mt-1">
-            Snapshots appear after the first few daily fetches (live data only — estimates are excluded).
+            {t('ui_market_price_trend_card_snapshots_appear_after_the_first_few')}
           </p>
         </div>
       ) : (
@@ -236,9 +239,7 @@ const PriceHistorySection: React.FC = () => {
                   style={{ backgroundColor: HISTORY_COLORS[i % HISTORY_COLORS.length] }}
                 />
                 {s.crop}
-                {s.dataStatus === 'live' && (
-                  <span className="text-emerald-700 dark:text-emerald-400 font-medium font-mono text-xxs">· live</span>
-                )}
+                <span className="text-slate-500 dark:text-white/40 font-mono text-xxs">{s.observedPeriod ? `· observed ${s.observedPeriod}` : '· period unknown'}</span>
               </span>
             ))}
           </div>
@@ -251,6 +252,7 @@ const PriceHistorySection: React.FC = () => {
 // ── Component ────────────────────────────────────────────────────────
 
 export const MarketPriceTrendCard: React.FC = () => {
+  const { t } = useLanguage();
   const { data, isLoading, isError } = useQuery<MarketPricesResponse>({
     queryKey: ['analytics-market-prices'],
     queryFn: fetchMarketPricesWithMetadata,
@@ -305,11 +307,11 @@ export const MarketPriceTrendCard: React.FC = () => {
               <Truck className="w-4 h-4" />
             </div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Commodity market prices
+              {t('ui_market_price_trend_card_commodity_market_prices')}
             </h3>
           </div>
           <p className="text-xs text-slate-500 dark:text-white/50">
-            Producer price benchmarks per crop from FAOSTAT and FAO GIEWS. Estimates are labelled as such.
+            {t('ui_market_price_trend_card_producer_price_benchmarks_per_crop_f')}
           </p>
         </div>
 
@@ -342,14 +344,14 @@ export const MarketPriceTrendCard: React.FC = () => {
       ) : isError ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Database className="w-10 h-10 text-slate-300 dark:text-white/20 mb-3" />
-          <p className="text-sm font-medium text-slate-400">Market data unavailable</p>
-          <p className="text-xs text-slate-400 dark:text-white/30 mt-1">FAOSTAT, GIEWS, and USDA APIs are unreachable. Retrying automatically.</p>
+          <p className="text-sm font-medium text-slate-400">{t('ui_market_price_trend_card_market_data_unavailable')}</p>
+          <p className="text-xs text-slate-400 dark:text-white/30 mt-1">{t('ui_market_price_trend_card_faostat_giews_and_usda_apis_are_unre')}</p>
         </div>
       ) : chartData.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Truck className="w-10 h-10 text-slate-300 dark:text-white/20 mb-3" />
-          <p className="text-sm font-medium text-slate-400">No price data yet</p>
-          <p className="text-xs text-slate-400 dark:text-white/30 mt-1">Market data will appear once FAOSTAT producer prices are available.</p>
+          <p className="text-sm font-medium text-slate-400">{t('ui_market_price_trend_card_no_price_data_yet')}</p>
+          <p className="text-xs text-slate-400 dark:text-white/30 mt-1">{t('ui_market_price_trend_card_market_data_will_appear_once_faostat')}</p>
         </div>
       ) : (
         <>
@@ -403,7 +405,7 @@ export const MarketPriceTrendCard: React.FC = () => {
             <div className="flex items-center justify-between pt-2 text-xxs text-slate-400 dark:text-white/30">
               <span className="flex items-center gap-1.5">
                 <TrendingUp className="w-3 h-3" />
-                Last updated
+                {t('ui_market_price_trend_card_last_updated')}
               </span>
               <span className="font-mono">{new Date(metadata.fetchedAt).toLocaleString()}</span>
             </div>

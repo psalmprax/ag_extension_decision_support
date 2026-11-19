@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { useFieldVoiceRecorder } from '@/hooks/useFieldVoiceRecorder';
 import { useAppStore } from '@/store/useAppStore';
 import { AudioReaderButton } from './AudioReaderButton';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export interface VoiceNoteTakerProps {
   /** Callback fired when transcription is ready or saved */
@@ -48,6 +49,7 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
   compact = false,
   className = '',
 }) => {
+  const { t } = useLanguage();
   const storeLanguage = useAppStore(s => s.preferredAudioLanguage);
   const setStoreLanguage = useAppStore(s => s.setPreferredAudioLanguage);
 
@@ -118,10 +120,10 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
           </div>
           <div>
             <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-none">
-              Audio Note Taker
+              {t('ui_voice_note_taker_audio_note_taker')}
             </h4>
             <p className="text-3xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Speak in your language for automatic transcription
+              {t('ui_voice_note_taker_speak_in_your_language_for_automatic')}
             </p>
           </div>
         </div>
@@ -148,7 +150,7 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
                 className="absolute right-0 mt-1 w-44 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl z-50 py-1 max-h-56 overflow-y-auto"
               >
                 <div className="px-2.5 py-1 text-xs font-medium text-slate-400">
-                  Select Spoken Language
+                  {t('ui_voice_note_taker_select_spoken_language')}
                 </div>
                 {SUPPORTED_VOICE_LANGUAGES.map(lang => (
                   <button
@@ -227,7 +229,7 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
               <FileText className="w-3.5 h-3.5" />
-              <span>Transcribed Note ({activeLangObj.name})</span>
+              <span>{t('ui_voice_note_taker_transcribed_note', { name: activeLangObj.name })}</span>
             </div>
 
             {/* Read aloud the transcribed note */}
@@ -263,7 +265,7 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition-all active:scale-95"
               >
                 <Check className="w-3.5 h-3.5" />
-                <span>Save Voice Note</span>
+                <span>{t('ui_voice_note_taker_save_voice_note')}</span>
               </button>
             </div>
           )}

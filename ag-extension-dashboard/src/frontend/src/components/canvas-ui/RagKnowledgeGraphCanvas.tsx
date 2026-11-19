@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Search, Network } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export interface GraphNode {
   id: string;
@@ -235,6 +236,7 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
   onNodeSelect,
   customNodes,
 }) => {
+  const { t } = useLanguage();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [nodes, setNodes] = useState<GraphNode[]>([]);
   const [links] = useState<GraphLink[]>(DEFAULT_LINKS);
@@ -390,10 +392,9 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center px-6 space-y-2">
               <Network className="w-8 h-8 mx-auto text-slate-500" />
-              <p className="text-sm font-semibold text-slate-300">No indexed knowledge yet</p>
+              <p className="text-sm font-semibold text-slate-300">{t('ui_rag_knowledge_graph_canvas_no_indexed_knowledge_yet')}</p>
               <p className="text-xs text-slate-500 max-w-md">
-                The knowledge graph visualizes real RAG-memory entries. When indexed articles,
-                soils, or farmer records exist, they'll appear here — fabricated sample data is never shown.
+                {t('ui_rag_knowledge_graph_canvas_the_knowledge_graph_visualizes_real')}
               </p>
             </div>
           </div>
@@ -419,7 +420,7 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
               {(selectedNode || hoveredNode)?.snippet}
             </p>
             <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-xxs font-mono text-gray-400">
-              <span>Vector Similarity:</span>
+              <span>{t('ui_rag_knowledge_graph_canvas_vector_similarity')}</span>
               <span className="text-emerald-400 font-bold">
                 {(((selectedNode || hoveredNode)?.score || 0.85) * 100).toFixed(1)}%
               </span>
@@ -428,7 +429,7 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
         )}
 
         <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-md border border-white/10 text-xxs font-mono text-gray-400 pointer-events-none">
-          Physics Force Directed • Drag nodes to reposition
+          {t('ui_rag_knowledge_graph_canvas_physics_force_directed_drag_nodes_to')}
         </div>
       </div>
     </div>

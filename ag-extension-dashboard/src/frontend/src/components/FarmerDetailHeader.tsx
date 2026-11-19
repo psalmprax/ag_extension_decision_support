@@ -16,6 +16,7 @@ import {
   MoreVertical,
   Radio,
 } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface FarmerDetailHeaderProps {
   farmer: Farmer;
@@ -46,6 +47,7 @@ export const FarmerDetailHeader: React.FC<FarmerDetailHeaderProps> = ({
   radiusClass: _radiusClass,
   isCyber: _isCyber,
 }) => {
+  const { t } = useLanguage();
   // Deleting a farmer is limited to admins and regional managers by the API.
   const canDelete = ['admin', 'regional_manager'].includes(useAppStore(s => s.user?.role) ?? '');
   return (
@@ -115,7 +117,7 @@ export const FarmerDetailHeader: React.FC<FarmerDetailHeaderProps> = ({
             <div className="flex items-center gap-2 mb-1">
               <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-[3px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-mono font-medium">
                 <Radio className="w-2.5 h-2.5" />
-                Smallholder Profile
+                {t('ui_farmer_detail_header_smallholder_profile')}
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-tight leading-tight truncate">

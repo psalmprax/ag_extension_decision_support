@@ -78,7 +78,7 @@ export const CyberDashboard: React.FC<CyberDashboardProps> = ({ farmerStats }) =
         </div>
         <div className="text-right">
           <p className="text-xxs font-medium text-slate-400">
-            System Status: {farmerStats ? 'Telemetry available' : 'Awaiting telemetry'}
+            {t('ui_cyber_dashboard_system_status')} {farmerStats ? 'Telemetry available' : 'Awaiting telemetry'}
           </p>
           <p className="text-sm font-medium font-mono tabular-nums text-white mt-1">
             {new Date().toLocaleDateString('en-US', {

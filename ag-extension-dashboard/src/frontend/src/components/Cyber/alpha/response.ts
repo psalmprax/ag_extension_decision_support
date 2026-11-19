@@ -110,7 +110,5 @@ export const WELCOME_MESSAGE_ID = 'welcome-msg';
 
 /** Text of the latest real advisory, or undefined when only the greeting is present. */
 export function latestAdvisoryText(messages: ChatMessageItem[]): string | undefined {
-  return [...messages]
-    .reverse()
-    .find(m => m.sender === 'assistant' && m.id !== WELCOME_MESSAGE_ID)?.text;
+  return messages.findLast(m => m.sender === 'assistant' && m.id !== WELCOME_MESSAGE_ID)?.text;
 }

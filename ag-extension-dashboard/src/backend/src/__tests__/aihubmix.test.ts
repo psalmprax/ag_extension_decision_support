@@ -167,6 +167,54 @@ describe('AIHubMix Integration (REST Account API, MCP Tool & Model Provider)', (
       expect(mockedAxios.post).toHaveBeenCalledTimes(1);
     });
 
+    describe('image analysis model', () => {
+      const savedProvider = process.env.AI_PRIMARY_PROVIDER;
+      const savedVision = process.env.AI_VISION_MODEL;
+      beforeEach(() => {
+        process.env.AI_PRIMARY_PROVIDER = 'aihubmix';
+        delete process.env.AI_VISION_MODEL;
+      });
+      afterAll(() => {
+        if (savedProvider === undefined) delete process.env.AI_PRIMARY_PROVIDER;
+        else process.env.AI_PRIMARY_PROVIDER = savedProvider;
+        if (savedVision === undefined) delete process.env.AI_VISION_MODEL;
+        else process.env.AI_VISION_MODEL = savedVision;
+      });
+      const postedModels = () => mockedAxios.post.mock.calls.map(call => (call[1] as { model: string }).model);
+
+      it('uses the vision model, not the general chat model, for images', async () => {
+        mockedAxios.post.mockResolvedValueOnce({ data: { choices: [{ message: { content: 'Leaf rust' } }] } });
+        const result = await new AIHubMixProvider('sk-test-key').analyzeImage('YWJj');
+        expect(postedModels()).toEqual(['gemini-3.5-flash']);
+        expect(result.model).toBe('gemini-3.5-flash');
+      });
+
+      it('honours AI_VISION_MODEL and an explicit per-call model', async () => {
+        process.env.AI_VISION_MODEL = 'gemini-3.8-flash';
+        mockedAxios.post.mockResolvedValue({ data: { choices: [{ message: { content: 'ok' } }] } });
+        const provider = new AIHubMixProvider('sk-test-key');
+        await provider.analyzeImage('YWJj');
+        await provider.analyzeImage('YWJj', undefined, { model: 'custom-model' });
+        expect(postedModels()).toEqual(['gemini-3.8-flash', 'custom-model']);
+        mockedAxios.post.mockReset();
+      });
+
+      it('retries with the general model when AIHubMix rejects the vision model', async () => {
+        mockedAxios.post
+          .mockRejectedValueOnce({ response: { status: 400, data: { error: 'model not found' } } })
+          .mockResolvedValueOnce({ data: { choices: [{ message: { content: 'Leaf rust' } }] } });
+        const result = await new AIHubMixProvider('sk-test-key').analyzeImage('YWJj');
+        expect(postedModels()).toEqual(['gemini-3.5-flash', 'gemini-2.5-flash']);
+        expect(result.model).toBe('gemini-2.5-flash');
+      });
+
+      it('does not retry other failures such as an exhausted quota', async () => {
+        mockedAxios.post.mockRejectedValueOnce({ response: { status: 402, data: { error: 'insufficient_user_quota' } } });
+        await expect(new AIHubMixProvider('sk-test-key').analyzeImage('YWJj')).rejects.toBeDefined();
+        expect(postedModels()).toEqual(['gemini-3.5-flash']);
+      });
+    });
+
     it.each(['YWJj', 'data:image/png;base64,YWJj', Buffer.from('abc')])('preserves image encoding for %s', async image => {
       mockedAxios.post.mockResolvedValueOnce({ data: { choices: [{ message: { content: 'Healthy leaf' } }] } });
       const provider = new AIHubMixProvider('sk-test-key');
@@ -345,13 +393,14 @@ describe('AIHubMix Integration (REST Account API, MCP Tool & Model Provider)', (
       );
 
       expect(result.analysis).toContain('Late Blight');
-      expect(result.model).toBe('gemini-2.5-flash');
+      // Images use the vision model (gemini-3.5-flash by default), not AI_PRIMARY_MODEL.
+      expect(result.model).toBe('gemini-3.5-flash');
       expect(result.provider).toBe('AIMixHub');
       expect(result.usage?.totalTokens).toBe(195);
       expect(mockedAxios.post).toHaveBeenCalledWith(
         'https://aihubmix.com/v1/chat/completions',
         expect.objectContaining({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.5-flash',
           messages: [
             {
               role: 'user',

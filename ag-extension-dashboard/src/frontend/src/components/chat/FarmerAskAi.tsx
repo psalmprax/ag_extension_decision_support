@@ -4,6 +4,7 @@ import { isAxiosError } from 'axios';
 import { Bot, Loader2 } from 'lucide-react';
 import { askAiInThread, fetchTurnTakingSettings, sendThreadMessage } from '@/api/chatbotService';
 import { officerReplyExpectation } from '@/lib/turnTakingText';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface FarmerAskAiProps {
   /** The farmer's thread with their officer; created on first use. */
@@ -29,6 +30,7 @@ function errorText(error: unknown): string {
  * message now, labelled as AI, and their officer can see it.
  */
 export const FarmerAskAi: React.FC<FarmerAskAiProps> = ({ ensureConversation, input, clearInput, language, reload }) => {
+  const { t } = useLanguage();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { data } = useQuery({ queryKey: ['chat-turn-taking'], queryFn: fetchTurnTakingSettings, staleTime: 10 * 60_000 });
@@ -65,7 +67,7 @@ export const FarmerAskAi: React.FC<FarmerAskAiProps> = ({ ensureConversation, in
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-sky-500/40 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-200 hover:bg-sky-100 dark:hover:bg-sky-900/40 disabled:opacity-50 shrink-0"
       >
         {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Bot className="w-3.5 h-3.5" aria-hidden="true" />}
-        Ask AI
+        {t('ai_ask_button')}
       </button>
     </div>
   );
