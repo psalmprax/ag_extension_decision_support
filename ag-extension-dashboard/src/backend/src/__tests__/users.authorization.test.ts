@@ -72,6 +72,10 @@ beforeEach(() => {
     if (sql.includes('SELECT is_system_admin FROM users')) {
       return { rows: [{ is_system_admin: SYSTEM_ADMINS.has(String(params[0])) }], rowCount: 1 };
     }
+    // A regional manager's directory is scoped to the region on their own account.
+    if (sql.includes('SELECT region FROM users WHERE id = $1')) {
+      return params[0] === 'manager' ? { rows: [{ region: 'Rift Valley' }], rowCount: 1 } : { rows: [], rowCount: 0 };
+    }
     // Guard row loaded before every update or deactivation of a user.
     if (sql.includes('SELECT id, role, is_active, is_system_admin FROM users')) {
       return params[0] === 'target'
@@ -173,11 +177,12 @@ describe('demo accounts in the staff directory', () => {
     expect(mockQuery.mock.calls.find(([sql]) => String(sql).includes('AS is_demo'))?.[1]).toEqual([true]);
   });
 
-  it('hides demo accounts from regional managers', async () => {
+  it('hides demo accounts from regional managers and scopes them to their own region', async () => {
     const res = await request(app).get('/users').set('Authorization', `Bearer ${token('manager', 'regional_manager')}`);
     expect(res.status).toBe(200);
-    expect(sqlMatching('AS is_demo')).toContain('WHERE COALESCE(is_demo, false) = $1');
-    expect(mockQuery.mock.calls.find(([sql]) => String(sql).includes('AS is_demo'))?.[1]).toEqual([false]);
+    expect(sqlMatching('AS is_demo')).toContain('WHERE COALESCE(is_demo, false) = $1 AND users.region = $2');
+    // Real accounts only, and the region comes from the manager's own account, not the request.
+    expect(mockQuery.mock.calls.find(([sql]) => String(sql).includes('AS is_demo'))?.[1]).toEqual([false, 'Rift Valley']);
   });
 
   it('never offers demo accounts when picking an officer', async () => {

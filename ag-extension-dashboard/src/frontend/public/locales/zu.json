@@ -742,6 +742,8 @@
     "users_btn_manage_access": "Edit Access",
     "users_btn_manage_access_for": "Edit access for {name}",
     "users_access_plan_system_admin_note": "Only the system administrator can change a subscription plan manually.",
+    "users_access_manager": "Reports to",
+    "users_access_manager_none": "No regional manager",
     "users_btn_registering": "Iyabhalisa...",
     "users_create_error_failed": "Yehlulekile ukudala umsebenzisi",
     "users_create_error_required": "Zonke izinkambu ezidingekayo kufanele zigcwaliswe",
