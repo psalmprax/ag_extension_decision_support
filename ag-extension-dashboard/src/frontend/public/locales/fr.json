@@ -738,6 +738,7 @@
     "users_btn_create_user": "Créer un utilisateur",
     "users_btn_history": "Histoire",
     "users_btn_manage_access": "Edit Access",
+    "users_btn_manage_access_for": "Edit access for {name}",
     "users_btn_registering": "Enregistrement...",
     "users_create_error_failed": "Échec de la création de l'utilisateur",
     "users_create_error_required": "Tous les champs obligatoires doivent être remplis",

@@ -738,6 +738,7 @@
     "users_btn_create_user": "Unda Mtumiaji",
     "users_btn_history": "Historia",
     "users_btn_manage_access": "Edit Access",
+    "users_btn_manage_access_for": "Edit access for {name}",
     "users_btn_registering": "Inasajili...",
     "users_create_error_failed": "Imeshindwa kuunda mtumiaji",
     "users_create_error_required": "Sehemu zote zinazohitajika lazima zijazwe",

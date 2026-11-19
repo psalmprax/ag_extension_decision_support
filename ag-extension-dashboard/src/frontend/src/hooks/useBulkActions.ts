@@ -76,18 +76,24 @@ export const useBulkActions = (options: BulkActionsOptions) => {
   const onBulkSmsSend = async (message: string) => {
     const selectedFarmersList = effectiveFarmers?.filter(f => selectedFarmers.has(f.id)) || [];
     if (selectedFarmersList.length > 0) {
+      // Only farmers with a phone number can be messaged; count and report those.
+      const recipients = selectedFarmersList.map(f => f.phone?.trim()).filter((p): p is string => Boolean(p));
+      const skipped = selectedFarmersList.length - recipients.length;
+      if (recipients.length === 0) {
+        addNotification({ type: 'warning', message: 'None of the selected farmers has a phone number. No SMS was sent.' });
+        return;
+      }
       setIsSendingBulkSms(true);
       try {
-        await sendBulkSMS({
-          recipients: selectedFarmersList.map(f => f.phone).filter(Boolean) as string[],
-          message,
-        });
+        await sendBulkSMS({ recipients, message });
         setActiveTab('sms');
         setSelectedFarmers(new Set());
         setShowBulkSmsComposer(false);
         addNotification({
           type: 'success',
-          message: `Bulk SMS sent to ${selectedFarmersList.length} farmers.`,
+          message:
+            `Bulk SMS sent to ${recipients.length} farmer${recipients.length === 1 ? '' : 's'}.` +
+            (skipped > 0 ? ` ${skipped} without a phone number ${skipped === 1 ? 'was' : 'were'} skipped.` : ''),
         });
       } catch (error) {
         console.error('Bulk SMS error:', error);

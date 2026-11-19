@@ -260,7 +260,7 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
     expect(await screen.findByText('Grace Wanjiku')).toBeInTheDocument();
     expect(screen.getByText('Free')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Edit Access' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit access for Grace Wanjiku' }));
 
     expect(await screen.findByText('Manage Access & Subscription')).toBeInTheDocument();
     await waitFor(() => {
@@ -387,7 +387,11 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
     );
 
     expect(await screen.findByText('Mercy Chebet')).toBeInTheDocument();
-    const editButtons = screen.getAllByRole('button', { name: 'Edit Access' });
+    // Each card's button is named for its user, so screen readers can tell them apart.
+    const editButtons = [
+      screen.getByRole('button', { name: 'Edit access for Mercy Chebet' }),
+      screen.getByRole('button', { name: /^Edit access for Peter / }),
+    ];
     editButtons[0].focus();
     fireEvent.click(editButtons[0]);
 
@@ -437,7 +441,7 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
       expect(editButtons[0]).toHaveFocus();
     });
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Edit Access' })[1]);
+    fireEvent.click(screen.getByRole('button', { name: /^Edit access for Peter / }));
     const modalB = await screen.findByRole('dialog');
     expect(within(modalB).getByText(/Peter Karanja/)).toBeInTheDocument();
 
@@ -490,6 +494,7 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
 
     expect(await screen.findByText('Sam Otieno')).toBeInTheDocument();
     expect(screen.getByText('Inactive')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Edit Access' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Edit access for/ })).not.toBeInTheDocument();
+    expect(screen.queryByText('Edit Access')).not.toBeInTheDocument();
   });
 });

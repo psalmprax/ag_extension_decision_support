@@ -738,6 +738,7 @@
     "users_btn_create_user": "Create User",
     "users_btn_history": "History",
     "users_btn_manage_access": "Edit Access",
+    "users_btn_manage_access_for": "Edit access for {name}",
     "users_btn_registering": "Registering...",
     "users_create_error_failed": "Failed to create user",
     "users_create_error_required": "Всі обов'язкові поля мають бути заповнені",

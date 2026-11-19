@@ -162,17 +162,11 @@ export function UserManagementPage() {
   };
 
   const usersList = usersData || [];
-  const filteredUsers = usersList.filter(u => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      u.firstName?.toLowerCase().includes(term) ||
-      u.lastName?.toLowerCase().includes(term) ||
-      u.email?.toLowerCase().includes(term) ||
-      u.region?.toLowerCase().includes(term) ||
-      u.country?.toLowerCase().includes(term)
-    );
-  });
+  const searchNeedle = searchTerm.toLowerCase();
+  const filteredUsers = usersList.filter(u =>
+    !searchNeedle ||
+    [u.firstName, u.lastName, u.email, u.region, u.country].some(v => v?.toLowerCase().includes(searchNeedle))
+  );
 
   const officersCount = usersList.filter(u => u.role === 'extension_officer').length;
   const uniqueRegions = new Set(usersList.map(u => u.region).filter(Boolean)).size;
@@ -354,6 +348,7 @@ export function UserManagementPage() {
                       {currentUserRole === 'admin' && (
                         <button
                           onClick={() => setSelectedUserForAccess(user)}
+                          aria-label={t('users_btn_manage_access_for', 'Edit access for {name}', { name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email })}
                           className="text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
                         >
                           {t('users_btn_manage_access', 'Edit Access')}

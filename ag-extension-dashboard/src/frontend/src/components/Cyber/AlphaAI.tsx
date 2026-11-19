@@ -562,11 +562,7 @@ export const AlphaAI: React.FC = () => {
                   selectedGraphNode={selectedGraphNode}
                   onGraphNodeSelect={setSelectedGraphNode}
                   onDispatchSms={handleDispatchSms}
-                  citations={
-                    messages
-                      .toReversed()
-                      .find(m => m.sender === 'assistant' && m.citations?.length)?.citations ?? []
-                  }
+                  citations={messages.findLast(m => m.sender === 'assistant' && m.citations?.length)?.citations ?? []}
                   lastImageAnalysis={lastImageAnalysis}
                 />
               </div>

@@ -738,6 +738,7 @@
     "users_btn_create_user": "Create User",
     "users_btn_history": "Historie",
     "users_btn_manage_access": "Edit Access",
+    "users_btn_manage_access_for": "Edit access for {name}",
     "users_btn_registering": "Registrace...",
     "users_create_error_failed": "Nepodařilo se vytvořit uživatele",
     "users_create_error_required": "Všechna povinná pole musí být vyplněna",

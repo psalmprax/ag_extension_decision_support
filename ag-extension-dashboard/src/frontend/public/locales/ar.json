@@ -738,6 +738,7 @@
     "users_btn_create_user": "إنشاء مستخدم",
     "users_btn_history": "تاريخ",
     "users_btn_manage_access": "Edit Access",
+    "users_btn_manage_access_for": "Edit access for {name}",
     "users_btn_registering": "جاري التسجيل...",
     "users_create_error_failed": "فشل في إنشاء المستخدم",
     "users_create_error_required": "يجب ملء جميع الحقول المطلوبة",

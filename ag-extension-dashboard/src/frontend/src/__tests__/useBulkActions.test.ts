@@ -25,7 +25,7 @@ function farmer(id: string, overrides: Partial<Farmer> = {}): Farmer {
     crops: ['maize', 'beans'],
     farmSize: 1.5,
     ...overrides,
-  } as unknown as Farmer;
+  };
 }
 
 const FARMERS = [farmer('1'), farmer('2'), farmer('3', { phone: undefined })];
@@ -141,6 +141,21 @@ describe('useBulkActions', () => {
     expect(setShowBulkSmsComposer).toHaveBeenCalledWith(true);
   });
 
+  it('sends nothing and warns when no selected farmer has a phone number', async () => {
+    const { result, addNotification } = setup();
+    act(() => {
+      result.current.hook.handleSelectFarmer('3', true);
+    });
+    await act(async () => {
+      await result.current.hook.onBulkSmsSend('Late blight alert');
+    });
+    expect(sendBulkSMS).not.toHaveBeenCalled();
+    expect(addNotification).toHaveBeenCalledWith({
+      type: 'warning',
+      message: 'None of the selected farmers has a phone number. No SMS was sent.',
+    });
+  });
+
   it('sends a bulk SMS to the selected phone numbers and reports the count reached', async () => {
     sendBulkSMS.mockResolvedValueOnce({ success: true });
     const { result, setActiveTab, setShowBulkSmsComposer, addNotification } = setup();
@@ -160,7 +175,7 @@ describe('useBulkActions', () => {
     // The success toast counts recipients actually messaged, not the raw selection size.
     expect(addNotification).toHaveBeenCalledWith({
       type: 'success',
-      message: 'Bulk SMS sent to 3 farmers.',
+      message: 'Bulk SMS sent to 2 farmers. 1 without a phone number was skipped.',
     });
     expect(setActiveTab).toHaveBeenCalledWith('sms');
     expect(setShowBulkSmsComposer).toHaveBeenCalledWith(false);
