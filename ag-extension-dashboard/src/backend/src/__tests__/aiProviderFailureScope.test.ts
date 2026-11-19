@@ -7,7 +7,33 @@ jest.mock('@/services/omniRouteService', () => ({
 }));
 
 import { AIProviderFactory, AIRouter } from '@/services/aiProvider/aiProvider';
-import type { AICapability } from '@/services/aiProvider/types';
+import type { AICapability, AIProviderType } from '@/services/aiProvider/types';
+
+function unsupported(operation: string) {
+    return jest.fn(async () => { throw new Error(`${operation} is not supported by this fixture`); });
+}
+
+/** A complete AICapability: every operation the test does not exercise rejects. */
+function fakeProvider(provider: AIProviderType, configured: boolean, overrides: Partial<AICapability> = {}): AICapability {
+    return {
+        provider,
+        capabilities: configured ? ['text', 'embeddings'] : [],
+        isConfigured: () => configured,
+        healthCheck: jest.fn(async () => configured),
+        generateText: unsupported('generateText'),
+        // eslint-disable-next-line require-yield
+        streamText: async function* () { throw new Error('streamText is not supported by this fixture'); },
+        createEmbedding: unsupported('createEmbedding'),
+        createBatchEmbeddings: unsupported('createBatchEmbeddings'),
+        speechToText: unsupported('speechToText'),
+        textToSpeech: unsupported('textToSpeech'),
+        analyzeWithReasoning: unsupported('analyzeWithReasoning'),
+        classify: unsupported('classify'),
+        analyzeImage: unsupported('analyzeImage'),
+        analyzeVideo: unsupported('analyzeVideo'),
+        ...overrides,
+    };
+}
 
 /**
  * The retrieval evaluation found a failing chat model (a retired model id)
@@ -16,23 +42,20 @@ import type { AICapability } from '@/services/aiProvider/types';
  */
 describe('AI provider failure scope', () => {
     it('keeps embeddings available after the same provider\'s chat model fails', async () => {
-        const provider = {
-            capabilities: ['text', 'embeddings'],
-            isConfigured: () => true,
-            healthCheck: jest.fn().mockResolvedValue(true),
-            generateText: jest.fn().mockRejectedValue(Object.assign(new Error('model retired'), { response: { status: 404 } })),
-            createEmbedding: jest.fn().mockResolvedValue([0.1, 0.2]),
-        } as unknown as AICapability;
-        const unconfigured = { capabilities: [], isConfigured: () => false } as unknown as AICapability;
+        const generateText = jest.fn<ReturnType<AICapability['generateText']>, Parameters<AICapability['generateText']>>()
+            .mockRejectedValue(Object.assign(new Error('model retired'), { response: { status: 404 } }));
+        const createEmbedding = jest.fn<ReturnType<AICapability['createEmbedding']>, Parameters<AICapability['createEmbedding']>>()
+            .mockResolvedValue({ embedding: [0.1, 0.2], model: 'test-embedding' });
+        const provider = fakeProvider('aihubmix', true, { generateText, createEmbedding });
         const getProvider = jest.spyOn(AIProviderFactory, 'getProvider')
-            .mockImplementation(async type => (type === 'aihubmix' ? provider : unconfigured));
+            .mockImplementation(async type => (type === 'aihubmix' ? provider : fakeProvider(type ?? 'openai', false)));
 
         await expect(AIRouter.routeRequest('generate', { prompt: 'ping', options: { preferredProvider: 'aihubmix' } })).rejects.toThrow();
         const embedding = await AIRouter.routeRequest('embed', { text: 'maize', options: { preferredProvider: 'aihubmix' } });
-        expect(Array.from(embedding as number[])).toEqual([0.1, 0.2]);
+        expect(embedding).toMatchObject({ embedding: [0.1, 0.2] });
         // The chat failure still keeps chat away from this provider for a while.
         await expect(AIRouter.routeRequest('generate', { prompt: 'ping', options: { preferredProvider: 'aihubmix' } })).rejects.toThrow();
-        expect(jest.mocked(provider.generateText)).toHaveBeenCalledTimes(1);
+        expect(generateText).toHaveBeenCalledTimes(1);
         getProvider.mockRestore();
     });
 });

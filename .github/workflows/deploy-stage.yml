@@ -293,6 +293,16 @@ jobs:
                 sed -i "/^$var=/d" ag-extension-dashboard/.env
                 printf '%s=%s\n' "$var" "$val" >> ag-extension-dashboard/.env
                 echo "Updated $var in .env from GitHub secrets/variables"
+              else
+                case "$var" in
+                  # Optional settings: an unset secret switches the feature off,
+                  # so a removed secret must not leave the old value behind.
+                  RAG_RERANK_URL|RAG_RERANK_MODEL|RAG_RERANK_API_KEY)
+                    if grep -q "^$var=" ag-extension-dashboard/.env 2>/dev/null; then
+                      sed -i "/^$var=/d" ag-extension-dashboard/.env
+                      echo "Cleared $var in .env (no GitHub secret/variable set)"
+                    fi ;;
+                esac
               fi
             done
 

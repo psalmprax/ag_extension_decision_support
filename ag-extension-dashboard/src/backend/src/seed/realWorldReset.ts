@@ -62,10 +62,11 @@ function referencedColumns(where: string): string[] {
 
 /**
  * Deletes every fixture account on the reserved domain, every farmer record in
- * the fixture tenant or linked to a fixture account (including farmers that
+ * the fixture tenant or owned by a fixture account (including farmers that
  * end-to-end runs registered), and everything that references them. Demo and
  * real customer data are never matched: the selection is by the reserved email
- * domain and the fixture tenant only.
+ * domain and the fixture tenant only. A real farmer who was assigned to a
+ * fixture officer is kept; the foreign key clears that assignment.
  */
 export async function resetRealWorldFixtures(client: Client): Promise<void> {
     await client.query('BEGIN');
@@ -78,8 +79,7 @@ export async function resetRealWorldFixtures(client: Client): Promise<void> {
             `CREATE TEMP TABLE rw_farmers ON COMMIT DROP AS
              SELECT id FROM farmers
               WHERE tenant_id = $1
-                 OR user_id IN (SELECT id FROM rw_users)
-                 OR assigned_officer_id IN (SELECT id FROM rw_users)`,
+                 OR user_id IN (SELECT id FROM rw_users)`,
             [REAL_WORLD_TENANT_ID]
         );
         for (const { table, where } of DEPENDENT_DELETES) {

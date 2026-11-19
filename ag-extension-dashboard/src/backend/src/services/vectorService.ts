@@ -117,19 +117,25 @@ export class VectorService {
         params.push(minScore);
 
         // ORDER BY the indexed distance expression directly (not an alias or a
-        // filtered subquery) so the planner can walk the HNSW index.
-        const result = await query(`
+        // filtered subquery) so the planner can walk the HNSW index. An index
+        // scan applies category/crop filters after it stops at hnsw.ef_search
+        // rows, so a filtered search that comes back short is repeated exactly:
+        // "+ 0" keeps the planner off the index and filters apply first.
+        const nearest = (exact: boolean) => query(`
             SELECT * FROM (
                 SELECT id, title, content, category, crops, tags, regions, updated_at, source, source_url, content_type,
                        1 - (${cosineDistance('embedding', 1)}) AS score
                 FROM knowledge_articles
                 WHERE ${where.join(' AND ')}
-                ORDER BY ${cosineDistance('embedding', 1)}
+                ORDER BY ${exact ? `(${cosineDistance('embedding', 1)}) + 0` : cosineDistance('embedding', 1)}
                 LIMIT $${limitParam}
             ) nearest
             WHERE score >= $${params.length}
             ORDER BY score DESC
-        `, params as unknown as unknown[]);
+        `, params);
+        const filtered = Boolean(filters.category || filters.crop);
+        let result = await nearest(false);
+        if (filtered && result.rows.length < limit) result = await nearest(true);
 
         return mapKeywordRows(result.rows as unknown[]).map(row => ({
             ...row,

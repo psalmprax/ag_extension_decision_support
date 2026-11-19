@@ -415,7 +415,7 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
 
         await KnowledgeService.askQuestion('user-1', 'what are challenges Nigeria farners face?', undefined, { bypassCache: true });
 
-        expect(hybridSearchSpy).toHaveBeenCalledWith('what are challenges Nigeria farmers face?', 3, {});
+        expect(hybridSearchSpy).toHaveBeenCalledWith('what are challenges Nigeria farmers face?', 10, {});
     });
 
     it('filters out non-agronomic web search results like tailor measurements', async () => {

@@ -130,8 +130,12 @@ async function main(): Promise<void> {
         const gates = JSON.parse(readFileSync(path.join(EVAL_DIR, 'rag-gates.json'), 'utf8')) as { overall: MetricGates; byLanguage?: Record<string, MetricGates> };
         const failures = [
             ...failedGates(overall, gates.overall).map(failure => `all: ${failure}`),
+            // A gated language with no outcomes fails: deleting its questions
+            // must not pass the gate silently.
             ...Object.entries(gates.byLanguage ?? {}).flatMap(([language, languageGates]) =>
-                byLanguage[language] ? failedGates(byLanguage[language]!, languageGates).map(failure => `${language}: ${failure}`) : []),
+                byLanguage[language]
+                    ? failedGates(byLanguage[language]!, languageGates).map(failure => `${language}: ${failure}`)
+                    : [`${language}: no evaluated cases`]),
         ];
         if (failures.length > 0) {
             console.error(`\nRetrieval quality gate failed:\n  ${failures.join('\n  ')}`);

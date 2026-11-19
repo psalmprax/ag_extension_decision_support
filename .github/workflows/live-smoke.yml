@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
     inputs:
       suite:
-        description: Which checks to run
+        description: "Which checks to run. all = live-smoke + rag-eval (read-only). user-stories writes test data to the target's database and only runs when chosen by name."
         type: choice
         options: [all, live-smoke, rag-eval, user-stories]
         default: all
@@ -115,6 +115,10 @@ jobs:
       NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
       AI_EMBEDDINGS_PROVIDER: ${{ secrets.AI_EMBEDDINGS_PROVIDER || vars.AI_EMBEDDINGS_PROVIDER || 'aihubmix' }}
       AI_EMBEDDINGS_MODEL: ${{ secrets.AI_EMBEDDINGS_MODEL || vars.AI_EMBEDDINGS_MODEL || 'text-embedding-3-large' }}
+      # Same Azure settings as the deploys, for an azure_openai provider selection.
+      AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+      AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT || vars.AZURE_OPENAI_ENDPOINT }}
+      AZURE_OPENAI_DEPLOYMENT_NAME: ${{ secrets.AZURE_OPENAI_DEPLOYMENT_NAME || vars.AZURE_OPENAI_DEPLOYMENT_NAME || 'gpt-4' }}
       RAG_RERANK_URL: ${{ secrets.RAG_RERANK_URL || vars.RAG_RERANK_URL || '' }}
       RAG_RERANK_MODEL: ${{ secrets.RAG_RERANK_MODEL || vars.RAG_RERANK_MODEL || 'jina-reranker-v2-base-multilingual' }}
       RAG_RERANK_API_KEY: ${{ secrets.RAG_RERANK_API_KEY || '' }}
