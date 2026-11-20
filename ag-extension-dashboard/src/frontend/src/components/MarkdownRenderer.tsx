@@ -23,7 +23,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-xl font-bold tracking-wide mt-6 mb-3 text-primary-600 dark:text-primary-400 border-l-4 border-primary-500 pl-3">
+            <h2 className="text-xl font-bold tracking-wide mt-6 mb-3 text-primary-600 dark:text-primary-400 border-s-4 border-primary-500 ps-3">
               {children}
             </h2>
           ),
@@ -38,20 +38,20 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
             </p>
           ),
           ul: ({ children }) => (
-            <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-700 dark:text-gray-300 marker:text-primary-500">
+            <ul className="list-disc ps-6 mb-6 space-y-2 text-gray-700 dark:text-gray-300 marker:text-primary-500">
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal pl-6 mb-6 space-y-2 text-gray-700 dark:text-gray-300 marker:text-primary-500 marker:font-bold">
+            <ol className="list-decimal ps-6 mb-6 space-y-2 text-gray-700 dark:text-gray-300 marker:text-primary-500 marker:font-bold">
               {children}
             </ol>
           ),
-          li: ({ children }) => <li className="pl-1 leading-relaxed">{children}</li>,
+          li: ({ children }) => <li className="ps-1 leading-relaxed">{children}</li>,
 
           // Style blockquotes as "Insights"
           blockquote: ({ children }) => (
-            <div className="bg-primary-50 dark:bg-primary-900/10 border-l-4 border-primary-500 p-4 my-6 rounded-r-xl italic flex gap-3">
+            <div className="bg-primary-50 dark:bg-primary-900/10 border-s-4 border-primary-500 p-4 my-6 rounded-e-xl italic flex gap-3">
               <Info className="w-5 h-5 text-primary-500 flex-shrink-0 mt-1" />
               <div className="text-primary-900 dark:text-primary-100">{children}</div>
             </div>
@@ -69,7 +69,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
             <thead className="bg-gray-50 dark:bg-gray-900/50">{children}</thead>
           ),
           th: ({ children }) => (
-            <th className="px-4 py-3 text-left text-xs font-black text-gray-500 dark:text-gray-400">
+            <th className="px-4 py-3 text-start text-xs font-black text-gray-500 dark:text-gray-400">
               {children}
             </th>
           ),
@@ -81,7 +81,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
 
           // Support for checklists
           input: ({ checked }) => (
-            <span className="inline-block mr-2">
+            <span className="inline-block me-2">
               {checked ? (
                 <CheckCircle className="w-4 h-4 text-green-500 inline" />
               ) : (

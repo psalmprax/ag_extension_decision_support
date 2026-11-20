@@ -23,6 +23,7 @@ import {
     buildUserSubscriptionSelect,
     SUBSCRIPTION_SELECT_COLUMNS,
 } from '@/services/userQueryBuilder';
+import { defaultCountryName } from '@/services/country/phone';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const INACTIVE_STRIPE_SUBSCRIPTION_STATUSES = new Set(['canceled', 'expired', 'incomplete_expired']);
@@ -287,7 +288,7 @@ function extractCreateUserData(body: Record<string, unknown>) {
     const lastName = typeof rawLast === 'string' ? rawLast.trim() : '';
     const role = typeof body.role === 'string' ? body.role.trim() : 'extension_officer';
     const region = typeof body.region === 'string' && body.region.trim() ? body.region.trim() : null;
-    const country = typeof body.country === 'string' && body.country.trim() ? body.country.trim() : 'Kenya';
+    const country = typeof body.country === 'string' && body.country.trim() ? body.country.trim() : defaultCountryName();
     const phone = typeof body.phone === 'string' && body.phone.trim() ? body.phone.trim() : null;
 
     const safeRole = role.toLowerCase();

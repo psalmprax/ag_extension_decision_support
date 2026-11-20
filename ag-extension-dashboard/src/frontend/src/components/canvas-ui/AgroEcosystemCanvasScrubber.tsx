@@ -116,7 +116,7 @@ export function AgroEcosystemCanvasScrubber({
         fallback={<p className="text-sm text-[#c5d3cb] max-w-xs">{stage.subtitle}.</p>}
         className="absolute inset-0"
       />
-      <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2 pointer-events-none">
+      <div className="absolute top-3 start-3 end-3 flex items-start justify-between gap-2 pointer-events-none">
         <div className="flex items-center gap-3 bg-[#0d1a14]/90 border border-white/[0.1] px-3 py-2 rounded-lg">
           <Icon className="w-4 h-4 text-[#c5d3cb]" aria-hidden="true" />
           <div>
@@ -129,7 +129,7 @@ export function AgroEcosystemCanvasScrubber({
         </div>
       </div>
       {status !== 'ready' && currentStage === 3 && (
-        <ul className="absolute right-3 top-20 bg-[#0d1a14]/90 border border-white/[0.1] px-3 py-2 rounded-md text-xs text-[#c5d3cb]" aria-label={labels.sms[0]}>
+        <ul className="absolute end-3 top-20 bg-[#0d1a14]/90 border border-white/[0.1] px-3 py-2 rounded-md text-xs text-[#c5d3cb]" aria-label={labels.sms[0]}>
           {ADVICE_LINES.map(line => <li key={line}>{line}</li>)}
         </ul>
       )}

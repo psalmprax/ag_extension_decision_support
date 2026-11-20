@@ -5,6 +5,7 @@
  */
 import bcrypt from 'bcryptjs';
 import { query } from '@/services/databaseService';
+import { phoneVariants } from '@/services/country/phone';
 
 export interface SmsStaff {
     id: string;
@@ -17,6 +18,8 @@ export interface SmsStaff {
     sms_pin_failed_attempts: number;
     sms_pin_locked: boolean;
     sms_unlocked_until: Date | null;
+    country?: string | null;
+    time_zone?: string | null;
 }
 
 export const PIN_MAX_ATTEMPTS = 5;
@@ -26,15 +29,17 @@ const UNLOCK_HOURS = 24;
 export async function findStaffByPhone(phone: string): Promise<SmsStaff | null> {
     const digits = phone.replace(/\D/g, '');
     if (digits.length < 8) return null;
+    // Staff numbers may be stored as +254712…, 254712… or 0712…: match any of them.
+    const forms = phoneVariants(phone).map(form => form.replace(/\D/g, ''));
     const { rows } = await query<SmsStaff>(
         `SELECT id, role, first_name, region, tenant_id, NULL::text AS language, sms_pin_hash,
-                sms_pin_failed_attempts, sms_pin_locked, sms_unlocked_until
+                sms_pin_failed_attempts, sms_pin_locked, sms_unlocked_until, country, time_zone
            FROM users
-          WHERE regexp_replace(COALESCE(phone, ''), '\\D', '', 'g') = $1
+          WHERE regexp_replace(COALESCE(phone, ''), '\\D', '', 'g') = ANY($1)
             AND role IN ('extension_officer', 'regional_manager')
             AND COALESCE(is_active, true) = true
           ORDER BY created_at LIMIT 1`,
-        [digits],
+        [forms],
     );
     return rows[0] ?? null;
 }

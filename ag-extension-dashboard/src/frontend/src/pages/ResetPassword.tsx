@@ -82,13 +82,13 @@ export const ResetPassword: React.FC = () => {
               <label className="block">
                 <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{t('ui_reset_password_new_password')}</span>
                 <div className="relative mt-1">
-                  <Lock className="w-4 h-4 absolute left-3 top-3.5 text-gray-400" />
+                  <Lock className="w-4 h-4 absolute start-3 top-3.5 text-gray-400" />
                   <input
                     type="password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     autoComplete="new-password"
-                    className="w-full pl-9 pr-3 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm"
+                    className="w-full ps-9 pe-3 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm"
                     required
                   />
                 </div>

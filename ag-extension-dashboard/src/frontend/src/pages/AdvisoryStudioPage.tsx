@@ -257,7 +257,7 @@ export function AdvisoryStudioPage() {
       )}
 
       <div className="flex-1 flex overflow-hidden">
-        <aside className="w-72 border-r border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-5 flex flex-col gap-4 shrink-0 overflow-y-auto">
+        <aside className="w-72 border-e border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-5 flex flex-col gap-4 shrink-0 overflow-y-auto">
           <SavedProtocols activeId={workflowId} onOpen={handleOpenSaved} />
           <div>
             <h3 className="text-xs font-medium text-slate-400 mb-1 flex items-center gap-1.5">
@@ -272,7 +272,7 @@ export function AdvisoryStudioPage() {
                   key={item.type}
                   type="button"
                   onClick={() => handleAddBlock(item)}
-                  className="w-full text-left p-2.5 rounded-lg bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.07] border border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] transition-colors group"
+                  className="w-full text-start p-2.5 rounded-lg bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.07] border border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] transition-colors group"
                 >
                   <div className="flex items-center gap-2.5 mb-1">
                     <span className="w-6 h-6 rounded-md bg-slate-100 dark:bg-white/[0.07] border border-slate-900/[0.08] dark:border-white/[0.08] flex items-center justify-center shrink-0">
@@ -344,7 +344,7 @@ export function AdvisoryStudioPage() {
           </div>
         </main>
 
-        <aside className="w-84 border-l border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-5 flex flex-col items-center shrink-0 overflow-y-auto">
+        <aside className="w-84 border-s border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-5 flex flex-col items-center shrink-0 overflow-y-auto">
           <div className="w-full flex items-center justify-between mb-4">
             <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
               <Smartphone className="w-4 h-4 text-slate-400" />

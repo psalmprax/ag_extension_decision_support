@@ -16,6 +16,8 @@ import { setAuthCookie } from '@/middleware/authCookie';
 import { buildUserProfileColumns } from '@/services/userQueryBuilder';
 import { resolveRegionalManager } from '@/services/regionalManagerResolver';
 import { signSessionToken } from '@/utils/sessionToken';
+import { findCountry } from '@/shared-api/countries';
+import { toE164 } from '@/services/country/phone';
 
 const router = Router();
 
@@ -87,9 +89,13 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
 
         const accountRole: string = role || 'extension_officer';
         const accountRegion: string | null = region?.trim() || null;
-        const accountCountry: string | null = country?.trim() || null;
+        const accountCountry: string | null = findCountry(country)?.name ?? (country?.trim() || null);
         // Older clients sent `phoneNumber`; validation accepts both, the column is `phone`.
-        const accountPhone: string | null = (phone ?? phoneNumber ?? '').trim() || null;
+        const rawPhone: string | null = (phone ?? phoneNumber ?? '').trim() || null;
+        const accountPhone: string | null = rawPhone ? toE164(rawPhone, accountCountry) : null;
+        if (rawPhone && !accountPhone) {
+            return res.status(400).json({ success: false, error: `That phone number is not valid for ${accountCountry ?? 'your country'}.`, errorCode: 'INVALID_PHONE' });
+        }
 
         const problems = passwordProblems(password, email);
         if (problems.length > 0) {

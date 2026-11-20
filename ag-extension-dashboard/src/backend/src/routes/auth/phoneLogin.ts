@@ -24,16 +24,16 @@ import { finishSignIn } from './loginCompletion';
 
 const router = Router();
 
-const requestSchema = z.object({ body: z.object({ phone: z.string().min(7).max(25) }) });
+const requestSchema = z.object({ body: z.object({ phone: z.string().min(7).max(25), country: z.string().max(60).optional() }) });
 const verifySchema = z.object({
-    body: z.object({ phone: z.string().min(7).max(25), code: z.string().regex(/^\s*\d{6}\s*$/) }),
+    body: z.object({ phone: z.string().min(7).max(25), country: z.string().max(60).optional(), code: z.string().regex(/^\s*\d{6}\s*$/) }),
 });
 
 const clientIpOf = (req: Request) =>
     req.ip || (typeof req.headers['x-forwarded-for'] === 'string' ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || null;
 
 router.post('/phone/request', validate(requestSchema), async (req: Request, res: Response) => {
-    const phone = normalisePhone(req.body.phone);
+    const phone = normalisePhone(req.body.phone, req.body.country);
     if (!phone) return res.status(400).json({ success: false, error: 'Enter the phone number with its country code, for example +254 712 345 678.' });
     try {
         const outcome = await requestLoginCode(phone, clientIpOf(req));
@@ -52,7 +52,7 @@ router.post('/phone/request', validate(requestSchema), async (req: Request, res:
 });
 
 router.post('/phone/verify', [auditMiddleware('auth_login'), validate(verifySchema)], async (req: Request, res: Response) => {
-    const phone = normalisePhone(req.body.phone);
+    const phone = normalisePhone(req.body.phone, req.body.country);
     if (!phone) return res.status(400).json({ success: false, error: 'Enter the phone number with its country code.' });
     const clientIp = clientIpOf(req);
     try {

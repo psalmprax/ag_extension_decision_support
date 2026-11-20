@@ -52,7 +52,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
         aria-labelledby="admin-billing-title"
         className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden"
       >
-        <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+        <div className="absolute top-0 end-0 p-6 opacity-5 pointer-events-none">
           <Settings className="w-32 h-32 text-slate-700 dark:text-slate-400" />
         </div>
         <div className="flex items-center gap-4 mb-6">
@@ -75,7 +75,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
           <div className="space-y-2">
             <label
               htmlFor="stripe-secret"
-              className="text-xxs font-bold text-slate-600 dark:text-white/60 block ml-1"
+              className="text-xxs font-bold text-slate-600 dark:text-white/60 block ms-1"
             >
               {t('ui_billing_dashboard_stripe_secret_key_sk_live')}
             </label>
@@ -96,7 +96,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
           <div className="space-y-2">
             <label
               htmlFor="stripe-webhook"
-              className="text-xxs font-bold text-slate-600 dark:text-white/60 block ml-1"
+              className="text-xxs font-bold text-slate-600 dark:text-white/60 block ms-1"
             >
               {t('ui_billing_dashboard_stripe_webhook_secret_whsec')}
             </label>
@@ -117,7 +117,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
           <div className="space-y-2">
             <label
               htmlFor="paypal-client"
-              className="text-xxs font-bold text-slate-600 dark:text-white/60 block ml-1"
+              className="text-xxs font-bold text-slate-600 dark:text-white/60 block ms-1"
             >
               {t('ui_billing_dashboard_paypal_client_id')}
             </label>
@@ -137,7 +137,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
           <div className="space-y-2">
             <label
               htmlFor="paypal-secret"
-              className="text-xxs font-bold text-slate-600 dark:text-white/60 block ml-1"
+              className="text-xxs font-bold text-slate-600 dark:text-white/60 block ms-1"
             >
               {t('ui_billing_dashboard_paypal_secret_key')}
             </label>

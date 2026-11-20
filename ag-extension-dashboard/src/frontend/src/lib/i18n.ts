@@ -26,33 +26,59 @@ export type Language =
   | 'sk'
   | 'bg'
   | 'el'
-  | 'ug';
+  | 'ug'
+  | 'ha'
+  | 'yo'
+  | 'ig'
+  | 'am'
+  | 'om'
+  | 'ny'
+  | 'lg'
+  | 'rw'
+  | 'so'
+  | 'bn'
+  | 'id'
+  | 'vi'
+  | 'ur';
 
-export const languages: { code: Language; name: string; flag: string }[] = [
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'sw', name: 'Swahili', flag: '🇰🇪' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'pt', name: 'Português', flag: '🇵🇹' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'zu', name: 'Zulu', flag: '🇿🇦' },
-  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-  { code: 'nl', name: 'Nederlands', flag: '🇳🇱' },
-  { code: 'da', name: 'Dansk', flag: '🇩🇰' },
-  { code: 'pl', name: 'Polski', flag: '🇵🇱' },
-  { code: 'hu', name: 'Magyar', flag: '🇭🇺' },
-  { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
-  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
-  { code: 'zh', name: '中文', flag: '🇨🇳' },
-  { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
-  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
-  { code: 'uk', name: 'Українська', flag: '🇺🇦' },
-  { code: 'ro', name: 'Română', flag: '🇷🇴' },
-  { code: 'cs', name: 'Čeština', flag: '🇨🇿' },
-  { code: 'sk', name: 'Slovenčina', flag: '🇸🇰' },
-  { code: 'bg', name: 'Български', flag: '🇧🇬' },
-  { code: 'el', name: 'Ελληνικά', flag: '🇬🇷' },
-  { code: 'ug', name: 'Uyghur', flag: '🇨🇳' },
+export const languages: { code: Language; name: string }[] = [
+  { code: 'en', name: 'English' },
+  { code: 'sw', name: 'Swahili' },
+  { code: 'fr', name: 'Français' },
+  { code: 'pt', name: 'Português' },
+  { code: 'es', name: 'Español' },
+  { code: 'zu', name: 'Zulu' },
+  { code: 'it', name: 'Italiano' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'nl', name: 'Nederlands' },
+  { code: 'da', name: 'Dansk' },
+  { code: 'pl', name: 'Polski' },
+  { code: 'hu', name: 'Magyar' },
+  { code: 'tr', name: 'Türkçe' },
+  { code: 'ar', name: 'العربية' },
+  { code: 'zh', name: '中文' },
+  { code: 'hi', name: 'हिन्दी' },
+  { code: 'ru', name: 'Русский' },
+  { code: 'uk', name: 'Українська' },
+  { code: 'ro', name: 'Română' },
+  { code: 'cs', name: 'Čeština' },
+  { code: 'sk', name: 'Slovenčina' },
+  { code: 'bg', name: 'Български' },
+  { code: 'el', name: 'Ελληνικά' },
+  { code: 'ug', name: 'Uyghur' },
+  { code: 'ha', name: 'Hausa' },
+  { code: 'yo', name: 'Yorùbá' },
+  { code: 'ig', name: 'Igbo' },
+  { code: 'am', name: 'አማርኛ' },
+  { code: 'om', name: 'Afaan Oromoo' },
+  { code: 'ny', name: 'Chichewa' },
+  { code: 'lg', name: 'Luganda' },
+  { code: 'rw', name: 'Ikinyarwanda' },
+  { code: 'so', name: 'Soomaali' },
+  { code: 'bn', name: 'বাংলা' },
+  { code: 'id', name: 'Bahasa Indonesia' },
+  { code: 'vi', name: 'Tiếng Việt' },
+  { code: 'ur', name: 'اردو' },
 ];
 
 // Translations are lazy-loaded from /public/locales/{lang}.json

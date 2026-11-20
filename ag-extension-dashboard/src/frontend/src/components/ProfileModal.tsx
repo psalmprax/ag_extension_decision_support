@@ -27,6 +27,13 @@ import apiClient from '@/api/client';
 import { logout } from '@/api/authService';
 import { PasswordChangeInput } from '@/components/profile/PasswordChangeInput';
 import { AVATAR_PRESETS, DEFAULT_PREFERENCES, getSavedProfileData } from './profileDefaults';
+import { TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
+
+const PROFILE_TABS = [
+  { id: 'profile', label: 'ui_profile_modal_profile_avatar', icon: UserIcon },
+  { id: 'preferences', label: 'common_preferences', icon: Sliders },
+  { id: 'security', label: 'ui_profile_modal_security_account', icon: Lock },
+] as const;
 import { saveBlob } from '@/lib/saveBlob';
 
 interface ProfileModalProps {
@@ -209,6 +216,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   };
 
   const selectedAvatar = AVATAR_PRESETS.find(a => a.id === formData.avatarId) || AVATAR_PRESETS[0];
+  const SelectedIcon = selectedAvatar.icon;
 
   if (!user) return null;
 
@@ -231,37 +239,37 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           >
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[88vh] flex flex-col overflow-hidden">
               {/* Header */}
-              <div className={`relative p-5 sm:p-6 bg-gradient-to-br ${selectedAvatar.gradient} text-white shrink-0`}>
+              <div className="relative p-5 sm:p-6 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-900/[0.08] dark:border-white/[0.08] shrink-0">
                 <button
                   onClick={onClose}
-                  className="absolute top-4 right-4 p-2 rounded-xl hover:bg-white/20 transition-colors active:scale-95"
+                  className="absolute top-4 end-4 p-2 rounded-xl text-slate-500 hover:bg-slate-900/[0.06] dark:text-white/60 dark:hover:bg-white/10 transition-colors"
                   aria-label="Close modal"
                 >
                   <X className="w-5 h-5" />
                 </button>
                 <div className="flex items-center gap-4">
                   <div className="relative group">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/20 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl shadow-inner backdrop-blur-md border border-white/20 shrink-0">
-                      {selectedAvatar.emoji}
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white dark:bg-white/[0.06] rounded-2xl flex items-center justify-center border border-slate-900/[0.08] dark:border-white/[0.08] shrink-0">
+                      <SelectedIcon className="w-7 h-7 text-emerald-700 dark:text-emerald-400" strokeWidth={1.5} aria-hidden="true" />
                     </div>
-                    <span className="absolute -bottom-1 -right-1 p-1 bg-white text-slate-950 rounded-full shadow-md text-[10px]">
+                    <span className="absolute -bottom-1 -end-1 p-1 bg-white dark:bg-slate-900 rounded-full border border-slate-900/[0.08] dark:border-white/[0.1]">
                       <UserCheck className="w-3 h-3 text-emerald-600" />
                     </span>
                   </div>
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h2 className="text-xl sm:text-2xl font-semibold truncate tracking-tight">
+                      <h2 className="text-xl sm:text-2xl font-medium truncate">
                         {formData.firstName || user.firstName} {formData.lastName || user.lastName}
                       </h2>
                     </div>
-                    <p className="text-xs sm:text-sm text-white/80 font-mono">@{formData.username}</p>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-white/60 font-mono">@{formData.username}</p>
                     <div className="flex items-center gap-2 mt-1.5">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/20 text-white text-xs font-semibold backdrop-blur-sm">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-900/[0.06] dark:bg-white/10 text-slate-700 dark:text-white/80 text-xs font-medium">
                         <Shield className="w-3 h-3" />
                         <span className="capitalize">{user.role?.replace('_', ' ') || 'Extension Officer'}</span>
                       </span>
-                      <span className="text-xs text-white/70 flex items-center gap-1 truncate">
+                      <span className="text-xs text-slate-500 dark:text-white/60 flex items-center gap-1 truncate">
                         <MapPin className="w-3 h-3 shrink-0" />
                         <span className="truncate">{formData.region}</span>
                       </span>
@@ -270,40 +278,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-2 mt-6 border-b border-white/20 pb-0">
-                  <button
-                    onClick={() => setActiveTab('profile')}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-t-lg transition-all flex items-center gap-1.5 ${
-                      activeTab === 'profile'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-white/80 hover:bg-white/10'
-                    }`}
-                  >
-                    <UserIcon className="w-3.5 h-3.5" />
-                    <span>{t('ui_profile_modal_profile_avatar')}</span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('preferences')}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-t-lg transition-all flex items-center gap-1.5 ${
-                      activeTab === 'preferences'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-white/80 hover:bg-white/10'
-                    }`}
-                  >
-                    <Sliders className="w-3.5 h-3.5" />
-                    <span>{t('common_preferences')}</span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('security')}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-t-lg transition-all flex items-center gap-1.5 ${
-                      activeTab === 'security'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-white/80 hover:bg-white/10'
-                    }`}
-                  >
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>{t('ui_profile_modal_security_account')}</span>
-                  </button>
+                <div className={`${TAB_ROW} mt-5`} role="tablist">
+                  {PROFILE_TABS.map(tab => (
+                    <button
+                      key={tab.id}
+                      role="tab"
+                      aria-selected={activeTab === tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={tabButtonClass(activeTab === tab.id)}
+                    >
+                      <tab.icon className="w-4 h-4" aria-hidden="true" />
+                      <span>{t(tab.label)}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -330,8 +317,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                                   : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-slate-50 dark:bg-slate-800/60'
                               }`}
                             >
-                              <span className="text-2xl">{preset.emoji}</span>
-                              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate w-full">
+                              <preset.icon className="w-[18px] h-[18px] text-slate-700 dark:text-slate-200" strokeWidth={1.5} aria-hidden="true" />
+                              <span className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate w-full">
                                 {preset.label}
                               </span>
                               {isSelected && (
@@ -376,13 +363,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           {t('ui_profile_modal_custom_handle_this_device')}
                         </label>
                         <div className="relative mt-1">
-                          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm">@</span>
+                          <span className="absolute inset-y-0 start-0 ps-3 flex items-center text-slate-400 text-sm">@</span>
                           <input
                             type="text"
                             disabled={!isEditing}
                             value={formData.username}
                             onChange={e => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                            className="w-full pl-8 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
+                            className="w-full ps-8 pe-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
                           />
                         </div>
                       </div>
@@ -397,9 +384,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             disabled
                             value={formData.email}
                             onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                            className="w-full pl-3.5 pr-8 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
+                            className="w-full ps-3.5 pe-8 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
                           />
-                          <span className="absolute inset-y-0 right-0 pr-3 flex items-center text-emerald-500">
+                          <span className="absolute inset-y-0 end-0 pe-3 flex items-center text-emerald-500">
                             <Check className="w-4 h-4" />
                           </span>
                         </div>
@@ -415,9 +402,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             disabled={!isEditing}
                             value={formData.phone}
                             onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                            className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
+                            className="w-full ps-9 pe-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
                           />
-                          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                          <span className="absolute inset-y-0 start-0 ps-3 flex items-center text-slate-400">
                             <Smartphone className="w-4 h-4" />
                           </span>
                         </div>
@@ -432,9 +419,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             type="text"
                             disabled
                             value={formData.region}
-                            className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
+                            className="w-full ps-9 pe-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
                           />
-                          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                          <span className="absolute inset-y-0 start-0 ps-3 flex items-center text-slate-400">
                             <MapPin className="w-4 h-4" />
                           </span>
                         </div>

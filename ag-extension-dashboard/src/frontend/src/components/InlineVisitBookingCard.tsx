@@ -117,7 +117,7 @@ export const InlineVisitBookingCard: React.FC<InlineVisitBookingCardProps> = ({
                 type="button"
                 onClick={() => setSelectedSlot(slot.label)}
                 disabled={isBooking}
-                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-mono font-medium transition-all text-left flex items-center gap-1.5 disabled:opacity-50 ${
+                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-mono font-medium transition-all text-start flex items-center gap-1.5 disabled:opacity-50 ${
                   selectedSlot === slot.label
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-sm'
                     : 'bg-slate-900 hover:bg-slate-800 text-slate-400 border border-slate-800'

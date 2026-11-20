@@ -1,0 +1,35 @@
+# A second backend behind Traefik, for when one machine-sized container is not enough
+# or a restart must not take the API down. Opt-in:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.scale.yml up -d
+#
+# Safe to run alongside the first backend because:
+#   - background jobs (alerts, outreach, turn-taking, ingestion) run on one elected
+#     leader at a time (services/leaderElection.ts);
+#   - live updates fan out through the Socket.IO Redis adapter;
+#   - migrations take an advisory lock, so two boots never migrate at once;
+#   - uploads must be in object storage (STORAGE_BACKEND=s3 or r2): files on one
+#     container's disk are not visible to the other. The backend logs an error at
+#     start-up when a replica runs on local disk.
+#
+# Needs Docker Compose 2.24 or newer (for !reset). Traefik merges both containers
+# into its one "backend" service; sticky cookies keep a browser's Socket.IO polling
+# on the same container.
+services:
+  backend-2:
+    extends:
+      file: docker-compose.yml
+      service: backend
+    container_name: ag-dashboard-backend-2
+    ports: !reset []
+    environment:
+      BACKEND_REPLICA: "true"
+    labels:
+      - "traefik.http.services.backend.loadbalancer.sticky.cookie=true"
+      - "traefik.http.services.backend.loadbalancer.sticky.cookie.name=ag_lb"
+      - "traefik.http.services.backend.loadbalancer.sticky.cookie.secure=true"
+  backend:
+    labels:
+      - "traefik.http.services.backend.loadbalancer.sticky.cookie=true"
+      - "traefik.http.services.backend.loadbalancer.sticky.cookie.name=ag_lb"
+      - "traefik.http.services.backend.loadbalancer.sticky.cookie.secure=true"

@@ -114,6 +114,27 @@ class TelegramService {
         }
     }
 
+    /**
+     * Download a file a user sent the bot (photo, voice note, video), up to 16 MB. Bots can
+     * fetch files up to 20 MB; larger ones are left for the officer to ask about.
+     */
+    async downloadFile(fileId: string, tenantId?: string): Promise<Buffer | null> {
+        const token = await this.getBotTokenForTenant(tenantId);
+        if (!token) return null;
+        try {
+            const meta = await axios.get(`https://api.telegram.org/bot${token}/getFile`, { params: { file_id: fileId }, timeout: 10000 });
+            const filePath = meta.data?.ok ? String(meta.data.result?.file_path ?? '') : '';
+            if (!filePath) return null;
+            const file = await axios.get<ArrayBuffer>(`https://api.telegram.org/file/bot${token}/${filePath}`, {
+                responseType: 'arraybuffer', timeout: 20000, maxContentLength: 16 * 1024 * 1024, maxRedirects: 0,
+            });
+            return Buffer.from(file.data);
+        } catch (error) {
+            logger.warn('Could not download a Telegram file:', (error as Error).message);
+            return null;
+        }
+    }
+
     private async dispatchTelegramHttpRequest(
         botToken: string,
         chatId: string | number,

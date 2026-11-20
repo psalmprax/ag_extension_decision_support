@@ -122,17 +122,17 @@ const LanguageDropdown: React.FC<DropdownProps> = ({
   currentCode,
   onSelect,
 }) => (
-  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+  <div className="absolute end-0 mt-2 w-64 bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
     <div className="p-2 border-b border-gray-100 dark:border-white/10">
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+        <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
         <input
           type="text"
           autoFocus
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Search languages"
-          className="w-full pl-8 pr-2 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
+          className="w-full ps-8 pe-2 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
         />
       </div>
     </div>

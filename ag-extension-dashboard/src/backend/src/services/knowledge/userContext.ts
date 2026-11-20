@@ -22,6 +22,7 @@ interface FarmerContextRow {
     location_lat: string | number | null;
     location_lng: string | number | null;
     crops: string[] | null;
+    country: string | null;
 }
 
 interface MutableContextData {
@@ -56,6 +57,8 @@ function assignFarmerData(farmersResult: { rows: FarmerContextRow[] }, finalData
             finalData.finalCrop = allCrops[0];
         }
     }
+    // A farmer's own record says where they farm when their account has no country.
+    if (!finalData.finalCountry && firstFarmer.country) finalData.finalCountry = firstFarmer.country;
     if (firstFarmer.location) finalData.finalLocation = firstFarmer.location;
     if (firstFarmer.region) finalData.finalRegion = firstFarmer.region;
     if (firstFarmer.location_lat !== null && firstFarmer.location_lng !== null) {
@@ -72,7 +75,7 @@ async function fetchUserAndFarmerContext(userId: string, finalData: MutableConte
     try {
         const [userResult, farmersResult] = await Promise.all([
             query<UserRegionRow>('SELECT country, region FROM users WHERE id = $1', [userId]),
-            query<FarmerContextRow>(`SELECT location, region, location_lat, location_lng, crops FROM farmers WHERE user_id = $1 LIMIT 5`, [userId])
+            query<FarmerContextRow>(`SELECT location, region, location_lat, location_lng, crops, country FROM farmers WHERE user_id = $1 LIMIT 5`, [userId])
         ]);
 
         assignUserRegion(userResult, finalData);

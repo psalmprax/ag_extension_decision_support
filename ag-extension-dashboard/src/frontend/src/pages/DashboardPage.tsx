@@ -366,7 +366,7 @@ const DashboardMapSection: React.FC<{
 
         {!isMapExpanded && !showFallback && (
           <div
-            className={`absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 bg-slate-900/80 backdrop-blur-md p-2 sm:p-3 ${radiusClass} border border-white/10`}
+            className={`absolute bottom-2 sm:bottom-4 start-2 sm:start-4 end-2 sm:end-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 bg-slate-900/80 backdrop-blur-md p-2 sm:p-3 ${radiusClass} border border-white/10`}
           >
             <div className="flex items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-1.5 sm:gap-2">
@@ -429,7 +429,7 @@ const MapRetryOverlay: React.FC<{
   t: (key: string) => string;
 }> = ({ attempts, maxAttempts, t }) => (
   <div
-    className="absolute top-4 right-4 z-[1100] flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-2 rounded-xl border border-amber-400/30 shadow-lg"
+    className="absolute top-4 end-4 z-[1100] flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-2 rounded-xl border border-amber-400/30 shadow-lg"
     role="status"
     aria-live="polite"
   >

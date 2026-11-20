@@ -87,7 +87,7 @@ export function FieldToolsCard() {
                 <h3 className="text-sm font-black  ">
                     {t('fieldtools_title', { defaultValue: 'Field Calculators' })}
                 </h3>
-                <span className="text-xxs text-gray-400 ml-auto">
+                <span className="text-xxs text-gray-400 ms-auto">
                     {t('fieldtools_works_offline', { defaultValue: 'works offline' })}
                 </span>
             </div>

@@ -30,7 +30,7 @@ export function SMSRightPanel({
   const { t } = useLanguage();
 
   return (
-    <div className="w-full lg:w-1/4 space-y-4 overflow-y-auto pr-1">
+    <div className="w-full lg:w-1/4 space-y-4 overflow-y-auto pe-1">
       {/* DELIVERY & QUOTA CARD */}
       <div
         className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-5"

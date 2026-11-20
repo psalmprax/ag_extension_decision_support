@@ -76,14 +76,16 @@ test.describe('an extension officer works through every menu page', () => {
     await page.getByRole('button', { name: 'Add field' }).first().click();
     const dialog = page.getByRole('dialog', { name: /Add field/ });
     await dialog.getByLabel('Field name').fill(name);
-    await dialog.getByLabel('Area (hectares)').fill('0.8');
+    // Kenyan farmers measure land in acres, so the form asks in acres and stores hectares.
+    await dialog.getByLabel('Area (acres)').fill('2');
     await dialog.getByLabel('Soil type').fill('Loam');
     await dialog.getByRole('button', { name: 'Save field' }).click();
     await expect(page.getByText(name)).toBeVisible();
     await expect(statTile(page, 'Fields')).toContainText(String(before + 1));
 
-    const fields = await apiData<Array<{ name: string }>>(request, officer, fieldsPath);
-    expect(fields.map(f => f.name)).toContain(name);
+    const fields = await apiData<Array<{ name: string; areaHectares: number | string }>>(request, officer, fieldsPath);
+    const saved = fields.find(f => f.name === name);
+    expect(Number(saved?.areaHectares)).toBeCloseTo(0.81, 2);
     await page.reload();
     await openMenu(page, 'Crops & fields');
     await page.getByLabel('Farmer').selectOption({ label: `${JOURNEY.farmer.name} (Rift Valley)` });

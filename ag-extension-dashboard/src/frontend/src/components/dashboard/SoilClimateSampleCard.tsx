@@ -38,7 +38,6 @@ export const SoilClimateSampleCard: React.FC<{ cardClass: string }> = ({ cardCla
             <span>{t('ui_soil_climate_sample_card_topsoil_temp')}</span>
           </div>
           <div className="text-sm font-bold text-slate-900 dark:text-white">22.8 °C</div>
-          <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{t('ui_soil_climate_sample_card_nasa_power_data')}</div>
         </div>
       </div>
 

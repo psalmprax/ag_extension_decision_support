@@ -67,6 +67,7 @@ import organizationsRoutes from './routes/organizations';
 import recommendationReviewRoutes from './routes/recommendationReviews';
 import notificationRoutes from './routes/notifications';
 import smsRoutes from './routes/sms';
+import voiceLineRoutes from './routes/voiceLine';
 import billingRoutes from './routes/billing';
 import contextMenuRoutes from './routes/contextMenus';
 import { shareRouter, publicShareRouter } from './routes/shares';
@@ -91,6 +92,7 @@ import verificationFraudRoutes from './routes/verificationFraud';
 import activityTriageRoutes from './routes/activityTriage';
 import soilRoutes from './routes/soil';
 import pillarsRoutes from './routes/pillars';
+import countriesRoutes from './routes/countries';
 import callRoutes from './routes/call';
 import worldmonitorRoutes from './routes/worldmonitor';
 import offlineRoutes from './routes/offline';
@@ -564,7 +566,7 @@ app.use(limiter);
 
 // API route mounts — defined once, mounted under /api/v1/ (with i18n) and /api/ (legacy)
 type RouteMount = { path: string; router: express.Router };
-const routeMounts: RouteMount[] = [
+export const routeMounts: RouteMount[] = [
   { path: '/auth', router: authRoutes },
   { path: '/knowledge', router: knowledgeRoutes },
   { path: '/knowledge/sources', router: knowledgeSourcesRoutes },
@@ -593,6 +595,7 @@ const routeMounts: RouteMount[] = [
   { path: '/ai/reviews', router: recommendationReviewRoutes },
   { path: '/notifications', router: notificationRoutes },
   { path: '/sms', router: smsRoutes },
+  { path: '/voice-line', router: voiceLineRoutes },
   { path: '/billing', router: billingRoutes },
   { path: '/context-menus', router: contextMenuRoutes },
   { path: '/shares', router: shareRouter },
@@ -622,6 +625,7 @@ const routeMounts: RouteMount[] = [
   { path: '/account', router: accountRoutes },
   { path: '/account', router: accountSmsPinRoutes },
   { path: '/workflows', router: workflowsRoutes },
+  { path: '/countries', router: countriesRoutes },
 ];
 
 // Mount with i18n support (v1)

@@ -31,8 +31,11 @@ async function tenantOf(userId: string): Promise<string | null> {
 
 async function settingsFor(tenantId: string | null) {
   if (!tenantId) return resolveTurnTakingSettings(null);
-  const { rows } = await query<{ capabilities: unknown }>('SELECT capabilities FROM tenants WHERE id = $1', [tenantId]);
-  return resolveTurnTakingSettings(rows[0]?.capabilities ?? null);
+  const { rows } = await query<{ capabilities: unknown; time_zone: string | null; country: string | null }>(
+    'SELECT capabilities, time_zone, country FROM tenants WHERE id = $1',
+    [tenantId],
+  );
+  return resolveTurnTakingSettings(rows[0]?.capabilities ?? null, { timeZone: rows[0]?.time_zone, country: rows[0]?.country });
 }
 
 /** GET /chatbot/turn-taking — the rules that apply to the caller's organisation. */
@@ -60,16 +63,16 @@ router.put('/turn-taking', authorize(['admin']), validate({ body: putSchema }), 
     if (!tenantId) {
       return res.status(400).json({ success: false, error: 'Choose the organisation these settings are for.' });
     }
-    const { rows } = await query<{ capabilities: unknown }>(
+    const { rows } = await query<{ capabilities: unknown; time_zone: string | null; country: string | null }>(
       `UPDATE tenants
           SET capabilities = jsonb_set(COALESCE(capabilities, '{}'::jsonb), '{chatTurnTaking}', $2::jsonb),
               updated_at = NOW()
         WHERE id = $1
-        RETURNING capabilities`,
+        RETURNING capabilities, time_zone, country`,
       [tenantId, JSON.stringify(body.settings)],
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: 'Organisation not found' });
-    return res.json({ success: true, data: { tenantId, settings: resolveTurnTakingSettings(rows[0].capabilities) } });
+    return res.json({ success: true, data: { tenantId, settings: resolveTurnTakingSettings(rows[0].capabilities, { timeZone: rows[0].time_zone, country: rows[0].country }) } });
   } catch (error) {
     logger.error('Failed to save turn-taking settings:', error);
     return safeError(res, 500, 'Failed to save chat settings');

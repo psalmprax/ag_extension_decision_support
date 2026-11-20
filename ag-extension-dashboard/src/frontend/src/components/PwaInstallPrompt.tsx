@@ -107,7 +107,7 @@ export const PwaInstallPrompt: React.FC = () => {
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 50 }}
-        className="fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom))] left-3 right-auto max-w-[340px] sm:max-w-md md:bottom-6 md:left-6 md:right-auto z-40 pointer-events-auto"
+        className="fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom))] start-3 end-auto max-w-[340px] sm:max-w-md md:bottom-6 md:start-6 md:end-auto z-40 pointer-events-auto"
       >
         <div
           className={`p-4 bg-slate-900/95 dark:bg-slate-950/95 text-white border border-emerald-500/30 backdrop-blur-xl shadow-2xl shadow-emerald-950/50 ${radiusClass}`}

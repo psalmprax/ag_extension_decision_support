@@ -41,7 +41,7 @@ export function MCPToolsExecutionHistory({
                 </p>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-end">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 {new Date(execution.timestamp).toLocaleString()}
               </p>

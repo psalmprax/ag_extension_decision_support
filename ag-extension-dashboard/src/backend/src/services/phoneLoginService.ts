@@ -10,15 +10,16 @@ import { query } from '@/services/databaseService';
 import { smsService } from '@/services/smsService';
 import { smsCopy } from '@/services/sms/smsCopy';
 import type { LoginUserRow } from '@/routes/auth/loginCompletion';
+import { toE164 } from '@/services/country/phone';
 
 export const CODE_TTL_MINUTES = 5;
 export const CODE_MAX_ATTEMPTS = 5;
 const PER_PHONE_PER_15_MIN = 3;
 const PER_IP_PER_15_MIN = 10;
 
-export function normalisePhone(raw: string): string | null {
-    const phone = smsService.formatPhoneNumber(raw);
-    return /^\+[1-9]\d{7,14}$/.test(phone) ? phone : null;
+/** The number in E.164; a local number is read in the country the person picked. */
+export function normalisePhone(raw: string, country?: string | null): string | null {
+    return toE164(raw, country);
 }
 
 function hashCode(phone: string, code: string): string {

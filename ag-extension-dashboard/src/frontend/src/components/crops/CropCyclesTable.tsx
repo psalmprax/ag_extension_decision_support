@@ -108,23 +108,23 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
 
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
+            <table className="w-full text-start border-collapse text-sm">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-950/40 text-xs font-medium text-slate-500 dark:text-slate-400">
-                  <th className="p-4 pl-6">{t('ui_crop_cycles_table_sector_name')}</th>
+                  <th className="p-4 ps-6">{t('ui_crop_cycles_table_sector_name')}</th>
                   <th className="p-4">{t('ui_crop_cycles_table_crop_name')}</th>
                   <th className="p-4">{t('ui_crop_cycles_table_variety')}</th>
                   <th className="p-4">{t('ui_crop_cycles_table_growth_phase')}</th>
                   <th className="p-4">{t('ui_crop_cycles_table_planting_date')}</th>
                   <th className="p-4">{t('ui_crop_cycles_table_projected_harvest')}</th>
                   <th className="p-4">{t('ui_crop_cycles_table_yield_output')}</th>
-                  <th className="p-4 pr-6 text-right">{t('ui_crop_cycles_table_actions')}</th>
+                  <th className="p-4 pe-6 text-end">{t('ui_crop_cycles_table_actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {allCycles.map(({ field, cycle }) => (
                   <tr key={cycle.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors group">
-                    <td className="p-4 pl-6 font-medium text-slate-900 dark:text-slate-200">{field.name}</td>
+                    <td className="p-4 ps-6 font-medium text-slate-900 dark:text-slate-200">{field.name}</td>
                     <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{cycle.cropName}</td>
                     <td className="p-4 text-slate-600 dark:text-slate-400 font-mono text-xs">{cycle.variety || 'N/A'}</td>
                     <td className="p-4">
@@ -141,7 +141,7 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
                     </td>
                     <td className="p-4 text-slate-600 dark:text-slate-400">{formatHarvestDate(cycle)}</td>
                     <td className="p-4 font-mono font-medium tabular-nums text-emerald-600 dark:text-emerald-400">{formatYield(cycle.yieldKg)}</td>
-                    <td className="p-4 pr-6 text-right">
+                    <td className="p-4 pe-6 text-end">
                       <button
                         onClick={() => handleDeleteCycle(field.id, cycle.id)}
                         className="p-1.5 hover:bg-slate-200/60 dark:hover:bg-white/5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-colors"

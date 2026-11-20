@@ -17,7 +17,7 @@ export function DiagnosisPage() {
       aria-label="Crop Disease Diagnosis Clinic"
     >
       {/* ── Top Header Navigation Bar ── */}
-      <header className="sticky top-0 left-0 right-0 z-40 px-4 sm:px-6 h-16 bg-[#0d1a14] border-b border-white/[0.08] flex items-center justify-between">
+      <header className="sticky top-0 start-0 end-0 z-40 px-4 sm:px-6 h-16 bg-[#0d1a14] border-b border-white/[0.08] flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
             to="/"
@@ -29,7 +29,7 @@ export function DiagnosisPage() {
             <span className="sm:hidden">{t('common_back_to_home', { defaultValue: 'Back to home' })}</span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-2.5 pl-2 border-l border-white/10">
+          <div className="hidden md:flex items-center gap-2.5 ps-2 border-s border-white/10">
             <img src="/logo.png" alt="GPExts Logo" className="w-7 h-7 object-contain rounded-md" />
             <div>
               <span className="text-sm font-medium text-white block leading-none">

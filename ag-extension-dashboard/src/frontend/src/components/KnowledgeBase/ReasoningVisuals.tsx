@@ -166,11 +166,11 @@ const MediaAssetsSection = ({
                 <Maximize2 className="w-6 h-6" />
               </div>
             </div>
-            <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xxs font-black  ">
+            <div className="absolute top-3 start-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xxs font-black  ">
               <ImageIcon className="w-3 h-3" />
               {t('ui_reasoning_visuals_image')}
             </div>
-            <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xs font-black  ">
+            <div className="absolute bottom-3 start-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xs font-black  ">
               <CheckCircle2 className="w-2.5 h-2.5" />
               {t('ui_reasoning_visuals_verified_alfa_asset')}
             </div>
@@ -207,7 +207,7 @@ const MediaAssetsSection = ({
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
                   <Play className="w-12 h-12 text-white/80 group-hover:scale-110 transition-transform" />
                 </div>
-                <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xxs font-black  ">
+                <div className="absolute top-3 start-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xxs font-black  ">
                   <Play className="w-3 h-3" />
                   {t('ui_reasoning_visuals_external_video')}
                 </div>
@@ -215,13 +215,13 @@ const MediaAssetsSection = ({
                   href={vid.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="absolute bottom-3 right-3 p-3 bg-primary-600 rounded-xl text-white shadow-xl transform active:scale-95 transition-all"
+                  className="absolute bottom-3 end-3 p-3 bg-primary-600 rounded-xl text-white shadow-xl transform active:scale-95 transition-all"
                 >
                   <ExternalLink className="w-5 h-5" />
                 </a>
               </>
             )}
-            <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xs font-black pointer-events-none">
+            <div className="absolute bottom-3 start-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xs font-black pointer-events-none">
               <CheckCircle2 className="w-2.5 h-2.5" />
               {t('ui_reasoning_visuals_verified_source')}
             </div>
@@ -252,7 +252,7 @@ const AudioSynthesisSection = ({
   if (!audio) return null;
   return (
     <div className="p-8 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-xl text-white overflow-hidden relative group shadow-2xl shadow-primary-500/20">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:scale-110 transition-transform"></div>
+      <div className="absolute top-0 end-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -me-32 -mt-32 group-hover:scale-110 transition-transform"></div>
       <div className="relative flex flex-col md:flex-row items-center gap-8">
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -262,7 +262,7 @@ const AudioSynthesisSection = ({
         >
           <Zap className={`w-12 h-12 ${isPlaying ? 'animate-pulse fill-current' : 'fill-none'}`} />
         </motion.button>
-        <div className="flex-1 text-center md:text-left">
+        <div className="flex-1 text-center md:text-start">
           <h4 className="text-xxs font-black opacity-70 mb-2">
             {t('ui_reasoning_visuals_alfa_voice_synthesis')}
           </h4>
@@ -351,7 +351,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
           <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse shadow-[0_0_10px_var(--color-outline)]"></div>
         </div>
 
-        <div className="flex-1 w-full -ml-6">
+        <div className="flex-1 w-full -ms-6">
           <ResponsiveContainer width="100%" height="100%">
             {type === 'bar' ? (
               <BarChartRenderer data={chartData} />
@@ -451,7 +451,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
             onClick={() => setSelectedImage(null)}
           >
             <motion.button
-              className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+              className="absolute top-8 end-8 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
               onClick={() => setSelectedImage(null)}
             >
               <X className="w-8 h-8" />
@@ -480,7 +480,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
         (safeVisuals.images && safeVisuals.images.length > 0) ||
         (safeVisuals.videos && safeVisuals.videos.length > 0)) && (
         <div className="p-8 bg-primary-600 rounded-xl text-white overflow-hidden relative group shadow-2xl shadow-primary-500/20">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:scale-110 transition-transform"></div>
+          <div className="absolute top-0 end-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -me-32 -mt-32 group-hover:scale-110 transition-transform"></div>
           <div className="relative flex items-center gap-6">
             <div className="p-4 bg-white/20 backdrop-blur-md rounded-xl">
               <Zap className="w-10 h-10 fill-current" />

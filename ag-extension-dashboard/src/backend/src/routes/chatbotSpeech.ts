@@ -57,7 +57,7 @@ router.post('/text-to-speech', checkUsageLimit('speech'), async (req: Request, r
 
         const result = await synthesizeVoiceAdvisory({
             text,
-            language: language === 'sw' ? 'sw' : 'en',
+            language: typeof language === 'string' && /^[a-z]{2,3}(-[A-Za-z]{2,4})?$/.test(language) ? language : 'en',
         });
         if (!result.audioBase64) {
             return res.status(503).json({ success: false, error: 'Speech synthesis unavailable' });

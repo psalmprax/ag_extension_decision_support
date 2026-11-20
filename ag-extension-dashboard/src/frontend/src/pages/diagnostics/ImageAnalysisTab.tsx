@@ -235,7 +235,7 @@ export const AnalysisResultsHUD: React.FC<{
               {t('ui_image_analysis_tab_source')} {diagnosticSourceLabel(imageAnalysis.provenance)}
             </p>
           </div>
-          <div className="text-right">
+          <div className="text-end">
             <span className={`text-xl font-bold ${needsReview ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-400'} tabular-nums`}>
               {(imageAnalysis.confidence * 100).toFixed(1)}%
             </span>
@@ -253,7 +253,7 @@ export const AnalysisResultsHUD: React.FC<{
       {!analysisUnavailable && Boolean(imageAnalysis.nutrientDeficiencies?.length) && (
         <div className="space-y-2">
           <h4 className="text-xs font-medium text-slate-900 dark:text-white">{t('ui_image_analysis_tab_possible_nutrient_issues_unconfirmed')}</h4>
-          <ul className="list-disc pl-4 space-y-1 text-xs text-slate-700 dark:text-slate-300">
+          <ul className="list-disc ps-4 space-y-1 text-xs text-slate-700 dark:text-slate-300">
             {imageAnalysis.nutrientDeficiencies?.map((observation, index) => (
               <li key={index}>{observation}</li>
             ))}

@@ -155,7 +155,7 @@ const WorldMonitor: React.FC = () => {
               />
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: LAYER_COLORS[layer.key] }} aria-hidden="true" />
               <span className="flex-1">{layer.label}</span>
-              <span className="tabular-nums text-xs text-slate-500 dark:text-white/50 text-right">
+              <span className="tabular-nums text-xs text-slate-500 dark:text-white/50 text-end">
                 {layer.count === null ? t('map_not_connected', { defaultValue: 'not connected' }) : layer.count}
               </span>
             </label>

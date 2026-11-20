@@ -53,7 +53,7 @@ export const DashboardToolbar: React.FC<{ farmers: Farmer[] }> = ({ farmers }) =
         </button>
       )}
       {zones.length > 1 && (
-        <label className="flex items-center gap-2 ml-auto text-sm text-slate-700 dark:text-white/75">
+        <label className="flex items-center gap-2 ms-auto text-sm text-slate-700 dark:text-white/75">
           <MapPinned className="w-4 h-4" aria-hidden="true" />
           <span>{t('dash_zone', 'Zone')}</span>
           <select

@@ -75,7 +75,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
         className="max-w-7xl w-full min-w-0 mx-auto px-4 sm:px-6 grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-14 items-center relative z-10"
       >
         {/* Left column — Farmer-Friendly Value Proposition */}
-        <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-6 sm:space-y-8 text-center sm:text-left mx-auto sm:mx-0 min-w-0 max-w-full">
+        <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-6 sm:space-y-8 text-center sm:text-start mx-auto sm:mx-0 min-w-0 max-w-full">
 
           {/* Main Headline */}
           <motion.h1
@@ -132,7 +132,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="p-3.5 rounded-md bg-white/[0.04] border border-white/[0.1] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left max-w-xl"
+                className="p-3.5 rounded-md bg-white/[0.04] border border-white/[0.1] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-start max-w-xl"
               >
                 <div className="flex items-center gap-2.5 text-sm text-[#e6eee9]">
                   <span>
@@ -158,7 +158,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
           {/* Secondary Institutional Bridge for Officers & Ministries */}
           <motion.div
             variants={fadeUp}
-            className="pt-5 border-t border-white/[0.08] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-xl text-left"
+            className="pt-5 border-t border-white/[0.08] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-xl text-start"
           >
             <div className="space-y-0.5 min-w-0">
               <span className="text-sm font-medium text-white flex items-center gap-1.5">
@@ -188,7 +188,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             </div>
 
             {/* Smartphone Display */}
-            <div className="rounded-[2.2rem] overflow-hidden bg-[#0d1a14] border border-white/10 relative flex flex-col text-left">
+            <div className="rounded-[2.2rem] overflow-hidden bg-[#0d1a14] border border-white/10 relative flex flex-col text-start">
               {/* Phone Status Bar */}
               <div className="flex justify-between items-center px-5 pt-2 pb-1.5 text-[10px] text-white/60 font-mono bg-[#0d1a14]/90 border-b border-white/5">
                 <span>09:41</span>
@@ -228,14 +228,14 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 {/* Animated laser scanning line */}
 
                 {/* Diagnostic Bounding Reticle in Plain Language */}
-                <div className="absolute top-8 left-10 sm:left-14 w-44 h-28 border-2 border-emerald-400/90 rounded-xl bg-emerald-500/10 flex flex-col justify-between p-2">
+                <div className="absolute top-8 start-10 sm:start-14 w-44 h-28 border-2 border-emerald-400/90 rounded-xl bg-emerald-500/10 flex flex-col justify-between p-2">
                   <div className="flex justify-between items-start">
                     <span className="text-[9px] font-sans font-bold text-emerald-300 bg-[#0d1a14]/85 px-2 py-0.5 rounded border border-emerald-400/30 flex items-center gap-1">
                       <span>{t('ui_hero_affected_leaf_area')}</span>
                     </span>
                     <span />
                   </div>
-                  <div className="bg-[#0d1a14]/90 backdrop-blur-md rounded-lg p-1.5 border border-emerald-400/40 text-left">
+                  <div className="bg-[#0d1a14]/90 backdrop-blur-md rounded-lg p-1.5 border border-emerald-400/40 text-start">
                     <div className="text-[10px] font-bold text-white flex items-center gap-1">
                       <span>{t('ui_hero_example_leaf_observation')}</span>
                       <CheckCircle2 className="w-3 h-3 text-emerald-400" />
@@ -245,7 +245,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 </div>
 
                 {/* Floating Location Tag in Plain Language */}
-                <div className="absolute bottom-2.5 left-3 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-[9px] font-medium text-white/90 border border-white/10">
+                <div className="absolute bottom-2.5 start-3 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-[9px] font-medium text-white/90 border border-white/10">
                   {t('ui_hero_illustrative_sample_no_photo_was_upl')}
                 </div>
               </div>
@@ -335,7 +335,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             initial={{ opacity: 0, scale: 0.9, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.5 }}
-            className="hidden sm:flex absolute -bottom-4 -left-6 z-30 p-2.5 rounded-2xl bg-white/[0.03] border border-emerald-500/30 backdrop-blur-xl shadow-2xl items-center gap-3 max-w-[270px]"
+            className="hidden sm:flex absolute -bottom-4 -start-6 z-30 p-2.5 rounded-2xl bg-white/[0.03] border border-emerald-500/30 backdrop-blur-xl shadow-2xl items-center gap-3 max-w-[270px]"
           >
             <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-emerald-400/30">
               <img
@@ -346,7 +346,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 className="w-full h-full object-cover object-top"
               />
             </div>
-            <div className="text-left min-w-0">
+            <div className="text-start min-w-0">
               <div className="flex items-center gap-1 text-[11px] font-bold text-white">
                 <span className="truncate">{t('ui_hero_amina_m')}</span>
               </div>
@@ -356,7 +356,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
       </motion.div>
 
       {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0d1a14] via-[#0d1a14]/60 to-transparent pointer-events-none z-20" />
+      <div className="absolute bottom-0 start-0 end-0 h-24 bg-gradient-to-t from-[#0d1a14] via-[#0d1a14]/60 to-transparent pointer-events-none z-20" />
 
     </section>
   );

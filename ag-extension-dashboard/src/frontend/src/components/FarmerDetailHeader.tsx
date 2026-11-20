@@ -57,7 +57,7 @@ export const FarmerDetailHeader: React.FC<FarmerDetailHeaderProps> = ({
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),rgba(255,255,255,0))]" />
 
       {/* Top Action Bar */}
-      <div className="absolute top-4 right-4 flex items-center gap-1.5 z-20">
+      <div className="absolute top-4 end-4 flex items-center gap-1.5 z-20">
         <button
           onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
           className={`p-2 rounded-[4px] text-white transition-all backdrop-blur-md ${
@@ -103,7 +103,7 @@ export const FarmerDetailHeader: React.FC<FarmerDetailHeaderProps> = ({
       </div>
 
       {/* Main Profile Info */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 pt-12 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent">
+      <div className="absolute bottom-0 start-0 end-0 p-6 pt-12 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent">
         <div className="flex items-end gap-5">
           {/* Avatar Box */}
           <div className="w-20 h-20 rounded-[4px] p-0.5 bg-slate-800 border border-white/10 shrink-0">

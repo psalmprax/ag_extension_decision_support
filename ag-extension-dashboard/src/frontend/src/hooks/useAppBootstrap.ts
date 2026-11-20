@@ -69,11 +69,11 @@ export const useAppBootstrap = (storeUser: unknown, setActiveTab: (tab: string) 
           }
         },
         () => {
-          setWeatherLocation((storeUser as { region?: string })?.region || 'Kenya');
+          setWeatherLocation((storeUser as { region?: string; country?: string | null } | null)?.region || (storeUser as { country?: string | null } | null)?.country || '');
         }
       );
     } else {
-      setWeatherLocation((storeUser as { region?: string })?.region || 'Kenya');
+      setWeatherLocation((storeUser as { region?: string; country?: string | null } | null)?.region || (storeUser as { country?: string | null } | null)?.country || '');
     }
   }, [storeUser]);
 

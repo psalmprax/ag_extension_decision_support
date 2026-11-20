@@ -48,7 +48,7 @@ export async function messagingKnowledgeReply(question: string): Promise<string>
         const result = await withAdvisoryTimeout(() => query<Article>(
             `SELECT id, title, content, tags FROM knowledge_articles
              WHERE id = ANY($1::uuid[])
-               AND NOT ('unverified_scrape' = ANY(COALESCE(tags, ARRAY[]::text[])))
+               AND NOT (COALESCE(tags, ARRAY[]::text[]) && ARRAY['unverified_scrape', 'pending_review']::text[])
                AND to_tsvector('english', title || ' ' || content) @@ websearch_to_tsquery('english', $2)
              ORDER BY ts_rank_cd(to_tsvector('english', title || ' ' || content), websearch_to_tsquery('english', $2)) DESC
              LIMIT 100`,
@@ -56,7 +56,7 @@ export async function messagingKnowledgeReply(question: string): Promise<string>
         ), 4000, 'Public messaging knowledge search');
         for (const article of result.rows) {
             const hint = hints.find(h => h.articleId === article.id.toLowerCase());
-            if (!hint || article.tags?.includes('unverified_scrape')) continue;
+            if (!hint || article.tags?.includes('unverified_scrape') || article.tags?.includes('pending_review')) continue;
             const digest = createHash('sha256').update(JSON.stringify([article.title, article.content])).digest('hex');
             if (digest !== hint.sha256 || !agronomicSafetyGuard.scanGeneratedAdvice(hint.hint).safe ||
                 /\b(?:spray|pesticide|insecticide|fungicide|herbicide|fertili[sz]er|dose|dosage)\b/i.test(hint.hint)) continue;

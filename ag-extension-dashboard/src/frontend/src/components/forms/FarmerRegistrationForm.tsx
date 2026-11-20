@@ -29,6 +29,7 @@ import { COMMON_CROPS, ONBOARDING_PRESETS } from './farmerFormPresets';
 import { AssignOfficerField } from './AssignOfficerField';
 import { StaffRegionNote } from './StaffRegionNote';
 import { getApiErrorMessage } from '@/lib/apiError';
+import { useUnits } from '@/hooks/useUnits';
 
 // Coordinates are optional: a blank number input must mean "not given", not NaN
 // (which failed validation silently and blocked registration without GPS).
@@ -47,6 +48,7 @@ export const FarmerRegistrationForm: React.FC = () => {
     : user?.role === 'extension_officer' && user.region ? user.region : null;
   const [assignedOfficerId, setAssignedOfficerId] = useState('');
   const { t } = useLanguage();
+  const units = useUnits();
   const { isDemo } = useDemoMode();
 
   const [selectedCrops, setSelectedCrops] = useState<string[]>(['Maize']);
@@ -147,7 +149,7 @@ export const FarmerRegistrationForm: React.FC = () => {
         village: data.location,
         assignedOfficerId: canChooseOfficer && assignedOfficerId ? assignedOfficerId : undefined,
         crops: selectedCrops.length > 0 ? selectedCrops : ['Maize'],
-        farmSize: data.farmSize || 0,
+        farmSize: units.toHectares(data.farmSize || 0), // typed in the person's unit; stored in hectares
         locationLat: data.latitude,
         locationLng: data.longitude,
         vitalScore: data.vitalScore,
@@ -211,7 +213,6 @@ export const FarmerRegistrationForm: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* ── Top Bento Banner: Fast-Fill Presets & Node Telemetry ── */}
       <div className="backdrop-blur-xl bg-slate-900 border border-white/10 rounded-xl p-6 shadow-sm relative overflow-hidden">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -253,7 +254,6 @@ export const FarmerRegistrationForm: React.FC = () => {
         {t('ui_farmer_registration_form_farmers_registered_in_your_assigned')}
       </InlinePrompt>
 
-      {/* ── Main Bento Grid Form ── */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Card 1: Identity & Multi-Channel Contact Profile */}
@@ -309,11 +309,11 @@ export const FarmerRegistrationForm: React.FC = () => {
                 </div>
               </div>
               <div className="relative">
-                <Phone className="w-4 h-4 text-white/40 absolute left-4 top-1/2 -translate-y-1/2" />
+                <Phone className="w-4 h-4 text-white/40 absolute start-4 top-1/2 -translate-y-1/2" />
                 <input
                   {...register('phone')}
                   placeholder="+254 712 345 678"
-                  className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm font-mono tabular-nums"
+                  className="w-full ps-11 pe-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm font-mono tabular-nums"
                 />
               </div>
               {errors.phone && (
@@ -329,11 +329,11 @@ export const FarmerRegistrationForm: React.FC = () => {
                   {t('farmer_register_location') || 'District / Region'} *
                 </label>
                 <div className="relative">
-                  <MapPin className="w-4 h-4 text-white/40 absolute left-4 top-1/2 -translate-y-1/2" />
+                  <MapPin className="w-4 h-4 text-white/40 absolute start-4 top-1/2 -translate-y-1/2" />
                   <input
                     {...register('location')}
                     placeholder="e.g. Nakuru, Rongai"
-                    className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm"
+                    className="w-full ps-11 pe-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm"
                   />
                 </div>
                 {errors.location && (
@@ -348,10 +348,10 @@ export const FarmerRegistrationForm: React.FC = () => {
                   {t('farmers_language') || 'Advisory Language'}
                 </label>
                 <div className="relative">
-                  <Globe className="w-4 h-4 text-white/40 absolute left-4 top-1/2 -translate-y-1/2" />
+                  <Globe className="w-4 h-4 text-white/40 absolute start-4 top-1/2 -translate-y-1/2" />
                   <select
                     {...register('languagePreference')}
-                    className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-white/10 bg-slate-900 text-white focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm"
+                    className="w-full ps-11 pe-4 py-2.5 rounded-lg border border-white/10 bg-slate-900 text-white focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm"
                   >
                     <option value="en">{t('ui_farmer_registration_form_english_en')}</option>
                     <option value="sw">{t('ui_farmer_registration_form_kiswahili_sw')}</option>
@@ -443,22 +443,22 @@ export const FarmerRegistrationForm: React.FC = () => {
                       onClick={() => setValue('farmSize', parseFloat(sz), { shouldValidate: true })}
                       className="px-2 py-0.5 rounded-md text-xxs font-mono tabular-nums bg-white/[0.04] hover:bg-emerald-500/15 border border-white/5 text-white/60 hover:text-emerald-300 transition-colors"
                     >
-                      {sz} ha
+                      {sz} {units.areaUnit === 'ha' ? 'ha' : 'acres'}
                     </button>
                   ))}
                 </div>
               </div>
               <div className="relative">
-                <Maximize className="w-4 h-4 text-white/40 absolute left-4 top-1/2 -translate-y-1/2" />
+                <Maximize className="w-4 h-4 text-white/40 absolute start-4 top-1/2 -translate-y-1/2" />
                 <input
                   type="number"
                   step="0.1"
                   {...register('farmSize', { valueAsNumber: true })}
                   placeholder="2.5"
-                  className="w-full pl-11 pr-16 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm font-mono tabular-nums"
+                  className="w-full ps-11 pe-16 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm font-mono tabular-nums"
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-white/40">
-                  {t('map_hectares')}
+                <span className="absolute end-4 top-1/2 -translate-y-1/2 text-xs font-medium text-white/40">
+                  {units.areaUnit === 'ha' ? t('map_hectares') : t('map_acres', { defaultValue: 'acres' })}
                 </span>
               </div>
               {errors.farmSize && (

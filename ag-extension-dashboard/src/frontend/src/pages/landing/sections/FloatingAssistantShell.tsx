@@ -61,7 +61,7 @@ export function FloatingAssistantShell({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: reducedMotion ? 0 : 12 }}
             transition={{ duration: reducedMotion ? 0 : 0.18 }}
-            className={`fixed inset-x-3 top-[calc(4.5rem+env(safe-area-inset-top))] bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-[60] flex flex-col overflow-hidden rounded-lg border border-white/15 bg-[#0d1a14] text-white shadow-2xl shadow-black/50 sm:top-auto sm:inset-x-auto sm:right-6 sm:bottom-[calc(6rem+env(safe-area-inset-bottom))] sm:w-[420px] sm:h-[min(640px,calc(100dvh-128px-env(safe-area-inset-bottom)))] ${className}`}
+            className={`fixed inset-x-3 top-[calc(4.5rem+env(safe-area-inset-top))] bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-[60] flex flex-col overflow-hidden rounded-lg border border-white/15 bg-[#0d1a14] text-white shadow-2xl shadow-black/50 sm:top-auto sm:inset-x-auto sm:end-6 sm:bottom-[calc(6rem+env(safe-area-inset-bottom))] sm:w-[420px] sm:h-[min(640px,calc(100dvh-128px-env(safe-area-inset-bottom)))] ${className}`}
           >
             <header className="flex shrink-0 items-center gap-3 border-b border-white/10 bg-white/[0.03] px-4 py-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-300">
@@ -94,7 +94,7 @@ export function FloatingAssistantShell({
         aria-controls={panelId}
         aria-haspopup="dialog"
         title={isOpen ? 'Minimize assistant' : 'Ask Agronomic Copilot'}
-        className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-[60] flex h-14 items-center justify-center gap-2.5 rounded-full border border-emerald-300/30 bg-emerald-600 px-4 text-white shadow-lg shadow-black/30 transition-colors hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 sm:right-6 sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]"
+        className="fixed end-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-[60] flex h-14 items-center justify-center gap-2.5 rounded-full border border-emerald-300/30 bg-emerald-600 px-4 text-white shadow-lg shadow-black/30 transition-colors hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 sm:end-6 sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]"
       >
         <MessageCircle className="h-6 w-6" aria-hidden="true" />
         <span className="hidden text-sm font-semibold sm:inline">{t('ui_floating_assistant_shell_ask_copilot')}</span>

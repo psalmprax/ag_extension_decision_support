@@ -143,11 +143,11 @@ const PriceSummaryGrid: React.FC<{ rows: PriceChartRow[] }> = ({ rows }) => (
         transition={{ delay: i * 0.06 }}
         className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 hover:border-primary-500/20 transition-colors"
       >
-        <div className="min-w-0 pr-2">
+        <div className="min-w-0 pe-2">
           <p className="text-xs font-medium text-slate-900 dark:text-white truncate">{row.crop}</p>
           <p className="text-xxs text-slate-400 dark:text-white/30 font-mono mt-0.5">{SOURCE_LABELS[row.source] || row.source}</p>
         </div>
-        <div className="text-right shrink-0">
+        <div className="text-end shrink-0">
           <p className="text-sm font-semibold font-mono tabular-nums text-slate-900 dark:text-white">{row.formattedPrice}</p>
           <p className={`text-xxs font-medium font-mono tabular-nums ${row.trendPct >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
             {row.trendPct >= 0 ? '+' : ''}{row.trendPct.toFixed(1)}%

@@ -11,11 +11,6 @@ import {
   evaluateParametricInsuranceClaim,
   type ParametricInsurancePolicy,
 } from '../services/agriCreditInsuranceService';
-import {
-  getTenantBySlug,
-  buildTenantScopedQueryFilter,
-  validateTenantAdvisoryCompliance,
-} from '../services/multiTenantFederationService';
 
 jest.mock('../utils/logger', () => ({
   logger: {
@@ -31,7 +26,7 @@ jest.mock('../services/databaseService', () => ({
   query: jest.fn().mockResolvedValue({ rows: [] }),
 }));
 
-describe('Expanded Platform Capabilities (Satellite NDVI, Credit Score, Multi-Tenancy)', () => {
+describe('Expanded Platform Capabilities (Satellite NDVI, Credit Score)', () => {
   describe('Satellite Remote Sensing & Multispectral NDVI Engine', () => {
     it('calculates NDVI correctly for healthy and stressed vegetation', () => {
       // Healthy crop: high NIR (0.7), low Red (0.1) -> NDVI = (0.7 - 0.1) / (0.7 + 0.1) = 0.6 / 0.8 = 0.75
@@ -134,35 +129,4 @@ describe('Expanded Platform Capabilities (Satellite NDVI, Credit Score, Multi-Te
     });
   });
 
-  describe('Multi-Tenant Agribusiness Federation & Rule Compliance', () => {
-    it('finds tenant configuration by slug', async () => {
-      const tenant = await getTenantBySlug('eagf');
-      expect(tenant).not.toBeNull();
-      expect(tenant?.name).toContain('East Africa Grain');
-      expect(tenant?.branding.primaryColorHex).toBe('#10B981');
-    });
-
-    it('builds tenant scoped SQL query filter', () => {
-      const filter = buildTenantScopedQueryFilter('tenant-123');
-      expect(filter.clause).toBe('organization_id = $1');
-      expect(filter.param).toBe('tenant-123');
-    });
-
-    it('validates custom tenant advisory restrictions against banned chemicals', async () => {
-      const compliant = await validateTenantAdvisoryCompliance('tenant-eagf-01', 'Maize', ['Azadirachtin']);
-      expect(compliant.isCompliant).toBe(true);
-      expect(compliant.tenantKnown).toBe(true);
-
-      const nonCompliant = await validateTenantAdvisoryCompliance('tenant-eagf-01', 'Maize', ['Carbofuran']);
-      expect(nonCompliant.isCompliant).toBe(false);
-      expect(nonCompliant.violatedRestrictions).toContain('Carbofuran');
-    });
-
-    it('fails closed for an unknown tenant instead of passing the banned-chemical check', async () => {
-      const unknown = await validateTenantAdvisoryCompliance('tenant-does-not-exist', 'Maize', ['Carbofuran']);
-      expect(unknown.tenantKnown).toBe(false);
-      expect(unknown.isCompliant).toBe(false);
-      expect(unknown.reason).toMatch(/Unknown tenant/i);
-    });
-  });
 });

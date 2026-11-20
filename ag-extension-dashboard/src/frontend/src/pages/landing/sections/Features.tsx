@@ -48,11 +48,11 @@ export function Features() {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#0d1a14]/80 backdrop-blur-md border border-amber-500/30 text-amber-300 text-xxs font-medium">
+                  <div className="absolute top-4 start-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#0d1a14]/80 backdrop-blur-md border border-amber-500/30 text-amber-300 text-xxs font-medium">
                     <MessageSquare className="w-3 h-3 text-amber-400" />
                     {t('ui_features_direct_farmer_advisory')}
                   </div>
-                  <div className="absolute bottom-3 left-4 right-4">
+                  <div className="absolute bottom-3 start-4 end-4">
                     <span className="text-xxs text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-md">
                       {t('ui_features_zero_smartphone_required')}
                     </span>
@@ -104,11 +104,11 @@ export function Features() {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#0d1a14]/80 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-xxs font-medium">
+                  <div className="absolute top-4 start-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#0d1a14]/80 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-xxs font-medium">
                     <Smartphone className="w-3 h-3 text-emerald-400" />
                     {t('ui_features_field_ready_mobile_pwa')}
                   </div>
-                  <div className="absolute bottom-3 left-4 right-4">
+                  <div className="absolute bottom-3 start-4 end-4">
                     <span className="text-xxs text-emerald-300 bg-emerald-500/30 border border-emerald-400/40 px-2 py-0.5 rounded-md font-bold">
                       {t('ui_features_selected_offline_workflows')}
                     </span>
@@ -160,11 +160,11 @@ export function Features() {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#0d1a14]/80 backdrop-blur-md border border-cyan-500/30 text-cyan-300 text-xxs font-medium">
+                  <div className="absolute top-4 start-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#0d1a14]/80 backdrop-blur-md border border-cyan-500/30 text-cyan-300 text-xxs font-medium">
                     <BarChart3 className="w-3 h-3 text-cyan-400" />
                     {t('ui_features_macro_yield_supply_intelligence')}
                   </div>
-                  <div className="absolute bottom-3 left-4 right-4">
+                  <div className="absolute bottom-3 start-4 end-4">
                     <span className="text-xxs text-cyan-300 bg-cyan-500/20 border border-cyan-500/30 px-2 py-0.5 rounded-md">
                       {t('ui_features_enterprise_oversight')}
                     </span>

@@ -3,6 +3,7 @@ import { OfflineMapsSection } from '@/components/settings/OfflineMapsSection';
 import { NotificationPreferencesSection } from '@/components/settings/NotificationPreferencesSection';
 import { OrganizationSection } from '@/components/settings/OrganizationSection';
 import { SmsCommandsSection } from '@/components/settings/SmsCommandsSection';
+import { CountryTimeSection } from '@/components/settings/CountryTimeSection';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { Map } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -118,6 +119,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                   </h3>
                   <OfflineMapsSection />
                 </div>
+                <CountryTimeSection />
+
                 <NotificationPreferencesSection {...notifications} />
 
                 <OrganizationSection active={isOpen} />
@@ -190,7 +193,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                         'All local cache, session storage, and service worker caches cleared'
                       );
                     }}
-                    className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-start hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   >
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {t('settings_clear_cache') || 'Clear Local Cache'}
@@ -198,7 +201,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                   </button>
                   <button
                     onClick={() => void notifications.reset()}
-                    className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-start hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   >
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {t('ui_settings_panel_reset_alert_settings')}

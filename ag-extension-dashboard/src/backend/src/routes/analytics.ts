@@ -72,6 +72,8 @@ function tenantPredicate(tenantId: string | null, alias: string): string {
 interface UserScope {
     isOfficer: boolean;
     isManager: boolean;
+    /** A farmer's own user id: they see only their own farm in any count. */
+    farmerUserId?: string | null;
     officerId: string | null;
     managerRegion: string | null;
     tenantId: string | null;
@@ -83,6 +85,12 @@ function tenantFilter(user: UserScope, alias: string): string {
 
 function buildScopeFilter(user: UserScope, column = 'assigned_officer_id', alias = 'f'): { whereClause: string; params: unknown[] } {
     const tenantClause = tenantFilter(user, alias);
+    if (user.farmerUserId) {
+        const own = alias === 'f'
+            ? 'AND f.user_id = $1'
+            : `AND EXISTS (SELECT 1 FROM farmers own_f WHERE own_f.id = ${alias}.farmer_id AND own_f.user_id = $1)`;
+        return { whereClause: `${own}${tenantClause}`, params: [user.farmerUserId] };
+    }
     if (user.isOfficer) {
         return { whereClause: `AND ${alias}.${column} = $1${tenantClause}`, params: [user.officerId] };
     }
@@ -97,6 +105,7 @@ function buildScopeFilter(user: UserScope, column = 'assigned_officer_id', alias
 
 function buildCacheKey(user: UserScope): string {
     const tenant = `live-v2:${user.tenantId || 'legacy'}`;
+    if (user.farmerUserId) return `analytics:dashboard:${tenant}:farmer:${user.farmerUserId}`;
     if (user.isOfficer) return `analytics:dashboard:${tenant}:${user.officerId}`;
     if (user.isManager) return `analytics:dashboard:${tenant}:region:${user.managerRegion || 'unknown'}`;
     return `analytics:dashboard:${tenant}:global`;
@@ -196,6 +205,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             isOfficer: role === 'extension_officer',
             isManager: role === 'regional_manager',
             officerId: role === 'extension_officer' ? String(userId) : null,
+            farmerUserId: role === 'farmer' ? String(userId) : null,
             managerRegion: null,
             tenantId,
         };

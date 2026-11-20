@@ -68,7 +68,7 @@ interface ConstellationProps {
  */
 export function GlobalConstellationVisualization({ nodes }: ConstellationProps) {
   return (
-    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[540px] h-[540px] opacity-[0.08] pointer-events-none hidden xl:block">
+    <div className="absolute end-0 top-1/2 -translate-y-1/2 w-[540px] h-[540px] opacity-[0.08] pointer-events-none hidden xl:block">
       <svg viewBox="0 0 100 100" className="w-full h-full" aria-hidden="true">
         <ellipse
           cx="50"

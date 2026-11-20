@@ -196,6 +196,8 @@ describe('Portfolio Route — Row type correctness (snake_case → camelCase DTO
     });
 
     it('GET /portfolio/farmers/:id returns FarmerDetailDTO with camelCase fields', async () => {
+        // The access rule's check that the caller may see this farmer, then the detail row.
+        mockQuery.mockResolvedValueOnce({ rows: [{ visible: 1 }], rowCount: 1 });
         mockQuery.mockResolvedValueOnce({ rows: [farmerDetailRow], rowCount: 1 });
 
         const response = await request(app)

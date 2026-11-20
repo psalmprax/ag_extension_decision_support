@@ -23,7 +23,8 @@ describe('Quarantine review (parole path for grounding quarantine)', () => {
     mockQuery.mockResolvedValueOnce({ rows: [{ id: 'd1', title: 't', source: 's', sourceUrl: null, updatedAt: 'now' }] });
     const docs = await listQuarantinedDocuments();
     expect(docs).toHaveLength(1);
-    expect(mockQuery.mock.calls[0][0]).toContain("'unverified_scrape' = ANY(tags)");
+    // Scraped extracts and officers' uploads waiting for review.
+    expect(mockQuery.mock.calls[0][0]).toContain("tags && ARRAY['unverified_scrape', 'pending_review']::text[]");
     expect(mockQuery.mock.calls[0][1]).toEqual([50]);
   });
 
@@ -31,7 +32,7 @@ describe('Quarantine review (parole path for grounding quarantine)', () => {
     mockQuery.mockResolvedValueOnce({ rowCount: 1 });
     const result = await reviewQuarantinedDocument('doc-1', 'approve', 'admin-1');
     expect(result).toEqual({ cleared: true, deleted: false });
-    expect(mockQuery.mock.calls[0][0]).toContain("array_remove(tags, 'unverified_scrape')");
+    expect(mockQuery.mock.calls[0][0]).toContain("array_remove(array_remove(tags, 'unverified_scrape'), 'pending_review')");
     expect(mockQuery.mock.calls[0][1]).toEqual(['doc-1']);
   });
 

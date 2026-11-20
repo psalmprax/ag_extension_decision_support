@@ -9,6 +9,7 @@ import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 import { UUID_REGEX } from '@/utils/uuid';
 import { demoWhere, linkedDemoSql } from '@/services/demoScope';
+import { canSeeFarmer, rowsOfVisibleFarmersSql, visibleFarmerIds } from '@/services/access/farmerScope';
 
 const router = Router();
 
@@ -24,6 +25,7 @@ router.use((req: Request, res: Response, next) => {
 interface FieldUser {
     userId?: string;
     role?: string;
+    isDemo?: boolean;
 }
 
 async function checkFieldCreationAccess(
@@ -48,11 +50,9 @@ async function checkFieldCreationAccess(
             return { status: 403, error: 'Access denied: farmer not assigned to officer' };
         }
     } else if (user?.role === 'admin' || user?.role === 'regional_manager') {
-        const farmerExists = await prisma.farmer.findUnique({
-            where: { id: farmerId },
-            select: { id: true },
-        });
-        if (!farmerExists) {
+        // A manager only adds fields for farmers in their region; an admin for anyone.
+        const visible = user.userId && (await canSeeFarmer({ userId: user.userId, role: user.role }, farmerId));
+        if (!visible) {
             return { status: 404, error: 'Farmer not found' };
         }
     } else {
@@ -67,36 +67,17 @@ function parseCropCycleDate(camel?: string, snake?: string): Date | null {
 }
 
 async function buildFieldListWhere(
-    prisma: ReturnType<typeof getPrisma>,
     user: FieldUser | undefined,
     farmerIdQuery: unknown
 ): Promise<Prisma.FieldWhereInput> {
     // Demo farmers' fields are only for the demo session.
     const where: Prisma.FieldWhereInput = { isActive: true, farmer: demoWhere(user) };
-    const farmerId = farmerIdQuery as string | undefined;
-
-    if (user?.role === 'farmer') {
-        const farmer = await prisma.farmer.findFirst({ where: { userId: user.userId } });
-        if (!farmer) return where; // 403 handled in caller
-        where.farmerId = farmer.id;
-        return where;
-    }
-
-    if (user?.role === 'extension_officer') {
-        const assignedIds = (await prisma.farmer.findMany({
-            where: { assignedOfficerId: user.userId },
-            select: { id: true },
-        })).map(f => f.id);
-        if (farmerId) {
-            where.farmerId = farmerId;
-        } else {
-            where.farmerId = { in: assignedIds };
-        }
-        return where;
-    }
-
-    // admin / regional_manager — no scope
-    if (farmerId) where.farmerId = farmerId;
+    const farmerId = typeof farmerIdQuery === 'string' ? farmerIdQuery : undefined;
+    if (!user?.userId || !user.role) return { ...where, farmerId: { in: [] } };
+    // Only the fields of farmers this person may see (the shared access rule).
+    const visible = await visibleFarmerIds({ userId: user.userId, role: user.role, isDemo: user.isDemo });
+    if (farmerId) where.farmerId = visible === null || visible.includes(farmerId) ? farmerId : { in: [] };
+    else if (visible !== null) where.farmerId = { in: visible };
     return where;
 }
 
@@ -139,7 +120,7 @@ router.get('/', async (req: Request, res: Response) => {
             }
         }
 
-        const where = await buildFieldListWhere(prisma, user, farmerId);
+        const where = await buildFieldListWhere(user, farmerId);
 
         const [fields, total] = await Promise.all([
             prisma.field.findMany({
@@ -177,11 +158,8 @@ router.get('/:id', async (req: Request, res: Response) => {
         if (!field) {
             return res.status(404).json({ success: false, error: 'Field not found' });
         }
-        // Access check: farmer sees own, officer sees assigned, admin/manager see all
-        if (user?.role === 'farmer' && field.farmer.userId !== user.userId) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
-        if (user?.role === 'extension_officer' && field.farmer.assignedOfficerId !== user.userId) {
+        // The shared access rule: own farm, assigned farmers, a manager's region, or everyone (admin).
+        if (!user?.userId || !user.role || !(await canSeeFarmer({ userId: user.userId, role: user.role }, field.farmerId))) {
             return res.status(403).json({ success: false, error: 'Access denied' });
         }
         return res.json({ success: true, data: field });
@@ -536,18 +514,12 @@ router.delete('/:fieldId/cycles/:id', async (req: Request, res: Response) => {
  */
 router.get('/stats/summary', async (req: Request, res: Response) => {
     try {
-        const user = req.user as { userId?: string; role?: string } | undefined;
-        let scopeClause = '';
-        const scopeParams: unknown[] = [];
-
-        if (user?.role === 'farmer') {
-            scopeClause = ' AND farmer_id IN (SELECT id FROM farmers WHERE user_id = $1)';
-            scopeParams.push(user.userId);
-        } else if (user?.role === 'extension_officer') {
-            scopeClause = ' AND farmer_id IN (SELECT id FROM farmers WHERE assigned_officer_id = $1)';
-            scopeParams.push(user.userId);
-        }
-        // admin and regional_manager see all — no scope clause
+        const user = req.user as { userId?: string; role?: string; isDemo?: boolean } | undefined;
+        if (!user?.userId || !user.role) return res.status(401).json({ success: false, error: 'Authentication required' });
+        // Only fields of farmers this person may see (the shared access rule).
+        const scope = await rowsOfVisibleFarmersSql({ userId: user.userId, role: user.role, isDemo: user.isDemo }, 'fields.farmer_id');
+        const scopeClause = ` AND ${scope.sql}`;
+        const scopeParams = scope.params;
 
         const { rows } = await query<FieldStatsRow>(
             `SELECT farmer_id,

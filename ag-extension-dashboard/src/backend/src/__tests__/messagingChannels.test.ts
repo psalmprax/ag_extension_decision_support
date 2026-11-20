@@ -17,7 +17,7 @@ jest.mock('../services/onboardingEngine', () => ({ onboardingEngine: { processIn
 jest.mock('../services/smsService', () => ({ smsService: { sendSMS: jest.fn() } }));
 jest.mock('../services/whatsappService', () => ({ whatsappService: { sendMessage: jest.fn() } }));
 jest.mock('../services/telegramService', () => ({ telegramService: { sendMessage: jest.fn(), persistMessage: jest.fn(), answerCallbackQuery: jest.fn() } }));
-jest.mock('../services/chat/channelInbound', () => ({ takeRegisteredFarmerMessage: jest.fn() }));
+jest.mock('../services/chat/channelInbound', () => ({ takeRegisteredFarmerMessage: jest.fn(), claimInboundEvent: jest.fn().mockResolvedValue(true) }));
 jest.mock('../services/knowledge/messagingHints', () => ({
     ASK_HELP: 'Send ASK followed by your question.',
     parseAskCommand: (text: string) => /^\/?ask(?:\s|$)/i.test(text) ? text.replace(/^\/?ask\s*/i, '') : null,
@@ -79,7 +79,8 @@ describe('channel knowledge requests', () => {
         expect(telegramService.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ text: 'Public hint' }));
     });
 
-    it('keeps Telegram weather available for registered users', async () => {
+    it('gives Telegram weather for the registered farmer’s own area', async () => {
+        (onboardingEngine.findFarmerByIdentifier as jest.Mock).mockResolvedValueOnce({ id: 'f1', village: 'Ekwendeni', region: 'Mzuzu', country: 'Malawi', language_preference: 'en' });
         const weather = jest.spyOn(WeatherService, 'getByLocation').mockResolvedValueOnce({
             condition: 'Clear', temperature: 25, temp: 25, humidity: 50, windSpeed: 5, forecast: [],
         });
@@ -87,7 +88,7 @@ describe('channel knowledge requests', () => {
             .set('x-telegram-bot-api-secret-token', 'test-secret')
             .send({ message: { chat: { id: 123 }, text: '/weather' } });
         expect(res.status).toBe(200);
-        expect(weather).toHaveBeenCalled();
+        expect(weather).toHaveBeenCalledWith('Ekwendeni, Malawi');
         expect(messagingKnowledgeReply).not.toHaveBeenCalled();
         weather.mockRestore();
     });

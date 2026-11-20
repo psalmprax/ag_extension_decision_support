@@ -205,7 +205,8 @@ export async function transcribeVoiceNote(params: {
 
 export async function synthesizeVoiceAdvisory(params: {
   text: string;
-  language?: 'sw' | 'en';
+  /** BCP 47 language of the text. The speech model reads the text as written in any language. */
+  language?: string;
   voice?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
 }): Promise<VoiceSynthesisResult> {
   const { text, language = 'sw', voice = 'alloy' } = params;

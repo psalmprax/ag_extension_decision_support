@@ -76,21 +76,27 @@ describe('market price cache', () => {
             expect(fetchSpy).toHaveBeenCalledTimes(1);
         });
 
-        it('prices the US estimate at the 1:1 dollar rate', async () => {
+        it('never gives East African baseline prices to another country', async () => {
             fetchSpy.mockReturnValue(new Promise<MarketPrice[]>(() => undefined));
-            const rows = await marketPriceService.getLatestPrices(undefined, 'United States');
-            expect(rows[0]).toMatchObject({ currency: 'USD', priceValue: 32.4 });
+            expect(await marketPriceService.getLatestPrices(undefined, 'United States')).toEqual([]);
+            expect(await marketPriceService.getLatestPrices(undefined, 'Spain')).toEqual([]);
+        });
+
+        it('prices the Ugandan estimate in Ugandan shillings', async () => {
+            fetchSpy.mockReturnValue(new Promise<MarketPrice[]>(() => undefined));
+            const rows = await marketPriceService.getLatestPrices(undefined, 'Uganda');
+            expect(rows[0]).toMatchObject({ currency: 'UGX', dataStatus: 'estimated' });
         });
 
         it('logs a background failure after the budget instead of surfacing it', async () => {
             let fail!: (error: Error) => void;
             fetchSpy.mockReturnValue(new Promise<MarketPrice[]>((_, reject) => { fail = reject; }));
-            const rows = await marketPriceService.getLatestPrices(undefined, 'Ghana');
+            const rows = await marketPriceService.getLatestPrices(undefined, 'Tanzania');
             expect(rows[0].dataStatus).toBe('estimated');
 
             fail(new Error('FAOSTAT timeout'));
             await flush();
-            expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Background market price fetch for Ghana failed: FAOSTAT timeout'));
+            expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Background market price fetch for Tanzania failed: FAOSTAT timeout'));
         });
     });
 });

@@ -1,7 +1,5 @@
 import { detectVernacularKeywords, transcribeVoiceNote, synthesizeVoiceAdvisory } from '../services/voiceAudioService';
 import { generateIvrXml, processDtmfResponse, dispatchVoiceBroadcast } from '../services/ivrBroadcastService';
-import { findNearbySuppliers, verifyBatchNumber } from '../services/inputSupplierService';
-import { aggregateHarvestProjections, matchOfftakerContracts } from '../services/harvestOfftakeService';
 import { calculateAgronomicRoi } from '../services/agronomicRoiService';
 import { calculateSocStock, auditSoilCarbonSequestration } from '../services/soilCarbonMrvService';
 import { evaluateWeatherHazards, runProactiveHazardScan } from '../services/weatherHazardDaemonService';
@@ -80,40 +78,6 @@ describe('Strategic Architecture Pillars (Voice, Economics, Carbon, Hazards)', (
       expect(res.provider).toBe('not_configured');
       expect(res.batchId).toContain('ivr_batch_');
       expect(res.provenance?.kind).toBe('unavailable');
-    });
-  });
-
-  describe('Pillar 4: Certified Agro-Dealer Inventory & Harvest Matchmaking', () => {
-    it('locates nearest verified input dealers within specified radius', () => {
-      // Searching near Nakuru coordinates
-      const suppliers = findNearbySuppliers({ lat: -0.2, lng: 35.9, radiusKm: 30 });
-      expect(suppliers.length).toBeGreaterThan(0);
-      expect(suppliers[0].isVerifiedStockist).toBe(true);
-      expect(suppliers[0].location.distanceKm).toBeDefined();
-    });
-
-    it('verifies certified seed / pesticide batch authenticity against fraud', () => {
-      const authentic = verifyBatchNumber('KSC-2026-MZ-8821');
-      expect(authentic.isAuthentic).toBe(true);
-      expect(authentic.item?.category).toBe('seed');
-
-      const fake = verifyBatchNumber('FAKE-BATCH-9999');
-      expect(fake.isAuthentic).toBe(false);
-      expect(fake.verificationSource).toContain('Suspected Counterfeit');
-    });
-
-    it('aggregates projected cooperative yields and calculates bulk premiums', () => {
-      const aggregation = aggregateHarvestProjections({ crop: 'Maize', county: 'Nakuru', totalAcreage: 500 });
-      expect(aggregation.projectedMetricTons).toBe(900);
-      expect(aggregation.bulkContractValueKes).toBeGreaterThan(aggregation.spotMarketValueKes);
-      expect(aggregation.projectedCooperativePremiumKes).toBeGreaterThan(0);
-    });
-
-    it('matches harvest projections with accredited institutional buyers', () => {
-      const match = matchOfftakerContracts({ crop: 'Maize', county: 'Nakuru', totalAcreage: 300 });
-      expect(match.matchedBuyers.length).toBeGreaterThan(0);
-      expect(match.matchedBuyers[0].buyer.category).toBeDefined();
-      expect(match.matchedBuyers[0].totalOfferValueKes).toBeGreaterThan(0);
     });
   });
 

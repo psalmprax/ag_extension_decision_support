@@ -90,7 +90,7 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({ provenance, va
       </div>
       {provenance.note && <p className="mt-1 opacity-90 leading-relaxed">{provenance.note}</p>}
       {provenance.assumptions.length > 0 && (
-        <ul className="mt-1.5 list-disc space-y-0.5 pl-4 opacity-80">
+        <ul className="mt-1.5 list-disc space-y-0.5 ps-4 opacity-80">
           {provenance.assumptions.map((a, i) => (
             <li key={i}>{a}</li>
           ))}

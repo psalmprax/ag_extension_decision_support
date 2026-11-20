@@ -154,7 +154,7 @@ export const OfficerCopilot: React.FC<OfficerCopilotProps> = ({ conversationId, 
             key={idx}
             type="button"
             onClick={() => onUseText(suggestion)}
-            className="px-2.5 py-1 rounded-lg text-xxs font-sans bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] hover:border-emerald-500/40 text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white shrink-0 transition-colors text-left max-w-xs truncate"
+            className="px-2.5 py-1 rounded-lg text-xxs font-sans bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] hover:border-emerald-500/40 text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white shrink-0 transition-colors text-start max-w-xs truncate"
           >
             {suggestion}
           </button>

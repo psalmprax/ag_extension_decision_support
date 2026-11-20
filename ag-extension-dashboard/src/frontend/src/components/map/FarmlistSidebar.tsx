@@ -33,10 +33,10 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
   const { t } = useLanguage();
   return (
     <div
-      className={`transition-all duration-300 ease-in-out flex flex-col border-r shrink-0 z-20 ${
+      className={`transition-all duration-300 ease-in-out flex flex-col border-e shrink-0 z-20 ${
         isFarmlistCollapsed
-          ? 'w-0 opacity-0 overflow-hidden border-r-0 pointer-events-none'
-          : 'absolute inset-y-0 left-0 w-4/5 max-w-xs sm:relative sm:w-80 sm:inset-auto opacity-100 shadow-2xl sm:shadow-none'
+          ? 'w-0 opacity-0 overflow-hidden border-e-0 pointer-events-none'
+          : 'absolute inset-y-0 start-0 w-4/5 max-w-xs sm:relative sm:w-80 sm:inset-auto opacity-100 shadow-2xl sm:shadow-none'
       } ${
         themeName === 'cyber'
           ? 'border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30'
@@ -78,7 +78,7 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
                     setIsFarmlistCollapsed(true);
                   }
                 }}
-                className={`w-full text-left p-3 rounded-xl transition-all flex items-center gap-3 group ${
+                className={`w-full text-start p-3 rounded-xl transition-all flex items-center gap-3 group ${
                   isSelected
                     ? 'bg-white dark:bg-gray-800 shadow-md border border-gray-100 dark:border-gray-700'
                     : 'hover:bg-white/60 dark:hover:bg-gray-800/60 border border-transparent hover:border-gray-100 dark:border-gray-700'

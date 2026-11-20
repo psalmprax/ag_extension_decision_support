@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { Router, Request, Response } from 'express';
 import { query } from '@/services/databaseService';
 import type { AuthenticatedRequestUser, CountRow, WhatsAppMessageRow } from '@/types/rowTypes';
@@ -11,11 +10,14 @@ import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { whatsappService } from '@/services/whatsappService';
 import { onboardingEngine } from '@/services/onboardingEngine';
 import { ASK_HELP, messagingKnowledgeReply, parseAskCommand } from '@/services/knowledge/messagingHints';
-import { transcribeVoiceNote } from '@/services/voiceAudioService';
+import { readInboundContent, type InboundContent, type WhatsAppMediaPayload } from '@/services/chat/whatsappInboundMedia';
+import type { InboundMedia } from '@/services/chat/inboundMedia';
 import { synthesizeVoiceReply } from '@/services/chat/voiceReply';
 import { checkMessageAccess, MessageAccessError, resolvePrincipalRegion } from '@/services/messageAccessService';
 import { linkedDemoSql } from '@/services/demoScope';
-import { takeRegisteredFarmerMessage } from '@/services/chat/channelInbound';
+import { claimInboundEvent, takeRegisteredFarmerMessage } from '@/services/chat/channelInbound';
+import { findStaffByPhone } from '@/services/sms/officerSmsAccess';
+import { handleOfficerWhatsApp } from '@/services/chat/officerWhatsApp';
 import { WHATSAPP_ASK_AI_PAYLOAD } from '@/services/chat/channelThread';
 
 const router = Router();
@@ -52,7 +54,7 @@ router.get('/inbound', (req: Request, res: Response) => {
  * POST /api/whatsapp/inbound — webhook endpoint for inbound messages from Meta Cloud API or Twilio WhatsApp.
  * Requests must carry a valid provider signature (see middleware/webhookSignature).
  */
-interface InboundMessagePayload {
+interface InboundMessagePayload extends WhatsAppMediaPayload {
     from?: string;
     body?: string;
     messageId?: string;
@@ -63,150 +65,6 @@ interface InboundMessagePayload {
     /** Twilio: the payload of a tapped quick-reply button. */
     ButtonPayload?: string;
     ProfileName?: string;
-    MediaUrl0?: string;
-    MediaContentType0?: string;
-    audioUrl?: string;
-    audioBase64?: string;
-    mimeType?: string;
-    mediaContentType?: string;
-}
-
-const SSRF_BLOCKED_HOSTS = new Set([
-    '169.254.169.254',
-    'metadata.google.internal',
-    'metadata',
-    'localhost',
-    '127.0.0.1',
-    '::1',
-    '0.0.0.0',
-    '[::]',
-]);
-
-const SSRF_BLOCKED_PREFIXES = [
-    '10.',
-    '172.16.',
-    '172.17.',
-    '172.18.',
-    '172.19.',
-    '172.20.',
-    '172.21.',
-    '172.22.',
-    '172.23.',
-    '172.24.',
-    '172.25.',
-    '172.26.',
-    '172.27.',
-    '172.28.',
-    '172.29.',
-    '172.30.',
-    '172.31.',
-    '192.168.',
-    '127.',
-    '169.254.',
-    '0.',
-    '[fe8',
-    '[fc',
-    '[fd',
-    '[::',
-];
-
-const SSRF_BLOCKED_DOMAINS = [
-    '.internal',
-    '.local',
-    '.lan',
-    '.localhost',
-    '.localdomain',
-    '.corp',
-];
-
-function isSafeWebhookMediaUrl(rawUrl: string): boolean {
-    try {
-        const parsed = new URL(rawUrl);
-        if (!['http:', 'https:'].includes(parsed.protocol)) return false;
-        const lowerHost = parsed.hostname.toLowerCase();
-        if (SSRF_BLOCKED_HOSTS.has(lowerHost)) return false;
-        for (const prefix of SSRF_BLOCKED_PREFIXES) {
-            if (lowerHost.startsWith(prefix)) return false;
-        }
-        for (const domain of SSRF_BLOCKED_DOMAINS) {
-            if (lowerHost.endsWith(domain)) return false;
-        }
-        return true;
-    } catch {
-        return false;
-    }
-}
-
-function parseBase64Audio(rawBase64: string, mimeType: string): { buffer: Buffer; mimeType: string } | null {
-    if (rawBase64.length > 16 * 1024 * 1024) {
-        logger.warn('Rejected inbound WhatsApp audioBase64: exceeds 16MB limit');
-        return null;
-    }
-    const cleanBase64 = rawBase64.includes('base64,') ? rawBase64.split('base64,')[1] : rawBase64;
-    const buf = Buffer.from(cleanBase64, 'base64');
-    if (buf.length === 0) {
-        logger.warn('Rejected inbound WhatsApp audioBase64: empty or unparseable payload');
-        return null;
-    }
-    return { buffer: buf, mimeType };
-}
-
-async function downloadRemoteAudio(url: string, mimeType: string): Promise<{ buffer?: Buffer; url: string; mimeType: string } | null> {
-    if (!isSafeWebhookMediaUrl(url)) {
-        logger.warn(`Rejected potential SSRF or unsupported audio URL in WhatsApp inbound: ${url}`);
-        return null;
-    }
-    try {
-        const resp = await axios.get(url, {
-            responseType: 'arraybuffer',
-            timeout: 8000,
-            maxContentLength: 12 * 1024 * 1024,
-            maxRedirects: 3,
-            beforeRedirect: (options: Record<string, unknown>) => {
-                const target = (options.href as string) || `${options.protocol}//${options.host}${options.path}`;
-                if (!isSafeWebhookMediaUrl(target)) {
-                    throw new Error(`SSRF blocked redirect to ${target}`);
-                }
-            },
-        });
-        return { buffer: Buffer.from(resp.data), url, mimeType };
-    } catch (err) {
-        logger.warn('Could not download audio from remote URL for transcription:', err);
-        return { url, mimeType };
-    }
-}
-
-async function resolveAudioPayload(payload: InboundMessagePayload): Promise<{ buffer?: Buffer; url?: string; mimeType: string } | null> {
-    const mimeType = payload.MediaContentType0 || payload.mimeType || payload.mediaContentType || 'audio/ogg';
-
-    if (payload.audioBase64) {
-        return parseBase64Audio(payload.audioBase64, mimeType);
-    }
-
-    const url = payload.MediaUrl0 || payload.audioUrl;
-    if (url) {
-        return await downloadRemoteAudio(url, mimeType);
-    }
-
-    return null;
-}
-
-async function transcribeInboundAudio(audioInfo: { buffer?: Buffer; url?: string; mimeType: string }): Promise<{ transcription: string; detectedLanguage: 'sw' | 'en' | string } | null> {
-    try {
-        const tr = await transcribeVoiceNote({
-            audioBuffer: audioInfo.buffer,
-            audioUrl: audioInfo.url,
-            mimeType: audioInfo.mimeType,
-            languageHint: 'sw',
-        });
-        return {
-            transcription: tr.transcription,
-            detectedLanguage: tr.detectedLanguage || 'sw',
-        };
-    } catch (err) {
-        logger.error('Failed to transcribe inbound voice note:', err);
-        return null;
-    }
 }
 
 async function handleInboundAdvisoryOrOnboarding(
@@ -214,13 +72,14 @@ async function handleInboundAdvisoryOrOnboarding(
     body: string,
     senderName?: string,
     eventId?: string,
-    voice?: { isVoice: boolean; language: string }
+    voice?: { isVoice: boolean; language: string },
+    media: InboundMedia[] = [],
 ): Promise<{ responseText?: string; farmerId?: string; handled: boolean }> {
     // A registered farmer's message goes into their thread; replies are sent from there
     // (spoken too, when the farmer sent a voice note).
     if (await takeRegisteredFarmerMessage({
         channel: 'whatsapp', identifier: from, text: body, eventId,
-        isVoice: voice?.isVoice, language: voice?.isVoice ? voice.language : undefined,
+        isVoice: voice?.isVoice, language: voice?.isVoice ? voice.language : undefined, media,
     })) {
         return { handled: true };
     }
@@ -255,34 +114,11 @@ async function handleInboundAdvisoryOrOnboarding(
     return { handled: false };
 }
 
-async function extractInboundMessageContent(payload: InboundMessagePayload): Promise<{
-    from: string;
-    body: string;
-    senderName?: string;
-    isVoice: boolean;
-    detectedLang: string;
-}> {
+async function extractInboundMessageContent(payload: InboundMessagePayload): Promise<InboundContent & { from: string; senderName?: string }> {
     const from = (payload.from || payload.From?.replace('whatsapp:', '') || '').trim();
     // The Ask AI quick-reply button arrives as its payload; treat it as the ASK AI code.
-    let body = payload.ButtonPayload === WHATSAPP_ASK_AI_PAYLOAD ? 'ASK AI' : payload.body || payload.Body || '';
-    const senderName = payload.ProfileName;
-
-    let isVoice = false;
-    let detectedLang = 'sw';
-
-    const audioInfo = await resolveAudioPayload(payload);
-    if (audioInfo) {
-        const tr = await transcribeInboundAudio(audioInfo);
-        if (tr) {
-            isVoice = true;
-            detectedLang = tr.detectedLanguage;
-            body = body.trim().length === 0
-                ? tr.transcription
-                : `${body}\n[Audio transcript]: ${tr.transcription}`;
-        }
-    }
-
-    return { from, body, senderName, isVoice, detectedLang };
+    const text = payload.ButtonPayload === WHATSAPP_ASK_AI_PAYLOAD ? 'ASK AI' : payload.body || payload.Body || '';
+    return { from, senderName: payload.ProfileName, ...(await readInboundContent(payload, text)) };
 }
 
 async function dispatchOutboundResponse(
@@ -317,10 +153,23 @@ async function dispatchOutboundResponse(
 router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res: Response) => {
     try {
         const payload = req.body as InboundMessagePayload;
-        const { from, body, senderName, isVoice, detectedLang } = await extractInboundMessageContent(payload);
+        const content = await extractInboundMessageContent(payload);
+        const { from, body, senderName, isVoice, detectedLang, media } = content;
 
         if (!from || !body) {
             return res.status(400).json({ success: false, error: 'from and body are required' });
+        }
+
+        // An officer's or manager's number: run their command instead of farmer sign-up.
+        const staff = await findStaffByPhone(from);
+        if (staff) {
+            const staffEventId = payload.messageId || payload.MessageSid;
+            if (!staffEventId || await claimInboundEvent('whatsapp', from, staffEventId)) {
+                setImmediate(() => {
+                    handleOfficerWhatsApp(staff, from, content).catch(error => logger.error('Officer WhatsApp message failed:', error));
+                });
+            }
+            return res.status(202).json({ success: true, handled: true, isVoice });
         }
 
         const { rows } = await query<WhatsAppMessageRow>(
@@ -333,7 +182,7 @@ router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res:
         logger.info(`WhatsApp inbound ${payload.messageId ?? '-'}: ${rows.length} row(s) inserted (isVoice=${isVoice})`);
 
         const eventId = payload.messageId || payload.MessageSid;
-        const dispatch = await handleInboundAdvisoryOrOnboarding(from, body, senderName, eventId, { isVoice, language: detectedLang });
+        const dispatch = await handleInboundAdvisoryOrOnboarding(from, body, senderName, eventId, { isVoice, language: detectedLang }, media);
         if (!await dispatchOutboundResponse(from, dispatch, isVoice, detectedLang)) {
             return safeError(res, 503, 'Failed to send WhatsApp reply');
         }

@@ -38,7 +38,6 @@ import type { VisualsData } from './types';
 import { AgronomicIntakeCard, isAgronomicQueryAmbiguous } from '../AgronomicIntakeCard';
 import { useDemoMode } from '@/demo';
 
-// Interactive Canvas UI Components (canvasui.dev standard)
 import { RagKnowledgeGraphCanvas, GraphNode } from '../canvas-ui/RagKnowledgeGraphCanvas';
 import { SoilNutrientHeatmapCanvas, SoilProbeResult } from '../canvas-ui/SoilNutrientHeatmapCanvas';
 import { DiseaseSaliencyCanvas, LesionDetectionZone } from '../canvas-ui/DiseaseSaliencyCanvas';
@@ -77,10 +76,10 @@ import { QuotaChip } from './QuotaChip';
 import { useLanguage } from '@/lib/LanguageContext';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
+import { GuidesPanel } from './guides/GuidesPanel';
 import { saveBlob } from '@/lib/saveBlob';
 
 type KnowledgeTabMode = 'search' | 'graph' | 'workbench' | 'library' | 'telemetry';
-// Helper functions extracted to maintain cognitive complexity < 15
 const mapCitationCategory = (category?: string): GraphNode['category'] => {
   const cat = (category || '').toLowerCase();
   if (cat.includes('soil')) return 'soil';
@@ -415,7 +414,7 @@ export const KnowledgeBase: React.FC = () => {
                   <button
                     key={sc.id}
                     onClick={() => handleTriggerScenario(sc)}
-                    className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 dark:bg-slate-950/50 dark:hover:bg-emerald-500/10 border border-slate-200/80 hover:border-emerald-500/40 dark:border-white/5 dark:hover:border-emerald-500/30 text-left transition-all group flex flex-col justify-between"
+                    className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 dark:bg-slate-950/50 dark:hover:bg-emerald-500/10 border border-slate-200/80 hover:border-emerald-500/40 dark:border-white/5 dark:hover:border-emerald-500/30 text-start transition-all group flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
@@ -821,22 +820,23 @@ export const KnowledgeBase: React.FC = () => {
       {/* ── TAB 4: Document Library & Catalog ── */}
       {activeTabMode === 'library' && (
         <div className="space-y-6">
+          {!isDemo && <GuidesPanel />}
           {/* Library Control Bar */}
           <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             {/* Search within documents */}
             <div className="relative flex-1 w-full max-w-md">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40" />
+              <Search className="w-4 h-4 absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40" />
               <input
                 type="text"
                 value={librarySearchQuery}
                 onChange={e => setLibrarySearchQuery(e.target.value)}
                 placeholder="Search articles, crop guides, scientific bulletins..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 text-xs font-medium focus:outline-none focus:border-slate-500/50"
+                className="w-full ps-10 pe-4 py-2.5 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 text-xs font-medium focus:outline-none focus:border-slate-500/50"
               />
               {librarySearchQuery && (
                 <button
                   onClick={() => setLibrarySearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:text-white/40 dark:hover:text-white"
+                  className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:text-white/40 dark:hover:text-white"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>

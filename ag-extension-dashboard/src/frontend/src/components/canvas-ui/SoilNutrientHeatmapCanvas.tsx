@@ -311,7 +311,7 @@ const LAYER_CONFIG: Record<
 };
 
 const ProbeTooltip: React.FC<{ probe: SoilProbeResult }> = ({ probe }) => (
-  <div className="absolute top-3 left-3 bg-gray-900/90 border border-white/10 backdrop-blur-md p-3 rounded-xl shadow-xl text-xs text-white max-w-xs pointer-events-none animate-in fade-in duration-150">
+  <div className="absolute top-3 start-3 bg-gray-900/90 border border-white/10 backdrop-blur-md p-3 rounded-xl shadow-xl text-xs text-white max-w-xs pointer-events-none animate-in fade-in duration-150">
     <div className="flex items-center justify-between gap-2 mb-1.5">
       <span className="font-semibold text-gray-200">{probe.label}</span>
       <span
@@ -522,7 +522,7 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
         {probe && <ProbeTooltip probe={probe} />}
 
         {/* Legend strip at bottom */}
-        <div className="absolute bottom-2 right-2 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10 flex items-center gap-2 text-xs tabular-nums text-gray-200 pointer-events-none">
+        <div className="absolute bottom-2 end-2 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10 flex items-center gap-2 text-xs tabular-nums text-gray-200 pointer-events-none">
           <span>
             {config.min} {config.unit}
           </span>

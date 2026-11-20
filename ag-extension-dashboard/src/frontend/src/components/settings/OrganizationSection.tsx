@@ -10,6 +10,10 @@ import {
 import { downloadKnowledgePack } from '@/api/knowledgeService';
 import { ChatTurnTakingSection } from '@/components/settings/ChatTurnTakingSection';
 import { useLanguage } from '@/lib/LanguageContext';
+import { SUPPORTED_COUNTRIES } from '@/lib/countries';
+
+/** Every currency of a country the product serves, US dollar first. */
+const CURRENCIES = Array.from(new Set(['USD', ...SUPPORTED_COUNTRIES.map(country => country.currency).sort()]));
 
 /** Organisation name, region, currency and language, plus (admins) the farmer chat rules. */
 export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) => {
@@ -102,7 +106,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                       }
                       className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-white disabled:opacity-60"
                     >
-                      {['USD', 'KES', 'MWK', 'ZMW', 'TZS', 'UGX', 'CAD', 'EUR', 'GBP'].map(
+                      {CURRENCIES.map(
                         currency => (
                           <option key={currency}>{currency}</option>
                         )

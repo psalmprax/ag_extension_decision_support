@@ -105,9 +105,13 @@ describe('production data truthfulness', () => {
     }
   });
 
+  it('gives no prices when it does not know the country, rather than another country’s', async () => {
+    expect(await marketPriceService.getLatestPrices()).toEqual([]);
+  });
+
   it('returns labeled market estimates without mutating the database', async () => {
     mockedAxios.get.mockResolvedValue({ data: { rates: { KES: 130 } } });
-    const prices = await marketPriceService.getLatestPrices();
+    const prices = await marketPriceService.getLatestPrices(undefined, 'Kenya');
 
     expect(prices).toHaveLength(4);
     expect(prices[0].source).toBe('baseline_estimate');

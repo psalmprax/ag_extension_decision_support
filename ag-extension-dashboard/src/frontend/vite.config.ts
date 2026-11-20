@@ -220,7 +220,14 @@ export default defineConfig({
           ) {
             return 'core-vendor';
           }
-          if (id.includes('/node_modules/framer-motion/') || id.includes('/node_modules/lucide-react/')) {
+          // clsx and tailwind-merge are used by every page; left unassigned, Rollup pulls them
+          // into charts-vendor (recharts uses clsx too), which then loads on every first visit.
+          if (
+            id.includes('/node_modules/framer-motion/') ||
+            id.includes('/node_modules/lucide-react/') ||
+            id.includes('/node_modules/clsx/') ||
+            id.includes('/node_modules/tailwind-merge/')
+          ) {
             return 'ui-vendor';
           }
           if (id.includes('/node_modules/recharts/')) return 'charts-vendor';

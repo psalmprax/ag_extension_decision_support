@@ -9,6 +9,7 @@
  * fixed safety message straight away and the officer is alerted.
  */
 import { z } from 'zod';
+import { timeZoneFor } from '@/services/country/localTime';
 
 const clock = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use HH:MM (24-hour)');
 
@@ -46,19 +47,29 @@ export const DEFAULT_TURN_TAKING: TurnTakingSettings = {
     smsAiDailyLimit: 10,
 };
 
-/** Effective settings from a tenant's capabilities JSON; anything invalid falls back to the default. */
-export function resolveTurnTakingSettings(capabilities: unknown): TurnTakingSettings {
+/**
+ * Effective settings from a tenant's capabilities JSON; anything invalid falls back to the
+ * default. Working hours are in the organisation's own time zone (else its country's).
+ */
+export function resolveTurnTakingSettings(
+    capabilities: unknown,
+    organisation: { timeZone?: string | null; country?: string | null } = {},
+): TurnTakingSettings {
     const stored = (capabilities as { chatTurnTaking?: unknown } | null)?.chatTurnTaking;
-    const merged = {
+    const defaults: TurnTakingSettings = {
         ...DEFAULT_TURN_TAKING,
+        workingHours: { ...DEFAULT_TURN_TAKING.workingHours, timezone: timeZoneFor(organisation) },
+    };
+    const merged = {
+        ...defaults,
         ...(typeof stored === 'object' && stored ? stored : {}),
         workingHours: {
-            ...DEFAULT_TURN_TAKING.workingHours,
+            ...defaults.workingHours,
             ...((stored as { workingHours?: object } | undefined)?.workingHours ?? {}),
         },
     };
     const parsed = turnTakingSettingsSchema.safeParse(merged);
-    return parsed.success ? parsed.data : DEFAULT_TURN_TAKING;
+    return parsed.success ? parsed.data : defaults;
 }
 
 const WEEKDAY: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };

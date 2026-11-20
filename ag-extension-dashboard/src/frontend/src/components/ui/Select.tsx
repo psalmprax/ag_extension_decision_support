@@ -11,9 +11,9 @@ const selectVariants = cva(
         error: 'border-red-500 dark:border-red-400 focus:ring-2 focus:ring-red-400/50',
       },
       size: {
-        sm: 'h-8 pl-3 pr-8 text-xs',
-        md: 'h-10 pl-4 pr-10 text-sm',
-        lg: 'h-12 pl-4 pr-10 text-base',
+        sm: 'h-8 ps-3 pe-8 text-xs',
+        md: 'h-10 ps-4 pe-10 text-sm',
+        lg: 'h-12 ps-4 pe-10 text-base',
       },
       design: {
         modern: 'rounded-xl bg-white/5 border',
@@ -53,7 +53,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+        <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3">
           <svg
             className="h-4 w-4 text-slate-400"
             fill="none"

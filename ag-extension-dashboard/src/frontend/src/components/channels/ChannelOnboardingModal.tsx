@@ -29,44 +29,25 @@ interface ChannelOnboardingModalProps {
 
 type TabType = 'sms' | 'whatsapp' | 'telegram' | 'onboarding';
 
+/**
+ * Walks through the registration questions a new farmer is asked by SMS. The replies are a
+ * script, not live data, so the last step says what the real commands return instead of
+ * showing a made-up forecast.
+ */
 function advanceSimulator(step: number, userMsg: string): { nextStep: number; botText: string; nextDefaultInput: string } {
   switch (step) {
     case 0:
-      return {
-        nextStep: 1,
-        botText: '🌾 Welcome to the Advisory Network!\n\n👉 What is your Full Name?',
-        nextDefaultInput: 'Jane Wanjiku',
-      };
+      return { nextStep: 1, botText: 'Welcome to the advisory service.\n\nWhat is your full name?', nextDefaultInput: 'Jane Wanjiku' };
     case 1:
-      return {
-        nextStep: 2,
-        botText: `Great to meet you, *${userMsg}*! 🌽\n\n👉 What is your Primary Crop? (e.g. Maize, Coffee, Cassava)`,
-        nextDefaultInput: 'Maize & Beans',
-      };
+      return { nextStep: 2, botText: `Thank you, ${userMsg}.\n\nWhat is your main crop? For example maize, coffee or cassava.`, nextDefaultInput: 'Maize and beans' };
     case 2:
-      return {
-        nextStep: 3,
-        botText: `Noted: *${userMsg}* 🌱\n\n👉 In which Region or County is your farm located?`,
-        nextDefaultInput: 'Nakuru',
-      };
+      return { nextStep: 3, botText: `Noted: ${userMsg}.\n\nWhich region or district is your farm in?`, nextDefaultInput: 'Nakuru' };
     case 3:
-      return {
-        nextStep: 4,
-        botText: `Got it: *${userMsg}* 📍\n\n👉 What is the estimated Size of your farm in hectares or acres?`,
-        nextDefaultInput: '3.5 ha',
-      };
+      return { nextStep: 4, botText: `Noted: ${userMsg}.\n\nAbout how big is your farm? Reply with a number and ha or acres.`, nextDefaultInput: '3.5 ha' };
     case 4:
-      return {
-        nextStep: 5,
-        botText: `🎉 *Registration Complete!*\n\nWelcome aboard! Your Farm Profile is active for Nakuru (Maize & Beans, 3.5 ha).\n\n📱 Type *WEATHER* for forecasts or *PRICES* for market updates!`,
-        nextDefaultInput: 'WEATHER',
-      };
+      return { nextStep: 5, botText: 'Registration complete. Your officer can now see your farm.\n\nSend WEATHER for the forecast or PRICES for market prices.', nextDefaultInput: 'WEATHER' };
     default:
-      return {
-        nextStep: 6,
-        botText: `🌤 *Nakuru Forecast:* 24°C, Sunny intervals. 35% chance of light afternoon showers. Optimal for top-dressing!`,
-        nextDefaultInput: 'PRICES',
-      };
+      return { nextStep: 6, botText: 'In the live service, WEATHER replies with the 3-day forecast for the farm\'s location and PRICES with the latest market prices for its crops, where prices are collected for that country.', nextDefaultInput: 'PRICES' };
   }
 }
 

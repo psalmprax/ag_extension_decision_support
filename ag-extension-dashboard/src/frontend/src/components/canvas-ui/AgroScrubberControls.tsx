@@ -26,7 +26,7 @@ export function AgroScrubberControls({
     <div
       role="group"
       aria-label={t('ui_agro_ecosystem_canvas_scrubber_scrub_timeline', { defaultValue: 'Through the season' })}
-      className="absolute bottom-3 left-3 right-3 bg-[#0d1a14]/85 border border-white/[0.1] px-3 py-2 rounded-lg flex flex-col gap-2 z-20"
+      className="absolute bottom-3 start-3 end-3 bg-[#0d1a14]/85 border border-white/[0.1] px-3 py-2 rounded-lg flex flex-col gap-2 z-20"
     >
       <div className="flex items-center gap-1.5">
         <button type="button" onClick={onTogglePlay} aria-label={isPlaying ? t('scrubber_pause', { defaultValue: 'Pause' }) : t('scrubber_play', { defaultValue: 'Play' })} className={SMALL_BUTTON}>
@@ -44,7 +44,7 @@ export function AgroScrubberControls({
         >
           {audioMuted ? <VolumeX className="w-3.5 h-3.5" aria-hidden="true" /> : <Volume2 className="w-3.5 h-3.5" aria-hidden="true" />}
         </button>
-        <div className="grid grid-cols-4 gap-1 flex-1 ml-1">
+        <div className="grid grid-cols-4 gap-1 flex-1 ms-1">
           {AGRO_STAGES.map(s => (
             <button
               key={s.id}

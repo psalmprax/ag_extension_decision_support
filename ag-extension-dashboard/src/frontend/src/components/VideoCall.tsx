@@ -181,7 +181,7 @@ const LocalVideo = ({
           <span className="text-xs text-gray-400">Camera is off</span>
         </div>
       )}
-      <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 shadow">
+      <div className="absolute bottom-2 start-2 bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 shadow">
         <span className={`w-2 h-2 rounded-full ${isVideoEnabled ? 'bg-emerald-400' : 'bg-amber-400'}`} />
         <span>{t('video_you') || 'You'}</span>
         {isHost && <span className="text-emerald-400 font-semibold">({t('video_host') || 'Host'})</span>}
@@ -419,7 +419,7 @@ function RemoteVideo({ stream, peerId }: { stream: MediaStream; peerId: string }
         playsInline
         className="w-full h-full object-cover"
       />
-      <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 shadow">
+      <div className="absolute bottom-2 start-2 bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 shadow">
         <span className="w-2 h-2 rounded-full bg-emerald-400" />
         <span>{peerId.slice(0, 8)}</span>
       </div>

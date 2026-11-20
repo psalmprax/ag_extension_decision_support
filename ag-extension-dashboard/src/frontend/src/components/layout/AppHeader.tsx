@@ -98,7 +98,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
 
         {showAdminShortcuts && (
-          <div role="group" aria-label={t('header_shortcuts', { defaultValue: 'Shortcuts' })} className="hidden lg:flex items-center gap-1 border-l border-slate-900/[0.08] dark:border-white/[0.08] pl-3">
+          <div role="group" aria-label={t('header_shortcuts', { defaultValue: 'Shortcuts' })} className="hidden lg:flex items-center gap-1 border-s border-slate-900/[0.08] dark:border-white/[0.08] ps-3">
             {shortcuts.map(({ tab, icon: Icon, label, title }) => (
               <button
                 key={tab}
@@ -156,7 +156,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         >
           <Bell className="w-5 h-5" />
           {apiUnreadCount > 0 && (
-            <span className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-[#0d1a14]" aria-hidden="true" />
+            <span className="absolute top-2 end-2 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-[#0d1a14]" aria-hidden="true" />
           )}
         </button>
         <button
@@ -167,7 +167,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <Settings className="w-5 h-5" />
         </button>
 
-        <div className="ml-1 pl-2 sm:pl-3 sm:border-l border-slate-900/[0.08] dark:border-white/[0.08]">
+        <div className="ms-1 ps-2 sm:ps-3 sm:border-s border-slate-900/[0.08] dark:border-white/[0.08]">
         <ProfileMenu
           isProfileMenuOpen={isProfileMenuOpen}
           setIsProfileMenuOpen={setIsProfileMenuOpen}

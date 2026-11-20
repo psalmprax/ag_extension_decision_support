@@ -325,7 +325,7 @@ function Agents() {
             <span className="text-xxs font-mono text-emerald-600 dark:text-emerald-400">{t('ui_agents_0_errors')}</span>
           </div>
 
-          <div className="space-y-2.5 max-h-60 overflow-y-auto font-mono text-xs pr-1">
+          <div className="space-y-2.5 max-h-60 overflow-y-auto font-mono text-xs pe-1">
             {handoffLog.map((handoff, index) => (
               <div
                 key={index}

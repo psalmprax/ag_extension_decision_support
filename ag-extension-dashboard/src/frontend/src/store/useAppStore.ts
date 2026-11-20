@@ -15,6 +15,10 @@ export interface User {
   email: string;
   role: 'admin' | 'regional_manager' | 'extension_officer' | 'farmer';
   region?: string;
+  /** Country the account works in (English name, as in the country profiles). */
+  country?: string | null;
+  /** IANA time zone; null means the country's main one. */
+  timeZone?: string | null;
   phone?: string;
   planName?: string;
   isFree?: boolean;

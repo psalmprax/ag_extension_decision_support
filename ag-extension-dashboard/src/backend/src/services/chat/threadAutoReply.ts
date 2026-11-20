@@ -42,6 +42,8 @@ interface ThreadRow {
     first_name: string | null;
     last_name: string | null;
     capabilities: unknown;
+    tenant_time_zone?: string | null;
+    tenant_country?: string | null;
     question: string | null;
     question_language: string | null;
     question_at: Date | null;
@@ -54,6 +56,7 @@ interface ThreadRow {
 export const THREAD_FOR_REPLY_SQL = `
     SELECT cv.id, cv.farmer_id, cv.officer_id,
            f.user_id AS farmer_user_id, f.first_name, f.last_name, t.capabilities,
+           t.time_zone AS tenant_time_zone, COALESCE(t.country, f.country) AS tenant_country,
            q.content AS question, q.language AS question_language, q.created_at AS question_at,
            (SELECT MAX(o.created_at) FROM chat_messages o
              WHERE o.conversation_id = cv.id AND o.role = 'officer') AS last_officer_at,
@@ -81,7 +84,7 @@ export function toThreadForReply(row: ThreadRow): ThreadForReply {
         farmerName: [row.first_name, row.last_name].filter(Boolean).join(' ') || 'A farmer',
         farmerUserId: row.farmer_user_id,
         officerId: row.officer_id,
-        settings: resolveTurnTakingSettings(row.capabilities),
+        settings: resolveTurnTakingSettings(row.capabilities, { timeZone: row.tenant_time_zone, country: row.tenant_country }),
         question: row.question && questionAt
             ? { content: row.question, language: row.question_language, at: questionAt }
             : null,

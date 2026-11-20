@@ -33,12 +33,12 @@ export function Navbar() {
   const links = NAV_LINKS.map(link => ({ ...link, label: t(link.labelKey, { defaultValue: link.fallback }) }));
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0d1a14]/90 backdrop-blur border-b border-white/[0.08]">
+    <nav className="fixed top-0 start-0 end-0 z-50 bg-[#0d1a14]/90 backdrop-blur border-b border-white/[0.08]">
       <div className="max-w-6xl w-full mx-auto px-6 h-16 flex items-center justify-between">
         <button
           type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="flex items-center gap-2.5 text-left rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+          className="flex items-center gap-2.5 text-start rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
         >
           <img src="/logo.png" alt="" width={28} height={28} className="w-7 h-7 object-contain" />
           <span className="text-base font-medium text-white">{t('app_title')}</span>

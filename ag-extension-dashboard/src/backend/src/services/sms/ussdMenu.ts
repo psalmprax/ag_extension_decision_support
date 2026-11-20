@@ -10,7 +10,7 @@ import { handleRegisteredFarmerChannelMessage } from '@/services/chat/channelInb
 import { messagingKnowledgeReply } from '@/services/knowledge/messagingHints';
 import { smsService } from '@/services/smsService';
 import { smsCopy } from './smsCopy';
-import { con, end, numbered, pick } from './ussdText';
+import { USSD_LANGUAGE_CODES, con, end, numbered, pick } from './ussdText';
 import { findStaffByPhone } from './officerSmsAccess';
 import { staffUssd } from './ussdStaff';
 import { marketLines, weatherLine } from './ussdInfo';
@@ -76,7 +76,7 @@ function messageOfficer(farmer: UssdFarmer, rest: string[]): string {
 async function chooseLanguage(farmer: UssdFarmer, rest: string[]): Promise<string> {
     const lang = farmer.language_preference;
     if (!rest[0]) return con(numbered('languages', lang));
-    const code = rest[0] === '2' ? 'sw' : rest[0] === '1' ? 'en' : null;
+    const code = USSD_LANGUAGE_CODES[Number.parseInt(rest[0], 10) - 1] ?? null;
     if (!code) return end(smsCopy('ussd_invalid', lang));
     await query('UPDATE farmers SET language_preference = $2 WHERE id = $1', [farmer.id, code]);
     return end(smsCopy('lang_set', code));

@@ -34,23 +34,23 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { PRIMARY_BUTTON } from '@/components/ui/controlStyles';
 import { StatTile } from '@/components/ui/StatTile';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useUnits } from '@/hooks/useUnits';
 
 export function CropsFields() {
   const { t } = useLanguage();
+  const units = useUnits();
   const { radiusClass, btnClass, cardClass } = useThemeClasses();
   const { addNotification, user } = useAppStore();
   const { isDemo } = useDemoMode();
 
   const isFarmer = user?.role === 'farmer';
 
-  // State
   const [fields, setFields] = useState<Field[]>([]);
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [selectedFarmerId, setSelectedFarmerId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'cycles'>('overview');
 
-  // Modals
   const [showFieldModal, setShowFieldModal] = useState(false);
   const [showCycleModal, setShowCycleModal] = useState(false);
   const [showHarvestModal, setShowHarvestModal] = useState(false);
@@ -168,7 +168,6 @@ export function CropsFields() {
     loadFieldsData();
   }, [loadFieldsData]);
 
-  // Field Actions
   const handleOpenAddField = () => {
     setEditingField(null);
     setFieldForm({
@@ -186,7 +185,8 @@ export function CropsFields() {
     setEditingField(field);
     setFieldForm({
       name: field.name,
-      areaHectares: field.areaHectares.toString(),
+      // The form shows the person's unit (hectares or acres); it is saved in hectares.
+      areaHectares: String(Math.round(units.fromHectares(Number(field.areaHectares)) * 100) / 100),
       soilType: field.soilType || 'loam',
       soilPh: field.soilPh?.toString() || '6.5',
       latitude: field.latitude?.toString() || '',
@@ -204,7 +204,7 @@ export function CropsFields() {
     const data = {
       farmerId: isFarmer ? undefined : selectedFarmerId,
       name: fieldForm.name,
-      areaHectares: parseFloat(fieldForm.areaHectares),
+      areaHectares: units.toHectares(parseFloat(fieldForm.areaHectares)),
       soilType: fieldForm.soilType || undefined,
       soilPh: fieldForm.soilPh ? parseFloat(fieldForm.soilPh) : undefined,
       latitude: fieldForm.latitude ? parseFloat(fieldForm.latitude) : undefined,
@@ -377,7 +377,7 @@ export function CropsFields() {
                 <select
                   value={selectedFarmerId}
                   onChange={e => setSelectedFarmerId(e.target.value)}
-                  className="bg-transparent border-0 text-sm text-slate-900 dark:text-white focus:ring-0 focus:outline-none cursor-pointer pr-4 w-full sm:w-auto"
+                  className="bg-transparent border-0 text-sm text-slate-900 dark:text-white focus:ring-0 focus:outline-none cursor-pointer pe-4 w-full sm:w-auto"
                   aria-label={t('crops_fields_choose_farmer', { defaultValue: 'Farmer' })}
                 >
                   {farmers.map(farmer => (
@@ -403,7 +403,7 @@ export function CropsFields() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatTile label={t('ui_crops_fields_total_sectors')} icon={Map} value={totalFieldsCount} />
-        <StatTile label={t('ui_crops_fields_total_cultivated_area')} icon={Sliders} value={`${(Number(totalAreaHectares) || 0).toFixed(1)} ha`} />
+        <StatTile label={t('ui_crops_fields_total_cultivated_area')} icon={Sliders} value={units.area(totalAreaHectares)} />
         <StatTile label={t('ui_crops_fields_active_timelines')} icon={Sprout} value={activeCycles.length} />
         <StatTile
           label={t('ui_crops_fields_harvested_yield')}

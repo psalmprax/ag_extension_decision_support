@@ -156,7 +156,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
       {/* ── Multilingual Translation & Dual-View Bar ── */}
       <div className="p-4 rounded-lg bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 pr-2 border-r border-slate-200 dark:border-white/10">
+          <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 pe-2 border-e border-slate-200 dark:border-white/10">
             <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>{t('ui_airesult_localize_languages', { length: MULTILINGUAL_LANGUAGES.length })}</span>
           </div>
@@ -189,7 +189,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
               value={activeLang}
               disabled={isTranslating}
               onChange={e => onSelectLanguage(e.target.value)}
-              className="appearance-none bg-slate-50 dark:bg-slate-950/90 hover:bg-slate-100 dark:hover:bg-slate-950 text-slate-900 dark:text-white text-xs font-mono font-bold py-1.5 pl-3 pr-8 rounded-xl border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              className="appearance-none bg-slate-50 dark:bg-slate-950/90 hover:bg-slate-100 dark:hover:bg-slate-950 text-slate-900 dark:text-white text-xs font-mono font-bold py-1.5 ps-3 pe-8 rounded-xl border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"
             >
               <option value="" disabled>{t('ui_airesult_all_languages', { length: MULTILINGUAL_LANGUAGES.length })}</option>
               <optgroup label="African languages">
@@ -207,7 +207,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
                 ))}
               </optgroup>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 dark:text-white/50 absolute right-2.5 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 dark:text-white/50 absolute end-2.5 pointer-events-none" />
           </div>
         </div>
 
@@ -266,7 +266,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
 
             <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-emerald-500/30 space-y-3">
               <div className="flex items-center gap-2 pb-2 border-b border-emerald-500/20 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 ">
-                <span>{t('ui_airesult_localized_farmer_advisory', { flag: currentLangObj.flag, native: currentLangObj.native })}</span>
+                <span>{t('ui_airesult_localized_farmer_advisory', { native: currentLangObj.native })}</span>
               </div>
               <div className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-sans text-xs">
                 <MarkdownRenderer content={activeContent} />
@@ -447,7 +447,7 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
                 <Component
                   key={i}
                   {...linkProps}
-                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 hover:border-emerald-500/40 dark:border-white/5 dark:hover:border-emerald-500/40 transition-all text-left flex flex-col justify-between gap-2 group"
+                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 hover:border-emerald-500/40 dark:border-white/5 dark:hover:border-emerald-500/40 transition-all text-start flex flex-col justify-between gap-2 group"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1">

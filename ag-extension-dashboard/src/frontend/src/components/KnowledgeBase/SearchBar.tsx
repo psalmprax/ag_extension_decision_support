@@ -129,7 +129,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-50 dark:bg-rose-950/40 border-b border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs font-mono">
             <span className="w-2 h-2 rounded-full bg-rose-500" />
             <span>{t('ui_search_bar_listening_for_agronomic_inquiry_spea')}</span>
-            <div className="flex items-center gap-0.5 ml-auto">
+            <div className="flex items-center gap-0.5 ms-auto">
               {[4, 12, 8, 16, 10, 14, 6].map((h, i) => (
                 <span
                   key={i}
@@ -142,7 +142,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         )}
 
         <div className="flex items-center min-w-0 w-full overflow-hidden">
-          <div className="pl-3 sm:pl-4 text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center justify-center">
+          <div className="ps-3 sm:ps-4 text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center justify-center">
             <Search className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <input
@@ -154,7 +154,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             placeholder={t('kb_search_placeholder', { defaultValue: 'For example: fall armyworm in maize, or acid soil at pH 4.8' })}
             className="flex-1 min-w-0 bg-transparent border-none focus:ring-0 py-2.5 sm:py-3.5 px-3 sm:px-4 text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 truncate"
           />
-          <div className="flex items-center gap-1 sm:gap-2 pr-1 sm:pr-2 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 pe-1 sm:pe-2 shrink-0">
             <label
               className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white cursor-pointer transition-all shrink-0 border border-transparent hover:border-slate-200 dark:hover:border-white/10"
               title={t('kb_attach', { defaultValue: 'Attach a leaf photo or a soil test' })}

@@ -4,11 +4,9 @@ import { authorize, AuthRequest } from '@/middleware/authorize';
 import traceabilityRouter from './traceability';
 import creditRouter from './credit';
 import pestRouter from './pest';
-import tradeRouter from './trade';
 import mechanizationRouter from './mechanization';
 import telemetryRouter from './telemetry';
 import voiceRouter from './voice';
-import tenantRouter from './tenant';
 
 const router = Router();
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
@@ -57,10 +55,8 @@ router.use((req: AuthRequest, res: Response, next) => {
 router.use(traceabilityRouter);
 router.use(creditRouter);
 router.use(pestRouter);
-router.use(tradeRouter);
 router.use(mechanizationRouter);
 router.use(telemetryRouter);
 router.use(voiceRouter);
-router.use(tenantRouter);
 
 export default router;

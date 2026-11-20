@@ -23,6 +23,7 @@ import * as XLSX from 'xlsx';
 import { safeError } from '@/utils/safeResponse';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 import { demoSql, linkedDemoSql } from '@/services/demoScope';
+import { requireFarmerAccess } from '@/services/access/farmerScope';
 
 const router = Router();
 
@@ -193,7 +194,7 @@ router.get('/recommendations', async (req: Request, res: Response) => {
 // Visit updates handled by /api/v1/visits/:id (visits.ts) — duplicate removed
 
 // Get farmer details for visit
-router.get('/farmers/:id', async (req: Request, res: Response) => {
+router.get('/farmers/:id', requireFarmerAccess('id'), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const scope = await getPortfolioScope(req);

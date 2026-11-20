@@ -10,12 +10,12 @@ import { whatsappService } from '@/services/whatsappService';
 import { smsService } from '@/services/smsService';
 import { onboardingEngine } from '@/services/onboardingEngine';
 import { checkMessageAccess, MessageAccessError } from '@/services/messageAccessService';
-import { WeatherService } from '@/services/weatherService';
-import { marketPriceService } from '@/services/marketPriceService';
 import type { TenantChannelConfigRow } from '@/types/rowTypes';
 import { ASK_HELP, messagingKnowledgeReply, parseAskCommand } from '@/services/knowledge/messagingHints';
 import { takeRegisteredFarmerMessage } from '@/services/chat/channelInbound';
 import { TELEGRAM_ASK_AI_DATA } from '@/services/chat/channelThread';
+import { marketLines, weatherLine } from '@/services/sms/ussdInfo';
+import { hasTelegramFile, readTelegramContent } from '@/services/chat/telegramInboundMedia';
 
 const router = Router();
 
@@ -39,39 +39,17 @@ router.get('/telegram/webhook', (_req: Request, res: Response) => {
     res.json({ status: 'ok', channel: 'telegram', timestamp: new Date().toISOString() });
 });
 
+/** Weather for the farmer's own area, if this chat belongs to a registered farmer. */
 async function handleTelegramWeather(chatId: string) {
-    try {
-        const weather = await WeatherService.getByLocation('Kenya');
-        const forecastLines = weather.forecast.slice(0, 3).map(f =>
-            `  • ${f.date}: ${f.maxTemp}°C / ${f.minTemp}°C — ${f.condition}`
-        ).join('\n');
-        const temp = weather.temperature ?? weather.temp;
-        await telegramService.sendMessage({
-            chatId,
-            text: `🌤 *Live Weather — East Africa*\n• ${weather.condition}, ${temp}°C\n• Humidity: ${weather.humidity}%\n\n3-Day Forecast:\n${forecastLines}`,
-        });
-    } catch {
-        await telegramService.sendMessage({
-            chatId,
-            text: `🌤 *Weather Forecast*\nWeather data is temporarily unavailable. Please try again shortly.`,
-        });
-    }
+    const farmer = await onboardingEngine.findFarmerByIdentifier(chatId, 'telegram');
+    const place = farmer ? [farmer.village || farmer.region, farmer.country].filter(Boolean).join(', ') || null : null;
+    await telegramService.sendMessage({ chatId, text: await weatherLine(place, farmer?.language_preference), parseMode: null });
 }
 
+/** Prices collected for the farmer's country; none are shown where none are collected. */
 async function handleTelegramPrices(chatId: string) {
-    try {
-        const prices = await marketPriceService.getLatestPrices();
-        const priceLines = prices.map(p => `• ${p.crop}: ${p.price} (${p.trend})`).join('\n');
-        await telegramService.sendMessage({
-            chatId,
-            text: `📈 *Market Bulletin*\n${priceLines || 'No current price data.'}\n\n_Source: baseline estimate_`,
-        });
-    } catch {
-        await telegramService.sendMessage({
-            chatId,
-            text: `📈 *Market Bulletin*\nMarket price data is temporarily unavailable. Please try again shortly.`,
-        });
-    }
+    const farmer = await onboardingEngine.findFarmerByIdentifier(chatId, 'telegram');
+    await telegramService.sendMessage({ chatId, text: await marketLines(farmer?.country ?? null, farmer?.language_preference), parseMode: null });
 }
 
 function getTelegramEventId(update: { update_id?: unknown }): string | undefined {
@@ -138,9 +116,12 @@ router.post('/telegram/webhook', verifyTelegramWebhookSecret, async (req: Reques
 
         const msg = update.message;
         const chatId = msg.chat?.id;
-        const text = msg.text || '';
         const username = msg.from?.username || '';
         const firstName = msg.from?.first_name || '';
+        // A photo, video or voice note is kept for a registered farmer; its caption (or the
+        // voice-note transcript) is the message text.
+        const content = hasTelegramFile(msg) ? await readTelegramContent(msg) : null;
+        const text = content?.body || msg.text || '';
 
         if (!chatId || !text) {
             return res.status(200).json({ ok: true });
@@ -168,7 +149,10 @@ router.post('/telegram/webhook', verifyTelegramWebhookSecret, async (req: Reques
             return res.status(200).json({ ok: true });
         }
         // A registered farmer's message goes into their thread for their officer.
-        if (await takeRegisteredFarmerMessage({ channel: 'telegram', identifier: String(chatId), text, eventId })) {
+        if (await takeRegisteredFarmerMessage({
+            channel: 'telegram', identifier: String(chatId), text, eventId,
+            isVoice: content?.isVoice, language: content?.isVoice ? content.detectedLang : undefined, media: content?.media,
+        })) {
             return res.status(200).json({ ok: true, handled: 'thread' });
         }
         if (await handleTelegramKnowledgeOrOnboarding(chatId, text, firstName, eventId, res)) return;

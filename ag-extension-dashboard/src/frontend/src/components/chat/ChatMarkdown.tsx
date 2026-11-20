@@ -19,8 +19,8 @@ export function ChatMarkdown({ content }: { content: string }) {
           h1: ({ children }) => <p className="font-medium">{children}</p>,
           h2: ({ children }) => <p className="font-medium">{children}</p>,
           h3: ({ children }) => <p className="font-medium">{children}</p>,
-          ul: ({ children }) => <ul className="list-disc pl-4 space-y-1">{children}</ul>,
-          ol: ({ children }) => <ol className="list-decimal pl-4 space-y-1">{children}</ol>,
+          ul: ({ children }) => <ul className="list-disc ps-4 space-y-1">{children}</ul>,
+          ol: ({ children }) => <ol className="list-decimal ps-4 space-y-1">{children}</ol>,
           code: ({ children }) => <code className="rounded bg-black/5 px-1 font-mono dark:bg-white/10">{children}</code>,
           a: ({ href, children }) =>
             href && /^https?:\/\//i.test(href) ? (

@@ -38,7 +38,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
           <motion.div
             animate={{ x: [0, 50, 0], y: [0, 30, 0], scale: [1, 1.12, 1] }}
             transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute -top-1/4 -right-1/4 w-full h-full bg-emerald-500/15 rounded-full blur-[100px]"
+            className="absolute -top-1/4 -end-1/4 w-full h-full bg-emerald-500/15 rounded-full blur-[100px]"
           />
           <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px]" />
         </div>
@@ -53,7 +53,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
                 {t('billing_status_label') || 'Agronomist Seat'}
               </span>
               <Badge variant="success" size="sm">
-                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full mr-1" />
+                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full me-1" />
                 {t('billing_status_active') || 'Active License'}
               </Badge>
             </div>
@@ -108,7 +108,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
       animate={{ opacity: 1, scale: 1 }}
       className={`relative p-8 lg:p-10 bg-slate-950/90 dark:bg-slate-950/95 backdrop-blur-2xl ${radiusClass} border border-emerald-500/25 shadow-sm dark:shadow-none overflow-hidden min-h-[440px] flex flex-col justify-between`}
     >
-      <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-[90px]" />
+      <div className="absolute top-0 end-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-[90px]" />
       <div className="relative z-10">
         <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 w-fit mb-4 text-emerald-700 dark:text-emerald-400">
           <TrendingUp className="w-6 h-6" />

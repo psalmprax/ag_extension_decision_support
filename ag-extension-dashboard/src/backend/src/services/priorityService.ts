@@ -4,6 +4,7 @@ import { getPrisma } from './prismaService';
 import { FAOService } from './faoService';
 import { WeatherService } from './weatherService';
 import { logger } from '@/utils/logger';
+import { defaultCountryName } from '@/services/country/phone';
 
 export interface PriorityScore {
     farmerId: string;
@@ -30,7 +31,7 @@ class PriorityService {
         let score = 0;
         let relevantAlerts: Record<string, any>[] = [];
         try {
-            const region = farmer.region || 'Kenya';
+            const region = farmer.region || farmer.country || defaultCountryName();
             const alerts = await FAOService.getDiseaseAlerts(region);
             const farmerCrops = Array.isArray(farmer.crops) ? farmer.crops : [];
             relevantAlerts = alerts.filter(a => 
@@ -46,8 +47,10 @@ class PriorityService {
     private async calculateWeatherScore(farmer: Record<string, any>, reasons: string[]): Promise<number> {
         let score = 0;
         try {
-            const location = farmer.village || farmer.region || 'Kenya';
-            const weather = await WeatherService.getByLocation(`${location}, Kenya`);
+            // The farmer's own place and country, never another country's weather.
+            const country = farmer.country || defaultCountryName();
+            const place = farmer.village || farmer.region;
+            const weather = await WeatherService.getByLocation(place ? `${place}, ${country}` : country);
             const riskConditions = ['Thunderstorm', 'Heavy rain', 'Violent rain showers', 'Thunderstorm with hail'];
             
             if (weather && weather.condition) {

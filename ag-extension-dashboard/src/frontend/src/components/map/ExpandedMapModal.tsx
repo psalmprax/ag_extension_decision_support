@@ -108,13 +108,13 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
 
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <div className="relative hidden md:block w-64">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="w-4 h-4 absolute start-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder={t('search_farmer_crop') || 'Search farmers, crops...'}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-0 focus:ring-2 focus:ring-emerald-500"
+                className="w-full ps-9 pe-4 py-2 text-xs rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-0 focus:ring-2 focus:ring-emerald-500"
               />
             </div>
             <button

@@ -2,7 +2,6 @@ import { calculateVpdKPa, evaluateSmartIrrigation, type SoilProbeTelemetry } fro
 import { verifyEudrDeforestationCompliance, generateFarmToForkPassport } from '../services/traceabilityPassportService';
 import { findAvailableEquipment, planDroneSprayMission, registerEquipment } from '../services/mechanizationFleetService';
 import { clusterPestSightings, forecastSwarmTrajectory, type PestSightingReport } from '../services/pestSwarmRadarService';
-import { findCrossBorderArbitrage } from '../services/crossBorderTradeService';
 
 jest.mock('../utils/logger', () => ({
   logger: {
@@ -16,7 +15,7 @@ jest.mock('../utils/logger', () => ({
 const mockAssetQuery = jest.fn();
 jest.mock('../services/databaseService', () => ({ query: (...args: unknown[]) => mockAssetQuery(...args) }));
 
-describe('Frontier Agricultural Capabilities (IoT, EUDR, Drone Fleet, Swarm Radar, Cross-Border Trade)', () => {
+describe('Frontier Agricultural Capabilities (IoT, EUDR, Drone Fleet, Swarm Radar)', () => {
   describe('IoT & LoRaWAN Sensor Mesh & Smart Irrigation', () => {
     it('calculates Vapor Pressure Deficit (VPD) accurately', () => {
       // 25°C, 60% RH -> SVP ~ 3.17 kPa, VPD = 3.17 * 0.40 = 1.27 kPa
@@ -236,16 +235,4 @@ describe('Frontier Agricultural Capabilities (IoT, EUDR, Drone Fleet, Swarm Rada
     });
   });
 
-  describe('Cross-Border Commodity Trade & Arbitrage Engine', () => {
-    it('identifies profitable cross-border arbitrage opportunities (e.g. Uganda to Kenya Maize)', () => {
-      const opportunities = findCrossBorderArbitrage({ commodity: 'Maize', minNetMarginPct: 5.0 });
-      expect(opportunities.length).toBeGreaterThan(0);
-
-      const top = opportunities[0];
-      expect(top.originCountry).toBe('Uganda');
-      expect(top.destinationCountry).toBe('Kenya');
-      expect(top.netArbitrageProfitUsdPerTon).toBeGreaterThan(20.0);
-      expect(top.recommendedTrade).toBe(true);
-    });
-  });
 });

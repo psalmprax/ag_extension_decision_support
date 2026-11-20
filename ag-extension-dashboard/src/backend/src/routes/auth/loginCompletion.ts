@@ -51,6 +51,8 @@ export interface LoginUser {
     email: string;
     password_hash: string | null;
     region: string | null;
+    country?: string | null;
+    time_zone?: string | null;
     role: string;
     first_name: string | null;
     last_name: string | null;
@@ -114,6 +116,8 @@ async function completePasswordLogin(req: Request, res: Response, user: LoginUse
                 isDemo: user.is_demo === true || user.email?.toLowerCase() === 'demo@agridemo.com',
                 isSystemAdmin: reportedSystemAdmin(user),
                 region: user.region,
+                country: user.country ?? null,
+                timeZone: user.time_zone ?? null,
                 mfaEnabled: !!user.mfa_enabled,
                 planName,
                 isFree,

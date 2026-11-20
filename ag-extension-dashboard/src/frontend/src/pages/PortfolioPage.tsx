@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SECONDARY_BUTTON } from '@/components/ui/controlStyles';
 import { useLanguage } from '../lib/LanguageContext';
 import { RegisterFarmerButton } from '@/components/portfolio/RegisterFarmerButton';
+import { useUnits } from '@/hooks/useUnits';
 
 interface PortfolioPageProps {
   effectiveFarmers: Farmer[];
@@ -38,6 +39,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
   setSelectedFarmers,
 }) => {
   const { t } = useLanguage();
+  const units = useUnits();
   const { isDemo } = useDemoMode();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -68,8 +70,8 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
           <span className="tabular-nums">
             {t('portfolio_summary', {
               count: effectiveFarmers.length,
-              hectares: (Number(totalLandHa) || 0).toFixed(1),
-              defaultValue: '{count} farmers, {hectares} ha in total',
+              area: units.area(totalLandHa),
+              defaultValue: '{count} farmers, {area} in total',
             })}
             {selectedFarmers.size > 0 && ` · ${t('portfolio_selected_count', { count: selectedFarmers.size, defaultValue: '{count} selected' })}`}
           </span>
@@ -78,13 +80,13 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
         {/* Search & Bulk Select Controls */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 text-slate-400 dark:text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 dark:text-white/40 absolute start-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder={t('portfolio_search_placeholder', { defaultValue: 'Search by name, region or crop' })}
-              className="w-full h-10 pl-10 pr-4 text-sm rounded-md border border-slate-900/[0.12] dark:border-white/[0.12] bg-white dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:ring-2 focus:ring-emerald-600 outline-none"
+              className="w-full h-10 ps-10 pe-4 text-sm rounded-md border border-slate-900/[0.12] dark:border-white/[0.12] bg-white dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:ring-2 focus:ring-emerald-600 outline-none"
             />
           </div>
 
@@ -211,7 +213,6 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
                         </div>
                       </div>
 
-                      {/* Checkbox Selector */}
                       <div
                         onClick={e => e.stopPropagation()}
                         className="pt-0.5"
@@ -240,12 +241,11 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
                           {t('ui_portfolio_page_land_holding')}
                         </span>
                         <p className="font-semibold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">
-                          {farmer.farmSize || 0} ha
+                          {units.area(farmer.farmSize || 0)}
                         </p>
                       </div>
                     </div>
 
-                    {/* Crops Chips */}
                     <div className="flex flex-wrap gap-1 min-h-[26px]">
                       {farmer.crops && farmer.crops.length > 0 ? (
                         farmer.crops.map((crop: string) => (
@@ -294,7 +294,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
             exit={{ opacity: 0, y: 30 }}
             className="fixed bottom-[calc(8.25rem+env(safe-area-inset-bottom))] md:bottom-8 left-1/2 -translate-x-1/2 z-[1050] backdrop-blur-xl bg-slate-900/95 border border-slate-700/80 dark:border-white/10 shadow-xl rounded-xl px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between sm:justify-start gap-2 sm:gap-4 flex-wrap w-[calc(100%-1.5rem)] max-w-xl md:w-auto"
           >
-            <div className="flex items-center gap-2 pr-2 border-r border-white/10 text-xs">
+            <div className="flex items-center gap-2 pe-2 border-e border-white/10 text-xs">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <strong className="text-white font-mono tabular-nums">{selectedFarmers.size}</strong>
               <span className="text-white/70">{t('common_selected', { defaultValue: 'selected' })}</span>

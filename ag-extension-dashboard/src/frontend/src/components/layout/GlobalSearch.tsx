@@ -86,7 +86,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
       {/* Mobile Full-Width Search Overlay */}
       {mobileSearchOpen && (
         <div className="sm:hidden fixed inset-x-0 top-0 h-16 bg-slate-950/95 backdrop-blur-2xl border-b border-white/10 px-3 flex items-center gap-2 z-[60] shadow-2xl">
-          <Search className="w-4 h-4 text-emerald-400 shrink-0 ml-1" />
+          <Search className="w-4 h-4 text-emerald-400 shrink-0 ms-1" />
           <input
             type="text"
             autoFocus
@@ -124,10 +124,10 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
 
           {/* Mobile Results Dropdown */}
           {shouldShowResults && (
-            <div className="absolute top-16 left-0 right-0 bg-slate-950 border-b border-white/10 shadow-2xl max-h-[60vh] overflow-y-auto z-50">
+            <div className="absolute top-16 start-0 end-0 bg-slate-950 border-b border-white/10 shadow-2xl max-h-[60vh] overflow-y-auto z-50">
               {isGlobalSearching ? (
                 <div role="status" aria-live="polite" className="p-4 text-center text-xs text-slate-400">
-                  <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
+                  <Loader2 className="w-4 h-4 animate-spin inline me-2" />
                   {t('common_searching', { defaultValue: 'Searching...' })}
                 </div>
               ) : globalSearchResults.length === 0 ? (
@@ -143,7 +143,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
                     {group.items.map(item => (
                       <button
                         key={item.id}
-                        className="w-full px-4 py-2.5 text-left hover:bg-white/5 flex items-center gap-3 border-b border-white/[0.02]"
+                        className="w-full px-4 py-2.5 text-start hover:bg-white/5 flex items-center gap-3 border-b border-white/[0.02]"
                         onClick={() => handleItemClick(group.type, item)}
                       >
                         <div className="flex-1 min-w-0">
@@ -165,12 +165,12 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
 
       {/* Desktop Search Input */}
       <div className="relative hidden sm:block">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+        <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
         <input
           type="text"
           aria-label={t('common_search_placeholder', { defaultValue: 'Search system or location' })}
           placeholder={t('common_search_placeholder', { defaultValue: 'Search system or location...' })}
-          className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-full pl-10 pr-4 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 dark:focus:border-primary-400 outline-none w-48 md:w-64 transition-all text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 shadow-sm"
+          className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-full ps-10 pe-4 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 dark:focus:border-primary-400 outline-none w-48 md:w-64 transition-all text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 shadow-sm"
           value={searchQuery}
           onChange={e => {
             setSearchQuery(e.target.value);
@@ -185,10 +185,10 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
           }}
         />
         {shouldShowResults && (
-          <div className="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl shadow-2xl z-[100] max-h-80 overflow-y-auto">
+          <div className="absolute top-full mt-2 start-0 end-0 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl shadow-2xl z-[100] max-h-80 overflow-y-auto">
             {isGlobalSearching ? (
               <div role="status" aria-live="polite" className="p-4 text-center text-sm text-slate-600 dark:text-slate-300">
-                <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
+                <Loader2 className="w-4 h-4 animate-spin inline me-2" />
                 {t('common_searching', { defaultValue: 'Searching...' })}
               </div>
             ) : globalSearchResults.length === 0 ? (
@@ -204,7 +204,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
                   {group.items.map(item => (
                     <button
                       key={item.id}
-                      className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/50 flex items-center gap-3 transition-colors border-b border-slate-100 dark:border-slate-800/40 last:border-0"
+                      className="w-full px-4 py-2.5 text-start hover:bg-slate-100 dark:hover:bg-slate-800/50 flex items-center gap-3 transition-colors border-b border-slate-100 dark:border-slate-800/40 last:border-0"
                       onClick={() => handleItemClick(group.type, item)}
                     >
                       <div className="flex-1">

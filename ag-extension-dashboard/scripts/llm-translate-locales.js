@@ -59,6 +59,19 @@ const LANGUAGE_NAMES = {
   sk: 'Slovak',
   uk: 'Ukrainian',
   ug: 'Uyghur',
+  ha: 'Hausa',
+  yo: 'Yoruba',
+  ig: 'Igbo',
+  am: 'Amharic',
+  om: 'Afaan Oromoo (Oromo)',
+  ny: 'Chichewa (Nyanja)',
+  lg: 'Luganda',
+  rw: 'Kinyarwanda',
+  so: 'Somali',
+  bn: 'Bengali',
+  id: 'Indonesian',
+  vi: 'Vietnamese',
+  ur: 'Urdu',
 };
 
 const PROTECTED_TERMS = ['FAOSTAT', 'NASA POWER', 'SoilGrids', 'ISRIC', 'Stripe', 'PayPal'];

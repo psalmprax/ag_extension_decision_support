@@ -133,7 +133,7 @@ const CropsSection = ({
                     ),
                   })
                 }
-                className="ml-1 text-red-400 hover:text-red-600"
+                className="ms-1 text-red-400 hover:text-red-600"
               >
                 ×
               </button>
@@ -593,7 +593,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed right-0 top-0 bottom-0 w-full max-w-xl z-[70] shadow-2xl overflow-hidden flex flex-col bg-slate-950/95 backdrop-blur-2xl border-l border-slate-800 text-slate-100"
+            className="fixed end-0 top-0 bottom-0 w-full max-w-xl z-[70] shadow-2xl overflow-hidden flex flex-col bg-slate-950/95 backdrop-blur-2xl border-s border-slate-800 text-slate-100"
             onClick={() => onFarmerClick?.(farmer)}
           >
             {/* Header Section */}
@@ -747,7 +747,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                 navigator.clipboard.writeText(inviteLink);
                 toast.success('Invite link copied — share it with the farmer to join this call.');
               }}
-              className="absolute top-4 right-16 z-[110] px-3 py-2 bg-black/50 hover:bg-black/70 text-white text-xs font-bold rounded-xl backdrop-blur-md transition-all flex items-center gap-1.5"
+              className="absolute top-4 end-16 z-[110] px-3 py-2 bg-black/50 hover:bg-black/70 text-white text-xs font-bold rounded-xl backdrop-blur-md transition-all flex items-center gap-1.5"
             >
               <Link2 className="w-4 h-4" />
               {t('ui_farmer_detail_panel_invite')}
@@ -755,7 +755,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             <button
               onClick={() => setShowVideoCall(false)}
               aria-label="Close video call"
-              className="absolute top-4 right-4 z-[110] p-2 bg-black/50 hover:bg-black/70 text-white rounded-xl backdrop-blur-md transition-all"
+              className="absolute top-4 end-4 z-[110] p-2 bg-black/50 hover:bg-black/70 text-white rounded-xl backdrop-blur-md transition-all"
             >
               <X className="w-6 h-6" />
             </button>

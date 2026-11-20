@@ -36,4 +36,19 @@ describe('photos in a chat message', () => {
     const { container } = render(<MessagePhotos photos={[]} label="Photo from Farmer" />);
     expect(container).toBeEmptyDOMElement();
   });
+
+  it('plays videos and voice notes sent from WhatsApp in place', () => {
+    const { container } = render(
+      <MessagePhotos
+        photos={[
+          { id: 'v1', url: '/api/v1/upload/file/v1.mp4', name: 'video-1.mp4', mimeType: 'video/mp4' },
+          { id: 'a1', url: '/api/v1/upload/file/a1.ogg', name: 'audio-1.ogg', mimeType: 'audio/ogg' },
+        ]}
+        label="Photo from Farmer"
+      />,
+    );
+    expect(container.querySelector('video')).toHaveAttribute('src', '/api/v1/upload/file/v1.mp4');
+    expect(container.querySelector('audio')).toHaveAttribute('aria-label', 'Voice note 1: audio-1.ogg');
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
 });

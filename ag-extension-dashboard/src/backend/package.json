@@ -26,7 +26,8 @@
     "predev": "node scripts/sync-shared-api.js",
     "prelint": "node scripts/sync-shared-api.js",
     "prebuild": "node scripts/sync-shared-api.js",
-    "pretest": "node scripts/sync-shared-api.js"
+    "pretest": "node scripts/sync-shared-api.js",
+    "routes:inventory": "ts-node -r tsconfig-paths/register --transpile-only scripts/route-inventory.ts"
   },
   "lint-staged": {
     "src/**/*.ts": [
@@ -61,6 +62,7 @@
     "groq-sdk": "^0.37.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "libphonenumber-js": "^1.13.17",
     "morgan": "^1.12.1",
     "multer": "^2.5.0",
     "nodemailer": "^10.2.1",

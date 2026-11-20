@@ -16,6 +16,8 @@ model User {
   role          String             @default("extension_officer") @db.VarChar(50)
   region        String?            @db.VarChar(100)
   country       String?            @default("Kenya") @db.VarChar(100)
+  /// IANA time zone; null means the country's main one.
+  timeZone      String?            @map("time_zone") @db.VarChar(64)
   phone         String?            @db.VarChar(20)
   /// SMS command PIN for officers and managers (bcrypt); commands unlock for a day after a correct PIN.
   smsPinHash            String?   @map("sms_pin_hash") @db.VarChar(255)
@@ -237,6 +239,8 @@ model Farmer {
    locationLat              Decimal?           @map("location_lat") @db.Decimal(10, 8)
    locationLng              Decimal?           @map("location_lng") @db.Decimal(11, 8)
    languagePreference       String?            @default("en") @map("language_preference") @db.VarChar(20)
+   smsOptOut                Boolean            @default(false) @map("sms_opt_out")
+   smsOptOutAt              DateTime?          @map("sms_opt_out_at") @db.Timestamp(6)
    isActive                 Boolean?           @default(true) @map("is_active")
    isDemo                   Boolean            @default(false) @map("is_demo")
    assignmentNotificationSent Boolean           @default(false) @map("assignment_notification_sent")
@@ -949,6 +953,9 @@ model Tenant {
   id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name             String             @db.VarChar(160)
   region           String?            @db.VarChar(100)
+  country          String?            @db.VarChar(100)
+  /// IANA time zone for working hours; null means the country's main one.
+  timeZone         String?            @map("time_zone") @db.VarChar(64)
   defaultCurrency  String             @default("USD") @map("default_currency") @db.VarChar(10)
   defaultLanguage  String             @default("en") @map("default_language") @db.VarChar(20)
   capabilities     Json               @default("{}")

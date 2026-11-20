@@ -44,7 +44,9 @@ describe('recommendation reviews', () => {
         expect(res.status).toBe(200);
         expect(res.body.data[0].trigger).toBe('no_sources');
         expect(mockQuery.mock.calls[0][0]).toContain('trigger');
-        expect(mockQuery.mock.calls[0][1]).toEqual(['t1', 'pending']);
+        // Only reviews about the officer's own farmers (or about no farmer).
+        expect(mockQuery.mock.calls[0][0]).toContain('assigned_officer_id = $3');
+        expect(mockQuery.mock.calls[0][1]).toEqual(['t1', 'pending', expect.any(String)]);
     });
 
     it('does not let a farmer list the queue (it holds other farmers\' advice)', async () => {

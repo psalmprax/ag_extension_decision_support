@@ -51,7 +51,7 @@ function IssuesSummary({ issues, summary }: { issues?: string[]; summary?: strin
           {t('ui_system_health_infrastructure_incident_s_detected', { length: issues.length })}
         </p>
       </div>
-      <ul className="list-disc list-inside space-y-1 pl-1">
+      <ul className="list-disc list-inside space-y-1 ps-1">
         {issues.map((issue, i) => (
           <li key={i} className="text-xs text-rose-800 dark:text-rose-200 font-mono">
             {issue}
@@ -477,7 +477,7 @@ function RecoveryLogList({
         <span className="text-xs text-slate-500 dark:text-white/40 font-mono">Real-time Stream</span>
       </div>
 
-      <div className="space-y-2.5 max-h-96 overflow-y-auto custom-scrollbar pr-1">
+      <div className="space-y-2.5 max-h-96 overflow-y-auto custom-scrollbar pe-1">
         {actions.length === 0 ? (
           <div className="text-center py-8 text-slate-400 dark:text-white/40 text-xs font-mono">
             No recovery interventions recorded. Cluster operating autonomously.
@@ -503,7 +503,7 @@ function RecoveryLogList({
                   )}
                 </div>
               </div>
-              <div className="text-right font-mono text-xxs text-slate-500 dark:text-white/40">
+              <div className="text-end font-mono text-xxs text-slate-500 dark:text-white/40">
                 <span className={`inline-block px-2 py-0.5 rounded-full font-bold text-xxs mb-1 ${action.success ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/20 text-rose-700 dark:text-rose-300'}`}>
                   {action.success ? 'Success' : 'Failed'}
                 </span>

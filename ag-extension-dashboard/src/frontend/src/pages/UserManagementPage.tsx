@@ -23,7 +23,6 @@ import { fetchLoginHistory, fetchLoginStats } from '@/api/authService';
 import {
   SUPPORTED_COUNTRIES,
   CONTINENT_ORDER,
-  getCountryFlag,
   getCountryConfig,
 } from '@/lib/countries';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -199,13 +198,13 @@ export function UserManagementPage() {
         {/* Search & Filter Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative w-full sm:w-96">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
+            <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
             <input
               type="text"
               placeholder={t('users_search_placeholder', 'Search by name, email, country, or region...')}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:ring-1 focus:ring-emerald-400 outline-none"
+              className="w-full ps-10 pe-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:ring-1 focus:ring-emerald-400 outline-none"
             />
           </div>
 
@@ -213,7 +212,7 @@ export function UserManagementPage() {
             <select
               value={roleFilter}
               onChange={e => setRoleFilter(e.target.value)}
-              className="w-full appearance-none pl-3.5 pr-9 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-400 outline-none"
+              className="w-full appearance-none ps-3.5 pe-9 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-400 outline-none"
             >
               <option value="">{t('users_all_roles', 'All Roles ({count})', { count: usersList.length })}</option>
               {ROLES.map(r => (
@@ -222,7 +221,7 @@ export function UserManagementPage() {
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-white/40 pointer-events-none" />
+            <ChevronDown className="absolute end-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-white/40 pointer-events-none" />
           </div>
         </div>
       </PageHeader>
@@ -296,8 +295,7 @@ export function UserManagementPage() {
                     <span className="truncate">{user.email}</span>
                   </div>
                   <div className="flex items-center gap-2 text-slate-700 dark:text-white/70">
-                    <span className="text-xs shrink-0">{getCountryFlag(user.country)}</span>
-                    <span className="font-medium text-slate-800 dark:text-white/80">{user.country || 'Kenya'}</span>
+                    <span className="font-medium text-slate-800 dark:text-white/80">{user.country || t('users_no_country', 'Country not set')}</span>
                     <span className="text-slate-300 dark:text-white/30">•</span>
                     <span>{user.region || t('users_unassigned_region', 'Unassigned region')}</span>
                   </div>
@@ -626,7 +624,7 @@ export function UserManagementPage() {
                         </div>
                       </div>
 
-                      <div className="text-right font-mono text-xxs text-white/50 space-y-0.5">
+                      <div className="text-end font-mono text-xxs text-white/50 space-y-0.5">
                         <div className="text-white/80">{new Date(entry.createdAt).toLocaleString()}</div>
                         {entry.location && (
                           <div className="flex items-center justify-end gap-1 text-white/70">

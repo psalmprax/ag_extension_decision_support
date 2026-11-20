@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { render, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -32,11 +33,11 @@ const mockedRegister = authService.register as unknown as ReturnType<typeof vi.f
 // The provider renders once the (mocked) locale file has loaded.
 const renderRegister = async () => {
   render(
-    <MemoryRouter>
+    <QueryClientProvider client={new QueryClient()}><MemoryRouter>
       <LanguageProvider>
         <Register />
       </LanguageProvider>
-    </MemoryRouter>
+    </MemoryRouter></QueryClientProvider>
   );
   await waitFor(() => expect(document.querySelector('form')).not.toBeNull());
 };

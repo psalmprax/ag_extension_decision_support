@@ -327,7 +327,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                       <button
                         key={idx}
                         onClick={() => handleApplyPreset(preset)}
-                        className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800 hover:border-amber-500/40 text-left transition-all group"
+                        className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800 hover:border-amber-500/40 text-start transition-all group"
                       >
                         <div className="font-bold text-xs text-white group-hover:text-amber-400 flex items-center justify-between">
                           <span>{preset.title}</span>

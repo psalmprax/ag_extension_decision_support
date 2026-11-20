@@ -166,7 +166,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       onAction(item.action, entityId);
                       onClose();
                     }}
-                    className={`w-full flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors text-left
+                    className={`w-full flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors text-start
                       ${
                         item.action.includes('delete')
                           ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20'
