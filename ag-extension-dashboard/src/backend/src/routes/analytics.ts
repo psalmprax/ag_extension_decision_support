@@ -306,6 +306,14 @@ router.get('/farmer-stats', async (req: Request, res: Response) => {
             LIMIT 1
         `, [userId]);
 
+        // The officer assigned to this farmer, so "My officer" can name them before any message.
+        const officerResult = await getFromDB(`
+            SELECT NULLIF(TRIM(CONCAT(u.first_name, ' ', u.last_name)), '') AS officer_name
+            FROM farmers f JOIN users u ON u.id = f.assigned_officer_id
+            WHERE f.user_id = $1
+            LIMIT 1
+        `, [userId]);
+
         // Fetch alerts count
         const alertsCountResult = await getFromDB(`
             SELECT COUNT(*) as count 
@@ -335,7 +343,8 @@ router.get('/farmer-stats', async (req: Request, res: Response) => {
                 aiConfidence: farmer.ai_confidence ? `${farmer.ai_confidence}%` : 'N/A',
                 nextVisitDate: nextVisitResult[0]?.scheduled_at || 'None',
                 alertsCount: parseInt(String(alertsCountResult[0]?.count || '0')),
-                aiTipsCount: parseInt(String(aiTipsCountResult[0]?.count || '0'))
+                aiTipsCount: parseInt(String(aiTipsCountResult[0]?.count || '0')),
+                officerName: officerResult[0]?.officer_name ?? null,
             }
         });
     } catch (error) {

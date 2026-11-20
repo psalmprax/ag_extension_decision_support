@@ -9,6 +9,8 @@ import { useConversationRealtime } from '@/hooks/useConversationRealtime';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import type { ThreadPageProps } from '@/components/chat/threadProps';
+import { useQuery } from '@tanstack/react-query';
+import { fetchFarmerStats } from '@/api/farmerService';
 
 /**
  * The farmer's chat with their extension officer, the in-app counterpart of
@@ -32,6 +34,9 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
 
+  // Shared with the farmer dashboard's query, so it is usually already loaded.
+  const { data: stats } = useQuery({ queryKey: ['farmer-stats'], queryFn: fetchFarmerStats });
+  const assignedOfficer = stats?.data?.officerName ?? null;
   const thread = farmerConversations.find(c => c.id === activeFarmerConvId) ?? farmerConversations[0] ?? null;
   const threadId = thread?.id ?? activeFarmerConvId;
 
@@ -105,7 +110,9 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('ui_farmer_officer_chat_page_my_extension_officer')}</h2>
           <p className="text-sm text-slate-500 dark:text-white/60 flex items-center gap-1.5">
             <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-            {thread?.officerName || (thread ? 'Your officer' : 'Your officer will see your first message here')}
+            {thread?.officerName ||
+              assignedOfficer ||
+              t('farmer_chat_no_officer', { defaultValue: 'No officer is assigned to you yet. Your message will reach the next one assigned.' })}
           </p>
         </div>
         <span role="status" className="flex items-center gap-1.5 text-xxs text-slate-500 dark:text-white/50 shrink-0">

@@ -2655,5 +2655,6 @@
     "sidebar_group_insights": "Insights",
     "sidebar_group_operations": "Operations",
     "sidebar_group_administration": "Administration",
-    "nav_advisory_studio": "Advisory Studio"
+    "nav_advisory_studio": "Advisory Studio",
+    "farmer_chat_no_officer": "No officer is assigned to you yet. Your message will reach the next one assigned."
 }
