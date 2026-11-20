@@ -29,7 +29,7 @@ export interface PredictionForMatch {
 
 /** The answer the diagnosis gave, as one name: its top disease, or "healthy". */
 export function topPrediction(prediction: PredictionForMatch): { name: string; confidence: number | null } {
-    const top = [...prediction.diseases].sort((a, b) => b.confidence - a.confidence)[0];
+    const top = prediction.diseases.toSorted((a, b) => b.confidence - a.confidence)[0];
     if (top?.disease) return { name: top.disease, confidence: top.confidence };
     return { name: prediction.overallHealth === 'healthy' ? HEALTHY : prediction.overallHealth, confidence: null };
 }

@@ -49,7 +49,7 @@ export async function withValidation<T extends PlantImageAnalysis>(analysis: T, 
         const validation = validationFor(d.disease, classes);
         return { ...d, validation, reviewStatus: validation.status === 'tested' ? d.reviewStatus : 'needs_expert_review' as const };
     });
-    const top = [...diseases].sort((a, b) => b.confidence - a.confidence)[0];
+    const top = diseases.toSorted((a, b) => b.confidence - a.confidence)[0];
     return {
         ...analysis,
         diseases,
