@@ -9,11 +9,11 @@
  */
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
-import { smsService } from '@/services/smsService';
+import { sendSmsReply } from '@/services/sms/smsReply';
 import { whatsappService } from '@/services/whatsappService';
 import { telegramService } from '@/services/telegramService';
 import { persistTurnMessage } from '@/services/chat/advisoryAnswer';
-import { fitSms, toPlainText } from '@/services/chat/plainText';
+import { toPlainText } from '@/services/chat/plainText';
 import { synthesizeVoiceReply } from '@/services/chat/voiceReply';
 
 export type FarmerChannel = 'sms' | 'whatsapp' | 'telegram';
@@ -109,11 +109,12 @@ interface FarmerAddress {
     phone: string | null;
     notes: string | null;
     tenant_id: string | null;
+    language_preference: string | null;
 }
 
 async function farmerAddress(conversationId: string): Promise<FarmerAddress | null> {
     const { rows } = await query<FarmerAddress>(
-        `SELECT f.id AS farmer_id, f.phone, f.notes, f.tenant_id
+        `SELECT f.id AS farmer_id, f.phone, f.notes, f.tenant_id, f.language_preference
            FROM chat_conversations cv JOIN farmers f ON f.id = cv.farmer_id
           WHERE cv.id = $1 LIMIT 1`,
         [conversationId],
@@ -134,7 +135,7 @@ async function sendOnChannel(
 ): Promise<boolean> {
     if (channel === 'sms') {
         if (!address.phone) return false;
-        return smsService.sendSMS({ to: address.phone, message: fitSms(text), farmerId: address.farmer_id });
+        return sendSmsReply({ to: address.phone, text, language: address.language_preference, farmerId: address.farmer_id });
     }
     if (channel === 'whatsapp') {
         if (!address.phone) return false;

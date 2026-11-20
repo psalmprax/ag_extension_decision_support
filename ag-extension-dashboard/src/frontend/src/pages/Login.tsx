@@ -6,10 +6,11 @@ import { useAppStore, type User } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { enterDemoMode, exitDemoMode } from '@/demo';
 
-import { login, demoLogin } from '@/api/authService';
+import { login, demoLogin, type AuthResponse } from '@/api/authService';
+import { PhoneSignInForm } from '@/components/auth/PhoneSignInForm';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { AuthLayout } from '@/components/auth/AuthLayout';
-import { AUTH_CARD } from '@/components/ui/controlStyles';
+import { AUTH_CARD, AUTH_INPUT, AUTH_SUBMIT } from '@/components/ui/controlStyles';
 
 interface LoginProps {
   onDemo?: () => void;
@@ -26,36 +27,32 @@ export function Login({ onDemo }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [usePhone, setUsePhone] = useState(false);
+
+  /** Store the signed-in user and go where they were headed (shared by email and phone sign-in). */
+  const finishSignIn = (data: AuthResponse) => {
+    // The JWT itself arrives as an httpOnly cookie — nothing token-shaped is
+    // written to localStorage.
+    const token = data.token || data.data?.token;
+    const userData = data.data?.user || data.user;
+    if (userData) {
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData as User);
+      exitDemoMode();
+    }
+    if (!userData && !token) throw new Error(t('login_failed_no_token'));
+    // Return the user to where they were headed (e.g. a /tele-call/<roomId>
+    // invite link that required sign-in first).
+    const from = (location.state as { from?: string } | null)?.from;
+    navigate(from && from.startsWith('/') ? from : '/dashboard');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-
     try {
-      const data = await login({ email, password });
-
-      // Handle nested response structure { success: true, data: { token, user } }
-      // The JWT itself arrives as an httpOnly cookie — nothing token-shaped is
-      // written to localStorage.
-      const token = data.token || data.data?.token;
-      const userData = data.data?.user || data.user;
-
-      // Store user data
-      if (userData) {
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData as User);
-        exitDemoMode();
-      }
-
-      if (!userData && !token) {
-        throw new Error(t('login_failed_no_token'));
-      }
-
-      // Return the user to where they were headed (e.g. a /tele-call/<roomId>
-      // invite link that required sign-in first).
-      const from = (location.state as { from?: string } | null)?.from;
-      navigate(from && from.startsWith('/') ? from : '/dashboard');
+      finishSignIn(await login({ email, password }));
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, t('login_invalid_credentials')));
     } finally {
@@ -132,6 +129,10 @@ export function Login({ onDemo }: LoginProps) {
               <div className="flex-1 h-px bg-white/10"></div>
             </div>
 
+            {usePhone ? (
+              <PhoneSignInForm onSignedIn={finishSignIn} onUseEmail={() => setUsePhone(false)} />
+            ) : (
+            <>
             {/* Error Message */}
             {error && (
               <div
@@ -158,7 +159,7 @@ export function Login({ onDemo }: LoginProps) {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-md text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                  className={AUTH_INPUT}
                   placeholder={t('login_email_placeholder') || 'name@organization.org'}
                   autoComplete="email"
                 />
@@ -178,7 +179,7 @@ export function Login({ onDemo }: LoginProps) {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-md text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all pr-12"
+                    className={`${AUTH_INPUT} pr-12`}
                     placeholder="••••••••"
                     autoComplete="current-password"
                   />
@@ -193,14 +194,7 @@ export function Login({ onDemo }: LoginProps) {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs pt-1">
-                <label className="flex items-center gap-2 cursor-pointer text-white/70 hover:text-white">
-                  <input
-                    type="checkbox"
-                    className="rounded bg-white/10 border-white/20 text-emerald-500 focus:ring-emerald-500/30"
-                  />
-                  <span>{t('login_remember_me')}</span>
-                </label>
+              <div className="flex items-center justify-end text-sm pt-1">
                 <Link
                   to="/forgot-password"
                   className="text-emerald-300 hover:text-emerald-200 transition-colors"
@@ -209,11 +203,7 @@ export function Login({ onDemo }: LoginProps) {
                 </Link>
               </div>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-md shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-              >
+              <button type="submit" disabled={isLoading} className={`${AUTH_SUBMIT} mt-2`}>
                 {isLoading ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -223,7 +213,16 @@ export function Login({ onDemo }: LoginProps) {
                   <span>{t('login_sign_in')}</span>
                 )}
               </button>
+              <button
+                type="button"
+                onClick={() => { setError(''); setUsePhone(true); }}
+                className="w-full text-center text-sm text-emerald-300 hover:text-emerald-200 transition-colors"
+              >
+                {t('phone_login_switch', { defaultValue: 'Sign in with your phone number' })}
+              </button>
             </form>
+            </>
+            )}
           </div>
 
           {/* Footer */}

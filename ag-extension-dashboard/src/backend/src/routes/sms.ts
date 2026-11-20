@@ -15,7 +15,9 @@ import { detectLanguage } from '@/utils/languageDetector';
 import { onboardingEngine } from '@/services/onboardingEngine';
 import { checkMessageAccess, MessageAccessError, resolvePrincipalRegion } from '@/services/messageAccessService';
 import { logger } from '@/utils/logger';
-import { verifyInboundWebhookSignature } from '@/middleware/webhookSignature';
+import { verifySmsGatewayWebhook } from '@/middleware/webhookSignature';
+import { routeSpecialSms } from '@/services/sms/smsInboundRouting';
+import { ussdScreen } from '@/services/sms/ussdMenu';
 import { ASK_HELP, messagingKnowledgeReply, parseAskCommand } from '@/services/knowledge/messagingHints';
 import { linkedDemoSql } from '@/services/demoScope';
 import { takeRegisteredFarmerMessage } from '@/services/chat/channelInbound';
@@ -32,7 +34,7 @@ function getInboundEventId(payload: Record<string, unknown>): string | undefined
  * POST /api/sms/inbound — Inbound SMS Webhook for Africa's Talking and Twilio
  * Verifies HMAC when META_APP_SECRET/TWILIO_AUTH_TOKEN is configured; dev allows unsigned for local testing.
  */
-router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res: Response) => {
+router.post('/inbound', verifySmsGatewayWebhook, async (req: Request, res: Response) => {
     try {
         const from = req.body.from || req.body.From || req.body.phoneNumber;
         const text = req.body.text || req.body.Body || req.body.message;
@@ -40,6 +42,11 @@ router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res:
 
         if (!from || !text) {
             return res.status(400).json({ success: false, error: 'from and text are required' });
+        }
+
+        // MORE, LANG and officers' commands come first.
+        if (await routeSpecialSms(String(from), String(text), eventId)) {
+            return res.status(200).json({ success: true, handled: true });
         }
 
         // A registered farmer's message goes into their thread for their officer
@@ -83,6 +90,50 @@ router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res:
     }
 });
 
+// Delivery receipt callback (Africa's Talking / Twilio) — provider posts messageId+status
+// Gateway-verified (Twilio signature or the Africa's Talking shared secret); no staff login, so it must sit above authorize.
+router.post('/delivery', verifySmsGatewayWebhook, async (req: Request, res: Response) => {
+    try {
+        const status = (req.body.status || req.body.MessageStatus || req.body.messageStatus || '').toString().toLowerCase();
+        const phone = (req.body.phoneNumber || req.body.recipient || req.body.to || req.body.To || '').toString();
+        const messageId = (req.body.messageId || req.body.MessageSid || req.body.id || '').toString();
+        if (status) {
+            const normalized = normalizeDeliveryStatus(status);
+            if (messageId) {
+                await query(`UPDATE sms_history SET status = $1 WHERE id = $2`, [normalized, messageId]);
+            } else if (phone) {
+                const digits = phone.replace(/\D/g, '');
+                await query(`UPDATE sms_history SET status = $1 WHERE regexp_replace(recipient_phone, '\\D', '', 'g') = $2 AND status IN ('sent','queued','pending')`, [normalized, digits]);
+            }
+        }
+        return res.json({ success: true });
+    } catch (error) {
+        logger.error('SMS delivery callback failed:', error);
+        return res.json({ success: false });
+    }
+});
+
+/**
+ * USSD callback (Africa's Talking): sessionId, serviceCode, phoneNumber, and text with every
+ * answer so far joined by *. Replies in plain text starting with CON (more to come) or END.
+ */
+const ussdSchema = z.object({
+    sessionId: z.string().min(1).max(100),
+    phoneNumber: z.string().min(7).max(25),
+    text: z.string().max(500).optional().default(''),
+    serviceCode: z.string().max(40).optional(),
+});
+
+router.post('/ussd', verifySmsGatewayWebhook, validate({ body: ussdSchema }), async (req: Request, res: Response) => {
+    try {
+        const { phoneNumber, text } = req.body as z.infer<typeof ussdSchema>;
+        res.type('text/plain').send(await ussdScreen(phoneNumber, text));
+    } catch (error) {
+        logger.error('USSD callback failed:', error);
+        res.type('text/plain').send('END Sorry, something went wrong. Please try again.');
+    }
+});
+
 // Apply authentication to protected SMS management routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
@@ -114,13 +165,6 @@ const aiDiagnosisSchema = z.object({
     symptoms: z.string().min(1, 'Symptoms description is required'),
     cropType: z.string().optional(),
     language: z.string().default('en'),
-});
-
-// USSD Schema
-const ussdSchema = z.object({
-    sessionId: z.string().min(1, 'Session ID is required'),
-    phoneNumber: z.string().min(1, 'Phone number is required'),
-    text: z.string(),
 });
 
 // Schedule SMS Schema
@@ -339,32 +383,6 @@ const parseDiagnosisField = (response: string, field: string): string => {
     return '';
 };
 
-// Start USSD session
-router.post('/ussd/start', validate({ body: ussdSchema }), async (req: Request, res: Response) => {
-    try {
-        const { sessionId, phoneNumber, text } = req.body;
-
-        const response = await smsService.startUSSDSession({ sessionId, phoneNumber, text });
-
-        res.json({ response });
-    } catch (error) {
-        safeError(res, 500, error instanceof Error ? error.message : 'Internal server error');
-    }
-});
-
-// Handle USSD input
-router.post('/ussd/handle', validate({ body: ussdSchema }), async (req: Request, res: Response) => {
-    try {
-        const { sessionId, text } = req.body;
-
-        const response = await smsService.handleUSSDInput(sessionId, text);
-
-        res.json({ response });
-    } catch (error) {
-        safeError(res, 500, error instanceof Error ? error.message : 'Internal server error');
-    }
-});
-
 // Schedule SMS
 router.post('/schedule', validate({ body: scheduleSMSSchema }), async (req: AuthRequest, res: Response) => {
     try {
@@ -391,29 +409,6 @@ router.post('/schedule', validate({ body: scheduleSMSSchema }), async (req: Auth
             return safeError(res, error.statusCode, error.message);
         }
         safeError(res, 500, error instanceof Error ? error.message : 'Internal server error');
-    }
-});
-
-// Delivery receipt callback (Africa's Talking / Twilio) — provider posts messageId+status
-// Verified when TWILIO_AUTH_TOKEN is set (Twilio DLRs carry X-Twilio-Signature); AT DLRs have no signature so dev allows unsigned
-router.post('/delivery', verifyInboundWebhookSignature, async (req: Request, res: Response) => {
-    try {
-        const status = (req.body.status || req.body.MessageStatus || req.body.messageStatus || '').toString().toLowerCase();
-        const phone = (req.body.phoneNumber || req.body.recipient || req.body.to || req.body.To || '').toString();
-        const messageId = (req.body.messageId || req.body.MessageSid || req.body.id || '').toString();
-        if (status) {
-            const normalized = normalizeDeliveryStatus(status);
-            if (messageId) {
-                await query(`UPDATE sms_history SET status = $1 WHERE id = $2`, [normalized, messageId]);
-            } else if (phone) {
-                const digits = phone.replace(/\D/g, '');
-                await query(`UPDATE sms_history SET status = $1 WHERE regexp_replace(recipient_phone, '\\D', '', 'g') = $2 AND status IN ('sent','queued','pending')`, [normalized, digits]);
-            }
-        }
-        return res.json({ success: true });
-    } catch (error) {
-        logger.error('SMS delivery callback failed:', error);
-        return res.json({ success: false });
     }
 });
 

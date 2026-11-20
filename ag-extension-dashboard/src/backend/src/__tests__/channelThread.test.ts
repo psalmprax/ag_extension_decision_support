@@ -1,6 +1,8 @@
 jest.mock('@/services/databaseService', () => ({ query: jest.fn() }));
 jest.mock('@/utils/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } }));
-jest.mock('@/services/smsService', () => ({ smsService: { sendSMS: jest.fn().mockResolvedValue(true) } }));
+jest.mock('@/services/smsService', () => ({
+    smsService: { sendSMS: jest.fn().mockResolvedValue(true), formatPhoneNumber: (phone: string) => phone },
+}));
 jest.mock('@/services/whatsappService', () => ({
     whatsappService: { sendMessage: jest.fn().mockResolvedValue({ success: true }), sendTemplateMessage: jest.fn() },
 }));
@@ -19,7 +21,8 @@ import {
     recordChannelMessage,
     TELEGRAM_ASK_AI_KEYBOARD,
 } from '@/services/chat/channelThread';
-import { fitSms, toPlainText, SMS_MAX_CHARS } from '@/services/chat/plainText';
+import { toPlainText } from '@/services/chat/plainText';
+import { splitForSms } from '@/services/sms/smsText';
 
 const mockQuery = query as jest.Mock;
 const farmer = { farmer_id: 'farmer-1', phone: '+254712000111', notes: 'Auto-enrolled via Telegram [tg:987654]', tenant_id: null };
@@ -62,12 +65,13 @@ describe('plain text for channels', () => {
             .toBe('Steps\n- Remove infected leaves\n- See the guide (https://example.org/g)');
     });
 
-    it('fits a long answer into three SMS parts, cut at a word', () => {
+    it('fits a long answer into two SMS parts, cut at a word, with a MORE prompt', () => {
         const long = 'word '.repeat(200);
-        const sms = fitSms(long);
-        expect(sms.length).toBeLessThanOrEqual(SMS_MAX_CHARS);
-        expect(sms.endsWith('(more in the app or from your officer)')).toBe(true);
-        expect(fitSms('Short answer.')).toBe('Short answer.');
+        const { send, rest } = splitForSms(long, 'Reply MORE for the rest.');
+        expect(send.length).toBeLessThanOrEqual(306);
+        expect(send.endsWith('Reply MORE for the rest.')).toBe(true);
+        expect(rest?.startsWith('word')).toBe(true);
+        expect(splitForSms('Short answer.', 'Reply MORE for the rest.')).toEqual({ send: 'Short answer.', rest: null });
     });
 });
 

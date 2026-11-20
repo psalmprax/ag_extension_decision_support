@@ -16,15 +16,3 @@ export function toPlainText(markdown: string): string {
         .replace(/\n{3,}/g, '\n\n')
         .trim();
 }
-
-/** Three SMS parts (153 characters each in a multi-part message). */
-export const SMS_MAX_CHARS = 459;
-
-/** Fit a reply into a few SMS parts, cutting at a word and saying so. */
-export function fitSms(text: string, maxChars: number = SMS_MAX_CHARS): string {
-    const plain = toPlainText(text).replace(/\s+/g, ' ').trim();
-    if (plain.length <= maxChars) return plain;
-    const more = ' ... (more in the app or from your officer)';
-    const cut = plain.slice(0, maxChars - more.length);
-    return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), 0)) || cut}${more}`;
-}

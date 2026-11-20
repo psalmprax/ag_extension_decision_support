@@ -9,8 +9,7 @@ function axiosErrorMessage(error: unknown): unknown {
     return error instanceof Error ? error.message : error;
 }
 import { query } from './databaseService';
-import { WeatherService } from './weatherService';
-import { marketPriceService, MarketPrice } from './marketPriceService';
+import { toSmsText } from './sms/smsText';
 
 export interface SMSOptions {
     to: string;
@@ -18,12 +17,6 @@ export interface SMSOptions {
     farmerId?: string;
     senderId?: string;
     provider?: string;
-}
-
-export interface USSDOptions {
-    sessionId: string;
-    phoneNumber: string;
-    text: string;
 }
 
 export interface BulkSMSOptions {
@@ -76,9 +69,15 @@ class SMSService {
     private async persistSMS(options: SMSOptions, status: string = 'sent'): Promise<void> {
         try {
             const { to, message, farmerId, senderId, provider } = options;
+            // A message sent to a number (a campaign, a reply) is still the farmer's: link it
+            // by phone so officers and managers see it in that farmer's SMS history.
             await query(
                 `INSERT INTO sms_history (sender_id, recipient_phone, farmer_id, message, status, provider)
-                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                 VALUES ($1, $2::text, COALESCE($3::uuid, (
+                     SELECT id FROM farmers
+                      WHERE regexp_replace(phone, '\\D', '', 'g') = regexp_replace($2::text, '\\D', '', 'g')
+                      ORDER BY created_at LIMIT 1
+                 )), $4, $5, $6)`,
                 [senderId || null, to, farmerId || null, message, status, provider || 'none']
             );
         } catch (error) {
@@ -152,7 +151,11 @@ class SMSService {
 
     // Main send SMS method
     async sendSMS(options: SMSOptions): Promise<boolean> {
-        const { to, message } = options;
+        const { to } = options;
+        // GSM-7 only: one emoji or curly quote would make every part of the message
+        // UCS-2 (70 characters instead of 160) and multiply its cost.
+        const message = toSmsText(options.message);
+        options = { ...options, message };
 
         // Format phone number (ensure E.164 format)
         const formattedPhone = this.formatPhoneNumber(to);
@@ -226,16 +229,11 @@ class SMSService {
         return { sent, failed, results };
     }
 
-    // USSD Session Management — Redis-backed with Map fallback for multi-instance
-    private ussdSessions: Map<string, { phoneNumber: string; step: number; data: Record<string, string>; lastActiveAt: number }> = new Map();
-    private static readonly USSD_TTL_MS = 3 * 60 * 1000; // 3 min per Africa's Talking spec
-    private static readonly USSD_MAX_SESSIONS = 5000;
-    private static readonly USSD_REDIS_PREFIX = 'ussd:session:';
-    private static readonly USSD_REDIS_TTL_S = 180;
-
     // Provider token-bucket (30 req/min per provider, per instance)
     private smsRateBuckets: Map<string, { tokens: number; resetAt: number }> = new Map();
-    private readonly SMS_RATE_MAX = 30;
+    // Per-instance cap on provider calls; above it messages are dropped (and recorded as
+    // failed), so set SMS_PROVIDER_RATE_PER_MINUTE to what the provider account allows.
+    private readonly SMS_RATE_MAX = Number(process.env.SMS_PROVIDER_RATE_PER_MINUTE) || 30;
     private readonly SMS_RATE_WINDOW_MS = 60_000;
 
     private checkProviderRateLimit(provider: string): boolean {
@@ -254,191 +252,8 @@ class SMSService {
         return /^\+[1-9]\d{7,14}$/.test(phone);
     }
 
-    private async ussdRedisGet(sessionId: string): Promise<{ phoneNumber: string; step: number; data: Record<string, string>; lastActiveAt: number } | null> {
-        try {
-            const { getCache } = await import('./cacheService');
-            const c = getCache();
-            if (!c) return null;
-            const raw = await c.get(SMSService.USSD_REDIS_PREFIX + sessionId);
-            if (!raw) return null;
-            const parsed = JSON.parse(raw) as { phoneNumber: string; step: number; data: Record<string, string>; lastActiveAt: number };
-            // refresh TTL on access
-            await c.expire(SMSService.USSD_REDIS_PREFIX + sessionId, SMSService.USSD_REDIS_TTL_S);
-            return parsed;
-        } catch { return null; }
-    }
-
-    private async ussdRedisSet(sessionId: string, data: { phoneNumber: string; step: number; data: Record<string, string>; lastActiveAt: number }): Promise<void> {
-        try {
-            const { getCache } = await import('./cacheService');
-            const c = getCache();
-            if (!c) return;
-            await c.setEx(SMSService.USSD_REDIS_PREFIX + sessionId, SMSService.USSD_REDIS_TTL_S, JSON.stringify(data));
-        } catch { /* redis unavailable — Map fallback covers */ }
-    }
-
-    private async ussdRedisDel(sessionId: string): Promise<void> {
-        try {
-            const { getCache } = await import('./cacheService');
-            const c = getCache();
-            if (!c) return;
-            await c.del(SMSService.USSD_REDIS_PREFIX + sessionId);
-        } catch (e) { logger.debug(`USSD session ${sessionId} redis delete skipped:`, e); }
-    }
-
-    private async getUssdSession(sessionId: string): Promise<{ phoneNumber: string; step: number; data: Record<string, string>; lastActiveAt: number } | null> {
-        const fromRedis = await this.ussdRedisGet(sessionId);
-        if (fromRedis) {
-            // mirror to Map for fast fallback
-            this.ussdSessions.set(sessionId, fromRedis);
-            return fromRedis;
-        }
-        return this.ussdSessions.get(sessionId) ?? null;
-    }
-
-    private touchUssdSession(sessionId: string): void {
-        const s = this.ussdSessions.get(sessionId);
-        if (s) {
-            s.lastActiveAt = Date.now();
-            void this.ussdRedisSet(sessionId, s);
-        }
-    }
-
-    private reapExpiredUssdSessions(): void {
-        const now = Date.now();
-        for (const [k, v] of this.ussdSessions.entries()) {
-            if (now - v.lastActiveAt > SMSService.USSD_TTL_MS) {
-                this.ussdSessions.delete(k);
-                void this.ussdRedisDel(k);
-            }
-        }
-        if (this.ussdSessions.size > SMSService.USSD_MAX_SESSIONS) {
-            const sorted = [...this.ussdSessions.entries()].sort((a, b) => a[1].lastActiveAt - b[1].lastActiveAt);
-            const toDrop = this.ussdSessions.size - SMSService.USSD_MAX_SESSIONS;
-            for (let i = 0; i < toDrop; i++) {
-                const key = sorted[i][0];
-                this.ussdSessions.delete(key);
-                void this.ussdRedisDel(key);
-            }
-        }
-    }
-
-    async startUSSDSession(options: USSDOptions): Promise<string> {
-        this.reapExpiredUssdSessions();
-        const payload = {
-            phoneNumber: options.phoneNumber,
-            step: 0,
-            data: {} as Record<string, string>,
-            lastActiveAt: Date.now(),
-        };
-        this.ussdSessions.set(options.sessionId, payload);
-        await this.ussdRedisSet(options.sessionId, payload);
-
-        // Return welcome message
-        return this.handleUSSDInput(options.sessionId, '');
-    }
-
-    async handleUSSDInput(sessionId: string, text: string): Promise<string> {
-        this.reapExpiredUssdSessions();
-        const session = await this.getUssdSession(sessionId);
-        if (!session) {
-            return 'END Session expired. Please try again.';
-        }
-
-        this.touchUssdSession(sessionId);
-        session.step++;
-        // persist step increment
-        void this.ussdRedisSet(sessionId, session);
-
-        // Helper to get dynamic weather
-        const getWeatherSummary = async () => {
-            try {
-                // Default to a central region if unknown
-                const weather = await WeatherService.getByLocation('Nairobi');
-                return `${weather.condition}, ${weather.temp}°C. Hum: ${weather.humidity}%`;
-            } catch {
-                return 'Weather service unavailable.';
-            }
-        };
-
-        // Helper to get dynamic prices
-        const getMarketSummary = async () => {
-            try {
-                const prices: MarketPrice[] = await marketPriceService.getLatestPrices();
-                return prices.slice(0, 3)
-                    .map((p: MarketPrice) => `${p.crop}: ${p.price}`)
-                    .join('\n');
-            } catch {
-                return 'Market prices unavailable.';
-            }
-        };
-
-        // Simple USSD menu flow
-        switch (session.step) {
-            case 1:
-                return 'CON Ag Extension Services\n1. Disease Diagnosis (AI)\n2. Weather Forecast\n3. Market Prices\n4. Knowledge Base\n5. SMS Feedback\n6. Exit';
-
-            case 2: {
-                const choice = text;
-                session.data.choice = choice;
-
-                switch (choice) {
-                    case '1': {
-                        return `CON AI disease diagnosis is unavailable over USSD. Please contact an extension officer.\n1. Back to menu`;
-                    }
-                    case '2': {
-                        const summary = await getWeatherSummary();
-                        return `CON Current weather:\n${summary}\n1. Back to menu`;
-                    }
-                    case '3': {
-                        const summary = await getMarketSummary();
-                        return `CON Current prices:\n${summary || 'Market prices unavailable.'}\n1. Back to menu`;
-                    }
-                    case '4': {
-                        this.ussdSessions.delete(sessionId);
-                        void this.ussdRedisDel(sessionId);
-                        return 'END Knowledge hints are not available over USSD. Send an SMS starting with ASK followed by your question.';
-                    }
-                    case '5': {
-                        return `CON Please rate our service (1-5):\n1. Excellent 2. Good 3. Average 4. Poor 5. Very Poor\nYour feedback helps us improve`;
-                    }
-                    case '6':
-                        this.ussdSessions.delete(sessionId);
-                        void this.ussdRedisDel(sessionId);
-                        return 'END Thank you for using Ag Extension!';
-                    default:
-                        void this.ussdRedisSet(sessionId, session);
-                        return 'CON Invalid option. Try again.\n1. Back to menu';
-                }
-            }
-
-            case 3:
-                if (session.data.choice === '1') {
-                    void this.ussdRedisSet(sessionId, session);
-                    return 'CON AI disease diagnosis is unavailable over USSD. Please contact an extension officer.\n1. Back to menu';
-                }
-                void this.ussdRedisSet(sessionId, session);
-                return 'CON Invalid option. Try again.\n1. Back to menu';
-
-            default:
-                if (text === '1') {
-                    session.step = 0;
-                    void this.ussdRedisSet(sessionId, session);
-                    return this.handleUSSDInput(sessionId, '');
-                }
-                this.ussdSessions.delete(sessionId);
-                void this.ussdRedisDel(sessionId);
-                return 'END Session ended.';
-        }
-    }
-
-    async endUSSDSession(sessionId: string): Promise<void> {
-        this.ussdSessions.delete(sessionId);
-        await this.ussdRedisDel(sessionId);
-    }
-
     // Helper: Format phone number to E.164
-    private formatPhoneNumber(phone: string): string {
+    formatPhoneNumber(phone: string): string {
         // Remove any non-digit characters
         const digits = phone.replace(/\D/g, '');
 

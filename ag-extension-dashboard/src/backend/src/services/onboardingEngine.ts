@@ -3,6 +3,7 @@ import { query, withTransaction } from './databaseService';
 import { logger } from '../utils/logger';
 import type { FarmerOnboardingSessionRow } from '../types/rowTypes';
 import type { PoolClient } from 'pg';
+import { officerForPlace, parseFarmSize } from './onboardingAssignment';
 
 interface OnboardingProcessResult {
     isHandled: boolean;
@@ -92,6 +93,8 @@ class OnboardingEngine {
         data: Record<string, any>,
         client?: PoolClient
     ): Promise<OnboardingProcessResult> {
+        data.greeted = true;
+        if (/^(habari|mambo)$/i.test(text)) data.language = 'sw';
         const defaultName = senderName && senderName.trim().length > 2 ? senderName.trim() : '';
         if (defaultName && isTriggerKeyword) {
             data.name = defaultName;
@@ -166,8 +169,15 @@ class OnboardingEngine {
         tenantId?: string | null,
         client?: PoolClient
     ): Promise<OnboardingProcessResult> {
-        const rawSize = text.replace(/[^\d.]/g, '');
-        const parsedSize = parseFloat(rawSize) || 2.0;
+        // Never guess a size: ask again when no number was given.
+        const parsedSize = parseFarmSize(text);
+        if (parsedSize === null) {
+            return {
+                isHandled: true,
+                isRegistered: false,
+                responseMessage: `Please send your farm size as a number, for example 2.5 ha or 5 acres.`,
+            };
+        }
         data.farmSize = parsedSize;
 
         const nameParts = (data.name || 'Valued Farmer').trim().split(/\s+/);
@@ -175,28 +185,33 @@ class OnboardingEngine {
         const lastName = nameParts.slice(1).join(' ') || 'Farmer';
         const coords = getRegionCoordinates(data.region || 'default');
 
-        const finalTenantId = tenantId || (await this.getDefaultTenantId(client));
+        // The officer who already works where they farm; the typed place is kept as the district.
+        const placed = data.region ? await officerForPlace(String(data.region), tenantId ?? null, client) : null;
+        const finalTenantId = tenantId || placed?.tenantId || (await this.getDefaultTenantId(client));
         const notes = channel === 'telegram' ? `Auto-enrolled via Telegram [tg:${identifier}]` : `Auto-enrolled via ${channel.toUpperCase()} [${identifier}]`;
 
         const insertResult = await executeQuery<{ id: string }>(
             client,
             `INSERT INTO farmers (
                 first_name, last_name, phone, region, crops, farm_size_hectares,
-                location_lat, location_lng, notes, tenant_id, language_preference
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                location_lat, location_lng, notes, tenant_id, language_preference,
+                district, assigned_officer_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING id`,
             [
                 firstName,
                 lastName,
                 identifier,
-                data.region || 'Central Hub',
+                placed?.region || data.region || 'Central Hub',
                 [data.crop || 'Maize'],
                 parsedSize,
                 coords.lat,
                 coords.lng,
                 notes,
                 finalTenantId,
-                'en',
+                data.language === 'sw' ? 'sw' : 'en',
+                data.region || null,
+                placed?.officerId ?? null,
             ]
         );
 
@@ -314,7 +329,9 @@ class OnboardingEngine {
             return { isHandled: true, isRegistered: session.created_farmer_id !== null, responseMessage: reply, farmerId: session.created_farmer_id ?? undefined };
         }
 
-        if (isTriggerKeyword || (currentStep === 'awaiting_name' && !data.name)) {
+        // Greet once (or again on a trigger word); after that, the reply to "What is your
+        // name?" is the name. Checking only for a missing name re-sent the greeting forever.
+        if (isTriggerKeyword || (currentStep === 'awaiting_name' && !data.greeted)) {
             return this.handleInitialGreeting(session, text, senderName, isTriggerKeyword, data, client);
         }
 

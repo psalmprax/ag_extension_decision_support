@@ -17,6 +17,12 @@ model User {
   region        String?            @db.VarChar(100)
   country       String?            @default("Kenya") @db.VarChar(100)
   phone         String?            @db.VarChar(20)
+  /// SMS command PIN for officers and managers (bcrypt); commands unlock for a day after a correct PIN.
+  smsPinHash            String?   @map("sms_pin_hash") @db.VarChar(255)
+  smsPinFailedAttempts  Int       @default(0) @map("sms_pin_failed_attempts")
+  smsPinLocked          Boolean   @default(false) @map("sms_pin_locked")
+  smsUnlockedUntil      DateTime? @map("sms_unlocked_until") @db.Timestamp(6)
+  officerSmsRefs        OfficerSmsRef[]
   isDemo        Boolean            @default(false) @map("is_demo")
   managerId     String?            @map("manager_id") @db.Uuid
   manager       User?              @relation("ManagerOfficers", fields: [managerId], references: [id], onDelete: SetNull)
@@ -213,6 +219,8 @@ model Farmer {
    firstName                String             @map("first_name") @db.VarChar(100)
    lastName                 String             @map("last_name") @db.VarChar(100)
    phone                    String?            @db.VarChar(20)
+   /// Channel enrolment record, e.g. "Auto-enrolled via SMS [+2547...]" or "[tg:<chat id>]".
+   notes                    String?
    location                 String?            @db.VarChar(255)
    village                  String?            @db.VarChar(100)
    district                 String?            @db.VarChar(100)
@@ -265,6 +273,7 @@ model Farmer {
   @@index([userId])
   @@index([tenantId])
   @@map("farmers")
+   officerSmsRefs           OfficerSmsRef[]
 }
 
 model Visit {
@@ -1434,4 +1443,43 @@ model ServiceAccessGrant {
 
   @@unique([userId, service])
   @@map("service_access_grants")
+}
+
+/// The rest of a long SMS reply, sent when the recipient replies MORE.
+model SmsContinuation {
+  phone     String   @id @db.VarChar(20)
+  remaining String
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@map("sms_continuations")
+}
+
+/// Short numbers an officer uses in SMS commands (VISIT 12 ...), stable per farmer.
+model OfficerSmsRef {
+  officerId String   @map("officer_id") @db.Uuid
+  ref       Int
+  farmerId  String   @map("farmer_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  officer   User     @relation(fields: [officerId], references: [id], onDelete: Cascade)
+  farmer    Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@id([officerId, ref])
+  @@unique([officerId, farmerId])
+  @@map("officer_sms_refs")
+}
+
+/// One-time sign-in codes sent by SMS (stored hashed; 5 minutes; 5 tries).
+model PhoneLoginCode {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  phone      String    @db.VarChar(20)
+  codeHash   String    @map("code_hash") @db.VarChar(128)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamp(6)
+  attempts   Int       @default(0)
+  consumedAt DateTime? @map("consumed_at") @db.Timestamp(6)
+  ipAddress  String?   @map("ip_address") @db.VarChar(64)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([phone, createdAt])
+  @@index([ipAddress, createdAt])
+  @@map("phone_login_codes")
 }

@@ -5,6 +5,7 @@ import sessionRouter from './session';
 import mfaRouter from './mfa';
 import sessionsRouter from './sessions';
 import passwordResetRouter from './passwordReset';
+import phoneLoginRouter from './phoneLogin';
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use(sessionRouter);
 router.use(mfaRouter);
 router.use(sessionsRouter);
 router.use(passwordResetRouter);
+router.use(phoneLoginRouter);
 
 export default router;

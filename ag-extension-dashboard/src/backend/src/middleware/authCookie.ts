@@ -110,10 +110,14 @@ const CSRF_EXEMPT_PATHS = new Set([
     '/api/auth/verify-email', '/api/v1/auth/verify-email',
     '/api/auth/resend-verification', '/api/v1/auth/resend-verification',
     '/api/auth/mfa/verify', '/api/v1/auth/mfa/verify',
+    '/api/auth/phone/request', '/api/v1/auth/phone/request',
+    '/api/auth/phone/verify', '/api/v1/auth/phone/verify',
     '/api/errors',
     '/api/billing/webhook', '/api/v1/billing/webhook',
     '/api/whatsapp/inbound', '/api/v1/whatsapp/inbound',
     '/api/sms/inbound', '/api/v1/sms/inbound',
+    '/api/sms/ussd', '/api/v1/sms/ussd',
+    '/api/sms/delivery', '/api/v1/sms/delivery',
     '/api/channels/telegram/webhook', '/api/v1/channels/telegram/webhook',
     // Health probes are read-only but GET only — covered by the method check.
 ]);

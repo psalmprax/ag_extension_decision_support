@@ -96,6 +96,7 @@ import worldmonitorRoutes from './routes/worldmonitor';
 import offlineRoutes from './routes/offline';
 import auditLogsRoutes from './routes/auditLogs';
 import accountRoutes from './routes/account';
+import accountSmsPinRoutes from './routes/accountSmsPin';
 import workflowsRoutes from './routes/workflows';
 import { demoSessionGuard } from '@/middleware/demoSessionGuard';
 
@@ -619,6 +620,7 @@ const routeMounts: RouteMount[] = [
   { path: '/offline', router: offlineRoutes },
   { path: '/audit-logs', router: auditLogsRoutes },
   { path: '/account', router: accountRoutes },
+  { path: '/account', router: accountSmsPinRoutes },
   { path: '/workflows', router: workflowsRoutes },
 ];
 
