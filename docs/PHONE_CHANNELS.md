@@ -18,7 +18,12 @@ What farmers and officers can do without the app, and what each channel cannot c
 - **Photos, videos, voice notes** (WhatsApp or Telegram): kept in the thread so the officer can open or play them. Voice notes are
   also transcribed.
 - **Voice line**: call the number, speak the question after the beep, press #. The recording and its transcript reach
-  the officer; the answer comes by SMS. Unregistered callers are told how to register.
+  the officer; the answer comes by SMS. Unregistered callers are told how to register. Prompts are played from
+  recordings in the caller's language (Settings > Recordings), else spoken in English.
+- **Voice advisories**: managers can ring a pilot's service group and play a recorded advisory in the farmers'
+  language (capped per day by `VOICE_CALL_DAILY_LIMIT`; farmers who sent STOP are never called).
+- **Pilot replies**: YIELD 900 or YIELD 10 BAGS reports a harvest; YES, PARTLY or NO (in the farmer's language)
+  answers "did you follow your officer's advice?".
 - **Notices**: a confirmation when an officer registers them, and a message when a visit is planned or cancelled.
   STOP turns notices off (replies to their own messages still arrive); START turns them on again.
 - **Language**: LANG SW, LANG EN, LANG FR or LANG PT.
@@ -44,6 +49,7 @@ the recording (it counts against the officer's AI allowance).
 
 ## Not done yet
 
-- Calling a farmer back with a recorded answer: answers to the voice line go by SMS.
+- Calling a farmer back with an officer's own recorded answer: voice-line answers go by SMS; only prepared
+  advisories are played by phone.
 - An offline video library on the officer's phone.
 - WhatsApp files from the Meta Cloud API (media ids): files are fetched from Twilio's media links only.

@@ -5,9 +5,10 @@
  * officer like any message, and the reply goes back by SMS.
  *
  * Africa's Talking calls the callback URL with form fields (isActive, sessionId,
- * callerNumber, recordingUrl...) and expects XML back. The greeting is spoken in English by
- * the provider's voice; for another language, record a person reading it and set
- * VOICE_LINE_GREETING_<LANG> (for example VOICE_LINE_GREETING_SW) to the audio file's URL.
+ * callerNumber, recordingUrl...) and expects XML back. Prompts are played from the voice
+ * library (a person reading them in the caller's language); without a recording they are
+ * spoken in English by the provider's voice. The same callback answers voice advisories we
+ * place (direction Outbound) by playing the queued recording.
  */
 import axios from 'axios';
 import { query } from '@/services/databaseService';
@@ -17,46 +18,55 @@ import { transcribeVoiceNote } from '@/services/voiceAudioService';
 import { handleRegisteredFarmerChannelMessage } from '@/services/chat/channelInbound';
 import { mediaOnlyText } from '@/services/chat/inboundMedia';
 import { smsLanguage } from '@/services/sms/smsCopy';
+import { clipFor, clipUrl, PROMPTS, type PromptKey } from './voiceClips';
+import { answeredCallClip } from './advisoryCalls';
 
 const MAX_SECONDS = 120;
 const RECORDING_HOSTS = /(^|\.)africastalking\.com$/i;
 
-const GREETING =
-    'Welcome to your extension service. Your question is recorded and shared with your extension officer. ' +
-    'After the beep, say your name and your question, then press the hash key. The answer will come by SMS.';
-const THANKS = 'Thank you. Your officer will reply by SMS.';
-const NOT_REGISTERED = 'This number is not registered with the extension service. Send an SMS to this number to register, then call again.';
-
 const xmlEscape = (text: string) => text.replace(/[<>&"']/g, ch => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', '\'': '&apos;' }[ch] ?? ch));
+const XML = '<?xml version="1.0" encoding="UTF-8"?>';
 
-/** The greeting: a recorded one in the farmer's language when set, else spoken English. */
-function greetingXml(language: string | null | undefined): string {
-    const recorded = process.env[`VOICE_LINE_GREETING_${smsLanguage(language).toUpperCase()}`];
-    return recorded ? `<Play url="${xmlEscape(recorded)}"/>` : `<Say>${xmlEscape(GREETING)}</Say>`;
+/**
+ * A prompt as the caller hears it: the recording in their language from the voice library,
+ * else a greeting recording set in VOICE_LINE_GREETING_<LANG>, else the provider's English voice.
+ */
+export async function promptXml(key: PromptKey, language: string | null | undefined): Promise<string> {
+    const clipId = await clipFor(key, language);
+    if (clipId) return `<Play url="${xmlEscape(clipUrl(clipId))}"/>`;
+    const legacy = key === 'line_greeting' ? process.env[`VOICE_LINE_GREETING_${smsLanguage(language).toUpperCase()}`] : undefined;
+    return legacy ? `<Play url="${xmlEscape(legacy)}"/>` : `<Say>${xmlEscape(PROMPTS[key])}</Say>`;
 }
 
 export interface VoiceCallback {
     isActive?: string;
     sessionId?: string;
+    direction?: string;
     callerNumber?: string;
+    destinationNumber?: string;
     recordingUrl?: string;
     durationInSeconds?: string;
 }
 
-/** The XML for a call that has just come in. */
+/** The XML for a call that has just connected: an advisory we placed, or a farmer calling in. */
 export async function answerCall(callback: VoiceCallback): Promise<string> {
+    if (callback.direction?.toLowerCase() === 'outbound') {
+        const clipId = await answeredCallClip([callback.destinationNumber ?? '', callback.callerNumber ?? '']);
+        return clipId ? `${XML}<Response><Play url="${xmlEscape(clipUrl(clipId))}"/></Response>` : `${XML}<Response><Reject/></Response>`;
+    }
     const farmer = callback.callerNumber
         ? await onboardingEngine.findFarmerByIdentifier(callback.callerNumber, 'sms')
         : null;
-    if (!farmer) return `<?xml version="1.0" encoding="UTF-8"?><Response><Say>${xmlEscape(NOT_REGISTERED)}</Say><Reject/></Response>`;
-    return '<?xml version="1.0" encoding="UTF-8"?><Response>' +
-        `<Record finishOnKey="#" maxLength="${MAX_SECONDS}" trimSilence="true" playBeep="true">${greetingXml(farmer.language_preference)}</Record>` +
-        `<Say>${xmlEscape(THANKS)}</Say></Response>`;
+    if (!farmer) return `${XML}<Response>${await promptXml('line_not_registered', null)}<Reject/></Response>`;
+    return `${XML}<Response>` +
+        `<Record finishOnKey="#" maxLength="${MAX_SECONDS}" trimSilence="true" playBeep="true">${await promptXml('line_greeting', farmer.language_preference)}</Record>` +
+        `${await promptXml('line_thanks', farmer.language_preference)}</Response>`;
 }
 
 /** The XML once the question is recorded and the call is still open. */
-export function thanksXml(): string {
-    return `<?xml version="1.0" encoding="UTF-8"?><Response><Say>${xmlEscape(THANKS)}</Say></Response>`;
+export async function thanksXml(callerNumber?: string): Promise<string> {
+    const farmer = callerNumber ? await onboardingEngine.findFarmerByIdentifier(callerNumber, 'sms') : null;
+    return `${XML}<Response>${await promptXml('line_thanks', farmer?.language_preference)}</Response>`;
 }
 
 /** Only the provider's own recording links are fetched. */

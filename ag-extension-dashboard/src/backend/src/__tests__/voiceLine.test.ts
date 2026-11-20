@@ -21,6 +21,8 @@ const findFarmer = onboardingEngine.findFarmerByIdentifier as jest.Mock;
 describe('voice question line', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        // Another suite in the same worker may have left a gateway key set.
+        delete process.env.AFRICASTALKING_API_KEY;
         process.env.AFRICASTALKING_WEBHOOK_SECRET = 'abc123';
         process.env.VOICE_LINE_ENABLED = 'true';
         delete process.env.VOICE_LINE_GREETING_SW;

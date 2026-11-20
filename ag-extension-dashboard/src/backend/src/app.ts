@@ -68,6 +68,9 @@ import recommendationReviewRoutes from './routes/recommendationReviews';
 import notificationRoutes from './routes/notifications';
 import smsRoutes from './routes/sms';
 import voiceLineRoutes from './routes/voiceLine';
+import diagnosisTestRoutes from './routes/diagnosisTests';
+import pilotRoutes from './routes/pilots';
+import voiceClipRoutes from './routes/voiceClips';
 import billingRoutes from './routes/billing';
 import contextMenuRoutes from './routes/contextMenus';
 import { shareRouter, publicShareRouter } from './routes/shares';
@@ -596,6 +599,9 @@ export const routeMounts: RouteMount[] = [
   { path: '/notifications', router: notificationRoutes },
   { path: '/sms', router: smsRoutes },
   { path: '/voice-line', router: voiceLineRoutes },
+  { path: '/diagnosis-tests', router: diagnosisTestRoutes },
+  { path: '/pilots', router: pilotRoutes },
+  { path: '/voice-clips', router: voiceClipRoutes },
   { path: '/billing', router: billingRoutes },
   { path: '/context-menus', router: contextMenuRoutes },
   { path: '/shares', router: shareRouter },

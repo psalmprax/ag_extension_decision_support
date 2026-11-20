@@ -4,6 +4,7 @@ import { NotificationPreferencesSection } from '@/components/settings/Notificati
 import { OrganizationSection } from '@/components/settings/OrganizationSection';
 import { SmsCommandsSection } from '@/components/settings/SmsCommandsSection';
 import { CountryTimeSection } from '@/components/settings/CountryTimeSection';
+import { VoiceLibrarySection } from '@/components/voice/VoiceLibrarySection';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { Map } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -126,6 +127,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                 <OrganizationSection active={isOpen} />
 
                 <SmsCommandsSection active={isOpen} />
+
+                <VoiceLibrarySection active={isOpen} />
 
                 {/* Communication Gateways & Onboarding */}
                 <div className="space-y-3">

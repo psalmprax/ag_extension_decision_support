@@ -22,6 +22,7 @@ import { AdvisoryTimeoutError, withAdvisoryTimeout } from '@/services/knowledge/
 import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
 import { getRealtimeServer } from '@/services/realtimeHub';
 import { linkAttachments, listAttachments, type AttachmentDto } from '@/services/uploadAttachments';
+import { recordContentGap } from '@/services/content/contentGaps';
 
 /**
  * Load the last turns of a conversation as a context block (empty when
@@ -320,6 +321,12 @@ export async function generateAdvisoryAnswer(req: AdvisoryAnswerRequest): Promis
     metadata: answerSourceMetadata(ragResult.citations, validated.evidence, req.storeIn ? trigger : null),
   });
   const reviewTrigger = scheduleAdvisoryReview(req.storeIn, requester.userId, validated.answer, trigger);
+  // No vetted guide behind the answer: note the question for the content team's gap report.
+  if (validated.evidence.status === 'general_guidance_only' && !requester.isDemo) {
+    void recordContentGap({
+      question: req.message, crop: advisoryContext.crops?.[0], country: advisoryContext.country, language: req.language, role: requester.role,
+    });
+  }
 
   return {
     text,

@@ -21,6 +21,7 @@ import type { TurnTakingSettings } from '@/services/chat/turnTaking';
 import { smsCopy } from '@/services/sms/smsCopy';
 import type { InboundMedia } from './inboundMedia';
 import { applyOptCommand, optCommand } from '@/services/notify/optOut';
+import { takePilotReply } from '@/services/pilots/pilotReplies';
 
 /** A new conversation, worth an acknowledgement: SMS costs money, so less often there. */
 const ACK_GAP_MS: Record<FarmerChannel, number> = {
@@ -97,6 +98,7 @@ export async function handleRegisteredFarmerChannelMessage(params: {
         await applyOptCommand(farmerId, opt);
         return;
     }
+    if (!media?.length && await takePilotReply(farmerId, text)) return;
     const question = parseAskAiCommand(text);
     const noticeLanguage = language ?? (await farmerLanguage(farmerId));
 

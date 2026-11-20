@@ -32,12 +32,15 @@ describe('Local guides panel', () => {
 
   it('lets a manager approve a guide waiting for review', async () => {
     asRole('regional_manager');
-    api.get.mockResolvedValue({ data: { data: [{ id: 'g1', title: 'Maize spacing in Mzimba', source: 'Dynamic Ingestion', sourceUrl: null, updatedAt: '2026-11-20T10:00:00Z' }] } });
+    api.get.mockImplementation((url: string) => Promise.resolve(url === '/knowledge/content-gaps'
+      ? { data: { data: { groups: [{ crop: 'maize', country: 'Malawi', questions: 14, topWords: [{ word: 'armyworm', count: 9 }], examples: ['Armyworm in the funnel'] }] } } }
+      : { data: { data: [{ id: 'g1', title: 'Maize spacing in Mzimba', source: 'Dynamic Ingestion', sourceUrl: null, updatedAt: '2026-11-20T10:00:00Z' }] } }));
     api.post.mockResolvedValue({ data: { success: true } });
     render(<GuidesPanel />);
     expect(await screen.findByText('Maize spacing in Mzimba')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/knowledge/quarantine/g1/clear', { verdict: 'approve' }));
     await waitFor(() => expect(screen.queryByText('Maize spacing in Mzimba')).not.toBeInTheDocument());
+    expect(await screen.findByText('Often mentioned: armyworm (9)')).toBeInTheDocument();
   });
 });

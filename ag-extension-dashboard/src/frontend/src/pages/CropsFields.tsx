@@ -69,7 +69,6 @@ export function CropsFields() {
     longitude: '',
   });
 
-  // Form state - Crop Cycle
   const [cycleForm, setCycleForm] = useState({
     cropName: '',
     variety: '',
@@ -78,7 +77,6 @@ export function CropsFields() {
     notes: '',
   });
 
-  // Form state - Harvest
   const [harvestForm, setHarvestForm] = useState({
     status: 'harvested' as 'harvested' | 'failed',
     actualHarvestDate: new Date().toISOString().split('T')[0],
@@ -99,14 +97,16 @@ export function CropsFields() {
               region: f.region,
             }));
             setFarmers(demoFarmers);
-            setSelectedFarmerId(demoFarmers[0]?.id || '');
+            setSelectedFarmerId(previous => previous || demoFarmers[0]?.id || '');
             return;
           }
 
           const res = await fetchFarmers();
           if (res.success && res.data?.farmers && res.data.farmers.length > 0) {
-            setFarmers(res.data.farmers);
-            setSelectedFarmerId(res.data.farmers[0].id);
+            const list = res.data.farmers;
+            setFarmers(list);
+            // A reload of the list keeps the farmer the person already chose.
+            setSelectedFarmerId(previous => (previous && list.some(f => f.id === previous) ? previous : list[0].id));
           } else {
             setFarmers([]);
             setSelectedFarmerId('');

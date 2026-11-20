@@ -36,6 +36,42 @@ const NOTICES = {
         fr: 'Vous ne recevrez plus d\'avis. Votre conseiller peut toujours répondre à vos messages. Envoyez START pour les recevoir à nouveau.',
         pt: 'Não vai receber mais avisos. O seu extensionista ainda pode responder às suas mensagens. Envie START para voltar a receber avisos.',
     },
+    harvest_baseline: {
+        en: 'How much {crop} did you harvest last season? Reply YIELD and the kg, or the bags (YIELD 10 BAGS). It helps us check whether the advice works.',
+        sw: 'Ulivuna {crop} kiasi gani msimu uliopita? Jibu YIELD na kilo, au magunia (YIELD 10 BAGS). Inatusaidia kuona kama ushauri unafanya kazi.',
+        fr: 'Combien de {crop} avez-vous récolté la saison dernière ? Répondez YIELD et les kg, ou les sacs (YIELD 10 BAGS). Cela nous aide à vérifier si les conseils marchent.',
+        pt: 'Quanto {crop} colheu na época passada? Responda YIELD e os kg, ou os sacos (YIELD 10 BAGS). Ajuda-nos a ver se os conselhos funcionam.',
+    },
+    harvest_endline: {
+        en: 'How much {crop} did you harvest this season? Reply YIELD and the kg, or the bags (YIELD 10 BAGS).',
+        sw: 'Ulivuna {crop} kiasi gani msimu huu? Jibu YIELD na kilo, au magunia (YIELD 10 BAGS).',
+        fr: 'Combien de {crop} avez-vous récolté cette saison ? Répondez YIELD et les kg, ou les sacs (YIELD 10 BAGS).',
+        pt: 'Quanto {crop} colheu nesta época? Responda YIELD e os kg, ou os sacos (YIELD 10 BAGS).',
+    },
+    harvest_thanks: {
+        en: 'Thank you. Recorded: {kg} kg.',
+        sw: 'Asante. Imerekodiwa: kilo {kg}.',
+        fr: 'Merci. Enregistré : {kg} kg.',
+        pt: 'Obrigado. Registado: {kg} kg.',
+    },
+    harvest_usage: {
+        en: 'Send YIELD and the kg you harvested, for example YIELD 900, or the bags, for example YIELD 10 BAGS.',
+        sw: 'Tuma YIELD na kilo ulizovuna, mfano YIELD 900, au magunia, mfano YIELD 10 BAGS.',
+        fr: 'Envoyez YIELD et les kg récoltés, par exemple YIELD 900, ou les sacs, par exemple YIELD 10 BAGS.',
+        pt: 'Envie YIELD e os kg colhidos, por exemplo YIELD 900, ou os sacos, por exemplo YIELD 10 BAGS.',
+    },
+    advice_followup: {
+        en: 'Did you do what your officer advised on {date}? Reply YES, PARTLY or NO.',
+        sw: 'Ulifanya alichoshauri afisa wako tarehe {date}? Jibu NDIO, KIASI au HAPANA.',
+        fr: 'Avez-vous suivi le conseil de votre conseiller du {date} ? Répondez OUI, EN PARTIE ou NON.',
+        pt: 'Fez o que o seu extensionista aconselhou em {date}? Responda SIM, EM PARTE ou NAO.',
+    },
+    followup_thanks: {
+        en: 'Thank you for telling us.',
+        sw: 'Asante kwa kutuambia.',
+        fr: 'Merci de nous l\'avoir dit.',
+        pt: 'Obrigado por nos dizer.',
+    },
     started: {
         en: 'Notices are on again. Send STOP to stop them.',
         sw: 'Taarifa zimewashwa tena. Tuma STOP kuzisitisha.',

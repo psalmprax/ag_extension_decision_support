@@ -22,7 +22,7 @@ router.post('/callback', verifySmsGatewayWebhook, async (req: Request, res: Resp
         });
     }
     if (callback.isActive === '0') return res.status(200).end();
-    if (callback.recordingUrl) return res.status(200).type('application/xml').send(thanksXml());
+    if (callback.recordingUrl) return res.status(200).type('application/xml').send(await thanksXml(callback.callerNumber));
     try {
         return res.status(200).type('application/xml').send(await answerCall(callback));
     } catch (error) {

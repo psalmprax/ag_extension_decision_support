@@ -3,6 +3,8 @@ import { Dialog as HeadlessDialog } from '@headlessui/react';
 import { ChevronLeft, ChevronRight, Download, X } from 'lucide-react';
 import type { ChatAttachment } from '@/types/dashboard';
 import { Dialog } from '@/components/ui/Dialog';
+import { useAppStore } from '@/store/useAppStore';
+import { LabelPhotoForm } from '@/components/diagnosisTests/LabelPhotoForm';
 
 interface PhotoViewerProps {
   photos: ChatAttachment[];
@@ -24,6 +26,9 @@ export function PhotoViewer({ photos, index, onIndexChange, label }: PhotoViewer
   const photo = index === null ? null : photos[index];
   const count = photos.length;
   const step = (delta: number) => index !== null && onIndexChange((index + delta + count) % count);
+  // Staff can record what a farmer's photo shows once they have confirmed it in the field.
+  const role = useAppStore(state => state.user?.role);
+  const canLabel = role === 'extension_officer' || role === 'regional_manager' || role === 'admin';
 
   useEffect(() => {
     if (index === null || count < 2) return undefined;
@@ -64,6 +69,7 @@ export function PhotoViewer({ photos, index, onIndexChange, label }: PhotoViewer
               </>
             )}
           </div>
+          {canLabel && <LabelPhotoForm key={photo.id} uploadId={photo.id} />}
         </div>
       )}
     </Dialog>

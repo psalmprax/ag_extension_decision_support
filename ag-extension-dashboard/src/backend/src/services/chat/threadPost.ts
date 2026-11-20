@@ -6,6 +6,7 @@ import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { getRealtimeServer } from '@/services/realtimeHub';
 import { deliverToFarmerChannel } from '@/services/chat/channelThread';
+import { queueAdviceFollowUp } from '@/services/pilots/followups';
 import type { ChatMessageRow } from '@/types/rowTypes';
 import { mapChatMessageRow } from '@/types/dtos';
 
@@ -37,6 +38,10 @@ export async function postOfficerReply(conversationId: string, content: string):
     if (created) {
         fanoutNewMessage(conversationId, created);
         scheduleChannelDelivery(conversationId, created.id, created.content);
+        // In a running pilot, the farmer is later asked whether they followed this advice.
+        setImmediate(() => {
+            queueAdviceFollowUp(conversationId, created.id).catch(error => logger.warn('Could not queue a pilot follow-up:', error));
+        });
     }
     return created;
 }

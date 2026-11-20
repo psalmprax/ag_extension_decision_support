@@ -28,3 +28,17 @@ export async function listPendingGuides(): Promise<PendingGuide[]> {
 export async function reviewGuide(id: string, verdict: 'approve' | 'reject'): Promise<void> {
   await apiClient.post(`/knowledge/quarantine/${id}/clear`, { verdict });
 }
+
+export interface ContentGapGroup {
+  crop: string | null;
+  country: string | null;
+  questions: number;
+  topWords: Array<{ word: string; count: number }>;
+  examples: string[];
+}
+
+/** Questions answered without a vetted guide, by crop and country (last `days` days). */
+export async function fetchContentGaps(days = 90): Promise<ContentGapGroup[]> {
+  const { data } = await apiClient.get('/knowledge/content-gaps', { params: { days } });
+  return (data?.data?.groups ?? []) as ContentGapGroup[];
+}

@@ -83,9 +83,9 @@ test.describe('an extension officer works through every menu page', () => {
     await expect(page.getByText(name)).toBeVisible();
     await expect(statTile(page, 'Fields')).toContainText(String(before + 1));
 
-    const fields = await apiData<Array<{ name: string; areaHectares: number | string }>>(request, officer, fieldsPath);
+    const fields = await apiData<Array<{ name: string; areaHectares?: number | string; area_hectares?: number | string }>>(request, officer, fieldsPath);
     const saved = fields.find(f => f.name === name);
-    expect(Number(saved?.areaHectares)).toBeCloseTo(0.81, 2);
+    expect(Number(saved?.areaHectares ?? saved?.area_hectares)).toBeCloseTo(0.81, 2);
     await page.reload();
     await openMenu(page, 'Crops & fields');
     await page.getByLabel('Farmer').selectOption({ label: `${JOURNEY.farmer.name} (Rift Valley)` });

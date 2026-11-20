@@ -18,6 +18,11 @@ What was found and what changed. Server-side steps are in [SCALING_AND_RESILIENC
 | Prototype services with invented buyers, dealers and phone numbers | Removed (see [PILLAR_SERVICES_DECISION.md](PILLAR_SERVICES_DECISION.md)). |
 | First load fetched the charts bundle | Initial JavaScript cut from about 374 KB to 260 KB gzipped. |
 
+| No proof the service works | Pilots with random assignment, harvests by SMS, advice follow-ups and an export for an evaluator ([GROWTH_AND_EVIDENCE_PLAN.md](GROWTH_AND_EVIDENCE_PLAN.md)). |
+| Photo diagnosis never tested | Labelled test set, test runs per crop and problem; only passing pairs reach farmers as "tested". |
+| Voice only in English | Recordings per language for the voice line, and voice advisories to a pilot's farmers. |
+| Unknown which guides are missing | Content-gap report of questions answered without a vetted guide. |
+
 Still open: SMS cannot carry photos, audio or video (those need WhatsApp, Telegram or a voice line); price collection exists only for Kenya, Uganda, Tanzania and Rwanda; the access test covers GET routes only; `k8s/` is a starting point, not a deployment.
 
 ---
