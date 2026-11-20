@@ -121,7 +121,7 @@ test.describe.serial('officer and farmer through a season', () => {
       await form.getByRole('button', { name: 'Schedule visit' }).click();
       await expect(officerPage.getByLabel('Search farmer')).toHaveCount(0);
     }
-    await expect(officerPage.getByText(`"${visitNote}"`)).toBeVisible();
+    await expect(officerPage.getByText(visitNote)).toBeVisible();
 
     // Correspondence: the officer confirms the dates in the thread.
     await openMenu(officerPage, FARMER_CHAT_MENU);

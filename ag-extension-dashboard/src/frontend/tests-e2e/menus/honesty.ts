@@ -50,7 +50,10 @@ export async function textProblems(page: Page): Promise<string[]> {
   hit('broken value', BROKEN_VALUES);
   hit('inflated copy', HYPE);
   hit('emoji', EMOJI);
-  for (const run of shoutedRuns(text)) problems.push(`all caps: "${run}"`);
+  for (const run of shoutedRuns(text)) {
+    const at = text.indexOf(run);
+    problems.push(`all caps: "${run}" in "${text.slice(Math.max(0, at - 30), at + run.length + 30).replace(/\s+/g, ' ')}"`);
+  }
   return problems;
 }
 
