@@ -129,14 +129,18 @@ jobs:
       # created, a timer is left there that disables this run's account after
       # 90 minutes (longer than the job can run), so a runner that disconnects
       # before the cleanup step cannot leave it enabled. The timer only touches
-      # the account tagged with this run's id, never a later run's.
+      # the account tagged with this run's id, never a later run's; the id is
+      # written into the script itself, so every attempt carries it. If the
+      # backend container is down (a deploy, a restart), the timer retries with
+      # a growing pause and deletes the script only once the cleanup succeeded;
+      # after the last attempt fails the script stays on the host for a manual run.
       - name: Temporary test system administrator
         env:
           RUN_TAG: ${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           expiry="/tmp/e2e-admin-expiry-$RUN_TAG.cjs"
           { printf 'process.env.E2E_ONLY_RUN_ID = "%s";\n' "$RUN_TAG"; cat "$RUNNER_TEMP/seeds/disable-e2e-system-admin.cjs"; } \
-            | ~/live-ssh "cat > $expiry && (nohup sh -c 'sleep 5400; docker exec -i ag-dashboard-backend node - < $expiry; rm -f $expiry' </dev/null >/dev/null 2>&1 &)"
+            | ~/live-ssh "cat > $expiry && (nohup sh -c 'sleep 5400; n=0; until docker exec -i ag-dashboard-backend node - < $expiry; do n=\$((n + 1)); [ \$n -ge 8 ] && exit 1; sleep \$((n * 120)); done; rm -f $expiry' </dev/null >/dev/null 2>&1 &)"
           pw="$(openssl rand -base64 36 | tr -dc 'A-Za-z0-9' | head -c 32)"
           echo "::add-mask::$pw"
           echo "E2E_SYSTEM_ADMIN_PASSWORD=$pw" >> "$GITHUB_ENV"

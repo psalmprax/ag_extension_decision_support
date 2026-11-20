@@ -101,6 +101,9 @@ describe('PATCH /api/auth/me', () => {
     it('rejects an invalid handle or unknown profile settings', async () => {
         await request(app).patch('/api/auth/me').send({ profileSettings: { handle: 'no spaces allowed' } }).expect(400);
         await request(app).patch('/api/auth/me').send({ profileSettings: { role: 'admin' } }).expect(400);
+        // The live-run tag of the test system administrator (seed/e2eSystemAdmin.ts) must stay out of reach,
+        // or the account could hide from its run's delayed expiry.
+        await request(app).patch('/api/auth/me').send({ profileSettings: { e2eRunId: 'other-run' } }).expect(400);
         expect(mockQuery).not.toHaveBeenCalled();
     });
 
