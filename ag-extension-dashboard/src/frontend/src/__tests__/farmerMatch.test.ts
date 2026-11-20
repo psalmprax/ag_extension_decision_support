@@ -12,7 +12,7 @@ const farmers = [
   farmer('f4', 'Grace', 'Mwangi', '0744000333'),
 ];
 
-describe('findFarmer (activity stream "Chat View" lookup)', () => {
+describe('findFarmer (activity stream "Chat view" lookup)', () => {
   it('prefers the farmer id', () => {
     expect(findFarmer(farmers, { farmerId: 'f2', phone: '0712345678', farmerName: 'Wanjiku Kamau' })?.id).toBe('f2');
   });

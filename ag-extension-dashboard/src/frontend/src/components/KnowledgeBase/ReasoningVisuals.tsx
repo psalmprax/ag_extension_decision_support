@@ -166,11 +166,11 @@ const MediaAssetsSection = ({
                 <Maximize2 className="w-6 h-6" />
               </div>
             </div>
-            <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xxs font-black uppercase tracking-widest">
+            <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xxs font-black  ">
               <ImageIcon className="w-3 h-3" />
               {t('ui_reasoning_visuals_image')}
             </div>
-            <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xs font-black uppercase tracking-widest">
+            <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xs font-black  ">
               <CheckCircle2 className="w-2.5 h-2.5" />
               {t('ui_reasoning_visuals_verified_alfa_asset')}
             </div>
@@ -178,7 +178,7 @@ const MediaAssetsSection = ({
           {img.caption && (
             <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2 flex items-center justify-between">
               <span>{img.caption}</span>
-              <span className="text-xxs text-primary-500 uppercase font-black opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="text-xxs text-primary-500 font-black opacity-0 group-hover:opacity-100 transition-opacity">
                 {t('ui_reasoning_visuals_click_to_enlarge')}
               </span>
             </p>
@@ -207,7 +207,7 @@ const MediaAssetsSection = ({
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
                   <Play className="w-12 h-12 text-white/80 group-hover:scale-110 transition-transform" />
                 </div>
-                <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xxs font-black uppercase tracking-widest">
+                <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xxs font-black  ">
                   <Play className="w-3 h-3" />
                   {t('ui_reasoning_visuals_external_video')}
                 </div>
@@ -221,7 +221,7 @@ const MediaAssetsSection = ({
                 </a>
               </>
             )}
-            <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xs font-black uppercase tracking-widest pointer-events-none">
+            <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xs font-black pointer-events-none">
               <CheckCircle2 className="w-2.5 h-2.5" />
               {t('ui_reasoning_visuals_verified_source')}
             </div>
@@ -263,7 +263,7 @@ const AudioSynthesisSection = ({
           <Zap className={`w-12 h-12 ${isPlaying ? 'animate-pulse fill-current' : 'fill-none'}`} />
         </motion.button>
         <div className="flex-1 text-center md:text-left">
-          <h4 className="text-xxs font-black uppercase tracking-[0.3em] opacity-70 mb-2">
+          <h4 className="text-xxs font-black opacity-70 mb-2">
             {t('ui_reasoning_visuals_alfa_voice_synthesis')}
           </h4>
           <p className="text-xl font-bold leading-tight mb-4">
@@ -278,7 +278,7 @@ const AudioSynthesisSection = ({
                 className="h-full bg-white"
               />
             </div>
-            <span className="text-xxs font-black uppercase">
+            <span className="text-xxs font-black ">
               {isPlaying ? 'Playing...' : 'Click to Play'}
             </span>
           </div>
@@ -344,7 +344,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
             <div className="p-2 bg-primary-500/20 rounded-xl text-primary-500">
               <TrendingUp className="w-5 h-5" />
             </div>
-            <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-[0.2em]">
+            <h3 className="text-xs font-black text-gray-500 dark:text-gray-400  ">
               {title}
             </h3>
           </div>
@@ -407,7 +407,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                   <AlertCircle className="w-5 h-5" />
                 )}
               </div>
-              <span className="text-xxs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+              <span className="text-xxs font-black text-gray-400 dark:text-gray-500  ">
                 {kpi.label}
               </span>
               <span className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
@@ -486,7 +486,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
               <Zap className="w-10 h-10 fill-current" />
             </div>
             <div className="flex-1">
-              <h4 className="text-sm font-black uppercase tracking-[0.2em] opacity-70 mb-1">
+              <h4 className="text-sm font-black opacity-70 mb-1">
                 {t('ui_reasoning_visuals_expert_decision_insight')}
               </h4>
               <p className="text-lg font-bold leading-tight">

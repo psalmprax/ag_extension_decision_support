@@ -314,7 +314,7 @@ const ProbeTooltip: React.FC<{ probe: SoilProbeResult }> = ({ probe }) => (
     <div className="flex items-center justify-between gap-2 mb-1.5">
       <span className="font-semibold text-gray-200">{probe.label}</span>
       <span
-        className={`px-1.5 py-0.5 rounded text-xxs font-bold uppercase ${
+        className={`px-1.5 py-0.5 rounded text-xxs font-bold  ${
           probe.status === 'optimal'
             ? 'bg-emerald-500/20 text-emerald-400'
             : probe.status === 'warning'

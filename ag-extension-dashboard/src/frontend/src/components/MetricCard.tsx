@@ -27,7 +27,7 @@ export const MetricCard = ({
   >
     <div className="flex items-start justify-between">
       <div>
-        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+        <p className="text-xs font-bold text-gray-500 dark:text-gray-400  ">
           {title}
         </p>
         <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>

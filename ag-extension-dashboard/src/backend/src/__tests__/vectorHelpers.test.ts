@@ -8,7 +8,7 @@ import {
     searchByTsQuery,
 } from '../services/vector/keywordSearch';
 import { fuseRankedLegs, retrievalSignals } from '../services/vector/rrfFusion';
-import type { SearchResult } from '../services/vectorService';
+import { VectorService, type SearchResult } from '../services/vectorService';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -149,6 +149,25 @@ describe('keywordSearch', () => {
     it('returns [] on total failure', async () => {
         mockedQuery.mockRejectedValueOnce(new Error('db down'));
         await expect(keywordSearch('maize', 5, {})).resolves.toEqual([]);
+    });
+});
+
+describe('VectorService.searchByEmbedding', () => {
+    const row = (id: string) => ({ id, content: 'c', title: 't', category: 'pest', crops: ['maize'], source_url: 'u', content_type: 'text', score: 0.6 });
+
+    it('repeats a filtered search exactly when the index scan comes back short', async () => {
+        mockedQuery
+            .mockResolvedValueOnce({ rows: [row('a')], rowCount: 1 })
+            .mockResolvedValueOnce({ rows: [row('a'), row('b')], rowCount: 2 });
+        const res = await VectorService.searchByEmbedding([0.1, 0.2], 2, { crop: 'maize' });
+        expect(res.map(r => r.id)).toEqual(['a', 'b']);
+        expect(String(mockedQuery.mock.calls[1][0])).toContain(') + 0');
+    });
+
+    it('trusts the index scan for an unfiltered search', async () => {
+        mockedQuery.mockResolvedValueOnce({ rows: [row('a')], rowCount: 1 });
+        await VectorService.searchByEmbedding([0.1, 0.2], 2, {});
+        expect(mockedQuery).toHaveBeenCalledTimes(1);
     });
 });
 

@@ -112,7 +112,7 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Pro Feature Locked')).toBeInTheDocument();
+    expect(await screen.findByText('Pro feature locked')).toBeInTheDocument();
     expect(screen.queryByTestId('disease-diagnosis-module')).not.toBeInTheDocument();
 
     rerender(
@@ -123,7 +123,7 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Pro Feature Locked')).toBeInTheDocument();
+    expect(await screen.findByText('Pro feature locked')).toBeInTheDocument();
     expect(screen.queryByTestId('worldmonitor-module')).not.toBeInTheDocument();
   });
 
@@ -247,19 +247,19 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit access for Grace Wanjiku' }));
 
-    expect(await screen.findByText('Manage Access & Subscription')).toBeInTheDocument();
+    expect(await screen.findByText('Manage access & subscription')).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByRole('option', { name: /Pro \(USD 29\/month\)/ })).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText('System Role'), {
+    fireEvent.change(screen.getByLabelText('System role'), {
       target: { value: 'extension_officer' },
     });
-    fireEvent.change(screen.getByLabelText('Subscription Tier (Feature Access)'), {
+    fireEvent.change(screen.getByLabelText('Subscription tier (feature access)'), {
       target: { value: PRO_PLAN_ID },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save Access' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save access' }));
 
     await waitFor(() => {
       expect(apiClient.put).toHaveBeenCalledWith('/users/u-basic', {
@@ -302,15 +302,15 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
       </QueryClientProvider>
     );
     fireEvent.click(await screen.findByRole('button', { name: 'Edit access for Grace Wanjiku' }));
-    expect(await screen.findByText('Manage Access & Subscription')).toBeInTheDocument();
+    expect(await screen.findByText('Manage access & subscription')).toBeInTheDocument();
 
-    expect(screen.queryByLabelText('Subscription Tier (Feature Access)')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Subscription tier (feature access)')).not.toBeInTheDocument();
     expect(screen.getByText('Only the system administrator can change a subscription plan manually.')).toBeInTheDocument();
     // Plans are not even fetched for someone who cannot assign them.
     expect(fetchPlanQuotas).not.toHaveBeenCalled();
 
-    fireEvent.change(screen.getByLabelText('System Role'), { target: { value: 'extension_officer' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save Access' }));
+    fireEvent.change(screen.getByLabelText('System role'), { target: { value: 'extension_officer' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save access' }));
     await waitFor(() => {
       expect(apiClient.put).toHaveBeenCalledWith('/users/u-basic', { role: 'extension_officer' });
     });
@@ -428,7 +428,7 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
     editButtons[0].focus();
     fireEvent.click(editButtons[0]);
 
-    const modalA = await screen.findByRole('dialog', { name: 'Manage Access & Subscription' });
+    const modalA = await screen.findByRole('dialog', { name: 'Manage access & subscription' });
     await waitFor(() => {
       expect(modalA.contains(document.activeElement)).toBe(true);
     });
@@ -442,13 +442,13 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
     });
 
     // Plan defaults to '' ("unchanged") and Save is disabled when nothing changed
-    const planSelect = screen.getByLabelText('Subscription Tier (Feature Access)') as HTMLSelectElement;
+    const planSelect = screen.getByLabelText('Subscription tier (feature access)') as HTMLSelectElement;
     expect(planSelect.value).toBe('');
-    const saveBtn = screen.getByRole('button', { name: 'Save Access' });
+    const saveBtn = screen.getByRole('button', { name: 'Save access' });
     expect(saveBtn).toBeDisabled();
 
     // Role-only edit must send ONLY { role } and omit planId + isActive
-    fireEvent.change(screen.getByLabelText('System Role'), {
+    fireEvent.change(screen.getByLabelText('System role'), {
       target: { value: 'regional_manager' },
     });
     expect(saveBtn).not.toBeDisabled();
@@ -528,6 +528,6 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
     expect(await screen.findByText('Sam Otieno')).toBeInTheDocument();
     expect(screen.getByText('Inactive')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Edit access for/ })).not.toBeInTheDocument();
-    expect(screen.queryByText('Edit Access')).not.toBeInTheDocument();
+    expect(screen.queryByText('Edit access')).not.toBeInTheDocument();
   });
 });

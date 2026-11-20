@@ -89,7 +89,7 @@ export function SMSComposerPanel({
           <div className="flex bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 p-1 rounded-xl">
             <button
               onClick={() => setSendMode('single')}
-              className={`px-3 py-1 text-xxs font-bold uppercase tracking-wider rounded-lg transition-all ${
+              className={`px-3 py-1 text-xxs font-bold rounded-lg transition-all ${
                 sendMode === 'single'
                   ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shadow-sm'
                   : 'text-slate-500 hover:text-slate-800 dark:text-white/40 dark:hover:text-white'
@@ -99,7 +99,7 @@ export function SMSComposerPanel({
             </button>
             <button
               onClick={() => setSendMode('bulk')}
-              className={`px-3 py-1 text-xxs font-bold uppercase tracking-wider rounded-lg transition-all ${
+              className={`px-3 py-1 text-xxs font-bold rounded-lg transition-all ${
                 sendMode === 'bulk'
                   ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shadow-sm'
                   : 'text-slate-500 hover:text-slate-800 dark:text-white/40 dark:hover:text-white'

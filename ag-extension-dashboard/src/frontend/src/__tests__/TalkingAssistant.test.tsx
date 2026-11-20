@@ -101,7 +101,7 @@ describe('TalkingAssistant Component', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     fireEvent.click(launcher);
 
-    expect(screen.getByRole('dialog', { name: /Agronomic Copilot/i })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: /Agronomic copilot/i })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('textbox', { name: /Your question/i })).toHaveFocus());
   });
 
@@ -136,7 +136,7 @@ describe('TalkingAssistant Component', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/Active Context:/i)).toBeInTheDocument();
+      expect(screen.getByText(/Active context:/i)).toBeInTheDocument();
       expect(screen.getByText(/🌱 Maize/i)).toBeInTheDocument();
       expect(screen.getByText(/🐛 Fall Armyworm/i)).toBeInTheDocument();
     });
@@ -257,14 +257,14 @@ describe('TalkingAssistant Component', () => {
     fireEvent.click(armywormPrompt);
 
     await waitFor(() => {
-      expect(screen.getByText(/Active Context:/i)).toBeInTheDocument();
+      expect(screen.getByText(/Active context:/i)).toBeInTheDocument();
     });
 
     const resetButton = screen.getByRole('button', { name: /Reset/i });
     fireEvent.click(resetButton);
 
     await waitFor(() => {
-      expect(screen.queryByText(/Active Context:/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Active context:/i)).not.toBeInTheDocument();
     });
   });
 
@@ -404,8 +404,8 @@ describe('TalkingAssistant Component', () => {
     render(<TalkingAssistant defaultOpen />);
     fireEvent.click(screen.getByRole('tab', { name: 'Voice' }));
 
-    expect(screen.getByText(/Voice Persona/i)).toBeInTheDocument();
-    expect(screen.getByText(/HD Neural/i)).toBeInTheDocument();
+    expect(screen.getByText(/Voice persona/i)).toBeInTheDocument();
+    expect(screen.getByText(/HD neural/i)).toBeInTheDocument();
 
     const amaniBtn = screen.getByRole('button', { name: /Amani/i });
     const barakaBtn = screen.getByRole('button', { name: /Baraka/i });
@@ -493,7 +493,7 @@ describe('TalkingAssistant Component', () => {
     render(<TalkingAssistant defaultOpen />);
     fireEvent.click(screen.getByRole('tab', { name: 'Voice' }));
 
-    expect(screen.getByText(/24 Languages/i)).toBeInTheDocument();
+    expect(screen.getByText(/24 languages/i)).toBeInTheDocument();
 
     const frPill = screen.getByRole('button', { name: /^🇫🇷\s*Français$/i });
     expect(frPill).toBeInTheDocument();
@@ -547,7 +547,7 @@ describe('TalkingAssistant Component', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Open agronomic assistant/i }));
     expect(screen.getByText(/scout leaf whorls at dawn or dusk/i)).toBeInTheDocument();
-    expect(screen.getByText(/Active Context:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Active context:/i)).toBeInTheDocument();
   });
 
   it('opens for existing assistant hash links', () => {

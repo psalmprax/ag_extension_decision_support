@@ -157,13 +157,13 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
         />
       );
 
-      expect(screen.getByText('Priority Field Visit Recommendation')).toBeInTheDocument();
+      expect(screen.getByText('Priority field visit recommendation')).toBeInTheDocument();
       expect(screen.getByText(/Tomorrow 09:00 AM/i)).toBeInTheDocument();
       expect(screen.getByText(/Tomorrow 02:30 PM/i)).toBeInTheDocument();
 
       // Click second slot and book
       fireEvent.click(screen.getByText(/Tomorrow 02:30 PM/i));
-      const bookBtn = screen.getByRole('button', { name: /Book & Dispatch Itinerary/i });
+      const bookBtn = screen.getByRole('button', { name: /Book & dispatch itinerary/i });
       fireEvent.click(bookBtn);
 
       expect(mockBooked).toHaveBeenCalledWith('Tomorrow 02:30 PM');
@@ -203,14 +203,14 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
       const teleCallBtns = screen.getAllByRole('button', { name: /Tele-Call/i });
       fireEvent.click(teleCallBtns[0]);
 
-      expect(screen.getByText('Tele-Agronomy Video Consultation')).toBeInTheDocument();
+      expect(screen.getByText('Tele-Agronomy video consultation')).toBeInTheDocument();
       // Real WebRTC host start screen, not a simulation placeholder
-      expect(screen.getByRole('button', { name: /Start Video Consultation/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Start video consultation/i })).toBeInTheDocument();
       expect(screen.queryByText(/DEMO.+WebRTC not connected/i)).not.toBeInTheDocument();
 
       fireEvent.click(screen.getByRole('button', { name: /Close tele-call/i }));
 
-      expect(screen.queryByText('Tele-Agronomy Video Consultation')).not.toBeInTheDocument();
+      expect(screen.queryByText('Tele-Agronomy video consultation')).not.toBeInTheDocument();
     });
 
     it('toggles Inline Visit Booking card for critical activities', async () => {
@@ -221,10 +221,10 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
         await new Promise(resolve => setTimeout(resolve, 50));
       });
 
-      const dispatchBtns = screen.getAllByRole('button', { name: /Dispatch Visit/i });
+      const dispatchBtns = screen.getAllByRole('button', { name: /Dispatch visit/i });
       fireEvent.click(dispatchBtns[0]);
 
-      expect(screen.getByText('Priority Field Visit Recommendation')).toBeInTheDocument();
+      expect(screen.getByText('Priority field visit recommendation')).toBeInTheDocument();
     });
   });
 
@@ -233,7 +233,7 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
       await renderWithLanguage(<FloatingAIPill />);
 
       // Open drawer
-      fireEvent.click(screen.getByRole('button', { name: /AI Agronomist/i }));
+      fireEvent.click(screen.getByRole('button', { name: /AI agronomist/i }));
 
       // Verify progressive profile header
       expect(screen.getByText('Conversational Intake Profile')).toBeInTheDocument();

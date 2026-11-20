@@ -60,6 +60,28 @@ describe('chunkDocument', () => {
         expect(chunks.map(chunk => chunk.content).join(' ').split(' ').length).toBe(600);
     });
 
+    it('starts a section at every Markdown heading, also without blank lines around it', () => {
+        const chunks = chunkDocument('# Scouting\nCheck twenty plants.\n## Thresholds\nAct at 20% damage.\n### Biocontrol\nRelease parasitoids.');
+        expect(chunks).toEqual([
+            { content: 'Scouting\nCheck twenty plants.', section: 'Scouting' },
+            { content: 'Thresholds\nAct at 20% damage.', section: 'Thresholds' },
+            { content: 'Biocontrol\nRelease parasitoids.', section: 'Biocontrol' },
+        ]);
+    });
+
+    it('never exceeds the maximum, even with a heading longer than a chunk', () => {
+        const heading = `# ${'Very long heading '.repeat(40)}`;
+        const chunks = chunkDocument(`${heading}\n\n${'Practical advice sentence here. '.repeat(60)}`, { targetChars: 300, maxChars: 400 });
+        expect(chunks.length).toBeGreaterThan(3);
+        expect(chunks.every(chunk => chunk.content.length <= 400)).toBe(true);
+        expect(chunks[0]!.content.split('\n')[0]!.endsWith('…')).toBe(true);
+    });
+
+    it('rejects sizes that are not positive numbers', () => {
+        expect(() => chunkDocument('text', { maxChars: 0 })).toThrow(RangeError);
+        expect(() => chunkDocument('text', { targetChars: Number.NaN })).toThrow(RangeError);
+    });
+
     it('embeds a chunk with its article title and section', () => {
         expect(chunkEmbeddingInput('FAW guide', { content: 'Scout weekly.', section: 'Scouting' })).toBe('FAW guide — Scouting\n\nScout weekly.');
         expect(chunkEmbeddingInput(undefined, { content: 'Scout weekly.' })).toBe('Scout weekly.');
@@ -85,6 +107,9 @@ describe('reranker', () => {
     it('parses scores to 0-1 and drops malformed entries', () => {
         const scores = parseLlmRerankScores('Scores: [{"idx":0,"score":8},{"idx":1,"score":"x"},{"idx":7,"score":9},{"idx":2,"score":14}]', 3);
         expect([...scores.entries()]).toEqual([[0, 0.8], [2, 1]]);
+        // null, strings and fractions are not indexes (Number(null) would be 0).
+        const malformed = parseLlmRerankScores('[{"idx":null,"score":9},{"idx":"1","score":9},{"idx":1.5,"score":9}]', 3);
+        expect(malformed.size).toBe(0);
         expect(parseLlmRerankScores('no json here', 3).size).toBe(0);
     });
 
@@ -103,8 +128,15 @@ describe('reranker', () => {
         expect(outcome.scores.get(1)).toBe(0.92);
         expect(JSON.parse(String(fetchMock.mock.calls[0]![1]!.body))).toMatchObject({ query: 'maize', documents: ['a', 'b'], top_n: 2 });
 
+        fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({
+            results: [{ index: null, relevance_score: 0.9 }, { index: '1', relevance_score: 0.9 }],
+        }), { status: 200 }));
+        routeRequest.mockResolvedValueOnce('[{"idx":1,"score":7}]');
+        expect(await scoreCandidates('maize', [{ content: 'a' }, { content: 'b' }]))
+            .toEqual({ by: 'llm', scores: new Map([[1, 0.7]]) });
+
         fetchMock.mockResolvedValueOnce(new Response('busy', { status: 503 }));
-        routeRequest.mockResolvedValueOnce('[{"idx":0,"score":6}]' as never);
+        routeRequest.mockResolvedValueOnce('[{"idx":0,"score":6}]');
         const fallback = await scoreCandidates('maize', [{ content: 'a' }, { content: 'b' }]);
         expect(fallback).toEqual({ by: 'llm', scores: new Map([[0, 0.6]]) });
         fetchMock.mockRestore();
@@ -122,7 +154,7 @@ describe('query translation', () => {
     });
 
     it('translates once, caches, and returns undefined when translation fails', async () => {
-        routeRequest.mockResolvedValueOnce('"How can I control fall armyworm in maize?"' as never);
+        routeRequest.mockResolvedValueOnce('"How can I control fall armyworm in maize?"');
         const question = 'Ninawezaje kudhibiti viwavijeshi vamizi kwenye mahindi shambani?';
         expect(await englishSearchQuery(question, 'sw')).toBe('How can I control fall armyworm in maize?');
         expect(await englishSearchQuery(question, 'sw')).toBe('How can I control fall armyworm in maize?');
@@ -191,7 +223,7 @@ describe('retrieveAdvisoryEvidence', () => {
     });
 
     it('searches the keyword leg with the English translation of a Swahili question', async () => {
-        routeRequest.mockResolvedValueOnce('How do I make compost at home?' as never);
+        routeRequest.mockResolvedValueOnce('How do I make compost at home?');
         retrieveCandidates.mockResolvedValue([hit('compost', { rerankScore: 0.9 })]);
         rerank.mockImplementation(async (_query, results) => results);
         const evidence = await retrieveAdvisoryEvidence('Jinsi ya kutengeneza mboji nyumbani kwa urahisi', { language: 'sw' });
@@ -225,6 +257,15 @@ describe('retrieval metrics', () => {
         expect(metrics).toMatchObject({ answerable: 2, unanswerable: 1, hitAt1: 0.5, hitAt3: 1, groundedRate: 0.5, abstentionRate: 1, evidencePrecision: 0.5 });
         expect(metrics.mrr).toBeCloseTo((1 + 1 / 3) / 2);
         expect(failedGates(metrics, { hitAt1: 0.6, hitAt3: 0.9, errors: 0 })).toEqual(['hitAt1 0.500 < 0.6']);
+    });
+
+    it('rejects golden cases with malformed crops or country', () => {
+        expect(() => validateGoldenCases([{ id: 'a', question: 'q', language: 'en', expected: [], crops: 'maize' }], new Set()))
+            .toThrow('crops must be an array of strings');
+        expect(() => validateGoldenCases([{ id: 'a', question: 'q', language: 'en', expected: [], country: 42 }], new Set()))
+            .toThrow('country must be a string');
+        expect(validateGoldenCases([{ id: 'a', question: 'q', language: 'en', expected: [], crops: ['maize'], country: 'Kenya' }], new Set()))
+            .toEqual([{ id: 'a', question: 'q', language: 'en', expected: [], crops: ['maize'], country: 'Kenya' }]);
     });
 
     it('rejects golden cases that cite unknown articles or repeat ids', () => {

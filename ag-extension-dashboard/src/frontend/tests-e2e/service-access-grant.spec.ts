@@ -46,7 +46,7 @@ test.describe.serial('service access granted by the system administrator', () =>
 
   async function openServiceAccess(): Promise<ReturnType<Page['getByRole']>> {
     const page = admin.page;
-    await openMenu(page, 'Staff & Officers');
+    await openMenu(page, 'Staff & officers');
     await page.getByPlaceholder(/Search by name, email/).fill(farmer.email);
     await page.getByRole('button', { name: `Edit access for ${farmer.name}` }).click();
     const section = page.getByRole('dialog').getByRole('group', { name: 'Service access' });

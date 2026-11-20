@@ -43,17 +43,8 @@ test.describe('@release multi-viewport layout & visual stability gates', () => {
     // Hero copy must still render (parallax off, content static)
     await expect(page.locator('main')).toBeVisible();
 
-    // Mesh orbs must have no running animation under reduced motion
-    const orbCount = await page.locator('.mesh-orb-1, .mesh-orb-2, .mesh-orb-3').count();
-    expect(orbCount).toBeGreaterThan(0);
-    const animations = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('.mesh-orb-1, .mesh-orb-2, .mesh-orb-3')).map(
-        el => getComputedStyle(el).animationName
-      )
-    );
-    for (const name of animations) {
-      expect(name === 'none' || name === '').toBe(true);
-    }
+    // The ambient mesh orbs were removed in the design pass: none may come back.
+    await expect(page.locator('.mesh-orb-1, .mesh-orb-2, .mesh-orb-3')).toHaveCount(0);
 
     // Responsive hero backdrop must resolve to the 640px variant
     const heroImg = page.locator('img[alt*="extension officer consulting"]').first();

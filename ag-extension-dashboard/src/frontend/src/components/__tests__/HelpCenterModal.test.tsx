@@ -26,7 +26,7 @@ describe('HelpCenterModal', () => {
     render(<HelpCenterModal isOpen onClose={vi.fn()} />);
     await screen.findByText('No FAQs available');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Feature Request' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Feature request' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close support ticket form' }));
     fireEvent.click(screen.getByRole('button', { name: 'Submit Ticket' }));
 
@@ -36,11 +36,11 @@ describe('HelpCenterModal', () => {
   it('submits feature requests using the dedicated category', async () => {
     render(<HelpCenterModal isOpen onClose={vi.fn()} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Feature Request' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Feature request' }));
 
     const category = screen.getByRole('combobox');
     expect(category).toHaveValue('feature-request');
-    expect(screen.getByRole('option', { name: 'Feature Request' })).toHaveValue('feature-request');
+    expect(screen.getByRole('option', { name: 'Feature request' })).toHaveValue('feature-request');
 
     fireEvent.change(screen.getByPlaceholderText('Brief description of your issue'), {
       target: { value: 'Add crop planning' },
@@ -63,7 +63,7 @@ describe('HelpCenterModal', () => {
     vi.mocked(createSupportTicket).mockRejectedValueOnce(new Error('network unavailable'));
     render(<HelpCenterModal isOpen onClose={vi.fn()} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Report an Issue' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Report an issue' }));
     fireEvent.change(screen.getByPlaceholderText('Brief description of your issue'), {
       target: { value: 'Map is not loading' },
     });
@@ -73,7 +73,7 @@ describe('HelpCenterModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Submit Ticket' }));
 
     await waitFor(() => expect(createSupportTicket).toHaveBeenCalled());
-    expect(screen.queryByText('Ticket Submitted')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ticket submitted')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Submit Ticket' })).toBeInTheDocument();
   });
 });

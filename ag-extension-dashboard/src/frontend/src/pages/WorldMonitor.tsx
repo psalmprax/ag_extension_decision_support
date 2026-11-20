@@ -66,22 +66,20 @@ const WorldMonitor: React.FC = () => {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-white/10">
         <div className="flex items-center gap-2.5">
-          <Globe className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-          <h1 className="text-base font-semibold text-slate-900 dark:text-white">{t('ui_world_monitor_worldmonitor_live_spatial_gis')}</h1>
-          <span className="px-2 py-0.5 rounded text-xs font-medium bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/20">{t('ui_world_monitor_live_gis')}</span>
+          <h1 className="text-2xl font-medium text-slate-900 dark:text-white">{t('ui_world_monitor_worldmonitor_live_spatial_gis')}</h1>
           {isDemo && <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">{t('ui_world_monitor_demo_filters')}</span>}
         </div>
         <div className="flex items-center gap-2">
-          <input placeholder="Region" value={filters.region || ''} onChange={e => setFilters(s => ({ ...s, region: e.target.value || undefined }))} className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs w-28 placeholder:text-slate-400 focus:outline-none focus:border-cyan-500" />
-          <input placeholder="Crop" value={filters.crop || ''} onChange={e => setFilters(s => ({ ...s, crop: e.target.value || undefined }))} className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs w-28 placeholder:text-slate-400 focus:outline-none focus:border-cyan-500" />
-          <input placeholder="County" value={filters.county || ''} onChange={e => setFilters(s => ({ ...s, county: e.target.value || undefined }))} className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs w-28 placeholder:text-slate-400 focus:outline-none focus:border-cyan-500" />
-          <button onClick={() => fetchLayers()} disabled={loading} className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium disabled:opacity-50 transition-colors">{t('ui_world_monitor_apply')}</button>
+          <input placeholder="Region" value={filters.region || ''} onChange={e => setFilters(s => ({ ...s, region: e.target.value || undefined }))} className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs w-28 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600" />
+          <input placeholder="Crop" value={filters.crop || ''} onChange={e => setFilters(s => ({ ...s, crop: e.target.value || undefined }))} className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs w-28 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600" />
+          <input placeholder="County" value={filters.county || ''} onChange={e => setFilters(s => ({ ...s, county: e.target.value || undefined }))} className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs w-28 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600" />
+          <button onClick={() => fetchLayers()} disabled={loading} className="h-8 px-4 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium disabled:opacity-50 transition-colors">{t('ui_world_monitor_apply')}</button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
-          <Satellite className="w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
+          <Satellite className="w-4 h-4 text-slate-600 dark:text-slate-400 shrink-0" />
           <div><div className="text-xs text-slate-500 dark:text-white/50">{t('ui_world_monitor_satellite_orbit')}</div><div className="text-xs font-medium text-slate-900 dark:text-white">{data ? 'Not connected yet' : '—'}</div></div>
         </div>
         <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
@@ -109,7 +107,7 @@ const WorldMonitor: React.FC = () => {
             <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-emerald-400">{t('ui_world_monitor_farmers_mapped')}</span> {data?.farmers?.length ?? 0}</div>
             <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-amber-400">{t('ui_world_monitor_soil_centroid')}</span> {data?.soilHorizon ? `${Number(data.soilHorizon.centroid.lat).toFixed(2)}, ${Number(data.soilHorizon.centroid.lon).toFixed(2)}` : '—'}</div>
             <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-rose-400">{t('ui_world_monitor_swarm_clusters')}</span> {data?.pestSwarm?.clusters?.map(c => c.clusterId.slice(0, 8)).join(', ') || '—'}</div>
-            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-cyan-400">{t('ui_world_monitor_view')}</span> {viewState.longitude.toFixed(1)}, {viewState.latitude.toFixed(1)} z{viewState.zoom}</div>
+            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-slate-400">{t('ui_world_monitor_view')}</span> {viewState.longitude.toFixed(1)}, {viewState.latitude.toFixed(1)} z{viewState.zoom}</div>
           </div>
         </div>
       </div>

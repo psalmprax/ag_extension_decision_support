@@ -6,9 +6,9 @@ import type { PreferenceKey, useNotificationPreferences } from '@/hooks/useNotif
 export function NotificationPreferencesSection({ prefs, saving, toggle }: ReturnType<typeof useNotificationPreferences>) {
   const { t } = useLanguage();
   const rows: Array<{ key: PreferenceKey; label: string }> = [
-    { key: 'emailAlerts', label: t('settings_email_alerts') || 'Email Alerts' },
-    { key: 'smsAlerts', label: t('settings_sms_alerts') || 'SMS Alerts' },
-    { key: 'pushNotifications', label: t('settings_push_notifs') || 'Push Notifications' },
+    { key: 'emailAlerts', label: t('settings_email_alerts') || 'Email alerts' },
+    { key: 'smsAlerts', label: t('settings_sms_alerts') || 'SMS alerts' },
+    { key: 'pushNotifications', label: t('settings_push_notifs') || 'Push notifications' },
   ];
   return (
     <div className="space-y-3">

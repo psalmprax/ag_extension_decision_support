@@ -206,13 +206,18 @@ export interface AppState {
   setPreferredAudioLanguage: (lang: string) => void;
 }
 
+/** md breakpoint: below it the sidebar overlays the page as a drawer. */
+function isWideViewport(): boolean {
+  return typeof window === 'undefined' || !window.matchMedia || window.matchMedia('(min-width: 768px)').matches;
+}
+
 export const useAppStore = create<AppState>()(
   persist(
     set => ({
       // Initial state
       user: null,
       isDemo: false,
-      sidebarOpen: true,
+      sidebarOpen: isWideViewport(),
       themeName: getInitialThemeName(),
       darkMode: getInitialDarkMode(),
       activeTab: 'dashboard',
@@ -432,6 +437,8 @@ export const useAppStore = create<AppState>()(
     {
       name: 'ag-extension-storage',
       onRehydrateStorage: () => state => {
+        // The sidebar is a drawer on phones: never restore it open over the page.
+        if (state && state.sidebarOpen && !isWideViewport()) state.setSidebarOpen(false);
         if (!state?.user) return;
         const isDemo = isDemoSession(state.user, state.isDemo);
         if (state.isDemo !== isDemo) state.setIsDemo(isDemo);

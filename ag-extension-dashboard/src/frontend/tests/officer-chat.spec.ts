@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 
 /**
  * Officer flows reported broken in production and fixed since: the dashboard
- * greeting rendered a raw "{name}", the activity stream's "Chat View" button
+ * greeting rendered a raw "{name}", the activity stream's "Chat view" button
  * did nothing, and farmer, officer and AI messages looked identical. Each test
  * asserts what the officer sees, not implementation details.
  */
@@ -46,7 +46,7 @@ async function signInAsDemoOfficer(page: Page) {
   );
 
   await page.goto('/login');
-  await page.getByRole('button', { name: 'Try the Demo' }).click({ timeout: 90_000 });
+  await page.getByRole('button', { name: 'Try the demo' }).click({ timeout: 90_000 });
   await expect(page.getByRole('button', { name: 'Dashboard' }).first()).toBeVisible({ timeout: 30_000 });
 }
 
@@ -56,14 +56,14 @@ test.describe('@e2e Officer dashboard and farmer chat', () => {
   test('greets the officer by first name, never with a raw placeholder', async ({ page }) => {
     await signInAsDemoOfficer(page);
 
-    await expect(page.getByText('Welcome back, Amina! Here is your overview.')).toBeVisible();
+    await expect(page.getByText('Welcome back, Amina.')).toBeVisible();
     await expect(page.getByText('{name}')).toHaveCount(0);
   });
 
   test('Chat View opens that farmer\'s conversation, with farmer, officer and AI messages labelled apart', async ({ page }) => {
     await signInAsDemoOfficer(page);
 
-    const chatView = page.getByRole('button', { name: 'Chat View' }).first();
+    const chatView = page.getByRole('button', { name: 'Chat view' }).first();
     await chatView.scrollIntoViewIfNeeded();
     await chatView.click();
 

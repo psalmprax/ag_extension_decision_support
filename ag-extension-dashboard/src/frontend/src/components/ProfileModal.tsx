@@ -353,7 +353,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                          {t('common_first_name') || 'First Name'}
+                          {t('common_first_name') || 'First name'}
                         </label>
                         <input
                           type="text"
@@ -366,7 +366,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
                       <div>
                         <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                          {t('common_last_name') || 'Last Name'}
+                          {t('common_last_name') || 'Last name'}
                         </label>
                         <input
                           type="text"

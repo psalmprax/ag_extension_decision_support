@@ -44,7 +44,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
             <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
               {t('billing_admin_transactions') || 'Pending Mobile Money Queue'}
             </h3>
-            <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
+            <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
               {t('ui_manual_plan_grants_manual_ussd_till_verification')}
             </p>
           </div>
@@ -56,7 +56,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
                 {['User', 'Method', 'TX ID', 'Amount', 'Plan', 'Actions'].map(h => (
                   <th
                     key={h}
-                    className="px-6 py-4 text-xxs font-bold uppercase tracking-wider text-slate-600 dark:text-white/60"
+                    className="px-6 py-4 text-xxs font-bold text-slate-600 dark:text-white/60"
                   >
                     {h}
                   </th>
@@ -73,7 +73,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
                     <td className="px-6 py-4 text-xs font-bold text-slate-900 dark:text-white">
                       {tx.userEmail}
                     </td>
-                    <td className="px-6 py-4 text-xs font-black uppercase text-amber-700 dark:text-amber-400">
+                    <td className="px-6 py-4 text-xs font-black text-amber-700 dark:text-amber-400">
                       {tx.method}
                     </td>
                     <td className="px-6 py-4 text-xs font-mono text-slate-700 dark:text-white/80">
@@ -82,7 +82,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
                     <td className="px-6 py-4 text-xs font-bold text-slate-900 dark:text-white">
                       {tx.amount} {tx.currency}
                     </td>
-                    <td className="px-6 py-4 text-xs uppercase text-slate-600 dark:text-white/60 font-bold">
+                    <td className="px-6 py-4 text-xs text-slate-600 dark:text-white/60 font-bold">
                       {tx.planId?.split('_')[1]}
                     </td>
                     <td className="px-6 py-4">
@@ -114,7 +114,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-6 py-12 text-center text-xs text-slate-500 dark:text-white/40 font-semibold uppercase tracking-widest italic"
+                    className="px-6 py-12 text-center text-xs text-slate-500 dark:text-white/40 font-semibold italic"
                   >
                     {t('billing_admin_no_pending') || 'No pending mobile money transactions'}
                   </td>
@@ -129,13 +129,13 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
       <section className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl overflow-hidden">
         <div className="flex items-center gap-4 mb-6">
           <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center">
-            <Ticket className="w-5 h-5 text-purple-400" />
+            <Ticket className="w-5 h-5 text-slate-400" />
           </div>
           <div>
             <h3 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
               {t('billing_admin_vouchers') || 'AgriVoucher Minting Engine'}
             </h3>
-            <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
+            <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
               {t('ui_manual_plan_grants_batch_generation_for_cooperatives_ng')}
             </p>
           </div>
@@ -174,7 +174,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
           </div>
           <div>
             <label className="text-xs font-medium text-slate-400 mb-1.5 block">
-              {t('billing_admin_expiry_days') || 'Expiry (Days)'}
+              {t('billing_admin_expiry_days') || 'Expiry (days)'}
             </label>
             <Input
               type="number"

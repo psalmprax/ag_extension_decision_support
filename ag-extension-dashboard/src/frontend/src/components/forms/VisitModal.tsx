@@ -139,7 +139,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                {t('visit_create_title') || 'Schedule New Visit'}
+                {t('visit_create_title') || 'Schedule new visit'}
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {t('visit_create_subtitle') || 'Book a visit with a farmer'}
@@ -160,7 +160,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               <User className="w-4 h-4 inline mr-1" />
-              {t('visit_select_farmer') || 'Select Farmer'} *
+              {t('visit_select_farmer') || 'Select farmer'} *
             </label>
             <div className="relative">
               <input
@@ -240,7 +240,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               <FileText className="w-4 h-4 inline mr-1" />
-              {t('visit_type_label') || 'Visit Type'}
+              {t('visit_type_label') || 'Visit type'}
             </label>
             <div className="grid grid-cols-3 gap-2">
               {[
@@ -270,7 +270,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               <Calendar className="w-4 h-4 inline mr-1" />
-              {t('visit_date_time') || 'Date & Time'} *
+              {t('visit_date_time') || 'Date & time'} *
             </label>
             <Input
               type="datetime-local" aria-label="Visit date and time"
@@ -308,7 +308,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
               className="flex-1"
             >
               <MapPin className="w-4 h-4" />
-              {t('visit_schedule') || 'Schedule Visit'}
+              {t('visit_schedule') || 'Schedule visit'}
             </Button>
           </div>
         </form>

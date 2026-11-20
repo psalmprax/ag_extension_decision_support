@@ -3,6 +3,7 @@ import { RefreshCw, Trash2, AlertTriangle, Clock, CheckCircle2 } from 'lucide-re
 import toast from 'react-hot-toast';
 import { syncQueue, type SyncQueueItem } from '@/api/syncQueueService';
 import { useLanguage } from '@/lib/LanguageContext';
+import { formatLabel } from '@/lib/formatLabel';
 
 /**
  * Operator view of the offline write queue. Surfaces items that exhausted
@@ -85,11 +86,11 @@ export const SyncQueuePanel: React.FC = () => {
           <li key={item.id} className="py-2.5 flex items-start justify-between gap-3 text-xs">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className={`px-1.5 py-0.5 rounded font-mono uppercase text-[10px] ${
-                  item.state === 'pending' ? 'bg-cyan-500/15 text-cyan-300' :
+                <span className={`px-1.5 py-0.5 rounded font-mono text-[10px] ${
+                  item.state === 'pending' ? 'bg-slate-500/15 text-slate-300' :
                   item.state === 'conflict' ? 'bg-amber-500/15 text-amber-300' :
                   'bg-rose-500/15 text-rose-300'
-                }`}>{item.state}</span>
+                }`}>{formatLabel(item.state)}</span>
                 <span className="text-white/80 font-semibold truncate">{item.method} {item.endpoint}</span>
               </div>
               <div className="text-white/40 mt-0.5 flex flex-wrap items-center gap-2">

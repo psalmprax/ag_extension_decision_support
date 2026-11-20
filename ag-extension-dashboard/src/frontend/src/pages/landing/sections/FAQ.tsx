@@ -23,20 +23,8 @@ export function FAQ() {
               variants={stagger}
               className="text-center mb-16"
             >
-              <motion.div
-                variants={fadeUp}
-                className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/80 mb-4"
-              >
-                {t('help_faq')}
-              </motion.div>
-              <motion.h2
-                variants={fadeUp}
-                className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-bold tracking-tight"
-              >
-                {t('ui_faq_everything_you_need_to_know_about')}{' '}
-                <span className="bg-gradient-to-r from-emerald-300 to-amber-400 bg-clip-text text-transparent">
-                  {t('app_title')}
-                </span>
+              <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-medium leading-tight text-white mb-4">
+                {t('ui_faq_everything_you_need_to_know_about')}
               </motion.h2>
               <motion.p
                 variants={fadeUp}
@@ -56,7 +44,7 @@ export function FAQ() {
                     whileInView="visible"
                     viewport={{ once: true, margin: '-40px' }}
                     variants={fadeUp}
-                    className="rounded-xl border border-white/[0.08] backdrop-blur-md bg-slate-900/60 hover:border-emerald-500/30 transition-all duration-300 overflow-hidden"
+                    className="rounded-xl border border-white/[0.08] backdrop-blur-md bg-white/[0.03] hover:border-emerald-500/30 transition-all duration-300 overflow-hidden"
                   >
                     <button
                       type="button"

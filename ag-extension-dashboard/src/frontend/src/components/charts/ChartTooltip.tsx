@@ -75,7 +75,7 @@ export const ChartTooltip: React.FC<ChartTooltipProps> = ({
     >
       {label !== undefined && label !== null && label !== '' && (
         <p
-          className="mb-1.5 text-xxs font-bold uppercase tracking-wider"
+          className="mb-1.5 text-xxs font-bold  "
           style={{ color: 'var(--color-on-surface-variant)' }}
         >
           {labelFormatter ? labelFormatter(label) : label}

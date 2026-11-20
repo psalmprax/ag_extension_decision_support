@@ -134,6 +134,6 @@ describe("the farmer's mobile tabs", () => {
 
     expect(screen.getByRole('button', { name: /My officer/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Farmers/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /AI Scan/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /AI scan/ })).not.toBeInTheDocument();
   });
 });

@@ -1,192 +1,45 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { AgroStorytellingSection } from '@/components/landing/AgroStorytellingSection';
-import { SANDBOX_PRESETS } from './landing/data';
+import { useMotionValue } from 'framer-motion';
 import { Navbar } from './landing/sections/Navbar';
 import { Hero } from './landing/sections/Hero';
 import { FarmerServices } from './landing/sections/FarmerServices';
 import { HowItWorks } from './landing/sections/HowItWorks';
-import { Problem } from './landing/sections/Problem';
 import { Features } from './landing/sections/Features';
 import { TrustAndSafety } from './landing/sections/TrustAndSafety';
-import { AgentOS } from './landing/sections/AgentOS';
 import { TalkingAssistant } from './landing/sections/TalkingAssistant';
-import { Demo } from './landing/sections/Demo';
-import { ROI } from './landing/sections/ROI';
 import { FAQ } from './landing/sections/FAQ';
-import { Mission } from './landing/sections/Mission';
 import { CTA } from './landing/sections/CTA';
 import { Footer } from './landing/sections/Footer';
 import { useLanguage } from '@/lib/LanguageContext';
 
 // ─── Main component ─────────────────────────────────────────────
+// One dark page, eight sections: what farmers get, how it works, who it is
+// for, how it stays safe, questions, and one call to action. No ambient
+// motion: the hero carries the page.
 export function LandingPage() {
   const { t } = useLanguage();
-  const pageRef = useRef<HTMLDivElement>(null);
-
-  // Agent OS Sandbox Interactive State
-  const [activePreset, setActivePreset] = useState(SANDBOX_PRESETS[0]);
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [simProgress, setSimProgress] = useState(4);
-  const [activeChannelTab, setActiveChannelTab] = useState<'sms' | 'whatsapp' | 'telegram'>('sms');
-
-  const handleRunSimulation = () => {
-    setIsSimulating(true);
-    setSimProgress(1);
-    setTimeout(() => setSimProgress(2), 350);
-    setTimeout(() => setSimProgress(3), 700);
-    setTimeout(() => {
-      setSimProgress(4);
-      setIsSimulating(false);
-    }, 1050);
-  };
-
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const springX = useSpring(mouseX, { stiffness: 150, damping: 15 });
-  const springY = useSpring(mouseY, { stiffness: 150, damping: 15 });
-
-  const reducedMotion = useReducedMotion();
-
-  // Scroll-driven transforms
-  const { scrollYProgress } = useScroll();
-  const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -80]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.6]);
-
-  // Global Cursor spotlight tracking
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
-    },
-    [mouseX, mouseY]
-  );
+  // Hero accepts motion values for an optional scroll effect; the page holds
+  // it still.
+  const heroY = useMotionValue(0);
+  const heroOpacity = useMotionValue(1);
 
   return (
-    <div
-      ref={pageRef}
-      onMouseMove={handleMouseMove}
-      className="relative min-h-screen bg-slate-950 text-white overflow-x-hidden"
-    >
-      {/* ── Global Animated Mesh Background & Authentic Agricultural Atmosphere ── */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <img
-          src="/images/landing/hero-aerial.webp"
-          alt=""
-          role="presentation"
-          aria-hidden="true"
-          className="w-full h-full object-cover object-center opacity-[0.10] filter saturate-125 contrast-105 pointer-events-none mix-blend-luminosity"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-stone-950/60 via-slate-950/40 via-stone-950/70 to-slate-950/90 pointer-events-none" />
-
-        <div className="mesh-orb-1 absolute top-[-10%] left-[-10%] w-[800px] h-[800px] rounded-full bg-emerald-600/[0.05] blur-[180px]" />
-        <div className="mesh-orb-2 absolute top-[30%] right-[-15%] w-[700px] h-[700px] rounded-full bg-amber-500/[0.04] blur-[150px]" />
-        <div className="mesh-orb-3 absolute top-[60%] left-[10%] w-[600px] h-[600px] rounded-full bg-emerald-400/[0.035] blur-[130px]" />
-        <div className="mesh-orb-2 absolute top-[85%] right-[5%] w-[500px] h-[500px] rounded-full bg-teal-500/[0.035] blur-[110px]" />
-      </div>
-
-      {/* Global Cursor spotlight (mouse-only; off under reduced motion) */}
-      {!reducedMotion && (
-      <motion.div
-        className="fixed w-[600px] h-[600px] rounded-full pointer-events-none z-0 opacity-25"
-        style={{
-          x: springX,
-          y: springY,
-          translateX: '-50%',
-          translateY: '-50%',
-          background: 'radial-gradient(circle, var(--color-outline) 0%, transparent 70%)',
-        }}
-      />
-      )}
-
-      {/* ── CSS for mesh animation ── */}
-      <style>{`
-        @keyframes meshShift {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          25% { transform: translate(30px, -20px) scale(1.05); }
-          50% { transform: translate(-20px, 30px) scale(0.95); }
-          75% { transform: translate(10px, 10px) scale(1.02); }
-        }
-        @keyframes meshShift2 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(-40px, 20px) scale(1.08); }
-          66% { transform: translate(20px, -30px) scale(0.96); }
-        }
-        @keyframes meshShift3 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(25px, 25px) scale(1.04); }
-        }
-        .mesh-orb-1 { animation: meshShift 12s ease-in-out infinite; }
-        .mesh-orb-2 { animation: meshShift2 15s ease-in-out infinite; }
-        .mesh-orb-3 { animation: meshShift3 10s ease-in-out infinite; }
-        ${reducedMotion ? '.mesh-orb-1,.mesh-orb-2,.mesh-orb-3{animation:none !important;}' : ''}
-      `}</style>
-
-      {/* Accessible Skip to Main Content */}
+    <div className="dark surface-dark relative min-h-screen bg-[#0d1a14] text-[#e6eee9] overflow-x-hidden">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[9999] focus:px-4 focus:py-2.5 focus:bg-emerald-600 focus:text-white focus:font-semibold focus:text-sm focus:rounded-lg focus:shadow-2xl focus:ring-2 focus:ring-white focus:outline-none transition-all"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[9999] focus:px-4 focus:py-2.5 focus:bg-emerald-700 focus:text-white focus:text-sm focus:rounded-md focus:ring-2 focus:ring-white focus:outline-none"
       >
         {t('skip_to_main_content')}
       </a>
 
-
       <Navbar />
 
       <main id="main-content">
-        {/* Section 1: Warm Farmer-First Welcome */}
         <Hero heroY={heroY} heroOpacity={heroOpacity} />
-
-        {/* Section 2: Four Core Everyday Services */}
         <FarmerServices />
-
-        {/* Section 3: Simple 3-Step Process */}
         <HowItWorks />
-
-        {/* Real Farm Challenges & Direct Solutions */}
-        <Problem />
-
-        {/* Section 4: Built for Real Rural Fields (Smallholders, Extension Officers, Co-ops) */}
         <Features />
-
-        {/* Section 5: Trust, Safety & Certified Agronomists */}
         <TrustAndSafety />
-
-        {/* Section 6: Institutional & Enterprise Platform (Dedicated for Extension Officers & Ministries) */}
-        <div className="relative pt-10">
-          <div className="max-w-[90rem] mx-auto px-4 sm:px-6 mb-6">
-            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-slate-900/80 to-amber-950/30 border border-emerald-500/30 flex flex-col md:flex-row items-center justify-between gap-4">
-              <div>
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 block mb-1">
-                  {t('ui_landing_page_institutional_government_operations')}
-                </span>
-                <h3 className="text-base sm:text-lg font-bold text-white">
-                  {t('ui_landing_page_autonomous_multi_agent_extension_os')}
-                </h3>
-                <p className="text-xs sm:text-sm text-white/70">
-                  {t('ui_landing_page_simulate_regional_pest_intervention')}
-                </p>
-              </div>
-            </div>
-          </div>
-          <AgentOS
-            activePreset={activePreset}
-            setActivePreset={setActivePreset}
-            handleRunSimulation={handleRunSimulation}
-            isSimulating={isSimulating}
-            simProgress={simProgress}
-            activeChannelTab={activeChannelTab}
-            setActiveChannelTab={setActiveChannelTab}
-          />
-        </div>
-
-        {/* ── INTERACTIVE 3D SCROLL-DRIVEN AGRO-ECOSYSTEM STORYTELLING ── */}
-        <AgroStorytellingSection />
-        <Demo />
-        <ROI />
         <FAQ />
-        <Mission />
         <CTA />
       </main>
 

@@ -56,9 +56,9 @@ describe('FarmerMap Component - Unexpanded State', () => {
     expect(mapContainer.style.width).toBe('100%');
 
     // Controls & actions should be visible
-    expect(screen.getByTitle(/Locate Current Position/i)).toBeDefined();
+    expect(screen.getByTitle(/Show my location/i)).toBeDefined();
     expect(screen.getByTitle(/Search Farmers/i)).toBeDefined();
-    expect(screen.getByTitle(/Expand Map Fullscreen/i)).toBeDefined();
+    expect(screen.getByTitle(/Expand map/i)).toBeDefined();
 
     // TileLayer should be rendered with OpenStreetMap by default
     const tileLayer = screen.getByTestId('tile-layer');

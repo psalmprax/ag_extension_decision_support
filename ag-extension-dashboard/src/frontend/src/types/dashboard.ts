@@ -75,6 +75,9 @@ export interface Farmer {
   crops?: string[];
   latitude?: number;
   longitude?: number;
+  /** Saved farm position. Typed as in the shared contract; Postgres decimals can arrive as strings, so read it through farmerCoordinates(). */
+  locationLat?: number;
+  locationLng?: number;
   phone?: string;
   yield?: number;
   status?: string;

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, ChevronDown, Check } from 'lucide-react';
+import { Search, ChevronDown, Check, Globe } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { languages, Language } from '../lib/i18n';
 
@@ -45,13 +45,13 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
       <div ref={ref} className={`relative ${className}`}>
         <button
           onClick={() => setOpen(o => !o)}
-          className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xxs font-black uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-primary-400/50 text-slate-300 hover:text-white transition-all backdrop-blur-xl"
+          className="flex items-center gap-1.5 h-10 px-2.5 rounded-md text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors"
           aria-label={t('common_select_language')}
           aria-expanded={open}
         >
-          {showFlag && <span>{current.flag}</span>}
-          <span>{current.code.toUpperCase()}</span>
-          <ChevronDown className="w-3 h-3 opacity-60" />
+          {showFlag ? <span aria-hidden="true">{current.flag}</span> : <Globe className="w-4 h-4" aria-hidden="true" />}
+          <span className="font-mono">{current.code.toUpperCase()}</span>
+          <ChevronDown className="w-3.5 h-3.5 opacity-60" aria-hidden="true" />
         </button>
         {open && (
           <LanguageDropdown
@@ -74,7 +74,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
     <div className={`flex items-center gap-2 ${className}`}>
       <label
         htmlFor="language-select"
-        className="text-xxs font-black uppercase tracking-widest text-gray-400"
+        className="text-sm text-slate-500 dark:text-slate-400"
       >
         {t('common_select_language')}:
       </label>
@@ -82,7 +82,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         <button
           id="language-select"
           onClick={() => setOpen(o => !o)}
-          className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xxs font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white min-w-[160px] justify-between"
+          className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white min-w-[160px] justify-between"
           aria-haspopup="listbox"
           aria-expanded={open}
         >
@@ -134,7 +134,7 @@ const LanguageDropdown: React.FC<DropdownProps> = ({
           autoFocus
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Search languages..."
+          placeholder="Search languages"
           className="w-full pl-8 pr-2 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
         />
       </div>

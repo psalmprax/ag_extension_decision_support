@@ -30,7 +30,7 @@ describe('AgronomicIntakeCard', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Zone 5–6' }).className).not.toContain('bg-slate-900');
-    fireEvent.click(screen.getByRole('button', { name: 'Generate Precision Advice' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Generate precision advice' }));
 
     expect(onApplyIntake).toHaveBeenCalledWith(
       'What crops should I plant?',
@@ -48,7 +48,7 @@ describe('AgronomicIntakeCard', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Rainfed / Dryland' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Generate Precision Advice' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Generate precision advice' }));
 
     expect(onApplyIntake).toHaveBeenCalledWith(
       'What crops should I plant? [Agronomic Context: Water=Rainfed / Dryland]',

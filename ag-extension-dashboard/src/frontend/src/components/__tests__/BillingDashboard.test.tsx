@@ -158,7 +158,7 @@ describe('BillingDashboard', () => {
     });
 
     // Check for the subscription status heading
-    expect(screen.getByText('Current Plan')).toBeInTheDocument();
+    expect(screen.getByText('Current plan')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Pro/i, level: 2 })).toBeInTheDocument();
   });
 
@@ -188,7 +188,7 @@ describe('BillingDashboard', () => {
     // Check for plan headings (Free and Pro)
     expect(screen.getByRole('heading', { name: /Free/i, level: 3 })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Pro/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Select Plan' }).className).toContain(
+    expect(screen.getByRole('button', { name: 'Select plan' }).className).toContain(
       'text-slate-900 dark:text-white'
     );
   });

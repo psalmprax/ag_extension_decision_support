@@ -44,7 +44,7 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
-      className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm dark:shadow-xl"
+      className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg overflow-hidden"
     >
       {allCycles.length === 0 ? (
         <div className="p-8 text-center text-xs text-slate-500">

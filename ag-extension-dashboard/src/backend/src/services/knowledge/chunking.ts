@@ -25,12 +25,15 @@ export interface ChunkOptions {
 const MARKDOWN_HEADING = /^#{1,6}\s+(.+?)\s*#*$/;
 const SHORT_TITLE_LINE = /^[\p{Lu}\p{N}][^.!?]{2,80}:$/u;
 
-function headingText(line: string): string | undefined {
+function markdownHeading(line: string): string | undefined {
+    const markdown = MARKDOWN_HEADING.exec(line.trim());
+    return markdown ? markdown[1]!.replace(/:$/, '').trim() : undefined;
+}
+
+/** A short "Title:" line counts as a heading only when it opens a paragraph. */
+function titleLine(line: string): string | undefined {
     const trimmed = line.trim();
-    const markdown = MARKDOWN_HEADING.exec(trimmed);
-    if (markdown) return markdown[1]!.replace(/:$/, '').trim();
-    if (SHORT_TITLE_LINE.test(trimmed)) return trimmed.slice(0, -1).trim();
-    return undefined;
+    return SHORT_TITLE_LINE.test(trimmed) ? trimmed.slice(0, -1).trim() : undefined;
 }
 
 /** Sentence split that keeps abbreviations like "e.g." and decimals like "2.5" intact. */
@@ -42,6 +45,7 @@ export function splitSentences(text: string): string[] {
 }
 
 function hardWrap(text: string, maxChars: number): string[] {
+    if (!Number.isFinite(maxChars) || maxChars < 1) throw new RangeError(`chunk budget must be positive (got ${maxChars})`);
     const pieces: string[] = [];
     let rest = text.trim();
     while (rest.length > maxChars) {
@@ -56,19 +60,32 @@ function hardWrap(text: string, maxChars: number): string[] {
 
 interface Section { heading?: string; blocks: string[] }
 
+/**
+ * Sections and their paragraphs. Markdown headings start a new section on any
+ * line, also without blank lines around them; blank lines end a paragraph.
+ */
 function sections(text: string): Section[] {
     const result: Section[] = [{ blocks: [] }];
-    const paragraphs = text.replace(/\r\n?/g, '\n').split(/\n\s*\n/);
-    for (const paragraph of paragraphs) {
-        const lines = paragraph.split('\n');
-        const heading = headingText(lines[0] ?? '');
-        if (heading !== undefined) {
-            result.push({ heading, blocks: [] });
-            lines.shift();
-        }
-        const body = lines.join('\n').trim();
+    let paragraph: string[] = [];
+    const endParagraph = () => {
+        const body = paragraph.join('\n').trim();
         if (body) result[result.length - 1]!.blocks.push(body);
+        paragraph = [];
+    };
+    for (const line of text.replace(/\r\n?/g, '\n').split('\n')) {
+        if (!line.trim()) {
+            endParagraph();
+            continue;
+        }
+        const heading = markdownHeading(line) ?? (paragraph.length === 0 ? titleLine(line) : undefined);
+        if (heading !== undefined) {
+            endParagraph();
+            result.push({ heading, blocks: [] });
+            continue;
+        }
+        paragraph.push(line);
     }
+    endParagraph();
     return result.filter(section => section.blocks.length > 0 || section.heading);
 }
 
@@ -86,10 +103,23 @@ function overlapSentence(text: string, limit: number): string | undefined {
     return sentence && sentence.length <= limit ? sentence : undefined;
 }
 
+/**
+ * The heading line repeated on a section's chunks: shortened when it would
+ * take more than a quarter of a chunk, so the text always keeps room.
+ */
+function headingPrefix(heading: string | undefined, maxChars: number): string {
+    if (!heading) return '';
+    const room = Math.floor(maxChars / 4);
+    const shown = heading.length < room ? heading : `${heading.slice(0, Math.max(room - 2, 1)).trimEnd()}…`;
+    return `${shown}\n`;
+}
+
 /** Pack one section's paragraphs into chunks, repeating the boundary sentence. */
 function packSection(section: Section, targetChars: number, maxChars: number): TextChunk[] {
-    const prefix = section.heading ? `${section.heading}\n` : '';
+    const prefix = headingPrefix(section.heading, maxChars);
     const budget = maxChars - prefix.length;
+    // A chunk closes at the target size, and never grows past the hard maximum.
+    const limit = Math.min(targetChars, budget);
     const chunks: TextChunk[] = [];
     let current: string[] = [];
     let length = 0;
@@ -98,7 +128,7 @@ function packSection(section: Section, targetChars: number, maxChars: number): T
         if (body) chunks.push({ content: `${prefix}${body}`, section: section.heading });
     };
     for (const unit of section.blocks.flatMap(block => packingUnits(block, budget))) {
-        if (length > 0 && length + unit.length + 2 > targetChars) {
+        if (length > 0 && length + unit.length + 2 > limit) {
             const carry = overlapSentence(current[current.length - 1] ?? '', targetChars * 0.35);
             flush();
             current = carry && carry.length + unit.length + 2 <= budget ? [carry] : [];
@@ -119,7 +149,7 @@ function mergeTinyChunks(chunks: TextChunk[], minChars: number, maxChars: number
         const fits = previous !== undefined && previous.section === chunk.section &&
             previous.content.length + chunk.content.length <= maxChars;
         if (fits && chunk.content.length < minChars) {
-            const body = chunk.section ? chunk.content.replace(`${chunk.section}\n`, '') : chunk.content;
+            const body = chunk.content.slice(headingPrefix(chunk.section, maxChars).length);
             previous.content = `${previous.content}\n\n${body}`;
         } else {
             merged.push({ ...chunk });
@@ -128,12 +158,18 @@ function mergeTinyChunks(chunks: TextChunk[], minChars: number, maxChars: number
     return merged;
 }
 
+function positiveSize(name: string, value: number): number {
+    if (!Number.isFinite(value) || value < 1) throw new RangeError(`${name} must be a positive number (got ${value})`);
+    return Math.floor(value);
+}
+
 export function chunkDocument(text: string, options: ChunkOptions = {}): TextChunk[] {
-    const targetChars = options.targetChars ?? 900;
-    const maxChars = Math.max(options.maxChars ?? 1400, targetChars);
+    const targetChars = positiveSize('targetChars', options.targetChars ?? 900);
+    // Room for a shortened heading (a quarter) plus text.
+    const maxChars = Math.max(positiveSize('maxChars', options.maxChars ?? 1400), targetChars, 8);
     if (!text?.trim()) return [];
     const chunks = sections(text).flatMap(section => packSection(section, targetChars, maxChars));
-    return mergeTinyChunks(chunks, options.minChars ?? 40, maxChars).filter(chunk => chunk.content.trim().length > 0);
+    return mergeTinyChunks(chunks, positiveSize('minChars', options.minChars ?? 40), maxChars).filter(chunk => chunk.content.trim().length > 0);
 }
 
 /** Text embedded for a chunk: the article title and section give a short passage its topic. */

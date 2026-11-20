@@ -5,12 +5,12 @@ test.describe('@release public accessibility gates', () => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     await expect(page.locator('main')).toBeVisible();
-    // The landing page has both a top-nav "Get Started" and a hero "Get Started Free"
+    // The landing page has both a top-nav "Get started" and a hero "Get started free"
     // button — assert the hero CTA (exact name) and the nav action separately.
-    await expect(page.getByRole('button', { name: 'Get Started Free' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Get Started', exact: true }).first()).toBeVisible();
-    // "Sign In" appears in both the top nav and the footer/contact section.
-    await expect(page.getByRole('button', { name: 'Sign In' }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Get started free' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Get started', exact: true }).first()).toBeVisible();
+    // "Sign in" appears in both the top nav and the footer/contact section.
+    await expect(page.getByRole('button', { name: 'Sign in' }).first()).toBeVisible();
 
     const images = page.locator('img');
     for (let index = 0; index < await images.count(); index += 1) {
@@ -28,7 +28,7 @@ test.describe('@release public accessibility gates', () => {
 
     await email.focus();
     await expect(email).toBeFocused();
-    // Tab order from email: "Forgot Password?" link → password input → the
+    // Tab order from email: "Forgot password?" link → password input → the
     // show/hide toggle inside the password field → submit. Assert the password
     // input is keyboard-reachable by tabbing until it gains focus.
     for (let tab = 0; tab < 4; tab += 1) {

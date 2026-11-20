@@ -53,21 +53,21 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
     <div className="relative">
       <button
         onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-        className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-white/10 hover:opacity-80 transition-opacity"
+        className="flex items-center gap-2 sm:gap-3 rounded-md p-1 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] transition-colors"
         aria-label="Open user profile menu"
       >
-        <div className="w-8 h-8 rounded-full border border-primary-400/30 overflow-hidden ring-2 ring-primary-400/10 flex items-center justify-center bg-slate-800 shrink-0">
+        <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-emerald-100 dark:bg-emerald-400/[0.15] shrink-0">
           {avatarEmojis[avatarId] ? (
             <span className="text-lg" aria-label="Selected profile avatar">{avatarEmojis[avatarId]}</span>
           ) : (
-            <span className="text-xxs text-primary-400 font-bold">
+            <span className="text-xs text-emerald-800 dark:text-emerald-200 font-medium">
               {storeUser?.firstName?.[0]}
               {storeUser?.lastName?.[0]}
             </span>
           )}
         </div>
         <div className="hidden xl:block text-left">
-          <p className="text-xs font-bold text-gray-900 dark:text-white leading-none">
+          <p className="text-sm font-medium text-slate-900 dark:text-white leading-none">
             {storeUser?.firstName} {storeUser?.lastName}
           </p>
         </div>
@@ -86,11 +86,11 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
             >
               <div className="p-3 mb-2 border-b border-white/10">
                 <p
-                  className={cn('text-xxs font-bold uppercase tracking-widest mb-1', subtextClass)}
+                  className={cn('text-xs mb-1', subtextClass)}
                 >
-                  {t('header_account_info', { defaultValue: 'Account Info' })}
+                  {t('header_account_info', { defaultValue: 'Account info' })}
                 </p>
-                <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                   {storeUser?.email}
                 </p>
               </div>
@@ -103,7 +103,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300"
               >
                 <User className="w-4 h-4 text-primary-400" />
-                <span className="text-xs font-bold uppercase tracking-widest">
+                <span className="text-xs font-bold  ">
                   {t('header_profile', { defaultValue: 'Profile' })}
                 </span>
               </button>
@@ -112,8 +112,8 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-rose-500/10 text-rose-400"
               >
                 <LogOut className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase tracking-widest">
-                  {t('header_sign_out', { defaultValue: 'Sign Out' })}
+                <span className="text-xs font-bold  ">
+                  {t('header_sign_out', { defaultValue: 'Sign out' })}
                 </span>
               </button>
             </motion.div>

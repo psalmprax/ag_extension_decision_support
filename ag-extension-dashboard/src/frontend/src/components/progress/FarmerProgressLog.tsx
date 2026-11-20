@@ -12,7 +12,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 const PROGRESS_KINDS: { value: ProgressKind; label: string; tone: string }[] = [
   { value: 'success', label: 'Success', tone: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10' },
   { value: 'failure', label: 'Failure', tone: 'text-rose-300 border-rose-500/30 bg-rose-500/10' },
-  { value: 'field_event', label: 'Field event', tone: 'text-sky-300 border-sky-500/30 bg-sky-500/10' },
+  { value: 'field_event', label: 'Field event', tone: 'text-slate-300 border-slate-500/30 bg-slate-500/10' },
   { value: 'action', label: 'Action taken', tone: 'text-amber-300 border-amber-500/30 bg-amber-500/10' },
   { value: 'observation', label: 'Observation', tone: 'text-slate-300 border-slate-500/30 bg-slate-500/10' },
 ];

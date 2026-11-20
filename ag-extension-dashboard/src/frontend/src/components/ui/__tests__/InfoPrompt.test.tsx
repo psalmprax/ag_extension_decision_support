@@ -27,7 +27,7 @@ describe('InfoPrompt Components', () => {
         lastName: 'Doe',
         email: 'jane@example.com',
         role: 'extension_officer',
-        planName: 'Free Starter',
+        planName: 'Free starter',
         isFree: true,
       },
       isDemo: false,
@@ -163,7 +163,7 @@ describe('InfoPrompt Components', () => {
     it('renders upgrade button and tier badge when user does not meet requiredPlan', async () => {
       const onUpgrade = vi.fn();
 
-      // Rely on beforeEach state: isFree=true, subscription=null, planName='Free Starter'
+      // Rely on beforeEach state: isFree=true, subscription=null, planName='Free starter'
       // This resolves to tier='free', isProOrHigher=false
       // With requiredPlan='pro', checkTierMet returns false → upgrade UI renders
       render(

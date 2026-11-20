@@ -94,9 +94,9 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
             </div>
 
             <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
-              <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 flex gap-3">
-                <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
-                <p className="text-xs text-blue-700 dark:text-blue-300">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800 flex gap-3">
+                <AlertCircle className="w-5 h-5 text-slate-600 dark:text-slate-400 shrink-0" />
+                <p className="text-xs text-slate-700 dark:text-slate-300">
                   {t('ui_bulk_update_modal_selected_fields_will_be_updated_for')} <strong>{t('ui_bulk_update_modal_all')}</strong> {selectedCount} {t('ui_bulk_update_modal_selected_farmers_leave_fields_empty')}
                 </p>
               </div>

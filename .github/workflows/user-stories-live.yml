@@ -11,11 +11,12 @@ name: User stories on a live site
 #    the run so they can be used by hand; their shared password is the one
 #    committed in src/seed/realWorldSeed.ts.
 # 2. Creates a temporary test system administrator (random password, masked)
-#    for the service-access stories, and always disables it at the end.
+#    for the service-access stories, and disables it at the end; a timer left
+#    on the host disables it after 90 minutes even if that cleanup never runs.
 # 3. Runs Playwright against the site and keeps the HTML report.
 #
 # Dispatch from this file once it is on master, or meanwhile through
-# "Live smoke" with suite=user-stories (which calls this workflow).
+# "Live checks" (live-smoke.yml) with suite=user-stories (which calls this workflow).
 
 on:
   workflow_dispatch:
@@ -46,6 +47,8 @@ jobs:
       TARGET: ${{ inputs.target }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Check the target
         run: |
@@ -122,13 +125,27 @@ jobs:
       - name: Reset and seed the test population
         run: ~/live-ssh "docker exec -i ag-dashboard-backend node - --reset" < "$RUNNER_TEMP/seeds/seed-realworld.cjs"
 
+      # The administrator's lifetime is bounded on the host itself: before it is
+      # created, a timer is left there that disables this run's account after
+      # 90 minutes (longer than the job can run), so a runner that disconnects
+      # before the cleanup step cannot leave it enabled. The timer only touches
+      # the account tagged with this run's id, never a later run's; the id is
+      # written into the script itself, so every attempt carries it. If the
+      # backend container is down (a deploy, a restart), the timer retries with
+      # a growing pause and deletes the script only once the cleanup succeeded;
+      # after the last attempt fails the script stays on the host for a manual run.
       - name: Temporary test system administrator
+        env:
+          RUN_TAG: ${{ github.run_id }}-${{ github.run_attempt }}
         run: |
+          expiry="/tmp/e2e-admin-expiry-$RUN_TAG.cjs"
+          { printf 'process.env.E2E_ONLY_RUN_ID = "%s";\n' "$RUN_TAG"; cat "$RUNNER_TEMP/seeds/disable-e2e-system-admin.cjs"; } \
+            | ~/live-ssh "cat > $expiry && (nohup sh -c 'sleep 5400; n=0; until docker exec -i ag-dashboard-backend node - < $expiry; do n=\$((n + 1)); [ \$n -ge 8 ] && exit 1; sleep \$((n * 120)); done; rm -f $expiry' </dev/null >/dev/null 2>&1 &)"
           pw="$(openssl rand -base64 36 | tr -dc 'A-Za-z0-9' | head -c 32)"
           echo "::add-mask::$pw"
           echo "E2E_SYSTEM_ADMIN_PASSWORD=$pw" >> "$GITHUB_ENV"
           # The password travels inside the script on stdin: never on a command line.
-          { printf 'process.env.E2E_SYSTEM_ADMIN_PASSWORD = %s;\nprocess.env.E2E_SYSTEM_ADMIN_TEMPORARY = "removed-after-run";\n' "\"$pw\""
+          { printf 'process.env.E2E_SYSTEM_ADMIN_PASSWORD = %s;\nprocess.env.E2E_SYSTEM_ADMIN_TEMPORARY = "removed-after-run";\nprocess.env.E2E_RUN_ID = "%s";\n' "\"$pw\"" "$RUN_TAG"
             cat "$RUNNER_TEMP/seeds/seed-e2e-system-admin.cjs"; } \
             | ~/live-ssh "docker exec -i ag-dashboard-backend node -"
 

@@ -173,7 +173,7 @@ export function UserAccessModal({
                   id="user-access-modal-title"
                   className="text-base font-bold"
                 >
-                  {t('users_access_modal_title', 'Manage Access & Subscription')}
+                  {t('users_access_modal_title', 'Manage access & subscription')}
                 </HeadlessDialog.Title>
                 <p className="text-xs text-white/60">
                   {user.firstName} {user.lastName} • {user.email}
@@ -208,7 +208,7 @@ export function UserAccessModal({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1">
               <label htmlFor="access-role-select" className="text-xs font-medium text-white/70">
-                {t('users_form_role', 'System Role')}
+                {t('users_form_role', 'System role')}
               </label>
               <select
                 id="access-role-select"
@@ -282,7 +282,7 @@ export function UserAccessModal({
                 className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center gap-2 transition-colors disabled:opacity-50"
               >
                 {updateAccess.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                <span>{t('users_access_save', 'Save Access')}</span>
+                <span>{t('users_access_save', 'Save access')}</span>
               </button>
             </div>
           </form>

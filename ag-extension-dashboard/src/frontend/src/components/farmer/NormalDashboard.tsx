@@ -14,17 +14,23 @@ interface NormalDashboardProps {
     title: string;
     value: string;
     icon: React.ElementType;
-    color: string;
-    bg: string;
   }>;
   statsLoading: boolean;
 }
 
 const DATA_STATUS_LABELS: Record<MarketDataStatus, string> = {
-  live: 'LIVE',
-  estimated: 'ESTIMATED',
-  unavailable: 'UNAVAILABLE',
+  live: 'Live',
+  estimated: 'Estimated',
+  unavailable: 'Unavailable',
 };
+
+/** Rising prices read green, falling red; anything else (e.g. "Stable") stays neutral. */
+function trendTone(trend: unknown): string {
+  const value = String(trend ?? '').trim();
+  if (value.startsWith('+')) return 'text-emerald-700 dark:text-emerald-400';
+  if (value.startsWith('-') || value.startsWith('\u2212')) return 'text-rose-600 dark:text-rose-400';
+  return 'text-slate-500 dark:text-slate-400';
+}
 
 const DATA_STATUS_COLORS: Record<MarketDataStatus, string> = {
   live: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
@@ -56,13 +62,13 @@ function renderVegetationCard(
   const maxBar = Math.max(0.05, ...points.map(p => p.ndvi), 1);
 
   return (
-    <div className="bg-theme-bg-card dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div className="bg-white dark:bg-white/[0.03] p-5 sm:p-6 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08]">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
           <Sprout className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white">
             Vegetation health
           </h3>
           <p className="text-xxs text-gray-400 dark:text-gray-500">14-day agroclimatology proxy</p>
@@ -120,13 +126,13 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
   const metrics = data?.world?.metrics || data?.country?.metrics || null;
 
   return (
-    <div className="bg-theme-bg-card dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div className="bg-white dark:bg-white/[0.03] p-5 sm:p-6 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08]">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shrink-0">
           <Globe className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white">
             Global benchmarks
           </h3>
           <p className="text-xxs text-gray-400 dark:text-gray-500">Maize · USDA PSD data</p>
@@ -170,7 +176,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
           )}
           {data?.dataStatus === 'live' && (
             <div className="pt-2">
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                 USDA PSD
               </span>
             </div>
@@ -207,12 +213,12 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
 
   if (statsLoading) {
     return (
-      <div className="space-y-8 animate-fade-in">
+      <div className="space-y-6 animate-fade-in">
         <header>
           <div className="h-9 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-2" />
           <div className="h-5 w-48 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
         </header>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <MetricCardSkeleton key={i} />
           ))}
@@ -226,22 +232,22 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       <header>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white tracking-tight">
+        <h1 className="text-2xl font-medium text-slate-900 dark:text-white">
           {t('farmer_greeting').replace('{name}', user?.firstName || 'Farmer')}
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('farmer_overview')}</p>
+        <p className="text-slate-600 dark:text-slate-400 mt-1">{t('farmer_overview')}</p>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((stat, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="p-6 bg-theme-bg-card dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 hover:shadow-md transition-shadow group cursor-context-menu"
+            className="p-4 bg-white dark:bg-white/[0.03] rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] cursor-context-menu"
             onContextMenu={e => {
               e.preventDefault();
               showContextMenu({
@@ -252,28 +258,18 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
               });
             }}
           >
-            <div className="flex items-start justify-between">
-              <div className="space-y-1.5">
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                  {stat.title}
-                </p>
-                <p className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight">
-                  {stat.value}
-                </p>
-              </div>
-              <div
-                className={`p-3 ${stat.bg} dark:bg-opacity-10 rounded-xl transition-transform`}
-              >
-                <stat.icon className={`w-5 h-5 ${stat.color}`} />
-              </div>
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+              <stat.icon className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <p className="text-sm">{stat.title}</p>
             </div>
+            <p className="mt-2 text-lg font-medium text-slate-900 dark:text-white break-words">{stat.value}</p>
           </motion.div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-theme-bg-card dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+        <div className="bg-white dark:bg-white/[0.03] p-5 sm:p-6 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08]">
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-6">
             {t('farmer_market_prices')}
             {prices && prices.length > 0 && (
               <span className={`ml-2 px-2 py-0.5 rounded text-xs font-medium align-middle ${DATA_STATUS_COLORS[prices[0].dataStatus]}`}>
@@ -290,13 +286,13 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
               prices.map((item: MarketPrice, i: number) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800 transition-colors hover:border-primary-500/30"
+                  className="flex items-center justify-between py-3 border-b last:border-b-0 border-slate-900/[0.06] dark:border-white/[0.06]"
                 >
                   <span className="font-medium text-gray-700 dark:text-gray-300">{item.crop}</span>
                   <div className="text-right">
-                    <p className="font-semibold text-gray-900 dark:text-white">{item.price}</p>
+                    <p className="font-medium font-mono tabular-nums text-slate-900 dark:text-white">{item.price}</p>
                     <p
-                      className={`text-xs font-mono font-medium ${String(item.trend || '').startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}`}
+                      className={`text-xs font-mono tabular-nums ${trendTone(item.trend)}`}
                     >
                       {item.trend}
                     </p>

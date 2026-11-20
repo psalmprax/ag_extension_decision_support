@@ -47,21 +47,31 @@ export interface ThemeColors {
 /** Steps present in every color scale (drives Tailwind + CSS var generation). */
 export const COLOR_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900] as const;
 
+/**
+ * Field green: the product's one brand hue. Deeper and less saturated than
+ * Tailwind's emerald, so a primary button keeps AA contrast with white text
+ * (500: 4.9:1) and the green reads as crop foliage rather than a neon accent.
+ * Tailwind's `emerald` utilities resolve to this scale too (tailwind.config.js),
+ * so the 2,000+ emerald classes in the app follow one green.
+ */
+export const FIELD_GREEN: ColorScale & { 950: string } = {
+  50: '#eef6f1',
+  100: '#d8ebdf',
+  200: '#b3d7c1',
+  300: '#83bc9b',
+  400: '#4e9e73',
+  500: '#1f8053',
+  600: '#196c46',
+  700: '#155939',
+  800: '#11472e',
+  900: '#0d3824',
+  950: '#08231a',
+};
+
 export const themes: Record<ThemeName, ThemeColors> = {
   /** Rich greens representing lush crops and forests. */
   forest: {
-    primary: {
-      50: '#f0fdf4',
-      100: '#dcfce7',
-      200: '#bbf7d0',
-      300: '#86efac',
-      400: '#4ade80',
-      500: '#22c55e',
-      600: '#16a34a',
-      700: '#15803d',
-      800: '#166534',
-      900: '#14532d',
-    },
+    primary: FIELD_GREEN,
     secondary: {
       50: '#ecfeff',
       100: '#cffafe',
@@ -87,8 +97,8 @@ export const themes: Record<ThemeName, ThemeColors> = {
       900: '#713f12',
     },
     background: {
-      primary: '#f0fdf4',
-      secondary: '#dcfce7',
+      primary: '#f6f8f7',
+      secondary: '#eef2f0',
       card: '#ffffff',
     },
   },
@@ -440,16 +450,18 @@ export interface SemanticTokens {
 }
 
 export const semanticTokens: SemanticTokens = {
+  // Status and chart series follow the field-green palette; the other series
+  // use Okabe-Ito hues so lines stay distinguishable with colour blindness.
   status: {
-    success: '#10b981',
-    warning: '#f59e0b',
-    error: '#ef4444',
-    info: '#3b82f6',
+    success: FIELD_GREEN[500],
+    warning: '#B7791F',
+    error: '#C2410C',
+    info: '#0072B2',
   },
   chart: {
-    green: '#22c55e',
-    blue: '#3b82f6',
-    purple: '#8b5cf6',
+    green: FIELD_GREEN[500],
+    blue: '#0072B2',
+    purple: '#CC79A7',
     cyber: '#4fd1c5',
     gray: '#9ca3af',
   },
@@ -517,11 +529,15 @@ export const surfaceTokens: { light: SurfaceTokens; dark: SurfaceTokens } = {
 /** Non-color design tokens (kept here so Tailwind config has zero hardcoded values). */
 export const designTokens = {
   fontFamily: {
-    sans: ['Inter', 'system-ui', 'sans-serif'],
-    headline: ['Space Grotesk', 'sans-serif'],
-    // GRP-03 "Data & Numerical Typeface": JetBrains Mono with tabular numerals
-    // (see the .font-mono override in index.css which applies tabular-nums).
-    mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
+    // Atkinson Hyperlegible: drawn for low-vision readers, so letters stay
+    // distinct on small, cheap screens in bright sun, where farmers and
+    // officers actually read this app. Self-hosted (Fontsource); the nginx
+    // CSP blocks Google Fonts, so the old Inter link never loaded in production.
+    sans: ['"Atkinson Hyperlegible Next Variable"', '"Atkinson Hyperlegible Next"', 'system-ui', 'sans-serif'],
+    headline: ['"Atkinson Hyperlegible Next Variable"', '"Atkinson Hyperlegible Next"', 'system-ui', 'sans-serif'],
+    // GRP-03 "Data & Numerical Typeface": tabular figures for hectares, counts
+    // and percentages (see the .font-mono override in index.css).
+    mono: ['"Atkinson Hyperlegible Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
   },
   // GRP-04 "Modular Type Hierarchy" sets the Micro/Overline floor at 12px.
   // The legacy 9/10/11px overlines below are collapsed to that floor.

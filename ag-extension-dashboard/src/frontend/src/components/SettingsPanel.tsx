@@ -78,7 +78,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                           <Sun className="w-4 h-4 text-gray-400" />
                         )}
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {t('settings_dark_mode') || 'Dark Mode'}
+                          {t('settings_dark_mode') || 'Dark mode'}
                         </span>
                       </div>
                       <button

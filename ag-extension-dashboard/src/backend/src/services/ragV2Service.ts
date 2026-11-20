@@ -323,28 +323,44 @@ export class RAGV2Service {
 
     /** Nearest current chunks (derived from the article's present content). Throws on database errors. */
     static async searchChunksByEmbedding(embedding: number[], limit: number, filters: { category?: string; crop?: string } = {}): Promise<RankedResult[]> {
-        // Over-fetch from the index, then drop chunks of stale or filtered-out
-        // articles: the HNSW scan returns nearest rows before the join filters.
-        // 40 is pgvector's default hnsw.ef_search, the most one index scan returns.
-        const { rows } = await query(
-            `SELECT nearest.id, nearest.article_id, nearest.content, nearest.chunk_index, nearest.score,
-                    a.title, a.category, a.source, a.source_url, a.crops, a.tags, a.regions, a.updated_at
+        const params = [toVectorLiteral(embedding), limit, filters.category ?? null, filters.crop ?? null];
+        const columns = `c.id, c.article_id, c.content, c.chunk_index,
+                    a.title, a.category, a.source, a.source_url, a.crops, a.tags, a.regions, a.updated_at`;
+        const eligible = `c.source_content_hash = a.content_hash
+               AND ($3::text IS NULL OR a.category = $3)
+               AND ($4::text IS NULL OR $4 = ANY(a.crops))`;
+
+        // Fast path: over-fetch the nearest chunks through the HNSW index, then
+        // keep the eligible ones (current content, matching filters). 40 is
+        // pgvector's default hnsw.ef_search, the most one index scan returns.
+        const indexed = await query(
+            `SELECT ${columns}, nearest.score
              FROM (
-                SELECT c.id, c.article_id, c.content, c.chunk_index, c.source_content_hash,
-                       1 - (${cosineDistance('c.embedding', 1)}) AS score
-                FROM knowledge_chunks c
-                WHERE ${embeddingWidthPredicate('c.embedding')}
-                ORDER BY ${cosineDistance('c.embedding', 1)}
+                SELECT id, 1 - (${cosineDistance('embedding', 1)}) AS score
+                FROM knowledge_chunks
+                WHERE ${embeddingWidthPredicate('embedding')}
+                ORDER BY ${cosineDistance('embedding', 1)}
                 LIMIT LEAST($2::int * 4, 40)
              ) nearest
-             JOIN knowledge_articles a ON a.id = nearest.article_id
-             WHERE nearest.source_content_hash = a.content_hash
-               AND ($3::text IS NULL OR a.category = $3)
-               AND ($4::text IS NULL OR $4 = ANY(a.crops))
+             JOIN knowledge_chunks c ON c.id = nearest.id
+             JOIN knowledge_articles a ON a.id = c.article_id
+             WHERE ${eligible}
              ORDER BY nearest.score DESC
              LIMIT $2::int`,
-            [toVectorLiteral(embedding), limit, filters.category ?? null, filters.crop ?? null]
+            params
         );
+        // When filters or stale chunks removed too many of those, search
+        // exactly: eligibility applies before the limit. "+ 0" keeps the planner
+        // off the index (an index scan would stop at hnsw.ef_search rows).
+        const rows = indexed.rows.length >= limit ? indexed.rows : (await query(
+            `SELECT ${columns}, 1 - (${cosineDistance('c.embedding', 1)}) AS score
+             FROM knowledge_chunks c
+             JOIN knowledge_articles a ON a.id = c.article_id
+             WHERE ${embeddingWidthPredicate('c.embedding')} AND ${eligible}
+             ORDER BY (${cosineDistance('c.embedding', 1)}) + 0
+             LIMIT $2::int`,
+            params
+        )).rows;
 
         return rows.map((row: Record<string, unknown>) => {
             const score = Number.parseFloat(String(row.score));

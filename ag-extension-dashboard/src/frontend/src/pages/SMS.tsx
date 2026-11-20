@@ -38,7 +38,7 @@ export function SMSPage() {
       title: t('sms_template_visit'),
       content: 'I will be visiting your farm tomorrow at 10 AM. Please be available.',
       icon: MapPin,
-      color: 'bg-blue-100 text-blue-600',
+      color: 'bg-slate-100 text-slate-600',
     },
     {
       id: '3',

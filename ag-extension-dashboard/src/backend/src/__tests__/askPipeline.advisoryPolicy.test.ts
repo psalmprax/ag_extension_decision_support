@@ -128,7 +128,7 @@ describe('Knowledge advisory policy integration', () => {
 
         expect(result.answer).toContain('West Africa spans different rainfall zones');
         expect(VectorService.hybridSearch).toHaveBeenLastCalledWith(
-            'What season is West Africa going through now for crops to be planted?', 3, {}
+            'What season is West Africa going through now for crops to be planted?', 10, {}
         );
         expect(callReasoningAgentic).toHaveBeenLastCalledWith(
             expect.any(String),

@@ -9,12 +9,17 @@ vi.mock('@/api/authService', () => ({ fetchLoginHistory: vi.fn().mockResolvedVal
 vi.mock('@/demo', () => ({ useDemoMode: () => ({ isDemo: false }), DEMO_USERS: [] }));
 vi.mock('@/lib/LanguageContext', () => ({
   useLanguage: () => ({
-    t: (_key: string, fallback?: string, vars?: Record<string, string>) =>
-      (fallback || '').replace(/\{(\w+)\}/g, (_m, k) => vars?.[k] ?? ''),
+    // Accepts both call styles: t(key, 'fallback', vars) and t(key, { defaultValue, ...vars }).
+    t: (_key: string, fallback?: string | Record<string, unknown>, vars?: Record<string, unknown>) => {
+      const options = typeof fallback === 'object' ? fallback : undefined;
+      const text = typeof fallback === 'string' ? fallback : String(options?.defaultValue ?? '');
+      const values = vars ?? options;
+      return text.replace(/\{(\w+)\}/g, (_m, k) => String(values?.[k] ?? ''));
+    },
   }),
 }));
 
-describe('Staff & Officers', () => {
+describe('Staff & officers', () => {
   it('shows the last sign-in the API reports (lastLogin), not "No recent login"', async () => {
     vi.mocked(apiClient.get).mockResolvedValue({
       data: {

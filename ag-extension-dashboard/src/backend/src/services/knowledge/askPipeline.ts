@@ -344,16 +344,23 @@ async function resolveUserContextSafely(userId: string, queryText: string): Prom
     }
 }
 
+/** Fused candidates the relevance gate sees, and local passages kept as evidence. */
+const GATED_CANDIDATES = 10;
+const LOCAL_EVIDENCE = 3;
+
 async function fetchInitialContext(
     queryText: string,
     options?: AskOptions
 ): Promise<{ queryCategories: string[]; results: SearchResult[] }> {
     const [queryCategories, results] = await Promise.all([
         categorizeQuery(queryText, options),
+        // Gate a wider fused list, then keep the best few: with only the top
+        // fused 3, a strong vector-only hit could be cut before the relevance
+        // gate ever saw it.
         withAdvisoryTimeout(
-            () => VectorService.hybridSearch(queryText, 3, {}),
+            () => VectorService.hybridSearch(queryText, GATED_CANDIDATES, {}),
             8000, 'Knowledge vector retrieval'
-        ).then(hits => selectEvidence(hits, config.retrieval, hits.length)).catch(error => {
+        ).then(hits => selectEvidence(hits, config.retrieval, LOCAL_EVIDENCE)).catch(error => {
             logger.warn('Knowledge vector retrieval unavailable; continuing without local evidence:', error);
             return [] as SearchResult[];
         }),

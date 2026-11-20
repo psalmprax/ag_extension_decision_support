@@ -264,19 +264,19 @@ const OverviewTabContent = ({
           id: 'sms',
           icon: Mail,
           label: t('action_sms') || 'SMS',
-          color: 'bg-sky-500/10 border-sky-500/20 text-sky-400',
+          color: 'bg-slate-500/10 border-slate-500/20 text-slate-400',
         },
         {
           id: 'call',
           icon: Phone,
           label: t('action_call') || 'Call',
-          color: 'bg-teal-500/10 border-teal-500/20 text-teal-400',
+          color: 'bg-slate-500/10 border-slate-500/20 text-slate-400',
         },
         {
           id: 'video',
           icon: Video,
           label: t('action_video') || 'Video',
-          color: 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400',
+          color: 'bg-slate-500/10 border-slate-500/20 text-slate-400',
         },
       ].map(action => (
         <button
@@ -678,7 +678,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] font-mono font-medium text-slate-400">
-                    {t('visit_next_scheduled') || 'Next Scheduled'}
+                    {t('visit_next_scheduled') || 'Next scheduled'}
                   </p>
                   <p className="text-xs font-bold text-white truncate">
                     {(() => {
@@ -706,7 +706,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                   onClick={handleStartSynthesis}
                   className="font-medium text-xs !rounded-[4px] !bg-emerald-600 !hover:bg-emerald-500 !text-white border border-white/10 shadow-sm"
                 >
-                  {t('action_start_synthesis') || 'Start Synthesis'}
+                  {t('action_start_synthesis') || 'Start synthesis'}
                   <ChevronRight className="w-3.5 h-3.5" />
                 </Button>
               </div>

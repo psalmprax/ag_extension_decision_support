@@ -59,19 +59,19 @@ export const DashboardHeader: React.FC<{
   return (
     <div className="mb-6 sm:mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h1 className={`text-2xl sm:text-3xl font-semibold tracking-tight font-headline mb-1 sm:mb-2 ${headingClass}`}>
-          {t('dashboard_operations_title', { defaultValue: 'Operations Dashboard' })}
+        <h1 className={`text-2xl sm:text-3xl mb-1 ${headingClass}`}>
+          {t('dashboard_operations_title', { defaultValue: 'Overview' })}
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 font-headline font-medium text-xs sm:text-base">
+        <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">
           {dashboardGreeting(t, userName)}
         </p>
       </div>
 
       {/* Browser connectivity and queued-sync status (not database activity). */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm text-xs">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] text-sm">
           <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-          <span className="font-semibold text-slate-800 dark:text-slate-200">
+          <span className="text-slate-700 dark:text-slate-200">
             {isOnline ? 'Browser online' : 'Offline'} · {pendingCount} pending
           </span>
           <button
@@ -80,7 +80,7 @@ export const DashboardHeader: React.FC<{
             className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 text-xs font-medium transition-colors"
           >
             <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
-            <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
+            <span>{isSyncing ? t('dashboard_syncing', { defaultValue: 'Syncing' }) : t('dashboard_sync_now', { defaultValue: 'Sync now' })}</span>
           </button>
         </div>
       </div>

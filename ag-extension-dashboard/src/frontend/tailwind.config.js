@@ -3,6 +3,7 @@ import {
   semanticTokens,
   SURFACE_TOKEN_NAMES,
   designTokens,
+  FIELD_GREEN,
 } from './src/theme/tokens.ts';
 
 /**
@@ -30,6 +31,8 @@ export default {
   theme: {
     extend: {
       colors: {
+        // One green across the app: emerald-* utilities use the field-green scale.
+        emerald: FIELD_GREEN,
         primary: scaleVars('primary'),
         secondary: scaleVars('secondary'),
         accent: scaleVars('accent'),
@@ -44,6 +47,15 @@ export default {
         chart: semanticTokens.chart,
         cyber: semanticTokens.cyber,
         map: semanticTokens.map,
+      },
+      // Two weights carry the hierarchy (Unslop): 400 and 500, with 600 for
+      // rare emphasis. Heavier utilities collapse onto 600 so the 780+ legacy
+      // bold/black classes stop shouting; size and colour do the rest.
+      fontWeight: {
+        semibold: '500',
+        bold: '600',
+        extrabold: '600',
+        black: '600',
       },
       borderRadius: designTokens.borderRadius,
       boxShadow: designTokens.boxShadow,

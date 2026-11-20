@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { formatLabel } from '@/lib/formatLabel';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brain,
@@ -154,9 +155,9 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
       className="space-y-6"
     >
       {/* ── Multilingual Translation & Dual-View Bar ── */}
-      <div className="p-4 rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-xl backdrop-blur-2xl flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+      <div className="p-4 rounded-lg bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider pr-2 border-r border-slate-200 dark:border-white/10">
+          <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 pr-2 border-r border-slate-200 dark:border-white/10">
             <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>{t('ui_airesult_localize_languages', { length: MULTILINGUAL_LANGUAGES.length })}</span>
           </div>
@@ -217,7 +218,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
             onClick={() => setDualView(!dualView)}
             className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition-all flex items-center gap-1.5 shrink-0 ${
               dualView
-                ? 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-cyan-500/40 shadow-sm'
+                ? 'bg-slate-500/20 text-slate-700 dark:text-slate-300 border-slate-500/40 shadow-sm'
                 : 'bg-slate-100 text-slate-700 hover:text-slate-900 border-slate-200 dark:bg-white/5 dark:text-white/60 dark:hover:text-white dark:border-white/10'
             }`}
           >
@@ -234,12 +235,12 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
         </div>
       )}
 
-      <div className="p-6 sm:p-10 rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl backdrop-blur-2xl space-y-6">
+      <div className="p-6 sm:p-10 rounded-lg bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] space-y-6">
         {result.evidenceStatus && (
           <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-800 dark:text-amber-200">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider">{t('ui_airesult_evidence_status_notice')}</p>
+              <p className="text-xs font-bold  ">{t('ui_airesult_evidence_status_notice')}</p>
               <p className="mt-1 text-xs text-amber-900 dark:text-amber-100/90">
                 {result.evidenceStatus === 'verified_sources'
                   ? 'Sources were retrieved, but relevance is not proof of accuracy or local treatment authorization. Check the source, country, crop and current product label before acting.'
@@ -257,7 +258,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
         {dualView && activeLang !== 'en' ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 space-y-3">
-              <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-white/10 text-xs font-mono font-bold text-slate-500 dark:text-slate-400 uppercase">
+              <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-white/10 text-xs font-mono font-bold text-slate-500 dark:text-slate-400 ">
                 <span>{t('ui_airesult_english_primary_grounded_context')}</span>
               </div>
               <div className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-sans text-xs">
@@ -266,7 +267,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
             </div>
 
             <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-emerald-500/30 space-y-3">
-              <div className="flex items-center gap-2 pb-2 border-b border-emerald-500/20 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 uppercase">
+              <div className="flex items-center gap-2 pb-2 border-b border-emerald-500/20 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 ">
                 <span>{t('ui_airesult_localized_farmer_advisory', { flag: currentLangObj.flag, native: currentLangObj.native })}</span>
               </div>
               <div className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-sans text-xs">
@@ -283,7 +284,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
         {result.contextUsed && result.contextUsed.length > 0 && (
           <div className="pt-6 border-t border-slate-200 dark:border-white/5 flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <span className="text-xxs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+              <span className="text-xxs font-black text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 {t('ui_airesult_retrieved_verification_context')}
               </span>
@@ -326,7 +327,7 @@ const KnowledgeGraphView: React.FC<{
     exit={{ opacity: 0, y: -10 }}
     className="space-y-4"
   >
-    <div className="p-4 sm:p-6 rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl backdrop-blur-2xl">
+    <div className="p-4 sm:p-6 rounded-lg bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08]">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -355,9 +356,7 @@ const KnowledgeGraphView: React.FC<{
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-slate-900 dark:text-white">{selectedGraphNode.label}</span>
-              <span className="text-xxs uppercase px-2 py-0.5 rounded-md font-black bg-emerald-500/20 text-emerald-700 dark:text-emerald-400">
-                {selectedGraphNode.category}
-              </span>
+              <span className="text-xs px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 dark:bg-emerald-400/[0.12] dark:text-emerald-200">{formatLabel(selectedGraphNode.category)}</span>
               {selectedGraphNode.score && (
                 <span className="text-xxs font-mono text-slate-500 dark:text-slate-400">
                   Relevance: {Math.round(selectedGraphNode.score * 100)}%
@@ -386,7 +385,7 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
     exit={{ opacity: 0, y: -10 }}
     className="space-y-4"
   >
-    <div className="p-6 sm:p-8 rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl backdrop-blur-2xl space-y-6">
+    <div className="p-6 sm:p-8 rounded-lg bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] space-y-6">
       <div>
         <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -399,7 +398,7 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
 
       {result.citations && result.citations.length > 0 && (
         <div className="space-y-3">
-          <span className="text-xxs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+          <span className="text-xxs font-black text-slate-500 dark:text-slate-400  ">
             Formal Agronomic Citations ({result.citations.length})
           </span>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -431,7 +430,7 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
 
       {result.contextUsed && result.contextUsed.length > 0 && (
         <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-white/5">
-          <span className="text-xxs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+          <span className="text-xxs font-black text-slate-500 dark:text-slate-400  ">
             Retrieved Knowledge Vectors ({result.contextUsed.length})
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -454,7 +453,7 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xxs font-black text-emerald-700 dark:text-emerald-400 uppercase">
+                      <span className="text-xxs font-black text-emerald-700 dark:text-emerald-400 ">
                         {ctx.metadata?.category || 'Vector Chunk'}
                       </span>
                       {hasUrl && (
@@ -497,22 +496,22 @@ const AIResultHeader: React.FC<{
 }) => (
   <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-slate-200 dark:border-white/10">
     <div className="flex items-center gap-4 min-w-0">
-      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-lg shadow-emerald-950/20 dark:shadow-emerald-950/40 shrink-0">
+      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-slate-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-lg shadow-emerald-950/20 dark:shadow-emerald-950/40 shrink-0">
         <Brain className="w-6 h-6" />
       </div>
       <div className="min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xxs font-black tracking-widest uppercase px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+          <span className="text-xxs font-black px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
             ALFA Spatial Reasoning
           </span>
           {result.cached && (
-            <span className="text-xxs font-black tracking-widest uppercase px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
+            <span className="text-xxs font-black px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/30 flex items-center gap-1">
               <Zap className="w-2.5 h-2.5 fill-current" />
               Context-scoped cache
             </span>
           )}
           {result.evidenceStatus === 'verified_sources' && (
-            <span className="text-xxs font-black tracking-widest uppercase px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+            <span className="text-xxs font-black px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
               <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
               Retrieved Sources
             </span>
@@ -774,7 +773,7 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6 pb-12"
     >
-      <RefractiveGlassCard className="p-6 sm:p-8 bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-emerald-500/20 shadow-sm dark:shadow-2xl backdrop-blur-2xl">
+      <RefractiveGlassCard className="p-6 sm:p-8 bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-emerald-500/20">
         <AIResultHeader
           result={result}
           isSpeaking={isSpeaking}
@@ -820,7 +819,7 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="p-6 sm:p-8 rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl backdrop-blur-2xl"
+            className="p-6 sm:p-8 rounded-lg bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08]"
           >
             <ReasoningVisuals
               visuals={(result.visuals ?? {}) as VisualsData}

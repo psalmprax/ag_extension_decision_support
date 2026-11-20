@@ -24,7 +24,7 @@ describe('AuditReasonModal component', () => {
 
     expect(screen.getByText('Non-Repudiation Security Authorization')).toBeInTheDocument();
     expect(screen.getByText(/Erase User Data/)).toBeInTheDocument();
-    const select = screen.getByLabelText(/Audit Reason Code/i) as HTMLSelectElement;
+    const select = screen.getByLabelText(/Audit reason code/i) as HTMLSelectElement;
     expect(select).toBeInTheDocument();
     expect(select.children.length).toBe(STANDARD_REASON_CODES.length);
   });
@@ -44,7 +44,7 @@ describe('AuditReasonModal component', () => {
     expect(submitBtn).toBeDisabled();
 
     // Type less than 10 characters
-    const textarea = screen.getByLabelText(/Technical Justification & Context/i);
+    const textarea = screen.getByLabelText(/Technical justification & context/i);
     fireEvent.change(textarea, { target: { value: 'Too short' } });
     expect(submitBtn).toBeDisabled();
 
@@ -76,14 +76,14 @@ describe('AuditReasonModal component', () => {
       />
     );
 
-    const select = screen.getByLabelText(/Audit Reason Code/i);
+    const select = screen.getByLabelText(/Audit reason code/i);
     fireEvent.change(select, { target: { value: 'CUSTOM' } });
 
     const customInput = screen.getByPlaceholderText(/SEC-INCIDENT-2026-0812/i);
     expect(customInput).toBeInTheDocument();
 
     fireEvent.change(customInput, { target: { value: 'INCIDENT-9912' } });
-    const textarea = screen.getByLabelText(/Technical Justification & Context/i);
+    const textarea = screen.getByLabelText(/Technical justification & context/i);
     fireEvent.change(textarea, { target: { value: 'Emergency purge per incident team' } });
     fireEvent.click(screen.getByRole('checkbox'));
 

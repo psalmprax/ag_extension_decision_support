@@ -1,5 +1,6 @@
 import React from 'react';
 import { Flame, Smartphone } from 'lucide-react';
+import { formatLabel } from '@/lib/formatLabel';
 
 export type FilterSeverity = 'all' | 'critical' | 'moderate';
 
@@ -41,11 +42,11 @@ export const TriageFilterBar: React.FC<{
           onClick={() => setFilterSeverity(f)}
           disabled={disabled}
           title={disabled ? 'No farmer activity to filter yet' : undefined}
-          className={`px-2 py-1 rounded text-[11px] font-bold uppercase transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+          className={`px-2 py-1 rounded text-[11px] font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
             filterSeverity === f ? 'bg-white text-slate-900 dark:bg-slate-800 dark:text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
           }`}
         >
-          {f}
+          {formatLabel(f)}
         </button>
       ))}
     </div>

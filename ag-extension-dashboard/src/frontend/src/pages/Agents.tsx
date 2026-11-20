@@ -193,7 +193,7 @@ function Agents() {
                 key={agent.agentId}
                 whileHover={{ y: -3 }}
                 transition={{ duration: 0.2 }}
-                className="p-6 rounded-xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/[0.1] hover:border-emerald-500/30 hover:bg-white dark:hover:bg-slate-900/90 shadow-sm hover:shadow-xl dark:shadow-none transition-all flex flex-col justify-between space-y-5"
+                className="p-6 rounded-lg bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.1] hover:border-emerald-500/30 hover:bg-white dark:hover:bg-slate-900/90 hover: dark:shadow-none transition-all flex flex-col justify-between space-y-5"
               >
                 <div className="space-y-4">
                   {/* Top Status Strip */}
@@ -316,7 +316,7 @@ function Agents() {
         </div>
 
         {/* Handoff Log Terminal */}
-        <div className="p-6 rounded-xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-4 flex flex-col justify-between">
+        <div className="p-6 rounded-lg bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-sky-600 dark:text-sky-400" />

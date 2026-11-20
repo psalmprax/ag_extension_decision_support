@@ -33,7 +33,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
     return (
       <div className="flex items-center justify-center p-20 text-gray-400">
         <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full mr-3"></div>
-        <p className="font-black uppercase tracking-widest text-xs">
+        <p className="font-black text-xs">
           {t('ui_knowledge_stats_analyzing_knowledge_streams')}
         </p>
       </div>
@@ -83,7 +83,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
               <stat.icon className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xxs font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
+              <p className="text-xxs font-black text-gray-400 leading-none mb-1">
                 {stat.label}
               </p>
               <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
@@ -99,7 +99,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
         <div className="card p-8 bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700/50 border flex flex-col">
           <div className="flex items-center gap-2 mb-8">
             <TrendingUp className="w-5 h-5 text-green-500" />
-            <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest">
+            <h3 className="text-sm font-black text-gray-400  ">
               {t('ui_knowledge_stats_trending_crop_queries')}
             </h3>
           </div>
@@ -120,7 +120,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
         <div className="card p-8 bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700/50 border">
           <div className="flex items-center gap-2 mb-8">
             <PieIcon className="w-5 h-5 text-blue-500" />
-            <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest">
+            <h3 className="text-sm font-black text-gray-400  ">
               {t('ui_knowledge_stats_category_distribution')}
             </h3>
           </div>

@@ -202,7 +202,7 @@ export const UssdGatewayTester: React.FC = () => {
           <div className="p-6 rounded-xl bg-black/40 border border-white/10 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xxs font-mono uppercase text-emerald-400 font-bold">
+                <span className="text-xxs font-mono text-emerald-400 font-bold">
                   {t('ui_ussd_gateway_tester_simulated_ussd_session_trace')}
                 </span>
                 <span className="text-xxs text-stone-400">

@@ -8,6 +8,6 @@ type Translate = (key: string, options?: { defaultValue?: string } & Record<stri
 export function dashboardGreeting(t: Translate, userName: string | undefined): string {
   const name = userName?.trim();
   return name
-    ? t('dashboard_welcome', { name, defaultValue: 'Welcome back, {name}! Here is your overview.' })
-    : t('dashboard_overview', { defaultValue: 'Dashboard Overview' });
+    ? t('dashboard_welcome', { name, defaultValue: 'Welcome back, {name}.' })
+    : t('dashboard_overview', { defaultValue: 'Dashboard overview' });
 }

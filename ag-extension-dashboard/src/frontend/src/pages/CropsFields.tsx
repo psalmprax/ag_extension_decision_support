@@ -30,6 +30,9 @@ import { CropCyclesTable } from '@/components/crops/CropCyclesTable';
 import { FieldModal } from '@/components/crops/FieldModal';
 import { GrowthCycleModal } from '@/components/crops/GrowthCycleModal';
 import { HarvestModal } from '@/components/crops/HarvestModal';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { PRIMARY_BUTTON } from '@/components/ui/controlStyles';
+import { StatTile } from '@/components/ui/StatTile';
 import { useLanguage } from '@/lib/LanguageContext';
 
 export function CropsFields() {
@@ -359,37 +362,23 @@ export function CropsFields() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* ── Top Bento Header: Fields & Geospatial Parcels ── */}
-      <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-4 sm:p-6 shadow-sm relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-              <Map className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 sm:gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{t('ui_crops_fields_fields_geospatial_parcels')}</h1>
-                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                  <Sprout className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                  {t('ui_crops_fields_growth_cycles_active')}
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-                {isFarmer
-                  ? 'Manage farm sectors, track soil pH profiles, and monitor growth timelines.'
-                  : 'Monitor agronomic fields and crop lifecycle performance for registered farmers.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
+      <PageHeader
+        title={t('ui_crops_fields_fields_geospatial_parcels')}
+        description={
+          isFarmer
+            ? t('crops_fields_desc_farmer', { defaultValue: 'Your fields, their soil and what is growing on each.' })
+            : t('crops_fields_desc_officer', { defaultValue: 'Fields and crop cycles for each farmer you advise.' })
+        }
+        actions={
+          <>
             {!isFarmer && farmers.length > 0 && (
-              <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/[0.04] backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm w-full sm:w-auto">
-                <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-slate-900/[0.12] dark:border-white/[0.14] w-full sm:w-auto">
+                <User className="w-4 h-4 text-slate-500 shrink-0" aria-hidden="true" />
                 <select
                   value={selectedFarmerId}
                   onChange={e => setSelectedFarmerId(e.target.value)}
-                  className="bg-transparent border-0 text-xs font-semibold text-slate-900 dark:text-white focus:ring-0 focus:outline-none cursor-pointer pr-4 w-full sm:w-auto"
+                  className="bg-transparent border-0 text-sm text-slate-900 dark:text-white focus:ring-0 focus:outline-none cursor-pointer pr-4 w-full sm:w-auto"
+                  aria-label={t('crops_fields_choose_farmer', { defaultValue: 'Farmer' })}
                 >
                   {farmers.map(farmer => (
                     <option key={farmer.id} value={farmer.id} className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
@@ -403,63 +392,31 @@ export function CropsFields() {
             <button
               onClick={handleOpenAddField}
               disabled={!isFarmer && !selectedFarmerId}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg transition-colors active:scale-95 disabled:opacity-50"
+              className={PRIMARY_BUTTON}
             >
               <Plus className="w-4 h-4" />
               <span>{t('ui_crops_fields_add_field_sector')}</span>
             </button>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      {/* ── Statistics Bento Row ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('ui_crops_fields_total_sectors')}</span>
-            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-              <Map className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white font-mono tabular-nums">{totalFieldsCount}</p>
-        </div>
-
-        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('ui_crops_fields_total_cultivated_area')}</span>
-            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              <Sliders className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">{(Number(totalAreaHectares) || 0).toFixed(1)} ha</p>
-        </div>
-
-        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('ui_crops_fields_active_timelines')}</span>
-            <div className="p-2 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
-              <Sprout className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-teal-600 dark:text-teal-300 font-mono tabular-nums">{activeCycles.length}</p>
-        </div>
-
-        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('ui_crops_fields_harvested_yield')}</span>
-            <div className="p-2 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-              <TrendingUp className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-purple-600 dark:text-purple-300 font-mono tabular-nums">{((Number(totalYieldKg) || 0) / 1000).toFixed(1)} {t('ui_crops_fields_tons')}</p>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatTile label={t('ui_crops_fields_total_sectors')} icon={Map} value={totalFieldsCount} />
+        <StatTile label={t('ui_crops_fields_total_cultivated_area')} icon={Sliders} value={`${(Number(totalAreaHectares) || 0).toFixed(1)} ha`} />
+        <StatTile label={t('ui_crops_fields_active_timelines')} icon={Sprout} value={activeCycles.length} />
+        <StatTile
+          label={t('ui_crops_fields_harvested_yield')}
+          icon={TrendingUp}
+          value={`${((Number(totalYieldKg) || 0) / 1000).toFixed(1)} ${t('ui_crops_fields_tons')}`}
+        />
       </div>
 
       {/* ── Main Tabs Navigation ── */}
       <div className="flex border-b border-slate-200 dark:border-white/5 gap-4">
         {[
-          { id: 'overview', label: 'Field Sectors', icon: Map },
-          { id: 'cycles', label: 'Growth Timelines', icon: Sprout },
+          { id: 'overview', label: t('crops_fields_tab_fields', { defaultValue: 'Fields' }), icon: Map },
+          { id: 'cycles', label: t('crops_fields_tab_cycles', { defaultValue: 'Crop cycles' }), icon: Sprout },
         ].map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -469,7 +426,7 @@ export function CropsFields() {
               onClick={() => setActiveTab(tab.id as 'overview' | 'cycles')}
               className={`flex items-center gap-2 pb-3 font-medium text-sm transition-colors border-b-2 ${
                 isActive
-                  ? 'text-primary-600 dark:text-primary-400 border-primary-500'
+                  ? 'text-emerald-800 dark:text-emerald-300 border-emerald-700'
                   : 'text-slate-500 border-transparent hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >

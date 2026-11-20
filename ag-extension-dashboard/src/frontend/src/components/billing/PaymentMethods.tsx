@@ -68,7 +68,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
     >
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6 relative z-10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-sm text-emerald-700 dark:text-emerald-400">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-slate-500/20 border border-emerald-500/30 flex items-center justify-center shadow-sm text-emerald-700 dark:text-emerald-400">
             <CardIcon className="w-6 h-6" />
           </div>
           <div>
@@ -78,7 +78,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             >
               {t('billing_payment_intelligence') || 'Payment Methods & Fast Checkout'}
             </h3>
-            <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
+            <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
               {t('billing_stored_protocols') || 'Zero-Trust Mobile Money & Voucher Rails'}
             </p>
           </div>
@@ -169,7 +169,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                   setMobilePayData({ ...mobilePayData, transactionId: e.target.value.toUpperCase() })
                 }
                 placeholder="Enter M-Pesa/Airtel Ref (e.g. QKH7189XA)"
-                className="font-mono text-xs uppercase bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl"
+                className="font-mono text-xs bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl"
               />
               <div className="flex items-center justify-between gap-3 pt-1">
                 <p className="text-[11px] text-slate-500 dark:text-white/50 leading-tight">
@@ -199,12 +199,12 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
 
         {/* AgriVoucher Option */}
         <div
-          className="p-5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 hover:border-indigo-500/30 transition-all duration-300 relative overflow-hidden"
+          className="p-5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 hover:border-slate-500/30 transition-all duration-300 relative overflow-hidden"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3.5 relative z-10">
               <div
-                className="w-10 h-10 bg-indigo-500/15 border border-indigo-500/30 rounded-xl flex items-center justify-center text-indigo-700 dark:text-indigo-400 shadow-inner"
+                className="w-10 h-10 bg-slate-500/15 border border-slate-500/30 rounded-xl flex items-center justify-center text-slate-700 dark:text-slate-400 shadow-inner"
               >
                 <Ticket className="w-5 h-5" />
               </div>
@@ -212,7 +212,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                 <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
                   {t('billing_voucher') || 'AgriVoucher Token'}
                 </p>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xxs font-medium bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 mt-0.5">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xxs font-medium bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20 mt-0.5">
                   {t('billing_voucher_desc') || 'Prepaid NGO / Grant Code'}
                 </span>
               </div>
@@ -222,7 +222,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                 triggerHaptic('light');
                 setShowVoucherForm(!showVoucherForm);
               }}
-              className="px-3.5 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white text-xs font-medium transition-all"
+              className="px-3.5 py-1.5 rounded-lg bg-slate-500/15 border border-slate-500/30 text-slate-700 dark:text-slate-300 hover:bg-slate-600 hover:text-white text-xs font-medium transition-all"
             >
               {showVoucherForm ? 'Hide' : t('action_redeem') || 'Redeem'}
             </button>
@@ -234,7 +234,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                 value={voucherCode}
                 onChange={e => setVoucherCode(e.target.value.toUpperCase())}
                 placeholder="Enter voucher code (e.g. AGV-A1B2C3D4)"
-                className="font-mono tracking-wider text-xs bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl"
+                className="font-mono text-xs bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl"
               />
               <div className="flex items-center justify-between gap-3 pt-1">
                 <p className="text-[11px] text-slate-500 dark:text-white/50">{t('ui_payment_methods_instantly_unlocks_agronomist_quota')}</p>
@@ -244,7 +244,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                     triggerHaptic('medium');
                     handleRedeemVoucher();
                   }}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs rounded-lg shadow-sm transition-all shrink-0"
+                  className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white font-medium text-xs rounded-lg shadow-sm transition-all shrink-0"
                 >
                   {t('ui_payment_methods_activate_token')}
                 </button>
@@ -315,7 +315,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
       {/* PayPal Integration */}
       <div className="mt-6 pt-6 border-t border-slate-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-4 relative z-10">
         <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 bg-indigo-500/15 border border-indigo-500/30 rounded-xl flex items-center justify-center text-indigo-700 dark:text-indigo-400">
+          <div className="w-10 h-10 bg-slate-500/15 border border-slate-500/30 rounded-xl flex items-center justify-center text-slate-700 dark:text-slate-400">
             <Globe className="w-5 h-5" />
           </div>
           <div>
@@ -333,7 +333,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             onPayPalSubscription('price_pro_monthly');
           }}
           disabled={actionLoading === 'paypal-price_pro_monthly'}
-          className="px-4 py-2 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white text-xs font-medium transition-all flex items-center gap-2"
+          className="px-4 py-2 rounded-lg bg-slate-500/15 border border-slate-500/30 text-slate-700 dark:text-slate-300 hover:bg-slate-600 hover:text-white text-xs font-medium transition-all flex items-center gap-2"
         >
           <Globe className="w-4 h-4" />
           <span>{t('billing_subscribe_paypal') || 'PayPal Checkout'}</span>

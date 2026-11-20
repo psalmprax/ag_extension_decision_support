@@ -351,6 +351,22 @@ describe('RAGV2Service', () => {
             expect(mockQuery.mock.calls[0][0]).toContain('c.source_content_hash');
         });
 
+        it('searches exactly when filters leave the indexed candidates short', async () => {
+            mockGetEmbedding.mockResolvedValue(fakeEmbedding());
+            mockQuery
+                .mockResolvedValueOnce(mockResult([], 0))
+                .mockResolvedValueOnce(mockResult([{ id: 'c1', article_id: 'art-9', content: 'Cassava spacing', chunk_index: 0, title: 'Cassava', category: 'Crop Management', crops: ['cassava'], score: 0.41 }], 1));
+
+            const results = await RAGV2Service.searchChunks('cassava spacing', 5, { crop: 'cassava' });
+
+            expect(results.map(r => r.articleId)).toEqual(['art-9']);
+            expect(mockQuery).toHaveBeenCalledTimes(2);
+            expect(String(mockQuery.mock.calls[0][0])).toContain('LIMIT LEAST($2::int * 4, 40)');
+            const exact = String(mockQuery.mock.calls[1][0]);
+            expect(exact).toContain(') + 0');
+            expect(exact.indexOf('$4 = ANY(a.crops)')).toBeLessThan(exact.indexOf('LIMIT'));
+        });
+
         it('returns empty array on error', async () => {
             mockGetEmbedding.mockRejectedValue(new Error('Embedding service down'));
 

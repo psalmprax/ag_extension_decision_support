@@ -18,12 +18,12 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
         components={{
           // Style headers
           h1: ({ children }) => (
-            <h1 className="text-2xl font-black uppercase tracking-tight mb-4 text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-black tracking-tight mb-4 text-gray-900 dark:text-white">
               {children}
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-xl font-bold uppercase tracking-wide mt-6 mb-3 text-primary-600 dark:text-primary-400 border-l-4 border-primary-500 pl-3">
+            <h2 className="text-xl font-bold tracking-wide mt-6 mb-3 text-primary-600 dark:text-primary-400 border-l-4 border-primary-500 pl-3">
               {children}
             </h2>
           ),
@@ -69,7 +69,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
             <thead className="bg-gray-50 dark:bg-gray-900/50">{children}</thead>
           ),
           th: ({ children }) => (
-            <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">
+            <th className="px-4 py-3 text-left text-xs font-black text-gray-500 dark:text-gray-400">
               {children}
             </th>
           ),

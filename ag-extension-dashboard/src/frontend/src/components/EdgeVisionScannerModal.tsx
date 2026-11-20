@@ -50,7 +50,7 @@ const CropPillScrubber: React.FC<CropPillScrubberProps> = ({
       <div className="flex items-center justify-between">
         <label
           htmlFor="edge-target-crop-select"
-          className="block text-xs font-bold font-mono uppercase text-slate-300"
+          className="block text-xs font-bold font-mono text-slate-300"
         >
           {t('ui_edge_vision_scanner_modal_target_crop_specimen')}
         </label>
@@ -81,7 +81,7 @@ const CropPillScrubber: React.FC<CropPillScrubberProps> = ({
               className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-150 active:scale-95 disabled:opacity-50 select-none cursor-pointer ${
                 isSelected
                   ? isBase
-                    ? 'bg-blue-600 text-white shadow-[0_0_12px_rgba(0,82,255,0.45)] border border-blue-400 ring-2 ring-blue-500/30'
+                    ? 'bg-slate-600 text-white shadow-[0_0_12px_rgba(0,82,255,0.45)] border border-slate-400 ring-2 ring-slate-500/30'
                     : 'bg-emerald-600 text-white shadow-[0_0_12px_rgba(16,185,129,0.45)] border border-emerald-400 ring-2 ring-emerald-500/30'
                   : 'bg-slate-900/90 text-slate-400 border border-white/10 hover:border-white/20 hover:text-white'
               }`}
@@ -166,7 +166,7 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
   <div className="p-4 bg-slate-900/60 rounded-xl border border-white/10 space-y-3">
     <div className="flex justify-between items-start">
       <div>
-        <span className="text-[10px] font-bold tracking-wider text-emerald-400 uppercase font-mono">
+        <span className="text-[10px] font-bold text-emerald-400 font-mono">
           Edge Primary Diagnosis
         </span>
         <h4 className="text-base font-bold text-white mt-0.5">
@@ -195,7 +195,7 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
             <span className="text-slate-400 block text-[9px]">STAGE 1 DETECTOR</span>
             <strong>{result.twoStage.stage1Detector.model.toUpperCase()}</strong> ({result.twoStage.stage1Detector.boxes.filter(b => b.label !== 'crop_leaf').length} lesions)
           </div>
-          <div className="p-1.5 rounded bg-slate-900/80 border border-sky-500/20 text-sky-300">
+          <div className="p-1.5 rounded bg-slate-900/80 border border-slate-500/20 text-slate-300">
             <span className="text-slate-400 block text-[9px]">STAGE 2 CLASSIFIER</span>
             <strong>{result.twoStage.stage2Classifier.model.toUpperCase()}</strong> ({Math.round(result.twoStage.stage2Classifier.confidence * 100)}%)
           </div>
@@ -233,13 +233,13 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
       </div>
       <div className="p-2 bg-slate-950/80 rounded-lg border border-white/5">
         <span className="text-[10px] font-mono text-slate-400">Texture Var</span>
-        <p className="text-xs font-bold font-mono text-purple-400 mt-0.5">
+        <p className="text-xs font-bold font-mono text-slate-400 mt-0.5">
           {(result.metrics.textureVariance ?? 0).toFixed(2)}
         </p>
       </div>
       <div className="p-2 bg-slate-950/80 rounded-lg border border-white/5">
         <span className="text-[10px] font-mono text-slate-400">NGRDI</span>
-        <p className="text-xs font-bold font-mono text-sky-400 mt-0.5">
+        <p className="text-xs font-bold font-mono text-slate-400 mt-0.5">
           {(result.metrics.ngrdi ?? 0).toFixed(2)}
         </p>
       </div>
@@ -259,7 +259,7 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
       </div>
 
       <div>
-        <span className="font-medium text-indigo-400 font-mono text-xs">
+        <span className="font-medium text-slate-400 font-mono text-xs">
           Treatment guidance:
         </span>
         <p className="text-slate-300 mt-0.5">
@@ -274,7 +274,7 @@ const SoilDiagnosticHUD: React.FC<{ result: OfflineSoilDiagnosisResult }> = ({ r
   <div className="p-4 bg-slate-900/60 rounded-xl border border-white/10 space-y-3">
     <div className="flex justify-between items-start">
       <div>
-        <span className="text-[10px] font-bold tracking-wider text-amber-400 uppercase font-mono">
+        <span className="text-[10px] font-bold text-amber-400 font-mono">
           Edge Soil Texture & Physical Class
         </span>
         <h4 className="text-base font-bold text-white mt-0.5">
@@ -305,7 +305,7 @@ const SoilDiagnosticHUD: React.FC<{ result: OfflineSoilDiagnosisResult }> = ({ r
       </div>
       <div className="p-2 bg-slate-950/80 rounded-lg border border-white/5">
         <span className="text-[10px] font-mono text-slate-400">Moisture Index</span>
-        <p className="text-xs font-bold font-mono text-sky-400 mt-0.5">
+        <p className="text-xs font-bold font-mono text-slate-400 mt-0.5">
           {result.estimatedMoisture.split(' ')[0]}
         </p>
       </div>
@@ -375,7 +375,7 @@ const VerifiedCloudCard: React.FC<{
               N: <strong className="text-emerald-400">{soilData.npkDeficiencies.nitrogen}</strong>
             </span>
             <span className="p-1 rounded bg-slate-900 border border-white/5">
-              P: <strong className="text-sky-400">{soilData.npkDeficiencies.phosphorus}</strong>
+              P: <strong className="text-slate-400">{soilData.npkDeficiencies.phosphorus}</strong>
             </span>
             <span className="p-1 rounded bg-slate-900 border border-white/5">
               K: <strong className="text-amber-400">{soilData.npkDeficiencies.potassium}</strong>
@@ -881,7 +881,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
               {analyzing && (
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white">
                   <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mb-2" />
-                  <span className="text-xs font-mono font-bold tracking-wider uppercase">
+                  <span className="text-xs font-mono font-bold  ">
                     {t('ui_edge_vision_scanner_modal_stage_1_yolo_detection_stage_2_mobil')}
                   </span>
                 </div>
@@ -982,7 +982,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                   </>
                 ) : (
                   <>
-                    <MapPin className="w-4 h-4 text-sky-400" />
+                    <MapPin className="w-4 h-4 text-slate-400" />
                     <span>{t('ui_edge_vision_scanner_modal_plot_to_worldmonitor_outbreak_map')}</span>
                   </>
                 )}
@@ -993,7 +993,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                 onClick={handleShareReport}
                 className="w-full py-2.5 border border-white/10 hover:bg-white/5 text-xs font-medium text-slate-300 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
               >
-                <Copy className="w-3.5 h-3.5 text-blue-400" />
+                <Copy className="w-3.5 h-3.5 text-slate-400" />
                 <span>{t('ui_edge_vision_scanner_modal_copy_finding_summary')}</span>
               </button>
 

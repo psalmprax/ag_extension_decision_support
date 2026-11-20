@@ -19,7 +19,7 @@ Use these exact commands for common development operations. Do not hallucinate o
 - **Backend lint**: `cd ag-extension-dashboard/src/backend && npm run lint`
 - **Component-size ratchet**: `npm run check:component-size`
 - **Explicit-any ratchet (backend)**: `npm run check:explicit-any` (counts `any` even behind `eslint-disable`; `--update` after reducing)
-- **Live smoke against stage** (real AI providers + PayPal sandbox): the `Live smoke` workflow; script `scripts/live-smoke.cjs`
+- **Live checks** (`.github/workflows/live-smoke.yml`, workflow name "Live checks"): `suite=live-smoke` smoke-tests stage against real AI providers + PayPal sandbox (script `scripts/live-smoke.cjs`); `suite=rag-eval` runs the retrieval evaluation; `suite=user-stories` with `target=stage|production` seeds the test population and runs the Playwright user stories on that site
 
 ### ⚙️ Running Locally (Development)
 - **Full stack**: `docker compose up -d` (from `ag-extension-dashboard/`)

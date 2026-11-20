@@ -26,35 +26,27 @@ export const FarmerDashboard: React.FC = () => {
       value:
         Array.isArray(farmerStats?.crops) && farmerStats.crops.length > 0
           ? farmerStats.crops.join(', ')
-          : 'N/A',
+          : t('farmer_no_crops', { defaultValue: 'None recorded' }),
       icon: Sprout,
-      color: 'text-primary-600',
-      bg: 'bg-primary-100',
     },
     {
       title: t('farmer_next_visit'),
-      value: farmerStats?.nextVisitDate || 'TBD',
+      value: farmerStats?.nextVisitDate || t('farmer_no_visit', { defaultValue: 'None planned' }),
       icon: Calendar,
-      color: 'text-secondary-600',
-      bg: 'bg-secondary-100',
     },
     {
       title: t('farmer_ai_advisory'),
       value: farmerStats?.aiTipsCount
         ? t('farmer_new_tips', { count: farmerStats.aiTipsCount })
-        : '0 updates',
+        : t('farmer_no_tips', { defaultValue: 'No new tips' }),
       icon: MessageSquare,
-      color: 'text-accent-600',
-      bg: 'bg-accent-100',
     },
     {
       title: t('farmer_alerts'),
       value: farmerStats?.alertsCount
         ? `${farmerStats.alertsCount} ${t('farmer_active_status', { defaultValue: 'Active' })}`
-        : 'No alerts',
+        : t('farmer_no_alerts', { defaultValue: 'No alerts' }),
       icon: Bell,
-      color: 'text-amber-600',
-      bg: 'bg-amber-100',
     },
   ];
 

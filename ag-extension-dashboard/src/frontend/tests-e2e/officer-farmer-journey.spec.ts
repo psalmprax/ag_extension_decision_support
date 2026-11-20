@@ -118,7 +118,7 @@ test.describe.serial('officer and farmer through a season', () => {
       await form.getByRole('button', { name: visit.type, exact: true }).click();
       await form.getByLabel('Visit date and time').fill(visit.when);
       await form.getByLabel('Visit notes').fill(visit.note);
-      await form.getByRole('button', { name: 'Schedule Visit' }).click();
+      await form.getByRole('button', { name: 'Schedule visit' }).click();
       await expect(officerPage.getByLabel('Search farmer')).toHaveCount(0);
     }
     await expect(officerPage.getByText(`"${visitNote}"`)).toBeVisible();

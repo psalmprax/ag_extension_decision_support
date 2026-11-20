@@ -47,7 +47,7 @@ describe('locale validation utilities', () => {
 
   describe('isEnglishFallback', () => {
     it('flags an identical non-universal English value', () => {
-      expect(isEnglishFallback('Farmers Reached', 'Farmers Reached')).toBe(true);
+      expect(isEnglishFallback('Farmers reached', 'Farmers reached')).toBe(true);
     });
 
     it('ignores universal terms', () => {
@@ -55,7 +55,7 @@ describe('locale validation utilities', () => {
     });
 
     it('does not flag a real translation', () => {
-      expect(isEnglishFallback('Wakulima Waliofikwa', 'Farmers Reached')).toBe(false);
+      expect(isEnglishFallback('Wakulima Waliofikwa', 'Farmers reached')).toBe(false);
     });
   });
 

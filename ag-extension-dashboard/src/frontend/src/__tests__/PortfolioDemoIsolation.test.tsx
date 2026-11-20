@@ -52,7 +52,7 @@ describe('Client Portfolio demo isolation', () => {
     renderPortfolio();
     expect(await screen.findByText('Live Client')).toBeInTheDocument();
     expect(fetchFarmers).toHaveBeenCalledTimes(1);
-    expect(screen.queryByText('Sandbox Mode:')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sandbox mode:')).not.toBeInTheDocument();
     expect(screen.queryByText(`${DEMO_FARMERS[0].firstName} ${DEMO_FARMERS[0].lastName}`)).not.toBeInTheDocument();
   });
 
@@ -61,7 +61,7 @@ describe('Client Portfolio demo isolation', () => {
     useAppStore.setState({ isDemo: true, farmers: DEMO_FARMERS });
     renderPortfolio();
     await waitFor(() => expect(fetchFarmers).toHaveBeenCalledTimes(1));
-    expect(screen.queryByText('Sandbox Mode:')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sandbox mode:')).not.toBeInTheDocument();
     expect(screen.queryByText(`${DEMO_FARMERS[0].firstName} ${DEMO_FARMERS[0].lastName}`)).not.toBeInTheDocument();
   });
 
@@ -81,7 +81,7 @@ describe('Client Portfolio demo isolation', () => {
   it('shows sample farmers only for the actual demo account', () => {
     useAppStore.setState({ user: { ...admin, id: 'demo-user', email: 'demo@agridemo.com' }, isDemo: true });
     renderPortfolio();
-    expect(screen.getByText('Sandbox Mode:')).toBeInTheDocument();
+    expect(screen.getByText('Sandbox mode:')).toBeInTheDocument();
     expect(screen.getByText(`${DEMO_FARMERS[0].firstName} ${DEMO_FARMERS[0].lastName}`)).toBeInTheDocument();
     expect(fetchFarmers).not.toHaveBeenCalled();
   });
@@ -115,6 +115,6 @@ describe('Client Portfolio demo isolation', () => {
     expect(useAppStore.getState().isDemo).toBe(false);
     renderPortfolio();
     expect(await screen.findByText('Live Client')).toBeInTheDocument();
-    expect(screen.queryByText('Sandbox Mode:')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sandbox mode:')).not.toBeInTheDocument();
   });
 });

@@ -30,6 +30,11 @@ function clamp01(value: number): number {
     return Math.min(1, Math.max(0, value));
 }
 
+/** A candidate index as sent: a JSON number that is an integer in range (null, "1" and 1.5 are rejected). */
+function candidateIndex(value: unknown, candidateCount: number): number | undefined {
+    return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value < candidateCount ? value : undefined;
+}
+
 function passageText(candidate: RerankCandidate): string {
     const title = candidate.title?.trim();
     const body = candidate.content.replace(/\s+/g, ' ').trim().slice(0, PASSAGE_CHARS);
@@ -57,9 +62,9 @@ async function crossEncoderScores(queryText: string, candidates: RerankCandidate
     const body = await response.json() as { results?: Array<{ index?: unknown; relevance_score?: unknown }> };
     const scores = new Map<number, number>();
     for (const item of body.results ?? []) {
-        const index = Number(item.index);
-        const score = Number(item.relevance_score);
-        if (Number.isInteger(index) && index >= 0 && index < candidates.length && Number.isFinite(score)) {
+        const index = candidateIndex(item.index, candidates.length);
+        const score = item.relevance_score;
+        if (index !== undefined && typeof score === 'number' && Number.isFinite(score)) {
             scores.set(index, clamp01(score));
         }
     }
@@ -105,9 +110,9 @@ export function parseLlmRerankScores(text: string, candidateCount: number): Map<
     for (const item of parsed) {
         if (!item || typeof item !== 'object') continue;
         const { idx, score } = item as { idx?: unknown; score?: unknown };
-        const index = Number(idx);
-        const value = Number(score);
-        if (Number.isInteger(index) && index >= 0 && index < candidateCount && Number.isFinite(value)) {
+        const index = candidateIndex(idx, candidateCount);
+        const value = typeof score === 'number' ? score : Number.NaN;
+        if (index !== undefined && Number.isFinite(value)) {
             scores.set(index, clamp01(value / 10));
         }
     }

@@ -13,7 +13,7 @@ export const SoilClimateSampleCard: React.FC<{ cardClass: string }> = ({ cardCla
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sprout className="w-4 h-4 text-emerald-500" />
-          <h3 className="text-xs sm:text-sm font-headline font-bold text-gray-900 dark:text-white uppercase tracking-widest">
+          <h3 className="text-xs sm:text-sm font-headline font-bold text-gray-900 dark:text-white  ">
             {t('ui_soil_climate_sample_card_soil_telemetry_climate_radar')}
           </h3>
         </div>
@@ -25,7 +25,7 @@ export const SoilClimateSampleCard: React.FC<{ cardClass: string }> = ({ cardCla
       <div className="grid grid-cols-2 gap-3">
         <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 space-y-1">
           <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-500 dark:text-slate-400">
-            <Droplets className="w-3 h-3 text-sky-500" />
+            <Droplets className="w-3 h-3 text-slate-500" />
             <span>{t('ui_soil_climate_sample_card_soil_moisture')}</span>
           </div>
           <div className="text-sm font-bold text-slate-900 dark:text-white">28.4%</div>

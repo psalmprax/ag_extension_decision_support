@@ -24,7 +24,7 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
   return (
     <section>
       <h3 className="text-sm font-medium mb-6 flex items-center gap-2 text-slate-400">
-        <Clock className="w-4 h-4 text-purple-500" />
+        <Clock className="w-4 h-4 text-slate-500" />
         {t('nav_visits')}
       </h3>
       <div className="space-y-4">
@@ -67,7 +67,7 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
                     <Button
                       size="sm"
                       onClick={() => handleUpdateVisitStatus(visit.id, 'completed')}
-                      className="bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 text-micro font-black uppercase tracking-widest border border-green-500/20"
+                      className="bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 text-micro font-black border border-green-500/20"
                     >
                       {t('ui_farmer_visit_timeline_complete')}
                     </Button>
@@ -75,7 +75,7 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
                       size="sm"
                       variant="danger"
                       onClick={() => handleUpdateVisitStatus(visit.id, 'cancelled')}
-                      className="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-micro font-black uppercase tracking-widest border border-red-500/20"
+                      className="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-micro font-black border border-red-500/20"
                     >
                       {t('common_cancel')}
                     </Button>
@@ -89,7 +89,7 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
             className={`p-8 text-center ${radiusClass} border border-dashed bg-gray-50/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700`}
           >
             <Calendar className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-            <p className="text-xs font-bold uppercase tracking-widest text-gray-400">
+            <p className="text-xs font-bold text-gray-400">
               {t('visit_no_history')}
             </p>
           </div>

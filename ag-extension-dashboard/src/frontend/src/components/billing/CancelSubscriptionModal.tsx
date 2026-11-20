@@ -86,7 +86,7 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
         <div className="space-y-2">
           <label
             htmlFor="cancellation-reason"
-            className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
+            className="text-xxs font-bold text-slate-600 dark:text-white/60 block ml-1"
           >
             {t('ui_cancel_subscription_modal_reason_optional')}
           </label>
@@ -102,7 +102,7 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
         <div className="space-y-2">
           <label
             htmlFor="cancellation-comment"
-            className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
+            className="text-xxs font-bold text-slate-600 dark:text-white/60 block ml-1"
           >
             {t('ui_cancel_subscription_modal_anything_else_optional')}
           </label>

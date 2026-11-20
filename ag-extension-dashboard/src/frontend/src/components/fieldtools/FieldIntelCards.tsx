@@ -27,7 +27,7 @@ export function LeaderboardCard() {
         <div className={`${cardClass} p-4 sm:p-5`}>
             <div className="flex items-center gap-2 mb-3">
                 <Award className="w-4 h-4 text-amber-500" />
-                <h3 className="text-sm font-black uppercase tracking-widest">{t('ui_field_intel_cards_officer_leaderboard')}</h3>
+                <h3 className="text-sm font-black  ">{t('ui_field_intel_cards_officer_leaderboard')}</h3>
                 <span className="text-xxs text-gray-400 ml-auto">{t('ui_field_intel_cards_30_days')}</span>
             </div>
             {!data || data.length === 0 ? (

@@ -40,29 +40,29 @@ const renderModal = (user: DirectoryUser, actorIsSystemAdmin: boolean) =>
 describe('UserAccessModal admin guard (matches the server rule)', () => {
   it('lets a system administrator edit another system administrator', () => {
     renderModal(account({ isSystemAdmin: true }), true);
-    expect(screen.getByLabelText('System Role')).not.toBeDisabled();
+    expect(screen.getByLabelText('System role')).not.toBeDisabled();
     expect(screen.queryByText(NOTE)).not.toBeInTheDocument();
   });
 
   it('lets a system administrator edit an ordinary admin', () => {
     renderModal(account({ isSystemAdmin: false }), true);
-    expect(screen.getByLabelText('System Role')).not.toBeDisabled();
+    expect(screen.getByLabelText('System role')).not.toBeDisabled();
   });
 
   it('locks a system administrator account for an ordinary admin', () => {
     renderModal(account({ isSystemAdmin: true }), false);
-    expect(screen.getByLabelText('System Role')).toBeDisabled();
+    expect(screen.getByLabelText('System role')).toBeDisabled();
     expect(screen.getByText(NOTE)).toBeInTheDocument();
   });
 
   it('locks an admin account for an ordinary admin', () => {
     renderModal(account({ isSystemAdmin: false }), false);
-    expect(screen.getByLabelText('System Role')).toBeDisabled();
+    expect(screen.getByLabelText('System role')).toBeDisabled();
   });
 
   it('leaves non-admin accounts editable for an ordinary admin', () => {
     renderModal(account({ role: 'farmer' }), false);
-    expect(screen.getByLabelText('System Role')).not.toBeDisabled();
+    expect(screen.getByLabelText('System role')).not.toBeDisabled();
     expect(screen.queryByText(NOTE)).not.toBeInTheDocument();
   });
 });

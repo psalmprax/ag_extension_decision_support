@@ -48,7 +48,7 @@ export function AdvisoryPreferencesSection({ farmerId }: { farmerId: string }) {
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                     <Radio className="w-4 h-4 text-primary-500" />
-                    <h4 className="text-xs font-black uppercase tracking-widest">{t('ui_advisory_preferences_section_proactive_advisories')}</h4>
+                    <h4 className="text-xs font-black  ">{t('ui_advisory_preferences_section_proactive_advisories')}</h4>
                 </div>
                 <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
                     <input

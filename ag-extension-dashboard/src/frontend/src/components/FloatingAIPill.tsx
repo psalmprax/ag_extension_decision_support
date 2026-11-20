@@ -328,70 +328,18 @@ const AIAgronomistTelecallTab: React.FC<TelecallTabProps> = ({ onStartCall }) =>
   </div>
 );
 
-function getAgronomicFallbackAnswer(query: string): string {
-  const q = query.toLowerCase();
+/**
+ * Shown when no answer came back. The assistant never substitutes canned crop
+ * advice for a failed answer: a dose or a planting window it did not retrieve
+ * for this question could be wrong for this farm.
+ */
+const NO_ANSWER_TEXT =
+  'No answer came back for this question, so none is shown. Try again in a moment, or ask your extension officer.';
 
-  if (q.includes('maize') && (q.includes('plant') || q.includes('when') || q.includes('calendar') || q.includes('nigeria') || q.includes('kenya'))) {
-    if (q.includes('nigeria')) {
-      return (
-        "**Maize Planting Windows for Nigeria:**\n\n" +
-        "• **Southern Rainforest & Forest Zone (Lagos, Ogun, Edo, Delta, Oyo, etc.):**\n" +
-        "  - Early Season: Late March to Mid-April (as early rains stabilize).\n" +
-        "  - Late Season: Early to Mid-August.\n\n" +
-        "• **Guinea Savannah (Central / Middle Belt - Kaduna, Niger, Benue, Plateau):**\n" +
-        "  - Plant between Late May and Early June with consistent rainfall.\n\n" +
-        "• **Sudan & Sahel Savannah (Northern Zone - Kano, Katsina, Sokoto, Borno):**\n" +
-        "  - Plant short-duration drought-tolerant varieties (e.g. SAMMAZ series) from Mid-June to Early July.\n\n" +
-        "**Key Agronomic Best Practices:**\n" +
-        "1. Spacing: 75 cm between rows, 25 cm within rows (1 seed per stand) for ~53,000 plants/ha.\n" +
-        "2. Basal Dressing: Apply NPK 15:15:15 at 10–14 days post-emergence.\n" +
-        "3. Top-dressing: Apply Urea at 4–6 weeks during knee-high stage."
-      );
-    }
-    return (
-      "**Maize Planting Guidelines & Windows:**\n\n" +
-      "• **East Africa / Kenya (Long Rains):** Mid-March to Mid-April with onset of main rains.\n" +
-      "• **Short Rains:** October to early November for fast-maturing highland/dryland varieties.\n" +
-      "• **Seedbed Preparation:** Well-tilled, weed-free soil with pH 5.8–6.8.\n" +
-      "• **Fertilization:** 50kg DAP per acre at planting (banded 5cm to the side and below seed), followed by CAN top-dressing at knee-high stage."
-    );
-  }
-
-  if (q.includes('potato') || q.includes('blight')) {
-    return (
-      "**Potato Late Blight (*Phytophthora infestans*) Protocol:**\n\n" +
-      "1. **Sanitation:** Rogue out and burn voluntary host plants and infected tuber cull piles.\n" +
-      "2. **Preventative Spray:** Apply protective contact fungicides (Mancozeb 80 WP at 2.5 g/L or Chlorothalonil) before continuous rain spells or fog.\n" +
-      "3. **Curative Spray:** At first sight of water-soaked spots, rotate systemic fungicides (Metalaxyl + Mancozeb or Cymoxanil). Avoid back-to-back single-mode systemic applications to prevent fungicide resistance.\n" +
-      "4. **Harvest Timing:** Dehaulm (cut foliage) 10–14 days before harvest to allow tuber skins to harden and prevent tuber blight."
-    );
-  }
-
-  if (q.includes('stem borer') || q.includes('fall armyworm') || q.includes('armyworm')) {
-    return (
-      "**Stem Borer & Fall Armyworm Integrated Management:**\n\n" +
-      "1. **Push-Pull Strategy:** Intercrop maize with silverleaf desmodium (repels moths) and plant Napier grass or Brachiaria around border edges (traps moths).\n" +
-      "2. **Scouting:** Check 20 plants across 5 points in a W-pattern. Look for 'window-pane' feeding patches and moist frass in the central whorl.\n" +
-      "3. **Targeted Treatment:** Apply fine sand mixed with wood ash or bio-pesticides (*Bacillus thuringiensis* / Neem seed extract) directly into the whorl. For heavy infestations, apply Chlorantraniliprole or Emamectin Benzoate early in the morning or late evening."
-    );
-  }
-
-  if (q.includes('soil') && (q.includes('ph') || q.includes('acid') || q.includes('lime'))) {
-    return (
-      "**Soil Acidity & pH Amendment Guide:**\n\n" +
-      "1. **Lime Application:** For soils below pH 5.5, apply Agricultural Calcitic or Dolomitic Lime at 1.5–2.5 tons/hectare. Broadcast evenly and incorporate into the top 15 cm at least 4 weeks before planting.\n" +
-      "2. **Organic Buffering:** Incorporate well-decomposed manure or compost to enhance soil cation exchange capacity (CEC) and reduce aluminum toxicity.\n" +
-      "3. **Fertilizer Choice:** Avoid ammonium sulfate fertilizers that acidify soil; substitute with Calcium Ammonium Nitrate (CAN) or coated slow-release urea."
-    );
-  }
-
-  return (
-    "**Agronomic Advisory:**\n\n" +
-    `Regarding "${query}":\n` +
-    "• Ensure balanced soil moisture and inspect foliage for early foliar lesions or chlorosis.\n" +
-    "• Adhere to regional recommended planting density and certified seed spacing.\n" +
-    "• For localized micro-climate advisories or specific chemical dosages, use the Leaf Scan tab for neural diagnosis or schedule a field visit with your extension officer."
-  );
+function isUsableReply(reply: string | undefined): reply is string {
+  if (!reply?.trim()) return false;
+  const lower = reply.toLowerCase();
+  return !lower.includes('internal error') && !lower.includes('unable to retrieve');
 }
 
 const INITIAL_WELCOME_MESSAGE = {
@@ -509,42 +457,17 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
     setChatInput('');
     setIsLoadingAi(true);
 
+    const answeredAt = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     try {
       const res = await getChatCompletion(userText, undefined, language);
       const reply = res.data?.messages?.find(m => m.role === 'assistant')?.content;
-
-      if (!reply || reply.toLowerCase().includes('internal error') || reply.toLowerCase().includes('unable to retrieve')) {
-        const fallback = getAgronomicFallbackAnswer(userText);
-        setMessages(prev => [
-          ...prev,
-          {
-            sender: 'ai',
-            text: fallback,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          },
-        ]);
-        return;
-      }
-
       setMessages(prev => [
         ...prev,
-        {
-          sender: 'ai',
-          text: reply,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
+        { sender: 'ai', text: isUsableReply(reply) ? reply : NO_ANSWER_TEXT, time: answeredAt() },
       ]);
     } catch (err) {
-      console.warn('AI chat query failed, using agronomic knowledge engine:', err);
-      const fallback = getAgronomicFallbackAnswer(userText);
-      setMessages(prev => [
-        ...prev,
-        {
-          sender: 'ai',
-          text: fallback,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
-      ]);
+      console.warn('AI chat query failed:', err);
+      setMessages(prev => [...prev, { sender: 'ai', text: NO_ANSWER_TEXT, time: answeredAt() }]);
     } finally {
       setIsLoadingAi(false);
     }
@@ -607,25 +530,12 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
           >
             <button
               onClick={() => setIsOpen(true)}
-              className="group flex items-center gap-2.5 sm:gap-3 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl bg-slate-900/95 hover:bg-slate-800/90 border border-white/[0.08] hover:border-white/[0.16] text-white shadow-xl backdrop-blur-md transition-colors active:scale-[0.98]"
-              aria-label="Open AI Agronomist"
+              className="flex items-center gap-2 h-11 pl-3 pr-4 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium shadow-lg shadow-slate-900/15 transition-colors"
+              aria-label={t('nav_aiassistant')}
+              title={t('ui_floating_aipill_live_chat_leaf_scan_voice_memo')}
             >
-              <div className="relative">
-                <div className="w-8 h-8 rounded-md bg-slate-800 border border-white/[0.08] flex items-center justify-center text-slate-300">
-                  <Bot className="w-4 h-4" />
-                </div>
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-slate-950" />
-              </div>
-
-              <div className="text-left pr-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-medium text-white">{t('nav_aiassistant')}</span>
-                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-emerald-950/60 text-emerald-300 border border-emerald-800/40">
-                    ONLINE
-                  </span>
-                </div>
-                <span className="text-[10px] text-slate-400 font-normal hidden sm:block">{t('ui_floating_aipill_live_chat_leaf_scan_voice_memo')}</span>
-              </div>
+              <Bot className="w-5 h-5" aria-hidden="true" />
+              <span className="hidden sm:inline">{t('nav_aiassistant')}</span>
             </button>
           </motion.div>
         )}

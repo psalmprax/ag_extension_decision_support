@@ -240,7 +240,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                   <button
                     key={lang}
                     onClick={() => setSelectedLang(lang)}
-                    className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase transition-all ${
+                    className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all ${
                       selectedLang === lang
                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                         : 'text-slate-400 hover:bg-slate-800'

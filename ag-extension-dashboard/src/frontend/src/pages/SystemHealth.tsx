@@ -11,7 +11,6 @@ import {
   Database,
   Zap,
   Wifi,
-  Radio,
   Terminal,
   Cpu,
   Globe,
@@ -31,6 +30,7 @@ import { runDiagnostics, DiagnosticResult } from '../api/diagnosticsService';
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 import { SyncQueuePanel } from '@/components/SyncQueuePanel';
 import { RATE_LIMIT_STATUS, CERT_EXPIRY_WARN_DAYS, ERROR_COOLDOWN_MS } from '@/lib/constants';
+import { SECONDARY_BUTTON } from '@/components/ui/controlStyles';
 
 function IssuesSummary({ issues, summary }: { issues?: string[]; summary?: string }) {
   const { t } = useLanguage();
@@ -256,19 +256,19 @@ function DeploymentSection({ deployment }: { deployment?: Record<string, unknown
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="p-3 rounded-xl border bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/10 text-xs">
-          <p className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase">NODE_ENV</p>
+          <p className="text-xxs font-bold text-slate-500 dark:text-white/40 ">NODE_ENV</p>
           <p className="text-xs font-mono font-bold text-slate-900 dark:text-white mt-0.5">{String(deployment.node_env ?? 'production')}</p>
         </div>
         <div className={`p-3 rounded-xl border text-xs ${prodOk ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300'}`}>
-          <p className="text-xxs font-bold opacity-60 uppercase">{t('ui_system_health_prod_override')}</p>
+          <p className="text-xxs font-bold opacity-60 ">{t('ui_system_health_prod_override')}</p>
           <p className="text-xs font-bold mt-0.5">{prodOk ? '✓ Active' : '✗ Missing'}</p>
         </div>
         <div className={`p-3 rounded-xl border text-xs ${httpsOk ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300' : 'bg-amber-500/10 border-amber-500/25 text-amber-700 dark:text-amber-300'}`}>
-          <p className="text-xxs font-bold opacity-60 uppercase">{t('ui_system_health_https_tls')}</p>
+          <p className="text-xxs font-bold opacity-60 ">{t('ui_system_health_https_tls')}</p>
           <p className="text-xs font-bold mt-0.5">{httpsOk ? '✓ Enforced' : '✗ Inactive'}</p>
         </div>
         <div className={`p-3 rounded-xl border text-xs ${acmeOk ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300' : 'bg-amber-500/10 border-amber-500/25 text-amber-700 dark:text-amber-300'}`}>
-          <p className="text-xxs font-bold opacity-60 uppercase">{t('ui_system_health_acme_email')}</p>
+          <p className="text-xxs font-bold opacity-60 ">{t('ui_system_health_acme_email')}</p>
           <p className="text-xs font-bold mt-0.5">{acmeOk ? '✓ Configured' : '✗ Not set'}</p>
         </div>
       </div>
@@ -280,11 +280,11 @@ function RecommendationsSection({ recommendations }: { recommendations?: string[
   const { t } = useLanguage();
   if (!recommendations || recommendations.length === 0) return null;
   return (
-    <div className="mt-4 p-4 bg-sky-500/10 border border-sky-500/30 rounded-xl">
-      <p className="text-xs font-bold text-sky-700 dark:text-sky-300 mb-2">{t('ui_system_health_automated_sre_recommendations')}</p>
+    <div className="mt-4 p-4 bg-slate-500/10 border border-slate-500/30 rounded-xl">
+      <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">{t('ui_system_health_automated_sre_recommendations')}</p>
       <ul className="list-disc list-inside space-y-1">
         {recommendations.map((rec, i) => (
-          <li key={i} className="text-xs text-sky-800 dark:text-sky-200 whitespace-pre-wrap font-mono">
+          <li key={i} className="text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap font-mono">
             {rec}
           </li>
         ))}
@@ -296,7 +296,7 @@ function RecommendationsSection({ recommendations }: { recommendations?: string[
 function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
   const { t } = useLanguage();
   return (
-    <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl space-y-6">
+    <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-6">
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
         <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <Activity className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -399,19 +399,19 @@ function ComponentHealthCard({
 
       <div className="space-y-2 p-3 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 text-xs font-mono">
         <div className="flex justify-between text-slate-500 dark:text-white/60">
-          <span>Last Poll</span>
+          <span>{t('system_health_last_check')}</span>
           <span className="text-slate-900 dark:text-white">{new Date(check.lastCheck).toLocaleTimeString()}</span>
         </div>
 
         {check.lastSuccess && (
           <div className="flex justify-between text-slate-500 dark:text-white/60">
-            <span>Last Ack</span>
+            <span>{t('system_health_last_reply')}</span>
             <span className="text-emerald-600 dark:text-emerald-400">{new Date(check.lastSuccess).toLocaleTimeString()}</span>
           </div>
         )}
 
         <div className="flex justify-between text-slate-500 dark:text-white/60">
-          <span>Failures</span>
+          <span>{t('system_health_failures')}</span>
           <span className={check.consecutiveFailures > 0 ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-900 dark:text-white'}>
             {check.consecutiveFailures}
           </span>
@@ -467,7 +467,7 @@ function RecoveryLogList({
   t: (key: string) => string;
 }) {
   return (
-    <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl space-y-4">
+    <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-4">
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
         <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -503,7 +503,7 @@ function RecoveryLogList({
                 </div>
               </div>
               <div className="text-right font-mono text-xxs text-slate-500 dark:text-white/40">
-                <span className={`inline-block px-2 py-0.5 rounded-full uppercase font-bold text-xxs mb-1 ${action.success ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/20 text-rose-700 dark:text-rose-300'}`}>
+                <span className={`inline-block px-2 py-0.5 rounded-full font-bold text-xxs mb-1 ${action.success ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/20 text-rose-700 dark:text-rose-300'}`}>
                   {action.success ? 'Success' : 'Failed'}
                 </span>
                 <div>{new Date(action.triggeredAt).toLocaleTimeString()}</div>
@@ -635,21 +635,14 @@ function SystemHealth() {
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-24">
       {/* ── Top Bento Banner: SRE & Telemetry Health Hub ── */}
-      <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl relative overflow-hidden">
+      <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">{t('ui_system_health_sre_self_healing_telemetry')}</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                  <Radio className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                  {t('ui_system_health_cluster_online')}
-                </span>
+                <h1 className="text-2xl font-medium text-slate-900 dark:text-white">{t('ui_system_health_sre_self_healing_telemetry')}</h1>
               </div>
-              <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
+              <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
                 {t('ui_system_health_real_time_node_latency_database_conn')}
               </p>
             </div>
@@ -659,10 +652,10 @@ function SystemHealth() {
             <button
               onClick={handleRunDiagnostics}
               disabled={isRunningDiagnostics}
-              className="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-slate-950 text-xs font-medium rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
+              className={SECONDARY_BUTTON}
             >
               <Activity className={`w-4 h-4 ${isRunningDiagnostics ? 'animate-spin' : ''}`} />
-              <span>{isRunningDiagnostics ? 'Running Scan...' : 'Deep Diagnostic'}</span>
+              <span>{isRunningDiagnostics ? t('system_health_checking', { defaultValue: 'Checking' }) : t('system_health_run_check', { defaultValue: 'Run full check' })}</span>
             </button>
             <button
               onClick={() => reload(true)}
@@ -678,28 +671,28 @@ function SystemHealth() {
         {/* ── Subsystem Metric Tiles ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-200 dark:border-white/5">
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">{t('ui_system_health_healthy_services')}</span>
+            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 block">{t('ui_system_health_healthy_services')}</span>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
               <strong className="text-lg font-mono font-bold text-emerald-600 dark:text-emerald-400">{overallHealth.healthy}</strong>
             </div>
           </div>
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">{t('ui_system_health_degraded_nodes')}</span>
+            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 block">{t('ui_system_health_degraded_nodes')}</span>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400" />
               <strong className="text-lg font-mono font-bold text-amber-600 dark:text-amber-400">{overallHealth.degraded}</strong>
             </div>
           </div>
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">{t('system_health_unhealthy')}</span>
+            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 block">{t('system_health_unhealthy')}</span>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-rose-500 dark:bg-rose-400" />
               <strong className="text-lg font-mono font-bold text-rose-600 dark:text-rose-400">{overallHealth.unhealthy}</strong>
             </div>
           </div>
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">{t('system_health_offline')}</span>
+            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 block">{t('system_health_offline')}</span>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-slate-400" />
               <strong className="text-lg font-mono font-bold text-slate-700 dark:text-slate-400">{overallHealth.offline}</strong>
@@ -709,16 +702,12 @@ function SystemHealth() {
       </div>
 
       {/* ── Component Health Radar Grid ── */}
-      <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl space-y-6">
+      <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-6">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Server className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             {t('ui_system_health_core_infrastructure_nodes')}{healthChecks.length})
           </h3>
-          <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-            {t('ui_system_health_active_mesh')}
-          </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

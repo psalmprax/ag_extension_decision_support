@@ -11,7 +11,6 @@ import {
   Mail,
   MapPin,
   Phone,
-  Radio,
   CheckCircle2,
   AlertCircle,
   History,
@@ -38,6 +37,8 @@ import {
   getRoleBadge,
   type DirectoryUser as User,
 } from '@/components/users/types';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { PRIMARY_BUTTON } from '@/components/ui/controlStyles';
 
 export function UserManagementPage() {
   const { t } = useLanguage();
@@ -174,60 +175,29 @@ export function UserManagementPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-24">
-      {/* ── Top Bento Banner: Staff Directory & Access Control ── */}
-      <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">{t('users_directory_title', 'Staff & Officer Directory')}</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                  <Radio className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                  {t('users_rbac_active', 'RBAC Active')}
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-                {t('users_directory_desc', 'Manage extension officers, regional supervisors, and administrative credentials.')}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
-            {/* KPI Telemetry Chips */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:flex items-center gap-2 w-full sm:w-auto">
-              <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xs text-slate-500 dark:text-white/40 block">{t('users_stat_total_staff', 'Total Staff')}</span>
-                <strong className="text-sm font-semibold text-slate-900 dark:text-white font-mono tabular-nums">{usersList.length}</strong>
-              </div>
-              <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xs text-slate-500 dark:text-white/40 block">{t('users_stat_officers', 'Officers')}</span>
-                <strong className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">{officersCount}</strong>
-              </div>
-              <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xs text-slate-500 dark:text-white/40 block">{t('users_stat_countries', 'Countries')}</span>
-                <strong className="text-sm font-semibold text-sky-600 dark:text-sky-400 font-mono tabular-nums">{uniqueCountries}</strong>
-              </div>
-              <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
-                <span className="text-xs text-slate-500 dark:text-white/40 block">{t('users_stat_regions', 'Regions')}</span>
-                <strong className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 font-mono tabular-nums">{uniqueRegions}</strong>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>{t('users_btn_create_user', 'Create User')}</span>
-            </button>
-          </div>
-        </div>
-
+      <PageHeader
+        title={t('users_directory_title', 'Staff & officers')}
+        description={t('users_directory_desc', 'Accounts for officers, regional managers, farmers and administrators.')}
+        meta={
+          <span className="tabular-nums">
+            {t('users_summary', {
+              total: usersList.length,
+              officers: officersCount,
+              countries: uniqueCountries,
+              regions: uniqueRegions,
+              defaultValue: '{total} accounts, {officers} officers, {countries} countries, {regions} regions',
+            })}
+          </span>
+        }
+        actions={
+          <button onClick={() => setShowCreateModal(true)} className={PRIMARY_BUTTON}>
+            <UserPlus className="w-4 h-4" aria-hidden="true" />
+            <span>{t('users_btn_create_user', 'Create user')}</span>
+          </button>
+        }
+      >
         {/* Search & Filter Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 mt-5 border-t border-slate-200 dark:border-white/5">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative w-full sm:w-96">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
             <input
@@ -255,7 +225,7 @@ export function UserManagementPage() {
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-white/40 pointer-events-none" />
           </div>
         </div>
-      </div>
+      </PageHeader>
 
       <AdminDemoRecords />
 
@@ -271,7 +241,7 @@ export function UserManagementPage() {
             <Users className="w-8 h-8 opacity-70" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">{t('users_empty_title', 'No Users Found')}</h3>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">{t('users_empty_title', 'No users found')}</h3>
             <p className="text-xs text-slate-600 dark:text-white/50 max-w-sm mx-auto">
               {searchTerm || roleFilter
                 ? t('users_empty_desc_filtered', 'No staff members match the active search or role filters.')
@@ -283,7 +253,7 @@ export function UserManagementPage() {
             className="px-5 py-2.5 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-2"
           >
             <UserPlus className="w-4 h-4" />
-            <span>{t('users_btn_add_first', 'Add Extension Officer')}</span>
+            <span>{t('users_btn_add_first', 'Add extension officer')}</span>
           </button>
         </div>
       ) : (
@@ -295,7 +265,7 @@ export function UserManagementPage() {
                 key={user.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 hover:border-emerald-500/30 rounded-xl p-5 shadow-sm dark:shadow-lg space-y-4 transition-all duration-300 group"
+                className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] hover:border-emerald-500/30 rounded-lg p-5 space-y-4 transition-all duration-300 group"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
@@ -329,11 +299,11 @@ export function UserManagementPage() {
                     <span className="text-xs shrink-0">{getCountryFlag(user.country)}</span>
                     <span className="font-medium text-slate-800 dark:text-white/80">{user.country || 'Kenya'}</span>
                     <span className="text-slate-300 dark:text-white/30">•</span>
-                    <span>{user.region || t('users_unassigned_region', 'Unassigned Region')}</span>
+                    <span>{user.region || t('users_unassigned_region', 'Unassigned region')}</span>
                   </div>
                   {user.phone && (
                     <div className="flex items-center gap-2 text-slate-700 dark:text-white/70">
-                      <Phone className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400/70 shrink-0" />
+                      <Phone className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400/70 shrink-0" />
                       <span className="font-mono">{user.phone}</span>
                     </div>
                   )}
@@ -349,9 +319,9 @@ export function UserManagementPage() {
                         <button
                           onClick={() => setSelectedUserForAccess(user)}
                           aria-label={t('users_btn_manage_access_for', 'Edit access for {name}', { name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email })}
-                          className="text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
+                          className="text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
                         >
-                          {t('users_btn_manage_access', 'Edit Access')}
+                          {t('users_btn_manage_access', 'Edit access')}
                         </button>
                       )}
                       <button
@@ -393,7 +363,7 @@ export function UserManagementPage() {
                     <UserPlus className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold">{t('users_modal_register_title', 'Register New User')}</h2>
+                    <h2 className="text-lg font-bold">{t('users_modal_register_title', 'Register new user')}</h2>
                     <p className="text-xs text-white/50">{t('users_modal_register_desc', 'Add extension officer or admin account')}</p>
                   </div>
                 </div>
@@ -422,7 +392,7 @@ export function UserManagementPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-white/70">{t('users_form_first_name', 'First Name *')}</label>
+                    <label className="text-xs font-medium text-white/70">{t('users_form_first_name', 'First name *')}</label>
                     <input
                       type="text"
                       required
@@ -433,7 +403,7 @@ export function UserManagementPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-white/70">{t('users_form_last_name', 'Last Name *')}</label>
+                    <label className="text-xs font-medium text-white/70">{t('users_form_last_name', 'Last name *')}</label>
                     <input
                       type="text"
                       required
@@ -446,7 +416,7 @@ export function UserManagementPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-white/70">{t('users_form_work_email', 'Work Email *')}</label>
+                  <label className="text-xs font-medium text-white/70">{t('users_form_work_email', 'Work email *')}</label>
                   <input
                     type="email"
                     required
@@ -472,7 +442,7 @@ export function UserManagementPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-white/70">{t('users_form_role', 'System Role')}</label>
+                    <label className="text-xs font-medium text-white/70">{t('users_form_role', 'System role')}</label>
                     <select
                       value={formData.role}
                       onChange={e => setFormData({ ...formData, role: e.target.value })}
@@ -486,7 +456,7 @@ export function UserManagementPage() {
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-white/70">{t('users_form_phone', 'Phone Number')}</label>
+                    <label className="text-xs font-medium text-white/70">{t('users_form_phone', 'Phone number')}</label>
                     <input
                       type="tel"
                       value={formData.phone}
@@ -523,7 +493,7 @@ export function UserManagementPage() {
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-white/70">
-                      {t('users_form_region', 'Assigned Region / Territory')}
+                      {t('users_form_region', 'Assigned region / Territory')}
                     </label>
                     <div className="relative">
                       <input
@@ -557,7 +527,7 @@ export function UserManagementPage() {
                     className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center gap-2 transition-colors disabled:opacity-50"
                   >
                     {createUser.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                    <span>{createUser.isPending ? t('users_btn_registering', 'Registering...') : t('users_btn_create_account', 'Create Account')}</span>
+                    <span>{createUser.isPending ? t('users_btn_registering', 'Registering...') : t('users_btn_create_account', 'Create account')}</span>
                   </button>
                 </div>
               </form>
@@ -586,11 +556,11 @@ export function UserManagementPage() {
               {/* Header */}
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                  <div className="w-10 h-10 rounded-xl bg-slate-500/20 border border-slate-500/30 flex items-center justify-center text-slate-400">
                     <History className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold">{t('users_history_title', 'Login & Access History')}</h2>
+                    <h2 className="text-lg font-bold">{t('users_history_title', 'Login & access history')}</h2>
                     <p className="text-xs text-white/50">
                       {selectedUserForHistory.firstName} {selectedUserForHistory.lastName} ({selectedUserForHistory.email})
                     </p>
@@ -607,7 +577,7 @@ export function UserManagementPage() {
               {/* Telemetry Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-xs text-white/50 block">{t('users_history_total_logins', 'Total Logins')}</span>
+                  <span className="text-xs text-white/50 block">{t('users_history_total_logins', 'Total logins')}</span>
                   <strong className="text-sm font-semibold text-white font-mono tabular-nums">{loginStatsData?.totalLogins ?? 0}</strong>
                 </div>
                 <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
@@ -648,7 +618,7 @@ export function UserManagementPage() {
                         <div>
                           <div className="font-medium text-white flex items-center gap-2">
                             <Laptop className="w-3 h-3 text-white/40" />
-                            <span>{entry.device || t('users_history_unknown_device', 'Unknown Device')}</span>
+                            <span>{entry.device || t('users_history_unknown_device', 'Unknown device')}</span>
                           </div>
                           {entry.failureReason && (
                             <p className="text-xxs text-rose-400 font-mono mt-0.5">{t('users_history_reason', 'Reason: {reason}', { reason: entry.failureReason })}</p>

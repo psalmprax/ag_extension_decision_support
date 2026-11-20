@@ -125,7 +125,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
         </div>
         <div>
           <span className="text-xs text-gray-500 font-medium">{t('ui_parcel_polygon_drawer_boundary_vertices')}</span>
-          <p className="text-xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-1">
+          <p className="text-xl font-extrabold text-slate-600 dark:text-slate-400 mt-1">
             {metrics.vertexCount}
           </p>
         </div>
@@ -178,7 +178,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
           type="button"
           onClick={handleExportAndSave}
           disabled={vertices.length < 3}
-          className="py-3 px-5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow disabled:opacity-50 transition"
+          className="py-3 px-5 bg-slate-600 hover:bg-slate-700 text-white text-sm font-semibold rounded-xl shadow disabled:opacity-50 transition"
         >
           {t('ui_parcel_polygon_drawer_export_geojson_save')}
         </button>

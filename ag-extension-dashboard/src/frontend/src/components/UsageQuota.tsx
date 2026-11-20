@@ -37,7 +37,7 @@ const QuotaBar = ({
             <Icon className="w-3.5 h-3.5" />
           </div>
           <div>
-            <span className="text-xxs font-black uppercase tracking-widest text-slate-400 block leading-none mb-1">
+            <span className="text-xxs font-black text-slate-400 block leading-none mb-1">
               {label}
             </span>
             <span
@@ -111,7 +111,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
         className={`relative overflow-hidden ${compact ? '' : 'p-6 bg-slate-900/60 border border-white/10 rounded-xl shadow-xl backdrop-blur-xl'}`}
       >
         <div className="relative z-10 flex flex-col items-center text-center py-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center mb-3 shadow-sm text-emerald-400">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-slate-500/20 border border-emerald-500/30 flex items-center justify-center mb-3 shadow-sm text-emerald-400">
             <Activity className="w-6 h-6" />
           </div>
           <h4 className="text-sm font-bold text-white mb-1">
@@ -136,15 +136,15 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
     string,
     { icon: React.ComponentType<{ className?: string }>; color: string; glow: string }
   > = {
-    sms: { icon: Send, color: 'from-emerald-500 to-teal-400', glow: 'rgba(16,185,129,0.5)' },
+    sms: { icon: Send, color: 'from-emerald-500 to-slate-400', glow: 'rgba(16,185,129,0.5)' },
     ai_chat: {
       icon: MessageSquare,
-      color: 'from-indigo-500 to-cyan-400',
+      color: 'from-slate-500 to-slate-400',
       glow: 'rgba(99,102,241,0.5)',
     },
     report: {
       icon: FileText,
-      color: 'from-purple-500 to-pink-500',
+      color: 'from-slate-500 to-slate-500',
       glow: 'rgba(168,85,247,0.5)',
     },
   };
@@ -156,7 +156,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
       {!compact && (
         <div className="flex items-center justify-between mb-6 relative z-10">
           <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-inner">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-slate-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-inner">
               <TrendingUp className="w-5 h-5" />
             </div>
             <div>

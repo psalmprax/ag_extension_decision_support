@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Camera, CloudRain, TrendingUp, BookOpenCheck,
-  ArrowRight, Check, Sparkles, Volume2
+  ArrowRight, Check, Volume2
 } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
 import { MarketPriceCard } from './MarketPriceCard';
@@ -21,7 +21,7 @@ export function FarmerServices() {
   };
 
   return (
-    <section id="services" className="relative py-20 sm:py-28 border-t border-white/[0.06] bg-gradient-to-b from-slate-950 via-emerald-950/20 to-slate-950 overflow-hidden">
+    <section id="services" className="relative py-20 sm:py-28 border-t border-white/[0.06]  overflow-hidden">
       {/* Subtle Agricultural Crop Backdrop Layer */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         <img
@@ -33,13 +33,10 @@ export function FarmerServices() {
           height={860}
           className="w-full h-full object-cover object-center opacity-10 filter saturate-125 contrast-105 pointer-events-none"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950/80 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0d1a14] via-[#0d1a14]/80 to-[#0d1a14]" />
       </div>
 
-      {/* Warm ambient harvest underlay */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-amber-500/[0.035] blur-[140px] rounded-full pointer-events-none" />
-
-      <div className="max-w-[90rem] w-full mx-auto px-4 sm:px-6 relative z-10">
+      <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 relative z-10">
         {/* Section Header */}
         <motion.div
           initial="hidden"
@@ -48,21 +45,8 @@ export function FarmerServices() {
           variants={stagger}
           className="text-center max-w-3xl mx-auto mb-14 sm:mb-20"
         >
-          <motion.div
-            variants={fadeUp}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-4 shadow-sm"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            {t('ui_farmer_services_four_essential_farmer_services')}
-          </motion.div>
-          <motion.h2
-            variants={fadeUp}
-            className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight"
-          >
-            {t('ui_farmer_services_everything_you_need_to')}{' '}
-            <span className="text-emerald-400">
-              {t('ui_farmer_services_protect_your_family_s_yield')}
-            </span>
+          <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-medium leading-tight text-white mb-4">
+            {t('ui_farmer_services_everything_you_need_to')}
           </motion.h2>
           <motion.p
             variants={fadeUp}
@@ -80,14 +64,14 @@ export function FarmerServices() {
             whileInView="visible"
             viewport={{ once: true, margin: '-60px' }}
             variants={fadeUp}
-            className="group relative rounded-2xl backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] hover:border-emerald-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-emerald-950/40"
+            className="group relative rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-emerald-950/40"
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-inner group-hover:scale-105 transition-transform">
+                <div className="w-11 h-11 rounded-lg bg-white/[0.05] border border-white/[0.1] flex items-center justify-center text-emerald-300 ">
                   <Camera className="w-7 h-7" />
                 </div>
-                <span className="text-xs font-bold font-mono uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
+                <span className="text-xs text-[#9db2a6]">
                   {t('ui_farmer_services_crop_assessment')}
                 </span>
               </div>
@@ -127,7 +111,7 @@ export function FarmerServices() {
               <button
                 type="button"
                 onClick={() => navigate('/diagnosis')}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 transition-all active:scale-[0.98]"
+                className="w-full sm:w-auto h-11 px-5 rounded-md border border-white/[0.16] text-[#e6eee9] hover:bg-white/[0.06] hover:text-white text-sm flex items-center justify-center gap-2 transition-colors"
               >
                 <Camera className="w-4 h-4" />
                 <span>{t('ui_farmer_services_diagnose_a_crop_free')}</span>
@@ -142,20 +126,20 @@ export function FarmerServices() {
             whileInView="visible"
             viewport={{ once: true, margin: '-60px' }}
             variants={fadeUp}
-            className="group relative rounded-2xl backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] hover:border-sky-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-sky-950/40"
+            className="group relative rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-emerald-950/40"
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="w-14 h-14 rounded-2xl bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400 shadow-inner group-hover:scale-105 transition-transform">
+                <div className="w-11 h-11 rounded-lg bg-white/[0.05] border border-white/[0.1] flex items-center justify-center text-emerald-300 ">
                   <CloudRain className="w-7 h-7" />
                 </div>
-                <span className="text-xs font-bold font-mono uppercase tracking-wider text-sky-400 bg-sky-500/10 border border-sky-500/20 px-3 py-1 rounded-full">
+                <span className="text-xs text-[#9db2a6]">
                   {t('ui_farmer_services_weather_information')}
                 </span>
               </div>
 
               <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-sky-300 transition-colors">
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-emerald-300 transition-colors">
                   {t('ui_farmer_services_check_the_weather')}
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
@@ -165,19 +149,19 @@ export function FarmerServices() {
 
               <div className="pt-2 space-y-2 text-xs sm:text-sm text-white/80">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
+                  <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
                   <span>{t('ui_farmer_services_weather_coverage_and_detail_depend_o')}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
+                  <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
                   <span>{t('ui_farmer_services_forecasts_can_change_and_should_not')}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
+                  <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
                   <span>{t('ui_farmer_services_messaging_availability_depends_on_yo')}</span>
@@ -189,7 +173,7 @@ export function FarmerServices() {
               <button
                 type="button"
                 onClick={() => navigate('/demo')}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-sky-600/90 hover:bg-sky-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-sky-950/40 transition-all active:scale-[0.98]"
+                className="w-full sm:w-auto h-11 px-5 rounded-md border border-white/[0.16] text-[#e6eee9] hover:bg-white/[0.06] hover:text-white text-sm flex items-center justify-center gap-2 transition-colors"
               >
                 <CloudRain className="w-4 h-4" />
                 <span>{t('ui_farmer_services_explore_platform_demo')}</span>
@@ -204,14 +188,14 @@ export function FarmerServices() {
             whileInView="visible"
             viewport={{ once: true, margin: '-60px' }}
             variants={fadeUp}
-            className="group relative rounded-2xl backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] hover:border-amber-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-amber-950/40"
+            className="group relative rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:border-amber-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-amber-950/40"
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-inner group-hover:scale-105 transition-transform">
+                <div className="w-11 h-11 rounded-lg bg-white/[0.05] border border-white/[0.1] flex items-center justify-center text-emerald-300 ">
                   <TrendingUp className="w-7 h-7" />
                 </div>
-                <span className="text-xs font-bold font-mono uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
+                <span className="text-xs text-[#9db2a6]">
                   {t('ui_farmer_services_regional_commodity_tracking')}
                 </span>
               </div>
@@ -256,7 +240,7 @@ export function FarmerServices() {
               <button
                 type="button"
                 onClick={() => navigate('/demo')}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-600/90 hover:bg-amber-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40 transition-all active:scale-[0.98]"
+                className="w-full sm:w-auto h-11 px-5 rounded-md border border-white/[0.16] text-[#e6eee9] hover:bg-white/[0.06] hover:text-white text-sm flex items-center justify-center gap-2 transition-colors"
               >
                 <TrendingUp className="w-4 h-4" />
                 <span>{t('ui_farmer_services_open_market_demo')}</span>
@@ -271,20 +255,20 @@ export function FarmerServices() {
             whileInView="visible"
             viewport={{ once: true, margin: '-60px' }}
             variants={fadeUp}
-            className="group relative rounded-2xl backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] hover:border-teal-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-teal-950/40"
+            className="group relative rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-emerald-950/40"
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="w-14 h-14 rounded-2xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400 shadow-inner group-hover:scale-105 transition-transform">
+                <div className="w-11 h-11 rounded-lg bg-white/[0.05] border border-white/[0.1] flex items-center justify-center text-emerald-300 ">
                   <BookOpenCheck className="w-7 h-7" />
                 </div>
-                <span className="text-xs font-bold font-mono uppercase tracking-wider text-teal-400 bg-teal-500/10 border border-teal-500/20 px-3 py-1 rounded-full">
+                <span className="text-xs text-[#9db2a6]">
                   {t('ui_farmer_services_text_voice')}
                 </span>
               </div>
 
               <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-teal-300 transition-colors">
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-emerald-300 transition-colors">
                   {t('ui_farmer_services_read_advice_in_your_dialect')}
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
@@ -294,7 +278,7 @@ export function FarmerServices() {
 
               {/* Interactive Dialect Transcript Card */}
               <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2.5">
-                <div className="text-xs font-semibold text-teal-300 flex items-center justify-between">
+                <div className="text-xs font-semibold text-emerald-300 flex items-center justify-between">
                   <span>{t('ui_farmer_services_advice_text_preview')}</span>
                   <span className="text-xxs font-mono text-white/60">{t('ui_farmer_services_select_a_language')}</span>
                 </div>
@@ -305,7 +289,7 @@ export function FarmerServices() {
                     aria-pressed={activeDialect === 'sw'}
                     className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center ${
                       activeDialect === 'sw'
-                        ? 'bg-teal-700 text-white shadow-md'
+                        ? 'bg-emerald-700 text-white shadow-md'
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
                     }`}
                   >
@@ -317,7 +301,7 @@ export function FarmerServices() {
                     aria-pressed={activeDialect === 'lg'}
                     className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center ${
                       activeDialect === 'lg'
-                        ? 'bg-teal-700 text-white shadow-md'
+                        ? 'bg-emerald-700 text-white shadow-md'
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
                     }`}
                   >
@@ -329,14 +313,14 @@ export function FarmerServices() {
                     aria-pressed={activeDialect === 'en'}
                     className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center ${
                       activeDialect === 'en'
-                        ? 'bg-teal-700 text-white shadow-md'
+                        ? 'bg-emerald-700 text-white shadow-md'
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
                     }`}
                   >
                     <span>{t('ui_bulk_update_modal_english')}</span>
                   </button>
                 </div>
-                <div className="p-2.5 rounded-lg bg-teal-950/40 border border-teal-500/30 text-xs text-teal-200">
+                <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-xs text-emerald-200">
                   <span className="italic leading-snug">
                     {activeDialect === 'sw' && '"Wasiliana na afisa ugani wa eneo lako."'}
                     {activeDialect === 'lg' && '"Tuukirira omukugu mu by\'obulimi ow\'omu kitundu kyo."'}
@@ -353,7 +337,7 @@ export function FarmerServices() {
                   window.location.hash = '#talking-assistant';
                   window.dispatchEvent(new CustomEvent('open-talking-assistant'));
                 }}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-teal-600/90 hover:bg-teal-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-teal-950/40 transition-all active:scale-[0.98]"
+                className="w-full sm:w-auto h-11 px-5 rounded-md border border-white/[0.16] text-[#e6eee9] hover:bg-white/[0.06] hover:text-white text-sm flex items-center justify-center gap-2 transition-colors"
               >
                 <Volume2 className="w-4 h-4" />
                 <span>{t('ui_farmer_services_open_talking_assistant')}</span>

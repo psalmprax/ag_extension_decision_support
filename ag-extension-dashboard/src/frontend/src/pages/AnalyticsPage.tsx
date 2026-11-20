@@ -1,6 +1,7 @@
 import React from 'react';
-import { BarChart3, Radio } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { useLanguage } from '@/lib/LanguageContext';
 import { ChartTooltip } from '@/components/charts/ChartTooltip';
 import { chartTick } from '@/components/charts/chartConfig';
@@ -17,29 +18,11 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* ── Top Bento Banner: Analytics & Velocity Hub ── */}
-      <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-              <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{t('ui_analytics_page_system_analytics')}</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                  <Radio className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                  {t('ui_analytics_page_last_30_days')}
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-                {t('ui_analytics_page_support_performance_commodity_prices')}
-              </p>
-            </div>
-          </div>
-
-        </div>
-      </div>
+      <PageHeader
+        title={t('ui_analytics_page_system_analytics')}
+        description={t('ui_analytics_page_support_performance_commodity_prices')}
+        meta={t('ui_analytics_page_last_30_days')}
+      />
 
       {performanceData ? (
         <>
@@ -49,7 +32,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
           <MarketPriceTrendCard />
 
           {/* ── Activity Timeline Chart Card ── */}
-          <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm space-y-6">
+          <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-white/5">
               <div className="space-y-1">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">

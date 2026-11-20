@@ -4,9 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { MotionValue } from 'framer-motion';
 import { GlobalConstellationVisualization } from '@/components/landing/Visuals';
 import {
-  Camera, Leaf, ArrowRight, CheckCircle2,
-  BookOpenCheck, CloudRain, ShieldCheck, ChevronDown,
-  AlertCircle, Droplets, Radio,
+  Camera, Leaf, CheckCircle2,
+  BookOpenCheck,
+  AlertCircle, Droplets,
 } from 'lucide-react';
 import { stagger, fadeUp, scaleIn } from '../variants';
 import { globalTelemetryNodes } from '../data';
@@ -54,7 +54,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
           decoding="async"
         />
         {/* Soft, warm agrarian sunlit vignette overlays */}
-        <div className="absolute inset-0 bg-gradient-to-b from-stone-950/75 via-emerald-950/60 to-slate-950/95" />
+        <div className="absolute inset-0 bg-gradient-to-b from-stone-950/75 via-emerald-950/60 to-[#0d1a14]/95" />
       </div>
 
       {/* Subtle organic contour pattern */}
@@ -76,112 +76,49 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
       >
         {/* Left column — Farmer-Friendly Value Proposition */}
         <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-6 sm:space-y-8 text-center sm:text-left mx-auto sm:mx-0 min-w-0 max-w-full">
-          {/* Badge */}
-          <motion.div
-            variants={fadeUp}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-md shadow-sm max-w-full mx-auto sm:mx-0 overflow-hidden"
-          >
-            <Leaf className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span className="text-xs sm:text-sm font-semibold tracking-wide text-emerald-300">
-              {t('ui_hero_free_pocket_crop_doctor_for_every_fa')}
-            </span>
-          </motion.div>
 
           {/* Main Headline */}
           <motion.h1
             variants={fadeUp}
-            className="text-3xl sm:text-5xl lg:text-[3.6rem] font-extrabold leading-[1.12] sm:leading-[1.08] tracking-tight text-white"
+            className="text-4xl sm:text-5xl lg:text-6xl font-medium leading-[1.05] text-white"
           >
-            {t('ui_hero_heal_your_crops')}
-            <br />
-            {t('ui_hero_protect_your_harvest')}
-            <br />
-            <span className="text-emerald-400">
-              {t('ui_hero_grow_with_confidence')}
-            </span>
+            {t('ui_hero_heal_your_crops')} {t('ui_hero_protect_your_harvest')} {t('ui_hero_grow_with_confidence')}
           </motion.h1>
 
           {/* Subtitle */}
           <motion.p
             variants={fadeUp}
-            className="text-sm sm:text-base lg:text-lg text-white/80 leading-relaxed max-w-xl mx-auto sm:mx-0 font-normal"
+            className="text-base sm:text-lg text-[#c5d3cb] leading-relaxed max-w-xl mx-auto sm:mx-0"
           >
             {t('ui_hero_share_a_crop_photo_or_symptoms_for_a')}
           </motion.p>
-
-          {/* 4 Farmer Benefit Signifiers */}
-          <motion.div variants={fadeUp} className="grid grid-cols-2 gap-2.5 sm:gap-3 max-w-xl mx-auto sm:mx-0">
-            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                <Camera className="w-4 h-4 text-emerald-400" />
-              </div>
-              <div className="text-left min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white truncate">{t('ui_hero_crop_assessment')}</div>
-                <div className="text-xxs sm:text-xs text-white/60 truncate">{t('ui_hero_possible_causes_not_a_diagnosis')}</div>
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center shrink-0">
-                <CloudRain className="w-4 h-4 text-sky-400" />
-              </div>
-              <div className="text-left min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white truncate">{t('ui_hero_rain_forecasts')}</div>
-                <div className="text-xxs sm:text-xs text-white/60 truncate">{t('ui_hero_check_local_conditions')}</div>
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0">
-                <Radio className="w-4 h-4 text-amber-400" />
-              </div>
-              <div className="text-left min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white truncate">{t('ui_hero_field_tools')}</div>
-                <div className="text-xxs sm:text-xs text-white/60 truncate">{t('ui_hero_availability_varies_by_feature')}</div>
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-teal-500/15 border border-teal-500/30 flex items-center justify-center shrink-0">
-                <BookOpenCheck className="w-4 h-4 text-teal-400" />
-              </div>
-              <div className="text-left min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-white">{t('ui_hero_text_in_local_dialect')}</div>
-                <div className="text-xxs sm:text-xs text-white/70">{t('ui_hero_swahili_luganda_hindi_20')}</div>
-              </div>
-            </div>
-          </motion.div>
 
           {/* Action CTAs */}
           <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 pt-1">
             <button
               type="button"
               onClick={() => navigate('/diagnosis')}
-              className="w-full sm:w-auto relative group overflow-hidden px-8 py-3.5 text-sm sm:text-base font-semibold text-white rounded-xl bg-emerald-600 hover:bg-emerald-500 border border-emerald-500 shadow-sm active:scale-[0.98] transition-colors flex items-center justify-center gap-2.5"
+              className="w-full sm:w-auto h-12 px-6 text-base font-medium text-white rounded-md bg-emerald-600 hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
             >
-              <Camera className="w-5 h-5 text-emerald-100" />
+              <Camera className="w-5 h-5" aria-hidden="true" />
               <span>{t('ui_hero_diagnose_a_crop_free')}</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
 
             {/* Text Dialect Preview */}
             <button
               type="button"
               onClick={toggleTextSample}
-              className={`w-full sm:w-auto group px-6 py-3.5 text-sm sm:text-base font-semibold border rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 backdrop-blur-sm ${
-                isTextSampleVisible
-                  ? 'bg-amber-500/20 border-amber-400 text-amber-200 shadow-md shadow-amber-950/40'
-                  : 'bg-white/[0.06] border-white/[0.12] text-white/90 hover:bg-white/[0.12] hover:text-white'
-              }`}
+              aria-expanded={isTextSampleVisible}
+              className="w-full sm:w-auto h-12 px-6 text-base border border-white/[0.16] rounded-md text-[#e6eee9] hover:bg-white/[0.06] hover:text-white transition-colors flex items-center justify-center gap-2"
             >
               {isTextSampleVisible ? (
                 <>
-                  <BookOpenCheck className="w-4 h-4 text-amber-300" />
+                  <BookOpenCheck className="w-4 h-4" aria-hidden="true" />
                   <span>{t('ui_hero_hide_text_sample')}</span>
                 </>
               ) : (
                 <>
-                  <BookOpenCheck className="w-4 h-4 text-amber-400" />
+                  <BookOpenCheck className="w-4 h-4" aria-hidden="true" />
                   <span>{t('ui_hero_read_in_your_dialect')}</span>
                 </>
               )}
@@ -195,9 +132,9 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left max-w-xl"
+                className="p-3.5 rounded-md bg-white/[0.04] border border-white/[0.1] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left max-w-xl"
               >
-                <div className="flex items-center gap-2.5 text-xs text-amber-100">
+                <div className="flex items-center gap-2.5 text-sm text-[#e6eee9]">
                   <span>
                     <strong>{t('ui_hero_text_sample_in')} {textLanguage === 'sw' ? 'Kiswahili' : 'English'}:</strong>{' '}
                     <em>
@@ -210,7 +147,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <button
                   type="button"
                   onClick={() => setTextLanguage(prev => (prev === 'sw' ? 'en' : 'sw'))}
-                  className="text-xs font-semibold text-amber-300 hover:text-white bg-amber-500/20 px-3.5 py-2 min-h-[44px] inline-flex items-center rounded-md border border-amber-400/30 whitespace-nowrap transition-colors"
+                  className="text-sm text-[#e6eee9] hover:text-white px-3.5 min-h-[44px] inline-flex items-center rounded-md border border-white/[0.16] whitespace-nowrap transition-colors"
                 >
                   {t('ui_hero_switch_text_to')} {textLanguage === 'sw' ? 'English' : 'Kiswahili'}
                 </button>
@@ -221,20 +158,19 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
           {/* Secondary Institutional Bridge for Officers & Ministries */}
           <motion.div
             variants={fadeUp}
-            className="p-3.5 sm:p-4 rounded-xl bg-white/[0.025] border border-white/[0.06] backdrop-blur-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-xl text-left"
+            className="pt-5 border-t border-white/[0.08] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-xl text-left"
           >
             <div className="space-y-0.5 min-w-0">
-              <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5" />
+              <span className="text-sm font-medium text-white flex items-center gap-1.5">
                 {t('ui_hero_are_you_an_extension_officer_coopera')}
               </span>
-              <p className="text-xxs sm:text-xs text-white/60 leading-snug">
+              <p className="text-sm text-[#9db2a6] leading-snug">
                 {t('ui_hero_manage_thousands_of_farmers_across_d')}
               </p>
             </div>
             <a
-              href="#agent-os"
-              className="text-xs font-bold text-emerald-300 hover:text-emerald-200 underline whitespace-nowrap py-1"
+              href="#features"
+              className="text-sm text-emerald-300 hover:text-emerald-200 underline underline-offset-4 whitespace-nowrap py-1"
             >
               {t('ui_hero_explore_organization_tools')}
             </a>
@@ -244,17 +180,17 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
         {/* Right column — Plantix-Style Smartphone Leaf Scanner Mockup (Plain Language) */}
         <motion.div initial="hidden" animate="visible" variants={scaleIn} className="relative w-full max-w-full flex justify-center">
           {/* Smartphone Chassis */}
-          <div className="relative w-full max-w-[370px] sm:max-w-[400px] rounded-[2.8rem] p-3.5 bg-slate-900/90 border-4 border-slate-700/60 shadow-2xl ring-1 ring-white/10 backdrop-blur-xl transition-transform duration-500 hover:scale-[1.01]">
+          <div className="relative w-full max-w-[370px] sm:max-w-[400px] rounded-[2.8rem] p-3.5 bg-white/[0.03] border-4 border-slate-700/60 shadow-2xl ring-1 ring-white/10 backdrop-blur-xl">
             {/* Top speaker & camera bezel */}
-            <div className="w-28 h-4 bg-slate-950 rounded-full mx-auto mb-2 flex items-center justify-center gap-2">
+            <div className="w-28 h-4 bg-[#0d1a14] rounded-full mx-auto mb-2 flex items-center justify-center gap-2">
               <div className="w-2 h-2 rounded-full bg-slate-800" />
               <div className="w-10 h-1 bg-slate-800 rounded-full" />
             </div>
 
             {/* Smartphone Display */}
-            <div className="rounded-[2.2rem] overflow-hidden bg-slate-950 border border-white/10 relative flex flex-col text-left">
+            <div className="rounded-[2.2rem] overflow-hidden bg-[#0d1a14] border border-white/10 relative flex flex-col text-left">
               {/* Phone Status Bar */}
-              <div className="flex justify-between items-center px-5 pt-2 pb-1.5 text-[10px] text-white/60 font-mono bg-slate-950/90 border-b border-white/5">
+              <div className="flex justify-between items-center px-5 pt-2 pb-1.5 text-[10px] text-white/60 font-mono bg-[#0d1a14]/90 border-b border-white/5">
                 <span>09:41</span>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400" />
@@ -281,26 +217,25 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
               </div>
 
               {/* Camera Leaf Viewfinder */}
-              <div className="relative h-[210px] sm:h-[230px] w-full overflow-hidden bg-slate-900">
+              <div className="relative h-[210px] sm:h-[230px] w-full overflow-hidden bg-white/[0.03]">
                 <img
                   src="/images/landing/maize-leaf-diagnostics.webp"
                   alt="Illustrative close-up of a maize leaf"
                   className="w-full h-full object-cover object-center filter saturate-110"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/30" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0d1a14] via-transparent to-black/30" />
 
                 {/* Animated laser scanning line */}
-                <div className="absolute inset-x-0 top-1/2 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_12px_#34d399] animate-pulse" />
 
                 {/* Diagnostic Bounding Reticle in Plain Language */}
-                <div className="absolute top-8 left-10 sm:left-14 w-44 h-28 border-2 border-emerald-400/90 rounded-xl bg-emerald-500/10 flex flex-col justify-between p-2 shadow-[0_0_15px_rgba(16,185,129,0.25)]">
+                <div className="absolute top-8 left-10 sm:left-14 w-44 h-28 border-2 border-emerald-400/90 rounded-xl bg-emerald-500/10 flex flex-col justify-between p-2">
                   <div className="flex justify-between items-start">
-                    <span className="text-[9px] font-sans font-bold text-emerald-300 bg-slate-950/85 px-2 py-0.5 rounded border border-emerald-400/30 flex items-center gap-1">
+                    <span className="text-[9px] font-sans font-bold text-emerald-300 bg-[#0d1a14]/85 px-2 py-0.5 rounded border border-emerald-400/30 flex items-center gap-1">
                       <span>{t('ui_hero_affected_leaf_area')}</span>
                     </span>
-                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                    <span />
                   </div>
-                  <div className="bg-slate-950/90 backdrop-blur-md rounded-lg p-1.5 border border-emerald-400/40 text-left">
+                  <div className="bg-[#0d1a14]/90 backdrop-blur-md rounded-lg p-1.5 border border-emerald-400/40 text-left">
                     <div className="text-[10px] font-bold text-white flex items-center gap-1">
                       <span>{t('ui_hero_example_leaf_observation')}</span>
                       <CheckCircle2 className="w-3 h-3 text-emerald-400" />
@@ -316,11 +251,11 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
               </div>
 
               {/* Diagnosis & Actionable Treatment Card in Plain Language */}
-              <div className="p-4 bg-slate-900/95 border-t border-white/10 space-y-3">
+              <div className="p-4 bg-white/[0.03] border-t border-white/10 space-y-3">
                 {/* Result header */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400 block">
+                    <span className="text-[10px] font-bold text-emerald-400 block">
                       {t('ui_hero_example_next_step')}
                     </span>
                     <h3 className="text-sm font-bold text-white">{t('ui_hero_unconfirmed_leaf_symptoms')}</h3>
@@ -400,7 +335,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             initial={{ opacity: 0, scale: 0.9, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.5 }}
-            className="hidden sm:flex absolute -bottom-4 -left-6 z-30 p-2.5 rounded-2xl bg-slate-900/90 border border-emerald-500/30 backdrop-blur-xl shadow-2xl items-center gap-3 max-w-[270px]"
+            className="hidden sm:flex absolute -bottom-4 -left-6 z-30 p-2.5 rounded-2xl bg-white/[0.03] border border-emerald-500/30 backdrop-blur-xl shadow-2xl items-center gap-3 max-w-[270px]"
           >
             <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-emerald-400/30">
               <img
@@ -421,18 +356,8 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
       </motion.div>
 
       {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent pointer-events-none z-20" />
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0d1a14] via-[#0d1a14]/60 to-transparent pointer-events-none z-20" />
 
-      {/* Scroll indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.5 }}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-20"
-      >
-        <span className="text-xxs text-white/40 uppercase tracking-widest font-mono">{t('ui_hero_scroll_for_more')}</span>
-        <ChevronDown className="w-4 h-4 text-white/40 animate-bounce" />
-      </motion.div>
     </section>
   );
 }

@@ -44,7 +44,7 @@ describe('VoiceNoteTaker', () => {
   it('renders microphone button and active language', () => {
     render(<VoiceNoteTaker />);
 
-    expect(screen.getByText('Audio Note Taker')).toBeInTheDocument();
+    expect(screen.getByText('Audio note taker')).toBeInTheDocument();
     expect(screen.getByText('Kiswahili')).toBeInTheDocument();
     expect(screen.getByLabelText(/Start speaking voice note/i)).toBeInTheDocument();
   });
@@ -55,7 +55,7 @@ describe('VoiceNoteTaker', () => {
     const langBtn = screen.getByLabelText(/Current language: Kiswahili/i);
     fireEvent.click(langBtn);
 
-    expect(screen.getByText('Select Spoken Language')).toBeInTheDocument();
+    expect(screen.getByText('Select spoken language')).toBeInTheDocument();
 
     const hausaOption = screen.getByText('Hausa');
     fireEvent.click(hausaOption);
@@ -74,7 +74,7 @@ describe('VoiceNoteTaker', () => {
     expect(mockToggleRecording).toHaveBeenCalledTimes(1);
     expect(screen.getByText(/Nahitaji mbolea ya kupandia mahindi ekari mbili./i)).toBeInTheDocument();
 
-    const saveBtn = screen.getByText('Save Voice Note');
+    const saveBtn = screen.getByText('Save voice note');
     fireEvent.click(saveBtn);
     expect(onSaveNote).toHaveBeenCalledWith('Nahitaji mbolea ya kupandia mahindi ekari mbili.');
   });

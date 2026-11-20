@@ -109,7 +109,7 @@ export function EfficacyCard() {
         <div className={`${cardClass} p-4 sm:p-5`}>
             <div className="flex items-center gap-2 mb-3">
                 <TrendingUp className="w-4 h-4 text-primary-500" />
-                <h3 className="text-sm font-black uppercase tracking-widest">{t('ui_efficacy_card_advice_efficacy')}</h3>
+                <h3 className="text-sm font-black  ">{t('ui_efficacy_card_advice_efficacy')}</h3>
             </div>
 
             {summary.isLoading ? (
@@ -120,7 +120,7 @@ export function EfficacyCard() {
                         <CheckCircle2 className="w-8 h-8 text-green-500" />
                         <div>
                             <p className="text-2xl font-black leading-none">{summary.data.overallSuccessRate}%</p>
-                            <p className="text-xxs uppercase tracking-widest text-gray-400">{t('ui_efficacy_card_success_rate')}</p>
+                            <p className="text-xxs text-gray-400">{t('ui_efficacy_card_success_rate')}</p>
                         </div>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">

@@ -94,23 +94,35 @@ export function failedGates(metrics: RetrievalMetrics, gates: MetricGates): stri
     });
 }
 
+function isStringArray(value: unknown): value is string[] {
+    return Array.isArray(value) && value.every(item => typeof item === 'string');
+}
+
 /** Rejects malformed golden files early: unknown ids would silently score as misses. */
 export function validateGoldenCases(cases: unknown, knownArticleIds: Set<string>): GoldenCase[] {
     if (!Array.isArray(cases)) throw new Error('Golden set must be an array');
     const seen = new Set<string>();
     return cases.map((raw, index) => {
-        const item = raw as Partial<GoldenCase>;
+        if (!raw || typeof raw !== 'object') throw new Error(`Case ${index}: not an object`);
+        const item = raw as Record<string, unknown>;
         if (typeof item.id !== 'string' || !item.id || seen.has(item.id)) throw new Error(`Case ${index}: missing or duplicate id`);
         seen.add(item.id);
         if (typeof item.question !== 'string' || !item.question.trim()) throw new Error(`Case ${item.id}: missing question`);
         if (typeof item.language !== 'string') throw new Error(`Case ${item.id}: missing language`);
         if (!Array.isArray(item.expected)) throw new Error(`Case ${item.id}: expected must be an array`);
+        const expected: string[] = [];
         for (const id of item.expected) {
-            if (!knownArticleIds.has(id)) throw new Error(`Case ${item.id}: unknown article id ${id}`);
+            if (typeof id !== 'string' || !knownArticleIds.has(id)) throw new Error(`Case ${item.id}: unknown article id ${String(id)}`);
+            expected.push(id);
         }
+        const { crops, country } = item;
+        if (crops !== undefined && !isStringArray(crops)) {
+            throw new Error(`Case ${item.id}: crops must be an array of strings`);
+        }
+        if (country !== undefined && typeof country !== 'string') throw new Error(`Case ${item.id}: country must be a string`);
         return {
-            id: item.id, question: item.question, language: item.language, expected: item.expected,
-            ...(item.crops ? { crops: item.crops } : {}), ...(item.country ? { country: item.country } : {}),
+            id: item.id, question: item.question, language: item.language, expected,
+            ...(isStringArray(crops) ? { crops } : {}), ...(country !== undefined ? { country } : {}),
         };
     });
 }

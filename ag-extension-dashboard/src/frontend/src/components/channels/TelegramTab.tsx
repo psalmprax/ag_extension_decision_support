@@ -45,7 +45,7 @@ export const TelegramTab: React.FC<TelegramTabProps> = ({
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-sky-500/20 text-sky-400">
+          <div className="p-2 rounded-lg bg-slate-500/20 text-slate-400">
             <Bot className="w-5 h-5" />
           </div>
           <div>
@@ -74,7 +74,7 @@ export const TelegramTab: React.FC<TelegramTabProps> = ({
               href="https://t.me/BotFather"
               target="_blank"
               rel="noreferrer"
-              className="text-xxs text-sky-400 hover:underline flex items-center gap-1"
+              className="text-xxs text-slate-400 hover:underline flex items-center gap-1"
             >
               <span>{t('ui_telegram_tab_create_bot_via_botfather')}</span>
               <ExternalLink className="w-3 h-3" />
@@ -86,12 +86,12 @@ export const TelegramTab: React.FC<TelegramTabProps> = ({
               value={telegramForm.botToken}
               onChange={e => setTelegramForm(prev => ({ ...prev, botToken: e.target.value }))}
               placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
-              className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+              className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-slate-500/50"
             />
             <button
               onClick={handleVerifyTelegramBot}
               disabled={isTesting}
-              className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold flex items-center gap-2 transition-all disabled:opacity-50"
+              className="px-4 py-2.5 rounded-xl bg-slate-600 hover:bg-slate-500 text-white text-xs font-bold flex items-center gap-2 transition-all disabled:opacity-50"
             >
               {isTesting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
               <span>{t('ui_telegram_tab_verify_token')}</span>
@@ -113,13 +113,13 @@ export const TelegramTab: React.FC<TelegramTabProps> = ({
           <span className="text-xs font-bold text-slate-300">{t('ui_telegram_tab_telegram_webhook_url')}</span>
           <button
             onClick={() => copyToClipboard(webhookUrl, 'tg_webhook')}
-            className="text-xs flex items-center gap-1 text-sky-400 hover:text-sky-300"
+            className="text-xs flex items-center gap-1 text-slate-400 hover:text-slate-300"
           >
             {copiedKey === 'tg_webhook' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{t('ui_telegram_tab_copy_webhook')}</span>
           </button>
         </div>
-        <code className="text-xs text-sky-400 font-mono block select-all break-all">{webhookUrl}</code>
+        <code className="text-xs text-slate-400 font-mono block select-all break-all">{webhookUrl}</code>
       </div>
 
       <div className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/40 flex items-center justify-between">
@@ -133,7 +133,7 @@ export const TelegramTab: React.FC<TelegramTabProps> = ({
           href={`https://t.me/${telegramForm.botUsername}?start=onboard`}
           target="_blank"
           rel="noreferrer"
-          className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all"
+          className="px-4 py-2 rounded-xl bg-slate-600 hover:bg-slate-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all"
         >
           <span>{t('ui_telegram_tab_open', { botUsername: telegramForm.botUsername })}</span>
           <ExternalLink className="w-3.5 h-3.5" />
@@ -144,7 +144,7 @@ export const TelegramTab: React.FC<TelegramTabProps> = ({
         <button
           onClick={handleSaveTelegram}
           disabled={isSaving}
-          className="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-sky-900/30"
+          className="px-5 py-2.5 rounded-xl bg-slate-600 hover:bg-slate-500 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-slate-900/30"
         >
           {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
           <span>{t('ui_telegram_tab_save_telegram_bot_config')}</span>

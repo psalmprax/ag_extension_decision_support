@@ -244,7 +244,7 @@ function Telemetry() {
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <span>{t('ui_telemetry_spatial_soil_environmental_telemetry')}</span>
-              <span className="px-2 py-0.5 rounded text-xxs font-mono uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+              <span className="px-2 py-0.5 rounded text-xxs font-mono bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                 {t('ui_telemetry_soilgrids_v2_nasa_power')}
               </span>
             </h3>

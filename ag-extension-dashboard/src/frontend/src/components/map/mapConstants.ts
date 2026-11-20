@@ -45,18 +45,20 @@ export const TILE_LAYERS: Record<MapLayer, TileLayerConfig> = {
   },
 };
 
+// Okabe-Ito categorical palette: distinguishable with the common forms of
+// colour blindness, so pins can be told apart by crop.
 export const CROP_COLORS: Record<string, string> = {
-  maize: 'var(--color-primary-500)',
-  tobacco: 'var(--color-primary-500)',
-  groundnuts: 'var(--color-primary-500)',
-  soybeans: 'var(--color-primary-500)',
-  rice: 'var(--color-primary-500)',
-  cotton: 'var(--color-primary-500)',
-  wheat: 'var(--color-primary-500)',
-  sorghum: 'var(--color-primary-500)',
-  beans: 'var(--color-primary-500)',
-  potatoes: 'var(--color-primary-500)',
-  default: 'var(--color-primary-500)',
+  maize: '#E69F00',
+  beans: '#D55E00',
+  potatoes: '#0072B2',
+  wheat: '#B8962E',
+  sorghum: '#CC79A7',
+  rice: '#56B4E9',
+  groundnuts: '#8C6D46',
+  soybeans: '#009E73',
+  tobacco: '#5E4B8B',
+  cotton: '#6B7A8F',
+  default: '#1f8053',
 };
 
 export const CROP_ICONS: Record<string, string> = {
@@ -128,7 +130,7 @@ export const createCurrentUserMarkerIcon = (): L.DivIcon => {
 
 export const MAP_STYLES = `
   .leaflet-container {
-    background: #0b1329 !important;
+    background: #dfe5e1 !important;
     width: 100%;
     height: 100%;
     z-index: 1;
