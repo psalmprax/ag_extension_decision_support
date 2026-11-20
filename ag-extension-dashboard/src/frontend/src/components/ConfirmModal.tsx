@@ -41,8 +41,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     },
     info: {
       icon: Info,
-      iconBg: 'bg-indigo-500/15 border border-indigo-500/30 text-indigo-400',
-      confirmBg: 'bg-indigo-600 hover:bg-indigo-500 text-white',
+      iconBg: 'bg-slate-500/15 border border-slate-500/30 text-slate-400',
+      confirmBg: 'bg-slate-600 hover:bg-slate-500 text-white',
     },
     success: {
       icon: CheckCircle,

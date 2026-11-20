@@ -86,7 +86,7 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
             <div className="text-xxs text-slate-400">{t('outreach_queued', { defaultValue: 'Queued' })}</div>
           </div>
           <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-            <div className="text-sky-400 font-bold text-sm">{stats.totals.processing}</div>
+            <div className="text-slate-400 font-bold text-sm">{stats.totals.processing}</div>
             <div className="text-xxs text-slate-400">{t('outreach_in_flight', { defaultValue: 'In flight' })}</div>
           </div>
         </div>

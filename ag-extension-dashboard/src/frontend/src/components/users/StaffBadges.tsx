@@ -14,7 +14,7 @@ interface StaffBadgesProps {
 function getPlanBadgeClass(planName: string, isFree?: boolean): string {
   const normalized = planName.trim().toLowerCase();
   if (normalized === 'enterprise' || normalized === 'admin') {
-    return 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/30';
+    return 'bg-slate-50 text-slate-800 border-slate-200 dark:bg-slate-500/15 dark:text-slate-300 dark:border-slate-500/30';
   }
   if (!isFree && normalized !== 'free') {
     return 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30';

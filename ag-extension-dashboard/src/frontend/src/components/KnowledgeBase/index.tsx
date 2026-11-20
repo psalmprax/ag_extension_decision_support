@@ -75,6 +75,8 @@ import { DOCUMENT_CATALOG, type DocumentArticle } from './catalog';
 import { RESEARCH_SCENARIOS, type ResearchScenario, type SpatialCanvasMode } from './scenarios';
 import { QuotaChip } from './QuotaChip';
 import { useLanguage } from '@/lib/LanguageContext';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { tabButtonClass } from '@/components/ui/controlStyles';
 
 type KnowledgeTabMode = 'search' | 'graph' | 'workbench' | 'library' | 'telemetry';
 // Helper functions extracted to maintain cognitive complexity < 15
@@ -336,105 +338,65 @@ export const KnowledgeBase: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-20">
-      {/* ── Top Bento Banner Header ── */}
-      <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-5 sm:p-6 shadow-sm relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-              <Brain className="w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                  {t('ui_index_agro_spatial_knowledge_mesh')}
-                </h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                  <BookOpen className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                  {t('ui_index_rag_2_0')}
-                </span>
+      <PageHeader
+        title={t('ui_index_agro_spatial_knowledge_mesh')}
+        description={t('ui_index_multi_modal_grounded_semantic_retrie')}
+        actions={quota ? <QuotaChip quota={quota} onUpgrade={() => setActiveTab('billing')} /> : undefined}
+      >
+  <div className="flex items-center gap-1 overflow-x-auto">
+                <button
+                  onClick={() => setActiveTabMode('search')}
+                  aria-pressed={activeTabMode === 'search'}
+                  className={tabButtonClass(activeTabMode === 'search')}
+                >
+                  <Search className="w-4 h-4" aria-hidden="true" />
+                  <span>{t('ui_index_search_discovery')}</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTabMode('graph')}
+                  aria-pressed={activeTabMode === 'graph'}
+                  className={tabButtonClass(activeTabMode === 'graph')}
+                >
+                  <Brain className="w-4 h-4" aria-hidden="true" />
+                  <span>{t('ui_index_knowledge_graph')}</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTabMode('workbench')}
+                  aria-pressed={activeTabMode === 'workbench'}
+                  className={tabButtonClass(activeTabMode === 'workbench')}
+                >
+                  <Layers className="w-4 h-4" aria-hidden="true" />
+                  <span>{t('ui_index_spatial_simulators')}</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTabMode('library')}
+                  aria-pressed={activeTabMode === 'library'}
+                  className={tabButtonClass(activeTabMode === 'library')}
+                >
+                  <BookOpen className="w-4 h-4" aria-hidden="true" />
+                  <span>{t('ui_index_document_library')}</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTabMode('telemetry')}
+                  aria-pressed={activeTabMode === 'telemetry'}
+                  className={tabButtonClass(activeTabMode === 'telemetry')}
+                >
+                  <Activity className="w-4 h-4" aria-hidden="true" />
+                  <span>{t('ui_index_index_telemetry')}</span>
+                </button>
               </div>
-              <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-                {t('ui_index_multi_modal_grounded_semantic_retrie')}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
-            {/* Quota Telemetry Chip — free 3/3 daily, Pro/Admin Unlimited */}
-            {quota && <QuotaChip quota={quota} onUpgrade={() => setActiveTab('billing')} />}
-
-            {/* 5-Segmented Mode Switcher */}
-            <div className="flex items-center bg-slate-100 dark:bg-white/[0.04] p-1 rounded-lg border border-slate-200 dark:border-white/10 overflow-x-auto">
-              <button
-                onClick={() => setActiveTabMode('search')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                  activeTabMode === 'search'
-                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white'
-                }`}
-              >
-                <Search className="w-3.5 h-3.5" />
-                <span>{t('ui_index_search_discovery')}</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTabMode('graph')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                  activeTabMode === 'graph'
-                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white'
-                }`}
-              >
-                <Brain className="w-3.5 h-3.5" />
-                <span>{t('ui_index_knowledge_graph')}</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTabMode('workbench')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                  activeTabMode === 'workbench'
-                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white'
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>{t('ui_index_spatial_simulators')}</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTabMode('library')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                  activeTabMode === 'library'
-                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white'
-                }`}
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>{t('ui_index_document_library')}</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTabMode('telemetry')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                  activeTabMode === 'telemetry'
-                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white'
-                }`}
-              >
-                <Activity className="w-3.5 h-3.5" />
-                <span>{t('ui_index_index_telemetry')}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      </PageHeader>
 
       {/* ── TAB 1: Search & AI Discovery ── */}
       {activeTabMode === 'search' && (
         <div className="space-y-6">
           {/* Quick Agronomic Research Scenarios — demo curated, live search for real users */}
           {isDemo ? (
-            <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/10 rounded-xl p-5 space-y-4 shadow-sm dark:shadow-xl">
+            <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xxs font-mono font-bold text-emerald-700 dark:text-emerald-400 ">
@@ -480,7 +442,7 @@ export const KnowledgeBase: React.FC = () => {
           )}
 
           {/* Multi-Modal Research Search Bar */}
-          <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm dark:shadow-xl space-y-4">
+          <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5 space-y-4">
             <SearchBar
               searchQuery={searchQuery}
               setSearchQuery={q => {
@@ -518,7 +480,7 @@ export const KnowledgeBase: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/90 border border-emerald-500/30 rounded-xl p-4 shadow-sm dark:shadow-xl space-y-2"
+              className="bg-white dark:bg-white/[0.03] border border-emerald-500/30 rounded-lg p-4 space-y-2"
             >
               <div className="flex items-center gap-2">
                 <RefreshCw className="w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-spin" />
@@ -542,7 +504,7 @@ export const KnowledgeBase: React.FC = () => {
                         isDone
                           ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
                           : isCurrent
-                          ? 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-500/40'
+                          ? 'bg-slate-500/20 text-slate-700 dark:text-slate-300 border border-slate-500/40'
                           : 'bg-slate-100 text-slate-400 border border-slate-200 dark:bg-white/5 dark:text-white/30 dark:border-white/5'
                       }`}
                     >
@@ -562,7 +524,7 @@ export const KnowledgeBase: React.FC = () => {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
-                className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm space-y-6"
+                className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-6"
               >
                 {/* Result Top Action Bar */}
                 <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-white/10">
@@ -586,7 +548,7 @@ export const KnowledgeBase: React.FC = () => {
 
                     <button
                       onClick={() => setActiveTabMode('graph')}
-                      className="px-3 py-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-700 dark:text-teal-300 text-xs font-medium transition-colors flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-lg bg-slate-500/10 hover:bg-slate-500/20 border border-slate-500/30 text-slate-700 dark:text-slate-300 text-xs font-medium transition-colors flex items-center gap-1.5"
                     >
                       <Brain className="w-3.5 h-3.5" />
                       <span>{t('ui_index_inspect_in_citation_graph')}</span>
@@ -594,7 +556,7 @@ export const KnowledgeBase: React.FC = () => {
 
                     <button
                       onClick={() => setActiveTabMode('workbench')}
-                      className="px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300 text-xs font-medium transition-colors flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-lg bg-slate-500/10 hover:bg-slate-500/20 border border-slate-500/30 text-slate-700 dark:text-slate-300 text-xs font-medium transition-colors flex items-center gap-1.5"
                     >
                       <Layers className="w-3.5 h-3.5" />
                       <span>{t('ui_index_launch_spatial_simulator')}</span>
@@ -634,15 +596,15 @@ export const KnowledgeBase: React.FC = () => {
       {/* ── TAB 2: RAG Knowledge Graph ── */}
       {activeTabMode === 'graph' && (
         <div className="space-y-6">
-          <div className="backdrop-blur-2xl bg-white/95 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-2xl relative overflow-hidden">
+          <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 relative overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <Brain className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                    <Brain className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                     <span>{t('ui_index_topological_citation_concept_mesh')}</span>
                   </h3>
-                  <span className="px-2.5 py-0.5 rounded-md text-xxs font-mono font-medium bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20">
+                  <span className="px-2.5 py-0.5 rounded-md text-xxs font-mono font-medium bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20">
                     {t('ui_index_force_directed_webgl')}
                   </span>
                 </div>
@@ -673,16 +635,16 @@ export const KnowledgeBase: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-950/90 border border-teal-500/40 text-xs space-y-2 shadow-sm"
+                  className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-950/90 border border-slate-500/40 text-xs space-y-2 shadow-sm"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-teal-700 dark:text-teal-300 text-sm">{selectedNode.label}</span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-300 text-sm">{selectedNode.label}</span>
                       <span className="text-xxs font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-white/5 text-slate-700 dark:text-white/60">
                         {t('ui_index_type', { category: selectedNode.category })}
                       </span>
                     </div>
-                    <span className="font-mono text-xxs px-2.5 py-1 rounded bg-teal-500/10 text-teal-700 dark:text-teal-300 font-medium tabular-nums">
+                    <span className="font-mono text-xxs px-2.5 py-1 rounded bg-slate-500/10 text-slate-700 dark:text-slate-300 font-medium tabular-nums">
                       {t('ui_index_relevance_score')} {(((selectedNode.score ?? 0.9)) * 100).toFixed(0)}%
                     </span>
                   </div>
@@ -716,13 +678,13 @@ export const KnowledgeBase: React.FC = () => {
       {activeTabMode === 'workbench' && (
         <div className="space-y-6">
           {/* Spatial Canvas Mode Switcher Bar */}
-          <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-2.5 flex items-center justify-between overflow-x-auto gap-2 shadow-sm dark:shadow-xl">
+          <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-2.5 flex items-center justify-between overflow-x-auto gap-2">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setActiveCanvasMode('phenology')}
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
                   activeCanvasMode === 'phenology'
-                    ? 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-500/40 shadow-sm'
+                    ? 'bg-slate-500/20 text-slate-700 dark:text-slate-300 border border-slate-500/40 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900 bg-slate-100 border border-slate-200/80 dark:text-white/60 dark:hover:text-white dark:bg-slate-950/40 dark:border-transparent'
                 }`}
               >
@@ -762,7 +724,7 @@ export const KnowledgeBase: React.FC = () => {
           </div>
 
           {/* Active Canvas Display Shell */}
-          <div className="backdrop-blur-2xl bg-white/95 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-2xl relative min-h-[520px] flex flex-col justify-between overflow-hidden">
+          <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 relative min-h-[520px] flex flex-col justify-between overflow-hidden">
             <div className="w-full flex-1">
               {activeCanvasMode === 'phenology' && (
                 <div className="space-y-3">
@@ -893,7 +855,7 @@ export const KnowledgeBase: React.FC = () => {
       {activeTabMode === 'library' && (
         <div className="space-y-6">
           {/* Library Control Bar */}
-          <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm dark:shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             {/* Search within documents */}
             <div className="relative flex-1 w-full max-w-md">
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40" />
@@ -902,7 +864,7 @@ export const KnowledgeBase: React.FC = () => {
                 value={librarySearchQuery}
                 onChange={e => setLibrarySearchQuery(e.target.value)}
                 placeholder="Search articles, crop guides, scientific bulletins..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 text-xs font-medium focus:outline-none focus:border-purple-500/50"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 text-xs font-medium focus:outline-none focus:border-slate-500/50"
               />
               {librarySearchQuery && (
                 <button
@@ -916,14 +878,14 @@ export const KnowledgeBase: React.FC = () => {
 
             {/* Category Filter Pills */}
             <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1">
-              <Filter className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0 hidden sm:block" />
+              <Filter className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400 shrink-0 hidden sm:block" />
               {['All', 'Agronomy', 'IPM & Pest', 'Soil Chemistry', 'Climatology', 'Horticulture'].map(cat => (
                 <button
                   key={cat}
                   onClick={() => setLibraryFilterCategory(cat)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap ${
                     libraryFilterCategory === cat
-                      ? 'bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/40 shadow-sm shadow-purple-950/40'
+                      ? 'bg-slate-500/20 text-slate-700 dark:text-slate-300 border-slate-500/40 shadow-sm shadow-slate-950/40'
                       : 'bg-slate-100 text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-900 dark:bg-white/[0.03] dark:text-white/50 dark:border-white/5 dark:hover:border-white/15 dark:hover:text-white'
                   }`}
                 >
@@ -945,7 +907,7 @@ export const KnowledgeBase: React.FC = () => {
                 }}
                 className="flex-1 md:flex-none px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 dark:bg-white/5 dark:hover:bg-white/10 dark:text-white dark:border-white/10 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
               >
-                <Download className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                <Download className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
                 <span>{t('ui_index_export_offline_pack')}</span>
               </button>
 
@@ -990,7 +952,7 @@ export const KnowledgeBase: React.FC = () => {
               />
               <label
                 htmlFor="kb-doc-upload-input"
-                className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-950/40 flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-slate-600 hover:bg-slate-500 text-white text-xs font-bold transition-all shadow-lg shadow-slate-950/40 flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Upload className="w-3.5 h-3.5" />
                 <span>{t('ui_index_upload_technical_doc')}</span>
@@ -1007,18 +969,18 @@ export const KnowledgeBase: React.FC = () => {
                   layout
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 hover:border-purple-500/40 dark:border-white/10 dark:hover:border-purple-500/40 rounded-xl p-5 flex flex-col justify-between shadow-sm dark:shadow-xl transition-all group"
+                  className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] hover:border-slate-500/40 dark:border-white/[0.08] dark:hover:border-slate-500/40 rounded-lg p-5 flex flex-col justify-between transition-all group"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-1 rounded-md text-xxs font-mono font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                      <span className="px-2.5 py-1 rounded-md text-xxs font-mono font-bold bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20">
                         {art.category}
                       </span>
                       <span className="text-[10px] font-mono text-slate-500 dark:text-white/40">{art.readingTime}</span>
                     </div>
 
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900 group-hover:text-purple-700 dark:text-white dark:group-hover:text-purple-300 transition-colors line-clamp-2">
+                      <h3 className="text-sm font-bold text-slate-900 group-hover:text-slate-700 dark:text-white dark:group-hover:text-slate-300 transition-colors line-clamp-2">
                         {art.title}
                       </h3>
                       <p className="text-xxs text-slate-500 dark:text-white/50 font-mono mt-1">{art.author}</p>
@@ -1037,7 +999,7 @@ export const KnowledgeBase: React.FC = () => {
 
                     <button
                       onClick={() => setSelectedArticle(art)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-purple-500/20 border border-slate-200 hover:border-purple-500/30 text-slate-700 hover:text-purple-900 dark:bg-white/[0.04] dark:hover:bg-purple-500/20 dark:border-white/10 dark:hover:border-purple-500/30 dark:text-white/80 dark:hover:text-white text-xxs font-bold transition-all flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-500/20 border border-slate-200 hover:border-slate-500/30 text-slate-700 hover:text-slate-900 dark:bg-white/[0.04] dark:hover:bg-slate-500/20 dark:border-white/10 dark:hover:border-slate-500/30 dark:text-white/80 dark:hover:text-white text-xxs font-bold transition-all flex items-center gap-1.5"
                     >
                       <span>{t('ui_index_read_article')}</span>
                       <ExternalLink className="w-3 h-3" />
@@ -1067,7 +1029,7 @@ export const KnowledgeBase: React.FC = () => {
                   <div className="p-6 border-b border-slate-200 dark:border-white/10 flex items-start justify-between gap-4 bg-slate-50 dark:bg-slate-950/60">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="px-2.5 py-0.5 rounded-md text-xxs font-mono font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                        <span className="px-2.5 py-0.5 rounded-md text-xxs font-mono font-bold bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20">
                           {selectedArticle.category}
                         </span>
                         <span className="text-xxs font-mono text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
@@ -1141,7 +1103,7 @@ export const KnowledgeBase: React.FC = () => {
 
       {/* ── TAB 5: Index Telemetry ── */}
       {activeTabMode === 'telemetry' && (
-        <div className="backdrop-blur-2xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-2xl">
+        <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6">
           {stats && <KnowledgeStats data={stats} />}
         </div>
       )}

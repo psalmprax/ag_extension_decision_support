@@ -399,13 +399,13 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                       </span>
                     </div>
                   </th>
-                  <th className="p-4 md:p-5 text-xs font-medium text-center w-[20%] text-purple-300">
+                  <th className="p-4 md:p-5 text-xs font-medium text-center w-[20%] text-slate-300">
                     <div className="flex flex-col items-center gap-1">
                       <div className="flex items-center gap-1">
-                        <Building2 className="w-3.5 h-3.5 text-purple-400" />
+                        <Building2 className="w-3.5 h-3.5 text-slate-400" />
                         <span>{t('billing_matrix_tier_enterprise')}</span>
                       </div>
-                      <span className="text-xs px-2.5 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30 font-medium">
+                      <span className="text-xs px-2.5 py-0.5 rounded-md bg-slate-500/20 text-slate-300 border border-slate-500/30 font-medium">
                         {t('ui_access_and_cost_matrix_custom_tier')}
                       </span>
                     </div>
@@ -536,7 +536,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                     </div>
                     <div className="flex justify-between items-center text-slate-600 dark:text-white/60">
                       <span>{t('ui_access_and_cost_matrix_enterprise_quota')}</span>
-                      <span className="font-semibold text-purple-400 font-mono">
+                      <span className="font-semibold text-slate-400 font-mono">
                         {svc.enterpriseQuota}
                       </span>
                     </div>
@@ -636,7 +636,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 <label className="font-semibold text-slate-700 dark:text-white/80">
                   {t('ui_access_and_cost_matrix_ai_generative_assistant_reasoning_qu')}
                 </label>
-                <span className="font-mono font-bold text-purple-400">
+                <span className="font-mono font-bold text-slate-400">
                   {calcAiChat.toLocaleString()} {t('ui_access_and_cost_matrix_chats')}
                 </span>
               </div>
@@ -647,7 +647,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 step={50}
                 value={calcAiChat}
                 onChange={e => setCalcAiChat(Number(e.target.value))}
-                className="w-full h-2 bg-slate-50 dark:bg-white/[0.05] rounded-lg appearance-none cursor-pointer accent-purple-400"
+                className="w-full h-2 bg-slate-50 dark:bg-white/[0.05] rounded-lg appearance-none cursor-pointer accent-slate-400"
               />
               <span className="text-xxs text-slate-500 dark:text-white/40 block font-mono">
                 {t('ui_access_and_cost_matrix_1_000_included_with_pro_additional_0')}
@@ -660,7 +660,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 <label className="font-semibold text-slate-700 dark:text-white/80">
                   {t('ui_access_and_cost_matrix_ai_crop_soil_photo_diagnoses')}
                 </label>
-                <span className="font-mono font-bold text-cyan-400">
+                <span className="font-mono font-bold text-slate-400">
                   {calcVision.toLocaleString()} {t('ui_access_and_cost_matrix_scans')}
                 </span>
               </div>
@@ -671,7 +671,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 step={10}
                 value={calcVision}
                 onChange={e => setCalcVision(Number(e.target.value))}
-                className="w-full h-2 bg-slate-50 dark:bg-white/[0.05] rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                className="w-full h-2 bg-slate-50 dark:bg-white/[0.05] rounded-lg appearance-none cursor-pointer accent-slate-400"
               />
               <span className="text-xxs text-slate-500 dark:text-white/40 block font-mono">
                 {t('ui_access_and_cost_matrix_100_included_with_pro_additional_0_0')}
@@ -684,7 +684,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 <label className="font-semibold text-slate-700 dark:text-white/80">
                   {t('ui_access_and_cost_matrix_whatsapp_telegram_broadcasts')}
                 </label>
-                <span className="font-mono font-bold text-teal-700 dark:text-teal-400">
+                <span className="font-mono font-bold text-slate-700 dark:text-slate-400">
                   {calcWhatsapp.toLocaleString()} {t('ui_access_and_cost_matrix_broadcasts')}
                 </span>
               </div>
@@ -695,7 +695,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 step={50}
                 value={calcWhatsapp}
                 onChange={e => setCalcWhatsapp(Number(e.target.value))}
-                className="w-full h-2 bg-slate-50 dark:bg-white/[0.05] rounded-lg appearance-none cursor-pointer accent-teal-400"
+                className="w-full h-2 bg-slate-50 dark:bg-white/[0.05] rounded-lg appearance-none cursor-pointer accent-slate-400"
               />
               <span className="text-xxs text-slate-500 dark:text-white/40 block font-mono">
                 {t('ui_access_and_cost_matrix_500_included_with_pro_additional_0_0_2')}

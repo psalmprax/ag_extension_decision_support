@@ -5,7 +5,7 @@ import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useLanguage } from '@/lib/LanguageContext';
 
 const SEVERITY_ICON = {
-    info: { Icon: Info, cls: 'text-blue-500' },
+    info: { Icon: Info, cls: 'text-slate-500' },
     warning: { Icon: AlertTriangle, cls: 'text-amber-500' },
     urgent: { Icon: AlertOctagon, cls: 'text-red-500' },
 } as const;

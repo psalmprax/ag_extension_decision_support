@@ -13,7 +13,6 @@ import {
   AlertCircle,
   Calendar,
   Mic,
-  Radio,
   Leaf,
   Layers,
   ArrowRight,
@@ -86,7 +85,7 @@ function getStatusBadgeClass(status: string): string {
     case 'good':
       return 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
     case 'fair':
-      return 'text-sky-400 border-sky-500/30 bg-sky-500/10';
+      return 'text-slate-400 border-slate-500/30 bg-slate-500/10';
     case 'poor':
       return 'text-amber-400 border-amber-500/30 bg-amber-500/10';
     case 'diseased':
@@ -179,7 +178,7 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
                 <div className="text-xs text-white/50 flex items-center gap-3 mt-0.5">
                   {selectedFarmer.village && (
                     <span className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-purple-400" /> {selectedFarmer.village}
+                      <MapPin className="w-3 h-3 text-slate-400" /> {selectedFarmer.village}
                     </span>
                   )}
                   {selectedFarmer.phone && (
@@ -199,7 +198,7 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
         </div>
 
         {isDropdownOpen && (
-          <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-slate-900/95 border border-purple-500/30 rounded-xl shadow-2xl backdrop-blur-2xl p-2 max-h-60 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-slate-900/95 border border-slate-500/30 rounded-xl shadow-2xl backdrop-blur-2xl p-2 max-h-60 overflow-y-auto">
             <div className="relative mb-2">
               <Search className="w-3.5 h-3.5 text-white/40 absolute left-3 top-2.5" />
               <input
@@ -207,7 +206,7 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
                 value={farmerSearch}
                 onChange={e => onSearchChange(e.target.value)}
                 placeholder="Search farmer by name, village, or phone..."
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/10 text-xs text-white placeholder-white/30 outline-none focus:border-purple-400"
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/10 text-xs text-white placeholder-white/30 outline-none focus:border-slate-400"
                 onClick={e => e.stopPropagation()}
               />
             </div>
@@ -217,14 +216,14 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
                   key={f.id}
                   onClick={() => onSelectFarmer(f)}
                   className={`p-2 rounded-lg cursor-pointer flex items-center justify-between text-xs transition-all ${
-                    selectedFarmer?.id === f.id ? 'bg-purple-500/20 text-white font-semibold' : 'text-white/80 hover:bg-white/[0.05]'
+                    selectedFarmer?.id === f.id ? 'bg-slate-500/20 text-white font-semibold' : 'text-white/80 hover:bg-white/[0.05]'
                   }`}
                 >
                   <div>
                     <div>{f.firstName} {f.lastName}</div>
                     <div className="text-xxs text-white/40">{f.village || f.region || 'Registered Farmer'}</div>
                   </div>
-                  {selectedFarmer?.id === f.id && <Check className="w-3.5 h-3.5 text-purple-400" />}
+                  {selectedFarmer?.id === f.id && <Check className="w-3.5 h-3.5 text-slate-400" />}
                 </div>
               ))}
               {filteredFarmers.length === 0 && (
@@ -515,16 +514,9 @@ export const VisitSynthesisForm: React.FC = () => {
       <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-sm relative overflow-hidden">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-              <FileCheck className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
-            </div>
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">{t('nav_visit_synthesis')}</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                  <Radio className="w-2.5 h-2.5 text-emerald-400" />
-                  {t('ui_visit_synthesis_form_ai_field_copilot_active')}
-                </span>
               </div>
               <p className="text-xs text-white/60 mt-0.5">
                 {t('ui_visit_synthesis_form_convert_unorganized_voice_dictation')}
@@ -674,7 +666,7 @@ export const VisitSynthesisForm: React.FC = () => {
         />
       ) : (
         <div className="p-4 rounded-xl bg-slate-900/60 border border-white/10 text-center text-xs text-white/50 flex items-center justify-center gap-2">
-          <AlertCircle className="w-4 h-4 text-purple-400" />
+          <AlertCircle className="w-4 h-4 text-slate-400" />
           <span>{t('ui_visit_synthesis_form_select_a_registered_farmer_above_to')}</span>
         </div>
       )}

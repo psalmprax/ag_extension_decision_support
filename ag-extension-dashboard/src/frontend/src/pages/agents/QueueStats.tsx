@@ -53,8 +53,8 @@ export function QueueStats({ status }: { status: QueueStatus }) {
         label="Active workers"
         value={status.active}
         caption="Running now"
-        iconClass="text-sky-500 dark:text-sky-400"
-        valueClass="text-sky-600 dark:text-sky-400"
+        iconClass="text-slate-500 dark:text-slate-400"
+        valueClass="text-slate-600 dark:text-slate-400"
       />
       <QueueStatCard
         icon={CheckCircle}

@@ -21,6 +21,7 @@ import { useRetryWithBackoff } from '@/hooks/useRetryWithBackoff';
 import { fetchFarmers } from '@/api/farmerService';
 import { useOpenFarmerChat } from '@/hooks/useOpenFarmerChat';
 import { findFarmer } from '@/lib/farmerMatch';
+import { farmerCoordinates } from '@/lib/farmerLocation';
 import apiClient from '@/api/client';
 import { LiveActivityStream } from '@/components/LiveActivityStream';
 import { VegetationHealthCard } from '@/components/VegetationHealthCard';
@@ -38,6 +39,7 @@ import { DistributionPanels } from '@/components/dashboard/DistributionPanels';
 import { DashboardToolbar } from '@/components/dashboard/DashboardToolbar';
 import { useZoneFarmers } from '@/hooks/useDashboardZone';
 import { SoilClimateSampleCard } from '@/components/dashboard/SoilClimateSampleCard';
+import { formatLabel } from '@/lib/formatLabel';
 
 const REGION_MAP_MAX_RETRIES = 3;
 const REGION_MAP_RETRY_BASE_DELAY_MS = 800;
@@ -201,7 +203,7 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
                   </p>
                   <p className="text-xxs text-slate-500">{health?.environment || ''}</p>
                 </div>
-                <span className={`text-xxs font-semibold  ${item.ok ? 'text-emerald-400' : 'text-amber-400'}`}>{item.status}</span>
+                <span className={`text-xxs font-semibold  ${item.ok ? 'text-emerald-400' : 'text-amber-400'}`}>{formatLabel(item.status)}</span>
               </div>
             ))}
           </>
@@ -304,24 +306,18 @@ const DashboardMapSection: React.FC<{
     refetchWithRetry();
   }, [resetRetry, refetchWithRetry]);
 
-  // Only farmers with a real GPS fix are plottable. Defaulting missing
-  // coordinates to Nairobi used to fabricate pin positions on the map.
+  // Only farmers with a saved farm position are plottable; nothing is defaulted.
   const mappedFarmers = useMemo(
     () =>
-      effectiveFarmers
-        .filter(f => typeof f.latitude === 'number' && Number.isFinite(f.latitude)
-          && typeof f.longitude === 'number' && Number.isFinite(f.longitude))
-        .map(f => ({
-          id: f.id,
-          name: `${f.firstName} ${f.lastName}`,
-          lat: f.latitude as number,
-          lng: f.longitude as number,
-          crop: f.crops?.[0] || 'Unspecified',
-          region: f.region || 'Unknown',
-          size: f.farmSize || 0,
-          phone: f.phone,
-          yield: f.yield || 0,
-        })),
+      effectiveFarmers.flatMap(f => {
+        const position = farmerCoordinates(f);
+        if (!position) return [];
+        return [{
+          id: f.id, name: `${f.firstName} ${f.lastName}`, lat: position.lat, lng: position.lng,
+          crop: f.crops?.[0] || 'Unspecified', region: f.region || 'Unknown',
+          size: Number(f.farmSize) || 0, phone: f.phone, yield: f.yield || 0,
+        }];
+      }),
     [effectiveFarmers]
   );
 
@@ -380,7 +376,7 @@ const DashboardMapSection: React.FC<{
                 </span>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-slate-500 rounded-full"></div>
                 <span className="text-xs font-medium text-slate-200">
                   {t('analytics_disease_alerts')}
                 </span>

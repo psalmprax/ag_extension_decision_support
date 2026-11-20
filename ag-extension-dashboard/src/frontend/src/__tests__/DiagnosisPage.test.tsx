@@ -49,14 +49,12 @@ describe('DiagnosisPage Component', () => {
     expect(backBtn.getAttribute('href')).toBe('/');
 
     // Verify clinic title and guarantees
-    expect(screen.getByText(/Instant crop disease & leaf pathology doctor/i)).toBeDefined();
-    expect(screen.getByText(/Online analysis/i)).toBeDefined();
+    expect(screen.getByRole('heading', { level: 1, name: 'Disease diagnosis' })).toBeDefined();
+    expect(screen.getByText(/confirm with an extension officer before you treat/i)).toBeDefined();
 
     // Verify diagnostic tabs
-    expect(screen.getByText(/Leaf Image Analysis/i)).toBeDefined();
-    expect(screen.getByText(/Video Observations/i)).toBeDefined();
-    expect(screen.getByText(/Symptom Inference/i)).toBeDefined();
-    expect(screen.getByText(/Soil Diagnostics/i)).toBeDefined();
-    expect(screen.getByText(/Pathology Library/i)).toBeDefined();
+    for (const name of ['Leaf photo', 'Video', 'Describe symptoms', 'Soil', 'Disease library']) {
+      expect(screen.getByRole('tab', { name })).toBeDefined();
+    }
   });
 });

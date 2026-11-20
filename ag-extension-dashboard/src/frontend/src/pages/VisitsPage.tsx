@@ -3,6 +3,8 @@ import { AnimatePresence } from 'framer-motion';
 import { Plus, Calendar } from 'lucide-react';
 import { Visit, Farmer } from '../types/dashboard';
 import { updateVisit } from '@/api/visitService';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { PRIMARY_BUTTON, tabButtonClass } from '@/components/ui/controlStyles';
 import { useLanguage } from '@/lib/LanguageContext';
 import { VisitCard } from '@/components/visits/VisitCard';
 import { VisitReportModal, type VisitReportTarget } from '@/components/visits/VisitReportModal';
@@ -72,29 +74,18 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
           }}
         />
       )}
-      {/* ── Top Bento Banner & Quick Actions ── */}
-      <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-4 sm:p-6">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
-          <div>
-            <h1 className="text-2xl font-medium text-slate-900 dark:text-white">{t('ui_visits_page_field_visits_itineraries')}</h1>
-            <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
-              {t('ui_visits_page_manage_scheduled_on_site_inspections')}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
-            <button
-              onClick={() => setShowVisitModal(true)}
-              className="w-full sm:w-auto h-10 px-4 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{t('visits_schedule_new') || 'Schedule Field Visit'}</span>
-            </button>
-          </div>
-        </div>
-
+      <PageHeader
+        title={t('ui_visits_page_field_visits_itineraries')}
+        description={t('ui_visits_page_manage_scheduled_on_site_inspections')}
+        actions={
+          <button onClick={() => setShowVisitModal(true)} className={PRIMARY_BUTTON}>
+            <Plus className="w-4 h-4" aria-hidden="true" />
+            <span>{t('visits_schedule_new') || 'Schedule a visit'}</span>
+          </button>
+        }
+      >
         {/* Status Filter Tabs */}
-        <div className="flex items-center gap-2 pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-slate-200/80 dark:border-white/5 overflow-x-auto pb-1">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {[
             { id: 'all', label: t('visits_filter_all', { defaultValue: 'All' }), count: visits.length },
             { id: 'pending', label: t('visits_filter_upcoming', { defaultValue: 'Upcoming' }), count: pendingCount },
@@ -105,11 +96,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
               key={tab.id}
               onClick={() => setFilter(tab.id as typeof filter)}
               aria-pressed={filter === tab.id}
-              className={`h-8 px-3 rounded-md text-sm transition-colors flex items-center gap-2 whitespace-nowrap ${
-                filter === tab.id
-                  ? 'bg-emerald-50 dark:bg-emerald-400/[0.1] text-emerald-800 dark:text-emerald-200 font-medium'
-                  : 'text-slate-600 dark:text-white/60 hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white'
-              }`}
+              className={tabButtonClass(filter === tab.id)}
             >
               <span>{tab.label}</span>
               <span className="text-xs font-mono tabular-nums text-slate-500 dark:text-white/50">
@@ -118,7 +105,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
             </button>
           ))}
         </div>
-      </div>
+      </PageHeader>
 
       {/* Visits Cards Grid */}
       {filteredVisits.length === 0 ? (

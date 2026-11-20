@@ -24,7 +24,7 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
   return (
     <section>
       <h3 className="text-sm font-medium mb-6 flex items-center gap-2 text-slate-400">
-        <Clock className="w-4 h-4 text-purple-500" />
+        <Clock className="w-4 h-4 text-slate-500" />
         {t('nav_visits')}
       </h3>
       <div className="space-y-4">

@@ -144,7 +144,7 @@ const SpatialDataVisualization = ({
 
   return (
     <div className={`aspect-video rounded-xl relative overflow-hidden border ${isCyber ? 'bg-black/40 border-primary-500/20 shadow-[0_0_30px_var(--color-outline)]' : 'bg-gray-100 border-gray-200'}`}>
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/40 via-blue-900/20 to-emerald-950/40" />
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/40 via-slate-900/20 to-emerald-950/40" />
       {isCyber && <div className="absolute inset-0 cyber-grid-premium opacity-30" />}
 
       <div className="absolute inset-0 flex items-center justify-center">
@@ -298,8 +298,8 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
       <SpatialDataVisualization dataPoints={dataPoints} isLoading={isLoading} isCyber={isCyber ?? false} priority={priority as PriorityLike} farmer={farmer as FarmerLike} />
       <MetricsGrid priority={priority as PriorityLike} isCyber={isCyber ?? false} isLoading={isLoading} />
 
-      <div className={`p-6 rounded-xl border relative min-h-[140px] flex flex-col justify-center ${isCyber ? 'bg-primary-500/5 border-primary-500/20 shadow-[0_0_20px_var(--color-outline)]' : 'bg-blue-50/50 border-blue-100'}`}>
-        <h5 className={`text-xxs font-black mb-3 flex items-center gap-2 ${isCyber ? 'text-primary-400' : 'text-blue-600'}`}>
+      <div className={`p-6 rounded-xl border relative min-h-[140px] flex flex-col justify-center ${isCyber ? 'bg-primary-500/5 border-primary-500/20 shadow-[0_0_20px_var(--color-outline)]' : 'bg-slate-50/50 border-slate-100'}`}>
+        <h5 className={`text-xxs font-black mb-3 flex items-center gap-2 ${isCyber ? 'text-primary-400' : 'text-slate-600'}`}>
           <Navigation2 className="w-3 h-3" />
           {isLoading ? 'Generating Synthesis...' : 'Growth Trajectory Analysis'}
         </h5>

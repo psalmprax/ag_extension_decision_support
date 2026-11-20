@@ -263,7 +263,7 @@ export function Register() {
               <span>{t('ui_register_multi_spectral_field_disease_detecti')}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
               <span>{t('ui_register_nasa_power_weather_sync_offline_fiel')}</span>
             </div>
           </div>

@@ -215,16 +215,9 @@ export const FarmerRegistrationForm: React.FC = () => {
       <div className="backdrop-blur-xl bg-slate-900 border border-white/10 rounded-xl p-6 shadow-sm relative overflow-hidden">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-              <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
-            </div>
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">{t('ui_farmer_registration_form_register_client')}</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                  <Radio className="w-2.5 h-2.5 text-emerald-400" />
-                  {t('ui_farmer_registration_form_edge_intake_node')}
-                </span>
               </div>
               <p className="text-xs text-white/60 mt-0.5">
                 {t('ui_farmer_registration_form_enroll_smallholders_into_real_time_a')}
@@ -312,7 +305,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                 <div className="flex items-center gap-1.5 text-xxs text-white/40">
                   <span className="px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10">SMS</span>
                   <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{t('ui_farmer_registration_form_whatsapp')}</span>
-                  <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">{t('ui_farmer_registration_form_telegram')}</span>
+                  <span className="px-1.5 py-0.5 rounded bg-slate-500/10 text-slate-400 border border-slate-500/20">{t('ui_farmer_registration_form_telegram')}</span>
                 </div>
               </div>
               <div className="relative">

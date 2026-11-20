@@ -145,18 +145,18 @@ export function DemoPage({
               label: '3D Agro Scrubber',
               color: 'text-emerald-400',
             },
-            { key: 'rag' as const, icon: Brain, label: 'RAG Assistant', color: 'text-purple-400' },
+            { key: 'rag' as const, icon: Brain, label: 'RAG Assistant', color: 'text-slate-400' },
             {
               key: 'synthesis' as const,
               icon: Smartphone,
               label: 'Voice Synthesis',
-              color: 'text-sky-400',
+              color: 'text-slate-400',
             },
             {
               key: 'telemetry' as const,
               icon: Database,
               label: 'Soil Telemetry',
-              color: 'text-cyan-400',
+              color: 'text-slate-400',
             },
             {
               key: 'telecom' as const,
@@ -202,7 +202,7 @@ export function DemoPage({
                       onClick={() => setSelectedPreset(idx)}
                       className={`p-4 text-xs text-left rounded-xl transition-all border ${
                         selectedPreset === idx
-                          ? 'bg-cyan-500/15 border-cyan-400/40 text-white'
+                          ? 'bg-slate-500/15 border-slate-400/40 text-white'
                           : 'bg-white/5 border-white/5 text-stone-300 hover:bg-white/10'
                       }`}
                     >
@@ -214,7 +214,7 @@ export function DemoPage({
 
               <div className="p-5 rounded-xl bg-black/40 border border-white/5 min-h-[200px]">
                 <div className="flex items-center gap-2 border-b border-white/5 pb-3 mb-4">
-                  <Bot className="w-4 h-4 text-purple-400" />
+                  <Bot className="w-4 h-4 text-slate-400" />
                   <span className="text-xs font-bold font-mono text-stone-400">
                     {t('ui_demo_page_example_assistant_response_scripted')}
                   </span>
@@ -278,7 +278,7 @@ export function DemoPage({
                     onClick={triggerSynthesisToDashboard}
                     className="px-5 py-2.5 rounded-xl text-xs font-bold bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center gap-2 cursor-pointer transition-all"
                   >
-                    <Zap className="w-4 h-4 text-purple-400" /> {t('ui_demo_page_preview_example_summary')}
+                    <Zap className="w-4 h-4 text-slate-400" /> {t('ui_demo_page_preview_example_summary')}
                   </button>
                 </div>
                 {audioError && <p role="alert" className="text-xs text-amber-300">{audioError}</p>}
@@ -326,7 +326,7 @@ export function DemoPage({
                   <span className="text-xxs font-mono text-stone-500 block mb-1">
                     {t('ui_demo_page_bulk_density')}
                   </span>
-                  <span className="text-2xl font-bold font-mono text-cyan-400">1.25 kg/dm3</span>
+                  <span className="text-2xl font-bold font-mono text-slate-400">1.25 kg/dm3</span>
                   <span className="text-xxs text-emerald-400 block mt-1.5">
                     {t('ui_demo_page_illustrative_value')}
                   </span>
@@ -346,15 +346,15 @@ export function DemoPage({
                 <div className="flex justify-between items-center text-xs border-b border-white/5 pb-3">
                   <span className="font-mono text-stone-400">{t('ui_demo_page_illustrative_telemetry_not_live')}</span>
                 </div>
-                <div className="space-y-2 font-mono text-xs-plus text-cyan-400/90 leading-relaxed">
+                <div className="space-y-2 font-mono text-xs-plus text-slate-400/90 leading-relaxed">
                   {telemetryLogs.map((log, i) => (
                     <p key={i}>{log}</p>
                   ))}
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
-                <MapPin className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-slate-500/5 border border-slate-500/10">
+                <MapPin className="w-5 h-5 text-slate-400 flex-shrink-0" />
                 <p className="text-xs text-stone-400">
                   {t('ui_demo_page_these_sample_values_are_not_field_me')}
                 </p>
@@ -387,7 +387,7 @@ export function DemoPage({
 
               <div className="grid md:grid-cols-3 gap-4 pt-2">
                 <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1">
-                  <div className="text-xs font-mono text-sky-400">{t('ui_demo_page_stage_01_orbital')}</div>
+                  <div className="text-xs font-mono text-slate-400">{t('ui_demo_page_stage_01_orbital')}</div>
                   <div className="text-sm font-bold text-white">{t('ui_demo_page_atmospheric_flux')}</div>
                   <p className="text-xs text-stone-400">
                     {t('ui_demo_page_example_of_weather_data_that_could_i')}
@@ -403,7 +403,7 @@ export function DemoPage({
                 </div>
 
                 <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1">
-                  <div className="text-xs font-mono text-purple-400">{t('ui_demo_page_stage_03_04_synthesis')}</div>
+                  <div className="text-xs font-mono text-slate-400">{t('ui_demo_page_stage_03_04_synthesis')}</div>
                   <div className="text-sm font-bold text-white">{t('ui_demo_page_edge_ussd_uplink')}</div>
                   <p className="text-xs text-stone-400">
                     {t('ui_demo_page_example_of_how_observations_and_mess')}

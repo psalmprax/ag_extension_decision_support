@@ -643,7 +643,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                           <div className="text-xxs text-slate-400">{t('ui_goal_mode_campaign_modal_alerts_sent')}</div>
                         </div>
                         <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                          <div className="text-sky-400 font-bold">{item.scheduled_visits_count}</div>
+                          <div className="text-slate-400 font-bold">{item.scheduled_visits_count}</div>
                           <div className="text-xxs text-slate-400">{t('ui_goal_mode_campaign_modal_visits_queued')}</div>
                         </div>
                       </div>

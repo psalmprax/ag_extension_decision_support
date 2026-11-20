@@ -137,7 +137,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
           {/* Sidebar Footer */}
           <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800 flex items-center gap-4 px-2">
             <div
-              className={`w-10 h-10 bg-indigo-500 ${radiusClass} flex items-center justify-center text-white font-black`}
+              className={`w-10 h-10 bg-slate-500 ${radiusClass} flex items-center justify-center text-white font-black`}
             >
               {user ? (
                 <span className="text-sm font-bold">

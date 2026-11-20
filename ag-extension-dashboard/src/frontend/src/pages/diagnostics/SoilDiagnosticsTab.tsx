@@ -199,7 +199,7 @@ const SoilNpkGrid: React.FC<{ npk: SoilAnalysisResult['npkDeficiencies'] }> = ({
         </div>
 
         <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800 text-center">
-          <div className="w-7 h-7 rounded-[3px] bg-sky-500/15 border border-sky-500/30 flex items-center justify-center mx-auto mb-1 text-sky-400 font-bold font-mono text-xs">
+          <div className="w-7 h-7 rounded-[3px] bg-slate-500/15 border border-slate-500/30 flex items-center justify-center mx-auto mb-1 text-slate-400 font-bold font-mono text-xs">
             P
           </div>
           <p className="text-[10px] font-mono text-slate-400 ">{t('ui_soil_diagnostics_tab_phosphorus')}</p>
@@ -292,7 +292,7 @@ const SoilResultsHUD: React.FC<{
 
         <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800">
           <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 ">
-            <Droplet className="w-3 h-3 text-sky-400" />
+            <Droplet className="w-3 h-3 text-slate-400" />
             <span>{t('ui_soil_diagnostics_tab_moisture_level')}</span>
           </div>
           <p className="text-xs font-bold text-white">{soilAnalysis.estimatedMoisture}</p>
@@ -300,7 +300,7 @@ const SoilResultsHUD: React.FC<{
 
         <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800">
           <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 ">
-            <Activity className="w-3 h-3 text-purple-400" />
+            <Activity className="w-3 h-3 text-slate-400" />
             <span>{t('ui_soil_diagnostics_tab_drainage_class')}</span>
           </div>
           <p className="text-xs font-bold text-white">{soilAnalysis.drainageClass}</p>
@@ -555,15 +555,15 @@ export function SoilDiagnosticsTab({
       <div className="p-4 rounded-[4px] bg-slate-900/80 border border-slate-800">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <h3 className="text-xs font-semibold text-white flex items-center gap-2">
-            <Database className="w-4 h-4 text-sky-400" />
+            <Database className="w-4 h-4 text-slate-400" />
             {t('ui_soil_diagnostics_tab_field_soil_context')}
-            <span className="px-1.5 py-0.5 rounded-[2px] text-[9px] font-mono bg-sky-500/10 text-sky-300 border border-sky-500/20">{t('ui_live_activity_stream_live')}</span>
+            <span className="px-1.5 py-0.5 rounded-[2px] text-[9px] font-mono bg-slate-500/10 text-slate-300 border border-slate-500/20">{t('ui_live_activity_stream_live')}</span>
           </h3>
           <div className="flex flex-wrap items-center gap-2">
             <select
               value={selectedFarmerId}
               onChange={e => setSelectedFarmerId(e.target.value)}
-              className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white focus:border-sky-500 outline-none"
+              className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white focus:border-slate-500 outline-none"
             >
               <option value="">{t('ui_soil_diagnostics_tab_select_farmer_to_load_real_soil_base')}</option>
               {farmersList.map(f => (
@@ -577,7 +577,7 @@ export function SoilDiagnosticsTab({
                 type="button"
                 onClick={handleCaptureLocation}
                 disabled={isSavingLocation}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-semibold bg-sky-600 text-white hover:bg-sky-500 disabled:opacity-50 disabled:cursor-wait transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-semibold bg-slate-600 text-white hover:bg-slate-500 disabled:opacity-50 disabled:cursor-wait transition-colors"
               >
                 {isSavingLocation ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -590,7 +590,7 @@ export function SoilDiagnosticsTab({
           </div>
         </div>
         {locationNotice && (
-          <p className="text-[11px] text-sky-300 mb-3" role="status">
+          <p className="text-[11px] text-slate-300 mb-3" role="status">
             {locationNotice}
           </p>
         )}
@@ -611,7 +611,7 @@ export function SoilDiagnosticsTab({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* SoilGrids Baseline */}
             <div className="p-3 rounded-[3px] bg-slate-950 border border-slate-800">
-              <div className="flex items-center gap-1.5 text-[10px] font-mono text-sky-400 mb-1">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400 mb-1">
                 <MapPin className="w-3 h-3" /> {t('ui_plot_telemetry_drawer_isric_soilgrids_250m')}
               </div>
               {soilProfile.baseline && (soilProfile.baseline as { ph?: number | null }).ph !== undefined ? (

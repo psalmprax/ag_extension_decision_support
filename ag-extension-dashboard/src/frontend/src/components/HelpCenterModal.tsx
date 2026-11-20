@@ -200,7 +200,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
     {
       icon: Book,
       label: t('help_docs') || 'Documentation',
-      color: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
+      color: 'bg-slate-50 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300 border border-slate-200 dark:border-slate-800',
       action: () => {
         onClose();
         setActiveTab('knowledge');
@@ -218,7 +218,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
     {
       icon: Mail,
       label: 'Submit Ticket',
-      color: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-800',
+      color: 'bg-slate-50 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300 border border-slate-200 dark:border-slate-800',
       action: () => {
         setTicketCategory('general');
         setShowTicketForm(true);
@@ -251,7 +251,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
           >
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-hidden flex flex-col">
               {/* Header */}
-              <div className="p-4 sm:p-6 bg-gradient-to-br from-emerald-600 to-teal-700 text-white">
+              <div className="p-4 sm:p-6 bg-gradient-to-br from-emerald-600 to-slate-700 text-white">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">

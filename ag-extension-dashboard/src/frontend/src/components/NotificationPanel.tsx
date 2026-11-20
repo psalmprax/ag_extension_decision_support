@@ -44,14 +44,14 @@ const NOTIFICATION_ICONS = {
   success: <CheckCircle2 className="w-4 h-4 text-emerald-400" />,
   warning: <AlertTriangle className="w-4 h-4 text-amber-400" />,
   error: <AlertCircle className="w-4 h-4 text-rose-400" />,
-  info: <Info className="w-4 h-4 text-sky-400" />,
+  info: <Info className="w-4 h-4 text-slate-400" />,
 };
 
 const NOTIFICATION_BG = {
   success: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300',
   warning: 'bg-amber-500/10 border-amber-500/30 text-amber-300',
   error: 'bg-rose-500/10 border-rose-500/30 text-rose-300',
-  info: 'bg-sky-500/10 border-sky-500/30 text-sky-300',
+  info: 'bg-slate-500/10 border-slate-500/30 text-slate-300',
 };
 
 const NotificationItem: React.FC<{

@@ -84,7 +84,7 @@ export const PlotTelemetryDrawer: React.FC<{
     : 'text-emerald-600 dark:text-emerald-400';
 
   return (
-    <div className="hidden xl:flex w-72 flex-col backdrop-blur-xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/[0.08] rounded-xl p-5 shadow-sm space-y-4 overflow-y-auto">
+    <div className="hidden xl:flex w-72 flex-col bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5 space-y-4 overflow-y-auto">
       <div className="text-xs font-mono font-medium text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
         <Sprout className="w-4 h-4" />
         <span>{t('ui_plot_telemetry_drawer_plot_telemetry')}</span>
@@ -106,7 +106,7 @@ export const PlotTelemetryDrawer: React.FC<{
 
       <div className={CARD}>
         <div className={LABEL}>{t('ui_plot_telemetry_drawer_nasa_power_weather')}</div>
-        <div className="text-base font-bold text-sky-600 dark:text-sky-400">{weatherValue(telemetry, farmer)}</div>
+        <div className="text-base font-bold text-slate-600 dark:text-slate-400">{weatherValue(telemetry, farmer)}</div>
         <div className={NOTE}>{t('ui_plot_telemetry_drawer_open_meteo_modeled')} {telemetry.temp != null ? '• live' : '• no geo'}</div>
       </div>
 

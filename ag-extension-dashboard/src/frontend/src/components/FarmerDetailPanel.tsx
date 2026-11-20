@@ -264,19 +264,19 @@ const OverviewTabContent = ({
           id: 'sms',
           icon: Mail,
           label: t('action_sms') || 'SMS',
-          color: 'bg-sky-500/10 border-sky-500/20 text-sky-400',
+          color: 'bg-slate-500/10 border-slate-500/20 text-slate-400',
         },
         {
           id: 'call',
           icon: Phone,
           label: t('action_call') || 'Call',
-          color: 'bg-teal-500/10 border-teal-500/20 text-teal-400',
+          color: 'bg-slate-500/10 border-slate-500/20 text-slate-400',
         },
         {
           id: 'video',
           icon: Video,
           label: t('action_video') || 'Video',
-          color: 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400',
+          color: 'bg-slate-500/10 border-slate-500/20 text-slate-400',
         },
       ].map(action => (
         <button

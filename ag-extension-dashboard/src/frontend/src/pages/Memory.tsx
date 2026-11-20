@@ -8,7 +8,6 @@ import {
   Tag,
   RefreshCw,
   Filter,
-  Radio,
   Database,
   X,
   Layers,
@@ -145,21 +144,14 @@ function Memory() {
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-24">
       {/* ── Top Bento Banner: Agent Memory Engine ── */}
-      <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl relative overflow-hidden">
+      <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center">
-              <Brain className="w-5 h-5 text-indigo-400" />
-            </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">{t('ui_memory_agent_memory_knowledge_engine')}</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20">
-                  <Radio className="w-2.5 h-2.5 text-indigo-600 dark:text-indigo-400" />
-                  {t('ui_memory_rag_vector_store_synced')}
-                </span>
+                <h1 className="text-2xl font-medium text-slate-900 dark:text-white">{t('ui_memory_agent_memory_knowledge_engine')}</h1>
               </div>
-              <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
+              <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
                 {t('ui_memory_dynamic_conversational_memory_region')}
               </p>
             </div>
@@ -174,7 +166,7 @@ function Memory() {
               </div>
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
                 <span className="text-xs text-slate-500 dark:text-white/40 block">{t('email_workflows_categories')}</span>
-                <strong className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 font-mono tabular-nums">{categories.length}</strong>
+                <strong className="text-sm font-semibold text-slate-600 dark:text-slate-400 font-mono tabular-nums">{categories.length}</strong>
               </div>
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
                 <span className="text-xs text-slate-500 dark:text-white/40 block">{t('ui_memory_mean_score')}</span>
@@ -214,7 +206,7 @@ function Memory() {
               placeholder="Search vector keys, semantic values, or categories..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:ring-1 focus:ring-purple-400 outline-none"
+              className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:ring-1 focus:ring-slate-400 outline-none"
             />
           </div>
 
@@ -222,7 +214,7 @@ function Memory() {
             <select
               value={selectedCategory}
               onChange={e => setSelectedCategory(e.target.value)}
-              className="w-full appearance-none pl-3.5 pr-9 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-purple-400 outline-none"
+              className="w-full appearance-none pl-3.5 pr-9 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-slate-400 outline-none"
             >
               <option value="all">{t('ui_memory_all_vector_categories', { length: memories.length })}</option>
               {categories.map(c => (
@@ -237,13 +229,13 @@ function Memory() {
       </div>
 
       {/* ── Real-Time Impulse Knowledge Graph ── */}
-      <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl space-y-4">
+      <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-4">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
           <div className="flex items-center gap-2">
-            <Database className="w-4 h-4 text-indigo-500" />
+            <Database className="w-4 h-4 text-slate-500" />
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{t('ui_memory_dynamic_rag_semantic_mesh')}</h3>
           </div>
-          <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20">
+          <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-slate-500/10 text-slate-700 dark:text-slate-400 border border-slate-500/20">
             {t('ui_memory_real_time_impulse_graph')}
           </span>
         </div>
@@ -269,10 +261,10 @@ function Memory() {
       </div>
 
       {/* ── Memory Vector Entry Grid ── */}
-      <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl space-y-6">
+      <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-6">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
           <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Layers className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            <Layers className="w-4 h-4 text-slate-600 dark:text-slate-400" />
             {t('ui_memory_indexed_memories_knowledge_vectors')}{filteredMemories.length})
           </h3>
           <span className="text-xs text-slate-500 dark:text-white/40 font-mono">{t('ui_memory_total_accesses', { totalAccesses })}</span>
@@ -280,7 +272,7 @@ function Memory() {
 
         {filteredMemories.length === 0 ? (
           <div className="text-center py-16 space-y-4">
-            <div className="w-16 h-16 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto shadow-lg shadow-purple-950/40">
+            <div className="w-16 h-16 rounded-xl bg-slate-500/10 border border-slate-500/20 text-slate-600 dark:text-slate-400 flex items-center justify-center mx-auto shadow-lg shadow-slate-950/40">
               <Brain className="w-8 h-8 opacity-70" />
             </div>
             <div className="space-y-1">
@@ -297,7 +289,7 @@ function Memory() {
                 setNewMemory({ category: '', key: '', value: '', importance: 0.5 });
                 setShowAddModal(true);
               }}
-              className="px-5 py-2.5 bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-2"
+              className="px-5 py-2.5 bg-slate-500/20 text-slate-700 dark:text-slate-300 border border-slate-500/30 hover:bg-slate-500/30 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               <span>{t('ui_memory_add_first_knowledge_vector')}</span>
@@ -310,15 +302,15 @@ function Memory() {
                 key={`${memory.category}-${memory.key}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="backdrop-blur-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 hover:border-purple-500/30 rounded-xl p-5 space-y-3 transition-all duration-300 group"
+                className="backdrop-blur-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 hover:border-slate-500/30 rounded-xl p-5 space-y-3 transition-all duration-300 group"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1.5">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium capitalize bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium capitalize bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20">
                       <Tag className="w-2.5 h-2.5" />
                       {memory.category}
                     </span>
-                    <h4 className="font-semibold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
+                    <h4 className="font-semibold text-sm text-slate-900 dark:text-white group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
                       {memory.key}
                     </h4>
                   </div>
@@ -326,7 +318,7 @@ function Memory() {
                   <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => handleEditMemory(memory)}
-                      className="p-1.5 text-slate-400 dark:text-white/40 hover:text-indigo-600 dark:hover:text-indigo-300 rounded-lg hover:bg-slate-200 dark:hover:bg-white/5 transition-colors"
+                      className="p-1.5 text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-white/5 transition-colors"
                       title="Edit Memory"
                     >
                       <Edit className="w-3.5 h-3.5" />
@@ -367,7 +359,7 @@ function Memory() {
 
       {/* ── Category Cluster Summary ── */}
       {memorySummary.length > 0 && (
-        <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl space-y-4">
+        <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-4">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Layers className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             {t('ui_memory_category_vector_distribution_cluster')}
@@ -384,7 +376,7 @@ function Memory() {
                     {t('ui_memory_mean_recall')} {(category.avgImportance * 100).toFixed(0)}%
                   </p>
                 </div>
-                <span className="text-lg font-mono font-bold text-purple-600 dark:text-purple-400">{category.count}</span>
+                <span className="text-lg font-mono font-bold text-slate-600 dark:text-slate-400">{category.count}</span>
               </div>
             ))}
           </div>
@@ -413,7 +405,7 @@ function Memory() {
             >
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                  <div className="w-10 h-10 rounded-xl bg-slate-500/20 border border-slate-500/30 flex items-center justify-center text-slate-600 dark:text-slate-400">
                     <Brain className="w-5 h-5" />
                   </div>
                   <div>

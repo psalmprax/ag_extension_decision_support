@@ -144,7 +144,7 @@ test.describe('Demo mode network isolation', () => {
 
     // Navigate to Knowledge Base
     await page.goto('/knowledge');
-    await expect(page.getByText('Agro-Spatial knowledge mesh').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: 'Knowledge', exact: true })).toBeVisible({ timeout: 15000 });
 
     // Verify benchmark research scenario is clickable and executes
     const scenarioCard = page.getByText('Severe Soil Acidity (pH 4.8) & Liming Protocol').first();

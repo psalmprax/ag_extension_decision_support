@@ -111,7 +111,7 @@ export function DiseaseInfoModal({
                       key={index}
                       className="p-2 rounded-[3px] bg-slate-950 border border-slate-800 text-xs text-slate-300 flex items-start gap-2"
                     >
-                      <span className="text-sky-400 font-mono">✓</span>
+                      <span className="text-slate-400 font-mono">✓</span>
                       <span>{prevent}</span>
                     </div>
                   ))}

@@ -29,9 +29,12 @@ import {
   MAP_STYLES,
 } from './map/mapConstants';
 import { MapController } from './map/MapController';
+import { useFrameFarmers } from './map/useFrameFarmers';
 import { LayerSwitcher } from './map/LayerSwitcher';
 import { MapLegend } from './map/MapLegend';
 import { ExpandedMapModal } from './map/ExpandedMapModal';
+
+const MAP_CONTROL = 'h-9 min-w-9 px-2 rounded-md bg-white/95 dark:bg-[#0d1a14]/95 text-slate-700 dark:text-slate-200 border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm hover:bg-white dark:hover:bg-[#13251c] transition-colors flex items-center justify-center gap-1.5 text-sm';
 
 export type { FarmerData };
 
@@ -96,6 +99,7 @@ export function FarmerMap({
     [propFarmers, isDemo]
   );
 
+  useFrameFarmers(farmers, { setMapBounds, setMapCenter, setMapZoom });
   useEffect(() => {
     if (!('geolocation' in navigator) || !('permissions' in navigator)) return;
     let permissionStatus: PermissionStatus | undefined;
@@ -247,14 +251,14 @@ export function FarmerMap({
             closeButton={false}
           >
             <div className="p-4 flex flex-col items-center text-center">
-              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-2">
+              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-900/30 flex items-center justify-center text-slate-600 dark:text-slate-400 mb-2">
                 <Crosshair className="w-5 h-5" />
               </div>
               <h4 className="font-bold text-sm text-gray-900 dark:text-white">{t('ui_farmer_map_your_location')}</h4>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {t('ui_farmer_map_extension_officer_active_gps_node')}
               </p>
-              <span className="text-xxs text-blue-500 font-semibold mt-2 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40">
+              <span className="text-xxs text-slate-500 font-semibold mt-2 px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-950/40">
                 {t('ui_farmer_map_lat')} {currentUserLocation[0].toFixed(4)}{t('ui_farmer_map_lng')} {currentUserLocation[1].toFixed(4)}
               </span>
             </div>
@@ -285,9 +289,9 @@ export function FarmerMap({
               closeButton={false}
             >
               <div className="p-0 overflow-hidden">
-                <div className="p-4 bg-gradient-to-br from-emerald-500 to-teal-700 text-white relative">
+                <div className="p-4 bg-emerald-800 text-white relative">
                   <div className="flex items-center justify-between">
-                    <span className="text-xxs font-black bg-white/20 px-2 py-0.5 rounded-md backdrop-blur-md">
+                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded-md">
                       {farmer.crop}
                     </span>
                     <span className="text-xxs font-mono opacity-80">ID: {farmer.id}</span>
@@ -307,11 +311,11 @@ export function FarmerMap({
                 <div className="p-4 space-y-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                   <div className="grid grid-cols-2 gap-2 text-xxs">
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                      <div className="text-slate-400 font-bold  ">{t('ui_farmer_map_farm_area')}</div>
+                      <div className="text-slate-500">{t('ui_farmer_map_farm_area')}</div>
                       <div className="text-sm font-black text-slate-800 dark:text-white mt-0.5">{farmer.size} ha</div>
                     </div>
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                      <div className="text-slate-400 font-bold flex items-center gap-1">
+                      <div className="text-slate-500 flex items-center gap-1">
                         {t('farmer_est_yield')}
                         <InfoPromptIcon
                           title="Estimated Yield"
@@ -412,18 +416,15 @@ export function FarmerMap({
       <div className="absolute top-3 left-3 z-[400] flex items-center gap-1.5 sm:gap-2">
         <button
           onClick={handleLocateMe}
-          className="h-9 min-w-9 px-2 rounded-md bg-white/95 dark:bg-[#0d1a14]/95 text-slate-700 dark:text-slate-200 border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm hover:bg-white dark:hover:bg-[#13251c] transition-colors flex items-center justify-center gap-1.5 text-sm"
-          title="Locate Current Position"
-          aria-label="Locate Current Position"
+          className={MAP_CONTROL}
+          title="Show my location" aria-label="Show my location"
         >
           <Crosshair className="w-4 h-4" aria-hidden="true" />
         </button>
-
         <button
           onClick={() => setShowMiniSearch(!showMiniSearch)}
-          className="h-9 min-w-9 px-2 rounded-md bg-white/95 dark:bg-[#0d1a14]/95 text-slate-700 dark:text-slate-200 border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm hover:bg-white dark:hover:bg-[#13251c] transition-colors flex items-center justify-center gap-1.5 text-sm"
-          title="Search Farmers"
-          aria-label="Search Farmers"
+          className={MAP_CONTROL}
+          title="Search farmers" aria-label="Search farmers"
         >
           <Search className="w-4 h-4" aria-hidden="true" />
         </button>
@@ -444,9 +445,8 @@ export function FarmerMap({
       <div className="absolute top-3 right-3 z-[400]">
         <button
           onClick={() => setIsExpanded(true)}
-          className="h-9 min-w-9 px-2 rounded-md bg-white/95 dark:bg-[#0d1a14]/95 text-slate-700 dark:text-slate-200 border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm hover:bg-white dark:hover:bg-[#13251c] transition-colors flex items-center justify-center gap-1.5 text-sm"
-          title="Expand Map Fullscreen"
-          aria-label="Expand Map Fullscreen"
+          className={MAP_CONTROL}
+          title="Expand map" aria-label="Expand map"
         >
           <Maximize2 className="w-4 h-4" aria-hidden="true" />
           <span className="hidden sm:inline">{t('ui_farmer_map_expand')}</span>

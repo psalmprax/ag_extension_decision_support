@@ -450,16 +450,18 @@ export interface SemanticTokens {
 }
 
 export const semanticTokens: SemanticTokens = {
+  // Status and chart series follow the field-green palette; the other series
+  // use Okabe-Ito hues so lines stay distinguishable with colour blindness.
   status: {
-    success: '#10b981',
-    warning: '#f59e0b',
-    error: '#ef4444',
-    info: '#3b82f6',
+    success: FIELD_GREEN[500],
+    warning: '#B7791F',
+    error: '#C2410C',
+    info: '#0072B2',
   },
   chart: {
-    green: '#22c55e',
-    blue: '#3b82f6',
-    purple: '#8b5cf6',
+    green: FIELD_GREEN[500],
+    blue: '#0072B2',
+    purple: '#CC79A7',
     cyber: '#4fd1c5',
     gray: '#9ca3af',
   },

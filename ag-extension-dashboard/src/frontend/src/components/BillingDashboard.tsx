@@ -11,7 +11,6 @@ import {
   Clock,
   ExternalLink,
   ShieldCheck,
-  Radio,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBillingActions } from '@/hooks/useBillingActions';
@@ -30,6 +29,8 @@ import { ChurnReasons } from './billing/ChurnReasons';
 import { CancelSubscriptionModal } from './billing/CancelSubscriptionModal';
 import { triggerHaptic } from '@/lib/haptics';
 import { ManualPlanGrants } from './billing/ManualPlanGrants';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { PRIMARY_BUTTON, tabButtonClass } from '@/components/ui/controlStyles';
 
 interface AdminVaultProps {
   billing: ReturnType<typeof useBillingActions>;
@@ -53,11 +54,11 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
         className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden"
       >
         <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-          <Settings className="w-32 h-32 text-indigo-700 dark:text-indigo-400" />
+          <Settings className="w-32 h-32 text-slate-700 dark:text-slate-400" />
         </div>
         <div className="flex items-center gap-4 mb-6">
           <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-indigo-700 dark:text-indigo-400" />
+            <Shield className="w-5 h-5 text-slate-700 dark:text-slate-400" />
           </div>
           <div>
             <h3
@@ -66,7 +67,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
             >
               {t('billing_admin_vault_title') || 'Payment Gateway Credentials Vault'}
             </h3>
-            <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
+            <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
               {t('billing_admin_vault_subtitle') || 'Encrypted Server-Side API Secrets'}
             </p>
           </div>
@@ -163,7 +164,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
               billing.handleAdminUpdate();
             }}
             disabled={billing.actionLoading === 'admin-update'}
-            className="w-full md:w-auto font-bold px-8 shadow-lg shadow-indigo-950/40"
+            className="w-full md:w-auto font-bold px-8 shadow-lg shadow-slate-950/40"
           >
             {billing.actionLoading === 'admin-update'
               ? 'Saving Credentials...'
@@ -179,7 +180,6 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
 
 interface BillingHeaderProps {
   currentPlanName: string;
-  isProActive: boolean;
   isAnnual: boolean;
   setIsAnnual: (annual: boolean) => void;
   onPortal: () => void;
@@ -191,7 +191,6 @@ interface BillingHeaderProps {
 
 const BillingHeader: React.FC<BillingHeaderProps> = ({
   currentPlanName,
-  isProActive,
   isAnnual,
   setIsAnnual,
   onPortal,
@@ -203,67 +202,41 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
   const { t } = useLanguage();
 
   return (
-    <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 rounded-xl p-4 sm:p-6 shadow-sm relative overflow-hidden">
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-            <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-700 dark:text-emerald-400" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">{t('ui_billing_dashboard_billing_subscriptions')}</h1>
-              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                <Radio className="w-2.5 h-2.5 text-emerald-700 dark:text-emerald-400" />
-                {t('ui_billing_dashboard_commerce_radar')}
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              {t('billing_subtitle') || 'Manage individual farmer quotas, cooperative multi-county extension officer pools, and automated billing methods.'}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
-          {/* Telemetry Stat Chips */}
-          <div className="flex items-center gap-2 overflow-x-auto">
-            <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-white/80 font-mono whitespace-nowrap">
-              {t('ui_billing_dashboard_tier')} <strong className="text-slate-900 dark:text-white font-medium">{currentPlanName}</strong>
-            </span>
-            <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300 font-mono whitespace-nowrap">
-              {t('ui_billing_dashboard_status')} <strong className="font-medium">{isProActive ? 'Active' : 'Starter'}</strong>
-            </span>
-            <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 font-mono whitespace-nowrap">
-              {t('ui_billing_dashboard_billing')} <strong className="font-medium">{isAnnual ? 'Annual (-20%)' : 'Monthly'}</strong>
-            </span>
-          </div>
-
+    <PageHeader
+        title={t('ui_billing_dashboard_billing_subscriptions')}
+        description={t('billing_subtitle') || 'Your plan, usage, payment methods and invoices.'}
+        meta={t('billing_summary', {
+          plan: currentPlanName,
+          cycle: isAnnual ? t('billing_cycle_annual', { defaultValue: 'annually' }) : t('billing_cycle_monthly', { defaultValue: 'monthly' }),
+          defaultValue: 'Plan: {plan}, billed {cycle}',
+        })}
+        actions={
           <button
             onClick={() => {
               triggerHaptic('light');
               void onPortal();
             }}
             disabled={actionLoading === 'portal'}
-            className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+            className={PRIMARY_BUTTON}
           >
             {actionLoading === 'portal' ? (
-              <div className="w-4 h-4 border-2 border-slate-300 dark:border-white/20 border-t-white rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-4 h-4" aria-hidden="true" />
             )}
             <span>{t('ui_billing_dashboard_customer_portal')}</span>
           </button>
-        </div>
-      </div>
-
+        }
+      >
       {/* Status Filter / Navigation Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-slate-200 dark:border-white/5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {[
-            { id: 'plans', label: 'Plans & Pricing', icon: Layers },
-            { id: 'usage', label: 'Quota & Telemetry', icon: Activity },
-            { id: 'payments', label: 'Payment Rails', icon: CreditCard },
-            { id: 'invoices', label: 'Invoices & Receipts', icon: Receipt },
-            ...(isAdmin ? [{ id: 'admin', label: 'Admin Vault', icon: Shield }] : []),
+            { id: 'plans', label: t('billing_tab_plans', { defaultValue: 'Plans & pricing' }), icon: Layers },
+            { id: 'usage', label: t('billing_tab_usage', { defaultValue: 'Usage' }), icon: Activity },
+            { id: 'payments', label: t('billing_tab_payments', { defaultValue: 'Payment methods' }), icon: CreditCard },
+            { id: 'invoices', label: t('billing_tab_invoices', { defaultValue: 'Invoices & receipts' }), icon: Receipt },
+            ...(isAdmin ? [{ id: 'admin', label: t('billing_tab_admin', { defaultValue: 'Payment keys' }), icon: Shield }] : []),
           ].map(tab => (
             <button
               key={tab.id}
@@ -271,13 +244,10 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
                 triggerHaptic('light');
                 setActiveTab(tab.id as 'plans' | 'usage' | 'payments' | 'invoices' | 'admin');
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 border whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
-                  : 'bg-slate-50 dark:bg-white/[0.02] text-slate-400 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10 hover:text-slate-900 dark:hover:text-white'
-              }`}
+              aria-pressed={activeTab === tab.id}
+              className={tabButtonClass(activeTab === tab.id)}
             >
-              <tab.icon className="w-3.5 h-3.5" />
+              <tab.icon className="w-4 h-4" aria-hidden="true" />
               <span>{tab.label}</span>
             </button>
           ))}
@@ -312,7 +282,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
           </div>
         </div>
       </div>
-    </div>
+      </PageHeader>
   );
 };
 
@@ -402,7 +372,6 @@ export const BillingDashboard: React.FC = () => {
       {/* ── Top Bento Banner & Quick Actions (Matching VisitsPage) ── */}
       <BillingHeader
         currentPlanName={currentPlanName}
-        isProActive={isProActive}
         isAnnual={isAnnual}
         setIsAnnual={setIsAnnual}
         onPortal={() => {
@@ -436,14 +405,14 @@ export const BillingDashboard: React.FC = () => {
               </div>
             </div>
             <span className="px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-              {isProActive ? 'ACTIVE' : 'STARTER'}
+              {isProActive ? t('billing_status_active_label', { defaultValue: 'Active' }) : t('billing_status_free_label', { defaultValue: 'Free' })}
             </span>
           </div>
 
           {/* Card 2: Renewal Timeline */}
           <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-3.5">
-              <div className="p-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-700 dark:text-indigo-400">
+              <div className="p-2.5 bg-slate-500/10 border border-slate-500/20 rounded-xl text-slate-700 dark:text-slate-400">
                 <Clock className="w-5 h-5" />
               </div>
               <div>

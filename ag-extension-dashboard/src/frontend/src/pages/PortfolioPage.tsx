@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Send, FileText, Trash2, X, Lock, Search, ChevronRight } from 'lucide-react';
 import { Farmer } from '../types/dashboard';
 import { useDemoMode } from '@/demo';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { SECONDARY_BUTTON } from '@/components/ui/controlStyles';
 import { useLanguage } from '../lib/LanguageContext';
 import { RegisterFarmerButton } from '@/components/portfolio/RegisterFarmerButton';
 
@@ -59,35 +61,22 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-24">
-      {/* ── Top Bento Banner: Portfolio Intelligence & Telemetry ── */}
-      <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div>
-            <h1 className="text-2xl font-medium text-slate-900 dark:text-white">{t('ui_portfolio_page_client_portfolio')}</h1>
-            <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
-              {t('ui_portfolio_page_manage_smallholder_cohorts_inspect_i')}
-            </p>
-          </div>
-
-          {/* Quick Telemetry Metric Badges */}
-          <div className="grid grid-cols-3 sm:flex items-center gap-2 w-full lg:w-auto">
-            <div className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] text-xs text-center sm:text-left">
-              <span className="text-xxs font-medium text-slate-500 dark:text-white/40 block">{t('ui_portfolio_page_total_clients')}</span>
-              <strong className="text-sm font-semibold text-slate-900 dark:text-white font-mono tabular-nums">{effectiveFarmers.length}</strong>
-            </div>
-            <div className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] text-xs text-center sm:text-left">
-              <span className="text-xxs font-medium text-slate-500 dark:text-white/40 block">{t('ui_portfolio_page_total_land')}</span>
-              <strong className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">{(Number(totalLandHa) || 0).toFixed(1)} ha</strong>
-            </div>
-            <div className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] text-xs text-center sm:text-left">
-              <span className="text-xxs font-medium text-slate-500 dark:text-white/40 block">{t('ui_portfolio_page_selected')}</span>
-              <strong className="text-sm font-semibold text-slate-700 dark:text-slate-300 font-mono tabular-nums">{selectedFarmers.size}</strong>
-            </div>
-          </div>
-        </div>
-
+      <PageHeader
+        title={t('ui_portfolio_page_client_portfolio')}
+        description={t('ui_portfolio_page_manage_smallholder_cohorts_inspect_i')}
+        meta={
+          <span className="tabular-nums">
+            {t('portfolio_summary', {
+              count: effectiveFarmers.length,
+              hectares: (Number(totalLandHa) || 0).toFixed(1),
+              defaultValue: '{count} farmers, {hectares} ha in total',
+            })}
+            {selectedFarmers.size > 0 && ` · ${t('portfolio_selected_count', { count: selectedFarmers.size, defaultValue: '{count} selected' })}`}
+          </span>
+        }
+      >
         {/* Search & Bulk Select Controls */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 mt-5 border-t border-slate-200/80 dark:border-white/[0.06]">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 text-slate-400 dark:text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -95,7 +84,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder={t('portfolio_search_placeholder', { defaultValue: 'Search by name, region or crop' })}
-              className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:ring-1 focus:ring-emerald-500 dark:focus:ring-emerald-400 outline-none"
+              className="w-full h-10 pl-10 pr-4 text-sm rounded-md border border-slate-900/[0.12] dark:border-white/[0.12] bg-white dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:ring-2 focus:ring-emerald-600 outline-none"
             />
           </div>
 
@@ -103,7 +92,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
             <RegisterFarmerButton />
             <button
               onClick={toggleSelectAll}
-              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-xs font-medium text-slate-700 hover:text-slate-900 dark:text-white/80 dark:hover:text-white transition-colors"
+              className={SECONDARY_BUTTON}
             >
               {selectedFarmers.size === filteredFarmers.length && filteredFarmers.length > 0
                 ? t('portfolio_clear_selection', { defaultValue: 'Clear selection' })
@@ -111,14 +100,14 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
             </button>
             <button
               onClick={handleBulkExport}
-              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-50 dark:bg-white/[0.04] dark:hover:bg-emerald-500/15 border border-slate-200 hover:border-emerald-300 dark:border-white/[0.08] dark:hover:border-emerald-500/30 text-xs font-medium text-slate-700 hover:text-emerald-700 dark:text-white/80 dark:hover:text-emerald-300 transition-colors flex items-center gap-1.5"
+              className={SECONDARY_BUTTON}
             >
-              <FileText className="w-3.5 h-3.5" />
+              <FileText className="w-4 h-4" aria-hidden="true" />
               <span>{t('portfolio_export_csv')}</span>
             </button>
           </div>
         </div>
-      </div>
+      </PageHeader>
 
       {isDemo && (
         <div className="p-4 backdrop-blur-xl bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-3">
@@ -324,7 +313,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
                 onClick={handleBulkExport}
                 className="px-3 sm:px-4 py-2 bg-white/[0.08] hover:bg-white/[0.12] text-white text-xs font-medium rounded-lg border border-white/10 transition-colors flex items-center gap-1.5"
               >
-                <FileText className="w-3.5 h-3.5" />
+                <FileText className="w-4 h-4" aria-hidden="true" />
                 <span>{t('portfolio_export_csv', { defaultValue: 'Export CSV' })}</span>
               </button>
 

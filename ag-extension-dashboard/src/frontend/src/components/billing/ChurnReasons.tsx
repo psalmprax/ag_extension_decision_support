@@ -65,7 +65,7 @@ export const ChurnReasons: React.FC = () => {
           <h3 id="churn-reasons-title" className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
             {t('ui_churn_reasons_cancellation_reasons')}
           </h3>
-          <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
+          <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
             {t('ui_churn_reasons_self_reported_by_subscribers_at_canc')}
           </p>
         </div>

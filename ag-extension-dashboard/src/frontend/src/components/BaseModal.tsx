@@ -94,7 +94,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
                 className="pt-3 pb-1 flex justify-center sm:hidden relative z-20 cursor-grab active:cursor-grabbing touch-none select-none"
                 aria-label="Drag down to close"
               >
-                <div className="w-12 h-1.5 bg-white/25 rounded-full hover:bg-white/40 active:bg-blue-400 transition-colors" />
+                <div className="w-12 h-1.5 bg-white/25 rounded-full hover:bg-white/40 active:bg-slate-400 transition-colors" />
               </div>
             )}
 

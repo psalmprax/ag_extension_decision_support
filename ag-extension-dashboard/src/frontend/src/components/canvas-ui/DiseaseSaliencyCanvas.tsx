@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Eye, ZoomIn, Sliders, AlertCircle } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
-
+import { formatLabel } from '@/lib/formatLabel';
 export interface LesionDetectionZone {
   id: string;
   x: number; // Normalized 0..1
@@ -321,7 +321,7 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
             </div>
             <div className="flex items-center justify-between text-xxs font-mono text-gray-300">
               <span>{t('ui_disease_saliency_canvas_confidence')} {(selectedZone.confidence * 100).toFixed(1)}%</span>
-              <span className=" text-amber-400 font-bold">{selectedZone.severity}</span>
+              <span className=" text-amber-400 font-bold">{formatLabel(selectedZone.severity)}</span>
             </div>
           </div>
         )}

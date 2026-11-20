@@ -66,9 +66,9 @@ const VARIANT_CONFIG: Record<
 > = {
   info: {
     icon: Info,
-    iconClass: 'text-sky-500 dark:text-sky-400',
-    borderClass: 'border-sky-500/20 dark:border-sky-400/25',
-    bgClass: 'bg-white/95 dark:bg-slate-900/95 shadow-sky-500/5',
+    iconClass: 'text-slate-500 dark:text-slate-400',
+    borderClass: 'border-slate-500/20 dark:border-slate-400/25',
+    bgClass: 'bg-white/95 dark:bg-slate-900/95 shadow-slate-500/5',
     textClass: 'text-slate-700 dark:text-slate-200',
   },
   tip: {
@@ -80,9 +80,9 @@ const VARIANT_CONFIG: Record<
   },
   guidance: {
     icon: Compass,
-    iconClass: 'text-indigo-600 dark:text-indigo-400',
-    borderClass: 'border-indigo-500/20 dark:border-indigo-400/25',
-    bgClass: 'bg-white/95 dark:bg-slate-900/95 shadow-indigo-500/5',
+    iconClass: 'text-slate-600 dark:text-slate-400',
+    borderClass: 'border-slate-500/20 dark:border-slate-400/25',
+    bgClass: 'bg-white/95 dark:bg-slate-900/95 shadow-slate-500/5',
     textClass: 'text-slate-700 dark:text-slate-200',
   },
   neutral: {

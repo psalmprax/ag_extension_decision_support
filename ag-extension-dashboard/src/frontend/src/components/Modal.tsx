@@ -66,7 +66,7 @@ export function Modal({ title, onClose, size = 'md', children }: ModalProps) {
         transition={{ type: 'spring', damping: 28, stiffness: 320 }}
         className={`w-full ${SIZE_CLASS[size]} max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto shadow-2xl ${
           isBase
-            ? 'bg-[#0a0d14]/95 border-t sm:border border-white/15 ring-1 ring-blue-500/20 text-white rounded-t-[28px] sm:rounded-2xl rounded-b-none sm:rounded-b-2xl pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-0'
+            ? 'bg-[#0a0d14]/95 border-t sm:border border-white/15 ring-1 ring-slate-500/20 text-white rounded-t-[28px] sm:rounded-2xl rounded-b-none sm:rounded-b-2xl pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-0'
             : 'bg-slate-900 border border-white/10 text-white rounded-xl'
         }`}
       >
@@ -76,7 +76,7 @@ export function Modal({ title, onClose, size = 'md', children }: ModalProps) {
             className="pt-2.5 pb-1 flex justify-center sm:hidden cursor-grab active:cursor-grabbing touch-none select-none"
             aria-label="Drag down to close"
           >
-            <div className="w-12 h-1.5 bg-white/20 rounded-full hover:bg-white/40 active:bg-blue-400 transition-colors" />
+            <div className="w-12 h-1.5 bg-white/20 rounded-full hover:bg-white/40 active:bg-slate-400 transition-colors" />
           </div>
         )}
         <div className="p-4 sm:p-6">

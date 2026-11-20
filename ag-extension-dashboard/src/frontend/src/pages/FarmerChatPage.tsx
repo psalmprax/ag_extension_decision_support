@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Plus, Lock, MessageSquare, ArrowLeft, Trash2, Mic } from 'lucide-react';
 import { Conversation, ChatMessage } from '../types/dashboard';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { useLanguage } from '@/lib/LanguageContext';
-import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useDeviceThermalMemoryBudget } from '@/hooks/useDeviceThermalMemoryBudget';
 import { VirtualizedList } from '@/components/common/VirtualizedList';
 import { useDemoMode } from '@/demo';
@@ -51,7 +51,6 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 }) => {
   const { t, language } = useLanguage();
   const isFarmerUser = useAppStore(state => state.user?.role) === 'farmer';
-  const { headingClass } = useThemeClasses();
   const { isLowEndDevice } = useDeviceThermalMemoryBudget();
   const { isDemo } = useDemoMode();
   const [selectedChannel, setSelectedChannel] = useState<'all' | 'sms' | 'whatsapp' | 'telegram'>('all');
@@ -146,27 +145,23 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
   return (
     <div className="flex flex-col h-[calc(100dvh-150px)] md:h-[calc(100vh-140px)] gap-4 md:gap-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
-        <div>
-          <h1 className={`text-2xl font-medium text-slate-900 dark:text-white ${headingClass}`}>
-            {t('ui_farmer_chat_page_farmer_chat')}
-          </h1>
-          <p className="text-slate-600 dark:text-white/60 text-sm mt-1">
-            {t('chat_subtitle') || 'Messages with your farmers by SMS, WhatsApp and Telegram.'}
-          </p>
-        </div>
-
-        {/* Live updates need the socket; without it the thread refreshes when opened. */}
-        <span
-          className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-white/50"
-          title={socketConnected ? undefined : t('chat_live_updates_off_hint', { defaultValue: 'New messages appear when you reopen a conversation.' })}
-        >
-          <span className={`w-2 h-2 rounded-full ${socketConnected ? 'bg-emerald-600' : 'bg-amber-500'}`} aria-hidden="true" />
-          {socketConnected
-            ? t('chat_live_updates_on', { defaultValue: 'Live updates on' })
-            : t('chat_live_updates_off', { defaultValue: 'Live updates off' })}
-        </span>
-      </div>
+      <PageHeader
+        bare
+        title={t('ui_farmer_chat_page_farmer_chat')}
+        description={t('chat_subtitle') || 'Messages with your farmers by SMS, WhatsApp and Telegram.'}
+        actions={
+          /* Live updates need the socket; without it the thread refreshes when opened. */
+          <span
+            className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-white/50"
+            title={socketConnected ? undefined : t('chat_live_updates_off_hint', { defaultValue: 'New messages appear when you reopen a conversation.' })}
+          >
+            <span className={`w-2 h-2 rounded-full ${socketConnected ? 'bg-emerald-600' : 'bg-amber-500'}`} aria-hidden="true" />
+            {socketConnected
+              ? t('chat_live_updates_on', { defaultValue: 'Live updates on' })
+              : t('chat_live_updates_off', { defaultValue: 'Live updates off' })}
+          </span>
+        }
+      />
 
       <div className="flex flex-1 gap-4 md:gap-6 overflow-hidden relative">
         {/* Left Column: Farmer Conversations Roster */}
