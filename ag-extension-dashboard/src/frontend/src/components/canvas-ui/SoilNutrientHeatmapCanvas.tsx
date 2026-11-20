@@ -3,6 +3,7 @@ import { Layers, Droplets, Activity, Gauge, Flame } from 'lucide-react';
 import { useDemoMode } from '@/demo';
 import { normalizeProbePoint } from '@/lib/canvasProbe';
 import { useLanguage } from '@/lib/LanguageContext';
+import { TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
 
 export type SoilLayerType = 'ph' | 'nitrogen' | 'phosphorus' | 'potassium' | 'moisture' | 'carbon';
 
@@ -467,7 +468,7 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
     <div className={`space-y-4 ${className}`}>
       {/* Layer selector tabs */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-gray-800 pb-3">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
+        <div className={TAB_ROW}>
           {(Object.keys(LAYER_CONFIG) as SoilLayerType[]).map(layerKey => {
             const cfg = LAYER_CONFIG[layerKey];
             const Icon = cfg.icon;
@@ -479,11 +480,8 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
                   setActiveLayer(layerKey);
                   setProbe(null);
                 }}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
-                  isSelected
-                    ? 'bg-primary-600 text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
+                aria-pressed={isSelected}
+                className={tabButtonClass(isSelected)}
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{cfg.label.split(' ')[0]}</span>
@@ -492,14 +490,11 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
           })}
         </div>
 
-        <span className="text-xxs font-mono text-gray-500 dark:text-gray-400">
-          {t('ui_soil_nutrient_heatmap_canvas_idw_mesh_resolution_8px')}
-        </span>
       </div>
 
       {/* Data provenance for the active layer — surfaces preview/estimated status to the user */}
-      <p className={`text-[10px] leading-relaxed rounded-lg px-2.5 py-1.5 border ${isLiveLayer ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800' : hasNoData ? 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700' : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'}`}>
-        {isLiveLayer ? '✅ ' : hasNoData ? 'ℹ️ ' : '⚠️ '}{hasNoData ? 'No live data for this nutrient yet — save the field location or add a lab test, or preview a sample map in the demo account.' : provenanceOverride ?? config.description}{' '}
+      <p className={`text-xs leading-relaxed rounded-lg px-3 py-2 border ${isLiveLayer ? 'text-emerald-800 dark:text-emerald-200 bg-emerald-50 dark:bg-emerald-400/[0.06] border-emerald-700/20' : hasNoData ? 'text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-white/[0.03] border-slate-900/[0.08] dark:border-white/[0.08]' : 'text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-400/[0.06] border-amber-600/20'}`}>
+        {hasNoData ? 'No live data for this nutrient yet — save the field location or add a lab test, or preview a sample map in the demo account.' : provenanceOverride ?? config.description}{' '}
         {isLiveLayer ? 'Live starting estimate from satellite soil data plus your lab results — one even colour until more field points are added.' : hasNoData ? '' : 'Blended from nearby sample points — not a substitute for a lab soil test.'}
       </p>
 
@@ -527,7 +522,7 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
         {probe && <ProbeTooltip probe={probe} />}
 
         {/* Legend strip at bottom */}
-        <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/10 flex items-center gap-2 text-xxs font-mono text-gray-300 pointer-events-none">
+        <div className="absolute bottom-2 right-2 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10 flex items-center gap-2 text-xs tabular-nums text-gray-200 pointer-events-none">
           <span>
             {config.min} {config.unit}
           </span>

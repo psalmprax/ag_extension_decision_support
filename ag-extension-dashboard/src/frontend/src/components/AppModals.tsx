@@ -5,19 +5,12 @@ import { Farmer, Visit } from '../types/dashboard';
 import { Report, downloadReportPdf } from '@/api/reportService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { saveBlob } from '@/lib/saveBlob';
 
-function triggerDownload(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
 
 async function downloadPdf(report: Report): Promise<void> {
   const blob = await downloadReportPdf(report.id);
-  triggerDownload(blob, `${report.title}.pdf`);
+  saveBlob(blob, `${report.title}.pdf`);
 }
 
 const VisitModal = React.lazy(() =>

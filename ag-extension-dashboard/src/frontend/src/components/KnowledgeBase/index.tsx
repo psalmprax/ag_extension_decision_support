@@ -77,6 +77,7 @@ import { QuotaChip } from './QuotaChip';
 import { useLanguage } from '@/lib/LanguageContext';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
+import { saveBlob } from '@/lib/saveBlob';
 
 type KnowledgeTabMode = 'search' | 'graph' | 'workbench' | 'library' | 'telemetry';
 // Helper functions extracted to maintain cognitive complexity < 15
@@ -779,12 +780,7 @@ export const KnowledgeBase: React.FC = () => {
                       const reportId = (gen as { data?: { id?: string } })?.data?.id || (gen as { id?: string })?.id;
                       if (!reportId) throw new Error('No report id');
                       const blob = await downloadReportPdf(reportId);
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `factsheet-${Date.now()}.pdf`;
-                      a.click();
-                      URL.revokeObjectURL(url);
+                      saveBlob(blob, `factsheet-${Date.now()}.pdf`);
                       toast.success('Factsheet PDF downloaded');
                     } catch (e) {
                       toast.error((e as Error).message || 'Factsheet export failed');

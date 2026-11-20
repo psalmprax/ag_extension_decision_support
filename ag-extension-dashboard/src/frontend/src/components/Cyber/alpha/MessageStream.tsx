@@ -1,7 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Radio } from 'lucide-react';
-import type { CanvasViewType } from './rules';
+import { Loader2 } from 'lucide-react';
 import type { ChatMessageItem } from './response';
 import { ChatMarkdown } from '@/components/chat/ChatMarkdown';
 
@@ -9,69 +7,39 @@ export interface MessageStreamProps {
   messages: ChatMessageItem[];
   isProcessing: boolean;
   activeReasoningStep: string | null;
-  onSelectCanvas: (view: CanvasViewType) => void;
   messagesEndRef: React.RefObject<HTMLDivElement>;
+  /** Shown above each of the person's own messages. */
+  youLabel: string;
+  assistantLabel: string;
 }
 
-/** Scrollable co-pilot message stream with reasoning-status pill and scroll anchor. */
-export const MessageStream: React.FC<MessageStreamProps> = ({ messages, isProcessing, activeReasoningStep, onSelectCanvas, messagesEndRef }) => (
-  <div className="overflow-y-auto space-y-4 pr-1 custom-scrollbar flex-1 mb-4">
-    <AnimatePresence initial={false}>
-      {messages.map(msg => (
-        <motion.div
-          key={msg.id}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+/** The conversation with the AI agronomist, newest at the bottom, with what it is doing now. */
+export const MessageStream: React.FC<MessageStreamProps> = ({ messages, isProcessing, activeReasoningStep, messagesEndRef, youLabel, assistantLabel }) => (
+  <div className="overflow-y-auto space-y-4 pr-1 flex-1 mb-4" aria-live="polite">
+    {messages.map(msg => (
+      <div key={msg.id} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
+        <div className="flex items-center gap-1.5 mb-1 text-xs text-slate-500 dark:text-white/50">
+          <span>{msg.sender === 'user' ? youLabel : assistantLabel}</span>
+          <span aria-hidden="true">·</span>
+          <span className="tabular-nums">{msg.timestamp}</span>
+        </div>
+        <div
+          className={`max-w-[92%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+            msg.sender === 'user'
+              ? 'bg-emerald-700 text-white rounded-tr-md'
+              : 'bg-slate-50 border border-slate-900/[0.08] text-slate-800 dark:bg-white/[0.04] dark:border-white/[0.08] dark:text-white/90 rounded-tl-md'
+          }`}
         >
-          <div className="flex items-center gap-1.5 mb-1 text-[10px] text-slate-500 dark:text-white/40 font-mono">
-            <span>{msg.sender === 'user' ? 'Extension Officer' : 'AI Agronomist'}</span>
-            <span>•</span>
-            <span>{msg.timestamp}</span>
-          </div>
-
-          <div
-            className={`max-w-[92%] rounded-xl p-4 text-xs leading-relaxed ${
-              msg.sender === 'user'
-                ? 'bg-emerald-600 text-white rounded-tr-none shadow-sm'
-                : 'bg-slate-50 border border-slate-200 text-slate-800 dark:bg-white/[0.04] dark:border-white/10 dark:text-white/90 rounded-tl-none space-y-3'
-            }`}
-          >
-            {msg.sender === 'user' ? (
-              <div className="whitespace-pre-line font-sans">{msg.text}</div>
-            ) : (
-              <div className="font-sans"><ChatMarkdown content={msg.text} /></div>
-            )}
-
-            {/* Interactive Canvas Pill Trigger in Assistant Message */}
-            {msg.canvasTrigger && (
-              <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2">
-                <button
-                  onClick={() => msg.canvasTrigger && onSelectCanvas(msg.canvasTrigger)}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-300 text-xs font-medium flex items-center gap-1.5 transition-colors"
-                >
-                  <LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>View {msg.canvasLabel || 'Interactive Canvas'} →</span>
-                </button>
-              </div>
-            )}
-          </div>
-        </motion.div>
-      ))}
-    </AnimatePresence>
-
-    {/* Multi-Step Reasoning Live Badge */}
+          <div data-message>{msg.sender === 'user' ? <div className="whitespace-pre-line">{msg.text}</div> : <ChatMarkdown content={msg.text} />}</div>
+        </div>
+      </div>
+    ))}
     {isProcessing && activeReasoningStep && (
-      <motion.div
-        initial={{ opacity: 0, y: 5 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center gap-2.5 text-xs text-purple-300"
-      >
-        <Radio className="w-4 h-4 text-purple-400 animate-spin" />
-        <span className="font-mono text-xxs font-semibold">{activeReasoningStep}</span>
-      </motion.div>
+      <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-white/60">
+        <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+        {activeReasoningStep}
+      </p>
     )}
-
     <div ref={messagesEndRef} />
   </div>
 );

@@ -1,29 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import {
-  Brain,
-  Send,
-  Mic,
-  MicOff,
-  Image as ImageIcon,
-  Droplets,
-  Eye,
-  Network,
-  Sliders,
-  ShieldCheck,
-  Download,
-  Share2,
-} from 'lucide-react';
+import { Send, Mic, MicOff, Image as ImageIcon, ShieldCheck, Download, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '@/api/client';
 
-import type { SoilProbeResult } from '../canvas-ui/SoilNutrientHeatmapCanvas';
-import type { LesionDetectionZone } from '../canvas-ui/DiseaseSaliencyCanvas';
-import type { GraphNode } from '../canvas-ui/RagKnowledgeGraphCanvas';
-import AlphaAgentOps from './AlphaAgentOps';
 import { AgronomicIntakeCard, isAgronomicQueryAmbiguous } from '../AgronomicIntakeCard';
-import type { CanvasViewType } from './alpha/rules';
 import { nowStamp, drainAlphaOfflineQueue } from './alpha/offlineQueue';
 import {
   type ChatMessageItem,
@@ -35,12 +16,16 @@ import {
 } from './alpha/response';
 import { exportAdvisoryPdf } from './alpha/advisoryExport';
 import { isActionEnter } from '@/lib/keyboard';
-import { StudioTabSwitcher, CanvasWorkbench, type LastImageAnalysis } from './alpha/StudioTabs';
 import { MessageStream } from './alpha/MessageStream';
-import { NasaPowerBadge, RagMeshBadge } from './alpha/badges';
 import { analyzeLeafImage } from './alpha/utils/leafAnalysis';
 import { startVoiceCapture } from './alpha/voiceCapture';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useAppStore } from '@/store/useAppStore';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { SECONDARY_BUTTON } from '@/components/ui/controlStyles';
+
+const COMPOSER_ICON =
+  'h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-lg text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06]';
 
 async function fetchPillarTranscription(base64: string, mimeType: string): Promise<string | null> {
   try {
@@ -115,16 +100,10 @@ async function transcribeVoiceBlob(blob: Blob, mimeType: string): Promise<string
 
 export const AlphaAI: React.FC = () => {
   const { t } = useLanguage();
-  const [activeStudioTab, setActiveStudioTab] = useState<'copilot' | 'agent_ops'>('copilot');
-  const [activeCanvasView, setActiveCanvasView] = useState<CanvasViewType>('soil_heatmap');
   const [inputPrompt, setInputPrompt] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [activeReasoningStep, setActiveReasoningStep] = useState<string | null>(null);
-  const [selectedProbeResult, setSelectedProbeResult] = useState<SoilProbeResult | null>(null);
-  const [selectedLesionZone, setSelectedLesionZone] = useState<LesionDetectionZone | null>(null);
-  const [selectedGraphNode, setSelectedGraphNode] = useState<GraphNode | null>(null);
-  const [lastImageAnalysis, setLastImageAnalysis] = useState<LastImageAnalysis | null>(null);
   const [intakeDismissed, setIntakeDismissed] = useState<boolean>(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -133,35 +112,30 @@ export const AlphaAI: React.FC = () => {
     (overrideQuery?: string, opts?: { fromQueue?: boolean }) => Promise<boolean>
   >(async () => false);
 
-  // Initial welcome message
+  const role = useAppStore(state => state.user?.role);
+  const isStaff = role !== 'farmer';
+
+  // A plain greeting (never exported or sent as advice).
   const [messages, setMessages] = useState<ChatMessageItem[]>([
     {
       id: WELCOME_MESSAGE_ID,
       sender: 'assistant',
-      text: `**Agronomic Decision Support Co-Pilot**\n\nSynthesizing live **NASA POWER agroclimatology**, **SoilGrids v2 soil properties**, and **RAG agronomic research** into actionable field advisories and real-time interactive spatial canvas models.\n\nSelect a scenario below, enter field query parameters, or upload leaf symptoms to begin.`,
+      text: t('ai_agronomist_welcome', {
+        defaultValue: 'Ask about a crop, a pest, your soil or the weather. Add a photo of the leaf if you have one. Answers list their sources.',
+      }),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      canvasTrigger: 'soil_heatmap',
-      canvasLabel: 'Interactive Soil Nutrient Grid',
     },
   ]);
 
-  // System telemetry query
-  const { data: healthData } = useQuery({
-    queryKey: ['system-health-copilot'],
-    queryFn: async () => {
-      const { data } = await apiClient.get('/health');
-      return data as { status?: string; uptime?: number };
-    },
-    refetchInterval: 30000,
-  });
   const { data: kbStats } = useQuery({
     queryKey: ['kb-stats-copilot'],
     queryFn: async () => {
       const { data } = await apiClient.get('/knowledge/stats');
-      return data as { success?: boolean; data?: { totalQueries?: number } };
+      return data as { data?: { totalDocuments?: number; total?: number } };
     },
-    refetchInterval: 60000,
+    staleTime: 5 * 60_000,
   });
+  const guides = kbStats?.data?.totalDocuments ?? kbStats?.data?.total;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -204,11 +178,10 @@ export const AlphaAI: React.FC = () => {
     setInputPrompt('');
     appendUserMessage(query);
     setIsProcessing(true);
-    setActiveReasoningStep('Retrieving knowledge-base context...');
+    setActiveReasoningStep(t('ai_agronomist_thinking', { defaultValue: 'Looking through the guides…' }));
 
     try {
       const assistantMsg = await requestAdvisoryMessage(query);
-      if (assistantMsg.canvasTrigger) setActiveCanvasView(assistantMsg.canvasTrigger);
       setMessages(prev => [...prev, assistantMsg]);
     } catch (err) {
       handleSendFailure(err, query, opts);
@@ -249,7 +222,7 @@ export const AlphaAI: React.FC = () => {
     }
     try {
       const recorder = await startVoiceCapture(async (blob, mimeType) => {
-        setActiveReasoningStep('Transcribing voice (Whisper)...');
+        setActiveReasoningStep(t('ai_agronomist_transcribing', { defaultValue: 'Turning your recording into text…' }));
         try {
           const text = await transcribeVoiceBlob(blob, mimeType);
           if (text) {
@@ -263,7 +236,7 @@ export const AlphaAI: React.FC = () => {
       if (!recorder) return;
       voiceRecorderRef.current = recorder;
       setIsRecordingVoice(true);
-      toast('Recording… tap again to stop and transcribe');
+      toast(t('ai_agronomist_recording_toast', { defaultValue: 'Recording. Tap the microphone again to stop.' }));
     } catch (e) {
       toast.error((e as Error).message || 'Microphone access denied');
     }
@@ -276,23 +249,13 @@ export const AlphaAI: React.FC = () => {
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
-      setActiveReasoningStep('Analyzing leaf image (vision)…');
+      setActiveReasoningStep(t('ai_agronomist_reading_photo', { defaultValue: 'Looking at the photo…' }));
       try {
-        const { summary, analysis } = await analyzeLeafImage(file);
-        setLastImageAnalysis(analysis);
-        setActiveCanvasView('disease_saliency');
+        const { summary } = await analyzeLeafImage(file);
         setMessages(prev => [
           ...prev,
-          {
-            id: `img-${Date.now()}`,
-            sender: 'assistant',
-            text: `🖼️ **Image diagnosis:** ${summary}`,
-            timestamp: nowStamp(),
-            canvasTrigger: 'disease_saliency',
-            canvasLabel: 'Leaf Image Assessment',
-          },
+          { id: `img-${Date.now()}`, sender: 'assistant', text: `**${t('ai_agronomist_photo_result', { defaultValue: 'From the photo' })}:** ${summary}`, timestamp: nowStamp() },
         ]);
-        toast.success('Image analyzed — check Disease Diagnosis for lab verification');
       } catch (e) {
         toast.error(
           (e as { response?: { data?: { error?: string } } })?.response?.data?.error ||
@@ -310,7 +273,7 @@ export const AlphaAI: React.FC = () => {
   const handleDispatchSms = async () => {
     const lastAnswer = latestAdvisoryText(messages);
     if (!lastAnswer) {
-      toast.error('No advisory to dispatch — ask a question first');
+      toast.error('Ask a question first');
       return;
     }
     try {
@@ -324,8 +287,8 @@ export const AlphaAI: React.FC = () => {
       storeTab?.('sms');
       toast(
         truncated.length < body.length
-          ? 'Opening SMS composer (advisory truncated to 300 chars)…'
-          : 'Opening SMS composer with last advisory…'
+          ? 'Opening the SMS page (the answer was shortened to 300 characters)'
+          : 'Opening the SMS page with the last answer'
       );
     } catch {
       toast.error('SMS dispatch requires SMS page');
@@ -334,238 +297,131 @@ export const AlphaAI: React.FC = () => {
 
   const handleExportPdf = () => exportAdvisoryPdf(messages);
 
+  const lastCitations = messages.findLast(m => m.sender === 'assistant' && m.citations?.length)?.citations ?? [];
+  const hasAnswer = Boolean(latestAdvisoryText(messages));
+
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-20">
-      {/* ── Top HUD Navigation Banner (knockknockapp.ai standard) ── */}
-      <div className="backdrop-blur-2xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm dark:shadow-2xl relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
-          {/* Left: Branding */}
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <Brain className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
-                {t('ui_alpha_ai_ai_agronomic_co_pilot')}
-              </h1>
-              <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-                {t('ui_alpha_ai_multi_modal_decision_engine_powered')}
-              </p>
-            </div>
-          </div>
+    <div className="max-w-6xl mx-auto space-y-6 pb-20">
+      <PageHeader
+        title={t('nav_aiassistant', { defaultValue: 'AI agronomist' })}
+        description={t('ai_agronomist_description', {
+          defaultValue: 'Ask about crops, pests, soil and weather. Check any product dose on its label before use.',
+        })}
+        meta={
+          typeof guides === 'number'
+            ? t('ai_agronomist_guides', { count: guides, defaultValue: 'Answers draw on {count} extension guides' })
+            : undefined
+        }
+      />
 
-          {/* Center/Right: Live Telemetry Badges & Mode Switcher */}
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
-            <NasaPowerBadge data={healthData} />
-            <RagMeshBadge data={kbStats} />
-
-            {/* Studio / Ops Toggle */}
-            <StudioTabSwitcher active={activeStudioTab} onSelect={setActiveStudioTab} />
-          </div>
-        </div>
-      </div>
-
-      {activeStudioTab === 'agent_ops' ? (
-        /* ── Autonomous Agent Operations Subsystem ── */
-        <AlphaAgentOps />
-      ) : (
-        /* ── Main Dual-Pane Co-Pilot + Generative Canvas Workspace ── */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* ══════════════════════════════════════════════════════════════
-              LEFT PANE (5 / 12 Cols): Conversational Co-Pilot Stream
-             ══════════════════════════════════════════════════════════════ */}
-          <div className="lg:col-span-5 flex flex-col space-y-4">
-            {/* Conversational Stream Card */}
-            <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-4 flex-1 flex flex-col justify-between shadow-sm dark:shadow-xl min-h-[480px] max-h-[620px]">
-              {/* Message List */}
-              <MessageStream
-                messages={messages}
-                isProcessing={isProcessing}
-                activeReasoningStep={activeReasoningStep}
-                onSelectCanvas={setActiveCanvasView}
-                messagesEndRef={messagesEndRef}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <section
+          aria-label={t('ai_agronomist_conversation', { defaultValue: 'Conversation' })}
+          className="lg:col-span-8 bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl p-4 flex flex-col min-h-[520px] max-h-[72vh]"
+        >
+          <MessageStream
+            messages={messages}
+            isProcessing={isProcessing}
+            activeReasoningStep={activeReasoningStep}
+            messagesEndRef={messagesEndRef}
+            youLabel={t('chat_you', { defaultValue: 'You' })}
+            assistantLabel={t('nav_aiassistant', { defaultValue: 'AI agronomist' })}
+          />
+          <div className="pt-3 border-t border-slate-900/[0.08] dark:border-white/[0.08] space-y-2">
+            {isAgronomicQueryAmbiguous(inputPrompt) && !intakeDismissed && !isProcessing && (
+              <AgronomicIntakeCard
+                initialQuery={inputPrompt}
+                compact={true}
+                onApplyIntake={enrichedQuery => {
+                  setInputPrompt('');
+                  handleSendMessage(enrichedQuery);
+                }}
+                onBypass={() => {
+                  setIntakeDismissed(true);
+                  handleSendMessage();
+                }}
               />
-
-              {/* Input Bar & Multi-Modal Controls (knockknockapp.ai voice/leaf standard) */}
-              <div className="pt-3 border-t border-slate-200 dark:border-white/5 space-y-2">
-                {/* Dynamic Agronomic Intake Clarification */}
-                {isAgronomicQueryAmbiguous(inputPrompt) && !intakeDismissed && !isProcessing && (
-                  <AgronomicIntakeCard
-                    initialQuery={inputPrompt}
-                    compact={true}
-                    onApplyIntake={enrichedQuery => {
-                      setInputPrompt('');
-                      handleSendMessage(enrichedQuery);
-                    }}
-                    onBypass={() => {
-                      setIntakeDismissed(true);
-                      handleSendMessage();
-                    }}
-                  />
-                )}
-
-                {isRecordingVoice && (
-                  <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-                      <span className="font-mono text-xs font-medium">
-                        {t('ui_alpha_ai_recording_voice_audio_speak_prompt')}
-                      </span>
-                    </div>
-                    {/* Simulated Voice Waveform */}
-                    <div className="flex items-center gap-0.5 h-4">
-                      {[12, 24, 16, 32, 20, 28, 14, 26, 18, 30].map((h, i) => (
-                        <motion.div
-                          key={i}
-                          animate={{ height: [4, h, 6] }}
-                          transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.05 }}
-                          className="w-1 bg-emerald-500 dark:bg-emerald-400 rounded-full"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="relative flex items-center gap-2 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl p-1.5 focus-within:border-emerald-500/50 focus-within:ring-1 focus-within:ring-emerald-500/30 transition-all">
-                  <button
-                    onClick={handleImageUploadSim}
-                    title="Attach Leaf Image for Saliency Detection"
-                    className="p-2 text-slate-400 dark:text-white/40 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg hover:bg-slate-200 dark:hover:bg-white/5 transition-colors"
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={handleVoiceToggle}
-                    title={isRecordingVoice ? 'Stop Recording' : 'Voice Input (STT)'}
-                    className={`p-2 rounded-lg transition-colors ${
-                      isRecordingVoice
-                        ? 'bg-rose-500/20 text-rose-500 dark:text-rose-400 animate-pulse'
-                        : 'text-slate-400 dark:text-white/40 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-200 dark:hover:bg-white/5'
-                    }`}
-                  >
-                    {isRecordingVoice ? (
-                      <MicOff className="w-4 h-4" />
-                    ) : (
-                      <Mic className="w-4 h-4" />
-                    )}
-                  </button>
-
-                  <textarea
-                    value={inputPrompt}
-                    onChange={e => setInputPrompt(e.target.value)}
-                    onKeyDown={e => {
-                      if (isActionEnter(e) && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
-                    }}
-                    placeholder="Ask an agronomic question or enter field observation..."
-                    rows={1}
-                    className="w-full bg-transparent text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 outline-none resize-none px-1 py-1 max-h-20"
-                  />
-
-                  <button
-                    onClick={() => handleSendMessage()}
-                    disabled={!inputPrompt.trim() || isProcessing}
-                    className="p-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-lg shadow-md transition-all active:scale-95 shrink-0"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
+            )}
+            {isRecordingVoice && (
+              <p className="text-sm text-emerald-700 dark:text-emerald-300" role="status">
+                {t('ai_agronomist_recording', { defaultValue: 'Recording. Tap the microphone again to stop.' })}
+              </p>
+            )}
+            <div className="flex items-end gap-2 bg-slate-50 dark:bg-white/[0.03] border border-slate-900/[0.1] dark:border-white/[0.1] rounded-xl p-1.5 focus-within:ring-2 focus-within:ring-emerald-600">
+              <button type="button" onClick={handleImageUploadSim} aria-label={t('ai_agronomist_add_photo', { defaultValue: 'Add a leaf photo' })} className={COMPOSER_ICON}>
+                <ImageIcon className="w-[18px] h-[18px]" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={handleVoiceToggle}
+                aria-pressed={isRecordingVoice}
+                aria-label={isRecordingVoice ? t('ai_agronomist_stop_recording', { defaultValue: 'Stop recording' }) : t('ai_agronomist_record', { defaultValue: 'Ask by voice' })}
+                className={COMPOSER_ICON}
+              >
+                {isRecordingVoice ? <MicOff className="w-[18px] h-[18px]" aria-hidden="true" /> : <Mic className="w-[18px] h-[18px]" aria-hidden="true" />}
+              </button>
+              <textarea
+                value={inputPrompt}
+                onChange={e => setInputPrompt(e.target.value)}
+                onKeyDown={e => {
+                  if (isActionEnter(e) && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                aria-label={t('ai_agronomist_question', { defaultValue: 'Your question' })}
+                placeholder={t('ai_agronomist_placeholder', { defaultValue: 'For example: lower maize leaves turning yellow after rain' })}
+                rows={1}
+                className="w-full bg-transparent text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 outline-none resize-none px-1 py-2 max-h-28"
+              />
+              <button
+                type="button"
+                onClick={() => handleSendMessage()}
+                disabled={!inputPrompt.trim() || isProcessing}
+                aria-label={t('ai_agronomist_send', { defaultValue: 'Send question' })}
+                className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-lg bg-emerald-700 hover:bg-emerald-800 disabled:opacity-40 text-white"
+              >
+                <Send className="w-4 h-4" aria-hidden="true" />
+              </button>
             </div>
           </div>
+        </section>
 
-          {/* ══════════════════════════════════════════════════════════════
-              RIGHT PANE (7 / 12 Cols): Generative Canvas Workbench
-             ══════════════════════════════════════════════════════════════ */}
-          <div className="lg:col-span-7 flex flex-col space-y-4">
-            {/* Workbench Navigation Header */}
-            <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-sm dark:shadow-lg">
-              {/* Canvas Tabs */}
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-slate-200 dark:border-white/5 overflow-x-auto max-w-full">
-                {[
-                  { id: 'soil_heatmap' as const, label: 'Soil Heatmap', icon: Droplets },
-                  { id: 'disease_saliency' as const, label: 'Disease Saliency', icon: Eye },
-                  { id: 'agro_scrubber' as const, label: 'Agro Scrubber', icon: Sliders },
-                  { id: 'rag_graph' as const, label: 'RAG Graph', icon: Network },
-                ].map(tab => {
-                  const Icon = tab.icon;
-                  const isActive = activeCanvasView === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveCanvasView(tab.id)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                        isActive
-                          ? 'bg-emerald-600 text-white shadow-sm'
-                          : 'text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      <Icon className="w-3.5 h-3.5" />
-                      <span>{tab.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Status Pill */}
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-                  {t('ui_alpha_ai_interactive_canvas')}
-                </span>
-              </div>
-            </div>
-
-            {/* Generative Interactive Canvas Container (canvasui.dev glassmorphic standard) */}
-            <div className="backdrop-blur-2xl bg-white/95 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm dark:shadow-2xl relative overflow-hidden min-h-[500px] flex flex-col justify-between">
-              {' '}
-              {/* Dynamic Mounted Canvas */}
-              <div className="flex-1 flex flex-col justify-center">
-                <CanvasWorkbench
-                  view={activeCanvasView}
-                  selectedProbeResult={selectedProbeResult}
-                  onProbeSelect={setSelectedProbeResult}
-                  selectedLesionZone={selectedLesionZone}
-                  onLesionZoneSelect={setSelectedLesionZone}
-                  selectedGraphNode={selectedGraphNode}
-                  onGraphNodeSelect={setSelectedGraphNode}
-                  onDispatchSms={handleDispatchSms}
-                  citations={messages.findLast(m => m.sender === 'assistant' && m.citations?.length)?.citations ?? []}
-                  lastImageAnalysis={lastImageAnalysis}
-                />
-              </div>
-              {/* ── Workbench Action Footer Dock ── */}
-              <div className="pt-4 mt-4 border-t border-slate-200 dark:border-white/5 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xxs text-slate-500 dark:text-white/50 font-mono">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>{t('ui_alpha_ai_agronomic_safety_guard_on_answers_ar')}</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleExportPdf}
-                    className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 text-xs font-semibold dark:text-white/80 dark:hover:text-white transition-colors flex items-center gap-1.5"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>{t('ui_alpha_ai_export_pdf')}</span>
-                  </button>
-
-                  <button
-                    onClick={handleDispatchSms}
-                    className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
-                  >
-                    <Share2 className="w-3.5 h-3.5" />
-                    <span>{t('ui_alpha_ai_dispatch_advisory_sms')}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+        <aside className="lg:col-span-4 space-y-4" aria-label={t('ai_agronomist_sources', { defaultValue: 'Sources' })}>
+          <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl p-4">
+            <h2 className="text-sm font-medium text-slate-900 dark:text-white">{t('ai_agronomist_sources', { defaultValue: 'Sources' })}</h2>
+            {lastCitations.length === 0 ? (
+              <p className="mt-2 text-sm text-slate-500 dark:text-white/60">
+                {t('ai_agronomist_no_sources', { defaultValue: 'The guides behind each answer are listed here.' })}
+              </p>
+            ) : (
+              <ol className="mt-2 space-y-2 text-sm list-decimal list-inside text-slate-700 dark:text-white/80">
+                {lastCitations.map((citation, index) => (
+                  <li key={`${citation.title}-${index}`}>{citation.title}</li>
+                ))}
+              </ol>
+            )}
           </div>
-        </div>
-      )}
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={handleExportPdf} disabled={!hasAnswer} className={SECONDARY_BUTTON}>
+              <Download className="w-4 h-4" aria-hidden="true" />
+              {t('ai_agronomist_export', { defaultValue: 'Save as PDF' })}
+            </button>
+            {isStaff && (
+              <button type="button" onClick={handleDispatchSms} disabled={!hasAnswer} className={SECONDARY_BUTTON}>
+                <Share2 className="w-4 h-4" aria-hidden="true" />
+                {t('ai_agronomist_send_sms', { defaultValue: 'Send by SMS' })}
+              </button>
+            )}
+          </div>
+          <p className="flex gap-2 text-xs text-slate-500 dark:text-white/60">
+            <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+            {t('ai_agronomist_safety', {
+              defaultValue: 'Answers are checked for unsafe doses and mixtures. A diagnosis from a photo needs confirmation by your officer.',
+            })}
+          </p>
+        </aside>
+      </div>
     </div>
   );
 };

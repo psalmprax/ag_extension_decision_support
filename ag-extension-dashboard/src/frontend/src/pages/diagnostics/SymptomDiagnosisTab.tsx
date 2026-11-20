@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Search, Loader2, Leaf, X, Plus, ShieldAlert, Activity, FileCheck } from 'lucide-react';
+import { Leaf, ShieldAlert, FileCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { diagnoseFromSymptoms, type DiseaseDiagnosis } from '../../api/diseaseService';
-import { isActionEnter } from '@/lib/keyboard';
+import { SymptomInputPanel } from './SymptomInputPanel';
 
 interface Props {
   cropType: string;
@@ -15,161 +15,6 @@ interface Props {
   getSeverityColor: (severity: string) => string;
 }
 
-const COMMON_SYMPTOM_PRESETS = [
-  'Yellowing / Chlorosis',
-  'Dark Necrotic Spots',
-  'White Powdery Mold',
-  'Wilting / Drooping',
-  'Leaf Curling & Crinkling',
-  'Stem Lesions & Cankers',
-  'Orange Pustules (Rust)',
-  'Mottled Mosaic Discoloration',
-];
-
-const SymptomInputPanel: React.FC<{
-  cropType: string;
-  setCropType: (v: string) => void;
-  currentSymptom: string;
-  setCurrentSymptom: (v: string) => void;
-  symptoms: string[];
-  onAddSymptom: (s: string) => void;
-  onRemoveSymptom: (s: string) => void;
-  onDiagnose: () => void;
-  isDiagnosing: boolean;
-}> = ({
-  cropType,
-  setCropType,
-  currentSymptom,
-  setCurrentSymptom,
-  symptoms,
-  onAddSymptom,
-  onRemoveSymptom,
-  onDiagnose,
-  isDiagnosing,
-}) => (
-  <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 space-y-4">
-    <div className="flex items-center justify-between">
-      <h3 className="text-xs font-semibold text-white flex items-center gap-2">
-        <Activity className="w-4 h-4 text-emerald-400" />
-        Symptom Observation Panel
-      </h3>
-      <span className="text-xxs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
-        Heuristic Match
-      </span>
-    </div>
-
-    <div className="space-y-3">
-      <div>
-        <label className="block text-xs font-medium text-slate-400 mb-1">
-          Target Crop Type
-        </label>
-        <input
-          type="text"
-          value={cropType}
-          onChange={e => setCropType(e.target.value)}
-          placeholder="e.g. Maize, Tomato, Coffee, Cassava"
-          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-md text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 font-mono transition-colors"
-        />
-      </div>
-
-      <div>
-        <label className="block text-xs font-medium text-slate-400 mb-1">
-          Add Observed Symptoms
-        </label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={currentSymptom}
-            onChange={e => setCurrentSymptom(e.target.value)}
-            onKeyDown={e => isActionEnter(e) && currentSymptom.trim() && onAddSymptom(currentSymptom.trim())}
-            placeholder="Type custom symptom and press Add or Enter..."
-            className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-md text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 font-mono transition-colors"
-          />
-          <button
-            type="button"
-            onClick={() => currentSymptom.trim() && onAddSymptom(currentSymptom.trim())}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs font-medium transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5 inline mr-1" />
-            Add
-          </button>
-        </div>
-      </div>
-
-      {/* Preset Symptom Chips */}
-      <div>
-        <p className="text-xs font-medium text-slate-400 mb-1.5">
-          Quick Preset Selectors:
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          {COMMON_SYMPTOM_PRESETS.map(preset => {
-            const isSelected = symptoms.includes(preset);
-            return (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => (isSelected ? onRemoveSymptom(preset) : onAddSymptom(preset))}
-                className={`text-xs font-mono px-2.5 py-1 rounded border transition-colors ${
-                  isSelected
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
-                    : 'bg-slate-950/60 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
-                }`}
-              >
-                {isSelected ? '✓ ' : '+ '}
-                {preset}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Selected Symptoms Tag Cloud */}
-      {symptoms.length > 0 && (
-        <div className="pt-2 border-t border-slate-800">
-          <p className="text-xs font-medium text-slate-400 mb-1.5">
-            Active Symptom Registry ({symptoms.length}):
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {symptoms.map(symptom => (
-              <span
-                key={symptom}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-950 border border-emerald-500/30 text-emerald-300 text-xs font-mono"
-              >
-                <span>{symptom}</span>
-                <button
-                  type="button"
-                  onClick={() => onRemoveSymptom(symptom)}
-                  className="text-slate-500 hover:text-rose-400"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-
-    <button
-      onClick={onDiagnose}
-      disabled={symptoms.length === 0 || isDiagnosing}
-      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors active:scale-[0.98]"
-    >
-      {isDiagnosing ? (
-        <>
-          <Loader2 className="w-4 h-4 animate-spin text-white" />
-          <span>Inferring Pathological Matches...</span>
-        </>
-      ) : (
-        <>
-          <Search className="w-4 h-4" />
-          <span>Execute Symptom Inference ({symptoms.length} Tags)</span>
-        </>
-      )}
-    </button>
-  </div>
-);
-
 const SymptomResultCard: React.FC<{
   result: DiseaseDiagnosis;
   onViewDiseaseInfo: (name: string) => void;
@@ -178,10 +23,10 @@ const SymptomResultCard: React.FC<{
   <motion.div
     initial={{ opacity: 0, y: 8 }}
     animate={{ opacity: 1, y: 0 }}
-    className="p-4 rounded-lg bg-slate-950 border border-slate-800 hover:border-slate-700 transition-colors space-y-2.5"
+    className="p-4 rounded-lg bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] transition-colors space-y-2.5"
   >
     <div className="flex items-center justify-between">
-      <h4 className="text-xs font-semibold text-white">
+      <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
         {result.reviewStatus === 'needs_expert_review' || result.provenance.evidenceStatus !== 'verified_source' ? 'Possible: ' : ''}
         {result.disease}
       </h4>
@@ -194,7 +39,7 @@ const SymptomResultCard: React.FC<{
       </span>
     </div>
 
-    <div className="flex items-center justify-between text-xs font-mono">
+    <div className="flex items-center justify-between text-xs">
       <span className="text-emerald-400 font-medium tabular-nums">
         Symptom match: {(result.confidence * 100).toFixed(1)}%
       </span>
@@ -203,14 +48,14 @@ const SymptomResultCard: React.FC<{
       </span>
     </div>
 
-    <p className="text-xs text-slate-300 leading-relaxed">{result.description}</p>
+    <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{result.description}</p>
 
-    <div className="p-2 rounded bg-slate-900/60 border border-white/5 text-xs font-mono text-amber-300 flex items-start gap-1.5">
+    <div className="p-2 rounded bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-amber-800 dark:text-amber-300 flex items-start gap-1.5">
       <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
       <span>{result.safetyNotice}</span>
     </div>
 
-    <div className="pt-2 border-t border-slate-800 flex justify-end">
+    <div className="pt-2 border-t border-slate-900/[0.08] dark:border-white/[0.08] flex justify-end">
       <button
         onClick={() => onViewDiseaseInfo(result.disease)}
         className="text-xs font-medium text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
@@ -260,14 +105,14 @@ export function SymptomDiagnosisTab({
       } else {
         addNotification({
           type: 'error',
-          message: 'Failed to infer diseases from symptoms.',
+          message: 'The symptom check is not available right now. Try again later.',
         });
       }
     } catch (error) {
       console.error('Diagnosis error:', error);
       addNotification({
         type: 'error',
-        message: 'Network error diagnosing symptoms',
+        message: 'The symptom check is not available right now. Try again later.',
       });
     } finally {
       setIsDiagnosing(false);
@@ -288,16 +133,16 @@ export function SymptomDiagnosisTab({
         isDiagnosing={isDiagnosing}
       />
 
-      {/* Results Section */}
-      <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-4">
+      {/* Results */}
+      <section aria-label="Result" className="p-5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] flex flex-col justify-between space-y-4">
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-semibold text-white flex items-center gap-2">
-              <FileCheck className="w-4 h-4 text-emerald-400" />
-              Ranked Pathology Differentials
+            <h3 className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <FileCheck className="w-4 h-4 text-slate-400" aria-hidden="true" />
+              Possible causes, most likely first
             </h3>
-            <span className="text-xxs font-mono text-slate-400 tabular-nums">
-              {diagnosis.length} Matches Found
+            <span className="text-xs text-slate-400 tabular-nums">
+              {diagnosis.length} {diagnosis.length === 1 ? 'match' : 'matches'}
             </span>
           </div>
 
@@ -315,16 +160,13 @@ export function SymptomDiagnosisTab({
           ) : (
             <div className="py-12 text-center text-slate-500 space-y-2">
               <Leaf className="w-10 h-10 mx-auto opacity-30 text-emerald-400" />
-              <p className="text-xs font-medium text-slate-400">
-                Awaiting symptom input
-              </p>
-              <p className="text-xs font-mono text-slate-500">
-                Select preset chips or type custom symptoms on the left to run inference.
+              <p className="text-sm text-slate-400">
+                Add the signs you see, then check them. A match is a starting point: your officer confirms it.
               </p>
             </div>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

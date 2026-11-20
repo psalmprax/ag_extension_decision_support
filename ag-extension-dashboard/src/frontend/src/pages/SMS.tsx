@@ -43,7 +43,7 @@ export function SMSPage() {
     {
       id: '3',
       title: t('sms_template_alert'),
-      content: 'URGENT: Heavy rain expected. Please take necessary precautions for your harvest.',
+      content: 'Heavy rain is forecast for your area. Please take precautions to protect your harvest.',
       icon: AlertTriangle,
       color: 'bg-rose-100 text-rose-600',
     },

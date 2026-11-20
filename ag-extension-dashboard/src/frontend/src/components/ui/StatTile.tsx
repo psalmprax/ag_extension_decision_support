@@ -19,7 +19,7 @@ interface StatTileProps {
  * the note (for a rise or fall), never to the tile.
  */
 export const StatTile: React.FC<StatTileProps> = ({ label, icon: Icon, value, note, emptyText = 'No data yet', className }) => (
-  <div className={cn('bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5', className)}>
+  <div role="group" aria-label={label} className={cn('bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5', className)}>
     <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
       {Icon && <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />}
       <span className="text-sm text-slate-600 dark:text-slate-300">{label}</span>

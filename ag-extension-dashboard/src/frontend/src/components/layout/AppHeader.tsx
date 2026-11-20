@@ -80,7 +80,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   ];
 
   return (
-    <header className="fixed top-0 w-full z-50 flex justify-between items-center px-3 sm:px-5 h-16 border-b border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#0d1a14]">
+    <header className="fixed top-0 w-full z-50 flex justify-between items-center px-3 sm:px-5 h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] border-b border-slate-900/[0.08] dark:border-white/[0.08] max-md:ios-bar md:bg-white md:dark:bg-[#0d1a14]">
       <div className="flex items-center gap-2 sm:gap-4">
         <div className="flex items-center gap-1 sm:gap-2">
           {/* Phones open the menu from the bottom bar, so the top button is for wider screens. */}
@@ -136,7 +136,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
 
         <div className="hidden lg:block">
-          <LanguageSwitcher compact showFlag={false} />
+          <LanguageSwitcher compact />
         </div>
 
         {/* On phones, dark mode and settings live in the menu drawer to keep the bar uncluttered. */}

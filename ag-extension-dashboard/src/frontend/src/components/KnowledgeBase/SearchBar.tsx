@@ -146,17 +146,19 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             <Search className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <input
-            type="text"
+            type="search"
+            aria-label={t('kb_search_label', { defaultValue: 'Search the guides' })}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && onSearch()}
-            placeholder="Ask ALFA Agro-RAG (e.g., Maize Fall Armyworm IPM, Soil Acidity pH 4.8)..."
+            placeholder={t('kb_search_placeholder', { defaultValue: 'For example: fall armyworm in maize, or acid soil at pH 4.8' })}
             className="flex-1 min-w-0 bg-transparent border-none focus:ring-0 py-2.5 sm:py-3.5 px-3 sm:px-4 text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 truncate"
           />
           <div className="flex items-center gap-1 sm:gap-2 pr-1 sm:pr-2 shrink-0">
             <label
               className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white cursor-pointer transition-all shrink-0 border border-transparent hover:border-slate-200 dark:hover:border-white/10"
-              title="Attach leaf photo or soil test report"
+              title={t('kb_attach', { defaultValue: 'Attach a leaf photo or a soil test' })}
+              aria-label={t('kb_attach', { defaultValue: 'Attach a leaf photo or a soil test' })}
             >
               <Paperclip className="w-4 h-4" />
               <input type="file" multiple className="hidden" onChange={handleFileUpload} />

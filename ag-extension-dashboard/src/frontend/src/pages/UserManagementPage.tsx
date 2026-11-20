@@ -483,7 +483,7 @@ export function UserManagementPage() {
                           <optgroup key={continent} label={continent} className="bg-slate-900 text-emerald-400 font-medium">
                             {countries.map(c => (
                               <option key={c.name} value={c.name} className="bg-slate-900 text-white font-normal">
-                                {c.flag} {c.name}
+                                {c.name}
                               </option>
                             ))}
                           </optgroup>

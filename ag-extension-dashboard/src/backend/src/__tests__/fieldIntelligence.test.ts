@@ -199,6 +199,29 @@ describe('MIS export service', () => {
         const { csv } = await misExportService.exportDataset('farmers');
         expect(csv).toContain('"A, District"');
     });
+
+    it('limits an officer to their own farmers and a manager to their region', async () => {
+        mockQuery.mockResolvedValue({ rows: [], rowCount: 0 });
+        await misExportService.exportDataset('visits', { kind: 'officer', officerId: 'officer-1' });
+        const [officerSql, officerParams] = mockQuery.mock.calls[0];
+        expect(officerSql).toContain('f.assigned_officer_id = $2');
+        expect(officerParams).toEqual([10000, 'officer-1']);
+
+        await misExportService.exportDataset('outcomes', { kind: 'region', region: 'Nakuru' });
+        const [regionSql, regionParams] = mockQuery.mock.calls[1];
+        expect(regionSql).toContain('f.region = $2');
+        expect(regionParams).toEqual([10000, 'Nakuru']);
+    });
+
+    it('never exports demo farmers to a real account', async () => {
+        mockQuery.mockResolvedValue({ rows: [], rowCount: 0 });
+        await misExportService.exportDataset('farmers');
+        expect(mockQuery.mock.calls[0][0]).toContain('COALESCE(f.is_demo, false) = false');
+    });
+
+    it('rejects an unknown dataset', async () => {
+        await expect(misExportService.exportDataset('payments' as never)).rejects.toThrow('UNKNOWN_DATASET');
+    });
 });
 
 // ── Weather index ────────────────────────────────────────────────────────────

@@ -1,5 +1,7 @@
 import apiClient from './client';
 
+export type MisDataset = 'farmers' | 'visits' | 'outcomes';
+
 // ── Route optimizer ──────────────────────────────────────────────────────────
 
 export interface PlannedStop {
@@ -87,7 +89,9 @@ export const fieldIntelService = {
         return data.data;
     },
 
-    misExportUrl(dataset: 'farmers' | 'visits' | 'outcomes'): string {
-        return `/field-intel/mis/export/${dataset}`;
+    /** The government MIS export for one dataset, limited to the records the user may see. */
+    async downloadMisExport(dataset: MisDataset): Promise<Blob> {
+        const response = await apiClient.get(`/field-intel/mis/export/${dataset}`, { responseType: 'blob' });
+        return response.data as Blob;
     },
 };

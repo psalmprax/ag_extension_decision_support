@@ -1,5 +1,6 @@
 import { useAppStore } from '@/store/useAppStore';
 import { useAppModalState } from './useAppModalState';
+import { saveBlob } from '@/lib/saveBlob';
 
 export function useAppMenuActions() {
   const { farmers: storeFarmers, addNotification, showShareModal, removeFarmer } = useAppStore();
@@ -32,12 +33,7 @@ export function useAppMenuActions() {
           ],
         ].join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `farmer_${entityId}_export.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
+        saveBlob(blob, `farmer_${entityId}_export.csv`);
         addNotification({ type: 'success', message: 'Farmer data exported successfully' });
       }
     }

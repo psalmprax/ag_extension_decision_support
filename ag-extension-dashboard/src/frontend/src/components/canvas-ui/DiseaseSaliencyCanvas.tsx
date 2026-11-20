@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Eye, ZoomIn, Sliders, AlertCircle } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { formatLabel } from '@/lib/formatLabel';
+import { tabButtonClass } from '@/components/ui/controlStyles';
 export interface LesionDetectionZone {
   id: string;
   x: number; // Normalized 0..1
@@ -277,13 +278,10 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
 
           <button
             onClick={() => setShowLoupe(!showLoupe)}
-            className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-              showLoupe
-                ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
-            }`}
+            aria-pressed={showLoupe}
+            className={tabButtonClass(showLoupe)}
           >
-            <ZoomIn className="w-3.5 h-3.5" />
+            <ZoomIn className="w-4 h-4" aria-hidden="true" />
             <span>{t('ui_disease_saliency_canvas_2_5x_loupe_lens')}</span>
           </button>
         </div>
@@ -326,8 +324,10 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
           </div>
         )}
 
-        <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-md border border-white/10 text-xxs font-mono text-gray-400">
-          {hasLiveDetections ? 'Lesion overlay • Move cursor to inspect' : 'Image loupe • No lesion detection overlay'}
+        <div className="absolute bottom-2 left-2 bg-black/60 px-2.5 py-1 rounded-md text-xs text-slate-200">
+          {hasLiveDetections
+            ? t('saliency_hint_lesions', { defaultValue: 'Marked areas are where the model found damage. Point at one for detail.' })
+            : t('saliency_hint_none', { defaultValue: 'No damaged areas were marked on this photo.' })}
         </div>
       </div>
     </div>

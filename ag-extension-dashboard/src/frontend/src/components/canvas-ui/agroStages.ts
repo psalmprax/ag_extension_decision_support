@@ -50,3 +50,6 @@ export const AGRO_STAGES: AgroStageMeta[] = [
     color: '#a855f7',
   },
 ];
+
+/** The lines of the example SMS in the last step: general steps, never a product rate. */
+export const ADVICE_LINES = ['Observation', 'Review field data', 'Seek expert review'];

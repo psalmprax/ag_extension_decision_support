@@ -6,7 +6,7 @@ interface DialogProps {
   open: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '3xl';
 }
 
 const sizeClasses = {
@@ -14,6 +14,7 @@ const sizeClasses = {
   md: 'max-w-md',
   lg: 'max-w-lg',
   xl: 'max-w-xl',
+  '3xl': 'max-w-3xl',
 };
 
 export function Dialog({ open, onClose, children, size = 'md' }: DialogProps) {

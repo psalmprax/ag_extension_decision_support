@@ -1114,7 +1114,6 @@ function LanguageSelector({ selectedLanguage, onSelectLanguage }: LanguageSelect
                   : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
-              <span>{langObj?.flag}</span>
               <span>{langObj?.name}</span>
             </button>
           );

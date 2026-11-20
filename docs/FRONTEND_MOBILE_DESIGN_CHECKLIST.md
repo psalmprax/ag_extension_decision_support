@@ -49,12 +49,12 @@ graph TD
 
 | ID | Graphical Standard | Specification & Execution Details | Status |
 | :--- | :--- | :--- | :---: |
-| **GRP-01** | **Harmonious HSL Color Tokens** | **Base Semantic Colors:**<br>• **Brand Primary (Forest Emerald):** `hsl(160, 84%, 39%)` / `#059669`<br>• **Canvas Background (Light/Dark):** `#ffffff` / `#0c0a09` (`stone-950`)<br>• **Surface Card 1:** `#f8fafc` (`slate-50`) / `#1c1917` (`stone-900`)<br>• **Surface Card 2 (Modal):** `#ffffff` / `#292524` (`stone-800`)<br>• **Alert Amber (Pest/Risk):** `hsl(38, 92%, 50%)` / `#d97706`<br>• **Alert Crimson (Disease/Hazard):** `hsl(0, 84%, 60%)` / `#dc2626`<br>• **Water/Rainfall Sky:** `hsl(199, 89%, 48%)` / `#0284c7` | 🟢 Enforced |
+| **GRP-01** | **Harmonious HSL Color Tokens** | **Base Semantic Colors:**<br>• **Brand Primary (Forest Emerald):** `hsl(160, 84%, 39%)` / `#059669`<br>• **Canvas Background (Light/Dark):** `#f8fafc` / `#0d1a14`<br>• **Surface Card 1:** `#ffffff` / `rgb(255 255 255 / 0.03)` on `#0d1a14`<br>• **Surface Card 2 (Modal):** `#ffffff` / `#13241b`<br>• **Alert Amber (Pest/Risk):** `hsl(38, 92%, 50%)` / `#d97706`<br>• **Alert Crimson (Disease/Hazard):** `hsl(0, 84%, 60%)` / `#dc2626`<br>• **Water/Rainfall Sky:** `hsl(199, 89%, 48%)` / `#0284c7` | 🟢 Enforced |
 | **GRP-02** | **Color Blindness Parity** | Data visualizations and status badges must never rely solely on color. Red/Green indicators must be accompanied by explicit text labels and distinct geometric icons (e.g. Checkmark for healthy, Exclamation Triangle for risk). | 🟢 Enforced |
 | **GRP-03** | **Unified Typography Pairing** | • **Primary UI Typeface:** *Inter* / *Plus Jakarta Sans* (High x-height, open apertures for low-cost mobile screens).<br>• **Data & Numerical Typeface:** *JetBrains Mono* / *Roboto Mono* with `font-variant-numeric: tabular-nums` for crop yield, GPS coordinates, area, and financial alignment. | 🟢 Enforced |
-| **GRP-04** | **Modular Type Hierarchy** | • **Display:** `36px` / `line-height: 44px` / `tracking: -0.02em`<br>• **H1 (Page Titles):** `30px` / `line-height: 36px` / `tracking: -0.02em`<br>• **H2 (Section Headers):** `24px` / `line-height: 32px` / `tracking: -0.015em`<br>• **H3 (Card Headers):** `20px` / `line-height: 28px` / `tracking: -0.01em`<br>• **Body Regular:** `16px` / `line-height: 24px` / `tracking: 0em`<br>• **Caption / Meta:** `14px` / `line-height: 20px` / `tracking: +0.01em`<br>• **Micro / Overline:** `12px` / `line-height: 16px` / `tracking: +0.05em` (uppercase). | 🟢 Enforced |
+| **GRP-04** | **Modular Type Hierarchy** | • **Display:** `36px` / `line-height: 44px` / `tracking: -0.02em`<br>• **H1 (Page Titles):** `30px` / `line-height: 36px` / `tracking: -0.02em`<br>• **H2 (Section Headers):** `24px` / `line-height: 32px` / `tracking: -0.015em`<br>• **H3 (Card Headers):** `20px` / `line-height: 28px` / `tracking: -0.01em`<br>• **Body Regular:** `16px` / `line-height: 24px` / `tracking: 0em`<br>• **Caption / Meta:** `14px` / `line-height: 20px` / `tracking: +0.01em`<br>• **Micro:** `12px` / `line-height: 16px`, sentence case (no uppercase overlines).<br>• **Phone large title (iOS):** `30px` / `line-height: 36px` / weight 600, on the page background without a card. | 🟢 Enforced |
 | **GRP-05** | **Micro-Typography Rules** | • Use non-breaking spaces before units: `120&nbsp;kg/ha`, `2.5&nbsp;ha`, `28&nbsp;°C`.<br>• Use true typographical quotes (`“ ”`) rather than straight quotes (`" "`).<br>• Use em-dashes (`—`) with standard spacing for parenthetical thought breaks. | 🟢 Enforced |
-| **GRP-06** | **Unified 24px Icon Grid** | All icons (Lucide React) must render on a **24 × 24 px base grid** with a consistent **1.75px–2px stroke weight** (`stroke-linecap="round" stroke-linejoin="round"`). Icons must be optically centered to adjacent text baselines. | 🟢 Enforced |
+| **GRP-06** | **Unified 24px Icon Grid** | Lucide icons render at **16–18px** in content and controls (**22px** in the phone tab bar) with a consistent **1.5–2px stroke weight** (`stroke-linecap="round" stroke-linejoin="round"`). Icons must be optically centered to adjacent text baselines. | 🟢 Enforced |
 | **GRP-07** | **8pt / 4pt Spatial Geometry** | All margins, paddings, gaps, and component heights must align with an **8pt hard grid** (sub-grid: **4pt**): `4px`, `8px`, `12px`, `16px`, `20px`, `24px`, `32px`, `40px`, `48px`, `64px`. | 🟢 Enforced |
 | **GRP-08** | **Concentric Corner Radius Math** | Nested container radii must obey concentric geometry: $R_{\text{inner}} = R_{\text{outer}} - \text{padding}$.<br>• Outer Cards: `rounded-xl` (`12px`)<br>• Inner List Items / Inputs: `rounded-lg` (`8px`)<br>• Status Pills: `rounded-full` (`9999px`). | 🟢 Enforced |
 | **GRP-09** | **Natural Multi-Stop Elevation Shadows** | Multi-layered ambient lighting shadows to eliminate muddy black halos:<br>• `shadow-sm`: `0 1px 2px 0 rgb(0 0 0 / 0.05)`<br>• `shadow-md`: `0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04)`<br>• `shadow-lg`: `0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.05)`. | 🟢 Enforced |
@@ -69,7 +69,7 @@ graph TD
 | :--- | :--- |
 | **Default** | Crisp border (`border-stone-200 dark:border-stone-800`), semantic surface background, high-contrast text. |
 | **Hover** | 1-step surface illumination (`hover:bg-stone-100 dark:hover:bg-stone-800`), subtle border darken, cursor pointer. |
-| **Active / Pressed** | Slight physics scale down (`active:scale-[0.98]`), border tone shift for tangible tactile feedback. |
+| **Active / Pressed** | Surface tone shift (`active:bg-slate-900/[0.05]`); no scale animations on buttons. |
 | **Focus-Visible** | High-visibility focus ring (`focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2`). |
 | **Disabled** | Opacity reduced to `50%`, `cursor-not-allowed`, muted borders, no hover transitions. |
 | **Loading / Skeleton** | Shimmer animation pulse with exact aspect ratio dimensions of the target content to eliminate CLS layout shift. |
@@ -106,10 +106,15 @@ graph TD
 | ID | Design Requirement | Specification & Verification | Status |
 | :--- | :--- | :--- | :---: |
 | **MOB-01** | **Safe Area Insets** | Root layouts use `padding-top: env(safe-area-inset-top)` and `padding-bottom: env(safe-area-inset-bottom)` for camera notches and navigation bars. | 🟢 Required |
-| **MOB-02** | **Status Bar & Theme Match** | Capacitor `StatusBar` matches page backgrounds (`#0c0a09` dark / `#ffffff` light). | 🟢 Required |
+| **MOB-02** | **Status Bar & Theme Match** | Capacitor `StatusBar` overlays the web view (`overlaysWebView: true`, style follows the system); splash `#0d1a14`. `theme-color` meta is `#ffffff` light / `#0d1a14` dark. | 🟢 Required |
 | **MOB-03** | **Pull-to-Refresh & Swipe Dismiss** | Native pull-to-refresh on dashboard lists; downward swipe drag-to-dismiss on bottom sheets. | 🟢 Required |
 | **MOB-04** | **Camera & GPS Pre-Flight UX** | Friendly custom explainer modal before triggering OS camera (crop scanning) or GPS (field perimeter) permission requests. | 🟢 Required |
 | **MOB-05** | **Offline Visual Sync Indicator** | Persistent, non-blocking floating pill showing pending offline sync records with manual "Sync Now" trigger. | 🟢 Required |
+| **MOB-06** | **Glass material (iOS Liquid Glass)** | Phone chrome only (tab bar, top bar, menu sheet, AI button) uses `.ios-glass` / `.ios-bar` from `index.css`: translucent white `0.74` (dark `#13241b` at `0.7`), `blur(22px) saturate(1.8)`, hairline edge. Page content stays opaque and quiet. With `prefers-reduced-transparency: reduce` the material is solid. | 🟢 Required |
+| **MOB-07** | **Floating tab bar** | Below `md`, `MobileBottomNav` is a capsule (`rounded-[30px]`) floating 10px above the home indicator, inset 12px; tabs are 22px icons over 11px labels, the selected tab on a soft pill. It stops short of the round AI button on its right. | 🟢 Required |
+| **MOB-08** | **Round AI button** | Below `md`, the AI assistant is a 64px round glass button beside the tab bar. It is hidden on screens with their own message box (`lib/composerScreens.ts`), where the tab bar takes the full width. | 🟢 Required |
+| **MOB-09** | **Menu as a bottom sheet** | Below `md`, the side menu opens as a sheet from the bottom (max 86% of the screen height) with a grabber; dragging it down 120px closes it. | 🟢 Required |
+| **MOB-10** | **Translucent top bar and large titles** | Below `md`, the top bar uses `.ios-bar` and pads for the status bar (`env(safe-area-inset-top)`); page titles are iOS large titles without a card. Content scrolls under both bars, with bottom padding clearing the floating tab bar. | 🟢 Required |
 
 ---
 
@@ -117,8 +122,8 @@ graph TD
 
 | ID | Breakpoint | Layout Behavior |
 | :--- | :--- | :--- |
-| **Compact Mobile** | `< 640px` (320px–639px) | Bottom thumb navigation bar, single-column full-width cards, full-screen bottom-sheet dialogs. |
-| **Large Mobile / Foldable** | `640px – 767px` | 2-column metric cards, collapsible bottom sheets. |
+| **Compact Mobile** | `< 640px` (320px–639px) | Floating glass tab bar with round AI button, menu as a bottom sheet, single-column full-width cards. |
+| **Large Mobile / Foldable** | `640px – 767px` | Same phone chrome as compact; 2-column metric cards. |
 | **Tablet** | `768px – 1023px` | Collapsible icon-rail side navigation, 2-to-3 column dashboard grid, centered modal dialogs. |
 | **Desktop** | `1024px – 1439px` | Expandable sidebar navigation, multi-column analytics layouts, persistent secondary detail panels. |
 | **Wide Desktop** | `≥ 1440px` | Max-content container bounds (`max-w-7xl` centered) with ample whitespace margins. |

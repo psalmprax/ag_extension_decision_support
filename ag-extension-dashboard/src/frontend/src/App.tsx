@@ -487,7 +487,7 @@ function App() {
           setShowSettingsPanel={setShowSettingsPanel}
         />
 
-        <div className="flex flex-1 overflow-hidden pt-16">
+        <div className="flex flex-1 overflow-hidden pt-[calc(4rem+env(safe-area-inset-top))]">
           <AppSidebar
             sidebarOpen={sidebarOpen}
             setSidebarOpen={setSidebarOpen}
@@ -502,7 +502,7 @@ function App() {
           <main
             id="main-content"
             tabIndex={-1}
-            className={`flex-1 overflow-y-auto overflow-x-hidden outline-none transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : ''} relative pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-20`}
+            className={`flex-1 overflow-y-auto overflow-x-hidden outline-none transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : ''} relative pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-20`}
           >
             <ErrorBoundary componentName="MainContent">
               <Suspense

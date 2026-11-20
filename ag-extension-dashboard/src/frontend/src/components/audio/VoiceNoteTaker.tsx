@@ -136,7 +136,6 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-xs font-medium text-slate-700 dark:text-slate-200 hover:border-emerald-500/50 transition-colors"
             aria-label={`Current language: ${activeLangObj.name}. Click to change.`}
           >
-            <span>{activeLangObj.flag}</span>
             <span className="text-xxs">{activeLangObj.name}</span>
             <Languages className="w-3 h-3 text-slate-400" />
           </button>
@@ -162,7 +161,6 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
                     }`}
                   >
                     <span className="flex items-center gap-2">
-                      <span>{lang.flag}</span>
                       <span>{lang.name}</span>
                     </span>
                     {lang.code === currentLang && <Check className="w-3.5 h-3.5 text-emerald-500" />}

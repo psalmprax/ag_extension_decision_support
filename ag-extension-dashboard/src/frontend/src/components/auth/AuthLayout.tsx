@@ -53,7 +53,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ label, headline, body, w
           <span className="sm:hidden">{t('common_back_to_home', { defaultValue: 'Back to home' })}</span>
         </Link>
         <div className="pointer-events-auto flex items-center gap-2">
-          <LanguageSwitcher compact showFlag={false} />
+          <LanguageSwitcher compact />
         </div>
       </header>
 

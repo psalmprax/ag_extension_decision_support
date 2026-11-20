@@ -23,6 +23,7 @@ import { getChatCompletion, analyzeImage } from '@/api/aiService';
 import { useFieldVoiceRecorder } from '@/hooks/useFieldVoiceRecorder';
 import { ProgressiveProfileChips, ProfileParameter } from './ProgressiveProfileChips';
 import { useAppStore } from '@/store/useAppStore';
+import { SCREENS_WITH_COMPOSER } from '@/lib/composerScreens';
 import toast from 'react-hot-toast';
 import { AudioReaderButton } from './audio/AudioReaderButton';
 import { VoiceNoteTaker } from './audio/VoiceNoteTaker';
@@ -38,8 +39,6 @@ interface FloatingAIPillProps {
 
 type TabType = 'chat' | 'scan' | 'voice' | 'telecall';
 
-/** Screens with their own message box. */
-const SCREENS_WITH_COMPOSER = new Set(['aiassistant', 'farmerchat', 'officerchat', 'knowledge']);
 
 const INITIAL_PROFILE: ProfileParameter[] = [
   { key: 'name', label: 'Farmer', value: null },
@@ -531,16 +530,17 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
             initial={{ opacity: 0, scale: 0.9, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 16 }}
-            className={`fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-3 md:bottom-6 md:right-6 z-[1000] items-center gap-2 ${hideOnPhone ? 'hidden md:flex' : 'flex'}`}
+            className={`fixed bottom-[calc(env(safe-area-inset-bottom)+0.625rem)] right-3 md:bottom-6 md:right-6 z-[1000] items-center gap-2 ${hideOnPhone ? 'hidden md:flex' : 'flex'}`}
           >
+            {/* Phones: a round glass button beside the tab bar, as iOS places its search button. */}
             <button
               onClick={() => setIsOpen(true)}
-              className="flex items-center gap-2 h-11 pl-3 pr-4 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium shadow-lg shadow-slate-900/15 transition-colors"
+              className="flex items-center justify-center gap-2 h-16 w-16 md:h-11 md:w-auto md:pl-3 md:pr-4 rounded-full max-md:ios-glass md:bg-emerald-700 md:hover:bg-emerald-800 text-emerald-800 dark:text-emerald-200 md:text-white md:dark:text-white text-sm font-medium md:shadow-lg md:shadow-slate-900/15 transition-colors"
               aria-label={t('nav_aiassistant')}
               title={t('ui_floating_aipill_live_chat_leaf_scan_voice_memo')}
             >
-              <Bot className="w-5 h-5" aria-hidden="true" />
-              <span className="hidden sm:inline">{t('nav_aiassistant')}</span>
+              <Bot className="w-6 h-6 md:w-5 md:h-5" aria-hidden="true" />
+              <span className="hidden md:inline">{t('nav_aiassistant')}</span>
             </button>
           </motion.div>
         )}

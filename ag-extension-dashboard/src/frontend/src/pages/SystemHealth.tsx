@@ -31,6 +31,7 @@ import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 import { SyncQueuePanel } from '@/components/SyncQueuePanel';
 import { RATE_LIMIT_STATUS, CERT_EXPIRY_WARN_DAYS, ERROR_COOLDOWN_MS } from '@/lib/constants';
 import { SECONDARY_BUTTON } from '@/components/ui/controlStyles';
+import { StatTile } from '@/components/ui/StatTile';
 
 function IssuesSummary({ issues, summary }: { issues?: string[]; summary?: string }) {
   const { t } = useLanguage();
@@ -669,35 +670,25 @@ function SystemHealth() {
         </div>
 
         {/* ── Subsystem Metric Tiles ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-200 dark:border-white/5">
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 block">{t('ui_system_health_healthy_services')}</span>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-              <strong className="text-lg font-mono font-bold text-emerald-600 dark:text-emerald-400">{overallHealth.healthy}</strong>
-            </div>
-          </div>
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 block">{t('ui_system_health_degraded_nodes')}</span>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400" />
-              <strong className="text-lg font-mono font-bold text-amber-600 dark:text-amber-400">{overallHealth.degraded}</strong>
-            </div>
-          </div>
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 block">{t('system_health_unhealthy')}</span>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="w-2 h-2 rounded-full bg-rose-500 dark:bg-rose-400" />
-              <strong className="text-lg font-mono font-bold text-rose-600 dark:text-rose-400">{overallHealth.unhealthy}</strong>
-            </div>
-          </div>
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 block">{t('system_health_offline')}</span>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="w-2 h-2 rounded-full bg-slate-400" />
-              <strong className="text-lg font-mono font-bold text-slate-700 dark:text-slate-400">{overallHealth.offline}</strong>
-            </div>
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-900/[0.08] dark:border-white/[0.08]">
+          {[
+            { label: t('ui_system_health_healthy_services'), value: overallHealth.healthy, dot: 'bg-emerald-500' },
+            { label: t('ui_system_health_degraded_nodes'), value: overallHealth.degraded, dot: 'bg-amber-500' },
+            { label: t('system_health_unhealthy'), value: overallHealth.unhealthy, dot: 'bg-rose-500' },
+            { label: t('system_health_offline'), value: overallHealth.offline, dot: 'bg-slate-400' },
+          ].map(tile => (
+            <StatTile
+              key={tile.label}
+              label={tile.label}
+              value={
+                <span className="inline-flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${tile.dot}`} aria-hidden="true" />
+                  {tile.value}
+                </span>
+              }
+              className="p-4"
+            />
+          ))}
         </div>
       </div>
 

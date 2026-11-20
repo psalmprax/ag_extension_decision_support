@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { Field, CropCycle } from '@/api/fieldService';
 import { FarmPlanSection } from '@/components/fieldtools/FarmPlanSection';
 import { useLanguage } from '@/lib/LanguageContext';
+import { PRIMARY_BUTTON } from '@/components/ui/controlStyles';
 
 interface CropsOverviewTabProps {
   fields: Field[];
@@ -30,7 +31,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
   isFarmer,
   selectedFarmerId,
   cardClass,
-  btnClass,
+  btnClass: _btnClass,
   handleOpenEditField,
   handleDeleteField,
   handleOpenStartCycle,
@@ -175,20 +176,16 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
           })}
         </div>
       ) : (
-        <div className="text-center py-20 bg-white/80 dark:bg-slate-900/10 border border-dashed border-slate-200 dark:border-white/5 rounded-xl shadow-sm">
-          <Map className="w-16 h-16 text-slate-400 dark:text-slate-600 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-300">{t('ui_crops_overview_tab_no_farm_sectors_found')}</h3>
-          <p className="text-slate-600 dark:text-slate-500 text-sm mt-1 mb-6">
+        <div className="text-center py-14 px-6 border border-dashed border-slate-900/[0.12] dark:border-white/[0.1] rounded-xl">
+          <Map className="w-8 h-8 text-slate-400 dark:text-white/40 mx-auto mb-3" aria-hidden="true" />
+          <h3 className="text-base font-medium text-slate-900 dark:text-white">{t('fields_empty_title', { defaultValue: 'No fields yet' })}</h3>
+          <p className="text-slate-600 dark:text-white/60 text-sm mt-1 mb-5">
             {!isFarmer && !selectedFarmerId
-              ? 'Please select a farmer to load their sectors.'
-              : 'Start by provisioning your first agronomic field sector.'}
+              ? t('fields_choose_farmer', { defaultValue: 'Choose a farmer to see their fields.' })
+              : t('fields_empty_body', { defaultValue: 'Add the first field: its size, soil and where it is.' })}
           </p>
-          <button
-            onClick={handleOpenAddField}
-            disabled={!isFarmer && !selectedFarmerId}
-            className={`px-6 py-2.5 bg-primary-700 hover:bg-primary-800 text-white font-bold transition-all ${btnClass} disabled:opacity-50`}
-          >
-            {t('ui_crops_overview_tab_create_first_sector')}
+          <button onClick={handleOpenAddField} disabled={!isFarmer && !selectedFarmerId} className={PRIMARY_BUTTON}>
+            {t('field_add_title', { defaultValue: 'Add field' })}
           </button>
         </div>
       )}

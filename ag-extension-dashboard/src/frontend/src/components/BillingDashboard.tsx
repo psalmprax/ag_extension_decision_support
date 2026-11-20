@@ -24,7 +24,6 @@ import { Textarea } from './ui/Textarea';
 import { PlanCard } from './billing/PlanCard';
 import { PaymentMethods } from './billing/PaymentMethods';
 import { Invoices } from './billing/Invoices';
-import { AccessAndCostMatrix } from './billing/AccessAndCostMatrix';
 import { ChurnReasons } from './billing/ChurnReasons';
 import { CancelSubscriptionModal } from './billing/CancelSubscriptionModal';
 import { triggerHaptic } from '@/lib/haptics';
@@ -308,13 +307,13 @@ export const BillingDashboard: React.FC = () => {
           </div>
         </div>
         <p className="mt-4 text-slate-400 font-medium text-xs">
-          {t('billing_syncing') || 'Synchronizing Billing Rails...'}
+          {t('billing_loading', { defaultValue: 'Loading billing…' })}
         </p>
       </div>
     );
   }
 
-  const currentPlanName = billing.subscription?.plan?.name || 'Free Starter';
+  const currentPlanName = billing.subscription?.plan?.name || 'Free';
   const isProActive = Boolean(
     billing.subscription?.plan?.id?.includes('pro') ||
     billing.subscription?.plan?.name?.toLowerCase().includes('pro')
@@ -322,25 +321,21 @@ export const BillingDashboard: React.FC = () => {
 
   return (
     <main id="billing-main" className="max-w-7xl mx-auto space-y-6">
-      {/* Configuration Alert Banner */}
-      {(billing.configErrors.stripe || billing.configErrors.paypal) && (
-        <motion.div
-          initial={{ opacity: 0, y: -15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-5 bg-amber-500/10 border-2 border-amber-500/40 rounded-xl flex items-start gap-4 shadow-xl backdrop-blur-xl"
-        >
-          <AlertCircle className="w-6 h-6 text-amber-700 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-          <div className="flex-1">
-            <h3 className="text-amber-700 dark:text-amber-400 font-black text-xs mb-1">
-              {t('billing_configuration_alert') || 'PAYMENT GATEWAY CONFIGURATION REQUIRED'}
+      {/* Only an administrator can fix missing payment keys, so only they see it. */}
+      {billing.user?.role === 'admin' && (billing.configErrors.stripe || billing.configErrors.paypal) && (
+        <div role="status" className="p-4 bg-amber-50 dark:bg-amber-400/[0.08] border border-amber-600/20 dark:border-amber-300/20 rounded-lg flex items-start gap-3">
+          <AlertCircle className="w-4 h-4 text-amber-700 dark:text-amber-300 mt-0.5 shrink-0" aria-hidden="true" />
+          <div>
+            <h3 className="text-sm font-medium text-amber-900 dark:text-amber-100">
+              {t('billing_config_title', { defaultValue: 'Payments are not set up' })}
             </h3>
-            <p className="text-amber-300/90 font-medium text-xs leading-relaxed">
-              {billing.user?.role === 'admin'
-                ? 'Action Required: Stripe or PayPal API keys are missing. Please update your credentials in the Admin Vault section below to enable card and PayPal payments.'
-                : 'Note: We are currently updating our payment gateways. Some card and PayPal features may be temporarily unavailable. Please use Vouchers or Mobile Money in the meantime.'}
+            <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-0.5">
+              {t('billing_config_body', {
+                defaultValue: 'Add the PayPal (or Stripe) keys under Payment keys below. Until then, nobody can pay by card or PayPal.',
+              })}
             </p>
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Success/Cancel Messages */}
@@ -491,6 +486,13 @@ export const BillingDashboard: React.FC = () => {
             transition={{ duration: 0.2 }}
             className="space-y-6"
           >
+            {billing.plans.length === 0 && (
+              <p className="p-5 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-white/[0.03] text-sm text-slate-600 dark:text-slate-300">
+                {t('billing_no_plans', {
+                  defaultValue: 'No plans can be bought online right now. Your current plan keeps working; contact your organisation to change it.',
+                })}
+              </p>
+            )}
             <section
               aria-label="Available subscription plans"
               className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch"
@@ -506,10 +508,6 @@ export const BillingDashboard: React.FC = () => {
                   actionLoading={billing.actionLoading}
                 />
               ))}
-            </section>
-
-            <section aria-label="Feature Access and Cost Matrix">
-              <AccessAndCostMatrix onSelectPlan={billing.handleSubscribe} />
             </section>
           </motion.div>
         )}

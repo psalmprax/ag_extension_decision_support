@@ -55,39 +55,39 @@ const ImageUploadViewfinder: React.FC<{
   onRemoveImage,
   onAnalyze,
   isAnalyzing,
-}) => (
-  <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-4">
+}) => {
+  const { t } = useLanguage();
+  return (
+  <div className="p-5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] flex flex-col justify-between space-y-4">
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-semibold text-white flex items-center gap-2">
-          <Camera className="w-4 h-4 text-emerald-400" />
-          Field Specimen Viewfinder
+        <h3 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
+          <Camera className="w-4 h-4 text-slate-400" aria-hidden="true" />
+          {t('diagnosis_photo_title', { defaultValue: 'Leaf photo' })}
         </h3>
-        <span className="text-xxs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
-          Neural Sensor
-        </span>
       </div>
 
       <div className="space-y-3">
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">
-            Target Crop (Optional Context)
+          <label htmlFor="diagnosis-photo-crop" className="block text-sm text-slate-400 mb-1">
+            {t('diagnosis_photo_crop', { defaultValue: 'Crop (optional)' })}
           </label>
           <input
+            id="diagnosis-photo-crop"
             type="text"
             value={cropType}
             onChange={e => setCropType(e.target.value)}
-            placeholder="e.g. Coffee, Maize, Tomato, Cassava"
-            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-md text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/40 font-mono transition-colors"
+            placeholder={t('diagnosis_photo_crop_placeholder', { defaultValue: 'For example maize, coffee or tomato' })}
+            className="w-full px-3 py-2 bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-md text-xs text-slate-900 dark:text-white placeholder-slate-600 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/40 transition-colors"
           />
         </div>
 
         {/* Viewfinder Dropzone */}
-        <div className="relative rounded-lg border-2 border-dashed border-slate-700/80 hover:border-emerald-500/60 bg-slate-950/80 p-5 text-center transition-colors group overflow-hidden">
+        <div className="relative rounded-lg border-2 border-dashed border-slate-900/[0.08] dark:border-white/[0.08] hover:border-emerald-500/60 bg-white dark:bg-[#0d1a14] p-5 text-center transition-colors group overflow-hidden">
           {imagePreview ? (
             <div className="space-y-3 relative z-10">
               <div className="relative max-w-xs mx-auto rounded-md overflow-hidden border border-emerald-500/40">
-                <img src={imagePreview} alt="Specimen" className="w-full h-44 object-cover" />
+                <img src={imagePreview} alt={t('diagnosis_photo_alt', { defaultValue: 'Leaf photo to check' })} className="w-full h-44 object-cover" />
                 {isAnalyzing && (
                   <div className="absolute inset-0 bg-emerald-500/20 backdrop-blur-[1px] flex items-center justify-center">
                     <div className="w-full h-0.5 bg-emerald-500/50" />
@@ -97,23 +97,23 @@ const ImageUploadViewfinder: React.FC<{
               <button
                 type="button"
                 onClick={onRemoveImage}
-                className="text-xs font-mono text-rose-400 hover:text-rose-300 underline"
+                className="text-xs text-rose-400 hover:text-rose-300 underline"
               >
-                [ Clear & Retake ]
+                {t('diagnosis_photo_retake', { defaultValue: 'Choose another photo' })}
               </button>
             </div>
           ) : (
             <div className="space-y-3 py-4">
-              <div className="w-12 h-12 mx-auto rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/40 transition-colors">
+              <div className="w-12 h-12 mx-auto rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/40 transition-colors">
                 <FileImage className="w-6 h-6" />
               </div>
               <div>
                 <label htmlFor="image-upload" className="cursor-pointer">
                   <span className="text-xs font-medium text-emerald-400 hover:text-emerald-300">
-                    Capture or Upload Leaf Photo
+                    {t('diagnosis_photo_pick', { defaultValue: 'Take or choose a photo of the leaf' })}
                   </span>
-                  <p className="text-xxs font-mono text-slate-500 mt-1">
-                    Drag & Drop JPG, PNG (Max 10MB)
+                  <p className="text-xs text-slate-500 mt-1">
+                    {t('diagnosis_photo_formats', { defaultValue: 'JPG or PNG, up to 10 MB' })}
                   </p>
                 </label>
                 <input
@@ -140,18 +140,19 @@ const ImageUploadViewfinder: React.FC<{
     >
       {isAnalyzing ? (
         <>
-          <Loader2 className="w-4 h-4 animate-spin text-white" />
-          <span>Executing Neural Pathology Scan...</span>
+          <Loader2 className="w-4 h-4 animate-spin text-slate-900 dark:text-white" />
+          <span>{t('diagnosis_photo_checking', { defaultValue: 'Checking the photo…' })}</span>
         </>
       ) : (
         <>
           <Camera className="w-4 h-4" />
-          <span>Run AI Pathology Analysis</span>
+          <span>{t('diagnosis_photo_check', { defaultValue: 'Check this photo' })}</span>
         </>
       )}
     </button>
   </div>
-);
+  );
+};
 
 export const AnalysisResultsHUD: React.FC<{
   imageAnalysis: ImageAnalysisData | null;
@@ -162,15 +163,15 @@ export const AnalysisResultsHUD: React.FC<{
   const { t } = useLanguage();
   if (offlineQueued) {
     return (
-      <div className="p-5 rounded-[4px] bg-slate-900/80 border border-amber-500/40 flex flex-col justify-center space-y-4">
-        <div className="flex items-center gap-2 p-2.5 rounded-[3px] bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono">
+      <div className="p-5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-amber-500/40 flex flex-col justify-center space-y-4">
+        <div className="flex items-center gap-2 p-2.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs">
           <CloudOff className="w-4 h-4 text-amber-400 shrink-0" />
           <span>{t('ui_image_analysis_tab_offline_diagnosis_pending_connectivi')}</span>
         </div>
-        <p className="text-xs font-mono text-slate-300 leading-relaxed">
+        <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
           {t('ui_image_analysis_tab_there_is_no_on_device_ai_model_so_no')}
         </p>
-        <p className="text-[11px] font-mono text-slate-400 leading-relaxed">
+        <p className="text-[11px] text-slate-400 leading-relaxed">
           {t('ui_image_analysis_tab_the_photo_has_been_queued_and_will_b')}
         </p>
       </div>
@@ -179,17 +180,16 @@ export const AnalysisResultsHUD: React.FC<{
 
   if (!imageAnalysis) {
     return (
-      <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 flex flex-col justify-center space-y-4">
+      <div className="p-5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] flex flex-col justify-center space-y-4">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-slate-400">
-            {t('ui_image_analysis_tab_specimen_image_loupe')}
+          <span className="text-sm font-medium text-slate-400">
+            {t('diagnosis_result_title', { defaultValue: 'Result' })}
           </span>
-          <span className="text-xxs font-mono text-slate-400">{t('ui_image_analysis_tab_standby')}</span>
         </div>
-        <div className="rounded-lg overflow-hidden border border-slate-800 bg-slate-950">
+        <div className="rounded-lg overflow-hidden border border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#0d1a14]">
           <DiseaseSaliencyCanvas />
         </div>
-        <p className="text-xs font-mono text-center text-slate-400">
+        <p className="text-xs text-center text-slate-400">
           {t('ui_image_analysis_tab_upload_a_specimen_photo_on_the_left')}
         </p>
       </div>
@@ -203,11 +203,11 @@ export const AnalysisResultsHUD: React.FC<{
     imageAnalysis.provenance.evidenceStatus !== 'verified_source';
 
   return (
-    <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 space-y-4">
+    <div className="p-5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] space-y-4">
       {/* Specimen Photo Review */}
-      <div className="rounded-lg p-2 bg-slate-950 border border-slate-800">
-        <div className="px-2 py-1 mb-2 border-b border-slate-800">
-          <span className="text-xs font-medium text-slate-300">
+      <div className="rounded-lg p-2 bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08]">
+        <div className="px-2 py-1 mb-2 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
+          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
             {t('ui_image_analysis_tab_specimen_photo_review')}
           </span>
         </div>
@@ -215,9 +215,9 @@ export const AnalysisResultsHUD: React.FC<{
       </div>
 
       {analysisUnavailable ? (
-        <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-2 text-amber-300">
+        <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-2 text-amber-800 dark:text-amber-300">
           <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
-          <p className="text-xs font-mono">{t('ui_image_analysis_tab_analysis_unavailable_no_diagnosis_wa')}</p>
+          <p className="text-xs">{t('ui_image_analysis_tab_analysis_unavailable_no_diagnosis_wa')}</p>
         </div>
       ) : (
         /* Health Metric Banner */
@@ -227,33 +227,33 @@ export const AnalysisResultsHUD: React.FC<{
               {needsReview
                 ? <ShieldAlert className="w-4 h-4 text-amber-400" />
                 : <CheckCircle className="w-4 h-4 text-emerald-400" />}
-              <h4 className="text-xs font-semibold text-white">
+              <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
                 {needsReview ? 'AI-observed health status' : 'Health status'}: {imageAnalysis.overallHealth}
               </h4>
             </div>
-            <p className="text-xxs font-mono text-slate-400 mt-1">
+            <p className="text-xxs text-slate-400 mt-1">
               {t('ui_image_analysis_tab_source')} {diagnosticSourceLabel(imageAnalysis.provenance)}
             </p>
           </div>
           <div className="text-right">
-            <span className={`text-xl font-mono font-bold ${needsReview ? 'text-amber-300' : 'text-emerald-400'} tabular-nums`}>
+            <span className={`text-xl font-bold ${needsReview ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-400'} tabular-nums`}>
               {(imageAnalysis.confidence * 100).toFixed(1)}%
             </span>
-            <p className="text-xxs font-mono text-slate-400">{needsReview ? 'Model-reported confidence' : 'Confidence'}</p>
+            <p className="text-xxs text-slate-400">{needsReview ? 'Model-reported confidence' : 'Confidence'}</p>
           </div>
         </div>
       )}
 
       {!analysisUnavailable && needsReview && (
-        <p className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300">
+        <p className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-800 dark:text-amber-300">
           {t('ui_image_analysis_tab_unconfirmed_image_observations_not_a')}
         </p>
       )}
 
       {!analysisUnavailable && Boolean(imageAnalysis.nutrientDeficiencies?.length) && (
         <div className="space-y-2">
-          <h4 className="text-xs font-medium text-white">{t('ui_image_analysis_tab_possible_nutrient_issues_unconfirmed')}</h4>
-          <ul className="list-disc pl-4 space-y-1 text-xs text-slate-300">
+          <h4 className="text-xs font-medium text-slate-900 dark:text-white">{t('ui_image_analysis_tab_possible_nutrient_issues_unconfirmed')}</h4>
+          <ul className="list-disc pl-4 space-y-1 text-xs text-slate-700 dark:text-slate-300">
             {imageAnalysis.nutrientDeficiencies?.map((observation, index) => (
               <li key={index}>{observation}</li>
             ))}
@@ -267,17 +267,17 @@ export const AnalysisResultsHUD: React.FC<{
       {/* Detected Pathogens */}
       {imageAnalysis.diseases.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-xs font-semibold text-white">
+          <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
             {t('ui_image_analysis_tab_possible_pathological_matches')}
           </h4>
           <div className="space-y-2">
             {imageAnalysis.diseases.map(disease => (
               <div
                 key={disease.disease}
-                className="p-3 rounded-lg bg-slate-950 border border-slate-800 hover:border-slate-700 transition-colors"
+                className="p-3 rounded-lg bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] transition-colors"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <h5 className="text-xs font-medium text-white">
+                  <h5 className="text-xs font-medium text-slate-900 dark:text-white">
                     {disease.reviewStatus === 'needs_expert_review' || disease.provenance.evidenceStatus !== 'verified_source' ? 'Possible Match: ' : ''}
                     {disease.disease}
                   </h5>
@@ -289,14 +289,14 @@ export const AnalysisResultsHUD: React.FC<{
                     {disease.severity}
                   </span>
                 </div>
-                <p className="text-xs font-mono text-emerald-400 tabular-nums">
+                <p className="text-xs text-emerald-400 tabular-nums">
                   {t('ui_image_analysis_tab_model_reported_confidence')} {(disease.confidence * 100).toFixed(1)}%
                 </p>
-                <p className="mt-1 text-xs text-slate-300">{disease.description}</p>
+                <p className="mt-1 text-xs text-slate-700 dark:text-slate-300">{disease.description}</p>
                 {Array.isArray(disease.symptoms) && disease.symptoms.length > 0 && (
                   <p className="mt-1 text-xs text-slate-400">{t('ui_image_analysis_tab_reported_symptoms')} {disease.symptoms.join('; ')}</p>
                 )}
-                <p className="mt-1 text-xs text-amber-300 font-mono flex items-start gap-1">
+                <p className="mt-1 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-1">
                   <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                   {disease.safetyNotice}
                 </p>
@@ -309,14 +309,14 @@ export const AnalysisResultsHUD: React.FC<{
       {/* Prescribed Actions */}
       {imageAnalysis.recommendations.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-xs font-semibold text-white">
+          <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
             {t('ui_image_analysis_tab_guidance')}
           </h4>
           <div className="grid grid-cols-1 gap-1.5">
             {imageAnalysis.recommendations.map((rec, index) => (
               <div
                 key={index}
-                className="p-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300 flex items-start gap-2"
+                className="p-2 rounded-lg bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-slate-300 flex items-start gap-2"
               >
                 <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                 <span>{rec}</span>

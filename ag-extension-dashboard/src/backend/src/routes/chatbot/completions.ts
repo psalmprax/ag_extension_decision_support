@@ -9,6 +9,7 @@ import {
   mapCountRow,
   mapSatisfactionAvgRow,
 } from '@/types/dtos';
+import { AIUnavailableError } from '@/services/aiProvider/aiProvider';
 import { logger } from '@/utils/logger';
 import { z } from 'zod';
 import { validate } from '@/middleware/validate';
@@ -124,7 +125,10 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
     });
   } catch (error) {
     logger.error('Chat completion failed:', error);
-    return safeError(res, error instanceof AdvisoryTimeoutError ? 503 : 500, 'Chat completion failed');
+    if (error instanceof AdvisoryTimeoutError || error instanceof AIUnavailableError) {
+      return safeError(res, 503, 'The AI assistant is not available right now');
+    }
+    return safeError(res, 500, 'Chat completion failed');
   }
 });
 

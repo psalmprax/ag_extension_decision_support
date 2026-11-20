@@ -103,6 +103,9 @@ describe('GET /api/worldmonitor/layers', () => {
     const executedSql = String(farmerQueryCall[0]);
     expect(executedSql).toContain('WHERE');
     expect(executedSql).not.toMatch(/FROM farmers f\s+AND/);
+    // An officer sees only their own farmers' locations.
+    expect(executedSql).toMatch(/f\.assigned_officer_id = \$\d+/);
+    expect(farmerQueryCall[1]).toContain('off-1');
   });
 
   it('should return 200 with filtered layers when called with filters', async () => {

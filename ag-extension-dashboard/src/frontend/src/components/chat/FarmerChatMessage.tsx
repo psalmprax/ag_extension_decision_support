@@ -51,9 +51,9 @@ export const FarmerChatMessage: React.FC<{ message: ChatMessage; viewer?: 'offic
         </div>
         {/* AI answers are markdown; what farmers and officers type stays verbatim. */}
         {look.sender === 'assistant' ? (
-          <div className="text-xs sm:text-sm"><ChatMarkdown content={message.content} /></div>
+          <div data-message className="text-xs sm:text-sm"><ChatMarkdown content={message.content} /></div>
         ) : (
-          <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-line">{message.content}</p>
+          <p data-message className="text-xs sm:text-sm leading-relaxed whitespace-pre-line">{message.content}</p>
         )}
         <MessagePhotos photos={message.attachments} label={`Photo from ${label}`} />
         <MessageProvenance metadata={message.metadata} sender={look.sender} viewer={viewer} />

@@ -99,7 +99,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
               className={tabButtonClass(filter === tab.id)}
             >
               <span>{tab.label}</span>
-              <span className="text-xs font-mono tabular-nums text-slate-500 dark:text-white/50">
+              <span className="text-xs tabular-nums text-slate-500 dark:text-white/50">
                 {tab.count}
               </span>
             </button>

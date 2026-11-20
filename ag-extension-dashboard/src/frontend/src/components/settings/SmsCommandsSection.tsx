@@ -17,6 +17,17 @@ const INPUT =
   'w-full h-10 px-3 rounded-md border border-slate-900/[0.12] dark:border-white/[0.12] bg-white dark:bg-white/[0.03] text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-600';
 
 /** The PIN that lets officers and managers use SMS commands from their phone number. */
+/** The officer SMS commands, as typed. Kept in step with the backend's command table. */
+const SMS_COMMANDS: Array<{ code: string; key: string; does: string }> = [
+  { code: 'INBOX', key: 'sms_cmd_inbox', does: 'The three newest unanswered farmer messages, numbered' },
+  { code: 'R 12 <reply>', key: 'sms_cmd_reply', does: 'Reply to farmer 12' },
+  { code: 'FIND <name>', key: 'sms_cmd_find', does: 'Look up one of your farmers' },
+  { code: 'VISIT 12 <notes>', key: 'sms_cmd_visit', does: 'Record a visit to farmer 12 today' },
+  { code: 'PLAN 12 <date> <notes>', key: 'sms_cmd_plan', does: 'Schedule a visit: today, tomorrow, Tue or 25/11' },
+  { code: 'ASK AI <question>', key: 'sms_cmd_ask', does: 'Ask the AI agronomist' },
+  { code: 'LOCK', key: 'sms_cmd_lock', does: 'Turn commands off until you send your PIN again' },
+];
+
 export const SmsCommandsSection: React.FC<{ active: boolean }> = ({ active }) => {
   const { t } = useLanguage();
   const role = useAppStore(state => state.user?.role);
@@ -68,11 +79,21 @@ export const SmsCommandsSection: React.FC<{ active: boolean }> = ({ active }) =>
       </h3>
       <div className="p-4 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] space-y-3">
         <p className="text-sm text-slate-600 dark:text-white/70">
-          {t('sms_commands_body', {
+          {t('sms_commands_intro', {
             phone: status?.phone ?? '—',
-            defaultValue: 'Text INBOX, R 12 <reply>, FIND <name>, VISIT 12 <notes> or ASK AI <question> from {phone}. Send PIN and your 4 digits once a day first.',
+            defaultValue: 'From {phone}, send PIN and your 4 digits once a day, then text any of these:',
           })}
         </p>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
+          {SMS_COMMANDS.map(command => (
+            <React.Fragment key={command.code}>
+              <dt>
+                <code className="text-[13px] text-slate-900 dark:text-white">{command.code}</code>
+              </dt>
+              <dd className="text-slate-600 dark:text-white/70">{t(command.key, { defaultValue: command.does })}</dd>
+            </React.Fragment>
+          ))}
+        </dl>
         {state && <p className="text-sm text-slate-900 dark:text-white" aria-live="polite">{state}</p>}
         <form onSubmit={save} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="text-sm text-slate-600 dark:text-white/70">

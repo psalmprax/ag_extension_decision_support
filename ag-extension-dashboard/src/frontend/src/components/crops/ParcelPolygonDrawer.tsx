@@ -6,6 +6,7 @@ import {
   saveParcelOffline,
 } from '../../services/parcelGeoService';
 import { useLanguage } from '@/lib/LanguageContext';
+import { saveBlob } from '@/lib/saveBlob';
 
 interface ParcelPolygonDrawerProps {
   farmerId?: string;
@@ -79,12 +80,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
     if (onSavePolygon) onSavePolygon(feature);
 
     const blob = new Blob([JSON.stringify(feature, null, 2)], { type: 'application/geo+json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${parcelName.toLowerCase().replace(/\s+/g, '_')}.geojson`;
-    a.click();
-    URL.revokeObjectURL(url);
+    saveBlob(blob, `${parcelName.toLowerCase().replace(/\s+/g, '_')}.geojson`);
   };
 
   return (

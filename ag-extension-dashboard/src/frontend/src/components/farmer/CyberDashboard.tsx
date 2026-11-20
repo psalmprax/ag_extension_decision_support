@@ -2,7 +2,7 @@ import React from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Zap, TrendingUp, LineChart, ShieldAlert } from 'lucide-react';
-import IsometricFarmOverview from '../Cyber/IsometricFarmOverview';
+import FarmPlotView from '../Cyber/FarmPlotView';
 import CropCycleGantt from '../Cyber/CropCycleGantt';
 import SystemOverview from '../Cyber/SystemOverview';
 
@@ -94,7 +94,7 @@ export const CyberDashboard: React.FC<CyberDashboardProps> = ({ farmerStats }) =
       </header>
 
       <section className="animate-slide-up">
-        <IsometricFarmOverview
+        <FarmPlotView
           farmSize={farmerStats?.['farmSize'] as number | undefined}
           crops={farmerStats?.['crops'] as string[] | undefined}
         />

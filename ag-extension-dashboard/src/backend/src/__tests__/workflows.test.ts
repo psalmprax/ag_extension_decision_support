@@ -68,11 +68,17 @@ describe('Advisory Workflows API (/api/v1/workflows)', () => {
       updated_at: new Date().toISOString(),
     };
 
+    mockQuery.mockResolvedValueOnce({ rows: [{ tenant_id: 'tenant-1' }] }); // caller's organisation
     mockQuery.mockResolvedValueOnce({ rows: [mockWorkflowRow] });
 
     const res = await request(app)
       .get('/api/v1/workflows?status=published&category=crop_protection')
+      .set('Authorization', `Bearer ${officerToken}`)
       .expect(200);
+    // An officer only lists their own organisation's protocols.
+    const listCall = mockQuery.mock.calls.find(c => String(c[0]).includes('FROM advisory_workflows'));
+    expect(String(listCall?.[0])).toMatch(/tenant_id IS NOT DISTINCT FROM \$\d+/);
+    expect(listCall?.[1]).toContain('tenant-1');
 
     expect(res.body.success).toBe(true);
     expect(res.body.data).toHaveLength(1);
@@ -118,10 +124,12 @@ describe('Advisory Workflows API (/api/v1/workflows)', () => {
   });
 
   it('GET /api/v1/workflows/:id returns 404 when workflow does not exist', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [{ tenant_id: 'tenant-1' }] }); // caller's organisation
     mockQuery.mockResolvedValueOnce({ rows: [] });
 
     const res = await request(app)
       .get('/api/v1/workflows/non-existent-id')
+      .set('Authorization', `Bearer ${officerToken}`)
       .expect(404);
 
     expect(res.body.success).toBe(false);
@@ -145,6 +153,7 @@ describe('Advisory Workflows API (/api/v1/workflows)', () => {
     };
 
     mockQuery
+      .mockResolvedValueOnce({ rows: [{ tenant_id: 'tenant-1' }] }) // caller's organisation
       .mockResolvedValueOnce({ rows: [existing] }) // SELECT
       .mockResolvedValueOnce({ rows: [updated] }); // UPDATE
 
@@ -172,6 +181,7 @@ describe('Advisory Workflows API (/api/v1/workflows)', () => {
       updated_at: new Date().toISOString(),
     };
 
+    mockQuery.mockResolvedValueOnce({ rows: [{ tenant_id: 'tenant-1' }] }); // caller's organisation
     mockQuery.mockResolvedValueOnce({ rows: [published] });
 
     const res = await request(app)
@@ -182,5 +192,9 @@ describe('Advisory Workflows API (/api/v1/workflows)', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data.status).toBe('published');
     expect(res.body.data.version).toBe(2);
+  });
+
+  it('refuses to list protocols without a signed-in staff member', async () => {
+    await request(app).get('/api/v1/workflows').expect(401);
   });
 });

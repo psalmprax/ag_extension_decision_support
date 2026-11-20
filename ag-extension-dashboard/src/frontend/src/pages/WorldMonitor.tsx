@@ -1,36 +1,37 @@
 import React, { useEffect, useState } from 'react';
-import { Layers, Globe, Bug, Satellite, Droplets, AlertTriangle } from 'lucide-react';
+import { Globe, Bug, Satellite, Droplets, Layers, AlertTriangle } from 'lucide-react';
 import { useDemoMode } from '@/demo';
 import { useAppStore } from '@/store/useAppStore';
 import apiClient from '@/api/client';
-import { liveLayersSummary, pestSwarmLabel, type PestSwarmStatus } from './worldMonitorStatus';
+import { pestSwarmLabel, type PestSwarmStatus } from './worldMonitorStatus';
 import { useLanguage } from '@/lib/LanguageContext';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { StatTile } from '@/components/ui/StatTile';
+import { PRIMARY_BUTTON } from '@/components/ui/controlStyles';
+import { FarmGlobe, type GlobeLayers, type LayerToggles } from '@/components/worldmonitor/FarmGlobe';
+import { LAYER_COLORS } from '@/components/three/scenes/globeColors';
 
 type Filters = { region?: string; crop?: string; county?: string };
+type LayerData = GlobeLayers & { pestSwarm: { status?: PestSwarmStatus; clusters: NonNullable<GlobeLayers['pestSwarm']>['clusters'] } };
+
+const FILTER_INPUT =
+  'h-10 px-3 rounded-md border border-slate-900/[0.12] dark:border-white/[0.12] bg-white dark:bg-white/[0.03] text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-emerald-600 w-full sm:w-36';
 
 /**
- * Officer-only WorldMonitor — live GIS layer status with 4 live data feeds.
- * Farmer role sees a gated placeholder (per navItems). Layers are filtered by
- * region/crop/county so the feeds stay coherent with the officer's cohort.
- * Heavy globe canvas is intentionally deferred (bundle budget); this page
- * surfaces the live layer data without shipping the deck.gl payload.
+ * Farms and field signals on a globe, for officers (their farmers), managers (their region)
+ * and administrators. Each layer can be switched off; nothing is drawn that the server did
+ * not return.
  */
 const WorldMonitor: React.FC = () => {
   const { t } = useLanguage();
   const { isDemo } = useDemoMode();
   const user = useAppStore(s => s.user);
-  const isOfficer = user?.role === 'extension_officer' || user?.role === 'admin' || user?.role === 'regional_manager';
+  const isStaff = user?.role === 'extension_officer' || user?.role === 'admin' || user?.role === 'regional_manager';
   const [filters, setFilters] = useState<Filters>({});
-  const [data, setData] = useState<{
-    farmers: { id: string; lat: number; lon: number; region: string | null }[];
-    soilHorizon: { centroid: { lat: number; lon: number }; baseline: { ph: number | null; organicCarbonGPerKg: number | null } | null } | null;
-    ndviPoints: { lat: string | number | null; lng: string | number | null; disease_label: string }[];
-    pestSwarm: { status?: PestSwarmStatus; clusters: { clusterId: string; centroid: [number, number]; severityLevel: string }[] };
-  } | null>(null);
+  const [data, setData] = useState<LayerData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const viewState = { longitude: 36.8, latitude: -1.3, zoom: 2.2 };
+  const [toggles, setToggles] = useState<LayerToggles>({ farmers: true, stress: true, pests: true, soil: true });
 
   const fetchLayers = async (f: Filters = filters) => {
     setLoading(true);
@@ -42,77 +43,128 @@ const WorldMonitor: React.FC = () => {
       if (f.county) params.set('county', f.county);
       const { data: res } = await apiClient.get(`/worldmonitor/layers?${params.toString()}`);
       if (res?.success) setData(res.data);
-      else setError(res?.error || 'Failed to load layers');
-    } catch (e) { setError((e as Error).message || 'Failed to load layers'); }
-    finally { setLoading(false); }
+      else setError(t('map_load_failed', { defaultValue: 'The map layers could not be loaded.' }));
+    } catch {
+      setError(t('map_load_failed', { defaultValue: 'The map layers could not be loaded.' }));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Initial fetch only — subsequent loads are user-triggered via the Apply button,
-  // so fetchLayers is intentionally not a dependency (it closes over filter state).
+  // The first load only; later loads come from the Apply button (which reads the filters).
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (isOfficer) void fetchLayers({}); }, [isOfficer]);
+  useEffect(() => { if (isStaff) void fetchLayers({}); }, [isStaff]);
 
-  if (!isOfficer) {
+  if (!isStaff) {
     return (
       <div className="max-w-3xl mx-auto p-8 text-center space-y-3">
-        <Globe className="w-10 h-10 text-slate-400 dark:text-white/20 mx-auto" />
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('ui_world_monitor_officer_globe')}</h2>
-        <p className="text-sm text-slate-500 dark:text-white/60">{t('ui_world_monitor_worldmonitor_is_available_for_extens')}</p>
+        <Globe className="w-8 h-8 text-slate-400 mx-auto" aria-hidden="true" />
+        <h2 className="text-lg font-medium text-slate-900 dark:text-white">{t('nav_worldmonitor', { defaultValue: 'Farm map' })}</h2>
+        <p className="text-sm text-slate-600 dark:text-white/70">{t('map_staff_only', { defaultValue: 'The farm map is for extension officers and managers.' })}</p>
       </div>
     );
   }
 
+  const farmerCount = data?.farmers.length ?? 0;
+  const stressCount = data?.ndviPoints.filter(p => p.lat != null && p.lng != null).length ?? 0;
+  const pestCount = data?.pestSwarm?.clusters.length ?? 0;
+  const layerList: Array<{ key: keyof LayerToggles; label: string; count: number | null }> = [
+    { key: 'farmers', label: t('map_layer_farmers', { defaultValue: 'Farms' }), count: farmerCount },
+    { key: 'stress', label: t('map_layer_stress', { defaultValue: 'Crop stress (30 days)' }), count: stressCount },
+    { key: 'pests', label: t('map_layer_pests', { defaultValue: 'Pest reports (14 days)' }), count: data?.pestSwarm?.status === 'live' ? pestCount : null },
+    { key: 'soil', label: t('map_layer_soil', { defaultValue: 'Soil sample point' }), count: data?.soilHorizon ? 1 : 0 },
+  ];
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-white/10">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-2xl font-medium text-slate-900 dark:text-white">{t('ui_world_monitor_worldmonitor_live_spatial_gis')}</h1>
-          {isDemo && <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">{t('ui_world_monitor_demo_filters')}</span>}
-        </div>
-        <div className="flex items-center gap-2">
-          <input placeholder="Region" value={filters.region || ''} onChange={e => setFilters(s => ({ ...s, region: e.target.value || undefined }))} className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs w-28 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600" />
-          <input placeholder="Crop" value={filters.crop || ''} onChange={e => setFilters(s => ({ ...s, crop: e.target.value || undefined }))} className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs w-28 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600" />
-          <input placeholder="County" value={filters.county || ''} onChange={e => setFilters(s => ({ ...s, county: e.target.value || undefined }))} className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs w-28 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600" />
-          <button onClick={() => fetchLayers()} disabled={loading} className="h-8 px-4 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium disabled:opacity-50 transition-colors">{t('ui_world_monitor_apply')}</button>
-        </div>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        title={t('map_title', { defaultValue: 'Map of farms and field signals' })}
+        description={t('map_description', {
+          defaultValue: 'Farms with a saved location, crop stress from recent diagnoses, pest reports and soil data. Drag the globe to turn it.',
+        })}
+        meta={
+          <span aria-live="polite">
+            {loading
+              ? t('common_loading', { defaultValue: 'Loading…' })
+              : farmerCount === 1
+                ? t('map_farmer_count_one', { defaultValue: '1 farmer on the map' })
+                : t('map_farmers_count', { count: farmerCount, defaultValue: '{count} farmers on the map' })}
+            {isDemo && ` · ${t('map_demo', { defaultValue: 'demo data' })}`}
+          </span>
+        }
+      >
+        <form
+          className="flex flex-wrap items-end gap-2"
+          onSubmit={event => {
+            event.preventDefault();
+            void fetchLayers();
+          }}
+        >
+          {(['region', 'crop', 'county'] as const).map(key => (
+            <label key={key} className="text-sm text-slate-600 dark:text-white/70 flex-1 sm:flex-none">
+              {t(`map_filter_${key}`, { defaultValue: key === 'county' ? 'County' : key === 'crop' ? 'Crop' : 'Region' })}
+              <input
+                value={filters[key] || ''}
+                onChange={e => setFilters(s => ({ ...s, [key]: e.target.value || undefined }))}
+                className={`${FILTER_INPUT} mt-1 block`}
+              />
+            </label>
+          ))}
+          <button type="submit" disabled={loading} className={PRIMARY_BUTTON}>
+            {t('map_apply', { defaultValue: 'Apply' })}
+          </button>
+        </form>
+      </PageHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
-          <Satellite className="w-4 h-4 text-slate-600 dark:text-slate-400 shrink-0" />
-          <div><div className="text-xs text-slate-500 dark:text-white/50">{t('ui_world_monitor_satellite_orbit')}</div><div className="text-xs font-medium text-slate-900 dark:text-white">{data ? 'Not connected yet' : '—'}</div></div>
-        </div>
-        <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
-          <Layers className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-          <div><div className="text-xs text-slate-500 dark:text-white/50">{t('ui_world_monitor_ndvi_stress')}</div><div className="text-xs font-medium font-mono tabular-nums text-slate-900 dark:text-white">{data?.ndviPoints?.length ?? 0} {t('ui_world_monitor_points_30d')}</div></div>
-        </div>
-        <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
-          <Droplets className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-          <div><div className="text-xs text-slate-500 dark:text-white/50">{t('ui_world_monitor_soilgrids_horizon')}</div><div className="text-xs font-medium font-mono tabular-nums text-slate-900 dark:text-white">{data?.soilHorizon ? `${data.soilHorizon.baseline?.ph ?? '—'} pH` : '—'}</div></div>
-        </div>
-        <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center gap-2.5">
-          <Bug className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
-          <div><div className="text-xs text-slate-500 dark:text-white/50">{t('ui_world_monitor_pest_swarm')}</div><div className="text-xs font-medium font-mono tabular-nums text-slate-900 dark:text-white">{pestSwarmLabel(data?.pestSwarm)}</div></div>
-        </div>
+        <StatTile label={t('map_tile_farms', { defaultValue: 'Farms mapped' })} icon={Layers} value={data ? farmerCount : null} />
+        <StatTile label={t('map_tile_stress', { defaultValue: 'Crop stress reports' })} icon={Droplets} value={data ? stressCount : null} note={t('map_last_30', { defaultValue: 'Last 30 days' })} />
+        <StatTile
+          label={t('map_tile_soil', { defaultValue: 'Soil pH at sample point' })}
+          icon={Satellite}
+          value={data?.soilHorizon?.baseline?.ph ?? null}
+          emptyText={t('map_no_soil', { defaultValue: 'No soil data yet' })}
+          note={data?.soilHorizon?.baseline?.ph != null ? 'SoilGrids, 0–30 cm' : undefined}
+        />
+        <StatTile
+          label={t('map_tile_pests', { defaultValue: 'Pest clusters' })}
+          icon={Bug}
+          value={data?.pestSwarm?.status === 'live' ? pestCount : null}
+          emptyText={data ? pestSwarmLabel(data.pestSwarm) : undefined}
+          note={t('map_last_14', { defaultValue: 'Last 14 days' })}
+        />
       </div>
 
-      {error && <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</div>}
-
-      <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-950 h-[520px] relative">
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-          <Globe className="w-10 h-10 text-white/20 mb-2" />
-          <p className="text-sm font-semibold text-white">{t('ui_world_monitor_spatial_layer_status')}</p>
-          <p className="text-xs text-white/50 mt-1 max-w-md">{liveLayersSummary(data?.pestSwarm?.status)}{t('ui_world_monitor_filtered_by_region_crop_county_globe')}</p>
-          <div className="mt-4 grid grid-cols-2 gap-2 text-left text-xs font-mono tabular-nums w-full max-w-2xl">
-            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-emerald-400">{t('ui_world_monitor_farmers_mapped')}</span> {data?.farmers?.length ?? 0}</div>
-            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-amber-400">{t('ui_world_monitor_soil_centroid')}</span> {data?.soilHorizon ? `${Number(data.soilHorizon.centroid.lat).toFixed(2)}, ${Number(data.soilHorizon.centroid.lon).toFixed(2)}` : '—'}</div>
-            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-rose-400">{t('ui_world_monitor_swarm_clusters')}</span> {data?.pestSwarm?.clusters?.map(c => c.clusterId.slice(0, 8)).join(', ') || '—'}</div>
-            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-slate-400">{t('ui_world_monitor_view')}</span> {viewState.longitude.toFixed(1)}, {viewState.latitude.toFixed(1)} z{viewState.zoom}</div>
-          </div>
+      {error && (
+        <div role="alert" className="p-3 rounded-lg bg-rose-50 dark:bg-rose-400/[0.08] border border-rose-600/20 text-sm text-rose-800 dark:text-rose-200 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4" aria-hidden="true" /> {error}
         </div>
-      </div>
+      )}
 
-      <p className="text-[10px] text-slate-400 dark:text-white/40 text-center">{t('ui_world_monitor_shows_farmers_with_a_saved_location')}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_17rem] gap-4">
+        <FarmGlobe layers={data} toggles={toggles} />
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium text-slate-900 dark:text-white mb-2">{t('map_layers', { defaultValue: 'Layers' })}</legend>
+          {layerList.map(layer => (
+            <label key={layer.key} className="flex items-center gap-3 h-11 px-3 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] text-sm text-slate-700 dark:text-white/80 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={toggles[layer.key]}
+                onChange={e => setToggles(s => ({ ...s, [layer.key]: e.target.checked }))}
+                className="w-4 h-4 accent-emerald-700"
+              />
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: LAYER_COLORS[layer.key] }} aria-hidden="true" />
+              <span className="flex-1">{layer.label}</span>
+              <span className="tabular-nums text-xs text-slate-500 dark:text-white/50 text-right">
+                {layer.count === null ? t('map_not_connected', { defaultValue: 'not connected' }) : layer.count}
+              </span>
+            </label>
+          ))}
+          <p className="text-xs text-slate-500 dark:text-white/50 pt-1">
+            {t('map_note', { defaultValue: 'Add a farmer’s location to put their farm on the map.' })}
+          </p>
+        </fieldset>
+      </div>
     </div>
   );
 };

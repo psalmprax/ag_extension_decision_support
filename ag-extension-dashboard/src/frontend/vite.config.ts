@@ -224,6 +224,8 @@ export default defineConfig({
             return 'ui-vendor';
           }
           if (id.includes('/node_modules/recharts/')) return 'charts-vendor';
+          // three.js is loaded only with a 3D view (dynamic import), never with a page.
+          if (id.includes('/node_modules/three/')) return 'three-vendor';
           if (id.includes('/node_modules/leaflet/') || id.includes('/node_modules/react-leaflet/')) {
             return 'maps-vendor';
           }

@@ -7,6 +7,13 @@ import { fetchFarmerStats } from '@/api/farmerService';
 import { CyberDashboard } from './farmer/CyberDashboard';
 import { NormalDashboard } from './farmer/NormalDashboard';
 
+/** The next visit as a date, or null when none is planned (the API sends "None"). */
+function formatNextVisit(value: string | null | undefined): string | null {
+  if (!value || value === 'None') return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
 export const FarmerDashboard: React.FC = () => {
   const { user, themeName } = useAppStore();
   const { t } = useLanguage();
@@ -31,7 +38,7 @@ export const FarmerDashboard: React.FC = () => {
     },
     {
       title: t('farmer_next_visit'),
-      value: farmerStats?.nextVisitDate || t('farmer_no_visit', { defaultValue: 'None planned' }),
+      value: formatNextVisit(farmerStats?.nextVisitDate) ?? t('farmer_no_visit', { defaultValue: 'None planned' }),
       icon: Calendar,
     },
     {

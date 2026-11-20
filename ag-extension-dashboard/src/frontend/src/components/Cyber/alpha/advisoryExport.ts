@@ -1,6 +1,7 @@
 import toast from 'react-hot-toast';
 import type { ChatMessageItem } from './response';
 import { latestAdvisoryText } from './response';
+import { saveBlob } from '@/lib/saveBlob';
 
 /** Downloads the latest real advisory as a PDF factsheet. The greeting is not an advisory. */
 export async function exportAdvisoryPdf(messages: ChatMessageItem[]): Promise<void> {
@@ -21,12 +22,7 @@ export async function exportAdvisoryPdf(messages: ChatMessageItem[]): Promise<vo
     const reportId = (gen as { data?: { id?: string } })?.data?.id || (gen as { id?: string })?.id;
     if (!reportId) throw new Error('No report id');
     const blob = await downloadReportPdf(reportId);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `co-pilot-${Date.now()}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
+    saveBlob(blob, `co-pilot-${Date.now()}.pdf`);
     toast.success('Prescription PDF downloaded');
   } catch (e) {
     toast.error((e as Error).message || 'PDF export failed');

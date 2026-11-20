@@ -10,6 +10,7 @@ import { SoilGridsService } from '@/services/soilGridsService';
 import { OpenMeteoSoilService } from '@/services/openMeteoSoilService';
 import { clusterPestSightings, type SwarmCluster } from '@/services/pestSwarmRadarService';
 import { demoSql } from '@/services/demoScope';
+import { resolvePrincipalRegion } from '@/services/messageAccessService';
 
 const router = Router();
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
@@ -32,9 +33,19 @@ const layersQuery = z.object({
 router.get('/layers', validate({ query: layersQuery }), async (req: AuthRequest, res: Response) => {
   try {
     const { region, crop, county, limit } = req.query as unknown as { region?: string; crop?: string; county?: string; limit: number };
-    const userRegion = (req.user as unknown as { region?: string })?.region || region;
-
-    const { clauses, params, nextIdx } = buildFarmerFilters(userRegion, crop, county);
+    const built = buildFarmerFilters(region, crop, county);
+    const { clauses, params } = built;
+    let nextIdx = built.nextIdx;
+    // Who may see which farms: an officer their own farmers, a manager their region,
+    // an administrator everyone. Locations are personal data.
+    const role = req.user?.role;
+    if (role === 'extension_officer') {
+      clauses.push(`f.assigned_officer_id = $${nextIdx++}`);
+      params.push(req.user!.userId);
+    } else if (role === 'regional_manager') {
+      clauses.push(`f.region = $${nextIdx++}`);
+      params.push(await resolvePrincipalRegion(req.user!.userId));
+    }
     // Demo farmers never appear on a real account's map (f is joined in both layers).
     clauses.push(demoSql('f', req.user));
 
@@ -82,7 +93,7 @@ router.get('/layers', validate({ query: layersQuery }), async (req: AuthRequest,
         ndviPoints,
         pestSwarm,
         satelliteOrbit,
-        filters: { region: userRegion || null, crop: crop || null, county: county || null, limit },
+        filters: { region: region || null, crop: crop || null, county: county || null, limit },
       },
     });
   } catch (error) {
@@ -94,7 +105,7 @@ router.get('/layers', validate({ query: layersQuery }), async (req: AuthRequest,
 export default router;
 
 /** Build the shared WHERE clauses + params for farmer-cohort filtering. */
-function buildFarmerFilters(userRegion: string | undefined, crop: string | undefined, county: string | undefined): {
+function buildFarmerFilters(region: string | undefined, crop: string | undefined, county: string | undefined): {
   clauses: string[];
   params: unknown[];
   nextIdx: number;
@@ -102,9 +113,9 @@ function buildFarmerFilters(userRegion: string | undefined, crop: string | undef
   const clauses: string[] = [];
   const params: unknown[] = [];
   let idx = 1;
-  if (userRegion) {
+  if (region) {
     clauses.push(`f.region = $${idx++}`);
-    params.push(userRegion);
+    params.push(region);
   }
   if (county) {
     clauses.push(`f.district = $${idx++}`);

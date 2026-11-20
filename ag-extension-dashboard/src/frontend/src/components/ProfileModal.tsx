@@ -27,6 +27,7 @@ import apiClient from '@/api/client';
 import { logout } from '@/api/authService';
 import { PasswordChangeInput } from '@/components/profile/PasswordChangeInput';
 import { AVATAR_PRESETS, DEFAULT_PREFERENCES, getSavedProfileData } from './profileDefaults';
+import { saveBlob } from '@/lib/saveBlob';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -198,14 +199,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     setIsExporting(true);
     try {
       const response = await apiClient.get('/account/export', { responseType: 'blob' });
-      const url = URL.createObjectURL(response.data as Blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'gpexts-personal-data.json';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
+      saveBlob(response.data as Blob, 'gpexts-personal-data.json');
       toast.success('Your account data export has downloaded.');
     } catch {
       toast.error('Account data export failed. Please try again.');
