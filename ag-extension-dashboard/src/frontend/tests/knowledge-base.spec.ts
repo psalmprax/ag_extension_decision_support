@@ -74,7 +74,7 @@ async function mockDemoBackend(page: Page) {
 
 async function openKnowledgeBase(page: Page) {
   await page.goto('/login');
-  await page.getByRole('button', { name: 'Try the Demo' }).click({ timeout: 90000 });
+  await page.getByRole('button', { name: 'Try the demo' }).click({ timeout: 90000 });
   await expect(page.getByRole('button', { name: 'Dashboard' }).first()).toBeVisible({ timeout: 30000 });
   await page.goto('/knowledge');
   await expect(page.locator('input[placeholder*="Ask ALFA Agro-RAG"]')).toBeVisible({ timeout: 15000 });
@@ -248,11 +248,11 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
     await submitQuery(page);
     await expect(page.getByText('Scout maize fields before treatment.', { exact: true })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Regenerate Live' }).click();
+    await page.getByRole('button', { name: 'Regenerate live' }).click();
     await expect(page.getByText('Search Failed — No Answer Generated')).toBeVisible();
     await expect(page.getByText('Scout maize fields before treatment.', { exact: true })).toHaveCount(0);
 
-    await page.getByRole('button', { name: 'Regenerate Live' }).click();
+    await page.getByRole('button', { name: 'Regenerate live' }).click();
     await expect(page.getByText('Scout maize fields before treatment.', { exact: true })).toBeVisible();
     await expect(page.getByText('Search Failed — No Answer Generated')).toHaveCount(0);
     expect(requests).toBe(3);
@@ -287,7 +287,7 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
     await expect(page.getByText('Search Failed — No Answer Generated')).toBeVisible();
     await expect(page.getByText('field-notes.txt', { exact: true })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Regenerate Live' }).click();
+    await page.getByRole('button', { name: 'Regenerate live' }).click();
     await expect(page.getByText('Check the field notes with your officer.', { exact: true })).toBeVisible();
     expect(bodies).toHaveLength(2);
     expect(bodies[0].attachments).toHaveLength(1);

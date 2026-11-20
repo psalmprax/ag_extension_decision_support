@@ -97,7 +97,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
 
         {showAdminShortcuts && (
-          <nav aria-label={t('header_shortcuts', { defaultValue: 'Shortcuts' })} className="hidden lg:flex items-center gap-1 border-l border-slate-900/[0.08] dark:border-white/[0.08] pl-3">
+          <div role="group" aria-label={t('header_shortcuts', { defaultValue: 'Shortcuts' })} className="hidden lg:flex items-center gap-1 border-l border-slate-900/[0.08] dark:border-white/[0.08] pl-3">
             {shortcuts.map(({ tab, icon: Icon, label, title }) => (
               <button
                 key={tab}
@@ -110,7 +110,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 <span>{label}</span>
               </button>
             ))}
-          </nav>
+          </div>
         )}
       </div>
 

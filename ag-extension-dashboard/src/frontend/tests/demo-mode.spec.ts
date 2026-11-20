@@ -82,7 +82,7 @@ async function mockDemoBackend(page: Page, record: (url: string) => void) {
 async function loginAsDemo(page: Page) {
   await page.goto('/login');
   // First-run Vite cold compile of this large app can take a while.
-  await page.getByRole('button', { name: 'Try the Demo' }).click({ timeout: 90000 });
+  await page.getByRole('button', { name: 'Try the demo' }).click({ timeout: 90000 });
   // The main shell (sidebar) renders once the mocked profile resolves.
   await expect(page.getByRole('button', { name: 'Dashboard' }).first()).toBeVisible({
     timeout: 30000,
@@ -144,7 +144,7 @@ test.describe('Demo mode network isolation', () => {
 
     // Navigate to Knowledge Base
     await page.goto('/knowledge');
-    await expect(page.getByText('Agro-Spatial Knowledge Mesh').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Agro-Spatial knowledge mesh').first()).toBeVisible({ timeout: 15000 });
 
     // Verify benchmark research scenario is clickable and executes
     const scenarioCard = page.getByText('Severe Soil Acidity (pH 4.8) & Liming Protocol').first();

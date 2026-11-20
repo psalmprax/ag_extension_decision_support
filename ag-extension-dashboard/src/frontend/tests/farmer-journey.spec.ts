@@ -62,7 +62,7 @@ test.describe('@e2e Critical Operational User Journey', () => {
     await mockDemoBackend(page);
     await page.goto('/login');
 
-    await page.getByRole('button', { name: 'Try the Demo' }).click({ timeout: 90000 });
+    await page.getByRole('button', { name: 'Try the demo' }).click({ timeout: 90000 });
     await expect(page.getByRole('button', { name: 'Dashboard' }).first()).toBeVisible({
       timeout: 30000,
     });
@@ -84,17 +84,17 @@ test.describe('@e2e Critical Operational User Journey', () => {
     await mockDemoBackend(page);
     await page.goto('/login');
 
-    await page.getByRole('button', { name: 'Try the Demo' }).click({ timeout: 90000 });
+    await page.getByRole('button', { name: 'Try the demo' }).click({ timeout: 90000 });
 
     // Assert Mobile Bottom Navigation Bar is visible on mobile screens
-    const bottomNav = page.locator('nav[aria-label="Mobile Navigation Bar"]');
+    const bottomNav = page.locator('nav[aria-label="Main navigation"]');
     await expect(bottomNav).toBeVisible({ timeout: 30000 });
 
     // Verify key action items exist inside mobile bottom bar
     await expect(bottomNav.getByRole('button', { name: 'Home' })).toBeVisible();
     await expect(bottomNav.getByRole('button', { name: 'Farmers' })).toBeVisible();
-    await expect(bottomNav.getByRole('button', { name: 'AI Scan' })).toBeVisible();
+    await expect(bottomNav.getByRole('button', { name: 'AI scan' })).toBeVisible();
     await expect(bottomNav.getByRole('button', { name: 'Knowledge' })).toBeVisible();
-    await expect(bottomNav.getByRole('button', { name: 'Toggle Full Menu' })).toBeVisible();
+    await expect(bottomNav.getByRole('button', { name: 'Menu' })).toBeVisible();
   });
 });

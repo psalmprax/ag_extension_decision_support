@@ -40,7 +40,7 @@ const ACCOUNTS = [
   { role: 'admin', email: process.env.AUDIT_ADMIN_EMAIL },
   { role: 'extension_officer', email: process.env.AUDIT_OFFICER_EMAIL },
   { role: 'farmer', email: process.env.AUDIT_FARMER_EMAIL },
-  // The public demo session: signs in with the "Try the Demo" button, no account needed.
+  // The public demo session: signs in with the "Try the demo" button, no account needed.
   { role: 'demo', email: process.env.AUDIT_DEMO === 'true' ? 'demo' : undefined },
 ].filter((a): a is { role: string; email: string } => Boolean(a.email));
 
@@ -173,7 +173,7 @@ for (const account of ACCOUNTS) {
         order: order + 1,
         loadMs: Date.now() - started,
         errorBoundary: boundary ? clip(boundary.replace(/\s+/g, ' '), 400) : null,
-        planLocked: /Pro Feature Locked/i.test(text),
+        planLocked: /Pro feature locked/i.test(text),
         stuckLoading: spinners > 0 || /^\s*loading/i.test(text),
         apiFailures: current.api,
         apiCalls: [...current.calls].sort(),
