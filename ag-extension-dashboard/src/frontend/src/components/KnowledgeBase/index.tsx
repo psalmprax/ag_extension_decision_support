@@ -157,21 +157,21 @@ const notifySearchResult = (
   if (res.data.cached) {
     notify({
       type: 'info',
-      message: 'Result retrieved from your context-scoped answer cache',
+      message: 'This answer was saved from an earlier identical question.',
     });
   } else if (bypassCache) {
     notify({
       type: 'success',
-      message: 'Fresh real-time LLM synthesis generated',
+      message: 'A new answer was written.',
     });
   }
 };
 
 const resultHeading = (result: Result): string => {
-  if (result.failed) return 'Search Failed — No Answer Generated';
-  if (result.answerMode === 'extractive') return 'Source Excerpts — AI Synthesis Unavailable';
-  if (result.evidenceStatus !== 'verified_sources') return 'General Guidance — Not Verified';
-  return 'Grounded Synthesis Completed';
+  if (result.failed) return 'The search failed. No answer was written.';
+  if (result.answerMode === 'extractive') return 'Passages from the guides. The AI summary is not available.';
+  if (result.evidenceStatus !== 'verified_sources') return 'General guidance, not checked against a source';
+  return 'Answer based on the sources below';
 };
 
 // This legacy feature shell coordinates search, graph, telemetry, and document-library state;
