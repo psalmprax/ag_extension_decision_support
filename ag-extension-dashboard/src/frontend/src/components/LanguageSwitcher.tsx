@@ -7,13 +7,11 @@ import { languages, Language } from '../lib/i18n';
 
 interface LanguageSwitcherProps {
   className?: string;
-  showFlag?: boolean;
   compact?: boolean;
 }
 
 export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   className = '',
-  showFlag = true,
   compact = false,
 }) => {
   const { language, setLanguage, t } = useLanguage();
@@ -49,8 +47,8 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
           aria-label={t('common_select_language')}
           aria-expanded={open}
         >
-          {showFlag ? <span aria-hidden="true">{current.flag}</span> : <Globe className="w-4 h-4" aria-hidden="true" />}
-          <span className="font-mono">{current.code.toUpperCase()}</span>
+          <Globe className="w-4 h-4" aria-hidden="true" />
+          <span>{current.code.toUpperCase()}</span>
           <ChevronDown className="w-3.5 h-3.5 opacity-60" aria-hidden="true" />
         </button>
         {open && (
@@ -87,7 +85,6 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
           aria-expanded={open}
         >
           <span className="flex items-center gap-2">
-            {showFlag && <span>{current.flag}</span>}
             <span>{current.name}</span>
           </span>
           <ChevronDown className="w-3 h-3 opacity-60" />
@@ -156,7 +153,6 @@ const LanguageDropdown: React.FC<DropdownProps> = ({
               }`}
             >
               <span className="flex items-center gap-2">
-                <span className="text-base">{lang.flag}</span>
                 <span className="font-medium">{lang.name}</span>
               </span>
               {lang.code === currentCode && (

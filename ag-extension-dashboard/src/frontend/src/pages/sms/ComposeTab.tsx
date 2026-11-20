@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Send, CheckCircle, XCircle, Loader2, Plus, Languages } from 'lucide-react';
+import { Send, CheckCircle, XCircle, Loader2, Languages } from 'lucide-react';
 import { useLanguage } from '../../lib/LanguageContext';
+import { smsParts } from '@/lib/smsParts';
 
 export function SMSComposerComposeTab({
   sendMode,
@@ -35,6 +36,7 @@ export function SMSComposerComposeTab({
   radiusClass: string;
 }) {
   const { t } = useLanguage();
+  const parts = smsParts(message);
   return (
     <motion.div
       key="compose"
@@ -46,33 +48,33 @@ export function SMSComposerComposeTab({
       <div className="space-y-4">
         {sendMode === 'single' ? (
           <div className="space-y-1.5">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">
+            <label htmlFor="sms-phone" className="text-sm text-slate-700 dark:text-slate-300">
               {t('sms_phone_label')}
             </label>
             <div className="relative group">
               <input
+                id="sms-phone"
                 type="tel"
+                inputMode="tel"
                 value={phoneNumber}
                 onChange={e => setPhoneNumber(e.target.value)}
                 placeholder="+254 --- --- ---"
-                className={`w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-800 ${radiusClass} px-5 py-4 focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-mono text-lg`}
+                className={`w-full bg-white dark:bg-white/[0.03] border border-slate-900/[0.12] dark:border-white/[0.12] ${radiusClass} px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-600 text-base tabular-nums`}
               />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500">
-                <Plus className="w-5 h-5 pointer-events-none" />
-              </div>
             </div>
           </div>
         ) : (
           <div className="space-y-1.5">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">
+            <label htmlFor="sms-recipients" className="text-sm text-slate-700 dark:text-slate-300">
               {t('sms_bulk_recipients')}
             </label>
             <textarea
+              id="sms-recipients"
               value={recipients}
               onChange={e => setRecipients(e.target.value)}
               placeholder="+2541, +2542, +2543..."
               rows={3}
-              className={`w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-800 ${radiusClass} px-5 py-4 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-mono`}
+              className={`w-full bg-white dark:bg-white/[0.03] border border-slate-900/[0.12] dark:border-white/[0.12] ${radiusClass} px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-600 text-base tabular-nums`}
             />
           </div>
         )}
@@ -80,7 +82,7 @@ export function SMSComposerComposeTab({
         <div className="space-y-1.5">
           <div className="flex justify-between items-center ml-1">
             <div className="flex items-center gap-2">
-              <label className="text-sm font-bold text-slate-700 dark:text-slate-300">
+              <label htmlFor="sms-message" className="text-sm text-slate-700 dark:text-slate-300">
                 {t('sms_message_label')}
               </label>
               <button
@@ -96,18 +98,17 @@ export function SMSComposerComposeTab({
                 {t('common_translate') || 'Translate'}
               </button>
             </div>
-            <span
-              className={`text-xxs font-bold px-2 py-0.5 rounded-full ${message.length > 150 ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}
-            >
-              {t('sms_char_count').replace('{count}', message.length.toString())}
+            <span aria-live="polite" className={`text-xs tabular-nums ${parts.parts > 1 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-white/60'}`}>
+              {t('sms_char_parts', { count: message.length, parts: parts.parts, defaultValue: '{count} characters · {parts} SMS' })}
+              {parts.unicode && ` · ${t('sms_unicode_note', { defaultValue: 'special characters make each SMS shorter' })}`}
             </span>
           </div>
           <textarea
+            id="sms-message"
             value={message}
             onChange={e => setMessage(e.target.value)}
-            placeholder="..."
             rows={6}
-            className={`w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-800 ${radiusClass} px-5 py-4 focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all text-lg leading-relaxed resize-none`}
+            className={`w-full bg-white dark:bg-white/[0.03] border border-slate-900/[0.12] dark:border-white/[0.12] ${radiusClass} px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-600 text-base leading-relaxed resize-none`}
           />
         </div>
 

@@ -24,7 +24,7 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
   const templates = [
     {
       id: 'urgent',
-      text: 'URGENT: New agricultural updates for your area. Please check the USSD menu *384*100# or contact your extension officer.',
+      text: 'Urgent: new agricultural updates for your area. Please check the USSD menu *384*100# or contact your extension officer.',
     },
     {
       id: 'meeting',

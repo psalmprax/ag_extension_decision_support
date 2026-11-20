@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Award, FileDown } from 'lucide-react';
+import { Award } from 'lucide-react';
 import { fieldIntelService } from '@/api/fieldIntelService';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useDemoMode } from '@/demo';
@@ -58,29 +58,5 @@ export function LeaderboardCard() {
     );
 }
 
-// ── MIS export ───────────────────────────────────────────────────────────────
-
-export function MisExportButtons() {
-    const datasets: { key: 'farmers' | 'visits' | 'outcomes'; label: string }[] = [
-        { key: 'farmers', label: 'Farmers' },
-        { key: 'visits', label: 'Visits' },
-        { key: 'outcomes', label: 'Outcomes' },
-    ];
-    return (
-        <div className="flex flex-wrap gap-2">
-            {datasets.map(d => (
-                <a
-                    key={d.key}
-                    href={fieldIntelService.misExportUrl(d.key)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 text-xs font-bold hover:bg-primary-500/20"
-                    download
-                >
-                    <FileDown className="w-3.5 h-3.5" />
-                    {d.label} CSV
-                </a>
-            ))}
-        </div>
-    );
-}
 
 // ── Soil lab import ──────────────────────────────────────────────────────────

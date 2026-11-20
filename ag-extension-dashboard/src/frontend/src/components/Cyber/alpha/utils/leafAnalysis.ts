@@ -4,7 +4,14 @@
 
 import apiClient from '@/api/client';
 
-import type { LastImageAnalysis } from '../StudioTabs';
+import type { LesionDetectionZone } from '@/components/canvas-ui/DiseaseSaliencyCanvas';
+
+/** A photo and what was found in it. */
+export interface LastImageAnalysis {
+  imageSrc: string;
+  overallHealth: string;
+  detections: LesionDetectionZone[];
+}
 
 /** Validate, upload, and analyze a leaf image; resolves to the health summary text. */
 export interface LeafAnalysisOutcome {

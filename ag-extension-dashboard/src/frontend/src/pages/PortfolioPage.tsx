@@ -88,7 +88,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end">
             <RegisterFarmerButton />
             <button
               onClick={toggleSelectAll}
@@ -110,10 +110,10 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
       </PageHeader>
 
       {isDemo && (
-        <div className="p-4 backdrop-blur-xl bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-3">
-          <Lock className="w-5 h-5 text-amber-400 shrink-0" />
-          <p className="text-xs text-amber-200/90">
-            <strong>{t('ui_portfolio_page_sandbox_mode')}</strong> {t('ui_portfolio_page_sample_farmer_cohort_records_shown_c')}
+        <div className="p-4 bg-amber-50 dark:bg-amber-400/[0.08] border border-amber-600/20 dark:border-amber-300/20 rounded-lg flex items-center gap-3">
+          <Lock className="w-4 h-4 text-amber-700 dark:text-amber-300 shrink-0" aria-hidden="true" />
+          <p className="text-sm text-amber-900 dark:text-amber-100">
+            <strong className="font-medium">{t('ui_portfolio_page_sandbox_mode')}</strong> {t('ui_portfolio_page_sample_farmer_cohort_records_shown_c')}
           </p>
         </div>
       )}

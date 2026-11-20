@@ -113,8 +113,10 @@ router.get('/weather/:location?', async (req: Request, res: Response) => {
         const weather = await WeatherService.getByLocation(location);
         res.json({ success: true, data: weather });
     } catch (error) {
-        logger.error('Weather route error:', (error as Error).message);
-        safeError(res, 500, 'Failed to fetch weather');
+        // The forecast provider (or its place lookup) is unreachable or does not know the
+        // place: say so, rather than reporting a server fault.
+        logger.warn('Weather unavailable:', (error as Error).message);
+        safeError(res, 503, 'Weather is not available right now');
     }
 });
 

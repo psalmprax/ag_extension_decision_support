@@ -165,7 +165,7 @@ router.get('/subscription', authorize(['admin', 'extension_officer', 'farmer']),
  *     summary: Get user usage statistics
  *     tags: [Billing]
  */
-router.get('/usage', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
+router.get('/usage', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const usageData = await usageService.getUsageStatus(req.user!.userId);
         res.json({ success: true, data: usageData });

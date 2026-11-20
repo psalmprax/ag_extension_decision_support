@@ -48,6 +48,7 @@ function previousMessage(hoursAgo: number | null) {
 
 beforeEach(() => {
     jest.clearAllMocks();
+    mockQuery.mockResolvedValue({ rows: [] });
     jest.mocked(aiAnswersAvailable).mockResolvedValue(true);
 });
 
@@ -154,5 +155,24 @@ describe('taking a webhook message', () => {
         await expect(takeRegisteredFarmerMessage({ channel: 'sms', identifier: '+254712000111', text: 'Hello', eventId: 'evt-1' })).resolves.toBe(true);
         await new Promise(resolve => setImmediate(resolve));
         expect(recordChannelMessage).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('fixed notices in the farmer\'s language', () => {
+    it('acknowledges a Kiswahili-speaking farmer in Kiswahili', async () => {
+        mockQuery.mockImplementation((sql: string) =>
+            Promise.resolve({ rows: sql.includes('language_preference') ? [{ language_preference: 'sw' }] : [] }));
+        jest.mocked(loadThreadForReply).mockResolvedValue(thread() as never);
+        await handleRegisteredFarmerChannelMessage({ farmerId: 'farmer-1', channel: 'sms', text: 'Mahindi yana madoa' });
+        expect(noticeOnChannel).toHaveBeenCalledWith('conv-1', 'sms', expect.stringContaining('Asante'), expect.anything());
+    });
+
+    it("says today's SMS answers are used up in Kiswahili", async () => {
+        mockQuery.mockImplementation((sql: string) =>
+            Promise.resolve({ rows: sql.includes('language_preference') ? [{ language_preference: 'sw' }] : [] }));
+        jest.mocked(loadThreadForReply).mockResolvedValue(thread() as never);
+        jest.mocked(answerFarmerInThread).mockResolvedValueOnce('sms_limit');
+        await handleRegisteredFarmerChannelMessage({ farmerId: 'farmer-1', channel: 'sms', text: 'ASK AI mbolea gani' });
+        expect(noticeOnChannel).toHaveBeenCalledWith('conv-1', 'sms', expect.stringContaining('Umetumia'));
     });
 });

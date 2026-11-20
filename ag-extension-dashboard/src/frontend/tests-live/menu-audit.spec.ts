@@ -8,7 +8,7 @@ import path from 'node:path';
  * sidebar section toggles and menu items, never page controls, so it cannot
  * send, pay for or delete anything.
  *
- * Env: AUDIT_BASE_URL, AUDIT_PASSWORD, AUDIT_<ROLE>_EMAIL (ADMIN, OFFICER, FARMER),
+ * Env: AUDIT_BASE_URL, AUDIT_PASSWORD, AUDIT_<ROLE>_EMAIL (ADMIN, OFFICER, MANAGER, FARMER),
  *      AUDIT_OUT (output directory, default ui-audit).
  */
 
@@ -39,6 +39,7 @@ const PASSWORD = process.env.AUDIT_PASSWORD || '';
 const ACCOUNTS = [
   { role: 'admin', email: process.env.AUDIT_ADMIN_EMAIL },
   { role: 'extension_officer', email: process.env.AUDIT_OFFICER_EMAIL },
+  { role: 'regional_manager', email: process.env.AUDIT_MANAGER_EMAIL },
   { role: 'farmer', email: process.env.AUDIT_FARMER_EMAIL },
   // The public demo session: signs in with the "Try the demo" button, no account needed.
   { role: 'demo', email: process.env.AUDIT_DEMO === 'true' ? 'demo' : undefined },
@@ -173,7 +174,7 @@ for (const account of ACCOUNTS) {
         order: order + 1,
         loadMs: Date.now() - started,
         errorBoundary: boundary ? clip(boundary.replace(/\s+/g, ' '), 400) : null,
-        planLocked: /Pro feature locked/i.test(text),
+        planLocked: /Available on Pro and Enterprise/i.test(text),
         stuckLoading: spinners > 0 || /^\s*loading/i.test(text),
         apiFailures: current.api,
         apiCalls: [...current.calls].sort(),

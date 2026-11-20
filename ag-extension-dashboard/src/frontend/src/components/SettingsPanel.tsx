@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { OfflineMapsSection } from '@/components/settings/OfflineMapsSection';
 import { NotificationPreferencesSection } from '@/components/settings/NotificationPreferencesSection';
 import { OrganizationSection } from '@/components/settings/OrganizationSection';
+import { SmsCommandsSection } from '@/components/settings/SmsCommandsSection';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { Map } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -120,6 +121,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                 <NotificationPreferencesSection {...notifications} />
 
                 <OrganizationSection active={isOpen} />
+
+                <SmsCommandsSection active={isOpen} />
 
                 {/* Communication Gateways & Onboarding */}
                 <div className="space-y-3">

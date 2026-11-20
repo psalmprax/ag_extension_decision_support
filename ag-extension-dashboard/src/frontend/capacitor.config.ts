@@ -10,13 +10,15 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 1800,
-      backgroundColor: '#0c0a09',
+      launchShowDuration: 1200,
+      backgroundColor: '#0d1a14',
       showSpinner: false,
     },
+    // The web view draws under the status bar, as iOS apps do; the glass top bar pads for it.
     StatusBar: {
-      style: 'DARK',
-      backgroundColor: '#0c0a09',
+      overlaysWebView: true,
+      style: 'DEFAULT',
+      backgroundColor: '#0d1a14',
     },
   },
 };

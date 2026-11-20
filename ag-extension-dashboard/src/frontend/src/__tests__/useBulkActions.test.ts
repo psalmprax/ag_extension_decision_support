@@ -328,6 +328,7 @@ describe('useBulkActions', () => {
   });
 
   it('exports the selection as a quoted CSV download with a dated filename', () => {
+    vi.useFakeTimers();
     const { result, addNotification } = setup();
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
 
@@ -340,7 +341,10 @@ describe('useBulkActions', () => {
 
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
     expect(click).toHaveBeenCalledTimes(1);
+    // The URL is released after the browser has started the download.
+    vi.runAllTimers();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock');
+    vi.useRealTimers();
     expect(addNotification).toHaveBeenCalledWith({
       type: 'success',
       message: 'Exported 1 farmers to CSV',
@@ -348,12 +352,13 @@ describe('useBulkActions', () => {
     expect(result.current.selected.size).toBe(0);
   });
 
-  it('does not export an empty selection', () => {
+  it('exports everyone listed when nothing is selected', () => {
     const { result, addNotification } = setup();
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
     act(() => {
       result.current.hook.handleBulkExport();
     });
-    expect(URL.createObjectURL).not.toHaveBeenCalled();
-    expect(addNotification).not.toHaveBeenCalled();
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+    expect(addNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'success', message: expect.stringMatching(/^Exported \d+ farmers to CSV$/) }));
   });
 });

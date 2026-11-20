@@ -151,7 +151,7 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
           <span className="text-xs text-slate-600 dark:text-slate-300">{activity.region}</span>
         </div>
         <p className="text-xs font-medium text-slate-800 dark:text-slate-200">
-          <span className="text-rose-400 font-bold">{activity.issue}:</span> {activity.aiSummary}
+          <span data-message><span className="text-rose-400 font-bold">{activity.issue}:</span> {activity.aiSummary}</span>
         </p>
       </div>
 

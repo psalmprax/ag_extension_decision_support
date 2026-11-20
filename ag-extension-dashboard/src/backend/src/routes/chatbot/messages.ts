@@ -12,9 +12,8 @@ import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
 import { assertConversationAccess, checkMessageAccess, MessageAccessError, resolveFarmerId } from '@/services/messageAccessService';
-import { getRealtimeServer } from '@/services/realtimeHub';
 import { respondIfUrgent } from '@/services/chat/threadAutoReply';
-import { deliverToFarmerChannel } from '@/services/chat/channelThread';
+import { fanoutNewMessage, scheduleChannelDelivery } from '@/services/chat/threadPost';
 import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
 import {
   AttachmentError,
@@ -108,23 +107,6 @@ const resolveOrCreateConversation = async (user: AuthenticatedRequestUser, targe
 };
 
 /** Best-effort realtime fanout of a persisted chat turn to its conversation room. */
-async function fanoutNewMessage(conversationId: string, message: ChatMessageRow): Promise<void> {
-  try {
-    getRealtimeServer()?.to(`conversation:${conversationId}`).emit('new_message', mapChatMessageRow(message));
-  } catch { /* socket fanout is best-effort */ }
-}
-
-/**
- * POST /api/chatbot/message (and /api/chatbot/messages) — Persist message turn from officer or farmer.
- */
-/** An officer's reply goes out on the channel the farmer last wrote from (SMS, WhatsApp, Telegram). */
-function scheduleChannelDelivery(conversationId: string, messageId: string, content: string): void {
-  setImmediate(() => {
-    deliverToFarmerChannel(conversationId, messageId, content, { askAiButton: true })
-      .catch(error => logger.warn('Channel delivery failed:', error));
-  });
-}
-
 /** A farmer's urgent message gets safety steps right away; the turn-taking job is the backstop. */
 function scheduleUrgentCheck(conversationId: string): void {
   setImmediate(() => {
@@ -230,7 +212,7 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
       await linkAttachments('chat', created.id, attachmentIds);
     }
     if (created && conversationId) {
-      await fanoutNewMessage(conversationId, created);
+      fanoutNewMessage(conversationId, created);
       if (senderRole === 'user') scheduleUrgentCheck(conversationId);
       else scheduleChannelDelivery(conversationId, created.id, created.content);
     }

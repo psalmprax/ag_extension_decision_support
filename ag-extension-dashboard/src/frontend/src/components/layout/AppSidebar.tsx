@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, HelpCircle, Lock } from 'lucide-react';
+import { ChevronDown, HelpCircle, Lock, Moon, Settings, Sun } from 'lucide-react';
 import { NavItem } from '../../config/navItems';
 import { UnreadCount } from '@/components/chat/UnreadCount';
 import { collapseHubs, menuItemIsActive } from '@/config/navHubs';
 import { cn } from '@/lib/cn';
-import { sidebarVariants } from '@/lib/animations';
+import { sheetVariants, sidebarVariants } from '@/lib/animations';
+import { useIsPhone } from '@/hooks/useIsPhone';
 import { triggerHaptic } from '@/lib/haptics';
 
 import { useLanguage } from '@/lib/LanguageContext';
@@ -55,6 +56,9 @@ const NAV_SECTIONS = [
 const getSectionId = (itemId: string) =>
   NAV_SECTIONS.find(section => (section.itemIds as readonly string[]).includes(itemId))?.id ?? 'other';
 
+const DRAWER_BUTTON =
+  'flex items-center justify-center gap-2 h-11 rounded-md border border-slate-900/[0.1] dark:border-white/[0.12] text-sm text-slate-700 dark:text-slate-200';
+
 interface AppSidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen?: (open: boolean) => void;
@@ -62,6 +66,8 @@ interface AppSidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   setShowHelpCenter: (show: boolean) => void;
+  /** Opens the settings panel; shown in the drawer on phones, where the header hides it. */
+  onOpenSettings?: () => void;
   onGenerateReport?: () => void;
 }
 
@@ -72,10 +78,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   activeTab,
   setActiveTab,
   setShowHelpCenter,
+  onOpenSettings,
   onGenerateReport: _onGenerateReport,
 }) => {
   const { t } = useLanguage();
-  const { themeName, setThemeName, user } = useAppStore();
+  const isPhone = useIsPhone();
+  const { themeName, setThemeName, user, darkMode, setDarkMode } = useAppStore();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => ({
     [getSectionId(activeTab)]: true,
   }));
@@ -113,19 +121,29 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSidebarOpen?.(false)}
-            className="md:hidden fixed top-16 inset-x-0 bottom-0 bg-black/60 backdrop-blur-sm z-30"
+            className="md:hidden fixed inset-0 bg-black/30 z-[1100]"
           />
 
+          {/* Phones: the menu is a sheet that rises from the bottom, with a grabber. */}
           <motion.aside
-            variants={sidebarVariants}
+            variants={isPhone ? sheetVariants : sidebarVariants}
             initial="initial"
             animate="animate"
             exit="exit"
+            drag={isPhone ? 'y' : false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.6 }}
+            onDragEnd={(_event, info) => {
+              if (info.offset.y > 120) setSidebarOpen?.(false);
+            }}
             className={cn(
-              'fixed left-0 top-16 bottom-0 flex flex-col pt-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-4 px-3 border-r border-slate-900/[0.08] dark:border-white/[0.08] w-64 z-40',
-              'bg-white dark:bg-[#0d1a14]'
+              'fixed flex flex-col px-3',
+              isPhone
+                ? 'inset-x-0 bottom-0 max-h-[86dvh] rounded-t-[28px] ios-sheet pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))] z-[1101]'
+                : 'left-0 top-16 bottom-0 pt-3 pb-4 border-r border-slate-900/[0.08] dark:border-white/[0.08] w-64 z-40 bg-white dark:bg-[#0d1a14]'
             )}
           >
+            {isPhone && <span className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-900/20 dark:bg-white/25" aria-hidden="true" />}
 
             <nav className="flex flex-col gap-3 grow overflow-y-auto custom-scrollbar -mr-1 pr-1">
               {sections.map(section => {
@@ -197,6 +215,18 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               <div className="flex items-center justify-between gap-2">
                 <LanguageSwitcher compact />
                 <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
+              </div>
+              <div className="sm:hidden grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setDarkMode(!darkMode)} className={DRAWER_BUTTON}>
+                  {darkMode ? <Sun className="w-[18px] h-[18px]" aria-hidden="true" /> : <Moon className="w-[18px] h-[18px]" aria-hidden="true" />}
+                  {darkMode ? t('theme_light_short', { defaultValue: 'Light mode' }) : t('theme_dark_short', { defaultValue: 'Dark mode' })}
+                </button>
+                {onOpenSettings && (
+                  <button type="button" onClick={() => { setSidebarOpen?.(false); onOpenSettings(); }} className={DRAWER_BUTTON}>
+                    <Settings className="w-[18px] h-[18px]" aria-hidden="true" />
+                    {t('header_open_settings_short', { defaultValue: 'Settings' })}
+                  </button>
+                )}
               </div>
             </div>
 

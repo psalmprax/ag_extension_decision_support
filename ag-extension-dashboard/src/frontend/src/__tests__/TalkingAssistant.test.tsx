@@ -495,7 +495,7 @@ describe('TalkingAssistant Component', () => {
 
     expect(screen.getByText(/24 languages/i)).toBeInTheDocument();
 
-    const frPill = screen.getByRole('button', { name: /^🇫🇷\s*Français$/i });
+    const frPill = screen.getByRole('button', { name: /^Français$/i });
     expect(frPill).toBeInTheDocument();
     fireEvent.click(frPill);
 

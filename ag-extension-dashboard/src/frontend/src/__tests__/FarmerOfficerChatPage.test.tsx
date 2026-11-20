@@ -6,6 +6,7 @@ import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { askAiInThread, createConversation, fetchTurnTakingSettings, sendThreadMessage } from '@/api/chatbotService';
 import { useAppStore } from '@/store/useAppStore';
 import type { ThreadPageProps } from '@/components/chat/threadProps';
+import { fetchFarmerStats } from '@/api/farmerService';
 
 vi.mock('@/api/chatbotService', () => ({
   createConversation: vi.fn(), sendThreadMessage: vi.fn(), askAiInThread: vi.fn(),
@@ -45,6 +46,18 @@ afterEach(() => {
 });
 
 describe("the farmer's chat with their officer", () => {
+  it('names the assigned officer before the farmer has written anything', async () => {
+    vi.mocked(fetchFarmerStats).mockResolvedValue({ success: true, data: { officerName: 'Daniel Kiptoo' } as never });
+    renderPage();
+    expect(await screen.findByText('Daniel Kiptoo')).toBeInTheDocument();
+  });
+
+  it('says plainly when no officer is assigned yet', async () => {
+    vi.mocked(fetchFarmerStats).mockResolvedValue({ success: true, data: { officerName: null } as never });
+    renderPage();
+    expect(await screen.findByText(/No officer is assigned to you yet/)).toBeInTheDocument();
+  });
+
   it('shows their own thread, labelled from their side, with Ask AI and no officer tools', async () => {
     renderPage({
       farmerConversations: [{ id: 'thread-1', title: '', officerName: 'Grace Achieng', updatedAt: '', startedAt: '' }],

@@ -155,7 +155,9 @@ interface ChatRow {
  * admins everything.
  */
 function activityScope(alias: string, userId: string, role: string, params: unknown[]): string {
-  if (role === 'admin') return '';
+  // The stream is farmer activity: messages to or from staff (SMS command replies,
+  // officers' own AI chats) carry no farmer and never belong in it.
+  if (role === 'admin') return `AND ${alias}.farmer_id IS NOT NULL`;
   params.push(userId);
   if (role === 'farmer') return `AND ${alias}.farmer_id IN (SELECT id FROM farmers WHERE user_id = $1)`;
   if (role === 'regional_manager') {

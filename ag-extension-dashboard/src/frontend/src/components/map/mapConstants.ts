@@ -61,19 +61,8 @@ export const CROP_COLORS: Record<string, string> = {
   default: '#1f8053',
 };
 
-export const CROP_ICONS: Record<string, string> = {
-  maize: '🌽',
-  tobacco: '🍂',
-  groundnuts: '🥜',
-  soybeans: '🫘',
-  rice: '🍚',
-  cotton: '☁️',
-  wheat: '🌾',
-  sorghum: '🌿',
-  beans: '🫘',
-  potatoes: '🥔',
-  default: '📍',
-};
+/** The letter shown inside a farm pin (the pin colour carries the crop; see the legend). */
+export const cropInitial = (crop: string): string => (crop.trim()[0] || '?').toUpperCase();
 
 export const DEFAULT_CENTER: [number, number] = [-1.2863, 36.8172];
 export const DEFAULT_ZOOM = 6;
@@ -92,7 +81,7 @@ export const DEFAULT_DEMO_MAP_FARMERS: FarmerData[] = DEMO_FARMERS.map(f => ({
 
 export const createMarkerIcon = (crop: string, isSelected: boolean = false): L.DivIcon => {
   const color = CROP_COLORS[crop.toLowerCase()] || CROP_COLORS.default;
-  const icon = CROP_ICONS[crop.toLowerCase()] || CROP_ICONS.default;
+  const icon = cropInitial(crop);
 
   return L.divIcon({
     className: 'custom-marker',
@@ -172,7 +161,10 @@ export const MAP_STYLES = `
     top: 18px;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--marker-color);
     pointer-events: none;
   }
   

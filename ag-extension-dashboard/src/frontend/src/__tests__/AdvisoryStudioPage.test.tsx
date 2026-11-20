@@ -1,7 +1,18 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AdvisoryStudioPage } from '../pages/AdvisoryStudioPage';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AdvisoryStudioPage as Page } from '../pages/AdvisoryStudioPage';
+
+/** The page with a fresh query cache (it lists saved protocols). */
+function AdvisoryStudioPage() {
+  const client = React.useMemo(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }), []);
+  return (
+    <QueryClientProvider client={client}>
+      <Page />
+    </QueryClientProvider>
+  );
+}
 import apiClient from '@/api/client';
 
 vi.mock('@/api/client', () => ({
@@ -18,6 +29,7 @@ const mockedPut = apiClient.put as unknown as ReturnType<typeof vi.fn>;
 describe('AdvisoryStudioPage Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (apiClient.get as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ data: { success: true, data: [] } });
     mockedPost.mockResolvedValue({
       data: {
         success: true,
@@ -94,7 +106,7 @@ describe('AdvisoryStudioPage Component', () => {
   it('saves draft workflow via API', async () => {
     render(<AdvisoryStudioPage />);
 
-    const saveDraftBtn = screen.getByText('Save Draft');
+    const saveDraftBtn = screen.getByText('Save draft');
     fireEvent.click(saveDraftBtn);
 
     await waitFor(() => {
@@ -108,14 +120,14 @@ describe('AdvisoryStudioPage Component', () => {
     });
 
     expect(
-      await screen.findByText(/Workflow schema synchronized and ready for offline deployment/i)
+      await screen.findByText(/Draft saved/i)
     ).toBeInTheDocument();
   });
 
   it('publishes workflow to field officers', async () => {
     render(<AdvisoryStudioPage />);
 
-    const publishBtn = screen.getByText('Publish to field PWA');
+    const publishBtn = screen.getByText('Publish');
     fireEvent.click(publishBtn);
 
     await waitFor(() => {

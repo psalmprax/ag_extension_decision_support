@@ -151,7 +151,7 @@ test.describe('Demo mode network isolation', () => {
     await expect(scenarioCard).toBeVisible({ timeout: 10000 });
     await scenarioCard.click();
 
-    await expect(page.getByText('General Guidance — Not Verified')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('General guidance, not checked against a source')).toBeVisible({ timeout: 15000 });
     await expect(page.getByText('Confirm soil acidity with a current soil test before deciding on liming.')).toBeVisible();
     expect(requests.some(url => new URL(url).pathname === '/api/knowledge/ask')).toBe(true);
 

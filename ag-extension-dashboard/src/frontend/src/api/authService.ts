@@ -23,6 +23,18 @@ export const login = async (credentials: LoginCredentials): Promise<AuthResponse
   return response.data;
 };
 
+/** Sends a 6-digit sign-in code by SMS (the reply is the same whether or not the number is known). */
+export const requestPhoneCode = async (phone: string): Promise<{ success: boolean; data?: { message: string } }> => {
+  const response = await apiClient.post('/auth/phone/request', { phone });
+  return response.data;
+};
+
+/** Signs in with the code; the reply has the same shape as a password sign-in. */
+export const verifyPhoneCode = async (phone: string, code: string): Promise<AuthResponse> => {
+  const response = await apiClient.post<AuthResponse>('/auth/phone/verify', { phone, code });
+  return response.data;
+};
+
 export const register = async (userData: RegisterData): Promise<AuthResponse> => {
   const response = await apiClient.post<AuthResponse>('/auth/register', userData);
   return response.data;

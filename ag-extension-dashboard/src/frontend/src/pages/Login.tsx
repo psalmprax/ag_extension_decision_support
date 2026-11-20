@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAppStore, type User } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { enterDemoMode, exitDemoMode } from '@/demo';
 
-import { login, demoLogin } from '@/api/authService';
+import { login, demoLogin, type AuthResponse } from '@/api/authService';
+import { PhoneSignInForm } from '@/components/auth/PhoneSignInForm';
 import { getApiErrorMessage } from '@/lib/apiError';
+import { AuthLayout } from '@/components/auth/AuthLayout';
+import { AUTH_CARD, AUTH_INPUT, AUTH_SUBMIT } from '@/components/ui/controlStyles';
 
 interface LoginProps {
   onDemo?: () => void;
@@ -25,36 +27,32 @@ export function Login({ onDemo }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [usePhone, setUsePhone] = useState(false);
+
+  /** Store the signed-in user and go where they were headed (shared by email and phone sign-in). */
+  const finishSignIn = (data: AuthResponse) => {
+    // The JWT itself arrives as an httpOnly cookie — nothing token-shaped is
+    // written to localStorage.
+    const token = data.token || data.data?.token;
+    const userData = data.data?.user || data.user;
+    if (userData) {
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData as User);
+      exitDemoMode();
+    }
+    if (!userData && !token) throw new Error(t('login_failed_no_token'));
+    // Return the user to where they were headed (e.g. a /tele-call/<roomId>
+    // invite link that required sign-in first).
+    const from = (location.state as { from?: string } | null)?.from;
+    navigate(from && from.startsWith('/') ? from : '/dashboard');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-
     try {
-      const data = await login({ email, password });
-
-      // Handle nested response structure { success: true, data: { token, user } }
-      // The JWT itself arrives as an httpOnly cookie — nothing token-shaped is
-      // written to localStorage.
-      const token = data.token || data.data?.token;
-      const userData = data.data?.user || data.user;
-
-      // Store user data
-      if (userData) {
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData as User);
-        exitDemoMode();
-      }
-
-      if (!userData && !token) {
-        throw new Error(t('login_failed_no_token'));
-      }
-
-      // Return the user to where they were headed (e.g. a /tele-call/<roomId>
-      // invite link that required sign-in first).
-      const from = (location.state as { from?: string } | null)?.from;
-      navigate(from && from.startsWith('/') ? from : '/dashboard');
+      finishSignIn(await login({ email, password }));
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, t('login_invalid_credentials')));
     } finally {
@@ -93,72 +91,15 @@ export function Login({ onDemo }: LoginProps) {
   };
 
   return (
-    <div
-      className="dark surface-dark min-h-[100dvh] bg-[#0d1a14] text-[#e6eee9] flex items-center justify-center p-4 sm:p-6 relative overflow-y-auto overflow-x-hidden"
-      role="main"
-      aria-label="Login page"
+    <AuthLayout
+      label="Login page"
+      headline={t('ui_login_panel_headline', { defaultValue: 'Advice for farmers, records for the officers who visit them.' })}
+      body={t('ui_login_panel_body', { defaultValue: 'Crop checks, visits and messages by SMS, WhatsApp and Telegram, in one place.' })}
     >
-      {/* ── Warm Agrarian Background Picture & Atmosphere ── */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        <img
-          src="/images/landing/maize-field-sunrise.webp"
-          alt=""
-          role="presentation"
-          aria-hidden="true"
-          width={1319}
-          height={860}
-          className="w-full h-full object-cover object-center opacity-40"
-          loading="eager"
-          decoding="async"
-        />
-        <div className="absolute inset-0 bg-[#0d1a14]/85" />
-      </div>
-
-      {/* ── Top Header Navigation Bar ── */}
-      <header className="absolute top-0 left-0 right-0 z-30 p-4 sm:p-6 flex items-center justify-between pointer-events-none">
-        <Link
-          to="/"
-          className="pointer-events-auto inline-flex items-center gap-2 h-9 px-3 rounded-md text-[#c5d3cb] hover:text-white hover:bg-white/[0.06] text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-          aria-label={t('common_back_to_landing', { defaultValue: 'Back to landing page' })}
-        >
-          <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-          <span className="hidden sm:inline">{t('common_back_to_landing', { defaultValue: 'Back to landing page' })}</span>
-          <span className="sm:hidden">{t('common_back_to_home', { defaultValue: 'Back to home' })}</span>
-        </Link>
-        <div className="pointer-events-auto flex items-center gap-2">
-          <LanguageSwitcher compact />
-        </div>
-      </header>
-
-      <div className="w-full max-w-md lg:max-w-5xl grid lg:grid-cols-12 gap-6 lg:gap-8 items-stretch relative z-10 my-auto pt-16 pb-8 sm:py-6">
-        {/* Left: who this is for, over a real field photo (desktop only). */}
-        <div className="hidden lg:flex lg:col-span-6 flex-col justify-between rounded-lg overflow-hidden relative self-stretch min-h-[520px] border border-white/[0.08]">
-          <img
-            src="/images/landing/officer-farmer-hero-1024.webp"
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0d1a14] via-[#0d1a14]/50 to-[#0d1a14]/30" />
-          <div className="relative flex items-center gap-2.5 p-7">
-            <img src="/logo.png" alt="" className="w-7 h-7 object-contain" />
-            <span className="text-base font-medium text-white">{t('app_title')}</span>
-          </div>
-          <div className="relative p-7">
-            <p className="text-2xl font-medium leading-snug text-white max-w-sm">
-              {t('ui_login_panel_headline', { defaultValue: 'Advice for farmers, records for the officers who visit them.' })}
-            </p>
-            <p className="text-sm text-[#c5d3cb] mt-3 max-w-sm">
-              {t('ui_login_panel_body', { defaultValue: 'Crop checks, visits and messages by SMS, WhatsApp and Telegram, in one place.' })}
-            </p>
-          </div>
-        </div>
-
-        {/* Right Side: Login Card */}
-        <motion.div
+      <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="lg:col-span-6 bg-[#13241b] border border-white/[0.08] rounded-lg p-7 sm:p-8 w-full relative z-10 self-stretch flex flex-col justify-between"
+          className={`${AUTH_CARD} relative z-10 flex flex-col justify-between`}
         >
           <div>
             {/* Header Title */}
@@ -188,6 +129,10 @@ export function Login({ onDemo }: LoginProps) {
               <div className="flex-1 h-px bg-white/10"></div>
             </div>
 
+            {usePhone ? (
+              <PhoneSignInForm onSignedIn={finishSignIn} onUseEmail={() => setUsePhone(false)} />
+            ) : (
+            <>
             {/* Error Message */}
             {error && (
               <div
@@ -214,7 +159,7 @@ export function Login({ onDemo }: LoginProps) {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-md text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                  className={AUTH_INPUT}
                   placeholder={t('login_email_placeholder') || 'name@organization.org'}
                   autoComplete="email"
                 />
@@ -234,7 +179,7 @@ export function Login({ onDemo }: LoginProps) {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-md text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all pr-12"
+                    className={`${AUTH_INPUT} pr-12`}
                     placeholder="••••••••"
                     autoComplete="current-password"
                   />
@@ -249,14 +194,7 @@ export function Login({ onDemo }: LoginProps) {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs pt-1">
-                <label className="flex items-center gap-2 cursor-pointer text-white/70 hover:text-white">
-                  <input
-                    type="checkbox"
-                    className="rounded bg-white/10 border-white/20 text-emerald-500 focus:ring-emerald-500/30"
-                  />
-                  <span>{t('login_remember_me')}</span>
-                </label>
+              <div className="flex items-center justify-end text-sm pt-1">
                 <Link
                   to="/forgot-password"
                   className="text-emerald-300 hover:text-emerald-200 transition-colors"
@@ -265,11 +203,7 @@ export function Login({ onDemo }: LoginProps) {
                 </Link>
               </div>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-md shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-              >
+              <button type="submit" disabled={isLoading} className={`${AUTH_SUBMIT} mt-2`}>
                 {isLoading ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -279,7 +213,16 @@ export function Login({ onDemo }: LoginProps) {
                   <span>{t('login_sign_in')}</span>
                 )}
               </button>
+              <button
+                type="button"
+                onClick={() => { setError(''); setUsePhone(true); }}
+                className="w-full text-center text-sm text-emerald-300 hover:text-emerald-200 transition-colors"
+              >
+                {t('phone_login_switch', { defaultValue: 'Sign in with your phone number' })}
+              </button>
             </form>
+            </>
+            )}
           </div>
 
           {/* Footer */}
@@ -295,8 +238,7 @@ export function Login({ onDemo }: LoginProps) {
             </p>
           </div>
         </motion.div>
-      </div>
-    </div>
+    </AuthLayout>
   );
 }
 

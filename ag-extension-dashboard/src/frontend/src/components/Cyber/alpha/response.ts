@@ -99,8 +99,8 @@ export function handleAdvisoryFailure(err: unknown, query: string, setMessages: 
     id: `asst-${Date.now()}`,
     sender: 'assistant',
     text: isNetwork
-      ? '📡 Network unavailable — your agronomic question was queued offline and will be sent when back online.'
-      : 'The advisory service is currently unavailable. No agronomic guidance was generated for this query — please retry shortly or consult your local extension officer.',
+      ? 'You are offline. Your question is saved and will be sent when you are back online.'
+      : 'The AI agronomist is not available right now. Nothing was generated for this question: try again later, or ask your extension officer.',
     timestamp: nowStamp(),
   } as ChatMessageItem]);
 }

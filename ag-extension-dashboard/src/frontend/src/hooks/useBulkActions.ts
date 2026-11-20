@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Farmer } from '../types/dashboard';
 import { sendBulkSMS } from '@/api/smsService';
 import { createFarmer, fetchFarmers, updateFarmers } from '@/api/farmerService';
+import { saveBlob } from '@/lib/saveBlob';
 
 interface ConfirmModalData {
   title: string;
@@ -172,37 +173,30 @@ export const useBulkActions = (options: BulkActionsOptions) => {
     }
   };
 
+  /** Export the selected farmers, or everyone listed when nothing is selected. */
   const handleBulkExport = () => {
     const selectedFarmersList = effectiveFarmers?.filter(f => selectedFarmers.has(f.id)) || [];
-    if (selectedFarmersList.length > 0) {
-      const csvContent = [
-        ['Name', 'Phone', 'Region', 'Village', 'Crops', 'Farm Size (ha)'],
-        ...selectedFarmersList.map(f => [
-          `${f.firstName} ${f.lastName}`,
-          f.phone || '',
-          f.region || '',
-          f.village || '',
-          f.crops?.join(', ') || '',
-          f.farmSize?.toString() || '',
-        ]),
-      ]
-        .map(row => row.map(cell => `"${cell}"`).join(','))
-        .join('\n');
+    const list = selectedFarmersList.length > 0 ? selectedFarmersList : effectiveFarmers || [];
+    if (list.length === 0) return;
+    const cell = (value: string) => `"${value.replace(/"/g, '""')}"`;
+    const csvContent = [
+      ['Name', 'Phone', 'Region', 'Village', 'Crops', 'Farm size (ha)'],
+      ...list.map(f => [
+        `${f.firstName} ${f.lastName}`,
+        f.phone || '',
+        f.region || '',
+        f.village || '',
+        f.crops?.join(', ') || '',
+        f.farmSize?.toString() || '',
+      ]),
+    ]
+      .map(row => row.map(cell).join(','))
+      .join('\n');
 
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `farmers_export_${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      setSelectedFarmers(new Set());
-
-      addNotification({
-        type: 'success',
-        message: `Exported ${selectedFarmersList.length} farmers to CSV`,
-      });
-    }
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    saveBlob(blob, `farmers_export_${new Date().toISOString().split('T')[0]}.csv`);
+    setSelectedFarmers(new Set());
+    addNotification({ type: 'success', message: `Exported ${list.length} farmers to CSV` });
   };
 
   return {

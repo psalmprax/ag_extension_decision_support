@@ -21,7 +21,10 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location = 'Kenya'
     queryKey: ['weather', location],
     queryFn: () => fetchWeather(location),
     refetchInterval: 1000 * 60 * 30, // 30 mins
-    enabled: hasAuthSession(),
+    // "Global" (a system administrator) is not a place with weather.
+    enabled: hasAuthSession() && Boolean(location) && location.toLowerCase() !== 'global',
+    // A 503 means the forecast is unavailable for now; the chip simply stays hidden.
+    retry: 1,
   });
 
   // A header chip has no room for a skeleton: show it once there is a reading.

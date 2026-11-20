@@ -29,6 +29,8 @@ export interface FarmerStats {
   nextVisitDate?: string;
   aiTipsCount?: number;
   alertsCount?: number;
+  /** The extension officer assigned to the farmer, or null when none is. */
+  officerName?: string | null;
 }
 
 export interface FarmerStatsResponse {

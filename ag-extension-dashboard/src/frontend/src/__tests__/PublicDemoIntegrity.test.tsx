@@ -40,46 +40,15 @@ describe('public demos', () => {
     expect(screen.getByText(/not field measurements/)).toBeInTheDocument();
   });
 
-  it('uses observation and expert-review guidance in the scrubber canvas', () => {
-    const fillText = vi.fn();
-    const gradient = { addColorStop: vi.fn() };
-    const context = new Proxy(
-      {
-        fillText,
-        createRadialGradient: vi.fn(() => gradient),
-        createLinearGradient: vi.fn(() => gradient),
-      },
-      {
-        get: (target, property) =>
-          property in target ? target[property as keyof typeof target] : vi.fn(),
-      }
-    );
-    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext')
-      .mockReturnValue(context as unknown as CanvasRenderingContext2D);
-    const { container, unmount } = render(
-      <AgroEcosystemCanvasScrubber progress={0.9} autoPlay={false} />
-    );
-    const scrubber = container.firstElementChild as HTMLDivElement;
-    Object.defineProperties(scrubber, {
-      clientWidth: { configurable: true, value: 600 },
-      clientHeight: { configurable: true, value: 400 },
-    });
-    const getBoundingClientRect = vi.spyOn(scrubber, 'getBoundingClientRect').mockReturnValue({
-      width: 600,
-      height: 400,
-    } as DOMRect);
+  it('uses observation and expert-review guidance in the season illustration, never a product rate', () => {
+    const { unmount } = render(<AgroEcosystemCanvasScrubber progress={0.9} autoPlay={false} />);
     try {
-      fireEvent(window, new Event('resize'));
-
-      expect(fillText).toHaveBeenCalledWith('OBSERVATION', expect.any(Number), expect.any(Number));
-      expect(fillText).toHaveBeenCalledWith('Review field data', expect.any(Number), expect.any(Number));
-      expect(fillText).toHaveBeenCalledWith('Seek expert review', expect.any(Number), expect.any(Number));
-      expect(fillText).not.toHaveBeenCalledWith('Apply 2.5t Lime', expect.any(Number), expect.any(Number));
-      expect(fillText).not.toHaveBeenCalledWith('Before Rain: 48h', expect.any(Number), expect.any(Number));
+      expect(screen.getByText('Observation')).toBeInTheDocument();
+      expect(screen.getByText('Review field data')).toBeInTheDocument();
+      expect(screen.getByText('Seek expert review')).toBeInTheDocument();
+      expect(screen.queryByText(/Apply 2\.5t Lime|Before Rain: 48h/)).not.toBeInTheDocument();
     } finally {
       unmount();
-      getBoundingClientRect.mockRestore();
-      getContext.mockRestore();
     }
   });
 

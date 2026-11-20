@@ -112,7 +112,7 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Pro feature locked')).toBeInTheDocument();
+    expect(await screen.findByText('Available on Pro and Enterprise')).toBeInTheDocument();
     expect(screen.queryByTestId('disease-diagnosis-module')).not.toBeInTheDocument();
 
     rerender(
@@ -123,7 +123,7 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Pro feature locked')).toBeInTheDocument();
+    expect(await screen.findByText('Available on Pro and Enterprise')).toBeInTheDocument();
     expect(screen.queryByTestId('worldmonitor-module')).not.toBeInTheDocument();
   });
 
@@ -337,7 +337,7 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText(/30-day NDVI stress diagnosis counts/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Crop-stress reports from the last 30 days/i)).toBeInTheDocument();
     expect(screen.queryByText(/3D geospatial globe/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/organic carbon/i)).not.toBeInTheDocument();
   });

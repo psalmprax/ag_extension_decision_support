@@ -9,6 +9,18 @@ import type { AuthenticatedRequestUser } from '@/types/rowTypes';
 
 const router = Router();
 
+// Protocols belong to an organisation: staff only, and only their own organisation's
+// (administrators see every organisation). Reads were open to anyone before.
+router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
+
+/** SQL condition limiting rows to the caller's organisation (none for administrators). */
+async function tenantCondition(req: Request, nextIndex: number): Promise<{ sql: string; params: unknown[] }> {
+  const user = (req as AuthedRequest).user;
+  if (!user || user.role === 'admin') return { sql: 'TRUE', params: [] };
+  const { rows } = await query<{ tenant_id: string | null }>('SELECT tenant_id FROM users WHERE id = $1', [user.userId]);
+  return { sql: `tenant_id IS NOT DISTINCT FROM $${nextIndex}`, params: [rows[0]?.tenant_id ?? null] };
+}
+
 type AuthedRequest = Request & { user?: AuthenticatedRequestUser };
 
 interface AdvisoryWorkflowRow {
@@ -80,7 +92,10 @@ router.get('/', async (req: Request, res: Response) => {
       conditions.push(`category = $${params.length}`);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const tenant = await tenantCondition(req, params.length + 1);
+    params.push(...tenant.params);
+    conditions.push(tenant.sql);
+    const whereClause = `WHERE ${conditions.join(' AND ')}`;
     params.push(limit);
     const limitParam = `$${params.length}`;
     params.push(offset);
@@ -119,8 +134,8 @@ router.post(
       const { title, description, category, status, stepsJson } = req.body;
 
       const { rows } = await query<AdvisoryWorkflowRow>(
-        `INSERT INTO advisory_workflows (title, description, category, status, version, steps_json, created_by, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, 1, $5, $6, NOW(), NOW())
+        `INSERT INTO advisory_workflows (title, description, category, status, version, steps_json, created_by, tenant_id, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, 1, $5, $6, (SELECT tenant_id FROM users WHERE id = $6), NOW(), NOW())
          RETURNING *`,
         [title, description || null, category || 'general', status || 'draft', JSON.stringify(stepsJson), user?.userId || null]
       );
@@ -148,9 +163,10 @@ router.post(
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const tenant = await tenantCondition(req, 2);
     const { rows } = await query<AdvisoryWorkflowRow>(
-      `SELECT * FROM advisory_workflows WHERE id = $1 LIMIT 1`,
-      [id]
+      `SELECT * FROM advisory_workflows WHERE id = $1 AND ${tenant.sql} LIMIT 1`,
+      [id, ...tenant.params]
     );
 
     const workflow = rows[0];
@@ -180,9 +196,10 @@ router.put(
       const { id } = req.params;
       const { title, description, category, status, stepsJson } = req.body;
 
+      const tenant = await tenantCondition(req, 2);
       const { rows: existingRows } = await query<AdvisoryWorkflowRow>(
-        `SELECT * FROM advisory_workflows WHERE id = $1 LIMIT 1`,
-        [id]
+        `SELECT * FROM advisory_workflows WHERE id = $1 AND ${tenant.sql} LIMIT 1`,
+        [id, ...tenant.params]
       );
 
       const existing = existingRows[0];
@@ -225,12 +242,13 @@ router.post(
   async (req: AuthedRequest, res: Response) => {
     try {
       const { id } = req.params;
+      const tenant = await tenantCondition(req, 2);
       const { rows } = await query<AdvisoryWorkflowRow>(
         `UPDATE advisory_workflows
          SET status = 'published', version = version + 1, updated_at = NOW()
-         WHERE id = $1
+         WHERE id = $1 AND ${tenant.sql}
          RETURNING *`,
-        [id]
+        [id, ...tenant.params]
       );
 
       const published = rows[0];
@@ -259,9 +277,10 @@ router.delete(
   async (req: AuthedRequest, res: Response) => {
     try {
       const { id } = req.params;
+      const tenant = await tenantCondition(req, 2);
       const { rowCount } = await query(
-        `DELETE FROM advisory_workflows WHERE id = $1`,
-        [id]
+        `DELETE FROM advisory_workflows WHERE id = $1 AND ${tenant.sql}`,
+        [id, ...tenant.params]
       );
 
       if (rowCount === 0) {

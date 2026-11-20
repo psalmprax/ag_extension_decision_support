@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronLeft, Search } from 'lucide-react';
 import L from 'leaflet';
 import { ThemeName } from '@/theme';
-import { FarmerData, CROP_ICONS } from './mapConstants';
+import { FarmerData, CROP_COLORS } from './mapConstants';
 import { useLanguage } from '@/lib/LanguageContext';
 
 interface FarmlistSidebarProps {
@@ -84,9 +84,11 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
                     : 'hover:bg-white/60 dark:hover:bg-gray-800/60 border border-transparent hover:border-gray-100 dark:border-gray-700'
                 }`}
               >
-                <div className="text-2xl group-hover:scale-110 transition-transform">
-                  {CROP_ICONS[farmer.crop.toLowerCase()] || CROP_ICONS.default}
-                </div>
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: CROP_COLORS[farmer.crop.toLowerCase()] || CROP_COLORS.default }}
+                  aria-hidden="true"
+                />
                 <div className="min-w-0">
                   <div className="font-bold text-sm truncate text-gray-800 dark:text-white">
                     {farmer.name}

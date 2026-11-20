@@ -20,7 +20,7 @@ describe('AgroEcosystemCanvasScrubber hostile progress', () => {
     'renders a valid stage badge for progress=%s without crashing',
     (progress) => {
       const { onStageChange, unmount } = renderScrubber(progress);
-      expect(screen.getByText(/STAGE 0\d \/\//)).toBeInTheDocument();
+      expect(screen.getByText(/^Step \d of 4$/)).toBeInTheDocument();
       const reported = onStageChange.mock.calls.map((c) => c[0] as number);
       for (const stage of reported) {
         expect(Number.isInteger(stage)).toBe(true);
@@ -36,10 +36,10 @@ describe('AgroEcosystemCanvasScrubber hostile progress', () => {
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
-    expect(screen.getByText('STAGE 01 // SATELLITE')).toBeInTheDocument();
+    expect(screen.getByText('Step 1 of 4')).toBeInTheDocument();
     rerender(
       <AgroEcosystemCanvasScrubber progress={0.99} autoPlay={false} onStageChange={onStageChange} />
     );
-    expect(screen.getByText('STAGE 04 // EDGE DISPATCH')).toBeInTheDocument();
+    expect(screen.getByText('Step 4 of 4')).toBeInTheDocument();
   });
 });

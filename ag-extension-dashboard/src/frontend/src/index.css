@@ -355,3 +355,57 @@
   margin-bottom: env(safe-area-inset-bottom);
 }
 
+
+/*
+ * Phone chrome in the style of current iOS (Liquid Glass): the tab bar, top bar, menu sheet
+ * and AI button float over the content on a translucent material. Content itself stays
+ * quiet and opaque. With "Reduce transparency" on, the material is solid.
+ */
+@layer components {
+  .ios-glass {
+    background: rgb(255 255 255 / 0.74);
+    -webkit-backdrop-filter: blur(22px) saturate(1.8);
+    backdrop-filter: blur(22px) saturate(1.8);
+    border: 1px solid rgb(255 255 255 / 0.7);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6), 0 12px 32px -12px rgb(13 26 20 / 0.28);
+  }
+  .dark .ios-glass {
+    background: rgb(19 36 27 / 0.7);
+    border-color: rgb(255 255 255 / 0.1);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 12px 32px -12px rgb(0 0 0 / 0.7);
+  }
+  /* Sheets cover content to be read, so the material is thicker than on the bars. */
+  .ios-sheet {
+    background: rgb(248 250 252 / 0.94);
+    -webkit-backdrop-filter: blur(30px) saturate(1.8);
+    backdrop-filter: blur(30px) saturate(1.8);
+    box-shadow: 0 -8px 40px -12px rgb(13 26 20 / 0.3);
+  }
+  .dark .ios-sheet {
+    background: rgb(19 36 27 / 0.94);
+    box-shadow: 0 -8px 40px -12px rgb(0 0 0 / 0.7);
+  }
+  /* The same material for full-width bars: a hairline instead of a floating shadow. */
+  .ios-bar {
+    background: rgb(255 255 255 / 0.8);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    backdrop-filter: blur(20px) saturate(1.8);
+  }
+  .dark .ios-bar {
+    background: rgb(13 26 20 / 0.78);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .ios-glass,
+    .ios-sheet,
+    .ios-bar {
+      background: #ffffff;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    .dark .ios-glass,
+    .dark .ios-sheet,
+    .dark .ios-bar {
+      background: #13241b;
+    }
+  }
+}

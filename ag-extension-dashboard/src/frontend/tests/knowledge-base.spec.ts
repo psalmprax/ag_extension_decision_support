@@ -77,11 +77,11 @@ async function openKnowledgeBase(page: Page) {
   await page.getByRole('button', { name: 'Try the demo' }).click({ timeout: 90000 });
   await expect(page.getByRole('button', { name: 'Dashboard' }).first()).toBeVisible({ timeout: 30000 });
   await page.goto('/knowledge');
-  await expect(page.locator('input[placeholder*="Ask ALFA Agro-RAG"]')).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('searchbox', { name: 'Search the guides' })).toBeVisible({ timeout: 15000 });
 }
 
 async function submitQuery(page: Page, query = 'Maize Fall Armyworm IPM control') {
-  await page.locator('input[placeholder*="Ask ALFA Agro-RAG"]').fill(query);
+  await page.getByRole('searchbox', { name: 'Search the guides' }).fill(query);
   const bypassBtn = page.locator('button:has-text("Bypass"), button:has-text("Bypass & Ask General")');
   if (await bypassBtn.isVisible()) {
     await bypassBtn.click();
@@ -146,7 +146,7 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
     await submitQuery(page, 'What are the biological control thresholds for Fall Armyworm in maize?');
 
     // Verify Grounded Synthesis result renders
-    await expect(page.getByText('Grounded Synthesis Completed')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Answer based on the sources below')).toBeVisible({ timeout: 15000 });
     await expect(page.getByText('Verified Agro-RAG Synthesis', { exact: false })).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Action Thresholds', { exact: false })).toBeVisible();
     await expect(page.getByText('Biological & Cultural Controls', { exact: false })).toBeVisible();
@@ -170,7 +170,7 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
     await submitQuery(page);
 
     // A failed request must not be presented as a grounded or fabricated answer.
-    await expect(page.getByText('Search Failed — No Answer Generated')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('The search failed. No answer was written.')).toBeVisible({ timeout: 15000 });
     await expect(page.getByText('The knowledge search failed, so no answer was produced', { exact: false }))
       .toBeVisible();
     await expect(page.getByText('Verified Agro-RAG Synthesis', { exact: false })).toHaveCount(0);
@@ -191,14 +191,14 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
       await openKnowledgeBase(page);
       await submitQuery(page);
 
-      await expect(page.getByText('Search Failed — No Answer Generated')).toBeVisible({ timeout: 15000 });
-      await expect(page.getByText('Grounded Synthesis Completed')).toHaveCount(0);
+      await expect(page.getByText('The search failed. No answer was written.')).toBeVisible({ timeout: 15000 });
+      await expect(page.getByText('Answer based on the sources below')).toHaveCount(0);
     });
   }
 
   for (const [answerMode, evidenceStatus, heading] of [
-    ['extractive', 'verified_sources', 'Source Excerpts — AI Synthesis Unavailable'],
-    ['generated', 'no_verified_source', 'General Guidance — Not Verified'],
+    ['extractive', 'verified_sources', 'Passages from the guides. The AI summary is not available.'],
+    ['generated', 'no_verified_source', 'General guidance, not checked against a source'],
   ] as const) {
     test(`labels ${answerMode} responses without overstating evidence`, async ({ page }) => {
       await mockDemoBackend(page);
@@ -216,7 +216,7 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
       await submitQuery(page);
 
       await expect(page.getByText(heading)).toBeVisible();
-      await expect(page.getByText('Grounded Synthesis Completed')).toHaveCount(0);
+      await expect(page.getByText('Answer based on the sources below')).toHaveCount(0);
     });
   }
 
@@ -248,13 +248,13 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
     await submitQuery(page);
     await expect(page.getByText('Scout maize fields before treatment.', { exact: true })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Regenerate live' }).click();
-    await expect(page.getByText('Search Failed — No Answer Generated')).toBeVisible();
+    await page.getByRole('button', { name: 'Search again' }).click();
+    await expect(page.getByText('The search failed. No answer was written.')).toBeVisible();
     await expect(page.getByText('Scout maize fields before treatment.', { exact: true })).toHaveCount(0);
 
-    await page.getByRole('button', { name: 'Regenerate live' }).click();
+    await page.getByRole('button', { name: 'Search again' }).click();
     await expect(page.getByText('Scout maize fields before treatment.', { exact: true })).toBeVisible();
-    await expect(page.getByText('Search Failed — No Answer Generated')).toHaveCount(0);
+    await expect(page.getByText('The search failed. No answer was written.')).toHaveCount(0);
     expect(requests).toBe(3);
   });
 
@@ -284,10 +284,10 @@ test.describe('@e2e Knowledge Base Synthesis & Answer Rendering', () => {
     });
     await expect(page.getByText('field-notes.txt', { exact: true })).toBeVisible();
     await submitQuery(page);
-    await expect(page.getByText('Search Failed — No Answer Generated')).toBeVisible();
+    await expect(page.getByText('The search failed. No answer was written.')).toBeVisible();
     await expect(page.getByText('field-notes.txt', { exact: true })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Regenerate live' }).click();
+    await page.getByRole('button', { name: 'Search again' }).click();
     await expect(page.getByText('Check the field notes with your officer.', { exact: true })).toBeVisible();
     expect(bodies).toHaveLength(2);
     expect(bodies[0].attachments).toHaveLength(1);

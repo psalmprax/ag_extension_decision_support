@@ -72,11 +72,12 @@ interface Result {
   failed?: boolean;
 }
 import { DOCUMENT_CATALOG, type DocumentArticle } from './catalog';
-import { RESEARCH_SCENARIOS, type ResearchScenario, type SpatialCanvasMode } from './scenarios';
+import { CANVAS_MODES, RESEARCH_SCENARIOS, type ResearchScenario, type SpatialCanvasMode } from './scenarios';
 import { QuotaChip } from './QuotaChip';
 import { useLanguage } from '@/lib/LanguageContext';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { tabButtonClass } from '@/components/ui/controlStyles';
+import { TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
+import { saveBlob } from '@/lib/saveBlob';
 
 type KnowledgeTabMode = 'search' | 'graph' | 'workbench' | 'library' | 'telemetry';
 // Helper functions extracted to maintain cognitive complexity < 15
@@ -156,21 +157,21 @@ const notifySearchResult = (
   if (res.data.cached) {
     notify({
       type: 'info',
-      message: 'Result retrieved from your context-scoped answer cache',
+      message: 'This answer was saved from an earlier identical question.',
     });
   } else if (bypassCache) {
     notify({
       type: 'success',
-      message: 'Fresh real-time LLM synthesis generated',
+      message: 'A new answer was written.',
     });
   }
 };
 
 const resultHeading = (result: Result): string => {
-  if (result.failed) return 'Search Failed — No Answer Generated';
-  if (result.answerMode === 'extractive') return 'Source Excerpts — AI Synthesis Unavailable';
-  if (result.evidenceStatus !== 'verified_sources') return 'General Guidance — Not Verified';
-  return 'Grounded Synthesis Completed';
+  if (result.failed) return 'The search failed. No answer was written.';
+  if (result.answerMode === 'extractive') return 'Passages from the guides. The AI summary is not available.';
+  if (result.evidenceStatus !== 'verified_sources') return 'General guidance, not checked against a source';
+  return 'Answer based on the sources below';
 };
 
 // This legacy feature shell coordinates search, graph, telemetry, and document-library state;
@@ -343,7 +344,7 @@ export const KnowledgeBase: React.FC = () => {
         description={t('ui_index_multi_modal_grounded_semantic_retrie')}
         actions={quota ? <QuotaChip quota={quota} onUpgrade={() => setActiveTab('billing')} /> : undefined}
       >
-  <div className="flex items-center gap-1 overflow-x-auto">
+  <div className={TAB_ROW}>
                 <button
                   onClick={() => setActiveTabMode('search')}
                   aria-pressed={activeTabMode === 'search'}
@@ -677,50 +678,21 @@ export const KnowledgeBase: React.FC = () => {
       {/* ── TAB 3: Spatial Simulators ── */}
       {activeTabMode === 'workbench' && (
         <div className="space-y-6">
-          {/* Spatial Canvas Mode Switcher Bar */}
-          <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-2.5 flex items-center justify-between overflow-x-auto gap-2">
-            <div className="flex items-center gap-2">
+          {/* Canvas mode switcher */}
+          <div className={TAB_ROW} role="tablist">
+            {CANVAS_MODES.map(({ id, icon: Icon, labelKey }) => (
               <button
-                onClick={() => setActiveCanvasMode('phenology')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                  activeCanvasMode === 'phenology'
-                    ? 'bg-slate-500/20 text-slate-700 dark:text-slate-300 border border-slate-500/40 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 bg-slate-100 border border-slate-200/80 dark:text-white/60 dark:hover:text-white dark:bg-slate-950/40 dark:border-transparent'
-                }`}
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={activeCanvasMode === id}
+                onClick={() => setActiveCanvasMode(id)}
+                className={tabButtonClass(activeCanvasMode === id)}
               >
-                <Compass className="w-3.5 h-3.5" />
-                <span>{t('ui_index_phenology_scrubber')}</span>
+                <Icon className="w-4 h-4" aria-hidden="true" />
+                {t(labelKey)}
               </button>
-
-              <button
-                onClick={() => setActiveCanvasMode('soil_heatmap')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                  activeCanvasMode === 'soil_heatmap'
-                    ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 bg-slate-100 border border-slate-200/80 dark:text-white/60 dark:hover:text-white dark:bg-slate-950/40 dark:border-transparent'
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>{t('ui_index_soil_heatmap_grid')}</span>
-              </button>
-
-              <button
-                onClick={() => setActiveCanvasMode('pathology')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                  activeCanvasMode === 'pathology'
-                    ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/40 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 bg-slate-100 border border-slate-200/80 dark:text-white/60 dark:hover:text-white dark:bg-slate-950/40 dark:border-transparent'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>{t('ui_index_pathology_scanner')}</span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/5 text-xxs font-mono text-emerald-700 dark:text-emerald-400 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-              <span>{t('ui_index_60_fps_webgl_simulators')}</span>
-            </div>
+            ))}
           </div>
 
           {/* Active Canvas Display Shell */}
@@ -808,12 +780,7 @@ export const KnowledgeBase: React.FC = () => {
                       const reportId = (gen as { data?: { id?: string } })?.data?.id || (gen as { id?: string })?.id;
                       if (!reportId) throw new Error('No report id');
                       const blob = await downloadReportPdf(reportId);
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `factsheet-${Date.now()}.pdf`;
-                      a.click();
-                      URL.revokeObjectURL(url);
+                      saveBlob(blob, `factsheet-${Date.now()}.pdf`);
                       toast.success('Factsheet PDF downloaded');
                     } catch (e) {
                       toast.error((e as Error).message || 'Factsheet export failed');

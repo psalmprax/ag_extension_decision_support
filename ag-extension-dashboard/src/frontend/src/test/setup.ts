@@ -66,6 +66,7 @@ vi.mock('@/api/farmerService', () => ({
   deleteFarmer: vi.fn().mockResolvedValue({ success: true }),
   deleteFarmers: vi.fn().mockResolvedValue({ success: true }),
   fetchFarmers: vi.fn().mockResolvedValue({ success: true, data: [] }),
+  fetchFarmerStats: vi.fn().mockResolvedValue({ success: true, data: null }),
 }));
 
 vi.mock('@/api/visitService', () => ({

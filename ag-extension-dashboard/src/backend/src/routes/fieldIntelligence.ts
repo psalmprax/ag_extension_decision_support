@@ -10,7 +10,8 @@ import { farmPlanService } from '@/services/farmPlanService';
 import { officerGamificationService } from '@/services/officerGamificationService';
 import { soilLabService } from '@/services/soilLabService';
 import { weatherIndexService } from '@/services/weatherIndexService';
-import { misExportService, MisDataset } from '@/services/misExportService';
+import { misExportService, MisDataset, type MisScope } from '@/services/misExportService';
+import { resolvePrincipalRegion } from '@/services/messageAccessService';
 import { adviceEfficacyService } from '@/services/adviceEfficacyService';
 
 const router = Router();
@@ -156,11 +157,19 @@ router.get('/insurance/weather-index', async (req: AuthedRequest, res: Response)
     }
 });
 
-// ── MIS exports (admin/regional only) ────────────────────────────────────────
-router.get('/mis/export/:dataset', authorize(['admin', 'regional_manager']), async (req: AuthedRequest, res: Response) => {
+// ── MIS exports ──────────────────────────────────────────────────────────────
+// Each person exports only the records they may see: an officer their own farmers,
+// a manager their region, an administrator everyone.
+async function misScopeFor(user: { userId: string; role: string }): Promise<MisScope> {
+    if (user.role === 'extension_officer') return { kind: 'officer', officerId: user.userId, viewer: user };
+    if (user.role === 'regional_manager') return { kind: 'region', region: await resolvePrincipalRegion(user.userId), viewer: user };
+    return { kind: 'all', viewer: user };
+}
+
+router.get('/mis/export/:dataset', authorize(['admin', 'regional_manager', 'extension_officer']), async (req: AuthedRequest, res: Response) => {
     try {
         const dataset = req.params.dataset as MisDataset;
-        const { csv } = await misExportService.exportDataset(dataset);
+        const { csv } = await misExportService.exportDataset(dataset, await misScopeFor(req.user!));
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', `attachment; filename="gpexts_${dataset}_mis_v${misExportService.version.replace(/\./g, '_')}.csv"`);
         return res.send(csv);

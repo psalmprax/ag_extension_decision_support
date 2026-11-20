@@ -31,6 +31,14 @@ export { BaseAIProvider } from './types';
 
 import type { AIProviderType, AICapability } from './types';
 
+/** Every AI provider failed or none is configured: callers answer 503 "not available right now". */
+export class AIUnavailableError extends Error {
+    constructor(cause: string) {
+        super(`All AI providers failed — ${cause}`);
+        this.name = 'AIUnavailableError';
+    }
+}
+
 // Factory for creating AI providers
 /** What the OmniRoute free-model fallback returns when every provider failed. */
 export interface OmniRouteFallbackResult {
@@ -116,7 +124,7 @@ export class AIProviderFactory {
         }
 
         logger.error('All AI providers failed (including OmniRoute free tier)');
-        throw lastError || new Error('All AI providers failed — no provider is configured or healthy');
+        throw new AIUnavailableError(lastError?.message || 'no provider is configured or healthy');
     }
 
     private static async buildProviderChain(preferredProvider?: AIProviderType): Promise<AIProviderType[]> {

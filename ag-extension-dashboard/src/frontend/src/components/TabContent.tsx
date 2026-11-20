@@ -6,6 +6,7 @@ import type { PerformanceData } from '@/api/analyticsService';
 
 import { DashboardLoadError } from '@/components/DashboardLoadError';
 import { threadProps } from './chat/threadProps';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const DashboardPage = React.lazy(() =>
   import('@/pages/DashboardPage').then(m => ({ default: m.DashboardPage }))
@@ -128,6 +129,7 @@ interface TabContentProps {
 
 export function TabContent(props: TabContentProps) {
   const { activeTab, isOfficer, user, addNotification } = props;
+  const { t } = useLanguage();
 
   switch (activeTab) {
     case 'dashboard':
@@ -173,7 +175,7 @@ export function TabContent(props: TabContentProps) {
       );
     case 'visits':
       return (
-        <PlanUpgradeGuard category="visits" featureName="Field Visits & Tracking">
+        <PlanUpgradeGuard category="visits" featureName={t('plan_gate_name_visits', { defaultValue: 'Field visits' })}>
           <VisitsPage
             visits={props.visits as Visit[]}
             setShowVisitModal={props.setShowVisitModal}
@@ -202,7 +204,7 @@ export function TabContent(props: TabContentProps) {
       );
     case 'analytics':
       return (
-        <PlanUpgradeGuard category="analytics" featureName="Operational Analytics & Telemetry">
+        <PlanUpgradeGuard category="analytics" featureName={t('plan_gate_name_analytics', { defaultValue: 'Analytics' })}>
           <AnalyticsPage
             performanceData={props.performanceData}
           />
@@ -214,13 +216,13 @@ export function TabContent(props: TabContentProps) {
       return <KnowledgeBase />;
     case 'aiassistant':
       return (
-        <PlanUpgradeGuard category="chat" featureName="AI Agronomic Assistant">
+        <PlanUpgradeGuard category="chat" featureName={t('plan_gate_name_ai', { defaultValue: 'AI agronomist' })}>
           <AlphaAI />
         </PlanUpgradeGuard>
       );
     case 'farmerchat':
       return (
-        <PlanUpgradeGuard category="chat" featureName="Farmer Chat & Direct Communication">
+        <PlanUpgradeGuard category="chat" featureName={t('plan_gate_name_farmer_chat', { defaultValue: 'Farmer chat' })}>
           <FarmerChatPage
             {...threadProps(props)}
             loadFarmers={props.loadFarmers}
@@ -231,7 +233,7 @@ export function TabContent(props: TabContentProps) {
       );
     case 'officerchat':
       return (
-        <PlanUpgradeGuard category="chat" featureName="Chat with your extension officer">
+        <PlanUpgradeGuard category="chat" featureName={t('plan_gate_name_my_officer', { defaultValue: 'Chat with your extension officer' })}>
           <FarmerOfficerChatPage {...threadProps(props)} />
         </PlanUpgradeGuard>
       );
@@ -245,7 +247,7 @@ export function TabContent(props: TabContentProps) {
       );
     case 'visit_synthesis':
       return (
-        <PlanUpgradeGuard category="visits" featureName="AI Visit Synthesis & Diagnosis">
+        <PlanUpgradeGuard category="visits" featureName={t('plan_gate_name_visit_summaries', { defaultValue: 'Visit summaries' })}>
           <div className="mt-6">
             <VisitSynthesisForm />
           </div>
@@ -253,7 +255,7 @@ export function TabContent(props: TabContentProps) {
       );
     case 'sms':
       return (
-        <PlanUpgradeGuard category="sms" featureName="SMS Campaigns">
+        <PlanUpgradeGuard category="sms" featureName={t('plan_gate_name_sms', { defaultValue: 'SMS campaigns' })}>
           <SMSPage />
         </PlanUpgradeGuard>
       );
@@ -265,7 +267,7 @@ export function TabContent(props: TabContentProps) {
       return <SystemHealth />;
     case 'disease_diagnosis':
       return (
-        <PlanUpgradeGuard category="vision" featureName="Disease & Soil Diagnostics">
+        <PlanUpgradeGuard category="vision" featureName={t('plan_gate_name_diagnosis', { defaultValue: 'Disease and soil checks' })}>
           <DiseaseDiagnosisPage />
         </PlanUpgradeGuard>
       );
@@ -275,7 +277,7 @@ export function TabContent(props: TabContentProps) {
       return <Memory />;
     case 'email_workflows':
       return (
-        <PlanUpgradeGuard category="workflows" featureName="Automated Email Workflows">
+        <PlanUpgradeGuard category="workflows" featureName={t('plan_gate_name_email', { defaultValue: 'Email automation' })}>
           <EmailWorkflows />
         </PlanUpgradeGuard>
       );
@@ -285,7 +287,7 @@ export function TabContent(props: TabContentProps) {
       return <UserManagementPage />;
     case 'worldmonitor':
       return (
-        <PlanUpgradeGuard category="worldmonitor" featureName="WorldMonitor Spatial Intelligence">
+        <PlanUpgradeGuard category="worldmonitor" featureName={t('plan_gate_name_map', { defaultValue: 'Farm map' })}>
           <WorldMonitor />
         </PlanUpgradeGuard>
       );

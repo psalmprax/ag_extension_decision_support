@@ -120,3 +120,25 @@ export const verifyInboundWebhookSignature = (req: Request, res: Response, next:
     logger.warn('Inbound webhook rejected — missing provider signature header');
     res.status(403).json({ success: false, error: 'Webhook signature verification failed' });
 };
+
+const GATEWAY_SECRET_HEADER = 'x-gateway-secret';
+
+/**
+ * SMS and USSD gateway callbacks. Africa's Talking does not sign its callbacks, so its
+ * callback URLs carry a shared secret (`?key=<AFRICASTALKING_WEBHOOK_SECRET>`, or the
+ * X-Gateway-Secret header). Twilio and Meta callbacks keep their own signatures.
+ */
+export const verifySmsGatewayWebhook = (req: Request, res: Response, next: NextFunction): void => {
+    const gatewaySecret = process.env.AFRICASTALKING_WEBHOOK_SECRET;
+    const presented = req.headers[GATEWAY_SECRET_HEADER] ?? req.query.key;
+    if (gatewaySecret && typeof presented === 'string') {
+        if (safeHexEqual(presented, gatewaySecret)) {
+            next();
+            return;
+        }
+        logger.warn('SMS gateway callback rejected — wrong shared secret');
+        res.status(403).json({ success: false, error: 'Webhook signature verification failed' });
+        return;
+    }
+    verifyInboundWebhookSignature(req, res, next);
+};

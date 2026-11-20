@@ -2,7 +2,6 @@ import React from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { MessageSquare, Loader2, Sprout, Globe, CloudOff } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMarketPrices, MarketPrice, MarketDataStatus } from '@/api/priceService';
 import { fetchUsdaBenchmark, fetchNDVITimeSeries } from '@/api/agriDataService';
@@ -113,7 +112,7 @@ function renderVegetationCard(
           <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
             <span className="text-xxs text-gray-400 dark:text-gray-500 capitalize">{data?.reason || ''}</span>
             <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-              {data?.dataStatus === 'live' ? 'NASA POWER' : data?.dataStatus?.toUpperCase()}
+              {data?.dataStatus === 'live' ? 'NASA POWER' : data?.dataStatus ? DATA_STATUS_LABELS[data.dataStatus as MarketDataStatus] : null}
             </span>
           </div>
         </>
@@ -242,11 +241,10 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((stat, i) => (
-          <motion.div
+          <div
             key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
+            role="group"
+            aria-label={stat.title}
             className="p-4 bg-white dark:bg-white/[0.03] rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] cursor-context-menu"
             onContextMenu={e => {
               e.preventDefault();
@@ -263,7 +261,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
               <p className="text-sm">{stat.title}</p>
             </div>
             <p className="mt-2 text-lg font-medium text-slate-900 dark:text-white break-words">{stat.value}</p>
-          </motion.div>
+          </div>
         ))}
       </div>
 

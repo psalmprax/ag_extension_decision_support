@@ -33,9 +33,9 @@ export const isTextFieldName = (name: string): name is TextFieldName =>
 
 /** One shared style so every field on the card stays visually identical. */
 export const FIELD_INPUT_CLASS =
-  'w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm';
+  'w-full h-10 px-3 bg-white/[0.04] border border-white/[0.12] rounded-md text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors text-sm';
 
 export const FIELD_SELECT_CLASS =
-  'w-full px-4 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm';
+  'w-full h-10 px-3 bg-[#13241b] border border-white/[0.12] rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors text-sm';
 
-export const FIELD_LABEL_CLASS = 'block text-xs font-medium text-white/70 mb-1.5';
+export const FIELD_LABEL_CLASS = 'block text-sm text-[#c5d3cb] mb-1.5';

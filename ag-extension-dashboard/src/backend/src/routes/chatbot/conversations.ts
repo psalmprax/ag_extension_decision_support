@@ -116,7 +116,8 @@ router.get('/conversations', authorize(['admin', 'regional_manager', 'extension_
         (SELECT COUNT(*)::int FROM chat_messages m WHERE m.conversation_id = cv.id) AS message_count
       FROM chat_conversations cv
       LEFT JOIN farmers f ON f.id = cv.farmer_id
-      LEFT JOIN users u ON u.id = cv.officer_id
+      -- A farmer's thread started from the app has no officer yet; it goes to their assigned officer.
+      LEFT JOIN users u ON u.id = COALESCE(cv.officer_id, f.assigned_officer_id)
       WHERE ${whereClause}
       ORDER BY last_message_at DESC NULLS LAST
       LIMIT $${limitParamIdx} OFFSET $${offsetParamIdx}
@@ -258,7 +259,7 @@ const findExistingConversation = async (farmerId: string, officerId: string, kin
             TRIM(CONCAT(u.first_name, ' ', u.last_name)) AS officer_name
        FROM chat_conversations cv
        LEFT JOIN farmers f ON f.id = cv.farmer_id
-       LEFT JOIN users u ON u.id = cv.officer_id
+       LEFT JOIN users u ON u.id = COALESCE(cv.officer_id, f.assigned_officer_id)
       WHERE cv.farmer_id = $1 AND cv.officer_id = $2 AND cv.kind = $3
       ORDER BY cv.started_at DESC NULLS LAST
       LIMIT 1`,
@@ -275,7 +276,7 @@ const fetchRichConversation = async (conversationId: string) => {
             TRIM(CONCAT(u.first_name, ' ', u.last_name)) AS officer_name
        FROM chat_conversations cv
        LEFT JOIN farmers f ON f.id = cv.farmer_id
-       LEFT JOIN users u ON u.id = cv.officer_id
+       LEFT JOIN users u ON u.id = COALESCE(cv.officer_id, f.assigned_officer_id)
       WHERE cv.id = $1`,
     [conversationId]
   );

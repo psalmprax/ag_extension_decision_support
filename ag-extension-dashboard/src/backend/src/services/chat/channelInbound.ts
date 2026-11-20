@@ -18,6 +18,7 @@ import {
 } from '@/services/chat/channelThread';
 import { aiAnswersAvailable, answerFarmerInThread, loadThreadForReply, respondIfUrgent } from '@/services/chat/threadAutoReply';
 import type { TurnTakingSettings } from '@/services/chat/turnTaking';
+import { smsCopy } from '@/services/sms/smsCopy';
 
 /** A new conversation, worth an acknowledgement: SMS costs money, so less often there. */
 const ACK_GAP_MS: Record<FarmerChannel, number> = {
@@ -26,24 +27,31 @@ const ACK_GAP_MS: Record<FarmerChannel, number> = {
     telegram: 60 * 60 * 1000,
 };
 
-export function acknowledgementText(channel: FarmerChannel, settings: TurnTakingSettings, aiAvailable = true): string {
+export function acknowledgementText(
+    channel: FarmerChannel,
+    settings: TurnTakingSettings,
+    aiAvailable = true,
+    language: string | null = null,
+): string {
     // Never promise an AI answer the officer's plan does not include.
-    if (!aiAvailable) return 'Thanks, your officer will reply.';
-    if (channel === 'sms') {
-        return 'Thanks, your officer will reply. For an AI answer now, send ASK AI and your question.';
-    }
-    return `Thanks, your officer will reply, usually within ${settings.aiFallbackMinutes} minutes in working hours. ` +
-        'For an answer now, tap Ask AI or send ASK AI.';
+    if (!aiAvailable) return smsCopy('ack_no_ai', language);
+    if (channel === 'sms') return smsCopy('ack_sms', language);
+    return smsCopy('ack_chat', language).replace('{minutes}', String(settings.aiFallbackMinutes));
 }
 
-export const ASK_AI_USAGE =
-    'Send your question after ASK AI. Example: ASK AI maize leaves turning yellow after rain.';
-export const ALREADY_ANSWERED =
-    'The AI has already answered your last question. Your officer will follow up.';
-export const SMS_LIMIT_REACHED =
-    "You have used today's AI answers by SMS. Your officer will reply.";
-export const AI_NOT_ON_PLAN =
-    'AI answers are not included in your service plan. Your officer will reply.';
+export const ASK_AI_USAGE = smsCopy('ask_ai_usage', 'en');
+export const ALREADY_ANSWERED = smsCopy('already_answered', 'en');
+export const SMS_LIMIT_REACHED = smsCopy('sms_limit_reached', 'en');
+export const AI_NOT_ON_PLAN = smsCopy('ai_not_on_plan', 'en');
+
+/** The farmer's saved language, for fixed notices (the AI answers in the question's language). */
+async function farmerLanguage(farmerId: string): Promise<string | null> {
+    const { rows } = await query<{ language_preference: string | null }>(
+        'SELECT language_preference FROM farmers WHERE id = $1',
+        [farmerId],
+    );
+    return rows[0]?.language_preference ?? null;
+}
 
 /** Whether the farmer's previous message (before this one) is older than the channel's gap. */
 async function startsNewConversation(conversationId: string, channel: FarmerChannel): Promise<boolean> {
@@ -57,19 +65,19 @@ async function startsNewConversation(conversationId: string, channel: FarmerChan
     return !previous || Date.now() - new Date(previous).getTime() > ACK_GAP_MS[channel];
 }
 
-async function answerWithAi(conversationId: string, channel: FarmerChannel): Promise<void> {
+async function answerWithAi(conversationId: string, channel: FarmerChannel, language: string | null): Promise<void> {
     const thread = await loadThreadForReply(conversationId);
     if (!thread?.question) {
-        await noticeOnChannel(conversationId, channel, ASK_AI_USAGE);
+        await noticeOnChannel(conversationId, channel, smsCopy('ask_ai_usage', language));
         return;
     }
     if (thread.aiAnsweredSinceFarmer) {
-        await noticeOnChannel(conversationId, channel, ALREADY_ANSWERED);
+        await noticeOnChannel(conversationId, channel, smsCopy('already_answered', language));
         return;
     }
     const outcome = await answerFarmerInThread(thread, 'farmer_request');
-    if (outcome === 'sms_limit') await noticeOnChannel(conversationId, channel, SMS_LIMIT_REACHED);
-    if (outcome === 'not_on_plan') await noticeOnChannel(conversationId, channel, AI_NOT_ON_PLAN);
+    if (outcome === 'sms_limit') await noticeOnChannel(conversationId, channel, smsCopy('sms_limit_reached', language));
+    if (outcome === 'not_on_plan') await noticeOnChannel(conversationId, channel, smsCopy('ai_not_on_plan', language));
 }
 
 /** Handle one message from a registered farmer (runs in the background). */
@@ -82,6 +90,7 @@ export async function handleRegisteredFarmerChannelMessage(params: {
 }): Promise<void> {
     const { farmerId, channel, text, language, isVoice } = params;
     const question = parseAskAiCommand(text);
+    const noticeLanguage = language ?? (await farmerLanguage(farmerId));
 
     if (question === null) {
         const conversationId = await recordChannelMessage({ farmerId, channel, content: text, language, isVoice });
@@ -91,7 +100,7 @@ export async function handleRegisteredFarmerChannelMessage(params: {
             // An urgent message has had its safety reply; no second notice.
             if (thread && !thread.state.answeredSinceFarmer) {
                 const aiAvailable = await aiAnswersAvailable(thread);
-                await noticeOnChannel(conversationId, channel, acknowledgementText(channel, thread.settings, aiAvailable), {
+                await noticeOnChannel(conversationId, channel, acknowledgementText(channel, thread.settings, aiAvailable, noticeLanguage), {
                     askAiButton: aiAvailable,
                 });
             }
@@ -102,11 +111,11 @@ export async function handleRegisteredFarmerChannelMessage(params: {
     const conversationId = question
         ? await recordChannelMessage({ farmerId, channel, content: question, language, isVoice })
         : await farmerThreadFor(farmerId);
-    await answerWithAi(conversationId, channel);
+    await answerWithAi(conversationId, channel, noticeLanguage);
 }
 
 /** Record that a webhook event was processed; false when it already was (a provider retry). */
-async function claimInboundEvent(channel: FarmerChannel, identifier: string, eventId: string): Promise<boolean> {
+export async function claimInboundEvent(channel: FarmerChannel, identifier: string, eventId: string): Promise<boolean> {
     const { rows } = await query<{ event_id: string }>(
         `INSERT INTO messaging_inbound_events (channel, external_identifier, event_id)
          VALUES ($1, $2, $3)
