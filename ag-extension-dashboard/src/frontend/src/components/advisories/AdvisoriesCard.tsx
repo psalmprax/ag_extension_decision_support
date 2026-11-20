@@ -30,7 +30,7 @@ export function AdvisoriesCard() {
         <div className={`${cardClass} p-4 sm:p-5`}>
             <div className="flex items-center gap-2 mb-3">
                 <Radio className="w-4 h-4 text-primary-500" />
-                <h3 className="text-sm font-black uppercase tracking-widest">
+                <h3 className="text-sm font-black  ">
                     {t('advisories_title', { defaultValue: 'Proactive Advisories' })}
                 </h3>
             </div>

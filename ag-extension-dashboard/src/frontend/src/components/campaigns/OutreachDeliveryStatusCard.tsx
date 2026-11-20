@@ -43,7 +43,7 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
       <div className="flex items-center gap-2">
         <Send className="w-4 h-4 text-emerald-400" />
         <span className="font-bold text-xs text-white">
-          {t('outreach_delivery_status', { defaultValue: 'Outreach Delivery Status' })}
+          {t('outreach_delivery_status', { defaultValue: 'Outreach delivery status' })}
         </span>
       </div>
       <button
@@ -87,7 +87,7 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
           </div>
           <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
             <div className="text-sky-400 font-bold text-sm">{stats.totals.processing}</div>
-            <div className="text-xxs text-slate-400">{t('outreach_in_flight', { defaultValue: 'In Flight' })}</div>
+            <div className="text-xxs text-slate-400">{t('outreach_in_flight', { defaultValue: 'In flight' })}</div>
           </div>
         </div>
 
@@ -120,7 +120,7 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
 
         {stats.recentFailures.length > 0 && (
           <div className="space-y-1.5">
-            <div className="flex items-center gap-1.5 text-xxs font-bold text-rose-400 uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 text-xxs font-bold text-rose-400  ">
               <AlertTriangle className="w-3 h-3" />
               {t('ui_outreach_delivery_status_card_recent_failures')}
             </div>

@@ -63,7 +63,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
             id="subscription-status-title"
             className="text-xs font-medium text-slate-400 mb-2 block"
           >
-            {t('billing_current_plan') || 'Current Plan'}
+            {t('billing_current_plan') || 'Current plan'}
           </span>
           <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900 dark:text-white leading-tight tracking-tight mb-4 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors duration-300">
             {subscription?.plan?.name ?? 'N/A'}
@@ -95,7 +95,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
             ) : (
               <ExternalLink className="w-4 h-4 text-emerald-700 dark:text-emerald-400 group-hover/btn:translate-x-0.5 transition-transform" />
             )}
-            <span>{t('billing_manage_subscription') || 'Manage Subscription'}</span>
+            <span>{t('billing_manage_subscription') || 'Manage subscription'}</span>
           </button>
         </div>
       </motion.section>

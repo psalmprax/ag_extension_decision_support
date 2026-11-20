@@ -36,10 +36,10 @@ describe('AdvisoryStudioPage Component', () => {
     render(<AdvisoryStudioPage />);
 
     expect(screen.getByDisplayValue('Kenya Maize & Fall Armyworm Bio-Protocol')).toBeInTheDocument();
-    expect(screen.getByText('4 Steps')).toBeInTheDocument();
+    expect(screen.getByText('4 steps')).toBeInTheDocument();
     expect(screen.getByText('Crop & Phenology Phase')).toBeInTheDocument();
     expect(screen.getByText('Fall Armyworm Severity Assessment')).toBeInTheDocument();
-    expect(screen.getByText('Mobile PWA Preview')).toBeInTheDocument();
+    expect(screen.getByText('Mobile PWA preview')).toBeInTheDocument();
   });
 
   it('switches template when selector changes', () => {
@@ -50,19 +50,19 @@ describe('AdvisoryStudioPage Component', () => {
 
     expect(screen.getByDisplayValue('Acidic Soil Remediation & Lime Advisory')).toBeInTheDocument();
     expect(screen.getByText('Soil pH Sensor Input')).toBeInTheDocument();
-    expect(screen.getByText('3 Steps')).toBeInTheDocument();
+    expect(screen.getByText('3 steps')).toBeInTheDocument();
   });
 
   it('allows adding a new step block from the palette', () => {
     render(<AdvisoryStudioPage />);
 
-    const initialStepCount = screen.getByText('4 Steps');
+    const initialStepCount = screen.getByText('4 steps');
     expect(initialStepCount).toBeInTheDocument();
 
     const addSoilBlockBtn = screen.getByText('Soil Chemistry & pH');
     fireEvent.click(addSoilBlockBtn);
 
-    expect(screen.getByText('5 Steps')).toBeInTheDocument();
+    expect(screen.getByText('5 steps')).toBeInTheDocument();
   });
 
   it('allows moving and deleting steps', () => {
@@ -72,7 +72,7 @@ describe('AdvisoryStudioPage Component', () => {
     expect(deleteButtons.length).toBe(4);
 
     fireEvent.click(deleteButtons[0]!);
-    expect(screen.getByText('3 Steps')).toBeInTheDocument();
+    expect(screen.getByText('3 steps')).toBeInTheDocument();
   });
 
   it('handles editing and saving step conditions', () => {
@@ -115,7 +115,7 @@ describe('AdvisoryStudioPage Component', () => {
   it('publishes workflow to field officers', async () => {
     render(<AdvisoryStudioPage />);
 
-    const publishBtn = screen.getByText('Publish to Field PWA');
+    const publishBtn = screen.getByText('Publish to field PWA');
     fireEvent.click(publishBtn);
 
     await waitFor(() => {
@@ -132,9 +132,9 @@ describe('AdvisoryStudioPage Component', () => {
   it('allows clearing canvas steps', () => {
     render(<AdvisoryStudioPage />);
 
-    const clearBtn = screen.getByText('Clear Canvas');
+    const clearBtn = screen.getByText('Clear canvas');
     fireEvent.click(clearBtn);
 
-    expect(screen.getByText('0 Steps')).toBeInTheDocument();
+    expect(screen.getByText('0 steps')).toBeInTheDocument();
   });
 });

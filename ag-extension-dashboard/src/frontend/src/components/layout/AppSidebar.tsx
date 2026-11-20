@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle, Lock } from 'lucide-react';
 import { NavItem } from '../../config/navItems';
-import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { UnreadCount } from '@/components/chat/UnreadCount';
 import { collapseHubs, menuItemIsActive } from '@/config/navHubs';
 import { cn } from '@/lib/cn';
@@ -75,7 +74,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   setShowHelpCenter,
   onGenerateReport: _onGenerateReport,
 }) => {
-  const { subtextClass } = useThemeClasses();
   const { t } = useLanguage();
   const { themeName, setThemeName, user } = useAppStore();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => ({
@@ -124,12 +122,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             animate="animate"
             exit="exit"
             className={cn(
-              'fixed left-0 top-16 bottom-0 flex flex-col pt-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8 px-4 border-r border-slate-200 dark:border-white/10 w-72 z-40',
-              'bg-white/98 dark:bg-slate-950/95 backdrop-blur-2xl'
+              'fixed left-0 top-16 bottom-0 flex flex-col pt-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-4 px-3 border-r border-slate-900/[0.08] dark:border-white/[0.08] w-64 z-40',
+              'bg-white dark:bg-[#0d1a14]'
             )}
           >
 
-            <nav className="flex flex-col gap-2 grow overflow-y-auto custom-scrollbar pr-2">
+            <nav className="flex flex-col gap-3 grow overflow-y-auto custom-scrollbar -mr-1 pr-1">
               {sections.map(section => {
                 const isExpanded = Boolean(expandedSections[section.id]);
                 const sectionLabel = t(`sidebar_group_${section.id}`, { defaultValue: section.label });
@@ -142,7 +140,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                       onClick={() =>
                         setExpandedSections(current => ({ ...current, [section.id]: !current[section.id] }))
                       }
-                      className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400"
+                      className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-md"
                     >
                       <span>{sectionLabel}</span>
                       <ChevronDown
@@ -152,7 +150,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     </button>
                     <div
                       id={`sidebar-section-${section.id}`}
-                      className="flex flex-col gap-1"
+                      className="flex flex-col gap-0.5"
                       style={{ display: isExpanded ? 'flex' : 'none' }}
                     >
                       {section.items.map(item => (
@@ -160,20 +158,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                           key={item.id}
                           onClick={() => handleNavClick(item.id)}
                           className={cn(
-                            'flex items-center justify-between px-4 py-3 min-h-[48px] transition-colors text-left group',
-                            'rounded-lg',
+                            'flex items-center justify-between px-3 py-2 min-h-[44px] md:min-h-[40px] transition-colors text-left rounded-md',
                             menuItemIsActive(item, activeTab, navItems)
-                              ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-medium border-l-2 border-emerald-500'
-                              : cn(
-                                  subtextClass,
-                                  'hover:bg-slate-100 dark:hover:bg-white/5 hover:text-primary-600 dark:hover:text-primary-200'
-                                )
+                              ? 'bg-emerald-50 dark:bg-emerald-400/[0.1] text-emerald-800 dark:text-emerald-200 font-medium'
+                              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white'
                           )}
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <item.icon className="w-5 h-5 flex-shrink-0" />
+                            <item.icon className="w-[18px] h-[18px] flex-shrink-0" aria-hidden="true" />
                             <span
-                              className="font-medium text-xs whitespace-normal break-words hyphens-auto leading-tight"
+                              className="text-sm whitespace-normal break-words hyphens-auto leading-snug"
                               title={t(item.labelKey || `nav_${item.id}`, { defaultValue: item.label })}
                             >
                               {t(item.labelKey || `nav_${item.id}`, { defaultValue: item.label })}
@@ -194,7 +188,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               })}
             </nav>
 
-          <div className="mt-auto flex flex-col gap-2 pt-4 border-t border-gray-200 dark:border-white/5">
+          <div className="mt-auto flex flex-col gap-2 pt-3 border-t border-slate-900/[0.08] dark:border-white/[0.08]">
             {/* Mobile-visible Language, Theme & A/B Experiment controls */}
             <div className="lg:hidden flex flex-col gap-2 pb-2 border-b border-gray-100 dark:border-white/5">
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -209,9 +203,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             <button
               type="button"
               onClick={() => setShowHelpCenter(true)}
-              className="flex items-center gap-3 px-4 py-2.5 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+              className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-sm rounded-md hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.05] transition-colors"
             >
-              <HelpCircle className="w-4 h-4" />
+              <HelpCircle className="w-[18px] h-[18px]" aria-hidden="true" />
               {t('nav_support', { defaultValue: 'Support' })}
             </button>
           </div>

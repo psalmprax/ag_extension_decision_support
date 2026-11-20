@@ -256,19 +256,19 @@ function DeploymentSection({ deployment }: { deployment?: Record<string, unknown
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="p-3 rounded-xl border bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/10 text-xs">
-          <p className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase">NODE_ENV</p>
+          <p className="text-xxs font-bold text-slate-500 dark:text-white/40 ">NODE_ENV</p>
           <p className="text-xs font-mono font-bold text-slate-900 dark:text-white mt-0.5">{String(deployment.node_env ?? 'production')}</p>
         </div>
         <div className={`p-3 rounded-xl border text-xs ${prodOk ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300'}`}>
-          <p className="text-xxs font-bold opacity-60 uppercase">{t('ui_system_health_prod_override')}</p>
+          <p className="text-xxs font-bold opacity-60 ">{t('ui_system_health_prod_override')}</p>
           <p className="text-xs font-bold mt-0.5">{prodOk ? '✓ Active' : '✗ Missing'}</p>
         </div>
         <div className={`p-3 rounded-xl border text-xs ${httpsOk ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300' : 'bg-amber-500/10 border-amber-500/25 text-amber-700 dark:text-amber-300'}`}>
-          <p className="text-xxs font-bold opacity-60 uppercase">{t('ui_system_health_https_tls')}</p>
+          <p className="text-xxs font-bold opacity-60 ">{t('ui_system_health_https_tls')}</p>
           <p className="text-xs font-bold mt-0.5">{httpsOk ? '✓ Enforced' : '✗ Inactive'}</p>
         </div>
         <div className={`p-3 rounded-xl border text-xs ${acmeOk ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300' : 'bg-amber-500/10 border-amber-500/25 text-amber-700 dark:text-amber-300'}`}>
-          <p className="text-xxs font-bold opacity-60 uppercase">{t('ui_system_health_acme_email')}</p>
+          <p className="text-xxs font-bold opacity-60 ">{t('ui_system_health_acme_email')}</p>
           <p className="text-xs font-bold mt-0.5">{acmeOk ? '✓ Configured' : '✗ Not set'}</p>
         </div>
       </div>
@@ -503,7 +503,7 @@ function RecoveryLogList({
                 </div>
               </div>
               <div className="text-right font-mono text-xxs text-slate-500 dark:text-white/40">
-                <span className={`inline-block px-2 py-0.5 rounded-full uppercase font-bold text-xxs mb-1 ${action.success ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/20 text-rose-700 dark:text-rose-300'}`}>
+                <span className={`inline-block px-2 py-0.5 rounded-full font-bold text-xxs mb-1 ${action.success ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/20 text-rose-700 dark:text-rose-300'}`}>
                   {action.success ? 'Success' : 'Failed'}
                 </span>
                 <div>{new Date(action.triggeredAt).toLocaleTimeString()}</div>
@@ -678,28 +678,28 @@ function SystemHealth() {
         {/* ── Subsystem Metric Tiles ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-200 dark:border-white/5">
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">{t('ui_system_health_healthy_services')}</span>
+            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 block">{t('ui_system_health_healthy_services')}</span>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
               <strong className="text-lg font-mono font-bold text-emerald-600 dark:text-emerald-400">{overallHealth.healthy}</strong>
             </div>
           </div>
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">{t('ui_system_health_degraded_nodes')}</span>
+            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 block">{t('ui_system_health_degraded_nodes')}</span>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400" />
               <strong className="text-lg font-mono font-bold text-amber-600 dark:text-amber-400">{overallHealth.degraded}</strong>
             </div>
           </div>
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">{t('system_health_unhealthy')}</span>
+            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 block">{t('system_health_unhealthy')}</span>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-rose-500 dark:bg-rose-400" />
               <strong className="text-lg font-mono font-bold text-rose-600 dark:text-rose-400">{overallHealth.unhealthy}</strong>
             </div>
           </div>
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10">
-            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 uppercase block">{t('system_health_offline')}</span>
+            <span className="text-xxs font-bold text-slate-500 dark:text-white/40 block">{t('system_health_offline')}</span>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-slate-400" />
               <strong className="text-lg font-mono font-bold text-slate-700 dark:text-slate-400">{overallHealth.offline}</strong>

@@ -56,7 +56,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
                 {['User', 'Method', 'TX ID', 'Amount', 'Plan', 'Actions'].map(h => (
                   <th
                     key={h}
-                    className="px-6 py-4 text-xxs font-bold uppercase tracking-wider text-slate-600 dark:text-white/60"
+                    className="px-6 py-4 text-xxs font-bold text-slate-600 dark:text-white/60"
                   >
                     {h}
                   </th>
@@ -73,7 +73,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
                     <td className="px-6 py-4 text-xs font-bold text-slate-900 dark:text-white">
                       {tx.userEmail}
                     </td>
-                    <td className="px-6 py-4 text-xs font-black uppercase text-amber-700 dark:text-amber-400">
+                    <td className="px-6 py-4 text-xs font-black text-amber-700 dark:text-amber-400">
                       {tx.method}
                     </td>
                     <td className="px-6 py-4 text-xs font-mono text-slate-700 dark:text-white/80">
@@ -82,7 +82,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
                     <td className="px-6 py-4 text-xs font-bold text-slate-900 dark:text-white">
                       {tx.amount} {tx.currency}
                     </td>
-                    <td className="px-6 py-4 text-xs uppercase text-slate-600 dark:text-white/60 font-bold">
+                    <td className="px-6 py-4 text-xs text-slate-600 dark:text-white/60 font-bold">
                       {tx.planId?.split('_')[1]}
                     </td>
                     <td className="px-6 py-4">
@@ -114,7 +114,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-6 py-12 text-center text-xs text-slate-500 dark:text-white/40 font-semibold uppercase tracking-widest italic"
+                    className="px-6 py-12 text-center text-xs text-slate-500 dark:text-white/40 font-semibold italic"
                   >
                     {t('billing_admin_no_pending') || 'No pending mobile money transactions'}
                   </td>
@@ -174,7 +174,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
           </div>
           <div>
             <label className="text-xs font-medium text-slate-400 mb-1.5 block">
-              {t('billing_admin_expiry_days') || 'Expiry (Days)'}
+              {t('billing_admin_expiry_days') || 'Expiry (days)'}
             </label>
             <Input
               type="number"

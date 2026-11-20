@@ -169,19 +169,20 @@ describe('KnockKnock Aesthetic Component Suite', () => {
     it('renders the docked floating pill in initial state', async () => {
       await renderWithLanguage(<FloatingAIPill />);
 
-      expect(screen.getByText('AI Agronomist')).toBeInTheDocument();
-      expect(screen.getByText('ONLINE')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'AI agronomist' })).toBeInTheDocument();
+      // No live-status badge: nothing measures whether the assistant is up.
+      expect(screen.queryByText('ONLINE')).not.toBeInTheDocument();
     });
 
     it('expands into the multimodal drawer upon click', async () => {
       await renderWithLanguage(<FloatingAIPill />);
 
-      const pillButton = screen.getByRole('button', { name: /AI Agronomist/i });
+      const pillButton = screen.getByRole('button', { name: /AI agronomist/i });
       fireEvent.click(pillButton);
 
-      expect(screen.getByText('Multimodal Decision Support')).toBeInTheDocument();
+      expect(screen.getByText('Multimodal decision support')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Chat/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Leaf Scan/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Leaf scan/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Voice/i })).toBeInTheDocument();
     });
 
@@ -189,10 +190,10 @@ describe('KnockKnock Aesthetic Component Suite', () => {
       await renderWithLanguage(<FloatingAIPill />);
 
       // Open drawer
-      fireEvent.click(screen.getByRole('button', { name: /AI Agronomist/i }));
+      fireEvent.click(screen.getByRole('button', { name: /AI agronomist/i }));
 
       // Switch to leaf scan
-      fireEvent.click(screen.getByRole('button', { name: /Leaf Scan/i }));
+      fireEvent.click(screen.getByRole('button', { name: /Leaf scan/i }));
       expect(screen.getByText('Upload or Capture Leaf Photo')).toBeInTheDocument();
 
       // Trigger scan — no diagnosis may appear without a real analysis response
@@ -209,7 +210,7 @@ describe('KnockKnock Aesthetic Component Suite', () => {
     it('switches to Voice tab and never fabricates a transcription', async () => {
       await renderWithLanguage(<FloatingAIPill />);
 
-      fireEvent.click(screen.getByRole('button', { name: /AI Agronomist/i }));
+      fireEvent.click(screen.getByRole('button', { name: /AI agronomist/i }));
       fireEvent.click(screen.getByRole('button', { name: /Voice/i }));
 
       expect(screen.getByText(/Tap to Record Agronomic Note/i)).toBeInTheDocument();
@@ -235,7 +236,7 @@ describe('KnockKnock Aesthetic Component Suite', () => {
         expect(screen.getByText('Emmanuel Mwangi')).toBeInTheDocument();
       });
 
-      expect(screen.getByText('Live Intelligence Stream')).toBeInTheDocument();
+      expect(screen.getByText('Live intelligence stream')).toBeInTheDocument();
       expect(screen.getByText('88/100')).toBeInTheDocument();
       expect(screen.getByText('Grace Wanjiku')).toBeInTheDocument();
       expect(screen.getByText('74/100')).toBeInTheDocument();
@@ -248,14 +249,14 @@ describe('KnockKnock Aesthetic Component Suite', () => {
         expect(screen.getByText('Emmanuel Mwangi')).toBeInTheDocument();
       });
 
-      const claimBtns = screen.getAllByRole('button', { name: /Claim & Intervene/i });
+      const claimBtns = screen.getAllByRole('button', { name: /Claim & intervene/i });
       fireEvent.click(claimBtns[0]);
 
       await waitFor(() => {
         expect(screen.getByText('You')).toBeInTheDocument();
       });
-      expect(screen.getAllByRole('button', { name: /Direct SMS Reply/i }).length).toBeGreaterThanOrEqual(1);
-      expect(screen.getAllByText('Release to AI Autopilot').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByRole('button', { name: /Direct SMS reply/i }).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Release to AI autopilot').length).toBeGreaterThanOrEqual(1);
     });
 
     it('filters cards by critical severity', async () => {
@@ -280,7 +281,7 @@ describe('KnockKnock Aesthetic Component Suite', () => {
         <USSDSimulatorDrawer isOpen={true} onClose={vi.fn()} />
       );
 
-      expect(screen.getByText('USSD & SMS Sandbox')).toBeInTheDocument();
+      expect(screen.getByText('USSD & SMS sandbox')).toBeInTheDocument();
       expect(screen.getAllByText('*123#')[0]).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Start simulation/i })).toBeInTheDocument();
     });

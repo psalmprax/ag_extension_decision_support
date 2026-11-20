@@ -5,7 +5,7 @@ import { dashboardGreeting } from '@/pages/dashboardGreeting';
 const t = (key: string, options?: { defaultValue?: string } & Record<string, unknown>) => {
   const templates: Record<string, string> = {
     dashboard_welcome: 'Welcome back, {name}! Here is your overview.',
-    dashboard_overview: 'Dashboard Overview',
+    dashboard_overview: 'Dashboard overview',
   };
   let text = templates[key] ?? options?.defaultValue ?? key;
   for (const [k, v] of Object.entries(options ?? {})) if (k !== 'defaultValue') text = text.replace(`{${k}}`, String(v));
@@ -21,7 +21,7 @@ describe('dashboardGreeting', () => {
     for (const name of [undefined, '', '   ']) {
       const text = dashboardGreeting(t, name);
       expect(text).not.toContain('{name}');
-      expect(text).toBe('Dashboard Overview');
+      expect(text).toBe('Dashboard overview');
     }
   });
 });

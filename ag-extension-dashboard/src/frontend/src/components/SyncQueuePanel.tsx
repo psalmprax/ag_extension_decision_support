@@ -85,7 +85,7 @@ export const SyncQueuePanel: React.FC = () => {
           <li key={item.id} className="py-2.5 flex items-start justify-between gap-3 text-xs">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className={`px-1.5 py-0.5 rounded font-mono uppercase text-[10px] ${
+                <span className={`px-1.5 py-0.5 rounded font-mono text-[10px] ${
                   item.state === 'pending' ? 'bg-cyan-500/15 text-cyan-300' :
                   item.state === 'conflict' ? 'bg-amber-500/15 text-amber-300' :
                   'bg-rose-500/15 text-rose-300'

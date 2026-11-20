@@ -273,7 +273,7 @@ export const FarmerRegistrationForm: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-white/70">
-                  {t('farmer_register_first_name') || 'First Name'} *
+                  {t('farmer_register_first_name') || 'First name'} *
                 </label>
                 <input
                   {...register('firstName')}
@@ -289,7 +289,7 @@ export const FarmerRegistrationForm: React.FC = () => {
 
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-white/70">
-                  {t('farmer_register_last_name') || 'Last Name'} *
+                  {t('farmer_register_last_name') || 'Last name'} *
                 </label>
                 <input
                   {...register('lastName')}

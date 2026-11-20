@@ -14,7 +14,7 @@ vi.mock('@/lib/LanguageContext', () => ({
   }),
 }));
 
-describe('Staff & Officers', () => {
+describe('Staff & officers', () => {
   it('shows the last sign-in the API reports (lastLogin), not "No recent login"', async () => {
     vi.mocked(apiClient.get).mockResolvedValue({
       data: {

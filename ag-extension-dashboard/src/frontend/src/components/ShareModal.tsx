@@ -118,7 +118,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 <Share2 className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-lg sm:text-xl font-bold text-white uppercase tracking-tight truncate">
+                <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight truncate">
                   {t('ui_share_modal_share', { entityType })}
                 </h2>
                 <p className="text-xs text-white/50 truncate">
@@ -141,7 +141,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             <div className="space-y-6">
               {/* Access Settings */}
               <div className="space-y-4">
-                <label className="text-xxs font-black text-gray-400 uppercase tracking-[0.2em]">
+                <label className="text-xxs font-black text-gray-400  ">
                   {t('ui_share_modal_access_level')}
                 </label>
                 <div className="grid grid-cols-1 gap-3">
@@ -193,7 +193,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               {/* Expiration Settings */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xxs font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
+                  <label className="text-xxs font-black text-gray-400 flex items-center gap-1.5">
                     <Clock className="w-3 h-3" /> {t('ui_share_modal_expiration')}
                   </label>
                   <select
@@ -208,7 +208,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xxs font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
+                  <label className="text-xxs font-black text-gray-400 flex items-center gap-1.5">
                     <Calendar className="w-3 h-3" /> {t('ui_share_modal_permissions')}
                   </label>
                   <button
@@ -252,7 +252,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 <div className="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
                   <Check className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-black text-emerald-900 dark:text-emerald-400 uppercase italic">
+                <h3 className="text-lg font-black text-emerald-900 dark:text-emerald-400 italic">
                   {t('ui_share_modal_link_ready')}
                 </h3>
                 <p className="text-sm text-emerald-700 dark:text-emerald-500 mt-1">
@@ -261,7 +261,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-xxs font-black text-gray-400 uppercase tracking-[0.2em]">
+                <label className="text-xxs font-black text-gray-400  ">
                   {t('ui_share_modal_shareable_url')}
                 </label>
                 <div className="relative">

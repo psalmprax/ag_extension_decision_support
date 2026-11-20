@@ -14,7 +14,7 @@ export function AccountActiveToggle({ checked, disabled, onChange }: AccountActi
     <label className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/10 cursor-pointer">
       <div>
         <div className="text-xs font-medium text-white">
-          {t('users_access_account_active', 'Account Active')}
+          {t('users_access_account_active', 'Account active')}
         </div>
         <div className="text-[11px] text-white/50">
           {t('users_access_account_active_hint', 'Suspended accounts are immediately signed out and blocked.')}

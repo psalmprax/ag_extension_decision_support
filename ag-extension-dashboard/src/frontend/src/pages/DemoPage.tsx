@@ -192,7 +192,7 @@ export function DemoPage({
           {activeTab === 'rag' && (
             <div className="space-y-6">
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3 block">
+                <label className="text-xs font-bold text-stone-500 mb-3 block">
                   {t('ui_demo_page_select_agronomic_scenario')}
                 </label>
                 <div className="grid md:grid-cols-3 gap-3">
@@ -297,11 +297,11 @@ export function DemoPage({
                     </p>
                     <div className="grid grid-cols-2 gap-4 text-xs">
                       <div>
-                        <p className="text-stone-500 font-mono text-xxs uppercase mb-0.5">{t('register_role_farmer')}</p>
+                        <p className="text-stone-500 font-mono text-xxs mb-0.5">{t('register_role_farmer')}</p>
                         <p className="font-semibold">{synthesisOutput.farmer ?? ''}</p>
                       </div>
                       <div>
-                        <p className="text-stone-500 font-mono text-xxs uppercase mb-0.5">
+                        <p className="text-stone-500 font-mono text-xxs mb-0.5">
                           {t('ui_demo_page_observation')}
                         </p>
                         <p className="font-semibold text-amber-400">
@@ -323,7 +323,7 @@ export function DemoPage({
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-black/30 border border-white/5">
-                  <span className="text-xxs uppercase font-mono text-stone-500 block mb-1">
+                  <span className="text-xxs font-mono text-stone-500 block mb-1">
                     {t('ui_demo_page_bulk_density')}
                   </span>
                   <span className="text-2xl font-bold font-mono text-cyan-400">1.25 kg/dm3</span>
@@ -332,7 +332,7 @@ export function DemoPage({
                   </span>
                 </div>
                 <div className="p-4 rounded-xl bg-black/30 border border-white/5">
-                  <span className="text-xxs uppercase font-mono text-stone-500 block mb-1">
+                  <span className="text-xxs font-mono text-stone-500 block mb-1">
                     {t('ui_demo_page_organic_carbon')}
                   </span>
                   <span className="text-2xl font-bold font-mono text-amber-400">22 g/kg</span>

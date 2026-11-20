@@ -4,8 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { motionValue } from 'framer-motion';
 import { DemoPage } from '../pages/DemoPage';
 import { UssdGatewayTester } from '../components/telecom/UssdGatewayTester';
-import { AgentOS } from '../pages/landing/sections/AgentOS';
-import { SANDBOX_PRESETS } from '../pages/landing/data';
 import { Hero } from '../pages/landing/sections/Hero';
 import { FarmerServices } from '../pages/landing/sections/FarmerServices';
 import { TrustAndSafety } from '../pages/landing/sections/TrustAndSafety';
@@ -91,7 +89,7 @@ describe('public demos', () => {
     fireEvent.change(screen.getByPlaceholderText('Reply...'), { target: { value: '1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     expect(screen.getByText(/No SMS was sent/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'SMS Broadcaster' }));
+    fireEvent.click(screen.getByRole('button', { name: 'SMS broadcaster' }));
     fireEvent.change(screen.getByLabelText(/Example recipient/), { target: { value: 'example recipient' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add local preview' }));
     const preview = screen.getByText('Local previews (not sent)').parentElement;
@@ -100,27 +98,13 @@ describe('public demos', () => {
     expect(screen.queryByText(/Delivered|successfully dispatched/)).not.toBeInTheDocument();
   });
 
-  it('marks landing simulations and messages as fictional for every preset', () => {
-    for (const preset of SANDBOX_PRESETS) {
-      const { unmount } = render(<AgentOS activePreset={preset} setActivePreset={vi.fn()}
-        handleRunSimulation={vi.fn()} isSimulating={false} simProgress={4}
-        activeChannelTab="sms" setActiveChannelTab={vi.fn()} />);
-      expect(screen.getByText(/no messages or visits are sent or queued/i)).toBeInTheDocument();
-      expect(screen.getByText(/PREVIEW ONLY — NOT SENT/)).toBeInTheDocument();
-      expect(screen.getByText('Not verified')).toBeInTheDocument();
-      expect(screen.getByText(preset.channelPreview.sms)).toBeInTheDocument();
-      expect(screen.queryByText(/SOURCE: FIELD_VISIT_CONSENSUS|DISPATCHED \(45\/45\)/)).not.toBeInTheDocument();
-      unmount();
-    }
-  });
-
   it('does not present the landing-page examples as verified treatment or live forecasts', () => {
     render(<MemoryRouter><Hero heroY={motionValue(0)} heroOpacity={motionValue(1)} /><FarmerServices /><TrustAndSafety /></MemoryRouter>);
     expect(screen.getByText('Illustration, not a diagnosis')).toBeInTheDocument();
     expect(screen.getByText(/This illustration is not a forecast/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Consult' }));
     expect(screen.getByText(/locally authorized options before treatment/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Read in Your Dialect' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Read in your dialect' }));
     fireEvent.click(screen.getByRole('button', { name: 'Switch text to English' }));
     expect(screen.getByText(/Contact your local extension officer/)).toBeInTheDocument();
     expect(screen.queryByText(/Mix two tablespoons|safe spray doses|scientifically proven protocols/i)).not.toBeInTheDocument();

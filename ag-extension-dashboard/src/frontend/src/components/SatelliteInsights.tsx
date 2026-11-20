@@ -159,14 +159,14 @@ const SpatialDataVisualization = ({
             >
               <div className={`w-full h-full rounded-full ${String(point.colorClass ?? '')} blur-md opacity-40 pulse-ring`} />
               <div className={`absolute inset-0 w-2 h-2 m-auto rounded-full ${String(point.pulseClass ?? '')} border border-white/40 shadow-lg`} />
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-black text-white/60 uppercase whitespace-nowrap">
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-black text-white/60 whitespace-nowrap">
                 NDVI {String(point.ndvi ?? 0)}
               </div>
             </motion.div>
           ))}
           {dataPoints.length === 0 && !isLoading && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <p className="text-xxs font-black text-white/20 uppercase tracking-[0.3em]">{t('ui_satellite_insights_no_satellite_observation')}</p>
+              <p className="text-xxs font-black text-white/20  ">{t('ui_satellite_insights_no_satellite_observation')}</p>
             </div>
           )}
         </div>
@@ -181,7 +181,7 @@ const SpatialDataVisualization = ({
       </div>
 
       <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
-        <p className="text-xs font-black text-primary-400 uppercase tracking-[0.2em] flex items-center gap-2">
+        <p className="text-xs font-black text-primary-400 flex items-center gap-2">
           <Layers className="w-3 h-3" />
           {t('ui_satellite_insights_spectral_layer_iv')}
         </p>
@@ -189,7 +189,7 @@ const SpatialDataVisualization = ({
 
       {priority && (
         <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
-          <div className={`text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2 ${priorityTextClass}`}>
+          <div className={`text-xs font-black flex items-center gap-2 ${priorityTextClass}`}>
             {isHighOrCritical ? <AlertTriangle className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
             {String(priority.level ?? 'unknown')} PRIORITY
           </div>
@@ -197,10 +197,10 @@ const SpatialDataVisualization = ({
       )}
 
       <div className="absolute bottom-4 left-4">
-        <p className="text-xxs font-black text-white/40 uppercase tracking-widest">{gpsLabel}</p>
+        <p className="text-xxs font-black text-white/40  ">{gpsLabel}</p>
       </div>
       <div className="absolute bottom-4 right-4 text-right">
-        <p className="text-xxs font-black text-white/40 uppercase tracking-widest">
+        <p className="text-xxs font-black text-white/40  ">
           {dataPoints.length > 0 ? `Source: ${String(dataPoints[0].source ?? 'provider')}` : 'No satellite observation'}
         </p>
       </div>
@@ -230,7 +230,7 @@ const MetricsGrid = ({
   return (
     <div className={`p-6 rounded-xl border transition-all ${containerClass}`}>
       <div className="flex items-center justify-between mb-4">
-        <h5 className="text-xxs font-black uppercase tracking-[0.2em] text-gray-400">{t('ui_satellite_insights_resource_priority_index')}</h5>
+        <h5 className="text-xxs font-black text-gray-400">{t('ui_satellite_insights_resource_priority_index')}</h5>
         {priority && <div className={`px-2 py-0.5 rounded text-xxs font-bold ${isCritical ? 'bg-red-500 text-white' : 'bg-primary-500 text-white'}`}>{score}%</div>}
       </div>
 
@@ -248,7 +248,7 @@ const MetricsGrid = ({
           {isCritical ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
         </div>
         <div>
-          <p className="text-micro font-black text-gray-500 uppercase tracking-widest">{t('ui_satellite_insights_recommended_action')}</p>
+          <p className="text-micro font-black text-gray-500  ">{t('ui_satellite_insights_recommended_action')}</p>
           <p className={`text-xs-plus font-bold ${isCyber ? 'text-white' : 'text-gray-900'}`}>
             {isLoading ? 'Calculating...' : priority?.recommendedAction || 'No verified recommendation available.'}
           </p>
@@ -283,13 +283,13 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-xl ${isCyber ? 'bg-primary-500/10 border border-primary-500/20' : 'bg-primary-100 text-primary-600'}`}><Cpu className="w-5 h-5" /></div>
           <div>
-            <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${isCyber ? 'text-primary-400' : 'text-gray-900'}`}>{t('ui_satellite_insights_spatial_intelligence')}</h4>
-            <p className="text-xxs text-gray-500 uppercase tracking-widest font-bold">{satelliteData.length > 0 ? 'Provider Telemetry' : 'Telemetry Unavailable'} • ID: {farmerId.slice(0, 8)}</p>
+            <h4 className={`text-xs font-black   ${isCyber ? 'text-primary-400' : 'text-gray-900'}`}>{t('ui_satellite_insights_spatial_intelligence')}</h4>
+            <p className="text-xxs text-gray-500 font-bold">{satelliteData.length > 0 ? 'Provider Telemetry' : 'Telemetry Unavailable'} • ID: {farmerId.slice(0, 8)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <span className={`h-2 w-2 rounded-full ${satelliteData.length > 0 ? 'bg-green-500' : 'bg-amber-500'}`} />
-          <span className={`text-xxs font-black uppercase tracking-tighter ${satelliteData.length > 0 ? 'text-green-500' : 'text-amber-500'}`}>{satelliteData.length > 0 ? 'Live observation' : 'Unavailable'}</span>
+          <span className={`text-xxs font-black tracking-tighter ${satelliteData.length > 0 ? 'text-green-500' : 'text-amber-500'}`}>{satelliteData.length > 0 ? 'Live observation' : 'Unavailable'}</span>
         </div>
       </div>
 
@@ -299,7 +299,7 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
       <MetricsGrid priority={priority as PriorityLike} isCyber={isCyber ?? false} isLoading={isLoading} />
 
       <div className={`p-6 rounded-xl border relative min-h-[140px] flex flex-col justify-center ${isCyber ? 'bg-primary-500/5 border-primary-500/20 shadow-[0_0_20px_var(--color-outline)]' : 'bg-blue-50/50 border-blue-100'}`}>
-        <h5 className={`text-xxs font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2 ${isCyber ? 'text-primary-400' : 'text-blue-600'}`}>
+        <h5 className={`text-xxs font-black mb-3 flex items-center gap-2 ${isCyber ? 'text-primary-400' : 'text-blue-600'}`}>
           <Navigation2 className="w-3 h-3" />
           {isLoading ? 'Generating Synthesis...' : 'Growth Trajectory Analysis'}
         </h5>

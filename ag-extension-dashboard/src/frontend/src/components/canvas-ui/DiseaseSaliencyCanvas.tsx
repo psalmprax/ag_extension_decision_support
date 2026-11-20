@@ -291,7 +291,7 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
         {hasLiveDetections && (
           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
             <Sliders className="w-3.5 h-3.5" />
-            <span className="text-xxs uppercase tracking-wider">{t('ui_disease_saliency_canvas_heatmap_alpha')}</span>
+            <span className="text-xxs  ">{t('ui_disease_saliency_canvas_heatmap_alpha')}</span>
             <input
               type="range"
               min={0.2}
@@ -321,7 +321,7 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
             </div>
             <div className="flex items-center justify-between text-xxs font-mono text-gray-300">
               <span>{t('ui_disease_saliency_canvas_confidence')} {(selectedZone.confidence * 100).toFixed(1)}%</span>
-              <span className="uppercase text-amber-400 font-bold">{selectedZone.severity}</span>
+              <span className=" text-amber-400 font-bold">{selectedZone.severity}</span>
             </div>
           </div>
         )}

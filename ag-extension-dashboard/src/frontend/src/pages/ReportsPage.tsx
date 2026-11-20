@@ -135,7 +135,7 @@ function ReportCard({
         <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-white/[0.04] space-y-1.5">
           <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-white/40">
             <span>{t('ui_reports_page_report_status')}</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase">{report.status || 'ready'}</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold ">{report.status || 'ready'}</span>
           </div>
           <div className="text-[10px] font-mono text-slate-600 dark:text-white/50 truncate">
             {report.generatedAt ? new Date(report.generatedAt).toLocaleDateString() : '—'}
@@ -147,7 +147,7 @@ function ReportCard({
       <div className="mt-6 pt-4 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Clock className="w-3.5 h-3.5 text-slate-400 dark:text-white/40" />
-          <span className="text-[10px] font-mono text-slate-500 dark:text-white/40 uppercase">
+          <span className="text-[10px] font-mono text-slate-500 dark:text-white/40 ">
             {new Date(report.generatedAt).toLocaleDateString()}
           </span>
         </div>
@@ -217,7 +217,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
   return (
     <div className="space-y-8">
       <section className="mb-6" aria-label="Government MIS exports">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-gray-400 mb-2">{t('ui_reports_page_government_mis_exports_csv')}</h3>
+        <h3 className="text-xs font-bold text-slate-500 dark:text-gray-400 mb-2">{t('ui_reports_page_government_mis_exports_csv')}</h3>
         <MisExportButtons />
       </section>
       {/* Header & Generate Button */}
@@ -256,7 +256,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
       {/* AI Executive Summary Highlight Strip (KnockKnock Bento Style) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+          <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs font-mono">
             <Layers className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>{t('ui_reports_page_reports_generated')}</span>
           </div>
@@ -267,7 +267,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         </div>
 
         <div className="p-4 rounded-xl backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+          <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs font-mono">
             <Users className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
             <span>{t('ui_reports_page_reports_archive')}</span>
           </div>
@@ -278,7 +278,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         </div>
 
         <div className="p-4 rounded-xl backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+          <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs font-mono">
             <TrendingUp className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
             <span>{t('ui_reports_page_latest_report')}</span>
           </div>
@@ -288,7 +288,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         </div>
 
         <div className="p-4 rounded-xl backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs uppercase tracking-wider font-mono">
+          <div className="flex items-center gap-2 text-slate-500 dark:text-white/40 text-xxs font-mono">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>{t('ui_reports_page_data_source')}</span>
           </div>
@@ -403,7 +403,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
               <div className="grid md:grid-cols-[1.3fr_1fr] flex-1 overflow-y-auto divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-white/[0.08]">
                 {/* Left Pane: Report Document Content */}
                 <div className="p-6 space-y-4">
-                  <div className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  <div className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
                     {t('ui_reports_page_document_synthesis_observations')}
                   </div>
                   {isLoadingReport ? (
@@ -427,13 +427,13 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
 
                 {/* Right Pane: Telemetry Metrics & Action Breakdown */}
                 <div className="p-6 bg-slate-50 dark:bg-slate-950/40 space-y-5">
-                  <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-white/50">
+                  <div className="text-xs font-mono font-bold text-slate-500 dark:text-white/50">
                     {t('ui_reports_page_telemetry_metadata_audit_trail')}
                   </div>
 
                   <div className="space-y-3">
                     <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/[0.06] shadow-sm space-y-1">
-                      <div className="text-[10px] font-mono text-slate-500 dark:text-white/40 uppercase">{t('ui_reports_page_dataset_integrity')}</div>
+                      <div className="text-[10px] font-mono text-slate-500 dark:text-white/40 ">{t('ui_reports_page_dataset_integrity')}</div>
                       <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>{t('ui_reports_page_isric_soilgrids_nasa_power_verified')}</span>
@@ -441,14 +441,14 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                     </div>
 
                     <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/[0.06] shadow-sm space-y-1">
-                      <div className="text-[10px] font-mono text-slate-500 dark:text-white/40 uppercase">{t('ui_reports_page_author_provenance')}</div>
+                      <div className="text-[10px] font-mono text-slate-500 dark:text-white/40 ">{t('ui_reports_page_author_provenance')}</div>
                       <div className="text-xs font-bold text-slate-900 dark:text-white">
                         {viewingReport.createdBy || `${user?.firstName || 'Extension'} ${user?.lastName || 'Officer'}`}
                       </div>
                     </div>
 
                     <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/[0.06] shadow-sm space-y-1">
-                      <div className="text-[10px] font-mono text-slate-500 dark:text-white/40 uppercase">{t('ui_reports_page_export_formats')}</div>
+                      <div className="text-[10px] font-mono text-slate-500 dark:text-white/40 ">{t('ui_reports_page_export_formats')}</div>
                       <div className="flex gap-2 pt-1">
                         {['PDF', 'CSV', 'GeoJSON'].map(fmt => (
                           <span

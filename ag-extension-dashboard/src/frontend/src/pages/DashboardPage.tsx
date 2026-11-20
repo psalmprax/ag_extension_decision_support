@@ -67,14 +67,8 @@ const DashboardStats: React.FC<{
   classes: Record<string, string | boolean>;
 }> = ({ isLoading, dashboardData, isOfficer, t, classes }) => {
   if (isLoading) {
-    const hasSampleData = !dashboardData?.overview || !dashboardData?.trends;
     return (
       <>
-        {hasSampleData && (
-          <p className="col-span-full -mb-2 text-xs text-amber-800 dark:text-amber-300">
-            Illustrative sample figures — these are not live account metrics.
-          </p>
-        )}
         <CardSkeleton />
         <CardSkeleton />
         <CardSkeleton />
@@ -82,32 +76,22 @@ const DashboardStats: React.FC<{
       </>
     );
   }
-  const overview = dashboardData?.overview || {
-    totalFarmers: 148,
-    activeConversations: 34,
-    visitsThisMonth: 62,
-    avgConversationsPerFarmer: 3.4,
-    avgSatisfaction: 4.8,
-  };
-  const trends = dashboardData?.trends || {
-    farmersGrowth: 14.2,
-    conversationsGrowth: 9.8,
-    visitsGrowth: 18.5,
-    satisfactionChange: 4.2,
-  };
+  // No invented fallback figures: a failed load shows dashes, not numbers.
+  const overview: Partial<DashboardData['overview']> = dashboardData?.overview ?? {};
+  const trends: Partial<DashboardData['trends']> = dashboardData?.trends ?? {};
   return (
     <>
       <StatCard
-        title={isOfficer ? t('stat_my_farmers', { defaultValue: 'My Farmers' }) : t('stat_total_farmers')}
-        value={overview.totalFarmers}
+        title={isOfficer ? t('stat_my_farmers', { defaultValue: 'My farmers' }) : t('stat_total_farmers')}
+        value={overview.totalFarmers ?? ''}
         change={trends.farmersGrowth}
         icon={Users}
         delay={0}
         {...classes}
       />
       <StatCard
-        title={isOfficer ? t('stat_my_active_chats', { defaultValue: 'My Active Chats' }) : t('stat_active_conversations')}
-        value={overview.activeConversations}
+        title={isOfficer ? t('stat_my_active_chats', { defaultValue: 'Active chats' }) : t('stat_active_conversations')}
+        value={overview.activeConversations ?? ''}
         change={trends.conversationsGrowth}
         icon={MessageSquare}
         delay={0.05}
@@ -115,18 +99,18 @@ const DashboardStats: React.FC<{
       />
       <StatCard
         title={isOfficer ? t('stat_my_visits_30d', { defaultValue: 'My Visits (30d)' }) : t('stat_visits_this_month')}
-        value={overview.visitsThisMonth}
+        value={overview.visitsThisMonth ?? ''}
         change={trends.visitsGrowth}
         icon={MapPin}
         delay={0.1}
         {...classes}
       />
       <StatCard
-        title={isOfficer ? t('stat_avg_conversations', { defaultValue: 'Avg. Conversations' }) : t('stat_avg_satisfaction')}
+        title={isOfficer ? t('stat_avg_conversations', { defaultValue: 'Conversations per farmer' }) : t('stat_avg_satisfaction')}
         value={
           isOfficer
-            ? overview.avgConversationsPerFarmer
-            : `${overview.avgSatisfaction}/5`
+            ? overview.avgConversationsPerFarmer ?? ''
+            : overview.avgSatisfaction ? `${overview.avgSatisfaction}/5` : ''
         }
         change={isOfficer ? undefined : trends.satisfactionChange}
         icon={isOfficer ? MessageSquare : BarChart3}
@@ -197,7 +181,7 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
                 ok: dbConnected,
               },
               {
-                label: t('dashboard_redis_cache', { defaultValue: 'Redis Cache' }),
+                label: t('dashboard_redis_cache', { defaultValue: 'Redis cache' }),
                 status: cacheConnected ? t('dashboard_connected', { defaultValue: 'Connected' }) : t('dashboard_disconnected', { defaultValue: 'Disconnected' }),
                 ok: cacheConnected,
               },
@@ -217,7 +201,7 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
                   </p>
                   <p className="text-xxs text-slate-500">{health?.environment || ''}</p>
                 </div>
-                <span className={`text-xxs font-semibold uppercase ${item.ok ? 'text-emerald-400' : 'text-amber-400'}`}>{item.status}</span>
+                <span className={`text-xxs font-semibold  ${item.ok ? 'text-emerald-400' : 'text-amber-400'}`}>{item.status}</span>
               </div>
             ))}
           </>
@@ -348,23 +332,21 @@ const DashboardMapSection: React.FC<{
   return (
     <div className={`lg:col-span-2 ${cardClass} group p-4 sm:p-6`}>
       <div className="flex justify-between items-center mb-4 sm:mb-6">
-        <h3 className="text-base sm:text-lg font-headline font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-primary-400" />
+        <h3 className="text-base sm:text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+          <MapPin className="w-[18px] h-[18px] text-slate-500" aria-hidden="true" />
           <span>{t('stat_regional_distribution')}</span>
         </h3>
         <div className="flex gap-2">
-          <span
-            className={`px-2 py-1 bg-primary-400/10 text-primary-400 ${radiusClass} text-xxs font-bold uppercase tracking-widest border border-primary-400/20`}
-          >
+          <span className="text-sm text-slate-500 dark:text-slate-400">
             {isDemo
-              ? (t('stat_kenya_overview') || 'Kenya Overview')
-              : ((user?.region || userFromStore?.region) ? `${user?.region || userFromStore?.region} Overview` : (t('stat_portfolio_overview') || 'Portfolio Overview'))}
+              ? (t('stat_kenya_overview') || 'Kenya overview')
+              : ((user?.region || userFromStore?.region) ? `${user?.region || userFromStore?.region}` : (t('stat_portfolio_overview') || 'Portfolio overview'))}
           </span>
         </div>
       </div>
 
       <div
-        className={`relative h-[300px] sm:h-[400px] bg-slate-950/50 ${radiusClass} overflow-hidden border border-white/5 shadow-inner`}
+        className={`relative h-[300px] sm:h-[400px] ${radiusClass} overflow-hidden`}
       >
         {!showFallback && !showSkeletonWithRetry && (
           <FarmerMap
@@ -393,7 +375,7 @@ const DashboardMapSection: React.FC<{
             <div className="flex items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <div className="w-2 h-2 bg-primary-400 rounded-full"></div>
-                <span className="text-xxs font-bold text-slate-200 uppercase tracking-widest">
+                <span className="text-xxs font-bold text-slate-200  ">
                   {t('table_active')}
                 </span>
               </div>
@@ -424,20 +406,13 @@ const MapSectionSkeleton: React.FC<{
 }> = ({ cardClass, radiusClass, t }) => (
   <div className={`lg:col-span-2 ${cardClass} group`}>
     <div className="flex justify-between items-center mb-6">
-      <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white flex items-center gap-2">
-        <MapPin className="w-5 h-5 text-primary-400" />
+      <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+        <MapPin className="w-[18px] h-[18px] text-slate-500" aria-hidden="true" />
         {t('stat_regional_distribution')}
       </h3>
-      <div className="flex gap-2">
-        <span
-          className={`px-2 py-1 bg-primary-400/10 text-primary-400 ${radiusClass} text-xxs font-bold uppercase tracking-widest border border-primary-400/20`}
-        >
-          {t('stat_kenya_overview') || 'Kenya Overview'}
-        </span>
-      </div>
     </div>
     <div
-      className={`relative h-[400px] bg-slate-950/50 ${radiusClass} overflow-hidden border border-white/5 shadow-inner flex items-center justify-center`}
+      className={`relative h-[400px] bg-slate-100 dark:bg-white/[0.03] ${radiusClass} overflow-hidden flex items-center justify-center`}
       role="status"
       aria-busy="true"
       aria-label={t('map_loading') || 'Loading regional distribution'}
@@ -463,7 +438,7 @@ const MapRetryOverlay: React.FC<{
     aria-live="polite"
   >
     <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
-    <span className="text-xxs font-bold text-amber-400 uppercase tracking-widest">
+    <span className="text-xxs font-bold text-amber-400  ">
       {t('map_retrying') || 'Retrying'} ({attempts}/{maxAttempts})
     </span>
   </div>
@@ -502,7 +477,7 @@ const MapFallbackEmptyState: React.FC<{
         <AlertCircle className="w-8 h-8 text-amber-600 dark:text-amber-400" />
       </div>
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-        {t('map_fallback_title') || 'Unable to Load Distribution'}
+        {t('map_fallback_title') || 'Unable to load distribution'}
       </h3>
       <p className="text-xs text-gray-500 dark:text-gray-400 font-medium leading-relaxed mb-6">
         {t('map_fallback_desc') ||
@@ -513,7 +488,7 @@ const MapFallbackEmptyState: React.FC<{
         className="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-medium transition-all flex items-center gap-2 mx-auto"
       >
         <RefreshCw className="w-3.5 h-3.5" />
-        {t('action_try_again') || 'Try Again'}
+        {t('action_try_again') || 'Try again'}
       </button>
     </div>
   </div>

@@ -607,25 +607,12 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
           >
             <button
               onClick={() => setIsOpen(true)}
-              className="group flex items-center gap-2.5 sm:gap-3 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl bg-slate-900/95 hover:bg-slate-800/90 border border-white/[0.08] hover:border-white/[0.16] text-white shadow-xl backdrop-blur-md transition-colors active:scale-[0.98]"
-              aria-label="Open AI Agronomist"
+              className="flex items-center gap-2 h-11 pl-3 pr-4 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium shadow-lg shadow-slate-900/15 transition-colors"
+              aria-label={t('nav_aiassistant')}
+              title={t('ui_floating_aipill_live_chat_leaf_scan_voice_memo')}
             >
-              <div className="relative">
-                <div className="w-8 h-8 rounded-md bg-slate-800 border border-white/[0.08] flex items-center justify-center text-slate-300">
-                  <Bot className="w-4 h-4" />
-                </div>
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-slate-950" />
-              </div>
-
-              <div className="text-left pr-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-medium text-white">{t('nav_aiassistant')}</span>
-                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-emerald-950/60 text-emerald-300 border border-emerald-800/40">
-                    ONLINE
-                  </span>
-                </div>
-                <span className="text-[10px] text-slate-400 font-normal hidden sm:block">{t('ui_floating_aipill_live_chat_leaf_scan_voice_memo')}</span>
-              </div>
+              <Bot className="w-5 h-5" aria-hidden="true" />
+              <span className="hidden sm:inline">{t('nav_aiassistant')}</span>
             </button>
           </motion.div>
         )}

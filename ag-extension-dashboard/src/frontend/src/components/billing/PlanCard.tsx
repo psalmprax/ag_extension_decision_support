@@ -97,7 +97,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               {plan.name}
             </h3>
             <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
-              {t('plan_tier_operational') || 'Operational Tier'}
+              {t('plan_tier_operational') || 'Operational tier'}
             </p>
           </div>
           <div className="flex flex-col items-end">

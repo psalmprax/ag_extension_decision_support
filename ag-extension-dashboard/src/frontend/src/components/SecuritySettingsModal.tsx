@@ -185,7 +185,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                   <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 mb-2">
                     {t('ui_security_settings_modal_enter_this_secret_key_in_your_authen')}
                   </p>
-                  <code className="px-3 py-1.5 bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-300 font-mono text-sm rounded border tracking-wider">
+                  <code className="px-3 py-1.5 bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-300 font-mono text-sm rounded border ">
                     {setupData.secret}
                   </code>
                 </div>
@@ -200,7 +200,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                     placeholder="000000"
                     value={totpCode}
                     onChange={e => setTotpCode(e.target.value.replace(/\D/g, ''))}
-                    className="w-full px-3 py-2 border rounded-lg text-center font-mono text-lg tracking-widest bg-white dark:bg-gray-800 dark:border-gray-600"
+                    className="w-full px-3 py-2 border rounded-lg text-center font-mono text-lg bg-white dark:bg-gray-800 dark:border-gray-600"
                   />
                 </div>
 

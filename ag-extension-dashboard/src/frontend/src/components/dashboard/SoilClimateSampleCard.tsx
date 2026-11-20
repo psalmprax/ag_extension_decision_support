@@ -13,7 +13,7 @@ export const SoilClimateSampleCard: React.FC<{ cardClass: string }> = ({ cardCla
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sprout className="w-4 h-4 text-emerald-500" />
-          <h3 className="text-xs sm:text-sm font-headline font-bold text-gray-900 dark:text-white uppercase tracking-widest">
+          <h3 className="text-xs sm:text-sm font-headline font-bold text-gray-900 dark:text-white  ">
             {t('ui_soil_climate_sample_card_soil_telemetry_climate_radar')}
           </h3>
         </div>

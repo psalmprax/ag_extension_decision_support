@@ -15,19 +15,19 @@
      in sync by useAppTheme so the page chrome never flashes the wrong scheme. */
   color-scheme: light;
   /* Design Variant Specific Overrides */
-  --font-heading: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Atkinson Hyperlegible Next Variable', 'Atkinson Hyperlegible Next', system-ui, sans-serif;
   --radius-card: 0.25rem;
   --shadow-premium: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 :root[data-design-variant='current'] {
-  --font-heading: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Atkinson Hyperlegible Next Variable', 'Atkinson Hyperlegible Next', system-ui, sans-serif;
   --radius-card: 0.25rem;
   --shadow-premium: 0 4px 6px -1px rgb(0 0 0 / 0.1);
 }
 
 :root[data-design-variant='new'] {
-  --font-heading: 'Outfit', 'Inter', system-ui, sans-serif;
+  --font-heading: 'Atkinson Hyperlegible Next Variable', 'Atkinson Hyperlegible Next', system-ui, sans-serif;
   --radius-card: 0.25rem;
   --shadow-premium: 0 35px 60px -15px rgba(0, 0, 0, 0.35);
 }
@@ -41,7 +41,7 @@
 
 @layer base {
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Atkinson Hyperlegible Next Variable', 'Atkinson Hyperlegible Next', system-ui, sans-serif;
     scroll-behavior: smooth;
     scroll-padding-top: 4.5rem;
     font-size: 100%;
@@ -90,11 +90,17 @@
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 antialiased overflow-x-hidden;
+    @apply bg-[#f6f8f7] text-slate-900 antialiased overflow-x-hidden;
   }
 
   .dark body {
-    @apply bg-[#0c1324] text-[#dce1fb] overflow-x-hidden;
+    @apply bg-[#0d1a14] text-[#e6eee9] overflow-x-hidden;
+  }
+
+  /* Two weights carry the hierarchy (Unslop): 400 body, 500 headings. */
+  h1, h2, h3 {
+    font-weight: 500;
+    letter-spacing: -0.01em;
   }
 
   /* Premium Custom Scrollbar */
@@ -129,13 +135,14 @@
 }
 
 @layer components {
-  /* Glass Panel */
+  /* Panel: a quiet surface step with a hairline border; depth from the
+     surface, never from a coloured glow (Unslop "quiet chrome"). */
   .glass-panel {
-    @apply backdrop-blur-xl bg-white/70 dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.1)];
+    @apply bg-white dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08];
   }
 
   .neon-glow {
-    @apply shadow-[0_0_15px_rgba(var(--color-primary-500-rgb),0.3)];
+    @apply shadow-none;
   }
 
   .rim-lighting {
@@ -152,7 +159,7 @@
   }
 
   .card-hover {
-    @apply transition-all duration-200 hover:scale-[1.02] hover:bg-white/10 hover:border-white/20;
+    @apply transition-colors duration-150 hover:border-slate-900/[0.16] dark:hover:border-white/20;
   }
 
   /* Button styles */
@@ -161,7 +168,7 @@
   }
 
   .btn-primary {
-    @apply bg-primary-500 text-white hover:brightness-110 active:scale-95 shadow-[0_0_20px_rgba(var(--color-primary-500-rgb),0.2)];
+    @apply bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700;
   }
 
   .btn-secondary {
@@ -176,7 +183,7 @@
 
   /* Badge styles */
   .badge {
-    @apply inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-widest;
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium;
   }
 
   .badge-success {
@@ -198,7 +205,7 @@
 
 @layer utilities {
   .text-glow {
-    @apply drop-shadow-[0_0_8px_rgba(var(--color-primary-500-rgb),0.5)];
+    @apply drop-shadow-none;
   }
 }
 
@@ -312,7 +319,7 @@
    :where() keeps specificity at zero so it only restyles the browser's
    default outline and never fights Tailwind's explicit focus utilities. */
 :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-primary-500, #06b6d4);
+  outline: 2px solid var(--color-primary-500, #1f8053);
   outline-offset: 2px;
 }
 

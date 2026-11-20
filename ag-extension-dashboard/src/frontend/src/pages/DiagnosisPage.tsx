@@ -28,11 +28,11 @@ export function DiagnosisPage() {
           <Link
             to="/"
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-white/10 text-slate-200 hover:text-white text-xs font-medium transition-colors group focus:outline-none focus:ring-1 focus:ring-emerald-500"
-            aria-label={t('common_back_to_landing', { defaultValue: 'Back to Landing Page' })}
+            aria-label={t('common_back_to_landing', { defaultValue: 'Back to landing page' })}
           >
             <ArrowLeft className="w-4 h-4 text-emerald-400 group-hover:-translate-x-0.5 transition-transform" />
-            <span className="hidden sm:inline">{t('common_back_to_landing', { defaultValue: 'Back to Landing Page' })}</span>
-            <span className="sm:hidden">{t('common_back_to_home', { defaultValue: 'Back to Home' })}</span>
+            <span className="hidden sm:inline">{t('common_back_to_landing', { defaultValue: 'Back to landing page' })}</span>
+            <span className="sm:hidden">{t('common_back_to_home', { defaultValue: 'Back to home' })}</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-2.5 pl-2 border-l border-white/10">

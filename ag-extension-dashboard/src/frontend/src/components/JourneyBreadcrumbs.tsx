@@ -22,7 +22,7 @@ export const JourneyBreadcrumbs: React.FC<JourneyBreadcrumbsProps> = ({
 
   return (
     <div className={`flex items-center gap-1.5 overflow-x-auto py-1 text-[11px] font-mono no-scrollbar ${className}`}>
-      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1 shrink-0">
+      <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1 shrink-0">
         <Clock className="w-3 h-3 text-slate-400" />
         {t('ui_journey_breadcrumbs_path')}
       </span>

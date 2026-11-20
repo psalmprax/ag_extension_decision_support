@@ -12,7 +12,7 @@ const inputCls =
 function NumField({ label, value, onChange, step = 'any', suffix }: { label: string; value: number | ''; onChange: (v: number | '') => void; step?: string; suffix?: string }) {
     return (
         <label className="block">
-            <span className="text-xxs font-bold uppercase tracking-widest text-gray-400">{label}</span>
+            <span className="text-xxs font-bold text-gray-400">{label}</span>
             <span className="flex items-center gap-1">
                 <input
                     type="number"
@@ -84,7 +84,7 @@ export function FieldToolsCard() {
         <div className={`${cardClass} p-4 sm:p-5`}>
             <div className="flex items-center gap-2 mb-3">
                 <Calculator className="w-4 h-4 text-primary-500" />
-                <h3 className="text-sm font-black uppercase tracking-widest">
+                <h3 className="text-sm font-black  ">
                     {t('fieldtools_title', { defaultValue: 'Field Calculators' })}
                 </h3>
                 <span className="text-xxs text-gray-400 ml-auto">

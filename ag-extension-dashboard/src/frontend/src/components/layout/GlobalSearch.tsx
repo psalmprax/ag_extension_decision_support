@@ -136,7 +136,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
               ) : (
                 globalSearchResults.map(group => (
                   <div key={group.type}>
-                    <div className="px-4 pt-3 pb-1 text-xxs font-bold text-emerald-400 uppercase tracking-widest bg-slate-900/50">
+                    <div className="px-4 pt-3 pb-1 text-xxs font-bold text-emerald-400 bg-slate-900/50">
                       {group.type}
                     </div>
                     {group.items.map(item => (
@@ -197,7 +197,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
             ) : (
               globalSearchResults.map(group => (
                 <div key={group.type}>
-                  <div className="px-4 pt-3 pb-1 text-xxs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest bg-slate-100 dark:bg-slate-800/60">
+                  <div className="px-4 pt-3 pb-1 text-xxs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/60">
                     {group.type}
                   </div>
                   {group.items.map(item => (

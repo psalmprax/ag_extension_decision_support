@@ -45,7 +45,7 @@ export function SMSComposerHistoryTab({
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2">
                   {msg.message}
                 </p>
-                <span className="text-xxs uppercase font-bold text-slate-400 mt-2 inline-block">
+                <span className="text-xxs font-bold text-slate-400 mt-2 inline-block">
                   {msg.timestamp.toLocaleString()}
                 </span>
               </div>

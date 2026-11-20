@@ -60,7 +60,7 @@ export function PlanTierSelector({
       >
         <option value="">
           {isAdminRole
-            ? t('users_access_admin_full', 'Admin — Full Platform Access')
+            ? t('users_access_admin_full', 'Admin — Full platform access')
             : t('users_access_keep_plan', 'Current: {plan} (unchanged)', {
                 plan: currentPlanName || 'Free',
               })}

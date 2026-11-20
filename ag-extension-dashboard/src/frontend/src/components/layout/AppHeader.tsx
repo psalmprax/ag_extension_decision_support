@@ -2,13 +2,16 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sun as SunIcon, Moon as MoonIcon, Menu, Bell, Settings, Leaf, Activity, Send } from 'lucide-react';
 import { WeatherWidget } from '@/components/WeatherWidget';
-import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Farmer } from '../../types/dashboard';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/cn';
 import { GlobalSearch } from './GlobalSearch';
 import { ProfileMenu } from './ProfileMenu';
+import { useLanguage } from '@/lib/LanguageContext';
+
+const ICON_BUTTON =
+  'h-10 w-10 flex items-center justify-center rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors';
 
 interface AppHeaderProps {
   sidebarOpen: boolean;
@@ -39,8 +42,6 @@ interface AppHeaderProps {
   setShowSettingsPanel: (show: boolean) => void;
 }
 
-import { useLanguage } from '@/lib/LanguageContext';
-
 export const AppHeader: React.FC<AppHeaderProps> = ({
   sidebarOpen,
   setSidebarOpen,
@@ -66,69 +67,54 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   setShowProfileModal,
   setShowSettingsPanel,
 }) => {
-  const { darkMode, setDarkMode, themeName, setThemeName } = useAppStore();
+  const { darkMode, setDarkMode, user } = useAppStore();
   const { t } = useLanguage();
+  // Demo shortcuts open admin tooling (scanner sandbox, telemetry, SMS bot);
+  // officers and farmers reach their own tools from the sidebar.
+  const showAdminShortcuts = user?.role === 'admin';
 
-  const headerClass = cn(
-    'fixed top-0 w-full z-50 flex justify-between items-center px-3 sm:px-6 h-16 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-xs',
-    'bg-white/95 dark:bg-slate-950/90'
-  );
+  const shortcuts = [
+    { tab: 'disease_diagnosis', icon: Leaf, label: t('header_instant_ai_scan', { defaultValue: 'Scan a leaf' }), title: t('header_edge_ai_tooltip', { defaultValue: 'Check a crop photo for disease' }) },
+    { tab: 'telemetry', icon: Activity, label: t('header_live_field_radar', { defaultValue: 'Field conditions' }), title: t('header_radar_tooltip', { defaultValue: 'Weather and soil readings by area' }) },
+    { tab: 'sms', icon: Send, label: t('header_test_sms_bot', { defaultValue: 'SMS preview' }), title: t('header_bot_tooltip', { defaultValue: 'Try the SMS and USSD menus' }) },
+  ];
 
   return (
-    <header className={headerClass}>
-      <div className="flex items-center gap-2 sm:gap-6">
-        <div className="flex items-center gap-1.5 sm:gap-3">
+    <header className="fixed top-0 w-full z-50 flex justify-between items-center px-3 sm:px-5 h-16 border-b border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#0d1a14]">
+      <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-1 sm:gap-2">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="h-10 w-10 sm:h-12 sm:w-12 flex items-center justify-center rounded-lg hover:bg-white/5 transition-all text-gray-400"
-            aria-label="Toggle navigation menu"
+            className={ICON_BUTTON}
+            aria-label={t('header_toggle_navigation', { defaultValue: 'Toggle navigation menu' })}
+            aria-expanded={sidebarOpen}
           >
-            <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
+            <Menu className="w-5 h-5" />
           </button>
-          <Link to="/dashboard" aria-label="Go to dashboard">
-            <img
-              src="/logo.png"
-              alt="Logo"
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-            />
+          <Link to="/dashboard" aria-label={t('header_go_dashboard', { defaultValue: 'Go to dashboard' })}>
+            <img src="/logo.png" alt="" className="w-7 h-7 rounded-md" />
           </Link>
         </div>
 
-        {/* ── Quick-Action Interest Pills for First-Time Clients ── */}
-        <div className="hidden md:flex items-center gap-2 border-l border-slate-200 dark:border-white/10 pl-4">
-          <button
-            type="button"
-            onClick={() => React.startTransition(() => setActiveTab('disease_diagnosis'))}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/[0.08] text-xs font-medium transition-colors cursor-pointer"
-            title={t('header_edge_ai_tooltip', { defaultValue: 'Instant Edge AI Plant Disease Scanner' })}
-          >
-            <Leaf className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-            <span>{t('header_instant_ai_scan', { defaultValue: 'Instant AI Scan' })}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => React.startTransition(() => setActiveTab('telemetry'))}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/[0.08] text-xs font-medium transition-colors cursor-pointer"
-            title={t('header_radar_tooltip', { defaultValue: 'Live Geospatial Weather & Soil Telemetry' })}
-          >
-            <Activity className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-            <span>{t('header_live_field_radar', { defaultValue: 'Live Field Radar' })}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => React.startTransition(() => setActiveTab('sms'))}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/[0.08] text-xs font-medium transition-colors cursor-pointer"
-            title={t('header_bot_tooltip', { defaultValue: 'Interactive SMS & USSD Bot Sandbox' })}
-          >
-            <Send className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-            <span>{t('header_test_sms_bot', { defaultValue: 'Test SMS Bot' })}</span>
-          </button>
-        </div>
+        {showAdminShortcuts && (
+          <nav aria-label={t('header_shortcuts', { defaultValue: 'Shortcuts' })} className="hidden lg:flex items-center gap-1 border-l border-slate-900/[0.08] dark:border-white/[0.08] pl-3">
+            {shortcuts.map(({ tab, icon: Icon, label, title }) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => React.startTransition(() => setActiveTab(tab))}
+                className="flex items-center gap-1.5 h-8 px-2.5 rounded-md text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors"
+                title={title}
+              >
+                <Icon className="w-4 h-4" aria-hidden="true" />
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
+        )}
       </div>
 
-      <div className="flex items-center gap-1.5 sm:gap-4">
+      <div className="flex items-center gap-1 sm:gap-2">
         <GlobalSearch
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -144,45 +130,42 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           setActiveTab={setActiveTab}
         />
 
-        <div className="hidden xl:block ml-2">
+        <div className="hidden xl:block">
           <WeatherWidget location={weatherLocation} />
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-3 border-r border-gray-200 dark:border-white/10 pr-2 sm:pr-4">
-          <div className="hidden lg:flex items-center gap-2 scale-90 origin-right">
-            <LanguageSwitcher compact />
-            <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
-          </div>
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="h-9 w-9 sm:h-12 sm:w-12 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:border-primary-400/50 hover:bg-white/10 transition-all text-slate-400 hover:text-primary-400 backdrop-blur-sm"
-            title={darkMode ? t('theme_switch_light', { defaultValue: 'Switch to Light Mode' }) : t('theme_switch_dark', { defaultValue: 'Switch to Dark Mode' })}
-            aria-label={darkMode ? t('theme_switch_light', { defaultValue: 'Switch to Light Mode' }) : t('theme_switch_dark', { defaultValue: 'Switch to Dark Mode' })}
-          >
-            {darkMode ? <SunIcon className="w-4 h-4 sm:w-6 sm:h-6" /> : <MoonIcon className="w-4 h-4 sm:w-6 sm:h-6" />}
-          </button>
+        <div className="hidden lg:block">
+          <LanguageSwitcher compact showFlag={false} />
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2">
-          <button
-            onClick={() => setIsNotificationPanelOpen(true)}
-            className="text-slate-400 hover:text-primary-400 transition-colors h-9 w-9 sm:h-12 sm:w-12 flex items-center justify-center rounded-full hover:bg-white/5 relative"
-            aria-label={t('header_open_notifications', { defaultValue: 'Open notifications' })}
-          >
-            <Bell className="w-4 h-4 sm:w-6 sm:h-6" />
-            {apiUnreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-2 h-2 bg-emerald-500 rounded-full"></span>
-            )}
-          </button>
-          <button
-            onClick={() => setShowSettingsPanel(true)}
-            className="text-slate-400 hover:text-primary-400 transition-colors h-9 w-9 sm:h-12 sm:w-12 flex items-center justify-center rounded-full hover:bg-white/5"
-            aria-label={t('header_open_settings', { defaultValue: 'Open settings' })}
-          >
-            <Settings className="w-4 h-4 sm:w-6 sm:h-6" />
-          </button>
-        </div>
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className={ICON_BUTTON}
+          title={darkMode ? t('theme_switch_light', { defaultValue: 'Switch to light mode' }) : t('theme_switch_dark', { defaultValue: 'Switch to dark mode' })}
+          aria-label={darkMode ? t('theme_switch_light', { defaultValue: 'Switch to light mode' }) : t('theme_switch_dark', { defaultValue: 'Switch to dark mode' })}
+        >
+          {darkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+        </button>
 
+        <button
+          onClick={() => setIsNotificationPanelOpen(true)}
+          className={cn(ICON_BUTTON, 'relative')}
+          aria-label={t('header_open_notifications', { defaultValue: 'Open notifications' })}
+        >
+          <Bell className="w-5 h-5" />
+          {apiUnreadCount > 0 && (
+            <span className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-[#0d1a14]" aria-hidden="true" />
+          )}
+        </button>
+        <button
+          onClick={() => setShowSettingsPanel(true)}
+          className={ICON_BUTTON}
+          aria-label={t('header_open_settings', { defaultValue: 'Open settings' })}
+        >
+          <Settings className="w-5 h-5" />
+        </button>
+
+        <div className="ml-1 pl-2 sm:pl-3 border-l border-slate-900/[0.08] dark:border-white/[0.08]">
         <ProfileMenu
           isProfileMenuOpen={isProfileMenuOpen}
           setIsProfileMenuOpen={setIsProfileMenuOpen}
@@ -190,6 +173,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           setShowProfileModal={setShowProfileModal}
           handleLogout={handleLogout}
         />
+        </div>
       </div>
     </header>
   );

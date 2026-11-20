@@ -13,7 +13,7 @@ const liveResponse = {
     dataStatus: 'live',
     attribution: 'FAOSTAT Producer Prices (CC BY 4.0)',
     prices: [
-      { crop: 'Maize (Corn)', cropCode: '0112', usdPerTonne: 400, usdPerKg: 0.4, usdPerBag90kg: 36, yoyPct: 5.3 },
+      { crop: 'Maize (corn)', cropCode: '0112', usdPerTonne: 400, usdPerKg: 0.4, usdPerBag90kg: 36, yoyPct: 5.3 },
       { crop: 'Beans (Dry)', cropCode: '01591', usdPerTonne: 900, usdPerKg: 0.9, usdPerBag90kg: 81, yoyPct: -2.1 },
       { crop: 'Sorghum', cropCode: '0115', usdPerTonne: 320, usdPerKg: 0.32, usdPerBag90kg: 28.8, yoyPct: null },
     ],

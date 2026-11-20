@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Send, FileText, Trash2, X, Lock, Radio, Search, ChevronRight } from 'lucide-react';
+import { Users, Send, FileText, Trash2, X, Lock, Search, ChevronRight } from 'lucide-react';
 import { Farmer } from '../types/dashboard';
 import { useDemoMode } from '@/demo';
 import { useLanguage } from '../lib/LanguageContext';
@@ -60,24 +60,13 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-24">
       {/* ── Top Bento Banner: Portfolio Intelligence & Telemetry ── */}
-      <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-xl relative overflow-hidden">
+      <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center">
-              <Users className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">{t('ui_portfolio_page_client_portfolio')}</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                  <Radio className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                  {t('ui_portfolio_page_telemetry_mesh_active')}
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-white/60 mt-0.5">
-                {t('ui_portfolio_page_manage_smallholder_cohorts_inspect_i')}
-              </p>
-            </div>
+          <div>
+            <h1 className="text-2xl font-medium text-slate-900 dark:text-white">{t('ui_portfolio_page_client_portfolio')}</h1>
+            <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
+              {t('ui_portfolio_page_manage_smallholder_cohorts_inspect_i')}
+            </p>
           </div>
 
           {/* Quick Telemetry Metric Badges */}
@@ -105,7 +94,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search by name, region, crop..."
+              placeholder={t('portfolio_search_placeholder', { defaultValue: 'Search by name, region or crop' })}
               className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:ring-1 focus:ring-emerald-500 dark:focus:ring-emerald-400 outline-none"
             />
           </div>
@@ -117,8 +106,8 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
               className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-xs font-medium text-slate-700 hover:text-slate-900 dark:text-white/80 dark:hover:text-white transition-colors"
             >
               {selectedFarmers.size === filteredFarmers.length && filteredFarmers.length > 0
-                ? 'Deselect All'
-                : 'Select All Filtered'}
+                ? t('portfolio_clear_selection', { defaultValue: 'Clear selection' })
+                : t('portfolio_select_all', { defaultValue: 'Select all' })}
             </button>
             <button
               onClick={handleBulkExport}
@@ -211,10 +200,10 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
                   transition={{ duration: 0.3, delay: Math.min(idx * 0.03, 0.3) }}
                   key={farmer.id}
                   onClick={() => handleOpenFarmerDetail(farmer)}
-                  className={`backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200 relative group flex flex-col justify-between cursor-pointer ${
+                  className={`bg-white dark:bg-white/[0.03] border rounded-lg p-5 transition-colors relative group flex flex-col justify-between cursor-pointer ${
                     isSelected
                       ? 'border-emerald-500/60 ring-1 ring-emerald-500/40'
-                      : 'border-slate-200 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/20'
+                      : 'border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/20 dark:hover:border-white/20'
                   }`}
                 >
                   <div className="space-y-3">
@@ -227,9 +216,9 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
                           <h3 className="font-semibold text-slate-900 dark:text-white text-base leading-tight truncate max-w-[140px]">
                             {farmer.firstName} {farmer.lastName}
                           </h3>
-                          <span className="text-xxs font-mono text-slate-500 dark:text-white/40">
-                            ID: {farmer.id.slice(0, 8)}
-                          </span>
+                          {farmer.phone && (
+                            <span className="text-xs font-mono tabular-nums text-slate-500 dark:text-white/50">{farmer.phone}</span>
+                          )}
                         </div>
                       </div>
 
@@ -328,7 +317,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
                 className="px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>{t('portfolio_broadcast_alert', { defaultValue: 'Broadcast Alert' })}</span>
+                <span>{t('portfolio_broadcast_alert', { defaultValue: 'Broadcast alert' })}</span>
               </button>
 
               <button

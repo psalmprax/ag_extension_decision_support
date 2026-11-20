@@ -61,9 +61,9 @@ export function FloatingAssistantShell({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: reducedMotion ? 0 : 12 }}
             transition={{ duration: reducedMotion ? 0 : 0.18 }}
-            className={`fixed inset-x-3 top-[calc(4.5rem+env(safe-area-inset-top))] bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-[60] flex flex-col overflow-hidden rounded-lg border border-white/15 bg-slate-950 text-white shadow-2xl shadow-black/50 sm:top-auto sm:inset-x-auto sm:right-6 sm:bottom-[calc(6rem+env(safe-area-inset-bottom))] sm:w-[420px] sm:h-[min(640px,calc(100dvh-128px-env(safe-area-inset-bottom)))] ${className}`}
+            className={`fixed inset-x-3 top-[calc(4.5rem+env(safe-area-inset-top))] bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-[60] flex flex-col overflow-hidden rounded-lg border border-white/15 bg-[#0d1a14] text-white shadow-2xl shadow-black/50 sm:top-auto sm:inset-x-auto sm:right-6 sm:bottom-[calc(6rem+env(safe-area-inset-bottom))] sm:w-[420px] sm:h-[min(640px,calc(100dvh-128px-env(safe-area-inset-bottom)))] ${className}`}
           >
-            <header className="flex shrink-0 items-center gap-3 border-b border-white/10 bg-slate-900 px-4 py-3">
+            <header className="flex shrink-0 items-center gap-3 border-b border-white/10 bg-white/[0.03] px-4 py-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-300">
                 <Sparkles className="h-4 w-4" aria-hidden="true" />
               </div>

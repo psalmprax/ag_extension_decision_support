@@ -678,7 +678,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] font-mono font-medium text-slate-400">
-                    {t('visit_next_scheduled') || 'Next Scheduled'}
+                    {t('visit_next_scheduled') || 'Next scheduled'}
                   </p>
                   <p className="text-xs font-bold text-white truncate">
                     {(() => {
@@ -706,7 +706,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                   onClick={handleStartSynthesis}
                   className="font-medium text-xs !rounded-[4px] !bg-emerald-600 !hover:bg-emerald-500 !text-white border border-white/10 shadow-sm"
                 >
-                  {t('action_start_synthesis') || 'Start Synthesis'}
+                  {t('action_start_synthesis') || 'Start synthesis'}
                   <ChevronRight className="w-3.5 h-3.5" />
                 </Button>
               </div>

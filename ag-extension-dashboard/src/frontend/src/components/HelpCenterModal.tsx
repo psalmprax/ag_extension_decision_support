@@ -72,7 +72,7 @@ function SupportTicketForm({
       ) : (
         <form onSubmit={handleTicketSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <label className="text-xs font-bold text-slate-500 dark:text-slate-400  ">
               {t('email_workflows_subject')}
             </label>
             <input
@@ -85,7 +85,7 @@ function SupportTicketForm({
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <label className="text-xs font-bold text-slate-500 dark:text-slate-400  ">
               {t('ui_help_center_modal_category')}
             </label>
             <select
@@ -103,7 +103,7 @@ function SupportTicketForm({
             </select>
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <label className="text-xs font-bold text-slate-500 dark:text-slate-400  ">
               {t('ui_help_center_modal_description')}
             </label>
             <textarea
@@ -208,7 +208,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
     },
     {
       icon: MessageSquare,
-      label: t('help_chat') || 'Live Chat',
+      label: t('help_chat') || 'Live chat',
       color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
       action: () => {
         onClose();
@@ -259,7 +259,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                     </div>
                     <div>
                       <h2 className="text-xl font-bold">
-                        {t('help_center_title') || 'Help Center'}
+                        {t('help_center_title') || 'Help center'}
                       </h2>
                       <p className="text-sm opacity-90">
                         {t('help_center_subtitle') || 'Find answers and get support'}
@@ -308,8 +308,8 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
 
                     {/* FAQs */}
                     <div className="space-y-3">
-                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                        {t('help_faq') || 'Frequently Asked Questions'}
+                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400  ">
+                        {t('help_faq') || 'Frequently asked questions'}
                       </h3>
                       {faqsLoading ? (
                         <div className="flex items-center justify-center py-8">
@@ -353,8 +353,8 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
 
                     {/* Keyboard Shortcuts */}
                     <div className="space-y-3">
-                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                        {t('help_shortcuts') || 'Keyboard Shortcuts'}
+                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400  ">
+                        {t('help_shortcuts') || 'Keyboard shortcuts'}
                       </h3>
                       <div className="grid grid-cols-2 gap-2">
                         {keyboardShortcuts.map(({ key, action }, i) => (
@@ -388,7 +388,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                     className="flex items-center justify-center gap-2 py-2.5 px-4 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-900/60 rounded-xl text-sm font-bold text-rose-700 dark:text-rose-300 transition-colors shadow-xs"
                   >
                     <Bug className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                    {t('help_report_issue') || 'Report an Issue'}
+                    {t('help_report_issue') || 'Report an issue'}
                   </button>
                   <button
                     type="button"
@@ -399,7 +399,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                     className="flex items-center justify-center gap-2 py-2.5 px-4 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-900/60 rounded-xl text-sm font-bold text-emerald-800 dark:text-emerald-300 transition-colors shadow-xs"
                   >
                     <ExternalLink className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    {t('help_feature_request') || 'Feature Request'}
+                    {t('help_feature_request') || 'Feature request'}
                   </button>
                 </div>
               )}

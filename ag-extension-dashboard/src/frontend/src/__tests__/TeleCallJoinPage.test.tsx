@@ -42,7 +42,7 @@ describe('TeleCallJoinPage', () => {
   it('redirects unauthenticated visitors to login (socket signaling requires a session)', async () => {
     await renderJoinPage();
     expect(screen.getByText('Login page')).toBeInTheDocument();
-    expect(screen.queryByText(/Tele-Agronomy Consultation/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Tele-Agronomy consultation/)).not.toBeInTheDocument();
   });
 
   it('renders the guest join UI for an authenticated farmer', async () => {
@@ -51,7 +51,7 @@ describe('TeleCallJoinPage', () => {
 
     expect(screen.getByText(/Joining as Grace Wanjiku/)).toBeInTheDocument();
     // Guest mode renders the real WebRTC pre-call view with a Join button
-    expect(screen.getByRole('button', { name: /Join Call/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Join call/i })).toBeInTheDocument();
     expect(screen.queryByText('Login page')).not.toBeInTheDocument();
   });
 

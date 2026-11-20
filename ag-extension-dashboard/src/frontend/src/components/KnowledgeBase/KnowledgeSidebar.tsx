@@ -69,7 +69,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
             onClick={() => (onNewQuery ? onNewQuery() : window.location.reload())}
             disabled={isDemo}
             title={isDemo ? 'Not available in demo version' : 'Start a new expert query'}
-            className={`flex items-center gap-2 w-full p-4 mb-8 text-white ${radiusClass} font-black text-sm uppercase tracking-widest shadow-lg transition-all transform ${
+            className={`flex items-center gap-2 w-full p-4 mb-8 text-white ${radiusClass} font-black text-sm shadow-lg transition-all transform ${
               isDemo
                 ? 'bg-gray-400 dark:bg-gray-700 cursor-not-allowed opacity-70'
                 : 'bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 active:scale-95'
@@ -83,7 +83,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
           <div className="flex-1 overflow-y-auto scrollbar-hide space-y-6">
             <div className="flex items-center gap-2 text-gray-400 px-2">
               <History className="w-4 h-4" />
-              <span className="text-xxs font-black uppercase tracking-widest">
+              <span className="text-xxs font-black  ">
                 {t('ui_knowledge_sidebar_recent_search_retainer')}
               </span>
             </div>
@@ -114,7 +114,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                         <p className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate mb-1">
                           {h.queryText}
                         </p>
-                        <div className="flex items-center gap-2 text-xxs font-black text-gray-400 uppercase tracking-widest">
+                        <div className="flex items-center gap-2 text-xxs font-black text-gray-400  ">
                           {h.crop && (
                             <span className="flex items-center gap-1 text-primary-500">
                               <Target className="w-2.5 h-2.5" />
@@ -152,7 +152,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
               <p className="text-sm font-black text-gray-900 dark:text-white truncate">
                 {user ? `${user.firstName} ${user.lastName}` : 'User'}
               </p>
-              <p className="text-xxs font-bold text-gray-400 uppercase tracking-[0.2em]">
+              <p className="text-xxs font-bold text-gray-400  ">
                 {user?.role?.replace('_', ' ') || 'Member'}
               </p>
             </div>

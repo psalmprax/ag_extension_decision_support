@@ -25,25 +25,9 @@ const SOURCE_EXTENSIONS = ['.ts', '.tsx', '.css'];
 const FORBIDDEN_TOKENS: { token: string; allow: string[]; reason: string }[] = [
   {
     token: 'bg-clip-text',
-    // The marketing landing page is a one-shot accent, not part of the dashboard shell.
-    // Sections live under pages/landing/sections/ after the LandingPage decompose (pure move).
-    allow: [
-      'LandingPage.tsx',
-      'AgentOS.tsx',
-      'CTA.tsx',
-      'Demo.tsx',
-      'FAQ.tsx',
-      'Features.tsx',
-      'FarmerServices.tsx',
-      'Footer.tsx',
-      'Hero.tsx',
-      'HowItWorks.tsx',
-      'Mission.tsx',
-      'Navbar.tsx',
-      'Problem.tsx',
-      'ROI.tsx',
-      'TrustAndSafety.tsx',
-    ],
+    // No exceptions: the landing page lost its gradient headlines in the
+    // design pass, so gradient text is banned everywhere.
+    allow: [],
     reason: 'gradient text fill (GRP-11 "No Gradient Keywords")',
   },
   {

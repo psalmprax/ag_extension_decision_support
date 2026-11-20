@@ -19,9 +19,9 @@ export function HowItWorks() {
           height={600}
           className="w-full h-full object-cover object-center opacity-[0.06] filter saturate-125 contrast-105 pointer-events-none"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950/85 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0d1a14] via-[#0d1a14]/85 to-[#0d1a14]" />
       </div>
-          <div className="relative z-10 max-w-[90rem] w-full mx-auto px-6">
+          <div className="relative z-10 max-w-6xl w-full mx-auto px-6">
             <motion.div
               initial="hidden"
               whileInView="visible"
@@ -29,20 +29,8 @@ export function HowItWorks() {
               variants={stagger}
               className="text-center mb-20"
             >
-              <motion.div
-                variants={fadeUp}
-                className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400 mb-3"
-              >
-                {t('ui_how_it_works_simple_3_step_process')}
-              </motion.div>
-              <motion.h2
-                variants={fadeUp}
-                className="text-2xl sm:text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight text-white mb-3"
-              >
-                {t('ui_how_it_works_heal_your_crops_in')}{' '}
-                <span className="bg-gradient-to-r from-emerald-300 to-amber-300 bg-clip-text text-transparent">
-                  {t('ui_how_it_works_three_simple_steps')}
-                </span>
+              <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-medium leading-tight text-white mb-4">
+                {t('ui_how_it_works_heal_your_crops_in')}
               </motion.h2>
               <motion.p
                 variants={fadeUp}
@@ -54,7 +42,6 @@ export function HowItWorks() {
 
             <div className="grid md:grid-cols-3 gap-8 relative">
               <div className="hidden md:block absolute top-8 left-[12%] right-[12%] h-px">
-                <div className="w-full h-full bg-gradient-to-r from-emerald-500/20 via-emerald-500/40 to-amber-500/20" />
               </div>
 
               {steps.map((step, i) => (
@@ -64,9 +51,9 @@ export function HowItWorks() {
                   whileInView="visible"
                   viewport={{ once: true }}
                   variants={fadeUp}
-                  className="p-6 rounded-xl backdrop-blur-md bg-slate-900/50 border border-white/[0.08] hover:border-emerald-500/30 transition-all duration-300 text-center relative"
+                  className="p-6 rounded-xl backdrop-blur-md bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/30 transition-all duration-300 text-center relative"
                 >
-                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-500/20 to-amber-500/10 border border-emerald-500/30 flex items-center justify-center text-lg font-bold text-emerald-400 mx-auto mb-6 relative z-10 shadow-lg shadow-emerald-950/30">
+                  <div className="w-16 h-16 rounded-xl bg-white/[0.04] border border-white/[0.12] flex items-center justify-center text-lg font-bold text-emerald-400 mx-auto mb-6 relative z-10 shadow-lg shadow-emerald-950/30">
                     {step.num}
                   </div>
                   <h3 className="text-lg font-bold mb-3 text-white/90">{step.title}</h3>

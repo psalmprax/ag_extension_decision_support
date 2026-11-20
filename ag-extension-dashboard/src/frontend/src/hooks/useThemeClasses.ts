@@ -11,16 +11,17 @@ export function useThemeClasses() {
   return useMemo(() => {
     const design = 'modern' as const;
 
-    const radiusClass = 'rounded';
+    const radiusClass = 'rounded-lg';
+    // Quiet panels: a hairline border carries the edge, no blur, glow or lift.
     const panelClass =
-      'backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 shadow-[inset_0_1px_1px_var(--color-outline)] border border-slate-200 dark:border-white/10';
+      'bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08]';
     const headerOpacity = 'bg-white/30 dark:bg-slate-950/30';
     const btnClass =
-      'rounded hover:scale-[1.01] active:scale-[0.99] hover:shadow-[0_0_20px_var(--color-outline)]';
-    const headingClass = 'text-gray-900 dark:text-white font-black tracking-tight';
-    const dataClass = 'text-gray-900 dark:text-white font-black tracking-tight';
+      'rounded-md transition-colors';
+    const headingClass = 'text-slate-900 dark:text-white font-medium';
+    const dataClass = 'text-slate-900 dark:text-white font-medium tabular-nums';
     const subtextClass = 'text-slate-600 dark:text-slate-400';
-    const cardClass = `${panelClass} ${radiusClass} p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:shadow-2xl`;
+    const cardClass = `${panelClass} ${radiusClass} p-6 relative overflow-hidden`;
 
     return {
       design,

@@ -169,7 +169,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                   setMobilePayData({ ...mobilePayData, transactionId: e.target.value.toUpperCase() })
                 }
                 placeholder="Enter M-Pesa/Airtel Ref (e.g. QKH7189XA)"
-                className="font-mono text-xs uppercase bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl"
+                className="font-mono text-xs bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl"
               />
               <div className="flex items-center justify-between gap-3 pt-1">
                 <p className="text-[11px] text-slate-500 dark:text-white/50 leading-tight">
@@ -234,7 +234,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                 value={voucherCode}
                 onChange={e => setVoucherCode(e.target.value.toUpperCase())}
                 placeholder="Enter voucher code (e.g. AGV-A1B2C3D4)"
-                className="font-mono tracking-wider text-xs bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl"
+                className="font-mono text-xs bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl"
               />
               <div className="flex items-center justify-between gap-3 pt-1">
                 <p className="text-[11px] text-slate-500 dark:text-white/50">{t('ui_payment_methods_instantly_unlocks_agronomist_quota')}</p>

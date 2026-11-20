@@ -43,13 +43,13 @@ describe('DiagnosisPage Component', () => {
 
     // Verify prominent Back to Landing Page navigation
     const backBtn = within(screen.getByRole('banner')).getByRole('link', {
-      name: /Back to Landing Page/i,
+      name: /Back to landing page/i,
     });
     expect(backBtn).toBeDefined();
     expect(backBtn.getAttribute('href')).toBe('/');
 
     // Verify clinic title and guarantees
-    expect(screen.getByText(/Instant Crop Disease & Leaf Pathology Doctor/i)).toBeDefined();
+    expect(screen.getByText(/Instant crop disease & leaf pathology doctor/i)).toBeDefined();
     expect(screen.getByText(/Online analysis/i)).toBeDefined();
 
     // Verify diagnostic tabs

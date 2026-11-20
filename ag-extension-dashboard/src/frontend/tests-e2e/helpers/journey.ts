@@ -87,8 +87,8 @@ export async function openMenu(page: Page, label: string | RegExp): Promise<void
   await item.click({ timeout: 30_000 });
 }
 
-/** The officer's chat with farmers ("Farmer Direct Chat" in the side menu), with or without its unread badge. */
-export const FARMER_CHAT_MENU = /^Farmer (Direct )?Chat( \d+ unread messages?)?$/;
+/** The officer's chat with farmers ("Farmer chat" in the side menu), with or without its unread badge. */
+export const FARMER_CHAT_MENU = /^Farmer (direct )?chat( \d+ unread messages?)?$/i;
 
 /** The farmer's chat with their officer ("My officer"), with or without its unread badge. */
 export const MY_OFFICER_MENU = /^My officer( \d+ unread messages?)?$/;

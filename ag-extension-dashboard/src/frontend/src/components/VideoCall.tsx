@@ -32,7 +32,7 @@ const ErrorState = ({
       onClick={isHost ? handleStartCall : handleJoinCall}
       className="mt-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
     >
-      {t('video_try_again') || 'Try Again'}
+      {t('video_try_again') || 'Try again'}
     </button>
   </div>
 );
@@ -68,7 +68,7 @@ const PreCallView = ({
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
       <h2 className="text-xl font-semibold text-gray-900 mb-4">
-        {t('video_consultation_title') || 'Video Consultation'}
+        {t('video_consultation_title') || 'Video consultation'}
       </h2>
 
       <div className="space-y-4">
@@ -124,7 +124,7 @@ const PreCallView = ({
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
             >
               <Video className="w-5 h-5" />
-              {isJoining ? t('video_joining') || 'Joining...' : t('video_join_call') || 'Join Call'}
+              {isJoining ? t('video_joining') || 'Joining...' : t('video_join_call') || 'Join call'}
             </button>
           )}
         </div>

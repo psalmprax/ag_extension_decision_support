@@ -64,7 +64,7 @@ export const DistributionPanels: React.FC<{
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       <DistributionCard
-        title={t('viz_crop_planning', 'Crop Planning')}
+        title={t('viz_crop_planning', 'Crop planning')}
         icon={<BarChart3 className="w-5 h-5 text-emerald-500" />}
         rows={crops}
         emptyText={t('dash_crops_empty', 'No crops recorded yet. They appear here as farmers are registered with their crops.')}
@@ -73,7 +73,7 @@ export const DistributionPanels: React.FC<{
         cardClass={cardClass}
       />
       <DistributionCard
-        title={t('stat_regional_distribution', 'Regional Distribution')}
+        title={t('stat_regional_distribution', 'Farm locations')}
         icon={<Users className="w-5 h-5 text-primary-500" />}
         rows={regions}
         emptyText={t('dash_regions_empty', 'No farmers registered yet. Their regions appear here once they are added.')}

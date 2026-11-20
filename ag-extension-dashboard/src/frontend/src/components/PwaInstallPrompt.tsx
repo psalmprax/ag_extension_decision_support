@@ -120,7 +120,7 @@ export const PwaInstallPrompt: React.FC = () => {
               <div>
                 <h4 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
                   {t('ui_pwa_install_prompt_install_gpexts_app')}
-                  <span className="px-1.5 py-0.5 rounded text-xs font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <span className="px-1.5 py-0.5 rounded text-xs font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                     {t('ui_pwa_install_prompt_mobile')}
                   </span>
                 </h4>

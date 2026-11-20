@@ -37,7 +37,7 @@ const QuotaBar = ({
             <Icon className="w-3.5 h-3.5" />
           </div>
           <div>
-            <span className="text-xxs font-black uppercase tracking-widest text-slate-400 block leading-none mb-1">
+            <span className="text-xxs font-black text-slate-400 block leading-none mb-1">
               {label}
             </span>
             <span

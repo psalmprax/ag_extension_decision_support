@@ -287,7 +287,7 @@ export function FarmerMap({
               <div className="p-0 overflow-hidden">
                 <div className="p-4 bg-gradient-to-br from-emerald-500 to-teal-700 text-white relative">
                   <div className="flex items-center justify-between">
-                    <span className="text-xxs font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-md backdrop-blur-md">
+                    <span className="text-xxs font-black bg-white/20 px-2 py-0.5 rounded-md backdrop-blur-md">
                       {farmer.crop}
                     </span>
                     <span className="text-xxs font-mono opacity-80">ID: {farmer.id}</span>
@@ -307,11 +307,11 @@ export function FarmerMap({
                 <div className="p-4 space-y-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                   <div className="grid grid-cols-2 gap-2 text-xxs">
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                      <div className="text-slate-400 font-bold uppercase tracking-wider">{t('ui_farmer_map_farm_area')}</div>
+                      <div className="text-slate-400 font-bold  ">{t('ui_farmer_map_farm_area')}</div>
                       <div className="text-sm font-black text-slate-800 dark:text-white mt-0.5">{farmer.size} ha</div>
                     </div>
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                      <div className="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                      <div className="text-slate-400 font-bold flex items-center gap-1">
                         {t('farmer_est_yield')}
                         <InfoPromptIcon
                           title="Estimated Yield"
@@ -396,46 +396,46 @@ export function FarmerMap({
 
       <OutbreakLayer />
       <LayerSwitcher currentLayer={currentLayer} onLayerChange={handleLayerChange} t={t} />
-      <MapLegend show={showLegend} t={t} />
+      <MapLegend show={showLegend && farmers.length > 0} crops={Object.keys(stats.cropCounts)} t={t} />
     </MapContainer>
   );
 
   return (
     <div
-      className={`relative w-full rounded-xl overflow-hidden border shadow-xl ${
+      className={`relative w-full rounded-lg overflow-hidden border ${
         themeName === 'cyber'
           ? 'border-gray-800 bg-gray-900/40'
-          : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900'
+          : 'border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#0d1a14]'
       } ${className}`}
       style={{ height }}
     >
       <div className="absolute top-3 left-3 z-[400] flex items-center gap-1.5 sm:gap-2">
         <button
           onClick={handleLocateMe}
-          className="p-2 sm:p-2.5 rounded-xl bg-slate-900/90 text-white border border-white/10 shadow-lg backdrop-blur-md hover:bg-slate-800 active:scale-95 transition-all"
+          className="h-9 min-w-9 px-2 rounded-md bg-white/95 dark:bg-[#0d1a14]/95 text-slate-700 dark:text-slate-200 border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm hover:bg-white dark:hover:bg-[#13251c] transition-colors flex items-center justify-center gap-1.5 text-sm"
           title="Locate Current Position"
           aria-label="Locate Current Position"
         >
-          <Crosshair className="w-4 h-4 text-emerald-400" />
+          <Crosshair className="w-4 h-4" aria-hidden="true" />
         </button>
 
         <button
           onClick={() => setShowMiniSearch(!showMiniSearch)}
-          className="p-2 sm:p-2.5 rounded-xl bg-slate-900/90 text-white border border-white/10 shadow-lg backdrop-blur-md hover:bg-slate-800 active:scale-95 transition-all"
+          className="h-9 min-w-9 px-2 rounded-md bg-white/95 dark:bg-[#0d1a14]/95 text-slate-700 dark:text-slate-200 border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm hover:bg-white dark:hover:bg-[#13251c] transition-colors flex items-center justify-center gap-1.5 text-sm"
           title="Search Farmers"
           aria-label="Search Farmers"
         >
-          <Search className="w-4 h-4 text-emerald-400" />
+          <Search className="w-4 h-4" aria-hidden="true" />
         </button>
 
         {showMiniSearch && (
           <div className="animate-in fade-in slide-in-from-left duration-200">
             <input
               type="text"
-              placeholder="Filter crops, region..."
+              placeholder="Filter by crop or region"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="px-3 py-1.5 text-xs rounded-xl bg-slate-900/95 text-white border border-white/20 backdrop-blur-md shadow-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 w-40 sm:w-56"
+              className="h-9 px-3 text-sm rounded-md bg-white dark:bg-[#0d1a14] text-slate-900 dark:text-white border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 w-40 sm:w-56"
             />
           </div>
         )}
@@ -444,17 +444,17 @@ export function FarmerMap({
       <div className="absolute top-3 right-3 z-[400]">
         <button
           onClick={() => setIsExpanded(true)}
-          className="p-2 sm:p-2.5 rounded-xl bg-slate-900/90 text-white border border-white/10 shadow-lg backdrop-blur-md hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-1.5 text-xs font-bold"
+          className="h-9 min-w-9 px-2 rounded-md bg-white/95 dark:bg-[#0d1a14]/95 text-slate-700 dark:text-slate-200 border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm hover:bg-white dark:hover:bg-[#13251c] transition-colors flex items-center justify-center gap-1.5 text-sm"
           title="Expand Map Fullscreen"
           aria-label="Expand Map Fullscreen"
         >
-          <Maximize2 className="w-4 h-4 text-emerald-400" />
+          <Maximize2 className="w-4 h-4" aria-hidden="true" />
           <span className="hidden sm:inline">{t('ui_farmer_map_expand')}</span>
         </button>
       </div>
 
       {isDemo && (
-        <div className="absolute bottom-3 left-3 z-[400] rounded-lg bg-slate-950/85 px-2.5 py-1.5 text-[10px] font-semibold text-amber-200 border border-amber-400/30">
+        <div className="absolute bottom-3 left-3 z-[400] rounded-md bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 border border-amber-300">
           {t('ui_farmer_map_sample_demo_locations')}
         </div>
       )}

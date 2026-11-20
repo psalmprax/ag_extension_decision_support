@@ -355,7 +355,7 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-2.5 py-1 rounded-lg font-semibold uppercase text-xxs transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg font-semibold text-xxs transition-all cursor-pointer ${
                 activeCategory === cat
                   ? 'bg-primary-600 text-white'
                   : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -411,7 +411,7 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
                   backgroundColor: `${CATEGORY_COLORS[(selectedNode || hoveredNode)!.category]}25`,
                   color: CATEGORY_COLORS[(selectedNode || hoveredNode)!.category],
                 }}
-                className="px-2 py-0.5 rounded text-xxs font-mono uppercase font-bold"
+                className="px-2 py-0.5 rounded text-xxs font-mono font-bold"
               >
                 {(selectedNode || hoveredNode)?.category}
               </span>

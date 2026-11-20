@@ -255,7 +255,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
               <div>
                 <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
                   {t('ui_goal_mode_campaign_modal_autonomous_agronomy_campaigns_goal_m')}
-                  <span className="text-xxs uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                  <span className="text-xxs px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30">
                     {t('ui_goal_mode_campaign_modal_agent_os')}
                   </span>
                 </h2>

@@ -98,7 +98,7 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
             </button>
             <div className="min-w-0">
               <h2 id="map-modal-title" className="text-base sm:text-xl font-bold truncate text-gray-900 dark:text-white">
-                {t('interactive_farmer_map') || 'Interactive Map'}
+                {t('interactive_farmer_map') || 'Interactive map'}
               </h2>
               <p className="text-xxs sm:text-xs text-gray-400 font-medium truncate">
                 {farmers.length} {t('registered_farms_overview') || 'Registered farms'}
@@ -145,7 +145,7 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
         <div className="px-4 sm:px-8 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 backdrop-blur-sm bg-gray-50/80 dark:bg-gray-800/80 border-gray-100 dark:border-gray-800">
           <div className="flex flex-wrap items-center gap-4 sm:gap-8">
             <div className="flex flex-col">
-              <span className="text-xxs uppercase font-black tracking-widest text-gray-400">
+              <span className="text-xxs font-black text-gray-400">
                 {t('map_farms') || 'Total Farms'}
               </span>
               <span className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">{farmers.length}</span>

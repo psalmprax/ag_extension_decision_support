@@ -1093,13 +1093,13 @@ function LanguageSelector({ selectedLanguage, onSelectLanguage }: LanguageSelect
       <div className="flex items-center justify-between mb-2 px-0.5">
         <div className="flex items-center gap-2 text-xs font-medium text-white/70">
           <Globe className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="font-mono uppercase tracking-wider">{t('ui_talking_assistant_voice_language')}</span>
+          <span className="font-mono  ">{t('ui_talking_assistant_voice_language')}</span>
         </div>
         <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
           {t('ui_talking_assistant_24_languages')}
         </span>
       </div>
-      <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-950/70 border border-white/[0.08]">
+      <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-[#0d1a14]/70 border border-white/[0.08]">
         {PILOT_LANGUAGES.map((code) => {
           const langObj = languages.find((l) => l.code === code);
           const isSelected = selectedLanguage === code;
@@ -1124,10 +1124,10 @@ function LanguageSelector({ selectedLanguage, onSelectLanguage }: LanguageSelect
             aria-label="Select voice language"
             value={selectedLanguage}
             onChange={(e) => onSelectLanguage(e.target.value as Language)}
-            className="appearance-none bg-slate-900 text-white text-xs font-medium pl-2.5 pr-7 py-1 rounded-lg border border-white/10 hover:border-emerald-500/40 focus:outline-none focus:border-emerald-500 cursor-pointer"
+            className="appearance-none bg-white/[0.03] text-white text-xs font-medium pl-2.5 pr-7 py-1 rounded-lg border border-white/10 hover:border-emerald-500/40 focus:outline-none focus:border-emerald-500 cursor-pointer"
           >
             {languages.map((l) => (
-              <option key={l.code} value={l.code} className="bg-slate-900 text-white">
+              <option key={l.code} value={l.code} className="bg-white/[0.03] text-white">
                 {l.flag} {l.name} ({l.code.toUpperCase()})
               </option>
             ))}
@@ -1200,7 +1200,7 @@ function VoiceOrbIcon({
     return (
       <>
         <Loader2 className="w-9 h-9 animate-spin" />
-        <span className="text-[10px] font-bold uppercase tracking-wider mt-1">{t('ui_talking_assistant_transcribing')}</span>
+        <span className="text-[10px] font-bold mt-1">{t('ui_talking_assistant_transcribing')}</span>
       </>
     );
   }
@@ -1208,7 +1208,7 @@ function VoiceOrbIcon({
     return (
       <>
         <Mic className="w-9 h-9 animate-pulse" />
-        <span className="text-[10px] font-bold uppercase tracking-wider mt-1">{t('ui_talking_assistant_listening')}</span>
+        <span className="text-[10px] font-bold mt-1">{t('ui_talking_assistant_listening')}</span>
       </>
     );
   }
@@ -1216,14 +1216,14 @@ function VoiceOrbIcon({
     return (
       <>
         <Volume2 className="w-9 h-9 animate-bounce" />
-        <span className="text-[10px] font-bold uppercase tracking-wider mt-1">{t('ui_talking_assistant_speaking')}</span>
+        <span className="text-[10px] font-bold mt-1">{t('ui_talking_assistant_speaking')}</span>
       </>
     );
   }
   return (
     <>
       <Mic className="w-9 h-9" />
-      <span className="text-[10px] font-bold uppercase tracking-wider mt-1">{t('ui_talking_assistant_tap_to_speak')}</span>
+      <span className="text-[10px] font-bold mt-1">{t('ui_talking_assistant_tap_to_speak')}</span>
     </>
   );
 }
@@ -1375,7 +1375,7 @@ function PersonaSelector({ selectedPersona, onSelectPersona }: PersonaSelectorPr
   return (
     <div className="w-full my-2">
       <div className="flex items-center justify-between mb-1.5 px-0.5">
-        <span className="text-[11px] font-medium tracking-wider uppercase text-white/50">
+        <span className="text-[11px] font-medium text-white/50">
           {t('ui_talking_assistant_voice_persona')}
         </span>
         <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
@@ -1466,7 +1466,7 @@ function ActiveContextBanner({ slots, onClear }: ActiveContextBannerProps) {
   return (
     <div className="mb-3 px-3 py-2 rounded-lg bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between gap-2 text-xs">
       <div className="flex items-center gap-1.5 flex-wrap">
-        <span className="text-emerald-400 font-semibold uppercase tracking-wider text-[10px]">
+        <span className="text-emerald-400 font-semibold text-[10px]">
           {t('ui_talking_assistant_active_context')}
         </span>
         {slots.crop && (
@@ -1518,7 +1518,7 @@ function HandoffCard({ onHandoff }: HandoffCardProps) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mb-4 p-3 rounded-lg bg-slate-900 border border-slate-800 flex flex-col items-start gap-3 shadow-sm"
+      className="mb-4 p-3 rounded-lg bg-white/[0.03] border border-slate-800 flex flex-col items-start gap-3 shadow-sm"
     >
       <div className="flex items-center gap-2.5">
         <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
@@ -1572,7 +1572,7 @@ function ChatMessage({ msg, onSpeak }: ChatMessageProps) {
         className={`min-w-0 flex-1 max-w-[calc(100%-2.75rem)] rounded-lg px-3 py-3 text-sm leading-relaxed [overflow-wrap:anywhere] ${
           isUser
             ? 'bg-emerald-600 text-white rounded-tr-none'
-            : 'bg-slate-950/80 border border-white/[0.08] text-white/90 rounded-tl-none'
+            : 'bg-[#0d1a14]/80 border border-white/[0.08] text-white/90 rounded-tl-none'
         }`}
       >
         <p>{msg.text}</p>
@@ -1676,7 +1676,7 @@ function ChatInputForm({
         disabled={isLoading || isTranscribing}
         onChange={(e) => onChangeInput(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-lg bg-slate-950/90 border border-white/[0.12] text-sm text-white placeholder-white/40 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all pr-28 disabled:opacity-50"
+        className="w-full px-4 py-3 rounded-lg bg-[#0d1a14]/90 border border-white/[0.12] text-sm text-white placeholder-white/40 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all pr-28 disabled:opacity-50"
       />
 
       <div className="absolute right-2 flex items-center gap-1">
@@ -1998,7 +1998,7 @@ export function TalkingAssistant({ defaultOpen = false, className = '' }: Talkin
         <QuestionChips onSelect={handleSelectPrompt} expanded={messages.length === 1} />
         <div ref={messagesEndRef} />
       </div>
-      <div className="shrink-0 border-t border-white/10 bg-slate-900/60 p-3">
+      <div className="shrink-0 border-t border-white/10 bg-white/[0.03] p-3">
               <ChatInputForm
                 inputText={inputText}
                 isListening={isListening}

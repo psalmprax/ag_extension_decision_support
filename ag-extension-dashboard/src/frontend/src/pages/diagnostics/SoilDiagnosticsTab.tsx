@@ -192,8 +192,8 @@ const SoilNpkGrid: React.FC<{ npk: SoilAnalysisResult['npkDeficiencies'] }> = ({
           <div className="w-7 h-7 rounded-[3px] bg-rose-500/15 border border-rose-500/30 flex items-center justify-center mx-auto mb-1 text-rose-400 font-bold font-mono text-xs">
             N
           </div>
-          <p className="text-[10px] font-mono text-slate-400 uppercase">{t('ui_soil_diagnostics_tab_nitrogen')}</p>
-          <span className={`inline-block mt-1 px-1.5 py-0.2 rounded-[2px] text-[9px] font-mono font-bold uppercase border ${getStatusBadge(npk.nitrogen)}`}>
+          <p className="text-[10px] font-mono text-slate-400 ">{t('ui_soil_diagnostics_tab_nitrogen')}</p>
+          <span className={`inline-block mt-1 px-1.5 py-0.2 rounded-[2px] text-[9px] font-mono font-bold border ${getStatusBadge(npk.nitrogen)}`}>
             {npk.nitrogen}
           </span>
         </div>
@@ -202,8 +202,8 @@ const SoilNpkGrid: React.FC<{ npk: SoilAnalysisResult['npkDeficiencies'] }> = ({
           <div className="w-7 h-7 rounded-[3px] bg-sky-500/15 border border-sky-500/30 flex items-center justify-center mx-auto mb-1 text-sky-400 font-bold font-mono text-xs">
             P
           </div>
-          <p className="text-[10px] font-mono text-slate-400 uppercase">{t('ui_soil_diagnostics_tab_phosphorus')}</p>
-          <span className={`inline-block mt-1 px-1.5 py-0.2 rounded-[2px] text-[9px] font-mono font-bold uppercase border ${getStatusBadge(npk.phosphorus)}`}>
+          <p className="text-[10px] font-mono text-slate-400 ">{t('ui_soil_diagnostics_tab_phosphorus')}</p>
+          <span className={`inline-block mt-1 px-1.5 py-0.2 rounded-[2px] text-[9px] font-mono font-bold border ${getStatusBadge(npk.phosphorus)}`}>
             {npk.phosphorus}
           </span>
         </div>
@@ -212,8 +212,8 @@ const SoilNpkGrid: React.FC<{ npk: SoilAnalysisResult['npkDeficiencies'] }> = ({
           <div className="w-7 h-7 rounded-[3px] bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mx-auto mb-1 text-amber-400 font-bold font-mono text-xs">
             K
           </div>
-          <p className="text-[10px] font-mono text-slate-400 uppercase">{t('ui_soil_diagnostics_tab_potassium')}</p>
-          <span className={`inline-block mt-1 px-1.5 py-0.2 rounded-[2px] text-[9px] font-mono font-bold uppercase border ${getStatusBadge(npk.potassium)}`}>
+          <p className="text-[10px] font-mono text-slate-400 ">{t('ui_soil_diagnostics_tab_potassium')}</p>
+          <span className={`inline-block mt-1 px-1.5 py-0.2 rounded-[2px] text-[9px] font-mono font-bold border ${getStatusBadge(npk.potassium)}`}>
             {npk.potassium}
           </span>
         </div>
@@ -283,7 +283,7 @@ const SoilResultsHUD: React.FC<{
       {/* Physics Bento Grid */}
       <div className="grid grid-cols-2 gap-2">
         <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800">
-          <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 uppercase">
+          <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 ">
             <Layers className="w-3 h-3 text-emerald-400" />
             <span>{t('ui_soil_diagnostics_tab_texture_class')}</span>
           </div>
@@ -291,7 +291,7 @@ const SoilResultsHUD: React.FC<{
         </div>
 
         <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800">
-          <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 uppercase">
+          <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 ">
             <Droplet className="w-3 h-3 text-sky-400" />
             <span>{t('ui_soil_diagnostics_tab_moisture_level')}</span>
           </div>
@@ -299,7 +299,7 @@ const SoilResultsHUD: React.FC<{
         </div>
 
         <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800">
-          <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 uppercase">
+          <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 ">
             <Activity className="w-3 h-3 text-purple-400" />
             <span>{t('ui_soil_diagnostics_tab_drainage_class')}</span>
           </div>
@@ -307,7 +307,7 @@ const SoilResultsHUD: React.FC<{
         </div>
 
         <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800">
-          <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 uppercase">
+          <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 ">
             <AlertTriangle className="w-3 h-3 text-amber-400" />
             <span>{t('ui_soil_diagnostics_tab_discoloration')}</span>
           </div>

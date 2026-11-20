@@ -437,7 +437,7 @@ export const KnowledgeBase: React.FC = () => {
             <div className="backdrop-blur-xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/10 rounded-xl p-5 space-y-4 shadow-sm dark:shadow-xl">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-xxs font-mono font-bold tracking-widest text-emerald-700 dark:text-emerald-400 uppercase">
+                  <span className="text-xxs font-mono font-bold text-emerald-700 dark:text-emerald-400 ">
                     {t('ui_index_verified_research_scenarios')}
                   </span>
                   <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-300 text-xxs font-mono border border-amber-500/20">
@@ -456,7 +456,7 @@ export const KnowledgeBase: React.FC = () => {
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                        <span className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                           {sc.crop}
                         </span>
                         <span className="text-[9px] text-slate-500 dark:text-white/40 font-mono">{sc.category}</span>
@@ -522,7 +522,7 @@ export const KnowledgeBase: React.FC = () => {
             >
               <div className="flex items-center gap-2">
                 <RefreshCw className="w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-spin" />
-                <span className="text-xs font-bold text-slate-900 dark:text-white font-mono uppercase">
+                <span className="text-xs font-bold text-slate-900 dark:text-white font-mono ">
                   {t('ui_index_neural_rag_pipeline_active')}
                 </span>
               </div>
@@ -1011,7 +1011,7 @@ export const KnowledgeBase: React.FC = () => {
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-1 rounded-md text-xxs font-mono font-bold uppercase bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                      <span className="px-2.5 py-1 rounded-md text-xxs font-mono font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
                         {art.category}
                       </span>
                       <span className="text-[10px] font-mono text-slate-500 dark:text-white/40">{art.readingTime}</span>
@@ -1037,7 +1037,7 @@ export const KnowledgeBase: React.FC = () => {
 
                     <button
                       onClick={() => setSelectedArticle(art)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-purple-500/20 border border-slate-200 hover:border-purple-500/30 text-slate-700 hover:text-purple-900 dark:bg-white/[0.04] dark:hover:bg-purple-500/20 dark:border-white/10 dark:hover:border-purple-500/30 dark:text-white/80 dark:hover:text-white text-xxs font-bold uppercase transition-all flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-purple-500/20 border border-slate-200 hover:border-purple-500/30 text-slate-700 hover:text-purple-900 dark:bg-white/[0.04] dark:hover:bg-purple-500/20 dark:border-white/10 dark:hover:border-purple-500/30 dark:text-white/80 dark:hover:text-white text-xxs font-bold transition-all flex items-center gap-1.5"
                     >
                       <span>{t('ui_index_read_article')}</span>
                       <ExternalLink className="w-3 h-3" />
@@ -1067,7 +1067,7 @@ export const KnowledgeBase: React.FC = () => {
                   <div className="p-6 border-b border-slate-200 dark:border-white/10 flex items-start justify-between gap-4 bg-slate-50 dark:bg-slate-950/60">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="px-2.5 py-0.5 rounded-md text-xxs font-mono font-bold uppercase bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                        <span className="px-2.5 py-0.5 rounded-md text-xxs font-mono font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
                           {selectedArticle.category}
                         </span>
                         <span className="text-xxs font-mono text-emerald-700 dark:text-emerald-400 flex items-center gap-1">

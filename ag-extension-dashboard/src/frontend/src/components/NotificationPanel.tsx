@@ -84,7 +84,7 @@ const NotificationItem: React.FC<{
         <div className="flex items-center justify-between mt-2 pt-1 border-t border-white/5">
           <div className="flex items-center gap-1.5 text-slate-500">
             <Clock className="w-3 h-3" />
-            <span className="text-[10px] font-mono tracking-wider">
+            <span className="text-[10px] font-mono ">
               {formatDistanceToNow(notification.timestamp, { addSuffix: true })}
             </span>
           </div>
@@ -118,7 +118,7 @@ const NotificationEmptyState: React.FC<{ t: (k: string) => string }> = ({ t }) =
       <p className="text-xs font-bold text-slate-300">
         {t('common_no_data') || 'No new notifications'}
       </p>
-      <p className="text-[10px] font-mono text-slate-500 mt-1 uppercase tracking-wider">
+      <p className="text-[10px] font-mono text-slate-500 mt-1  ">
         {t('notifications_all_caught_up') || 'System telemetry all caught up'}
       </p>
     </div>
@@ -261,14 +261,14 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                     <button
                       onClick={handleMarkAllRead}
                       className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded transition-colors"
-                      title={t('common_mark_all_read') || 'Mark All Read'}
+                      title={t('common_mark_all_read') || 'Mark all read'}
                     >
                       <CheckCircle2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={handleClearAll}
                       className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors"
-                      title={t('common_clear_all') || 'Clear All'}
+                      title={t('common_clear_all') || 'Clear all'}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -289,7 +289,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                 <button
                   key={tabKey}
                   onClick={() => setFilter(tabKey)}
-                  className={`px-2.5 py-1 rounded-[3px] font-bold uppercase text-[10px] tracking-wider transition-all ${
+                  className={`px-2.5 py-1 rounded-[3px] font-bold text-[10px] transition-all ${
                     filter === tabKey
                       ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                       : 'text-slate-400 hover:text-slate-200'
@@ -326,9 +326,9 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                   onClose();
                   useAppStore.getState().setActiveTab('analytics');
                 }}
-                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold rounded border border-slate-800 transition-all uppercase tracking-widest flex items-center justify-center gap-2"
+                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold rounded border border-slate-800 transition-all flex items-center justify-center gap-2"
               >
-                <span>{t('notifications_view_history') || 'View Activity Telemetry'} {t('ui_notification_panel_text')}</span>
+                <span>{t('notifications_view_history') || 'View activity telemetry'} {t('ui_notification_panel_text')}</span>
               </button>
             </div>
           </motion.div>

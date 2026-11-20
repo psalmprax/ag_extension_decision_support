@@ -24,56 +24,26 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location = 'Kenya'
     enabled: hasAuthSession(),
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center px-4 py-2 bg-white/30 dark:bg-gray-800/20 backdrop-blur-3xl rounded-full border border-white/10">
-        <div className="w-1.5 h-1.5 bg-primary-500/50 rounded-full animate-pulse mr-2" />
-        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full w-16 animate-pulse" />
-      </div>
-    );
-  }
+  // A header chip has no room for a skeleton: show it once there is a reading.
+  if (isLoading) return null;
 
   const weather = weatherResponse?.data;
   if (!weather || !weather.condition) return null;
 
   const cond = String(weather.condition).toLowerCase();
 
-  let WeatherIconComponent;
-  if (cond.includes('sun') || cond.includes('clear')) {
-    WeatherIconComponent = (
-      <Sun className="text-yellow-500 w-4 h-4 transition-all group-hover:rotate-45" />
-    );
-  } else if (cond.includes('rain') || cond.includes('drizzle')) {
-    WeatherIconComponent = (
-      <CloudRain className="text-blue-500 w-4 h-4 transition-all group-hover:-translate-y-0.5" />
-    );
-  } else {
-    WeatherIconComponent = (
-      <Cloud className="text-blue-400 w-4 h-4 transition-all group-hover:scale-110" />
-    );
-  }
+  const Icon = cond.includes('sun') || cond.includes('clear') ? Sun : cond.includes('rain') || cond.includes('drizzle') ? CloudRain : Cloud;
 
   return (
-    <div className="flex items-center bg-white/40 dark:bg-black/10 backdrop-blur-3xl px-4 py-2 rounded-full border border-white/20 dark:border-white/5 shadow-lg group select-none transition-all hover:bg-white/60 dark:hover:bg-white/5">
-      <div className="flex items-center gap-2 pr-3 border-r border-gray-100 dark:border-white/10">
-        <div className="relative">
-          <MapPin className="w-3.5 h-3.5 text-primary-500" />
-          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-green-500 rounded-full border-2 border-white dark:border-gray-900 animate-pulse"></span>
-        </div>
-        <span className="text-xs font-bold text-gray-900 dark:text-white tracking-tight">
-          {location}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-2 pl-3">
-        {WeatherIconComponent}
-        <div className="flex items-baseline gap-1">
-          <span className="text-sm font-black text-gray-900 dark:text-white tracking-tighter">
-            {Math.round(weather.temperature ?? weather.temp ?? 0)}°
-          </span>
-          <span className="text-xxs font-black text-primary-500/60 uppercase">C</span>
-        </div>
-      </div>
+    <div
+      className="flex items-center gap-2 h-9 px-3 rounded-md border border-slate-900/[0.08] dark:border-white/[0.08] text-sm text-slate-700 dark:text-slate-200 select-none"
+      title={weather.condition}
+    >
+      <MapPin className="w-4 h-4 text-slate-400" aria-hidden="true" />
+      <span>{location}</span>
+      <span className="w-px h-4 bg-slate-900/[0.08] dark:bg-white/[0.1]" aria-hidden="true" />
+      <Icon className="w-4 h-4 text-slate-500 dark:text-slate-400" aria-hidden="true" />
+      <span className="font-mono tabular-nums">{Math.round(weather.temperature ?? weather.temp ?? 0)}°C</span>
     </div>
   );
 };

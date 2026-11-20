@@ -501,7 +501,7 @@ function App() {
           <main
             id="main-content"
             tabIndex={-1}
-            className={`flex-1 overflow-y-auto overflow-x-hidden outline-none transition-all duration-300 ${sidebarOpen ? 'md:ml-72' : ''} relative pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-6`}
+            className={`flex-1 overflow-y-auto overflow-x-hidden outline-none transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : ''} relative pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-20`}
           >
             <ErrorBoundary componentName="MainContent">
               <Suspense

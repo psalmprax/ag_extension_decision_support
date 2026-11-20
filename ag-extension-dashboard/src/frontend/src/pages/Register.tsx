@@ -213,11 +213,11 @@ export function Register() {
         <Link
           to="/"
           className="pointer-events-auto inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/10 text-slate-200 hover:text-white text-xs font-semibold backdrop-blur-md shadow-lg transition-all active:scale-95 group focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          aria-label={t('common_back_to_landing', { defaultValue: 'Back to Landing Page' })}
+          aria-label={t('common_back_to_landing', { defaultValue: 'Back to landing page' })}
         >
           <ArrowLeft className="w-4 h-4 text-emerald-400 group-hover:-translate-x-0.5 transition-transform" />
-          <span className="hidden sm:inline">{t('common_back_to_landing', { defaultValue: 'Back to Landing Page' })}</span>
-          <span className="sm:hidden">{t('common_back_to_home', { defaultValue: 'Back to Home' })}</span>
+          <span className="hidden sm:inline">{t('common_back_to_landing', { defaultValue: 'Back to landing page' })}</span>
+          <span className="sm:hidden">{t('common_back_to_home', { defaultValue: 'Back to home' })}</span>
         </Link>
         <div className="pointer-events-auto flex items-center gap-2">
           <LanguageSwitcher compact />
@@ -240,7 +240,7 @@ export function Register() {
                 <span className="font-extrabold text-base tracking-tight text-white block leading-none">
                   {t('app_title')}
                 </span>
-                <span className="text-[10px] font-mono text-emerald-400 font-semibold tracking-wider">
+                <span className="text-[10px] font-mono text-emerald-400 font-semibold ">
                   {t('ui_register_enterprise_enrollment')}
                 </span>
               </div>

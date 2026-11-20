@@ -203,7 +203,7 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
           <div>
             <div className="text-xs font-bold text-white flex items-center gap-2">
               {t('ui_anti_fraud_verification_badge_zero_trust_visit_verification_engine')}
-              <span className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 uppercase">
+              <span className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 ">
                 {t('ui_anti_fraud_verification_badge_anti_fraud')}
               </span>
             </div>
@@ -292,7 +292,7 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
                     : `Geofence breach detected (${geofence.distanceMeters}m away).`}
                 </span>
               </div>
-              <span className="font-mono text-[10px] uppercase px-2 py-0.5 rounded bg-black/40 border border-white/10">
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-black/40 border border-white/10">
                 {t('ui_anti_fraud_verification_badge_risk_score_100', { riskScore: geofence.riskScore })}
               </span>
             </motion.div>
@@ -328,7 +328,7 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
                 <div className="flex items-center gap-2">
                   <KeyRound className="w-4 h-4 text-emerald-400" />
                   <span className="text-xs text-white/60">{t('ui_anti_fraud_verification_badge_farmer_otp_code')}</span>
-                  <span className="font-mono text-base font-bold text-emerald-400 tracking-widest bg-black/40 px-3 py-1 rounded-md border border-emerald-500/30">
+                  <span className="font-mono text-base font-bold text-emerald-400 bg-black/40 px-3 py-1 rounded-md border border-emerald-500/30">
                     {coSignOtp}
                   </span>
                 </div>

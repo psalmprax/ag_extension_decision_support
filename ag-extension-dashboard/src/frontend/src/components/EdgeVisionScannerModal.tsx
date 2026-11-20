@@ -50,7 +50,7 @@ const CropPillScrubber: React.FC<CropPillScrubberProps> = ({
       <div className="flex items-center justify-between">
         <label
           htmlFor="edge-target-crop-select"
-          className="block text-xs font-bold font-mono uppercase text-slate-300"
+          className="block text-xs font-bold font-mono text-slate-300"
         >
           {t('ui_edge_vision_scanner_modal_target_crop_specimen')}
         </label>
@@ -166,7 +166,7 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
   <div className="p-4 bg-slate-900/60 rounded-xl border border-white/10 space-y-3">
     <div className="flex justify-between items-start">
       <div>
-        <span className="text-[10px] font-bold tracking-wider text-emerald-400 uppercase font-mono">
+        <span className="text-[10px] font-bold text-emerald-400 font-mono">
           Edge Primary Diagnosis
         </span>
         <h4 className="text-base font-bold text-white mt-0.5">
@@ -274,7 +274,7 @@ const SoilDiagnosticHUD: React.FC<{ result: OfflineSoilDiagnosisResult }> = ({ r
   <div className="p-4 bg-slate-900/60 rounded-xl border border-white/10 space-y-3">
     <div className="flex justify-between items-start">
       <div>
-        <span className="text-[10px] font-bold tracking-wider text-amber-400 uppercase font-mono">
+        <span className="text-[10px] font-bold text-amber-400 font-mono">
           Edge Soil Texture & Physical Class
         </span>
         <h4 className="text-base font-bold text-white mt-0.5">
@@ -881,7 +881,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
               {analyzing && (
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white">
                   <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mb-2" />
-                  <span className="text-xs font-mono font-bold tracking-wider uppercase">
+                  <span className="text-xs font-mono font-bold  ">
                     {t('ui_edge_vision_scanner_modal_stage_1_yolo_detection_stage_2_mobil')}
                   </span>
                 </div>

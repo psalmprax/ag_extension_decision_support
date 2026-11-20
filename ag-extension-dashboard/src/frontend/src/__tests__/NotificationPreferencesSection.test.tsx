@@ -29,17 +29,17 @@ describe('Settings alert preferences', () => {
 
   it('shows the choices saved on the account (missing means on)', () => {
     render(<Harness />);
-    expect(screen.getByRole('switch', { name: 'SMS Alerts' })).toHaveAttribute('aria-checked', 'false');
-    expect(screen.getByRole('switch', { name: 'Email Alerts' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('switch', { name: 'SMS alerts' })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('switch', { name: 'Email alerts' })).toHaveAttribute('aria-checked', 'true');
     expect(screen.queryByText(/Sound/)).not.toBeInTheDocument();
   });
 
   it('saves one channel to the account and keeps the server\'s answer', async () => {
     mockPatch.mockResolvedValue({ data: { success: true, data: { notificationPreferences: { smsAlerts: false, emailAlerts: false } } } });
     render(<Harness />);
-    fireEvent.click(screen.getByRole('switch', { name: 'Email Alerts' }));
+    fireEvent.click(screen.getByRole('switch', { name: 'Email alerts' }));
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/auth/me', { notificationPreferences: { emailAlerts: false } }));
-    await waitFor(() => expect(screen.getByRole('switch', { name: 'Email Alerts' })).toHaveAttribute('aria-checked', 'false'));
+    await waitFor(() => expect(screen.getByRole('switch', { name: 'Email alerts' })).toHaveAttribute('aria-checked', 'false'));
     expect(useAppStore.getState().user?.notificationPreferences).toEqual({ emailAlerts: false, smsAlerts: false, pushNotifications: true });
     expect(toast.success).toHaveBeenCalledWith('Alert settings saved');
   });
@@ -47,9 +47,9 @@ describe('Settings alert preferences', () => {
   it('puts the switch back and says so when saving fails', async () => {
     mockPatch.mockRejectedValue(new Error('offline'));
     render(<Harness />);
-    fireEvent.click(screen.getByRole('switch', { name: 'Push Notifications' }));
+    fireEvent.click(screen.getByRole('switch', { name: 'Push notifications' }));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Could not save your alert settings. Nothing was changed.'));
-    expect(screen.getByRole('switch', { name: 'Push Notifications' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('switch', { name: 'Push notifications' })).toHaveAttribute('aria-checked', 'true');
     expect(toast.success).not.toHaveBeenCalled();
   });
 });

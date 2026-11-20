@@ -349,7 +349,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
               <div>
                 <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
                   {t('ui_channel_onboarding_modal_client_farmer_channel_onboarding')}
-                  <span className="text-xxs uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <span className="text-xxs px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                     {t('ui_channel_onboarding_modal_live_hub')}
                   </span>
                 </h2>

@@ -75,7 +75,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
           <div className="space-y-2">
             <label
               htmlFor="stripe-secret"
-              className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
+              className="text-xxs font-bold text-slate-600 dark:text-white/60 block ml-1"
             >
               {t('ui_billing_dashboard_stripe_secret_key_sk_live')}
             </label>
@@ -96,7 +96,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
           <div className="space-y-2">
             <label
               htmlFor="stripe-webhook"
-              className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
+              className="text-xxs font-bold text-slate-600 dark:text-white/60 block ml-1"
             >
               {t('ui_billing_dashboard_stripe_webhook_secret_whsec')}
             </label>
@@ -117,7 +117,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
           <div className="space-y-2">
             <label
               htmlFor="paypal-client"
-              className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
+              className="text-xxs font-bold text-slate-600 dark:text-white/60 block ml-1"
             >
               {t('ui_billing_dashboard_paypal_client_id')}
             </label>
@@ -137,7 +137,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
           <div className="space-y-2">
             <label
               htmlFor="paypal-secret"
-              className="text-xxs font-bold text-slate-600 dark:text-white/60 uppercase tracking-widest block ml-1"
+              className="text-xxs font-bold text-slate-600 dark:text-white/60 block ml-1"
             >
               {t('ui_billing_dashboard_paypal_secret_key')}
             </label>
@@ -167,7 +167,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
           >
             {billing.actionLoading === 'admin-update'
               ? 'Saving Credentials...'
-              : t('billing_admin_save_vault') || 'Encrypt & Save Credentials'}
+              : t('billing_admin_save_vault') || 'Encrypt & save credentials'}
           </Button>
         </div>
       </section>
@@ -361,7 +361,7 @@ export const BillingDashboard: React.FC = () => {
         >
           <AlertCircle className="w-6 h-6 text-amber-700 dark:text-amber-400 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
-            <h3 className="text-amber-700 dark:text-amber-400 font-black uppercase tracking-widest text-xs mb-1">
+            <h3 className="text-amber-700 dark:text-amber-400 font-black text-xs mb-1">
               {t('billing_configuration_alert') || 'PAYMENT GATEWAY CONFIGURATION REQUIRED'}
             </h3>
             <p className="text-amber-300/90 font-medium text-xs leading-relaxed">
@@ -427,8 +427,8 @@ export const BillingDashboard: React.FC = () => {
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xxs font-black uppercase tracking-widest text-slate-500 dark:text-white/50 block mb-0.5">
-                  {t('billing_current_plan') || 'Current Plan'}
+                <span className="text-xxs font-black text-slate-500 dark:text-white/50 block mb-0.5">
+                  {t('billing_current_plan') || 'Current plan'}
                 </span>
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">
                   {currentPlanName}
@@ -447,7 +447,7 @@ export const BillingDashboard: React.FC = () => {
                 <Clock className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xxs font-black uppercase tracking-widest text-slate-500 dark:text-white/50 block mb-0.5">
+                <span className="text-xxs font-black text-slate-500 dark:text-white/50 block mb-0.5">
                   {t('billing_renews_on') || 'Billing Cycle'}
                 </span>
                 <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">
@@ -465,7 +465,7 @@ export const BillingDashboard: React.FC = () => {
           {/* Card 3: Instant Customer Portal Action */}
           <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-xxs font-black uppercase tracking-widest text-slate-500 dark:text-white/50 block">
+              <span className="text-xxs font-black text-slate-500 dark:text-white/50 block">
                 {t('ui_billing_dashboard_stripe_customer_portal')}
               </span>
               <span className="text-xs text-slate-600 dark:text-white/70 font-medium">{t('ui_billing_dashboard_manage_payment_methods_invoices')}</span>
@@ -476,7 +476,7 @@ export const BillingDashboard: React.FC = () => {
                 void billing.handlePortal();
               }}
               disabled={billing.actionLoading === 'portal'}
-              className="px-3.5 py-1.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 font-bold text-xxs uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0"
+              className="px-3.5 py-1.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 font-bold text-xxs transition-all flex items-center gap-1.5 shrink-0"
             >
               {billing.actionLoading === 'portal' ? (
                 <div className="w-3.5 h-3.5 border-2 border-slate-300 dark:border-white/20 border-t-white rounded-full animate-spin" />
@@ -498,7 +498,7 @@ export const BillingDashboard: React.FC = () => {
                 triggerHaptic('light');
                 setShowCancelModal(true);
               }}
-              className="text-xxs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300 hover:text-rose-200 transition-colors self-start sm:self-auto"
+              className="text-xxs font-bold text-rose-700 dark:text-rose-300 hover:text-rose-200 transition-colors self-start sm:self-auto"
             >
               {t('ui_billing_dashboard_cancel_subscription')}
             </button>
@@ -671,7 +671,7 @@ export const BillingDashboard: React.FC = () => {
           </div>
         }
       >
-        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-3">
+        <p className="text-xs text-slate-400 font-bold mb-3">
           {t('billing_admin_pending_reason') || 'Specify reason for rejection to notify user'}
         </p>
         <Textarea

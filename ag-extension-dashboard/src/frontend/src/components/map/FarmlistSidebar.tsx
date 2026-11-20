@@ -50,7 +50,7 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
             : 'bg-gray-50 dark:bg-gray-800/50'
         }`}
       >
-        <div className="text-xs-plus uppercase tracking-wider font-bold text-gray-400">
+        <div className="text-xs-plus font-bold text-gray-400">
           {t('ui_farmlist_sidebar_farmlist', { length: filteredFarmers.length })}
         </div>
         <button

@@ -2,7 +2,6 @@ import React from 'react';
 import { LayoutDashboard, Users, Camera, BookOpen, Menu, Lock, MessageSquare } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
-import { useFeatureFlags } from '@/store/useFeatureFlags';
 import { triggerHaptic } from '@/lib/haptics';
 import { isMenuItemLocked, type PaidService } from '@/lib/planAccess';
 
@@ -22,42 +21,32 @@ interface NavItemConfig {
   service?: PaidService;
 }
 
+const TAB_BUTTON =
+  'flex-1 flex flex-col items-center justify-center gap-1 min-h-[52px] px-1 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600';
+const tabTone = (isActive: boolean) =>
+  isActive
+    ? 'text-emerald-800 dark:text-emerald-200'
+    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+
+/** The scan tab: same row height as the others, with a filled icon well. */
 const SpecialCenterButton: React.FC<{
   item: NavItemConfig;
   isActive: boolean;
   isLocked: boolean;
-  isBase: boolean;
   onClick: () => void;
-}> = ({ item, isActive, isLocked, isBase, onClick }) => {
+}> = ({ item, isActive, isLocked, onClick }) => {
   const Icon = item.icon;
-  const activeBg = isBase
-    ? 'bg-blue-600 shadow-sm ring-1 ring-blue-500'
-    : 'bg-emerald-600 shadow-sm ring-1 ring-emerald-500';
-  const inactiveBg = 'bg-slate-800 hover:bg-slate-700 text-slate-300';
-  const bgClass = isActive ? activeBg : inactiveBg;
-  const textColor = isActive ? (isBase ? 'text-blue-400' : 'text-emerald-400') : 'text-slate-400';
-
   return (
-    <button
-      onClick={onClick}
-      className={`relative -top-3 flex flex-col items-center group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
-        isBase ? 'active:scale-90 transition-transform duration-150' : ''
-      }`}
-      aria-label={item.label}
-    >
-      <div
-        className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md transition-all duration-200 ${bgClass}`}
-      >
-        <Icon className="w-5 h-5" />
+    <button onClick={onClick} className={`${TAB_BUTTON} ${tabTone(isActive)}`} aria-label={item.label} aria-current={isActive ? 'page' : undefined}>
+      <span className="relative w-10 h-7 rounded-full bg-emerald-700 text-white flex items-center justify-center">
+        <Icon className="w-[18px] h-[18px]" aria-hidden="true" />
         {isLocked && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-xs font-semibold shadow">
-            <Lock className="w-2.5 h-2.5" />
+          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center">
+            <Lock className="w-2.5 h-2.5" aria-hidden="true" />
           </span>
         )}
-      </div>
-      <span className={`text-xs font-medium mt-1 tracking-tight ${textColor}`}>
-        {item.label}
       </span>
+      <span className="text-xs truncate max-w-[72px]">{item.label}</span>
     </button>
   );
 };
@@ -65,37 +54,15 @@ const SpecialCenterButton: React.FC<{
 const StandardNavButton: React.FC<{
   item: NavItemConfig;
   isActive: boolean;
-  isBase: boolean;
   onClick: () => void;
-}> = ({ item, isActive, isBase, onClick }) => {
+}> = ({ item, isActive, onClick }) => {
   const Icon = item.icon;
-  const baseStyle = isActive
-    ? 'bg-white/[0.08] text-white font-medium border border-white/10 shadow-sm'
-    : 'text-slate-400 hover:text-slate-200 active:scale-90 transition-transform duration-150';
-  const classicStyle = isActive
-    ? 'text-emerald-400 font-medium'
-    : 'text-slate-400 hover:text-slate-200 active:scale-95';
-
   return (
-    <button
-      onClick={onClick}
-      className={`flex-1 flex flex-col items-center py-1 px-2 min-h-[48px] rounded-xl transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
-        isBase ? baseStyle : classicStyle
-      }`}
-    >
-      <div className="relative">
-        <Icon className={`w-5 h-5 transition-transform ${isActive ? 'scale-110' : ''}`} />
-        {isActive && (
-          <span
-            className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
-              isBase ? 'bg-blue-400' : 'bg-emerald-400'
-            }`}
-          />
-        )}
-      </div>
-      <span className="text-xs mt-1 font-medium tracking-tight truncate max-w-[64px]">
-        {item.label}
+    <button onClick={onClick} className={`${TAB_BUTTON} ${tabTone(isActive)}`} aria-current={isActive ? 'page' : undefined}>
+      <span className={`w-10 h-7 rounded-full flex items-center justify-center ${isActive ? 'bg-emerald-50 dark:bg-emerald-400/[0.12]' : ''}`}>
+        <Icon className="w-5 h-5" aria-hidden="true" />
       </span>
+      <span className={`text-xs truncate max-w-[72px] ${isActive ? 'font-medium' : ''}`}>{item.label}</span>
     </button>
   );
 };
@@ -108,8 +75,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 }) => {
   const user = useAppStore(s => s.user);
   const { t } = useLanguage();
-  const { designVariant } = useFeatureFlags();
-  const isBase = designVariant === 'base' || designVariant === 'new';
 
 
   const handleTabClick = (id: string) => {
@@ -139,7 +104,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     },
     {
       id: 'disease_diagnosis',
-      label: t('nav_ai_scan', { defaultValue: 'AI Scan' }),
+      label: t('nav_ai_scan', { defaultValue: 'AI scan' }),
       icon: Camera,
       isSpecial: true,
       requiresPro: true,
@@ -153,12 +118,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   ];
   const navItems = user?.role === 'farmer' ? farmerItems : officerItems;
 
-  const navClass = isBase
-    ? 'md:hidden fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-3 right-3 max-w-lg mx-auto z-40 bg-slate-950/85 dark:bg-black/90 backdrop-blur-2xl border border-white/15 rounded-2xl px-2 py-1.5 shadow-2xl shadow-black/80 transition-all duration-300 ring-1 ring-white/10'
-    : 'md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/90 dark:bg-slate-950/90 backdrop-blur-xl border-t border-white/10 px-3 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-2xl transition-all';
+  const navClass =
+    'md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#0d1a14] border-t border-slate-900/[0.08] dark:border-white/[0.08] px-2 pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom))]';
 
   return (
-    <nav aria-label="Mobile Navigation Bar" className={navClass}>
+    <nav aria-label={t('nav_mobile_bar', { defaultValue: 'Main' })} className={navClass}>
       <div className="flex items-center justify-around max-w-lg mx-auto w-full">
         {navItems.map(item => {
           const isActive = activeTab === item.id;
@@ -170,7 +134,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               item={item}
               isActive={isActive}
               isLocked={Boolean(isLocked)}
-              isBase={isBase}
               onClick={() => handleTabClick(item.id)}
             />
           ) : (
@@ -178,27 +141,24 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               key={item.id}
               item={item}
               isActive={isActive}
-              isBase={isBase}
               onClick={() => handleTabClick(item.id)}
             />
           );
         })}
 
-        {/* More Menu Drawer Trigger */}
         <button
           onClick={() => {
             triggerHaptic('light');
             setSidebarOpen(!sidebarOpen);
           }}
-          className={`flex-1 flex flex-col items-center py-1 px-2 min-h-[48px] rounded-xl transition-all cursor-pointer text-slate-400 hover:text-slate-200 ${
-            isBase ? 'active:scale-90 transition-transform duration-150' : 'active:scale-95'
-          }`}
-          aria-label="Toggle Full Menu"
+          className={`${TAB_BUTTON} ${tabTone(sidebarOpen)}`}
+          aria-label={t('nav_menu', { defaultValue: 'Menu' })}
+          aria-expanded={sidebarOpen}
         >
-          <Menu className="w-5 h-5" />
-          <span className="text-xs mt-1 font-medium tracking-tight truncate max-w-[64px]">
-            {t('nav_menu', { defaultValue: 'Menu' })}
+          <span className="w-10 h-7 flex items-center justify-center">
+            <Menu className="w-5 h-5" aria-hidden="true" />
           </span>
+          <span className="text-xs">{t('nav_menu', { defaultValue: 'Menu' })}</span>
         </button>
       </div>
     </nav>

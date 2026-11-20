@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Users, BarChart3, CheckCircle2, MessageSquare, Smartphone } from 'lucide-react';
+import { BarChart3, CheckCircle2, MessageSquare, Smartphone } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
 import { useLanguage } from '@/lib/LanguageContext';
 
@@ -8,9 +8,8 @@ export function Features() {
   const { t } = useLanguage();
   return (
         <section id="features" className="relative py-20 sm:py-28 border-t border-white/[0.04]">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-emerald-500/[0.03] blur-[120px] rounded-full pointer-events-none" />
 
-          <div className="max-w-[90rem] w-full mx-auto px-4 sm:px-6 relative z-10">
+          <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 relative z-10">
             <motion.div
               initial="hidden"
               whileInView="visible"
@@ -18,21 +17,8 @@ export function Features() {
               variants={stagger}
               className="text-center max-w-3xl mx-auto mb-14 sm:mb-20"
             >
-              <motion.div
-                variants={fadeUp}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium mb-4"
-              >
-                <Users className="w-3.5 h-3.5" />
-                {t('ui_features_who_we_empower')}
-              </motion.div>
-              <motion.h2
-                variants={fadeUp}
-                className="text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight text-white mb-4"
-              >
-                {t('ui_features_built_for_the_real_field')}{' '}
-                <span className="text-emerald-400">
-                  {t('ui_features_grounded_in_rural_realities')}
-                </span>
+              <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-medium leading-tight text-white mb-4">
+                {t('ui_features_built_for_the_real_field')}
               </motion.h2>
               <motion.p
                 variants={fadeUp}
@@ -50,9 +36,9 @@ export function Features() {
                 whileInView="visible"
                 viewport={{ once: true, margin: '-60px' }}
                 variants={fadeUp}
-                className="group relative rounded-xl backdrop-blur-xl bg-slate-900/80 border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl"
+                className="group relative rounded-xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl"
               >
-                <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
+                <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-[#0d1a14]">
                   <img
                     src="/images/landing/farmer-inspecting-ear.webp"
                     alt="African smallholder farmer inspecting healthy maize crop in field"
@@ -62,12 +48,12 @@ export function Features() {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-950/80 backdrop-blur-md border border-amber-500/30 text-amber-300 text-xxs font-medium">
+                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#0d1a14]/80 backdrop-blur-md border border-amber-500/30 text-amber-300 text-xxs font-medium">
                     <MessageSquare className="w-3 h-3 text-amber-400" />
                     {t('ui_features_direct_farmer_advisory')}
                   </div>
                   <div className="absolute bottom-3 left-4 right-4">
-                    <span className="text-xxs font-mono text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-md">
+                    <span className="text-xxs text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-md">
                       {t('ui_features_zero_smartphone_required')}
                     </span>
                   </div>
@@ -106,9 +92,9 @@ export function Features() {
                 whileInView="visible"
                 viewport={{ once: true, margin: '-60px' }}
                 variants={fadeUp}
-                className="group relative rounded-xl backdrop-blur-xl bg-slate-900/80 border border-emerald-500/30 hover:border-emerald-500/60 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl shadow-emerald-950/30 hover:shadow-emerald-950/60 ring-1 ring-emerald-500/20"
+                className="group relative rounded-xl backdrop-blur-xl bg-white/[0.03] border border-emerald-500/30 hover:border-emerald-500/60 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl shadow-emerald-950/30 hover:shadow-emerald-950/60 ring-1 ring-emerald-500/20"
               >
-                <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
+                <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-[#0d1a14]">
                   <img
                     src="/images/landing/persona-officer.webp"
                     alt="Field extension officer diagnosing crop leaf health in the field with mobile AI app"
@@ -118,12 +104,12 @@ export function Features() {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-950/80 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-xxs font-medium">
+                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#0d1a14]/80 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-xxs font-medium">
                     <Smartphone className="w-3 h-3 text-emerald-400" />
                     {t('ui_features_field_ready_mobile_pwa')}
                   </div>
                   <div className="absolute bottom-3 left-4 right-4">
-                    <span className="text-xxs font-mono text-emerald-300 bg-emerald-500/30 border border-emerald-400/40 px-2 py-0.5 rounded-md font-bold">
+                    <span className="text-xxs text-emerald-300 bg-emerald-500/30 border border-emerald-400/40 px-2 py-0.5 rounded-md font-bold">
                       {t('ui_features_selected_offline_workflows')}
                     </span>
                   </div>
@@ -162,9 +148,9 @@ export function Features() {
                 whileInView="visible"
                 viewport={{ once: true, margin: '-60px' }}
                 variants={fadeUp}
-                className="group relative rounded-xl backdrop-blur-xl bg-slate-900/80 border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl"
+                className="group relative rounded-xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl"
               >
-                <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
+                <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-[#0d1a14]">
                   <img
                     src="/images/landing/persona-manager.webp"
                     alt="Regional agribusiness manager analyzing yield analytics and field operations on dashboard"
@@ -174,12 +160,12 @@ export function Features() {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-950/80 backdrop-blur-md border border-cyan-500/30 text-cyan-300 text-xxs font-medium">
+                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#0d1a14]/80 backdrop-blur-md border border-cyan-500/30 text-cyan-300 text-xxs font-medium">
                     <BarChart3 className="w-3 h-3 text-cyan-400" />
                     {t('ui_features_macro_yield_supply_intelligence')}
                   </div>
                   <div className="absolute bottom-3 left-4 right-4">
-                    <span className="text-xxs font-mono text-cyan-300 bg-cyan-500/20 border border-cyan-500/30 px-2 py-0.5 rounded-md">
+                    <span className="text-xxs text-cyan-300 bg-cyan-500/20 border border-cyan-500/30 px-2 py-0.5 rounded-md">
                       {t('ui_features_enterprise_oversight')}
                     </span>
                   </div>
