@@ -63,5 +63,6 @@ below are in the repository; the items marked **server setting** need values onl
 
 ## 8. Upload scanning
 
-- Uploaded files are scanned by ClamAV. `CLAMD_FAIL_OPEN` defaults to `false`: when the scanner is down, uploads are
-  refused rather than accepted unscanned. The backend warns at start-up when it is set to `true`.
+- Uploaded files are scanned by ClamAV. `CLAMD_FAIL_OPEN` defaults to `true`, so photos still upload while the scanner
+  is down, and the backend warns at start-up. **Server setting:** once the `clamav` container runs reliably, set
+  `CLAMD_FAIL_OPEN=false` so uploads are refused rather than accepted unscanned.

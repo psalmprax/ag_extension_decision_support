@@ -217,8 +217,9 @@ services:
       MCP_API_TOKEN: ${MCP_API_TOKEN:-}
       TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
       CLAMD_HOST: ${CLAMD_HOST:-clamav}
-      # Fail closed: when the scanner is down, uploads wait rather than go through unscanned.
-      CLAMD_FAIL_OPEN: ${CLAMD_FAIL_OPEN:-false}
+      # Uploads go through unscanned while the scanner is down (the backend warns at start-up).
+      # Set CLAMD_FAIL_OPEN=false in .env once the clamav container runs reliably on the host.
+      CLAMD_FAIL_OPEN: ${CLAMD_FAIL_OPEN:-true}
       UPLOAD_QUOTA_MB: ${UPLOAD_QUOTA_MB:-500}
       REQUIRE_EMAIL_VERIFICATION: ${REQUIRE_EMAIL_VERIFICATION:-false}
       PILLARS_SPEC_ROUTES_ENABLED: ${PILLARS_SPEC_ROUTES_ENABLED:-false}
