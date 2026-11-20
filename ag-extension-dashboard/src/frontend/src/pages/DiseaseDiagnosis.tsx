@@ -22,7 +22,7 @@ import { EdgeVisionScannerModal } from '@/components/EdgeVisionScannerModal';
 import { VideoAnalysisTab } from './diagnostics/VideoAnalysisTab';
 import { DiagnosisHistoryPanel } from './diagnostics/DiagnosisHistoryPanel';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { PRIMARY_BUTTON, tabButtonClass } from '@/components/ui/controlStyles';
+import { PRIMARY_BUTTON, TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
 
 export function DiseaseDiagnosis() {
   const online = useOnlineStatus();
@@ -108,7 +108,7 @@ export function DiseaseDiagnosis() {
         />
 
         {/* Diagnostic tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto" role="tablist">
+        <div className={TAB_ROW} role="tablist">
           {[
             { id: 'image', label: t('diagnosis_tab_photo', { defaultValue: 'Leaf photo' }), icon: Camera },
             { id: 'video', label: t('diagnosis_tab_video', { defaultValue: 'Video' }), icon: Video },

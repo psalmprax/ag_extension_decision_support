@@ -4,7 +4,7 @@ import { Plus, Calendar } from 'lucide-react';
 import { Visit, Farmer } from '../types/dashboard';
 import { updateVisit } from '@/api/visitService';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { PRIMARY_BUTTON, tabButtonClass } from '@/components/ui/controlStyles';
+import { PRIMARY_BUTTON, TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
 import { useLanguage } from '@/lib/LanguageContext';
 import { VisitCard } from '@/components/visits/VisitCard';
 import { VisitReportModal, type VisitReportTarget } from '@/components/visits/VisitReportModal';
@@ -85,7 +85,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
         }
       >
         {/* Status Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <div className={TAB_ROW}>
           {[
             { id: 'all', label: t('visits_filter_all', { defaultValue: 'All' }), count: visits.length },
             { id: 'pending', label: t('visits_filter_upcoming', { defaultValue: 'Upcoming' }), count: pendingCount },

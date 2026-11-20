@@ -1,23 +1,28 @@
 import React from 'react';
-import { Zap } from 'lucide-react';
 import type { KnowledgeQuotaData } from '@/api/knowledgeService';
+import { useLanguage } from '@/lib/LanguageContext';
 
-export const QuotaChip: React.FC<{ quota: KnowledgeQuotaData; onUpgrade: () => void }> = ({ quota, onUpgrade }) => (
-  <div className="flex items-center gap-2 bg-slate-100 dark:bg-black/40 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/5 text-xxs font-mono">
-    <Zap className="w-3 h-3 text-amber-500 dark:text-amber-400 shrink-0" />
-    <span className="text-slate-600 dark:text-white/70">DAILY QUOTA:</span>
-    {quota.limit === -1 ? (
-      <span className="text-emerald-700 dark:text-emerald-300 font-bold">Unlimited</span>
-    ) : (
-      <span className="text-slate-900 dark:text-white font-bold">{quota.remaining}/{quota.limit}</span>
-    )}
-    {quota.isFree && quota.remaining <= 1 && quota.limit !== -1 && (
-      <button
-        onClick={onUpgrade}
-        className="ml-1 underline font-bold text-amber-600 hover:text-amber-700 dark:text-amber-300 dark:hover:text-amber-200"
-      >
-        Upgrade
-      </button>
-    )}
-  </div>
-);
+/** Questions left today. Nothing is shown on unlimited plans. */
+export const QuotaChip: React.FC<{ quota: KnowledgeQuotaData; onUpgrade: () => void }> = ({ quota, onUpgrade }) => {
+  const { t } = useLanguage();
+  if (quota.limit === -1) return null;
+
+  return (
+    <p className="text-sm text-slate-600 dark:text-white/70 tabular-nums">
+      {t('kb_quota_left_today', {
+        remaining: quota.remaining,
+        limit: quota.limit,
+        defaultValue: '{remaining} of {limit} questions left today',
+      })}
+      {quota.isFree && quota.remaining <= 1 && (
+        <button
+          type="button"
+          onClick={onUpgrade}
+          className="ml-2 underline underline-offset-2 text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
+        >
+          {t('kb_quota_upgrade', { defaultValue: 'Upgrade' })}
+        </button>
+      )}
+    </p>
+  );
+};

@@ -4,7 +4,7 @@ import { QuotaChip } from '../components/KnowledgeBase/QuotaChip';
 import type { KnowledgeQuotaData } from '@/api/knowledgeService';
 
 describe('QuotaChip', () => {
-  it('renders Unlimited when quota.limit is -1', () => {
+  it('shows nothing when quota.limit is -1 (unlimited)', () => {
     const quota: KnowledgeQuotaData = {
       allowed: true,
       current: 0,
@@ -12,13 +12,11 @@ describe('QuotaChip', () => {
       remaining: 999999,
       isFree: false,
     };
-    render(<QuotaChip quota={quota} onUpgrade={() => {}} />);
-    expect(screen.getByText('DAILY QUOTA:')).toBeInTheDocument();
-    expect(screen.getByText('Unlimited')).toBeInTheDocument();
-    expect(screen.queryByText('Upgrade')).not.toBeInTheDocument();
+    const { container } = render(<QuotaChip quota={quota} onUpgrade={() => {}} />);
+    expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders 3/3 searches for free/demo user with full quota', () => {
+  it('renders questions left for free/demo user with full quota', () => {
     const quota: KnowledgeQuotaData = {
       allowed: true,
       current: 0,
@@ -27,8 +25,7 @@ describe('QuotaChip', () => {
       isFree: true,
     };
     render(<QuotaChip quota={quota} onUpgrade={() => {}} />);
-    expect(screen.getByText('DAILY QUOTA:')).toBeInTheDocument();
-    expect(screen.getByText('3/3')).toBeInTheDocument();
+    expect(screen.getByText(/3 of 3 questions left today/)).toBeInTheDocument();
     expect(screen.queryByText('Upgrade')).not.toBeInTheDocument();
   });
 
@@ -42,7 +39,7 @@ describe('QuotaChip', () => {
       isFree: true,
     };
     render(<QuotaChip quota={quota} onUpgrade={onUpgrade} />);
-    expect(screen.getByText('1/3')).toBeInTheDocument();
+    expect(screen.getByText(/1 of 3 questions left today/)).toBeInTheDocument();
     const upgradeBtn = screen.getByText('Upgrade');
     expect(upgradeBtn).toBeInTheDocument();
     fireEvent.click(upgradeBtn);
@@ -58,7 +55,7 @@ describe('QuotaChip', () => {
       isFree: true,
     };
     render(<QuotaChip quota={quota} onUpgrade={() => {}} />);
-    expect(screen.getByText('0/3')).toBeInTheDocument();
+    expect(screen.getByText(/0 of 3 questions left today/)).toBeInTheDocument();
     expect(screen.getByText('Upgrade')).toBeInTheDocument();
   });
 });

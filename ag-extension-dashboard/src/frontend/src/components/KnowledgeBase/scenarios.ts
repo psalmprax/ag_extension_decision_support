@@ -1,8 +1,17 @@
 // Research scenarios moved verbatim from components/KnowledgeBase/index.tsx (pure move).
 
+import type { LucideIcon } from 'lucide-react';
+import { Compass, Layers, ShieldCheck } from 'lucide-react';
 import type { Citation } from '@/api/knowledgeService';
 
 export type SpatialCanvasMode = 'phenology' | 'soil_heatmap' | 'pathology';
+
+/** The three illustration views on the knowledge workbench, in tab order. */
+export const CANVAS_MODES: ReadonlyArray<{ id: SpatialCanvasMode; icon: LucideIcon; labelKey: string }> = [
+  { id: 'phenology', icon: Compass, labelKey: 'ui_index_phenology_scrubber' },
+  { id: 'soil_heatmap', icon: Layers, labelKey: 'ui_index_soil_heatmap_grid' },
+  { id: 'pathology', icon: ShieldCheck, labelKey: 'ui_index_pathology_scanner' },
+];
 
 export interface ResearchScenario {
   id: string;

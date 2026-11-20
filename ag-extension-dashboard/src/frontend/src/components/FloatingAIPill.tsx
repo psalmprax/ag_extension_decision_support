@@ -38,6 +38,9 @@ interface FloatingAIPillProps {
 
 type TabType = 'chat' | 'scan' | 'voice' | 'telecall';
 
+/** Screens with their own message box. */
+const SCREENS_WITH_COMPOSER = new Set(['aiassistant', 'farmerchat', 'officerchat', 'knowledge']);
+
 const INITIAL_PROFILE: ProfileParameter[] = [
   { key: 'name', label: 'Farmer', value: null },
   { key: 'crop', label: 'Crop', value: null },
@@ -352,6 +355,8 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
   onOpenUSSDSandbox,
   onNavigateToDiagnosis,
 }) => {
+  // On phones the button would sit over these screens' own message box.
+  const hideOnPhone = SCREENS_WITH_COMPOSER.has(useAppStore(state => state.activeTab));
   const { t } = useLanguage();
   const { language } = useLanguage();
   const storeUser = useAppStore(s => s.user);
@@ -526,7 +531,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
             initial={{ opacity: 0, scale: 0.9, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 16 }}
-            className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-3 md:bottom-6 md:right-6 z-[1000] flex items-center gap-2"
+            className={`fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-3 md:bottom-6 md:right-6 z-[1000] items-center gap-2 ${hideOnPhone ? 'hidden md:flex' : 'flex'}`}
           >
             <button
               onClick={() => setIsOpen(true)}

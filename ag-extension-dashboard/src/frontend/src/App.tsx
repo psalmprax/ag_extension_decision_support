@@ -495,6 +495,7 @@ function App() {
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             setShowHelpCenter={setShowHelpCenter}
+            onOpenSettings={() => setShowSettingsPanel(true)}
             onGenerateReport={handleGenerateReport}
           />
 
@@ -621,7 +622,6 @@ function App() {
           addNotification={addNotification}
         />
 
-        {/* ── KnockKnock-Inspired Floating Multimodal AI Pill ── */}
         <FloatingAIPill
           onOpenUSSDSandbox={() => setIsUSSDSimulatorOpen(true)}
           onNavigateToDiagnosis={() => setActiveTab('disease_diagnosis')}

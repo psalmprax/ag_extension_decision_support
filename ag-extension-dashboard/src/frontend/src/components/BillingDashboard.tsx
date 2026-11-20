@@ -30,7 +30,7 @@ import { CancelSubscriptionModal } from './billing/CancelSubscriptionModal';
 import { triggerHaptic } from '@/lib/haptics';
 import { ManualPlanGrants } from './billing/ManualPlanGrants';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { PRIMARY_BUTTON, tabButtonClass } from '@/components/ui/controlStyles';
+import { PRIMARY_BUTTON, TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
 
 interface AdminVaultProps {
   billing: ReturnType<typeof useBillingActions>;
@@ -230,7 +230,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
       >
       {/* Status Filter / Navigation Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <div className={TAB_ROW}>
           {[
             { id: 'plans', label: t('billing_tab_plans', { defaultValue: 'Plans & pricing' }), icon: Layers },
             { id: 'usage', label: t('billing_tab_usage', { defaultValue: 'Usage' }), icon: Activity },

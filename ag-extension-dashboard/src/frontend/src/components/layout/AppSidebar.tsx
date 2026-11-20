@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, HelpCircle, Lock } from 'lucide-react';
+import { ChevronDown, HelpCircle, Lock, Moon, Settings, Sun } from 'lucide-react';
 import { NavItem } from '../../config/navItems';
 import { UnreadCount } from '@/components/chat/UnreadCount';
 import { collapseHubs, menuItemIsActive } from '@/config/navHubs';
@@ -55,6 +55,9 @@ const NAV_SECTIONS = [
 const getSectionId = (itemId: string) =>
   NAV_SECTIONS.find(section => (section.itemIds as readonly string[]).includes(itemId))?.id ?? 'other';
 
+const DRAWER_BUTTON =
+  'flex items-center justify-center gap-2 h-11 rounded-md border border-slate-900/[0.1] dark:border-white/[0.12] text-sm text-slate-700 dark:text-slate-200';
+
 interface AppSidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen?: (open: boolean) => void;
@@ -62,6 +65,8 @@ interface AppSidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   setShowHelpCenter: (show: boolean) => void;
+  /** Opens the settings panel; shown in the drawer on phones, where the header hides it. */
+  onOpenSettings?: () => void;
   onGenerateReport?: () => void;
 }
 
@@ -72,10 +77,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   activeTab,
   setActiveTab,
   setShowHelpCenter,
+  onOpenSettings,
   onGenerateReport: _onGenerateReport,
 }) => {
   const { t } = useLanguage();
-  const { themeName, setThemeName, user } = useAppStore();
+  const { themeName, setThemeName, user, darkMode, setDarkMode } = useAppStore();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => ({
     [getSectionId(activeTab)]: true,
   }));
@@ -197,6 +203,18 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               <div className="flex items-center justify-between gap-2">
                 <LanguageSwitcher compact />
                 <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
+              </div>
+              <div className="sm:hidden grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setDarkMode(!darkMode)} className={DRAWER_BUTTON}>
+                  {darkMode ? <Sun className="w-[18px] h-[18px]" aria-hidden="true" /> : <Moon className="w-[18px] h-[18px]" aria-hidden="true" />}
+                  {darkMode ? t('theme_light_short', { defaultValue: 'Light mode' }) : t('theme_dark_short', { defaultValue: 'Dark mode' })}
+                </button>
+                {onOpenSettings && (
+                  <button type="button" onClick={() => { setSidebarOpen?.(false); onOpenSettings(); }} className={DRAWER_BUTTON}>
+                    <Settings className="w-[18px] h-[18px]" aria-hidden="true" />
+                    {t('header_open_settings_short', { defaultValue: 'Settings' })}
+                  </button>
+                )}
               </div>
             </div>
 

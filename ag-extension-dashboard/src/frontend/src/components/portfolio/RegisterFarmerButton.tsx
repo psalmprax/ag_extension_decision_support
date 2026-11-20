@@ -2,6 +2,7 @@ import { UserPlus } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useDemoMode } from '@/demo';
 import { useLanguage } from '@/lib/LanguageContext';
+import { PRIMARY_BUTTON } from '@/components/ui/controlStyles';
 
 /** Roles that enrol farmers (the server refuses farmer accounts). */
 const REGISTERING_ROLES = new Set(['admin', 'regional_manager', 'extension_officer']);
@@ -22,9 +23,9 @@ export function RegisterFarmerButton() {
     <button
       type="button"
       onClick={() => setActiveTab('register_farmer')}
-      className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition-colors flex items-center gap-1.5"
+      className={PRIMARY_BUTTON}
     >
-      <UserPlus className="w-3.5 h-3.5" />
+      <UserPlus className="w-4 h-4" aria-hidden="true" />
       <span>{t('portfolio_register_farmer', 'Register farmer')}</span>
     </button>
   );
