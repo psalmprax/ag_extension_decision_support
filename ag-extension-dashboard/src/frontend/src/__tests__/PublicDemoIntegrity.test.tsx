@@ -71,7 +71,7 @@ describe('public demos', () => {
     try {
       fireEvent(window, new Event('resize'));
 
-      expect(fillText).toHaveBeenCalledWith('OBSERVATION', expect.any(Number), expect.any(Number));
+      expect(fillText).toHaveBeenCalledWith('Observation', expect.any(Number), expect.any(Number));
       expect(fillText).toHaveBeenCalledWith('Review field data', expect.any(Number), expect.any(Number));
       expect(fillText).toHaveBeenCalledWith('Seek expert review', expect.any(Number), expect.any(Number));
       expect(fillText).not.toHaveBeenCalledWith('Apply 2.5t Lime', expect.any(Number), expect.any(Number));

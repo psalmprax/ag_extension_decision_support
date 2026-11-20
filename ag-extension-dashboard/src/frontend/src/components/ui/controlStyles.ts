@@ -15,3 +15,6 @@ export function tabButtonClass(active: boolean): string {
       : 'text-slate-600 dark:text-white/60 hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white'
   );
 }
+
+/** The form card on the sign-in and registration pages (inside AuthLayout). */
+export const AUTH_CARD = 'bg-[#13241b] border border-white/[0.08] rounded-lg p-7 sm:p-8 w-full';

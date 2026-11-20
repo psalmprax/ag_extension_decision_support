@@ -173,7 +173,7 @@ for (const account of ACCOUNTS) {
         order: order + 1,
         loadMs: Date.now() - started,
         errorBoundary: boundary ? clip(boundary.replace(/\s+/g, ' '), 400) : null,
-        planLocked: /Pro feature locked/i.test(text),
+        planLocked: /Available on Pro and Enterprise/i.test(text),
         stuckLoading: spinners > 0 || /^\s*loading/i.test(text),
         apiFailures: current.api,
         apiCalls: [...current.calls].sort(),

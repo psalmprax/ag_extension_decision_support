@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Activity, Play, Pause, RotateCcw, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { playStageChime, playScrubTick, isAudioEnabled, setAudioMuted } from '@/lib/audioHaptics';
 import { AGRO_STAGES, type AgroStageMeta } from './agroStages';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -42,12 +42,12 @@ function renderBackground(rc: RenderContext) {
       height * 0.5,
       Math.max(width, height) * 0.8
     );
-    bgGrad.addColorStop(0, '#0f172a');
-    bgGrad.addColorStop(0.5, '#090d16');
-    bgGrad.addColorStop(1, '#030712');
+    bgGrad.addColorStop(0, '#13241b');
+    bgGrad.addColorStop(0.5, '#0d1a14');
+    bgGrad.addColorStop(1, '#08120d');
     ctx.fillStyle = bgGrad;
   } else {
-    ctx.fillStyle = '#030712';
+    ctx.fillStyle = '#08120d';
   }
   ctx.fillRect(0, 0, width, height);
 
@@ -91,7 +91,7 @@ function renderStage1Orbit(rc: RenderContext) {
     );
     globeGrad.addColorStop(0, 'rgba(14, 165, 233, 0.25)');
     globeGrad.addColorStop(0.7, 'rgba(16, 185, 129, 0.12)');
-    globeGrad.addColorStop(1, 'rgba(3, 7, 18, 0.95)');
+    globeGrad.addColorStop(1, 'rgba(8, 18, 13, 0.95)');
     ctx.fillStyle = globeGrad;
   } else {
     ctx.fillStyle = 'rgba(14, 165, 233, 0.25)';
@@ -156,8 +156,8 @@ function renderStage1Orbit(rc: RenderContext) {
 
   ctx.fillStyle = '#38bdf8';
   ctx.font = '11px monospace';
-  ctx.fillText(`SIM // RAD: ${(18.4 + Math.sin(time) * 1.2).toFixed(1)} MJ/m² (animated preview)`, targetX + 25, targetY - 10);
-  ctx.fillText(`SIM // PRECIP: ${(4.2 + Math.cos(time) * 0.8).toFixed(1)} mm/day (animated preview)`, targetX + 25, targetY + 8);
+  ctx.fillText(`Sunshine (example): ${(18.4 + Math.sin(time) * 1.2).toFixed(1)} MJ/m²`, targetX + 25, targetY - 10);
+  ctx.fillText(`Rain (example): ${(4.2 + Math.cos(time) * 0.8).toFixed(1)} mm/day`, targetX + 25, targetY + 8);
 
   ctx.restore();
 }
@@ -235,7 +235,7 @@ function drawTopoPins(ctx: CanvasRenderingContext2D, originX: number, originY: n
     ctx.arc(px, py - 15, 4, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillStyle = 'rgba(13, 26, 20, 0.9)';
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
     ctx.lineWidth = 1;
     ctx.fillRect(px + 12, py - 28, 140, 32);
@@ -270,7 +270,7 @@ function renderStage2Topo(rc: RenderContext) {
 }
 
 function drawSoilHorizons(ctx: CanvasRenderingContext2D, boxX: number, boxY: number, boxW: number, boxH: number, l1H: number, l2H: number) {
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+  ctx.fillStyle = 'rgba(13, 26, 20, 0.9)';
   ctx.strokeStyle = 'rgba(251, 191, 36, 0.3)';
   ctx.lineWidth = 1.5;
   ctx.fillRect(boxX, boxY, boxW, boxH);
@@ -343,9 +343,9 @@ function drawPlantRoots(ctx: CanvasRenderingContext2D, boxX: number, boxY: numbe
 
 function drawSoilMetrics(ctx: CanvasRenderingContext2D, boxX: number, boxY: number, boxW: number, l2Y: number, l3Y: number) {
   const metrics = [
-    { label: 'HORIZON A (0-20cm): Humus & NPK Organic Matter', val: '84%', color: '#34d399', y: boxY + 22 },
-    { label: 'HORIZON B (20-60cm): Clay Density 380 g/kg // pH 6.2', val: '68%', color: '#fbbf24', y: l2Y + 24 },
-    { label: 'HORIZON C (60-100cm): Moisture Percolation Zone', val: '45%', color: '#38bdf8', y: l3Y + 20 },
+    { label: 'Topsoil, 0–20 cm: organic matter', val: '84%', color: '#34d399', y: boxY + 22 },
+    { label: 'Subsoil, 20–60 cm: clay, pH 6.2 (example)', val: '68%', color: '#fbbf24', y: l2Y + 24 },
+    { label: 'Deep layer, 60–100 cm: where water drains', val: '45%', color: '#38bdf8', y: l3Y + 20 },
   ];
 
   metrics.forEach((m) => {
@@ -399,7 +399,7 @@ function renderStage3Soil(rc: RenderContext) {
     ctx.fillRect(boxX + boxW - 110, probeLaserY - 12, 105, 24);
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 10px monospace';
-    ctx.fillText(`DEPTH: ${depthCm} cm`, boxX + boxW - 100, probeLaserY + 4);
+    ctx.fillText(`Depth: ${depthCm} cm`, boxX + boxW - 100, probeLaserY + 4);
   }
 
   ctx.restore();
@@ -434,7 +434,7 @@ function renderStage4EdgeUplink(rc: RenderContext) {
     const coreGrad = ctx.createRadialGradient(nexusX, nexusY, 5, nexusX, nexusY, hexRadius);
     coreGrad.addColorStop(0, 'rgba(168, 85, 247, 0.9)');
     coreGrad.addColorStop(0.6, 'rgba(192, 132, 252, 0.3)');
-    coreGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+    coreGrad.addColorStop(1, 'rgba(13, 26, 20, 0)');
     ctx.fillStyle = coreGrad;
   } else {
     ctx.fillStyle = 'rgba(168, 85, 247, 0.5)';
@@ -503,7 +503,7 @@ function renderStage4EdgeUplink(rc: RenderContext) {
   ctx.fillRect(phoneX - 28, phoneY - 45, 56, 40);
   ctx.fillStyle = '#34d399';
   ctx.font = 'bold 8px sans-serif';
-  ctx.fillText('OBSERVATION', phoneX - 24, phoneY - 33);
+  ctx.fillText('Observation', phoneX - 24, phoneY - 33);
   ctx.fillStyle = '#e2e8f0';
   ctx.font = '7px sans-serif';
   ctx.fillText('Review field data', phoneX - 24, phoneY - 21);
@@ -750,36 +750,35 @@ export function AgroEcosystemCanvasScrubber({
       onMouseUp={handleMouseUp}
       onTouchMove={handleTouchMove}
       onMouseLeave={handleMouseLeave}
-      className={`relative w-full h-full min-h-[360px] rounded-xl overflow-hidden border border-white/[0.08] shadow-2xl bg-slate-950 select-none ${className}`}
+      className={`relative w-full h-full min-h-[360px] rounded-md overflow-hidden border border-white/[0.08] bg-[#0b1611] select-none ${className}`}
     >
       <canvas ref={canvasRef} width={600} height={400} className="w-full h-full block" />
 
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
-        <div className="flex items-center gap-3 bg-slate-900/80 backdrop-blur-md border border-white/10 px-3.5 py-2 rounded-xl">
+        <div className="flex items-center gap-3 bg-[#0d1a14]/90 border border-white/[0.1] px-3 py-2 rounded-md">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg"
+            className="w-8 h-8 rounded-md flex items-center justify-center"
             style={{ backgroundColor: `${activeStageMeta.color}20`, color: activeStageMeta.color }}
           >
             <IconComponent className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-[10px] font-mono font-medium text-white/50">
+            <div className="text-xs text-white/60">
               {activeStageMeta.badge}
             </div>
-            <div className="text-xs font-bold text-white tracking-tight">{activeStageMeta.title}</div>
+            <div className="text-sm font-medium text-white">{activeStageMeta.title}</div>
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 bg-slate-900/80 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl font-mono tabular-nums text-[11px] text-amber-300">
-          <Activity className="w-3.5 h-3.5" />
-          <span>{t('ui_agro_ecosystem_canvas_scrubber_illustration_stage')} {currentStage + 1} of {AGRO_STAGES.length}</span>
+        <div className="hidden sm:flex items-center gap-2 bg-[#0d1a14]/90 border border-white/[0.1] px-3 py-1.5 rounded-md text-xs text-[#c5d3cb]">
+          <span>{t('ui_agro_ecosystem_canvas_scrubber_illustration_only', { defaultValue: 'Illustration, not live data' })}</span>
         </div>
       </div>
 
       {showControls && (
-        <div className="absolute bottom-4 left-4 right-4 bg-slate-900/90 backdrop-blur-md border border-white/10 p-3 rounded-xl flex flex-col gap-2 shadow-xl z-20">
+        <div className="absolute bottom-4 left-4 right-4 bg-[#0d1a14]/95 border border-white/[0.1] p-3 rounded-md flex flex-col gap-2 z-20">
           <div className="flex items-center justify-between text-xs text-white/70">
-            <span className="font-mono text-[11px] text-emerald-400 font-medium">
+            <span className="text-xs text-[#c5d3cb]">
               {t('ui_agro_ecosystem_canvas_scrubber_scrub_timeline')}
             </span>
             <div className="flex items-center gap-2">
@@ -787,10 +786,10 @@ export function AgroEcosystemCanvasScrubber({
                 type="button"
                 aria-label={isPlaying ? 'Pause simulation' : 'Auto play simulation'}
                 onClick={() => setIsPlaying(!isPlaying)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[11px] font-medium transition-colors cursor-pointer"
+                className="flex items-center gap-1 h-7 px-2.5 rounded-md bg-white/[0.06] hover:bg-white/[0.1] text-white text-xs transition-colors cursor-pointer"
               >
                 {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                <span>{isPlaying ? 'Pause' : 'Auto Play'}</span>
+                <span>{isPlaying ? 'Pause' : 'Play'}</span>
               </button>
               <button
                 type="button"
@@ -800,7 +799,7 @@ export function AgroEcosystemCanvasScrubber({
                   playScrubTick();
                 }}
                 className="p-1 rounded-md bg-slate-800 hover:bg-slate-700 text-white/60 hover:text-white transition-colors cursor-pointer"
-                title="Reset to 0%"
+                title="Back to the start"
               >
                 <RotateCcw className="w-3 h-3" />
               </button>
@@ -813,7 +812,7 @@ export function AgroEcosystemCanvasScrubber({
                     ? 'bg-slate-800 text-white/40 hover:text-white'
                     : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
                 }`}
-                title={audioMuted ? 'Unmute Audio' : 'Mute Audio'}
+                title={audioMuted ? 'Unmute sound' : 'Mute sound'}
               >
                 {audioMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
               </button>
@@ -832,7 +831,7 @@ export function AgroEcosystemCanvasScrubber({
               updateProgress(val);
               playScrubTick();
             }}
-            className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400"
+            className="w-full h-1.5 bg-white/[0.1] rounded-lg appearance-none cursor-pointer accent-emerald-500"
           />
 
           <div className="grid grid-cols-4 gap-1.5 pt-1">
@@ -842,19 +841,20 @@ export function AgroEcosystemCanvasScrubber({
                 <button
                   key={s.id}
                   type="button"
-                  aria-label={`Jump to ${s.badge}`}
+                  aria-label={`Jump to ${s.title}`}
                   onClick={() => {
                     const nextVal = s.id * 0.28 + 0.05;
                     updateProgress(nextVal);
                     playStageChime(s.id);
                   }}
-                  className={`text-[10px] font-mono py-1 px-1.5 rounded-lg border transition-all text-center truncate cursor-pointer ${
+                  aria-pressed={isActive}
+                  className={`text-xs h-8 px-1.5 rounded-md transition-colors text-center truncate cursor-pointer ${
                     isActive
-                      ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-medium'
-                      : 'bg-slate-800/40 border-white/[0.06] text-white/40 hover:text-white/80 hover:bg-slate-800'
+                      ? 'bg-emerald-400/[0.14] text-emerald-200 font-medium'
+                      : 'text-white/60 hover:text-white hover:bg-white/[0.06]'
                   }`}
                 >
-                  {s.badge.split('// ')[1]}
+                  {s.short}
                 </button>
               );
             })}

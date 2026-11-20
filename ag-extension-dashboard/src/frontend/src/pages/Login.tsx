@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAppStore, type User } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { enterDemoMode, exitDemoMode } from '@/demo';
 
 import { login, demoLogin } from '@/api/authService';
 import { getApiErrorMessage } from '@/lib/apiError';
+import { AuthLayout } from '@/components/auth/AuthLayout';
+import { AUTH_CARD } from '@/components/ui/controlStyles';
 
 interface LoginProps {
   onDemo?: () => void;
@@ -93,72 +94,15 @@ export function Login({ onDemo }: LoginProps) {
   };
 
   return (
-    <div
-      className="dark surface-dark min-h-[100dvh] bg-[#0d1a14] text-[#e6eee9] flex items-center justify-center p-4 sm:p-6 relative overflow-y-auto overflow-x-hidden"
-      role="main"
-      aria-label="Login page"
+    <AuthLayout
+      label="Login page"
+      headline={t('ui_login_panel_headline', { defaultValue: 'Advice for farmers, records for the officers who visit them.' })}
+      body={t('ui_login_panel_body', { defaultValue: 'Crop checks, visits and messages by SMS, WhatsApp and Telegram, in one place.' })}
     >
-      {/* ── Warm Agrarian Background Picture & Atmosphere ── */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        <img
-          src="/images/landing/maize-field-sunrise.webp"
-          alt=""
-          role="presentation"
-          aria-hidden="true"
-          width={1319}
-          height={860}
-          className="w-full h-full object-cover object-center opacity-40"
-          loading="eager"
-          decoding="async"
-        />
-        <div className="absolute inset-0 bg-[#0d1a14]/85" />
-      </div>
-
-      {/* ── Top Header Navigation Bar ── */}
-      <header className="absolute top-0 left-0 right-0 z-30 p-4 sm:p-6 flex items-center justify-between pointer-events-none">
-        <Link
-          to="/"
-          className="pointer-events-auto inline-flex items-center gap-2 h-9 px-3 rounded-md text-[#c5d3cb] hover:text-white hover:bg-white/[0.06] text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-          aria-label={t('common_back_to_landing', { defaultValue: 'Back to landing page' })}
-        >
-          <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-          <span className="hidden sm:inline">{t('common_back_to_landing', { defaultValue: 'Back to landing page' })}</span>
-          <span className="sm:hidden">{t('common_back_to_home', { defaultValue: 'Back to home' })}</span>
-        </Link>
-        <div className="pointer-events-auto flex items-center gap-2">
-          <LanguageSwitcher compact />
-        </div>
-      </header>
-
-      <div className="w-full max-w-md lg:max-w-5xl grid lg:grid-cols-12 gap-6 lg:gap-8 items-stretch relative z-10 my-auto pt-16 pb-8 sm:py-6">
-        {/* Left: who this is for, over a real field photo (desktop only). */}
-        <div className="hidden lg:flex lg:col-span-6 flex-col justify-between rounded-lg overflow-hidden relative self-stretch min-h-[520px] border border-white/[0.08]">
-          <img
-            src="/images/landing/officer-farmer-hero-1024.webp"
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0d1a14] via-[#0d1a14]/50 to-[#0d1a14]/30" />
-          <div className="relative flex items-center gap-2.5 p-7">
-            <img src="/logo.png" alt="" className="w-7 h-7 object-contain" />
-            <span className="text-base font-medium text-white">{t('app_title')}</span>
-          </div>
-          <div className="relative p-7">
-            <p className="text-2xl font-medium leading-snug text-white max-w-sm">
-              {t('ui_login_panel_headline', { defaultValue: 'Advice for farmers, records for the officers who visit them.' })}
-            </p>
-            <p className="text-sm text-[#c5d3cb] mt-3 max-w-sm">
-              {t('ui_login_panel_body', { defaultValue: 'Crop checks, visits and messages by SMS, WhatsApp and Telegram, in one place.' })}
-            </p>
-          </div>
-        </div>
-
-        {/* Right Side: Login Card */}
-        <motion.div
+      <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="lg:col-span-6 bg-[#13241b] border border-white/[0.08] rounded-lg p-7 sm:p-8 w-full relative z-10 self-stretch flex flex-col justify-between"
+          className={`${AUTH_CARD} relative z-10 flex flex-col justify-between`}
         >
           <div>
             {/* Header Title */}
@@ -295,8 +239,7 @@ export function Login({ onDemo }: LoginProps) {
             </p>
           </div>
         </motion.div>
-      </div>
-    </div>
+    </AuthLayout>
   );
 }
 

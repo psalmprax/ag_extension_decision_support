@@ -6,7 +6,6 @@ import {
   Smartphone,
   Database,
   ArrowLeft,
-  Layers,
   Play,
   Activity,
   CheckCircle,
@@ -18,6 +17,7 @@ import {
 import { UssdGatewayTester } from '@/components/telecom/UssdGatewayTester';
 import { AgroEcosystemCanvasScrubber } from '@/components/canvas-ui/AgroEcosystemCanvasScrubber';
 import { useLanguage } from '@/lib/LanguageContext';
+import { tabButtonClass } from '@/components/ui/controlStyles';
 
 export function DemoPage({
   initialTab = 'scrubber',
@@ -95,104 +95,68 @@ export function DemoPage({
     });
   };
 
+  const tabs = [
+    { key: 'scrubber' as const, icon: MapPin, label: t('demo_tab_farm_map', { defaultValue: 'Farm map' }) },
+    { key: 'rag' as const, icon: Brain, label: t('demo_tab_ask', { defaultValue: 'Ask a question' }) },
+    { key: 'synthesis' as const, icon: Smartphone, label: t('demo_tab_voice', { defaultValue: 'Voice advice' }) },
+    { key: 'telemetry' as const, icon: Database, label: t('demo_tab_soil', { defaultValue: 'Soil readings' }) },
+    { key: 'telecom' as const, icon: Radio, label: t('demo_tab_ussd', { defaultValue: 'SMS & USSD' }) },
+  ];
+
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100">
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-stone-950/90 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+    <div className="dark surface-dark min-h-screen bg-[#0d1a14] text-[#e6eee9]">
+      <nav className="sticky top-0 z-50 bg-[#0d1a14]/90 backdrop-blur border-b border-white/[0.08]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3 sm:gap-4">
             <button
               onClick={() => navigate('/')}
-              className="flex items-center gap-2 text-sm text-stone-400 hover:text-white transition-colors"
+              className="inline-flex items-center gap-2 h-9 px-2 rounded-md text-sm text-[#9db2a6] hover:text-white hover:bg-white/[0.06] transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4" aria-hidden="true" />
               {t('common_back')}
             </button>
-            <div className="w-px h-5 bg-white/10" />
+            <div className="w-px h-5 bg-white/[0.12]" aria-hidden="true" />
             <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="GPExts Logo" className="w-7 h-7 object-contain rounded-lg" />
-              <span className="font-bold text-sm tracking-tight">{t('app_title')}</span>
+              <img src="/logo.png" alt="" className="w-7 h-7 object-contain" />
+              <span className="text-base font-medium text-white">{t('app_title')}</span>
             </div>
           </div>
           <button
             onClick={() => navigate('/register')}
-            className="px-4 py-2 text-sm font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors"
+            className="h-9 px-4 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors"
           >
             {t('ui_demo_page_get_started')}
           </button>
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 mb-4">
-            <Layers className="w-4 h-4 text-emerald-400" />
-            <span className="text-xs font-semibold text-emerald-400">{t('ui_demo_page_interactive_sandbox')}</span>
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">{t('ui_demo_page_experience_gpexts')}</h1>
-          <p className="text-stone-400 max-w-lg mx-auto">
-            {t('ui_demo_page_explore_illustrative_examples_this_s')}
-          </p>
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-12">
+        <div className="mb-8 max-w-2xl">
+          <h1 className="text-3xl sm:text-4xl font-medium leading-tight text-white">{t('ui_demo_page_experience_gpexts')}</h1>
+          <p className="mt-3 text-base text-[#c5d3cb]">{t('ui_demo_page_explore_illustrative_examples_this_s')}</p>
         </div>
 
-        {/* Tab bar */}
-        <div className="flex gap-2 mb-8 bg-white/5 p-1.5 rounded-xl border border-white/5 max-w-4xl mx-auto overflow-x-auto">
-          {[
-            {
-              key: 'scrubber' as const,
-              icon: Layers,
-              label: '3D Agro Scrubber',
-              color: 'text-emerald-400',
-            },
-            { key: 'rag' as const, icon: Brain, label: 'RAG Assistant', color: 'text-slate-400' },
-            {
-              key: 'synthesis' as const,
-              icon: Smartphone,
-              label: 'Voice Synthesis',
-              color: 'text-slate-400',
-            },
-            {
-              key: 'telemetry' as const,
-              icon: Database,
-              label: 'Soil Telemetry',
-              color: 'text-slate-400',
-            },
-            {
-              key: 'telecom' as const,
-              icon: Radio,
-              label: 'USSD & Telecom',
-              color: 'text-rose-400',
-            },
-          ].map(tab => (
+        <div className="flex gap-1 mb-6 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0" role="tablist" aria-label={t('demo_tabs_label', { defaultValue: 'Examples' })}>
+          {tabs.map(tab => (
             <button
               key={tab.key}
+              role="tab"
+              aria-selected={activeTab === tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                activeTab === tab.key ? 'bg-white/10 text-white' : 'text-stone-500 hover:text-white'
-              }`}
+              className={tabButtonClass(activeTab === tab.key)}
             >
-              <tab.icon className={`w-3.5 h-3.5 ${tab.color}`} />
+              <tab.icon className="w-4 h-4" aria-hidden="true" />
               {tab.label}
             </button>
           ))}
         </div>
 
-        {/* Content */}
-        <div className="bg-stone-900/60 border border-white/5 rounded-xl p-6 md:p-8">
-          {/* Window chrome */}
-          <div className="flex items-center gap-2 pb-4 border-b border-white/5 mb-6">
-            <div className="h-3 w-3 rounded-full bg-red-500" />
-            <div className="h-3 w-3 rounded-full bg-yellow-500" />
-            <div className="h-3 w-3 rounded-full bg-green-500" />
-            <span className="text-xs font-mono text-stone-500 ml-2">{t('ui_demo_page_info_gpfed_com')}</span>
-          </div>
-
+        <div className="bg-white/[0.03] border border-white/[0.08] rounded-lg p-5 sm:p-8">
           {/* RAG Tab */}
           {activeTab === 'rag' && (
             <div className="space-y-6">
               <div>
-                <label className="text-xs font-bold text-stone-500 mb-3 block">
+                <label className="text-xs font-medium text-[#9db2a6] mb-3 block">
                   {t('ui_demo_page_select_agronomic_scenario')}
                 </label>
                 <div className="grid md:grid-cols-3 gap-3">
@@ -200,10 +164,10 @@ export function DemoPage({
                     <button
                       key={idx}
                       onClick={() => setSelectedPreset(idx)}
-                      className={`p-4 text-xs text-left rounded-xl transition-all border ${
+                      className={`p-4 text-xs text-left rounded-lg transition-all border ${
                         selectedPreset === idx
                           ? 'bg-slate-500/15 border-slate-400/40 text-white'
-                          : 'bg-white/5 border-white/5 text-stone-300 hover:bg-white/10'
+                          : 'bg-white/[0.04] border-white/[0.08] text-[#c5d3cb] hover:bg-white/10'
                       }`}
                     >
                       {preset.query}
@@ -212,23 +176,23 @@ export function DemoPage({
                 </div>
               </div>
 
-              <div className="p-5 rounded-xl bg-black/40 border border-white/5 min-h-[200px]">
-                <div className="flex items-center gap-2 border-b border-white/5 pb-3 mb-4">
+              <div className="p-5 rounded-lg bg-white/[0.03] border border-white/[0.08] min-h-[200px]">
+                <div className="flex items-center gap-2 border-b border-white/[0.08] pb-3 mb-4">
                   <Bot className="w-4 h-4 text-slate-400" />
-                  <span className="text-xs font-bold font-mono text-stone-400">
+                  <span className="text-xs font-medium text-[#9db2a6]">
                     {t('ui_demo_page_example_assistant_response_scripted')}
                   </span>
                 </div>
 
                 {selectedPreset === null && (
-                  <p className="text-sm text-stone-500 italic">
+                  <p className="text-sm text-[#9db2a6] ">
                     {t('ui_demo_page_select_a_scenario_to_see_a_scripted')}
                   </p>
                 )}
 
                 {selectedPreset !== null && (
                   <>
-                    <p className="text-sm font-mono leading-relaxed whitespace-pre-line text-stone-200">
+                    <p className="text-sm leading-relaxed whitespace-pre-line text-[#e6eee9]">
                       {presets[selectedPreset].response}
                     </p>
                     <p className="mt-4 text-xs text-amber-300">{t('ui_demo_page_example_only_not_a_diagnosis_or_veri')}</p>
@@ -241,14 +205,14 @@ export function DemoPage({
           {/* Synthesis Tab */}
           {activeTab === 'synthesis' && (
             <div className="space-y-6">
-              <div className="p-5 rounded-xl bg-black/30 border border-white/5 text-center space-y-5">
+              <div className="p-5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-center space-y-5">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-mono text-stone-400">{t('ui_demo_page_audio_note_transcript_preview')}</span>
-                  <span className="text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md font-mono text-xxs">
+                  <span className="text-[#9db2a6]">{t('ui_demo_page_audio_note_transcript_preview')}</span>
+                  <span className="text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md text-xs">
                     {t('ui_demo_page_scripted_example')}
                   </span>
                 </div>
-                <p className="text-sm italic text-stone-300 leading-relaxed max-w-lg mx-auto">
+                <p className="text-sm text-[#c5d3cb] leading-relaxed max-w-lg mx-auto">
                   {t('ui_demo_page_example_field_note_maize_leaves_show')}
                 </p>
 
@@ -257,15 +221,15 @@ export function DemoPage({
                     type="button"
                     onClick={triggerAudioPlayback}
                     disabled={isPlayingAudio}
-                    className={`px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer transition-all ${
+                    className={`px-5 py-2.5 rounded-lg text-xs font-medium flex items-center gap-2 cursor-pointer transition-all ${
                       isPlayingAudio
-                        ? 'bg-amber-500 text-stone-900 animate-pulse'
-                        : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                        ? 'bg-emerald-800 text-white'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                     }`}
                   >
                     {isPlayingAudio ? (
                       <>
-                        <Activity className="w-4 h-4 animate-bounce" /> {t('ui_demo_page_playing_example')}
+                        <Activity className="w-4 h-4" aria-hidden="true" /> {t('ui_demo_page_playing_example')}
                       </>
                     ) : (
                       <>
@@ -276,7 +240,7 @@ export function DemoPage({
                   <button
                     type="button"
                     onClick={triggerSynthesisToDashboard}
-                    className="px-5 py-2.5 rounded-xl text-xs font-bold bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center gap-2 cursor-pointer transition-all"
+                    className="px-5 py-2.5 rounded-lg text-xs font-medium bg-white/[0.04] border border-white/10 hover:bg-white/10 text-white flex items-center gap-2 cursor-pointer transition-all"
                   >
                     <Zap className="w-4 h-4 text-slate-400" /> {t('ui_demo_page_preview_example_summary')}
                   </button>
@@ -289,19 +253,19 @@ export function DemoPage({
                   <motion.div
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-4"
+                    className="p-5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 space-y-4"
                   >
-                    <p className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                    <p className="text-xs font-medium text-emerald-400 flex items-center gap-1.5">
                       <CheckCircle className="w-4 h-4" />
                       {t('ui_demo_page_example_summary_not_saved_or_dispatc')}
                     </p>
                     <div className="grid grid-cols-2 gap-4 text-xs">
                       <div>
-                        <p className="text-stone-500 font-mono text-xxs mb-0.5">{t('register_role_farmer')}</p>
+                        <p className="text-[#9db2a6] text-xs mb-0.5">{t('register_role_farmer')}</p>
                         <p className="font-semibold">{synthesisOutput.farmer ?? ''}</p>
                       </div>
                       <div>
-                        <p className="text-stone-500 font-mono text-xxs mb-0.5">
+                        <p className="text-[#9db2a6] text-xs mb-0.5">
                           {t('ui_demo_page_observation')}
                         </p>
                         <p className="font-semibold text-amber-400">
@@ -309,7 +273,7 @@ export function DemoPage({
                         </p>
                       </div>
                     </div>
-                    <div className="p-3 rounded-lg bg-black/30 text-xs text-stone-300 font-mono">
+                    <div className="p-3 rounded-lg bg-white/[0.03] text-xs text-[#c5d3cb] font-mono">
                       {synthesisOutput.action ?? ''}
                     </div>
                   </motion.div>
@@ -322,40 +286,40 @@ export function DemoPage({
           {activeTab === 'telemetry' && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-black/30 border border-white/5">
-                  <span className="text-xxs font-mono text-stone-500 block mb-1">
+                <div className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.08]">
+                  <span className="text-xs text-[#9db2a6] block mb-1">
                     {t('ui_demo_page_bulk_density')}
                   </span>
-                  <span className="text-2xl font-bold font-mono text-slate-400">1.25 kg/dm3</span>
-                  <span className="text-xxs text-emerald-400 block mt-1.5">
+                  <span className="text-2xl font-medium text-slate-400">1.25 kg/dm3</span>
+                  <span className="text-xs text-emerald-400 block mt-1.5">
                     {t('ui_demo_page_illustrative_value')}
                   </span>
                 </div>
-                <div className="p-4 rounded-xl bg-black/30 border border-white/5">
-                  <span className="text-xxs font-mono text-stone-500 block mb-1">
+                <div className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.08]">
+                  <span className="text-xs text-[#9db2a6] block mb-1">
                     {t('ui_demo_page_organic_carbon')}
                   </span>
-                  <span className="text-2xl font-bold font-mono text-amber-400">22 g/kg</span>
-                  <span className="text-xxs text-amber-400 block mt-1.5">
+                  <span className="text-2xl font-medium text-amber-400">22 g/kg</span>
+                  <span className="text-xs text-amber-400 block mt-1.5">
                     {t('ui_demo_page_illustrative_value')}
                   </span>
                 </div>
               </div>
 
-              <div className="p-5 rounded-xl bg-black/40 border border-white/5 space-y-3">
-                <div className="flex justify-between items-center text-xs border-b border-white/5 pb-3">
-                  <span className="font-mono text-stone-400">{t('ui_demo_page_illustrative_telemetry_not_live')}</span>
+              <div className="p-5 rounded-lg bg-white/[0.03] border border-white/[0.08] space-y-3">
+                <div className="flex justify-between items-center text-xs border-b border-white/[0.08] pb-3">
+                  <span className="text-[#9db2a6]">{t('ui_demo_page_illustrative_telemetry_not_live')}</span>
                 </div>
-                <div className="space-y-2 font-mono text-xs-plus text-slate-400/90 leading-relaxed">
+                <div className="space-y-2 text-sm text-slate-400/90 leading-relaxed">
                   {telemetryLogs.map((log, i) => (
                     <p key={i}>{log}</p>
                   ))}
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-slate-500/5 border border-slate-500/10">
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-500/5 border border-slate-500/10">
                 <MapPin className="w-5 h-5 text-slate-400 flex-shrink-0" />
-                <p className="text-xs text-stone-400">
+                <p className="text-xs text-[#9db2a6]">
                   {t('ui_demo_page_these_sample_values_are_not_field_me')}
                 </p>
               </div>
@@ -365,47 +329,42 @@ export function DemoPage({
           {/* 3D Agro Scrubber Tab */}
           {activeTab === 'scrubber' && (
             <div className="space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/5">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
                 <div>
-                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-emerald-400" />
+                  <h2 className="text-lg font-medium text-white">
                     {t('ui_demo_page_interactive_3d_agro_intelligence_scr')}
                   </h2>
-                  <p className="text-xs text-stone-400 mt-1">
+                  <p className="text-xs text-[#9db2a6] mt-1">
                     {t('ui_demo_page_explore_an_illustrated_four_stage_co')}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 font-mono text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/20">
-                  <Activity className="w-3.5 h-3.5" />
-                  <span>{t('ui_demo_page_illustrative_canvas')}</span>
-                </div>
               </div>
 
-              <div className="h-[480px] w-full">
+              <div className="h-[380px] sm:h-[480px] w-full rounded-md overflow-hidden">
                 <AgroEcosystemCanvasScrubber interactive={true} showControls={true} className="w-full h-full" />
               </div>
 
               <div className="grid md:grid-cols-3 gap-4 pt-2">
-                <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1">
-                  <div className="text-xs font-mono text-slate-400">{t('ui_demo_page_stage_01_orbital')}</div>
-                  <div className="text-sm font-bold text-white">{t('ui_demo_page_atmospheric_flux')}</div>
-                  <p className="text-xs text-stone-400">
+                <div className="p-4 rounded-lg bg-white/[0.04] border border-white/[0.08] space-y-1">
+                  <div className="text-xs text-[#9db2a6]">{t('ui_demo_page_stage_01_orbital')}</div>
+                  <div className="text-sm font-medium text-white">{t('ui_demo_page_atmospheric_flux')}</div>
+                  <p className="text-xs text-[#9db2a6]">
                     {t('ui_demo_page_example_of_weather_data_that_could_i')}
                   </p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1">
-                  <div className="text-xs font-mono text-emerald-400">{t('ui_demo_page_stage_02_canopy')}</div>
-                  <div className="text-sm font-bold text-white">{t('ui_demo_page_multi_spectral_ndvi')}</div>
-                  <p className="text-xs text-stone-400">
+                <div className="p-4 rounded-lg bg-white/[0.04] border border-white/[0.08] space-y-1">
+                  <div className="text-xs text-[#9db2a6]">{t('ui_demo_page_stage_02_canopy')}</div>
+                  <div className="text-sm font-medium text-white">{t('ui_demo_page_multi_spectral_ndvi')}</div>
+                  <p className="text-xs text-[#9db2a6]">
                     {t('ui_demo_page_example_of_vegetation_indices_used_t')}
                   </p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1">
-                  <div className="text-xs font-mono text-slate-400">{t('ui_demo_page_stage_03_04_synthesis')}</div>
-                  <div className="text-sm font-bold text-white">{t('ui_demo_page_edge_ussd_uplink')}</div>
-                  <p className="text-xs text-stone-400">
+                <div className="p-4 rounded-lg bg-white/[0.04] border border-white/[0.08] space-y-1">
+                  <div className="text-xs text-[#9db2a6]">{t('ui_demo_page_stage_03_04_synthesis')}</div>
+                  <div className="text-sm font-medium text-white">{t('ui_demo_page_edge_ussd_uplink')}</div>
+                  <p className="text-xs text-[#9db2a6]">
                     {t('ui_demo_page_example_of_how_observations_and_mess')}
                   </p>
                 </div>
@@ -413,23 +372,21 @@ export function DemoPage({
             </div>
           )}
 
-          {/* Canvas UI Effects Lab Tab */}
-
           {/* Telecom & USSD Simulator Tab */}
           {activeTab === 'telecom' && <UssdGatewayTester />}
         </div>
 
         {/* Bottom CTA */}
         <div className="text-center mt-12 space-y-4">
-          <p className="text-stone-400 text-sm">{t('ui_demo_page_ready_to_use_these_capabilities_in_t')}</p>
+          <p className="text-[#9db2a6] text-sm">{t('ui_demo_page_ready_to_use_these_capabilities_in_t')}</p>
           <button
             onClick={() => navigate('/register')}
-            className="px-6 py-3 text-sm font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors"
+            className="h-12 px-6 text-base font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors"
           >
             {t('ui_demo_page_create_free_account')}
           </button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
