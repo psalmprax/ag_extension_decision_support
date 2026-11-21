@@ -49,9 +49,6 @@ jest.mock('../services/openMeteoSoilService', () => ({
   },
 }));
 
-jest.mock('../services/pestSwarmRadarService', () => ({
-  clusterPestSightings: jest.fn().mockReturnValue([]),
-}));
 
 import { query } from '../services/databaseService';
 const mockQuery = query as jest.Mock;
@@ -78,9 +75,6 @@ describe('GET /api/worldmonitor/layers', () => {
         });
       }
       if (sql.includes('FROM diagnosis_events d')) {
-        return Promise.resolve({ rows: [] });
-      }
-      if (sql.includes('FROM pest_sightings')) {
         return Promise.resolve({ rows: [] });
       }
       return Promise.resolve({ rows: [] });
@@ -127,7 +121,7 @@ describe('GET /api/worldmonitor/layers — pest swarm status', () => {
   // An empty pest map must never read as "no swarms" when there is no data source.
   const get = () => request(app).get('/api/worldmonitor/layers').set('Authorization', 'Bearer fake-jwt-token');
   const withPestQuery = (pest: () => Promise<unknown>) => mockQuery.mockImplementation((sql: string) =>
-    (String(sql).includes('FROM pest_sightings') ? pest() : Promise.resolve({ rows: [] })));
+    (String(sql).includes('(armyworm|locust|quelea)') ? pest() : Promise.resolve({ rows: [] })));
 
   beforeEach(() => jest.clearAllMocks());
 
@@ -138,11 +132,18 @@ describe('GET /api/worldmonitor/layers — pest swarm status', () => {
     expect(res.body.data.pestSwarm).toEqual({ status: 'live', clusters: [], trajectories: [] });
   });
 
-  it('reports "no_data_source" when pest_sightings does not exist (42P01)', async () => {
-    withPestQuery(() => Promise.reject(Object.assign(new Error('relation "pest_sightings" does not exist'), { code: '42P01' })));
+  it('clusters pest diagnoses from farms this officer may see', async () => {
+    const near = (id: string, lat: string) => ({
+      id, disease_label: 'Fall Armyworm', lat, lng: '36.80', district: 'Kiambu', created_at: '2026-11-20T08:00:00Z', role: 'extension_officer',
+    });
+    withPestQuery(() => Promise.resolve({ rows: [near('d-1', '-1.280'), near('d-2', '-1.285')] }));
     const res = await get();
     expect(res.status).toBe(200);
-    expect(res.body.data.pestSwarm.status).toBe('no_data_source');
+    expect(res.body.data.pestSwarm.status).toBe('live');
+    expect(res.body.data.pestSwarm.clusters).toHaveLength(1);
+    expect(res.body.data.pestSwarm.clusters[0].pestType).toBe('fall_armyworm');
+    const pestCall = mockQuery.mock.calls.find(c => String(c[0]).includes('(armyworm|locust|quelea)'));
+    expect(String(pestCall?.[0])).toMatch(/f\.assigned_officer_id = \$\d+/);
   });
 
   it('reports "unavailable" and logs an error on any other failure', async () => {

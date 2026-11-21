@@ -27,7 +27,8 @@
     "prelint": "node scripts/sync-shared-api.js",
     "prebuild": "node scripts/sync-shared-api.js",
     "pretest": "node scripts/sync-shared-api.js",
-    "routes:inventory": "ts-node -r tsconfig-paths/register --transpile-only scripts/route-inventory.ts"
+    "routes:inventory": "ts-node -r tsconfig-paths/register --transpile-only scripts/route-inventory.ts",
+    "check:sql": "ts-node --transpile-only scripts/check-sql-against-schema.ts"
   },
   "lint-staged": {
     "src/**/*.ts": [

@@ -8,6 +8,12 @@ describe('the cross-region access test covers every GET route', () => {
         const listed = JSON.parse(fs.readFileSync(ROUTE_LIST_FILE, 'utf8')) as string[];
         expect(listed).toEqual(currentGetRoutes());
     });
+
+    it('lists every route with its method for the no-server-errors test', async () => {
+        const { currentAllRoutes, ALL_ROUTES_FILE } = await import('@/utils/getRouteList');
+        const listed = JSON.parse(fs.readFileSync(ALL_ROUTES_FILE, 'utf8')) as string[];
+        expect(listed).toEqual(currentAllRoutes());
+    });
 });
 
 describe('route inventory', () => {

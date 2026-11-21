@@ -6,7 +6,6 @@ import {
 } from '../services/fieldVerificationService';
 import { evaluateProviders } from '../services/aiProviderEvalService';
 import { sweepThresholds, bestThreshold } from '../services/thresholdBacktestService';
-import { ingestParcelBands } from '../services/satelliteIngestService';
 import { splitQuarantined, quarantineDisclosure, isQuarantined } from '../services/knowledge/groundingPolicy';
 import { OmniRouteService } from '../services/omniRouteService';
 import { credentialVault } from '../services/security/credentialVault';
@@ -32,7 +31,7 @@ jest.mock('../services/marketPriceService', () => {
   return { ...actual };
 });
 
-describe('Post-fix guards (settlement grade, calibration, eval, backtest, ingest)', () => {
+describe('Post-fix guards (settlement grade, calibration, eval, backtest)', () => {
   it('grades only live non-estimated FX as settlement-grade', () => {
     expect(
       isSettlementGradeRate({ rate: 129.5, source: 'live', asOf: new Date().toISOString(), estimated: false, stale: false }),
@@ -93,30 +92,6 @@ describe('Post-fix guards (settlement grade, calibration, eval, backtest, ingest
     expect(at800?.recall).toBe(1);
     expect(bestThreshold(metrics).threshold).toBe(800);
     expect(() => sweepThresholds([], [500])).toThrow();
-  });
-
-  it('refuses satellite ingest loudly when unconfigured', async () => {
-    delete process.env.SENTINEL_HUB_CLIENT_ID;
-    delete process.env.SENTINEL_HUB_CLIENT_SECRET;
-    await expect(
-      ingestParcelBands({ minLat: -1.3, maxLat: -1.2, minLng: 36.7, maxLng: 36.8, fromDate: '2026-08-01', toDate: '2026-08-10' }),
-    ).rejects.toThrow(/UNCONFIGURED/);
-  });
-
-  it('accepts an injected imagery provider (contract test)', async () => {
-    const result = await ingestParcelBands(
-      { minLat: -1.3, maxLat: -1.2, minLng: 36.7, maxLng: 36.8, fromDate: '2026-08-01', toDate: '2026-08-10' },
-      {
-        fetchBands: async () => ({
-          pixels: [{ bandRed: 0.2, bandNir: 0.6, bandGreen: 0.15 }],
-          cloudCoverPct: 5,
-          capturedAt: new Date().toISOString(),
-          source: 'test-provider',
-        }),
-      },
-    );
-    expect(result.pixels).toHaveLength(1);
-    expect(result.cloudCoverPct).toBe(5);
   });
 
   it('withholds unverified scrapes from grounding with disclosure', () => {

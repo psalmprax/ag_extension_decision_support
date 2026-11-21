@@ -111,7 +111,6 @@
   "/api/v1/offline/status",
   "/api/v1/organizations/config",
   "/api/v1/outbreaks",
-  "/api/v1/pillars/satellite/ingest-status",
   "/api/v1/pilots",
   "/api/v1/portfolio",
   "/api/v1/portfolio/export/excel",

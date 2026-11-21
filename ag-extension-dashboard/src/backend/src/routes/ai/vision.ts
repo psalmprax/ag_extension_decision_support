@@ -4,7 +4,7 @@ import { logger } from '@/utils/logger';
 import { AuthRequest } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { usageService } from '@/services/usageService';
-import { safeError } from '@/utils/safeResponse';
+import { safeError, failRequest } from '@/utils/safeResponse';
 import { MAX_VIDEO_BYTES } from '@/services/aiProvider/videoFrameService';
 
 const router = Router();
@@ -70,8 +70,11 @@ function decodeVideo(video: unknown, res: Response): Buffer | null {
  */
 router.post('/analyze-image', [checkUsageLimit('ai_vision', { meter: false })], async (req: AuthRequest, res: Response) => {
     try {
-        const { image, prompt } = req.body;
+        const { image, prompt } = req.body ?? {};
         const userId = req.user!.userId;
+        if (typeof image !== 'string' || image.length === 0) {
+            return res.status(400).json({ success: false, error: 'An image is required as a base64 string.' });
+        }
 
         const result = await AIRouter.routeRequest('vision', {
             imageData: image,
@@ -87,7 +90,7 @@ router.post('/analyze-image', [checkUsageLimit('ai_vision', { meter: false })], 
         });
     } catch (error) {
         logger.error('Image analysis failed:', error);
-        safeError(res, 500, 'Failed to analyze image');
+        failRequest(res, error, 'Failed to analyze image');
     }
 });
 

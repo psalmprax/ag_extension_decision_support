@@ -18,6 +18,7 @@ Use these exact commands for common development operations. Do not hallucinate o
 - **Frontend lint**: `npm run lint:frontend` (max 20 warnings)
 - **Backend lint**: `cd ag-extension-dashboard/src/backend && npm run lint`
 - **Component-size ratchet**: `npm run check:component-size`
+- **SQL vs schema (backend)**: `cd ag-extension-dashboard/src/backend && DATABASE_URL=... npm run check:sql` (Postgres prepares every raw SQL statement against the migrated schema; runs in Real-backend E2E)
 - **Explicit-any ratchet (backend)**: `npm run check:explicit-any` (counts `any` even behind `eslint-disable`; `--update` after reducing)
 - **Live checks** (`.github/workflows/live-smoke.yml`, workflow name "Live checks"): `suite=live-smoke` smoke-tests stage against real AI providers + PayPal sandbox (script `scripts/live-smoke.cjs`); `suite=rag-eval` runs the retrieval evaluation; `suite=user-stories` with `target=stage|production` seeds the test population and runs the Playwright user stories on that site
 

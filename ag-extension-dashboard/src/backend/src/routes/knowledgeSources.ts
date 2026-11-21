@@ -3,7 +3,7 @@ import { query } from '@/services/databaseService';
 import { TropicalKnowledgeSourceService } from '@/services/data/tropicalKnowledgeSources';
 import { logger } from '@/utils/logger';
 import { authorize, UserRole } from '@/middleware/authorize';
-import { safeError } from '@/utils/safeResponse';
+import { safeError, failRequest } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -126,7 +126,7 @@ router.post('/sync-curated', authorize(knowledgeAdminRoles), async (_req: Reques
         });
     } catch (error) {
         logger.error('Curated tropical source sync error:', error);
-        safeError(res, 500, 'Failed to sync curated tropical sources');
+        failRequest(res, error, 'Failed to sync curated tropical sources');
     }
 });
 

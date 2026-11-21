@@ -203,6 +203,26 @@ export class AgentTelemetry {
     });
   }
 
+  /**
+   * Deletes events older than the retention window, a slice at a time so a large backlog
+   * never holds a long lock. Returns how many rows went.
+   */
+  async prune(retentionDays = Number(process.env.AGENT_TELEMETRY_RETENTION_DAYS || 90)): Promise<number> {
+    const days = Number.isFinite(retentionDays) && retentionDays > 0 ? Math.floor(retentionDays) : 90;
+    const SLICE = 10_000;
+    let removed = 0;
+    for (let i = 0; i < 1_000; i++) {
+      const result = await query(
+        `DELETE FROM agent_telemetry WHERE id IN (
+           SELECT id FROM agent_telemetry WHERE timestamp < NOW() - make_interval(days => $1) LIMIT $2)`,
+        [days, SLICE]
+      );
+      removed += result.rowCount ?? 0;
+      if ((result.rowCount ?? 0) < SLICE) break;
+    }
+    return removed;
+  }
+
   async getSummary(hours = 24): Promise<TelemetrySummary> {
     const pool = getPool();
     if (!pool || !this.initialized) {

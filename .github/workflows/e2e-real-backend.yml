@@ -77,6 +77,10 @@ jobs:
           node prisma/seed.cjs
           npm run seed:realworld
 
+      - name: Check every SQL statement against the migrated schema
+        working-directory: ag-extension-dashboard/src/backend
+        run: npm run check:sql
+
       - name: Install Playwright browser (chromium)
         working-directory: ag-extension-dashboard/src/frontend
         run: npx playwright install --with-deps chromium

@@ -81,6 +81,8 @@ let adapterSubClient: ReturnType<typeof createClient> | null = null;
 let smsPollTimer: NodeJS.Timeout | null = null;
 // Pilot follow-up questions ("did you follow the advice?"), leader-gated.
 let pilotTimer: NodeJS.Timeout | null = null;
+// Hourly removal of AI telemetry past its retention window, leader-gated.
+let telemetryPruneTimer: NodeJS.Timeout | null = null;
 
 // Runs a startup step with uniform error handling: logs a success line on
 // completion, or a failure line (warn-only for optional services) on error.
@@ -169,6 +171,13 @@ async function startScheduledSms() {
             runIfLeader('pilot-followups', () => sendDueFollowUps()).catch(e => logger.warn('Pilot follow-up tick failed:', e));
         }, Number(process.env.PILOT_FOLLOWUP_POLL_MS || 15 * 60_000));
         pilotTimer.unref?.();
+        const { agentTelemetry } = await import('./services/agentTelemetry');
+        telemetryPruneTimer = setInterval(() => {
+            runIfLeader('telemetry-prune', () => agentTelemetry.prune())
+                .then(removed => { if (removed) logger.info(`Removed ${removed} AI telemetry events past retention`); })
+                .catch(e => logger.warn('Telemetry prune tick failed:', e));
+        }, 60 * 60_000);
+        telemetryPruneTimer.unref?.();
     } catch (error) {
         logger.error('Scheduled SMS polling startup failed:', error);
     }
@@ -366,6 +375,10 @@ async function stopIntervalWorkers() {
     if (pilotTimer) {
         clearInterval(pilotTimer);
         pilotTimer = null;
+    }
+    if (telemetryPruneTimer) {
+        clearInterval(telemetryPruneTimer);
+        telemetryPruneTimer = null;
     }
     if (smsPollTimer) {
         clearInterval(smsPollTimer);
