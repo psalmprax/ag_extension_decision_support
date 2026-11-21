@@ -1,5 +1,6 @@
 import React from 'react';
 import { AdvisoryPreferencesSection } from '@/components/advisories/AdvisoryPreferencesSection';
+import { FarmerRecordingsSection } from '@/components/partners/FarmerRecordingsSection';
 import { Farmer, Visit } from '@/types/dashboard';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -9,8 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FarmerDetailHeader } from './FarmerDetailHeader';
 import { FarmerYieldChart } from './FarmerYieldChart';
 import { FarmerVisitTimeline } from './FarmerVisitTimeline';
-import { X, TrendingUp, MessageSquare, Phone, Video, Clock, ChevronRight, Sprout } from 'lucide-react';
-import { Activity, Mail, History, FileText, Loader2, Link2, ListChecks } from 'lucide-react';
+import { X, TrendingUp, MessageSquare, Phone, Video, Clock, ChevronRight, Sprout, Activity, Mail, History, FileText, Loader2, Link2, ListChecks } from 'lucide-react';
 import { FarmerProgressLog } from './progress/FarmerProgressLog';
 
 type DetailTab = 'overview' | 'history' | 'progress' | 'insights';
@@ -596,7 +596,6 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             className="fixed end-0 top-0 bottom-0 w-full max-w-xl z-[70] shadow-2xl overflow-hidden flex flex-col bg-slate-950/95 backdrop-blur-2xl border-s border-slate-800 text-slate-100"
             onClick={() => onFarmerClick?.(farmer)}
           >
-            {/* Header Section */}
             <FarmerDetailHeader
               farmer={farmer}
               editData={editData}
@@ -666,11 +665,11 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
               )}
             </div>
 
-            <div className="px-4 pb-2">
+            <div className="px-4 pb-2 space-y-4">
               <AdvisoryPreferencesSection farmerId={farmer.id} />
+              <FarmerRecordingsSection farmerId={farmer.id} farmerName={`${farmer.firstName} ${farmer.lastName}`} />
             </div>
 
-            {/* Footer Quick Action */}
             <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900/80 border-slate-800">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-9 h-9 rounded-[4px] flex items-center justify-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shrink-0">

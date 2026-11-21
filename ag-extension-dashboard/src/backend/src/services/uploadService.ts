@@ -10,37 +10,8 @@ export const MAX_UPLOAD_BYTES = Number(process.env.MAX_UPLOAD_MB || 100) * 1024 
 /** Per-user total storage quota (bytes). Override with UPLOAD_QUOTA_MB. */
 const USER_QUOTA_BYTES = Number(process.env.UPLOAD_QUOTA_MB || 500) * 1024 * 1024;
 
-export const UPLOAD_TYPES = {
-  // Images
-  'image/jpeg': '.jpg',
-  'image/png': '.png',
-  'image/gif': '.gif',
-  'image/webp': '.webp',
-  'image/svg+xml': '.svg',
-  // Documents
-  'application/pdf': '.pdf',
-  'text/csv': '.csv',
-  'text/plain': '.txt',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
-  'application/vnd.ms-excel': '.xls',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
-  'application/msword': '.doc',
-  // Videos
-  'video/mp4': '.mp4',
-  'video/webm': '.webm',
-  'video/quicktime': '.mov',
-  'video/x-matroska': '.mkv',
-  // Audio
-  'audio/mpeg': '.mp3',
-  'audio/wav': '.wav',
-  'audio/ogg': '.ogg',
-  'audio/webm': '.webm',
-  'audio/aac': '.aac',
-  'audio/mp4': '.m4a',
-  'audio/x-m4a': '.m4a',
-} as const;
-
-export type SupportedMimeType = keyof typeof UPLOAD_TYPES;
+export { UPLOAD_TYPES, mimeTypeForName, type SupportedMimeType } from './uploadTypes';
+import { UPLOAD_TYPES, type SupportedMimeType } from './uploadTypes';
 
 const DANGEROUS_SVG_PATTERNS = [
   '<script',
@@ -158,6 +129,8 @@ export interface UploadInput {
   mimeType: string;
   ownerUserId: string;
   farmerId?: string;
+  /** A partner library imported by the system administrator is not personal storage. */
+  quotaExempt?: boolean;
 }
 
 export interface UploadResult {
@@ -207,7 +180,7 @@ export async function saveUpload(input: UploadInput): Promise<UploadResult> {
   }
 
   // Quota check before writing or scanning
-  await checkStorageQuota(input.ownerUserId, input.buffer.length);
+  if (!input.quotaExempt) await checkStorageQuota(input.ownerUserId, input.buffer.length);
 
   // Malware scan (ClamAV via CLAMD_HOST when configured)
   await assertNotMalicious(input.buffer);

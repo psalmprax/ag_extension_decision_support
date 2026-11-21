@@ -72,6 +72,8 @@ import voiceLineRoutes from './routes/voiceLine';
 import diagnosisTestRoutes from './routes/diagnosisTests';
 import pilotRoutes from './routes/pilots';
 import voiceClipRoutes from './routes/voiceClips';
+import { partnersRouter, recordingsRouter } from './routes/partnerRecordings';
+import importRoutes from './routes/imports';
 import billingRoutes from './routes/billing';
 import contextMenuRoutes from './routes/contextMenus';
 import { shareRouter, publicShareRouter } from './routes/shares';
@@ -603,6 +605,9 @@ export const routeMounts: RouteMount[] = [
   { path: '/diagnosis-tests', router: diagnosisTestRoutes },
   { path: '/pilots', router: pilotRoutes },
   { path: '/voice-clips', router: voiceClipRoutes },
+  { path: '/content-partners', router: partnersRouter },
+  { path: '/partner-recordings', router: recordingsRouter },
+  { path: '/imports', router: importRoutes },
   { path: '/billing', router: billingRoutes },
   { path: '/context-menus', router: contextMenuRoutes },
   { path: '/shares', router: shareRouter },

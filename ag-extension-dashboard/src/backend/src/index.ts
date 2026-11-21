@@ -83,6 +83,7 @@ let smsPollTimer: NodeJS.Timeout | null = null;
 let pilotTimer: NodeJS.Timeout | null = null;
 // Hourly removal of AI telemetry past its retention window, leader-gated.
 let telemetryPruneTimer: NodeJS.Timeout | null = null;
+let partnerTranscribeTimer: NodeJS.Timeout | null = null;
 
 // Runs a startup step with uniform error handling: logs a success line on
 // completion, or a failure line (warn-only for optional services) on error.
@@ -178,6 +179,13 @@ async function startScheduledSms() {
                 .catch(e => logger.warn('Telemetry prune tick failed:', e));
         }, 60 * 60_000);
         telemetryPruneTimer.unref?.();
+        // Partner recordings still waiting for a transcript (e.g. a speech service was down).
+        const { transcribePendingRecordings } = await import('./services/partners/recordingTranscribe');
+        partnerTranscribeTimer = setInterval(() => {
+            runIfLeader('partner-transcribe', () => transcribePendingRecordings())
+                .catch(e => logger.warn('Partner transcription tick failed:', e));
+        }, 10 * 60_000);
+        partnerTranscribeTimer.unref?.();
     } catch (error) {
         logger.error('Scheduled SMS polling startup failed:', error);
     }
@@ -379,6 +387,10 @@ async function stopIntervalWorkers() {
     if (telemetryPruneTimer) {
         clearInterval(telemetryPruneTimer);
         telemetryPruneTimer = null;
+    }
+    if (partnerTranscribeTimer) {
+        clearInterval(partnerTranscribeTimer);
+        partnerTranscribeTimer = null;
     }
     if (smsPollTimer) {
         clearInterval(smsPollTimer);

@@ -76,6 +76,7 @@ import { QuotaChip } from './QuotaChip';
 import { useLanguage } from '@/lib/LanguageContext';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
+import { PartnerLibraryPanel } from '@/components/partners/PartnerLibraryPanel';
 import { GuidesPanel } from './guides/GuidesPanel';
 import { saveBlob } from '@/lib/saveBlob';
 
@@ -821,9 +822,8 @@ export const KnowledgeBase: React.FC = () => {
       {activeTabMode === 'library' && (
         <div className="space-y-6">
           {!isDemo && <GuidesPanel />}
-          {/* Library Control Bar */}
+          {!isDemo && <PartnerLibraryPanel />}
           <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            {/* Search within documents */}
             <div className="relative flex-1 w-full max-w-md">
               <Search className="w-4 h-4 absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40" />
               <input

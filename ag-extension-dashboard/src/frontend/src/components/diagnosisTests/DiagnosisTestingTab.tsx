@@ -3,6 +3,7 @@ import { Play } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
 import { AddTestPhotos } from './AddTestPhotos';
+import { ImportPhotoArchive } from './ImportPhotoArchive';
 import { classState, fetchMistakes, fetchTestOverview, startTestRun, type ClassState, type TestMistake, type TestOverview } from './diagnosisTestsApi';
 
 const CARD = 'p-5 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-white/[0.03] space-y-4';
@@ -75,6 +76,7 @@ export function DiagnosisTestingTab() {
           })}
         </p>
         <AddTestPhotos onAdded={() => { void load(); }} />
+        <ImportPhotoArchive onAdded={() => { void load(); }} />
       </section>
 
       <section className={CARD} aria-labelledby="diag-classes-heading">
