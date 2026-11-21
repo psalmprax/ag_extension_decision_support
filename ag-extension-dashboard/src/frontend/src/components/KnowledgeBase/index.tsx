@@ -402,7 +402,7 @@ export const KnowledgeBase: React.FC = () => {
                   <span className="text-xxs font-mono font-medium text-emerald-700 dark:text-emerald-400 ">
                     {t('ui_index_verified_research_scenarios')}
                   </span>
-                  <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-300 text-xxs font-mono border border-amber-500/20">
+                  <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-800 dark:text-amber-300 text-xxs font-mono border border-amber-500/20">
                     {t('ui_index_demo')}
                   </span>
                 </div>

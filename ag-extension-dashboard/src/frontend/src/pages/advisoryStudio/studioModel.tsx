@@ -29,7 +29,7 @@ export function renderStepIcon(type: WorkflowStep['type']) {
 
 export const DEFAULT_TEMPLATES: Record<string, { title: string; category: string; description: string; steps: WorkflowStep[] }> = {
   maize_armyworm: {
-    title: 'Kenya Maize & Fall Armyworm Bio-Protocol',
+    title: 'Maize and fall armyworm protocol',
     category: 'crop_protection',
     description: 'Autonomous field scouting checklist for scouting leaf funnels and computing cold-pressed Neem bio-dosages.',
     steps: [

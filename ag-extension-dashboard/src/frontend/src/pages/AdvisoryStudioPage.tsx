@@ -197,6 +197,7 @@ export function AdvisoryStudioPage() {
 
         <div className="flex items-center gap-2.5">
           <select
+            aria-label="Workflow template"
             onChange={(e) => handleSelectTemplate(e.target.value)}
             className="px-2.5 py-1.5 text-xs rounded-md bg-slate-100 dark:bg-white/[0.07] border border-slate-900/[0.08] dark:border-white/[0.08] text-slate-700 dark:text-slate-300 focus:outline-none focus:border-emerald-500"
           >

@@ -46,7 +46,7 @@ export const InlineVisitBookingCard: React.FC<InlineVisitBookingCardProps> = ({
   farmerName,
   farmerPhone,
   issue,
-  region = 'Nakuru County',
+  region,
   farmerId,
   onBooked,
 }) => {
@@ -140,7 +140,7 @@ export const InlineVisitBookingCard: React.FC<InlineVisitBookingCardProps> = ({
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-2 border-t border-slate-800">
             <span className="text-[10px] text-slate-400 flex items-center gap-1">
               <MapPin className="w-3 h-3 text-slate-500 shrink-0" />
-              <span className="truncate">{region}</span>
+              <span className="truncate">{region || 'Region not recorded'}</span>
             </span>
 
             <button

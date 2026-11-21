@@ -67,6 +67,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@capacitor/cli": "^7.6.8",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.58.2",

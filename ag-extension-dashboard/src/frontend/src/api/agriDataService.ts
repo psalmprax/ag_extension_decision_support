@@ -66,11 +66,11 @@ export const fetchNDVITimeSeries = async (
 
 export const fetchUsdaBenchmark = async (
   crop: string,
-  country = 'Kenya'
+  country?: string
 ): Promise<UsdaBenchmarkResult> => {
   const response = await apiClient.get<{ success: boolean; data: UsdaBenchmarkResult }>(
     `/external/usda/${encodeURIComponent(crop)}`,
-    { params: { country } }
+    { params: country ? { country } : {} }
   );
   return response.data.data;
 };

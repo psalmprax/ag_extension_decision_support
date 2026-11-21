@@ -18,14 +18,13 @@ import {
   CheckCircle2,
   AlertCircle,
   Compass,
-  Sprout,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
 import { isActionEnter } from '@/lib/keyboard';
 import { createFarmer } from '@/api/farmerService';
 import { InlinePrompt, InfoPromptIcon } from '@/components/ui/InfoPrompt';
-import { COMMON_CROPS, ONBOARDING_PRESETS } from './farmerFormPresets';
+import { COMMON_CROPS } from './farmerFormPresets';
 import { AssignOfficerField } from './AssignOfficerField';
 import { StaffRegionNote } from './StaffRegionNote';
 import { getApiErrorMessage } from '@/lib/apiError';
@@ -51,7 +50,7 @@ export const FarmerRegistrationForm: React.FC = () => {
   const units = useUnits();
   const { isDemo } = useDemoMode();
 
-  const [selectedCrops, setSelectedCrops] = useState<string[]>(['Maize']);
+  const [selectedCrops, setSelectedCrops] = useState<string[]>([]);
   const [customCropInput, setCustomCropInput] = useState('');
   const [isDetectingGps, setIsDetectingGps] = useState(false);
 
@@ -70,15 +69,17 @@ export const FarmerRegistrationForm: React.FC = () => {
       phone: '',
       location: '',
       languagePreference: 'en',
-      crops: ['Maize'],
-      farmSize: 2.5,
+      crops: [],
+      farmSize: undefined,
       latitude: undefined,
       longitude: undefined,
-      vitalScore: 85,
+      vitalScore: undefined,
     },
   });
 
-  const currentVitalScore = watch('vitalScore') ?? 85;
+  // The officer's own assessment: nothing is recorded until they set it.
+  const assessedVitalScore = watch('vitalScore');
+  const currentVitalScore = assessedVitalScore ?? 70;
   const currentLatitude = watch('latitude');
   const currentLongitude = watch('longitude');
 
@@ -102,18 +103,6 @@ export const FarmerRegistrationForm: React.FC = () => {
       setValue('crops', next, { shouldValidate: true });
       setCustomCropInput('');
     }
-  };
-
-  const applyPreset = (preset: typeof ONBOARDING_PRESETS[0]) => {
-    setValue('crops', preset.crops, { shouldValidate: true });
-    setSelectedCrops(preset.crops);
-    setValue('location', preset.location, { shouldValidate: true });
-    setValue('farmSize', preset.farmSize, { shouldValidate: true });
-    setValue('vitalScore', preset.vitalScore, { shouldValidate: true });
-    setValue('latitude', preset.lat, { shouldValidate: true });
-    setValue('longitude', preset.lng, { shouldValidate: true });
-    setValue('languagePreference', preset.lang, { shouldValidate: true });
-    toast.success(`Preset "${preset.name}" loaded!`);
   };
 
   const handleDetectLocation = () => {
@@ -148,8 +137,8 @@ export const FarmerRegistrationForm: React.FC = () => {
         region: staffRegion ?? data.location,
         village: data.location,
         assignedOfficerId: canChooseOfficer && assignedOfficerId ? assignedOfficerId : undefined,
-        crops: selectedCrops.length > 0 ? selectedCrops : ['Maize'],
-        farmSize: units.toHectares(data.farmSize || 0), // typed in the person's unit; stored in hectares
+        crops: selectedCrops,
+        farmSize: units.toHectares(data.farmSize ?? 0), // typed in the person's unit; stored in hectares
         locationLat: data.latitude,
         locationLng: data.longitude,
         vitalScore: data.vitalScore,
@@ -170,7 +159,7 @@ export const FarmerRegistrationForm: React.FC = () => {
         });
         toast.success(t('farmer_register_success') || 'Farmer client registered successfully!');
         reset();
-        setSelectedCrops(['Maize']);
+        setSelectedCrops([]);
         setAssignedOfficerId('');
       }
     } catch (error) {
@@ -226,21 +215,6 @@ export const FarmerRegistrationForm: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick-Fill Agronomic Presets */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-medium text-white/50">{t('ui_farmer_registration_form_quick_fill')}</span>
-            {ONBOARDING_PRESETS.map(p => (
-              <button
-                key={p.name}
-                type="button"
-                onClick={() => applyPreset(p)}
-                className="px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/30 text-xs text-white/80 hover:text-white transition-colors flex items-center gap-1.5"
-              >
-                <Sprout className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="font-medium">{p.name}</span>
-              </button>
-            ))}
-          </div>
         </div>
       </div>
 
@@ -270,7 +244,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                 </label>
                 <input
                   {...register('firstName')}
-                  placeholder="e.g. Samuel"
+                  placeholder="First name"
                   className="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm"
                 />
                 {errors.firstName && (
@@ -286,7 +260,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                 </label>
                 <input
                   {...register('lastName')}
-                  placeholder="e.g. Kiprono"
+                  placeholder="Last name"
                   className="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm"
                 />
                 {errors.lastName && (
@@ -312,7 +286,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                 <Phone className="w-4 h-4 text-white/40 absolute start-4 top-1/2 -translate-y-1/2" />
                 <input
                   {...register('phone')}
-                  placeholder="+254 712 345 678"
+                  placeholder="+ country code and number"
                   className="w-full ps-11 pe-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm font-mono tabular-nums"
                 />
               </div>
@@ -332,7 +306,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                   <MapPin className="w-4 h-4 text-white/40 absolute start-4 top-1/2 -translate-y-1/2" />
                   <input
                     {...register('location')}
-                    placeholder="e.g. Nakuru, Rongai"
+                    placeholder="Village or ward"
                     className="w-full ps-11 pe-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm"
                   />
                 </div>
@@ -414,7 +388,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                   type="text"
                   value={customCropInput}
                   onChange={e => setCustomCropInput(e.target.value)}
-                  placeholder="Add custom crop..."
+                  placeholder="Add another crop"
                   className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-white/10 bg-white/[0.02] text-white placeholder-white/30 focus:ring-1 focus:ring-emerald-400 outline-none"
                   onKeyDown={e => isActionEnter(e) && addCustomCrop(e)}
                 />
@@ -427,6 +401,11 @@ export const FarmerRegistrationForm: React.FC = () => {
                   <span>{t('common_add')}</span>
                 </button>
               </div>
+              {errors.crops && (
+                <p className="text-xs text-rose-400 flex items-center gap-1" role="alert">
+                  <AlertCircle className="w-3 h-3" /> {errors.crops.message}
+                </p>
+              )}
             </div>
 
             {/* Farm Size */}
@@ -570,9 +549,15 @@ export const FarmerRegistrationForm: React.FC = () => {
                   />
                 </h2>
               </div>
-              <span className={`px-2.5 py-0.5 rounded-md text-xs font-medium border tabular-nums ${getVitalScoreColor(currentVitalScore)}`}>
-                {currentVitalScore}/100 • {getVitalScoreLabel(currentVitalScore)}
-              </span>
+              {assessedVitalScore === undefined || Number.isNaN(assessedVitalScore) ? (
+                <span className="px-2.5 py-0.5 rounded-md text-xs font-medium border border-white/10 text-white/60">
+                  {t('ui_farmer_registration_form_not_assessed', 'Not assessed yet')}
+                </span>
+              ) : (
+                <span className={`px-2.5 py-0.5 rounded-md text-xs font-medium border tabular-nums ${getVitalScoreColor(currentVitalScore)}`}>
+                  {currentVitalScore}/100 · {getVitalScoreLabel(currentVitalScore)}
+                </span>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -586,7 +571,9 @@ export const FarmerRegistrationForm: React.FC = () => {
                 min="30"
                 max="100"
                 step="1"
-                {...register('vitalScore', { valueAsNumber: true })}
+                value={currentVitalScore}
+                onChange={event => setValue('vitalScore', Number(event.target.value), { shouldValidate: true })}
+                aria-label={t('ui_farmer_registration_form_vital_score_label', 'Officer assessment of farm condition, 30 to 100')}
                 className="w-full h-2 rounded-lg bg-slate-800 appearance-none cursor-pointer accent-emerald-400"
               />
             </div>

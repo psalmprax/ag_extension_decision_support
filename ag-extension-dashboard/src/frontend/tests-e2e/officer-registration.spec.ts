@@ -19,10 +19,12 @@ interface FarmerRow {
 }
 
 async function fillRegistration(page: Page, first: string, last: string, village: string): Promise<void> {
-  await page.getByPlaceholder('e.g. Samuel').fill(first);
-  await page.getByPlaceholder('e.g. Kiprono').fill(last);
-  await page.getByPlaceholder('+254 712 345 678').fill(uniquePhone());
-  await page.getByPlaceholder('e.g. Nakuru, Rongai').fill(village);
+  await page.getByPlaceholder('First name').fill(first);
+  await page.getByPlaceholder('Last name').fill(last);
+  await page.getByPlaceholder('+ country code and number').fill(uniquePhone());
+  await page.getByPlaceholder('Village or ward').fill(village);
+  await page.getByRole('button', { name: /^Maize$/ }).click();
+  await page.getByPlaceholder('2.5').fill('2.5');
 }
 
 async function findFarmer(page: Page, last: string): Promise<FarmerRow | undefined> {

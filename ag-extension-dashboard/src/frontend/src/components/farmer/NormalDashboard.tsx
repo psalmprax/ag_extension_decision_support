@@ -1,11 +1,12 @@
 import React from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
-import { MessageSquare, Loader2, Sprout, Globe, CloudOff } from 'lucide-react';
+import { MessageSquare, Loader2, Sprout, Globe, CloudOff, MapPin } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMarketPrices, MarketPrice, MarketDataStatus } from '@/api/priceService';
 import { fetchUsdaBenchmark, fetchNDVITimeSeries } from '@/api/agriDataService';
 import type { UsdaBenchmarkResult, NDVIPoint } from '@/api/agriDataService';
+import type { FarmerStats } from '@/api/farmerService';
 import { MetricCardSkeleton, ChartSkeleton } from '../Skeleton';
 
 interface NormalDashboardProps {
@@ -15,6 +16,8 @@ interface NormalDashboardProps {
     icon: React.ElementType;
   }>;
   statsLoading: boolean;
+  /** The farmer's own record: its crop, country and location drive the cards below. */
+  farm: Pick<FarmerStats, 'crops' | 'country' | 'location'> | null;
 }
 
 const DATA_STATUS_LABELS: Record<MarketDataStatus, string> = {
@@ -49,16 +52,65 @@ function barColor(p: NDVIPoint): string {
   return p.ndvi >= 0.5 ? '#10b981' : p.ndvi >= 0.35 ? '#f59e0b' : '#ef4444';
 }
 
+/** A quiet message in place of a card's figures. */
+function CardNotice({ icon: Icon, text }: { icon: React.ElementType; text: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-8 text-center">
+      <Icon className="w-8 h-8 text-gray-300 dark:text-gray-600 mb-3" />
+      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 max-w-[16rem]">{text}</p>
+    </div>
+  );
+}
+
+/** The latest vegetation index and the last two weeks as bars. */
+function VegetationFigures({ data }: { data: { data: NDVIPoint[]; dataStatus: string; reason: string } }) {
+  const points = data.data;
+  const ndvi = points[points.length - 1].ndvi;
+  const veg = vegInterpret(ndvi);
+  const maxBar = Math.max(0.05, ...points.map(p => p.ndvi), 1);
+  return (
+    <>
+      <div className="flex items-baseline gap-2 mb-5">
+        <span className={`text-3xl font-medium ${veg.color}`}>
+          {ndvi.toFixed(2)}
+        </span>
+        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{veg.label}</span>
+      </div>
+
+      <div className="flex items-end gap-0.5 h-14 mb-2">
+        {points.slice(-14).map((p, i) => (
+          <div
+            key={i}
+            className="flex-1 rounded-t-sm"
+            style={{ height: `${Math.max((p.ndvi / maxBar) * 100, 3)}%`, backgroundColor: barColor(p) }}
+          />
+        ))}
+      </div>
+
+      <div className="flex justify-between text-xxs text-gray-400 dark:text-gray-500 font-mono mt-1">
+        <span>{points[0]?.date.slice(5) || ''}</span>
+        <span>{points[points.length - 1]?.date.slice(5) || ''}</span>
+      </div>
+
+      <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+        <span className="text-xxs text-gray-400 dark:text-gray-500 capitalize">{data.reason || ''}</span>
+        <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+          {data.dataStatus === 'live' ? 'NASA POWER' : data.dataStatus ? DATA_STATUS_LABELS[data.dataStatus as MarketDataStatus] : null}
+        </span>
+      </div>
+    </>
+  );
+}
+
 function renderVegetationCard(
   data: { data: NDVIPoint[]; dataStatus: string; reason: string } | undefined,
   loading: boolean,
   isError: boolean,
+  hasLocation: boolean,
 ) {
   const points = data?.data || [];
   const latest = points[points.length - 1];
-  const ndvi = latest?.ndvi;
-  const veg = ndvi != null ? vegInterpret(ndvi) : null;
-  const maxBar = Math.max(0.05, ...points.map(p => p.ndvi), 1);
+  const veg = latest?.ndvi != null ? vegInterpret(latest.ndvi) : null;
 
   return (
     <div className="bg-white dark:bg-white/[0.03] p-5 sm:p-6 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08]">
@@ -74,48 +126,16 @@ function renderVegetationCard(
         </div>
       </div>
 
-      {loading ? (
+      {!hasLocation ? (
+        <CardNotice icon={MapPin} text="Add your farm's location in your profile, or ask your officer to, to see the vegetation on your own fields." />
+      ) : loading ? (
         <div className="flex items-center justify-center py-10">
           <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
         </div>
       ) : isError || !veg ? (
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <CloudOff className="w-8 h-8 text-gray-300 dark:text-gray-600 mb-3" />
-          <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
-            Vegetation data unavailable
-          </p>
-        </div>
+        <CardNotice icon={CloudOff} text="Vegetation data unavailable" />
       ) : (
-        <>
-          <div className="flex items-baseline gap-2 mb-5">
-            <span className={`text-3xl font-medium ${veg.color}`}>
-              {ndvi!.toFixed(2)}
-            </span>
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{veg.label}</span>
-          </div>
-
-          <div className="flex items-end gap-0.5 h-14 mb-2">
-            {points.slice(-14).map((p, i) => (
-              <div
-                key={i}
-                className="flex-1 rounded-t-sm"
-                style={{ height: `${Math.max((p.ndvi / maxBar) * 100, 3)}%`, backgroundColor: barColor(p) }}
-              />
-            ))}
-          </div>
-
-          <div className="flex justify-between text-xxs text-gray-400 dark:text-gray-500 font-mono mt-1">
-            <span>{points[0]?.date.slice(5) || ''}</span>
-            <span>{points[points.length - 1]?.date.slice(5) || ''}</span>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
-            <span className="text-xxs text-gray-400 dark:text-gray-500 capitalize">{data?.reason || ''}</span>
-            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-              {data?.dataStatus === 'live' ? 'NASA POWER' : data?.dataStatus ? DATA_STATUS_LABELS[data.dataStatus as MarketDataStatus] : null}
-            </span>
-          </div>
-        </>
+        <VegetationFigures data={data!} />
       )}
     </div>
   );
@@ -186,9 +206,12 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
   );
 }
 
-export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLoading }) => {
+export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLoading, farm }) => {
   const { user, showContextMenu, setActiveTab } = useAppStore();
   const { t } = useLanguage();
+
+  const mainCrop = farm?.crops?.[0];
+  const farmLocation = farm?.location ?? null;
 
   const { data: prices, isLoading: pricesLoading } = useQuery({
     queryKey: ['market-prices'],
@@ -197,16 +220,16 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
   });
 
   const { data: usdaData, isLoading: usdaLoading } = useQuery<UsdaBenchmarkResult | null>({
-    queryKey: ['farmer-usda'],
-    queryFn: () => fetchUsdaBenchmark('Maize'),
-    enabled: !!user,
+    queryKey: ['farmer-usda', mainCrop, farm?.country],
+    queryFn: () => fetchUsdaBenchmark(mainCrop as string, farm?.country ?? undefined),
+    enabled: !!user && !!mainCrop,
     staleTime: 12 * 60 * 60 * 1000,
   });
 
   const { data: ndviData, isLoading: ndviLoading, isError: ndviError } = useQuery({
-    queryKey: ['farmer-vegetation'],
-    queryFn: () => fetchNDVITimeSeries(-1.2863, 36.8172, 14),
-    enabled: !!user,
+    queryKey: ['farmer-vegetation', farmLocation?.lat, farmLocation?.lng],
+    queryFn: () => fetchNDVITimeSeries(farmLocation!.lat, farmLocation!.lng, 14),
+    enabled: !!user && !!farmLocation,
     staleTime: 6 * 60 * 60 * 1000,
   });
 
@@ -324,7 +347,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
 
       {/* Row 2 — Vegetation Health + USDA Benchmarks */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {renderVegetationCard(ndviData, ndviLoading, ndviError)}
+        {renderVegetationCard(ndviData, ndviLoading, ndviError, !!farmLocation)}
         {renderUsdaCard(usdaData, usdaLoading)}
       </div>
     </div>

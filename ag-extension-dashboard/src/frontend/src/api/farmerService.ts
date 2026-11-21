@@ -31,6 +31,9 @@ export interface FarmerStats {
   alertsCount?: number;
   /** The extension officer assigned to the farmer, or null when none is. */
   officerName?: string | null;
+  /** Where the farm is, when recorded; null until the farmer or officer adds it. */
+  location?: { lat: number; lng: number } | null;
+  country?: string | null;
 }
 
 export interface FarmerStatsResponse {

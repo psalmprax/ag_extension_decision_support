@@ -47,7 +47,7 @@ describe('AdvisoryStudioPage Component', () => {
   it('renders initial default maize workflow template and steps', () => {
     render(<AdvisoryStudioPage />);
 
-    expect(screen.getByDisplayValue('Kenya Maize & Fall Armyworm Bio-Protocol')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Maize and fall armyworm protocol')).toBeInTheDocument();
     expect(screen.getByText('4 steps')).toBeInTheDocument();
     expect(screen.getByText('Crop & phenology phase')).toBeInTheDocument();
     expect(screen.getByText('Fall armyworm severity assessment')).toBeInTheDocument();
@@ -113,7 +113,7 @@ describe('AdvisoryStudioPage Component', () => {
       expect(mockedPost).toHaveBeenCalledWith(
         '/workflows',
         expect.objectContaining({
-          title: 'Kenya Maize & Fall Armyworm Bio-Protocol',
+          title: 'Maize and fall armyworm protocol',
           status: 'draft',
         })
       );

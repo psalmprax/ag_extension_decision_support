@@ -47,13 +47,13 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
       <button
         onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
         className="flex items-center gap-2 sm:gap-3 rounded-md p-1 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] transition-colors"
-        aria-label="Open user profile menu"
+        aria-expanded={isProfileMenuOpen}
       >
         <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-emerald-100 dark:bg-emerald-400/[0.15] shrink-0">
           {AvatarIcon ? (
-            <AvatarIcon className="w-4 h-4 text-emerald-800 dark:text-emerald-200" strokeWidth={1.5} aria-label="Selected profile avatar" />
+            <AvatarIcon className="w-4 h-4 text-emerald-800 dark:text-emerald-200" strokeWidth={1.5} aria-hidden="true" />
           ) : (
-            <span className="text-xs text-emerald-800 dark:text-emerald-200 font-medium">
+            <span className="text-xs text-emerald-800 dark:text-emerald-200 font-medium" aria-hidden="true">
               {storeUser?.firstName?.[0]}
               {storeUser?.lastName?.[0]}
             </span>
@@ -64,6 +64,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
             {storeUser?.firstName} {storeUser?.lastName}
           </p>
         </div>
+        <span className="sr-only">Profile menu</span>
       </button>
 
       <AnimatePresence>

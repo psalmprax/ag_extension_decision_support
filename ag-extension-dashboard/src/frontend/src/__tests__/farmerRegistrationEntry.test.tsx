@@ -23,10 +23,12 @@ function renderWithQuery(ui: React.ReactElement) {
 }
 
 function fillRequiredFields(withCoordinates = false) {
-  fireEvent.change(screen.getByPlaceholderText('e.g. Samuel'), { target: { value: 'Grace' } });
-  fireEvent.change(screen.getByPlaceholderText('e.g. Kiprono'), { target: { value: 'Chebet' } });
-  fireEvent.change(screen.getByPlaceholderText('+254 712 345 678'), { target: { value: '+254712345678' } });
-  fireEvent.change(screen.getByPlaceholderText('e.g. Nakuru, Rongai'), { target: { value: 'Rongai' } });
+  fireEvent.change(screen.getByPlaceholderText('First name'), { target: { value: 'Grace' } });
+  fireEvent.change(screen.getByPlaceholderText('Last name'), { target: { value: 'Chebet' } });
+  fireEvent.change(screen.getByPlaceholderText('+ country code and number'), { target: { value: '+254712345678' } });
+  fireEvent.change(screen.getByPlaceholderText('Village or ward'), { target: { value: 'Rongai' } });
+  fireEvent.click(screen.getByRole('button', { name: /^Maize$/ }));
+  fireEvent.change(screen.getByPlaceholderText('2.5'), { target: { value: '2.5' } });
   if (!withCoordinates) return;
   fireEvent.change(screen.getByPlaceholderText('-0.303099'), { target: { value: '-0.3' } });
   fireEvent.change(screen.getByPlaceholderText('36.080025'), { target: { value: '36.08' } });
@@ -101,9 +103,25 @@ describe('FarmerRegistrationForm officer assignment', () => {
     await waitFor(() => expect(createFarmer).toHaveBeenCalledTimes(1));
     expect(screen.queryByLabelText('Assigned extension officer')).not.toBeInTheDocument();
     expect(apiClient.get).not.toHaveBeenCalled();
+    expect(vi.mocked(createFarmer).mock.calls[0][0]).not.toHaveProperty('vitalScore', expect.any(Number));
     expect(createFarmer).toHaveBeenCalledWith(expect.objectContaining({
+      crops: ['Maize'],
       // An officer registers farmers in their own region; the typed location is the village.
       region: 'Rift Valley', village: 'Rongai', assignedOfficerId: undefined, locationLat: undefined, locationLng: undefined,
     }));
+  });
+
+  it('asks for a crop and the farm size instead of inventing them', async () => {
+    useAppStore.setState({ user: person('extension_officer', 'Rift Valley') });
+    renderWithQuery(<FarmerRegistrationForm />);
+    fireEvent.change(screen.getByPlaceholderText('First name'), { target: { value: 'Grace' } });
+    fireEvent.change(screen.getByPlaceholderText('Last name'), { target: { value: 'Chebet' } });
+    fireEvent.change(screen.getByPlaceholderText('+ country code and number'), { target: { value: '+254712345678' } });
+    fireEvent.change(screen.getByPlaceholderText('Village or ward'), { target: { value: 'Rongai' } });
+    fireEvent.click(screen.getByRole('button', { name: /Save farmer/ }));
+
+    expect(await screen.findByText('Choose at least one crop')).toBeInTheDocument();
+    expect(screen.getByText('Enter the farm size')).toBeInTheDocument();
+    expect(createFarmer).not.toHaveBeenCalled();
   });
 });

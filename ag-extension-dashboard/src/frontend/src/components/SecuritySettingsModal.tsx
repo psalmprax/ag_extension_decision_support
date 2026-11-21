@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BaseModal } from './BaseModal';
+import { getApiErrorMessage } from '@/lib/apiError';
 import apiClient from '../api/client';
 import { useLanguage } from '@/lib/LanguageContext';
 
@@ -40,18 +41,10 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
       if (res.data.success) {
         setSessions(res.data.data.sessions || []);
       }
-    } catch {
-      // Fallback sample session for UI robustness
-      setSessions([
-        {
-          id: 'sess-current',
-          ipAddress: '192.168.1.10',
-          device: 'Chrome on Linux',
-          location: 'Nairobi, Kenya',
-          lastActiveAt: new Date().toISOString(),
-          isCurrent: true,
-        },
-      ]);
+    } catch (err: unknown) {
+      // Show the failure; never a made-up session in its place.
+      setSessions([]);
+      setStatusMessage({ type: 'error', text: getApiErrorMessage(err, 'Could not load your signed-in devices. Try again.') });
     } finally {
       setLoading(false);
     }

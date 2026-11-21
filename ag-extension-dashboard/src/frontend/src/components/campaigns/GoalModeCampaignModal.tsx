@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useAppStore } from '@/store/useAppStore';
+import { getCountryConfig } from '@/lib/countries';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -38,32 +40,31 @@ type TabType = 'launcher' | 'skills' | 'history';
 const GOAL_PRESETS = [
   {
     title: 'Fall armyworm response',
-    prompt: 'Alert maize farmers in Nakuru about early-stage Fall Armyworm infestation after recent humidity rise. Advise on pheromone traps and localized bio-pesticide timing.',
-    region: 'Nakuru',
+    prompt: 'Alert maize farmers about early-stage fall armyworm infestation after a rise in humidity. Advise on pheromone traps and the timing of bio-pesticides.',
     crop: 'Maize',
   },
   {
     title: 'Nitrogen loss after heavy rain',
-    prompt: 'Advise maize and bean farmers in Uasin Gishu regarding top-dressing fertilizer re-application following 3 consecutive days of heavy downpours.',
-    region: 'Uasin Gishu',
+    prompt: 'Advise maize and bean farmers on re-applying top-dressing fertilizer after three days of heavy rain.',
     crop: 'Maize',
   },
   {
     title: 'Potato late blight prevention',
-    prompt: 'Notify Irish potato growers in Nyandarua about preventive copper-based fungicide spraying before the upcoming damp overcast week.',
-    region: 'Nyandarua',
+    prompt: 'Remind potato growers about preventive copper-based fungicide spraying before a damp, overcast week.',
     crop: 'Potato',
   },
   {
     title: 'Coffee berry borer scouting',
-    prompt: 'Dispatch pruning and sanitation guidelines to coffee farmers in Kiambu to break the Berry Borer lifecycle during cherry development.',
-    region: 'Kiambu',
+    prompt: 'Send pruning and sanitation guidance to coffee farmers to break the berry borer lifecycle during cherry development.',
     crop: 'Coffee',
   },
 ];
 
 export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ isOpen, onClose }) => {
   const { t } = useLanguage();
+  const user = useAppStore(state => state.user);
+  // The regions of the country this account works in, not a fixed list.
+  const regionOptions = getCountryConfig(user?.country ?? undefined)?.regions ?? [];
   const [activeTab, setActiveTab] = useState<TabType>('launcher');
   const [goalPrompt, setGoalPrompt] = useState(GOAL_PRESETS[0].prompt);
   const [targetRegion, setTargetRegion] = useState('Nakuru');
@@ -79,13 +80,9 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
   const [skills, setSkills] = useState<RegionalSkillCard[]>([]);
   const [isLoadingSkills, setIsLoadingSkills] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
-  const [synthForm, setSynthForm] = useState({
-    region: 'Nakuru',
-    crop: 'Maize',
-    topic: 'Fall Armyworm Bio-Control',
-    findings: 'Observed 15% leaf whorl damage in Rongai sub-county. Farmers applying neem extract + Pyrethrum at dusk achieved 85% larva knockdown within 48h.',
-    officerNotes: 'Recommend spraying at sunset to avoid pollinator disruption. Alternate with Bacillus thuringiensis.',
-  });
+  // Skill cards record what an officer observed: every field starts empty.
+  const emptySkill = { region: user?.region ?? '', crop: '', topic: '', findings: '', officerNotes: '' };
+  const [synthForm, setSynthForm] = useState(emptySkill);
 
   // History State
   const [history, setHistory] = useState<CampaignHistoryItem[]>([]);
@@ -152,7 +149,6 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
 
   const handleApplyPreset = (preset: typeof GOAL_PRESETS[0]) => {
     setGoalPrompt(preset.prompt);
-    setTargetRegion(preset.region);
     setTargetCrop(preset.crop);
     toast.success(`Preset loaded: ${preset.title}`);
   };
@@ -213,13 +209,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
       if (res.success && res.data) {
         toast.success(`Synthesized skill card: ${res.data.title}`);
         loadSkills();
-        setSynthForm({
-          region: 'Nakuru',
-          crop: 'Maize',
-          topic: '',
-          findings: '',
-          officerNotes: '',
-        });
+        setSynthForm(emptySkill);
       }
     } catch {
       toast.error('Failed to synthesize skill card');
@@ -332,7 +322,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                         <div className="font-medium text-xs text-white group-hover:text-amber-400 flex items-center justify-between">
                           <span>{preset.title}</span>
                           <span className="text-xxs px-2 py-0.5 rounded-md bg-slate-900 text-slate-400">
-                            {preset.region}
+                            {preset.crop}
                           </span>
                         </div>
                         <p className="text-xxs text-slate-400 line-clamp-2 mt-1">{preset.prompt}</p>
@@ -365,12 +355,9 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                         className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"
                       >
                         <option value="all">{t('ui_goal_mode_campaign_modal_all_regions')}</option>
-                        <option value="Nakuru">{t('ui_goal_mode_campaign_modal_nakuru_county')}</option>
-                        <option value="Kiambu">{t('ui_goal_mode_campaign_modal_kiambu_county')}</option>
-                        <option value="Uasin Gishu">{t('ui_goal_mode_campaign_modal_uasin_gishu_eldoret')}</option>
-                        <option value="Machakos">{t('ui_goal_mode_campaign_modal_machakos_county')}</option>
-                        <option value="Meru">{t('ui_goal_mode_campaign_modal_meru_county')}</option>
-                        <option value="Kilifi">{t('ui_goal_mode_campaign_modal_kilifi_county')}</option>
+                        {regionOptions.map(region => (
+                          <option key={region} value={region}>{region}</option>
+                        ))}
                       </select>
                     </div>
 

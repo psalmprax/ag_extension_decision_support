@@ -229,7 +229,7 @@ function SslSection({ ssl }: { ssl?: Record<string, unknown> }) {
             {cert.validTo && (
               <p>
                 <span className="text-slate-500 dark:text-white/60">{t('ui_system_health_expires')}</span> {new Date(cert.validTo).toLocaleDateString()}{' '}
-                <span className={cert.daysLeft != null && cert.daysLeft < CERT_EXPIRY_WARN_DAYS ? 'text-rose-600 dark:text-rose-400 font-medium' : 'text-emerald-600 dark:text-emerald-400 font-medium'}>
+                <span className={cert.daysLeft != null && cert.daysLeft < CERT_EXPIRY_WARN_DAYS ? 'text-rose-700 dark:text-rose-300 font-medium' : 'text-emerald-700 dark:text-emerald-300 font-medium'}>
                   ({cert.daysLeft ?? '—'} {t('ui_system_health_days_remaining')}
                 </span>
               </p>
@@ -331,7 +331,7 @@ function getStatusStyle(status: string) {
       };
     case 'degraded':
       return {
-        pill: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30',
+        pill: 'bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/30',
         dot: 'bg-amber-400',
         border: 'border-amber-500/30',
       };
@@ -412,7 +412,7 @@ function ComponentHealthCard({
 
         <div className="flex justify-between text-slate-500 dark:text-white/60">
           <span>{t('system_health_failures')}</span>
-          <span className={check.consecutiveFailures > 0 ? 'text-rose-600 dark:text-rose-400 font-medium' : 'text-slate-900 dark:text-white'}>
+          <span className={check.consecutiveFailures > 0 ? 'text-rose-700 dark:text-rose-300 font-medium' : 'text-slate-900 dark:text-white'}>
             {check.consecutiveFailures}
           </span>
         </div>
@@ -471,12 +471,12 @@ function RecoveryLogList({
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
         <h3 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
           <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          {t('system_health_recovery_log') || 'Automated SRE Recovery Audit Log'}
+          {t('system_health_recovery_log') || 'Recovery log'}
         </h3>
-        <span className="text-xs text-slate-500 dark:text-white/40 font-mono">Real-time Stream</span>
+        <span className="text-xs text-slate-500 dark:text-white/40 font-mono">Live</span>
       </div>
 
-      <div className="space-y-2.5 max-h-96 overflow-y-auto custom-scrollbar pe-1">
+      <div className="space-y-2.5 max-h-96 overflow-y-auto custom-scrollbar pe-1" tabIndex={0} aria-label="Recovery log">
         {actions.length === 0 ? (
           <div className="text-center py-8 text-slate-400 dark:text-white/40 text-xs font-mono">
             No recovery interventions recorded. Cluster operating autonomously.

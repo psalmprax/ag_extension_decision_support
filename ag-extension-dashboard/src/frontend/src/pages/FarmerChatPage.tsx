@@ -290,7 +290,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                         }
                       }}
                       className="opacity-0 group-hover:opacity-100 p-2 me-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-all border border-rose-500/20"
-                      title="Delete Conversation"
+                      title="Delete conversation"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -343,8 +343,8 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                           onDeleteConversation(activeConv.id);
                         }
                       }}
-                      className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors border border-rose-500/20 flex items-center gap-1.5 text-xs"
-                      title="Delete Conversation"
+                      className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-300 hover:text-rose-800 dark:hover:text-rose-200 transition-colors border border-rose-500/20 flex items-center gap-1.5 text-xs"
+                      title="Delete conversation"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">{t('common_delete')}</span>

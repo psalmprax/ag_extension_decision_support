@@ -51,7 +51,7 @@ const SOURCE_ICONS: Record<string, React.ElementType> = {
 
 const DATA_STATUS_STYLE: Record<MarketDataStatus, string> = {
   live: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
-  estimated: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
+  estimated: 'bg-amber-500/10 text-amber-800 dark:text-amber-400 border-amber-500/20',
   unavailable: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
 };
 

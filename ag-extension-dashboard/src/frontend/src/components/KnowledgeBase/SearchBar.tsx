@@ -155,12 +155,18 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           />
           <div className="flex items-center gap-1 sm:gap-2 pe-1 sm:pe-2 shrink-0">
             <label
-              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white cursor-pointer transition-all shrink-0 border border-transparent hover:border-slate-200 dark:hover:border-white/10"
+              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl focus-within:ring-2 focus-within:ring-emerald-500/40 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white cursor-pointer transition-all shrink-0 border border-transparent hover:border-slate-200 dark:hover:border-white/10"
               title={t('kb_attach', { defaultValue: 'Attach a leaf photo or a soil test' })}
-              aria-label={t('kb_attach', { defaultValue: 'Attach a leaf photo or a soil test' })}
             >
-              <Paperclip className="w-4 h-4" />
-              <input type="file" multiple className="hidden" onChange={handleFileUpload} />
+              <Paperclip className="w-4 h-4" aria-hidden="true" />
+              {/* Visually hidden but focusable, so the attach button works from the keyboard too. */}
+              <input
+                type="file"
+                multiple
+                className="sr-only"
+                aria-label={t('kb_attach', { defaultValue: 'Attach a leaf photo or a soil test' })}
+                onChange={handleFileUpload}
+              />
             </label>
             <button
               type="button"

@@ -89,6 +89,12 @@ jobs:
         working-directory: ag-extension-dashboard/src/frontend
         run: npm run test:e2e:real
 
+      - name: Show backend errors behind failed requests
+        if: failure()
+        working-directory: ag-extension-dashboard/src/backend
+        # Only the message and stack of each failed request, never the whole log.
+        run: grep -h -A14 '\[ERROR\]: Failed to (load|get|fetch|list)' -E logs/error.log 2>/dev/null | grep -E '\[ERROR\]|^ *code:|^ *message:|^ *at ' | cut -c1-300 | head -60 || true
+
       - name: Upload the Playwright report
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

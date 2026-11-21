@@ -409,7 +409,7 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
                   <span className="text-xs font-medium text-slate-900 dark:text-white truncate max-w-[200px]">
                     {cite.title}
                   </span>
-                  <span className="text-xxs px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 font-medium">
+                  <span className="text-xxs px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-800 dark:text-amber-300 font-medium">
                     {cite.category}
                   </span>
                 </div>

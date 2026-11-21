@@ -87,7 +87,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       username: savedUsername,
       email: user.email || '',
       phone: user.phone || savedPhone,
-      region: user.region || 'Uasin Gishu, Kenya',
+      region: user.region || '',
       avatarId: savedAvatar,
     });
 

@@ -41,7 +41,7 @@ function advanceSimulator(step: number, userMsg: string): { nextStep: number; bo
     case 1:
       return { nextStep: 2, botText: `Thank you, ${userMsg}.\n\nWhat is your main crop? For example maize, coffee or cassava.`, nextDefaultInput: 'Maize and beans' };
     case 2:
-      return { nextStep: 3, botText: `Noted: ${userMsg}.\n\nWhich region or district is your farm in?`, nextDefaultInput: 'Nakuru' };
+      return { nextStep: 3, botText: `Noted: ${userMsg}.\n\nWhich region or district is your farm in?`, nextDefaultInput: '' };
     case 3:
       return { nextStep: 4, botText: `Noted: ${userMsg}.\n\nAbout how big is your farm? Reply with a number and ha or acres.`, nextDefaultInput: '3.5 ha' };
     case 4:

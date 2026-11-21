@@ -24,6 +24,7 @@ import {
   SUPPORTED_COUNTRIES,
   CONTINENT_ORDER,
   getCountryConfig,
+  browserCountry,
 } from '@/lib/countries';
 import { useLanguage } from '@/lib/LanguageContext';
 import { StaffBadges } from '@/components/users/StaffBadges';
@@ -44,6 +45,8 @@ export function UserManagementPage() {
   const { isDemo } = useDemoMode();
   const currentUserId = useAppStore(state => state.user?.id);
   const currentUserRole = useAppStore(state => state.user?.role);
+  // New accounts start in the administrator's own country; they can pick another.
+  const homeCountry = useAppStore(state => state.user?.country) || browserCountry() || '';
   const currentUserIsSystemAdmin = useAppStore(state => state.user?.isSystemAdmin);
   const queryClient = useQueryClient();
 
@@ -59,7 +62,7 @@ export function UserManagementPage() {
     password: '',
     role: 'extension_officer',
     region: '',
-    country: 'Kenya',
+    country: homeCountry,
     phone: '',
   });
   const [formError, setFormError] = useState('');
@@ -141,7 +144,7 @@ export function UserManagementPage() {
         password: '',
         role: 'extension_officer',
         region: '',
-        country: 'Kenya',
+        country: homeCountry,
         phone: '',
       });
     },
@@ -210,6 +213,7 @@ export function UserManagementPage() {
 
           <div className="relative w-full sm:w-48">
             <select
+              aria-label={t('users_filter_role', 'Filter by role')}
               value={roleFilter}
               onChange={e => setRoleFilter(e.target.value)}
               className="w-full appearance-none ps-3.5 pe-9 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-400 outline-none"
