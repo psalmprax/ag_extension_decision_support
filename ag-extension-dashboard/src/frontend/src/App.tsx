@@ -500,9 +500,7 @@ function App() {
           />
 
           <main
-            id="main-content"
-            tabIndex={0}
-            aria-label="Main content"
+            id="main-content" tabIndex={0} aria-label="Main content"
             className={`flex-1 overflow-y-auto overflow-x-hidden outline-none transition-all duration-300 ${sidebarOpen ? 'md:ms-64' : ''} relative pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-20`}
           >
             <ErrorBoundary componentName="MainContent">

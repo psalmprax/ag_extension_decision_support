@@ -218,8 +218,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
                         className="pt-0.5"
                       >
                         <input
-                          type="checkbox"
-                          checked={isSelected}
+                          type="checkbox" checked={isSelected}
                           onChange={e => handleSelectFarmer(farmer.id, e.target.checked)}
                           aria-label={`Select ${farmer.firstName} ${farmer.lastName}`}
                           className="w-4 h-4 rounded border-slate-300 dark:border-white/20 bg-white dark:bg-white/5 text-emerald-500 focus:ring-0 cursor-pointer accent-emerald-500"
