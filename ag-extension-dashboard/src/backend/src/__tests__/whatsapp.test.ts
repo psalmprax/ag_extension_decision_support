@@ -59,15 +59,16 @@ describe('WhatsApp Route — Mapper-before-response: mapWhatsAppMessageRows + ma
     });
 
     it('GET /messages returns camelCase WhatsAppMessageDTO from snake_case row', async () => {
+        // The columns the migrations create for whatsapp_messages.
         const waRow = {
             id: 'wa-1',
-            sender_id: 'off-1',
-            recipient_phone: '+265999000111',
+            from_phone: null,
+            to_phone: '+265999000111',
             farmer_id: 'farm-uuid-1',
-            message: 'Hello from WhatsApp',
+            body: 'Hello from WhatsApp',
             direction: 'outbound',
             status: 'delivered',
-            provider: 'meta_cloud',
+            provider_id: 'SM123',
             created_at: '2024-12-15T10:00:00Z',
         };
         mockQuery.mockResolvedValueOnce({ rows: [waRow], rowCount: 1 });
@@ -80,15 +81,14 @@ describe('WhatsApp Route — Mapper-before-response: mapWhatsAppMessageRows + ma
         const first = response.body.data[0];
         // snake_case → camelCase
         expect(first.id).toBe('wa-1');
-        expect(first.senderId).toBe('off-1');
         expect(first.recipientPhone).toBe('+265999000111');
+        expect(first.message).toBe('Hello from WhatsApp');
         expect(first.farmerId).toBe('farm-uuid-1');
         expect(first.direction).toBe('outbound');
-        expect(first.provider).toBe('meta_cloud');
+        expect(first.providerMessageId).toBe('SM123');
         expect(first.createdAt).toBe('2024-12-15T10:00:00Z');
         // Must NOT leak snake_case
-        expect(first.sender_id).toBeUndefined();
-        expect(first.recipient_phone).toBeUndefined();
+        expect(first.to_phone).toBeUndefined();
         expect(first.created_at).toBeUndefined();
     });
 
@@ -101,13 +101,13 @@ describe('WhatsApp Route — Mapper-before-response: mapWhatsAppMessageRows + ma
         });
         const insertedRow = {
             id: 'wa-new',
-            sender_id: 'off-1',
-            recipient_phone: '+265999000222',
+            from_phone: null,
+            to_phone: '+265999000222',
             farmer_id: null,
-            message: 'Test message',
+            body: 'Test message',
             direction: 'outbound',
             status: 'not_configured',
-            provider: 'none',
+            provider_id: null,
             created_at: '2024-12-15T10:00:00Z',
         };
         mockQuery.mockResolvedValueOnce({ rows: [insertedRow], rowCount: 1 });
@@ -121,13 +121,12 @@ describe('WhatsApp Route — Mapper-before-response: mapWhatsAppMessageRows + ma
         expect(response.body.success).toBe(false);
         expect(response.body.status).toBe('not_configured');
         // The response is the mapped row from INSERT ... RETURNING
-        expect(response.body.data.senderId).toBe('off-1');
+        expect(mockQuery.mock.calls[1][0]).toContain('INSERT INTO whatsapp_messages (to_phone, body, direction, status, farmer_id, tenant_id)');
         expect(response.body.data.recipientPhone).toBe('+265999000222');
         expect(response.body.data.direction).toBe('outbound');
         expect(response.body.data.status).toBe('not_configured');
         // Must NOT leak snake_case
-        expect(response.body.data.sender_id).toBeUndefined();
-        expect(response.body.data.recipient_phone).toBeUndefined();
+        expect(response.body.data.to_phone).toBeUndefined();
     });
 
     it('GET /stats invokes mapCountRows on both COUNT queries (inbound + outbound)', async () => {

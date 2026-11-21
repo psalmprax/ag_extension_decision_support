@@ -340,15 +340,16 @@ export interface FieldStatsRow {
 
 // --- WhatsApp routes (whatsapp.ts) -----------------------------------------
 
+/** whatsapp_messages as the migrations create it (to_phone, body, provider_id). */
 export interface WhatsAppMessageRow {
   id: string;
-  sender_id: string | null;
-  recipient_phone: string;
+  from_phone: string | null;
+  to_phone: string;
   farmer_id: string | null;
-  message: string;
+  body: string;
   direction: string | null;
   status: string | null;
-  provider: string | null;
+  provider_id: string | null;
   created_at: Date | string | null;
 }
 
@@ -356,7 +357,7 @@ export interface WhatsAppMessageRow {
 
 export interface SupportTicketRow {
   id: string;
-  user_id: string | null;
+  created_by: string | null;
   subject: string;
   status: string | null;
   priority: string | null;

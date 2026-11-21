@@ -365,6 +365,8 @@ model ChatConversation {
   status                String?       @default("active") @db.VarChar(50)
   /// farmer_thread (farmer, officer, AI) or officer_ai (an officer's private AI chat)
   kind                  String        @default("farmer_thread") @db.VarChar(20)
+  /// Set when an officer renames one of their AI chats
+  title                 String?       @db.VarChar(120)
   startedAt             DateTime?     @default(now()) @map("started_at") @db.Timestamp(6)
   endedAt               DateTime?     @map("ended_at") @db.Timestamp(6)
   /// When each side last read the thread (unread counts and badges)
@@ -1327,6 +1329,7 @@ model SupportTicket {
   priority    String    @default("medium") @db.VarChar(20)
   status      String    @default("open") @db.VarChar(20)
   assignedTo  String?   @map("assigned_to") @db.Uuid
+  resolvedAt  DateTime? @map("resolved_at") @db.Timestamp(6)
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
 

@@ -137,8 +137,8 @@ describe('TalkingAssistant Component', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Active context:/i)).toBeInTheDocument();
-      expect(screen.getByText(/🌱 Maize/i)).toBeInTheDocument();
-      expect(screen.getByText(/🐛 Fall Armyworm/i)).toBeInTheDocument();
+      expect(screen.getByText(/^Maize$/i)).toBeInTheDocument();
+      expect(screen.getByText(/^Fall Armyworm$/i)).toBeInTheDocument();
     });
 
     const input = screen.getByPlaceholderText(/Ask about crop diagnosis/i);
@@ -151,7 +151,7 @@ describe('TalkingAssistant Component', () => {
       ).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/📐 3 acres/i)).toBeInTheDocument();
+    expect(screen.getByText(/^3 acres$/i)).toBeInTheDocument();
     expect(mockedPost).toHaveBeenCalledWith('/chatbot/public-demo', expect.objectContaining({
       query: 'What dosage should I use for 3 acres?',
       entitySlots: expect.objectContaining({ crop: 'Maize', field_size: '3 acres' }),
@@ -167,7 +167,7 @@ describe('TalkingAssistant Component', () => {
     fireEvent.click(armywormPrompt);
 
     await waitFor(() => {
-      expect(screen.getByText(/🌱 Maize/i)).toBeInTheDocument();
+      expect(screen.getByText(/^Maize$/i)).toBeInTheDocument();
     });
 
     // Turn 2: Query lime for acidic soil

@@ -7,6 +7,7 @@ import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
 import { safeError } from '@/utils/safeResponse';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 import { formatPerformanceMetrics } from '@/services/analytics/performanceMetrics';
+import { dashboardVersion } from '@/services/analytics/dashboardFreshness';
 
 const router = Router();
 
@@ -103,8 +104,8 @@ function buildScopeFilter(user: UserScope, column = 'assigned_officer_id', alias
     return { whereClause: tenantClause, params: [] };
 }
 
-function buildCacheKey(user: UserScope): string {
-    const tenant = `live-v2:${user.tenantId || 'legacy'}`;
+function buildCacheKey(user: UserScope, version: string): string {
+    const tenant = `live-v2:${version}:${user.tenantId || 'legacy'}`;
     if (user.farmerUserId) return `analytics:dashboard:${tenant}:farmer:${user.farmerUserId}`;
     if (user.isOfficer) return `analytics:dashboard:${tenant}:${user.officerId}`;
     if (user.isManager) return `analytics:dashboard:${tenant}:region:${user.managerRegion || 'unknown'}`;
@@ -215,7 +216,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             user.managerRegion = manager[0]?.region as string | null;
         }
 
-        const cacheKey = buildCacheKey(user);
+        const cacheKey = buildCacheKey(user, await dashboardVersion());
         const cached = await cacheGet(cacheKey);
         if (cached) return res.json(JSON.parse(cached));
 
@@ -283,7 +284,8 @@ router.get('/farmer-stats', async (req: Request, res: Response) => {
     try {
         const { userId } = req.user as Record<string, unknown>;
         const tenantId = await getSafeAnalyticsTenantId(req);
-        const tenantClause = ` AND tenant_id = '${tenantId}'`;
+        // No tenant (a system account): the farmer record is found by its user alone.
+        const tenantClause = tenantId ? ` AND tenant_id = '${tenantId}'` : '';
 
         const farmerResult = await getFromDB(`
             SELECT crops, farm_size_hectares, vital_score, yield_history,
@@ -522,10 +524,12 @@ router.get('/queries', requireAnalyticsPlan, async (req: Request, res: Response)
             getFromDB(`SELECT COUNT(*) as count FROM chat_conversations c WHERE c.status = 'resolved' AND c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}`),
             getFromDB(`SELECT COUNT(*) as count FROM chat_conversations c WHERE c.status = 'pending' AND c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}`),
             getFromDB(`
-                SELECT COALESCE(c.category, 'Other') as name, COUNT(*) as count
+                -- Conversations have no topic of their own: group by the farmer's main crop.
+                SELECT COALESCE(NULLIF(cf.crops[1], ''), 'Other') as name, COUNT(*) as count
                 FROM chat_conversations c
+                LEFT JOIN farmers cf ON cf.id = c.farmer_id
                 WHERE c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
-                GROUP BY c.category
+                GROUP BY 1
                 ORDER BY count DESC
             `),
             getFromDB(`

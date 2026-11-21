@@ -37,25 +37,25 @@ type TabType = 'launcher' | 'skills' | 'history';
 
 const GOAL_PRESETS = [
   {
-    title: '🌽 Fall Armyworm Rapid Response',
+    title: 'Fall armyworm response',
     prompt: 'Alert maize farmers in Nakuru about early-stage Fall Armyworm infestation after recent humidity rise. Advise on pheromone traps and localized bio-pesticide timing.',
     region: 'Nakuru',
     crop: 'Maize',
   },
   {
-    title: '🌧️ Heavy Rain Nitrogen Leaching',
+    title: 'Nitrogen loss after heavy rain',
     prompt: 'Advise maize and bean farmers in Uasin Gishu regarding top-dressing fertilizer re-application following 3 consecutive days of heavy downpours.',
     region: 'Uasin Gishu',
     crop: 'Maize',
   },
   {
-    title: '🥔 Potato Late Blight Prevention',
+    title: 'Potato late blight prevention',
     prompt: 'Notify Irish potato growers in Nyandarua about preventive copper-based fungicide spraying before the upcoming damp overcast week.',
     region: 'Nyandarua',
     crop: 'Potato',
   },
   {
-    title: '☕ Coffee Berry Borer Scouting',
+    title: 'Coffee berry borer scouting',
     prompt: 'Dispatch pruning and sanitation guidelines to coffee farmers in Kiambu to break the Berry Borer lifecycle during cherry development.',
     region: 'Kiambu',
     crop: 'Coffee',
@@ -154,7 +154,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
     setGoalPrompt(preset.prompt);
     setTargetRegion(preset.region);
     setTargetCrop(preset.crop);
-    toast.success(`Loaded preset: ${preset.title}`);
+    toast.success(`Preset loaded: ${preset.title}`);
   };
 
   const handleExecuteCampaign = async () => {

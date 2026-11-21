@@ -135,15 +135,14 @@ function Memory() {
   if (isLoading) {
     return (
       <LoadingHeaderSkeleton
-        title="Agentic Memory Engine"
-        description="Dynamic RAG vector store & knowledge graph"
+        title={t('ui_memory_agent_memory_knowledge_engine')}
+        description={t('ui_memory_dynamic_conversational_memory_region')}
       />
     );
   }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-24">
-      {/* ── Top Bento Banner: Agent Memory Engine ── */}
       <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
@@ -162,15 +161,15 @@ function Memory() {
             <div className="grid grid-cols-3 sm:flex items-center gap-2 w-full sm:w-auto">
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-start">
                 <span className="text-xs text-slate-500 dark:text-white/40 block">{t('ui_memory_vectors')}</span>
-                <strong className="text-sm font-semibold text-slate-900 dark:text-white font-mono tabular-nums">{memories.length}</strong>
+                <strong className="text-sm font-medium text-slate-900 dark:text-white font-mono tabular-nums">{memories.length}</strong>
               </div>
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-start">
                 <span className="text-xs text-slate-500 dark:text-white/40 block">{t('email_workflows_categories')}</span>
-                <strong className="text-sm font-semibold text-slate-600 dark:text-slate-400 font-mono tabular-nums">{categories.length}</strong>
+                <strong className="text-sm font-medium text-slate-600 dark:text-slate-400 font-mono tabular-nums">{categories.length}</strong>
               </div>
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-start">
                 <span className="text-xs text-slate-500 dark:text-white/40 block">{t('ui_memory_mean_score')}</span>
-                <strong className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">{avgImportanceScore.toFixed(0)}%</strong>
+                <strong className="text-sm font-medium text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">{avgImportanceScore.toFixed(0)}%</strong>
               </div>
             </div>
 
@@ -233,7 +232,7 @@ function Memory() {
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
           <div className="flex items-center gap-2">
             <Database className="w-4 h-4 text-slate-500" />
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{t('ui_memory_dynamic_rag_semantic_mesh')}</h3>
+            <h3 className="text-sm font-medium text-slate-900 dark:text-white">{t('ui_memory_dynamic_rag_semantic_mesh')}</h3>
           </div>
           <span className="px-2.5 py-1 rounded-md text-xs font-mono bg-slate-500/10 text-slate-700 dark:text-slate-400 border border-slate-500/20">
             {t('ui_memory_real_time_impulse_graph')}
@@ -319,14 +318,14 @@ function Memory() {
                     <button
                       onClick={() => handleEditMemory(memory)}
                       className="p-1.5 text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-white/5 transition-colors"
-                      title="Edit Memory"
+                      title="Edit memory"
                     >
                       <Edit className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleDeleteMemory(memory.category, memory.key)}
                       className="p-1.5 text-slate-400 dark:text-white/40 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-200 dark:hover:bg-white/5 transition-colors"
-                      title="Delete Memory"
+                      title="Delete memory"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -360,7 +359,7 @@ function Memory() {
       {/* ── Category Cluster Summary ── */}
       {memorySummary.length > 0 && (
         <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-4">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
             <Layers className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             {t('ui_memory_category_vector_distribution_cluster')}
           </h3>

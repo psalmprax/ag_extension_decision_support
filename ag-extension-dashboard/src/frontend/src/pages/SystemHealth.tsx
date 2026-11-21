@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
+import { StatusMark } from './systemHealth/StatusMark';
 import { useAppStore } from '../store/useAppStore';
 import {
   fetchHealthStatus,
@@ -39,7 +40,7 @@ function IssuesSummary({ issues, summary }: { issues?: string[]; summary?: strin
     return (
       <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-3">
         <CheckCircle className="w-5 h-5 text-emerald-700 dark:text-emerald-400 shrink-0" />
-        <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300">{summary || 'All edge subsystems and container clusters operating at optimal SLO latency.'}</p>
+        <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300">{summary || 'All edge subsystems and container clusters operating at optimal SLO latency.'}</p>
       </div>
     );
   }
@@ -47,7 +48,7 @@ function IssuesSummary({ issues, summary }: { issues?: string[]; summary?: strin
     <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl">
       <div className="flex items-center gap-2 mb-2">
         <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-        <p className="text-xs font-bold text-rose-700 dark:text-rose-300">
+        <p className="text-xs font-medium text-rose-700 dark:text-rose-300">
           {t('ui_system_health_infrastructure_incident_s_detected', { length: issues.length })}
         </p>
       </div>
@@ -76,7 +77,7 @@ function DnsSection({ dns }: { dns?: Record<string, Record<string, unknown>> }) 
           const resolvedIps = (info.ips as string[] | undefined)?.join(', ');
           const dnsDetail = isResolved
             ? `→ ${resolvedIps}`
-            : `✗ ${(info.error as string) || 'Resolution Failed'}`;
+            : `Not resolved: ${(info.error as string) || 'no answer'}`;
           return (
             <div
               key={domain}
@@ -86,7 +87,7 @@ function DnsSection({ dns }: { dns?: Record<string, Record<string, unknown>> }) 
                   : 'bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300'
               }`}
             >
-              <p className="font-mono font-bold text-slate-900 dark:text-white">{domain}</p>
+              <p className="font-mono font-medium text-slate-900 dark:text-white">{domain}</p>
               <p className="font-mono text-xxs mt-0.5 opacity-80">{String(dnsDetail)}</p>
             </div>
           );
@@ -114,10 +115,8 @@ function PortsSection({ ports }: { ports?: Array<Record<string, unknown>> }) {
                 : 'bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300'
             }`}
           >
-            <span className="font-bold">{p.open ? '✓' : '✗'}</span>
-            <span className="truncate">
-              {p.name as string} ({String(p.port ?? '')})
-            </span>
+            <StatusMark ok={Boolean(p.open)} />
+            <span className="truncate">{p.name as string} ({String(p.port ?? '')})</span>
           </div>
         ))}
       </div>
@@ -145,7 +144,7 @@ function TraefikSection({ traefik }: { traefik?: Record<string, unknown> }) {
         >
           <p className="font-bold text-slate-900 dark:text-white mb-0.5">{t('ui_system_health_backend_api_ingress')}</p>
           <p className="font-mono text-xxs">
-            {backendOk ? '✓ Reachable & Handshaking' : '✗ Upstream Unreachable'} {t('ui_system_health_http')}{' '}
+            {backendOk ? 'Reachable' : 'Not reachable'} {t('ui_system_health_http')}{' '}
             {String(traefik.backend_http_status ?? '')})
           </p>
         </div>
@@ -158,7 +157,7 @@ function TraefikSection({ traefik }: { traefik?: Record<string, unknown> }) {
         >
           <p className="font-bold text-slate-900 dark:text-white mb-0.5">{t('ui_system_health_frontend_spa_ingress')}</p>
           <p className="font-mono text-xxs">
-            {frontendOk ? '✓ Reachable & Serving' : '✗ Ingress Failed'} {t('ui_system_health_http')}{' '}
+            {frontendOk ? 'Reachable' : 'Not reachable'} {t('ui_system_health_http')}{' '}
             {String(traefik.frontend_http_status ?? '')})
           </p>
         </div>
@@ -189,7 +188,7 @@ function ContainerNetworkSection({
                 : 'bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300'
             }`}
           >
-            <span className="font-bold">{c.reachable ? '✓' : '✗'}</span>
+            <StatusMark ok={Boolean(c.reachable)} />
             <span className="truncate">{String(c.name ?? '')}</span>
           </div>
         ))}
@@ -230,7 +229,7 @@ function SslSection({ ssl }: { ssl?: Record<string, unknown> }) {
             {cert.validTo && (
               <p>
                 <span className="text-slate-500 dark:text-white/60">{t('ui_system_health_expires')}</span> {new Date(cert.validTo).toLocaleDateString()}{' '}
-                <span className={cert.daysLeft != null && cert.daysLeft < CERT_EXPIRY_WARN_DAYS ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-emerald-600 dark:text-emerald-400 font-bold'}>
+                <span className={cert.daysLeft != null && cert.daysLeft < CERT_EXPIRY_WARN_DAYS ? 'text-rose-600 dark:text-rose-400 font-medium' : 'text-emerald-600 dark:text-emerald-400 font-medium'}>
                   ({cert.daysLeft ?? '—'} {t('ui_system_health_days_remaining')}
                 </span>
               </p>
@@ -257,20 +256,20 @@ function DeploymentSection({ deployment }: { deployment?: Record<string, unknown
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="p-3 rounded-xl border bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/10 text-xs">
-          <p className="text-xxs font-bold text-slate-500 dark:text-white/40 ">NODE_ENV</p>
-          <p className="text-xs font-mono font-bold text-slate-900 dark:text-white mt-0.5">{String(deployment.node_env ?? 'production')}</p>
+          <p className="text-xxs font-medium text-slate-500 dark:text-white/40"><code>NODE_ENV</code></p>
+          <p className="text-xs font-mono font-medium text-slate-900 dark:text-white mt-0.5">{String(deployment.node_env ?? 'production')}</p>
         </div>
         <div className={`p-3 rounded-xl border text-xs ${prodOk ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300'}`}>
-          <p className="text-xxs font-bold opacity-60 ">{t('ui_system_health_prod_override')}</p>
-          <p className="text-xs font-bold mt-0.5">{prodOk ? '✓ Active' : '✗ Missing'}</p>
+          <p className="text-xxs font-medium opacity-60 ">{t('ui_system_health_prod_override')}</p>
+          <p className="text-xs font-medium mt-0.5">{prodOk ? 'Active' : 'Missing'}</p>
         </div>
         <div className={`p-3 rounded-xl border text-xs ${httpsOk ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300' : 'bg-amber-500/10 border-amber-500/25 text-amber-700 dark:text-amber-300'}`}>
-          <p className="text-xxs font-bold opacity-60 ">{t('ui_system_health_https_tls')}</p>
-          <p className="text-xs font-bold mt-0.5">{httpsOk ? '✓ Enforced' : '✗ Inactive'}</p>
+          <p className="text-xxs font-medium opacity-60 ">{t('ui_system_health_https_tls')}</p>
+          <p className="text-xs font-medium mt-0.5">{httpsOk ? 'Enforced' : 'Not enforced'}</p>
         </div>
         <div className={`p-3 rounded-xl border text-xs ${acmeOk ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300' : 'bg-amber-500/10 border-amber-500/25 text-amber-700 dark:text-amber-300'}`}>
-          <p className="text-xxs font-bold opacity-60 ">{t('ui_system_health_acme_email')}</p>
-          <p className="text-xs font-bold mt-0.5">{acmeOk ? '✓ Configured' : '✗ Not set'}</p>
+          <p className="text-xxs font-medium opacity-60 ">{t('ui_system_health_acme_email')}</p>
+          <p className="text-xs font-medium mt-0.5">{acmeOk ? 'Configured' : 'Not set'}</p>
         </div>
       </div>
     </div>
@@ -282,7 +281,7 @@ function RecommendationsSection({ recommendations }: { recommendations?: string[
   if (!recommendations || recommendations.length === 0) return null;
   return (
     <div className="mt-4 p-4 bg-slate-500/10 border border-slate-500/30 rounded-xl">
-      <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">{t('ui_system_health_automated_sre_recommendations')}</p>
+      <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">{t('ui_system_health_automated_sre_recommendations')}</p>
       <ul className="list-disc list-inside space-y-1">
         {recommendations.map((rec, i) => (
           <li key={i} className="text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap font-mono">
@@ -299,7 +298,7 @@ function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
   return (
     <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-6">
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
-        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
           <Activity className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           {t('ui_system_health_infrastructure_diagnostic_telemetry')}
           {diagnostics.cached && (
@@ -413,7 +412,7 @@ function ComponentHealthCard({
 
         <div className="flex justify-between text-slate-500 dark:text-white/60">
           <span>{t('system_health_failures')}</span>
-          <span className={check.consecutiveFailures > 0 ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-900 dark:text-white'}>
+          <span className={check.consecutiveFailures > 0 ? 'text-rose-600 dark:text-rose-400 font-medium' : 'text-slate-900 dark:text-white'}>
             {check.consecutiveFailures}
           </span>
         </div>
@@ -429,7 +428,7 @@ function ComponentHealthCard({
           <button
             onClick={onRecover}
             disabled={isTriggering}
-            className="w-full mt-2 flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-950/40 disabled:opacity-50"
+            className="w-full mt-2 flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-medium transition-all shadow-md shadow-emerald-950/40 disabled:opacity-50"
           >
             <RotateCcw className={`w-3.5 h-3.5 ${isTriggering ? 'animate-spin' : ''}`} />
             {t('system_health_trigger_recovery') || 'Execute Self-Healing'}
@@ -470,7 +469,7 @@ function RecoveryLogList({
   return (
     <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-4">
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
-        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
           <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           {t('system_health_recovery_log') || 'Automated SRE Recovery Audit Log'}
         </h3>
@@ -504,7 +503,7 @@ function RecoveryLogList({
                 </div>
               </div>
               <div className="text-end font-mono text-xxs text-slate-500 dark:text-white/40">
-                <span className={`inline-block px-2 py-0.5 rounded-full font-bold text-xxs mb-1 ${action.success ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/20 text-rose-700 dark:text-rose-300'}`}>
+                <span className={`inline-block px-2 py-0.5 rounded-full font-medium text-xxs mb-1 ${action.success ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/20 text-rose-700 dark:text-rose-300'}`}>
                   {action.success ? 'Success' : 'Failed'}
                 </span>
                 <div>{new Date(action.triggeredAt).toLocaleTimeString()}</div>

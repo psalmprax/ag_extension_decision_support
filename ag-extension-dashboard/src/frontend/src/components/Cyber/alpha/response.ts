@@ -61,7 +61,7 @@ export function stashQueryOffline(query: string, setMessages: SetChatMessages): 
   enqueueOfflineQuery(query);
   setMessages(prev => [...prev,
     { id: `user-${Date.now()}`, sender: 'user', text: query, timestamp: nowStamp() } as ChatMessageItem,
-    { id: `off-${Date.now()}`, sender: 'assistant', text: '📡 Offline — your agronomic question is queued and will be sent when back online.', timestamp: nowStamp() } as ChatMessageItem,
+    { id: `off-${Date.now()}`, sender: 'assistant', text: 'You are offline. Your question is queued and will be sent when back online.', timestamp: nowStamp() } as ChatMessageItem,
   ]);
 }
 

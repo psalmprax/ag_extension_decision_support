@@ -1444,22 +1444,22 @@ function ActiveContextBanner({ slots, onClear }: ActiveContextBannerProps) {
         </span>
         {slots.crop && (
           <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
-            🌱 {slots.crop}
+            {slots.crop}
           </span>
         )}
         {slots.pest_disease && (
           <span className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/25">
-            🐛 {slots.pest_disease}
+            {slots.pest_disease}
           </span>
         )}
         {slots.field_size && (
           <span className="px-2 py-0.5 rounded bg-teal-500/15 text-teal-300 border border-teal-500/25">
-            📐 {slots.field_size}
+            {slots.field_size}
           </span>
         )}
         {slots.soil_profile && (
           <span className="px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/25">
-            🧪 {slots.soil_profile}
+            {slots.soil_profile}
           </span>
         )}
         {slots.location_climate && (

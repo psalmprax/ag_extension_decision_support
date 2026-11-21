@@ -131,7 +131,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
   });
 
   const [simulatorMessages, setSimulatorMessages] = useState<Array<{ sender: 'farmer' | 'bot'; text: string }>>([
-    { sender: 'bot', text: '🌾 Welcome to Agricultural Advisory! Type START or HABARI to begin.' },
+    { sender: 'bot', text: 'Welcome. Send START or HABARI to register your farm.' },
   ]);
   const [simulatorInput, setSimulatorInput] = useState('HABARI');
   const [simulatorStep, setSimulatorStep] = useState(0);
@@ -275,7 +275,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
       const res = await testChannelDispatch({
         channel,
         recipient: testRecipient,
-        message: '🌾 Verified test message from your GPExts Decision Support Gateway!',
+        message: 'Test message from AgExtension. If you can read this, the channel works.',
       });
 
       if (res.success) {
@@ -471,7 +471,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
                   setSimulatorMessages([
                     {
                       sender: 'bot',
-                      text: '🌾 Welcome to Agricultural Advisory! Type START or HABARI to begin.',
+                      text: 'Welcome. Send START or HABARI to register your farm.',
                     },
                   ]);
                   setSimulatorStep(0);

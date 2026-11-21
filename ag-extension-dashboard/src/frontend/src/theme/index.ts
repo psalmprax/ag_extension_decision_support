@@ -25,14 +25,14 @@ export { COLOR_STEPS, designTokens, kebabCase } from './tokens';
 export type { ThemeName, ThemeColors, ColorScale, SemanticTokens, SurfaceTokens } from './tokens';
 
 export const themeDescriptions: Record<ThemeName, string> = {
-  forest: '🌲 Forest Green - Lush crops and rainforests',
-  golden: '🌾 Golden Harvest - Wheat fields and grain',
-  terracotta: '🏺 Terracotta - Earthy soil and clay',
-  oceanic: '🌊 Oceanic Blue - Water and irrigation',
-  sunset: '🌅 Sunset Orange - Warm harvest twilight',
-  sage: '🌿 Sage Green - Vegetables and organic',
-  cyber: '🌑 Cyber Dark - High-tech night mode',
-  base: '🔵 Base Onchain - Electric cobalt & obsidian',
+  forest: 'Forest green',
+  golden: 'Golden harvest',
+  terracotta: 'Terracotta',
+  oceanic: 'Ocean blue',
+  sunset: 'Sunset orange',
+  sage: 'Sage green',
+  cyber: 'Dark',
+  base: 'Cobalt',
 };
 
 function pushScaleVars(

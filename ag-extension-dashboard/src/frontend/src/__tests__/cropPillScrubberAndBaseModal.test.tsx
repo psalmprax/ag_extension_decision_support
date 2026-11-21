@@ -22,9 +22,8 @@ describe('Base App UX Additions: CropPillScrubber & BaseModal', () => {
       expect(cropIds).toContain('Legumes');
     });
 
-    it('defines emojis and alternative names for all crops', () => {
+    it('defines labels and alternative names for all crops', () => {
       CROP_PRESETS.forEach(crop => {
-        expect(crop.emoji).toBeTruthy();
         expect(crop.label).toBeTruthy();
         expect(crop.alt).toBeTruthy();
       });
@@ -86,7 +85,7 @@ describe('Base App UX Additions: CropPillScrubber & BaseModal', () => {
 
       const svgOverlay = screen.getByTestId('svg-bounding-boxes-overlay');
       expect(svgOverlay).toBeInTheDocument();
-      expect(screen.getByText('Foliar Lesion 88%')).toBeInTheDocument();
+      expect(screen.getByText('Leaf lesion 88%')).toBeInTheDocument();
     });
 
     it('applies custom bounding rect style to prevent letterbox/pillarbox offset (REM-06)', () => {

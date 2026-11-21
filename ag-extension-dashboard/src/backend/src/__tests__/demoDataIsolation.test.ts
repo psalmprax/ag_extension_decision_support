@@ -74,7 +74,7 @@ describe('Demo and live data separation', () => {
         for (const sql of queries) {
             expect(sql).toContain('is_demo');
         }
-        expect(cacheGet).toHaveBeenCalledWith('analytics:dashboard:live-v2:legacy:global');
+        expect(cacheGet).toHaveBeenCalledWith('analytics:dashboard:live-v2:0:legacy:global');
     });
 
     it('excludes demo records from performance aggregates and officer joins', async () => {

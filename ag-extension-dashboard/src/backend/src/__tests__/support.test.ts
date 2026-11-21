@@ -57,7 +57,7 @@ describe('Support Route — Mapper-before-response: mapSupportTicketRows + mapSu
     it('GET /tickets returns camelCase SupportTicketDTO[] from snake_case rows', async () => {
         const ticketRow = {
             id: 'ticket-1',
-            user_id: 'off-1',
+            created_by: 'off-1',
             subject: 'GPS not working',
             status: 'open',
             priority: 'high',
@@ -88,7 +88,7 @@ describe('Support Route — Mapper-before-response: mapSupportTicketRows + mapSu
         expect(first.createdAt).toBe('2024-12-15T10:00:00Z');
         expect(first.updatedAt).toBe('2024-12-15T10:00:00Z');
         // Must NOT leak snake_case
-        expect(first.user_id).toBeUndefined();
+        expect(first.created_by).toBeUndefined();
         expect(first.assigned_to).toBeUndefined();
         expect(first.resolved_at).toBeUndefined();
         expect(first.created_at).toBeUndefined();
@@ -97,7 +97,7 @@ describe('Support Route — Mapper-before-response: mapSupportTicketRows + mapSu
     it('POST /tickets invokes mapSupportTicketRow on the INSERT ... RETURNING row', async () => {
         const insertedRow = {
             id: 'ticket-new',
-            user_id: 'off-1',
+            created_by: 'off-1',
             subject: 'New issue',
             status: 'open',
             priority: 'normal',
@@ -120,7 +120,7 @@ describe('Support Route — Mapper-before-response: mapSupportTicketRows + mapSu
         expect(response.body.data.userId).toBe('off-1');
         expect(response.body.data.status).toBe('open');
         expect(response.body.data.category).toBe('feature-request');
-        expect(response.body.data.user_id).toBeUndefined();
+        expect(response.body.data.created_by).toBeUndefined();
     });
 
     it('rejects unknown ticket categories without writing to the database', async () => {
@@ -131,5 +131,44 @@ describe('Support Route — Mapper-before-response: mapSupportTicketRows + mapSu
 
         expect(response.status).toBe(400);
         expect(mockQuery).not.toHaveBeenCalled();
+    });
+
+    it('POST /tickets stores the author in created_by', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [{ id: 't', created_by: 'off-1', status: 'open' }], rowCount: 1 });
+        await request(app)
+            .post('/api/v1/support/tickets')
+            .set('Authorization', `Bearer ${officerToken}`)
+            .send({ subject: 'New issue', description: 'Something is broken', category: 'technical' });
+        expect(String(mockQuery.mock.calls[0][0])).toMatch(/created_by/);
+        expect(String(mockQuery.mock.calls[0][0])).not.toMatch(/\buser_id\b/);
+    });
+});
+
+describe('Support Route — PATCH /tickets/:id only changes known columns', () => {
+    const patch = (body: Record<string, unknown>) =>
+        request(app).patch('/api/v1/support/tickets/5d1c8a3e-2b4f-4c6d-9e8a-7f0b1c2d3e4f').set('Authorization', `Bearer ${makeOfficerToken()}`).send(body);
+
+    beforeEach(() => mockQuery.mockReset());
+
+    it('ignores body keys that are not ticket fields, so none reach the SQL', async () => {
+        const response = await patch({ subject: 'changed', created_by: 'someone-else' });
+        expect(response.status).toBe(400);
+        expect(mockQuery).not.toHaveBeenCalled();
+    });
+
+    it('rejects a status or priority outside the allowed lists', async () => {
+        expect((await patch({ status: 'deleted' })).status).toBe(400);
+        expect((await patch({ priority: 'whenever' })).status).toBe(400);
+        expect((await patch({ assigned_to: 'not-a-uuid' })).status).toBe(400);
+        expect(mockQuery).not.toHaveBeenCalled();
+    });
+
+    it('updates with placeholders and stamps resolved_at when the ticket is resolved', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [{ id: 'ticket-1', created_by: 'off-1', status: 'resolved' }], rowCount: 1 });
+        const response = await patch({ status: 'resolved', assigned_to: null });
+        expect(response.status).toBe(200);
+        const [sql, params] = mockQuery.mock.calls[0];
+        expect(sql).toMatch(/status = \$1, assigned_to = \$2, resolved_at = NOW\(\)/);
+        expect(params).toEqual(['resolved', null, '5d1c8a3e-2b4f-4c6d-9e8a-7f0b1c2d3e4f']);
     });
 });

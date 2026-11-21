@@ -14,7 +14,7 @@ const NasaPowerSchema = z.object({
  */
 export const nasaPowerTool: Tool<typeof NasaPowerSchema> = {
   name: 'get_geospatial_weather',
-  description: 'Fetches highly accurate meteorological data (temperature, solar irradiance, soil moisture indicators) for a precise latitude/longitude from NASA POWER. Use this for drought risk, pest modeling, and precision agriculture advice.',
+  description: 'Fetches modelled weather data (temperature, solar irradiance, soil moisture indicators) for a latitude/longitude from NASA POWER. Use this for drought risk, pest modeling, and precision agriculture advice.',
   schema: NasaPowerSchema,
   execute: async ({ latitude, longitude, days }) => {
     logger.info(`Fetching NASA POWER data for lat: ${latitude}, lng: ${longitude}`);

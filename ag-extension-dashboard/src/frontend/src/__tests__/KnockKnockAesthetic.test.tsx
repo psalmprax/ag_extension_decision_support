@@ -194,17 +194,17 @@ describe('KnockKnock Aesthetic Component Suite', () => {
 
       // Switch to leaf scan
       fireEvent.click(screen.getByRole('button', { name: /Leaf scan/i }));
-      expect(screen.getByText('Upload or Capture Leaf Photo')).toBeInTheDocument();
+      expect(screen.getByText('Take or upload a leaf photo')).toBeInTheDocument();
 
       // Trigger scan — no diagnosis may appear without a real analysis response
-      const scanBtn = screen.getByRole('button', { name: /Select Leaf Sample/i });
+      const scanBtn = screen.getByRole('button', { name: /Choose a leaf photo/i });
       fireEvent.click(scanBtn);
 
       await waitFor(() => {
         expect(screen.queryByText(/Late Blight/i)).not.toBeInTheDocument();
         expect(screen.queryByText(/% Match/i)).not.toBeInTheDocument();
       });
-      expect(screen.getByText('Upload or Capture Leaf Photo')).toBeInTheDocument();
+      expect(screen.getByText('Take or upload a leaf photo')).toBeInTheDocument();
     });
 
     it('switches to Voice tab and never fabricates a transcription', async () => {
@@ -213,17 +213,17 @@ describe('KnockKnock Aesthetic Component Suite', () => {
       fireEvent.click(screen.getByRole('button', { name: /AI agronomist/i }));
       fireEvent.click(screen.getByRole('button', { name: /Voice/i }));
 
-      expect(screen.getByText(/Tap to Record Agronomic Note/i)).toBeInTheDocument();
-      const recordPrompt = screen.getByText(/Tap to Record Agronomic Note/i);
+      expect(screen.getByText(/Tap to record a voice note/i)).toBeInTheDocument();
+      const recordPrompt = screen.getByText(/Tap to record a voice note/i);
       const recordBtn = recordPrompt.parentElement?.querySelector('button');
       if (recordBtn) fireEvent.click(recordBtn);
 
       // jsdom has no SpeechRecognition/getUserMedia, so no transcript may be invented
       await waitFor(() => {
-        expect(screen.queryByText(/AI Voice Transcription/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/^Transcript$/i)).not.toBeInTheDocument();
         expect(screen.queryByText(/Farmer Otieno reports/i)).not.toBeInTheDocument();
       });
-      expect(screen.getByText(/Tap to Record Agronomic Note/i)).toBeInTheDocument();
+      expect(screen.getByText(/Tap to record a voice note/i)).toBeInTheDocument();
     });
   });
 

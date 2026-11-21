@@ -72,6 +72,17 @@ export async function cacheDelete(key: string): Promise<boolean> {
     }
 }
 
+/** Adds one to a counter and returns the new value, or null with no cache. */
+export async function cacheIncr(key: string): Promise<number | null> {
+    if (!redisClient) return null;
+    try {
+        return await redisClient.incr(key);
+    } catch (error) {
+        logger.error('Cache incr error:', error);
+        return null;
+    }
+}
+
 export async function cacheHSet(key: string, field: string, value: string): Promise<boolean> {
     if (!redisClient) return false;
     try {

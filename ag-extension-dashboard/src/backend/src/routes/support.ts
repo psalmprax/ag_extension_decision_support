@@ -1,3 +1,4 @@
+import { isUuid } from '@/utils/uuid';
 import { Router, Request, Response } from 'express';
 import type { CountRow, SupportTicketRow, AuthenticatedRequestUser } from '@/types/rowTypes';
 import { mapSupportTicketRows, mapSupportTicketRow, mapCountRow } from '@/types/dtos';
@@ -7,6 +8,10 @@ import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
 
 const router = Router();
+
+const TICKET_STATUSES = new Set(['open', 'in_progress', 'resolved', 'closed']);
+const TICKET_PRIORITIES = new Set(['low', 'medium', 'normal', 'high', 'urgent']);
+
 
 type AuthedRequest = Request & { user?: AuthenticatedRequestUser };
 
@@ -95,7 +100,7 @@ router.get('/tickets', authorize(['admin', 'regional_manager', 'extension_office
 
         let sql = 'SELECT * FROM support_tickets';
         if (user?.role && user.role !== 'admin' && user.role !== 'regional_manager') {
-            where.push('user_id = $1');
+            where.push('created_by = $1');
             params.push(user.userId);
         }
         if (where.length > 0) {
@@ -131,7 +136,7 @@ router.post('/tickets', authorize(['admin', 'regional_manager', 'extension_offic
         }
 
         const { rows } = await query<SupportTicketRow>(
-            `INSERT INTO support_tickets (user_id, subject, description, status, priority, category)
+            `INSERT INTO support_tickets (created_by, subject, description, status, priority, category)
              VALUES ($1, $2, $3, 'open', $4, $5)
              RETURNING *`,
             [userId, body.subject, body.description, body.priority ?? 'normal', category]
@@ -145,31 +150,51 @@ router.post('/tickets', authorize(['admin', 'regional_manager', 'extension_offic
     }
 });
 
+type TicketUpdateBody = { status?: unknown; assigned_to?: unknown; priority?: unknown };
+
+/**
+ * The SET clause for a ticket edit. Only these columns can change, each with its own
+ * check, so a body key never becomes part of the SQL.
+ */
+function ticketUpdate(updates: TicketUpdateBody): { fields: string[]; params: unknown[] } | { error: string } {
+    const fields: string[] = [];
+    const params: unknown[] = [];
+    const set = (column: 'status' | 'assigned_to' | 'priority', value: unknown) => {
+        params.push(value);
+        fields.push(`${column} = $${params.length}`);
+    };
+    const isOneOf = (value: unknown, allowed: Set<string>) => typeof value === 'string' && allowed.has(value);
+    if (updates.status !== undefined) {
+        if (!isOneOf(updates.status, TICKET_STATUSES)) return { error: 'Invalid status' };
+        set('status', updates.status);
+    }
+    if (updates.priority !== undefined) {
+        if (!isOneOf(updates.priority, TICKET_PRIORITIES)) return { error: 'Invalid priority' };
+        set('priority', updates.priority);
+    }
+    if (updates.assigned_to !== undefined) {
+        if (updates.assigned_to !== null && !isUuid(updates.assigned_to)) return { error: 'Invalid assignee' };
+        set('assigned_to', updates.assigned_to);
+    }
+    if (updates.status === 'resolved') fields.push('resolved_at = NOW()');
+    return fields.length === 0 ? { error: 'No updates supplied' } : { fields, params };
+}
+
 /**
  * PATCH /api/support/tickets/:id — update status / assignment (admin only).
  */
 router.patch('/tickets/:id', authorize(['admin', 'regional_manager']), async (req: Request, res: Response) => {
     try {
         const id = req.params.id;
-        if (!id) {
-            return res.status(400).json({ success: false, error: 'Ticket id is required' });
+        if (!isUuid(id)) {
+            return res.status(400).json({ success: false, error: 'A valid ticket id is required' });
         }
-        const updates = req.body as { status?: string; assigned_to?: string; priority?: string };
-
-        const fields: string[] = [];
-        const params: unknown[] = [];
-        let i = 1;
-        for (const [key, value] of Object.entries(updates)) {
-            if (value === undefined) continue;
-            fields.push(`${key} = $${i++}`);
-            params.push(value);
+        const update = ticketUpdate(req.body as TicketUpdateBody);
+        if ('error' in update) {
+            return res.status(400).json({ success: false, error: update.error });
         }
-        if (updates.status === 'resolved') {
-            fields.push(`resolved_at = NOW()`);
-        }
-        if (fields.length === 0) {
-            return res.status(400).json({ success: false, error: 'No updates supplied' });
-        }
+        const { fields, params } = update;
+        const i = params.length + 1;
         params.push(id);
 
         const { rows } = await query<SupportTicketRow>(

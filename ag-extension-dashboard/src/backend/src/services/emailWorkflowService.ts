@@ -197,11 +197,11 @@ class EmailWorkflowService {
 
   private getTemplateDisplayName(templateName: string): string {
     const displayNames: Record<string, string> = {
-      'farmer_visit_confirmation': 'Farmer Visit Confirmation',
-      'disease_alert_notification': 'Disease Alert Notification',
-      'market_price_update': 'Market Price Update',
-      'weather_advisory': 'Weather Advisory',
-      'training_invitation': 'Training Invitation'
+      'farmer_visit_confirmation': 'Farm visit confirmation',
+      'disease_alert_notification': 'Disease alert',
+      'market_price_update': 'Market price update',
+      'weather_advisory': 'Weather advisory',
+      'training_invitation': 'Training invitation'
     };
     return displayNames[templateName] || templateName;
   }

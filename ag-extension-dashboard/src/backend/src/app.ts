@@ -2,6 +2,7 @@ import express, { Application, Request, Response, Router } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import { refreshDashboardAfterWrites } from '@/services/analytics/dashboardFreshness';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { config } from './config';
@@ -634,6 +635,8 @@ export const routeMounts: RouteMount[] = [
   { path: '/countries', router: countriesRoutes },
 ];
 
+// Saved changes to farmers, visits or chats make the next dashboard read count afresh.
+app.use(refreshDashboardAfterWrites);
 // Mount with i18n support (v1)
 app.use(i18nUrlMiddleware);
 app.use(i18nRouteHandler);

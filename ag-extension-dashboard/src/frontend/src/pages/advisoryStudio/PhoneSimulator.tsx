@@ -131,7 +131,9 @@ export function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
           onClick={() => setSubmitted(true)}
           className="w-full py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs shadow-sm transition-colors"
         >
-          {submitted ? '✓ Saved to offline cache' : 'Record field diagnostic'}
+          {submitted
+            ? t('advisory_preview_finished', { defaultValue: 'Preview finished. Nothing was saved.' })
+            : t('advisory_preview_finish', { defaultValue: 'Finish preview' })}
         </button>
       </div>
 

@@ -7,42 +7,42 @@ export interface AuditContext {
 export const STANDARD_REASON_CODES = [
   {
     code: 'SUSPECTED_ACCOUNT_COMPROMISE',
-    label: '🚨 Suspected Account Compromise / Intrusion',
+    label: 'Suspected account compromise',
     description: 'Emergency lockdown or credential revocation due to anomalous activity.',
   },
   {
     code: 'COMPLIANCE_GDPR_ERASURE',
-    label: '⚖️ GDPR / Data Subject Erasure Request',
+    label: 'Data erasure request (GDPR)',
     description: 'Verified Right to Erasure or privacy compliance obligation.',
   },
   {
     code: 'FARMER_RECORD_DISPUTE',
-    label: '🌾 Farmer Record Dispute / Boundary Correction',
+    label: 'Farmer record dispute or boundary correction',
     description: 'Rectifying contested land parcels, crops, or contact information.',
   },
   {
     code: 'DATA_INTEGRITY_CORRECTION',
-    label: '🔧 Data Integrity / Telemetry Calibration',
+    label: 'Data correction',
     description: 'Fixing corrupted telemetry, sensor anomalies, or duplicate profiles.',
   },
   {
     code: 'OFFICER_OFFBOARDING',
-    label: '👤 Officer Offboarding / Access Deprovisioning',
+    label: 'Officer leaving or access removed',
     description: 'Deprovisioning accounts or reassigning portfolio farmers.',
   },
   {
     code: 'EMERGENCY_FIELD_TRIAGE',
-    label: '⚡ Emergency Agronomic Intervention',
+    label: 'Emergency field response',
     description: 'Critical pest outbreak containment or weather crisis override.',
   },
   {
     code: 'ROUTINE_SYSTEM_MAINTENANCE',
-    label: '🛠️ Scheduled System Maintenance',
+    label: 'Scheduled maintenance',
     description: 'Routine verified administrative housekeeping or database hygiene.',
   },
   {
     code: 'CUSTOM',
-    label: '✏️ Custom Reason Code (Specify below)...',
+    label: 'Other reason (describe below)',
     description: 'Enter a custom tracking ticket or specific governance code.',
   },
 ] as const;

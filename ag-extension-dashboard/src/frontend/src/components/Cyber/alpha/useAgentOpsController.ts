@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import apiClient from '@/api/client';
 import { searchKnowledge } from '@/api/knowledgeService';
@@ -134,6 +134,7 @@ function useAgentOpsActions(
   executionMode: 'supervised' | 'autonomous' | 'edge'
 ) {
   const { addNotification } = useAppStore();
+  const queryClient = useQueryClient();
   const [activeAgent, setActiveAgent] = useState('agent-zero');
   const [isExecuting, setIsExecuting] = useState(false);
   const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
@@ -173,7 +174,11 @@ function useAgentOpsActions(
     setIsExecuting(true);
     appendLog(actionMessage(agent, 'start'));
     try {
-      const response = action === 'execute' ? await apiClient.post(endpoint, { agent, mode: executionMode }) : await apiClient.post(endpoint);
+      // Refresh re-reads the fleet (GET /ai/agents); execute and stop are commands.
+      const response = action === 'execute'
+        ? await apiClient.post(endpoint, { agent, mode: executionMode })
+        : action === 'refresh' ? await apiClient.get(endpoint) : await apiClient.post(endpoint);
+      if (action === 'refresh') await queryClient.invalidateQueries({ queryKey: ['ai-agents'] });
       if (action === 'execute' && response.data.success) {
         appendLog(actionMessage(agent, 'success'));
         addNotification({ type: 'success', message: `Agent ${agent} started successfully` });
@@ -186,7 +191,7 @@ function useAgentOpsActions(
     } finally {
       setIsExecuting(false);
     }
-  }, [activeAgentData, addNotification, appendLog, executionMode]);
+  }, [activeAgentData, addNotification, appendLog, executionMode, queryClient]);
 
   return {
     activeAgent,
