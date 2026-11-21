@@ -88,7 +88,7 @@ router.get('/', async (req: Request, res: Response) => {
                    f.first_name || ' ' || f.last_name as name,
                    'Follow-up required' as reason,
                    CASE
-                       WHEN EXISTS (SELECT 1 FROM alerts a WHERE a.is_active = true AND f.region = ANY(a.affected_regions)) THEN 'high'
+                       WHEN EXISTS (SELECT 1 FROM alerts a WHERE a.is_active = true AND (f.id = ANY(a.affected_farmers) OR a.location = f.region)) THEN 'high'
                        WHEN v.follow_up_required THEN 'medium'
                        ELSE 'low'
                    END as severity,

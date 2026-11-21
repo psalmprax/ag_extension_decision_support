@@ -145,7 +145,7 @@ describe('Extended Farmers API Tests', () => {
 
     it('should return the new fields in farmer details', async () => {
         const response = await request(app)
-            .get('/api/v1/farmers/1')
+            .get('/api/v1/farmers/3f1e2d4c-5b6a-4987-8a1b-2c3d4e5f6a7b')
             .set('Authorization', `Bearer ${officerToken}`);
 
         expect(response.status).toBe(200);

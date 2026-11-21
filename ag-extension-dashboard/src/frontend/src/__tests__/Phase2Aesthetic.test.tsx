@@ -240,8 +240,8 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
 
       // Switch to tele-call tab
       fireEvent.click(screen.getByRole('button', { name: /Tele-Call/i }));
-      expect(screen.getByText('Instant Tele-Agronomy Call')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Start Tele-Agronomy Call/i })).toBeInTheDocument();
+      expect(screen.getByText('Video call with an agronomist')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Start a call/i })).toBeInTheDocument();
     });
   });
 });

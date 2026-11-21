@@ -259,15 +259,10 @@ class WhatsAppService {
         severity: 'low' | 'medium' | 'high' | 'critical',
         farmerId?: string
     ): Promise<WhatsAppDeliveryResult> {
-        const severityEmoji = {
-            low: 'ℹ️',
-            medium: '⚠️',
-            high: '🔴',
-            critical: '🚨',
-        };
+        const severityLabel = { low: 'Notice', medium: 'Alert', high: 'Urgent alert', critical: 'Urgent alert' };
 
         const message = [
-            `${severityEmoji[severity]} *Agricultural Alert: ${alertTitle}*`,
+            `*${severityLabel[severity]}: ${alertTitle}*`,
             '',
             alertDescription,
             '',
@@ -289,7 +284,7 @@ class WhatsAppService {
         farmerId?: string
     ): Promise<WhatsAppDeliveryResult> {
         const message = [
-            `🌤 *Weather Update for ${location}*`,
+            `*Weather for ${location}*`,
             '',
             `Temperature: ${temperature}°C`,
             `Condition: ${condition}`,
@@ -311,7 +306,7 @@ class WhatsAppService {
     ): Promise<WhatsAppDeliveryResult> {
         const priceLines = prices.map(p => `• ${p.crop}: ${p.price} (${p.trend})`).join('\n');
         const message = [
-            `📊 *Market Price Update*`,
+            `*Market prices*`,
             '',
             priceLines,
             '',

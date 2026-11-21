@@ -124,8 +124,8 @@ describe('Deep-Tier Security — AgronomicSafetyGuard AI Boundary Validation', (
       const chemicalAdvice = 'Any pesticide decision during flowering needs local label review.';
       const { text } = agronomicSafetyGuard.guardAndEnrichAdvice(chemicalAdvice);
 
-      expect(text).toContain('Pre-Harvest & Re-Entry Safety (PHI / REI)');
-      expect(text).toContain('Pollinator & Bee Protection Warning');
+      expect(text).toContain('Pre-harvest and re-entry safety (PHI / REI)');
+      expect(text).toContain('Protect bees and other pollinators');
       expect(text).not.toContain('7–14 days');
       expect(text).not.toContain('24–48 hours');
     });

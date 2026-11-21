@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Loader2, Leaf, ShieldAlert, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { X, Loader2, Leaf, ShieldAlert, ShieldCheck, CheckCircle2, Check } from 'lucide-react';
 import type { DiseaseInfo } from '../../api/diseaseService';
 import { useLanguage } from '@/lib/LanguageContext';
 
@@ -111,7 +111,7 @@ export function DiseaseInfoModal({
                       key={index}
                       className="p-2 rounded-[3px] bg-slate-950 border border-slate-800 text-xs text-slate-300 flex items-start gap-2"
                     >
-                      <span className="text-slate-400 font-mono">✓</span>
+                      <Check className="w-3.5 h-3.5 mt-0.5 shrink-0 text-slate-400" aria-hidden="true" />
                       <span>{prevent}</span>
                     </div>
                   ))}

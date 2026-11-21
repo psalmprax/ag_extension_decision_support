@@ -7,8 +7,11 @@ import { fetchTurnTakingSettings, saveTurnTakingSettings, type TurnTakingSetting
 import { useLanguage } from '@/lib/LanguageContext';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const TIME_ZONES = ['Africa/Nairobi', 'Africa/Kampala', 'Africa/Dar_es_Salaam', 'Africa/Kigali', 'Africa/Addis_Ababa',
-  'Africa/Lagos', 'Africa/Accra', 'Africa/Johannesburg', 'Africa/Lusaka', 'Africa/Blantyre', 'Africa/Harare', 'UTC'];
+/** Every time zone the browser knows, so a team anywhere can set its own hours. */
+const TIME_ZONES: string[] = (() => {
+  const intl = Intl as typeof Intl & { supportedValuesOf?: (key: 'timeZone') => string[] };
+  return intl.supportedValuesOf ? ['UTC', ...intl.supportedValuesOf('timeZone')] : ['UTC'];
+})();
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-white';
@@ -17,7 +20,7 @@ function NumberField({ label, hint, value, min, max, onChange }: {
   label: string; hint: string; value: number; min: number; max: number; onChange: (n: number) => void;
 }) {
   return (
-    <label className="block text-xs font-semibold text-gray-500">
+    <label className="block text-xs font-medium text-gray-500">
       {label}
       <input type="number" min={min} max={max} value={value} onChange={e => onChange(Number(e.target.value))} className={inputClass} />
       <span className="mt-1 block font-normal text-gray-400">{hint}</span>
@@ -83,15 +86,15 @@ export const ChatTurnTakingSection: React.FC<{ tenantId?: string }> = ({ tenantI
             onChange={n => setForm({ ...form, aiPauseAfterOfficerMinutes: n })} />
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <label className="block text-xs font-semibold text-gray-500">{t('ui_chat_turn_taking_section_working_hours_start')}
+          <label className="block text-xs font-medium text-gray-500">{t('ui_chat_turn_taking_section_working_hours_start')}
             <input type="time" value={hours.start} onChange={e => setHours({ start: e.target.value })} className={inputClass} />
           </label>
-          <label className="block text-xs font-semibold text-gray-500">{t('ui_chat_turn_taking_section_working_hours_end')}
+          <label className="block text-xs font-medium text-gray-500">{t('ui_chat_turn_taking_section_working_hours_end')}
             <input type="time" value={hours.end} onChange={e => setHours({ end: e.target.value })} className={inputClass} />
           </label>
         </div>
         <fieldset>
-          <legend className="text-xs font-semibold text-gray-500">{t('ui_chat_turn_taking_section_working_days')}</legend>
+          <legend className="text-xs font-medium text-gray-500">{t('ui_chat_turn_taking_section_working_days')}</legend>
           <div className="mt-1 flex flex-wrap gap-1.5">
             {DAYS.map((label, day) => (
               <button key={label} type="button" aria-pressed={hours.days.includes(day)} onClick={() => toggleDay(day)}
@@ -104,16 +107,16 @@ export const ChatTurnTakingSection: React.FC<{ tenantId?: string }> = ({ tenantI
           </div>
         </fieldset>
         <div className="grid grid-cols-2 gap-3">
-          <label className="block text-xs font-semibold text-gray-500">{t('ui_chat_turn_taking_section_time_zone')}
+          <label className="block text-xs font-medium text-gray-500">{t('ui_chat_turn_taking_section_time_zone')}
             <select value={hours.timezone} onChange={e => setHours({ timezone: e.target.value })} className={inputClass}>
-              {[...new Set([hours.timezone, ...TIME_ZONES])].map(zone => <option key={zone}>{zone}</option>)}
+              {[...new Set([hours.timezone, Intl.DateTimeFormat().resolvedOptions().timeZone, ...TIME_ZONES])].map(zone => <option key={zone}>{zone}</option>)}
             </select>
           </label>
           <NumberField label="AI answers by SMS per farmer per day" hint="Each answer costs SMS credit" value={form.smsAiDailyLimit} min={0} max={100}
             onChange={n => setForm({ ...form, smsAiDailyLimit: n })} />
         </div>
         <button type="button" onClick={() => void save()} disabled={saving}
-          className="w-full rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">
+          className="w-full rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-60">
           {saving ? 'Saving…' : 'Save farmer chat settings'}
         </button>
       </div>

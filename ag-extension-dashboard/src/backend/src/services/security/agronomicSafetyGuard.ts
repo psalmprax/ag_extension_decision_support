@@ -310,12 +310,12 @@ class AgronomicSafetyGuard {
 
     if (hasChemical && boundaryCheck.violations.length === 0) {
       if (!/\b(pre-harvest interval|phi)\b/i.test(text)) {
-        enriched += `\n\n⏱️ **Pre-Harvest & Re-Entry Safety (PHI / REI)**:\n` +
+        enriched += `\n\n**Pre-harvest and re-entry safety (PHI / REI)**:\n` +
           `• PHI and REI are product-, crop- and country-specific. Follow the current locally registered label; no universal waiting period is safe to assume.`;
       }
 
       if (/\b(flower|flowering|bloom|blooming|pollinat\w*|bee|bees)\b/i.test(text) && !/\b(pollinator safety|pollinator protection)\b/i.test(text)) {
-        enriched += `\n\n🐝 **Pollinator & Bee Protection Warning**:\n` +
+        enriched += `\n\n**Protect bees and other pollinators**:\n` +
           `• Do NOT spray blooming crops or flowering weeds during daylight hours when honeybees and pollinators are actively foraging.\n` +
           `• Follow the label's pollinator restrictions. Spraying at dusk is not automatically safe.`;
       }

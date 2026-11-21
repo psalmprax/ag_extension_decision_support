@@ -1,4 +1,5 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
+import { isUuid } from '@/utils/uuid';
 import { KnowledgeService } from '@/services/knowledgeService';
 import { getPool, query } from '@/services/databaseService';
 import type {
@@ -131,7 +132,9 @@ router.get('/stats', async (_req: Request, res: Response) => {
 });
 
 // Get article by ID
-router.get('/:id', async (req: Request, res: Response) => {
+// Only an id: other one-word paths (/sources, /my-officer) belong to routes mounted later.
+router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+    if (!isUuid(req.params.id)) return next();
     try {
         const { id } = req.params;
         const pool = getPool();

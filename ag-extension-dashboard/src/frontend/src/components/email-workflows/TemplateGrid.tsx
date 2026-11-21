@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Eye, Edit } from 'lucide-react';
 import type { EmailTemplate } from '@/api/emailWorkflowService';
+import { TemplateText } from './TemplateText';
 
 export function EmailWorkflowsTemplateGrid({
   templates,
@@ -27,7 +28,7 @@ export function EmailWorkflowsTemplateGrid({
               key={template.id}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="card p-6 border-white/20 hover:scale-[1.02] transition-transform duration-300"
+              className="card p-6 border-white/20"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
@@ -37,11 +38,11 @@ export function EmailWorkflowsTemplateGrid({
                       {template.category}
                     </span>
                   </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                  <h3 className="font-medium text-gray-900 dark:text-white mb-1">
                     {template.displayName || template.name}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                    {template.subject}
+                    <TemplateText text={template.subject} />
                   </p>
                 </div>
               </div>

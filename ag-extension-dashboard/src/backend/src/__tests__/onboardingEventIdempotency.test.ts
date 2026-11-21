@@ -82,7 +82,7 @@ describe('onboarding webhook event idempotency', () => {
         const first = await onboardingEngine.processIncomingMessage(event);
         const duplicate = await onboardingEngine.processIncomingMessage(event);
 
-        expect(first.responseMessage).toBe('Noted: *maize* 🌱\n\n👉 In which *Region or County* is your farm located? (e.g. Nakuru, Uasin Gishu, Kiambu, Machakos, Meru)');
+        expect(first.responseMessage).toBe('Noted: *maize*.\n\nWhich district or county is your farm in?');
         expect(duplicate.responseMessage).toBe(first.responseMessage);
         expect(sessionUpdates).toBe(1);
         expect(client.query).toHaveBeenCalledTimes(8);

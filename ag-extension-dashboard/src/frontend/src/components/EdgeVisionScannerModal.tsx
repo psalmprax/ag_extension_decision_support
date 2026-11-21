@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   RefreshCw,
   Copy,
+  AlertTriangle,
 } from 'lucide-react';
 import { BaseModal } from './BaseModal';
 import { triggerHaptic } from '@/lib/haptics';
@@ -50,7 +51,7 @@ const CropPillScrubber: React.FC<CropPillScrubberProps> = ({
       <div className="flex items-center justify-between">
         <label
           htmlFor="edge-target-crop-select"
-          className="block text-xs font-bold font-mono text-slate-300"
+          className="block text-xs font-medium font-mono text-slate-300"
         >
           {t('ui_edge_vision_scanner_modal_target_crop_specimen')}
         </label>
@@ -78,17 +79,14 @@ const CropPillScrubber: React.FC<CropPillScrubberProps> = ({
                 triggerHaptic('light');
                 onSelectCrop(c.id);
               }}
-              className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-150 active:scale-95 disabled:opacity-50 select-none cursor-pointer ${
+              className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors disabled:opacity-50 select-none cursor-pointer ${
                 isSelected
                   ? isBase
-                    ? 'bg-slate-600 text-white shadow-[0_0_12px_rgba(0,82,255,0.45)] border border-slate-400 ring-2 ring-slate-500/30'
-                    : 'bg-emerald-600 text-white shadow-[0_0_12px_rgba(16,185,129,0.45)] border border-emerald-400 ring-2 ring-emerald-500/30'
+                    ? 'bg-slate-600 text-white border border-slate-400'
+                    : 'bg-emerald-600 text-white border border-emerald-400'
                   : 'bg-slate-900/90 text-slate-400 border border-white/10 hover:border-white/20 hover:text-white'
               }`}
             >
-              <span className="text-sm leading-none" aria-hidden="true">
-                {c.emoji}
-              </span>
               <span>{c.label}</span>
             </button>
           );
@@ -166,17 +164,17 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
   <div className="p-4 bg-slate-900/60 rounded-xl border border-white/10 space-y-3">
     <div className="flex justify-between items-start">
       <div>
-        <span className="text-[10px] font-bold text-emerald-400 font-mono">
+        <span className="text-[10px] font-medium text-emerald-400 font-mono">
           Edge Primary Diagnosis
         </span>
-        <h4 className="text-base font-bold text-white mt-0.5">
+        <h4 className="text-base font-medium text-white mt-0.5">
           {result.primaryDiagnosis.condition}
         </h4>
         <p className="text-xs text-slate-400 italic">
           {result.primaryDiagnosis.scientificName}
         </p>
       </div>
-      <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold font-mono rounded-full">
+      <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-medium font-mono rounded-full">
         {Math.round(result.primaryDiagnosis.confidence * 100)}% Match
       </span>
     </div>
@@ -186,17 +184,17 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
       <div className="p-2.5 bg-slate-950/80 border border-white/10 rounded-xl space-y-1.5">
         <div className="flex justify-between items-center text-[10px] font-mono">
           <span className="text-slate-400">Two-Stage Edge AI Pipeline:</span>
-          <span className="text-emerald-400 font-bold">
-            {result.twoStage.stage1Detector.detectedLeaf ? 'Foliage Verified' : 'Foliage Rejected'}
+          <span className="text-emerald-400 font-medium">
+            {result.twoStage.stage1Detector.detectedLeaf ? 'Leaf found' : 'No leaf found'}
           </span>
         </div>
         <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
           <div className="p-1.5 rounded bg-slate-900/80 border border-emerald-500/20 text-emerald-300">
-            <span className="text-slate-400 block text-[9px]">STAGE 1 DETECTOR</span>
+            <span className="text-slate-400 block text-[9px]">Leaf check</span>
             <strong>{result.twoStage.stage1Detector.model.toUpperCase()}</strong> ({result.twoStage.stage1Detector.boxes.filter(b => b.label !== 'crop_leaf').length} lesions)
           </div>
           <div className="p-1.5 rounded bg-slate-900/80 border border-slate-500/20 text-slate-300">
-            <span className="text-slate-400 block text-[9px]">STAGE 2 CLASSIFIER</span>
+            <span className="text-slate-400 block text-[9px]">Disease model</span>
             <strong>{result.twoStage.stage2Classifier.model.toUpperCase()}</strong> ({Math.round(result.twoStage.stage2Classifier.confidence * 100)}%)
           </div>
         </div>
@@ -207,19 +205,19 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
     <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10 text-center">
       <div className="p-2 bg-slate-950/80 rounded-lg border border-white/5">
         <span className="text-[10px] font-mono text-slate-400">Canopy Vigor</span>
-        <p className="text-xs font-bold font-mono text-emerald-400 mt-0.5">
+        <p className="text-xs font-medium font-mono text-emerald-400 mt-0.5">
           {Math.round(result.metrics.greenCanopyIndex * 100)}%
         </p>
       </div>
       <div className="p-2 bg-slate-950/80 rounded-lg border border-white/5">
         <span className="text-[10px] font-mono text-slate-400">Chlorosis</span>
-        <p className="text-xs font-bold font-mono text-amber-400 mt-0.5">
+        <p className="text-xs font-medium font-mono text-amber-400 mt-0.5">
           {Math.round(result.metrics.chlorosisRatio * 100)}%
         </p>
       </div>
       <div className="p-2 bg-slate-950/80 rounded-lg border border-white/5">
         <span className="text-[10px] font-mono text-slate-400">Necrosis</span>
-        <p className="text-xs font-bold font-mono text-rose-400 mt-0.5">
+        <p className="text-xs font-medium font-mono text-rose-400 mt-0.5">
           {Math.round(result.metrics.necrosisRatio * 100)}%
         </p>
       </div>
@@ -227,19 +225,19 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
     <div className="grid grid-cols-3 gap-2 text-center">
       <div className="p-2 bg-slate-950/80 rounded-lg border border-white/5">
         <span className="text-[10px] font-mono text-slate-400">Brown Spot</span>
-        <p className="text-xs font-bold font-mono text-orange-400 mt-0.5">
+        <p className="text-xs font-medium font-mono text-orange-400 mt-0.5">
           {Math.round((result.metrics.brownSpotRatio ?? 0) * 100)}%
         </p>
       </div>
       <div className="p-2 bg-slate-950/80 rounded-lg border border-white/5">
         <span className="text-[10px] font-mono text-slate-400">Texture Var</span>
-        <p className="text-xs font-bold font-mono text-slate-400 mt-0.5">
+        <p className="text-xs font-medium font-mono text-slate-400 mt-0.5">
           {(result.metrics.textureVariance ?? 0).toFixed(2)}
         </p>
       </div>
       <div className="p-2 bg-slate-950/80 rounded-lg border border-white/5">
         <span className="text-[10px] font-mono text-slate-400">NGRDI</span>
-        <p className="text-xs font-bold font-mono text-slate-400 mt-0.5">
+        <p className="text-xs font-medium font-mono text-slate-400 mt-0.5">
           {(result.metrics.ngrdi ?? 0).toFixed(2)}
         </p>
       </div>
@@ -274,17 +272,17 @@ const SoilDiagnosticHUD: React.FC<{ result: OfflineSoilDiagnosisResult }> = ({ r
   <div className="p-4 bg-slate-900/60 rounded-xl border border-white/10 space-y-3">
     <div className="flex justify-between items-start">
       <div>
-        <span className="text-[10px] font-bold text-amber-400 font-mono">
+        <span className="text-[10px] font-medium text-amber-400 font-mono">
           Edge Soil Texture & Physical Class
         </span>
-        <h4 className="text-base font-bold text-white mt-0.5">
+        <h4 className="text-base font-medium text-white mt-0.5">
           {result.textureClass}
         </h4>
         <p className="text-xs text-slate-400">
           Drainage: <strong className="text-white">{result.drainageClass}</strong>
         </p>
       </div>
-      <span className="px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold font-mono rounded-full">
+      <span className="px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-medium font-mono rounded-full">
         {Math.round(result.confidence * 100)}% Match
       </span>
     </div>
@@ -293,19 +291,19 @@ const SoilDiagnosticHUD: React.FC<{ result: OfflineSoilDiagnosisResult }> = ({ r
     <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10 text-center">
       <div className="p-2 bg-slate-950/80 rounded-lg border border-white/5">
         <span className="text-[10px] font-mono text-slate-400">Texture Roughness</span>
-        <p className="text-xs font-bold font-mono text-amber-400 mt-0.5">
+        <p className="text-xs font-medium font-mono text-amber-400 mt-0.5">
           {(result.metrics.textureVariance * 100).toFixed(0)}%
         </p>
       </div>
       <div className="p-2 bg-slate-950/80 rounded-lg border border-white/5">
         <span className="text-[10px] font-mono text-slate-400">Organic Matter</span>
-        <p className="text-xs font-bold font-mono text-emerald-400 mt-0.5">
+        <p className="text-xs font-medium font-mono text-emerald-400 mt-0.5">
           {result.organicMatterIndex}
         </p>
       </div>
       <div className="p-2 bg-slate-950/80 rounded-lg border border-white/5">
         <span className="text-[10px] font-mono text-slate-400">Moisture Index</span>
-        <p className="text-xs font-bold font-mono text-slate-400 mt-0.5">
+        <p className="text-xs font-medium font-mono text-slate-400 mt-0.5">
           {result.estimatedMoisture.split(' ')[0]}
         </p>
       </div>
@@ -344,7 +342,7 @@ const VerifiedCloudCard: React.FC<{
       {cropData && (
         <div className="space-y-1.5 text-xs text-slate-300">
           <div className="flex justify-between items-center">
-            <span className="font-bold text-white">
+            <span className="font-medium text-white">
               {cropData.diseases[0]?.disease || `Health status: ${cropData.overallHealth}`}
             </span>
             {cropData.diseases[0] && (
@@ -365,7 +363,7 @@ const VerifiedCloudCard: React.FC<{
       {soilData && (
         <div className="space-y-1.5 text-xs text-slate-300">
           <div className="flex justify-between items-center">
-            <span className="font-bold text-white">{soilData.texture}</span>
+            <span className="font-medium text-white">{soilData.texture}</span>
             <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px]">
               {t('ui_edge_vision_scanner_modal_score')} {soilData.overallHealthScore}/100
             </span>
@@ -388,10 +386,10 @@ const VerifiedCloudCard: React.FC<{
 };
 
 function getBoundingBoxLabel(label: string): string {
-  if (label === 'crop_leaf') return 'Leaf Blade';
-  if (label === 'pest_damage') return 'Pest Damage';
+  if (label === 'crop_leaf') return 'Leaf';
+  if (label === 'pest_damage') return 'Pest damage';
   if (label === 'non_plant_background') return 'Non-Foliage';
-  return 'Foliar Lesion';
+  return 'Leaf lesion';
 }
 
 interface YoloBoundingBoxesOverlayProps {
@@ -424,7 +422,7 @@ const YoloBoundingBoxesOverlay: React.FC<YoloBoundingBoxesOverlayProps> = ({ box
             }}
           >
             <span
-              className="absolute -top-5 start-0 px-1.5 py-0.5 text-[9px] font-mono font-bold text-white rounded shadow-sm whitespace-nowrap"
+              className="absolute -top-5 start-0 px-1.5 py-0.5 text-[9px] font-mono font-medium text-white rounded shadow-sm whitespace-nowrap"
               style={{ backgroundColor: b.color }}
             >
               {labelText} {Math.round(b.confidence * 100)}%
@@ -535,7 +533,7 @@ const EngineTelemetry: React.FC<{
     <div className="flex justify-between items-center bg-slate-900/90 p-3 rounded-xl border border-white/10">
       <div className="flex items-center gap-2">
         <span className="w-2 h-2 bg-emerald-400 rounded-full" />
-        <span className="text-xs font-bold text-white font-mono">{title}</span>
+        <span className="text-xs font-medium text-white font-mono">{title}</span>
       </div>
       <span className="text-[11px] text-slate-400 font-mono">{subtitle}</span>
     </div>
@@ -567,8 +565,8 @@ function createPlotEntry(
 ) {
   const isCrop = scanMode === 'crop';
   const condition = isCrop
-    ? cropResult?.primaryDiagnosis.condition || 'Crop Observation'
-    : soilResult?.textureClass || 'Soil Sample';
+    ? cropResult?.primaryDiagnosis.condition || 'Crop observation'
+    : soilResult?.textureClass || 'Soil sample';
   const confidence = isCrop
     ? cropResult?.primaryDiagnosis.confidence ?? 0.85
     : soilResult?.confidence ?? 0.85;
@@ -825,13 +823,13 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
               onChange={handleFileChange}
               className="hidden"
             />
-            <div className="w-12 h-12 mx-auto mb-3 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full flex items-center justify-center font-bold text-xl">
-              📷
+            <div className="w-12 h-12 mx-auto mb-3 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full flex items-center justify-center">
+              <Camera className="w-5 h-5" aria-hidden="true" />
             </div>
-            <p className="text-sm font-bold text-white">
+            <p className="text-sm font-medium text-white">
               {scanMode === 'crop'
-                ? 'Take Leaf Photo or Upload Foliage Specimen'
-                : 'Take Soil Clod Photo or Upload Profile'}
+                ? 'Take or upload a photo of the leaf'
+                : 'Take or upload a photo of the soil'}
             </p>
             <p className="text-xs text-slate-400 mt-1">
               {t('ui_edge_vision_scanner_modal_runs_100_on_device_without_internet')}
@@ -881,7 +879,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
               {analyzing && (
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white">
                   <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mb-2" />
-                  <span className="text-xs font-mono font-bold  ">
+                  <span className="text-xs font-mono font-medium  ">
                     {t('ui_edge_vision_scanner_modal_stage_1_yolo_detection_stage_2_mobil')}
                   </span>
                 </div>
@@ -908,7 +906,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                         : 'bg-slate-800 hover:bg-slate-700 border-white/10 text-slate-400'
                     }`}
                   >
-                    {lowRamSvgMode ? '⚡ Low-RAM SVG (Active)' : 'Std Overlay'}
+                    {lowRamSvgMode ? 'Light overlay (on)' : 'Standard overlay'}
                   </button>
                   <button
                     type="button"
@@ -918,7 +916,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                     }}
                     className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-lg text-[11px] font-mono text-emerald-300 transition"
                   >
-                    {showBoxes ? 'Hide YOLO Boxes' : 'Show YOLO Boxes'}
+                    {showBoxes ? 'Hide detection boxes' : 'Show detection boxes'}
                   </button>
                 </div>
               </div>
@@ -927,8 +925,8 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
             {/* Specimen Rejection Alert if Not a Leaf */}
             {cropResult?.isRejectedNonFoliage && (
               <div className="p-3.5 bg-rose-950/60 border border-rose-500/40 rounded-xl space-y-1 text-rose-200">
-                <div className="flex items-center gap-2 font-bold text-xs">
-                  <span className="text-rose-400 text-sm">⚠️</span>
+                <div className="flex items-center gap-2 font-medium text-xs">
+                  <AlertTriangle className="w-4 h-4 text-rose-400" aria-hidden="true" />
                   <span>{t('ui_edge_vision_scanner_modal_specimen_rejected_by_yolov8_leaf_gua')}</span>
                 </div>
                 <p className="text-[11px] text-rose-300/90 leading-relaxed">

@@ -56,19 +56,14 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ currentTheme, onTh
                     {/* Color Preview */}
                     <div className="flex gap-1">
                       <div
-                        className="w-3 h-3 rounded-full shadow-[0_0_8px_var(--color-outline),0.5)]"
+                        className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: themes[theme].primary[500] }}
                       />
                     </div>
 
                     {/* Theme Name */}
                     <div className="flex-1 text-start">
-                      <p
-                        className={`text-xxs font-black   ${isActive ? 'text-primary-400' : 'text-slate-300'}`}
-                      >
-                        {theme}
-                      </p>
-                      <p className="text-micro font-medium text-slate-500 mt-0.5">
+                      <p className={`text-xs font-medium ${isActive ? 'text-primary-400' : 'text-slate-300'}`}>
                         {themeDescriptions[theme]}
                       </p>
                     </div>

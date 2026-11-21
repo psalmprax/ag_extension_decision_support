@@ -321,7 +321,7 @@ export const KnowledgeBase: React.FC = () => {
       setActiveCanvasMode(sc.canvasMode as SpatialCanvasMode);
     }
     setActiveTabMode('search');
-    toast(`Running live RAG for: ${sc.title}`, { icon: '🔬' });
+    toast(`Searching the knowledge base for: ${sc.title}`);
     performAISearch(sc.query);
   };
 

@@ -56,6 +56,7 @@ router.get('/inbound', (req: Request, res: Response) => {
  */
 interface InboundMessagePayload extends WhatsAppMediaPayload {
     from?: string;
+    To?: string;
     body?: string;
     messageId?: string;
     MessageSid?: string;
@@ -112,6 +113,11 @@ async function handleInboundAdvisoryOrOnboarding(
     }
 
     return { handled: false };
+}
+
+/** Our WhatsApp number, as the message was addressed (Twilio "To"), for the log. */
+function businessNumber(payload: { To?: string }): string {
+    return (payload.To?.replace('whatsapp:', '') || process.env.TWILIO_WHATSAPP_NUMBER?.replace('whatsapp:', '') || process.env.WHATSAPP_PHONE_NUMBER_ID || 'whatsapp').slice(0, 20);
 }
 
 async function extractInboundMessageContent(payload: InboundMessagePayload): Promise<InboundContent & { from: string; senderName?: string }> {
@@ -173,10 +179,10 @@ router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res:
         }
 
         const { rows } = await query<WhatsAppMessageRow>(
-            `INSERT INTO whatsapp_messages (recipient_phone, message, direction, status, provider)
-             VALUES ($1, $2, 'inbound', 'received', 'meta_cloud')
+            `INSERT INTO whatsapp_messages (from_phone, to_phone, body, direction, status, provider_id)
+             VALUES ($1, $2, $3, 'inbound', 'received', $4)
              RETURNING *`,
-            [from, body]
+            [from, businessNumber(payload), body, payload.messageId || payload.MessageSid || null]
         );
 
         logger.info(`WhatsApp inbound ${payload.messageId ?? '-'}: ${rows.length} row(s) inserted (isVoice=${isVoice})`);
@@ -208,8 +214,8 @@ async function buildMessageScope(user: AuthenticatedRequestUser | undefined): Pr
             sql: `SELECT wm.* FROM whatsapp_messages wm
                  WHERE (wm.farmer_id IS NOT NULL AND wm.farmer_id IN
                      (SELECT id FROM farmers WHERE assigned_officer_id = $1))
-                    OR wm.recipient_phone IN
-                     (SELECT COALESCE(phone, '') FROM farmers WHERE assigned_officer_id = $1)`,
+                    OR wm.to_phone IN (SELECT COALESCE(phone, '') FROM farmers WHERE assigned_officer_id = $1)
+                    OR wm.from_phone IN (SELECT COALESCE(phone, '') FROM farmers WHERE assigned_officer_id = $1)`,
             params: [user.userId],
         };
     }
@@ -220,8 +226,8 @@ async function buildMessageScope(user: AuthenticatedRequestUser | undefined): Pr
             sql: `SELECT wm.* FROM whatsapp_messages wm
                  WHERE (wm.farmer_id IS NOT NULL AND wm.farmer_id IN
                      (SELECT id FROM farmers WHERE region = $1))
-                    OR wm.recipient_phone IN
-                     (SELECT COALESCE(phone, '') FROM farmers WHERE region = $1)`,
+                    OR wm.to_phone IN (SELECT COALESCE(phone, '') FROM farmers WHERE region = $1)
+                    OR wm.from_phone IN (SELECT COALESCE(phone, '') FROM farmers WHERE region = $1)`,
             params: [region],
         };
     }
@@ -273,12 +279,11 @@ router.post('/send', checkUsageLimit('whatsapp'), async (req: AuthedRequest, res
 
         const providerConfigured = whatsappService.isConfigured();
         const deliveryStatus = providerConfigured ? 'queued' : 'not_configured';
-        const provider = providerConfigured ? 'twilio' : 'none';
         const { rows } = await query<WhatsAppMessageRow>(
-            `INSERT INTO whatsapp_messages (recipient_phone, message, direction, status, farmer_id, sender_id, provider)
-             VALUES ($1, $2, 'outbound', $3, $4, $5, $6)
+            `INSERT INTO whatsapp_messages (to_phone, body, direction, status, farmer_id, tenant_id)
+             VALUES ($1, $2, 'outbound', $3, $4, (SELECT tenant_id FROM users WHERE id = $5))
              RETURNING *`,
-            [body.to, body.message, deliveryStatus, resolvedFarmerId ?? null, req.user?.userId ?? null, provider]
+            [body.to, body.message, deliveryStatus, resolvedFarmerId ?? null, req.user?.userId ?? null]
         );
 
         const created = rows[0];
@@ -311,16 +316,16 @@ router.get('/stats', async (req: Request, res: Response) => {
         if (user?.role === 'extension_officer') {
             scopeClause = `AND ((farmer_id IS NOT NULL AND farmer_id IN
                    (SELECT id FROM farmers WHERE assigned_officer_id = $1))
-               OR recipient_phone IN
-                   (SELECT COALESCE(phone, '') FROM farmers WHERE assigned_officer_id = $1))`;
+               OR to_phone IN (SELECT COALESCE(phone, '') FROM farmers WHERE assigned_officer_id = $1)
+               OR from_phone IN (SELECT COALESCE(phone, '') FROM farmers WHERE assigned_officer_id = $1))`;
             scopedParams = [user.userId];
         } else if (user?.role === 'regional_manager') {
             const region = await resolvePrincipalRegion(user.userId);
             if (region) {
                 scopeClause = `AND ((farmer_id IS NOT NULL AND farmer_id IN
                        (SELECT id FROM farmers WHERE region = $1))
-                   OR recipient_phone IN
-                       (SELECT COALESCE(phone, '') FROM farmers WHERE region = $1))`;
+                   OR to_phone IN (SELECT COALESCE(phone, '') FROM farmers WHERE region = $1)
+                   OR from_phone IN (SELECT COALESCE(phone, '') FROM farmers WHERE region = $1))`;
                 scopedParams = [region];
             }
         }

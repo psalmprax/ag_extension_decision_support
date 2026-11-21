@@ -116,3 +116,26 @@ export async function openItem(page: Page, item: { section: string; label: strin
 export function expectNoProblems(where: string, problems: string[]): void {
   expect(problems, `${where}:\n  ${problems.join('\n  ')}`).toEqual([]);
 }
+
+/**
+ * Opens each tab of the page in turn (role="tab" inside main, as a person would) and lists
+ * what failed or showed stub content on each. A tab that breaks is as broken as a page.
+ */
+export async function tabProblems(page: Page, api: ReturnType<typeof watchApi>): Promise<string[]> {
+  const problems: string[] = [];
+  const tabs = page.locator('main [role="tab"]');
+  const count = Math.min(await tabs.count(), 12);
+  const labels: string[] = [];
+  for (let i = 0; i < count; i++) labels.push(((await tabs.nth(i).innerText()) || (await tabs.nth(i).getAttribute('aria-label')) || `tab ${i + 1}`).split('\n')[0].trim());
+  for (const [i, label] of labels.entries()) {
+    const tab = page.locator('main [role="tab"]').nth(i);
+    if (!(await tab.isVisible()) || (await tab.getAttribute('aria-selected')) === 'true' || (await tab.isDisabled())) continue;
+    api.reset();
+    await tab.click();
+    await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
+    await page.waitForTimeout(500);
+    const found = [...api.failures.map(f => `request failed: ${f}`), ...(await textProblems(page))];
+    found.forEach(problem => problems.push(`tab "${label}": ${problem}`));
+  }
+  return problems;
+}

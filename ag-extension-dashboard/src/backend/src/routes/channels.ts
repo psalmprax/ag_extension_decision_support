@@ -339,7 +339,7 @@ router.patch('/config', authorize(['admin', 'regional_manager']), async (req: Re
  */
 router.post('/test', async (req: AuthRequest, res: Response) => {
     try {
-        const { channel, recipient, message = '🌾 Test message from AgExtension Decision Support' } = req.body;
+        const { channel, recipient, message = 'Test message from AgExtension Decision Support' } = req.body;
         const tenantId = await resolveTenantId(req);
 
         if (channel === 'telegram') {

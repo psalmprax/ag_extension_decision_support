@@ -290,13 +290,13 @@ describe('Knowledge Route — Negative paths', () => {
 
     it('GET /:id returns 404 with errorCode when the article does not exist (rows: [])', async () => {
         // Note: the route is `/:id` (single path segment after /knowledge/),
-        // so the URL must be `/api/v1/knowledge/missing-id`, not
+        // so the URL is `/api/v1/knowledge/<uuid>`, not
         // `/api/v1/knowledge/articles/missing-id` (which would 404 from
         // Express's catch-all and return { error: 'Not Found' } instead).
         mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
 
         const response = await request(app)
-            .get('/api/v1/knowledge/missing-id')
+            .get('/api/v1/knowledge/9b2f6c1e-3a4d-4e5f-8a6b-7c8d9e0f1a2b')
             .set('Authorization', `Bearer ${officerToken}`);
 
         expect(response.status).toBe(404);

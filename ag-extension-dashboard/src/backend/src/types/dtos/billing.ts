@@ -292,25 +292,26 @@ export function mapFieldStatsRows(rows: FieldStatsRow[]): FieldStatsDTO[] {
 
 export interface WhatsAppMessageDTO {
   id: string;
-  senderId: string | null;
+  fromPhone: string | null;
   recipientPhone: string;
   farmerId: string | null;
   message: string;
   direction: string | null;
   status: string | null;
-  provider: string | null;
+  /** The provider's message id, once it has one. */
+  providerMessageId: string | null;
   createdAt: string | null;
 }
 export function mapWhatsAppMessageRow(row: WhatsAppMessageRow): WhatsAppMessageDTO {
   return {
     id: row.id,
-    senderId: row.sender_id,
-    recipientPhone: row.recipient_phone,
+    fromPhone: row.from_phone,
+    recipientPhone: row.to_phone,
     farmerId: row.farmer_id,
-    message: row.message,
+    message: row.body,
     direction: row.direction,
     status: row.status,
-    provider: row.provider,
+    providerMessageId: row.provider_id,
     createdAt: toIso(row.created_at) ?? null,
   };
 }
@@ -336,7 +337,7 @@ export interface SupportTicketDTO {
 export function mapSupportTicketRow(row: SupportTicketRow): SupportTicketDTO {
   return {
     id: row.id,
-    userId: row.user_id,
+    userId: row.created_by,
     subject: row.subject,
     status: row.status,
     priority: row.priority,

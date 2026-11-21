@@ -167,9 +167,9 @@ const AIAgronomistScanTab: React.FC<ScanTabProps> = ({
           <div className="w-10 h-10 rounded-md bg-slate-800 border border-white/[0.08] flex items-center justify-center text-slate-300 mx-auto mb-2">
             <Camera className="w-5 h-5" />
           </div>
-          <h4 className="text-xs font-medium text-white mb-1">Upload or Capture Leaf Photo</h4>
+          <h4 className="text-xs font-medium text-white mb-1">Take or upload a leaf photo</h4>
           <p className="text-[11px] text-slate-400 mb-3">
-            Neural vision analyzes fungal lesions, pest bites, and nutrient deficiencies.
+            The photo is checked for signs of disease, pest damage and nutrient shortage.
           </p>
         </>
       )}
@@ -182,12 +182,12 @@ const AIAgronomistScanTab: React.FC<ScanTabProps> = ({
         {isScanning ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Analyzing Neural Vision...</span>
+            <span>Checking the photo…</span>
           </>
         ) : (
           <>
             <UploadCloud className="w-4 h-4" />
-            <span>{previewImage ? 'Re-scan Leaf Image' : 'Select Leaf Sample'}</span>
+            <span>{previewImage ? 'Check again' : 'Choose a leaf photo'}</span>
           </>
         )}
       </button>
@@ -202,7 +202,7 @@ const AIAgronomistScanTab: React.FC<ScanTabProps> = ({
         <div className="flex items-center justify-between text-xs font-medium text-emerald-400">
           <div className="flex items-center gap-1.5">
             <Leaf className="w-3.5 h-3.5" />
-            Pathology Diagnosis & Prescriptions
+            Diagnosis and treatment
           </div>
           <AudioReaderButton
             text={scanAnalysis}
@@ -219,7 +219,7 @@ const AIAgronomistScanTab: React.FC<ScanTabProps> = ({
             onClick={onNavigateToDiagnosis}
             className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1"
           >
-            <span>Open Comprehensive Crop Diagnostics</span>
+            <span>Open disease diagnosis</span>
             <ArrowRight className="w-3 h-3" />
           </button>
         )}
@@ -264,10 +264,10 @@ const AIAgronomistVoiceTab: React.FC<VoiceTabProps> = ({
 
       <p className="text-xs font-medium text-white mt-4">
         {isRecording
-          ? `Recording Field Memo (${formatDuration(recordingDuration)})...`
+          ? `Recording (${formatDuration(recordingDuration)})…`
           : isTranscribing
           ? 'Transcribing with Whisper STT...'
-          : 'Tap to Record Agronomic Note'}
+          : 'Tap to record a voice note'}
       </p>
       <p className="text-[11px] text-slate-400 mt-1">
         Live speech recognition with Whisper AI noise suppression
@@ -288,7 +288,7 @@ const AIAgronomistVoiceTab: React.FC<VoiceTabProps> = ({
       >
         <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-400">
           <Volume2 className="w-3.5 h-3.5" />
-          AI Voice Transcription
+          Transcript
         </div>
         <p className="text-xs font-mono text-slate-200 leading-relaxed p-2 bg-slate-950 rounded border border-slate-800">
           {capturedVoiceNote}
@@ -297,7 +297,7 @@ const AIAgronomistVoiceTab: React.FC<VoiceTabProps> = ({
           onClick={onInsertVoiceToChat}
           className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs rounded transition-colors flex items-center justify-center gap-1.5"
         >
-          <span>Query AI Agronomist with Voice Note</span>
+          <span>Ask the assistant with this note</span>
           <ArrowRight className="w-3 h-3" />
         </button>
       </motion.div>
@@ -315,7 +315,7 @@ const AIAgronomistTelecallTab: React.FC<TelecallTabProps> = ({ onStartCall }) =>
       <div className="w-10 h-10 rounded-md bg-slate-800 border border-white/[0.08] flex items-center justify-center text-slate-300 mx-auto">
         <Video className="w-5 h-5" />
       </div>
-      <h4 className="text-xs font-medium text-white">Instant Tele-Agronomy Call</h4>
+      <h4 className="text-xs font-medium text-white">Video call with an agronomist</h4>
       <p className="text-[11px] text-slate-400">
         Start a secure WebRTC video call, then copy the invite link and share it with the farmer to join from their phone.
       </p>
@@ -324,7 +324,7 @@ const AIAgronomistTelecallTab: React.FC<TelecallTabProps> = ({ onStartCall }) =>
         className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs rounded transition-colors shadow-sm flex items-center justify-center gap-1.5"
       >
         <Video className="w-3.5 h-3.5" />
-        <span>Start Tele-Agronomy Call</span>
+        <span>Start a call</span>
       </button>
     </div>
   </div>
@@ -346,7 +346,7 @@ function isUsableReply(reply: string | undefined): reply is string {
 
 const INITIAL_WELCOME_MESSAGE = {
   sender: 'ai' as const,
-  text: 'Hello! I am your GPExts Agronomic Advisor. Ask any crop health question, drop a leaf photo for visual diagnosis, or dictate a field voice note.',
+  text: 'Ask a crop question, add a leaf photo, or record a voice note. Check advice with an extension officer before acting on it.',
   time: 'Online',
 };
 

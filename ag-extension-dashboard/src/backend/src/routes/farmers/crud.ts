@@ -1,4 +1,5 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
+import { isUuid } from '@/utils/uuid';
 import { Farmer } from '@prisma/client';
 import { logger } from '@/utils/logger';
 import { validate } from '@/middleware/validationMiddleware';
@@ -240,7 +241,9 @@ const role = String(_role);
  *         description: Farmer not found
  */
 // Get farmer by ID
-router.get('/:id', async (req: Request, res: Response) => {
+// Only an id: other one-word paths (/sources, /my-officer) belong to routes mounted later.
+router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+    if (!isUuid(req.params.id)) return next();
     try {
         const { id } = req.params;
         const { userId: _userId, role: _role } = req.user as Record<string, unknown>;

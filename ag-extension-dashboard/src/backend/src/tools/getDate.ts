@@ -10,7 +10,7 @@ const GetDateSchema = z.object({});
  */
 export const getDateTool: Tool<typeof GetDateSchema> = {
   name: 'get_current_date',
-  description: 'Returns the current date in YYYY-MM-DD format.',
+  description: 'Returns today\'s date as an ISO date, for example 2026-11-21.',
   schema: GetDateSchema,
   execute: async () => {
     const today = new Date();

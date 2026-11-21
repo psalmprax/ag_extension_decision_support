@@ -265,7 +265,7 @@ function generateDiseaseDiagnosisPDF(doc: PDFKit.PDFDocument, report: ReportList
       doc.fillColor('#e65100')
         .font('Helvetica-Bold')
         .fontSize(9)
-        .text('⚠  POTENTIAL NUTRIENT DEFICIENCY: ', 65, doc.y)
+        .text('Possible nutrient deficiency: ', 65, doc.y)
         .font('Helvetica')
         .fillColor('#37474f')
         .text(def, doc.x + 5, doc.y);

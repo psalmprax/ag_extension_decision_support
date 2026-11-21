@@ -199,11 +199,9 @@ export function FarmerMap({
       return;
     }
     if (isDemo) {
-      toast.success(`[Demo Mode] Connecting simulated call to ${farmerName || 'farmer'} (${phone})`, {
-        icon: '📞',
-      });
+      toast.success(`Demo: opening a call to ${farmerName || 'the farmer'} (${phone})`);
     } else {
-      toast.success(`Calling ${farmerName || 'farmer'}...`, { icon: '📞' });
+      toast.success(`Calling ${farmerName || 'the farmer'}…`);
     }
     window.location.href = `tel:${phone}`;
   };

@@ -103,7 +103,7 @@ class OnboardingEngine {
             return {
                 isHandled: true,
                 isRegistered: false,
-                responseMessage: `🌾 Welcome to the Agricultural Advisory Network, *${defaultName}*!\n\nLet's configure your advisory profile.\n\n👉 What is your *Primary Crop*? (e.g. Maize, Coffee, Cassava, Rice, Tea, Tomato)`,
+                responseMessage: `Welcome, *${defaultName}*. Let's set up your farm profile.\n\nWhich crop do you grow most? (for example maize, coffee, cassava or rice)`,
             };
         }
 
@@ -111,7 +111,7 @@ class OnboardingEngine {
         return {
             isHandled: true,
             isRegistered: false,
-            responseMessage: `🌾 *Welcome to the Agricultural Advisory Network!*\n\nLet's get your farm registered for real-time weather forecasts, AI disease diagnosis, and extension support.\n\n👉 What is your *Full Name*?`,
+            responseMessage: `Welcome. Let's register your farm so you can get weather, crop advice and help from an extension officer.\n\nWhat is your full name?`,
         };
     }
 
@@ -127,7 +127,7 @@ class OnboardingEngine {
         return {
             isHandled: true,
             isRegistered: false,
-            responseMessage: `Great to connect, *${data.name}*! 🌽\n\n👉 What is your *Primary Crop*? (e.g. Maize, Coffee, Cassava, Rice, Beans, Tea)`,
+            responseMessage: `Thank you, *${data.name}*.\n\nWhich crop do you grow most? (for example maize, coffee, cassava or beans)`,
         };
     }
 
@@ -142,7 +142,7 @@ class OnboardingEngine {
         return {
             isHandled: true,
             isRegistered: false,
-            responseMessage: `Noted: *${data.crop}* 🌱\n\n👉 In which *Region or County* is your farm located? (e.g. Nakuru, Uasin Gishu, Kiambu, Machakos, Meru)`,
+            responseMessage: `Noted: *${data.crop}*.\n\nWhich district or county is your farm in?`,
         };
     }
 
@@ -157,7 +157,7 @@ class OnboardingEngine {
         return {
             isHandled: true,
             isRegistered: false,
-            responseMessage: `Got it: *${data.region}* 📍\n\n👉 Almost done! What is the estimated *Size of your Farm* in hectares or acres? (e.g. 2.5 ha, 5 acres)`,
+            responseMessage: `Noted: *${data.region}*.\n\nLast question: how big is your farm? (for example 2.5 ha or 5 acres)`,
         };
     }
 
@@ -226,7 +226,7 @@ class OnboardingEngine {
             isRegistered: true,
             completedNow: true,
             farmerId: newFarmerId,
-            responseMessage: `🎉 *Registration Complete!*\n\nWelcome aboard, *${data.name}*!\nYour Farm Profile is active for *${data.region}* (${data.crop}, ${parsedSize} ha).\n\nSend ASK followed by your crop question for an approved public knowledge hint. Include your location and symptoms. Contact a local extension officer for confirmation.`,
+            responseMessage: `Your farm is registered, *${data.name}*.\nYour farm profile is active for *${data.region}* (${data.crop}, ${parsedSize} ha).\n\nSend ASK followed by your crop question for an approved public knowledge hint. Include your location and symptoms. Contact a local extension officer for confirmation.`,
         };
     }
 

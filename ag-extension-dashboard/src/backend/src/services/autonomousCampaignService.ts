@@ -114,7 +114,7 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
             const aiResponse = await ai.generateText(prompt);
             return (aiResponse.text || '').trim();
         } catch {
-            return `🌾 Agricultural Advisory Alert: Regarding ${goalPrompt}. Please inspect your crops, monitor soil moisture, and contact your extension officer for guidance.`;
+            return `Crop advisory about ${goalPrompt}. Please inspect your crops, monitor soil moisture, and contact your extension officer for guidance.`;
         }
     }
 
@@ -249,7 +249,7 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
                 const officerId = userId || (await this.getDefaultOfficerId(tenantId));
                 await query(
                     `INSERT INTO visits (
-                        farmer_id, user_id, scheduled_date, status, notes, created_at, updated_at
+                        farmer_id, officer_id, scheduled_at, status, notes, created_at, updated_at
                     ) VALUES ($1, $2, NOW() + INTERVAL '2 days', 'scheduled', $3, NOW(), NOW())`,
                     [
                         atRisk.id,

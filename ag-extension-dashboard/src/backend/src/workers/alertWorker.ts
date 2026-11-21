@@ -132,7 +132,7 @@ async function checkSubscriptionExpiry(): Promise<void> {
             await notificationService.send({
                 userId: sub.user_id,
                 type: 'warning',
-                title: '⚠️ Subscription Expiring Soon',
+                title: 'Subscription expiring soon',
                 message: `Your subscription will expire in ${daysUntilExpiry} days. Please renew to continue receiving services.`,
                 channel: 'in_app',
                 metadata: { daysUntilExpiry, currentPeriodEnd: sub.current_period_end }
@@ -198,7 +198,7 @@ async function checkChatbotSatisfaction(): Promise<void> {
             await notificationService.send({
                 userId: conv.officer_id,
                 type: 'warning',
-                title: '📉 Low Satisfaction Alert',
+                title: 'Low satisfaction',
                 message: `A recent chat conversation received a low satisfaction score (${conv.satisfaction_score}/5). Please follow up with the farmer.`,
                 channel: 'in_app',
                 metadata: { conversationId: conv.id, satisfactionScore: conv.satisfaction_score }
@@ -236,7 +236,7 @@ async function checkFarmerAssignment(): Promise<void> {
             await notificationService.send({
                 userId: farmer.assigned_officer_id,
                 type: 'info',
-                title: '👤 New Farmer Assigned',
+                title: 'New farmer assigned',
                 message: `You have been assigned a new farmer: ${farmer.first_name} ${farmer.last_name} from ${farmer.region}.`,
                 channel: 'in_app',
                 metadata: { farmerId: farmer.id, farmerName: `${farmer.first_name} ${farmer.last_name}` }
@@ -289,8 +289,8 @@ async function checkUpcomingVisits(): Promise<void> {
                 userId: visit.officer_id,
                 type: 'warning',
                 title: reminderType === 'hour_reminder'
-                    ? '🚨 Visit in 1 Hour!'
-                    : '📅 Visit Tomorrow',
+                    ? 'Visit in 1 hour'
+                    : 'Visit tomorrow',
                 message: `Your ${visit.visit_type} visit to ${visit.farmer_first_name} ${visit.farmer_last_name} is ${reminderType === 'hour_reminder' ? 'in 1 hour' : 'scheduled for tomorrow'}.`,
                 channel: 'in_app',
                 metadata: {
@@ -352,7 +352,7 @@ async function checkOverdueVisits(): Promise<void> {
             await notificationService.send({
                 userId: visit.officer_id,
                 type: 'error',
-                title: '⚠️ Overdue Visit',
+                title: 'Overdue visit',
                 message: `Your visit to ${visit.farmer_first_name} ${visit.farmer_last_name} was scheduled ${hoursOverdue} hours ago and is now overdue. Please reschedule or complete.`,
                 channel: 'in_app',
                 metadata: {
@@ -403,7 +403,7 @@ async function checkFollowUpRequired(): Promise<void> {
             await notificationService.send({
                 userId: visit.officer_id,
                 type: 'warning',
-                title: '🔔 Follow-up Reminder',
+                title: 'Follow-up reminder',
                 message: `You requested a follow-up for ${visit.farmer_first_name} ${visit.farmer_last_name} (${visit.visit_type}) ${daysSince} days ago. Please complete the follow-up.`,
                 channel: 'in_app',
                 metadata: {
@@ -459,18 +459,11 @@ async function checkDiseaseAlerts(): Promise<void> {
             );
 
             for (const officer of relevantOfficers) {
-                const severityEmojiMap: Record<string, string> = {
-                    'critical': '🔴',
-                    'high': '🟠',
-                    'medium': '🟡',
-                    'low': '🟢'
-                };
-                const severityEmoji = severityEmojiMap[alert.severity] || '⚪';
 
                 await notificationService.send({
                     userId: officer.id,
                     type: alert.severity === 'critical' || alert.severity === 'high' ? 'error' : 'warning',
-                    title: `${severityEmoji} ${alert.type} Alert`,
+                    title: `${alert.type} alert (${alert.severity})`,
                     message: alert.description,
                     channel: 'in_app',
                     metadata: {
