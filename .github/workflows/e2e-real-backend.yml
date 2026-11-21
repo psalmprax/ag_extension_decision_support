@@ -54,6 +54,10 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:7501/ag_extension
       REDIS_URL: redis://127.0.0.1:6379
       CI: 'true'
+      # As in production, the migrations own the schema. A dev-mode boot would run
+      # `prisma db push`, which drops the tables that exist only in migrations
+      # (tenant_channel_configs, autonomous_campaign_runs, regional_agronomy_skills).
+      DB_SYNC_ON_BOOT: 'false'
 
     steps:
       - name: Checkout code
