@@ -94,7 +94,7 @@ export const PlotTelemetryDrawer: React.FC<{
 
       <div className={CARD}>
         <div className={LABEL}>{t('ui_plot_telemetry_drawer_ndvi_canopy_vigor')}</div>
-        <div className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+        <div className="text-base font-medium text-emerald-600 dark:text-emerald-400">
           {farmer?.ndvi ? `${farmer.ndvi.toFixed(2)} ${ndviBand(farmer.ndvi)}` : '—'}
         </div>
         <div className={NOTE}>{t('ui_plot_telemetry_drawer_sentinel_2_multispectral_add_field_p')}</div>
@@ -102,19 +102,19 @@ export const PlotTelemetryDrawer: React.FC<{
 
       <div className={CARD}>
         <div className={LABEL}>{t('ui_plot_telemetry_drawer_soil_ph_carbon')}</div>
-        <div className="text-base font-bold text-amber-600 dark:text-amber-400">{soilValue(telemetry, farmer)}</div>
+        <div className="text-base font-medium text-amber-600 dark:text-amber-400">{soilValue(telemetry, farmer)}</div>
         <div className={NOTE}>{t('ui_plot_telemetry_drawer_isric_soilgrids_250m')} {soilSource(telemetry, farmer)}</div>
       </div>
 
       <div className={CARD}>
         <div className={LABEL}>{t('ui_plot_telemetry_drawer_nasa_power_weather')}</div>
-        <div className="text-base font-bold text-slate-600 dark:text-slate-400">{weatherValue(telemetry, units.temp, farmer)}</div>
+        <div className="text-base font-medium text-slate-600 dark:text-slate-400">{weatherValue(telemetry, units.temp, farmer)}</div>
         <div className={NOTE}>{t('ui_plot_telemetry_drawer_open_meteo_modeled')} {telemetry.temp != null ? '• live' : '• no geo'}</div>
       </div>
 
       <div className={CARD}>
         <div className={LABEL}>{t('ui_plot_telemetry_drawer_forecast_thresholds')}</div>
-        <div className={`text-base font-bold ${hazardTone} flex items-center gap-1`}>
+        <div className={`text-base font-medium ${hazardTone} flex items-center gap-1`}>
           <CheckCircle2 className={`w-4 h-4 ${hazardTone}`} />
           <span>{hazardHeadline(hazardEval)}</span>
         </div>

@@ -88,7 +88,7 @@ function renderVegetationCard(
       ) : (
         <>
           <div className="flex items-baseline gap-2 mb-5">
-            <span className={`text-3xl font-semibold ${veg.color}`}>
+            <span className={`text-3xl font-medium ${veg.color}`}>
               {ndvi!.toFixed(2)}
             </span>
             <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{veg.label}</span>
@@ -152,7 +152,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
           {metrics.production != null && (
             <div className="p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800">
               <div className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-1">Global production</div>
-              <div className="text-xl font-semibold text-gray-900 dark:text-white">
+              <div className="text-xl font-medium text-gray-900 dark:text-white">
                 {(Number(metrics.production) / 1_000_000).toFixed(1)}M {metrics.unit}
               </div>
             </div>
@@ -160,7 +160,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
           {metrics.yield != null && (
             <div className="p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800">
               <div className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-1">Average yield</div>
-              <div className="text-xl font-semibold text-primary-600 dark:text-primary-400">
+              <div className="text-xl font-medium text-primary-600 dark:text-primary-400">
                 {Number(metrics.yield).toFixed(1)} {metrics.unit.replace('tonnes', 't/ha')}
               </div>
             </div>
@@ -168,14 +168,14 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
           {metrics.exports != null && (
             <div className="p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800">
               <div className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-1">Global exports</div>
-              <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
+              <div className="text-xl font-medium text-emerald-600 dark:text-emerald-400">
                 {(Number(metrics.exports) / 1_000_000).toFixed(1)}M tonnes
               </div>
             </div>
           )}
           {data?.dataStatus === 'live' && (
             <div className="pt-2">
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                 USDA PSD
               </span>
             </div>
@@ -307,7 +307,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
 
         <div className="bg-slate-900 border border-white/[0.08] p-8 rounded-xl shadow-sm text-white relative overflow-hidden group">
           <div className="relative z-10">
-            <h3 className="text-xl font-semibold mb-2 tracking-tight">{t('farmer_ask_ai')}</h3>
+            <h3 className="text-xl font-medium mb-2 tracking-tight">{t('farmer_ask_ai')}</h3>
             <p className="text-slate-300 mb-6 font-normal text-sm leading-relaxed max-w-sm">
               {t('farmer_ai_description')}
             </p>

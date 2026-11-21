@@ -18,7 +18,7 @@ export function MCPToolsToolListSidebar({
 }) {
   return (
     <div className="card p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
         {t('mcp_tools_available_tools')}
       </h3>
       <div className="space-y-4 max-h-96 overflow-y-auto">
@@ -37,7 +37,7 @@ export function MCPToolsToolListSidebar({
               onClick={() => onSelect(tool)}
             >
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-gray-900 dark:text-white">{tool.name}</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white">{tool.name}</h4>
                 <Code className="w-5 h-5 text-gray-400" />
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{tool.description}</p>

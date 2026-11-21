@@ -16,7 +16,7 @@ export const AuditReasonModal: React.FC<AuditReasonModalProps> = ({
   actionTitle,
   actionDescription,
   resourceName,
-  confirmText = 'Authorize & Execute Action',
+  confirmText = 'Authorize & execute action',
   isLoading = false,
 }) => {
   const { t } = useLanguage();
@@ -75,7 +75,7 @@ export const AuditReasonModal: React.FC<AuditReasonModalProps> = ({
         <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3">
           <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
           <div className="text-xs space-y-1">
-            <p className="font-semibold text-amber-200">
+            <p className="font-medium text-amber-200">
               {t('ui_audit_reason_modal_high_impact_administrative_action')} <span className="text-white font-mono">{actionTitle}</span>
             </p>
             {resourceName && (
@@ -94,7 +94,7 @@ export const AuditReasonModal: React.FC<AuditReasonModalProps> = ({
 
         {/* Reason Code Dropdown */}
         <div className="space-y-1.5">
-          <label htmlFor="audit-reason-code" className="block text-xs font-semibold text-white/90">
+          <label htmlFor="audit-reason-code" className="block text-xs font-medium text-white/90">
             {t('ui_audit_reason_modal_audit_reason_code')} <span className="text-rose-400">*</span>
           </label>
           <select
@@ -121,7 +121,7 @@ export const AuditReasonModal: React.FC<AuditReasonModalProps> = ({
         {/* Custom Reason Code Input (conditional) */}
         {isCustom && (
           <div className="space-y-1.5 animate-fadeIn">
-            <label htmlFor="audit-custom-code" className="block text-xs font-semibold text-white/90">
+            <label htmlFor="audit-custom-code" className="block text-xs font-medium text-white/90">
               {t('ui_audit_reason_modal_custom_reason_code_ticket')} <span className="text-rose-400">*</span>
             </label>
             <input
@@ -143,7 +143,7 @@ export const AuditReasonModal: React.FC<AuditReasonModalProps> = ({
         {/* Justification Textarea */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label htmlFor="audit-justification" className="block text-xs font-semibold text-white/90">
+            <label htmlFor="audit-justification" className="block text-xs font-medium text-white/90">
               {t('ui_audit_reason_modal_technical_justification_context')} <span className="text-rose-400">*</span>
             </label>
             <span
@@ -198,7 +198,7 @@ export const AuditReasonModal: React.FC<AuditReasonModalProps> = ({
           <button
             type="submit"
             disabled={!canSubmit}
-            className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-slate-950 font-semibold text-xs transition-all disabled:opacity-40 disabled:hover:bg-amber-600 shadow-lg shadow-amber-600/20 flex items-center gap-1.5"
+            className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-slate-950 font-medium text-xs transition-all disabled:opacity-40 disabled:hover:bg-amber-600 shadow-lg flex items-center gap-1.5"
           >
             {isLoading ? (
               <>

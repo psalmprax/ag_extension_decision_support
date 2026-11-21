@@ -49,7 +49,7 @@ export function EmailWorkflowsApprovalQueue({
                       {t('email_workflows_pending_approval')}
                     </span>
                   </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                  <h3 className="font-medium text-gray-900 dark:text-white mb-1">
                     {approval.emailData.subject}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">

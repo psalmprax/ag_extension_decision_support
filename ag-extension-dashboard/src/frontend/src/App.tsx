@@ -444,7 +444,7 @@ function App() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
             <div className="bg-white dark:bg-gray-800 rounded-xl p-12 shadow-2xl text-center">
               <Loader2 className="w-16 h-16 text-primary-500 mx-auto mb-4 animate-spin" />
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-xl font-medium text-gray-900 dark:text-white">
                 {t('upload_processing')}
               </h3>
             </div>
@@ -454,7 +454,7 @@ function App() {
         {/* Accessible Skip to Main Content link */}
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-[9999] focus:px-4 focus:py-2.5 focus:bg-emerald-600 focus:text-white focus:font-semibold focus:text-sm focus:rounded-lg focus:shadow-2xl focus:ring-2 focus:ring-white focus:outline-none transition-all"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-[9999] focus:px-4 focus:py-2.5 focus:bg-emerald-600 focus:text-white focus:font-medium focus:text-sm focus:rounded-lg focus:shadow-2xl focus:ring-2 focus:ring-white focus:outline-none transition-all"
         >
           {t('skip_to_main_content') || 'Skip to main content'}
         </a>

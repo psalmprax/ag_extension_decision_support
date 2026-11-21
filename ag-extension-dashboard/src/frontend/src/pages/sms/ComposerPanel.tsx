@@ -63,7 +63,7 @@ export function SMSComposerPanel({
         <div className="flex bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 p-1 rounded-xl">
           <button
             onClick={() => setActiveTab('compose')}
-            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${
+            className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all ${
               activeTab === 'compose'
                 ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900 dark:text-white/50 dark:hover:text-white'
@@ -74,7 +74,7 @@ export function SMSComposerPanel({
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${
+            className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all ${
               activeTab === 'history'
                 ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900 dark:text-white/50 dark:hover:text-white'
@@ -89,7 +89,7 @@ export function SMSComposerPanel({
           <div className="flex bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 p-1 rounded-xl">
             <button
               onClick={() => setSendMode('single')}
-              className={`px-3 py-1 text-xxs font-bold rounded-lg transition-all ${
+              className={`px-3 py-1 text-xxs font-medium rounded-lg transition-all ${
                 sendMode === 'single'
                   ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shadow-sm'
                   : 'text-slate-500 hover:text-slate-800 dark:text-white/40 dark:hover:text-white'
@@ -99,7 +99,7 @@ export function SMSComposerPanel({
             </button>
             <button
               onClick={() => setSendMode('bulk')}
-              className={`px-3 py-1 text-xxs font-bold rounded-lg transition-all ${
+              className={`px-3 py-1 text-xxs font-medium rounded-lg transition-all ${
                 sendMode === 'bulk'
                   ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shadow-sm'
                   : 'text-slate-500 hover:text-slate-800 dark:text-white/40 dark:hover:text-white'
@@ -114,7 +114,7 @@ export function SMSComposerPanel({
           <button
             type="button"
             onClick={onOpenGoalMode}
-            className="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-xs font-bold flex items-center gap-1.5 hover:bg-amber-500/20 transition-all shadow-sm"
+            className="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-xs font-medium flex items-center gap-1.5 hover:bg-amber-500/20 transition-all shadow-sm"
             title="Launch Autonomous Agronomy Goal Campaign"
           >
             <Target className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
@@ -123,7 +123,7 @@ export function SMSComposerPanel({
           <button
             type="button"
             onClick={onOpenGateways}
-            className="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-xs font-bold flex items-center gap-1.5 hover:bg-emerald-500/20 transition-all shadow-sm"
+            className="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-xs font-medium flex items-center gap-1.5 hover:bg-emerald-500/20 transition-all shadow-sm"
             title="Configure SMS, WhatsApp & Telegram Gateways"
           >
             <Zap className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />

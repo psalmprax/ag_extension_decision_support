@@ -36,20 +36,20 @@ export const DEFAULT_TEMPLATES: Record<string, { title: string; category: string
       {
         id: 'step-crop',
         type: 'crop_select',
-        title: 'Crop & Phenology Phase',
+        title: 'Crop & phenology phase',
         config: { crop: 'Maize', stage: 'V4 - Early Whorl' },
       },
       {
         id: 'step-pest',
         type: 'pest_scout',
-        title: 'Fall Armyworm Severity Assessment',
+        title: 'Fall armyworm severity assessment',
         condition: 'Crop == "Maize"',
         config: { threshold: 30, action: 'Trigger Neem Bio-Dosage' },
       },
       {
         id: 'step-photo',
         type: 'photo_leaf',
-        title: 'Leaf Funnel Photo Scan',
+        title: 'Leaf funnel photo scan',
         condition: 'Severity > 20%',
         config: { model: 'MobileNetV3-Agro-Edge', gpsTag: true },
       },
@@ -62,7 +62,7 @@ export const DEFAULT_TEMPLATES: Record<string, { title: string; category: string
     ],
   },
   soil_lime: {
-    title: 'Acidic Soil Remediation & Lime Advisory',
+    title: 'Acidic soil remediation & lime advisory',
     category: 'soil_health',
     description: 'Diagnostic survey calculating dolomitic lime requirement based on regional soil pH.',
     steps: [
@@ -75,13 +75,13 @@ export const DEFAULT_TEMPLATES: Record<string, { title: string; category: string
       {
         id: 'step-crop-remediation',
         type: 'crop_select',
-        title: 'Target Cereal Crop',
+        title: 'Target cereal crop',
         config: { crop: 'Wheat / Cereal', stage: 'Pre-Planting' },
       },
       {
         id: 'step-lime-calc',
         type: 'dosage_advisory',
-        title: 'Agricultural Lime Rate Formula',
+        title: 'Agricultural lime rate formula',
         condition: 'pH < 5.5',
         config: { ratePerHectareMin: 2.0, ratePerHectareMax: 2.5 },
       },
@@ -100,7 +100,7 @@ export interface PaletteItem {
 export const PALETTE_ITEMS: PaletteItem[] = [
   {
     type: 'crop_select',
-    title: 'Crop & Phenology',
+    title: 'Crop & phenology',
     description: 'Crop species, variety, and growth stage selector.',
     defaultConfig: { crop: 'Maize', stage: 'V4 - Early Whorl' },
   },
@@ -112,9 +112,9 @@ export const PALETTE_ITEMS: PaletteItem[] = [
   },
   {
     type: 'pest_scout',
-    title: 'Pest & Disease Rater',
+    title: 'Pest & disease rater',
     description: 'Severity slider (1-100%) and threshold alert.',
-    defaultConfig: { threshold: 30, action: 'Flag Outbreak Alert' },
+    defaultConfig: { threshold: 30, action: 'Flag outbreak alert' },
   },
   {
     type: 'photo_leaf',

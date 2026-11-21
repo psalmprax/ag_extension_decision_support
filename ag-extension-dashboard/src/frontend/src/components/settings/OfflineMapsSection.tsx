@@ -40,7 +40,7 @@ export function OfflineMapsSection() {
                 <div className="flex items-center gap-3 min-w-0">
                     <MapIcon className="w-4 h-4 text-primary-500 shrink-0" />
                     <div className="min-w-0">
-                        <p className="text-sm font-semibold">{t('ui_settings_panel_offline_maps')}</p>
+                        <p className="text-sm font-medium">{t('ui_settings_panel_offline_maps')}</p>
                         <p className="text-xs text-gray-400 truncate">
                             {customMode ? `Custom bbox, zoom 8–12 · ~${Math.round(estimate.approxKb / 1024)} MB` : `Country-wide tiles, zoom 8–12 · ~${Math.round(estimate.approxKb / 1024)} MB`}
                         </p>

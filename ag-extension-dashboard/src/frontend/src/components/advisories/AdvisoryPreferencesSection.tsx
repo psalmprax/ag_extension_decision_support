@@ -48,9 +48,9 @@ export function AdvisoryPreferencesSection({ farmerId }: { farmerId: string }) {
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                     <Radio className="w-4 h-4 text-primary-500" />
-                    <h4 className="text-xs font-black  ">{t('ui_advisory_preferences_section_proactive_advisories')}</h4>
+                    <h4 className="text-xs font-medium  ">{t('ui_advisory_preferences_section_proactive_advisories')}</h4>
                 </div>
-                <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
                     <input
                         type="checkbox"
                         checked={prefs.optIn}
@@ -69,7 +69,7 @@ export function AdvisoryPreferencesSection({ farmerId }: { farmerId: string }) {
                                 key={c.key}
                                 onClick={() => setDraft({ ...prefs, channels: toggle(prefs.channels, c.key) })}
                                 aria-pressed={prefs.channels.includes(c.key)}
-                                className={`px-2.5 py-1 rounded-lg text-xxs font-bold border ${prefs.channels.includes(c.key) ? 'bg-primary-500/10 border-primary-500/30 text-primary-600 dark:text-primary-400' : 'border-gray-200 dark:border-gray-700 opacity-60'}`}
+                                className={`px-2.5 py-1 rounded-lg text-xxs font-medium border ${prefs.channels.includes(c.key) ? 'bg-primary-500/10 border-primary-500/30 text-primary-600 dark:text-primary-400' : 'border-gray-200 dark:border-gray-700 opacity-60'}`}
                             >
                                 {c.label}
                             </button>
@@ -81,7 +81,7 @@ export function AdvisoryPreferencesSection({ farmerId }: { farmerId: string }) {
                                 key={c.key}
                                 onClick={() => setDraft({ ...prefs, categories: toggle(prefs.categories, c.key) })}
                                 aria-pressed={prefs.categories.includes(c.key)}
-                                className={`px-2.5 py-1 rounded-lg text-xxs font-bold border ${prefs.categories.includes(c.key) ? 'bg-primary-500/10 border-primary-500/30 text-primary-600 dark:text-primary-400' : 'border-gray-200 dark:border-gray-700 opacity-60'}`}
+                                className={`px-2.5 py-1 rounded-lg text-xxs font-medium border ${prefs.categories.includes(c.key) ? 'bg-primary-500/10 border-primary-500/30 text-primary-600 dark:text-primary-400' : 'border-gray-200 dark:border-gray-700 opacity-60'}`}
                             >
                                 {c.label}
                             </button>
@@ -91,7 +91,7 @@ export function AdvisoryPreferencesSection({ farmerId }: { farmerId: string }) {
                         <button
                             onClick={() => mutation.mutate()}
                             disabled={mutation.isPending}
-                            className="px-3 py-1.5 rounded-lg bg-primary-600 text-white text-xs font-bold disabled:opacity-50"
+                            className="px-3 py-1.5 rounded-lg bg-primary-600 text-white text-xs font-medium disabled:opacity-50"
                         >
                             {mutation.isPending ? 'Saving…' : 'Save preferences'}
                         </button>

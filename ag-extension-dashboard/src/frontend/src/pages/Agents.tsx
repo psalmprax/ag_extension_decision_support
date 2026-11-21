@@ -139,7 +139,7 @@ function Agents() {
               {t('ui_agents_autonomous_mesh_fleet')}
             </span>
           </div>
-          <h1 className={`text-2xl font-semibold text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
+          <h1 className={`text-2xl font-medium text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
             {t('ui_agents_agent_orchestration')}
           </h1>
           <p className="text-slate-600 dark:text-white/60 text-sm mt-1">
@@ -171,7 +171,7 @@ function Agents() {
       {/* Agent Status Grid (KnockKnock Bento Style) */}
       <div className="space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/[0.06]">
-          <div className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <div className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
             <Server className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>{t('ui_agents_active_agent_nodes')}</span>
           </div>
@@ -203,7 +203,7 @@ function Agents() {
                         <Zap className="w-5 h-5" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-slate-900 dark:text-white text-base leading-tight">{agent.name}</h4>
+                        <h4 className="font-medium text-slate-900 dark:text-white text-base leading-tight">{agent.name}</h4>
                         <p className="text-[10px] font-mono text-slate-500 dark:text-white/40 mt-0.5">ID: {agent.agentId}</p>
                       </div>
                     </div>
@@ -287,7 +287,7 @@ function Agents() {
         {/* Task Queue Distribution */}
         <div className="p-6 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
               <Cpu className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>{t('ui_agents_queue_status_telemetry')}</span>
             </h3>
@@ -318,7 +318,7 @@ function Agents() {
         {/* Handoff Log Terminal */}
         <div className="p-6 rounded-lg bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-sky-600 dark:text-sky-400" />
               <span>{t('ui_agents_autonomous_handoff_stream')}</span>
             </h3>
@@ -332,7 +332,7 @@ function Agents() {
                 className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] flex items-center justify-between gap-3"
               >
                 <div className="space-y-0.5 min-w-0">
-                  <div className="font-bold text-slate-800 dark:text-white/90 flex items-center gap-1.5 truncate">
+                  <div className="font-medium text-slate-800 dark:text-white/90 flex items-center gap-1.5 truncate">
                     <span className="text-emerald-600 dark:text-emerald-400">{handoff.from}</span>
                     <ArrowRight className="w-3 h-3 text-slate-400 dark:text-white/40 shrink-0" />
                     <span className="text-sky-600 dark:text-sky-400">{handoff.to}</span>

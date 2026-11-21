@@ -23,7 +23,7 @@ export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onVi
         <div>
           <div className="flex items-center gap-2 mb-1">
             <BookOpen className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-xs font-semibold text-white">
+            <h3 className="text-xs font-medium text-white">
               {t('ui_disease_library_tab_pathology_encyclopedia_protocols')}
             </h3>
           </div>
@@ -60,7 +60,7 @@ export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onVi
                   <Leaf className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors truncate">
+                  <h4 className="text-xs font-medium text-white group-hover:text-emerald-300 transition-colors truncate">
                     {disease}
                   </h4>
                   <span className="text-[10px] font-mono text-slate-500 font-medium">

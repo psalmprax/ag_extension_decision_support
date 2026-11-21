@@ -93,12 +93,12 @@ export function MCPToolsToolExecutionForm({
 
   return (
     <div className="card p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
         {t('mcp_tools_tool_execution')}
       </h3>
       <div className="space-y-6">
         <div className={`p-4 bg-gray-50 dark:bg-gray-800/50 ${radiusClass}`}>
-          <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{tool.name}</h4>
+          <h4 className="font-medium text-gray-900 dark:text-white mb-1">{tool.name}</h4>
           <p className="text-sm text-gray-600 dark:text-gray-400">{tool.description}</p>
         </div>
 

@@ -117,7 +117,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
               setMobileSearchOpen(false);
               setShowGlobalSearch(false);
             }}
-            className="px-2.5 py-1 rounded-lg bg-white/[0.05] text-xs text-white/80 font-bold"
+            className="px-2.5 py-1 rounded-lg bg-white/[0.05] text-xs text-white/80 font-medium"
           >
             {t('common_cancel', { defaultValue: 'Cancel' })}
           </button>
@@ -137,7 +137,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
               ) : (
                 globalSearchResults.map(group => (
                   <div key={formatLabel(group.type)}>
-                    <div className="px-4 pt-3 pb-1 text-xxs font-bold text-emerald-400 bg-slate-900/50">
+                    <div className="px-4 pt-3 pb-1 text-xxs font-medium text-emerald-400 bg-slate-900/50">
                       {formatLabel(group.type)}
                     </div>
                     {group.items.map(item => (
@@ -147,7 +147,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
                         onClick={() => handleItemClick(group.type, item)}
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-white truncate">{item.label}</p>
+                          <p className="text-xs font-medium text-white truncate">{item.label}</p>
                           {item.sublabel && (
                             <p className="text-xxs text-slate-400 truncate">{item.sublabel}</p>
                           )}
@@ -198,7 +198,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
             ) : (
               globalSearchResults.map(group => (
                 <div key={formatLabel(group.type)}>
-                  <div className="px-4 pt-3 pb-1 text-xxs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/60">
+                  <div className="px-4 pt-3 pb-1 text-xxs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/60">
                     {formatLabel(group.type)}
                   </div>
                   {group.items.map(item => (
@@ -208,7 +208,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
                       onClick={() => handleItemClick(group.type, item)}
                     >
                       <div className="flex-1">
-                        <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
                           {item.label}
                         </p>
                         {item.sublabel && (

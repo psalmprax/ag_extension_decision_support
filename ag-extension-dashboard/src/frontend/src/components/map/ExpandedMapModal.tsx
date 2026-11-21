@@ -97,7 +97,7 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
               )}
             </button>
             <div className="min-w-0">
-              <h2 id="map-modal-title" className="text-base sm:text-xl font-bold truncate text-gray-900 dark:text-white">
+              <h2 id="map-modal-title" className="text-base sm:text-xl font-medium truncate text-gray-900 dark:text-white">
                 {t('interactive_farmer_map') || 'Interactive map'}
               </h2>
               <p className="text-xxs sm:text-xs text-gray-400 font-medium truncate">
@@ -145,10 +145,10 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
         <div className="px-4 sm:px-8 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 backdrop-blur-sm bg-gray-50/80 dark:bg-gray-800/80 border-gray-100 dark:border-gray-800">
           <div className="flex flex-wrap items-center gap-4 sm:gap-8">
             <div className="flex flex-col">
-              <span className="text-xxs font-black text-gray-400">
+              <span className="text-xxs font-medium text-gray-400">
                 {t('map_farms') || 'Total Farms'}
               </span>
-              <span className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">{farmers.length}</span>
+              <span className="text-lg sm:text-xl font-medium text-gray-800 dark:text-white">{farmers.length}</span>
             </div>
             <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block" />
             <div className="flex flex-wrap items-center gap-3 sm:gap-6">
@@ -158,7 +158,7 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
                     className="w-2.5 h-2.5 rounded-full"
                     style={{ backgroundColor: theme.primary[cropColors[idx]] }}
                   />
-                  <span className="text-xs sm:text-sm font-bold capitalize text-gray-600 dark:text-gray-300">
+                  <span className="text-xs sm:text-sm font-medium capitalize text-gray-600 dark:text-gray-300">
                     {crop}: <span className="font-normal text-gray-400">{stats.cropCounts[crop]}</span>
                   </span>
                 </div>

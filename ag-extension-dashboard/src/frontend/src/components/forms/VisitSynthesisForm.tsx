@@ -34,15 +34,15 @@ import { AntiFraudVerificationBadge } from '@/components/AntiFraudVerificationBa
 
 const FIELD_PRESETS = [
   {
-    title: 'Fall Armyworm Infestation',
+    title: 'Fall armyworm infestation',
     text: 'Inspected 3-hectare maize plot. Severe whorl damage observed on 35% of crops at V4 vegetative stage. Characteristic windowpane feeding signs and sawdust-like frass detected. Recommended immediate biological spraying (Emamectin benzoate) and pheromone trap deployment.',
   },
   {
-    title: 'Late Blight & Soil Acidity',
+    title: 'Late blight & soil acidity',
     text: 'Visited potato field in highland parcel. Water-soaked dark lesions on lower leaves with white fungal growth on undersides. Soil pH tested at 5.2 (acidic). Prescribed copper hydroxide fungicide application and agricultural lime top-dressing.',
   },
   {
-    title: 'Moisture Stress & Stunting',
+    title: 'Moisture stress & stunting',
     text: 'Field inspection of smallholder sorghum plot. Crops showing marked wilting and nitrogen deficiency yellowing due to 18-day dry spell. Advised organic mulching to conserve root zone moisture and scheduled foliar fertilizer application once rains resume.',
   },
 ];
@@ -172,7 +172,7 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
                 {selectedFarmer.lastName?.[0]}
               </div>
               <div>
-                <div className="text-sm font-semibold text-white">
+                <div className="text-sm font-medium text-white">
                   {selectedFarmer.firstName} {selectedFarmer.lastName}
                 </div>
                 <div className="text-xs text-white/50 flex items-center gap-3 mt-0.5">
@@ -216,7 +216,7 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
                   key={f.id}
                   onClick={() => onSelectFarmer(f)}
                   className={`p-2 rounded-lg cursor-pointer flex items-center justify-between text-xs transition-all ${
-                    selectedFarmer?.id === f.id ? 'bg-slate-500/20 text-white font-semibold' : 'text-white/80 hover:bg-white/[0.05]'
+                    selectedFarmer?.id === f.id ? 'bg-slate-500/20 text-white font-medium' : 'text-white/80 hover:bg-white/[0.05]'
                   }`}
                 >
                   <div>
@@ -264,7 +264,7 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
           <div className="flex items-center justify-between pb-2 border-b border-white/5">
             <div className="flex items-center gap-2">
               <Leaf className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-sm font-semibold text-white">
+              <h3 className="text-sm font-medium text-white">
                 {t('ui_visit_synthesis_form_diagnostic_executive_summary')}
               </h3>
             </div>
@@ -314,7 +314,7 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
         <div className="space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-white/5">
             <Layers className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-sm font-semibold text-white">
+            <h3 className="text-sm font-medium text-white">
               {t('ui_visit_synthesis_form_observations_recommendations')}
             </h3>
           </div>
@@ -359,7 +359,7 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
           >
             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
-            <span>{isSaving ? 'Logging Visit...' : 'Save Visit Synthesis'}</span>
+            <span>{isSaving ? 'Logging Visit...' : 'Save visit synthesis'}</span>
           </button>
         </div>
       </div>
@@ -516,7 +516,7 @@ export const VisitSynthesisForm: React.FC = () => {
           <div className="flex items-center gap-4">
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">{t('nav_visit_synthesis')}</h1>
+                <h1 className="text-xl sm:text-2xl font-medium tracking-tight text-white">{t('nav_visit_synthesis')}</h1>
               </div>
               <p className="text-xs text-white/60 mt-0.5">
                 {t('ui_visit_synthesis_form_convert_unorganized_voice_dictation')}
@@ -566,7 +566,7 @@ export const VisitSynthesisForm: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/5">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-emerald-400" />
-            <h2 className="text-sm font-semibold text-white">
+            <h2 className="text-sm font-medium text-white">
               {t('ui_visit_synthesis_form_field_observation_notes')}
             </h2>
           </div>
@@ -589,7 +589,7 @@ export const VisitSynthesisForm: React.FC = () => {
               title="Upload field voice note (.mp3, .wav, .m4a, .ogg, .webm)"
             >
               <UploadCloud className="w-3.5 h-3.5 text-slate-400" />
-              <span>{isTranscribing ? 'Transcribing...' : 'Upload Voice Memo'}</span>
+              <span>{isTranscribing ? 'Transcribing...' : 'Upload voice memo'}</span>
             </button>
 
             <button

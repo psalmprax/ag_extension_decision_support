@@ -42,7 +42,7 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
         <Send className="w-4 h-4 text-emerald-400" />
-        <span className="font-bold text-xs text-white">
+        <span className="font-medium text-xs text-white">
           {t('outreach_delivery_status', { defaultValue: 'Outreach delivery status' })}
         </span>
       </div>
@@ -74,19 +74,19 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
       <>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center text-xs">
           <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-            <div className="text-emerald-400 font-bold text-sm">{stats.totals.sent}</div>
+            <div className="text-emerald-400 font-medium text-sm">{stats.totals.sent}</div>
             <div className="text-xxs text-slate-400">{t('outreach_delivered', { defaultValue: 'Delivered' })}</div>
           </div>
           <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-            <div className="text-rose-400 font-bold text-sm">{stats.totals.failed}</div>
+            <div className="text-rose-400 font-medium text-sm">{stats.totals.failed}</div>
             <div className="text-xxs text-slate-400">{t('outreach_failed', { defaultValue: 'Failed' })}</div>
           </div>
           <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-            <div className="text-amber-400 font-bold text-sm">{stats.totals.queued}</div>
+            <div className="text-amber-400 font-medium text-sm">{stats.totals.queued}</div>
             <div className="text-xxs text-slate-400">{t('outreach_queued', { defaultValue: 'Queued' })}</div>
           </div>
           <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-            <div className="text-slate-400 font-bold text-sm">{stats.totals.processing}</div>
+            <div className="text-slate-400 font-medium text-sm">{stats.totals.processing}</div>
             <div className="text-xxs text-slate-400">{t('outreach_in_flight', { defaultValue: 'In flight' })}</div>
           </div>
         </div>
@@ -94,7 +94,7 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xxs text-slate-400">
             <span>{t('outreach_delivery_rate', { defaultValue: 'Delivery Rate' })}</span>
-            <span className="font-mono font-bold text-emerald-400">{stats.totals.sentRate}%</span>
+            <span className="font-mono font-medium text-emerald-400">{stats.totals.sentRate}%</span>
           </div>
           <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
             <div
@@ -120,7 +120,7 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
 
         {stats.recentFailures.length > 0 && (
           <div className="space-y-1.5">
-            <div className="flex items-center gap-1.5 text-xxs font-bold text-rose-400  ">
+            <div className="flex items-center gap-1.5 text-xxs font-medium text-rose-400  ">
               <AlertTriangle className="w-3 h-3" />
               {t('ui_outreach_delivery_status_card_recent_failures')}
             </div>
@@ -138,7 +138,7 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
                     type="button"
                     onClick={() => handleRetry(f.id)}
                     disabled={retryingId === f.id}
-                    className="shrink-0 px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 font-bold flex items-center gap-1 transition-all disabled:opacity-50"
+                    className="shrink-0 px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 font-medium flex items-center gap-1 transition-all disabled:opacity-50"
                     title="Requeue this message for delivery"
                   >
                     <RotateCcw className={`w-3 h-3 ${retryingId === f.id ? 'animate-spin' : ''}`} />

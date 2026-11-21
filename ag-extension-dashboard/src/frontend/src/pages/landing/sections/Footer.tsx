@@ -160,8 +160,8 @@ export function Footer() {
                     <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                       <Shield className="w-4 h-4" />
                     </div>
-                    <h3 className="text-sm sm:text-lg font-bold text-white truncate">
-                      {legalModal === 'privacy' ? 'Privacy Policy & Data Sovereignty' : 'Terms of Service'}
+                    <h3 className="text-sm sm:text-lg font-medium text-white truncate">
+                      {legalModal === 'privacy' ? 'Privacy policy & data sovereignty' : 'Terms of service'}
                     </h3>
                   </div>
                   <button
@@ -215,7 +215,7 @@ export function Footer() {
                   <button
                     type="button"
                     onClick={() => setLegalModal(null)}
-                    className="w-full sm:w-auto px-5 py-2.5 text-xs font-semibold bg-emerald-700 text-white rounded-xl hover:bg-emerald-600 active:scale-[0.98] transition-colors"
+                    className="w-full sm:w-auto px-5 py-2.5 text-xs font-medium bg-emerald-700 text-white rounded-xl hover:bg-emerald-600 active:scale-[0.98] transition-colors"
                   >
                     {t('common_close')}
                   </button>

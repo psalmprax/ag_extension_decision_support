@@ -84,7 +84,7 @@ describe('FarmerRegistrationForm officer assignment', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/users/role/extension_officer');
     fireEvent.change(select, { target: { value: 'off-9' } });
     fillRequiredFields(true);
-    fireEvent.click(screen.getByRole('button', { name: /Enroll Farmer Client/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Save farmer/ }));
 
     await waitFor(() => expect(createFarmer).toHaveBeenCalledTimes(1));
     expect(createFarmer).toHaveBeenCalledWith(expect.objectContaining({
@@ -96,7 +96,7 @@ describe('FarmerRegistrationForm officer assignment', () => {
     useAppStore.setState({ user: person('extension_officer', 'Rift Valley') });
     renderWithQuery(<FarmerRegistrationForm />);
     fillRequiredFields();
-    fireEvent.click(screen.getByRole('button', { name: /Enroll Farmer Client/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Save farmer/ }));
 
     await waitFor(() => expect(createFarmer).toHaveBeenCalledTimes(1));
     expect(screen.queryByLabelText('Assigned extension officer')).not.toBeInTheDocument();

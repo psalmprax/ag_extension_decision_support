@@ -12,7 +12,7 @@ const inputCls =
 function NumField({ label, value, onChange, step = 'any', suffix }: { label: string; value: number | ''; onChange: (v: number | '') => void; step?: string; suffix?: string }) {
     return (
         <label className="block">
-            <span className="text-xxs font-bold text-gray-400">{label}</span>
+            <span className="text-xxs font-medium text-gray-400">{label}</span>
             <span className="flex items-center gap-1">
                 <input
                     type="number"
@@ -84,7 +84,7 @@ export function FieldToolsCard() {
         <div className={`${cardClass} p-4 sm:p-5`}>
             <div className="flex items-center gap-2 mb-3">
                 <Calculator className="w-4 h-4 text-primary-500" />
-                <h3 className="text-sm font-black  ">
+                <h3 className="text-sm font-medium  ">
                     {t('fieldtools_title', { defaultValue: 'Field Calculators' })}
                 </h3>
                 <span className="text-xxs text-gray-400 ms-auto">
@@ -98,7 +98,7 @@ export function FieldToolsCard() {
                         key={key}
                         onClick={() => setTab(key)}
                         aria-pressed={tab === key}
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold ${tab === key ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium ${tab === key ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                     >
                         <Icon className="w-3.5 h-3.5" />
                         {label}
@@ -116,7 +116,7 @@ export function FieldToolsCard() {
                     </div>
                     {tankResult.ok && (
                         <div className="p-3 bg-primary-500/5 rounded-xl text-xs space-y-1">
-                            <p><span className="font-bold">{tankResult.productPerTank}</span> {t('ui_field_tools_card_product_per')} {tank}{t('ui_field_tools_card_l_tank')} <span className="font-bold">{tankResult.herbicide.mlPerTank}ml</span>{t('ui_field_tools_card_tank')}</p>
+                            <p><span className="font-medium">{tankResult.productPerTank}</span> {t('ui_field_tools_card_product_per')} {tank}{t('ui_field_tools_card_l_tank')} <span className="font-medium">{tankResult.herbicide.mlPerTank}ml</span>{t('ui_field_tools_card_tank')}</p>
                             <p className="text-gray-500 dark:text-gray-400">{t('ui_field_tools_card_tanks_l_water_total_product_total', { tanksNeeded: tankResult.tanksNeeded, waterTotalL: tankResult.waterTotalL, productTotal: tankResult.productTotal })}</p>
                         </div>
                     )}
@@ -133,9 +133,9 @@ export function FieldToolsCard() {
                     </div>
                     {blendResult.ok && (
                         <div className="p-3 bg-primary-500/5 rounded-xl text-xs space-y-1">
-                            <p>{t('ui_field_tools_card_urea_46_0_0')} <span className="font-bold">{blendResult.ureaKg} kg</span></p>
-                            <p>{t('ui_field_tools_card_tsp_0_46_0')} <span className="font-bold">{blendResult.tspKg} kg</span></p>
-                            <p>{t('ui_field_tools_card_mop_0_0_60')} <span className="font-bold">{blendResult.mopKg} kg</span></p>
+                            <p>{t('ui_field_tools_card_urea_46_0_0')} <span className="font-medium">{blendResult.ureaKg} kg</span></p>
+                            <p>{t('ui_field_tools_card_tsp_0_46_0')} <span className="font-medium">{blendResult.tspKg} kg</span></p>
+                            <p>{t('ui_field_tools_card_mop_0_0_60')} <span className="font-medium">{blendResult.mopKg} kg</span></p>
                         </div>
                     )}
                 </div>
@@ -150,7 +150,7 @@ export function FieldToolsCard() {
                     </div>
                     {densityResult.ok && (
                         <div className="p-3 bg-primary-500/5 rounded-xl text-xs space-y-1">
-                            <p><span className="font-bold">{densityResult.plantsPerHa.toLocaleString()}</span> {t('ui_field_tools_card_plants_ha')}</p>
+                            <p><span className="font-medium">{densityResult.plantsPerHa.toLocaleString()}</span> {t('ui_field_tools_card_plants_ha')}</p>
                             <p className="text-gray-500 dark:text-gray-400">{densityResult.plantsTotal.toLocaleString()} {t('ui_field_tools_card_plants')}{densityResult.seedKgApprox} {t('ui_field_tools_card_kg_seed_15_oversow')}</p>
                         </div>
                     )}

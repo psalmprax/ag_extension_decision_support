@@ -36,9 +36,9 @@ export function SMSRightPanel({
         className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-5"
       >
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
             <BarChart2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            {t('sms_quota_title') || 'Delivery & Quota'}
+            {t('sms_quota_title') || 'Delivery & quota'}
           </h3>
           <button
             onClick={onClose}
@@ -58,7 +58,7 @@ export function SMSRightPanel({
       <div
         className={`bg-white dark:bg-slate-900 ${radiusClass} border border-slate-200 dark:border-white/10 p-5 flex flex-col shadow-sm`}
       >
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
           <Plus className="w-4 h-4 text-slate-500" />
           {t('sms_template_title')}
         </h3>

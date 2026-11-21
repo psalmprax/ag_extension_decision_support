@@ -68,7 +68,7 @@ export function FloatingAssistantShell({
                 <Sparkles className="h-4 w-4" aria-hidden="true" />
               </div>
               <div className="min-w-0 flex-1">
-                <h2 id={titleId} className="text-sm font-semibold">{t('ui_floating_assistant_shell_agronomic_copilot')}</h2>
+                <h2 id={titleId} className="text-sm font-medium">{t('ui_floating_assistant_shell_agronomic_copilot')}</h2>
                 <p className="text-xs text-white/65">{t('ui_floating_assistant_shell_gp_ext')}</p>
               </div>
               <button
@@ -93,11 +93,11 @@ export function FloatingAssistantShell({
         aria-expanded={isOpen}
         aria-controls={panelId}
         aria-haspopup="dialog"
-        title={isOpen ? 'Minimize assistant' : 'Ask Agronomic Copilot'}
+        title={isOpen ? 'Minimize assistant' : 'Ask agronomic copilot'}
         className="fixed end-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-[60] flex h-14 items-center justify-center gap-2.5 rounded-full border border-emerald-300/30 bg-emerald-600 px-4 text-white shadow-lg shadow-black/30 transition-colors hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 sm:end-6 sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]"
       >
         <MessageCircle className="h-6 w-6" aria-hidden="true" />
-        <span className="hidden text-sm font-semibold sm:inline">{t('ui_floating_assistant_shell_ask_copilot')}</span>
+        <span className="hidden text-sm font-medium sm:inline">{t('ui_floating_assistant_shell_ask_copilot')}</span>
       </button>
     </>,
     document.body

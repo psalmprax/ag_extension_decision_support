@@ -142,7 +142,7 @@ function TraefikSection({ traefik }: { traefik?: Record<string, unknown> }) {
               : 'bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300'
           }`}
         >
-          <p className="font-bold text-slate-900 dark:text-white mb-0.5">{t('ui_system_health_backend_api_ingress')}</p>
+          <p className="font-medium text-slate-900 dark:text-white mb-0.5">{t('ui_system_health_backend_api_ingress')}</p>
           <p className="font-mono text-xxs">
             {backendOk ? 'Reachable' : 'Not reachable'} {t('ui_system_health_http')}{' '}
             {String(traefik.backend_http_status ?? '')})
@@ -155,7 +155,7 @@ function TraefikSection({ traefik }: { traefik?: Record<string, unknown> }) {
               : 'bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300'
           }`}
         >
-          <p className="font-bold text-slate-900 dark:text-white mb-0.5">{t('ui_system_health_frontend_spa_ingress')}</p>
+          <p className="font-medium text-slate-900 dark:text-white mb-0.5">{t('ui_system_health_frontend_spa_ingress')}</p>
           <p className="font-mono text-xxs">
             {frontendOk ? 'Reachable' : 'Not reachable'} {t('ui_system_health_http')}{' '}
             {String(traefik.frontend_http_status ?? '')})
@@ -386,7 +386,7 @@ function ComponentHealthCard({
             <ComponentIcon className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">{check.component}</h4>
+            <h4 className="font-medium text-sm text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">{check.component}</h4>
             <div
               className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium capitalize border mt-1 ${style.pill}`}
             >
@@ -419,7 +419,7 @@ function ComponentHealthCard({
 
         {check.error && (
           <div className="mt-2 p-2.5 bg-rose-500/15 border border-rose-500/30 rounded-lg text-rose-700 dark:text-rose-300 text-xxs">
-            <p className="font-bold">Error:</p>
+            <p className="font-medium">Error:</p>
             <p className="mt-0.5 opacity-90">{check.error}</p>
           </div>
         )}
@@ -428,7 +428,7 @@ function ComponentHealthCard({
           <button
             onClick={onRecover}
             disabled={isTriggering}
-            className="w-full mt-2 flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-medium transition-all shadow-md shadow-emerald-950/40 disabled:opacity-50"
+            className="w-full mt-2 flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-medium transition-all shadow-md disabled:opacity-50"
           >
             <RotateCcw className={`w-3.5 h-3.5 ${isTriggering ? 'animate-spin' : ''}`} />
             {t('system_health_trigger_recovery') || 'Execute Self-Healing'}
@@ -494,7 +494,7 @@ function RecoveryLogList({
                   {action.success ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900 dark:text-white">
+                  <p className="font-medium text-slate-900 dark:text-white">
                     {action.component}: <span className="font-normal text-slate-600 dark:text-white/70">{action.action}</span>
                   </p>
                   {action.details && (
@@ -694,7 +694,7 @@ function SystemHealth() {
       {/* ── Component Health Radar Grid ── */}
       <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-6">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
             <Server className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             {t('ui_system_health_core_infrastructure_nodes')}{healthChecks.length})
           </h3>

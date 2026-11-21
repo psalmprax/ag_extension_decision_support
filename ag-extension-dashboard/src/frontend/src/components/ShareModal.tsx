@@ -118,7 +118,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 <Share2 className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight truncate">
+                <h2 className="text-lg sm:text-xl font-medium text-white tracking-tight truncate">
                   {t('ui_share_modal_share', { entityType })}
                 </h2>
                 <p className="text-xs text-white/50 truncate">
@@ -141,7 +141,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             <div className="space-y-6">
               {/* Access Settings */}
               <div className="space-y-4">
-                <label className="text-xxs font-black text-gray-400  ">
+                <label className="text-xxs font-medium text-gray-400  ">
                   {t('ui_share_modal_access_level')}
                 </label>
                 <div className="grid grid-cols-1 gap-3">
@@ -179,7 +179,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                       />
                       <div>
                         <p
-                          className={`text-sm font-bold ${settings.accessType === option.id ? 'text-primary-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}
+                          className={`text-sm font-medium ${settings.accessType === option.id ? 'text-primary-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}
                         >
                           {option.label}
                         </p>
@@ -193,13 +193,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               {/* Expiration Settings */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xxs font-black text-gray-400 flex items-center gap-1.5">
+                  <label className="text-xxs font-medium text-gray-400 flex items-center gap-1.5">
                     <Clock className="w-3 h-3" /> {t('ui_share_modal_expiration')}
                   </label>
                   <select
                     value={settings.expiresIn}
                     onChange={e => setSettings({ ...settings, expiresIn: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary-500/20"
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20"
                   >
                     <option value="1">{t('ui_share_modal_24_hours')}</option>
                     <option value="7">{t('ui_share_modal_7_days')}</option>
@@ -208,12 +208,12 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xxs font-black text-gray-400 flex items-center gap-1.5">
+                  <label className="text-xxs font-medium text-gray-400 flex items-center gap-1.5">
                     <Calendar className="w-3 h-3" /> {t('ui_share_modal_permissions')}
                   </label>
                   <button
                     onClick={() => setSettings({ ...settings, allowExport: !settings.allowExport })}
-                    className={`w-full px-4 py-3 rounded-xl border text-sm font-bold transition-all ${
+                    className={`w-full px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
                       settings.allowExport
                         ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400'
                         : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-800 text-gray-400'
@@ -234,7 +234,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               <button
                 onClick={handleCreateShare}
                 disabled={loading}
-                className="w-full py-4 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white font-black rounded-xl shadow-xl shadow-primary-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                className="w-full py-4 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white font-medium rounded-xl shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <RefreshCcw className="w-5 h-5 animate-spin" />
@@ -252,7 +252,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 <div className="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
                   <Check className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-black text-emerald-900 dark:text-emerald-400 italic">
+                <h3 className="text-lg font-medium text-emerald-900 dark:text-emerald-400 italic">
                   {t('ui_share_modal_link_ready')}
                 </h3>
                 <p className="text-sm text-emerald-700 dark:text-emerald-500 mt-1">
@@ -261,7 +261,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-xxs font-black text-gray-400  ">
+                <label className="text-xxs font-medium text-gray-400  ">
                   {t('ui_share_modal_shareable_url')}
                 </label>
                 <div className="relative">
@@ -294,13 +294,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               <div className="flex gap-3">
                 <button
                   onClick={() => setShareData(null)}
-                  className="flex-1 py-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-xl transition-all"
+                  className="flex-1 py-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl transition-all"
                 >
                   {t('ui_share_modal_regenerate')}
                 </button>
                 <button
                   onClick={onClose}
-                  className="flex-1 py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-lg shadow-primary-500/10 transition-all"
+                  className="flex-1 py-4 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl shadow-lg transition-all"
                 >
                   {t('ui_share_modal_done')}
                 </button>

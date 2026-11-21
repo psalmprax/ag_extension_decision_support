@@ -27,18 +27,18 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
     >
       <div className="flex flex-wrap justify-between items-center gap-4 pb-6 border-b border-slate-200 dark:border-white/10 relative z-10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-slate-500/20 border border-emerald-500/30 flex items-center justify-center shadow-sm text-emerald-700 dark:text-emerald-400">
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shadow-sm text-emerald-700 dark:text-emerald-400">
             <Receipt className="w-6 h-6" />
           </div>
           <div>
             <h3
               id="invoices-title"
-              className="text-xl font-bold tracking-tight text-slate-900 dark:text-white"
+              className="text-xl font-medium tracking-tight text-slate-900 dark:text-white"
             >
-              {t('billing_legacy_transactions') || 'Billing & Receipt History'}
+              {t('billing_legacy_transactions') || 'Billing & receipt history'}
             </h3>
             <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
-              {t('billing_transaction_archive') || 'Audited Invoices & Direct Downloads'}
+              {t('billing_transaction_archive') || 'Audited invoices & direct downloads'}
             </p>
           </div>
         </div>

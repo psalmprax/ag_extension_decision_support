@@ -96,7 +96,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300"
               >
                 <User className="w-4 h-4 text-primary-400" />
-                <span className="text-xs font-bold  ">
+                <span className="text-xs font-medium  ">
                   {t('header_profile', { defaultValue: 'Profile' })}
                 </span>
               </button>
@@ -105,7 +105,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-rose-500/10 text-rose-400"
               >
                 <LogOut className="w-4 h-4" />
-                <span className="text-xs font-bold  ">
+                <span className="text-xs font-medium  ">
                   {t('header_sign_out', { defaultValue: 'Sign out' })}
                 </span>
               </button>

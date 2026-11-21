@@ -535,7 +535,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
             {/* Phones: a round glass button beside the tab bar, as iOS places its search button. */}
             <button
               onClick={() => setIsOpen(true)}
-              className="flex items-center justify-center gap-2 h-16 w-16 md:h-11 md:w-auto md:ps-3 md:pe-4 rounded-full max-md:ios-glass md:bg-emerald-700 md:hover:bg-emerald-800 text-emerald-800 dark:text-emerald-200 md:text-white md:dark:text-white text-sm font-medium md:shadow-lg md:shadow-slate-900/15 transition-colors"
+              className="flex items-center justify-center gap-2 h-16 w-16 md:h-11 md:w-auto md:ps-3 md:pe-4 rounded-full max-md:ios-glass md:bg-emerald-700 md:hover:bg-emerald-800 text-emerald-800 dark:text-emerald-200 md:text-white md:dark:text-white text-sm font-medium md:shadow-lg md: transition-colors"
               aria-label={t('nav_aiassistant')}
               title={t('ui_floating_aipill_live_chat_leaf_scan_voice_memo')}
             >

@@ -262,13 +262,13 @@ export function DemoPage({
                     <div className="grid grid-cols-2 gap-4 text-xs">
                       <div>
                         <p className="text-[#9db2a6] text-xs mb-0.5">{t('register_role_farmer')}</p>
-                        <p className="font-semibold">{synthesisOutput.farmer ?? ''}</p>
+                        <p className="font-medium">{synthesisOutput.farmer ?? ''}</p>
                       </div>
                       <div>
                         <p className="text-[#9db2a6] text-xs mb-0.5">
                           {t('ui_demo_page_observation')}
                         </p>
-                        <p className="font-semibold text-amber-400">
+                        <p className="font-medium text-amber-400">
                           {synthesisOutput.status ?? ''}
                         </p>
                       </div>

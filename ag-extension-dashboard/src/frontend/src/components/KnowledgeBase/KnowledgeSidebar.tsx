@@ -69,10 +69,10 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
             onClick={() => (onNewQuery ? onNewQuery() : window.location.reload())}
             disabled={isDemo}
             title={isDemo ? 'Not available in demo version' : 'Start a new expert query'}
-            className={`flex items-center gap-2 w-full p-4 mb-8 text-white ${radiusClass} font-black text-sm shadow-lg transition-all transform ${
+            className={`flex items-center gap-2 w-full p-4 mb-8 text-white ${radiusClass} font-medium text-sm shadow-lg transition-all transform ${
               isDemo
                 ? 'bg-gray-400 dark:bg-gray-700 cursor-not-allowed opacity-70'
-                : 'bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 active:scale-95'
+                : 'bg-primary-600 hover:bg-primary-700 active:scale-95'
             }`}
           >
             {isDemo ? <Lock className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
@@ -83,7 +83,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
           <div className="flex-1 overflow-y-auto scrollbar-hide space-y-6">
             <div className="flex items-center gap-2 text-gray-400 px-2">
               <History className="w-4 h-4" />
-              <span className="text-xxs font-black  ">
+              <span className="text-xxs font-medium  ">
                 {t('ui_knowledge_sidebar_recent_search_retainer')}
               </span>
             </div>
@@ -92,7 +92,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
               {history.length === 0 ? (
                 <div className="text-center py-8 px-4">
                   <Search className="w-8 h-8 text-gray-200 dark:text-gray-700 mx-auto mb-3" />
-                  <p className="text-xs font-bold text-gray-400">{t('ui_knowledge_sidebar_no_recent_queries_found')}</p>
+                  <p className="text-xs font-medium text-gray-400">{t('ui_knowledge_sidebar_no_recent_queries_found')}</p>
                 </div>
               ) : (
                 history.map((h, i) => (
@@ -111,10 +111,10 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                         <MessageSquare className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate mb-1">
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate mb-1">
                           {h.queryText}
                         </p>
-                        <div className="flex items-center gap-2 text-xxs font-black text-gray-400  ">
+                        <div className="flex items-center gap-2 text-xxs font-medium text-gray-400  ">
                           {h.crop && (
                             <span className="flex items-center gap-1 text-primary-500">
                               <Target className="w-2.5 h-2.5" />
@@ -137,10 +137,10 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
           {/* Sidebar Footer */}
           <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800 flex items-center gap-4 px-2">
             <div
-              className={`w-10 h-10 bg-slate-500 ${radiusClass} flex items-center justify-center text-white font-black`}
+              className={`w-10 h-10 bg-slate-500 ${radiusClass} flex items-center justify-center text-white font-medium`}
             >
               {user ? (
-                <span className="text-sm font-bold">
+                <span className="text-sm font-medium">
                   {user.firstName?.[0]}
                   {user.lastName?.[0]}
                 </span>
@@ -149,10 +149,10 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
               )}
             </div>
             <div className="flex-1 overflow-hidden">
-              <p className="text-sm font-black text-gray-900 dark:text-white truncate">
+              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                 {user ? `${user.firstName} ${user.lastName}` : 'User'}
               </p>
-              <p className="text-xxs font-bold text-gray-400  ">
+              <p className="text-xxs font-medium text-gray-400  ">
                 {user?.role?.replace('_', ' ') || 'Member'}
               </p>
             </div>

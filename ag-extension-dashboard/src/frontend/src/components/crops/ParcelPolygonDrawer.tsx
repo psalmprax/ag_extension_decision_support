@@ -87,14 +87,14 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
     <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
             {t('ui_parcel_polygon_drawer_field_boundary_polygon_acreage_trace')}
           </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             {t('ui_parcel_polygon_drawer_walk_the_perimeter_of_the_field_to_m')}
           </p>
         </div>
-        <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-full">
+        <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 text-xs font-medium rounded-full">
           {t('ui_parcel_polygon_drawer_wgs_84_geodesic')}
         </span>
       </div>
@@ -103,25 +103,25 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
         <div>
           <span className="text-xs text-gray-500 font-medium">{t('ui_parcel_polygon_drawer_measured_acreage')}</span>
-          <p className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
+          <p className="text-xl font-medium text-emerald-600 dark:text-emerald-400 mt-1">
             {metrics.acres} <span className="text-xs font-normal text-gray-500">{t('ui_parcel_polygon_drawer_acres')}</span>
           </p>
         </div>
         <div>
           <span className="text-xs text-gray-500 font-medium">{t('ui_parcel_polygon_drawer_metric_area')}</span>
-          <p className="text-xl font-extrabold text-gray-900 dark:text-white mt-1">
+          <p className="text-xl font-medium text-gray-900 dark:text-white mt-1">
             {metrics.hectares} <span className="text-xs font-normal text-gray-500">ha</span>
           </p>
         </div>
         <div>
           <span className="text-xs text-gray-500 font-medium">{t('ui_parcel_polygon_drawer_perimeter')}</span>
-          <p className="text-xl font-extrabold text-gray-900 dark:text-white mt-1">
+          <p className="text-xl font-medium text-gray-900 dark:text-white mt-1">
             {metrics.perimeterMeters} <span className="text-xs font-normal text-gray-500">m</span>
           </p>
         </div>
         <div>
           <span className="text-xs text-gray-500 font-medium">{t('ui_parcel_polygon_drawer_boundary_vertices')}</span>
-          <p className="text-xl font-extrabold text-slate-600 dark:text-slate-400 mt-1">
+          <p className="text-xl font-medium text-slate-600 dark:text-slate-400 mt-1">
             {metrics.vertexCount}
           </p>
         </div>
@@ -165,7 +165,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
           type="button"
           onClick={handleCaptureCurrentGps}
           disabled={isRecording}
-          className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow transition"
+          className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl shadow transition"
         >
           {isRecording ? 'Capturing GPS Point...' : '+ Add GPS Boundary Vertex'}
         </button>
@@ -174,7 +174,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
           type="button"
           onClick={handleExportAndSave}
           disabled={vertices.length < 3}
-          className="py-3 px-5 bg-slate-600 hover:bg-slate-700 text-white text-sm font-semibold rounded-xl shadow disabled:opacity-50 transition"
+          className="py-3 px-5 bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium rounded-xl shadow disabled:opacity-50 transition"
         >
           {t('ui_parcel_polygon_drawer_export_geojson_save')}
         </button>

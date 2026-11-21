@@ -97,4 +97,5 @@ jobs:
           path: |
             ag-extension-dashboard/src/frontend/playwright-report
             ag-extension-dashboard/src/frontend/test-results
+            ag-extension-dashboard/src/backend/logs
           retention-days: 7

@@ -36,12 +36,12 @@ export const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-gray-900 flex items-center justify-center p-4">
       <div
         className={`w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-2xl overflow-hidden`}
       >
-        <div className="p-8 bg-gradient-to-br from-primary-500 to-primary-700 text-white">
-          <h1 className="text-2xl font-bold">{t('ui_forgot_password_reset_password')}</h1>
+        <div className="p-8 bg-primary-700 text-white">
+          <h1 className="text-2xl font-medium">{t('ui_forgot_password_reset_password')}</h1>
           <p className="text-sm opacity-90 mt-1">{t('ui_forgot_password_enter_your_email_to_receive_reset_in')}</p>
         </div>
 
@@ -55,7 +55,7 @@ export const ForgotPassword: React.FC = () => {
               <button
                 type="button"
                 onClick={() => navigate('/login')}
-                className={`w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold btn btn-primary w-full transition-colors`}
+                className={`w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium btn btn-primary w-full transition-colors`}
               >
                 {t('ui_forgot_password_back_to_login')}
               </button>
@@ -72,7 +72,7 @@ export const ForgotPassword: React.FC = () => {
               )}
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {t('login_email')}
                 </label>
                 <div className="relative">
@@ -91,10 +91,10 @@ export const ForgotPassword: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading || !email.trim()}
-                className={`w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold btn btn-primary w-full transition-colors disabled:opacity-50 flex items-center justify-center gap-2`}
+                className={`w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium btn btn-primary w-full transition-colors disabled:opacity-50 flex items-center justify-center gap-2`}
               >
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                {isLoading ? 'Sending...' : 'Send Reset Link'}
+                {isLoading ? 'Sending...' : 'Send reset link'}
               </button>
 
               <button

@@ -87,7 +87,7 @@ export function Modal({ title, onClose, size = 'md', children }: ModalProps) {
             }}
             className="flex items-center justify-between mb-4 border-b border-white/10 pb-3 select-none cursor-default"
           >
-            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">{title}</h3>
+            <h3 className="text-lg sm:text-xl font-medium text-white tracking-tight">{title}</h3>
             <button
               onClick={handleClose}
               className="text-white/40 hover:text-white text-xl p-1 rounded-lg hover:bg-white/5 transition-colors"

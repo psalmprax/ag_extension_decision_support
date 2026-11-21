@@ -50,7 +50,7 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
             : 'bg-gray-50 dark:bg-gray-800/50'
         }`}
       >
-        <div className="text-xs-plus font-bold text-gray-400">
+        <div className="text-xs-plus font-medium text-gray-400">
           {t('ui_farmlist_sidebar_farmlist', { length: filteredFarmers.length })}
         </div>
         <button
@@ -90,7 +90,7 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
                   aria-hidden="true"
                 />
                 <div className="min-w-0">
-                  <div className="font-bold text-sm truncate text-gray-800 dark:text-white">
+                  <div className="font-medium text-sm truncate text-gray-800 dark:text-white">
                     {farmer.name}
                   </div>
                   <div className="text-xxs font-medium truncate text-gray-400">

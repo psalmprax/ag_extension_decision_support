@@ -47,7 +47,7 @@ export function Features() {
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
+                  <div data-scrim className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
                   <div className="absolute top-4 start-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#0d1a14]/80 backdrop-blur-md border border-amber-500/30 text-amber-300 text-xxs font-medium">
                     <MessageSquare className="w-3 h-3 text-amber-400" />
                     {t('ui_features_direct_farmer_advisory')}
@@ -61,7 +61,7 @@ export function Features() {
 
                 <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between space-y-4">
                   <div>
-                    <h3 className="text-lg sm:text-xl font-bold text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                    <h3 className="text-lg sm:text-xl font-medium text-white mb-2 group-hover:text-emerald-300 transition-colors">
                       {t('ui_features_the_smallholder_farmer')}
                     </h3>
                     <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
@@ -92,7 +92,7 @@ export function Features() {
                 whileInView="visible"
                 viewport={{ once: true, margin: '-60px' }}
                 variants={fadeUp}
-                className="group relative rounded-xl backdrop-blur-xl bg-white/[0.03] border border-emerald-500/30 hover:border-emerald-500/60 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl shadow-emerald-950/30 hover:shadow-emerald-950/60 ring-1 ring-emerald-500/20"
+                className="group relative rounded-xl backdrop-blur-xl bg-white/[0.03] border border-emerald-500/30 hover:border-emerald-500/60 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl ring-1 ring-emerald-500/20"
               >
                 <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-[#0d1a14]">
                   <img
@@ -103,13 +103,13 @@ export function Features() {
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
+                  <div data-scrim className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
                   <div className="absolute top-4 start-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#0d1a14]/80 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-xxs font-medium">
                     <Smartphone className="w-3 h-3 text-emerald-400" />
                     {t('ui_features_field_ready_mobile_pwa')}
                   </div>
                   <div className="absolute bottom-3 start-4 end-4">
-                    <span className="text-xxs text-emerald-300 bg-emerald-500/30 border border-emerald-400/40 px-2 py-0.5 rounded-md font-bold">
+                    <span className="text-xxs text-emerald-300 bg-emerald-500/30 border border-emerald-400/40 px-2 py-0.5 rounded-md font-medium">
                       {t('ui_features_selected_offline_workflows')}
                     </span>
                   </div>
@@ -117,7 +117,7 @@ export function Features() {
 
                 <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between space-y-4">
                   <div>
-                    <h3 className="text-lg sm:text-xl font-bold text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                    <h3 className="text-lg sm:text-xl font-medium text-white mb-2 group-hover:text-emerald-300 transition-colors">
                       {t('ui_features_the_field_extension_officer')}
                     </h3>
                     <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
@@ -159,7 +159,7 @@ export function Features() {
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
+                  <div data-scrim className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
                   <div className="absolute top-4 start-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#0d1a14]/80 backdrop-blur-md border border-cyan-500/30 text-cyan-300 text-xxs font-medium">
                     <BarChart3 className="w-3 h-3 text-cyan-400" />
                     {t('ui_features_macro_yield_supply_intelligence')}
@@ -173,7 +173,7 @@ export function Features() {
 
                 <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between space-y-4">
                   <div>
-                    <h3 className="text-lg sm:text-xl font-bold text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                    <h3 className="text-lg sm:text-xl font-medium text-white mb-2 group-hover:text-emerald-300 transition-colors">
                       {t('ui_features_regional_cooperative_directors')}
                     </h3>
                     <p className="text-xs sm:text-sm text-white/70 leading-relaxed">

@@ -96,7 +96,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   return (
     <div className="relative group">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 via-slate-500/20 to-slate-500/20 blur opacity-60 group-hover:opacity-100 transition-opacity rounded-xl"></div>
       <div className="relative w-full max-w-full bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-white/10 p-1.5 sm:p-2 shadow-sm dark:shadow-2xl focus-within:ring-2 focus-within:ring-emerald-500/40 focus-within:border-emerald-500/60 rounded-xl overflow-hidden backdrop-blur-xl">
         {/* Attachment Previews */}
         {attachments.length > 0 && (
@@ -111,7 +110,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                 ) : (
                   <FileIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400" />
                 )}
-                <span className="text-xxs font-bold text-emerald-700 dark:text-emerald-300 max-w-[100px] truncate">
+                <span className="text-xxs font-medium text-emerald-700 dark:text-emerald-300 max-w-[100px] truncate">
                   {att.name}
                 </span>
                 <button
@@ -196,7 +195,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
               type="button"
               disabled={isAsking || (!searchQuery.trim() && attachments.length === 0)}
               onClick={onSearch}
-              className="h-8 sm:h-9 px-3 sm:px-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-bold rounded-xl shadow-lg shadow-emerald-950/40 text-xs shrink-0 flex items-center justify-center gap-1.5 transition-all"
+              className="h-8 sm:h-9 px-3 sm:px-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-medium rounded-xl shadow-lg text-xs shrink-0 flex items-center justify-center gap-1.5 transition-all"
             >
               <span className="hidden sm:inline">{t('ui_search_bar_search_rag')}</span>
               <ArrowRight className="w-3.5 h-3.5" />

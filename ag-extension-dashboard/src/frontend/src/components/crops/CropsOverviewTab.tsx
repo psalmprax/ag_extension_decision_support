@@ -61,7 +61,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                 <div>
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{field.name}</h3>
+                      <h3 className="text-xl font-medium text-slate-900 dark:text-white tracking-tight">{field.name}</h3>
                       <p className="text-xs text-slate-500 font-mono mt-1">
                         ID: {field.id.slice(0, 8)}
                       </p>
@@ -89,7 +89,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                       <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         {t('ui_crops_overview_tab_area_size')}
                       </span>
-                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-0.5 tabular-nums">
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5 tabular-nums">
                         {units.area(field.areaHectares, 2)}
                       </p>
                     </div>
@@ -97,7 +97,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                       <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         {t('ui_crops_overview_tab_soil_type')}
                       </span>
-                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-0.5 capitalize">
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5 capitalize">
                         {field.soilType || 'Unspecified'}
                       </p>
                     </div>
@@ -105,7 +105,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                       <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         {t('ui_crops_overview_tab_soil_ph')}
                       </span>
-                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-0.5 tabular-nums">
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5 tabular-nums">
                         {field.soilPh ? `${Number(field.soilPh).toFixed(1)} pH` : 'Not Measured'}
                       </p>
                     </div>
@@ -113,7 +113,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                       <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         {t('ui_crops_overview_tab_coordinates')}
                       </span>
-                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-0.5 truncate font-mono text-xs tabular-nums">
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5 truncate font-mono text-xs tabular-nums">
                         {field.latitude && field.longitude
                           ? `${Number(field.latitude).toFixed(4)}, ${Number(field.longitude).toFixed(4)}`
                           : 'No GPS Set'}
@@ -134,7 +134,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                               {t('ui_crops_overview_tab_planted')} {new Date(currentCycle.plantingDate!).toLocaleDateString()}
                             </span>
                           </div>
-                          <h4 className="text-sm font-bold text-slate-900 dark:text-slate-200 mt-1 truncate">
+                          <h4 className="text-sm font-medium text-slate-900 dark:text-slate-200 mt-1 truncate">
                             {currentCycle.cropName} ({currentCycle.variety || 'Standard'})
                           </h4>
                           {currentCycle.notes && (
@@ -148,12 +148,12 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                     ) : (
                       <div className="bg-slate-50 dark:bg-slate-900/30 border border-dashed border-slate-200 dark:border-white/10 p-4 rounded-xl text-center py-6">
                         <Info className="w-5 h-5 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
-                        <p className="text-xs text-slate-600 dark:text-slate-400 font-semibold mb-3">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-3">
                           {t('ui_crops_overview_tab_no_active_crop_growth_cycles')}
                         </p>
                         <button
                           onClick={() => handleOpenStartCycle(field)}
-                          className="text-xs font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 border border-primary-500/20 hover:bg-primary-500/20 px-3 py-1.5 rounded-xl transition-all"
+                          className="text-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-500/10 border border-primary-500/20 hover:bg-primary-500/20 px-3 py-1.5 rounded-xl transition-all"
                         >
                           {t('ui_crops_overview_tab_plant_new_crop')}
                         </button>
@@ -166,7 +166,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                   <div className="mt-6 pt-4 border-t border-slate-200 dark:border-white/5 flex justify-end gap-2">
                     <button
                       onClick={() => handleOpenHarvest(field, currentCycle)}
-                      className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 px-4 py-2 rounded-xl transition-all"
+                      className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 px-4 py-2 rounded-xl transition-all"
                     >
                       <CheckCircle className="w-3.5 h-3.5" />
                       {t('ui_crops_overview_tab_record_harvest')}

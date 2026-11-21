@@ -502,7 +502,7 @@ const getEngineTelemetryLabels = (
 ): { title: string; subtitle: string } => {
   if (scanMode !== 'crop') {
     return {
-      title: 'Edge Soil Aggregate & Reflectance Analyzer',
+      title: 'Edge soil aggregate & reflectance analyzer',
       subtitle: 'Sobel Physics v1',
     };
   }

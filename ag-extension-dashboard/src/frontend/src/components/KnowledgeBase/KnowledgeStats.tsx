@@ -33,7 +33,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
     return (
       <div className="flex items-center justify-center p-20 text-gray-400">
         <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full me-3"></div>
-        <p className="font-black text-xs">
+        <p className="font-medium text-xs">
           {t('ui_knowledge_stats_analyzing_knowledge_streams')}
         </p>
       </div>
@@ -59,7 +59,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
             bg: 'bg-blue-500/10',
           },
           {
-            label: 'Cache Hit Rate',
+            label: 'Cache hit rate',
             value: cacheHitRate,
             icon: BarChart3,
             color: 'text-green-500',
@@ -83,10 +83,10 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
               <stat.icon className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xxs font-black text-gray-400 leading-none mb-1">
+              <p className="text-xxs font-medium text-gray-400 leading-none mb-1">
                 {stat.label}
               </p>
-              <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+              <p className="text-2xl font-medium text-gray-900 dark:text-white tracking-tight">
                 {stat.value}
               </p>
             </div>
@@ -99,7 +99,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
         <div className="card p-8 bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700/50 border flex flex-col">
           <div className="flex items-center gap-2 mb-8">
             <TrendingUp className="w-5 h-5 text-green-500" />
-            <h3 className="text-sm font-black text-gray-400  ">
+            <h3 className="text-sm font-medium text-gray-400  ">
               {t('ui_knowledge_stats_trending_crop_queries')}
             </h3>
           </div>
@@ -120,7 +120,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
         <div className="card p-8 bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700/50 border">
           <div className="flex items-center gap-2 mb-8">
             <PieIcon className="w-5 h-5 text-blue-500" />
-            <h3 className="text-sm font-black text-gray-400  ">
+            <h3 className="text-sm font-medium text-gray-400  ">
               {t('ui_knowledge_stats_category_distribution')}
             </h3>
           </div>
@@ -154,10 +154,10 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: CHART_PALETTE[i % CHART_PALETTE.length] }}
                   ></div>
-                  <span className="text-xs font-bold text-gray-600 dark:text-gray-400 truncate w-32 capitalize">
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 truncate w-32 capitalize">
                     {String(cat.category ?? '')}
                   </span>
-                  <span className="text-xs font-black text-gray-900 dark:text-white">
+                  <span className="text-xs font-medium text-gray-900 dark:text-white">
                     {String(cat.count ?? 0)}
                   </span>
                 </div>

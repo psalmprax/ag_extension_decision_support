@@ -37,6 +37,9 @@ jobs:
       - name: Component-size ratchet (CLAUDE.md 300-line rule)
         run: node scripts/component-size-ratchet.cjs
 
+      - name: Design rules (CLAUDE.md Unslop standard)
+        run: node scripts/design-rules-check.cjs
+
       - name: Script tests (port handling, live smoke)
         run: node --test scripts/*.test.cjs
   

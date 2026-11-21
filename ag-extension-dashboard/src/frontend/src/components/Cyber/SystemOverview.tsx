@@ -126,13 +126,13 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({
             <p className="text-xxs font-medium text-slate-400 mb-1">
               {t('ui_system_overview_health_score')}
             </p>
-            <p className="text-3xl font-semibold text-white tabular-nums tracking-normal">
+            <p className="text-3xl font-medium text-white tabular-nums tracking-normal">
               {healthScore !== undefined ? healthScore : '—'}
             </p>
             {uptime && <p className="text-xxs font-mono tabular-nums text-white/40 mt-1">{t('ui_system_overview_uptime', { uptime })}</p>}
           </div>
           <div className="w-14 h-14 rounded-xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20">
-            <span className="text-primary-400 font-semibold text-lg font-mono">
+            <span className="text-primary-400 font-medium text-lg font-mono">
               {getHealthGrade(healthScore)}
             </span>
           </div>

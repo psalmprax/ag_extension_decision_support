@@ -24,7 +24,7 @@ const TEMPLATE_PREVIEW_SAMPLE_DATA: Record<string, string> = {
   dateRange: '2026-04-06 to 2026-04-10',
   weatherSummary: 'Heavy rainfall expected with winds up to 25 km/h',
   recipientName: 'Jane Smith',
-  trainingTopic: 'Sustainable Farming Practices',
+  trainingTopic: 'Sustainable farming practices',
   time: '2:00 PM',
   trainerName: 'Prof. Michael Brown',
 };

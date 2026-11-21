@@ -184,7 +184,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                 </div>
               </div>
               <div>
-                <h3 className={`text-2xl font-black 'text-gray-900 dark:text-white'`}>
+                <h3 className={`text-2xl font-medium 'text-gray-900 dark:text-white'`}>
                   {t('reports_generating_title') || 'Synthesizing Data'}
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">
@@ -212,7 +212,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
           >
             <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                <h3 className="text-xl font-medium text-gray-900 dark:text-white">
                   {props.viewingReport.title}
                 </h3>
                 <p className="text-xs text-gray-500 mt-1">
@@ -253,7 +253,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                         props.addNotification({ type: 'error', message: 'Download failed' });
                       }
                     }}
-                    className={`mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 ${btnClass} text-sm font-bold`}
+                    className={`mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 ${btnClass} text-sm font-medium`}
                   >
                     {t('ui_app_modals_download_report')}
                   </button>
@@ -269,7 +269,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                     props.addNotification({ type: 'error', message: 'Download failed' });
                   }
                 }}
-                className={`px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 ${btnClass} text-sm font-bold transition-colors`}
+                className={`px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 ${btnClass} text-sm font-medium transition-colors`}
               >
                 {t('billing_download')}
               </button>
@@ -278,7 +278,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                   props.setViewingReport(null);
                   props.setReportContent(null);
                 }}
-                className={`px-4 py-2 bg-primary-600 hover:bg-primary-700 ${btnClass} text-sm font-bold transition-colors`}
+                className={`px-4 py-2 bg-primary-600 hover:bg-primary-700 ${btnClass} text-sm font-medium transition-colors`}
               >
                 {t('common_close')}
               </button>
@@ -300,7 +300,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
             >
               <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                 <div>
-                  <h3 className="font-bold text-gray-900 dark:text-white">{t('chat_start_new')}</h3>
+                  <h3 className="font-medium text-gray-900 dark:text-white">{t('chat_start_new')}</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {t('chat_select_farmer')}
                   </p>
@@ -366,12 +366,12 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                         }
                         className="w-full p-3 rounded-xl text-start hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-3"
                       >
-                        <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-lg">
+                        <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 font-medium text-lg">
                           {farmer.firstName?.[0]}
                           {farmer.lastName?.[0]}
                         </div>
                         <div className="flex-1">
-                          <div className="font-bold text-gray-900 dark:text-white">
+                          <div className="font-medium text-gray-900 dark:text-white">
                             {farmer.firstName} {farmer.lastName}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">

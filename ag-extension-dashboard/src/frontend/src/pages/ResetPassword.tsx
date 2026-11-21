@@ -52,10 +52,10 @@ export const ResetPassword: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-2xl overflow-hidden">
-        <div className="p-8 bg-gradient-to-br from-primary-500 to-primary-700 text-white">
-          <h1 className="text-2xl font-bold">{t('ui_reset_password_choose_a_new_password')}</h1>
+        <div className="p-8 bg-primary-700 text-white">
+          <h1 className="text-2xl font-medium">{t('ui_reset_password_choose_a_new_password')}</h1>
           <p className="text-sm opacity-90 mt-1">{t('ui_reset_password_at_least_characters_with_a_letter_an', { MIN_LEN })}</p>
         </div>
 
@@ -73,14 +73,14 @@ export const ResetPassword: React.FC = () => {
                 <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">{message}</p>
-              <button type="button" onClick={() => navigate('/login')} className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition-colors">
+              <button type="button" onClick={() => navigate('/login')} className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors">
                 {t('ui_reset_password_sign_in')}
               </button>
             </div>
           ) : (
             <>
               <label className="block">
-                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{t('ui_reset_password_new_password')}</span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">{t('ui_reset_password_new_password')}</span>
                 <div className="relative mt-1">
                   <Lock className="w-4 h-4 absolute start-3 top-3.5 text-gray-400" />
                   <input
@@ -97,7 +97,7 @@ export const ResetPassword: React.FC = () => {
                 )}
               </label>
               <label className="block">
-                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{t('ui_reset_password_confirm_password')}</span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">{t('ui_reset_password_confirm_password')}</span>
                 <input
                   type="password"
                   value={confirm}
@@ -119,7 +119,7 @@ export const ResetPassword: React.FC = () => {
               <button
                 type="submit"
                 disabled={!canSubmit}
-                className="w-full py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
               >
                 {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                 {t('ui_reset_password_update_password')}

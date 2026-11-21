@@ -54,7 +54,7 @@ function SupportTicketForm({
       className="space-y-4"
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('ui_help_center_modal_submit_support_ticket')}</h3>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white">{t('ui_help_center_modal_submit_support_ticket')}</h3>
         <button
           onClick={() => setShowTicketForm(false)}
           aria-label="Close support ticket form"
@@ -66,13 +66,13 @@ function SupportTicketForm({
       {ticketSubmitted ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
-          <h4 className="text-lg font-bold text-gray-900 dark:text-white">{t('ui_help_center_modal_ticket_submitted')}</h4>
+          <h4 className="text-lg font-medium text-gray-900 dark:text-white">{t('ui_help_center_modal_ticket_submitted')}</h4>
           <p className="text-sm text-gray-500">{t('ui_help_center_modal_we_ll_get_back_to_you_soon')}</p>
         </div>
       ) : (
         <form onSubmit={handleTicketSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-slate-500 dark:text-slate-400  ">
+            <label className="text-xs font-medium text-slate-500 dark:text-slate-400  ">
               {t('email_workflows_subject')}
             </label>
             <input
@@ -85,7 +85,7 @@ function SupportTicketForm({
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-500 dark:text-slate-400  ">
+            <label className="text-xs font-medium text-slate-500 dark:text-slate-400  ">
               {t('ui_help_center_modal_category')}
             </label>
             <select
@@ -103,7 +103,7 @@ function SupportTicketForm({
             </select>
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-500 dark:text-slate-400  ">
+            <label className="text-xs font-medium text-slate-500 dark:text-slate-400  ">
               {t('ui_help_center_modal_description')}
             </label>
             <textarea
@@ -118,7 +118,7 @@ function SupportTicketForm({
           <button
             type="submit"
             disabled={ticketSubmitting}
-            className="w-full px-4 py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
+            className="w-full px-4 py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2"
           >
             {ticketSubmitting ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -251,14 +251,14 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
           >
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-hidden flex flex-col">
               {/* Header */}
-              <div className="p-4 sm:p-6 bg-gradient-to-br from-emerald-600 to-slate-700 text-white">
+              <div className="p-4 sm:p-6 bg-slate-800 border-b border-white/10 text-white">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
                       <HelpCircle className="w-6 h-6" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold">
+                      <h2 className="text-xl font-medium">
                         {t('help_center_title') || 'Help center'}
                       </h2>
                       <p className="text-sm opacity-90">
@@ -301,14 +301,14 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                           className={`p-4 rounded-xl ${color} flex flex-col items-center gap-2 hover:scale-105 transition-transform`}
                         >
                           <Icon className="w-6 h-6" />
-                          <span className="text-xs font-bold">{label}</span>
+                          <span className="text-xs font-medium">{label}</span>
                         </button>
                       ))}
                     </div>
 
                     {/* FAQs */}
                     <div className="space-y-3">
-                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400  ">
+                      <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400  ">
                         {t('help_faq') || 'Frequently asked questions'}
                       </h3>
                       {faqsLoading ? (
@@ -328,7 +328,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                               onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
                               className="w-full p-4 flex items-center justify-between text-start hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-colors"
                             >
-                              <span className="text-sm font-bold text-slate-900 dark:text-white pe-4">
+                              <span className="text-sm font-medium text-slate-900 dark:text-white pe-4">
                                 {faq.question}
                               </span>
                               <ChevronRight
@@ -353,7 +353,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
 
                     {/* Keyboard Shortcuts */}
                     <div className="space-y-3">
-                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400  ">
+                      <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400  ">
                         {t('help_shortcuts') || 'Keyboard shortcuts'}
                       </h3>
                       <div className="grid grid-cols-2 gap-2">
@@ -365,7 +365,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                             <span className="text-sm text-slate-700 dark:text-slate-300">
                               {action}
                             </span>
-                            <kbd className="px-2 py-1 bg-slate-200 dark:bg-slate-700 text-xs font-mono rounded text-slate-800 dark:text-slate-200 font-bold">
+                            <kbd className="px-2 py-1 bg-slate-200 dark:bg-slate-700 text-xs font-mono rounded text-slate-800 dark:text-slate-200 font-medium">
                               {key}
                             </kbd>
                           </div>
@@ -385,7 +385,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                       setTicketCategory('bug');
                       setShowTicketForm(true);
                     }}
-                    className="flex items-center justify-center gap-2 py-2.5 px-4 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-900/60 rounded-xl text-sm font-bold text-rose-700 dark:text-rose-300 transition-colors shadow-xs"
+                    className="flex items-center justify-center gap-2 py-2.5 px-4 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-900/60 rounded-xl text-sm font-medium text-rose-700 dark:text-rose-300 transition-colors shadow-xs"
                   >
                     <Bug className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                     {t('help_report_issue') || 'Report an issue'}
@@ -396,7 +396,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                       setTicketCategory('feature-request');
                       setShowTicketForm(true);
                     }}
-                    className="flex items-center justify-center gap-2 py-2.5 px-4 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-900/60 rounded-xl text-sm font-bold text-emerald-800 dark:text-emerald-300 transition-colors shadow-xs"
+                    className="flex items-center justify-center gap-2 py-2.5 px-4 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-900/60 rounded-xl text-sm font-medium text-emerald-800 dark:text-emerald-300 transition-colors shadow-xs"
                   >
                     <ExternalLink className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     {t('help_feature_request') || 'Feature request'}

@@ -27,13 +27,13 @@ export function OutbreakBanner() {
         >
             <AlertOctagon className="w-5 h-5 shrink-0 mt-0.5" />
             <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold">
+                <p className="text-sm font-medium">
                     {t('ui_outbreak_banner_outbreak_alert')}{alerts.length > 1 ? 's' : ''} {t('ui_outbreak_banner_in_your_region')}
                 </p>
                 <ul className="text-xs mt-1 space-y-0.5">
                     {alerts.slice(0, 3).map(c => (
                         <li key={`${c.district}-${c.diseaseLabel}`}>
-                            <span className="font-semibold">{c.diseaseLabel.replace(/_/g, ' ')}</span> on {c.crop} —{' '}
+                            <span className="font-medium">{c.diseaseLabel.replace(/_/g, ' ')}</span> on {c.crop} —{' '}
                             {c.caseCount} {t('ui_outbreak_banner_cases_in')} {c.district} {t('ui_outbreak_banner_last_14_days')}
                         </li>
                     ))}

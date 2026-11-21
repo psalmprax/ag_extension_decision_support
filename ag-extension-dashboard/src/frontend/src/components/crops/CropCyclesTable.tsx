@@ -58,9 +58,9 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
               <div key={cycle.id} className="p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{cycle.cropName}</h4>
+                    <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">{cycle.cropName}</h4>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {t('ui_crop_cycles_table_sector')} <span className="text-slate-800 dark:text-slate-200 font-semibold">{field.name}</span>
+                      {t('ui_crop_cycles_table_sector')} <span className="text-slate-800 dark:text-slate-200 font-medium">{field.name}</span>
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

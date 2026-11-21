@@ -49,7 +49,7 @@ const HistoryTabContent = ({
   <section className="space-y-6">
     <div className="flex items-center justify-between">
       <h3
-        className={`text-sm font-semibold flex items-center gap-2 text-gray-400`}
+        className={`text-sm font-medium flex items-center gap-2 text-gray-400`}
       >
         <History className={`w-4 h-4 text-primary-500`} />
         Recent Interactions
@@ -112,7 +112,7 @@ const CropsSection = ({
     className={`p-6 ${radiusClass} border shadow-sm bg-theme-bg-card dark:bg-gray-800/80 border-gray-100 dark:border-gray-700`}
   >
     <h3
-      className={`text-xs font-semibold mb-4 flex items-center gap-2 text-gray-400`}
+      className={`text-xs font-medium mb-4 flex items-center gap-2 text-gray-400`}
     >
       <Sprout className={`w-4 h-4 text-green-500`} />
       {t('table_crops')}
@@ -189,12 +189,12 @@ const VitalStatsSection = ({
     className={`p-6 ${radiusClass} border shadow-sm bg-theme-bg-card dark:bg-gray-800/80 border-gray-100 dark:border-gray-700`}
   >
     <h3
-      className={`text-xs font-semibold mb-4 flex items-center gap-2 text-gray-400`}
+      className={`text-xs font-medium mb-4 flex items-center gap-2 text-gray-400`}
     >
       <Activity className={`w-4 h-4 text-secondary-500`} />
       {t('farmer_vital_score')}
     </h3>
-    <div className={`text-3xl font-semibold tabular-nums leading-none text-gray-900 dark:text-white`}>
+    <div className={`text-3xl font-medium tabular-nums leading-none text-gray-900 dark:text-white`}>
       {farmer.vitalScore || 0}
       <span className="text-sm text-gray-400">/100</span>
     </div>
@@ -680,7 +680,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                   <p className="text-[10px] font-mono font-medium text-slate-400">
                     {t('visit_next_scheduled') || 'Next scheduled'}
                   </p>
-                  <p className="text-xs font-bold text-white truncate">
+                  <p className="text-xs font-medium text-white truncate">
                     {(() => {
                       if (!nextScheduledVisit) return t('no_visit_scheduled') || 'None scheduled';
                       const raw = nextScheduledVisit.scheduledAt || nextScheduledVisit.scheduled_at;
@@ -747,7 +747,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                 navigator.clipboard.writeText(inviteLink);
                 toast.success('Invite link copied — share it with the farmer to join this call.');
               }}
-              className="absolute top-4 end-16 z-[110] px-3 py-2 bg-black/50 hover:bg-black/70 text-white text-xs font-bold rounded-xl backdrop-blur-md transition-all flex items-center gap-1.5"
+              className="absolute top-4 end-16 z-[110] px-3 py-2 bg-black/50 hover:bg-black/70 text-white text-xs font-medium rounded-xl backdrop-blur-md transition-all flex items-center gap-1.5"
             >
               <Link2 className="w-4 h-4" />
               {t('ui_farmer_detail_panel_invite')}

@@ -26,7 +26,7 @@ export function ContactListItem({
           <User className="w-5 h-5 text-slate-500" />
         </div>
         <div>
-          <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+          <p className="text-sm font-medium text-slate-900 dark:text-white leading-tight">
             {contact.name}
           </p>
           <p className="text-xs text-slate-500">{contact.phone}</p>

@@ -31,13 +31,13 @@ export const VerifyEmail: React.FC = () => {
   }, [token]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 text-center space-y-4">
         {status === 'pending' && <Loader2 className="w-10 h-10 mx-auto animate-spin text-primary-600" />}
         {status === 'success' && <CheckCircle className="w-10 h-10 mx-auto text-green-600" />}
         {status === 'error' && <AlertCircle className="w-10 h-10 mx-auto text-red-600" />}
         <p className="text-sm text-gray-700 dark:text-gray-300">{message}</p>
-        <button type="button" onClick={() => navigate('/login')} className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition-colors">
+        <button type="button" onClick={() => navigate('/login')} className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors">
           {t('ui_verify_email_go_to_sign_in')}
         </button>
       </div>

@@ -13,11 +13,11 @@ export const SoilClimateSampleCard: React.FC<{ cardClass: string }> = ({ cardCla
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sprout className="w-4 h-4 text-emerald-500" />
-          <h3 className="text-xs sm:text-sm font-headline font-bold text-gray-900 dark:text-white  ">
+          <h3 className="text-xs sm:text-sm font-headline font-medium text-gray-900 dark:text-white  ">
             {t('ui_soil_climate_sample_card_soil_telemetry_climate_radar')}
           </h3>
         </div>
-        <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold">
+        <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-medium">
           {t('ui_soil_climate_sample_card_illustrative_sample_not_live_telemet')}
         </span>
       </div>
@@ -28,7 +28,7 @@ export const SoilClimateSampleCard: React.FC<{ cardClass: string }> = ({ cardCla
             <Droplets className="w-3 h-3 text-slate-500" />
             <span>{t('ui_soil_climate_sample_card_soil_moisture')}</span>
           </div>
-          <div className="text-sm font-bold text-slate-900 dark:text-white">28.4%</div>
+          <div className="text-sm font-medium text-slate-900 dark:text-white">28.4%</div>
           <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">{t('ui_soil_climate_sample_card_optimal_root_zone')}</div>
         </div>
 
@@ -37,14 +37,14 @@ export const SoilClimateSampleCard: React.FC<{ cardClass: string }> = ({ cardCla
             <Thermometer className="w-3 h-3 text-amber-500" />
             <span>{t('ui_soil_climate_sample_card_topsoil_temp')}</span>
           </div>
-          <div className="text-sm font-bold text-slate-900 dark:text-white">22.8 °C</div>
+          <div className="text-sm font-medium text-slate-900 dark:text-white">22.8 °C</div>
         </div>
       </div>
 
       <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 space-y-1.5">
         <div className="flex justify-between text-xs">
           <span className="font-medium text-slate-600 dark:text-slate-300">{t('ui_soil_climate_sample_card_regional_soil_ph')}</span>
-          <span className="font-bold text-emerald-600 dark:text-emerald-400">{t('ui_soil_climate_sample_card_6_2_neutral_fertile')}</span>
+          <span className="font-medium text-emerald-600 dark:text-emerald-400">{t('ui_soil_climate_sample_card_6_2_neutral_fertile')}</span>
         </div>
         <div className="w-full bg-slate-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
           <div className="bg-emerald-500 h-full rounded-full" style={{ width: '62%' }} />

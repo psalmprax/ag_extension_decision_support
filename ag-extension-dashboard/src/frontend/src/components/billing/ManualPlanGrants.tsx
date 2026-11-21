@@ -41,8 +41,8 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
             <AlertCircle className="w-5 h-5 text-amber-700 dark:text-amber-400" />
           </div>
           <div>
-            <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {t('billing_admin_transactions') || 'Pending Mobile Money Queue'}
+            <h3 className="text-xl font-medium tracking-tight text-slate-900 dark:text-white">
+              {t('billing_admin_transactions') || 'Pending mobile money queue'}
             </h3>
             <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
               {t('ui_manual_plan_grants_manual_ussd_till_verification')}
@@ -56,7 +56,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
                 {['User', 'Method', 'TX ID', 'Amount', 'Plan', 'Actions'].map(h => (
                   <th
                     key={h}
-                    className="px-6 py-4 text-xxs font-bold text-slate-600 dark:text-white/60"
+                    className="px-6 py-4 text-xxs font-medium text-slate-600 dark:text-white/60"
                   >
                     {h}
                   </th>
@@ -70,19 +70,19 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
                     key={tx.id}
                     className="hover:bg-slate-100 dark:hover:bg-white/[0.02] transition-colors"
                   >
-                    <td className="px-6 py-4 text-xs font-bold text-slate-900 dark:text-white">
+                    <td className="px-6 py-4 text-xs font-medium text-slate-900 dark:text-white">
                       {tx.userEmail}
                     </td>
-                    <td className="px-6 py-4 text-xs font-black text-amber-700 dark:text-amber-400">
+                    <td className="px-6 py-4 text-xs font-medium text-amber-700 dark:text-amber-400">
                       {tx.method}
                     </td>
                     <td className="px-6 py-4 text-xs font-mono text-slate-700 dark:text-white/80">
                       {tx.transactionId}
                     </td>
-                    <td className="px-6 py-4 text-xs font-bold text-slate-900 dark:text-white">
+                    <td className="px-6 py-4 text-xs font-medium text-slate-900 dark:text-white">
                       {tx.amount} {tx.currency}
                     </td>
-                    <td className="px-6 py-4 text-xs text-slate-600 dark:text-white/60 font-bold">
+                    <td className="px-6 py-4 text-xs text-slate-600 dark:text-white/60 font-medium">
                       {tx.planId?.split('_')[1]}
                     </td>
                     <td className="px-6 py-4">
@@ -93,7 +93,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
                             billing.handleVerifyTransaction(tx.id);
                           }}
                           disabled={billing.actionLoading === `verify-${tx.id}`}
-                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xxs font-bold rounded-lg shadow-sm"
+                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xxs font-medium rounded-lg shadow-sm"
                         >
                           {t('billing_admin_verify') || 'Verify'}
                         </button>
@@ -102,7 +102,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
                             triggerHaptic('light');
                             billing.setSelectedTransactionId(tx.id);
                           }}
-                          className="px-3.5 py-1.5 bg-rose-600/80 hover:bg-rose-500 text-white text-xxs font-bold rounded-lg shadow-sm"
+                          className="px-3.5 py-1.5 bg-rose-600/80 hover:bg-rose-500 text-white text-xxs font-medium rounded-lg shadow-sm"
                         >
                           {t('billing_admin_reject') || 'Reject'}
                         </button>
@@ -114,7 +114,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-6 py-12 text-center text-xs text-slate-500 dark:text-white/40 font-semibold italic"
+                    className="px-6 py-12 text-center text-xs text-slate-500 dark:text-white/40 font-medium italic"
                   >
                     {t('billing_admin_no_pending') || 'No pending mobile money transactions'}
                   </td>
@@ -132,7 +132,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
             <Ticket className="w-5 h-5 text-slate-400" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
+            <h3 className="text-xl font-medium tracking-tight text-slate-900 dark:text-white">
               {t('billing_admin_vouchers') || 'AgriVoucher Minting Engine'}
             </h3>
             <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
@@ -197,7 +197,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
           disabled={billing.actionLoading === 'generate-vouchers'}
           className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-xl border border-slate-200 dark:border-white/10 transition-colors flex items-center justify-center gap-2"
         >
-          {t('billing_admin_generate_vouchers') || 'Mint Batch Vouchers'}
+          {t('billing_admin_generate_vouchers') || 'Mint batch vouchers'}
         </button>
       </section>
     </>

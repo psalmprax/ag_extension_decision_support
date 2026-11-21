@@ -187,7 +187,7 @@ export const FarmerRegistrationForm: React.FC = () => {
         <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
           <Lock className="w-6 h-6 text-amber-400" />
         </div>
-        <h2 className="text-xl font-bold tracking-tight text-white mb-2">{t('ui_farmer_registration_form_register_client')}</h2>
+        <h2 className="text-xl font-medium tracking-tight text-white mb-2">{t('ui_farmer_registration_form_register_client')}</h2>
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-medium mb-3">
           <Layers className="w-3.5 h-3.5" />
           <span>{t('ui_farmer_registration_form_interactive_preview_mode')}</span>
@@ -218,7 +218,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           <div className="flex items-center gap-4">
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">{t('ui_farmer_registration_form_register_client')}</h1>
+                <h1 className="text-xl sm:text-2xl font-medium tracking-tight text-white">{t('ui_farmer_registration_form_register_client')}</h1>
               </div>
               <p className="text-xs text-white/60 mt-0.5">
                 {t('ui_farmer_registration_form_enroll_smallholders_into_real_time_a')}
@@ -260,7 +260,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           <div className="backdrop-blur-xl bg-slate-900 border border-white/10 rounded-xl p-6 space-y-5 shadow-lg">
             <div className="flex items-center gap-2.5 pb-2 border-b border-white/5">
               <UserPlus className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-sm font-semibold text-white">{t('ui_farmer_registration_form_identity_communication_profile')}</h2>
+              <h2 className="text-sm font-medium text-white">{t('ui_farmer_registration_form_identity_communication_profile')}</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -375,7 +375,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           <div className="backdrop-blur-xl bg-slate-900 border border-white/10 rounded-xl p-6 space-y-5 shadow-sm">
             <div className="flex items-center gap-2.5 pb-2 border-b border-white/5">
               <Layers className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-sm font-semibold text-white">{t('ui_farmer_registration_form_agronomic_portfolio_parcel')}</h2>
+              <h2 className="text-sm font-medium text-white">{t('ui_farmer_registration_form_agronomic_portfolio_parcel')}</h2>
             </div>
 
             {/* Multi-Crop Tag Chips */}
@@ -433,7 +433,7 @@ export const FarmerRegistrationForm: React.FC = () => {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="block text-xs font-medium text-white/70">
-                  {t('farmer_register_farm_size') || 'Estimated Land Holding'}
+                  {t('farmer_register_farm_size') || 'Estimated land holding'}
                 </label>
                 <div className="flex items-center gap-1.5">
                   {['1.0', '2.5', '5.0', '10.0'].map(sz => (
@@ -474,7 +474,7 @@ export const FarmerRegistrationForm: React.FC = () => {
             <div className="flex items-center justify-between pb-2 border-b border-white/5">
               <div className="flex items-center gap-2.5">
                 <Compass className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
+                <h2 className="text-sm font-medium text-white flex items-center gap-1.5">
                   {t('ui_farmer_registration_form_geospatial_telemetry')}
                   <InfoPromptIcon
                     title="GPS & Earth Observation"
@@ -536,15 +536,15 @@ export const FarmerRegistrationForm: React.FC = () => {
                 <div className="grid grid-cols-3 gap-2 text-center text-xs">
                   <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
                     <div className="text-xxs text-white/40">{t('ui_farmer_registration_form_estimated_ph')}</div>
-                    <div className="font-semibold text-white mt-0.5 tabular-nums">{t('ui_farmer_registration_form_6_2_optimal')}</div>
+                    <div className="font-medium text-white mt-0.5 tabular-nums">{t('ui_farmer_registration_form_6_2_optimal')}</div>
                   </div>
                   <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
                     <div className="text-xxs text-white/40">{t('ui_farmer_registration_form_rainfall_risk')}</div>
-                    <div className="font-semibold text-emerald-400 mt-0.5 tabular-nums">{t('ui_farmer_registration_form_low_18mm')}</div>
+                    <div className="font-medium text-emerald-400 mt-0.5 tabular-nums">{t('ui_farmer_registration_form_low_18mm')}</div>
                   </div>
                   <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
                     <div className="text-xxs text-white/40">{t('ui_farmer_registration_form_solar_rad')}</div>
-                    <div className="font-semibold text-amber-300 mt-0.5 tabular-nums">21.4 MJ/m²</div>
+                    <div className="font-medium text-amber-300 mt-0.5 tabular-nums">21.4 MJ/m²</div>
                   </div>
                 </div>
               </div>
@@ -560,7 +560,7 @@ export const FarmerRegistrationForm: React.FC = () => {
             <div className="flex items-center justify-between pb-2 border-b border-white/5">
               <div className="flex items-center gap-2.5">
                 <Activity className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
+                <h2 className="text-sm font-medium text-white flex items-center gap-1.5">
                   {t('ui_farmer_registration_form_vital_score_baseline')}
                   <InfoPromptIcon
                     title="Vital Score Health Index"
@@ -625,7 +625,7 @@ export const FarmerRegistrationForm: React.FC = () => {
               className="flex-1 sm:flex-initial px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
             >
               <UserPlus className="w-4 h-4" />
-              <span>{isLoading ? 'Enrolling Client...' : 'Enroll Farmer Client'}</span>
+              <span>{isLoading ? 'Saving…' : 'Save farmer'}</span>
             </button>
           </div>
         </div>

@@ -68,21 +68,21 @@ const VARIANT_CONFIG: Record<
     icon: Info,
     iconClass: 'text-slate-500 dark:text-slate-400',
     borderClass: 'border-slate-500/20 dark:border-slate-400/25',
-    bgClass: 'bg-white/95 dark:bg-slate-900/95 shadow-slate-500/5',
+    bgClass: 'bg-white/95 dark:bg-slate-900/95',
     textClass: 'text-slate-700 dark:text-slate-200',
   },
   tip: {
     icon: Lightbulb,
     iconClass: 'text-emerald-600 dark:text-emerald-400',
     borderClass: 'border-emerald-500/20 dark:border-emerald-400/25',
-    bgClass: 'bg-white/95 dark:bg-slate-900/95 shadow-emerald-500/5',
+    bgClass: 'bg-white/95 dark:bg-slate-900/95',
     textClass: 'text-slate-700 dark:text-slate-200',
   },
   guidance: {
     icon: Compass,
     iconClass: 'text-slate-600 dark:text-slate-400',
     borderClass: 'border-slate-500/20 dark:border-slate-400/25',
-    bgClass: 'bg-white/95 dark:bg-slate-900/95 shadow-slate-500/5',
+    bgClass: 'bg-white/95 dark:bg-slate-900/95',
     textClass: 'text-slate-700 dark:text-slate-200',
   },
   neutral: {
@@ -125,18 +125,18 @@ const PromptHeader: React.FC<PromptHeaderProps> = ({
   return (
     <div className="flex items-center justify-between gap-2 mb-1">
       {title && (
-        <h5 className="font-semibold text-slate-900 dark:text-white text-xs tracking-tight">
+        <h5 className="font-medium text-slate-900 dark:text-white text-xs tracking-tight">
           {title}
         </h5>
       )}
       {requiredPlan && !isTierMet && (
-        <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-3xs font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30">
+        <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-3xs font-medium bg-amber-500/15 text-amber-500 border border-amber-500/30">
           <Zap className="w-2.5 h-2.5" />
           {requiredPlan.toUpperCase()} {t('ui_info_prompt_tier')}
         </span>
       )}
       {showActiveBadge && (
-        <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-3xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-3xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
           <Check className="w-2.5 h-2.5" />
           {planName}
         </span>
@@ -165,7 +165,7 @@ const PromptUpgradeFooter: React.FC<PromptUpgradeFooterProps> = ({
     <button
       type="button"
       onClick={onUpgradeClick}
-      className="inline-flex items-center gap-1 px-2.5 py-1 text-xxs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-all active:scale-95"
+      className="inline-flex items-center gap-1 px-2.5 py-1 text-xxs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-all active:scale-95"
     >
       <Zap className="w-2.5 h-2.5" />
       {upgradeLabel || `Upgrade to ${requiredPlan.toUpperCase()}`}
@@ -508,7 +508,7 @@ export const InlinePrompt: React.FC<InlinePromptProps> = ({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           {title && (
-            <h5 className="font-semibold text-slate-900 dark:text-white text-xs tracking-tight">
+            <h5 className="font-medium text-slate-900 dark:text-white text-xs tracking-tight">
               {title}
             </h5>
           )}
@@ -521,7 +521,7 @@ export const InlinePrompt: React.FC<InlinePromptProps> = ({
             />
           )}
           {requiredPlan && !isTierMet && (
-            <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-3xs font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30">
+            <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-3xs font-medium bg-amber-500/15 text-amber-500 border border-amber-500/30">
               <Zap className="w-2.5 h-2.5" />
               {requiredPlan.toUpperCase()} {t('ui_info_prompt_tier')}
             </span>
@@ -534,7 +534,7 @@ export const InlinePrompt: React.FC<InlinePromptProps> = ({
             <button
               type="button"
               onClick={handleUpgrade}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-xxs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-all active:scale-95"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-xxs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-all active:scale-95"
             >
               <Zap className="w-2.5 h-2.5" />
               {upgradeLabel || `Upgrade to ${requiredPlan.toUpperCase()} to unlock`}

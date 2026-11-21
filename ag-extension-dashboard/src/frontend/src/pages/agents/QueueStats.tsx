@@ -27,7 +27,7 @@ function QueueStatCard({
         <span>{label}</span>
       </div>
       <div
-        className={`text-xl font-semibold font-mono tabular-nums flex items-baseline gap-2 ${valueClass}`}
+        className={`text-xl font-medium font-mono tabular-nums flex items-baseline gap-2 ${valueClass}`}
       >
         {value}
         <span className="text-xs font-normal text-slate-500 dark:text-slate-400">{caption}</span>

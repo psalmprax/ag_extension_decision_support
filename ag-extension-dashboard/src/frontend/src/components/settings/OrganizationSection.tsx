@@ -73,7 +73,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
               <p className="text-sm text-gray-500">{t('ui_organization_section_loading_organization_settings')}</p>
             ) : (
               <>
-                <label className="block text-xs font-semibold text-gray-500">
+                <label className="block text-xs font-medium text-gray-500">
                   {t('ui_organization_section_organization_name')}
                   <input
                     value={organizationForm.name}
@@ -85,7 +85,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                   />
                 </label>
                 <div className="grid grid-cols-2 gap-3">
-                  <label className="block text-xs font-semibold text-gray-500">
+                  <label className="block text-xs font-medium text-gray-500">
                     {t('common_region')}
                     <input
                       value={organizationForm.region}
@@ -96,7 +96,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                       className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-white disabled:opacity-60"
                     />
                   </label>
-                  <label className="block text-xs font-semibold text-gray-500">
+                  <label className="block text-xs font-medium text-gray-500">
                     {t('ui_organization_section_currency')}
                     <select
                       value={organizationForm.currency}
@@ -114,7 +114,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                     </select>
                   </label>
                 </div>
-                <label className="block text-xs font-semibold text-gray-500">
+                <label className="block text-xs font-medium text-gray-500">
                   {t('ui_organization_section_default_language')}
                   <select
                     value={organizationForm.language}
@@ -134,7 +134,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                     type="button"
                     onClick={saveOrganization}
                     disabled={isOrganizationSaving}
-                    className="w-full rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                    className="w-full rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
                   >
                     {isOrganizationSaving ? 'Saving…' : 'Save organization settings'}
                   </button>
@@ -146,7 +146,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                       .then(() => toast.success('Offline knowledge pack downloaded'))
                       .catch(() => toast.error('Could not download knowledge pack'))
                   }
-                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200"
+                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
                   {t('ui_organization_section_download_offline_knowledge_pack')}
                 </button>

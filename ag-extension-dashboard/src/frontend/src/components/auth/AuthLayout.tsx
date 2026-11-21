@@ -69,7 +69,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ label, headline, body, w
             aria-hidden="true"
             className="absolute inset-0 w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0d1a14] via-[#0d1a14]/50 to-[#0d1a14]/30" />
+          <div data-scrim className="absolute inset-0 bg-gradient-to-t from-[#0d1a14] via-[#0d1a14]/50 to-[#0d1a14]/30" />
           <div className="relative flex items-center gap-2.5 p-7">
             <img src="/logo.png" alt="" className="w-7 h-7 object-contain" />
             <span className="text-base font-medium text-white">{t('app_title')}</span>

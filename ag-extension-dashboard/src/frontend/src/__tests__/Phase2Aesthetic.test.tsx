@@ -182,7 +182,7 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
     it('displays completion percentage and individual parameter chips', () => {
       render(<ProgressiveProfileChips parameters={mockParams} />);
 
-      expect(screen.getByText('Conversational Intake Profile')).toBeInTheDocument();
+      expect(screen.getByText('Conversational intake profile')).toBeInTheDocument();
       expect(screen.getByText('2/3 (67%)')).toBeInTheDocument();
       expect(screen.getByText('Farmer:')).toBeInTheDocument();
       expect(screen.getByText('Samuel Kiprop')).toBeInTheDocument();
@@ -236,7 +236,7 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
       fireEvent.click(screen.getByRole('button', { name: /AI agronomist/i }));
 
       // Verify progressive profile header
-      expect(screen.getByText('Conversational Intake Profile')).toBeInTheDocument();
+      expect(screen.getByText('Conversational intake profile')).toBeInTheDocument();
 
       // Switch to tele-call tab
       fireEvent.click(screen.getByRole('button', { name: /Tele-Call/i }));

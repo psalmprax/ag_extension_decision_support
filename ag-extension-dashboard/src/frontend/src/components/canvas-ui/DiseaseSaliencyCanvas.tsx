@@ -265,7 +265,7 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
           {hasLiveDetections && (
             <button
               onClick={() => setShowHeatmap(!showHeatmap)}
-              className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
                 showHeatmap
                   ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
@@ -313,13 +313,13 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
 
         {selectedZone && (
           <div className="absolute top-3 end-3 bg-gray-900/90 border border-white/10 backdrop-blur-md p-3 rounded-xl shadow-xl text-xs text-white max-w-xs animate-in fade-in">
-            <div className="flex items-center gap-1.5 text-rose-400 font-bold mb-1">
+            <div className="flex items-center gap-1.5 text-rose-400 font-medium mb-1">
               <AlertCircle className="w-4 h-4" />
               <span>{selectedZone.label}</span>
             </div>
             <div className="flex items-center justify-between text-xxs font-mono text-gray-300">
               <span>{t('ui_disease_saliency_canvas_confidence')} {(selectedZone.confidence * 100).toFixed(1)}%</span>
-              <span className=" text-amber-400 font-bold">{formatLabel(selectedZone.severity)}</span>
+              <span className=" text-amber-400 font-medium">{formatLabel(selectedZone.severity)}</span>
             </div>
           </div>
         )}

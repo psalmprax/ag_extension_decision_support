@@ -94,7 +94,7 @@ const NotificationItem: React.FC<{
                 e.stopPropagation();
                 notification.onAction?.();
               }}
-              className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-[10px] font-bold text-emerald-300 rounded-[3px] transition-all border border-emerald-500/40"
+              className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-[10px] font-medium text-emerald-300 rounded-[3px] transition-all border border-emerald-500/40"
             >
               <Undo className="w-2.5 h-2.5" />
               {notification.actionLabel}
@@ -115,7 +115,7 @@ const NotificationEmptyState: React.FC<{ t: (k: string) => string }> = ({ t }) =
       <Bell className="w-6 h-6" />
     </div>
     <div>
-      <p className="text-xs font-bold text-slate-300">
+      <p className="text-xs font-medium text-slate-300">
         {t('common_no_data') || 'No new notifications'}
       </p>
       <p className="text-[10px] font-mono text-slate-500 mt-1  ">
@@ -241,7 +241,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xs font-semibold tracking-wide text-white">
+                    <h2 className="text-xs font-medium text-white">
                       {t('nav_notifications') || 'Notifications'}
                     </h2>
                     <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-[3px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-mono font-medium">
@@ -289,7 +289,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                 <button
                   key={tabKey}
                   onClick={() => setFilter(tabKey)}
-                  className={`px-2.5 py-1 rounded-[3px] font-bold text-[10px] transition-all ${
+                  className={`px-2.5 py-1 rounded-[3px] font-medium text-[10px] transition-all ${
                     filter === tabKey
                       ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                       : 'text-slate-400 hover:text-slate-200'
@@ -326,7 +326,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                   onClose();
                   useAppStore.getState().setActiveTab('analytics');
                 }}
-                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold rounded border border-slate-800 transition-all flex items-center justify-center gap-2"
+                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-medium rounded border border-slate-800 transition-all flex items-center justify-center gap-2"
               >
                 <span>{t('notifications_view_history') || 'View activity telemetry'} {t('ui_notification_panel_text')}</span>
               </button>

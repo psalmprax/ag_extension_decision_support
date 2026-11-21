@@ -253,7 +253,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                 <Target className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                <h2 className="text-xl font-medium tracking-tight text-white flex items-center gap-2">
                   {t('ui_goal_mode_campaign_modal_autonomous_agronomy_campaigns_goal_m')}
                   <span className="text-xxs px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30">
                     {t('ui_goal_mode_campaign_modal_agent_os')}
@@ -276,7 +276,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
           <div className="flex border-b border-slate-800 bg-slate-950/40 px-6 gap-2">
             <button
               onClick={() => setActiveTab('launcher')}
-              className={`py-3.5 px-4 text-xs font-bold transition-all border-b-2 flex items-center gap-2 ${
+              className={`py-3.5 px-4 text-xs font-medium transition-all border-b-2 flex items-center gap-2 ${
                 activeTab === 'launcher'
                   ? 'border-amber-500 text-amber-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -288,7 +288,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
 
             <button
               onClick={() => setActiveTab('skills')}
-              className={`py-3.5 px-4 text-xs font-bold transition-all border-b-2 flex items-center gap-2 ${
+              className={`py-3.5 px-4 text-xs font-medium transition-all border-b-2 flex items-center gap-2 ${
                 activeTab === 'skills'
                   ? 'border-amber-500 text-amber-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -300,7 +300,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
 
             <button
               onClick={() => setActiveTab('history')}
-              className={`py-3.5 px-4 text-xs font-bold transition-all border-b-2 flex items-center gap-2 ${
+              className={`py-3.5 px-4 text-xs font-medium transition-all border-b-2 flex items-center gap-2 ${
                 activeTab === 'history'
                   ? 'border-amber-500 text-amber-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -329,7 +329,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                         onClick={() => handleApplyPreset(preset)}
                         className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800 hover:border-amber-500/40 text-start transition-all group"
                       >
-                        <div className="font-bold text-xs text-white group-hover:text-amber-400 flex items-center justify-between">
+                        <div className="font-medium text-xs text-white group-hover:text-amber-400 flex items-center justify-between">
                           <span>{preset.title}</span>
                           <span className="text-xxs px-2 py-0.5 rounded-md bg-slate-900 text-slate-400">
                             {preset.region}
@@ -344,7 +344,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                 {/* Objective Input Form */}
                 <div className="space-y-4 bg-slate-950 p-4 rounded-xl border border-slate-800">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-300 mb-1.5">
                       {t('ui_goal_mode_campaign_modal_autonomous_campaign_objective_goal_p')}
                     </label>
                     <textarea
@@ -358,7 +358,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">{t('ui_goal_mode_campaign_modal_target_region')}</label>
+                      <label className="block text-xs font-medium text-slate-300 mb-1">{t('ui_goal_mode_campaign_modal_target_region')}</label>
                       <select
                         value={targetRegion}
                         onChange={e => setTargetRegion(e.target.value)}
@@ -375,7 +375,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">{t('ui_goal_mode_campaign_modal_target_crop')}</label>
+                      <label className="block text-xs font-medium text-slate-300 mb-1">{t('ui_goal_mode_campaign_modal_target_crop')}</label>
                       <select
                         value={targetCrop}
                         onChange={e => setTargetCrop(e.target.value)}
@@ -392,7 +392,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">{t('ui_goal_mode_campaign_modal_dispatch_channels')}</label>
+                      <label className="block text-xs font-medium text-slate-300 mb-1">{t('ui_goal_mode_campaign_modal_dispatch_channels')}</label>
                       <select
                         value={channel}
                         onChange={e => setChannel(e.target.value as 'all' | 'sms' | 'whatsapp' | 'telegram')}
@@ -427,7 +427,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                       ) : (
                         <Zap className="w-4 h-4" />
                       )}
-                      <span>{isExecuting ? 'Agent Executing...' : 'Launch Autonomous Campaign'}</span>
+                      <span>{isExecuting ? 'Agent Executing...' : 'Launch autonomous campaign'}</span>
                     </button>
                   </div>
                 </div>
@@ -438,7 +438,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <div className="flex items-center gap-2">
                         <div className={`w-2.5 h-2.5 rounded-full ${isExecuting ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`}></div>
-                        <span className="text-xs font-bold text-slate-200">{t('ui_goal_mode_campaign_modal_autonomous_agent_execution_trace')}</span>
+                        <span className="text-xs font-medium text-slate-200">{t('ui_goal_mode_campaign_modal_autonomous_agent_execution_trace')}</span>
                       </div>
                       {campaignResultSummary && (
                         <span className="text-xxs px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
@@ -452,7 +452,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                         <div key={idx} className="flex items-start gap-2.5 p-2 rounded-lg bg-slate-900/60 border border-slate-800">
                           <CheckCircle2 className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
                           <div className="flex-1">
-                            <div className="font-bold text-slate-200 flex items-center justify-between">
+                            <div className="font-medium text-slate-200 flex items-center justify-between">
                               <span>{t.step}</span>
                               <span className="text-xxs text-slate-500">{new Date(t.timestamp).toLocaleTimeString()}</span>
                             </div>
@@ -481,27 +481,27 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                       <Award className="w-5 h-5" />
                     </div>
                     <div>
-                      <div className="font-bold text-sm text-white">{t('ui_goal_mode_campaign_modal_closed_loop_agronomy_skill_cards')}</div>
+                      <div className="font-medium text-sm text-white">{t('ui_goal_mode_campaign_modal_closed_loop_agronomy_skill_cards')}</div>
                       <div className="text-xs text-slate-400">
                         {t('ui_goal_mode_campaign_modal_these_localized_intelligence_cards_a')}
                       </div>
                     </div>
                   </div>
-                  <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
+                  <span className="text-xs font-mono font-medium text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
                     {t('ui_goal_mode_campaign_modal_active_skills', { length: skills.length })}
                   </span>
                 </div>
 
                 {/* Synthesis Form */}
                 <form onSubmit={handleSynthesizeSkill} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
-                  <div className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                  <div className="text-xs font-medium text-amber-400 flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5" />
                     <span>{t('ui_goal_mode_campaign_modal_synthesize_new_regional_skill_card')}</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-xxs font-semibold text-slate-400 mb-1">{t('ui_goal_mode_campaign_modal_region_county')}</label>
+                      <label className="block text-xxs font-medium text-slate-400 mb-1">{t('ui_goal_mode_campaign_modal_region_county')}</label>
                       <input
                         type="text"
                         value={synthForm.region}
@@ -511,7 +511,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                       />
                     </div>
                     <div>
-                      <label className="block text-xxs font-semibold text-slate-400 mb-1">{t('ui_goal_mode_campaign_modal_crop')}</label>
+                      <label className="block text-xxs font-medium text-slate-400 mb-1">{t('ui_goal_mode_campaign_modal_crop')}</label>
                       <input
                         type="text"
                         value={synthForm.crop}
@@ -521,7 +521,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                       />
                     </div>
                     <div>
-                      <label className="block text-xxs font-semibold text-slate-400 mb-1">{t('ui_goal_mode_campaign_modal_topic_pest_disease')}</label>
+                      <label className="block text-xxs font-medium text-slate-400 mb-1">{t('ui_goal_mode_campaign_modal_topic_pest_disease')}</label>
                       <input
                         type="text"
                         value={synthForm.topic}
@@ -534,7 +534,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                   </div>
 
                   <div>
-                    <label className="block text-xxs font-semibold text-slate-400 mb-1">{t('ui_goal_mode_campaign_modal_field_observations_findings')}</label>
+                    <label className="block text-xxs font-medium text-slate-400 mb-1">{t('ui_goal_mode_campaign_modal_field_observations_findings')}</label>
                     <textarea
                       rows={2}
                       value={synthForm.findings}
@@ -546,7 +546,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                   </div>
 
                   <div>
-                    <label className="block text-xxs font-semibold text-slate-400 mb-1">{t('ui_goal_mode_campaign_modal_officer_recommendations_verified_tre')}</label>
+                    <label className="block text-xxs font-medium text-slate-400 mb-1">{t('ui_goal_mode_campaign_modal_officer_recommendations_verified_tre')}</label>
                     <textarea
                       rows={2}
                       value={synthForm.officerNotes}
@@ -579,7 +579,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                     skills.map(skill => (
                       <div key={skill.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold text-xs text-white">{skill.title}</span>
+                          <span className="font-medium text-xs text-white">{skill.title}</span>
                           <span className="text-xxs px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 font-mono">
                             {Math.round(skill.confidence_score * 100)}{t('ui_goal_mode_campaign_modal_conf')}
                           </span>
@@ -624,7 +624,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                   history.map(item => (
                     <div key={item.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
                       <div className="flex items-center justify-between">
-                        <div className="font-bold text-xs text-white flex items-center gap-2">
+                        <div className="font-medium text-xs text-white flex items-center gap-2">
                           <Target className="w-4 h-4 text-amber-400" />
                           <span>{item.goal_prompt}</span>
                         </div>
@@ -635,15 +635,15 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
 
                       <div className="grid grid-cols-3 gap-2 text-center text-xs">
                         <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                          <div className="text-amber-400 font-bold">{item.affected_farmers_count}</div>
+                          <div className="text-amber-400 font-medium">{item.affected_farmers_count}</div>
                           <div className="text-xxs text-slate-400">{t('ui_goal_mode_campaign_modal_farmers_targeted')}</div>
                         </div>
                         <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                          <div className="text-emerald-400 font-bold">{item.dispatched_messages_count}</div>
+                          <div className="text-emerald-400 font-medium">{item.dispatched_messages_count}</div>
                           <div className="text-xxs text-slate-400">{t('ui_goal_mode_campaign_modal_alerts_sent')}</div>
                         </div>
                         <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                          <div className="text-slate-400 font-bold">{item.scheduled_visits_count}</div>
+                          <div className="text-slate-400 font-medium">{item.scheduled_visits_count}</div>
                           <div className="text-xxs text-slate-400">{t('ui_goal_mode_campaign_modal_visits_queued')}</div>
                         </div>
                       </div>

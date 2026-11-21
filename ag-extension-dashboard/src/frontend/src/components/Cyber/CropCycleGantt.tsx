@@ -76,7 +76,7 @@ const CropCycleGantt: React.FC<CropCycleGanttProps> = ({ items, visits = [], far
   return (
     <div className="glass-premium p-8 rounded-xl border-white/5 h-full">
       <div className="flex justify-between items-center mb-8">
-        <h3 className="text-xs font-black text-primary-300/40  ">
+        <h3 className="text-xs font-medium text-primary-300/40  ">
           {t('ui_crop_cycle_gantt_crop_cycle_timeline')}
         </h3>
         <div className="flex gap-1">
@@ -89,7 +89,7 @@ const CropCycleGantt: React.FC<CropCycleGanttProps> = ({ items, visits = [], far
         {displayItems.length > 0 ? (
           displayItems.map(item => (
             <div key={item.id} className="space-y-2">
-              <div className="flex justify-between text-xxs font-bold text-primary-300/30">
+              <div className="flex justify-between text-xxs font-medium text-primary-300/30">
                 <span>{item.label}</span>
                 <span>{item.value}</span>
               </div>
@@ -97,13 +97,13 @@ const CropCycleGantt: React.FC<CropCycleGanttProps> = ({ items, visits = [], far
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${item.percent}%` }}
-                  className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 shadow-[0_0_15px_var(--color-outline)]"
+                  className="h-full bg-primary-500"
                 />
               </div>
             </div>
           ))
         ) : (
-          <div className="text-xxs font-bold text-primary-300/20 text-center py-10">
+          <div className="text-xxs font-medium text-primary-300/20 text-center py-10">
             {t('ui_crop_cycle_gantt_no_active_cycles_found')}
           </div>
         )}

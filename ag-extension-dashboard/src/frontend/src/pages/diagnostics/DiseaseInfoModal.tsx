@@ -35,7 +35,7 @@ export function DiseaseInfoModal({
                 <span className="text-[10px] font-mono text-emerald-400 font-medium">
                   {t('ui_disease_info_modal_pathology_protocol_dossier')}
                 </span>
-                <h3 className="text-sm font-semibold text-white">
+                <h3 className="text-sm font-medium text-white">
                   {selectedDisease}
                 </h3>
               </div>
@@ -74,7 +74,7 @@ export function DiseaseInfoModal({
                       key={index}
                       className="p-2 rounded-[3px] bg-slate-950 border border-slate-800 text-xs text-slate-300 flex items-start gap-1.5"
                     >
-                      <span className="text-emerald-400 font-bold">•</span>
+                      <span className="text-emerald-400 font-medium">•</span>
                       <span>{symptom}</span>
                     </div>
                   ))}

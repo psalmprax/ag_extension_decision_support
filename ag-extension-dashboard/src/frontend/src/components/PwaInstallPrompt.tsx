@@ -110,7 +110,7 @@ export const PwaInstallPrompt: React.FC = () => {
         className="fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom))] start-3 end-auto max-w-[340px] sm:max-w-md md:bottom-6 md:start-6 md:end-auto z-40 pointer-events-auto"
       >
         <div
-          className={`p-4 bg-slate-900/95 dark:bg-slate-950/95 text-white border border-emerald-500/30 backdrop-blur-xl shadow-2xl shadow-emerald-950/50 ${radiusClass}`}
+          className={`p-4 bg-slate-900/95 dark:bg-slate-950/95 text-white border border-emerald-500/30 backdrop-blur-xl shadow-2xl ${radiusClass}`}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -118,9 +118,9 @@ export const PwaInstallPrompt: React.FC = () => {
                 <img src="/logo.png" alt="GPExts" className="w-7 h-7 object-contain rounded-md" />
               </div>
               <div>
-                <h4 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+                <h4 className="text-sm font-medium tracking-tight text-white flex items-center gap-1.5">
                   {t('ui_pwa_install_prompt_install_gpexts_app')}
-                  <span className="px-1.5 py-0.5 rounded text-xs font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                     {t('ui_pwa_install_prompt_mobile')}
                   </span>
                 </h4>
@@ -154,12 +154,12 @@ export const PwaInstallPrompt: React.FC = () => {
           {/* iOS Instructions Modal/Accordion */}
           {showIOSInstructions && isIOS && (
             <div className="mb-3 p-3 bg-white/5 border border-white/10 rounded-xl text-xs space-y-2 text-slate-200">
-              <div className="font-bold text-emerald-400 flex items-center gap-1.5">
+              <div className="font-medium text-emerald-400 flex items-center gap-1.5">
                 <Smartphone className="w-3.5 h-3.5" />
                 {t('ui_pwa_install_prompt_how_to_install_on_ios_safari')}
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center font-bold text-xxs shrink-0">
+                <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center font-medium text-xxs shrink-0">
                   1
                 </span>
                 <span>
@@ -167,12 +167,12 @@ export const PwaInstallPrompt: React.FC = () => {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center font-bold text-xxs shrink-0">
+                <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center font-medium text-xxs shrink-0">
                   2
                 </span>
                 <span>
                   {t('ui_pwa_install_prompt_scroll_down_and_tap')}{' '}
-                  <span className="font-semibold text-emerald-400">
+                  <span className="font-medium text-emerald-400">
                     <PlusSquare className="w-3.5 h-3.5 inline mx-1" /> {t('ui_pwa_install_prompt_add_to_home_screen')}
                   </span>
                   .
@@ -185,14 +185,14 @@ export const PwaInstallPrompt: React.FC = () => {
           <div className="flex items-center gap-2 mt-2">
             <button
               onClick={handleInstallClick}
-              className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>{isIOS ? 'View Install Steps' : 'Install to Home Screen'}</span>
+              <span>{isIOS ? 'View install steps' : 'Install to home screen'}</span>
             </button>
             <button
               onClick={handleDismiss}
-              className="py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 text-xs font-semibold transition-all"
+              className="py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 text-xs font-medium transition-all"
             >
               {t('ui_pwa_install_prompt_not_now')}
             </button>

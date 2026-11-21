@@ -252,11 +252,11 @@ export function FarmerMap({
               <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-900/30 flex items-center justify-center text-slate-600 dark:text-slate-400 mb-2">
                 <Crosshair className="w-5 h-5" />
               </div>
-              <h4 className="font-bold text-sm text-gray-900 dark:text-white">{t('ui_farmer_map_your_location')}</h4>
+              <h4 className="font-medium text-sm text-gray-900 dark:text-white">{t('ui_farmer_map_your_location')}</h4>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {t('ui_farmer_map_extension_officer_active_gps_node')}
               </p>
-              <span className="text-xxs text-slate-500 font-semibold mt-2 px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-950/40">
+              <span className="text-xxs text-slate-500 font-medium mt-2 px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-950/40">
                 {t('ui_farmer_map_lat')} {currentUserLocation[0].toFixed(4)}{t('ui_farmer_map_lng')} {currentUserLocation[1].toFixed(4)}
               </span>
             </div>
@@ -295,7 +295,7 @@ export function FarmerMap({
                     <span className="text-xxs font-mono opacity-80">ID: {farmer.id}</span>
                   </div>
                   <div className="flex items-center justify-between mt-1">
-                    <h3 className="text-base font-black tracking-tight">{farmer.name}</h3>
+                    <h3 className="text-base font-medium tracking-tight">{farmer.name}</h3>
                     <AudioReaderButton
                       text={`Mkulima ${farmer.name}, eneo la ${farmer.region}. Zao kuu: ${farmer.crop}. Ukubwa wa shamba: hekta ${farmer.size}. Mavuno yanayokadiriwa: kilo ${farmer.yield || 0}.`}
                       size="xs"
@@ -310,7 +310,7 @@ export function FarmerMap({
                   <div className="grid grid-cols-2 gap-2 text-xxs">
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
                       <div className="text-slate-500">{t('ui_farmer_map_farm_area')}</div>
-                      <div className="text-sm font-black text-slate-800 dark:text-white mt-0.5">{units.area(farmer.size)}</div>
+                      <div className="text-sm font-medium text-slate-800 dark:text-white mt-0.5">{units.area(farmer.size)}</div>
                     </div>
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
                       <div className="text-slate-500 flex items-center gap-1">
@@ -322,7 +322,7 @@ export function FarmerMap({
                           ariaLabel="About estimated yield"
                         />
                       </div>
-                      <div className="text-sm font-black text-slate-800 dark:text-white mt-0.5">{farmer.yield || 0} kg</div>
+                      <div className="text-sm font-medium text-slate-800 dark:text-white mt-0.5">{farmer.yield || 0} kg</div>
                     </div>
                   </div>
 
@@ -331,7 +331,7 @@ export function FarmerMap({
                       canCall ? (
                         <button
                           onClick={() => handleCall(farmer.phone, farmer.name)}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-white rounded-xl text-xs font-bold transition-all shadow-md bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20 active:scale-95"
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-white rounded-xl text-xs font-medium transition-all shadow-md bg-emerald-500 hover:bg-emerald-600 active:scale-95"
                           title={`Call ${farmer.name}`}
                           aria-label={`Call ${farmer.name}`}
                         >
@@ -349,7 +349,7 @@ export function FarmerMap({
                           <button
                             type="button"
                             onClick={() => handleCall(farmer.phone, farmer.name)}
-                            className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-white rounded-xl text-xs font-bold transition-all bg-slate-400 dark:bg-slate-700 opacity-60 cursor-not-allowed"
+                            className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-white rounded-xl text-xs font-medium transition-all bg-slate-400 dark:bg-slate-700 opacity-60 cursor-not-allowed"
                             aria-label={`Call ${farmer.name}`}
                           >
                             <Phone className="w-3.5 h-3.5" />
@@ -362,7 +362,7 @@ export function FarmerMap({
                     {canChat ? (
                       <button
                         onClick={() => handleChatClick(farmer)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-95"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-medium transition-all bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-95"
                         title={`Chat with ${farmer.name}`}
                         aria-label={`Chat with ${farmer.name}`}
                       >
@@ -380,7 +380,7 @@ export function FarmerMap({
                         <button
                           type="button"
                           onClick={() => handleChatClick(farmer)}
-                          className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-400 opacity-60 cursor-not-allowed"
+                          className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-medium transition-all bg-slate-100 dark:bg-slate-800 text-slate-400 opacity-60 cursor-not-allowed"
                           aria-label={`Chat with ${farmer.name}`}
                         >
                           <MessageSquare className="w-3.5 h-3.5" />

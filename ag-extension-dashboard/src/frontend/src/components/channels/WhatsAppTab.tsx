@@ -45,7 +45,7 @@ export const WhatsAppTab: React.FC<WhatsAppTabProps> = ({
             <MessageSquare className="w-5 h-5" />
           </div>
           <div>
-            <div className="font-bold text-sm text-white">{t('ui_whats_app_tab_meta_whatsapp_cloud_api_twilio')}</div>
+            <div className="font-medium text-sm text-white">{t('ui_whats_app_tab_meta_whatsapp_cloud_api_twilio')}</div>
             <div className="text-xs text-slate-400">
               {t('ui_whats_app_tab_supports_rich_2_way_chats_crop_sympt')}
             </div>
@@ -64,7 +64,7 @@ export const WhatsAppTab: React.FC<WhatsAppTabProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">{t('ui_whats_app_tab_whatsapp_gateway_provider')}</label>
+          <label className="block text-xs font-medium text-slate-300 mb-1.5">{t('ui_whats_app_tab_whatsapp_gateway_provider')}</label>
           <select
             value={whatsappForm.provider}
             onChange={e => setWhatsappForm(prev => ({ ...prev, provider: e.target.value }))}
@@ -76,7 +76,7 @@ export const WhatsAppTab: React.FC<WhatsAppTabProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">{t('ui_whats_app_tab_business_phone_number_id')}</label>
+          <label className="block text-xs font-medium text-slate-300 mb-1.5">{t('ui_whats_app_tab_business_phone_number_id')}</label>
           <input
             type="text"
             value={whatsappForm.metaPhoneNumberId}
@@ -87,7 +87,7 @@ export const WhatsAppTab: React.FC<WhatsAppTabProps> = ({
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">{t('ui_whats_app_tab_system_user_access_token')}</label>
+          <label className="block text-xs font-medium text-slate-300 mb-1.5">{t('ui_whats_app_tab_system_user_access_token')}</label>
           <input
             type="password"
             value={whatsappForm.metaAccessToken}
@@ -100,7 +100,7 @@ export const WhatsAppTab: React.FC<WhatsAppTabProps> = ({
 
       <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-300">{t('ui_whats_app_tab_meta_webhook_callback_url')}</span>
+          <span className="text-xs font-medium text-slate-300">{t('ui_whats_app_tab_meta_webhook_callback_url')}</span>
           <button
             onClick={() => copyToClipboard(webhookUrl, 'wa_webhook')}
             className="text-xs flex items-center gap-1 text-emerald-400 hover:text-emerald-300"
@@ -111,13 +111,13 @@ export const WhatsAppTab: React.FC<WhatsAppTabProps> = ({
         </div>
         <code className="text-xs text-emerald-400 font-mono block select-all break-all">{webhookUrl}</code>
         <div className="text-xxs text-slate-400 pt-1">
-          {t('ui_whats_app_tab_verify_token')} <span className="font-mono text-emerald-300 font-bold">{whatsappForm.webhookVerifyToken || '(set in environment)'}</span>
+          {t('ui_whats_app_tab_verify_token')} <span className="font-mono text-emerald-300 font-medium">{whatsappForm.webhookVerifyToken || '(set in environment)'}</span>
         </div>
       </div>
 
       <div className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/40 flex items-center justify-between">
         <div>
-          <div className="text-xs font-bold text-slate-200">{t('ui_whats_app_tab_1_click_client_onboarding_link')}</div>
+          <div className="text-xs font-medium text-slate-200">{t('ui_whats_app_tab_1_click_client_onboarding_link')}</div>
           <div className="text-xxs text-slate-400">
             {t('ui_whats_app_tab_share_this_direct_link_with_farmers')}
           </div>
@@ -126,7 +126,7 @@ export const WhatsAppTab: React.FC<WhatsAppTabProps> = ({
           href={`https://wa.me/${whatsappForm.phoneNumber.replace('+', '')}?text=HABARI`}
           target="_blank"
           rel="noreferrer"
-          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all"
+          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium flex items-center gap-1.5 transition-all"
         >
           <span>{t('ui_whats_app_tab_test_on_whatsapp')}</span>
           <ExternalLink className="w-3.5 h-3.5" />
@@ -137,7 +137,7 @@ export const WhatsAppTab: React.FC<WhatsAppTabProps> = ({
         <button
           onClick={handleSaveWhatsApp}
           disabled={isSaving}
-          className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/30"
+          className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium flex items-center gap-2 transition-all shadow-lg"
         >
           {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
           <span>{t('ui_whats_app_tab_save_whatsapp_config')}</span>

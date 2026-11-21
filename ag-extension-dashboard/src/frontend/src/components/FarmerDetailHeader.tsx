@@ -53,8 +53,7 @@ export const FarmerDetailHeader: React.FC<FarmerDetailHeaderProps> = ({
   return (
     <div className="relative h-60 flex-shrink-0 bg-slate-950 border-b border-emerald-500/30 overflow-hidden" onContextMenu={handleContextMenu}>
       {/* Background Neon Grid / Ambient Glow */}
-      <div className="absolute inset-0 bg-gradient-to-b from-emerald-950/30 via-slate-950/80 to-slate-950" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),rgba(255,255,255,0))]" />
+      <div className="absolute inset-0 bg-slate-950/80" />
 
       {/* Top Action Bar */}
       <div className="absolute top-4 end-4 flex items-center gap-1.5 z-20">
@@ -103,11 +102,11 @@ export const FarmerDetailHeader: React.FC<FarmerDetailHeaderProps> = ({
       </div>
 
       {/* Main Profile Info */}
-      <div className="absolute bottom-0 start-0 end-0 p-6 pt-12 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent">
+      <div data-scrim className="absolute bottom-0 start-0 end-0 p-6 pt-12 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent">
         <div className="flex items-end gap-5">
           {/* Avatar Box */}
           <div className="w-20 h-20 rounded-[4px] p-0.5 bg-slate-800 border border-white/10 shrink-0">
-            <div className="w-full h-full rounded-[3px] flex items-center justify-center font-semibold text-xl bg-slate-900 text-emerald-400 border border-emerald-500/30">
+            <div className="w-full h-full rounded-[3px] flex items-center justify-center font-medium text-xl bg-slate-900 text-emerald-400 border border-emerald-500/30">
               {farmer.firstName?.[0]}
               {farmer.lastName?.[0]}
             </div>
@@ -120,7 +119,7 @@ export const FarmerDetailHeader: React.FC<FarmerDetailHeaderProps> = ({
                 {t('ui_farmer_detail_header_smallholder_profile')}
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-tight leading-tight truncate">
+            <h2 className="text-xl sm:text-2xl font-medium text-white tracking-tight leading-tight truncate">
               {farmer.firstName} {farmer.lastName}
             </h2>
 

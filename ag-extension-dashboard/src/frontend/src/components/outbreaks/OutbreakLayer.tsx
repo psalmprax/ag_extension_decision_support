@@ -65,7 +65,7 @@ export function OutbreakLayer() {
         });
       }}
       aria-pressed={enabled}
-      className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold rounded-xl transition-all ${
+      className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-medium rounded-xl transition-all ${
         enabled ? 'bg-red-500/20 text-red-300 border border-red-500/40' : 'text-white/60 hover:text-white hover:bg-white/5'
       }`}
     >
@@ -101,7 +101,7 @@ export function OutbreakLayer() {
                   <Popup>
                     <div className="text-xs space-y-1.5 min-w-[200px]">
                       <div>
-                        <p className="font-bold capitalize text-slate-100">
+                        <p className="font-medium capitalize text-slate-100">
                           {c.diseaseLabel.replace(/_/g, ' ')} — {c.crop}
                         </p>
                         <p className="text-slate-300 text-[11px]">
@@ -117,7 +117,7 @@ export function OutbreakLayer() {
                           type="button"
                           disabled={isCalculating}
                           onClick={() => handleTogglePlume(c)}
-                          className={`w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          className={`w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                             isPlumeActive
                               ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
                               : 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/30'

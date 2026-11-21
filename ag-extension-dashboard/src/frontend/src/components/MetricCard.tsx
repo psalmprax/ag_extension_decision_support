@@ -27,13 +27,13 @@ export const MetricCard = ({
   >
     <div className="flex items-start justify-between">
       <div>
-        <p className="text-xs font-bold text-gray-500 dark:text-gray-400  ">
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400  ">
           {title}
         </p>
-        <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
+        <p className="text-3xl font-medium text-gray-900 dark:text-white mt-1">{value}</p>
         {change !== undefined && (
           <div
-            className={`flex items-center gap-1 text-xs font-bold mt-2 ${change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
+            className={`flex items-center gap-1 text-xs font-medium mt-2 ${change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
           >
             <TrendingUp className="w-3 h-3" />
             <span>
