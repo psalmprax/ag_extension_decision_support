@@ -348,7 +348,7 @@ function Telemetry() {
                   </p>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-end">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {new Date(event.timestamp).toLocaleString()}
                 </p>

@@ -15,15 +15,25 @@ import { UsdaMarketService } from '@/services/usdaMarketService';
 import { FEWS_COUNTRIES, getRetailSnapshot } from '@/services/fewsnetService';
 import { WFP_COUNTRIES, getWfpSnapshot } from '@/services/wfpService';
 import type { MarketPrice } from '@/services/marketPriceService';
+import { findCountry } from '@/shared-api/countries';
 import { safeError } from '@/utils/safeResponse';
+import { requireFarmerAccess } from '@/services/access/farmerScope';
+import { defaultCountryName } from '@/services/country/phone';
+import { countryOfUser } from '@/services/country/countryContext';
 
 const router = Router();
+
+/** The signed-in person's country, else the deployment default, for requests that name no place. */
+async function requesterCountry(req: Request): Promise<string> {
+    const userId = (req as Request & { user?: { userId?: string } }).user?.userId;
+    return (userId ? await countryOfUser(userId) : null) ?? defaultCountryName();
+}
 
 // Apply authentication to all external routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 // Get priority score for a farmer — access-controlled
-router.get('/priority/:farmerId', async (req: Request, res: Response) => {
+router.get('/priority/:farmerId', requireFarmerAccess(), async (req: Request, res: Response) => {
     try {
         const { farmerId } = req.params;
         const user = req.user as { userId?: string; role?: string } | undefined;
@@ -84,7 +94,7 @@ router.get('/ndvi-timeseries', validate(soilDataQuerySchema), async (req: Reques
 router.get('/usda/:crop', async (req: Request, res: Response) => {
     try {
         const crop = (req.params.crop || '').substring(0, 60);
-        const country = (req.query.country as string || 'Kenya').substring(0, 60);
+        const country = ((req.query.country as string) || (await requesterCountry(req))).substring(0, 60);
         const [countryData, worldBenchmark] = await Promise.all([
             UsdaMarketService.getCommodityData(country, crop),
             UsdaMarketService.getWorldBenchmark(crop),
@@ -108,8 +118,9 @@ router.get('/usda/:crop', async (req: Request, res: Response) => {
 // Get weather by location
 router.get('/weather/:location?', async (req: Request, res: Response) => {
     try {
-        const rawLocation = req.params.location || req.query.location as string || 'Kenya';
-        const location = rawLocation.substring(0, 200).replace(/[<>"'`;${}()|&]/g, '').trim() || 'Kenya';
+        const fallback = await requesterCountry(req);
+        const rawLocation = req.params.location || req.query.location as string || fallback;
+        const location = rawLocation.substring(0, 200).replace(/[<>"'`;${}()|&]/g, '').trim() || fallback;
         const weather = await WeatherService.getByLocation(location);
         res.json({ success: true, data: weather });
     } catch (error) {
@@ -123,7 +134,7 @@ router.get('/weather/:location?', async (req: Request, res: Response) => {
 // Get disease alerts
 router.get('/alerts', async (req: Request, res: Response) => {
     try {
-        const region = req.query.region as string || 'Kenya';
+        const region = req.query.region as string || await requesterCountry(req);
         const crop = req.query.crop as string;
         const alerts = await FAOService.getDiseaseAlerts(region, crop);
         res.json({ success: true, data: alerts });
@@ -133,9 +144,10 @@ router.get('/alerts', async (req: Request, res: Response) => {
     }
 });
 
-router.get('/map', async (_req: Request, res: Response) => {
+router.get('/map', async (req: AuthRequest, res: Response) => {
     try {
-        const mapData = await getMapData();
+        if (!req.user) return res.status(401).json({ success: false, error: 'Authentication required' });
+        const mapData = await getMapData(req.user);
         res.json({ success: true, data: mapData });
     } catch (_error) {
         safeError(res, 500, 'Failed to fetch map data');
@@ -146,6 +158,7 @@ router.get('/map', async (_req: Request, res: Response) => {
 router.get('/prices/history', async (req: AuthRequest, res: Response) => {
     try {
         const areaCode = await resolveUserAreaCode(req.user?.userId);
+        if (!areaCode) return res.json({ success: true, data: [], areaCode: null });
         const days = Math.min(Math.max(parseInt(req.query.days as string, 10) || 30, 7), 90);
         const history = await getPriceHistory(areaCode, days);
         res.json({ success: true, data: history, areaCode });
@@ -227,12 +240,8 @@ async function resolveRetailCountry(req: AuthRequest): Promise<string | null> {
     // Only countries with verified-live series. Anything else (e.g. Ghana,
     // stale on both sources) honestly returns empty — never another
     // country's prices.
-    const userCountry = (await getUserCountry(req.user?.userId)).toLowerCase();
-    if (userCountry.includes('nigeria')) return 'NG';
-    if (userCountry.includes('kenya')) return 'KE';
-    if (userCountry.includes('uganda')) return 'UG';
-    if (userCountry.includes('ghana')) return 'GH';
-    return null;
+    const iso = findCountry(await getUserCountry(req.user?.userId))?.iso2;
+    return iso && (FEWS_COUNTRIES.includes(iso) || WFP_COUNTRIES.includes(iso)) ? iso : null;
 }
 
 function buildRetailResponse(

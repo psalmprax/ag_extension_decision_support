@@ -9,6 +9,9 @@ import { safeError } from '@/utils/safeResponse';
 import { demoWhere } from '@/services/demoScope';
 import { farmerRecordFilter, validateRecordScope } from '@/services/demoRecordScope';
 import { resolveCreationOfficer } from '@/services/farmerOfficerAssignment';
+import { toE164 } from '@/services/country/phone';
+import { farmerCountryFor } from '@/services/country/countryContext';
+import { requireFarmerAccess } from '@/services/access/farmerScope';
 
 const router = Router();
 
@@ -344,12 +347,17 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
         }
 
         const {
-            firstName, lastName, phone, region, village,
+            firstName, lastName, phone: rawPhone, region, village,
             farmSize, crops, languagePreference,
             vitalScore, yieldHistory, locationLat, locationLng,
             assignedOfficerId: requestedOfficerId,
         } = req.body;
         const prisma = getPrisma();
+        const country = await farmerCountryFor(req.body?.country, req.user?.userId);
+        const phone = rawPhone ? toE164(String(rawPhone), country) : null;
+        if (rawPhone && !phone) {
+            return res.status(400).json({ success: false, error: `That phone number is not valid for ${country}.`, code: 'INVALID_PHONE' });
+        }
         const tenantScope: Record<string, unknown> = {};
         if (!(await applyTenantScope(req, tenantScope, true))) {
             return res.status(403).json({ success: false, error: 'Tenant membership required' });
@@ -370,6 +378,7 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
                 firstName,
                 lastName,
                 phone,
+                country,
                 region,
                 village,
                 farmSizeHectares: farmSize,
@@ -438,37 +447,34 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
  *         description: Farmer not found
  */
 // Update farmer
-router.patch('/:id', validate(updateFarmerSchema), async (req: Request, res: Response) => {
+/** A new phone number for a farmer, read in the farmer's own country. */
+async function normalisedFarmerPhone(prisma: ReturnType<typeof getPrisma>, farmerId: string, raw: string): Promise<{ phone: string } | { error: string }> {
+    const existing = await prisma.farmer.findFirst({ where: { id: farmerId }, select: { country: true } });
+    const phone = toE164(raw, existing?.country);
+    return phone ? { phone } : { error: `That phone number is not valid for ${existing?.country ?? 'this country'}.` };
+}
+
+// The shared rule: an officer their assigned farmers, a manager their region, a farmer themselves.
+router.patch('/:id', requireFarmerAccess('id'), validate(updateFarmerSchema), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const user = (req as Request & { user?: Record<string, unknown> }).user;
-        const userRole = user?.role;
-        const userId = user?.userId;
         const tenantScope: Record<string, unknown> = {};
         if (!(await applyTenantScope(req, tenantScope))) {
             return res.status(403).json({ success: false, error: 'Tenant membership required' });
         }
 
-        // Ownership check: admin/regional_manager can edit any, others only their own or assigned
-        if (userRole !== 'admin' && userRole !== 'regional_manager') {
-            const prisma = getPrisma();
-            const existing = await prisma.farmer.findFirst({ where: { id, ...demoWhere(user), ...(tenantScope.tenantId ? { tenantId: tenantScope.tenantId as string } : {}) } });
-            if (!existing) {
-                return res.status(404).json({ success: false, error: 'Farmer not found' });
-            }
-            const isOwner = existing.userId === userId;
-            const isAssignedOfficer = existing.assignedOfficerId === userId;
-            if (!isOwner && !isAssignedOfficer) {
-                return res.status(403).json({ success: false, error: 'Not authorized to update this farmer' });
-            }
-        }
-
         const {
-            firstName, lastName, phone, region, village,
+            firstName, lastName, phone: rawPhone, region, village,
             farmSize, crops, languagePreference,
             vitalScore, yieldHistory, locationLat, locationLng
         } = req.body;
         const prisma = getPrisma();
+        const phoneCheck = rawPhone ? await normalisedFarmerPhone(prisma, id, String(rawPhone)) : null;
+        if (phoneCheck && 'error' in phoneCheck) {
+            return res.status(400).json({ success: false, error: phoneCheck.error, code: 'INVALID_PHONE' });
+        }
+        const phone = phoneCheck?.phone;
 
         const updateResult = await prisma.farmer.updateMany({
             where: { id, ...demoWhere(user), ...(tenantScope.tenantId ? { tenantId: tenantScope.tenantId as string } : {}) },

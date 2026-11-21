@@ -13,6 +13,7 @@ import { weatherIndexService } from '@/services/weatherIndexService';
 import { misExportService, MisDataset, type MisScope } from '@/services/misExportService';
 import { resolvePrincipalRegion } from '@/services/messageAccessService';
 import { adviceEfficacyService } from '@/services/adviceEfficacyService';
+import { requireFarmerAccess } from '@/services/access/farmerScope';
 
 const router = Router();
 type AuthedRequest = Request & { user?: { userId: string; role: string } };
@@ -130,7 +131,7 @@ router.post('/soil-lab/import', validate({ body: soilLabImportSchema }), async (
     }
 });
 
-router.get('/soil-lab/farmer/:farmerId', async (req: AuthedRequest, res: Response) => {
+router.get('/soil-lab/farmer/:farmerId', requireFarmerAccess(), async (req: AuthedRequest, res: Response) => {
     try {
         const results = await soilLabService.getResultsForFarmer(req.params.farmerId);
         return res.json({ success: true, data: results });

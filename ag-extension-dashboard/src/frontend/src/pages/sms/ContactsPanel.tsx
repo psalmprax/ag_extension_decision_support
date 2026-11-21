@@ -43,13 +43,13 @@ export function SMSContactsPanel({
         </h2>
         <div className="flex items-center justify-between gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-white/40" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-white/40" />
             <input
               type="text"
               placeholder={t('farmer_search_placeholder') || 'Search recipients...'}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-1 focus:ring-emerald-500 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 outline-none"
+              className="w-full ps-9 pe-3 py-1.5 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-1 focus:ring-emerald-500 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 outline-none"
             />
           </div>
           {sendMode === 'bulk' && (

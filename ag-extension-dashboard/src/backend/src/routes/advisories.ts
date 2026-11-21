@@ -7,6 +7,7 @@ import { logger } from '@/utils/logger';
 import { config } from '@/config';
 import { seasonalAdvisoryService } from '@/services/seasonalAdvisoryService';
 import { viewerIsDemo } from '@/services/demoScope';
+import { requireFarmerAccess } from '@/services/access/farmerScope';
 
 const router = Router();
 
@@ -42,7 +43,7 @@ router.put('/preferences', validate({ body: preferenceSchema }), async (req: Aut
 /**
  * GET /api/advisories/preferences/:farmerId
  */
-router.get('/preferences/:farmerId', async (req: AuthedRequest, res: Response) => {
+router.get('/preferences/:farmerId', requireFarmerAccess(), async (req: AuthedRequest, res: Response) => {
     try {
         const current = await seasonalAdvisoryService.getPreference(req.params.farmerId);
         return res.json({ success: true, data: current });

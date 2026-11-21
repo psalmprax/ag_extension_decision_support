@@ -12,6 +12,11 @@ jest.mock('@/services/sms/officerSmsData', () => ({
     threadForFarmer: jest.fn().mockResolvedValue('conv-1'),
     unansweredThreads: jest.fn(),
 }));
+jest.mock('@/services/notify/farmerNotices', () => ({
+    noticeInBackground: (_label: string, work: () => Promise<unknown>) => { void work(); },
+    notifyVisitChange: jest.fn().mockResolvedValue('sent'),
+    sendFarmerNotice: jest.fn().mockResolvedValue('sent'),
+}));
 jest.mock('@/services/sms/officerSmsAccess', () => ({
     ...jest.requireActual('@/services/sms/officerSmsAccess'),
     tryPin: jest.fn(),
@@ -86,7 +91,9 @@ describe('officer SMS commands once unlocked', () => {
 
     it('plans a visit on a date', async () => {
         jest.mocked(farmerForRef).mockResolvedValueOnce(mary);
-        await expect(officerCommandReply(staff(), 'PLAN 12 2026-12-25 soil sampling')).resolves.toBe('Visit to Mary Njeri planned for 2026-12-25.');
+        await expect(officerCommandReply(staff(), 'PLAN 12 2026-12-25 soil sampling')).resolves
+            .toBe('Visit to Mary Njeri planned for 2026-12-25. They are told by SMS unless they have turned notices off.');
+        expect(jest.requireMock('@/services/notify/farmerNotices').notifyVisitChange).toHaveBeenCalledWith('visit-1', 'planned');
         expect(recordSmsVisit).toHaveBeenCalledWith(expect.objectContaining({ status: 'scheduled', notes: 'soil sampling' }));
     });
 

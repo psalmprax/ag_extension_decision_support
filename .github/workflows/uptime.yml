@@ -1,0 +1,67 @@
+name: Uptime
+
+# Checks the production site every 15 minutes. When the API or the app does not answer,
+# an issue labelled "outage" is opened (GitHub notifies watchers); when it answers again,
+# the issue is commented on and closed. No secrets are needed: it only reads public pages.
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SITE: https://www.gpexts.com
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Probe the API and the app
+        id: probe
+        run: |
+          problems=""
+          for path in /api/health /login; do
+            ok=0
+            for attempt in 1 2 3; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$SITE$path" || echo 000)
+              if [ "$code" -ge 200 ] && [ "$code" -lt 400 ]; then ok=1; break; fi
+              sleep 10
+            done
+            [ "$ok" = 1 ] || problems="$problems $path (HTTP $code)"
+          done
+          echo "problems=${problems# }" >> "$GITHUB_OUTPUT"
+          [ -z "$problems" ] && echo "Site is up" || echo "::warning::Not answering:$problems"
+
+      - name: Open or update the outage issue
+        if: steps.probe.outputs.problems != ''
+        env:
+          PROBLEMS: ${{ steps.probe.outputs.problems }}
+        run: |
+          open=$(gh api "repos/$REPO/issues?state=open&labels=outage" --jq '.[0].number // empty')
+          when=$(date -u '+%Y-%m-%d %H:%M UTC')
+          if [ -z "$open" ]; then
+            gh api "repos/$REPO/labels" -f name=outage -f color=b60205 >/dev/null 2>&1 || true
+            gh api "repos/$REPO/issues" -f title="Production is not answering" \
+              -f body="$SITE stopped answering at $when: $PROBLEMS. This issue closes itself when the site answers again." \
+              -f 'labels[]=outage' --jq .html_url
+          else
+            gh api "repos/$REPO/issues/$open/comments" -f body="Still not answering at $when: $PROBLEMS." >/dev/null
+          fi
+          exit 1
+
+      - name: Close the outage issue once the site answers
+        if: steps.probe.outputs.problems == ''
+        run: |
+          for number in $(gh api "repos/$REPO/issues?state=open&labels=outage" --jq '.[].number'); do
+            gh api "repos/$REPO/issues/$number/comments" -f body="Answering again at $(date -u '+%Y-%m-%d %H:%M UTC')." >/dev/null
+            gh api -X PATCH "repos/$REPO/issues/$number" -f state=closed >/dev/null
+          done

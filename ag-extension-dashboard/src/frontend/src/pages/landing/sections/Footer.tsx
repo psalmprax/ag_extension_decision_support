@@ -28,7 +28,7 @@ export function Footer() {
               <button
                 type="button"
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="flex items-center gap-3 mb-4 cursor-pointer group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-lg"
+                className="flex items-center gap-3 mb-4 cursor-pointer group text-start focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-lg"
               >
                 <img
                   src="/logo.png"
@@ -73,7 +73,7 @@ export function Footer() {
                   <button
                     type="button"
                     onClick={() => navigate('/demo')}
-                    className={`${FOOTER_LINK} text-left`}
+                    className={`${FOOTER_LINK} text-start`}
                   >
                     {t('ui_footer_live_interactive_demo')}
                   </button>
@@ -97,7 +97,7 @@ export function Footer() {
                   <button
                     type="button"
                     onClick={() => navigate('/register')}
-                    className={`${FOOTER_LINK} text-left`}
+                    className={`${FOOTER_LINK} text-start`}
                   >
                     {t('register_button')}
                   </button>
@@ -106,7 +106,7 @@ export function Footer() {
                   <button
                     type="button"
                     onClick={() => navigate('/login')}
-                    className={`${FOOTER_LINK} text-left`}
+                    className={`${FOOTER_LINK} text-start`}
                   >
                     {t('login_sign_in')}
                   </button>
@@ -114,7 +114,7 @@ export function Footer() {
               </ul>
             </div>
           </div>
-          <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 text-center sm:text-left">
+          <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 text-center sm:text-start">
             <span className="text-xs sm:text-sm text-slate-300 font-normal">
               {t('ui_footer_copy')} {new Date().getFullYear()} {t('ui_footer_gpexts_all_rights_reserved')}
             </span>

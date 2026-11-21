@@ -91,18 +91,18 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
           <h2 id="written-reports" className="text-base font-medium text-slate-900 dark:text-white">
             {t('reports_list_title', { defaultValue: 'Written reports' })}
-            <span className="ml-2 text-sm font-normal tabular-nums text-slate-500 dark:text-slate-400">{filteredReports.length}</span>
+            <span className="ms-2 text-sm font-normal tabular-nums text-slate-500 dark:text-slate-400">{filteredReports.length}</span>
           </h2>
           {reports.length > 0 && (
             <label className="relative">
               <span className="sr-only">{t('reports_filter_label', { defaultValue: 'Find a report by title' })}</span>
-              <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+              <Search className="w-4 h-4 absolute start-2.5 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
               <input
                 type="search"
                 value={filterQuery}
                 onChange={e => setFilterQuery(e.target.value)}
                 placeholder={t('reports_filter_placeholder', { defaultValue: 'Find by title' })}
-                className="h-9 w-56 max-w-full pl-8 pr-3 rounded-md bg-white dark:bg-white/[0.03] border border-slate-900/[0.12] dark:border-white/[0.12] text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="h-9 w-56 max-w-full ps-8 pe-3 rounded-md bg-white dark:bg-white/[0.03] border border-slate-900/[0.12] dark:border-white/[0.12] text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </label>
           )}

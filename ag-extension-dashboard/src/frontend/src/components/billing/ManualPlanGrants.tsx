@@ -50,7 +50,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
           </div>
         </div>
         <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/10">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-start border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/10">
                 {['User', 'Method', 'TX ID', 'Amount', 'Plan', 'Actions'].map(h => (

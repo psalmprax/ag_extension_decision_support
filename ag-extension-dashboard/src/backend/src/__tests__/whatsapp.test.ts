@@ -258,7 +258,11 @@ jest.mock('../services/onboardingEngine', () => ({
 // most cases here are about people who are not registered yet.
 jest.mock('../services/chat/channelInbound', () => ({
     takeRegisteredFarmerMessage: jest.fn().mockResolvedValue(false),
+    claimInboundEvent: jest.fn().mockResolvedValue(true),
 }));
+
+// No sender here is an officer (officers' WhatsApp commands: officerWhatsApp.test.ts).
+jest.mock('../services/sms/officerSmsAccess', () => ({ findStaffByPhone: jest.fn().mockResolvedValue(null) }));
 
 jest.mock('../services/whatsappService', () => ({
     whatsappService: {

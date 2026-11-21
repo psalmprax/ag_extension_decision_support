@@ -3,6 +3,7 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {
   Activity,
   Camera,
+  FlaskConical,
   Layers,
   Search,
   Video,
@@ -20,6 +21,9 @@ import { DiseaseLibraryTab } from './diagnostics/DiseaseLibraryTab';
 import { DiseaseInfoModal } from './diagnostics/DiseaseInfoModal';
 import { EdgeVisionScannerModal } from '@/components/EdgeVisionScannerModal';
 import { VideoAnalysisTab } from './diagnostics/VideoAnalysisTab';
+import { DiagnosisTestingTab } from '@/components/diagnosisTests/DiagnosisTestingTab';
+
+type DiagnosisTab = 'symptoms' | 'image' | 'video' | 'soil' | 'library' | 'testing';
 import { DiagnosisHistoryPanel } from './diagnostics/DiagnosisHistoryPanel';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PRIMARY_BUTTON, TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
@@ -28,10 +32,11 @@ export function DiseaseDiagnosis() {
   const online = useOnlineStatus();
   const { t } = useLanguage();
   const { radiusClass, btnClass } = useThemeClasses();
-  const { addNotification } = useAppStore();
+  const { addNotification, user } = useAppStore();
+  const canTest = user?.role === 'admin' || user?.role === 'regional_manager';
 
   // Shared State
-  const [activeTab, setActiveTab] = useState<'symptoms' | 'image' | 'video' | 'soil' | 'library'>('image');
+  const [activeTab, setActiveTab] = useState<DiagnosisTab>('image');
   const [cropType, setCropType] = useState('');
 
   // Disease Library State
@@ -115,12 +120,13 @@ export function DiseaseDiagnosis() {
             { id: 'symptoms', label: t('diagnosis_tab_symptoms', { defaultValue: 'Describe symptoms' }), icon: Activity },
             { id: 'soil', label: t('diagnosis_tab_soil', { defaultValue: 'Soil' }), icon: Layers },
             { id: 'library', label: t('diagnosis_tab_library', { defaultValue: 'Disease library' }), icon: Search },
+            ...(canTest ? [{ id: 'testing', label: t('diagnosis_tab_testing', { defaultValue: 'Testing' }), icon: FlaskConical }] : []),
           ].map(tab => (
             <button
               key={tab.id}
               role="tab"
               aria-selected={activeTab === tab.id}
-              onClick={() => setActiveTab(tab.id as 'symptoms' | 'image' | 'video' | 'soil' | 'library')}
+              onClick={() => setActiveTab(tab.id as DiagnosisTab)}
               className={tabButtonClass(activeTab === tab.id)}
             >
               <tab.icon className="w-4 h-4" aria-hidden="true" />
@@ -161,6 +167,7 @@ export function DiseaseDiagnosis() {
           )}
 
           {activeTab === 'video' && <VideoAnalysisTab />}
+          {activeTab === 'testing' && canTest && <DiagnosisTestingTab />}
 
           {activeTab === 'soil' && (
             <SoilDiagnosticsTab

@@ -22,6 +22,9 @@ import { perUserRateLimit, SharedStateStore } from '@/middleware/rateLimitMiddle
 import { reportedSystemAdmin } from '@/services/systemAdminService';
 import { signSessionToken } from '@/utils/sessionToken';
 import { activeServicesFor } from '@/services/serviceAccessService';
+import { findCountry, isValidTimeZone } from '@/shared-api/countries';
+import { toE164 } from '@/services/country/phone';
+import { countryOfUser } from '@/services/country/countryContext';
 
 const router = Router();
 const profileUpdateRateLimit = rateLimit({
@@ -84,6 +87,8 @@ const updateProfileSchema = z.object({
         firstName: z.string().trim().min(1).max(100).optional(),
         lastName: z.string().trim().min(1).max(100).optional(),
         phone: z.string().trim().max(40).optional(),
+        country: z.string().trim().refine(value => findCountry(value) !== null, 'Unknown country').optional(),
+        timeZone: z.string().trim().refine(isValidTimeZone, 'Unknown time zone').optional(),
         notificationPreferences: notificationPreferencesSchema.optional(),
         profileSettings: profileSettingsSchema.optional(),
     }).strict().refine(body => Object.keys(body).length > 0, 'At least one profile field is required'),
@@ -168,13 +173,23 @@ router.post('/logout', async (req: Request, res: Response) => {
 router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), perUserRateLimit, validate(updateProfileSchema), auditMiddleware('auth.profile_update'), async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     const updates = req.body as {
-        firstName?: string; lastName?: string; phone?: string;
+        firstName?: string; lastName?: string; phone?: string; country?: string; timeZone?: string;
         notificationPreferences?: NotificationPreferences; profileSettings?: Record<string, unknown>;
     };
+    // Phone numbers are kept in E.164, read in the person's (possibly just changed) country.
+    let phone: string | undefined;
+    if (updates.phone) {
+        const international = /^(\+|00)/.test(updates.phone.trim());
+        const country = updates.country ?? (international ? null : await countryOfUser(userId));
+        phone = toE164(updates.phone, country) ?? undefined;
+        if (!phone) return res.status(400).json({ success: false, error: `That phone number is not valid for ${country ?? 'your country'}.` });
+    }
     const fields: Array<[string, unknown]> = [
         ['first_name', updates.firstName],
         ['last_name', updates.lastName],
-        ['phone', updates.phone],
+        ['phone', phone],
+        ['country', updates.country ? findCountry(updates.country)?.name : undefined],
+        ['time_zone', updates.timeZone],
     ].filter((entry): entry is [string, string] => typeof entry[1] === 'string');
     const assignments = fields.map(([column], index) => `${column} = $${index + 1}`);
     const values: unknown[] = fields.map(([, value]) => value);
@@ -208,6 +223,7 @@ router.patch('/me', profileUpdateRateLimit, authorize(['admin', 'regional_manage
                 isSystemAdmin: reportedSystemAdmin(user),
                 region: user.region,
                 country: user.country,
+                timeZone: user.time_zone ?? null,
                 phone: user.phone,
                 notificationPreferences: user.notification_preferences ?? {},
                 profileSettings: user.profile_settings ?? {},
@@ -275,6 +291,7 @@ router.get('/me', async (req: Request, res: Response) => {
                 isSystemAdmin: reportedSystemAdmin(user),
                 region: user.region,
                 country: user.country,
+                timeZone: user.time_zone ?? null,
                 phone: user.phone,
                 notificationPreferences: user.notification_preferences ?? {},
                 profileSettings: user.profile_settings ?? {},

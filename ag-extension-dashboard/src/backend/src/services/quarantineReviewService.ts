@@ -1,9 +1,9 @@
 /**
  * Quarantine review — the exit path for grounding quarantine.
  *
- * Scraped web extracts enter `knowledge_articles` tagged `unverified_scrape`
- * and are excluded from RAG grounding (see groundingPolicy) until a human
- * reviewer clears them. Approve removes the tag (document becomes groundable);
+ * Scraped web extracts enter `knowledge_articles` tagged `unverified_scrape`, and
+ * guides uploaded by officers enter tagged `pending_review`; both are excluded from
+ * RAG grounding (see groundingPolicy) until a manager or administrator clears them. Approve removes the tag (document becomes groundable);
  * reject deletes the row (poisoned/misleading source removed entirely).
  * Every decision is logged with the reviewer identity.
  */
@@ -25,7 +25,7 @@ export async function listQuarantinedDocuments(limit = 50): Promise<QuarantinedD
   const res = await query(
     `SELECT id, title, source, source_url AS "sourceUrl", updated_at AS "updatedAt"
      FROM knowledge_articles
-     WHERE 'unverified_scrape' = ANY(tags)
+     WHERE tags && ARRAY['unverified_scrape', 'pending_review']::text[]
      ORDER BY updated_at DESC
      LIMIT $1`,
     [capped],
@@ -47,8 +47,8 @@ export async function reviewQuarantinedDocument(
   if (verdict === 'approve') {
     const res = await query(
       `UPDATE knowledge_articles
-       SET tags = array_remove(tags, 'unverified_scrape'), updated_at = NOW()
-       WHERE id = $1 AND 'unverified_scrape' = ANY(tags)`,
+       SET tags = array_remove(array_remove(tags, 'unverified_scrape'), 'pending_review'), updated_at = NOW()
+       WHERE id = $1 AND tags && ARRAY['unverified_scrape', 'pending_review']::text[]`,
       [id],
     );
     const cleared = (res.rowCount ?? 0) > 0;
@@ -57,7 +57,7 @@ export async function reviewQuarantinedDocument(
   }
 
   const res = await query(
-    `DELETE FROM knowledge_articles WHERE id = $1 AND 'unverified_scrape' = ANY(tags)`,
+    `DELETE FROM knowledge_articles WHERE id = $1 AND tags && ARRAY['unverified_scrape', 'pending_review']::text[]`,
     [id],
   );
   const deleted = (res.rowCount ?? 0) > 0;

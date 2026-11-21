@@ -19,6 +19,9 @@ import {
 import { aiAnswersAvailable, answerFarmerInThread, loadThreadForReply, respondIfUrgent } from '@/services/chat/threadAutoReply';
 import type { TurnTakingSettings } from '@/services/chat/turnTaking';
 import { smsCopy } from '@/services/sms/smsCopy';
+import type { InboundMedia } from './inboundMedia';
+import { applyOptCommand, optCommand } from '@/services/notify/optOut';
+import { takePilotReply } from '@/services/pilots/pilotReplies';
 
 /** A new conversation, worth an acknowledgement: SMS costs money, so less often there. */
 const ACK_GAP_MS: Record<FarmerChannel, number> = {
@@ -87,13 +90,20 @@ export async function handleRegisteredFarmerChannelMessage(params: {
     text: string;
     language?: string;
     isVoice?: boolean;
+    media?: InboundMedia[];
 }): Promise<void> {
-    const { farmerId, channel, text, language, isVoice } = params;
+    const { farmerId, channel, text, language, isVoice, media } = params;
+    const opt = optCommand(text);
+    if (opt && !media?.length) {
+        await applyOptCommand(farmerId, opt);
+        return;
+    }
+    if (!media?.length && await takePilotReply(farmerId, text)) return;
     const question = parseAskAiCommand(text);
     const noticeLanguage = language ?? (await farmerLanguage(farmerId));
 
     if (question === null) {
-        const conversationId = await recordChannelMessage({ farmerId, channel, content: text, language, isVoice });
+        const conversationId = await recordChannelMessage({ farmerId, channel, content: text, language, isVoice, media });
         await respondIfUrgent(conversationId);
         if (await startsNewConversation(conversationId, channel)) {
             const thread = await loadThreadForReply(conversationId);
@@ -109,7 +119,7 @@ export async function handleRegisteredFarmerChannelMessage(params: {
     }
 
     const conversationId = question
-        ? await recordChannelMessage({ farmerId, channel, content: question, language, isVoice })
+        ? await recordChannelMessage({ farmerId, channel, content: question, language, isVoice, media })
         : await farmerThreadFor(farmerId);
     await answerWithAi(conversationId, channel, noticeLanguage);
 }
@@ -138,6 +148,7 @@ export async function takeRegisteredFarmerMessage(params: {
     language?: string;
     eventId?: string;
     isVoice?: boolean;
+    media?: InboundMedia[];
 }): Promise<boolean> {
     const farmer = await onboardingEngine.findFarmerByIdentifier(params.identifier, params.channel);
     if (!farmer?.id) return false;
@@ -151,6 +162,7 @@ export async function takeRegisteredFarmerMessage(params: {
             text: params.text,
             language: params.language,
             isVoice: params.isVoice,
+            media: params.media,
         }).catch(error => logger.error(`Could not handle a ${params.channel} message from farmer ${farmer.id}:`, error));
     });
     return true;

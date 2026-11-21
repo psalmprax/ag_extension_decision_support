@@ -27,7 +27,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ currentTheme, onTh
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 mt-2 w-72 glass-panel rounded-xl shadow-2xl z-50 overflow-hidden">
+          <div className="absolute end-0 mt-2 w-72 glass-panel rounded-xl shadow-2xl z-50 overflow-hidden">
             <div className="p-4 border-b border-white/10">
               <h3 className="text-sm font-bold text-white tracking-tight">
                 {t('theme_choose')}
@@ -62,7 +62,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ currentTheme, onTh
                     </div>
 
                     {/* Theme Name */}
-                    <div className="flex-1 text-left">
+                    <div className="flex-1 text-start">
                       <p
                         className={`text-xxs font-black   ${isActive ? 'text-primary-400' : 'text-slate-300'}`}
                       >

@@ -90,8 +90,8 @@ const AIAgronomistChatTab: React.FC<ChatTabProps> = ({
           <div
             className={`max-w-[88%] rounded p-3 text-xs leading-relaxed ${
               msg.sender === 'user'
-                ? 'bg-emerald-600 text-white rounded-br-none shadow-md'
-                : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-bl-none shadow-sm whitespace-pre-wrap'
+                ? 'bg-emerald-600 text-white rounded-ee-none shadow-md'
+                : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-es-none shadow-sm whitespace-pre-wrap'
             }`}
           >
             {msg.text}
@@ -111,7 +111,7 @@ const AIAgronomistChatTab: React.FC<ChatTabProps> = ({
       ))}
 
       {isLoadingAi && (
-        <div className="flex items-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded rounded-bl-none max-w-[80%] text-xs text-slate-400 animate-pulse">
+        <div className="flex items-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded rounded-es-none max-w-[80%] text-xs text-slate-400 animate-pulse">
           <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
           <span>AI Agronomist is analyzing agronomy database...</span>
         </div>
@@ -284,7 +284,7 @@ const AIAgronomistVoiceTab: React.FC<VoiceTabProps> = ({
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-4 rounded bg-slate-900 border border-slate-800 text-left space-y-2"
+        className="p-4 rounded bg-slate-900 border border-slate-800 text-start space-y-2"
       >
         <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-400">
           <Volume2 className="w-3.5 h-3.5" />
@@ -530,12 +530,12 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
             initial={{ opacity: 0, scale: 0.9, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 16 }}
-            className={`fixed bottom-[calc(env(safe-area-inset-bottom)+0.625rem)] right-3 md:bottom-6 md:right-6 z-[1000] items-center gap-2 ${hideOnPhone ? 'hidden md:flex' : 'flex'}`}
+            className={`fixed bottom-[calc(env(safe-area-inset-bottom)+0.625rem)] end-3 md:bottom-6 md:end-6 z-[1000] items-center gap-2 ${hideOnPhone ? 'hidden md:flex' : 'flex'}`}
           >
             {/* Phones: a round glass button beside the tab bar, as iOS places its search button. */}
             <button
               onClick={() => setIsOpen(true)}
-              className="flex items-center justify-center gap-2 h-16 w-16 md:h-11 md:w-auto md:pl-3 md:pr-4 rounded-full max-md:ios-glass md:bg-emerald-700 md:hover:bg-emerald-800 text-emerald-800 dark:text-emerald-200 md:text-white md:dark:text-white text-sm font-medium md:shadow-lg md:shadow-slate-900/15 transition-colors"
+              className="flex items-center justify-center gap-2 h-16 w-16 md:h-11 md:w-auto md:ps-3 md:pe-4 rounded-full max-md:ios-glass md:bg-emerald-700 md:hover:bg-emerald-800 text-emerald-800 dark:text-emerald-200 md:text-white md:dark:text-white text-sm font-medium md:shadow-lg md:shadow-slate-900/15 transition-colors"
               aria-label={t('nav_aiassistant')}
               title={t('ui_floating_aipill_live_chat_leaf_scan_voice_memo')}
             >
@@ -554,7 +554,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98, y: 20 }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-2 sm:right-6 md:bottom-6 md:right-6 z-[1100] w-[calc(100vw-1rem)] sm:w-[440px] max-w-[440px] max-h-[calc(100dvh-6rem)] h-[calc(100dvh-6rem)] md:max-h-[85vh] md:h-[85vh] bg-slate-950 border border-white/[0.08] rounded-xl shadow-2xl backdrop-blur-xl flex flex-col overflow-hidden text-slate-100"
+            className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] end-2 sm:end-6 md:bottom-6 md:end-6 z-[1100] w-[calc(100vw-1rem)] sm:w-[440px] max-w-[440px] max-h-[calc(100dvh-6rem)] h-[calc(100dvh-6rem)] md:max-h-[85vh] md:h-[85vh] bg-slate-950 border border-white/[0.08] rounded-xl shadow-2xl backdrop-blur-xl flex flex-col overflow-hidden text-slate-100"
           >
             {/* Drawer Header */}
             <div className="p-4 border-b border-white/[0.06] bg-slate-900/60 backdrop-blur-md flex items-center justify-between">

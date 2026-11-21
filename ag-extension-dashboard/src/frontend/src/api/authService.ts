@@ -24,14 +24,14 @@ export const login = async (credentials: LoginCredentials): Promise<AuthResponse
 };
 
 /** Sends a 6-digit sign-in code by SMS (the reply is the same whether or not the number is known). */
-export const requestPhoneCode = async (phone: string): Promise<{ success: boolean; data?: { message: string } }> => {
-  const response = await apiClient.post('/auth/phone/request', { phone });
+export const requestPhoneCode = async (phone: string, country?: string): Promise<{ success: boolean; data?: { message: string } }> => {
+  const response = await apiClient.post('/auth/phone/request', { phone, country });
   return response.data;
 };
 
 /** Signs in with the code; the reply has the same shape as a password sign-in. */
-export const verifyPhoneCode = async (phone: string, code: string): Promise<AuthResponse> => {
-  const response = await apiClient.post<AuthResponse>('/auth/phone/verify', { phone, code });
+export const verifyPhoneCode = async (phone: string, code: string, country?: string): Promise<AuthResponse> => {
+  const response = await apiClient.post<AuthResponse>('/auth/phone/verify', { phone, code, country });
   return response.data;
 };
 

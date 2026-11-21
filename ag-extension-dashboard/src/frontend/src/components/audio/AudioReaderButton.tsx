@@ -135,20 +135,20 @@ export const AudioReaderButton: React.FC<AudioReaderButtonProps> = ({
     setIsPlaying(true);
     onPlayStart?.();
 
-    // Strategy 1: Client-side Browser SpeechSynthesis (free, instant, works offline)
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    // Strategy 1: the phone's own voice, but only when it has one for this language.
+    // Without one the browser reads the text in another language's voice, which is
+    // unintelligible (most Android phones have no Kiswahili, Hausa or Amharic voice).
+    const localVoice =
+      typeof window !== 'undefined' && 'speechSynthesis' in window
+        ? (window.speechSynthesis.getVoices?.() || []).find(v => v.lang.toLowerCase().startsWith(targetLanguage.toLowerCase()))
+        : undefined;
+    if (localVoice) {
       try {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = bcp47;
+        utterance.voice = localVoice;
         utterance.rate = 0.95; // Slightly slower pace for clearer comprehension
-
-        // Look for localized voice
-        const voices = window.speechSynthesis.getVoices?.() || [];
-        const matchingVoice = voices.find(v => v.lang.toLowerCase().startsWith(targetLanguage.toLowerCase()));
-        if (matchingVoice) {
-          utterance.voice = matchingVoice;
-        }
 
         utterance.onend = () => {
           setIsPlaying(false);
@@ -163,7 +163,6 @@ export const AudioReaderButton: React.FC<AudioReaderButtonProps> = ({
             return;
           }
           console.warn('SpeechSynthesis error, falling back to backend TTS:', err);
-          // Try backend fallback
           playBackendTts(cleanText);
         };
 
@@ -269,7 +268,7 @@ export const AudioReaderButton: React.FC<AudioReaderButtonProps> = ({
       ) : isPlaying ? (
         <span className="relative flex items-center justify-center">
           <VolumeX className={`${iconSizes}`} />
-          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-amber-400 rounded-full" />
+          <span className="absolute -top-0.5 -end-0.5 w-1.5 h-1.5 bg-amber-400 rounded-full" />
         </span>
       ) : (
         <Volume2 className={`${iconSizes}`} />

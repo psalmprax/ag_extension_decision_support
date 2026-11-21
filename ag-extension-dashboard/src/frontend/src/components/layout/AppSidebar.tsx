@@ -140,12 +140,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               'fixed flex flex-col px-3',
               isPhone
                 ? 'inset-x-0 bottom-0 max-h-[86dvh] rounded-t-[28px] ios-sheet pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))] z-[1101]'
-                : 'left-0 top-16 bottom-0 pt-3 pb-4 border-r border-slate-900/[0.08] dark:border-white/[0.08] w-64 z-40 bg-white dark:bg-[#0d1a14]'
+                : 'start-0 top-16 bottom-0 pt-3 pb-4 border-e border-slate-900/[0.08] dark:border-white/[0.08] w-64 z-40 bg-white dark:bg-[#0d1a14]'
             )}
           >
             {isPhone && <span className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-900/20 dark:bg-white/25" aria-hidden="true" />}
 
-            <nav className="flex flex-col gap-3 grow overflow-y-auto custom-scrollbar -mr-1 pr-1">
+            <nav className="flex flex-col gap-3 grow overflow-y-auto custom-scrollbar -me-1 pe-1">
               {sections.map(section => {
                 const isExpanded = Boolean(expandedSections[section.id]);
                 const sectionLabel = t(`sidebar_group_${section.id}`, { defaultValue: section.label });
@@ -158,7 +158,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                       onClick={() =>
                         setExpandedSections(current => ({ ...current, [section.id]: !current[section.id] }))
                       }
-                      className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-md"
+                      className="flex w-full items-center justify-between px-3 py-1.5 text-start text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-md"
                     >
                       <span>{sectionLabel}</span>
                       <ChevronDown
@@ -176,7 +176,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                           key={item.id}
                           onClick={() => handleNavClick(item.id)}
                           className={cn(
-                            'flex items-center justify-between px-3 py-2 min-h-[44px] md:min-h-[40px] transition-colors text-left rounded-md',
+                            'flex items-center justify-between px-3 py-2 min-h-[44px] md:min-h-[40px] transition-colors text-start rounded-md',
                             menuItemIsActive(item, activeTab, navItems)
                               ? 'bg-emerald-50 dark:bg-emerald-400/[0.1] text-emerald-800 dark:text-emerald-200 font-medium'
                               : 'text-slate-600 dark:text-slate-300 hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white'
@@ -191,7 +191,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                               {t(item.labelKey || `nav_${item.id}`, { defaultValue: item.label })}
                             </span>
                           </div>
-                          {CHAT_TABS.has(item.id) && <UnreadCount className="ml-2" />}
+                          {CHAT_TABS.has(item.id) && <UnreadCount className="ms-2" />}
                           {isMenuItemLocked(user, item) && (
                             <Lock
                               className="w-3.5 h-3.5 text-amber-500/80 dark:text-amber-400/80 shrink-0"

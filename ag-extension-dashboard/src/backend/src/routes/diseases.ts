@@ -9,6 +9,7 @@ import { safeError } from '@/utils/safeResponse';
 import { logSensitiveAction } from '@/middleware/auditMiddleware';
 import { outbreakService } from '@/services/outbreakService';
 import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
+import { withValidation } from '@/services/diagnosisTests/gate';
 
 const router = Router();
 
@@ -303,7 +304,9 @@ router.post('/diagnose/image', allowedRoles, checkUsageLimit('ai_vision'), async
 
         if (rejectUnsafeRecommendation(req, res)) return;
 
-        const analysis = await plantDiseaseService.analyzeImage(imageData, cropType);
+        // Each diagnosis carries how it did on labelled photos of this crop; untested ones
+        // are marked for the officer to confirm.
+        const analysis = await withValidation(await plantDiseaseService.analyzeImage(imageData, cropType), cropType);
 
         const reportId = await saveDiagnosisReport(req, analysis);
 

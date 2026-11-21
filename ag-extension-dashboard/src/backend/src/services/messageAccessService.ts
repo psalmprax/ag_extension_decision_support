@@ -2,6 +2,7 @@ import { query } from './databaseService';
 import { logger } from '@/utils/logger';
 import { viewerIsDemo } from '@/services/demoScope';
 import { DEFAULT_CONVERSATION_KIND, parseConversationKind, type ConversationKind } from '@/services/chat/conversationKind';
+import { phoneVariants } from '@/services/country/phone';
 
 /** Error whose `statusCode` the route layer maps to an HTTP response. */
 export class MessageAccessError extends Error {
@@ -54,13 +55,8 @@ async function resolveTargetFarmer(recipient: MessageRecipient): Promise<FarmerW
   }
 
   if (recipient.phone) {
-    const digits = recipient.phone.replace(/\D/g, '');
-    // Accept international, 0-prefixed, or bare variants; match on normalized digits.
-    const variants = [
-      `+${digits}`,
-      ...(digits.startsWith('254') ? [`+${digits}`] : [`+254${digits.replace(/^0/, '')}`]),
-      digits.replace(/^0/, digits.startsWith('0') ? '' : digits.replace(/^0/, '')),
-    ];
+    // Accept international, 0-prefixed, or bare forms; match on normalized digits.
+    const variants = phoneVariants(recipient.phone).map(v => v.replace(/\D/g, ''));
     // Compare each candidate against the normalized DIGITS of the stored phone,
     // so formatting differences (+, 0-prefix, spaces) don't defeat the lookup.
     const { rows } = await query<FarmerWriteTarget>(

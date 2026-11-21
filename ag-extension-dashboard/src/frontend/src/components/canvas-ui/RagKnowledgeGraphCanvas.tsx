@@ -367,13 +367,13 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
         </div>
 
         <div className="relative">
-          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search className="w-3.5 h-3.5 absolute start-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Search RAG memory..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="pl-8 pr-3 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs w-44 text-gray-900 dark:text-white"
+            className="ps-8 pe-3 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs w-44 text-gray-900 dark:text-white"
           />
         </div>
       </div>
@@ -401,7 +401,7 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
         )}
 
         {(selectedNode || hoveredNode) && (
-          <div className="absolute top-3 left-3 bg-gray-900/90 border border-white/10 backdrop-blur-md p-3.5 rounded-xl shadow-xl text-xs text-white max-w-sm pointer-events-none animate-in fade-in">
+          <div className="absolute top-3 start-3 bg-gray-900/90 border border-white/10 backdrop-blur-md p-3.5 rounded-xl shadow-xl text-xs text-white max-w-sm pointer-events-none animate-in fade-in">
             <div className="flex items-center justify-between gap-2 mb-1.5">
               <span className="font-bold text-gray-100">
                 {(selectedNode || hoveredNode)?.label}
@@ -428,7 +428,7 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
           </div>
         )}
 
-        <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-md border border-white/10 text-xxs font-mono text-gray-400 pointer-events-none">
+        <div className="absolute bottom-2 end-2 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-md border border-white/10 text-xxs font-mono text-gray-400 pointer-events-none">
           {t('ui_rag_knowledge_graph_canvas_physics_force_directed_drag_nodes_to')}
         </div>
       </div>

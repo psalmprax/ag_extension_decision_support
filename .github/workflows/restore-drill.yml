@@ -1,0 +1,36 @@
+name: Backup restore drill
+
+# Proves the newest database backup can be restored: runs scripts/restore-drill.sh on
+# the chosen host, which restores the newest (off-site, else local) dump into a
+# throwaway Postgres container and checks it has data. The live database is not touched.
+# Run it monthly, and after changing backup settings.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'stage or production'
+        required: true
+        default: stage
+        type: choice
+        options: [stage, production]
+
+permissions:
+  contents: read
+
+jobs:
+  drill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Restore the newest backup on the host
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5 (pinned to commit SHA)
+        with:
+          host: ${{ inputs.target == 'production' && secrets.PROD_SERVER_IP || secrets.TEST_SERVER_IP }}
+          port: ${{ inputs.target == 'production' && 22 || (secrets.TEST_SERVER_PORT || 22) }}
+          username: ${{ inputs.target == 'production' && (vars.PROD_DEPLOY_SSH_USER || 'root') || (vars.TEST_DEPLOY_SSH_USER || 'root') }}
+          key: ${{ inputs.target == 'production' && secrets.SSH_PRIVATE_KEY_PRODUCTION || secrets.SSH_PRIVATE_KEY_TESTING }}
+          command_timeout: 25m
+          script: |
+            set -eu
+            cd ${HOME:?}/ag_extension_decision_support/ag-extension-dashboard
+            sh scripts/restore-drill.sh

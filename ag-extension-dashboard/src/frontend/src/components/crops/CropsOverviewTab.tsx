@@ -12,6 +12,7 @@ import { Field, CropCycle } from '@/api/fieldService';
 import { FarmPlanSection } from '@/components/fieldtools/FarmPlanSection';
 import { useLanguage } from '@/lib/LanguageContext';
 import { PRIMARY_BUTTON } from '@/components/ui/controlStyles';
+import { useUnits } from '@/hooks/useUnits';
 
 interface CropsOverviewTabProps {
   fields: Field[];
@@ -39,6 +40,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
   handleOpenAddField,
 }) => {
   const { t } = useLanguage();
+  const units = useUnits();
   return (
     <motion.div
       key="overview-tab"
@@ -88,7 +90,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                         {t('ui_crops_overview_tab_area_size')}
                       </span>
                       <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-0.5 tabular-nums">
-                        {t('ui_crops_overview_tab_hectares', { areaHectares: field.areaHectares })}
+                        {units.area(field.areaHectares, 2)}
                       </p>
                     </div>
                     <div>

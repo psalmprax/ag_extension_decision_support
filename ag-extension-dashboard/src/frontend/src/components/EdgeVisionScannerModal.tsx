@@ -251,7 +251,7 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
         <span className="font-medium text-emerald-400 font-mono text-xs">
           Review guidance:
         </span>
-        <ul className="list-disc pl-4 text-slate-300 space-y-0.5 mt-0.5">
+        <ul className="list-disc ps-4 text-slate-300 space-y-0.5 mt-0.5">
           {result.primaryDiagnosis.culturalControl.map((c, i) => (
             <li key={i}>{c}</li>
           ))}
@@ -316,7 +316,7 @@ const SoilDiagnosticHUD: React.FC<{ result: OfflineSoilDiagnosisResult }> = ({ r
       <span className="font-medium text-amber-400 font-mono text-xs">
         Agronomic Field Guidance:
       </span>
-      <ul className="list-disc pl-4 text-slate-300 space-y-1">
+      <ul className="list-disc ps-4 text-slate-300 space-y-1">
         {result.recommendations.map((rec, i) => (
           <li key={i}>{rec}</li>
         ))}
@@ -424,7 +424,7 @@ const YoloBoundingBoxesOverlay: React.FC<YoloBoundingBoxesOverlayProps> = ({ box
             }}
           >
             <span
-              className="absolute -top-5 left-0 px-1.5 py-0.5 text-[9px] font-mono font-bold text-white rounded shadow-sm whitespace-nowrap"
+              className="absolute -top-5 start-0 px-1.5 py-0.5 text-[9px] font-mono font-bold text-white rounded shadow-sm whitespace-nowrap"
               style={{ backgroundColor: b.color }}
             >
               {labelText} {Math.round(b.confidence * 100)}%

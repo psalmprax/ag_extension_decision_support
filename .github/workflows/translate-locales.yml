@@ -33,13 +33,13 @@ jobs:
     if: ${{ !github.event.inputs.export_run_id }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    # One model call per 25 strings per language: all 23 languages in one job
+    # One model call per 25 strings per language: all 36 languages in one job
     # takes close to two hours, so groups run in parallel. With a `languages`
     # input only the first group's job translates (those languages).
     strategy:
       fail-fast: false
       matrix:
-        group: ['ar de es fr', 'hi pt sw zu', 'zh it ru tr', 'nl pl el cs', 'hu ro bg da', 'sk uk ug']
+        group: ['ar de es fr', 'hi pt sw zu', 'zh it ru tr', 'nl pl el cs', 'hu ro bg da', 'sk uk ug', 'ha yo ig am', 'om ny lg rw', 'so bn id vi ur']
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

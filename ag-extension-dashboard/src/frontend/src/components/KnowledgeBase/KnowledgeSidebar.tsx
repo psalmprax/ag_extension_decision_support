@@ -58,10 +58,10 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
 
   return (
     <div
-      className={`relative h-full flex-shrink-0 transition-all duration-300 ease-in-out z-40 max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:shadow-2xl ${isOpen ? 'w-80' : 'w-0'}`}
+      className={`relative h-full flex-shrink-0 transition-all duration-300 ease-in-out z-40 max-md:absolute max-md:inset-y-0 max-md:start-0 max-md:z-50 max-md:shadow-2xl ${isOpen ? 'w-80' : 'w-0'}`}
     >
       <aside
-        className={`h-full w-full bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 overflow-hidden`}
+        className={`h-full w-full bg-white dark:bg-gray-900 border-e border-gray-100 dark:border-gray-800 overflow-hidden`}
       >
         <div className="h-full flex flex-col p-4 w-80">
           {/* New Search Button */}
@@ -102,7 +102,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
                     onClick={() => onSelect(h)}
-                    className={`w-full text-left p-4 ${radiusClass} hover:bg-gray-50 dark:hover:bg-gray-800 group transition-all border border-transparent hover:border-primary-500/10`}
+                    className={`w-full text-start p-4 ${radiusClass} hover:bg-gray-50 dark:hover:bg-gray-800 group transition-all border border-transparent hover:border-primary-500/10`}
                   >
                     <div className="flex items-start gap-4">
                       <div
@@ -169,7 +169,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
       {/* Toggle Tab */}
       <button
         onClick={onToggle}
-        className={`absolute top-1/2 -right-4 translate-y-[-50%] p-1 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg text-gray-400 hover:text-primary-500 transition-all z-50 group flex items-center justify-center ${!isOpen && 'translate-x-4'}`}
+        className={`absolute top-1/2 -end-4 translate-y-[-50%] p-1 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg text-gray-400 hover:text-primary-500 transition-all z-50 group flex items-center justify-center ${!isOpen && 'translate-x-4'}`}
       >
         {isOpen ? (
           <ChevronLeft className="w-6 h-6 group-hover:scale-110 transition-transform" />

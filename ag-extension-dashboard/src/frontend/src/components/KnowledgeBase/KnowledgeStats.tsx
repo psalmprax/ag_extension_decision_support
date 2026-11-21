@@ -32,7 +32,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
   if (!data)
     return (
       <div className="flex items-center justify-center p-20 text-gray-400">
-        <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full mr-3"></div>
+        <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full me-3"></div>
         <p className="font-black text-xs">
           {t('ui_knowledge_stats_analyzing_knowledge_streams')}
         </p>

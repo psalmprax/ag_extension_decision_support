@@ -71,7 +71,8 @@ export function useAppQueries(activeTab: string, searchQuery: string) {
   } = useQuery({
     queryKey: ['dashboard', user?.id, isDemo],
     queryFn: fetchDashboardData,
-    enabled: isDemoQueryEnabled(isDashboard, hasUser, isDemo),
+    // Farmers have their own dashboard (farmer stats); the organisation dashboard is for staff.
+    enabled: isDemoQueryEnabled(isDashboard, hasUser, isDemo) && user?.role !== 'farmer',
   });
 
   const { data: farmersResponse } = useQuery({

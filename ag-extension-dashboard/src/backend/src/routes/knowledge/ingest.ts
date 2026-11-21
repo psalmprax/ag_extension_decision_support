@@ -13,6 +13,8 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import { findCountry } from '@/shared-api/countries';
+import { countryOfUser } from '@/services/country/countryContext';
 
 const router = Router();
 const knowledgeAdminRoles: UserRole[] = ['admin', 'regional_manager', 'extension_officer'];
@@ -73,12 +75,30 @@ async function extractContentFromFile(filePath: string, ext: string): Promise<st
     return null;
 }
 
+const splitList = (value: unknown): string[] =>
+    typeof value === 'string' ? value.split(',').map(item => item.trim()).filter(Boolean) : [];
+
+/**
+ * Where a guide applies and whether it needs review. Each guide is tagged with the country
+ * it was written for (the uploader's, unless given), so answers in another country do not
+ * lean on it as local advice; an officer's upload waits for a manager or administrator
+ * before it grounds answers.
+ */
+async function guidePlacement(req: Request, body: { regions?: unknown; tags?: unknown; country?: unknown }) {
+    const uploader = (req as Request & { user?: { userId?: string; role?: string } }).user;
+    const guideCountry = findCountry(typeof body.country === 'string' ? body.country : null)?.name ?? (await countryOfUser(uploader?.userId));
+    const articleRegions = Array.from(new Set([...splitList(body.regions), ...(guideCountry ? [guideCountry] : [])]));
+    const needsReview = uploader?.role !== 'admin' && uploader?.role !== 'regional_manager';
+    const articleTags = [...splitList(body.tags), ...(needsReview ? ['pending_review'] : [])];
+    return { articleRegions, articleTags, needsReview };
+}
+
 async function processKnowledgeIngestion(req: Request, res: Response) {
     if (!req.file) {
         return res.status(400).json({ success: false, error: 'No file uploaded' });
     }
 
-    const { title, category = 'General', crops, regions, tags } = req.body;
+    const { title, category = 'General', crops, regions, tags, country } = req.body;
     const filePath = req.file.path;
     const ext = path.extname(req.file.originalname).toLowerCase();
 
@@ -100,8 +120,7 @@ async function processKnowledgeIngestion(req: Request, res: Response) {
     const articleId = uuidv4();
     const articleTitle = title || path.basename(req.file.originalname, ext).replace(/[-_]/g, ' ');
     const articleCrops = crops ? crops.split(',').map((c: string) => c.trim()) : [];
-    const articleRegions = regions ? regions.split(',').map((r: string) => r.trim()) : ['tropical'];
-    const articleTags = tags ? tags.split(',').map((t: string) => t.trim()) : [];
+    const { articleRegions, articleTags, needsReview } = await guidePlacement(req, { regions, tags, country });
     const summary = content.substring(0, 300).trim() + (content.length > 300 ? '...' : '');
 
     const article = await prisma.knowledgeArticle.create({
@@ -131,7 +150,8 @@ async function processKnowledgeIngestion(req: Request, res: Response) {
             crops: article.crops,
             regions: article.regions,
             tags: article.tags,
-            summary: article.summary
+            summary: article.summary,
+            pendingReview: needsReview,
         },
     });
 }

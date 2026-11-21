@@ -35,7 +35,8 @@ export function isQuarantined(res: SearchResult): boolean {
       // Invalid URLs do not establish provenance.
     }
   }
-  return tags.includes('unverified_scrape') || status === 'unverified_scrape' ||
+  // 'pending_review': uploaded by an officer, waiting for a manager or administrator.
+  return tags.includes('unverified_scrape') || tags.includes('pending_review') || status === 'unverified_scrape' ||
     /^faostat(?:[\s_-]|$)/i.test(source) || faostatUrl;
 }
 

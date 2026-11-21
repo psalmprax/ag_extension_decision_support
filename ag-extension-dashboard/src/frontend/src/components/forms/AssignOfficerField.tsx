@@ -38,13 +38,13 @@ export function AssignOfficerField({ value, onChange }: AssignOfficerFieldProps)
         {t('farmer_register_assign_officer', 'Assigned extension officer')}
       </label>
       <div className="relative">
-        <UserCheck className="w-4 h-4 text-white/40 absolute left-4 top-1/2 -translate-y-1/2" />
+        <UserCheck className="w-4 h-4 text-white/40 absolute start-4 top-1/2 -translate-y-1/2" />
         <select
           id="farmer-assign-officer"
           value={value}
           disabled={isLoading}
           onChange={e => onChange(e.target.value)}
-          className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-white/10 bg-slate-900 text-white focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm disabled:opacity-60"
+          className="w-full ps-11 pe-4 py-2.5 rounded-lg border border-white/10 bg-slate-900 text-white focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm disabled:opacity-60"
         >
           <option value="">{t('farmer_register_officer_none', 'Unassigned for now')}</option>
           {(officers ?? []).map(officer => (

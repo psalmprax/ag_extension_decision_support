@@ -6,6 +6,8 @@ import { query } from './databaseService';
 import crypto from 'crypto';
 import { demoWhere } from '@/services/demoScope';
 import { farmerRecordFilter } from './demoRecordScope';
+import { toE164 } from '@/services/country/phone';
+import { farmerCountryFor } from '@/services/country/countryContext';
 
 export interface BulkOperationResult {
     success: boolean;
@@ -357,6 +359,9 @@ class BulkOperationsService {
             case 'language preference':
                 farmerData.languagePreference = value || 'en';
                 break;
+            case 'country':
+                farmerData.country = value;
+                break;
         }
     }
 
@@ -388,10 +393,17 @@ class BulkOperationsService {
             }
         }
 
+        // Country: the row's own, else the importer's. Phones are stored in E.164 for that country.
+        farmerData.country = await farmerCountryFor(farmerData.country, userId);
+        if (farmerData.phone) {
+            const phone = toE164(String(farmerData.phone), farmerData.country);
+            if (!phone) throw new Error(`Phone number ${farmerData.phone} is not valid for ${farmerData.country}`);
+            farmerData.phone = phone;
+        }
+
         await tx.farmer.create({
             data: {
                 ...farmerData,
-                country: 'Kenya',
                 isActive: true
             }
         });

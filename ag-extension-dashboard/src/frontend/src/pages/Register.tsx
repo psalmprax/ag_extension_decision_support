@@ -8,7 +8,7 @@ import { RegisterAccountFields } from '@/components/auth/RegisterAccountFields';
 import { RegisterAffiliationFields } from '@/components/auth/RegisterAffiliationFields';
 import { isTextFieldName, type RegisterFormState } from '@/components/auth/registerForm';
 import { register, type RegisterData } from '@/api/authService';
-import { getCountryConfig } from '@/lib/countries';
+import { browserCountry, getCountryConfig } from '@/lib/countries';
 import { getApiErrorMessage } from '@/lib/apiError';
 import apiClient from '@/api/client';
 import { EncryptedStorageService } from '@/services/encryptedStorageService';
@@ -86,7 +86,7 @@ export function Register() {
     confirmPassword: '',
     phone: '',
     organization: '',
-    country: 'Kenya',
+    country: browserCountry() ?? 'Kenya',
     region: '',
     role: 'extension_officer',
   });

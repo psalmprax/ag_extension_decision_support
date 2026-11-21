@@ -1,9 +1,10 @@
-import { getPrisma } from './prismaService';
 import { logger } from '@/utils/logger';
 import axios from 'axios';
 import { rateLimitedFetch } from './externalApiGuard';
 import { recordPriceSnapshot } from './priceHistoryService';
 import { cacheGet, cacheSet } from './cacheService';
+import { countryOfUser } from './country/countryContext';
+import { findCountry } from '@/shared-api/countries';
 
 export type MarketDataStatus = 'live' | 'estimated' | 'unavailable';
 
@@ -103,28 +104,18 @@ function faostatAreaCode(country: string): string {
   return code;
 }
 
-export async function getUserCountry(userId?: string): Promise<string> {
-  if (!userId) return 'Kenya';
-  try {
-    const prisma = getPrisma();
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (user?.role === 'farmer') {
-      const farmer = await prisma.farmer.findFirst({ where: { userId: user.id } });
-      if (farmer?.country) return farmer.country;
-    }
-    if (user?.country) return user.country;
-  } catch (err) {
-    logger.error(`Error looking up user country details for ${userId}:`, err);
-  }
-  return 'Kenya';
+/** The caller's country, or null when none is recorded: prices are never another country's. */
+export async function getUserCountry(userId?: string): Promise<string | null> {
+  return countryOfUser(userId);
 }
 
-export async function resolveUserAreaCode(userId?: string): Promise<string> {
+/** FAOSTAT area code for the caller's country, or null when there is none to use. */
+export async function resolveUserAreaCode(userId?: string): Promise<string | null> {
   const country = await getUserCountry(userId);
+  if (!country || !isPriceCountrySupported(country)) return null;
   return faostatAreaCode(country);
 }
 
-/** True when a producer-price feed exists for this country (public routes use it to answer 400). */
 export function isPriceCountrySupported(country: string): boolean {
   try {
     faostatAreaCode(country);
@@ -135,19 +126,7 @@ export function isPriceCountrySupported(country: string): boolean {
 }
 
 function getCurrencyForCountry(country: string): string {
-  const countryLower = country.toLowerCase();
-  const mappings = [
-    { keys: ['nigeria', 'ng'], currency: 'NGN' },
-    { keys: ['ghana', 'gh'], currency: 'GHS' },
-    { keys: ['tanzania', 'tz'], currency: 'TZS' },
-    { keys: ['uganda', 'ug'], currency: 'UGX' },
-    { keys: ['ethiopia', 'et'], currency: 'ETB' },
-    { keys: ['india', 'in'], currency: 'INR' },
-    { keys: ['brazil', 'br'], currency: 'BRL' },
-    { keys: ['usa', 'united states', 'us'], currency: 'USD' },
-  ];
-  const match = mappings.find(mapping => mapping.keys.some(key => countryLower.includes(key)));
-  return match?.currency || 'KES';
+  return findCountry(country)?.currency ?? 'USD';
 }
 
 const usdIdentityRate = (): ExchangeRateResult =>
@@ -316,7 +295,15 @@ function priceLookupBudgetMs(): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 5000;
 }
 
+/**
+ * The baseline describes East African markets (90 kg bags, finger millet), so it is only
+ * offered there; anywhere else an empty list says plainly that there are no prices yet.
+ */
+const BASELINE_COUNTRIES = new Set(['KE', 'UG', 'TZ', 'RW']);
+
 function estimatedPricesFor(country: string): MarketPrice[] {
+  const iso = findCountry(country)?.iso2;
+  if (!iso || !BASELINE_COUNTRIES.has(iso)) return [];
   const currency = getCurrencyForCountry(country);
   return buildBaselinePrices(fallbackExchangeRate(currency), currency, new Date().toISOString());
 }
@@ -434,6 +421,7 @@ export const marketPriceService = {
    */
   async getLatestPrices(userId?: string, countryOverride?: string): Promise<MarketPrice[]> {
     const country = countryOverride || await getUserCountry(userId);
+    if (!country) return [];
     const cached = await readCachedPrices(country);
     if (cached) return cached;
     const fetched = await withinBudget(country, inFlightPrices.get(country) ?? this.startPriceFetch(country));

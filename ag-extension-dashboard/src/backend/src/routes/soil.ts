@@ -8,6 +8,7 @@ import { OpenMeteoSoilService } from '@/services/openMeteoSoilService';
 import { soilLabService } from '@/services/soilLabService';
 import { safeError } from '@/utils/safeResponse';
 import { logger } from '@/utils/logger';
+import { requireFarmerAccess } from '@/services/access/farmerScope';
 
 
 const router = Router();
@@ -84,7 +85,7 @@ async function getSoilComplements(lat: number | null, lon: number | null): Promi
  * Aggregated soil profile: lab history (real) + SoilGrids baseline (regional, if farmer has lat/lon)
  * + live moisture (modeled, if farmer has lat/lon). Each section carries its own provenance.
  */
-router.get('/farmer/:farmerId', async (req: AuthRequest, res: Response) => {
+router.get('/farmer/:farmerId', requireFarmerAccess(), async (req: AuthRequest, res: Response) => {
     try {
         const { farmerId } = req.params;
         if (!farmerId) return res.status(400).json({ success: false, error: 'farmerId required' });

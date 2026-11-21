@@ -44,7 +44,7 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
         </div>
       </div>
       <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/10 relative z-10 mt-6">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-start border-collapse">
           <thead>
             <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/10">
               {[
@@ -86,7 +86,7 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
                   <td className="px-6 py-4">
                     <Badge variant={invoice.status === 'paid' ? 'success' : 'warning'} size="sm">
                       <div
-                        className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                        className={`w-1.5 h-1.5 rounded-full me-1.5 ${
                           invoice.status === 'paid'
                             ? 'bg-emerald-400'
                             : 'bg-amber-400'

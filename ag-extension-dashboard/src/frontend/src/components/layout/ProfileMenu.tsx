@@ -5,15 +5,7 @@ import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { cn } from '@/lib/cn';
 import { dropdownVariants } from '@/lib/animations';
 import { useLanguage } from '@/lib/LanguageContext';
-
-const avatarEmojis: Record<string, string> = {
-  agronomist: '🌾',
-  lead_farmer: '🧑‍🌾',
-  field_officer: '🚜',
-  crop_scout: '🌱',
-  soil_expert: '🔬',
-  satellite_analyst: '🛰️',
-};
+import { AVATAR_PRESETS } from '@/components/profileDefaults';
 
 interface ProfileMenuProps {
   isProfileMenuOpen: boolean;
@@ -48,6 +40,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
     updateAvatar();
     return () => window.removeEventListener('gpexts:avatar-updated', updateAvatar);
   }, [storeUser?.id, storeUser?.profileSettings?.avatarId]);
+  const AvatarIcon = AVATAR_PRESETS.find(preset => preset.id === avatarId)?.icon;
 
   return (
     <div className="relative">
@@ -57,8 +50,8 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
         aria-label="Open user profile menu"
       >
         <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-emerald-100 dark:bg-emerald-400/[0.15] shrink-0">
-          {avatarEmojis[avatarId] ? (
-            <span className="text-lg" aria-label="Selected profile avatar">{avatarEmojis[avatarId]}</span>
+          {AvatarIcon ? (
+            <AvatarIcon className="w-4 h-4 text-emerald-800 dark:text-emerald-200" strokeWidth={1.5} aria-label="Selected profile avatar" />
           ) : (
             <span className="text-xs text-emerald-800 dark:text-emerald-200 font-medium">
               {storeUser?.firstName?.[0]}
@@ -66,7 +59,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
             </span>
           )}
         </div>
-        <div className="hidden xl:block text-left">
+        <div className="hidden xl:block text-start">
           <p className="text-sm font-medium text-slate-900 dark:text-white leading-none">
             {storeUser?.firstName} {storeUser?.lastName}
           </p>
@@ -82,7 +75,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
               initial="initial"
               animate="animate"
               exit="exit"
-              className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl p-2 z-50"
+              className="absolute end-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl p-2 z-50"
             >
               <div className="p-3 mb-2 border-b border-white/10">
                 <p

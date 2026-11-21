@@ -21,6 +21,8 @@ import { callAdvisoryTool, getAdvisoryTools } from '@/services/knowledge/advisor
 import { AdvisoryTimeoutError, withAdvisoryTimeout } from '@/services/knowledge/advisoryRuntime';
 import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
 import { getRealtimeServer } from '@/services/realtimeHub';
+import { linkAttachments, listAttachments, type AttachmentDto } from '@/services/uploadAttachments';
+import { recordContentGap } from '@/services/content/contentGaps';
 
 /**
  * Load the last turns of a conversation as a context block (empty when
@@ -84,9 +86,9 @@ const getRemainingTimeout = (deadline: number, stage: string, maximumMs?: number
 
 type ToolCall = { id?: string; function: { name: string; arguments: unknown } };
 
-function fanoutMessage(conversationId: string, message: ChatMessageRow): void {
+function fanoutMessage(conversationId: string, message: ChatMessageRow, attachments?: AttachmentDto[]): void {
   try {
-    getRealtimeServer()?.to(`conversation:${conversationId}`).emit('new_message', mapChatMessageRow(message));
+    getRealtimeServer()?.to(`conversation:${conversationId}`).emit('new_message', { ...mapChatMessageRow(message), ...(attachments?.length ? { attachments } : {}) });
   } catch {
     // Realtime delivery is best-effort; the persisted message remains authoritative.
   }
@@ -98,7 +100,7 @@ export async function persistTurnMessage(
   role: string,
   content: string,
   language?: string,
-  extra: { channel?: 'sms' | 'whatsapp' | 'telegram'; isVoice?: boolean; metadata?: object } = {},
+  extra: { channel?: 'sms' | 'whatsapp' | 'telegram'; isVoice?: boolean; metadata?: object; attachmentIds?: string[] } = {},
 ): Promise<ChatMessageRow | null> {
   if (!conversationId) return null;
   const { rows } = await query<ChatMessageRow>(
@@ -107,8 +109,15 @@ export async function persistTurnMessage(
     [conversationId, role, content, language ?? null, extra.channel ?? null, extra.isVoice ?? false,
      extra.metadata ? JSON.stringify(extra.metadata) : null]
   );
-  if (rows[0]) fanoutMessage(conversationId, rows[0]);
-  return rows[0] ?? null;
+  if (!rows[0]) return null;
+  let attachments: AttachmentDto[] | undefined;
+  if (extra.attachmentIds?.length) {
+    // Photos, videos or voice notes sent with the message (already stored for this farmer).
+    await linkAttachments('chat', rows[0].id, extra.attachmentIds);
+    attachments = (await listAttachments('chat', [rows[0].id])).get(rows[0].id);
+  }
+  fanoutMessage(conversationId, rows[0], attachments);
+  return rows[0];
 }
 
 const executeToolCalls = async (toolCalls: ToolCall[], deadline: number): Promise<Array<{ call: ToolCall; output: string }>> => {
@@ -312,6 +321,12 @@ export async function generateAdvisoryAnswer(req: AdvisoryAnswerRequest): Promis
     metadata: answerSourceMetadata(ragResult.citations, validated.evidence, req.storeIn ? trigger : null),
   });
   const reviewTrigger = scheduleAdvisoryReview(req.storeIn, requester.userId, validated.answer, trigger);
+  // No vetted guide behind the answer: note the question for the content team's gap report.
+  if (validated.evidence.status === 'general_guidance_only' && !requester.isDemo) {
+    void recordContentGap({
+      question: req.message, crop: advisoryContext.crops?.[0], country: advisoryContext.country, language: req.language, role: requester.role,
+    });
+  }
 
   return {
     text,

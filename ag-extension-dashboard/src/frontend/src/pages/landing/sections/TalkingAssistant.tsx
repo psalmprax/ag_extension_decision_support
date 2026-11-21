@@ -22,35 +22,9 @@ import {
 import apiClient from '@/api/client';
 import { EncryptedStorageService } from '@/services/encryptedStorageService';
 import { Language, languages } from '@/lib/i18n';
+import { SPEECH_LOCALES as LANGUAGE_LOCALE_MAP } from '@/lib/speechLocales';
 import { FloatingAssistantShell } from './FloatingAssistantShell';
 import { useLanguage } from '@/lib/LanguageContext';
-
-const LANGUAGE_LOCALE_MAP: Record<Language, string> = {
-  en: 'en-US',
-  sw: 'sw-KE',
-  fr: 'fr-FR',
-  pt: 'pt-PT',
-  es: 'es-ES',
-  zu: 'zu-ZA',
-  it: 'it-IT',
-  de: 'de-DE',
-  nl: 'nl-NL',
-  da: 'da-DK',
-  pl: 'pl-PL',
-  hu: 'hu-HU',
-  tr: 'tr-TR',
-  ar: 'ar-SA',
-  zh: 'zh-CN',
-  hi: 'hi-IN',
-  ru: 'ru-RU',
-  uk: 'uk-UA',
-  ro: 'ro-RO',
-  cs: 'cs-CZ',
-  sk: 'sk-SK',
-  bg: 'bg-BG',
-  el: 'el-GR',
-  ug: 'ug-CN',
-};
 
 interface AgronomicEntitySlots {
   crop?: string | null;
@@ -1118,20 +1092,20 @@ function LanguageSelector({ selectedLanguage, onSelectLanguage }: LanguageSelect
             </button>
           );
         })}
-        <div className="relative ml-auto">
+        <div className="relative ms-auto">
           <select
             aria-label="Select voice language"
             value={selectedLanguage}
             onChange={(e) => onSelectLanguage(e.target.value as Language)}
-            className="appearance-none bg-white/[0.03] text-white text-xs font-medium pl-2.5 pr-7 py-1 rounded-lg border border-white/10 hover:border-emerald-500/40 focus:outline-none focus:border-emerald-500 cursor-pointer"
+            className="appearance-none bg-white/[0.03] text-white text-xs font-medium ps-2.5 pe-7 py-1 rounded-lg border border-white/10 hover:border-emerald-500/40 focus:outline-none focus:border-emerald-500 cursor-pointer"
           >
             {languages.map((l) => (
               <option key={l.code} value={l.code} className="bg-white/[0.03] text-white">
-                {l.flag} {l.name} ({l.code.toUpperCase()})
+                {l.name} ({l.code.toUpperCase()})
               </option>
             ))}
           </select>
-          <ChevronDown className="w-3.5 h-3.5 text-white/40 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <ChevronDown className="w-3.5 h-3.5 text-white/40 absolute end-2 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
       </div>
     </div>
@@ -1570,8 +1544,8 @@ function ChatMessage({ msg, onSpeak }: ChatMessageProps) {
       <div
         className={`min-w-0 flex-1 max-w-[calc(100%-2.75rem)] rounded-lg px-3 py-3 text-sm leading-relaxed [overflow-wrap:anywhere] ${
           isUser
-            ? 'bg-emerald-600 text-white rounded-tr-none'
-            : 'bg-[#0d1a14]/80 border border-white/[0.08] text-white/90 rounded-tl-none'
+            ? 'bg-emerald-600 text-white rounded-se-none'
+            : 'bg-[#0d1a14]/80 border border-white/[0.08] text-white/90 rounded-ss-none'
         }`}
       >
         <p>{msg.text}</p>
@@ -1582,7 +1556,7 @@ function ChatMessage({ msg, onSpeak }: ChatMessageProps) {
             <button
               type="button"
               onClick={() => onSpeak(msg.text, msg.language ?? 'en')}
-              className="ml-2 shrink-0 hover:text-emerald-300 inline-flex items-center gap-1 font-sans text-xs"
+              className="ms-2 shrink-0 hover:text-emerald-300 inline-flex items-center gap-1 font-sans text-xs"
               title="Listen to this advisory again"
             >
               <Volume2 className="w-3.5 h-3.5" />
@@ -1607,7 +1581,7 @@ function QuestionChips({ onSelect, expanded }: QuestionChipsProps) {
       <summary className="min-h-[44px] cursor-pointer text-xs font-semibold text-white/70 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400">
         <HelpCircle className="w-3.5 h-3.5 text-emerald-400" />
         <span>{t('ui_talking_assistant_suggested_questions')}</span>
-        <ChevronDown className="ml-auto h-4 w-4" aria-hidden="true" />
+        <ChevronDown className="ms-auto h-4 w-4" aria-hidden="true" />
       </summary>
       <div className="flex flex-wrap gap-2">
         {SAMPLE_QUESTIONS.map((item, idx) => (
@@ -1615,7 +1589,7 @@ function QuestionChips({ onSelect, expanded }: QuestionChipsProps) {
             type="button"
             key={idx}
             onClick={() => onSelect(item)}
-            className="px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-emerald-500/10 border border-white/[0.08] hover:border-emerald-500/30 text-xs text-white/75 hover:text-white transition-all text-left flex items-center gap-1.5 group"
+            className="px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-emerald-500/10 border border-white/[0.08] hover:border-emerald-500/30 text-xs text-white/75 hover:text-white transition-all text-start flex items-center gap-1.5 group"
           >
             <span className="group-hover:text-emerald-300">{item.label}</span>
           </button>
@@ -1675,10 +1649,10 @@ function ChatInputForm({
         disabled={isLoading || isTranscribing}
         onChange={(e) => onChangeInput(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-lg bg-[#0d1a14]/90 border border-white/[0.12] text-sm text-white placeholder-white/40 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all pr-28 disabled:opacity-50"
+        className="w-full px-4 py-3 rounded-lg bg-[#0d1a14]/90 border border-white/[0.12] text-sm text-white placeholder-white/40 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all pe-28 disabled:opacity-50"
       />
 
-      <div className="absolute right-2 flex items-center gap-1">
+      <div className="absolute end-2 flex items-center gap-1">
         <button
           type="button"
           onClick={onToggleListening}

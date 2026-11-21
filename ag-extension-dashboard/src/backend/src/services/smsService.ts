@@ -10,6 +10,7 @@ function axiosErrorMessage(error: unknown): unknown {
 }
 import { query } from './databaseService';
 import { toSmsText } from './sms/smsText';
+import { toE164 } from '@/services/country/phone';
 
 export interface SMSOptions {
     to: string;
@@ -149,8 +150,16 @@ class SMSService {
         }
     }
 
-    // Main send SMS method
+    /** Sends one SMS; true when it was sent or queued to go out once the provider allows. */
     async sendSMS(options: SMSOptions): Promise<boolean> {
+        return (await this.deliver(options)) !== 'failed';
+    }
+
+    /**
+     * Sends one SMS. Above the provider's per-minute limit the message is not dropped:
+     * it is queued for the next minute ('deferred') and goes out then.
+     */
+    async deliver(options: SMSOptions): Promise<'sent' | 'deferred' | 'failed'> {
         const { to } = options;
         // GSM-7 only: one emoji or curly quote would make every part of the message
         // UCS-2 (70 characters instead of 160) and multiply its cost.
@@ -162,38 +171,29 @@ class SMSService {
         if (!this.isValidE164(formattedPhone)) {
             logger.warn(`SMS rejected — invalid E.164 after formatting: ${formattedPhone} (input: ${to})`);
             await this.persistSMS({ ...options, to: formattedPhone, provider: 'none' }, 'failed');
-            return false;
+            return 'failed';
         }
 
-        let success = false;
-        let provider = 'none';
-
-        // Log in development
         if (!this.africaTalkingApiKey && !this.twilioAccountSid) {
             logger.error('SMS provider not configured — cannot send message');
-            return false;
-        } else if (this.africaTalkingApiKey) {
-            provider = 'africa_talking';
-            if (!this.checkProviderRateLimit(provider)) {
-                logger.warn(`SMS rate-limited (${provider}) — dropping message to ${formattedPhone}`);
-                await this.persistSMS({ ...options, to: formattedPhone, provider }, 'failed');
-                return false;
-            }
-            success = await this.sendViaAfricaTalking(formattedPhone, message);
-        } else if (this.twilioAccountSid) {
-            provider = 'twilio';
-            if (!this.checkProviderRateLimit(provider)) {
-                logger.warn(`SMS rate-limited (${provider}) — dropping message to ${formattedPhone}`);
-                await this.persistSMS({ ...options, to: formattedPhone, provider }, 'failed');
-                return false;
-            }
-            success = await this.sendViaTwilio(formattedPhone, message);
+            return 'failed';
         }
+        const provider = this.africaTalkingApiKey ? 'africa_talking' : 'twilio';
+        const waitMs = this.providerWaitMs(provider);
+        if (waitMs > 0) {
+            // Spread the overflow over the following minutes instead of losing it.
+            const queued = await this.scheduleSMS(formattedPhone, message, new Date(Date.now() + waitMs + Math.floor(Math.random() * 5000)), options.senderId ?? null);
+            logger.info(`SMS over the ${provider} per-minute limit — queued to ${formattedPhone} in ${Math.round(waitMs / 1000)} s`);
+            if (queued) return 'deferred';
+            await this.persistSMS({ ...options, to: formattedPhone, provider }, 'failed');
+            return 'failed';
+        }
+        const success = provider === 'africa_talking'
+            ? await this.sendViaAfricaTalking(formattedPhone, message)
+            : await this.sendViaTwilio(formattedPhone, message);
 
-        // Persist to database
         await this.persistSMS({ ...options, to: formattedPhone, provider }, success ? 'sent' : 'failed');
-
-        return success;
+        return success ? 'sent' : 'failed';
     }
 
     // Send bulk SMS
@@ -231,52 +231,39 @@ class SMSService {
 
     // Provider token-bucket (30 req/min per provider, per instance)
     private smsRateBuckets: Map<string, { tokens: number; resetAt: number }> = new Map();
-    // Per-instance cap on provider calls; above it messages are dropped (and recorded as
-    // failed), so set SMS_PROVIDER_RATE_PER_MINUTE to what the provider account allows.
+    // Per-instance cap on provider calls; above it messages are queued for the next
+    // window. Set SMS_PROVIDER_RATE_PER_MINUTE to what the provider account allows.
     private readonly SMS_RATE_MAX = Number(process.env.SMS_PROVIDER_RATE_PER_MINUTE) || 30;
     private readonly SMS_RATE_WINDOW_MS = 60_000;
 
-    private checkProviderRateLimit(provider: string): boolean {
+    /** 0 and a token taken when the provider may be called now, else how long to wait. */
+    private providerWaitMs(provider: string): number {
         const now = Date.now();
         let bucket = this.smsRateBuckets.get(provider);
         if (!bucket || now >= bucket.resetAt) {
             bucket = { tokens: this.SMS_RATE_MAX, resetAt: now + this.SMS_RATE_WINDOW_MS };
             this.smsRateBuckets.set(provider, bucket);
         }
-        if (bucket.tokens <= 0) return false;
+        if (bucket.tokens <= 0) return bucket.resetAt - now;
         bucket.tokens--;
-        return true;
+        return 0;
     }
 
     private isValidE164(phone: string): boolean {
         return /^\+[1-9]\d{7,14}$/.test(phone);
     }
 
-    // Helper: Format phone number to E.164
-    formatPhoneNumber(phone: string): string {
-        // Remove any non-digit characters
-        const digits = phone.replace(/\D/g, '');
-
-        // If it starts with country code (e.g., 254), keep it
-        if (digits.startsWith('254')) {
-            return `+${digits}`;
-        }
-
-        // If it's 9 or 10 digits, assume Kenya
-        if (digits.length === 9) {
-            return `+254${digits}`;
-        }
-
-        if (digits.length === 10 && digits.startsWith('0')) {
-            return `+254${digits.substring(1)}`;
-        }
-
-        // Default: just add +
-        return `+${digits}`;
+    /**
+     * A phone number in E.164. Numbers written locally are read in the given country
+     * (else DEFAULT_COUNTRY). Unreadable input is returned digits-only with a plus, which
+     * fails the E.164 check at send time instead of going to a guessed number.
+     */
+    formatPhoneNumber(phone: string, country?: string | null): string {
+        return toE164(phone, country) ?? `+${phone.replace(/\D/g, '')}`;
     }
 
     // Send scheduled SMS (for reminders) — row + BullMQ delayed job (DB polling fallback remains)
-    async scheduleSMS(to: string, message: string, scheduledTime: Date, userId: string): Promise<boolean> {
+    async scheduleSMS(to: string, message: string, scheduledTime: Date, userId: string | null): Promise<boolean> {
         try {
             const formattedPhone = this.formatPhoneNumber(to);
             if (!this.isValidE164(formattedPhone)) {

@@ -193,7 +193,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="relative w-full max-w-md bg-slate-950/95 border-l border-emerald-500/20 text-slate-100 shadow-2xl flex flex-col h-full z-10 overflow-hidden"
+            className="relative w-full max-w-md bg-slate-950/95 border-s border-emerald-500/20 text-slate-100 shadow-2xl flex flex-col h-full z-10 overflow-hidden"
           >
             {/* Drawer Header */}
             <div className="p-4 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/60 backdrop-blur-md">
@@ -369,7 +369,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                         addLog('ussd', 'CON Karibu GPExts Huduma:\n1. Tambua Ugonjwa wa Mmea\n2. Hali ya Hewa\n3. Omba Afisa');
                       }, 100);
                     }}
-                    className="text-left p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-slate-300 text-[11px] transition-colors flex justify-between items-center"
+                    className="text-start p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-slate-300 text-[11px] transition-colors flex justify-between items-center"
                   >
                     <span>{t('ui_ussdsimulator_drawer_swahili_diagnosis_flow')}</span>
                     <span className="text-emerald-400 font-mono text-[10px]">{t('ui_ussdsimulator_drawer_test')}</span>
@@ -385,7 +385,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                         setUserInput('Maize leaves have gray spots');
                       }, 100);
                     }}
-                    className="text-left p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-slate-300 text-[11px] transition-colors flex justify-between items-center"
+                    className="text-start p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-slate-300 text-[11px] transition-colors flex justify-between items-center"
                   >
                     <span>{t('ui_ussdsimulator_drawer_gray_leaf_spot_maize')}</span>
                     <span className="text-emerald-400 font-mono text-[10px]">{t('ui_ussdsimulator_drawer_test')}</span>

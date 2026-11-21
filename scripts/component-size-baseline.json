@@ -16,7 +16,7 @@
   "components/LiveActivityStream.tsx": 568,
   "components/MarketPriceTrendCard.tsx": 418,
   "components/NotificationPanel.tsx": 340,
-  "components/ProfileModal.tsx": 716,
+  "components/ProfileModal.tsx": 703,
   "components/SatelliteInsights.tsx": 311,
   "components/ShareModal.tsx": 315,
   "components/USSDSimulatorDrawer.tsx": 410,
@@ -26,7 +26,7 @@
   "components/canvas-ui/DiseaseSaliencyCanvas.tsx": 338,
   "components/canvas-ui/RagKnowledgeGraphCanvas.tsx": 440,
   "components/canvas-ui/SoilNutrientHeatmapCanvas.tsx": 540,
-  "components/channels/ChannelOnboardingModal.tsx": 507,
+  "components/channels/ChannelOnboardingModal.tsx": 488,
   "components/farmer/NormalDashboard.tsx": 333,
   "components/forms/FarmerRegistrationForm.tsx": 638,
   "components/forms/VisitModal.tsx": 321,
@@ -44,10 +44,10 @@
   "pages/SMS.tsx": 332,
   "pages/SystemHealth.tsx": 731,
   "pages/Telemetry.tsx": 366,
-  "pages/UserManagementPage.tsx": 669,
+  "pages/UserManagementPage.tsx": 667,
   "pages/diagnostics/ImageAnalysisTab.tsx": 482,
   "pages/diagnostics/SoilDiagnosticsTab.tsx": 760,
   "pages/landing/sections/FarmerServices.tsx": 355,
   "pages/landing/sections/Hero.tsx": 366,
-  "pages/landing/sections/TalkingAssistant.tsx": 2015
+  "pages/landing/sections/TalkingAssistant.tsx": 1989
 }

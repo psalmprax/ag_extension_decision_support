@@ -3,6 +3,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Cloud, CloudRain, Sun, MapPin } from 'lucide-react';
 import { fetchWeather } from '@/api/weatherService';
+import { useUnits } from '@/hooks/useUnits';
 
 interface WeatherWidgetProps {
   location?: string;
@@ -16,7 +17,8 @@ interface WeatherData {
   windSpeed: number;
 }
 
-export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location = 'Kenya' }) => {
+export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location = '' }) => {
+  const units = useUnits();
   const { data: weatherResponse, isLoading } = useQuery<{ success: boolean; data: WeatherData }>({
     queryKey: ['weather', location],
     queryFn: () => fetchWeather(location),
@@ -46,7 +48,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location = 'Kenya'
       <span>{location}</span>
       <span className="w-px h-4 bg-slate-900/[0.08] dark:bg-white/[0.1]" aria-hidden="true" />
       <Icon className="w-4 h-4 text-slate-500 dark:text-slate-400" aria-hidden="true" />
-      <span className="font-mono tabular-nums">{Math.round(weather.temperature ?? weather.temp ?? 0)}°C</span>
+      <span className="font-mono tabular-nums">{units.temp(weather.temperature ?? weather.temp)}</span>
     </div>
   );
 };

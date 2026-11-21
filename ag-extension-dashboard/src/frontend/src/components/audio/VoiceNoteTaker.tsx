@@ -146,7 +146,7 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                className="absolute right-0 mt-1 w-44 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl z-50 py-1 max-h-56 overflow-y-auto"
+                className="absolute end-0 mt-1 w-44 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl z-50 py-1 max-h-56 overflow-y-auto"
               >
                 <div className="px-2.5 py-1 text-xs font-medium text-slate-400">
                   {t('ui_voice_note_taker_select_spoken_language')}
@@ -156,7 +156,7 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
                     key={lang.code}
                     type="button"
                     onClick={() => handleLanguageChange(lang.code)}
-                    className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between hover:bg-emerald-500/10 dark:hover:bg-slate-700 transition-colors ${
+                    className={`w-full text-start px-3 py-1.5 text-xs flex items-center justify-between hover:bg-emerald-500/10 dark:hover:bg-slate-700 transition-colors ${
                       lang.code === currentLang ? 'font-bold text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'
                     }`}
                   >

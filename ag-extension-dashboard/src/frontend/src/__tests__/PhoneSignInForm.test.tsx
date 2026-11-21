@@ -20,13 +20,22 @@ describe('PhoneSignInForm', () => {
     fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '+254711000302' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send code' }));
     await screen.findByText('If this number is registered, a code is on its way.');
-    expect(requestPhoneCode).toHaveBeenCalledWith('+254711000302');
+    expect(requestPhoneCode).toHaveBeenCalledWith('+254711000302', expect.any(String));
     expect(screen.getByRole('button', { name: /New code in 30s/ })).toBeDisabled();
 
     fireEvent.change(screen.getByLabelText('Code from the SMS'), { target: { value: '12 34 56' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     await waitFor(() => expect(onSignedIn).toHaveBeenCalled());
-    expect(verifyPhoneCode).toHaveBeenCalledWith('+254711000302', '123456');
+    expect(verifyPhoneCode).toHaveBeenCalledWith('+254711000302', '123456', expect.any(String));
+  });
+
+  it('reads a local number in the country the person picks', async () => {
+    vi.mocked(requestPhoneCode).mockResolvedValue({ success: true, data: { message: 'Sent' } });
+    render(<PhoneSignInForm onSignedIn={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText('Country'), { target: { value: 'Nigeria' } });
+    fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '0803 123 4567' } });
+    fireEvent.click(screen.getByRole('button', { name: /send code/i }));
+    await waitFor(() => expect(requestPhoneCode).toHaveBeenCalledWith('0803 123 4567', 'Nigeria'));
   });
 
   it('sends two-step accounts back to email sign-in', async () => {

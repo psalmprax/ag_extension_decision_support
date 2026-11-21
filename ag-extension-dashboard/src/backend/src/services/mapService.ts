@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { query, getPool } from './databaseService';
 import { logger } from '../utils/logger';
-import { demoSql } from '@/services/demoScope';
+import { farmerScopeSql, type ScopePrincipal } from '@/services/access/farmerScope';
 
 export interface MapFeature {
     id: string;
@@ -17,19 +17,21 @@ export interface MapFeature {
     };
 }
 
-export const getMapData = async (): Promise<MapFeature[]> => {
+/** Farms (only those the viewer may see) and active alerts, for the map. */
+export const getMapData = async (viewer: ScopePrincipal): Promise<MapFeature[]> => {
     try {
         const pool = getPool();
         if (!pool) return [];
 
         // Fetch farmers with real coordinates
+        const scope = await farmerScopeSql(viewer, 'f');
         const farmersResult = await query(`
-            SELECT id, first_name, last_name, region, village, crops, 
-                   location_lat as lat, location_lng as lng
-            FROM farmers
-            WHERE location_lat IS NOT NULL AND location_lng IS NOT NULL AND ${demoSql('farmers')}
+            SELECT f.id, f.first_name, f.last_name, f.region, f.village, f.crops,
+                   f.location_lat as lat, f.location_lng as lng
+            FROM farmers f
+            WHERE f.location_lat IS NOT NULL AND f.location_lng IS NOT NULL AND ${scope.sql}
             LIMIT 200
-        `);
+        `, scope.params);
 
         // Fetch active alerts
         const alertsResult = await query(`

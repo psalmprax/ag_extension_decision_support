@@ -50,7 +50,7 @@ const QuotaBar = ({
             </span>
           </div>
         </div>
-        <div className="text-right">
+        <div className="text-end">
           <span
             className={`text-xxs font-black font-mono ${isHigh ? 'text-rose-400 animate-pulse' : 'text-emerald-400'}`}
           >
@@ -63,7 +63,7 @@ const QuotaBar = ({
           initial={{ width: 0 }}
           animate={{ width: isUnlimited ? '100%' : `${percentage}%` }}
           transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
-          className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${color} transition-all duration-300 ${isUnlimited ? 'opacity-30' : ''}`}
+          className={`absolute inset-y-0 start-0 rounded-full bg-gradient-to-r ${color} transition-all duration-300 ${isUnlimited ? 'opacity-30' : ''}`}
           style={{
             boxShadow: isUnlimited || percentage > 5 ? `0 0 15px ${glowColor}` : 'none',
           }}

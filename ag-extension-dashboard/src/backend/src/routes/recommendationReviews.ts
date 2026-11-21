@@ -5,6 +5,7 @@ import { getFarmerForPrincipal, getPrincipalTenantId } from '@/services/dataGove
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { viewerIsDemo } from '@/services/demoScope';
+import { rowsOfVisibleFarmersSql } from '@/services/access/farmerScope';
 
 const router = Router();
 // Farmers may ask for a human to check advice they received (POST); listing and
@@ -42,10 +43,15 @@ router.get('/', reviewersOnly, async (req: Request, res: Response) => {
     }
 
     if (tenantId) {
+      // Within the organisation, only reviews about farmers this person may see
+      // (an officer's own farmers, a manager's region); reviews about no farmer are shared.
+      const scope = user.role === 'admin' ? null : await rowsOfVisibleFarmersSql(user, 'farmer_id', 3);
       const result = await query(
         `SELECT ${REVIEW_COLUMNS}
-         FROM recommendation_reviews WHERE tenant_id = $1 AND status = $2 ORDER BY created_at ASC`,
-        [tenantId, status]
+         FROM recommendation_reviews WHERE tenant_id = $1 AND status = $2
+         ${scope ? `AND (farmer_id IS NULL OR ${scope.sql})` : ''}
+         ORDER BY created_at ASC`,
+        [tenantId, status, ...(scope?.params ?? [])]
       );
       return res.json({ success: true, data: result.rows });
     } else if (user.role === 'admin') {

@@ -179,14 +179,14 @@ export function Login({ onDemo }: LoginProps) {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className={`${AUTH_INPUT} pr-12`}
+                    className={`${AUTH_INPUT} pe-12`}
                     placeholder="••••••••"
                     autoComplete="current-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors p-1"
+                    className="absolute end-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors p-1"
                     aria-label={showPassword ? 'Hide secret' : 'Show secret'}
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}

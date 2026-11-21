@@ -4,6 +4,7 @@ import { logger } from '../utils/logger';
 import type { FarmerOnboardingSessionRow } from '../types/rowTypes';
 import type { PoolClient } from 'pg';
 import { officerForPlace, parseFarmSize } from './onboardingAssignment';
+import { countryOfPhone, defaultCountryName } from '@/services/country/phone';
 
 interface OnboardingProcessResult {
     isHandled: boolean;
@@ -195,8 +196,8 @@ class OnboardingEngine {
             `INSERT INTO farmers (
                 first_name, last_name, phone, region, crops, farm_size_hectares,
                 location_lat, location_lng, notes, tenant_id, language_preference,
-                district, assigned_officer_id
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                district, assigned_officer_id, country
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING id`,
             [
                 firstName,
@@ -212,6 +213,8 @@ class OnboardingEngine {
                 data.language === 'sw' ? 'sw' : 'en',
                 data.region || null,
                 placed?.officerId ?? null,
+                // The farmer's country follows their number (+256… is Uganda); Telegram has no number.
+                (channel !== 'telegram' && countryOfPhone(identifier)) || defaultCountryName(),
             ]
         );
 

@@ -64,7 +64,7 @@ export function StepCard({
           <button
             type="button"
             onClick={onDelete}
-            className="p-1 text-slate-400 hover:text-rose-400 transition rounded ml-1"
+            className="p-1 text-slate-400 hover:text-rose-400 transition rounded ms-1"
             title="Delete step"
           >
             <Trash2 className="w-3.5 h-3.5" />

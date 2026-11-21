@@ -326,9 +326,9 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                             <button
                               type="button"
                               onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
-                              className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-colors"
+                              className="w-full p-4 flex items-center justify-between text-start hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-colors"
                             >
-                              <span className="text-sm font-bold text-slate-900 dark:text-white pr-4">
+                              <span className="text-sm font-bold text-slate-900 dark:text-white pe-4">
                                 {faq.question}
                               </span>
                               <ChevronRight

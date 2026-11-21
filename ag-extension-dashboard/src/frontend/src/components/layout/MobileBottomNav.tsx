@@ -43,7 +43,7 @@ const SpecialCenterButton: React.FC<{
       <span className="relative w-7 h-7 flex items-center justify-center">
         <Icon className="w-[22px] h-[22px]" aria-hidden="true" />
         {isLocked && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center">
+          <span className="absolute -top-1 -end-1 w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center">
             <Lock className="w-2.5 h-2.5" aria-hidden="true" />
           </span>
         )}
@@ -123,7 +123,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   // A floating capsule above the home indicator. It leaves room on the right for the round
   // AI button, except on screens that have their own message box (no AI button there).
   const aiButtonShown = !SCREENS_WITH_COMPOSER.has(activeTab);
-  const navClass = `md:hidden fixed left-3 ${aiButtonShown ? 'right-[5.25rem]' : 'right-3'} bottom-[calc(env(safe-area-inset-bottom)+0.625rem)] z-40 ios-glass rounded-[30px] p-1.5`;
+  const navClass = `md:hidden fixed start-3 ${aiButtonShown ? 'end-[5.25rem]' : 'end-3'} bottom-[calc(env(safe-area-inset-bottom)+0.625rem)] z-40 ios-glass rounded-[30px] p-1.5`;
 
   return (
     <nav aria-label={t('nav_mobile_bar', { defaultValue: 'Main' })} className={navClass}>

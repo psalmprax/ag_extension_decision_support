@@ -23,9 +23,9 @@ export function MCPToolsHealthCard({
           }`}
         >
           {health.status === 'healthy' ? (
-            <CheckCircle className="w-4 h-4 inline mr-1" />
+            <CheckCircle className="w-4 h-4 inline me-1" />
           ) : (
-            <XCircle className="w-4 h-4 inline mr-1" />
+            <XCircle className="w-4 h-4 inline me-1" />
           )}
           {health.status}
         </div>

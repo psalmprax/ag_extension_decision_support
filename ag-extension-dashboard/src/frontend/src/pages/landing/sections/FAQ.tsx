@@ -51,7 +51,7 @@ export function FAQ() {
                       aria-expanded={isOpen}
                       aria-controls={`faq-answer-${index}`}
                       onClick={() => toggleFaq(index)}
-                      className="w-full p-6 text-left flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                      className="w-full p-6 text-start flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
                     >
                       <span className="text-base sm:text-lg font-semibold text-white/90 leading-snug">
                         {item.question}

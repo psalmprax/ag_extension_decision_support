@@ -20,7 +20,7 @@ export function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
         <div className="w-2 h-2 rounded-full bg-slate-50 dark:bg-white/[0.04]" />
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-2.5 text-[11px] pr-1">
+      <div className="flex-1 overflow-y-auto space-y-2.5 text-[11px] pe-1">
         <div className="pb-2 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
           <div className="text-slate-900 dark:text-white font-medium text-[12px] flex items-center justify-between">
             <span>{t('ui_advisory_studio_page_field_scouting_pwa')}</span>

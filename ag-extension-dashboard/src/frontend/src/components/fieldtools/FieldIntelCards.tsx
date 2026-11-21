@@ -28,7 +28,7 @@ export function LeaderboardCard() {
             <div className="flex items-center gap-2 mb-3">
                 <Award className="w-4 h-4 text-amber-500" />
                 <h3 className="text-sm font-black  ">{t('ui_field_intel_cards_officer_leaderboard')}</h3>
-                <span className="text-xxs text-gray-400 ml-auto">{t('ui_field_intel_cards_30_days')}</span>
+                <span className="text-xxs text-gray-400 ms-auto">{t('ui_field_intel_cards_30_days')}</span>
             </div>
             {!data || data.length === 0 ? (
                 <p className="text-xs text-gray-400">{t('ui_field_intel_cards_no_officer_activity_in_the_last_30_d')}</p>

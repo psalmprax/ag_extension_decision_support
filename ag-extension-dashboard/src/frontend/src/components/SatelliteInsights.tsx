@@ -180,7 +180,7 @@ const SpatialDataVisualization = ({
         />
       </div>
 
-      <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+      <div className="absolute top-4 start-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
         <p className="text-xs font-black text-primary-400 flex items-center gap-2">
           <Layers className="w-3 h-3" />
           {t('ui_satellite_insights_spectral_layer_iv')}
@@ -188,7 +188,7 @@ const SpatialDataVisualization = ({
       </div>
 
       {priority && (
-        <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+        <div className="absolute top-4 end-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
           <div className={`text-xs font-black flex items-center gap-2 ${priorityTextClass}`}>
             {isHighOrCritical ? <AlertTriangle className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
             {String(priority.level ?? 'unknown')} PRIORITY
@@ -196,10 +196,10 @@ const SpatialDataVisualization = ({
         </div>
       )}
 
-      <div className="absolute bottom-4 left-4">
+      <div className="absolute bottom-4 start-4">
         <p className="text-xxs font-black text-white/40  ">{gpsLabel}</p>
       </div>
-      <div className="absolute bottom-4 right-4 text-right">
+      <div className="absolute bottom-4 end-4 text-end">
         <p className="text-xxs font-black text-white/40  ">
           {dataPoints.length > 0 ? `Source: ${String(dataPoints[0].source ?? 'provider')}` : 'No satellite observation'}
         </p>

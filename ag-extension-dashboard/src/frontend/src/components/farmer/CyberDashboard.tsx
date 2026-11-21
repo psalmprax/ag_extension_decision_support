@@ -76,7 +76,7 @@ export const CyberDashboard: React.FC<CyberDashboardProps> = ({ farmerStats }) =
             {t('farmer_overview')}
           </p>
         </div>
-        <div className="text-right">
+        <div className="text-end">
           <p className="text-xxs font-medium text-slate-400">
             {t('ui_cyber_dashboard_system_status')} {farmerStats ? 'Telemetry available' : 'Awaiting telemetry'}
           </p>

@@ -39,7 +39,7 @@ describe('public messaging knowledge hints', () => {
         expect(reply).not.toContain(article.content);
         expect(reply).toContain('Not a diagnosis');
         expect(mockQuery.mock.calls[0][1]).toEqual([[article.id], '"armyworm" OR "maize" OR "lilongwe"']);
-        expect(mockQuery.mock.calls[0][0]).toContain("NOT ('unverified_scrape' = ANY(COALESCE(tags, ARRAY[]::text[])))");
+        expect(mockQuery.mock.calls[0][0]).toContain("NOT (COALESCE(tags, ARRAY[]::text[]) && ARRAY['unverified_scrape', 'pending_review']::text[])");
         expect(mockQuery.mock.calls[0][0]).toContain("websearch_to_tsquery('english', $2)");
         expect(mockQuery.mock.calls[0][0]).toContain('LIMIT 100');
     });

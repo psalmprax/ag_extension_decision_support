@@ -16,6 +16,8 @@ model User {
   role          String             @default("extension_officer") @db.VarChar(50)
   region        String?            @db.VarChar(100)
   country       String?            @default("Kenya") @db.VarChar(100)
+  /// IANA time zone; null means the country's main one.
+  timeZone      String?            @map("time_zone") @db.VarChar(64)
   phone         String?            @db.VarChar(20)
   /// SMS command PIN for officers and managers (bcrypt); commands unlock for a day after a correct PIN.
   smsPinHash            String?   @map("sms_pin_hash") @db.VarChar(255)
@@ -93,6 +95,11 @@ model User {
   tenant         Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   tenantMemberships TenantMembership[]
   progressEntries   FarmerProgressEntry[] @relation("OfficerProgressEntries")
+  diagnosisLabels   DiagnosisTestImage[] @relation("DiagnosisLabeller")
+  diagnosisEvalRuns DiagnosisEvalRun[] @relation("DiagnosisEvalStarter")
+  pilotsCreated     Pilot[] @relation("PilotCreator")
+  voiceClips        VoiceClip[] @relation("VoiceClipRecorder")
+  voiceCalls        VoiceCall[] @relation("VoiceCallRequester")
   serviceAccess        ServiceAccessGrant[] @relation("ServiceAccessHolder")
   serviceAccessGranted ServiceAccessGrant[] @relation("ServiceAccessGrantedBy")
   serviceAccessRevoked ServiceAccessGrant[] @relation("ServiceAccessRevokedBy")
@@ -237,6 +244,8 @@ model Farmer {
    locationLat              Decimal?           @map("location_lat") @db.Decimal(10, 8)
    locationLng              Decimal?           @map("location_lng") @db.Decimal(11, 8)
    languagePreference       String?            @default("en") @map("language_preference") @db.VarChar(20)
+   smsOptOut                Boolean            @default(false) @map("sms_opt_out")
+   smsOptOutAt              DateTime?          @map("sms_opt_out_at") @db.Timestamp(6)
    isActive                 Boolean?           @default(true) @map("is_active")
    isDemo                   Boolean            @default(false) @map("is_demo")
    assignmentNotificationSent Boolean           @default(false) @map("assignment_notification_sent")
@@ -265,6 +274,9 @@ model Farmer {
    exportRequests           DataExportRequest[]
    uploads                  UploadRecord[]
    progressEntries          FarmerProgressEntry[]
+   pilotEnrolments          PilotFarmer[]
+   adviceFollowups          AdviceFollowup[]
+   voiceCalls               VoiceCall[]
    whatsappMessages         WhatsappMessage[]
    smsFeedbacks             SmsFeedback[]
 
@@ -949,6 +961,9 @@ model Tenant {
   id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name             String             @db.VarChar(160)
   region           String?            @db.VarChar(100)
+  country          String?            @db.VarChar(100)
+  /// IANA time zone for working hours; null means the country's main one.
+  timeZone         String?            @map("time_zone") @db.VarChar(64)
   defaultCurrency  String             @default("USD") @map("default_currency") @db.VarChar(10)
   defaultLanguage  String             @default("en") @map("default_language") @db.VarChar(20)
   capabilities     Json               @default("{}")
@@ -1049,6 +1064,8 @@ model UploadRecord {
   visitAttachments VisitAttachment[]
   chatMessageAttachments ChatMessageAttachment[]
   progressAttachments    FarmerProgressAttachment[]
+  diagnosisTestImage     DiagnosisTestImage?
+  voiceClips             VoiceClip[]
 
   @@index([tenantId])
   @@map("upload_records")
@@ -1482,4 +1499,187 @@ model PhoneLoginCode {
   @@index([phone, createdAt])
   @@index([ipAddress, createdAt])
   @@map("phone_login_codes")
+}
+
+/// A photo with a known answer (agronomist label or officer field confirmation), for testing photo diagnosis.
+model DiagnosisTestImage {
+  id         String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  uploadId   String                 @unique @map("upload_id") @db.Uuid
+  crop       String                 @db.VarChar(80)
+  label      String                 @db.VarChar(160)
+  /// agronomist | officer_confirmation
+  source     String                 @default("agronomist") @db.VarChar(30)
+  country    String?                @db.VarChar(100)
+  labelledBy String                 @map("labelled_by") @db.Uuid
+  createdAt  DateTime               @default(now()) @map("created_at") @db.Timestamp(6)
+  upload     UploadRecord           @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  labeller   User                   @relation("DiagnosisLabeller", fields: [labelledBy], references: [id], onDelete: Cascade)
+  results    DiagnosisEvalResult[]
+
+  @@index([crop, label])
+  @@index([labelledBy])
+  @@map("diagnosis_test_images")
+}
+
+/// One run of photo diagnosis over the test set.
+model DiagnosisEvalRun {
+  id         String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  startedBy  String                @map("started_by") @db.Uuid
+  /// running | finished | failed
+  status     String                @default("running") @db.VarChar(20)
+  total      Int                   @default(0)
+  done       Int                   @default(0)
+  correct    Int                   @default(0)
+  model      String?               @db.VarChar(200)
+  startedAt  DateTime              @default(now()) @map("started_at") @db.Timestamp(6)
+  finishedAt DateTime?             @map("finished_at") @db.Timestamp(6)
+  starter    User                  @relation("DiagnosisEvalStarter", fields: [startedBy], references: [id], onDelete: Cascade)
+  results    DiagnosisEvalResult[]
+
+  @@index([startedBy])
+  @@map("diagnosis_eval_runs")
+}
+
+model DiagnosisEvalResult {
+  runId      String             @map("run_id") @db.Uuid
+  imageId    String             @map("image_id") @db.Uuid
+  predicted  String?            @db.VarChar(200)
+  confidence Float?
+  correct    Boolean
+  run        DiagnosisEvalRun   @relation(fields: [runId], references: [id], onDelete: Cascade)
+  image      DiagnosisTestImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
+
+  @@id([runId, imageId])
+  @@index([imageId])
+  @@map("diagnosis_eval_results")
+}
+
+/// Accuracy per crop and label from the latest finished run; decides which diagnoses farmers see with confidence.
+model DiagnosisClassStatus {
+  crop      String   @db.VarChar(80)
+  label     String   @db.VarChar(160)
+  samples   Int
+  correct   Int
+  runId     String   @map("run_id") @db.Uuid
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@id([crop, label])
+  @@map("diagnosis_class_status")
+}
+
+/// A pilot: farmers in one region randomly split into a service group and a comparison group, to measure the service's effect over a season.
+model Pilot {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String           @db.VarChar(200)
+  region          String           @db.VarChar(100)
+  country         String?          @db.VarChar(100)
+  crop            String           @db.VarChar(80)
+  seasonStart     DateTime         @map("season_start") @db.Date
+  seasonEnd       DateTime         @map("season_end") @db.Date
+  comparisonShare Float            @default(0.5) @map("comparison_share")
+  bagKg           Float            @default(90) @map("bag_kg")
+  /// draft | running | closed
+  status          String           @default("draft") @db.VarChar(20)
+  tenantId        String?          @map("tenant_id") @db.Uuid
+  createdBy       String           @map("created_by") @db.Uuid
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  creator         User             @relation("PilotCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  farmers         PilotFarmer[]
+  followups       AdviceFollowup[]
+
+  @@index([createdBy])
+  @@map("pilots")
+}
+
+model PilotFarmer {
+  pilotId    String   @map("pilot_id") @db.Uuid
+  farmerId   String   @map("farmer_id") @db.Uuid
+  /// service | comparison
+  arm        String   @db.VarChar(20)
+  assignedAt DateTime @default(now()) @map("assigned_at") @db.Timestamp(6)
+  baselineKg Float?   @map("baseline_kg")
+  endlineKg  Float?   @map("endline_kg")
+  areaHa     Float?   @map("area_ha")
+  pilot      Pilot    @relation(fields: [pilotId], references: [id], onDelete: Cascade)
+  farmer     Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@id([pilotId, farmerId])
+  @@index([farmerId])
+  @@map("pilot_farmers")
+}
+
+/// "Did you follow your officer's advice?", asked some days after an officer's reply to a pilot farmer.
+model AdviceFollowup {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pilotId    String    @map("pilot_id") @db.Uuid
+  farmerId   String    @map("farmer_id") @db.Uuid
+  messageId  String?   @map("message_id") @db.Uuid
+  dueAt      DateTime  @map("due_at") @db.Timestamp(6)
+  askedAt    DateTime? @map("asked_at") @db.Timestamp(6)
+  answeredAt DateTime? @map("answered_at") @db.Timestamp(6)
+  /// yes | partly | no
+  answer     String?   @db.VarChar(10)
+  pilot      Pilot     @relation(fields: [pilotId], references: [id], onDelete: Cascade)
+  farmer     Farmer    @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@index([pilotId])
+  @@index([farmerId, dueAt])
+  @@map("advice_followups")
+}
+
+/// A person reading a voice-line prompt or an advisory in one language (mp3 or wav), played to callers.
+model VoiceClip {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key        String       @db.VarChar(80)
+  language   String       @db.VarChar(10)
+  title      String       @db.VarChar(200)
+  transcript String?
+  uploadId   String       @map("upload_id") @db.Uuid
+  recordedBy String       @map("recorded_by") @db.Uuid
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  upload     UploadRecord @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  recorder   User         @relation("VoiceClipRecorder", fields: [recordedBy], references: [id], onDelete: Cascade)
+  calls      VoiceCall[]
+
+  @@unique([key, language])
+  @@index([uploadId])
+  @@index([recordedBy])
+  @@map("voice_clips")
+}
+
+/// An outbound call that plays an advisory clip to a farmer.
+model VoiceCall {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clipId      String    @map("clip_id") @db.Uuid
+  farmerId    String    @map("farmer_id") @db.Uuid
+  phone       String    @db.VarChar(30)
+  /// queued | played | failed
+  status      String    @default("queued") @db.VarChar(20)
+  requestedBy String    @map("requested_by") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  answeredAt  DateTime? @map("answered_at") @db.Timestamp(6)
+  clip        VoiceClip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  farmer      Farmer    @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  requester   User      @relation("VoiceCallRequester", fields: [requestedBy], references: [id], onDelete: Cascade)
+
+  @@index([phone, createdAt])
+  @@index([clipId])
+  @@index([farmerId])
+  @@index([requestedBy])
+  @@map("voice_calls")
+}
+
+/// A question answered without a vetted guide behind it; ranked to show what content to license or write next.
+model ContentGap {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question    String   @db.VarChar(500)
+  crop        String?  @db.VarChar(80)
+  country     String?  @db.VarChar(100)
+  language    String?  @db.VarChar(10)
+  askedByRole String?  @map("asked_by_role") @db.VarChar(30)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([createdAt])
+  @@index([crop, country])
+  @@map("content_gaps")
 }

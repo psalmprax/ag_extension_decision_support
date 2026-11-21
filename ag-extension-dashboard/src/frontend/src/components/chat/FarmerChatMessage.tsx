@@ -44,7 +44,7 @@ export const FarmerChatMessage: React.FC<{ message: ChatMessage; viewer?: 'offic
           <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
           <span>{label}</span>
           {message.channel && (
-            <span className="ml-1 font-normal opacity-75">
+            <span className="ms-1 font-normal opacity-75">
               {look.sender === 'farmer' ? 'via' : 'sent by'} {CHANNEL_LABEL[message.channel]}
             </span>
           )}

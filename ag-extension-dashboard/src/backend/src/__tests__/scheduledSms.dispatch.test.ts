@@ -24,6 +24,7 @@ import { logger } from '../utils/logger';
 import type { Job } from 'bullmq';
 
 let sendSmsSpy: jest.SpyInstance;
+let deliverSpy: jest.SpyInstance;
 
 const dbResult = (rowCount = 0, rows: unknown[] = []) => ({ rows, rowCount });
 
@@ -36,6 +37,7 @@ beforeEach(() => {
     // previous spy, so reusing a module-level one would silently hit the real
     // sendSMS in every test after the first.
     sendSmsSpy = jest.spyOn(smsService, 'sendSMS').mockResolvedValue(true);
+    deliverSpy = jest.spyOn(smsService, 'deliver').mockResolvedValue('sent');
     // Logger methods chain (return the logger), so mocks must too.
     jest.spyOn(logger, 'warn').mockImplementation(() => logger);
     jest.spyOn(logger, 'error').mockImplementation(() => logger);
@@ -55,10 +57,19 @@ describe('BullMQ worker: claim-before-send', () => {
             scheduledSmsId: 'sms-1', to: '+254711000111', message: 'hi', senderId: 'user-1', farmerId: null,
         }));
 
-        expect(sendSmsSpy).toHaveBeenCalledTimes(1);
+        expect(deliverSpy).toHaveBeenCalledTimes(1);
         const finalize = mockQuery.mock.calls[1][0] as string;
         expect(finalize).toContain('status = $1');
         expect(mockQuery.mock.calls[1][1][0]).toBe('sent');
+    });
+
+    it('records a message queued past the provider limit as deferred, not sent', async () => {
+        deliverSpy.mockResolvedValue('deferred');
+        mockQuery.mockResolvedValueOnce(dbResult(1)).mockResolvedValueOnce(dbResult(1));
+        await processScheduledSmsJob(makeJob({
+            scheduledSmsId: 'sms-3', to: '+254711000113', message: 'hi', senderId: 'user-1', farmerId: null,
+        }));
+        expect(mockQuery.mock.calls[1][1][0]).toBe('deferred');
     });
 
     it('skips the send entirely when another path won the claim (duplicate race)', async () => {
@@ -68,13 +79,13 @@ describe('BullMQ worker: claim-before-send', () => {
             scheduledSmsId: 'sms-1', to: '+254711000111', message: 'hi', senderId: 'user-1', farmerId: null,
         }));
 
-        expect(sendSmsSpy).not.toHaveBeenCalled();
+        expect(deliverSpy).not.toHaveBeenCalled();
         // Only the claim UPDATE ran — no status finalization for a row we don't own.
         expect(mockQuery).toHaveBeenCalledTimes(1);
     });
 
     it('marks the row failed and rethrows when the provider send fails', async () => {
-        sendSmsSpy.mockResolvedValue(false);
+        deliverSpy.mockResolvedValue('failed');
         mockQuery
             .mockResolvedValueOnce(dbResult(1))   // claim wins
             .mockResolvedValue(dbResult(1));      // finalize + markScheduledSmsFailed

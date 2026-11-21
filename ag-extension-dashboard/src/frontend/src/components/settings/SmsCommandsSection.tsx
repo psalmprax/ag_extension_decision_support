@@ -23,7 +23,8 @@ const SMS_COMMANDS: Array<{ code: string; key: string; does: string }> = [
   { code: 'R 12 <reply>', key: 'sms_cmd_reply', does: 'Reply to farmer 12' },
   { code: 'FIND <name>', key: 'sms_cmd_find', does: 'Look up one of your farmers' },
   { code: 'VISIT 12 <notes>', key: 'sms_cmd_visit', does: 'Record a visit to farmer 12 today' },
-  { code: 'PLAN 12 <date> <notes>', key: 'sms_cmd_plan', does: 'Schedule a visit: today, tomorrow, Tue or 25/11' },
+  { code: 'PLAN 12 <date> <notes>', key: 'sms_cmd_plan_notice', does: 'Schedule a visit: today, tomorrow, Tue or 25/11. The farmer is told by SMS' },
+  { code: 'REG <phone> <name>, <crop>, <village>', key: 'sms_cmd_reg', does: 'Register a farmer to you. They get a confirmation SMS' },
   { code: 'ASK AI <question>', key: 'sms_cmd_ask', does: 'Ask the AI agronomist' },
   { code: 'LOCK', key: 'sms_cmd_lock', does: 'Turn commands off until you send your PIN again' },
 ];
@@ -94,6 +95,11 @@ export const SmsCommandsSection: React.FC<{ active: boolean }> = ({ active }) =>
             </React.Fragment>
           ))}
         </dl>
+        <p className="text-sm text-slate-600 dark:text-white/70">
+          {t('sms_commands_whatsapp', {
+            defaultValue: 'The same commands work on WhatsApp from this number. There you can also send photos, a video or a voice note with VISIT 12, and they are added to the visit report.',
+          })}
+        </p>
         {state && <p className="text-sm text-slate-900 dark:text-white" aria-live="polite">{state}</p>}
         <form onSubmit={save} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="text-sm text-slate-600 dark:text-white/70">

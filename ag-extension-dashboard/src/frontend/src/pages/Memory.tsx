@@ -160,15 +160,15 @@ function Memory() {
           <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
             {/* KPI Telemetry Chips */}
             <div className="grid grid-cols-3 sm:flex items-center gap-2 w-full sm:w-auto">
-              <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
+              <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-start">
                 <span className="text-xs text-slate-500 dark:text-white/40 block">{t('ui_memory_vectors')}</span>
                 <strong className="text-sm font-semibold text-slate-900 dark:text-white font-mono tabular-nums">{memories.length}</strong>
               </div>
-              <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
+              <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-start">
                 <span className="text-xs text-slate-500 dark:text-white/40 block">{t('email_workflows_categories')}</span>
                 <strong className="text-sm font-semibold text-slate-600 dark:text-slate-400 font-mono tabular-nums">{categories.length}</strong>
               </div>
-              <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-left">
+              <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-start">
                 <span className="text-xs text-slate-500 dark:text-white/40 block">{t('ui_memory_mean_score')}</span>
                 <strong className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">{avgImportanceScore.toFixed(0)}%</strong>
               </div>
@@ -200,13 +200,13 @@ function Memory() {
         {/* Search & Category Filter Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 mt-5 border-t border-slate-200 dark:border-white/5">
           <div className="relative w-full sm:w-96">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
+            <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
             <input
               type="text"
               placeholder="Search vector keys, semantic values, or categories..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:ring-1 focus:ring-slate-400 outline-none"
+              className="w-full ps-10 pe-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:ring-1 focus:ring-slate-400 outline-none"
             />
           </div>
 
@@ -214,7 +214,7 @@ function Memory() {
             <select
               value={selectedCategory}
               onChange={e => setSelectedCategory(e.target.value)}
-              className="w-full appearance-none pl-3.5 pr-9 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-slate-400 outline-none"
+              className="w-full appearance-none ps-3.5 pe-9 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-slate-400 outline-none"
             >
               <option value="all">{t('ui_memory_all_vector_categories', { length: memories.length })}</option>
               {categories.map(c => (
@@ -223,7 +223,7 @@ function Memory() {
                 </option>
               ))}
             </select>
-            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-white/40 pointer-events-none" />
+            <Filter className="absolute end-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-white/40 pointer-events-none" />
           </div>
         </div>
       </div>

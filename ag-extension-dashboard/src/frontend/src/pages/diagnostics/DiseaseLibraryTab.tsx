@@ -33,13 +33,13 @@ export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onVi
         </div>
 
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search plant pathogen or crop..."
-            className="w-full md:w-72 pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 font-mono transition-all"
+            className="w-full md:w-72 ps-9 pe-3 py-2 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 font-mono transition-all"
           />
         </div>
       </div>

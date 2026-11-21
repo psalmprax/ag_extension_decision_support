@@ -21,7 +21,7 @@ export function ContactListItem({
           : 'hover:bg-slate-100 dark:hover:bg-slate-800'
       }`}
     >
-      <div className="flex items-center gap-3 text-left">
+      <div className="flex items-center gap-3 text-start">
         <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
           <User className="w-5 h-5 text-slate-500" />
         </div>

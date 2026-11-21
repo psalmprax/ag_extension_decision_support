@@ -20,7 +20,7 @@ const HistoryRow = ({ entry }: { entry: DiagnosisHistoryEntry }) => (
         {entry.source ? ` · ${formatSource(entry.source)}` : ''}
       </p>
     </div>
-    <div className="text-right shrink-0">
+    <div className="text-end shrink-0">
       <p className="text-xs font-mono tabular-nums text-emerald-400">
         {entry.confidence === null ? 'n/a' : `${(entry.confidence * 100).toFixed(1)}%`}
       </p>

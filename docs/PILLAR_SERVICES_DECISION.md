@@ -12,18 +12,23 @@ when explicitly enabled in development/test and remain gated elsewhere.
 
 1. `traceabilityPassportService` — EUDR/GS1 passports (hardcoded GTIN, fake compliance)
 2. `pestSwarmRadarService` — DBSCAN clustering (greedy neighbor merge, hardcoded counties)
-3. `crossBorderTradeService` — Regional arbitrage (3 hardcoded markets, 650km all pairs)
+3. `crossBorderTradeService` — *Removed 2026-11-20.* Regional arbitrage built on 3 hardcoded markets.
 4. `mechanizationFleetService` — registry-backed equipment search and admin registration. Both use the authenticated user's active tenant. Pre-existing unassigned records remain hidden until ownership is verified. Drone planning remains illustrative; the routes are still prototypes.
 5. `satelliteNdviService` — NDVI analysis (pure math on caller-supplied pixels)
 6. `agriCreditInsuranceService` — Parametric insurance (fake verification source string)
-7. `inputSupplierService` — Anti-counterfeit (5-item fake regulator registry)
-8. `harvestOfftakeService` — Offtaker matchmaking (3 fake buyers)
+7. `inputSupplierService` — *Removed 2026-11-20.* Anti-counterfeit check against an invented 5-item registry, with invented dealers and phone numbers.
+8. `harvestOfftakeService` — *Removed 2026-11-20.* Offtaker matchmaking against 3 invented buyers with invented phone numbers.
 9. `iotTelemetryService` — LoRaWAN sensors (no hardware integration)
 10. `weatherHazardDaemonService` — Hazard warning daemon (fake dispatch counts, never scheduled)
 11. `soilCarbonMrvService` — IPCC Tier 2 MRV (textbook formula, no verification)
 12. `agronomicRoiService` — BCR financial modeling (no real data)
 13. `ivrBroadcastService` — IVR voice broadcasts (TwiML only, no telephony)
 14. `voiceAudioService` — Whisper transcription (empty branch, hardcoded Swahili). *Superseded:* its transcription and synthesis routes are now on the production allowlist (`POST /voice/transcribe`, `/voice/transcribe-local`, `/voice/synthesize`); IVR broadcast remains a prototype.
+
+Also removed on 2026-11-20: `multiTenantFederationService` and its `/pillars/tenant/*` routes, and the
+`/pillars/trade/arbitrage`, `/pillars/offtake/*` and `/pillars/suppliers/*` routes. Nothing in the app called
+them, and their sample buyers, dealers and phone numbers could be mistaken for real businesses. Rebuild them
+only on top of a real registry or partner data.
 
 ## Action Items
 

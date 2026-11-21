@@ -56,7 +56,7 @@ export function EmailWorkflowsApprovalQueue({
                     {t('email_workflows_to')} {approval.emailData.to.join(', ')}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-end">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Requested by {approval.requestedBy}
                   </p>

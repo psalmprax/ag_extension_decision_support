@@ -15,6 +15,7 @@ import { telegramService } from '@/services/telegramService';
 import { persistTurnMessage } from '@/services/chat/advisoryAnswer';
 import { toPlainText } from '@/services/chat/plainText';
 import { synthesizeVoiceReply } from '@/services/chat/voiceReply';
+import { storeFarmerMedia, type InboundMedia } from './inboundMedia';
 
 export type FarmerChannel = 'sms' | 'whatsapp' | 'telegram';
 
@@ -70,11 +71,15 @@ export async function recordChannelMessage(params: {
     language?: string;
     /** A transcribed voice note: replies are spoken too (WhatsApp). */
     isVoice?: boolean;
+    /** Photos, videos or the voice note itself, kept in the thread for the officer. */
+    media?: InboundMedia[];
 }): Promise<string> {
     const conversationId = await farmerThreadFor(params.farmerId);
+    const attachmentIds = await storeFarmerMedia(params.farmerId, params.media ?? []);
     await persistTurnMessage(conversationId, 'user', params.content, params.language, {
         channel: params.channel,
         isVoice: params.isVoice,
+        attachmentIds,
     });
     return conversationId;
 }

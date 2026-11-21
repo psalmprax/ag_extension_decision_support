@@ -16,7 +16,7 @@ interface RegisterAccountFieldsProps {
   onToggleConfirmPassword: () => void;
 }
 
-const SECRET_INPUT_CLASS = `${FIELD_INPUT_CLASS} pr-10`;
+const SECRET_INPUT_CLASS = `${FIELD_INPUT_CLASS} pe-10`;
 
 export function RegisterAccountFields({
   formData,
@@ -102,7 +102,7 @@ export function RegisterAccountFields({
             <button
               type="button"
               onClick={onTogglePassword}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
+              className="absolute end-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
               aria-label={showPassword ? 'Hide secret' : 'Show secret'}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -128,7 +128,7 @@ export function RegisterAccountFields({
             <button
               type="button"
               onClick={onToggleConfirmPassword}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
+              className="absolute end-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
               aria-label={showConfirmPassword ? 'Hide secret' : 'Show secret'}
             >
               {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

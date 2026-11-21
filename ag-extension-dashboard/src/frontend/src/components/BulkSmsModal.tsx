@@ -94,7 +94,7 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
                       key={tpl.id}
                       type="button"
                       onClick={() => setMessage(tpl.text)}
-                      className="text-left p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-primary-500/50 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-all group"
+                      className="text-start p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-primary-500/50 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-all group"
                     >
                       <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-primary-400">
                         {tpl.text}

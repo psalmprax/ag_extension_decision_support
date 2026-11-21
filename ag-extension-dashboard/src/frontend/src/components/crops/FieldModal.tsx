@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { Field } from '@/api/fieldService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { PRIMARY_BUTTON, SECONDARY_BUTTON } from '@/components/ui/controlStyles';
+import { useUnits } from '@/hooks/useUnits';
 
 type FieldForm = {
   name: string;
@@ -36,12 +37,13 @@ export const FieldModal: React.FC<FieldModalProps> = ({
   handleSaveField,
 }) => {
   const { t } = useLanguage();
+  const units = useUnits();
   if (!showFieldModal) return null;
 
   const title = editingField ? t('field_edit_title', { defaultValue: 'Edit field' }) : t('field_add_title', { defaultValue: 'Add field' });
   const inputs: Array<{ key: keyof FieldForm; label: string; placeholder: string; inputMode?: 'decimal'; required?: boolean; wide?: boolean }> = [
     { key: 'name', label: t('field_name', { defaultValue: 'Field name' }), placeholder: t('field_name_placeholder', { defaultValue: 'For example North plot' }), required: true, wide: true },
-    { key: 'areaHectares', label: t('ui_field_modal_area_hectares', { defaultValue: 'Area (hectares)' }), placeholder: '2.5', inputMode: 'decimal', required: true },
+    { key: 'areaHectares', label: units.areaUnit === 'ha' ? t('ui_field_modal_area_hectares', { defaultValue: 'Area (hectares)' }) : t('field_area_acres', { defaultValue: 'Area (acres)' }), placeholder: '2.5', inputMode: 'decimal', required: true },
     { key: 'soilType', label: t('ui_field_modal_soil_type', { defaultValue: 'Soil type' }), placeholder: t('field_soil_placeholder', { defaultValue: 'Loam, clay or sand' }) },
     { key: 'soilPh', label: t('ui_crops_overview_tab_soil_ph', { defaultValue: 'Soil pH' }), placeholder: '6.5', inputMode: 'decimal' },
     { key: 'latitude', label: t('latitude', { defaultValue: 'Latitude' }), placeholder: '-1.2863', inputMode: 'decimal' },
@@ -49,7 +51,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center sm:p-4 z-50" onClick={() => setShowFieldModal(false)}>
+    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center sm:p-4 z-[1200]" onClick={() => setShowFieldModal(false)}>
       <div
         role="dialog"
         aria-modal="true"

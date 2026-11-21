@@ -124,7 +124,7 @@ export const VisitCard: React.FC<VisitCardProps> = ({
           <button
             aria-label={`View details for farmer ${farmerDisplayName}`}
             onClick={() => onOpenDetail(farmerData)}
-            className={`${ACTION_BUTTON} ml-auto inline-flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06]`}
+            className={`${ACTION_BUTTON} ms-auto inline-flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06]`}
           >
             {t('visits_open_farmer', { defaultValue: 'Farmer' })}
             <ChevronRight className="w-4 h-4" aria-hidden="true" />

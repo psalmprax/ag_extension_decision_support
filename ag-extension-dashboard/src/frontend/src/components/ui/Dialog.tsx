@@ -20,7 +20,8 @@ const sizeClasses = {
 export function Dialog({ open, onClose, children, size = 'md' }: DialogProps) {
   return (
     <Transition appear show={open} as={Fragment}>
-      <HeadlessDialog as="div" className="relative z-50" onClose={onClose}>
+      {/* Above the phone chrome (tab bar, AI button, menu sheet), which floats over pages. */}
+      <HeadlessDialog as="div" className="relative z-[1200]" onClose={onClose}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-200"
@@ -46,7 +47,7 @@ export function Dialog({ open, onClose, children, size = 'md' }: DialogProps) {
             >
               <HeadlessDialog.Panel
                 className={cn(
-                  'w-full transform overflow-hidden text-left align-middle',
+                  'w-full transform overflow-hidden text-start align-middle',
                   'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10',
                   'rounded-xl shadow-2xl',
                   sizeClasses[size]

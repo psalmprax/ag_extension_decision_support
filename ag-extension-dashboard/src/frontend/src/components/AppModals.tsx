@@ -319,7 +319,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                     placeholder={t('common_search_farmers')}
                     value={props.farmerSearchQuery}
                     onChange={e => props.setFarmerSearchQuery(e.target.value)}
-                    className={`w-full pl-4 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 ${radiusClass} focus:ring-2 focus:ring-primary-500 dark:text-white`}
+                    className={`w-full ps-4 pe-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 ${radiusClass} focus:ring-2 focus:ring-primary-500 dark:text-white`}
                   />
                 </div>
               </div>
@@ -364,7 +364,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                             props.activeTab === 'farmerchat' ? 'farmer' : 'ai'
                           )
                         }
-                        className="w-full p-3 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-3"
+                        className="w-full p-3 rounded-xl text-start hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-3"
                       >
                         <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-lg">
                           {farmer.firstName?.[0]}

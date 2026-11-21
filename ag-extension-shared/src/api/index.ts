@@ -17,3 +17,4 @@ export * from './diseases';
 export * from './outbreaks';
 export * from './commercialKnowledge';
 export * from './autonomousCampaigns';
+export * from './countries';

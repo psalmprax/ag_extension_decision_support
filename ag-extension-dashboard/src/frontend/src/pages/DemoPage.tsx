@@ -164,7 +164,7 @@ export function DemoPage({
                     <button
                       key={idx}
                       onClick={() => setSelectedPreset(idx)}
-                      className={`p-4 text-xs text-left rounded-lg transition-all border ${
+                      className={`p-4 text-xs text-start rounded-lg transition-all border ${
                         selectedPreset === idx
                           ? 'bg-slate-500/15 border-slate-400/40 text-white'
                           : 'bg-white/[0.04] border-white/[0.08] text-[#c5d3cb] hover:bg-white/10'

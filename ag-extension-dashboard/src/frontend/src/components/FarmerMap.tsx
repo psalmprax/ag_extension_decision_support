@@ -33,6 +33,7 @@ import { useFrameFarmers } from './map/useFrameFarmers';
 import { LayerSwitcher } from './map/LayerSwitcher';
 import { MapLegend } from './map/MapLegend';
 import { ExpandedMapModal } from './map/ExpandedMapModal';
+import { useUnits } from '@/hooks/useUnits';
 
 const MAP_CONTROL = 'h-9 min-w-9 px-2 rounded-md bg-white/95 dark:bg-[#0d1a14]/95 text-slate-700 dark:text-slate-200 border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm hover:bg-white dark:hover:bg-[#13251c] transition-colors flex items-center justify-center gap-1.5 text-sm';
 
@@ -80,13 +81,13 @@ export function FarmerMap({
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   );
 
-  // Get theme from store
   const darkMode = useAppStore(state => state.darkMode);
   const isDemo = useAppStore(state => state.isDemo);
   const user = useAppStore(state => state.user);
   const themeName = useAppStore(state => state.themeName) as ThemeName;
   const theme = themes[themeName] || themes.forest;
   const { t } = useLanguage();
+  const units = useUnits();
 
   const canCall = isMapCallAllowed(user?.role, isDemo);
   const canChat = isMapChatAllowed(user?.role, isDemo);
@@ -124,7 +125,6 @@ export function FarmerMap({
     };
   }, []);
 
-  // Compute stats from farmer data
   const stats = useMemo(() => {
     const cropCounts = farmers.reduce(
       (acc, f) => {
@@ -312,7 +312,7 @@ export function FarmerMap({
                   <div className="grid grid-cols-2 gap-2 text-xxs">
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
                       <div className="text-slate-500">{t('ui_farmer_map_farm_area')}</div>
-                      <div className="text-sm font-black text-slate-800 dark:text-white mt-0.5">{farmer.size} ha</div>
+                      <div className="text-sm font-black text-slate-800 dark:text-white mt-0.5">{units.area(farmer.size)}</div>
                     </div>
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
                       <div className="text-slate-500 flex items-center gap-1">
@@ -413,7 +413,7 @@ export function FarmerMap({
       } ${className}`}
       style={{ height }}
     >
-      <div className="absolute top-3 left-3 z-[400] flex items-center gap-1.5 sm:gap-2">
+      <div className="absolute top-3 start-3 z-[400] flex items-center gap-1.5 sm:gap-2">
         <button
           onClick={handleLocateMe}
           className={MAP_CONTROL}
@@ -442,7 +442,7 @@ export function FarmerMap({
         )}
       </div>
 
-      <div className="absolute top-3 right-3 z-[400]">
+      <div className="absolute top-3 end-3 z-[400]">
         <button
           onClick={() => setIsExpanded(true)}
           className={MAP_CONTROL}
@@ -454,7 +454,7 @@ export function FarmerMap({
       </div>
 
       {isDemo && (
-        <div className="absolute bottom-3 left-3 z-[400] rounded-md bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 border border-amber-300">
+        <div className="absolute bottom-3 start-3 z-[400] rounded-md bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 border border-amber-300">
           {t('ui_farmer_map_sample_demo_locations')}
         </div>
       )}

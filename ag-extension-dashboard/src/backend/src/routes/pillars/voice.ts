@@ -72,7 +72,7 @@ router.post('/voice/transcribe-local', checkUsageLimit('speech'), validate({ bod
     }
 });
 
-router.post('/voice/synthesize', checkUsageLimit('speech'), validate({ body: z.object({ text: z.string().min(1).max(4000), language: z.enum(['sw','en']).optional() }) }), async (req: AuthRequest, res: Response) => {
+router.post('/voice/synthesize', checkUsageLimit('speech'), validate({ body: z.object({ text: z.string().min(1).max(4000), language: z.string().regex(/^[a-z]{2,3}(-[A-Za-z]{2,4})?$/).optional() }) }), async (req: AuthRequest, res: Response) => {
     try { return res.json({ success: true, data: await synthesizeVoiceAdvisory(req.body as never) }); } catch (e) { logger.error('Pillar synthesize failed:', e); return safeError(res, 500, (e as Error).message); }
 });
 

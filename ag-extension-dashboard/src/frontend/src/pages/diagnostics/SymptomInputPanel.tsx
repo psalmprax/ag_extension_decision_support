@@ -79,7 +79,7 @@ export const SymptomInputPanel: React.FC<{
             onClick={() => currentSymptom.trim() && onAddSymptom(currentSymptom.trim())}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs font-medium transition-colors"
           >
-            <Plus className="w-3.5 h-3.5 inline mr-1" aria-hidden="true" />
+            <Plus className="w-3.5 h-3.5 inline me-1" aria-hidden="true" />
             {t('symptoms_add', { defaultValue: 'Add' })}
           </button>
         </div>

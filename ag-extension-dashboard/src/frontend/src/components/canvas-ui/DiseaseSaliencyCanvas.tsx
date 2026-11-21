@@ -312,7 +312,7 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
         />
 
         {selectedZone && (
-          <div className="absolute top-3 right-3 bg-gray-900/90 border border-white/10 backdrop-blur-md p-3 rounded-xl shadow-xl text-xs text-white max-w-xs animate-in fade-in">
+          <div className="absolute top-3 end-3 bg-gray-900/90 border border-white/10 backdrop-blur-md p-3 rounded-xl shadow-xl text-xs text-white max-w-xs animate-in fade-in">
             <div className="flex items-center gap-1.5 text-rose-400 font-bold mb-1">
               <AlertCircle className="w-4 h-4" />
               <span>{selectedZone.label}</span>
@@ -324,7 +324,7 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
           </div>
         )}
 
-        <div className="absolute bottom-2 left-2 bg-black/60 px-2.5 py-1 rounded-md text-xs text-slate-200">
+        <div className="absolute bottom-2 start-2 bg-black/60 px-2.5 py-1 rounded-md text-xs text-slate-200">
           {hasLiveDetections
             ? t('saliency_hint_lesions', { defaultValue: 'Marked areas are where the model found damage. Point at one for detail.' })
             : t('saliency_hint_none', { defaultValue: 'No damaged areas were marked on this photo.' })}

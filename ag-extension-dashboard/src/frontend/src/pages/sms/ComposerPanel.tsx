@@ -69,7 +69,7 @@ export function SMSComposerPanel({
                 : 'text-slate-600 hover:text-slate-900 dark:text-white/50 dark:hover:text-white'
             }`}
           >
-            <Layout className="w-3.5 h-3.5 inline-block mr-1.5" />
+            <Layout className="w-3.5 h-3.5 inline-block me-1.5" />
             {t('sms_tab_compose') || 'Compose'}
           </button>
           <button
@@ -80,7 +80,7 @@ export function SMSComposerPanel({
                 : 'text-slate-600 hover:text-slate-900 dark:text-white/50 dark:hover:text-white'
             }`}
           >
-            <History className="w-3.5 h-3.5 inline-block mr-1.5" />
+            <History className="w-3.5 h-3.5 inline-block me-1.5" />
             {t('sms_tab_history') || 'History'}
           </button>
         </div>

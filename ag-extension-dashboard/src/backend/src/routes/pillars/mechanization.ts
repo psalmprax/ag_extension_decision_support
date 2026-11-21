@@ -4,7 +4,6 @@ import { authorize, AuthRequest } from '@/middleware/authorize';
 import { validate } from '@/middleware/validate';
 import { safeError } from '@/utils/safeResponse';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
-import { findNearbySuppliersLive, verifyBatchNumber } from '@/services/inputSupplierService';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 import { logger } from '@/utils/logger';
 import {
@@ -16,17 +15,6 @@ import {
 } from '@/services/mechanizationFleetService';
 
 const router = Router();
-
-router.post('/suppliers/nearby', checkUsageLimit('ai_chat'), validate({ body: z.object({ lat: z.number(), lng: z.number(), radiusKm: z.number().optional() }) }), async (req: AuthRequest, res: Response) => {
-    try {
-        const { dealers, provenance } = await findNearbySuppliersLive(req.body);
-        return res.json({ success: true, data: { dealers, provenance } });
-    } catch (e) { return safeError(res, 500, (e as Error).message); }
-});
-
-router.post('/suppliers/verify-batch', checkUsageLimit('ai_chat'), validate({ body: z.object({ batchNumber: z.string().min(1) }) }), async (req: AuthRequest, res: Response) => {
-    try { return res.json({ success: true, data: verifyBatchNumber(req.body.batchNumber) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
-});
 
 const equipmentSchema = z.object({
     assetType: z.enum(MECHANIZATION_ASSET_TYPES),

@@ -1,5 +1,32 @@
 # AG Extension Decision Support - Consolidated Gap Analysis
 
+## November 2026 review: worldwide use, scale and usability
+
+What was found and what changed. Server-side steps are in [SCALING_AND_RESILIENCE.md](SCALING_AND_RESILIENCE.md).
+
+| Gap | Change |
+|-----|--------|
+| Kenya was assumed in phone numbers, prices, currency, dates and the weather fallback | One country list (53 countries, shared by app and API). Phone numbers are read in the person's country; prices are shown only where they are collected for that country, never another country's; currency, land and temperature units follow the country; time zones are stored per user and organisation and used for SMS dates and working hours. `GET /api/v1/countries` says what each country gets. |
+| Officers and managers could see farmers outside their caseload or region on some pages | One access rule (`services/access/farmerScope.ts`) for every farmer list and farmer page. An end-to-end test calls every GET route as an officer, a manager and a farmer from another region and fails on any leak. |
+| SMS above the provider rate limit were dropped | Queued and sent when the limit allows. |
+| SMS and USSD only in English and Kiswahili | French and Portuguese added (translations need a native-speaker check). |
+| 23 app languages | 36: Hausa, Yoruba, Igbo, Amharic, Afaan Oromo, Chichewa, Luganda, Kinyarwanda, Somali, Bengali, Indonesian, Vietnamese and Urdu added; the translate workflow fills them. Arabic and Urdu lay out right to left. |
+| Backups only on the same server; never test-restored | Encrypted off-site copies and a restore drill. |
+| One backend; uploads on its disk | Optional second backend and object storage, with start-up checks. |
+| No outage alert | Uptime workflow. |
+| Knowledge guides from one country used as advice in another; officers' uploads used before review | Guides carry their country; an officer's upload waits for a manager or administrator before it grounds answers. |
+| Prototype services with invented buyers, dealers and phone numbers | Removed (see [PILLAR_SERVICES_DECISION.md](PILLAR_SERVICES_DECISION.md)). |
+| First load fetched the charts bundle | Initial JavaScript cut from about 374 KB to 260 KB gzipped. |
+
+| No proof the service works | Pilots with random assignment, harvests by SMS, advice follow-ups and an export for an evaluator ([GROWTH_AND_EVIDENCE_PLAN.md](GROWTH_AND_EVIDENCE_PLAN.md)). |
+| Photo diagnosis never tested | Labelled test set, test runs per crop and problem; only passing pairs reach farmers as "tested". |
+| Voice only in English | Recordings per language for the voice line, and voice advisories to a pilot's farmers. |
+| Unknown which guides are missing | Content-gap report of questions answered without a vetted guide. |
+
+Still open: SMS cannot carry photos, audio or video (those need WhatsApp, Telegram or a voice line); price collection exists only for Kenya, Uganda, Tanzania and Rwanda; the access test covers GET routes only; `k8s/` is a starting point, not a deployment.
+
+---
+
 ## Executive Summary
 
 This document serves as the master source of truth for the Ag-Extension Decision Support project's technical status, implementation progress, and outstanding gaps. As of April 2026, the project has matured significantly, moving from a simulation-heavy prototype to a production-ready platform with approximately **95% real implementation** across core features.

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { SUPPORTED_COUNTRIES } from '@/lib/countries';
+import { CountryCoverageNote } from './CountryCoverageNote';
 import {
   FIELD_INPUT_CLASS,
   FIELD_LABEL_CLASS,
@@ -76,6 +77,7 @@ export function RegisterAffiliationFields({
               </option>
             ))}
           </select>
+          <CountryCoverageNote country={formData.country} />
         </div>
         <div>
           <label htmlFor="reg-region" className={FIELD_LABEL_CLASS}>

@@ -2,6 +2,7 @@ import React from 'react';
 import { CheckCircle2, Sprout } from 'lucide-react';
 import type { PlotTelemetry } from '@/pages/farmerChatSafety';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useUnits } from '@/hooks/useUnits';
 
 // Forecast thresholds are estimates, not confirmed outbreaks or official alerts.
 
@@ -50,10 +51,10 @@ function soilSource(t: TelemetryReading, farmer?: FarmerPlotSnapshot): string {
   return farmer?.ph ? '• cached' : '• no farmer geo';
 }
 
-function weatherValue(t: TelemetryReading, farmer?: FarmerPlotSnapshot): string {
-  if (t.temp != null) return `${t.temp}°C`;
+function weatherValue(t: TelemetryReading, temp: (celsius: number) => string, farmer?: FarmerPlotSnapshot): string {
+  if (t.temp != null) return temp(t.temp);
   if (t.moisture != null) return `${t.moisture}% VWC`;
-  if (farmer?.temperature) return `${farmer.temperature}°C`;
+  if (farmer?.temperature) return temp(Number(farmer.temperature));
   return '—';
 }
 
@@ -79,6 +80,7 @@ export const PlotTelemetryDrawer: React.FC<{
   hazardEval: HazardEvaluation;
 }> = ({ farmer, telemetry, hazardEval }) => {
   const { t } = useLanguage();
+  const units = useUnits();
   const hazardTone = hazardEval.status === 'ready' && hazardEval.hazards.length > 0
     ? 'text-amber-600 dark:text-amber-400'
     : 'text-emerald-600 dark:text-emerald-400';
@@ -106,7 +108,7 @@ export const PlotTelemetryDrawer: React.FC<{
 
       <div className={CARD}>
         <div className={LABEL}>{t('ui_plot_telemetry_drawer_nasa_power_weather')}</div>
-        <div className="text-base font-bold text-slate-600 dark:text-slate-400">{weatherValue(telemetry, farmer)}</div>
+        <div className="text-base font-bold text-slate-600 dark:text-slate-400">{weatherValue(telemetry, units.temp, farmer)}</div>
         <div className={NOTE}>{t('ui_plot_telemetry_drawer_open_meteo_modeled')} {telemetry.temp != null ? '• live' : '• no geo'}</div>
       </div>
 

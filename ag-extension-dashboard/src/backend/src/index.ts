@@ -79,6 +79,8 @@ let adapterSubClient: ReturnType<typeof createClient> | null = null;
 
 // Scheduled-SMS polling fallback timer (leader-gated); cleared on shutdown.
 let smsPollTimer: NodeJS.Timeout | null = null;
+// Pilot follow-up questions ("did you follow the advice?"), leader-gated.
+let pilotTimer: NodeJS.Timeout | null = null;
 
 // Runs a startup step with uniform error handling: logs a success line on
 // completion, or a failure line (warn-only for optional services) on error.
@@ -162,6 +164,11 @@ async function startScheduledSms() {
         }, intervalMs);
         smsPollTimer.unref?.();
         logger.info(`Scheduled SMS polling fallback armed (poll=${intervalMs}ms, leader-gated)`);
+        const { sendDueFollowUps } = await import('./services/pilots/followups');
+        pilotTimer = setInterval(() => {
+            runIfLeader('pilot-followups', () => sendDueFollowUps()).catch(e => logger.warn('Pilot follow-up tick failed:', e));
+        }, Number(process.env.PILOT_FOLLOWUP_POLL_MS || 15 * 60_000));
+        pilotTimer.unref?.();
     } catch (error) {
         logger.error('Scheduled SMS polling startup failed:', error);
     }
@@ -356,6 +363,10 @@ async function stopIntervalWorkers() {
         const { stopAdvisoryScheduler } = await import('./workers/advisoryWorker');
         await stopAdvisoryScheduler();
     } catch { /* scheduler may not have started */ }
+    if (pilotTimer) {
+        clearInterval(pilotTimer);
+        pilotTimer = null;
+    }
     if (smsPollTimer) {
         clearInterval(smsPollTimer);
         smsPollTimer = null;

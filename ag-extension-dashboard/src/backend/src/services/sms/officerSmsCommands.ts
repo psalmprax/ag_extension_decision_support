@@ -6,8 +6,10 @@
  *   INBOX                    the three newest unanswered farmer messages, numbered
  *   R 12 <reply>             reply to farmer 12 (goes to them on their channel)
  *   FIND <name>              farmers whose name matches, numbered
- *   VISIT 12 <notes>         record a visit to farmer 12 today (DONE is optional)
- *   PLAN 12 <date> <notes>   schedule a visit (today, tomorrow, Tue, 25/11)
+ *   VISIT 12 <notes>         record a visit to farmer 12 today (DONE is optional); on WhatsApp,
+ *                            photos, video or a dictated voice note sent with it join the report
+ *   PLAN 12 <date> <notes>   schedule a visit (today, tomorrow, Tue, 25/11); the farmer is told
+ *   REG <phone> <name>, <crop>, <village>   register a farmer, who gets a confirmation
  *   ASK AI <question>        an AI answer by SMS
  */
 import { logger } from '@/utils/logger';
@@ -18,9 +20,15 @@ import { sendSmsReply } from './smsReply';
 import { type SmsStaff, isUnlocked, lockSmsCommands, tryPin } from './officerSmsAccess';
 import { farmerForRef, findFarmers, recordSmsVisit, threadForFarmer, unansweredThreads } from './officerSmsData';
 import { parseSmsDate } from './smsDate';
+import { timeZoneFor, writesMonthFirst } from '@/services/country/localTime';
+import { noticeInBackground, notifyVisitChange } from '@/services/notify/farmerNotices';
+import { registerFarmerBySms } from './officerRegister';
+import { storeFarmerMedia, type InboundMedia } from '@/services/chat/inboundMedia';
+import { linkAttachments } from '@/services/uploadAttachments';
+import { withEnglishSummary } from '@/services/visits/dictatedNotes';
 
 export const OFFICER_HELP =
-    'Commands: INBOX, R 12 reply, FIND name, VISIT 12 notes, PLAN 12 Tue notes, ASK AI question, LOCK. ' +
+    'Commands: INBOX, R 12 reply, FIND name, VISIT 12 notes, PLAN 12 Tue notes, REG phone name, crop, village, ASK AI question, LOCK. ' +
     'Send PIN and your 4 digits first each day.';
 
 const short = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 3).trimEnd()}...` : text);
@@ -48,21 +56,30 @@ async function find(staff: SmsStaff, text: string): Promise<string> {
     return farmers.map(f => `${f.ref} ${f.name}`).join('\n');
 }
 
-async function visit(staff: SmsStaff, ref: number, text: string): Promise<string> {
+async function visit(staff: SmsStaff, ref: number, text: string, extras: CommandExtras = {}): Promise<string> {
     const farmer = await farmerForRef(staff, ref);
     if (!farmer) return `No farmer ${ref} in your list. Send FIND <name> first.`;
-    const notes = text.replace(/^(done|imekamilika)\b\s*/i, '').trim();
-    await recordSmsVisit({ staffId: staff.id, farmer, status: 'completed', when: new Date(), notes });
-    return `Visit to ${farmer.name} recorded for today${notes ? ' with your notes' : ''}. Add photos or more detail in the app.`;
+    const spoken = text.replace(/^[\s,.:-]*(done|imekamilika)\b\s*/i, '').replace(/^[\s,.:-]+/, '').trim();
+    const notes = await withEnglishSummary(spoken, extras.spokenLanguage, staff.id);
+    const visitId = await recordSmsVisit({ staffId: staff.id, farmer, status: 'completed', when: new Date(), notes });
+    // Photos, video or the voice note sent with VISIT on WhatsApp go in the visit report.
+    const kept = await storeFarmerMedia(farmer.id, extras.media ?? [], staff.id);
+    await linkAttachments('visit', visitId, kept);
+    const files = kept.length ? ` and ${kept.length} file${kept.length > 1 ? 's' : ''}` : '';
+    return `Visit to ${farmer.name} recorded for today${notes ? ' with your notes' : ''}${files}.${kept.length ? '' : ' Add photos or more detail in the app.'}`;
 }
 
 async function plan(staff: SmsStaff, ref: number, text: string): Promise<string> {
     const farmer = await farmerForRef(staff, ref);
     if (!farmer) return `No farmer ${ref} in your list. Send FIND <name> first.`;
-    const parsed = parseSmsDate(text);
-    if (!parsed) return 'Add a date after the number: today, tomorrow, a weekday like Tue, or 25/11.';
-    await recordSmsVisit({ staffId: staff.id, farmer, status: 'scheduled', when: parsed.date, notes: parsed.rest });
-    return `Visit to ${farmer.name} planned for ${parsed.date.toISOString().slice(0, 10)}.`;
+    const timeZone = timeZoneFor({ timeZone: staff.time_zone, country: staff.country });
+    const monthFirst = writesMonthFirst(staff.country);
+    const parsed = parseSmsDate(text, new Date(), { timeZone, monthFirst });
+    if (!parsed) return `Add a date after the number: today, tomorrow, a weekday like Tue, or ${monthFirst ? '11/25' : '25/11'}.`;
+    const visitId = await recordSmsVisit({ staffId: staff.id, farmer, status: 'scheduled', when: parsed.date, notes: parsed.rest });
+    noticeInBackground('visit planned', () => notifyVisitChange(visitId, 'planned'));
+    const shown = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(parsed.date);
+    return `Visit to ${farmer.name} planned for ${shown}. They are told by SMS unless they have turned notices off.`;
 }
 
 /** An AI answer for a staff member by SMS or USSD, counted against their plan's AI quota. */
@@ -79,7 +96,14 @@ export async function staffAiAnswer(staff: SmsStaff, question: string): Promise<
     return answer.text;
 }
 
-type RefCommand = (staff: SmsStaff, ref: number, text: string) => Promise<string>;
+/** What came with the command besides its text: files sent on WhatsApp. */
+export interface CommandExtras {
+    media?: InboundMedia[];
+    /** The language of a dictated voice note, when the command came as one. */
+    spokenLanguage?: string;
+}
+
+type RefCommand = (staff: SmsStaff, ref: number, text: string, extras?: CommandExtras) => Promise<string>;
 type TextCommand = (staff: SmsStaff, text: string) => Promise<string>;
 
 /** Commands that act on a farmer number (R 12 ..., VISIT 12 ..., PLAN 12 ...). */
@@ -95,6 +119,8 @@ const TEXT_COMMANDS: Record<string, TextCommand> = {
     NEW: staff => inbox(staff),
     FIND: find,
     TAFUTA: find,
+    REG: registerFarmerBySms,
+    SAJILI: registerFarmerBySms,
     ASK: (staff, text) => staffAiAnswer(staff, text.replace(/^ai\b\s*[:,.-]?\s*/i, '').trim()),
     ULIZA: (staff, text) => staffAiAnswer(staff, text.replace(/^ai\b\s*[:,.-]?\s*/i, '').trim()),
     LOCK: async staff => {
@@ -114,9 +140,10 @@ async function pinReply(staff: SmsStaff, pin: string): Promise<string> {
 }
 
 /** Work out the reply to one SMS from a staff number. */
-export async function officerCommandReply(staff: SmsStaff, rawText: string): Promise<string> {
+export async function officerCommandReply(staff: SmsStaff, rawText: string, extras: CommandExtras = {}): Promise<string> {
     const [word = '', ...restWords] = rawText.trim().split(/\s+/);
-    const command = word.toUpperCase();
+    // A dictated command may come back from transcription as "Visit 12, ..." or "Visit." .
+    const command = word.toUpperCase().replace(/[^\p{L}]/gu, '');
     const rest = restWords.join(' ');
 
     if (command === 'HELP' || command === 'MSAADA') return OFFICER_HELP;
@@ -130,7 +157,7 @@ export async function officerCommandReply(staff: SmsStaff, rawText: string): Pro
     if (!refCommand) return OFFICER_HELP;
     const ref = Number.parseInt(restWords[0] ?? '', 10);
     if (!Number.isInteger(ref)) return `Add the farmer's number after ${command}, for example: ${command} 12 ...`;
-    return refCommand(staff, ref, restWords.slice(1).join(' '));
+    return refCommand(staff, ref, restWords.slice(1).join(' '), extras);
 }
 
 /** Handle one SMS from a staff number and text back the result. */

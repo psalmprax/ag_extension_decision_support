@@ -217,6 +217,8 @@ services:
       MCP_API_TOKEN: ${MCP_API_TOKEN:-}
       TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
       CLAMD_HOST: ${CLAMD_HOST:-clamav}
+      # Uploads go through unscanned while the scanner is down (the backend warns at start-up).
+      # Set CLAMD_FAIL_OPEN=false in .env once the clamav container runs reliably on the host.
       CLAMD_FAIL_OPEN: ${CLAMD_FAIL_OPEN:-true}
       UPLOAD_QUOTA_MB: ${UPLOAD_QUOTA_MB:-500}
       REQUIRE_EMAIL_VERIFICATION: ${REQUIRE_EMAIL_VERIFICATION:-false}
@@ -367,6 +369,15 @@ services:
       PGDATABASE: ${DATABASE_NAME:-ag_extension}
       BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+      # Off-site, encrypted copies (see scripts/db-backup-sidecar.sh); unset = local only.
+      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
+      BACKUP_S3_PREFIX: ${BACKUP_S3_PREFIX:-db/}
+      BACKUP_S3_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
+      BACKUP_S3_REGION: ${BACKUP_S3_REGION:-auto}
+      BACKUP_S3_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:-}
+      BACKUP_S3_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:-}
+      BACKUP_ENCRYPTION_PASSPHRASE: ${BACKUP_ENCRYPTION_PASSPHRASE:-}
+      BACKUP_S3_RETENTION_DAYS: ${BACKUP_S3_RETENTION_DAYS:-35}
     volumes:
       - ./scripts/db-backup-sidecar.sh:/usr/local/bin/db-backup-sidecar.sh:ro
       - db_backups:/backups

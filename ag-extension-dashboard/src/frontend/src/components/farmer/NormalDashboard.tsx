@@ -270,7 +270,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
           <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-6">
             {t('farmer_market_prices')}
             {prices && prices.length > 0 && (
-              <span className={`ml-2 px-2 py-0.5 rounded text-xs font-medium align-middle ${DATA_STATUS_COLORS[prices[0].dataStatus]}`}>
+              <span className={`ms-2 px-2 py-0.5 rounded text-xs font-medium align-middle ${DATA_STATUS_COLORS[prices[0].dataStatus]}`}>
                 {DATA_STATUS_LABELS[prices[0].dataStatus]}
               </span>
             )}
@@ -287,7 +287,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
                   className="flex items-center justify-between py-3 border-b last:border-b-0 border-slate-900/[0.06] dark:border-white/[0.06]"
                 >
                   <span className="font-medium text-gray-700 dark:text-gray-300">{item.crop}</span>
-                  <div className="text-right">
+                  <div className="text-end">
                     <p className="font-medium font-mono tabular-nums text-slate-900 dark:text-white">{item.price}</p>
                     <p
                       className={`text-xs font-mono tabular-nums ${trendTone(item.trend)}`}
@@ -318,7 +318,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
               {t('farmer_start_chat')}
             </button>
           </div>
-          <MessageSquare className="absolute -bottom-8 -right-8 w-40 h-40 text-white/5 transition-transform" />
+          <MessageSquare className="absolute -bottom-8 -end-8 w-40 h-40 text-white/5 transition-transform" />
         </div>
       </div>
 

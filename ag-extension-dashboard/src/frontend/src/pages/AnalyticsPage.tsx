@@ -8,6 +8,7 @@ import { chartTick } from '@/components/charts/chartConfig';
 import { MarketPriceTrendCard } from '@/components/MarketPriceTrendCard';
 import type { PerformanceData } from '@/api/analyticsService';
 import { KpiTiles } from './analytics/KpiTiles';
+import { PilotsSection } from '@/components/pilots/PilotsSection';
 
 interface AnalyticsPageProps {
   performanceData: PerformanceData | undefined;
@@ -106,6 +107,8 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
           </p>
         </div>
       )}
+
+      <PilotsSection />
     </div>
   );
 };

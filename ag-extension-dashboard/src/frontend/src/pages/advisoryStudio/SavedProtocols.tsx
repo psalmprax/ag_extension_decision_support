@@ -24,7 +24,7 @@ export const SavedProtocols: React.FC<{ activeId: string | null; onOpen: (protoc
                 type="button"
                 onClick={() => onOpen(protocol)}
                 aria-current={protocol.id === activeId ? 'true' : undefined}
-                className={`w-full text-left px-2.5 py-2 rounded-md text-sm flex items-start gap-2 ${
+                className={`w-full text-start px-2.5 py-2 rounded-md text-sm flex items-start gap-2 ${
                   protocol.id === activeId
                     ? 'bg-emerald-50 dark:bg-emerald-400/[0.1] text-emerald-900 dark:text-emerald-100'
                     : 'text-slate-700 dark:text-slate-200 hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.05]'

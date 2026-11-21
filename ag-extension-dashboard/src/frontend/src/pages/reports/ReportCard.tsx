@@ -21,7 +21,7 @@ export function ReportCard({ report, onOpen, onDownload }: ReportCardProps) {
   return (
     <li className="flex items-center gap-3 px-4 py-3">
       <FileText className="w-[18px] h-[18px] text-slate-400 dark:text-slate-500 shrink-0" aria-hidden="true" />
-      <button type="button" onClick={() => onOpen(report)} className="min-w-0 flex-1 text-left group">
+      <button type="button" onClick={() => onOpen(report)} className="min-w-0 flex-1 text-start group">
         <span className="block text-sm font-medium text-slate-900 dark:text-white truncate group-hover:underline">{report.title}</span>
         <span className="block text-sm text-slate-500 dark:text-slate-400 truncate">
           {[written, report.createdBy, ready ? null : formatLabel(report.status ?? '')].filter(Boolean).join(' · ')}

@@ -8,6 +8,7 @@ import metaRouter from './meta';
 import articlesRouter from './articles';
 import ingestRouter from './ingest';
 import quarantineRouter from './quarantine';
+import contentGapsRouter from './contentGaps';
 import { createShareRoute } from '../shareRouteFactory';
 
 const router = Router();
@@ -54,9 +55,11 @@ router.use(metaRouter);
 // Share a knowledge article
 router.use(createShareRoute('knowledge'));
 
+// Before articles: its GET /:id would otherwise take /quarantine and /content-gaps as ids.
+router.use(quarantineRouter);
+router.use(contentGapsRouter);
 router.use(articlesRouter);
 router.use(ingestRouter);
-router.use(quarantineRouter);
 
 export { seedKnowledgeArticles, seedKnowledgeArticlesData } from './articles';
 

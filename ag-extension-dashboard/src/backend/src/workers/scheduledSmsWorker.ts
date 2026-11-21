@@ -28,9 +28,11 @@ export async function processScheduledSmsJob(job: Job<ScheduledSmsJobData>): Pro
             return;
         }
 
-        const success = await smsService.sendSMS({ to, message, senderId: senderId ?? undefined, farmerId: farmerId ?? undefined });
-        await query(`UPDATE scheduled_sms SET status = $1, updated_at = NOW() WHERE id = $2`, [success ? 'sent' : 'failed', scheduledSmsId]);
-        if (!success) throw new Error('SMS provider reported failure');
+        // 'deferred': the provider's per-minute limit was reached and a new scheduled row
+        // carries the message to the next window.
+        const outcome = await smsService.deliver({ to, message, senderId: senderId ?? undefined, farmerId: farmerId ?? undefined });
+        await query(`UPDATE scheduled_sms SET status = $1, updated_at = NOW() WHERE id = $2`, [outcome, scheduledSmsId]);
+        if (outcome === 'failed') throw new Error('SMS provider reported failure');
         logger.info(`Scheduled SMS job ${job.id} completed`);
     } catch (error) {
         logger.error(`Scheduled SMS job ${job.id} failed:`, error);

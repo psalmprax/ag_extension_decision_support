@@ -12,6 +12,7 @@ import {
   mapVisitIdRow,
 } from '@/types/dtos';
 import { logger } from '@/utils/logger';
+import { noticeInBackground, notifyVisitChange } from '@/services/notify/farmerNotices';
 import { validate } from '@/middleware/validationMiddleware';
 import { createVisitSchema, updateVisitSchema } from '@/utils/schemas';
 import { checkVisitLocation, type ReportedPosition } from '@/services/visitLocationCheck';
@@ -27,7 +28,7 @@ import { linkedDemoSql } from '@/services/demoScope';
 
 const router = Router();
 
-type VisitPrincipal = { userId: string; role: string };
+type VisitPrincipal = { userId: string; role: string; isDemo?: boolean };
 
 export function haversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371; // Earth's radius in kilometers
@@ -49,19 +50,14 @@ async function buildVisitScope(user: VisitPrincipal | undefined): Promise<{ clau
     const tenantId = await getPrincipalTenantId(user.userId);
     if (!tenantId) throw new Error('TENANT_MEMBERSHIP_REQUIRED');
 
-    const params: unknown[] = [tenantId];
     // Scope on the visit's own tenant_id (backfilled from the farmer), falling
-    // back to the farmer's tenant for legacy rows created before the backfill.
-    let clause = ' AND (v.tenant_id = $1 OR (v.tenant_id IS NULL AND f.tenant_id = $1))';
-    if (user.role === 'extension_officer') {
-        params.push(user.userId);
-        clause += ' AND f.assigned_officer_id = $2';
-    }
-    if (user.role === 'farmer') {
-        params.push(user.userId);
-        clause += ' AND f.user_id = $2';
-    }
-    return { clause, params };
+    // back to the farmer's tenant for legacy rows created before the backfill;
+    // then only visits to farmers this person may see (the shared access rule).
+    const farmers = await farmerScopeSql(user, 'f', 2);
+    return {
+        clause: ` AND (v.tenant_id = $1 OR (v.tenant_id IS NULL AND f.tenant_id = $1)) AND ${farmers.sql}`,
+        params: [tenantId, ...farmers.params],
+    };
 }
 
 async function canAccessFarmer(req: Request, farmerId: string): Promise<boolean> {
@@ -608,13 +604,23 @@ router.post('/', validate(createVisitSchema), async (req: Request, res: Response
             return res.status(403).json({ success: false, error: 'Access denied to farmer' });
         }
 
+        // Set only when the insert runs (not on an idempotent replay), so the farmer is told once.
+        let createdId: string | null = null;
         const result = await executeVisitMutation(
             req,
             'create',
             insertParams as unknown as Record<string, unknown>,
             201,
-            executor => performInsertVisit(insertParams, executor)
+            async executor => {
+                const created = await performInsertVisit(insertParams, executor);
+                createdId = (created.data as { id?: string } | null)?.id ?? null;
+                return created;
+            }
         );
+        const plannedId: string | null = createdId;
+        if (plannedId && insertParams.status === 'scheduled') {
+            noticeInBackground('visit planned', () => notifyVisitChange(plannedId, 'planned'));
+        }
         return res.status(result.status).json(result.body);
     } catch (error) {
         if (error instanceof Error && error.message.startsWith('STATIONARY_FRAUD_DETECTED')) {
@@ -624,6 +630,13 @@ router.post('/', validate(createVisitSchema), async (req: Request, res: Response
         safeError(res, 500, 'Failed to create visit');
     }
 });
+
+/** A planned visit that was just cancelled: tell the farmer (after the response). */
+function tellFarmerIfCancelled(visitId: string, httpStatus: number, before: string | null | undefined, after: string | undefined): void {
+    if (httpStatus < 300 && before === 'scheduled' && after === 'cancelled') {
+        noticeInBackground('visit cancelled', () => notifyVisitChange(visitId, 'cancelled'));
+    }
+}
 
 // Update visit
 router.patch('/:id', validate(updateVisitSchema), async (req: Request, res: Response) => {
@@ -652,8 +665,8 @@ router.patch('/:id', validate(updateVisitSchema), async (req: Request, res: Resp
         if (!req.user?.userId || !req.user.role) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
-        const existingVisit = await query<{ farmer_id: string | null; duration_minutes?: number | null; started_at?: string | null; completed_at?: string | null }>(
-            'SELECT farmer_id, duration_minutes, started_at, completed_at FROM visits WHERE id = $1', [id]
+        const existingVisit = await query<{ farmer_id: string | null; status?: string | null; duration_minutes?: number | null; started_at?: string | null; completed_at?: string | null }>(
+            'SELECT farmer_id, duration_minutes, started_at, completed_at, status FROM visits WHERE id = $1', [id]
         );
         const existingFarmerId = existingVisit.rows[0]?.farmer_id;
         if (!existingFarmerId || !(await canAccessFarmer(req, existingFarmerId))) {
@@ -668,6 +681,7 @@ router.patch('/:id', validate(updateVisitSchema), async (req: Request, res: Resp
             200,
             executor => performUpdateVisit(updateParams, executor, existingVisit.rows[0])
         );
+        tellFarmerIfCancelled(id, result.status, existingVisit.rows[0]?.status, updateParams.status);
         return res.status(result.status).json(result.body);
     } catch (error) {
         if (error instanceof Error && error.message.startsWith('STATIONARY_FRAUD_DETECTED')) {
@@ -717,6 +731,7 @@ router.post('/location', async (req: Request, res: Response) => {
 });
 
 import { createShareRoute } from './shareRouteFactory';
+import { farmerScopeSql } from '@/services/access/farmerScope';
 router.use(createShareRoute('visit'));
 
 /**

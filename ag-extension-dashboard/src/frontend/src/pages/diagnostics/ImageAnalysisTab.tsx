@@ -10,6 +10,7 @@ import { queueSpecimenForAnalysis } from '@/services/offlineDiagnosisQueue';
 import { DiseaseSaliencyCanvas } from '@/components/canvas-ui/DiseaseSaliencyCanvas';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
+import { DiagnosisValidationNote, type DiagnosisValidation } from '@/components/diagnosisTests/DiagnosisValidationNote';
 
 interface Props {
   cropType: string;
@@ -29,6 +30,7 @@ export interface ImageAnalysisData {
   confidence: number;
   reviewStatus: DiagnosticReviewStatus;
   provenance: DiagnosticProvenance;
+  validation?: DiagnosisValidation | null;
 }
 
 function diagnosticSourceLabel({ source, provider }: DiagnosticProvenance): string {
@@ -82,7 +84,6 @@ const ImageUploadViewfinder: React.FC<{
           />
         </div>
 
-        {/* Viewfinder Dropzone */}
         <div className="relative rounded-lg border-2 border-dashed border-slate-900/[0.08] dark:border-white/[0.08] hover:border-emerald-500/60 bg-white dark:bg-[#0d1a14] p-5 text-center transition-colors group overflow-hidden">
           {imagePreview ? (
             <div className="space-y-3 relative z-10">
@@ -204,7 +205,6 @@ export const AnalysisResultsHUD: React.FC<{
 
   return (
     <div className="p-5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] space-y-4">
-      {/* Specimen Photo Review */}
       <div className="rounded-lg p-2 bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08]">
         <div className="px-2 py-1 mb-2 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
           <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
@@ -214,6 +214,7 @@ export const AnalysisResultsHUD: React.FC<{
         <DiseaseSaliencyCanvas imageSrc={imagePreview || undefined} detections={[]} />
       </div>
 
+      {!analysisUnavailable && <DiagnosisValidationNote validation={imageAnalysis.validation} />}
       {analysisUnavailable ? (
         <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-2 text-amber-800 dark:text-amber-300">
           <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
@@ -235,7 +236,7 @@ export const AnalysisResultsHUD: React.FC<{
               {t('ui_image_analysis_tab_source')} {diagnosticSourceLabel(imageAnalysis.provenance)}
             </p>
           </div>
-          <div className="text-right">
+          <div className="text-end">
             <span className={`text-xl font-bold ${needsReview ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-400'} tabular-nums`}>
               {(imageAnalysis.confidence * 100).toFixed(1)}%
             </span>
@@ -253,7 +254,7 @@ export const AnalysisResultsHUD: React.FC<{
       {!analysisUnavailable && Boolean(imageAnalysis.nutrientDeficiencies?.length) && (
         <div className="space-y-2">
           <h4 className="text-xs font-medium text-slate-900 dark:text-white">{t('ui_image_analysis_tab_possible_nutrient_issues_unconfirmed')}</h4>
-          <ul className="list-disc pl-4 space-y-1 text-xs text-slate-700 dark:text-slate-300">
+          <ul className="list-disc ps-4 space-y-1 text-xs text-slate-700 dark:text-slate-300">
             {imageAnalysis.nutrientDeficiencies?.map((observation, index) => (
               <li key={index}>{observation}</li>
             ))}
@@ -306,7 +307,6 @@ export const AnalysisResultsHUD: React.FC<{
         </div>
       )}
 
-      {/* Prescribed Actions */}
       {imageAnalysis.recommendations.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-xs font-semibold text-slate-900 dark:text-white">

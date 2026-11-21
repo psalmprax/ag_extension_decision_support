@@ -18,7 +18,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 // Languages that use Right-to-Left direction
-const RTL_LANGUAGES: Language[] = ['ar'];
+const RTL_LANGUAGES: Language[] = ['ar', 'ur'];
 
 function resolveTranslation(
   key: string,
@@ -155,6 +155,19 @@ const isValidLanguage = (code: string): boolean => {
     'el',
     'ug',
     'zu',
+    'ha',
+    'yo',
+    'ig',
+    'am',
+    'om',
+    'ny',
+    'lg',
+    'rw',
+    'so',
+    'bn',
+    'id',
+    'vi',
+    'ur',
   ];
   return validLanguages.includes(code as Language);
 };

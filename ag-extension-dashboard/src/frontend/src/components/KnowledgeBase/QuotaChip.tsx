@@ -18,7 +18,7 @@ export const QuotaChip: React.FC<{ quota: KnowledgeQuotaData; onUpgrade: () => v
         <button
           type="button"
           onClick={onUpgrade}
-          className="ml-2 underline underline-offset-2 text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
+          className="ms-2 underline underline-offset-2 text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
         >
           {t('kb_quota_upgrade', { defaultValue: 'Upgrade' })}
         </button>

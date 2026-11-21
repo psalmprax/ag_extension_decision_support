@@ -148,6 +148,34 @@ function validateDeploymentConfig(warnings: ValidationWarning[], isProduction: b
 }
 
 /**
+ * Resilience: in production, uploads on the container's own disk are lost with the
+ * server and are invisible to a second backend; dumps that stay on the server are lost
+ * with it too; a down virus scanner must not let files through.
+ */
+function validateResilienceConfig(warnings: ValidationWarning[], isProduction: boolean): void {
+    if (!isProduction) return;
+    const cloudStorage = Boolean(process.env.S3_BUCKET || process.env.R2_BUCKET) && (process.env.STORAGE_BACKEND || '').toLowerCase() !== 'local-disk';
+    if (!cloudStorage) {
+        warnings.push({
+            type: 'recommended',
+            key: 'STORAGE_BACKEND',
+            message: process.env.BACKEND_REPLICA === 'true'
+                ? 'This is a second backend but uploads are on local disk: photos uploaded to one backend cannot be opened from the other. Set STORAGE_BACKEND and S3_* (or R2_*).'
+                : 'Uploads are stored on this server\'s disk and are lost if the server is. Set STORAGE_BACKEND and S3_* (or R2_*) for object storage.',
+            severity: process.env.BACKEND_REPLICA === 'true' ? 'critical' : 'warning',
+        });
+    }
+    if (process.env.CLAMD_FAIL_OPEN === 'true') {
+        warnings.push({
+            type: 'misconfigured',
+            key: 'CLAMD_FAIL_OPEN',
+            message: 'Uploads are accepted unscanned whenever the virus scanner is down. Set CLAMD_FAIL_OPEN=false.',
+            severity: 'warning',
+        });
+    }
+}
+
+/**
  * Validates that critical configuration is present at startup
  * Logs warnings for missing non-critical configs
  */
@@ -160,6 +188,7 @@ export function validateStartupConfiguration(): ValidationWarning[] {
     validateAiConfig(warnings, isProduction);
     validateExternalServices(warnings);
     validateDeploymentConfig(warnings, isProduction);
+    validateResilienceConfig(warnings, isProduction);
 
     return warnings;
 }

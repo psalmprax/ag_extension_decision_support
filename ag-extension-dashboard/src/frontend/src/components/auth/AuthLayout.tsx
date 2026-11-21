@@ -42,7 +42,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ label, headline, body, w
         <div className="absolute inset-0 bg-[#0d1a14]/85" />
       </div>
 
-      <header className="absolute top-0 left-0 right-0 z-30 p-4 sm:p-6 flex items-center justify-between pointer-events-none">
+      <header className="absolute top-0 start-0 end-0 z-30 p-4 sm:p-6 flex items-center justify-between pointer-events-none">
         <Link
           to="/"
           className="pointer-events-auto inline-flex items-center gap-2 h-9 px-3 rounded-md text-[#c5d3cb] hover:text-white hover:bg-white/[0.06] text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"

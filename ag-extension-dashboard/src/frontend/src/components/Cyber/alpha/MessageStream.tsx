@@ -15,7 +15,7 @@ export interface MessageStreamProps {
 
 /** The conversation with the AI agronomist, newest at the bottom, with what it is doing now. */
 export const MessageStream: React.FC<MessageStreamProps> = ({ messages, isProcessing, activeReasoningStep, messagesEndRef, youLabel, assistantLabel }) => (
-  <div className="overflow-y-auto space-y-4 pr-1 flex-1 mb-4" aria-live="polite">
+  <div className="overflow-y-auto space-y-4 pe-1 flex-1 mb-4" aria-live="polite">
     {messages.map(msg => (
       <div key={msg.id} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
         <div className="flex items-center gap-1.5 mb-1 text-xs text-slate-500 dark:text-white/50">
@@ -26,8 +26,8 @@ export const MessageStream: React.FC<MessageStreamProps> = ({ messages, isProces
         <div
           className={`max-w-[92%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
             msg.sender === 'user'
-              ? 'bg-emerald-700 text-white rounded-tr-md'
-              : 'bg-slate-50 border border-slate-900/[0.08] text-slate-800 dark:bg-white/[0.04] dark:border-white/[0.08] dark:text-white/90 rounded-tl-md'
+              ? 'bg-emerald-700 text-white rounded-se-md'
+              : 'bg-slate-50 border border-slate-900/[0.08] text-slate-800 dark:bg-white/[0.04] dark:border-white/[0.08] dark:text-white/90 rounded-ss-md'
           }`}
         >
           <div data-message>{msg.sender === 'user' ? <div className="whitespace-pre-line">{msg.text}</div> : <ChatMarkdown content={msg.text} />}</div>

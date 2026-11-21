@@ -198,15 +198,15 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
         </div>
 
         {isDropdownOpen && (
-          <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-slate-900/95 border border-slate-500/30 rounded-xl shadow-2xl backdrop-blur-2xl p-2 max-h-60 overflow-y-auto">
+          <div className="absolute top-full start-0 end-0 mt-2 z-50 bg-slate-900/95 border border-slate-500/30 rounded-xl shadow-2xl backdrop-blur-2xl p-2 max-h-60 overflow-y-auto">
             <div className="relative mb-2">
-              <Search className="w-3.5 h-3.5 text-white/40 absolute left-3 top-2.5" />
+              <Search className="w-3.5 h-3.5 text-white/40 absolute start-3 top-2.5" />
               <input
                 type="text"
                 value={farmerSearch}
                 onChange={e => onSearchChange(e.target.value)}
                 placeholder="Search farmer by name, village, or phone..."
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/10 text-xs text-white placeholder-white/30 outline-none focus:border-slate-400"
+                className="w-full ps-8 pe-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/10 text-xs text-white placeholder-white/30 outline-none focus:border-slate-400"
                 onClick={e => e.stopPropagation()}
               />
             </div>

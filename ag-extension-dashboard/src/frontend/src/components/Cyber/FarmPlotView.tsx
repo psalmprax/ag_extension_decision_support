@@ -5,6 +5,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { ThreeViewport } from '@/components/three/ThreeViewport';
 import { useThreeScene, type SceneFactory } from '@/components/three/useThreeScene';
 import type { FarmPlotParams } from '@/components/three/scenes/farmPlotScene';
+import { useUnits } from '@/hooks/useUnits';
 
 interface FarmPlotViewProps {
   farmSize?: number;
@@ -26,6 +27,7 @@ const loadPlot = () => import('@/components/three/scenes/farmPlotScene').then(m 
  */
 const FarmPlotView: React.FC<FarmPlotViewProps> = ({ farmSize: givenSize = 0, crops = [], farmerId }) => {
   const { t } = useLanguage();
+  const units = useUnits();
   const dark = useAppStore(state => state.darkMode);
   const [reading, setReading] = useState<SatelliteReading | null>(null);
   const [farmSize, setFarmSize] = useState(givenSize);
@@ -43,13 +45,13 @@ const FarmPlotView: React.FC<FarmPlotViewProps> = ({ farmSize: givenSize = 0, cr
   }, [farmerId]);
 
   const lines = useMemo(() => {
-    const out = [`${crops[0] ?? t('farm_plot_farm', { defaultValue: 'Farm' })}${farmSize > 0 ? `, ${farmSize} ha` : ''}`];
+    const out = [`${crops[0] ?? t('farm_plot_farm', { defaultValue: 'Farm' })}${farmSize > 0 ? `, ${units.area(farmSize)}` : ''}`];
     if (reading?.ndvi !== undefined) out.push(`NDVI ${reading.ndvi.toFixed(2)}`);
     if (reading?.soilMoisture !== undefined) out.push(t('farm_plot_moisture', { value: reading.soilMoisture.toFixed(1), defaultValue: 'Soil moisture {value}%' }));
     if (reading?.lastUpdated) out.push(t('farm_plot_updated', { date: new Date(reading.lastUpdated).toLocaleDateString(), defaultValue: 'Updated {date}' }));
     if (!reading) out.push(t('farm_plot_no_reading', { defaultValue: 'No satellite reading yet' }));
     return out;
-  }, [crops, farmSize, reading, t]);
+  }, [crops, farmSize, reading, t, units]);
 
   const params = useMemo<FarmPlotParams>(
     () => ({ seed: farmerId ?? 'farm', dark, ndvi: reading?.ndvi ?? null, lines }),

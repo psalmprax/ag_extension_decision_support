@@ -192,7 +192,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
       {/* Vertex Table */}
       {vertices.length > 0 && (
         <div className="max-h-40 overflow-y-auto border border-gray-100 dark:border-gray-800 rounded-xl">
-          <table className="min-w-full text-xs text-left">
+          <table className="min-w-full text-xs text-start">
             <thead className="bg-gray-50 dark:bg-gray-900 text-gray-500">
               <tr>
                 <th className="p-2">#</th>

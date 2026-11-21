@@ -249,7 +249,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                       setActiveFarmerConvId(conv.id);
                       loadFarmerMessages(conv.id);
                     }}
-                    className="flex-1 p-3 text-left flex items-center gap-3 min-w-0"
+                    className="flex-1 p-3 text-start flex items-center gap-3 min-w-0"
                   >
                     <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-bold shrink-0">
                       {initial}
@@ -259,7 +259,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                         <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
                           {displayName}
                         </span>
-                        <UnreadCount conversationId={conv.id} className="ml-auto mr-2" />
+                        <UnreadCount conversationId={conv.id} className="ms-auto me-2" />
                         <span className="text-xs text-slate-500 dark:text-white/40">
                           {(() => {
                             const rawStarted = conv.startedAt || conv.updatedAt;
@@ -289,7 +289,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                           onDeleteConversation(conv.id);
                         }
                       }}
-                      className="opacity-0 group-hover:opacity-100 p-2 mr-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-all border border-rose-500/20"
+                      className="opacity-0 group-hover:opacity-100 p-2 me-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-all border border-rose-500/20"
                       title="Delete Conversation"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -314,7 +314,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                   <button
                     onClick={() => setActiveFarmerConvId(null)}
-                    className="md:hidden p-2 rounded-lg bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 text-slate-700 dark:text-white transition-colors mr-1"
+                    className="md:hidden p-2 rounded-lg bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 text-slate-700 dark:text-white transition-colors me-1"
                     aria-label="Back to conversations"
                   >
                     <ArrowLeft className="w-4 h-4" />

@@ -30,14 +30,14 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
       <div className="space-y-4">
         {safeVisits.length > 0 ? (
           safeVisits.map((visit, i) => (
-            <div key={visit.id || i} className="relative pl-8 group">
+            <div key={visit.id || i} className="relative ps-8 group">
               {i !== safeVisits.length - 1 && (
                 <div
-                  className={`absolute left-3 top-6 bottom-[-16px] w-0.5 transition-colors ${isCyber ? 'bg-primary-500/30' : 'bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-500'}`}
+                  className={`absolute start-3 top-6 bottom-[-16px] w-0.5 transition-colors ${isCyber ? 'bg-primary-500/30' : 'bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-500'}`}
                 />
               )}
               <div
-                className={`absolute left-0 top-1.5 w-6 h-6 rounded-full border-4 shadow-sm border-white dark:border-gray-900
+                className={`absolute start-0 top-1.5 w-6 h-6 rounded-full border-4 shadow-sm border-white dark:border-gray-900
                              ${visit.status === 'completed' ? 'bg-primary-500' : 'bg-accent-500'}`}
               />
 
