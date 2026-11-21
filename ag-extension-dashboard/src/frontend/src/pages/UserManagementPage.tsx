@@ -20,12 +20,7 @@ import {
 import apiClient from '@/api/client';
 import { useDemoMode, DEMO_USERS } from '@/demo';
 import { fetchLoginHistory, fetchLoginStats } from '@/api/authService';
-import {
-  SUPPORTED_COUNTRIES,
-  CONTINENT_ORDER,
-  getCountryConfig,
-  browserCountry,
-} from '@/lib/countries';
+import { SUPPORTED_COUNTRIES, CONTINENT_ORDER, getCountryConfig, browserCountry } from '@/lib/countries';
 import { useLanguage } from '@/lib/LanguageContext';
 import { StaffBadges } from '@/components/users/StaffBadges';
 import { UserAccessModal } from '@/components/users/UserAccessModal';
@@ -212,8 +207,7 @@ export function UserManagementPage() {
           </div>
 
           <div className="relative w-full sm:w-48">
-            <select
-              aria-label={t('users_filter_role', 'Filter by role')}
+            <select aria-label={t('users_filter_role', 'Filter by role')}
               value={roleFilter}
               onChange={e => setRoleFilter(e.target.value)}
               className="w-full appearance-none ps-3.5 pe-9 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-400 outline-none"
