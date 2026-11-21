@@ -56,8 +56,8 @@ export async function initializeDatabase(): Promise<void> {
     //  - Production: the docker entrypoint applies `prisma migrate deploy` BEFORE the
     //    app boots. Boot-time sync is OFF by default there; DB_SYNC_ON_BOOT=true opts a
     //    single-node deployment back in (it then runs under the advisory lock below).
-    //  - Dev/test: boot-time sync stays on (DB_SYNC_ON_BOOT=false disables), so the
-    //    low-friction local workflow is kept.
+    //  - Dev/test: boot-time sync stays on (DB_SYNC_ON_BOOT=false disables) and applies
+    //    the same migrations, so a local database matches production's.
     const syncOnBoot = process.env.DB_SYNC_ON_BOOT === 'true' ||
       (!isProduction && process.env.DB_SYNC_ON_BOOT !== 'false');
     if (syncOnBoot) {
@@ -203,7 +203,7 @@ const SCHEMA_SYNC_LOCK_ID = 727401;
 /**
  * Boot-time schema sync, gated by DB_SYNC_ON_BOOT (see initializeDatabase).
  *
- * The `prisma db push` subprocess runs while a session-scoped PostgreSQL advisory
+ * `prisma migrate deploy` runs while a session-scoped PostgreSQL advisory
  * lock is held on a dedicated pool client, so replicas booting concurrently
  * serialize instead of racing. The lock is released in `finally`, and the command
  * is spawned asynchronously — the previous execSync blocked the event loop for the
@@ -227,8 +227,10 @@ async function syncPrismaSchema(): Promise<void> {
     const client = await dbPool.connect();
     try {
       await client.query('SELECT pg_advisory_lock($1)', [SCHEMA_SYNC_LOCK_ID]);
-      logger.info('Running database schema sync: prisma db push (advisory lock held)');
-      await runCommand('npx', ['prisma', 'db', 'push']);
+      // The migrations, not schema.prisma, own the schema: `db push` would drop the tables
+      // that exist only in migrations (channel configs, email templates, agent telemetry…).
+      logger.info('Running database schema sync: prisma migrate deploy (advisory lock held)');
+      await runCommand('npx', ['prisma', 'migrate', 'deploy']);
       logger.info('Database schema sync completed (advisory lock released)');
     } finally {
       await client.query('SELECT pg_advisory_unlock($1)', [SCHEMA_SYNC_LOCK_ID]);
