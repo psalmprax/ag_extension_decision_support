@@ -93,7 +93,9 @@ jobs:
         if: failure()
         working-directory: ag-extension-dashboard/src/backend
         # Only the message and stack of each failed request, never the whole log.
-        run: grep -h -A14 '\[ERROR\]: Failed to (load|get|fetch|list)' -E logs/error.log 2>/dev/null | grep -E '\[ERROR\]|^ *code:|^ *message:|^ *at ' | cut -c1-300 | head -60 || true
+        run: |
+          grep -h -E -A14 '\[ERROR\]: Failed to (load|get|fetch|list)' logs/error.log 2>/dev/null \
+            | grep -E '\[ERROR\]|^ *code:|^ *message:|^ *at ' | cut -c1-300 | head -60 || true
 
       - name: Upload the Playwright report
         if: failure()
