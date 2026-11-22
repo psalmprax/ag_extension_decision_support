@@ -23,6 +23,7 @@ import { selectedModelFor, visionModelFor } from '../selectedModel';
 
 import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt } from '../assetLibrary';
 import { normalizeToolDefinitions, normalizeMessages, normalizeToolCalls } from '../toolCalling';
+import { AI_PROVIDER_TIMEOUT_MS, AI_PROVIDER_MAX_RETRIES } from '@/utils/outboundTimeout';
 
 export class OpenAIProvider extends BaseAIProvider {
     readonly provider: AIProviderType = 'openai';
@@ -45,7 +46,7 @@ export class OpenAIProvider extends BaseAIProvider {
 
         try {
             const OpenAI = await import('openai');
-            this.client = new OpenAI.default({ apiKey: config.openAI.apiKey });
+            this.client = new OpenAI.default({ apiKey: config.openAI.apiKey, timeout: AI_PROVIDER_TIMEOUT_MS, maxRetries: AI_PROVIDER_MAX_RETRIES });
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize OpenAI client:', error);

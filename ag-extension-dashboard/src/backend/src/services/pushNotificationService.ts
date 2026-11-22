@@ -2,6 +2,7 @@
 import webpush from 'web-push';
 import { getPrisma } from './prismaService';
 import { logger } from '../utils/logger';
+import { OUTBOUND_TIMEOUT_MS } from '@/utils/outboundTimeout';
 
 // Configure Web Push with VAPID keys
 const publicVapidKey = process.env.VAPID_PUBLIC_KEY || '';
@@ -84,7 +85,7 @@ export const sendPushNotification = async (userId: string, title: string, body: 
             };
 
             try {
-                await webpush.sendNotification(pushConfig, notificationPayload);
+                await webpush.sendNotification(pushConfig, notificationPayload, { timeout: OUTBOUND_TIMEOUT_MS });
             } catch (error) {
                 if ((error as any).statusCode === 410 || (error as any).statusCode === 404) {
                     // Subscription has expired or is no longer valid

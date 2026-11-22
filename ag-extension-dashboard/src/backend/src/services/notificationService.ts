@@ -4,6 +4,7 @@ import { channelAllowed, loadNotificationPreferences } from './notificationPrefe
 import { PrismaClient, Prisma } from '@prisma/client';
 import { addNotificationJob } from '../queues/notificationQueue';
 import { config } from '@/config';
+import { outboundSignal } from '@/utils/outboundTimeout';
 
 const prisma = new PrismaClient({
     datasourceUrl: config.database.url,
@@ -174,6 +175,7 @@ class NotificationService {
                 `https://api.twilio.com/2010-04-01/Accounts/${this.twilioSid}/Messages.json`,
                 {
                     method: 'POST',
+                    signal: outboundSignal(),
                     headers: {
                         'Authorization': `Basic ${credentials}`,
                         'Content-Type': 'application/x-www-form-urlencoded',

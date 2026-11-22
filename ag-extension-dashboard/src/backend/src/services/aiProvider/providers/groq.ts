@@ -17,6 +17,7 @@ import { visionModelFor } from '../selectedModel';
 import { logger } from '@/utils/logger';
 import Groq from 'groq-sdk';
 import { normalizeToolDefinitions, normalizeMessages, normalizeToolCalls } from '../toolCalling';
+import { AI_PROVIDER_TIMEOUT_MS, AI_PROVIDER_MAX_RETRIES } from '@/utils/outboundTimeout';
 
 
 export class GroqProvider extends BaseAIProvider {
@@ -26,7 +27,7 @@ export class GroqProvider extends BaseAIProvider {
 
     constructor() {
         super();
-        this.client = new Groq({ apiKey: config.groq.apiKey });
+        this.client = new Groq({ apiKey: config.groq.apiKey, timeout: AI_PROVIDER_TIMEOUT_MS, maxRetries: AI_PROVIDER_MAX_RETRIES });
     }
 
     override isConfigured(): boolean {

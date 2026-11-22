@@ -2,6 +2,7 @@
 import axios from 'axios';
 import { logger } from '../utils/logger';
 import { query } from './databaseService';
+import { OUTBOUND_TIMEOUT_MS } from '@/utils/outboundTimeout';
 
 export interface WhatsAppOptions {
     to?: string;
@@ -125,6 +126,7 @@ class WhatsAppService {
                     'Authorization': `Basic ${auth}`,
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
+                timeout: OUTBOUND_TIMEOUT_MS,
             });
 
             const success = response.data.status !== 'failed';

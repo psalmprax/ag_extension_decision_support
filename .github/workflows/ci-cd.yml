@@ -40,6 +40,9 @@ jobs:
       - name: Design rules (CLAUDE.md Unslop standard)
         run: node scripts/design-rules-check.cjs
 
+      - name: Outbound calls give up after a bounded time
+        run: node scripts/outbound-timeout-check.cjs
+
       - name: Script tests (port handling, live smoke)
         run: node --test scripts/*.test.cjs
   

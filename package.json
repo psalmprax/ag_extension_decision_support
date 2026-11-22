@@ -22,6 +22,7 @@
     "check:component-size": "node scripts/component-size-ratchet.cjs",
     "check:design-rules": "node scripts/design-rules-check.cjs",
     "check:explicit-any": "node scripts/explicit-any-ratchet.cjs",
+    "check:outbound-timeouts": "node scripts/outbound-timeout-check.cjs",
     "prepare": "husky || true",
     "lint:frontend": "cd ag-extension-dashboard/src/frontend && npm run lint",
     "lint:backend": "cd ag-extension-dashboard/src/backend && npm run lint",

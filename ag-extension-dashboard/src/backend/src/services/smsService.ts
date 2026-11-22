@@ -11,6 +11,7 @@ function axiosErrorMessage(error: unknown): unknown {
 import { query } from './databaseService';
 import { toSmsText } from './sms/smsText';
 import { toE164 } from '@/services/country/phone';
+import { OUTBOUND_TIMEOUT_MS } from '@/utils/outboundTimeout';
 
 export interface SMSOptions {
     to: string;
@@ -101,6 +102,7 @@ class SMSService {
                         'ApiKey': this.africaTalkingApiKey!,
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
+                    timeout: OUTBOUND_TIMEOUT_MS,
                 }
             );
 
@@ -135,6 +137,7 @@ class SMSService {
                         'Authorization': `Basic ${auth}`,
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
+                    timeout: OUTBOUND_TIMEOUT_MS,
                 }
             );
 

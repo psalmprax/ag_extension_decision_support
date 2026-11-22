@@ -22,6 +22,7 @@ import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import { EMBEDDING_DIMENSIONS } from '@/services/embeddingDimensions';
 import { selectedModelFor, visionModelFor } from '../selectedModel';
+import { AI_PROVIDER_TIMEOUT_MS } from '@/utils/outboundTimeout';
 
 const GOOGLE_DEFAULT_MODEL = 'gemini-flash-latest';
 
@@ -78,10 +79,10 @@ export class GoogleVertexProvider extends BaseAIProvider {
             const auth = resolveGoogleAuth();
             const { GoogleGenAI } = await import('@google/genai');
             this.client = auth?.mode === 'apiKey'
-                ? new GoogleGenAI({ apiKey: auth.apiKey })
+                ? new GoogleGenAI({ apiKey: auth.apiKey, httpOptions: { timeout: AI_PROVIDER_TIMEOUT_MS } })
                 // Vertex AI: credentials come from Application Default
                 // Credentials (GOOGLE_APPLICATION_CREDENTIALS / metadata server).
-                : new GoogleGenAI({ vertexai: true, project: auth?.project, location: auth?.location });
+                : new GoogleGenAI({ vertexai: true, project: auth?.project, location: auth?.location, httpOptions: { timeout: AI_PROVIDER_TIMEOUT_MS } });
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize Google Vertex client:', error);

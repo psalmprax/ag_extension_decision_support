@@ -17,6 +17,7 @@ import { config } from '@/config';
 import { visionModelFor } from '../selectedModel';
 import { logger } from '@/utils/logger';
 import { extractVisuals } from '../assetLibrary';
+import { AI_PROVIDER_TIMEOUT_MS, AI_PROVIDER_MAX_RETRIES } from '@/utils/outboundTimeout';
 
 export class AnthropicProvider extends BaseAIProvider {
     readonly provider: AIProviderType = 'anthropic';
@@ -42,7 +43,7 @@ export class AnthropicProvider extends BaseAIProvider {
 
         try {
             const Anthropic = await import('@anthropic-ai/sdk');
-            this.client = new Anthropic.default({ apiKey: config.anthropic.apiKey });
+            this.client = new Anthropic.default({ apiKey: config.anthropic.apiKey, timeout: AI_PROVIDER_TIMEOUT_MS, maxRetries: AI_PROVIDER_MAX_RETRIES });
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize Anthropic client:', error);

@@ -68,7 +68,7 @@ describe('GoogleVertexProvider client + embeddings', () => {
         setConfig({ projectId: 'my-gcp-project' });
         mockEmbedContent.mockResolvedValue({ embeddings: [{ values: new Array(EMBEDDING_DIMENSIONS).fill(0.1) }] });
         await new GoogleVertexProvider().createEmbedding('maize streak virus');
-        expect(mockCtor).toHaveBeenCalledWith({ vertexai: true, project: 'my-gcp-project', location: 'europe-west4' });
+        expect(mockCtor).toHaveBeenCalledWith({ vertexai: true, project: 'my-gcp-project', location: 'europe-west4', httpOptions: { timeout: 60_000 } });
     });
 
     it('pins outputDimensionality to the pgvector width (single)', async () => {

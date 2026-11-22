@@ -175,6 +175,10 @@ class ObjectStorageService {
           secretAccessKey: this.config.secretAccessKey,
         } : undefined,
         forcePathStyle: this.config.forcePathStyle || this.config.backend === 'minio',
+        // Give up on a store that does not connect, or stops sending, rather than holding
+        // an upload or a photo request open. Idle time, not total time: a large archive
+        // that keeps moving is never cut off.
+        requestHandler: { connectionTimeout: 5_000, socketTimeout: 60_000 },
       });
       logger.info(`[ObjectStorage] Initialized ${this.config.backend} client (Bucket: ${this.config.bucket})`);
     } catch (error) {
