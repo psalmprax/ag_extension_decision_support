@@ -5,7 +5,7 @@ import { PlanUpgradeGuard } from '@/components/PlanUpgradeGuard';
 import type { PerformanceData } from '@/api/analyticsService';
 
 import { DashboardLoadError } from '@/components/DashboardLoadError';
-import { threadProps } from './chat/threadProps';
+import { threadProps, type ThreadHistory } from './chat/threadProps';
 import { useLanguage } from '@/lib/LanguageContext';
 
 const DashboardPage = React.lazy(() =>
@@ -117,7 +117,7 @@ interface TabContentProps {
   activeFarmerConvId: string | null;
   setActiveFarmerConvId: (id: string | null) => void;
   loadFarmerMessages: (id: string) => void;
-  farmerChatMessages: unknown[];
+  farmerChatMessages: unknown[]; farmerHistory: ThreadHistory;
   farmerChatInput: string;
   setFarmerChatInput: (v: string) => void;
   handleFarmerChatSend: (...args: unknown[]) => void;

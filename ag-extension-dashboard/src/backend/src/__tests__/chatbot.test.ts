@@ -170,6 +170,28 @@ describe('Chatbot Route — Mapper-before-response: mapChatMessageRow + mapChatC
         expect(first.createdAt).toBe('2024-12-15T10:00:00Z');
         // Must NOT leak snake_case (proves mapper ran)
         expect(first.conversation_id).toBeUndefined();
+        expect(response.body.hasMore).toBe(false);
+    });
+
+    it('GET /conversations/:id/messages sends the latest page, oldest first, and pages back by message id', async () => {
+        const row = (n: number) => ({ id: `0f6c1a52-0000-4a5b-9c3d-00000000000${n}`, conversation_id: 'conv-1', role: 'user', content: `Message ${n}`, metadata: null, created_at: `2024-12-15T10:0${n}:00Z` });
+        mockQuery
+            .mockResolvedValueOnce({ rows: [{ farmer_id: 'farm-uuid-1', officer_id: 'off-1', region: 'North' }], rowCount: 1 })
+            // Newest first, one more than the page so the server knows there are older ones.
+            .mockResolvedValueOnce({ rows: [row(4), row(3), row(2)], rowCount: 3 })
+            .mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+        const before = '0f6c1a52-0000-4a5b-9c3d-000000000005';
+        const response = await request(app)
+            .get(`/api/v1/chatbot/conversations/conv-1/messages?limit=2&before=${before}`)
+            .set('Authorization', `Bearer ${officerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.map((m: { content: string }) => m.content)).toEqual(['Message 3', 'Message 4']);
+        expect(response.body.hasMore).toBe(true);
+        const [sql, params] = mockQuery.mock.calls[1];
+        expect(sql).toContain('(m.created_at, m.id) <');
+        expect(params.slice(-2)).toEqual([before, 3]);
     });
 
     it('POST /conversations invokes mapChatConversationRow on the INSERT ... RETURNING row', async () => {

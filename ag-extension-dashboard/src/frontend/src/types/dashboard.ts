@@ -25,6 +25,8 @@ export interface Conversation {
 }
 
 export interface ChatMessage {
+  /** Server id; absent on messages shown before the server stored them (demo, offline). */
+  id?: string;
   /** 'user' and 'farmer' are both the farmer; 'assistant' is the AI. */
   role: 'user' | 'farmer' | 'assistant' | 'officer';
   /** Received or delivered by SMS, WhatsApp or Telegram; absent or null = in the app. */

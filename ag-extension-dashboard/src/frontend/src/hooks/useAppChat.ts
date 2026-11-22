@@ -16,6 +16,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { lacksPaidAccess } from '@/lib/planAccess';
 import { takeCopilotDraft } from '@/lib/copilotDraft';
 import { getApiErrorMessage } from '@/lib/apiError';
+import { useThreadHistory } from './useThreadHistory';
 import { queryClient } from '@/lib/queryClient';
 import { UNREAD_CHATS_KEY } from '@/hooks/useUnreadChats';
 
@@ -133,9 +134,12 @@ export const useAppChat = (language: string) => {
   const farmerMessagesRequestRef = useRef(0);
   const farmerSelectionGenerationRef = useRef(0);
   const demoFarmerMessagesRef = useRef(new Map<string, ChatMessage[]>());
+  const farmerHistory = useThreadHistory(activeFarmerConvIdRef, farmerChatMessages, setFarmerChatMessages);
+  const { setHasEarlier: setFarmerHasEarlier } = farmerHistory;
   const setActiveFarmerConvId = useCallback((id: string | null) => {
     if (activeFarmerConvIdRef.current !== id) {
       activeFarmerConvIdRef.current = id;
+      setFarmerHasEarlier(false);
       farmerMessagesRequestRef.current++;
       farmerSelectionGenerationRef.current++;
       setFarmerChatMessages(id?.startsWith('conv-demo-farmer-')
@@ -143,7 +147,7 @@ export const useAppChat = (language: string) => {
         : []);
     }
     setActiveFarmerConvIdState(id);
-  }, []);
+  }, [setFarmerHasEarlier]);
 
   useEffect(() => {
     if (activeFarmerConvId?.startsWith('conv-demo-farmer-')) {
@@ -226,6 +230,7 @@ export const useAppChat = (language: string) => {
       // Drop a stale resolution so the active conversation always shows its own messages.
       if (requestId !== farmerMessagesRequestRef.current) return;
       setFarmerChatMessages(res.data || []);
+      setFarmerHasEarlier(Boolean(res.hasMore));
       // Opening a thread reads it: clear its unread count and the menu badge.
       void markThreadRead(id)
         .then(() => queryClient.invalidateQueries({ queryKey: UNREAD_CHATS_KEY }))
@@ -234,7 +239,7 @@ export const useAppChat = (language: string) => {
       if (requestId !== farmerMessagesRequestRef.current) return;
       console.error('Failed to load farmer messages:', error);
     }
-  }, []);
+  }, [setFarmerHasEarlier]);
 
   // Farmer Chat functions
   const loadFarmerConversations = useCallback(async () => {
@@ -444,6 +449,8 @@ export const useAppChat = (language: string) => {
     setFarmerChatInput,
     loadFarmerConversations,
     loadFarmerMessages,
+    farmerHasEarlier: farmerHistory.hasEarlier,
+    loadEarlierFarmerMessages: farmerHistory.loadEarlier,
     handleFarmerChatSend,
     handleStartConversation,
   };

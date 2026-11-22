@@ -2824,5 +2824,7 @@
     "ui_farmer_registration_form_not_assessed": "Not assessed yet",
     "ui_farmer_registration_form_vital_score_label": "Officer assessment of farm condition, 30 to 100",
     "users_filter_role": "Filter by role",
-    "voice_delete_failed": "Could not delete the recording."
+    "voice_delete_failed": "Could not delete the recording.",
+    "chat_loading_earlier": "Loading earlier messages…",
+    "chat_show_earlier": "Show earlier messages"
 }

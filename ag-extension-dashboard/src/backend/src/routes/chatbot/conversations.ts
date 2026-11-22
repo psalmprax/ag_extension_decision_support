@@ -20,6 +20,7 @@ import { DEFAULT_CONVERSATION_KIND, parseConversationKind, type ConversationKind
 import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
 import { listAttachments } from '@/services/uploadAttachments';
 import { markThreadRead, unreadSummary } from '@/services/chat/readState';
+import { isUuid } from '@/utils/uuid';
 
 // Farmer chat, the farmer's "My officer" thread and the officer's AI chats are paid features;
 // admins and the demo are exempt (see requirePaidPlan).
@@ -134,6 +135,9 @@ router.get('/conversations', authorize(['admin', 'regional_manager', 'extension_
 /**
  * GET /api/chatbot/conversations/:id/messages — message history for one conversation.
  */
+const THREAD_PAGE_SIZE = 200;
+const THREAD_PAGE_MAX = 500;
+
 router.get('/conversations/:id/messages', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requireChatPlan, async (req: AuthedRequest, res: Response) => {
   try {
     const conversationId = req.params.id;
@@ -156,20 +160,33 @@ router.get('/conversations/:id/messages', authorize(['admin', 'regional_manager'
       params.push(farmerId || user.userId);
     }
 
-    const { rows } = await query<ChatMessageRow>(
+    // The latest page of the thread (oldest first), and older pages on request with
+    // ?before=<id of the oldest message shown>: a long thread is never sent whole. The
+    // cursor is a message id, not a time, because the database keeps microseconds.
+    const limit = Math.min(Math.max(Number.parseInt(String(req.query.limit ?? ''), 10) || THREAD_PAGE_SIZE, 1), THREAD_PAGE_MAX);
+    const before = isUuid(req.query.before) ? req.query.before : null;
+    params.push(before, limit + 1);
+    const beforeParam = `$${params.length - 1}`;
+    const limitParam = `$${params.length}`;
+    const { rows: newestFirst } = await query<ChatMessageRow>(
       `SELECT m.*
          FROM chat_messages m
          JOIN chat_conversations cv ON cv.id = m.conversation_id
         WHERE m.conversation_id = $1 ${whereOwner}
-        ORDER BY m.created_at ASC`,
+          AND (${beforeParam}::uuid IS NULL OR (m.created_at, m.id) <
+               (SELECT older.created_at, older.id FROM chat_messages older WHERE older.id = ${beforeParam}::uuid))
+        ORDER BY m.created_at DESC, m.id DESC
+        LIMIT ${limitParam}`,
       params
     );
+    const hasMore = newestFirst.length > limit;
+    const rows = newestFirst.slice(0, limit).reverse();
     const attachments = await listAttachments('chat', rows.map(row => row.id));
     const messages = mapChatMessageRows(rows).map(message => {
       const photos = attachments.get(message.id);
       return photos ? { ...message, attachments: photos } : message;
     });
-    return res.json({ success: true, data: messages });
+    return res.json({ success: true, data: messages, hasMore });
   } catch (error) {
     if (error instanceof MessageAccessError) {
       return safeError(res, error.statusCode, error.message);

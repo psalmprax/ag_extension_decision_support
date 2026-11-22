@@ -41,6 +41,7 @@ router.post('/goal', requirePaidPlan('campaigns'), checkUsageLimit('ai_chat'), a
             autoScheduleVisits: autoScheduleVisits !== false,
             tenantId,
             userId: req.user?.userId,
+            principal: { userId: req.user!.userId, role: req.user!.role, isDemo: (req.user as { isDemo?: boolean }).isDemo },
         });
 
         return res.json(result);

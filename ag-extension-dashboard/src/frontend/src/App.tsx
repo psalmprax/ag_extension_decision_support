@@ -267,9 +267,8 @@ function App() {
     farmerConversations,
     activeFarmerConvId,
     setActiveFarmerConvId,
-    farmerChatMessages,
-    farmerChatInput,
-    setFarmerChatInput,
+    farmerChatMessages, farmerHasEarlier, loadEarlierFarmerMessages,
+    farmerChatInput, setFarmerChatInput,
     handleFarmerChatSend,
     handleStartConversation,
     handleDeleteConversation,
@@ -558,8 +557,8 @@ function App() {
                     setActiveFarmerConvId={setActiveFarmerConvId}
                     loadFarmerMessages={loadFarmerMessages}
                     farmerChatMessages={farmerChatMessages}
-                    farmerChatInput={farmerChatInput}
-                    setFarmerChatInput={setFarmerChatInput}
+                    farmerHistory={{ hasEarlier: farmerHasEarlier, loadEarlier: loadEarlierFarmerMessages }}
+                    farmerChatInput={farmerChatInput} setFarmerChatInput={setFarmerChatInput}
                     handleFarmerChatSend={handleFarmerChatSend as (...args: unknown[]) => void}
                     loadFarmers={loadFarmers}
                     setShowFarmerModal={setShowFarmerModal}

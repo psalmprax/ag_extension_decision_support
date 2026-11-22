@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Plus, Lock, MessageSquare, ArrowLeft, Trash2, Mic } from 'lucide-react';
-import { Conversation, ChatMessage } from '../types/dashboard';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useDeviceThermalMemoryBudget } from '@/hooks/useDeviceThermalMemoryBudget';
@@ -17,16 +16,10 @@ import { VoiceNoteTaker } from '@/components/audio/VoiceNoteTaker';
 import { fetchWeather } from '@/api/weatherService';
 import apiClient from '@/api/client';
 import { buildHazardDays, toPlotTelemetry, type PlotTelemetry, type WeatherForecastDay } from './farmerChatSafety';
+import { EarlierMessagesButton } from '@/components/chat/EarlierMessagesButton';
+import type { ThreadPageProps } from '@/components/chat/threadProps';
 
-interface FarmerChatPageProps {
-  farmerConversations: Conversation[];
-  activeFarmerConvId: string | null;
-  setActiveFarmerConvId: (id: string | null) => void;
-  loadFarmerMessages: (id: string) => void;
-  farmerChatMessages: ChatMessage[];
-  farmerChatInput: string;
-  setFarmerChatInput: (input: string) => void;
-  handleFarmerChatSend: (e: React.FormEvent) => void;
+interface FarmerChatPageProps extends ThreadPageProps {
   loadFarmers: () => void;
   setShowFarmerModal: (show: boolean) => void;
   onDeleteConversation?: (id: string) => void;
@@ -41,6 +34,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   setActiveFarmerConvId,
   loadFarmerMessages,
   farmerChatMessages,
+  farmerHistory,
   farmerChatInput,
   setFarmerChatInput,
   handleFarmerChatSend,
@@ -366,8 +360,9 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                     </div>
                   </div>
                 )}
+                <EarlierMessagesButton history={farmerHistory} />
                 {farmerChatMessages.map((msg, i) => (
-                  <FarmerChatMessage key={i} message={msg} />
+                  <FarmerChatMessage key={msg.id ?? i} message={msg} />
                 ))}
               </div>
 

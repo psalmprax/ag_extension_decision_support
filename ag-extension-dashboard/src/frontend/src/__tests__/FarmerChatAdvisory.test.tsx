@@ -29,7 +29,7 @@ describe('Farmer chat suggestion isolation', () => {
     ];
     const props = {
       farmerConversations: conversations, activeFarmerConvId: 'one', setActiveFarmerConvId: vi.fn(),
-      loadFarmerMessages: vi.fn(), farmerChatMessages: [{ role: 'user' as const, content: 'First message' }],
+      loadFarmerMessages: vi.fn(), farmerHistory: { hasEarlier: false, loadEarlier: vi.fn() }, farmerChatMessages: [{ role: 'user' as const, content: 'First message' }],
       farmerChatInput: '', setFarmerChatInput: vi.fn(), handleFarmerChatSend: vi.fn(),
       loadFarmers: vi.fn(), setShowFarmerModal: vi.fn(),
     };
@@ -65,7 +65,7 @@ describe('Farmer chat suggestion isolation', () => {
     ];
     const props = {
       farmerConversations: conversations, activeFarmerConvId: 'one', setActiveFarmerConvId: vi.fn(),
-      loadFarmerMessages: vi.fn(), farmerChatMessages: [], farmerChatInput: '', setFarmerChatInput: vi.fn(),
+      loadFarmerMessages: vi.fn(), farmerHistory: { hasEarlier: false, loadEarlier: vi.fn() }, farmerChatMessages: [], farmerChatInput: '', setFarmerChatInput: vi.fn(),
       handleFarmerChatSend: vi.fn(), loadFarmers: vi.fn(), setShowFarmerModal: vi.fn(),
     };
     const view = render(<FarmerChatPage {...props} />);
