@@ -16,8 +16,10 @@ import { useAppStore } from '@/store/useAppStore';
 import { lacksPaidAccess } from '@/lib/planAccess';
 import { takeCopilotDraft } from '@/lib/copilotDraft';
 import { getApiErrorMessage } from '@/lib/apiError';
+import { useThreadHistory } from './useThreadHistory';
 import { queryClient } from '@/lib/queryClient';
 import { UNREAD_CHATS_KEY } from '@/hooks/useUnreadChats';
+import { safeStorage } from '@/lib/safeStorage';
 
 interface QueuedChatItem {
   conversationId: string | null;
@@ -49,22 +51,22 @@ async function sendQueuedChatItem(item: QueuedChatItem): Promise<boolean> {
 
 /** Drain one conversation's offline chat queue out of localStorage. */
 async function drainChatOfflineQueue(key: string): Promise<void> {
-  const items = JSON.parse(localStorage.getItem(key) || '[]') as QueuedChatItem[];
+  const items = safeStorage.json<QueuedChatItem[]>(key, []);
   for (const item of [...items]) {
     if (!(await sendQueuedChatItem(item))) return;
     items.shift();
-    localStorage.setItem(key, JSON.stringify(items));
+    safeStorage.set(key, JSON.stringify(items));
   }
-  if (items.length === 0) localStorage.removeItem(key);
+  if (items.length === 0) safeStorage.remove(key);
 }
 
 function enqueueOfflineMessage(
   queueKey: string,
   item: QueuedChatItem
 ): void {
-  const q = JSON.parse(localStorage.getItem(queueKey) || '[]') as QueuedChatItem[];
+  const q = safeStorage.json<QueuedChatItem[]>(queueKey, []);
   q.push(item);
-  localStorage.setItem(queueKey, JSON.stringify(q));
+  safeStorage.set(queueKey, JSON.stringify(q));
 }
 
 async function sendDemoFarmerResponse(
@@ -133,9 +135,12 @@ export const useAppChat = (language: string) => {
   const farmerMessagesRequestRef = useRef(0);
   const farmerSelectionGenerationRef = useRef(0);
   const demoFarmerMessagesRef = useRef(new Map<string, ChatMessage[]>());
+  const farmerHistory = useThreadHistory(activeFarmerConvIdRef, farmerChatMessages, setFarmerChatMessages);
+  const { setHasEarlier: setFarmerHasEarlier } = farmerHistory;
   const setActiveFarmerConvId = useCallback((id: string | null) => {
     if (activeFarmerConvIdRef.current !== id) {
       activeFarmerConvIdRef.current = id;
+      setFarmerHasEarlier(false);
       farmerMessagesRequestRef.current++;
       farmerSelectionGenerationRef.current++;
       setFarmerChatMessages(id?.startsWith('conv-demo-farmer-')
@@ -143,7 +148,7 @@ export const useAppChat = (language: string) => {
         : []);
     }
     setActiveFarmerConvIdState(id);
-  }, []);
+  }, [setFarmerHasEarlier]);
 
   useEffect(() => {
     if (activeFarmerConvId?.startsWith('conv-demo-farmer-')) {
@@ -157,13 +162,12 @@ export const useAppChat = (language: string) => {
       // Staff: their own private AI chats. Farmers have none: their AI help is their thread.
       const res = await fetchConversations(isFarmerUser ? 'farmer_thread' : 'officer_ai');
       setConversations(res.data);
-      if (res.data.length > 0 && !activeConvId) {
-        setActiveConvId(res.data[0].id);
-      }
+      // Keep a conversation picked while the list was loading.
+      if (res.data.length > 0) setActiveConvId(current => current ?? res.data[0].id);
     } catch (error) {
       console.error('Failed to load conversations:', error);
     }
-  }, [activeConvId, isFarmerUser, freePlan]);
+  }, [isFarmerUser, freePlan]);
 
   // Guards against out-of-order responses: switching conversations quickly could
   // otherwise render the previous conversation's messages under the newly selected one.
@@ -227,6 +231,7 @@ export const useAppChat = (language: string) => {
       // Drop a stale resolution so the active conversation always shows its own messages.
       if (requestId !== farmerMessagesRequestRef.current) return;
       setFarmerChatMessages(res.data || []);
+      setFarmerHasEarlier(Boolean(res.hasMore));
       // Opening a thread reads it: clear its unread count and the menu badge.
       void markThreadRead(id)
         .then(() => queryClient.invalidateQueries({ queryKey: UNREAD_CHATS_KEY }))
@@ -235,7 +240,7 @@ export const useAppChat = (language: string) => {
       if (requestId !== farmerMessagesRequestRef.current) return;
       console.error('Failed to load farmer messages:', error);
     }
-  }, []);
+  }, [setFarmerHasEarlier]);
 
   // Farmer Chat functions
   const loadFarmerConversations = useCallback(async () => {
@@ -244,16 +249,17 @@ export const useAppChat = (language: string) => {
       const res = await fetchConversations('farmer_thread');
       const list = res.data || [];
       setFarmerConversations(list);
-      if (list.length > 0 && !activeFarmerConvId) {
-        // Auto-selecting the newest conversation must also show its history;
-        // previously the thread stayed empty until it was clicked again.
+      // Read the selection from the ref: a list that arrives after the officer has picked a
+      // thread must not switch them to the newest one.
+      if (list.length > 0 && !activeFarmerConvIdRef.current) {
+        // Auto-selecting the newest conversation must also show its history.
         setActiveFarmerConvId(list[0].id);
         void loadFarmerMessages(list[0].id);
       }
     } catch (error) {
       console.error('Failed to load farmer conversations:', error);
     }
-  }, [activeFarmerConvId, setActiveFarmerConvId, loadFarmerMessages, freePlan]);
+  }, [setActiveFarmerConvId, loadFarmerMessages, freePlan]);
 
   const handleFarmerChatSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -318,9 +324,9 @@ export const useAppChat = (language: string) => {
 
       // Single-flight across tabs. Both tabs share one localStorage queue, so without a
       // lock simultaneous drains would send every queued message twice.
-      const heldSince = Number(localStorage.getItem(DRAIN_LOCK_KEY) || 0);
+      const heldSince = Number(safeStorage.get(DRAIN_LOCK_KEY) || 0);
       if (heldSince && Date.now() - heldSince < DRAIN_LOCK_TTL_MS) return;
-      localStorage.setItem(DRAIN_LOCK_KEY, String(Date.now()));
+      safeStorage.set(DRAIN_LOCK_KEY, String(Date.now()));
 
       try {
         // Snapshot keys first: draining removes entries, which shifts the live
@@ -335,7 +341,7 @@ export const useAppChat = (language: string) => {
         }
         if (activeFarmerConvId) loadFarmerMessages(activeFarmerConvId);
       } finally {
-        localStorage.removeItem(DRAIN_LOCK_KEY);
+        safeStorage.remove(DRAIN_LOCK_KEY);
       }
     };
     window.addEventListener('online', drain);
@@ -444,6 +450,8 @@ export const useAppChat = (language: string) => {
     setFarmerChatInput,
     loadFarmerConversations,
     loadFarmerMessages,
+    farmerHasEarlier: farmerHistory.hasEarlier,
+    loadEarlierFarmerMessages: farmerHistory.loadEarlier,
     handleFarmerChatSend,
     handleStartConversation,
   };

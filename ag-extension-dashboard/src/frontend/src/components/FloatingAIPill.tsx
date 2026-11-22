@@ -27,6 +27,8 @@ import { SCREENS_WITH_COMPOSER } from '@/lib/composerScreens';
 import toast from 'react-hot-toast';
 import { AudioReaderButton } from './audio/AudioReaderButton';
 import { VoiceNoteTaker } from './audio/VoiceNoteTaker';
+import { copyWithToast } from '@/lib/copyText';
+import { safeStorage } from '@/lib/safeStorage';
 
 // Lazy: WebRTC stack (~200KB with deps) must not sit in the entry chunk for a
 // call modal that only mounts on explicit user action.
@@ -365,17 +367,8 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
   const [profileParams] = useState<ProfileParameter[]>(INITIAL_PROFILE);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [messages, setMessages] = useState<Array<{ sender: 'ai' | 'user'; text: string; time: string }>>(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem('gpexts_ai_chat_messages');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      }
-    } catch (_err) {
-      // LocalStorage unavailable in SSR / sandbox
-    }
+    const saved = safeStorage.json<unknown>('gpexts_ai_chat_messages', null);
+    if (Array.isArray(saved) && saved.length > 0) return saved;
     return [INITIAL_WELCOME_MESSAGE];
   });
 
@@ -389,7 +382,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
   React.useEffect(() => {
     try {
       if (typeof window !== 'undefined') {
-        localStorage.setItem('gpexts_ai_chat_messages', JSON.stringify(messages));
+        safeStorage.set('gpexts_ai_chat_messages', JSON.stringify(messages));
       }
     } catch (_err) {
       // LocalStorage write failed
@@ -400,7 +393,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
     setMessages([INITIAL_WELCOME_MESSAGE]);
     try {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('gpexts_ai_chat_messages');
+        safeStorage.remove('gpexts_ai_chat_messages');
       }
     } catch (_err) {
       // LocalStorage remove failed
@@ -535,7 +528,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
             {/* Phones: a round glass button beside the tab bar, as iOS places its search button. */}
             <button
               onClick={() => setIsOpen(true)}
-              className="flex items-center justify-center gap-2 h-16 w-16 md:h-11 md:w-auto md:ps-3 md:pe-4 rounded-full max-md:ios-glass md:bg-emerald-700 md:hover:bg-emerald-800 text-emerald-800 dark:text-emerald-200 md:text-white md:dark:text-white text-sm font-medium md:shadow-lg md:shadow-slate-900/15 transition-colors"
+              className="flex items-center justify-center gap-2 h-16 w-16 md:h-11 md:w-auto md:ps-3 md:pe-4 rounded-full max-md:ios-glass md:bg-emerald-700 md:hover:bg-emerald-800 text-emerald-800 dark:text-emerald-200 md:text-white md:dark:text-white text-sm font-medium md:shadow-lg md: transition-colors"
               aria-label={t('nav_aiassistant')}
               title={t('ui_floating_aipill_live_chat_leaf_scan_voice_memo')}
             >
@@ -796,8 +789,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
               <button
                 onClick={() => {
                   const inviteLink = `${window.location.origin}/tele-call/${callSessionId}`;
-                  navigator.clipboard.writeText(inviteLink);
-                  toast.success('Invite link copied — share it with the farmer to join this call.');
+                  void copyWithToast(inviteLink, 'Invite link copied — share it with the farmer to join this call.');
                 }}
                 aria-label="Copy invite link"
                 title="Copy invite link to share with the farmer"

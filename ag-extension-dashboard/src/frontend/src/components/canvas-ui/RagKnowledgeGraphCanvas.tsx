@@ -355,7 +355,7 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-2.5 py-1 rounded-lg font-semibold text-xxs transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg font-medium text-xxs transition-all cursor-pointer ${
                 activeCategory === cat
                   ? 'bg-primary-600 text-white'
                   : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -392,7 +392,7 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center px-6 space-y-2">
               <Network className="w-8 h-8 mx-auto text-slate-500" />
-              <p className="text-sm font-semibold text-slate-300">{t('ui_rag_knowledge_graph_canvas_no_indexed_knowledge_yet')}</p>
+              <p className="text-sm font-medium text-slate-300">{t('ui_rag_knowledge_graph_canvas_no_indexed_knowledge_yet')}</p>
               <p className="text-xs text-slate-500 max-w-md">
                 {t('ui_rag_knowledge_graph_canvas_the_knowledge_graph_visualizes_real')}
               </p>
@@ -403,7 +403,7 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
         {(selectedNode || hoveredNode) && (
           <div className="absolute top-3 start-3 bg-gray-900/90 border border-white/10 backdrop-blur-md p-3.5 rounded-xl shadow-xl text-xs text-white max-w-sm pointer-events-none animate-in fade-in">
             <div className="flex items-center justify-between gap-2 mb-1.5">
-              <span className="font-bold text-gray-100">
+              <span className="font-medium text-gray-100">
                 {(selectedNode || hoveredNode)?.label}
               </span>
               <span
@@ -411,7 +411,7 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
                   backgroundColor: `${CATEGORY_COLORS[(selectedNode || hoveredNode)!.category]}25`,
                   color: CATEGORY_COLORS[(selectedNode || hoveredNode)!.category],
                 }}
-                className="px-2 py-0.5 rounded text-xxs font-mono font-bold"
+                className="px-2 py-0.5 rounded text-xxs font-mono font-medium"
               >
                 {(selectedNode || hoveredNode)?.category}
               </span>
@@ -421,7 +421,7 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
             </p>
             <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-xxs font-mono text-gray-400">
               <span>{t('ui_rag_knowledge_graph_canvas_vector_similarity')}</span>
-              <span className="text-emerald-400 font-bold">
+              <span className="text-emerald-400 font-medium">
                 {(((selectedNode || hoveredNode)?.score || 0.85) * 100).toFixed(1)}%
               </span>
             </div>

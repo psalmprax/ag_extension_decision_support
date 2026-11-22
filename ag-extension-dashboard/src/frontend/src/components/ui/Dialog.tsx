@@ -67,7 +67,7 @@ export function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHe
   return (
     <HeadlessDialog.Title
       as="h3"
-      className={cn('text-lg font-bold text-slate-900 dark:text-white', className)}
+      className={cn('text-lg font-medium text-slate-900 dark:text-white', className)}
       {...props}
     />
   );

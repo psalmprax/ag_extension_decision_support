@@ -77,7 +77,7 @@ const SAMPLE_QUESTIONS: SampleQuestion[] = [
     lang: 'en',
   },
   {
-    label: 'Acidic Soil Remediation',
+    label: 'Acidic soil remediation',
     text: 'How should I remediate acidic soil with pH 4.8 for cereal production?',
     lang: 'en',
   },
@@ -447,7 +447,7 @@ const PERSONA_CONFIGS: Record<VoicePersona, PersonaConfig> = {
     id: 'amani',
     label: 'Amani',
     avatar: 'Amani',
-    role: 'Warm Field Agronomist',
+    role: 'Warm field agronomist',
     desc: 'Empathetic, warm, encouraging cadence',
     prosody: { rate: 0.94, pitch: 1.04 },
     serverVoice: 'nova',
@@ -463,7 +463,7 @@ const PERSONA_CONFIGS: Record<VoicePersona, PersonaConfig> = {
     id: 'baraka',
     label: 'Baraka',
     avatar: 'Baraka',
-    role: 'Dynamic Extension Lead',
+    role: 'Dynamic extension lead',
     desc: 'Resonant, confident, clear cadence',
     prosody: { rate: 0.98, pitch: 0.98 },
     serverVoice: 'alloy',
@@ -1082,7 +1082,7 @@ function LanguageSelector({ selectedLanguage, onSelectLanguage }: LanguageSelect
               key={code}
               type="button"
               onClick={() => onSelectLanguage(code)}
-              className={`px-2 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1 ${
+              className={`px-2 py-1 text-xs font-medium rounded-lg transition-all flex items-center gap-1 ${
                 isSelected
                   ? 'bg-emerald-500 text-slate-950 shadow-md'
                   : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
@@ -1125,15 +1125,15 @@ function getVoiceOrbStyle(
   isSpeaking?: boolean
 ): string {
   if (isTranscribing) {
-    return 'bg-teal-600 text-white ring-teal-400/40 shadow-teal-500/50';
+    return 'bg-teal-600 text-white ring-teal-400/40';
   }
   if (isListening) {
-    return 'bg-amber-500 text-slate-950 ring-amber-400/40 shadow-amber-500/50 scale-105';
+    return 'bg-amber-500 text-slate-950 ring-amber-400/40 scale-105';
   }
   if (isSpeaking) {
-    return 'bg-emerald-500 text-slate-950 ring-emerald-400/40 shadow-emerald-500/50';
+    return 'bg-emerald-500 text-slate-950 ring-emerald-400/40';
   }
-  return 'bg-gradient-to-tr from-emerald-600 to-teal-500 text-white hover:scale-105 hover:shadow-emerald-500/30';
+  return 'bg-emerald-600 hover:bg-emerald-500 text-white';
 }
 
 function getVoiceOrbAriaLabel(
@@ -1173,7 +1173,7 @@ function VoiceOrbIcon({
     return (
       <>
         <Loader2 className="w-9 h-9 animate-spin" />
-        <span className="text-[10px] font-bold mt-1">{t('ui_talking_assistant_transcribing')}</span>
+        <span className="text-[10px] font-medium mt-1">{t('ui_talking_assistant_transcribing')}</span>
       </>
     );
   }
@@ -1181,7 +1181,7 @@ function VoiceOrbIcon({
     return (
       <>
         <Mic className="w-9 h-9 animate-pulse" />
-        <span className="text-[10px] font-bold mt-1">{t('ui_talking_assistant_listening')}</span>
+        <span className="text-[10px] font-medium mt-1">{t('ui_talking_assistant_listening')}</span>
       </>
     );
   }
@@ -1189,14 +1189,14 @@ function VoiceOrbIcon({
     return (
       <>
         <Volume2 className="w-9 h-9 animate-bounce" />
-        <span className="text-[10px] font-bold mt-1">{t('ui_talking_assistant_speaking')}</span>
+        <span className="text-[10px] font-medium mt-1">{t('ui_talking_assistant_speaking')}</span>
       </>
     );
   }
   return (
     <>
       <Mic className="w-9 h-9" />
-      <span className="text-[10px] font-bold mt-1">{t('ui_talking_assistant_tap_to_speak')}</span>
+      <span className="text-[10px] font-medium mt-1">{t('ui_talking_assistant_tap_to_speak')}</span>
     </>
   );
 }
@@ -1340,8 +1340,8 @@ interface PersonaSelectorProps {
 function PersonaSelector({ selectedPersona, onSelectPersona }: PersonaSelectorProps) {
   const { t } = useLanguage();
   const personas: Array<{ id: VoicePersona; label: string; icon: React.ElementType; desc: string }> = [
-    { id: 'amani', label: 'Amani', icon: Leaf, desc: 'Warm Field Agronomist' },
-    { id: 'baraka', label: 'Baraka', icon: Zap, desc: 'Dynamic Extension Lead' },
+    { id: 'amani', label: 'Amani', icon: Leaf, desc: 'Warm field agronomist' },
+    { id: 'baraka', label: 'Baraka', icon: Zap, desc: 'Dynamic extension lead' },
     { id: 'zawadi', label: 'Zawadi', icon: Activity, desc: 'Diagnostic Specialist' },
   ];
 
@@ -1417,7 +1417,7 @@ function AudioControls({
         <button
           type="button"
           onClick={onStopSpeaking}
-          className="px-2 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 text-[11px] font-semibold"
+          className="px-2 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 text-[11px] font-medium"
         >
           {t('ui_talking_assistant_stop_audio')}
         </button>
@@ -1439,7 +1439,7 @@ function ActiveContextBanner({ slots, onClear }: ActiveContextBannerProps) {
   return (
     <div className="mb-3 px-3 py-2 rounded-lg bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between gap-2 text-xs">
       <div className="flex items-center gap-1.5 flex-wrap">
-        <span className="text-emerald-400 font-semibold text-[10px]">
+        <span className="text-emerald-400 font-medium text-[10px]">
           {t('ui_talking_assistant_active_context')}
         </span>
         {slots.crop && (
@@ -1498,7 +1498,7 @@ function HandoffCard({ onHandoff }: HandoffCardProps) {
           <ShieldCheck className="w-4 h-4" />
         </div>
         <div className="text-xs">
-          <p className="font-semibold text-white">{t('ui_talking_assistant_save_this_diagnostic_advisory')}</p>
+          <p className="font-medium text-white">{t('ui_talking_assistant_save_this_diagnostic_advisory')}</p>
           <p className="text-white/60 text-[11px]">
             {t('ui_talking_assistant_generate_an_official_field_visit_rep')}
           </p>
@@ -1578,7 +1578,7 @@ function QuestionChips({ onSelect, expanded }: QuestionChipsProps) {
   const { t } = useLanguage();
   return (
     <details open={expanded} className="mt-4 mb-2">
-      <summary className="min-h-[44px] cursor-pointer text-xs font-semibold text-white/70 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400">
+      <summary className="min-h-[44px] cursor-pointer text-xs font-medium text-white/70 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400">
         <HelpCircle className="w-3.5 h-3.5 text-emerald-400" />
         <span>{t('ui_talking_assistant_suggested_questions')}</span>
         <ChevronDown className="ms-auto h-4 w-4" aria-hidden="true" />

@@ -8,8 +8,9 @@ export const fetchConversations = async (kind: ConversationKind = 'farmer_thread
   return data;
 };
 
-export const fetchMessages = async (conversationId: string) => {
-  const { data } = await apiClient.get(`/chatbot/conversations/${conversationId}/messages`);
+/** The latest page of a thread, or the page before message `before`; `hasMore` says older ones exist. */
+export const fetchMessages = async (conversationId: string, before?: string) => {
+  const { data } = await apiClient.get(`/chatbot/conversations/${conversationId}/messages`, before ? { params: { before } } : undefined);
   return data;
 };
 

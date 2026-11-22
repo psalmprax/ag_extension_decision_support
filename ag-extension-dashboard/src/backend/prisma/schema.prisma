@@ -100,6 +100,10 @@ model User {
   pilotsCreated     Pilot[] @relation("PilotCreator")
   voiceClips        VoiceClip[] @relation("VoiceClipRecorder")
   voiceCalls        VoiceCall[] @relation("VoiceCallRequester")
+  contentPartnersCreated ContentPartner[]      @relation("ContentPartnerCreator")
+  contentPartnerGrants   ContentPartnerGrant[] @relation("ContentPartnerGranter")
+  partnerRecordings      PartnerRecording[]    @relation("PartnerRecordingImporter")
+  recordingDeliveries    RecordingDelivery[]   @relation("RecordingDeliverySender")
   serviceAccess        ServiceAccessGrant[] @relation("ServiceAccessHolder")
   serviceAccessGranted ServiceAccessGrant[] @relation("ServiceAccessGrantedBy")
   serviceAccessRevoked ServiceAccessGrant[] @relation("ServiceAccessRevokedBy")
@@ -277,6 +281,7 @@ model Farmer {
    pilotEnrolments          PilotFarmer[]
    adviceFollowups          AdviceFollowup[]
    voiceCalls               VoiceCall[]
+   recordingDeliveries      RecordingDelivery[]
    whatsappMessages         WhatsappMessage[]
    smsFeedbacks             SmsFeedback[]
 
@@ -284,6 +289,7 @@ model Farmer {
   @@index([region])
   @@index([userId])
   @@index([tenantId])
+  @@index([locationLat, locationLng])
   @@map("farmers")
    officerSmsRefs           OfficerSmsRef[]
 }
@@ -988,6 +994,7 @@ model Tenant {
   smsFeedbacks     SmsFeedback[]
   advisoryWorkflows AdvisoryWorkflow[]
   mechanizationAssets MechanizationAsset[]
+  contentPartnerGrants ContentPartnerGrant[]
 
   @@map("tenants")
 }
@@ -1068,6 +1075,7 @@ model UploadRecord {
   progressAttachments    FarmerProgressAttachment[]
   diagnosisTestImage     DiagnosisTestImage?
   voiceClips             VoiceClip[]
+  partnerRecordings      PartnerRecording[]
 
   @@index([tenantId])
   @@map("upload_records")
@@ -1685,4 +1693,90 @@ model ContentGap {
   @@index([createdAt])
   @@index([crop, country])
   @@map("content_gaps")
+}
+
+/// An organisation (an NGO, a research institute) whose agronomists' recordings are imported as a library.
+model ContentPartner {
+  id           String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String                @unique @db.VarChar(200)
+  website      String?               @db.VarChar(300)
+  contactEmail String?               @map("contact_email") @db.VarChar(255)
+  notes        String?
+  createdBy    String                @map("created_by") @db.Uuid
+  createdAt    DateTime              @default(now()) @map("created_at") @db.Timestamp(6)
+  creator      User                  @relation("ContentPartnerCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  grants       ContentPartnerGrant[]
+  recordings   PartnerRecording[]
+
+  @@index([createdBy])
+  @@map("content_partners")
+}
+
+/// An organisation allowed to use a partner's library.
+model ContentPartnerGrant {
+  partnerId String         @map("partner_id") @db.Uuid
+  tenantId  String         @map("tenant_id") @db.Uuid
+  grantedBy String         @map("granted_by") @db.Uuid
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  partner   ContentPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  granter   User           @relation("ContentPartnerGranter", fields: [grantedBy], references: [id], onDelete: Cascade)
+
+  @@id([partnerId, tenantId])
+  @@index([tenantId])
+  @@index([grantedBy])
+  @@map("content_partner_grants")
+}
+
+/// One recording in a partner's library: who speaks, under which licence, what it covers.
+model PartnerRecording {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId          String              @map("partner_id") @db.Uuid
+  uploadId           String              @map("upload_id") @db.Uuid
+  title              String              @db.VarChar(200)
+  speaker            String              @db.VarChar(160)
+  language           String              @db.VarChar(10)
+  crops              String[]            @default([])
+  regions            String[]            @default([])
+  topic              String?             @db.VarChar(80)
+  licence            String              @db.VarChar(80)
+  licenceExpiresAt   DateTime?           @map("licence_expires_at") @db.Timestamp(6)
+  consentConfirmed   Boolean             @default(false) @map("consent_confirmed")
+  transcript         String?
+  transcriptStatus   String              @default("pending") @map("transcript_status") @db.VarChar(20)
+  reviewStatus       String              @default("pending_review") @map("review_status") @db.VarChar(20)
+  reviewedBy         String?             @map("reviewed_by") @db.Uuid
+  reviewedAt         DateTime?           @map("reviewed_at") @db.Timestamp(6)
+  knowledgeArticleId String?             @map("knowledge_article_id") @db.Uuid
+  importedBy         String              @map("imported_by") @db.Uuid
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  partner            ContentPartner      @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  upload             UploadRecord        @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  importer           User                @relation("PartnerRecordingImporter", fields: [importedBy], references: [id], onDelete: Cascade)
+  deliveries         RecordingDelivery[]
+
+  @@index([partnerId])
+  @@index([uploadId])
+  @@index([importedBy])
+  @@index([reviewStatus, language])
+  @@index([transcriptStatus])
+  @@map("partner_recordings")
+}
+
+/// A recording sent to a farmer: by whom, on which channel, when.
+model RecordingDelivery {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recordingId String           @map("recording_id") @db.Uuid
+  farmerId    String           @map("farmer_id") @db.Uuid
+  channel     String           @db.VarChar(20)
+  sentBy      String           @map("sent_by") @db.Uuid
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  recording   PartnerRecording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+  farmer      Farmer           @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  sender      User             @relation("RecordingDeliverySender", fields: [sentBy], references: [id], onDelete: Cascade)
+
+  @@index([recordingId])
+  @@index([farmerId, createdAt])
+  @@index([sentBy])
+  @@map("recording_deliveries")
 }

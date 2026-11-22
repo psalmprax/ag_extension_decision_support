@@ -34,35 +34,54 @@ export async function backfillAllMissingEmbeddings(
         processed += r.processed;
         failed += r.failed;
         if (r.aborted) { aborted = r.aborted; break; }
-        if (r.processed === 0 && r.failed === 0) break; // nothing left
-        if (r.processed === 0 && r.failed > 0) break;   // every row in the batch failed — stop looping
+        // Nothing embedded in this batch: either nothing is left, or every row failed.
+        // Fetching the same rows again would only repeat the failure.
+        if (r.processed === 0) break;
     }
-    let remaining = 0;
+    return { processed, failed, remaining: await countRemaining(), aborted };
+}
+
+async function countRemaining(): Promise<number> {
     try {
         const c = await query(`SELECT COUNT(*)::int AS n FROM knowledge_articles WHERE embedding IS NULL`);
-        remaining = Number(c.rows[0]?.n ?? 0);
-    } catch { /* table may not exist */ }
-    return { processed, failed, remaining, aborted };
+        return Number(c.rows[0]?.n ?? 0);
+    } catch (err) {
+        logger.warn('Could not count articles still without an embedding:', err);
+        return 0;
+    }
+}
+
+/** An error that will fail every row the same way, so the backfill stops instead of retrying. */
+function abortReason(err: unknown): string | undefined {
+    const error = err as { name?: string; message?: string };
+    if (error?.name === 'EmbeddingDimensionError') return `embedding width mismatch: ${error.message ?? ''}`.trim();
+    if (error?.name === 'AIUnavailableError') {
+        return 'no embedding provider is available';
+    }
+    return undefined;
 }
 
 async function processEmbeddingBatch(batchSize: number, upsert: UpsertFn): Promise<{ processed: number; failed: number; aborted?: string }> {
     let processed = 0;
-    const failed: number[] = [];
-    const aborted: string | undefined = undefined;
+    let failed = 0;
+    let rows: Array<Record<string, unknown>>;
     try {
-        const rows = await fetchRowsMissingEmbeddings(batchSize);
-        for (const row of rows) {
-            try {
-                await processSingleEmbedding(row, upsert);
-                processed++;
-            } catch {
-                failed.push(1);
-            }
-        }
+        rows = await fetchRowsMissingEmbeddings(batchSize);
     } catch (err) {
         logger.warn('Embedding backfill query failed:', err);
+        return { processed, failed };
     }
-    return { processed, failed: failed.length, aborted };
+    for (const row of rows) {
+        try {
+            await embedRow(row, upsert);
+            processed++;
+        } catch (err) {
+            failed++;
+            const aborted = abortReason(err);
+            if (aborted) return { processed, failed, aborted };
+        }
+    }
+    return { processed, failed };
 }
 
 async function fetchRowsMissingEmbeddings(batchSize: number): Promise<Array<Record<string, unknown>>> {
@@ -74,21 +93,15 @@ async function fetchRowsMissingEmbeddings(batchSize: number): Promise<Array<Reco
     return res.rows as Array<Record<string, unknown>>;
 }
 
-async function processSingleEmbedding(row: Record<string, unknown>, upsert: UpsertFn): Promise<void> {
-    try {
-        await upsert(String(row.id), String(row.content || ''), {
-            title: row.title,
-            category: row.category,
-            tags: row.tags || [],
-            crops: row.crops || [],
-            regions: row.regions || [],
-            source: row.source || null,
-            sourceUrl: row.source_url || null,
-            contentType: row.content_type || 'text',
-        });
-    } catch (err) {
-        if ((err as Error)?.name === 'EmbeddingDimensionError') {
-            throw err;
-        }
-    }
+function embedRow(row: Record<string, unknown>, upsert: UpsertFn): Promise<void> {
+    return upsert(String(row.id), String(row.content || ''), {
+        title: row.title,
+        category: row.category,
+        tags: row.tags || [],
+        crops: row.crops || [],
+        regions: row.regions || [],
+        source: row.source || null,
+        sourceUrl: row.source_url || null,
+        contentType: row.content_type || 'text',
+    });
 }

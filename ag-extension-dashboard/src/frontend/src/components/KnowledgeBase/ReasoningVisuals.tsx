@@ -33,6 +33,7 @@ import { EMPTY_VISUALS, type Chart, type KPI, type MediaAsset, type VisualsData 
 import { ChartTooltip } from '@/components/charts/ChartTooltip';
 import { CHART_PALETTE } from '@/components/charts/chartConfig';
 import { useLanguage } from '@/lib/LanguageContext';
+import { safeHref } from '@/lib/safeHref';
 
 interface ReasoningVisualsProps {
   visuals: VisualsData;
@@ -166,19 +167,19 @@ const MediaAssetsSection = ({
                 <Maximize2 className="w-6 h-6" />
               </div>
             </div>
-            <div className="absolute top-3 start-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xxs font-black  ">
+            <div className="absolute top-3 start-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xxs font-medium  ">
               <ImageIcon className="w-3 h-3" />
               {t('ui_reasoning_visuals_image')}
             </div>
-            <div className="absolute bottom-3 start-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xs font-black  ">
+            <div className="absolute bottom-3 start-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xs font-medium  ">
               <CheckCircle2 className="w-2.5 h-2.5" />
               {t('ui_reasoning_visuals_verified_alfa_asset')}
             </div>
           </div>
           {img.caption && (
-            <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2 flex items-center justify-between">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 px-2 flex items-center justify-between">
               <span>{img.caption}</span>
-              <span className="text-xxs text-primary-500 font-black opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="text-xxs text-primary-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                 {t('ui_reasoning_visuals_click_to_enlarge')}
               </span>
             </p>
@@ -193,7 +194,6 @@ const MediaAssetsSection = ({
           className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden"
         >
           <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-black flex items-center justify-center shadow-inner">
-            {' '}
             {vid.url && (vid.url.includes('youtube.com') || vid.url.includes('youtu.be')) ? (
               <iframe
                 src={getYoutubeEmbedUrl(vid.url)}
@@ -207,12 +207,12 @@ const MediaAssetsSection = ({
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
                   <Play className="w-12 h-12 text-white/80 group-hover:scale-110 transition-transform" />
                 </div>
-                <div className="absolute top-3 start-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xxs font-black  ">
+                <div className="absolute top-3 start-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xxs font-medium  ">
                   <Play className="w-3 h-3" />
                   {t('ui_reasoning_visuals_external_video')}
                 </div>
                 <a
-                  href={vid.url}
+                  href={safeHref(vid.url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="absolute bottom-3 end-3 p-3 bg-primary-600 rounded-xl text-white shadow-xl transform active:scale-95 transition-all"
@@ -221,13 +221,13 @@ const MediaAssetsSection = ({
                 </a>
               </>
             )}
-            <div className="absolute bottom-3 start-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xs font-black pointer-events-none">
+            <div className="absolute bottom-3 start-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xs font-medium pointer-events-none">
               <CheckCircle2 className="w-2.5 h-2.5" />
               {t('ui_reasoning_visuals_verified_source')}
             </div>
           </div>
           {vid.caption && (
-            <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2">{vid.caption}</p>
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 px-2">{vid.caption}</p>
           )}
         </motion.div>
       ))}
@@ -251,8 +251,7 @@ const AudioSynthesisSection = ({
   const { t } = useLanguage();
   if (!audio) return null;
   return (
-    <div className="p-8 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-xl text-white overflow-hidden relative group shadow-2xl shadow-primary-500/20">
-      <div className="absolute top-0 end-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -me-32 -mt-32 group-hover:scale-110 transition-transform"></div>
+    <div className="p-8 bg-slate-800 border border-white/10 rounded-xl text-white overflow-hidden relative group shadow-2xl">
       <div className="relative flex flex-col md:flex-row items-center gap-8">
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -263,10 +262,10 @@ const AudioSynthesisSection = ({
           <Zap className={`w-12 h-12 ${isPlaying ? 'animate-pulse fill-current' : 'fill-none'}`} />
         </motion.button>
         <div className="flex-1 text-center md:text-start">
-          <h4 className="text-xxs font-black opacity-70 mb-2">
+          <h4 className="text-xxs font-medium opacity-70 mb-2">
             {t('ui_reasoning_visuals_alfa_voice_synthesis')}
           </h4>
-          <p className="text-xl font-bold leading-tight mb-4">
+          <p className="text-xl font-medium leading-tight mb-4">
             {t('ui_reasoning_visuals_listen_to_the_ai_s_synthesized_exper')}
           </p>
           <div className="flex items-center gap-4 justify-center md:justify-start">
@@ -278,8 +277,8 @@ const AudioSynthesisSection = ({
                 className="h-full bg-white"
               />
             </div>
-            <span className="text-xxs font-black ">
-              {isPlaying ? 'Playing...' : 'Click to Play'}
+            <span className="text-xxs font-medium ">
+              {isPlaying ? 'Playing...' : 'Click to play'}
             </span>
           </div>
         </div>
@@ -344,11 +343,11 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
             <div className="p-2 bg-primary-500/20 rounded-xl text-primary-500">
               <TrendingUp className="w-5 h-5" />
             </div>
-            <h3 className="text-xs font-black text-gray-500 dark:text-gray-400  ">
+            <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400  ">
               {title}
             </h3>
           </div>
-          <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse shadow-[0_0_10px_var(--color-outline)]"></div>
+          <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
         </div>
 
         <div className="flex-1 w-full -ms-6">
@@ -407,10 +406,10 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                   <AlertCircle className="w-5 h-5" />
                 )}
               </div>
-              <span className="text-xxs font-black text-gray-400 dark:text-gray-500  ">
+              <span className="text-xxs font-medium text-gray-400 dark:text-gray-500  ">
                 {kpi.label}
               </span>
-              <span className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+              <span className="text-2xl font-medium text-gray-900 dark:text-white tracking-tight">
                 {kpi.value}
               </span>
             </motion.div>
@@ -461,7 +460,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative max-w-7xl max-h-full rounded-xl overflow-hidden shadow-[0_0_100px_var(--color-outline)] border border-white/10"
+              className="relative max-w-7xl max-h-full rounded-xl overflow-hidden border border-white/10"
               onClick={e => e.stopPropagation()}
             >
               <img
@@ -479,24 +478,23 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
         (safeVisuals.charts && safeVisuals.charts.length > 0) ||
         (safeVisuals.images && safeVisuals.images.length > 0) ||
         (safeVisuals.videos && safeVisuals.videos.length > 0)) && (
-        <div className="p-8 bg-primary-600 rounded-xl text-white overflow-hidden relative group shadow-2xl shadow-primary-500/20">
-          <div className="absolute top-0 end-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -me-32 -mt-32 group-hover:scale-110 transition-transform"></div>
+        <div className="p-8 bg-primary-600 rounded-xl text-white overflow-hidden relative group shadow-2xl">
           <div className="relative flex items-center gap-6">
             <div className="p-4 bg-white/20 backdrop-blur-md rounded-xl">
               <Zap className="w-10 h-10 fill-current" />
             </div>
             <div className="flex-1">
-              <h4 className="text-sm font-black opacity-70 mb-1">
+              <h4 className="text-sm font-medium opacity-70 mb-1">
                 {t('ui_reasoning_visuals_expert_decision_insight')}
               </h4>
-              <p className="text-lg font-bold leading-tight">
+              <p className="text-lg font-medium leading-tight">
                 {safeVisuals.kpis && safeVisuals.kpis.length > 0
                   ? `${safeVisuals.kpis.filter((k: KPI) => k.status === 'good').length} of ${safeVisuals.kpis.length} indicators performing optimally. Review recommendations below.`
                   : 'Multimodal analysis complete. Review the synthesized intelligence above.'}
               </p>
             </div>
             <div className="hidden md:block">
-              <div className="px-6 py-2 bg-white text-primary-600 rounded-xl font-black shadow-xl shadow-black/10">
+              <div className="px-6 py-2 bg-white text-primary-600 rounded-xl font-medium shadow-xl shadow-black/10">
                 {t('ui_reasoning_visuals_alfa_v2_2')}
               </div>
             </div>

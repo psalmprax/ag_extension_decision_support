@@ -163,7 +163,7 @@ export function PhoneSignInForm({ onSignedIn, onUseEmail }: PhoneSignInFormProps
             required
             value={code}
             onChange={event => setCode(event.target.value.replace(/\D/g, ''))}
-            className={`${AUTH_INPUT} tracking-[0.3em] tabular-nums`}
+            className={`${AUTH_INPUT} font-mono tabular-nums`}
           />
           <div className="flex items-center justify-between mt-2">
             <button

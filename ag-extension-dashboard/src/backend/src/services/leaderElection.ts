@@ -98,15 +98,22 @@ export async function runIfLeader<T>(
     }
 
     if (!redisAvailable()) {
-        return runStatelessFallback(fn);
+        return runStatelessFallback(name, fn);
     }
 
     const existing = leases.get(name);
     // Reuse our live token (renewal path); a deposed ('' token) or missing
     // lease gets a fresh identity.
     const token = existing?.token || randomBytes(16).toString('hex');
-    if (!(await tryAcquire(key, token))) {
-        await learnDeposal(name, key, existing);
+    // A Redis error while deciding leadership means "not the leader this tick", never a
+    // rejection: callers fire this from timers, and an unhandled rejection stops the server.
+    try {
+        if (!(await tryAcquire(key, token))) {
+            await learnDeposal(name, key, existing);
+            return null;
+        }
+    } catch (err) {
+        logger.warn(`[leaderElection] could not check leadership for "${name}":`, err instanceof Error ? err.message : err);
         return null;
     }
 
@@ -115,10 +122,10 @@ export async function runIfLeader<T>(
 }
 
 /** No-Redis path: stateless single-node fallback or fail-closed. */
-async function runStatelessFallback<T>(fn: () => Promise<T> | T): Promise<T | null> {
+async function runStatelessFallback<T>(name: string, fn: () => Promise<T> | T): Promise<T | null> {
     if (statelessModeEnabled()) {
         warnOnce('[leaderElection] Redis unavailable + ALLOW_STATELESS_LEADER=true — every replica treats itself as leader (single-node/dev only).');
-        return await fn();
+        return runLeaderTask(name, fn);
     }
     warnOnce('[leaderElection] Redis unavailable — singleton workers will NOT run on any replica (fail-closed). Set ALLOW_STATELESS_LEADER=true for single-node dev.');
     return null;
@@ -171,13 +178,28 @@ function stopRenewing(lease: Lease): void {
     lease.token = '';
 }
 
-/** Run the leader callback; task failure resolves null (never throws). */
+/** Leader tasks still running on this replica, by name. */
+const running = new Set<string>();
+
+/**
+ * Run the leader callback; a task failure resolves null (never throws). One task at a
+ * time per name. A tick that fires while the previous run is
+ * still going (a large SMS batch, a slow transcription) is skipped rather than started
+ * alongside it, which would send the same messages or do the same work twice.
+ */
 async function runLeaderTask<T>(name: string, fn: () => Promise<T> | T): Promise<T | null> {
+    if (running.has(name)) {
+        logger.debug(`[leaderElection] leader task "${name}" is still running; skipping this tick`);
+        return null;
+    }
+    running.add(name);
     try {
         return await fn();
     } catch (err) {
         logger.warn(`[leaderElection] leader task "${name}" failed:`, err instanceof Error ? err.message : err);
         return null;
+    } finally {
+        running.delete(name);
     }
 }
 

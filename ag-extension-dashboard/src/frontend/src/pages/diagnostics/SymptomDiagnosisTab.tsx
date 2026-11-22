@@ -26,7 +26,7 @@ const SymptomResultCard: React.FC<{
     className="p-4 rounded-lg bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] transition-colors space-y-2.5"
   >
     <div className="flex items-center justify-between">
-      <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
+      <h4 className="text-xs font-medium text-slate-900 dark:text-white">
         {result.reviewStatus === 'needs_expert_review' || result.provenance.evidenceStatus !== 'verified_source' ? 'Possible: ' : ''}
         {result.disease}
       </h4>
@@ -137,7 +137,7 @@ export function SymptomDiagnosisTab({
       <section aria-label="Result" className="p-5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] flex flex-col justify-between space-y-4">
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-xs font-medium text-slate-900 dark:text-white flex items-center gap-2">
               <FileCheck className="w-4 h-4 text-slate-400" aria-hidden="true" />
               Possible causes, most likely first
             </h3>

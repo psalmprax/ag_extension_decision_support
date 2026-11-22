@@ -1,13 +1,12 @@
 import { logger } from '../utils/logger';
 import { sendPushNotification } from './pushNotificationService';
 import { channelAllowed, loadNotificationPreferences } from './notificationPreferences';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { addNotificationJob } from '../queues/notificationQueue';
-import { config } from '@/config';
+import { outboundSignal } from '@/utils/outboundTimeout';
+// The one shared client: a second PrismaClient would open a second connection pool.
+import { getPrisma } from './prismaService';
 
-const prisma = new PrismaClient({
-    datasourceUrl: config.database.url,
-});
 
 export type NotificationType =
     | 'info'
@@ -86,7 +85,7 @@ class NotificationService {
     private async sendInApp(payload: NotificationPayload, pushAllowed = true): Promise<boolean> {
         try {
             // Store notification in database for in-app display
-            await prisma.notification.create({
+            await getPrisma().notification.create({
                 data: {
                     userId: payload.userId,
                     type: payload.type,
@@ -174,6 +173,7 @@ class NotificationService {
                 `https://api.twilio.com/2010-04-01/Accounts/${this.twilioSid}/Messages.json`,
                 {
                     method: 'POST',
+                    signal: outboundSignal(),
                     headers: {
                         'Authorization': `Basic ${credentials}`,
                         'Content-Type': 'application/x-www-form-urlencoded',

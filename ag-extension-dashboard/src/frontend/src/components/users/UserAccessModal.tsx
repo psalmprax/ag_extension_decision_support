@@ -171,7 +171,7 @@ export function UserAccessModal({
                 <HeadlessDialog.Title
                   as="h2"
                   id="user-access-modal-title"
-                  className="text-base font-bold"
+                  className="text-base font-medium"
                 >
                   {t('users_access_modal_title', 'Manage access & subscription')}
                 </HeadlessDialog.Title>

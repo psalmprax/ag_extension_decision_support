@@ -74,7 +74,7 @@ describe('officer SMS commands once unlocked', () => {
     it('replies into the farmer thread', async () => {
         jest.mocked(farmerForRef).mockResolvedValueOnce(mary);
         await expect(officerCommandReply(staff(), 'R 12 I will visit on Tuesday')).resolves.toBe('Sent to Mary Njeri.');
-        expect(postOfficerReply).toHaveBeenCalledWith('conv-1', 'I will visit on Tuesday');
+        expect(postOfficerReply).toHaveBeenCalledWith('conv-1', 'I will visit on Tuesday', 'officer-1');
     });
 
     it('will not reply to a number outside the officer list', async () => {

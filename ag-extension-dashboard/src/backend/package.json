@@ -27,7 +27,8 @@
     "prelint": "node scripts/sync-shared-api.js",
     "prebuild": "node scripts/sync-shared-api.js",
     "pretest": "node scripts/sync-shared-api.js",
-    "routes:inventory": "ts-node -r tsconfig-paths/register --transpile-only scripts/route-inventory.ts"
+    "routes:inventory": "ts-node -r tsconfig-paths/register --transpile-only scripts/route-inventory.ts",
+    "check:sql": "ts-node --transpile-only scripts/check-sql-against-schema.ts"
   },
   "lint-staged": {
     "src/**/*.ts": [
@@ -59,6 +60,7 @@
     "dotenv": "^16.3.1",
     "express": "^4.22.3",
     "express-rate-limit": "^8.3.0",
+    "fflate": "^0.8.3",
     "groq-sdk": "^0.37.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",

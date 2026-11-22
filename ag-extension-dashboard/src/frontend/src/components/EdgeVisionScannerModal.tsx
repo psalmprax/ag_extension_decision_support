@@ -30,6 +30,8 @@ import {
 import toast from 'react-hot-toast';
 import { CROP_PRESETS } from './cropPresets';
 import { useLanguage } from '@/lib/LanguageContext';
+import { copyWithToast } from '@/lib/copyText';
+import { safeStorage } from '@/lib/safeStorage';
 
 interface CropPillScrubberProps {
   selectedCrop: string;
@@ -502,7 +504,7 @@ const getEngineTelemetryLabels = (
 ): { title: string; subtitle: string } => {
   if (scanMode !== 'crop') {
     return {
-      title: 'Edge Soil Aggregate & Reflectance Analyzer',
+      title: 'Edge soil aggregate & reflectance analyzer',
       subtitle: 'Sobel Physics v1',
     };
   }
@@ -751,9 +753,9 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
   const handlePlotOnWorldMonitor = () => {
     try {
       const entry = createPlotEntry(scanMode, crop, cropResult, soilResult);
-      const existing = JSON.parse(localStorage.getItem('outbreak_scans') || '[]');
+      const existing = safeStorage.json<unknown[]>('outbreak_scans', []);
       existing.push(entry);
-      localStorage.setItem('outbreak_scans', JSON.stringify(existing));
+      safeStorage.set('outbreak_scans', JSON.stringify(existing));
       setLoggedToMap(true);
       toast.success(`Pinned ${entry.condition} to WorldMonitor outbreak layers!`);
     } catch {
@@ -764,11 +766,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
   const handleShareReport = async () => {
     try {
       const summary = buildDiagnosticReportSummary(scanMode, crop, cropResult, soilResult);
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(summary);
-        triggerHaptic('light');
-        toast.success('Diagnostic report copied to clipboard');
-      }
+      if (await copyWithToast(summary, 'Diagnostic report copied.')) triggerHaptic('light');
     } catch {
       toast.error('Could not copy report');
     }

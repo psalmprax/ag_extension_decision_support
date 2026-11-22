@@ -1,6 +1,7 @@
 import { query } from '@/services/databaseService';
 import { demoSql, type DemoViewer } from '@/services/demoScope';
 import { resolvePrincipalRegion } from '@/services/messageAccessService';
+import { isUuid } from '@/utils/uuid';
 
 export interface ScopePrincipal extends DemoViewer {
     userId: string;
@@ -80,6 +81,49 @@ export async function canSeeFarmer(principal: ScopePrincipal, farmerId: string):
     return rows.length > 0;
 }
 
+/** The signed-in person on a request, as a scope principal, or null when nobody is signed in. */
+export function principalOf(req: import('express').Request): ScopePrincipal | null {
+    const user = req.user as { userId?: string; role?: string; isDemo?: boolean } | undefined;
+    return user?.userId && user.role ? { userId: user.userId, role: user.role, isDemo: user.isDemo } : null;
+}
+
+/** Whether the signed-in person may see this farmer (and so the records that belong to them). */
+export async function requestCanSeeFarmer(req: import('express').Request, farmerId: string | null | undefined): Promise<boolean> {
+    const principal = principalOf(req);
+    return Boolean(principal && farmerId && (await canSeeFarmer(principal, farmerId)));
+}
+
+/**
+ * Express guard for routes about a record that belongs to a farmer (a crop cycle, a
+ * milestone…): `farmerOfSql` takes the URL id as $1 and returns the owning farmer as
+ * `farmer_id`. Answers 404 unless the signed-in person may see that farmer.
+ */
+export function requireRecordOfVisibleFarmer(param: string, farmerOfSql: string, notFound = 'Not found') {
+    return async (req: import('express').Request, res: import('express').Response, next: import('express').NextFunction) => {
+        if (!principalOf(req)) {
+            res.status(401).json({ success: false, error: 'Authentication required' });
+            return;
+        }
+        const id = req.params[param];
+        if (id && isUuid(id)) {
+            const { rows } = await query<{ farmer_id: string | null }>(farmerOfSql, [id]);
+            if (await requestCanSeeFarmer(req, rows[0]?.farmer_id)) {
+                next();
+                return;
+            }
+        }
+        res.status(404).json({ success: false, error: notFound });
+    };
+}
+
+/** SQL for `requireRecordOfVisibleFarmer`: the farmer a record belongs to, from its id. */
+export const FARMER_OF = {
+    cropCycle: `SELECT fl.farmer_id FROM crop_cycles c JOIN fields fl ON fl.id = c.field_id WHERE c.id = $1`,
+    milestone: `SELECT fl.farmer_id FROM crop_cycle_milestones m
+                JOIN crop_cycles c ON c.id = m.crop_cycle_id JOIN fields fl ON fl.id = c.field_id
+                WHERE m.id = $1`,
+} as const;
+
 /**
  * Express guard for routes about one farmer (`:farmerId` or another param): answers 404
  * unless the signed-in person may see that farmer under the shared rule. 404, not 403,
@@ -87,14 +131,14 @@ export async function canSeeFarmer(principal: ScopePrincipal, farmerId: string):
  */
 export function requireFarmerAccess(param = 'farmerId') {
     return async (req: import('express').Request, res: import('express').Response, next: import('express').NextFunction) => {
-        const user = req.user as { userId?: string; role?: string; isDemo?: boolean } | undefined;
+        const principal = principalOf(req);
         const farmerId = req.params[param];
-        if (!user?.userId || !user.role) {
+        if (!principal) {
             res.status(401).json({ success: false, error: 'Authentication required' });
             return;
         }
         try {
-            if (farmerId && (await canSeeFarmer({ userId: user.userId, role: user.role, isDemo: user.isDemo }, farmerId))) {
+            if (farmerId && (await canSeeFarmer(principal, farmerId))) {
                 next();
                 return;
             }

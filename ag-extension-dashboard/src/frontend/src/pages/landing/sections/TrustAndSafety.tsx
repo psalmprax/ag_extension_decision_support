@@ -22,7 +22,7 @@ export function TrustAndSafety() {
           height={450}
           className="w-full h-full object-cover object-center opacity-[0.08] filter saturate-125 contrast-105 pointer-events-none"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0d1a14] via-[#0d1a14]/85 to-[#0d1a14]" />
+        <div data-scrim className="absolute inset-0 bg-gradient-to-b from-[#0d1a14] via-[#0d1a14]/85 to-[#0d1a14]" />
       </div>
 
       <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 relative z-10">
@@ -59,12 +59,12 @@ export function TrustAndSafety() {
               <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                 <ShieldCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">{t('ui_trust_and_safety_clear_ai_limits_human_escalation')}</h3>
+              <h3 className="text-lg font-medium text-white">{t('ui_trust_and_safety_clear_ai_limits_human_escalation')}</h3>
               <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
                 {t('ui_trust_and_safety_ai_assessments_can_be_wrong_or_uncer')}
               </p>
             </div>
-            <div className="pt-4 mt-4 border-t border-white/[0.06] text-xs text-emerald-300 font-semibold flex items-center gap-1.5">
+            <div className="pt-4 mt-4 border-t border-white/[0.06] text-xs text-emerald-300 font-medium flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span>{t('ui_trust_and_safety_expert_confirmation_matters')}</span>
             </div>
@@ -82,12 +82,12 @@ export function TrustAndSafety() {
               <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
                 <BookOpenCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">{t('ui_trust_and_safety_check_the_evidence')}</h3>
+              <h3 className="text-lg font-medium text-white">{t('ui_trust_and_safety_check_the_evidence')}</h3>
               <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
                 {t('ui_trust_and_safety_retrieved_information_is_not_proof_o')}
               </p>
             </div>
-            <div className="pt-4 mt-4 border-t border-white/[0.06] text-xs text-amber-300 font-semibold flex items-center gap-1.5">
+            <div className="pt-4 mt-4 border-t border-white/[0.06] text-xs text-amber-300 font-medium flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-amber-400" />
               <span>{t('ui_trust_and_safety_verify_sources_and_local_applicabili')}</span>
             </div>
@@ -105,12 +105,12 @@ export function TrustAndSafety() {
               <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                 <Leaf className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">{t('ui_trust_and_safety_protect_people_and_pollinators')}</h3>
+              <h3 className="text-lg font-medium text-white">{t('ui_trust_and_safety_protect_people_and_pollinators')}</h3>
               <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
                 {t('ui_trust_and_safety_natural_or_biological_products_are_n')}
               </p>
             </div>
-            <div className="pt-4 mt-4 border-t border-white/[0.06] text-xs text-emerald-300 font-semibold flex items-center gap-1.5">
+            <div className="pt-4 mt-4 border-t border-white/[0.06] text-xs text-emerald-300 font-medium flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span>{t('ui_trust_and_safety_soil_pollinator_conscious')}</span>
             </div>
@@ -130,7 +130,7 @@ export function TrustAndSafety() {
               <HeartHandshake className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-base sm:text-lg font-bold text-white mb-1">
+              <h4 className="text-base sm:text-lg font-medium text-white mb-1">
                 {t('ui_trust_and_safety_work_with_local_extension_officers')}
               </h4>
               <p className="text-xs sm:text-sm text-white/70 max-w-2xl leading-relaxed">
@@ -142,7 +142,7 @@ export function TrustAndSafety() {
           <div className="flex items-center shrink-0 w-full sm:w-auto">
             <a
               href="#agent-os"
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-white font-medium text-xs flex items-center justify-center gap-2 transition-all"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>{t('ui_trust_and_safety_see_officer_platform')}</span>

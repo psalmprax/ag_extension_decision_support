@@ -4,11 +4,24 @@ import { logger } from '../utils/logger';
 import { emailService } from './emailService';
 import { smsService } from './smsService';
 import { getPrisma } from './prismaService';
+import { query } from './databaseService';
+import { canSeeFarmer, rowsOfVisibleFarmersSql, type ScopePrincipal } from './access/farmerScope';
+import { isUuid } from '../utils/uuid';
+
+/** The entity does not exist, or the person may not share it: both answer 404. */
+export class ShareNotFoundError extends Error {
+    constructor(entityType: string) {
+        super(`${entityType} not found`);
+        this.name = 'ShareNotFoundError';
+    }
+}
 
 export interface CreateShareOptions {
     entityType: 'farmer' | 'visit' | 'report' | 'knowledge';
     entityId: string;
     createdBy?: string;
+    /** Who is sharing: a share is only made of something this person may see. */
+    principal: ScopePrincipal;
     isPublic?: boolean;
     expiresAt?: Date;
     permissions?: string[];
@@ -46,10 +59,12 @@ class ShareService {
             expiresAt,
             permissions = ['view'],
             tenantId,
+            principal,
         } = options;
 
-        // Validate entity exists
-        await this.validateEntity(entityType, entityId, tenantId);
+        if (!(await this.mayShare(entityType, entityId, principal, tenantId))) {
+            throw new ShareNotFoundError(entityType);
+        }
 
         const token = this.generateToken();
         const prisma = getPrisma();
@@ -201,34 +216,32 @@ class ShareService {
         return Boolean(share && share.createdBy === creatorId && (!tenantId || share.tenantId === tenantId));
     }
 
-    private async validateEntity(entityType: string, entityId: string, tenantId?: string): Promise<void> {
-        // Synthetic demo entities do not exist in the live database
-        if (entityId.startsWith('demo-') || entityId.startsWith('field-demo-') || entityId.includes('demo')) {
-            return;
-        }
-
-        let exists: boolean;
+    /**
+     * Whether this person may share the entity: it exists, sits in their organisation and
+     * is one they may see (a farmer or visit under the farmer rule, a report they made,
+     * any knowledge article). Synthetic demo ids are shareable only from a demo session.
+     */
+    private async mayShare(entityType: string, entityId: string, principal: ScopePrincipal, tenantId?: string): Promise<boolean> {
+        if (!isUuid(entityId)) return Boolean(principal.isDemo && String(entityId).startsWith('demo-'));
         const prisma = getPrisma();
-
         switch (entityType) {
             case 'farmer':
-                exists = !!(await prisma.farmer.findFirst({ where: { id: entityId, ...(tenantId ? { tenantId } : {}) } }));
-                break;
-            case 'visit':
-                exists = !!(await prisma.visit.findFirst({ where: { id: entityId, ...(tenantId ? { farmer: { tenantId } } : {}) } }));
-                break;
+                return (await canSeeFarmer(principal, entityId))
+                    && Boolean(await prisma.farmer.findFirst({ where: { id: entityId, ...(tenantId ? { tenantId } : {}) }, select: { id: true } }));
+            case 'visit': {
+                const scope = await rowsOfVisibleFarmersSql(principal, 'v.farmer_id', 2);
+                const { rows } = await query(`SELECT 1 FROM visits v WHERE v.id = $1 AND ${scope.sql} LIMIT 1`, [entityId, ...scope.params]);
+                return rows.length > 0;
+            }
             case 'report':
-                exists = !!(await prisma.report.findFirst({ where: { id: entityId, ...(tenantId ? { user: { tenantId } } : {}) } }));
-                break;
+                return Boolean(await prisma.report.findFirst({
+                    where: { id: entityId, ...(principal.role === 'admin' ? {} : { generatedBy: principal.userId }), ...(tenantId ? { tenantId } : {}) },
+                    select: { id: true },
+                }));
             case 'knowledge':
-                exists = !!(await prisma.knowledgeArticle.findUnique({ where: { id: entityId } }));
-                break;
+                return Boolean(await prisma.knowledgeArticle.findUnique({ where: { id: entityId }, select: { id: true } }));
             default:
-                throw new Error('Invalid entity type');
-        }
-
-        if (!exists) {
-            throw new Error(`${entityType} with id ${entityId} not found`);
+                return false;
         }
     }
 

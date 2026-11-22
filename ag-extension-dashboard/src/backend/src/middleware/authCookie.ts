@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
+import { safeEqual } from '@/utils/safeEqual';
 
 /**
  * httpOnly cookie auth + CSRF double-submit protection.
@@ -63,12 +64,6 @@ export function csrfTokenFor(token: string): string {
         .digest('hex');
 }
 
-function timingSafeEqualStr(a: string, b: string): boolean {
-    const bufA = Buffer.from(a);
-    const bufB = Buffer.from(b);
-    if (bufA.length !== bufB.length) return false;
-    return crypto.timingSafeEqual(bufA, bufB);
-}
 
 /**
  * Extract the bearer token: Authorization header first (mobile, browser
@@ -151,8 +146,8 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
     if (
         typeof cookieCsrf === 'string' &&
         typeof headerCsrf === 'string' &&
-        timingSafeEqualStr(cookieCsrf, headerCsrf) &&
-        timingSafeEqualStr(cookieCsrf, csrfTokenFor(token))
+        safeEqual(cookieCsrf, headerCsrf) &&
+        safeEqual(cookieCsrf, csrfTokenFor(token))
     ) {
         return next();
     }

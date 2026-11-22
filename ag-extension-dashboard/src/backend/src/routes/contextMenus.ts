@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { query } from '@/services/databaseService';
 import type { ApiClientRow, CountRow, AuthenticatedRequestUser } from '@/types/rowTypes';
 import { mapApiClientRows, mapApiClientRow } from '@/types/dtos';
@@ -56,6 +57,12 @@ router.post('/clients', authorize(['admin']), async (req: AuthedRequest, res: Re
     }
 });
 
+const clientUpdateSchema = z.object({
+    name: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['active', 'suspended', 'disabled']).optional(),
+    monthly_quota: z.number().int().positive().max(100_000_000).optional(),
+}).strict();
+
 /**
  * PATCH /api/context-menus/clients/:id — update quota / status.
  */
@@ -65,14 +72,19 @@ router.patch('/clients/:id', authorize(['admin']), async (req: Request, res: Res
         if (!id) {
             return res.status(400).json({ success: false, error: 'Client id is required' });
         }
-        const updates = req.body as Partial<{ name: string; status: string; monthly_quota: number }>;
+        // Only these columns, under these names: the request's own keys never reach the SQL.
+        const parsed = clientUpdateSchema.safeParse(req.body);
+        if (!parsed.success) {
+            return res.status(400).json({ success: false, error: parsed.error.issues[0]?.message ?? 'Invalid update' });
+        }
 
         const fields: string[] = [];
         const params: unknown[] = [];
         let i = 1;
-        for (const [key, value] of Object.entries(updates)) {
+        for (const column of ['name', 'status', 'monthly_quota'] as const) {
+            const value = parsed.data[column];
             if (value === undefined) continue;
-            fields.push(`${key} = $${i++}`);
+            fields.push(`${column} = $${i++}`);
             params.push(value);
         }
         if (fields.length === 0) {

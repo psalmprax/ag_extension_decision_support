@@ -6,7 +6,6 @@ import { safeError } from '@/utils/safeResponse';
 import { logger } from '@/utils/logger';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { transcribeVoiceNote, synthesizeVoiceAdvisory, detectVernacularKeywords } from '@/services/voiceAudioService';
-import { generateIvrXml, processDtmfResponse, dispatchVoiceBroadcast } from '@/services/ivrBroadcastService';
 
 const router = Router();
 
@@ -74,22 +73,6 @@ router.post('/voice/transcribe-local', checkUsageLimit('speech'), validate({ bod
 
 router.post('/voice/synthesize', checkUsageLimit('speech'), validate({ body: z.object({ text: z.string().min(1).max(4000), language: z.string().regex(/^[a-z]{2,3}(-[A-Za-z]{2,4})?$/).optional() }) }), async (req: AuthRequest, res: Response) => {
     try { return res.json({ success: true, data: await synthesizeVoiceAdvisory(req.body as never) }); } catch (e) { logger.error('Pillar synthesize failed:', e); return safeError(res, 500, (e as Error).message); }
-});
-
-router.post('/voice/ivr-xml', checkUsageLimit('ai_chat'), validate({ body: z.object({ alertTitle: z.string().min(1).max(200), advisorySwahili: z.string().min(1).max(4000), advisoryEnglish: z.string().max(4000).optional(), repeatAllowed: z.boolean().optional() }) }), async (req: AuthRequest, res: Response) => {
-    try {
-        const xml = generateIvrXml(req.body as never);
-        res.setHeader('Content-Type', 'application/xml');
-        return res.send(xml);
-    } catch (e) { return safeError(res, 500, (e as Error).message); }
-});
-
-router.post('/voice/ivr-dtmf', checkUsageLimit('ai_chat'), validate({ body: z.object({ digit: z.string().min(1).max(2).regex(/^[0-9*#]+$/) }) }), async (req: AuthRequest, res: Response) => {
-    try { return res.json({ success: true, data: processDtmfResponse(req.body.digit) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
-});
-
-router.post('/voice/broadcast', checkUsageLimit('ai_chat'), validate({ body: z.object({ farmerPhones: z.array(z.string().min(5).max(25)).min(1).max(500), alertTitle: z.string().min(1).max(200), advisorySwahili: z.string().min(1).max(4000), advisoryEnglish: z.string().min(1).max(4000) }) }), async (req: AuthRequest, res: Response) => {
-    try { return res.json({ success: true, data: await dispatchVoiceBroadcast(req.body as never) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
 });
 
 export default router;

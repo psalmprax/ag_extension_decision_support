@@ -22,7 +22,7 @@ jest.mock('@/middleware/authorize', () => ({
 }));
 jest.mock('@/services/prismaService', () => {
     const prisma = {
-        farmer: { findMany: jest.fn().mockResolvedValue([]), findUnique: jest.fn() },
+        farmer: { findMany: jest.fn().mockResolvedValue([]), count: jest.fn().mockResolvedValue(0), findUnique: jest.fn() },
         user: { findUnique: jest.fn().mockResolvedValue({ region: 'Central' }) },
     };
     return { getPrisma: jest.fn(() => prisma) };

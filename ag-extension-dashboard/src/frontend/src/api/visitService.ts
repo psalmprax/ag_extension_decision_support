@@ -1,4 +1,5 @@
 import apiClient from './client';
+import { fetchAllPages } from './fetchAllPages';
 import { syncQueue } from './syncQueueService';
 import { randomId } from '@/lib/randomId';
 import type { DevicePosition } from '@/lib/devicePosition';
@@ -39,10 +40,9 @@ export interface VisitsResponse {
   };
 }
 
-export const fetchVisits = async (): Promise<VisitsResponse> => {
-  const response = await apiClient.get<VisitsResponse>('/visits');
-  return response.data;
-};
+/** Every visit this person may see, page by page; one request returned only the latest 50. */
+export const fetchVisits = (): Promise<VisitsResponse> =>
+  fetchAllPages<'visits', Visit>('/visits', 'visits', { pageSize: 500, ceiling: 5_000 });
 
 export const fetchVisitsByFarmer = async (farmerId: string): Promise<VisitsResponse> => {
   const response = await apiClient.get<VisitsResponse>(`/visits?farmerId=${farmerId}`);

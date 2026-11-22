@@ -15,6 +15,7 @@ import { ThemeSwitcher } from './ThemeSwitcher';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import toast from 'react-hot-toast';
 import { ChannelOnboardingModal } from './channels/ChannelOnboardingModal';
+import { safeStorage } from '@/lib/safeStorage';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -52,7 +53,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                   <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
                     <Monitor className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  <h2 className="text-xl font-medium text-gray-900 dark:text-white">
                     {t('nav_settings') || 'Settings'}
                   </h2>
                 </div>
@@ -143,7 +144,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                     <button
                       type="button"
                       onClick={() => setIsChannelModalOpen(true)}
-                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-900/20"
+                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium flex items-center justify-center gap-2 transition-all shadow-md"
                     >
                       <Zap className="w-4 h-4" />
                       <span>{t('ui_settings_panel_configure_channels_onboarding_wizard')}</span>
@@ -154,19 +155,19 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                 {/* Data & Storage */}
                 <div className="space-y-3">
                   <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                    {t('settings_data') || 'Data & Storage'}
+                    {t('settings_data') || 'Data & storage'}
                   </h3>
                   <button
                     onClick={async () => {
                       const preserveKeys = ['user', 'theme', 'ag-theme-name'];
                       const preserved: Record<string, string> = {};
                       preserveKeys.forEach(key => {
-                        const val = localStorage.getItem(key);
+                        const val = safeStorage.get(key);
                         if (val) preserved[key] = val;
                       });
                       localStorage.clear();
                       Object.entries(preserved).forEach(([key, val]) =>
-                        localStorage.setItem(key, val)
+                        safeStorage.set(key, val)
                       );
                       sessionStorage.clear();
                       try {
@@ -199,7 +200,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                     className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-start hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   >
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {t('settings_clear_cache') || 'Clear Local Cache'}
+                      {t('settings_clear_cache') || 'Clear local cache'}
                     </span>
                   </button>
                   <button

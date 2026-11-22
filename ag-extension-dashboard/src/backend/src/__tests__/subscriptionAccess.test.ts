@@ -133,9 +133,11 @@ describe('requirePaidPlan & backend Pro route gating', () => {
     expect(analyticsPerfRes.status).toBe(403);
     expect(analyticsPerfRes.body.upgradeRequired).toBe(true);
 
+    // Email workflows are for administrators whatever the plan: the role check refuses
+    // first, so there is no upgrade to offer.
     const workflowRes = await request(app).get('/email-workflows/templates').set('Authorization', `Bearer ${officerToken}`);
     expect(workflowRes.status).toBe(403);
-    expect(workflowRes.body.upgradeRequired).toBe(true);
+    expect(workflowRes.body.upgradeRequired).toBeUndefined();
   });
 
   it('keeps Free core dashboard (/analytics/dashboard) unlocked for free users', async () => {

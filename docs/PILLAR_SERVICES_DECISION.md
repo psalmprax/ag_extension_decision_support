@@ -30,6 +30,21 @@ Also removed on 2026-11-20: `multiTenantFederationService` and its `/pillars/ten
 them, and their sample buyers, dealers and phone numbers could be mistaken for real businesses. Rebuild them
 only on top of a real registry or partner data.
 
+## Removed 2026-11-21
+
+The remaining prototype routes answered 501 in every deployment, so they were dead
+surface: `/pillars/traceability/*`, `/pillars/credit/*`, `/pillars/mechanization/*`,
+`/pillars/pest/*`, `/pillars/iot/*`, `/pillars/satellite/*`, `/pillars/soil/*`,
+`/pillars/roi/*`, `/pillars/hazard/scan` and the IVR routes. Removed with them:
+`traceabilityPassportService`, `agriCreditInsuranceService`, `mechanizationFleetService`,
+`iotTelemetryService`, `satelliteNdviService`, `satelliteIngestService`,
+`soilCarbonMrvService`, `agronomicRoiService`, `ivrBroadcastService` and the pest
+trajectory forecast. The mechanization tables stay in the database, untouched.
+
+Still served: `POST /pillars/hazard/evaluate` and the speech routes. The pest clustering
+in `pestSwarmRadarService` now feeds the WorldMonitor pest layer from recorded pest
+diagnoses. `PILLARS_SPEC_ROUTES_ENABLED` no longer exists.
+
 ## Action Items
 
 - [x] Remove these services from README.md feature list (README marks them as prototypes)

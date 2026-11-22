@@ -56,7 +56,7 @@ export const SyncQueuePanel: React.FC = () => {
     <div className="rounded-xl border border-white/10 bg-slate-900/60 p-5 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-bold text-white">{t('ui_sync_queue_panel_offline_sync_queue')}</h3>
+          <h3 className="text-sm font-medium text-white">{t('ui_sync_queue_panel_offline_sync_queue')}</h3>
           <p className="text-xs text-white/50">
             {pending.length} {t('ui_sync_queue_panel_pending')}{nextRetryAt ? ` · next automatic retry ${new Date(nextRetryAt).toLocaleTimeString()}` : ''} · {stuck.length} {t('ui_sync_queue_panel_need_attention')}
           </p>
@@ -91,7 +91,7 @@ export const SyncQueuePanel: React.FC = () => {
                   item.state === 'conflict' ? 'bg-amber-500/15 text-amber-300' :
                   'bg-rose-500/15 text-rose-300'
                 }`}>{formatLabel(item.state)}</span>
-                <span className="text-white/80 font-semibold truncate">{item.method} {item.endpoint}</span>
+                <span className="text-white/80 font-medium truncate">{item.method} {item.endpoint}</span>
               </div>
               <div className="text-white/40 mt-0.5 flex flex-wrap items-center gap-2">
                 <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {t('ui_sync_queue_panel_queued')} {new Date(item.timestamp).toLocaleString()} {t('ui_sync_queue_panel_attempts')} {item.retryCount}</span>

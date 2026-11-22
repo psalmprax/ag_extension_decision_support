@@ -6,6 +6,7 @@ import { cn } from '@/lib/cn';
 import { dropdownVariants } from '@/lib/animations';
 import { useLanguage } from '@/lib/LanguageContext';
 import { AVATAR_PRESETS } from '@/components/profileDefaults';
+import { safeStorage } from '@/lib/safeStorage';
 
 interface ProfileMenuProps {
   isProfileMenuOpen: boolean;
@@ -31,7 +32,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
       try {
         // The account's avatar, else this browser's older copy.
         setAvatarId(storeUser?.profileSettings?.avatarId
-          || (storeUser?.id ? localStorage.getItem(`gpexts_user_avatar:${storeUser.id}`) || '' : ''));
+          || (storeUser?.id ? safeStorage.get(`gpexts_user_avatar:${storeUser.id}`) || '' : ''));
       } catch {
         setAvatarId('');
       }
@@ -47,13 +48,13 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
       <button
         onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
         className="flex items-center gap-2 sm:gap-3 rounded-md p-1 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] transition-colors"
-        aria-label="Open user profile menu"
+        aria-expanded={isProfileMenuOpen}
       >
         <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-emerald-100 dark:bg-emerald-400/[0.15] shrink-0">
           {AvatarIcon ? (
-            <AvatarIcon className="w-4 h-4 text-emerald-800 dark:text-emerald-200" strokeWidth={1.5} aria-label="Selected profile avatar" />
+            <AvatarIcon className="w-4 h-4 text-emerald-800 dark:text-emerald-200" strokeWidth={1.5} aria-hidden="true" />
           ) : (
-            <span className="text-xs text-emerald-800 dark:text-emerald-200 font-medium">
+            <span className="text-xs text-emerald-800 dark:text-emerald-200 font-medium" aria-hidden="true">
               {storeUser?.firstName?.[0]}
               {storeUser?.lastName?.[0]}
             </span>
@@ -64,6 +65,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
             {storeUser?.firstName} {storeUser?.lastName}
           </p>
         </div>
+        <span className="sr-only">Profile menu</span>
       </button>
 
       <AnimatePresence>
@@ -96,7 +98,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300"
               >
                 <User className="w-4 h-4 text-primary-400" />
-                <span className="text-xs font-bold  ">
+                <span className="text-xs font-medium  ">
                   {t('header_profile', { defaultValue: 'Profile' })}
                 </span>
               </button>
@@ -105,7 +107,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-rose-500/10 text-rose-400"
               >
                 <LogOut className="w-4 h-4" />
-                <span className="text-xs font-bold  ">
+                <span className="text-xs font-medium  ">
                   {t('header_sign_out', { defaultValue: 'Sign out' })}
                 </span>
               </button>

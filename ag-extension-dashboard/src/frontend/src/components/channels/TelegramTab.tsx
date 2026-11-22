@@ -49,7 +49,7 @@ export const TelegramTab: React.FC<TelegramTabProps> = ({
             <Bot className="w-5 h-5" />
           </div>
           <div>
-            <div className="font-bold text-sm text-white">{t('ui_telegram_tab_telegram_bot_gateway')}</div>
+            <div className="font-medium text-sm text-white">{t('ui_telegram_tab_telegram_bot_gateway')}</div>
             <div className="text-xs text-slate-400">
               {t('ui_telegram_tab_zero_cost_instant_bot_messaging_for')}
             </div>
@@ -69,7 +69,7 @@ export const TelegramTab: React.FC<TelegramTabProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
           <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-xs font-semibold text-slate-300">{t('ui_telegram_tab_telegram_bot_token_from_botfather')}</label>
+            <label className="block text-xs font-medium text-slate-300">{t('ui_telegram_tab_telegram_bot_token_from_botfather')}</label>
             <a
               href="https://t.me/BotFather"
               target="_blank"
@@ -91,7 +91,7 @@ export const TelegramTab: React.FC<TelegramTabProps> = ({
             <button
               onClick={handleVerifyTelegramBot}
               disabled={isTesting}
-              className="px-4 py-2.5 rounded-xl bg-slate-600 hover:bg-slate-500 text-white text-xs font-bold flex items-center gap-2 transition-all disabled:opacity-50"
+              className="px-4 py-2.5 rounded-xl bg-slate-600 hover:bg-slate-500 text-white text-xs font-medium flex items-center gap-2 transition-all disabled:opacity-50"
             >
               {isTesting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
               <span>{t('ui_telegram_tab_verify_token')}</span>
@@ -110,7 +110,7 @@ export const TelegramTab: React.FC<TelegramTabProps> = ({
 
       <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-300">{t('ui_telegram_tab_telegram_webhook_url')}</span>
+          <span className="text-xs font-medium text-slate-300">{t('ui_telegram_tab_telegram_webhook_url')}</span>
           <button
             onClick={() => copyToClipboard(webhookUrl, 'tg_webhook')}
             className="text-xs flex items-center gap-1 text-slate-400 hover:text-slate-300"
@@ -124,7 +124,7 @@ export const TelegramTab: React.FC<TelegramTabProps> = ({
 
       <div className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/40 flex items-center justify-between">
         <div>
-          <div className="text-xs font-bold text-slate-200">{t('ui_telegram_tab_direct_bot_launch_link')}</div>
+          <div className="text-xs font-medium text-slate-200">{t('ui_telegram_tab_direct_bot_launch_link')}</div>
           <div className="text-xxs text-slate-400">
             {t('ui_telegram_tab_farmers_can_tap_this_link_to_launch')}
           </div>
@@ -133,7 +133,7 @@ export const TelegramTab: React.FC<TelegramTabProps> = ({
           href={`https://t.me/${telegramForm.botUsername}?start=onboard`}
           target="_blank"
           rel="noreferrer"
-          className="px-4 py-2 rounded-xl bg-slate-600 hover:bg-slate-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all"
+          className="px-4 py-2 rounded-xl bg-slate-600 hover:bg-slate-500 text-white text-xs font-medium flex items-center gap-1.5 transition-all"
         >
           <span>{t('ui_telegram_tab_open', { botUsername: telegramForm.botUsername })}</span>
           <ExternalLink className="w-3.5 h-3.5" />
@@ -144,7 +144,7 @@ export const TelegramTab: React.FC<TelegramTabProps> = ({
         <button
           onClick={handleSaveTelegram}
           disabled={isSaving}
-          className="px-5 py-2.5 rounded-xl bg-slate-600 hover:bg-slate-500 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-slate-900/30"
+          className="px-5 py-2.5 rounded-xl bg-slate-600 hover:bg-slate-500 text-white text-xs font-medium flex items-center gap-2 transition-all shadow-lg"
         >
           {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
           <span>{t('ui_telegram_tab_save_telegram_bot_config')}</span>

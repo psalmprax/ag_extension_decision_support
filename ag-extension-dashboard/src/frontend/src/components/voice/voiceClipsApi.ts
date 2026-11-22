@@ -7,6 +7,8 @@ export interface VoiceClip {
   title: string;
   transcript: string | null;
   url: string;
+  /** Whether this person may replace or delete it: the one who recorded it, or an administrator. */
+  canChange: boolean;
 }
 
 export interface VoiceLibrary {

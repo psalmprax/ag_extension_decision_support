@@ -203,8 +203,8 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-sm text-white tracking-wide">{t('ui_ussdsimulator_drawer_ussd_sms_sandbox')}</h3>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    <h3 className="font-medium text-sm text-white">{t('ui_ussdsimulator_drawer_ussd_sms_sandbox')}</h3>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                       SIMULATION
                     </span>
                   </div>
@@ -240,7 +240,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                   <button
                     key={lang}
                     onClick={() => setSelectedLang(lang)}
-                    className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all ${
+                    className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all ${
                       selectedLang === lang
                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                         : 'text-slate-400 hover:bg-slate-800'
@@ -274,11 +274,11 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                     <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3">
                       <PhoneCall className="w-5 h-5" />
                     </div>
-                    <p className="text-sm font-semibold text-white mb-1">{t('ui_ussdsimulator_drawer_ready_to_dial')}</p>
+                    <p className="text-sm font-medium text-white mb-1">{t('ui_ussdsimulator_drawer_ready_to_dial')}</p>
                     <p className="text-xs text-slate-400 mb-4 max-w-[200px]">
                       {t('ui_ussdsimulator_drawer_example_code')} <code className="text-emerald-400 font-mono">*123#</code> {t('ui_ussdsimulator_drawer_is_not_a_live_service')}
                     </p>
-                    <div className="font-mono text-xl font-semibold text-emerald-400 tabular-nums bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 mb-4">
+                    <div className="font-mono text-xl font-medium text-emerald-400 tabular-nums bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 mb-4">
                       {dialCode || '---'}
                     </div>
                     <button
@@ -316,7 +316,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                             />
                             <button
                               type="submit"
-                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-medium flex items-center gap-1 transition-all"
                             >
                               <Send className="w-3.5 h-3.5" />
                               {t('common_send')}
@@ -327,7 +327,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                         <div className="mt-4 pt-2 border-t border-slate-800 flex justify-end">
                           <button
                             onClick={resetSession}
-                            className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold transition-all"
+                            className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition-all"
                           >
                             {t('ui_ussdsimulator_drawer_dismiss_ok')}
                           </button>
@@ -344,7 +344,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                   <button
                     key={btn}
                     onClick={() => handleDialPadPress(btn)}
-                    className="py-2.5 rounded-xl bg-slate-800/80 hover:bg-emerald-600/30 hover:border-emerald-500/40 border border-slate-700/50 text-white font-mono font-bold text-sm transition-all active:scale-95 flex flex-col items-center justify-center shadow-sm"
+                    className="py-2.5 rounded-xl bg-slate-800/80 hover:bg-emerald-600/30 hover:border-emerald-500/40 border border-slate-700/50 text-white font-mono font-medium text-sm transition-all active:scale-95 flex flex-col items-center justify-center shadow-sm"
                   >
                     <span>{btn}</span>
                   </button>

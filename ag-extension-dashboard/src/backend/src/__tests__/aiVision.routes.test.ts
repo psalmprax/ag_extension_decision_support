@@ -56,21 +56,14 @@ describe('AI Vision Routes', () => {
     });
 
     describe('POST /api/ai/analyze-image', () => {
-        it('passes image to AIRouter even when not provided', async () => {
-            const mockResult = { analysis: 'No image provided' };
-            mockRouteRequest.mockResolvedValue(mockResult);
-
+        it('asks for an image instead of calling the AI without one', async () => {
             const res = await request(app)
                 .post('/api/ai/analyze-image')
                 .send({ prompt: 'test' })
-                .expect(200);
+                .expect(400);
 
-            expect(res.body.success).toBe(true);
-            expect(AIRouter.routeRequest).toHaveBeenCalledWith('vision', {
-                imageData: undefined,
-                prompt: 'test',
-                options: { temperature: 0.3 },
-            });
+            expect(res.body.success).toBe(false);
+            expect(AIRouter.routeRequest).not.toHaveBeenCalled();
         });
 
         it('calls AIRouter.routeRequest with correct params and returns result', async () => {

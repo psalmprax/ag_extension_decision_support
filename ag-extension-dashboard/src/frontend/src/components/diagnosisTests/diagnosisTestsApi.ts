@@ -61,3 +61,12 @@ export function classState(row: TestClass, minSamples: number, minAccuracy: numb
   if (row.tested < minSamples) return 'needs_photos';
   return row.correct / row.tested >= minAccuracy ? 'tested' : 'below_threshold';
 }
+
+/** A zip of photos in crop/label folders (maize/fall_armyworm/IMG_1.jpg), labelled by those folders. */
+export async function importPhotoArchive(archive: File, country?: string): Promise<{ imported: number; skipped: Array<{ file: string; reason: string }> }> {
+  const form = new FormData();
+  form.append('archive', archive);
+  if (country) form.append('country', country);
+  const { data } = await apiClient.post('/imports/diagnosis-photos', form, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 600_000 });
+  return data.data;
+}

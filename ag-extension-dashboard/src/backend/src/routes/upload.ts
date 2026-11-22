@@ -4,6 +4,7 @@ import fsp from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import multer from 'multer';
+import { mayPlayPartnerUpload } from '@/services/partners/recordingLibrary';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
@@ -226,8 +227,8 @@ router.get('/file/:storageKey', async (req: Request, res: Response) => {
     const storageKey = req.params.storageKey;
     if (!user) return res.status(401).json({ success: false, error: 'Authentication required' });
 
-    const result = await query<{ owner_user_id: string; farmer_id: string | null; mime_type: string; status: string }>(
-      `SELECT owner_user_id, farmer_id, mime_type, status
+    const result = await query<{ id: string; owner_user_id: string; farmer_id: string | null; mime_type: string; status: string }>(
+      `SELECT id, owner_user_id, farmer_id, mime_type, status
        FROM upload_records WHERE storage_key = $1`,
       [storageKey]
     );
@@ -236,7 +237,8 @@ router.get('/file/:storageKey', async (req: Request, res: Response) => {
 
     const allowed = user.role === 'admin' || record.owner_user_id === user.userId;
     const farmerAllowed = record.farmer_id ? Boolean(await getFarmerForPrincipal(record.farmer_id, user)) : false;
-    if (!allowed && !farmerAllowed) return res.status(403).json({ success: false, error: 'Access denied' });
+    const partnerAllowed = !allowed && !farmerAllowed && record.mime_type.startsWith('audio/') && (await mayPlayPartnerUpload(user, record.id));
+    if (!allowed && !farmerAllowed && !partnerAllowed) return res.status(403).json({ success: false, error: 'Access denied' });
 
     const buffer = await readStoredUpload(storageKey);
     return sendFileBuffer(res, buffer, record.mime_type, req.headers.range);

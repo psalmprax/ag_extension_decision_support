@@ -67,6 +67,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@capacitor/cli": "^7.6.8",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.58.2",
@@ -88,6 +89,7 @@
     "eslint-plugin-react-refresh": "^0.5.8",
     "eslint-plugin-sonarjs": "^4.2.2",
     "eslint-plugin-unused-imports": "^4.4.1",
+    "fflate": "^0.8.3",
     "globals": "^17.14.0",
     "husky": "^9.1.7",
     "jsdom": "^26.0.0",

@@ -49,7 +49,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
       >
         <div className="p-6 space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-white/5">
-            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+            <h3 className="text-xl font-medium text-white flex items-center gap-2">
               <Sprout className="w-5 h-5 text-primary-400" />
               {t('ui_growth_cycle_modal_plant_crop_on')} {selectedField.name}
             </h3>
@@ -133,13 +133,13 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
             <div className="flex gap-3 pt-4 border-t border-white/5">
               <button
                 onClick={handleStartCycle}
-                className="flex-1 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-bold transition-all rounded-xl"
+                className="flex-1 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-medium transition-all rounded-xl"
               >
                 {t('ui_growth_cycle_modal_initialize_growth_cycle')}
               </button>
               <button
                 onClick={() => setShowCycleModal(false)}
-                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition-all rounded-xl"
+                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-all rounded-xl"
               >
                 {t('common_cancel')}
               </button>

@@ -67,7 +67,7 @@ const PreCallView = ({
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+      <h2 className="text-xl font-medium text-gray-900 mb-4">
         {t('video_consultation_title') || 'Video consultation'}
       </h2>
 
@@ -175,7 +175,7 @@ const LocalVideo = ({
         />
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center bg-gray-800">
-          <div className="w-20 h-20 bg-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md mb-2">
+          <div className="w-20 h-20 bg-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-medium shadow-md mb-2">
             {userName.charAt(0).toUpperCase()}
           </div>
           <span className="text-xs text-gray-400">Camera is off</span>
@@ -184,7 +184,7 @@ const LocalVideo = ({
       <div className="absolute bottom-2 start-2 bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 shadow">
         <span className={`w-2 h-2 rounded-full ${isVideoEnabled ? 'bg-emerald-400' : 'bg-amber-400'}`} />
         <span>{t('video_you') || 'You'}</span>
-        {isHost && <span className="text-emerald-400 font-semibold">({t('video_host') || 'Host'})</span>}
+        {isHost && <span className="text-emerald-400 font-medium">({t('video_host') || 'Host'})</span>}
       </div>
     </div>
   );
@@ -223,7 +223,7 @@ const RecordingBar: React.FC<{ recordedUrl: string; roomId: string; t: (k: strin
     <a
       href={recordedUrl}
       download={`consultation-${roomId}-${Date.now()}.webm`}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-medium"
     >
       <Download className="w-3.5 h-3.5" /> {t('video_download_recording') || 'Download'}
     </a>
@@ -324,7 +324,7 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
             <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-3">
               <Users className="w-7 h-7" />
             </div>
-            <p className="text-white font-semibold text-sm sm:text-base">
+            <p className="text-white font-medium text-sm sm:text-base">
               {t('video_waiting_others') || 'Waiting for others to join...'}
             </p>
             <p className="text-xs text-gray-400 mt-1.5 max-w-xs leading-relaxed">

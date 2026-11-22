@@ -113,7 +113,7 @@ function Telemetry() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className={`text-2xl font-bold tracking-tight text-slate-900 dark:text-white ${headingClass}`}>{t('nav_telemetry')}</h1>
+          <h1 className={`text-2xl font-medium tracking-tight text-slate-900 dark:text-white ${headingClass}`}>{t('nav_telemetry')}</h1>
           <p className="text-slate-600 dark:text-white/60 text-xs sm:text-sm mt-1">{t('telemetry_subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
@@ -130,7 +130,7 @@ function Telemetry() {
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50 text-xs sm:text-sm font-bold transition-all shadow-md`}
+            className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50 text-xs sm:text-sm font-medium transition-all shadow-md`}
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>{t('ui_farmer_detail_panel_refresh')}</span>
@@ -242,7 +242,7 @@ function Telemetry() {
       <div className="card p-6">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
               <span>{t('ui_telemetry_spatial_soil_environmental_telemetry')}</span>
               <span className="px-2 py-0.5 rounded text-xxs font-mono bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                 {t('ui_telemetry_soilgrids_v2_nasa_power')}
@@ -260,7 +260,7 @@ function Telemetry() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Status Distribution */}
         <div className="card p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
             {t('telemetry_request_distribution')}
           </h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -281,7 +281,7 @@ function Telemetry() {
         {/* Agent Usage */}
         {summary?.agentUsage && (
           <div className="card p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
               {t('telemetry_agent_usage')}
             </h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -305,7 +305,7 @@ function Telemetry() {
       {/* Recent Events */}
       <div className="card p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
             {t('telemetry_recent_events')}
           </h3>
           <div className="flex items-center gap-2">

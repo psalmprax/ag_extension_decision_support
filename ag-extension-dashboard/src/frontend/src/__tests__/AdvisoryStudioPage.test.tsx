@@ -47,10 +47,10 @@ describe('AdvisoryStudioPage Component', () => {
   it('renders initial default maize workflow template and steps', () => {
     render(<AdvisoryStudioPage />);
 
-    expect(screen.getByDisplayValue('Kenya Maize & Fall Armyworm Bio-Protocol')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Maize and fall armyworm protocol')).toBeInTheDocument();
     expect(screen.getByText('4 steps')).toBeInTheDocument();
-    expect(screen.getByText('Crop & Phenology Phase')).toBeInTheDocument();
-    expect(screen.getByText('Fall Armyworm Severity Assessment')).toBeInTheDocument();
+    expect(screen.getByText('Crop & phenology phase')).toBeInTheDocument();
+    expect(screen.getByText('Fall armyworm severity assessment')).toBeInTheDocument();
     expect(screen.getByText('Mobile PWA preview')).toBeInTheDocument();
   });
 
@@ -60,7 +60,7 @@ describe('AdvisoryStudioPage Component', () => {
     const selects = screen.getAllByRole('combobox');
     fireEvent.change(selects[0]!, { target: { value: 'soil_lime' } });
 
-    expect(screen.getByDisplayValue('Acidic Soil Remediation & Lime Advisory')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Acidic soil remediation & lime advisory')).toBeInTheDocument();
     expect(screen.getByText('Soil pH Sensor Input')).toBeInTheDocument();
     expect(screen.getByText('3 steps')).toBeInTheDocument();
   });
@@ -113,7 +113,7 @@ describe('AdvisoryStudioPage Component', () => {
       expect(mockedPost).toHaveBeenCalledWith(
         '/workflows',
         expect.objectContaining({
-          title: 'Kenya Maize & Fall Armyworm Bio-Protocol',
+          title: 'Maize and fall armyworm protocol',
           status: 'draft',
         })
       );

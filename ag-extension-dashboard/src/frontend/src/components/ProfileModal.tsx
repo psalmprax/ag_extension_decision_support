@@ -26,7 +26,7 @@ import toast from 'react-hot-toast';
 import apiClient from '@/api/client';
 import { logout } from '@/api/authService';
 import { PasswordChangeInput } from '@/components/profile/PasswordChangeInput';
-import { AVATAR_PRESETS, DEFAULT_PREFERENCES, getSavedProfileData } from './profileDefaults';
+import { AVATAR_PRESETS, DEFAULT_PREFERENCES, getSavedProfileData, saveProfileLocally } from './profileDefaults';
 import { TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
 
 const PROFILE_TABS = [
@@ -35,6 +35,7 @@ const PROFILE_TABS = [
   { id: 'security', label: 'ui_profile_modal_security_account', icon: Lock },
 ] as const;
 import { saveBlob } from '@/lib/saveBlob';
+import { safeStorage } from '@/lib/safeStorage';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -87,7 +88,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       username: savedUsername,
       email: user.email || '',
       phone: user.phone || savedPhone,
-      region: user.region || 'Uasin Gishu, Kenya',
+      region: user.region || '',
       avatarId: savedAvatar,
     });
 
@@ -113,16 +114,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         phone: formData.phone,
         profileSettings,
       });
-      let personalizationSaved = true;
-      try {
-        localStorage.setItem(`gpexts_user_avatar:${user?.id}`, formData.avatarId);
-        localStorage.setItem(`gpexts_user_handle:${user?.id}`, formData.username);
-        localStorage.setItem(`gpexts_user_phone:${user?.id}`, formData.phone);
-        localStorage.setItem(`gpexts_user_preferences:${user?.id}`, JSON.stringify(preferences));
-        window.dispatchEvent(new Event('gpexts:avatar-updated'));
-      } catch {
-        personalizationSaved = false;
-      }
+      const personalizationSaved = saveProfileLocally(user?.id, formData, preferences);
+      window.dispatchEvent(new Event('gpexts:avatar-updated'));
 
       if (user) {
         setUser({
@@ -169,7 +162,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       toast.success('Password updated. Please sign in again.');
       setPasswordState({ currentPassword: '', newPassword: '', confirmPassword: '' });
       await logout();
-      localStorage.removeItem('user');
+      safeStorage.remove('user');
       setUser(null);
       window.location.href = '/login';
     } catch {
@@ -192,7 +185,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       });
       toast.success('Account deleted. Your session has ended.');
       await logout();
-      localStorage.removeItem('user');
+      safeStorage.remove('user');
       setUser(null);
       window.location.href = '/login';
     } catch {
@@ -455,7 +448,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                               setLanguage(item.code as Language);
                               toast.success(`Language set to ${item.label}`);
                             }}
-                            className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-between transition-all ${
+                            className={`p-2.5 rounded-xl border text-xs font-medium flex items-center justify-between transition-all ${
                               language === item.code
                                 ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
                                 : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 bg-slate-50 dark:bg-slate-800/60'
@@ -480,7 +473,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                               key={u}
                               type="button"
                               onClick={() => setPreferences(p => ({ ...p, areaUnit: u }))}
-                              className={`flex-1 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
+                              className={`flex-1 py-1.5 rounded-lg text-xs font-medium capitalize transition-all ${
                                 preferences.areaUnit === u
                                   ? 'bg-emerald-600 text-white shadow-sm'
                                   : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600'
@@ -505,7 +498,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                               key={tItem.id}
                               type="button"
                               onClick={() => setPreferences(p => ({ ...p, tempUnit: tItem.id }))}
-                              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
                                 preferences.tempUnit === tItem.id
                                   ? 'bg-emerald-600 text-white shadow-sm'
                                   : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600'
@@ -529,7 +522,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <form onSubmit={handlePasswordChange} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
                       <div className="flex items-center gap-2 mb-2">
                         <KeyRound className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                        <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                        <h4 className="text-xs font-medium text-slate-800 dark:text-slate-200">
                           {t('ui_profile_modal_change_account_password')}
                         </h4>
                       </div>
@@ -560,7 +553,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       <div className="flex justify-end pt-2">
                         <button
                           type="submit"
-                          className="px-4 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs rounded-xl hover:opacity-90 transition-opacity"
+                          className="px-4 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-medium text-xs rounded-xl hover:opacity-90 transition-opacity"
                         >
                           {t('ui_profile_modal_update_password')}
                         </button>
@@ -570,7 +563,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     {/* Two-Factor Authentication */}
                     <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                       <div>
-                        <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        <div className="text-xs font-medium text-slate-800 dark:text-slate-200">
                           {t('ui_profile_modal_two_factor_authentication_2fa')}
                         </div>
                         <div className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -584,7 +577,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <div className="p-4 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/20 space-y-3">
                       <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
                         <AlertTriangle className="w-4 h-4" />
-                        <h4 className="text-xs font-semibold">{t('ui_profile_modal_account_data_danger_zone')}</h4>
+                        <h4 className="text-xs font-medium">{t('ui_profile_modal_account_data_danger_zone')}</h4>
                       </div>
                       <p className="text-xs text-rose-900 dark:text-rose-200">
                         {t('ui_profile_modal_export_your_personal_data_or_request')}
@@ -593,7 +586,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         type="button"
                         onClick={() => void handleAccountExport()}
                         disabled={isExporting}
-                        className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 disabled:opacity-50"
+                        className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-medium flex items-center gap-1.5 disabled:opacity-50"
                       >
                         <Download className="w-3.5 h-3.5" />
                         {isExporting ? 'Preparing export…' : 'Download my account data'}
@@ -601,12 +594,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
                       {showDeleteConfirm ? (
                         <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-rose-300 dark:border-rose-800 space-y-2">
-                          <p className="text-xs font-bold text-rose-600">{t('ui_profile_modal_are_you_sure_this_cannot_be_undone')}</p>
+                          <p className="text-xs font-medium text-rose-600">{t('ui_profile_modal_are_you_sure_this_cannot_be_undone')}</p>
                           <div className="flex gap-2">
                             <button
                               type="button"
                               onClick={() => setShowDeleteConfirm(false)}
-                              className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-xs font-bold rounded-lg text-slate-700 dark:text-slate-300"
+                              className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-xs font-medium rounded-lg text-slate-700 dark:text-slate-300"
                             >
                               {t('common_cancel')}
                             </button>
@@ -614,9 +607,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                               type="button"
                               onClick={() => void handleAccountDeletion()}
                               disabled={isDeleting}
-                              className="px-3 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700"
+                              className="px-3 py-1.5 bg-rose-600 text-white text-xs font-medium rounded-lg hover:bg-rose-700"
                             >
-                              {isDeleting ? 'Deleting…' : 'Delete My Account'}
+                              {isDeleting ? 'Deleting…' : 'Delete my account'}
                             </button>
                           </div>
                           <input
@@ -640,7 +633,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         <button
                           type="button"
                           onClick={() => setShowDeleteConfirm(true)}
-                          className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                          className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           <span>{t('ui_profile_modal_request_account_deletion')}</span>
@@ -663,7 +656,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       <button
                         type="button"
                         onClick={() => setIsEditing(false)}
-                        className="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+                        className="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
                       >
                         {t('common_cancel')}
                       </button>
@@ -671,7 +664,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         type="button"
                         onClick={handleSaveProfile}
                         disabled={isSaving}
-                        className="px-5 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-1.5 disabled:opacity-50 shadow-md shadow-emerald-950/20"
+                        className="px-5 py-2 bg-emerald-600 text-white font-medium text-xs rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-1.5 disabled:opacity-50 shadow-md"
                       >
                         {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                         <span>{t('ui_profile_modal_save_changes')}</span>
@@ -684,7 +677,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         setIsEditing(true);
                         setActiveTab('profile');
                       }}
-                      className="px-5 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-950/20"
+                      className="px-5 py-2 bg-emerald-600 text-white font-medium text-xs rounded-xl hover:bg-emerald-700 transition-colors shadow-md"
                     >
                       {t('ui_profile_modal_edit_profile')}
                     </button>

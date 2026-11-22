@@ -51,7 +51,7 @@ const SOURCE_ICONS: Record<string, React.ElementType> = {
 
 const DATA_STATUS_STYLE: Record<MarketDataStatus, string> = {
   live: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
-  estimated: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
+  estimated: 'bg-amber-500/10 text-amber-800 dark:text-amber-400 border-amber-500/20',
   unavailable: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
 };
 
@@ -148,7 +148,7 @@ const PriceSummaryGrid: React.FC<{ rows: PriceChartRow[] }> = ({ rows }) => (
           <p className="text-xxs text-slate-400 dark:text-white/30 font-mono mt-0.5">{SOURCE_LABELS[row.source] || row.source}</p>
         </div>
         <div className="text-end shrink-0">
-          <p className="text-sm font-semibold font-mono tabular-nums text-slate-900 dark:text-white">{row.formattedPrice}</p>
+          <p className="text-sm font-medium font-mono tabular-nums text-slate-900 dark:text-white">{row.formattedPrice}</p>
           <p className={`text-xxs font-medium font-mono tabular-nums ${row.trendPct >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
             {row.trendPct >= 0 ? '+' : ''}{row.trendPct.toFixed(1)}%
           </p>
@@ -306,7 +306,7 @@ export const MarketPriceTrendCard: React.FC = () => {
             <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-700 dark:text-amber-400 shrink-0">
               <Truck className="w-4 h-4" />
             </div>
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+            <h3 className="text-base font-medium text-slate-900 dark:text-white">
               {t('ui_market_price_trend_card_commodity_market_prices')}
             </h3>
           </div>

@@ -69,7 +69,7 @@ router.get('/layers', validate({ query: layersQuery }), async (req: AuthRequest,
 
     const soilHorizon = await fetchSoilHorizon(farmerPoints);
     const ndviPoints = await fetchNdviPoints(clauses, params, nextIdx, limit);
-    const pestSwarm = await fetchPestSwarm();
+    const pestSwarm = await fetchPestSwarm(clauses, params, nextIdx);
 
     // 5. Satellite orbit — DETERMINISTIC PREVIEW, not live telemetry.
     // Static ISS/Terra-Aqua two-line elements propagated with Kepler math.
@@ -181,30 +181,51 @@ export type PestSwarmLayer = {
   trajectories: Array<Pick<SwarmCluster, 'clusterId' | 'centroid' | 'severityLevel'>>;
 };
 
-let warnedNoPestSource = false;
 
-async function fetchPestSwarm(): Promise<PestSwarmLayer> {
+/** Diagnosis labels that name a swarming pest, mapped to the radar's pest types. */
+const PEST_LABELS: Array<[RegExp, string]> = [
+  [/fall[\s_-]*armyworm/i, 'fall_armyworm'],
+  [/african[\s_-]*armyworm/i, 'african_armyworm'],
+  [/desert[\s_-]*locust|\blocust/i, 'desert_locust'],
+  [/quelea/i, 'quelea_birds'],
+];
+
+/**
+ * Pest sightings are the pest diagnoses recorded at farms with a location in the last 14
+ * days, limited to the farms this person may see. Each counts as one isolated sighting:
+ * a diagnosis does not say how dense the swarm was, so clustering decides the level.
+ */
+async function fetchPestSwarm(clauses: string[], params: unknown[], nextIdx: number): Promise<PestSwarmLayer> {
   try {
-    const { rows: sightings } = await query<{
-      id: string; pest_type: string; lat: string; lng: string; county: string; severity: string; reported_at: string; reporter_role: string;
-    }>(`SELECT id, pest_type, lat, lng, county, severity, reported_at, reporter_role FROM pest_sightings WHERE reported_at > NOW() - INTERVAL '14 days' LIMIT 500`);
+    const { rows } = await query<{
+      id: string; disease_label: string; lat: string; lng: string; district: string | null; created_at: string; role: string | null;
+    }>(`SELECT d.id, d.disease_label, f.location_lat AS lat, f.location_lng AS lng, COALESCE(d.district, f.district) AS district,
+               d.created_at, u.role
+          FROM diagnosis_events d
+          JOIN farmers f ON f.id = d.farmer_id
+          LEFT JOIN users u ON u.id = d.user_id
+         WHERE d.created_at > NOW() - INTERVAL '14 days'
+           AND f.location_lat IS NOT NULL AND f.location_lng IS NOT NULL
+           AND d.disease_label ~* '(armyworm|locust|quelea)'
+           ${clauses.length ? `AND ${clauses.join(' AND ')}` : ''}
+         LIMIT $${nextIdx}`, [...params, 500]);
+    const sightings = rows.flatMap(row => {
+      const pestType = PEST_LABELS.find(([pattern]) => pattern.test(row.disease_label))?.[1];
+      if (!pestType) return [];
+      return [{
+        id: row.id, pestType: pestType as never, lat: Number(row.lat), lng: Number(row.lng), county: row.district ?? '',
+        severity: 'isolated' as never, reportedAt: row.created_at,
+        reporterRole: (row.role === 'farmer' ? 'farmer' : 'extension_officer') as never,
+      }];
+    });
     if (sightings.length < 2) return { status: 'live', clusters: [], trajectories: [] };
-    const clusters = clusterPestSightings(sightings.map(s => ({
-      id: s.id, pestType: s.pest_type as never, lat: Number(s.lat), lng: Number(s.lng), county: s.county, severity: s.severity as never, reportedAt: s.reported_at, reporterRole: s.reporter_role as never,
-    })));
+    const clusters = clusterPestSightings(sightings);
     return {
       status: 'live',
       clusters,
       trajectories: clusters.map(c => ({ clusterId: c.clusterId, centroid: c.centroid, severityLevel: c.severityLevel })),
     };
   } catch (error) {
-    if ((error as { code?: string })?.code === '42P01') {
-      if (!warnedNoPestSource) {
-        warnedNoPestSource = true;
-        logger.warn('WorldMonitor pest swarm layer has no data source: table pest_sightings does not exist.');
-      }
-      return { status: 'no_data_source', clusters: [], trajectories: [] };
-    }
     logger.error('WorldMonitor pest swarm fetch failed:', error);
     return { status: 'unavailable', clusters: [], trajectories: [] };
   }

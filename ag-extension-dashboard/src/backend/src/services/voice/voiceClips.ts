@@ -4,9 +4,10 @@
  * or wav, so recordings are uploaded in those formats (a phone's voice recorder can export
  * either). The provider fetches a recording through a signed link, since it has no session.
  */
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHmac } from 'crypto';
 import { query } from '@/services/databaseService';
 import { config } from '@/config';
+import { safeEqual } from '@/utils/safeEqual';
 
 export class VoiceClipError extends Error {
     constructor(message: string, readonly status = 400) { super(message); }
@@ -24,12 +25,17 @@ const PLAYABLE = new Set(['audio/mpeg', 'audio/wav']);
 
 export interface ClipRow {
     id: string; key: string; language: string; title: string; transcript: string | null;
-    storage_key: string; mime_type: string; created_at: Date;
+    storage_key: string; mime_type: string; created_at: Date; recorded_by: string;
+}
+
+/** Who may replace or remove a recording: the person who made it, or an administrator. */
+export function mayChangeClip(clip: Pick<ClipRow, 'recorded_by'>, by: { userId: string; role: string }): boolean {
+    return by.role === 'admin' || clip.recorded_by === by.userId;
 }
 
 export async function listClips(): Promise<ClipRow[]> {
     const { rows } = await query<ClipRow>(
-        `SELECT c.id, c.key, c.language, c.title, c.transcript, u.storage_key, u.mime_type, c.created_at
+        `SELECT c.id, c.key, c.language, c.title, c.transcript, u.storage_key, u.mime_type, c.created_at, c.recorded_by
            FROM voice_clips c JOIN upload_records u ON u.id = c.upload_id
           ORDER BY c.key, c.language`,
     );
@@ -39,7 +45,8 @@ export async function listClips(): Promise<ClipRow[]> {
 export interface ClipInput { key: string; language: string; title: string; transcript?: string; uploadId: string }
 
 /** Save (or replace) the recording for a message in a language. */
-export async function saveClip(userId: string, input: ClipInput): Promise<{ id: string }> {
+export async function saveClip(by: { userId: string; role: string }, input: ClipInput): Promise<{ id: string }> {
+    const userId = by.userId;
     const key = input.key.trim().toLowerCase().replace(/[^a-z0-9_:-]+/g, '_').slice(0, 80);
     const language = input.language.trim().toLowerCase().slice(0, 10);
     if (!key || !/^[a-z]{2,3}(-[a-z]{2,4})?$/.test(language)) throw new VoiceClipError('Give the message and a language code such as sw or ha.');
@@ -55,22 +62,30 @@ export async function saveClip(userId: string, input: ClipInput): Promise<{ id: 
          VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (key, language) DO UPDATE SET title = EXCLUDED.title, transcript = EXCLUDED.transcript,
              upload_id = EXCLUDED.upload_id, recorded_by = EXCLUDED.recorded_by, created_at = NOW()
+           WHERE $7 OR voice_clips.recorded_by = EXCLUDED.recorded_by
          RETURNING id`,
-        [key, language, input.title.trim().slice(0, 200), input.transcript?.trim() || null, input.uploadId, userId],
+        [key, language, input.title.trim().slice(0, 200), input.transcript?.trim() || null, input.uploadId, userId, by.role === 'admin'],
     );
+    // No row: the message already has a recording in this language that someone else made.
+    if (!rows[0]) throw new VoiceClipError('This message already has a recording in that language by someone else. An administrator can replace it.', 409);
     return { id: rows[0].id };
 }
 
-export async function deleteClip(id: string): Promise<boolean> {
-    const { rowCount } = await query('DELETE FROM voice_clips WHERE id = $1', [id]);
+/**
+ * The library is shared by every organisation on this server, so a regional manager
+ * removes only the recordings they made; an administrator may remove any.
+ */
+export async function deleteClip(id: string, by: { userId: string; role: string }): Promise<boolean> {
+    const { rowCount } = by.role === 'admin'
+        ? await query('DELETE FROM voice_clips WHERE id = $1', [id])
+        : await query('DELETE FROM voice_clips WHERE id = $1 AND recorded_by = $2', [id, by.userId]);
     return (rowCount ?? 0) > 0;
 }
 
 const signature = (clipId: string) => createHmac('sha256', config.jwt.secret).update(`voice-clip:${clipId}`).digest('hex').slice(0, 32);
 
 export function isValidClipSignature(clipId: string, sig: unknown): boolean {
-    if (typeof sig !== 'string' || sig.length !== 32) return false;
-    return timingSafeEqual(Buffer.from(sig), Buffer.from(signature(clipId)));
+    return safeEqual(sig, signature(clipId));
 }
 
 /** A link the voice provider can fetch without signing in. */

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
+import { safeStorage } from '@/lib/safeStorage';
 
 interface ConversationRealtimeOptions {
   /** The conversation to join; null while none is open. */
@@ -74,7 +75,7 @@ export function useConversationRealtime({ conversationId, enabled, onNewMessage 
   const notifyTyping = useCallback(() => {
     const socket = socketRef.current;
     if (!socket || !conversationId || !enabled) return;
-    const userId = (JSON.parse(localStorage.getItem('user') || '{}') as { id?: string })?.id || 'me';
+    const userId = safeStorage.json<{ id?: string }>('user', {})?.id || 'me';
     socket.emit('typing', { conversationId, userId });
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {

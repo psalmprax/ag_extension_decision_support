@@ -1,17 +1,12 @@
 import crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '@/utils/logger';
+import { safeEqual } from '@/utils/safeEqual';
 
 const META_SIGNATURE_HEADER = 'x-hub-signature-256';
 const TWILIO_SIGNATURE_HEADER = 'x-twilio-signature';
 const TELEGRAM_SECRET_HEADER = 'x-telegram-bot-api-secret-token';
 
-const safeHexEqual = (received: string, expected: string): boolean => {
-    const a = Buffer.from(received, 'utf8');
-    const b = Buffer.from(expected, 'utf8');
-    if (a.length !== b.length) return false;
-    return crypto.timingSafeEqual(a, b);
-};
 
 export const verifyTelegramWebhookSecret = (req: Request, res: Response, next: NextFunction): void => {
     const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
@@ -21,7 +16,7 @@ export const verifyTelegramWebhookSecret = (req: Request, res: Response, next: N
         return;
     }
     const received = req.headers[TELEGRAM_SECRET_HEADER];
-    if (typeof received !== 'string' || !safeHexEqual(received, secret)) {
+    if (typeof received !== 'string' || !safeEqual(received, secret)) {
         logger.warn('Telegram webhook rejected — invalid secret token');
         res.status(403).json({ success: false, error: 'Webhook signature verification failed' });
         return;
@@ -32,7 +27,7 @@ export const verifyTelegramWebhookSecret = (req: Request, res: Response, next: N
 const verifyMetaSignature = (rawBody: Buffer, signatureHeader: string, appSecret: string): boolean => {
     if (!signatureHeader.startsWith('sha256=')) return false;
     const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex')}`;
-    return safeHexEqual(signatureHeader, expected);
+    return safeEqual(signatureHeader, expected);
 };
 
 const verifyTwilioSignature = (req: Request, authToken: string): boolean => {
@@ -61,7 +56,7 @@ const verifyTwilioSignature = (req: Request, authToken: string): boolean => {
         .digest('base64');
 
     const received = String(req.headers[TWILIO_SIGNATURE_HEADER]);
-    return safeHexEqual(received, expected);
+    return safeEqual(received, expected);
 };
 
 /**
@@ -132,7 +127,7 @@ export const verifySmsGatewayWebhook = (req: Request, res: Response, next: NextF
     const gatewaySecret = process.env.AFRICASTALKING_WEBHOOK_SECRET;
     const presented = req.headers[GATEWAY_SECRET_HEADER] ?? req.query.key;
     if (gatewaySecret && typeof presented === 'string') {
-        if (safeHexEqual(presented, gatewaySecret)) {
+        if (safeEqual(presented, gatewaySecret)) {
             next();
             return;
         }

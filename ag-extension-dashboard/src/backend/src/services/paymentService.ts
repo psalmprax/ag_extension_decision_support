@@ -94,6 +94,7 @@ class PaymentService {
             try {
                 this.stripe = new Stripe(stripeKey, {
                     apiVersion: '2024-12-18.acacia' as unknown as Stripe.LatestApiVersion,
+                    timeout: 20_000,
                 });
                 logger.info('Stripe payment service initialized (Real Mode)');
             } catch (error) {
@@ -576,13 +577,19 @@ class PaymentService {
     }
 
     // Delete payment method
-    async deletePaymentMethod(paymentMethodId: string): Promise<{ success: boolean; errorCode?: string; message?: string }> {
+    /** Detach a saved card, only when it belongs to this customer. */
+    async deletePaymentMethod(paymentMethodId: string, customerId: string): Promise<{ success: boolean; errorCode?: string; message?: string }> {
         if (!this.stripe) {
             logger.warn(`Cannot delete payment method ${paymentMethodId} — Stripe is not configured.`);
             return { success: false, errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED', message: 'Stripe is not configured. Payment method deletion is unavailable.' };
         }
 
         try {
+            const method = await this.stripe.paymentMethods.retrieve(paymentMethodId);
+            const owner = typeof method.customer === 'string' ? method.customer : method.customer?.id;
+            if (owner !== customerId) {
+                return { success: false, errorCode: 'PAYMENT_METHOD_NOT_FOUND', message: 'Payment method not found' };
+            }
             await this.stripe.paymentMethods.detach(paymentMethodId);
             return { success: true, message: 'Payment method removed successfully' };
         } catch (error) {

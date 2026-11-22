@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
-import { safeError } from '@/utils/safeResponse';
+import { safeError, failRequest } from '@/utils/safeResponse';
 import { KnowledgeSyncInProgressError, KnowledgeSyncOrchestrator } from '@/services/data/knowledgeSyncOrchestrator';
 
 const router = Router();
@@ -32,7 +32,7 @@ router.post('/', async (_req: Request, res: Response) => {
             return safeError(res, 409, 'Knowledge sync is already in progress');
         }
         logger.error('Knowledge sync error:', error);
-        safeError(res, 500, 'Failed to sync knowledge sources');
+        failRequest(res, error, 'Failed to sync knowledge sources');
     }
 });
 

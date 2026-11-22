@@ -14,6 +14,7 @@ import { safeError } from '@/utils/safeResponse';
 import { credentialVersion } from '@/utils/credentialVersion';
 import { resolveUserPlan } from '@/services/subscriptionUtils';
 import { signSessionToken } from '@/utils/sessionToken';
+import { clientIpOf } from '@/utils/clientIp';
 
 const router = Router();
 
@@ -177,7 +178,7 @@ async function completeMfaLogin(
 router.post('/mfa/verify', async (req: Request, res: Response) => {
     try {
         const { tempToken, code, isBackupCode } = req.body;
-        const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.ip || null;
+        const clientIp = clientIpOf(req);
 
         if (!tempToken || !code) {
             return res.status(400).json({ success: false, error: 'tempToken and code are required' });

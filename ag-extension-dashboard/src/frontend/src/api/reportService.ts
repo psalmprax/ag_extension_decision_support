@@ -1,14 +1,14 @@
 import apiClient from './client';
+import { fetchAllPages } from './fetchAllPages';
 import type { Report, ReportListResponse } from '@ag-extension/shared/api';
 
 // Canonical shapes come from the shared API contract (@ag-extension/shared/api).
 export type { Report };
 export type ReportsResponse = ReportListResponse;
 
-export const fetchReports = async (): Promise<ReportListResponse> => {
-  const response = await apiClient.get<ReportListResponse>('/reporting');
-  return response.data;
-};
+/** Every report this person may see, page by page; one request returned only the latest 20. */
+export const fetchReports = (): Promise<ReportListResponse> =>
+  fetchAllPages('/reporting', 'reports', { pageSize: 200, ceiling: 2_000 }) as Promise<ReportListResponse>;
 
 export const generateReport = async (
   type: string,

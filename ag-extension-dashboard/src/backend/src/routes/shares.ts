@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { shareService } from '@/services/shareService';
+import { respondWithShare } from './shareRouteFactory';
 import { safeError } from '@/utils/safeResponse';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 
@@ -56,38 +57,7 @@ router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
  *                     url: { type: string }
  *                     expiresAt: { type: string, format: date-time }
  */
-router.post('/', async (req: Request, res: Response) => {
-    try {
-        const { entityType, entityId, isPublic, expiresAt, permissions } = req.body;
-        const createdBy = req.user?.userId;
-        const tenantId = createdBy ? await getPrincipalTenantId(createdBy) : null;
-        if (!createdBy || !tenantId) {
-            return res.status(403).json({ success: false, error: 'Tenant membership required' });
-        }
-
-        const shareLink = await shareService.createShare({
-            entityType,
-            entityId,
-            createdBy,
-            tenantId,
-            isPublic,
-            expiresAt: expiresAt ? new Date(expiresAt) : undefined,
-            permissions,
-        });
-
-        res.status(201).json({
-            success: true,
-            data: shareLink,
-        });
-    } catch (error: unknown) {
-        const msg = (error as Error)?.message || '';
-        if (msg.includes('not found') || msg.includes('not exist')) {
-            return res.status(404).json({ success: false, error: msg });
-        }
-        logger.error('Error creating share:', error);
-        safeError(res, 500, 'Failed to create share link');
-    }
-});
+router.post('/', (req: Request, res: Response) => respondWithShare(req, res, req.body?.entityType, req.body?.entityId));
 
 /**
  * @openapi

@@ -15,7 +15,7 @@ export function MCPToolsExecutionHistory({
   if (history.length === 0) return null;
   return (
     <div className="card p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
         {t('mcp_tools_recent_executions')}
       </h3>
       <div className="space-y-3 max-h-64 overflow-y-auto">

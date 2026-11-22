@@ -22,7 +22,7 @@ const DistributionCard: React.FC<{
     <div className={cardClass}>
       <div className="flex items-center gap-2 mb-6">
         {icon}
-        <h3 className="text-lg font-headline font-semibold text-gray-900 dark:text-white">{title}</h3>
+        <h3 className="text-lg font-headline font-medium text-gray-900 dark:text-white">{title}</h3>
       </div>
       {rows.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">{emptyText}</p>
@@ -32,7 +32,7 @@ const DistributionCard: React.FC<{
             <div key={row.label}>
               <div className="flex justify-between items-center mb-1.5">
                 <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{row.label}</span>
-                <span className={`text-xs font-semibold tabular-nums ${valueClass}`}>{row.value}</span>
+                <span className={`text-xs font-medium tabular-nums ${valueClass}`}>{row.value}</span>
               </div>
               <div className="w-full h-2 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
                 <motion.div

@@ -1,14 +1,17 @@
 import apiClient from './client';
+import { fetchAllPages } from './fetchAllPages';
 import type { Farmer, FarmerListResponse } from '@ag-extension/shared/api';
 
 // Canonical shapes come from the shared API contract (@ag-extension/shared/api).
 export type { Farmer };
 export type FarmersResponse = FarmerListResponse;
 
-export const fetchFarmers = async (): Promise<FarmerListResponse> => {
-  const response = await apiClient.get<FarmerListResponse>('/farmers');
-  return response.data;
-};
+/**
+ * Every farmer this person may see, page by page (500 per request, the server's ceiling).
+ * One request returned only the first 50, so an officer with more could not find the rest.
+ */
+export const fetchFarmers = (): Promise<FarmerListResponse> =>
+  fetchAllPages('/farmers', 'farmers', { pageSize: 500, ceiling: 10_000 }) as Promise<FarmerListResponse>;
 
 export const createFarmer = async (
   farmer: Partial<Farmer>
@@ -31,6 +34,9 @@ export interface FarmerStats {
   alertsCount?: number;
   /** The extension officer assigned to the farmer, or null when none is. */
   officerName?: string | null;
+  /** Where the farm is, when recorded; null until the farmer or officer adds it. */
+  location?: { lat: number; lng: number } | null;
+  country?: string | null;
 }
 
 export interface FarmerStatsResponse {

@@ -12,10 +12,12 @@ import { smsService } from '@/services/smsService';
 import { whatsappService } from '@/services/whatsappService';
 import { telegramService } from '@/services/telegramService';
 import { usageService } from '@/services/usageService';
+import { query } from '@/services/databaseService';
 
 interface CohortFarmer {
   id: string;
   phone?: string | null;
+  sms_opt_out?: boolean;
   notes?: string | null;
   first_name?: string;
 }
@@ -89,3 +91,28 @@ describe('campaign messages are charged to the launching officer, one by one', (
     expect(usageService.incrementUsage).not.toHaveBeenCalled();
   });
 });
+
+describe('who a campaign reaches', () => {
+  it('sends nothing to the phone of a farmer who replied STOP', async () => {
+    jest.mocked(usageService.hasAllowance).mockResolvedValue(true);
+    const result = await dispatch([{ ...farmers[0], sms_opt_out: true }, farmers[1]], 'all', 'officer-1');
+    expect(smsService.sendSMS).toHaveBeenCalledTimes(1);
+    expect(whatsappService.sendMessage).toHaveBeenCalledTimes(1);
+    expect(result.byChannel.sms).toBe(1);
+  });
+
+  it("selects only the launcher's own farmers, by exact region and crop", async () => {
+    jest.mocked(query).mockResolvedValue({ rows: [] } as never);
+    const select = (autonomousCampaignService as unknown as {
+      queryTargetFarmers(principal: { userId: string; role: string }, tenantId: string | null, region: string, crop: string): Promise<unknown[]>;
+    }).queryTargetFarmers.bind(autonomousCampaignService);
+    await select({ userId: 'officer-1', role: 'extension_officer' }, 't1', 'Central', 'pea');
+    const [sql, params] = jest.mocked(query).mock.calls[0] as unknown as [string, unknown[]];
+    expect(sql).toContain('f.assigned_officer_id = $1');
+    expect(sql).toContain('lower(f.region) = lower($3)');
+    expect(sql).toContain('WHERE lower(crop) = lower($4)');
+    expect(sql).not.toMatch(/ILIKE/);
+    expect(params).toEqual(['officer-1', 't1', 'Central', 'pea']);
+  });
+});
+

@@ -15,24 +15,24 @@ export function MarketPriceCard({ snapshot }: { snapshot: LandingPricesSnapshot 
         data-testid="market-price-card"
         className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2.5"
       >
-        <div className="text-xs font-semibold text-amber-300 flex items-center justify-between">
+        <div className="text-xs font-medium text-amber-300 flex items-center justify-between">
           <span>{t('ui_market_price_card_illustrative_demo_data')}</span>
           <span className="text-[10px] font-mono text-white/50">{t('ui_market_price_card_not_live_prices')}</span>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="p-2 rounded-lg bg-white/[0.04] border border-white/5">
             <div className="text-[11px] text-white/60">{t('crop_maize')}</div>
-            <div className="text-xs sm:text-sm font-bold text-white mt-0.5">{t('ui_market_price_card_kes_3_850')}</div>
+            <div className="text-xs sm:text-sm font-medium text-white mt-0.5">{t('ui_market_price_card_kes_3_850')}</div>
             <div className="text-[10px] text-emerald-400 font-mono">{t('ui_market_price_card_2_4_bag')}</div>
           </div>
           <div className="p-2 rounded-lg bg-white/[0.04] border border-white/5">
             <div className="text-[11px] text-white/60">{t('ui_market_price_card_dry_beans')}</div>
-            <div className="text-xs sm:text-sm font-bold text-white mt-0.5">{t('ui_market_price_card_ugx_4_200')}</div>
+            <div className="text-xs sm:text-sm font-medium text-white mt-0.5">{t('ui_market_price_card_ugx_4_200')}</div>
             <div className="text-[10px] text-emerald-400 font-mono">+1.8% / kg</div>
           </div>
           <div className="p-2 rounded-lg bg-white/[0.04] border border-white/5">
             <div className="text-[11px] text-white/60">{t('ui_market_price_card_sorghum')}</div>
-            <div className="text-xs sm:text-sm font-bold text-white mt-0.5">{t('ui_market_price_card_tzs_1_450')}</div>
+            <div className="text-xs sm:text-sm font-medium text-white mt-0.5">{t('ui_market_price_card_tzs_1_450')}</div>
             <div className="text-[10px] text-amber-400 font-mono">{t('ui_market_price_card_stable_kg')}</div>
           </div>
         </div>
@@ -45,7 +45,7 @@ export function MarketPriceCard({ snapshot }: { snapshot: LandingPricesSnapshot 
       data-testid="market-price-card"
       className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2.5"
     >
-      <div className="text-xs font-semibold text-amber-300 flex items-center justify-between">
+      <div className="text-xs font-medium text-amber-300 flex items-center justify-between">
         <span>{t('ui_market_price_card_producer_price')} {snapshot.period ?? 'latest published year'}</span>
         <span className="text-[10px] font-mono text-white/50">USD</span>
       </div>
@@ -58,7 +58,7 @@ export function MarketPriceCard({ snapshot }: { snapshot: LandingPricesSnapshot 
               <div className="text-[11px] text-white/60">
                 {CROP_LABELS[price.cropCode] ?? price.crop}
               </div>
-              <div className="text-xs sm:text-sm font-bold text-white mt-0.5 tabular-nums">
+              <div className="text-xs sm:text-sm font-medium text-white mt-0.5 tabular-nums">
                 ${price.usdPerBag90kg.toFixed(2)}
               </div>
               <div

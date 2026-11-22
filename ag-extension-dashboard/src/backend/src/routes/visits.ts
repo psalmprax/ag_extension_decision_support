@@ -91,7 +91,8 @@ router.get('/', async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        let sql = `SELECT v.*, f.first_name || ' ' || f.last_name as farmer_name FROM visits v LEFT JOIN farmers f ON f.id = v.farmer_id WHERE ${linkedDemoSql('v', req.user)}`;
+        // total_count: every matching visit, not just this page.
+        let sql = `SELECT v.*, f.first_name || ' ' || f.last_name as farmer_name, COUNT(*) OVER()::int AS total_count FROM visits v LEFT JOIN farmers f ON f.id = v.farmer_id WHERE ${linkedDemoSql('v', req.user)}`;
         const params: unknown[] = [...scope.params];
         let paramIndex = params.length + 1;
         sql += scope.clause;
@@ -110,8 +111,8 @@ router.get('/', async (req: Request, res: Response) => {
             params.push(status);
         }
 
-        sql += ' ORDER BY v.scheduled_at DESC LIMIT $' + paramIndex++ + ' OFFSET $' + paramIndex;
-        params.push(parseInt(limit as string), parseInt(offset as string));
+        sql += ' ORDER BY v.scheduled_at DESC, v.id DESC LIMIT $' + paramIndex++ + ' OFFSET $' + paramIndex;
+        params.push(pageLimit(limit, 50, 500), pageOffset(offset));
 
         const result = await query<VisitWithFarmerRow>(sql, params);
 
@@ -119,7 +120,7 @@ router.get('/', async (req: Request, res: Response) => {
             success: true,
             data: {
                 visits: mapVisitWithFarmerRows(result.rows),
-                total: result.rowCount ?? result.rows.length,
+                total: (result.rows[0] as { total_count?: number } | undefined)?.total_count ?? 0,
             },
         });
     } catch (error) {
@@ -732,6 +733,7 @@ router.post('/location', async (req: Request, res: Response) => {
 
 import { createShareRoute } from './shareRouteFactory';
 import { farmerScopeSql } from '@/services/access/farmerScope';
+import { pageLimit, pageOffset } from '@/utils/pagination';
 router.use(createShareRoute('visit'));
 
 /**

@@ -228,7 +228,7 @@ export const AnalysisResultsHUD: React.FC<{
               {needsReview
                 ? <ShieldAlert className="w-4 h-4 text-amber-400" />
                 : <CheckCircle className="w-4 h-4 text-emerald-400" />}
-              <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
+              <h4 className="text-xs font-medium text-slate-900 dark:text-white">
                 {needsReview ? 'AI-observed health status' : 'Health status'}: {imageAnalysis.overallHealth}
               </h4>
             </div>
@@ -237,7 +237,7 @@ export const AnalysisResultsHUD: React.FC<{
             </p>
           </div>
           <div className="text-end">
-            <span className={`text-xl font-bold ${needsReview ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-400'} tabular-nums`}>
+            <span className={`text-xl font-medium ${needsReview ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-400'} tabular-nums`}>
               {(imageAnalysis.confidence * 100).toFixed(1)}%
             </span>
             <p className="text-xxs text-slate-400">{needsReview ? 'Model-reported confidence' : 'Confidence'}</p>
@@ -268,7 +268,7 @@ export const AnalysisResultsHUD: React.FC<{
       {/* Detected Pathogens */}
       {imageAnalysis.diseases.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
+          <h4 className="text-xs font-medium text-slate-900 dark:text-white">
             {t('ui_image_analysis_tab_possible_pathological_matches')}
           </h4>
           <div className="space-y-2">
@@ -309,7 +309,7 @@ export const AnalysisResultsHUD: React.FC<{
 
       {imageAnalysis.recommendations.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
+          <h4 className="text-xs font-medium text-slate-900 dark:text-white">
             {t('ui_image_analysis_tab_guidance')}
           </h4>
           <div className="grid grid-cols-1 gap-1.5">

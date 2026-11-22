@@ -80,10 +80,11 @@ export function VirtualizedList<T>({
       onScroll={handleScroll}
       className={`overflow-y-auto relative ${className}`}
       style={containerHeight !== undefined ? { height: containerHeight } : { minHeight: 0 }}
-      role="feed"
+      role="list"
     >
-      <div style={{ height: totalHeight, width: '100%', position: 'relative' }}>
+      <div role="presentation" style={{ height: totalHeight, width: '100%', position: 'relative' }}>
         <div
+          role="presentation"
           style={{
             transform: `translateY(${offsetY}px)`,
             position: 'absolute',
@@ -97,6 +98,7 @@ export function VirtualizedList<T>({
             return (
               <div
                 key={keyExtractor(item, actualIndex)}
+                role="listitem"
                 style={{ height: itemHeight }}
                 className="overflow-hidden"
               >

@@ -33,7 +33,7 @@ export function FarmerServices() {
           height={860}
           className="w-full h-full object-cover object-center opacity-10 filter saturate-125 contrast-105 pointer-events-none"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0d1a14] via-[#0d1a14]/80 to-[#0d1a14]" />
+        <div data-scrim className="absolute inset-0 bg-gradient-to-b from-[#0d1a14] via-[#0d1a14]/80 to-[#0d1a14]" />
       </div>
 
       <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 relative z-10">
@@ -64,7 +64,7 @@ export function FarmerServices() {
             whileInView="visible"
             viewport={{ once: true, margin: '-60px' }}
             variants={fadeUp}
-            className="group relative rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-emerald-950/40"
+            className="group relative rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl"
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -77,7 +77,7 @@ export function FarmerServices() {
               </div>
 
               <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                <h3 className="text-xl sm:text-2xl font-medium text-white mb-2 group-hover:text-emerald-300 transition-colors">
                   {t('ui_farmer_services_diagnose_my_crop')}
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
@@ -126,7 +126,7 @@ export function FarmerServices() {
             whileInView="visible"
             viewport={{ once: true, margin: '-60px' }}
             variants={fadeUp}
-            className="group relative rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-emerald-950/40"
+            className="group relative rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl"
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -139,7 +139,7 @@ export function FarmerServices() {
               </div>
 
               <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                <h3 className="text-xl sm:text-2xl font-medium text-white mb-2 group-hover:text-emerald-300 transition-colors">
                   {t('ui_farmer_services_check_the_weather')}
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
@@ -188,7 +188,7 @@ export function FarmerServices() {
             whileInView="visible"
             viewport={{ once: true, margin: '-60px' }}
             variants={fadeUp}
-            className="group relative rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:border-amber-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-amber-950/40"
+            className="group relative rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:border-amber-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl"
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -201,7 +201,7 @@ export function FarmerServices() {
               </div>
 
               <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-amber-300 transition-colors">
+                <h3 className="text-xl sm:text-2xl font-medium text-white mb-2 group-hover:text-amber-300 transition-colors">
                   {t('ui_farmer_services_check_fair_market_prices')}
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
@@ -255,7 +255,7 @@ export function FarmerServices() {
             whileInView="visible"
             viewport={{ once: true, margin: '-60px' }}
             variants={fadeUp}
-            className="group relative rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-emerald-950/40"
+            className="group relative rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/50 p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 shadow-xl"
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -268,7 +268,7 @@ export function FarmerServices() {
               </div>
 
               <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                <h3 className="text-xl sm:text-2xl font-medium text-white mb-2 group-hover:text-emerald-300 transition-colors">
                   {t('ui_farmer_services_read_advice_in_your_dialect')}
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
@@ -278,7 +278,7 @@ export function FarmerServices() {
 
               {/* Interactive Dialect Transcript Card */}
               <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2.5">
-                <div className="text-xs font-semibold text-emerald-300 flex items-center justify-between">
+                <div className="text-xs font-medium text-emerald-300 flex items-center justify-between">
                   <span>{t('ui_farmer_services_advice_text_preview')}</span>
                   <span className="text-xxs font-mono text-white/60">{t('ui_farmer_services_select_a_language')}</span>
                 </div>
@@ -287,7 +287,7 @@ export function FarmerServices() {
                     type="button"
                     onClick={() => selectDialect('sw')}
                     aria-pressed={activeDialect === 'sw'}
-                    className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center ${
+                    className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center ${
                       activeDialect === 'sw'
                         ? 'bg-emerald-700 text-white shadow-md'
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
@@ -299,7 +299,7 @@ export function FarmerServices() {
                     type="button"
                     onClick={() => selectDialect('lg')}
                     aria-pressed={activeDialect === 'lg'}
-                    className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center ${
+                    className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center ${
                       activeDialect === 'lg'
                         ? 'bg-emerald-700 text-white shadow-md'
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'
@@ -311,7 +311,7 @@ export function FarmerServices() {
                     type="button"
                     onClick={() => selectDialect('en')}
                     aria-pressed={activeDialect === 'en'}
-                    className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center ${
+                    className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center ${
                       activeDialect === 'en'
                         ? 'bg-emerald-700 text-white shadow-md'
                         : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10'

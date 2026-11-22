@@ -56,6 +56,8 @@ describe('POST /auth/forgot-password', () => {
     expect(res.body.message).toMatch(/If an account exists/);
     const [updateSql, params] = dbQuery.mock.calls[1];
     expect(updateSql).toMatch(/SET reset_token = \$1, reset_token_expires/);
+    // The email goes out after the answer, so the response time is the same either way.
+    await new Promise(resolve => setImmediate(resolve));
     const rawToken = sendPasswordResetEmail.mock.calls[0][1] as string;
     expect(rawToken).toHaveLength(64);
     expect(params[0]).toBe(sha(rawToken)); // only the hash hits the DB
@@ -91,7 +93,7 @@ describe('POST /auth/reset-password', () => {
   it('sets a bcrypt hash, clears the token/lockout and revokes all sessions', async () => {
     dbQuery
       .mockResolvedValueOnce({ rows: [{ id: 'u1', email: 'a@b', reset_token_expires: new Date(Date.now() + 60000) }] })
-      .mockResolvedValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [], rowCount: 1 });
     const res = await request(app).post('/auth/reset-password').send({ token, password: 'Kilimo-Bora-2026' });
     expect(res.status).toBe(200);
     const [sql, params] = dbQuery.mock.calls[1];
@@ -99,6 +101,16 @@ describe('POST /auth/reset-password', () => {
     expect(sql).toMatch(/failed_login_attempts = 0, lockout_until = NULL/);
     expect(await bcrypt.compare('Kilimo-Bora-2026', params[0])).toBe(true);
     expect(revokeAllUserSessions).toHaveBeenCalledWith('u1');
+    expect(params[2]).toBe(dbQuery.mock.calls[0][1][0]);
+  });
+
+  it('spends the link once: a second request with the same token changes nothing', async () => {
+    dbQuery
+      .mockResolvedValueOnce({ rows: [{ id: 'u1', email: 'a@b', reset_token_expires: new Date(Date.now() + 60000) }] })
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 });
+    const res = await request(app).post('/auth/reset-password').send({ token, password: 'Kilimo-Bora-2026' });
+    expect(res.status).toBe(400);
+    expect(res.body.errorCode).toBe('RESET_TOKEN_INVALID');
   });
 });
 

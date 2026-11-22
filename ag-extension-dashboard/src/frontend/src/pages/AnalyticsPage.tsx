@@ -36,8 +36,8 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
           <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-white/5">
               <div className="space-y-1">
-                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  {t('analytics_activity_timeline') || 'Activity & Advisory Timeline'}
+                <h3 className="text-base font-medium text-slate-900 dark:text-white">
+                  {t('analytics_activity_timeline') || 'Activity & advisory timeline'}
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-white/50">
                   {t('ui_analytics_page_completed_field_visits_and_new_farme')}
@@ -98,8 +98,8 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
       ) : (
         <div className="flex flex-col items-center justify-center py-20 text-center backdrop-blur-xl bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-white/10 rounded-xl p-8 shadow-sm">
           <BarChart3 className="w-14 h-14 text-slate-300 dark:text-white/20 mb-4" />
-          <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
-            {t('analytics_no_data') || 'No Analytics Data Available'}
+          <h3 className="text-base font-medium text-slate-900 dark:text-white mb-2">
+            {t('analytics_no_data') || 'No analytics data available'}
           </h3>
           <p className="text-xs text-slate-600 dark:text-white/50 max-w-sm leading-relaxed">
             {t('analytics_no_data_desc') ||

@@ -3,6 +3,9 @@ import { config } from '../config';
 import { logger } from '../utils/logger';
 import { addEmailJob } from '../queues/emailQueue';
 
+// nodemailer waits two minutes to connect and ten for a stalled socket by default.
+const SMTP_TIMEOUTS = { connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 30_000 };
+
 export interface EmailOptions {
     to: string | string[];
     subject: string;
@@ -22,6 +25,7 @@ class EmailService {
         // Create transporter based on environment
         if (process.env.SMTP_HOST) {
             this.transporter = nodemailer.createTransport({
+                ...SMTP_TIMEOUTS,
                 host: process.env.SMTP_HOST,
                 port: parseInt(process.env.SMTP_PORT || '587'),
                 secure: process.env.SMTP_SECURE === 'true',
@@ -34,6 +38,7 @@ class EmailService {
         } else if (process.env.EMAIL_SERVICE === 'sendgrid') {
             // SendGrid transport
             this.transporter = nodemailer.createTransport({
+                ...SMTP_TIMEOUTS,
                 service: 'SendGrid',
                 auth: {
                     user: 'apikey',
@@ -44,6 +49,7 @@ class EmailService {
         } else if (process.env.EMAIL_SERVICE === 'mailgun') {
             // Mailgun transport
             this.transporter = nodemailer.createTransport({
+                ...SMTP_TIMEOUTS,
                 host: 'smtp.mailgun.org',
                 port: 587,
                 auth: {
@@ -55,6 +61,7 @@ class EmailService {
         } else if (process.env.AWS_SES_REGION) {
             // AWS SES transport
             this.transporter = nodemailer.createTransport({
+                ...SMTP_TIMEOUTS,
                 host: `email.${process.env.AWS_SES_REGION}.amazonaws.com`,
                 port: 587,
                 auth: {

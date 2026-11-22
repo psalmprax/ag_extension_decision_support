@@ -12,7 +12,12 @@ jest.mock('../services/databaseService', () => ({
     getPool: jest.fn(() => ({
         query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 })
     })),
-    query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 })
+    // The shared farmer access rule: the fixture farmer belongs to officer off-1.
+    query: jest.fn(async (sql: string, params: unknown[] = []) => {
+        const visible = sql.includes('FROM farmers f WHERE f.id = $1')
+            && params[0] === '3f1e2d4c-5b6a-4987-8a1b-2c3d4e5f6a7b' && params.includes('off-1');
+        return visible ? { rows: [{ visible: 1 }], rowCount: 1 } : { rows: [], rowCount: 0 };
+    })
 }));
 
 jest.mock('../services/cacheService', () => ({

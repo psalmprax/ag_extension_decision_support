@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import { WeatherService } from '@/services/weatherService';
 import { FAOService } from '@/services/faoService';
 import { priorityService } from '@/services/priorityService';
-import { getPrisma } from '@/services/prismaService';
 import { logger } from '@/utils/logger';
 import { getMapData } from '@/services/mapService';
 import { marketPriceService, resolveUserAreaCode, getUserCountry } from '@/services/marketPriceService';
@@ -35,25 +34,8 @@ router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer'
 // Get priority score for a farmer — access-controlled
 router.get('/priority/:farmerId', requireFarmerAccess(), async (req: Request, res: Response) => {
     try {
+        // requireFarmerAccess has already applied the shared access rule.
         const { farmerId } = req.params;
-        const user = req.user as { userId?: string; role?: string } | undefined;
-        const prisma = getPrisma();
-
-        // Verify the requesting user has access to this farmer
-        const farmer = await prisma.farmer.findUnique({
-            where: { id: farmerId },
-            select: { userId: true, assignedOfficerId: true },
-        });
-        if (!farmer) {
-            return res.status(404).json({ success: false, error: 'Farmer not found' });
-        }
-        if (user?.role === 'farmer' && farmer.userId !== user.userId) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
-        if (user?.role === 'extension_officer' && farmer.assignedOfficerId !== user.userId) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
-
         const priority = await priorityService.calculateUrgencyScore(farmerId);
         res.json({ success: true, data: priority });
     } catch (error) {

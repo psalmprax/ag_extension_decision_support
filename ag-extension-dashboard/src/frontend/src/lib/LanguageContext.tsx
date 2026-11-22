@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Language } from './i18n';
 import { interpolate } from './interpolate';
+import { safeStorage } from '@/lib/safeStorage';
 
 interface LanguageContextType {
   language: Language;
@@ -26,6 +27,11 @@ function resolveTranslation(
   cache: Record<string, Record<string, string>>
 ): string | undefined {
   return cache[language]?.[key] ?? cache['en']?.[key];
+}
+
+/** The saved language, or null when there is none or the browser blocks storage. */
+function readSavedLanguage(): Language | null {
+  return safeStorage.get('preferred_language') as Language | null;
 }
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
@@ -56,7 +62,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const initI18n = async () => {
-      const savedLanguage = localStorage.getItem('preferred_language') as Language;
+      const savedLanguage = readSavedLanguage();
       const targetLang = savedLanguage && isValidLanguage(savedLanguage) ? savedLanguage : 'en';
 
       // Load both target and English (for fallback) in parallel
@@ -66,9 +72,12 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
       ]);
 
       setLanguageState(targetLang);
-      setIsLoaded(true);
     };
-    initI18n();
+    // The app renders nothing until this finishes, so it always finishes: whatever fails,
+    // the page shows in English rather than staying blank.
+    void initI18n()
+      .catch(error => console.error('[i18n] Could not start with the saved language:', error))
+      .finally(() => setIsLoaded(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -76,7 +85,8 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     // The current language stays on screen until the new one has loaded.
     await loadLanguage(lang);
     setLanguageState(lang);
-    localStorage.setItem('preferred_language', lang);
+    // Blocked storage: the choice holds for this visit only.
+    safeStorage.set('preferred_language', lang);
     setIsLoaded(true);
   };
 

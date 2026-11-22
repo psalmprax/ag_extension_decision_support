@@ -11,6 +11,7 @@ import { useAppStore } from '@/store/useAppStore';
 import type { ThreadPageProps } from '@/components/chat/threadProps';
 import { useQuery } from '@tanstack/react-query';
 import { fetchFarmerStats } from '@/api/farmerService';
+import { EarlierMessagesButton } from '@/components/chat/EarlierMessagesButton';
 
 /**
  * The farmer's chat with their extension officer, the in-app counterpart of
@@ -23,6 +24,7 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
   setActiveFarmerConvId,
   loadFarmerMessages,
   farmerChatMessages,
+  farmerHistory,
   farmerChatInput,
   setFarmerChatInput,
   handleFarmerChatSend,
@@ -107,7 +109,7 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
     <div className="flex flex-col h-[calc(100dvh-150px)] md:h-[calc(100vh-140px)] gap-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('ui_farmer_officer_chat_page_my_extension_officer')}</h2>
+          <h2 className="text-lg font-medium text-slate-900 dark:text-white">{t('ui_farmer_officer_chat_page_my_extension_officer')}</h2>
           <p className="text-sm text-slate-500 dark:text-white/60 flex items-center gap-1.5">
             <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
             {thread?.officerName ||
@@ -128,9 +130,12 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
               {t('ui_farmer_officer_chat_page_ask_your_officer_anything_about_your')}
             </p>
           ) : (
-            farmerChatMessages.map((message, index) => (
-              <FarmerChatMessage key={`${message.timestamp ?? ''}-${index}`} message={message} viewer="farmer" />
-            ))
+            <>
+              <EarlierMessagesButton history={farmerHistory} />
+              {farmerChatMessages.map((message, index) => (
+                <FarmerChatMessage key={message.id ?? `${message.timestamp ?? ''}-${index}`} message={message} viewer="farmer" />
+              ))}
+            </>
           )}
           {officerTyping && <p className="text-xxs text-slate-500 dark:text-white/50">{t('ui_farmer_officer_chat_page_your_officer_is_typing')}</p>}
           <div ref={endRef} />

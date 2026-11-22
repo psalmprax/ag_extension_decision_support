@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { PhoneCall, Trash2, Volume2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '@/lib/apiError';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { fetchPilots, type Pilot } from '@/components/pilots/pilotsApi';
@@ -38,8 +39,16 @@ export function VoiceLibrarySection({ active }: { active: boolean }) {
       const result = await callWithClip(clipId, pilotId);
       toast.success(t('voice_called', { queued: result.queued, skipped: result.skipped, defaultValue: 'Calling {queued} farmers. {skipped} calls could not be placed.' }));
     } catch (error) {
-      const message = (error as { response?: { data?: { error?: string } } }).response?.data?.error;
-      toast.error(message ?? t('voice_call_failed', { defaultValue: 'Could not place the calls.' }));
+      toast.error(getApiErrorMessage(error, t('voice_call_failed', { defaultValue: 'Could not place the calls.' })));
+    }
+  };
+
+  const remove = async (clipId: string) => {
+    try {
+      await deleteVoiceClip(clipId);
+      await load();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, t('voice_delete_failed', { defaultValue: 'Could not delete the recording.' })));
     }
   };
 
@@ -71,10 +80,12 @@ export function VoiceLibrarySection({ active }: { active: boolean }) {
                         <PhoneCall className="w-3.5 h-3.5" aria-hidden="true" />{t('voice_call_pilot', { name: pilot.name, defaultValue: 'Call {name}' })}
                       </button>
                     ))}
-                    <button type="button" className={ICON_BUTTON} aria-label={t('voice_delete', { title: clip.title, defaultValue: 'Delete {title}' })}
-                      onClick={() => { void deleteVoiceClip(clip.id).then(load); }}>
-                      <Trash2 className="w-4 h-4" aria-hidden="true" />
-                    </button>
+                    {clip.canChange && (
+                      <button type="button" className={ICON_BUTTON} aria-label={t('voice_delete', { title: clip.title, defaultValue: 'Delete {title}' })}
+                        onClick={() => { void remove(clip.id); }}>
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>

@@ -18,14 +18,13 @@ import {
   CheckCircle2,
   AlertCircle,
   Compass,
-  Sprout,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
 import { isActionEnter } from '@/lib/keyboard';
 import { createFarmer } from '@/api/farmerService';
 import { InlinePrompt, InfoPromptIcon } from '@/components/ui/InfoPrompt';
-import { COMMON_CROPS, ONBOARDING_PRESETS } from './farmerFormPresets';
+import { COMMON_CROPS } from './farmerFormPresets';
 import { AssignOfficerField } from './AssignOfficerField';
 import { StaffRegionNote } from './StaffRegionNote';
 import { getApiErrorMessage } from '@/lib/apiError';
@@ -51,7 +50,7 @@ export const FarmerRegistrationForm: React.FC = () => {
   const units = useUnits();
   const { isDemo } = useDemoMode();
 
-  const [selectedCrops, setSelectedCrops] = useState<string[]>(['Maize']);
+  const [selectedCrops, setSelectedCrops] = useState<string[]>([]);
   const [customCropInput, setCustomCropInput] = useState('');
   const [isDetectingGps, setIsDetectingGps] = useState(false);
 
@@ -70,15 +69,17 @@ export const FarmerRegistrationForm: React.FC = () => {
       phone: '',
       location: '',
       languagePreference: 'en',
-      crops: ['Maize'],
-      farmSize: 2.5,
+      crops: [],
+      farmSize: undefined,
       latitude: undefined,
       longitude: undefined,
-      vitalScore: 85,
+      vitalScore: undefined,
     },
   });
 
-  const currentVitalScore = watch('vitalScore') ?? 85;
+  // The officer's own assessment: nothing is recorded until they set it.
+  const assessedVitalScore = watch('vitalScore');
+  const currentVitalScore = assessedVitalScore ?? 70;
   const currentLatitude = watch('latitude');
   const currentLongitude = watch('longitude');
 
@@ -102,18 +103,6 @@ export const FarmerRegistrationForm: React.FC = () => {
       setValue('crops', next, { shouldValidate: true });
       setCustomCropInput('');
     }
-  };
-
-  const applyPreset = (preset: typeof ONBOARDING_PRESETS[0]) => {
-    setValue('crops', preset.crops, { shouldValidate: true });
-    setSelectedCrops(preset.crops);
-    setValue('location', preset.location, { shouldValidate: true });
-    setValue('farmSize', preset.farmSize, { shouldValidate: true });
-    setValue('vitalScore', preset.vitalScore, { shouldValidate: true });
-    setValue('latitude', preset.lat, { shouldValidate: true });
-    setValue('longitude', preset.lng, { shouldValidate: true });
-    setValue('languagePreference', preset.lang, { shouldValidate: true });
-    toast.success(`Preset "${preset.name}" loaded!`);
   };
 
   const handleDetectLocation = () => {
@@ -148,8 +137,8 @@ export const FarmerRegistrationForm: React.FC = () => {
         region: staffRegion ?? data.location,
         village: data.location,
         assignedOfficerId: canChooseOfficer && assignedOfficerId ? assignedOfficerId : undefined,
-        crops: selectedCrops.length > 0 ? selectedCrops : ['Maize'],
-        farmSize: units.toHectares(data.farmSize || 0), // typed in the person's unit; stored in hectares
+        crops: selectedCrops,
+        farmSize: units.toHectares(data.farmSize ?? 0), // typed in the person's unit; stored in hectares
         locationLat: data.latitude,
         locationLng: data.longitude,
         vitalScore: data.vitalScore,
@@ -170,7 +159,7 @@ export const FarmerRegistrationForm: React.FC = () => {
         });
         toast.success(t('farmer_register_success') || 'Farmer client registered successfully!');
         reset();
-        setSelectedCrops(['Maize']);
+        setSelectedCrops([]);
         setAssignedOfficerId('');
       }
     } catch (error) {
@@ -187,7 +176,7 @@ export const FarmerRegistrationForm: React.FC = () => {
         <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
           <Lock className="w-6 h-6 text-amber-400" />
         </div>
-        <h2 className="text-xl font-bold tracking-tight text-white mb-2">{t('ui_farmer_registration_form_register_client')}</h2>
+        <h2 className="text-xl font-medium tracking-tight text-white mb-2">{t('ui_farmer_registration_form_register_client')}</h2>
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-medium mb-3">
           <Layers className="w-3.5 h-3.5" />
           <span>{t('ui_farmer_registration_form_interactive_preview_mode')}</span>
@@ -218,7 +207,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           <div className="flex items-center gap-4">
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">{t('ui_farmer_registration_form_register_client')}</h1>
+                <h1 className="text-xl sm:text-2xl font-medium tracking-tight text-white">{t('ui_farmer_registration_form_register_client')}</h1>
               </div>
               <p className="text-xs text-white/60 mt-0.5">
                 {t('ui_farmer_registration_form_enroll_smallholders_into_real_time_a')}
@@ -226,21 +215,6 @@ export const FarmerRegistrationForm: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick-Fill Agronomic Presets */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-medium text-white/50">{t('ui_farmer_registration_form_quick_fill')}</span>
-            {ONBOARDING_PRESETS.map(p => (
-              <button
-                key={p.name}
-                type="button"
-                onClick={() => applyPreset(p)}
-                className="px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/30 text-xs text-white/80 hover:text-white transition-colors flex items-center gap-1.5"
-              >
-                <Sprout className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="font-medium">{p.name}</span>
-              </button>
-            ))}
-          </div>
         </div>
       </div>
 
@@ -260,7 +234,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           <div className="backdrop-blur-xl bg-slate-900 border border-white/10 rounded-xl p-6 space-y-5 shadow-lg">
             <div className="flex items-center gap-2.5 pb-2 border-b border-white/5">
               <UserPlus className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-sm font-semibold text-white">{t('ui_farmer_registration_form_identity_communication_profile')}</h2>
+              <h2 className="text-sm font-medium text-white">{t('ui_farmer_registration_form_identity_communication_profile')}</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -270,7 +244,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                 </label>
                 <input
                   {...register('firstName')}
-                  placeholder="e.g. Samuel"
+                  placeholder="First name"
                   className="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm"
                 />
                 {errors.firstName && (
@@ -286,7 +260,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                 </label>
                 <input
                   {...register('lastName')}
-                  placeholder="e.g. Kiprono"
+                  placeholder="Last name"
                   className="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm"
                 />
                 {errors.lastName && (
@@ -312,7 +286,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                 <Phone className="w-4 h-4 text-white/40 absolute start-4 top-1/2 -translate-y-1/2" />
                 <input
                   {...register('phone')}
-                  placeholder="+254 712 345 678"
+                  placeholder="+ country code and number"
                   className="w-full ps-11 pe-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm font-mono tabular-nums"
                 />
               </div>
@@ -332,7 +306,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                   <MapPin className="w-4 h-4 text-white/40 absolute start-4 top-1/2 -translate-y-1/2" />
                   <input
                     {...register('location')}
-                    placeholder="e.g. Nakuru, Rongai"
+                    placeholder="Village or ward"
                     className="w-full ps-11 pe-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent transition-colors outline-none text-sm"
                   />
                 </div>
@@ -375,7 +349,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           <div className="backdrop-blur-xl bg-slate-900 border border-white/10 rounded-xl p-6 space-y-5 shadow-sm">
             <div className="flex items-center gap-2.5 pb-2 border-b border-white/5">
               <Layers className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-sm font-semibold text-white">{t('ui_farmer_registration_form_agronomic_portfolio_parcel')}</h2>
+              <h2 className="text-sm font-medium text-white">{t('ui_farmer_registration_form_agronomic_portfolio_parcel')}</h2>
             </div>
 
             {/* Multi-Crop Tag Chips */}
@@ -414,7 +388,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                   type="text"
                   value={customCropInput}
                   onChange={e => setCustomCropInput(e.target.value)}
-                  placeholder="Add custom crop..."
+                  placeholder="Add another crop"
                   className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-white/10 bg-white/[0.02] text-white placeholder-white/30 focus:ring-1 focus:ring-emerald-400 outline-none"
                   onKeyDown={e => isActionEnter(e) && addCustomCrop(e)}
                 />
@@ -427,13 +401,18 @@ export const FarmerRegistrationForm: React.FC = () => {
                   <span>{t('common_add')}</span>
                 </button>
               </div>
+              {errors.crops && (
+                <p className="text-xs text-rose-400 flex items-center gap-1" role="alert">
+                  <AlertCircle className="w-3 h-3" /> {errors.crops.message}
+                </p>
+              )}
             </div>
 
             {/* Farm Size */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="block text-xs font-medium text-white/70">
-                  {t('farmer_register_farm_size') || 'Estimated Land Holding'}
+                  {t('farmer_register_farm_size') || 'Estimated land holding'}
                 </label>
                 <div className="flex items-center gap-1.5">
                   {['1.0', '2.5', '5.0', '10.0'].map(sz => (
@@ -474,7 +453,7 @@ export const FarmerRegistrationForm: React.FC = () => {
             <div className="flex items-center justify-between pb-2 border-b border-white/5">
               <div className="flex items-center gap-2.5">
                 <Compass className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
+                <h2 className="text-sm font-medium text-white flex items-center gap-1.5">
                   {t('ui_farmer_registration_form_geospatial_telemetry')}
                   <InfoPromptIcon
                     title="GPS & Earth Observation"
@@ -536,15 +515,15 @@ export const FarmerRegistrationForm: React.FC = () => {
                 <div className="grid grid-cols-3 gap-2 text-center text-xs">
                   <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
                     <div className="text-xxs text-white/40">{t('ui_farmer_registration_form_estimated_ph')}</div>
-                    <div className="font-semibold text-white mt-0.5 tabular-nums">{t('ui_farmer_registration_form_6_2_optimal')}</div>
+                    <div className="font-medium text-white mt-0.5 tabular-nums">{t('ui_farmer_registration_form_6_2_optimal')}</div>
                   </div>
                   <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
                     <div className="text-xxs text-white/40">{t('ui_farmer_registration_form_rainfall_risk')}</div>
-                    <div className="font-semibold text-emerald-400 mt-0.5 tabular-nums">{t('ui_farmer_registration_form_low_18mm')}</div>
+                    <div className="font-medium text-emerald-400 mt-0.5 tabular-nums">{t('ui_farmer_registration_form_low_18mm')}</div>
                   </div>
                   <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
                     <div className="text-xxs text-white/40">{t('ui_farmer_registration_form_solar_rad')}</div>
-                    <div className="font-semibold text-amber-300 mt-0.5 tabular-nums">21.4 MJ/m²</div>
+                    <div className="font-medium text-amber-300 mt-0.5 tabular-nums">21.4 MJ/m²</div>
                   </div>
                 </div>
               </div>
@@ -560,7 +539,7 @@ export const FarmerRegistrationForm: React.FC = () => {
             <div className="flex items-center justify-between pb-2 border-b border-white/5">
               <div className="flex items-center gap-2.5">
                 <Activity className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
+                <h2 className="text-sm font-medium text-white flex items-center gap-1.5">
                   {t('ui_farmer_registration_form_vital_score_baseline')}
                   <InfoPromptIcon
                     title="Vital Score Health Index"
@@ -570,9 +549,15 @@ export const FarmerRegistrationForm: React.FC = () => {
                   />
                 </h2>
               </div>
-              <span className={`px-2.5 py-0.5 rounded-md text-xs font-medium border tabular-nums ${getVitalScoreColor(currentVitalScore)}`}>
-                {currentVitalScore}/100 • {getVitalScoreLabel(currentVitalScore)}
-              </span>
+              {assessedVitalScore === undefined || Number.isNaN(assessedVitalScore) ? (
+                <span className="px-2.5 py-0.5 rounded-md text-xs font-medium border border-white/10 text-white/60">
+                  {t('ui_farmer_registration_form_not_assessed', 'Not assessed yet')}
+                </span>
+              ) : (
+                <span className={`px-2.5 py-0.5 rounded-md text-xs font-medium border tabular-nums ${getVitalScoreColor(currentVitalScore)}`}>
+                  {currentVitalScore}/100 · {getVitalScoreLabel(currentVitalScore)}
+                </span>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -586,7 +571,9 @@ export const FarmerRegistrationForm: React.FC = () => {
                 min="30"
                 max="100"
                 step="1"
-                {...register('vitalScore', { valueAsNumber: true })}
+                value={currentVitalScore}
+                onChange={event => setValue('vitalScore', Number(event.target.value), { shouldValidate: true })}
+                aria-label={t('ui_farmer_registration_form_vital_score_label', 'Officer assessment of farm condition, 30 to 100')}
                 className="w-full h-2 rounded-lg bg-slate-800 appearance-none cursor-pointer accent-emerald-400"
               />
             </div>
@@ -625,7 +612,7 @@ export const FarmerRegistrationForm: React.FC = () => {
               className="flex-1 sm:flex-initial px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
             >
               <UserPlus className="w-4 h-4" />
-              <span>{isLoading ? 'Enrolling Client...' : 'Enroll Farmer Client'}</span>
+              <span>{isLoading ? 'Saving…' : 'Save farmer'}</span>
             </button>
           </div>
         </div>

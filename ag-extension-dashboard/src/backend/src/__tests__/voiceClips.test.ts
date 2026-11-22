@@ -5,7 +5,7 @@ jest.mock('axios', () => ({ post: jest.fn(), get: jest.fn() }));
 import axios from 'axios';
 import { query } from '@/services/databaseService';
 import { onboardingEngine } from '@/services/onboardingEngine';
-import { clipUrl, isValidClipSignature, saveClip, VoiceClipError } from '@/services/voice/voiceClips';
+import { clipUrl, deleteClip, isValidClipSignature, saveClip, VoiceClipError } from '@/services/voice/voiceClips';
 import { callFarmers } from '@/services/voice/advisoryCalls';
 import { answerCall, promptXml } from '@/services/voice/voiceLine';
 
@@ -29,11 +29,32 @@ describe('recordings', () => {
         expect(isValidClipSignature('c1', url.searchParams.get('sig'))).toBe(true);
         expect(isValidClipSignature('c2', url.searchParams.get('sig'))).toBe(false);
         expect(isValidClipSignature('c1', 'x'.repeat(32))).toBe(false);
+        // 32 characters but more bytes: a mismatch, not a thrown error.
+        expect(isValidClipSignature('c1', 'é'.repeat(32))).toBe(false);
+        expect(isValidClipSignature('c1', undefined)).toBe(false);
+    });
+
+    it("are replaced or removed only by the person who made them, or an administrator", async () => {
+        const manager = { userId: 'm1', role: 'regional_manager' };
+        mockQuery
+            .mockResolvedValueOnce({ rows: [{ mime_type: 'audio/mpeg', owner_user_id: 'm1' }] })
+            .mockResolvedValueOnce({ rows: [] });
+        await expect(saveClip(manager, { key: 'line_greeting', language: 'sw', title: 'Greeting', uploadId: 'u1' }))
+            .rejects.toMatchObject({ status: 409 });
+        expect(mockQuery.mock.calls[1][1][6]).toBe(false);
+
+        mockQuery.mockResolvedValueOnce({ rowCount: 0 });
+        expect(await deleteClip('clip-other', manager)).toBe(false);
+        expect(mockQuery.mock.calls[2]).toEqual(['DELETE FROM voice_clips WHERE id = $1 AND recorded_by = $2', ['clip-other', 'm1']]);
+
+        mockQuery.mockResolvedValueOnce({ rowCount: 1 });
+        expect(await deleteClip('clip-other', { userId: 'a1', role: 'admin' })).toBe(true);
+        expect(mockQuery.mock.calls[3]).toEqual(['DELETE FROM voice_clips WHERE id = $1', ['clip-other']]);
     });
 
     it('must be mp3 or wav, which phones play', async () => {
         mockQuery.mockResolvedValueOnce({ rows: [{ mime_type: 'audio/ogg', owner_user_id: 'm1' }] });
-        await expect(saveClip('m1', { key: 'line_greeting', language: 'sw', title: 'Greeting', uploadId: 'u1' }))
+        await expect(saveClip({ userId: 'm1', role: 'regional_manager' }, { key: 'line_greeting', language: 'sw', title: 'Greeting', uploadId: 'u1' }))
             .rejects.toThrow(new VoiceClipError('Phones play mp3 or wav recordings. Export the recording in one of those formats.'));
     });
 

@@ -35,10 +35,11 @@ export function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
           if (step.type === 'crop_select') {
             return (
               <div key={step.id} className="p-2 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08]">
-                <label className="text-[10px] text-slate-400 block mb-1">
+                <label htmlFor={`sim-${step.id}`} className="text-[10px] text-slate-400 block mb-1">
                   {t('ui_advisory_studio_page_step')} {idx + 1}{t('ui_advisory_studio_page_select_crop')}
                 </label>
                 <select
+                  id={`sim-${step.id}`}
                   value={selectedCrop}
                   onChange={(e) => setSelectedCrop(e.target.value)}
                   className="w-full bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08] rounded px-1.5 py-1 text-slate-900 dark:text-white text-[11px]"
@@ -56,10 +57,11 @@ export function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
             return (
               <div key={step.id} className="p-2 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08]">
                 <div className="flex justify-between items-center mb-1">
-                  <label className="text-[10px] text-slate-400">{t('ui_advisory_studio_page_step')} {idx + 1}{t('ui_advisory_studio_page_infestation')}</label>
+                  <label htmlFor={`sim-${step.id}`} className="text-[10px] text-slate-400">{t('ui_advisory_studio_page_step')} {idx + 1}{t('ui_advisory_studio_page_infestation')}</label>
                   <span className="text-amber-400 font-mono text-[10px]">{severity}%</span>
                 </div>
                 <input
+                  id={`sim-${step.id}`}
                   type="range"
                   min="0"
                   max="100"

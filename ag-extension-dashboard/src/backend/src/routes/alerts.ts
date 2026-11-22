@@ -4,6 +4,18 @@ import { logger } from '../utils/logger';
 import { authorize } from '../middleware/authorize';
 import { sendSuccess, sendCreated, sendForbidden, sendError } from '@/utils/response';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
+import { z } from 'zod';
+import { validate } from '@/middleware/validate';
+
+/** What an alert needs: a kind and a title; everything else is optional. */
+const createAlertBody = z.object({
+    type: z.string().trim().min(1).max(50),
+    severity: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+    title: z.string().trim().min(1).max(255),
+    description: z.string().max(5000).optional(),
+    location: z.string().max(255).optional(),
+    affectedFarmers: z.array(z.string().uuid()).max(5000).optional(),
+});
 
 const router = Router();
 
@@ -67,7 +79,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // Create a new alert (Extension Officer/Admin only)
-router.post('/', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+router.post('/', authorize(['extension_officer', 'admin']), validate({ body: createAlertBody }), async (req: Request, res: Response) => {
     const { type, severity, title, description, location, affectedFarmers } = req.body;
 
     if (req.user?.role !== 'extension_officer' && req.user?.role !== 'admin') {

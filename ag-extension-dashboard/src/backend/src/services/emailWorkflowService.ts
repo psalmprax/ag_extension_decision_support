@@ -273,23 +273,24 @@ class EmailWorkflowService {
     const pool = getPool();
     if (!pool) return false;
 
-    await query(`
-      UPDATE email_approvals 
+    // Only a pending approval is reviewed, once: approving it again must not send it again.
+    // The person who asked for the email does not approve it themselves.
+    const { rows } = await query<{ email_data: { to: string[]; subject: string; html: string } }>(`
+      UPDATE email_approvals
       SET status = $1, reviewed_by = $2, reviewed_at = NOW(), review_comment = $3
-      WHERE id = $4
-    `, [status, reviewedBy, comment, approvalId]);
+      WHERE id = $4 AND status = 'pending' AND requested_by <> $2
+      RETURNING email_data
+    `, [status, reviewedBy, comment ?? null, approvalId]);
+    if (rows.length === 0) return false;
 
     if (status === 'approved') {
-      const result = await query('SELECT email_data FROM email_approvals WHERE id = $1', [approvalId]);
-      if (result.rows.length > 0) {
-        const emailData = result.rows[0].email_data;
-        await emailService.sendEmail({
-          to: emailData.to,
-          subject: emailData.subject,
-          html: emailData.html,
-        });
-        logger.info(`Approved email sent: ${approvalId}`);
-      }
+      const emailData = rows[0].email_data;
+      await emailService.sendEmail({
+        to: emailData.to,
+        subject: emailData.subject,
+        html: emailData.html,
+      });
+      logger.info(`Approved email sent: ${approvalId}`);
     }
 
     logger.info(`Email approval ${status}: ${approvalId} by ${reviewedBy}`);

@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import { applyTheme, ThemeName } from '@/theme';
+import { safeStorage } from '@/lib/safeStorage';
 
 export const useAppTheme = (themeName: ThemeName, darkMode: boolean) => {
   // Apply theme when it changes (emits light + dark CSS vars via a style element).
   useEffect(() => {
     applyTheme(themeName);
-    localStorage.setItem('ag-theme-name', themeName);
+    safeStorage.set('ag-theme-name', themeName);
   }, [themeName]);
 
   // Apply dark mode class. Native widgets (scrollbars, form controls, the
@@ -14,10 +15,10 @@ export const useAppTheme = (themeName: ThemeName, darkMode: boolean) => {
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+      safeStorage.set('theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+      safeStorage.set('theme', 'light');
     }
     document
       .querySelector('meta[name="color-scheme"]')

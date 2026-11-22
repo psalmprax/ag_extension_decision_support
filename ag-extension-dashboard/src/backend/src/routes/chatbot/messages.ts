@@ -13,7 +13,7 @@ import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
 import { assertConversationAccess, checkMessageAccess, MessageAccessError, resolveFarmerId } from '@/services/messageAccessService';
 import { respondIfUrgent } from '@/services/chat/threadAutoReply';
-import { fanoutNewMessage, scheduleChannelDelivery } from '@/services/chat/threadPost';
+import { afterOfficerReply, fanoutNewMessage, isMessageAuthor, senderMetadata } from '@/services/chat/threadPost';
 import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
 import {
   AttachmentError,
@@ -157,7 +157,7 @@ async function insertThreadMessage(params: {
      VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
     [conversationId ?? null, senderRole, content, params.language ?? null,
-     fromDraft ? JSON.stringify({ aiDraft: { edited: fromDraft.edited } }) : null]
+     senderMetadata(senderId, fromDraft ? { aiDraft: { edited: fromDraft.edited } } : {})]
   );
   if (fromDraft?.edited && conversationId && senderId) {
     scheduleDraftCorrectionReview({ conversationId, officerId: senderId, draft: fromDraft.draft, sent: content });
@@ -212,9 +212,12 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
       await linkAttachments('chat', created.id, attachmentIds);
     }
     if (created && conversationId) {
-      fanoutNewMessage(conversationId, created);
-      if (senderRole === 'user') scheduleUrgentCheck(conversationId);
-      else scheduleChannelDelivery(conversationId, created.id, created.content);
+      if (senderRole === 'user') {
+        fanoutNewMessage(conversationId, created);
+        scheduleUrgentCheck(conversationId);
+      } else {
+        afterOfficerReply(conversationId, created);
+      }
     }
     return res.status(201).json({ success: true, data: created ? await messageWithPhotos(created, attachmentIds) : null });
   } catch (error) {
@@ -247,7 +250,7 @@ router.patch('/messages/:id', authorize(['admin', 'regional_manager', 'extension
     } else if (user.role !== 'admin') {
       return res.status(404).json({ success: false, error: 'Message not found' });
     }
-    const isOwner = rows[0].role === (user.role === 'farmer' ? 'user' : 'officer') || user.role === 'admin';
+    const isOwner = isMessageAuthor(rows[0], user);
     if (!isOwner) return res.status(403).json({ success: false, error: 'Not owner' });
     const createdAt = rows[0].created_at ? new Date(rows[0].created_at as string).getTime() : 0;
     if (Date.now() - createdAt > 15 * 60 * 1000) return res.status(403).json({ success: false, error: 'Edit window expired (15m)' });
@@ -275,7 +278,7 @@ router.delete('/messages/:id', authorize(['admin', 'regional_manager', 'extensio
     } else if (user.role !== 'admin') {
       return res.status(404).json({ success: false, error: 'Message not found' });
     }
-    const isOwner = rows[0].role === (user.role === 'farmer' ? 'user' : 'officer') || user.role === 'admin';
+    const isOwner = isMessageAuthor(rows[0], user);
     if (!isOwner) return res.status(403).json({ success: false, error: 'Not owner' });
     const { rows: updated } = await query<ChatMessageRow>(`UPDATE chat_messages SET content='[deleted]', metadata=COALESCE(metadata,'{}'::jsonb) || $1::jsonb WHERE id=$2 RETURNING *`, [JSON.stringify({ deletedAt: new Date().toISOString(), deletedBy: user.userId }), msgId]);
     // A withdrawn message takes its photos with it.

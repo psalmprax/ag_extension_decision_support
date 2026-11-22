@@ -5,6 +5,7 @@ import { validate } from '@/middleware/validate';
 import { checkMessageAccess } from '@/services/messageAccessService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
+import { outboundSignal } from '@/utils/outboundTimeout';
 
 const router = Router();
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
@@ -41,6 +42,7 @@ router.post('/pstn', validate({ body: pstnSchema }), async (req: AuthRequest, re
 
     const resp = await fetch(endpoint, {
       method: 'POST',
+      signal: outboundSignal(),
       headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString(),
     });

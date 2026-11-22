@@ -12,36 +12,3 @@ export const COMMON_CROPS = [
   'Avocado',
   'Bananas',
 ];
-
-export const ONBOARDING_PRESETS = [
-  {
-    name: 'Smallholder Maize',
-    crops: ['Maize', 'Beans'],
-    location: 'Nakuru, Rift Valley',
-    farmSize: 2.5,
-    vitalScore: 88,
-    lat: -0.3031,
-    lng: 36.0800,
-    lang: 'sw',
-  },
-  {
-    name: 'Highland Coffee & Tea',
-    crops: ['Coffee', 'Tea'],
-    location: 'Kiambu, Central',
-    farmSize: 4.8,
-    vitalScore: 78,
-    lat: -1.1714,
-    lng: 36.8356,
-    lang: 'en',
-  },
-  {
-    name: 'Irrigation Rice Co-op',
-    crops: ['Rice', 'Tomato'],
-    location: 'Mwea, Kirinyaga',
-    farmSize: 12.0,
-    vitalScore: 92,
-    lat: -0.6591,
-    lng: 37.3582,
-    lang: 'en',
-  },
-];

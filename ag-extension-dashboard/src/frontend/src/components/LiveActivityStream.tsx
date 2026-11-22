@@ -71,24 +71,25 @@ function getChannelBadge(channel: string) {
   switch (channel) {
     case 'USSD':
       return (
-        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20 font-mono">USSD</span>
+        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20 font-mono">USSD</span>
       );
     case 'SMS':
       return (
-        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20 font-mono">SMS</span>
+        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20 font-mono">SMS</span>
       );
     case 'App':
       return (
-        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">APP</span>
+        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">APP</span>
       );
     default:
       return (
-        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20 font-mono">VOICE</span>
+        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20 font-mono">VOICE</span>
       );
   }
 }
 
 import { TriageFilterBar, type FilterSeverity } from './activity/TriageFilterBar';
+import { copyWithToast } from '@/lib/copyText';
 
 // ── Sub-components ──────────────────────────────────────────────────
 
@@ -131,9 +132,9 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
     >
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-sm text-gray-900 dark:text-white">{activity.farmerName}</span>
+          <span className="font-medium text-sm text-gray-900 dark:text-white">{activity.farmerName}</span>
           <span className="text-xs text-slate-400 font-mono">{activity.phone}</span>
-          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300">{activity.language}</span>
+          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-300">{activity.language}</span>
           {getChannelBadge(activity.channel)}
         </div>
         <div className="flex items-center gap-2">
@@ -146,12 +147,12 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
 
       <div className="mb-2">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs font-bold text-emerald-400">{activity.crop}</span>
+          <span className="text-xs font-medium text-emerald-400">{activity.crop}</span>
           <span className="text-xs text-slate-500">•</span>
           <span className="text-xs text-slate-600 dark:text-slate-300">{activity.region}</span>
         </div>
         <p className="text-xs font-medium text-slate-800 dark:text-slate-200">
-          <span data-message><span className="text-rose-400 font-bold">{activity.issue}:</span> {activity.aiSummary}</span>
+          <span data-message><span className="text-rose-400 font-medium">{activity.issue}:</span> {activity.aiSummary}</span>
         </p>
       </div>
 
@@ -194,7 +195,7 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
           ) : (
             <button
               onClick={() => toggleReply(activity.id)}
-              className="px-2.5 sm:px-3 py-1 bg-emerald-700 hover:bg-emerald-600 active:scale-[0.98] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shrink-0"
+              className="px-2.5 sm:px-3 py-1 bg-emerald-700 hover:bg-emerald-600 active:scale-[0.98] text-white rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 shrink-0"
             >
               <MessageSquare className="w-3.5 h-3.5" />
               {replyId === activity.id ? t('activity_close_composer') : t('activity_reply')}
@@ -203,7 +204,7 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
 
           <button
             onClick={() => startCall({ farmerName: activity.farmerName, phone: activity.phone, issue: activity.issue })}
-            className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-slate-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0"
+            className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-slate-200 rounded-lg text-xs font-medium transition-all flex items-center gap-1 shrink-0"
           >
             <Video className="w-3.5 h-3.5 text-emerald-400" />
             {t('ui_floating_aipill_tele_call')}
@@ -212,7 +213,7 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
           {isCritical && (
             <button
               onClick={() => toggleBooking(activity.id)}
-              className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 active:scale-[0.98] border border-amber-500/30 text-amber-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0"
+              className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 active:scale-[0.98] border border-amber-500/30 text-amber-300 rounded-lg text-xs font-medium transition-all flex items-center gap-1 shrink-0"
             >
               <Calendar className="w-3.5 h-3.5 text-amber-400" />
               {t('ui_live_activity_stream_dispatch_visit')}
@@ -222,7 +223,7 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
           {startChat && (
             <button
               onClick={() => startChat({ farmerId: activity.farmerId, phone: activity.phone, farmerName: activity.farmerName })}
-              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-slate-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0"
+              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-slate-200 rounded-lg text-xs font-medium transition-all flex items-center gap-1 shrink-0"
             >
               <ExternalLink className="w-3 h-3" />
               {t('ui_live_activity_stream_chat_view')}
@@ -251,7 +252,7 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
               <button
                 disabled={sendingSms}
                 onClick={() => sendSms(activity.phone, replyText)}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold flex items-center gap-1"
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg text-xs font-medium flex items-center gap-1"
               >
                 {sendingSms ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                 {sendingSms ? 'Sending...' : 'Send SMS'}
@@ -274,8 +275,7 @@ const TeleCallModal: React.FC<{
 
   const copyInviteLink = () => {
     const inviteLink = `${window.location.origin}/tele-call/${roomId}`;
-    navigator.clipboard.writeText(inviteLink);
-    toast.success('Invite link copied — share it with the farmer to join this call.');
+    void copyWithToast(inviteLink, 'Invite link copied — share it with the farmer to join this call.');
   };
 
   return (
@@ -292,7 +292,7 @@ const TeleCallModal: React.FC<{
               <Video className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="font-bold text-sm text-white">{t('ui_floating_aipill_tele_agronomy_video_consultation')}</h4>
+              <h4 className="font-medium text-sm text-white">{t('ui_floating_aipill_tele_agronomy_video_consultation')}</h4>
               <p className="text-xs text-slate-400">{t('ui_live_activity_stream_live_with', { farmerName: call.farmerName, phone: call.phone })}</p>
             </div>
           </div>
@@ -483,7 +483,7 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white tracking-wide">
+              <h3 className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">
                 {t('activity_stream_title')}
               </h3>
               <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium border ${hasData ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
@@ -515,7 +515,7 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <AlertTriangle className="w-8 h-8 text-amber-400 mb-2" />
-            <p className="text-sm font-semibold text-amber-400">{t('ui_live_activity_stream_feed_unavailable')}</p>
+            <p className="text-sm font-medium text-amber-400">{t('ui_live_activity_stream_feed_unavailable')}</p>
             <p className="text-xs text-slate-500 mt-1">{error}</p>
             <button
               onClick={fetchActivities}
@@ -527,7 +527,7 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Activity className="w-8 h-8 text-slate-500 mb-2" />
-            <p className="text-sm font-semibold text-slate-400">{t('ui_live_activity_stream_awaiting_events')}</p>
+            <p className="text-sm font-medium text-slate-400">{t('ui_live_activity_stream_awaiting_events')}</p>
             <p className="text-xs text-slate-500 mt-1">
               {t('ui_live_activity_stream_real_farmer_sms_ussd_and_app_activit')}
             </p>

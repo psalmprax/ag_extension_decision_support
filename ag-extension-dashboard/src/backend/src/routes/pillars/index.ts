@@ -1,62 +1,18 @@
-import { Router, Response } from 'express';
-import { authorize, AuthRequest } from '@/middleware/authorize';
+import { Router } from 'express';
+import { authorize } from '@/middleware/authorize';
 
-import traceabilityRouter from './traceability';
-import creditRouter from './credit';
-import pestRouter from './pest';
-import mechanizationRouter from './mechanization';
-import telemetryRouter from './telemetry';
+import hazardRouter from './hazard';
 import voiceRouter from './voice';
 
+/**
+ * The capabilities that grew out of the architecture pillars and are in real use:
+ * weather hazard evaluation and speech (transcribe, local transcribe, synthesize).
+ * The prototype routes that only ever answered 501 in a deployment were removed; see
+ * docs/PILLAR_SERVICES_DECISION.md.
+ */
 const router = Router();
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
-
-/**
- * Specification-phase gate.
- *
- * Most services behind this router are @deprecated prototypes (see
- * docs/PILLAR_SERVICES_DECISION.md): they compute from hardcoded registries and
- * illustrative constants. Only the endpoints the product actually uses are always
- * on; everything else returns 501 unless PILLARS_SPEC_ROUTES_ENABLED=true is set
- * in an explicitly development or test environment. Responses are stamped
- * `dataStatus: 'specification_prototype'` so nothing downstream mistakes them for
- * verified data.
- */
-const PRODUCTION_PILLAR_ROUTES = new Set<string>([
-    'POST /hazard/evaluate',
-    'POST /voice/transcribe',
-    'POST /voice/transcribe-local',
-    'POST /voice/synthesize',
-]);
-
-router.use((req: AuthRequest, res: Response, next) => {
-    const key = `${req.method} ${req.path}`;
-    if (PRODUCTION_PILLAR_ROUTES.has(key)) return next();
-    const sandbox = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
-    if (sandbox && process.env.PILLARS_SPEC_ROUTES_ENABLED === 'true') {
-        // Stamp prototype provenance onto every JSON body from a gated route.
-        const originalJson = res.json.bind(res);
-        res.json = (body: unknown) => {
-            if (body && typeof body === 'object' && !Array.isArray(body)) {
-                return originalJson({ ...(body as Record<string, unknown>), dataStatus: 'specification_prototype' });
-            }
-            return originalJson(body);
-        };
-        return next();
-    }
-    return res.status(501).json({
-        success: false,
-        errorCode: 'PILLAR_NOT_IMPLEMENTED',
-        error: 'This capability is a specification-phase prototype and is not enabled in this deployment.',
-        route: key,
-    });
-});
-
-router.use(traceabilityRouter);
-router.use(creditRouter);
-router.use(pestRouter);
-router.use(mechanizationRouter);
-router.use(telemetryRouter);
+router.use(hazardRouter);
 router.use(voiceRouter);
 
 export default router;

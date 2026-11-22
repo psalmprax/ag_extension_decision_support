@@ -10,6 +10,7 @@ import { isAccountLocked, recordFailedLogin, resetFailedAttempts } from '@/servi
 import { verifyPassword } from '@/utils/password';
 import { safeError } from '@/utils/safeResponse';
 import { finishSignIn, type LoginUserRow } from './loginCompletion';
+import { clientIpOf } from '@/utils/clientIp';
 
 const router = Router();
 
@@ -41,7 +42,7 @@ const DUMMY_BCRYPT_HASH = '$2a$10$NVqK3ijujMkE3ZwVVOLruutAEJwLmNCDXAGVKvTqLGxhBp
 router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
-        const clientIp = req.ip || (typeof req.headers['x-forwarded-for'] === 'string' ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || null;
+        const clientIp = clientIpOf(req);
 
         if (!email || !password) {
             await recordLoginAttempt({

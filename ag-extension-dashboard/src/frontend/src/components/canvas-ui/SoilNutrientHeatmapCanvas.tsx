@@ -262,7 +262,7 @@ const LAYER_CONFIG: Record<
     },
   },
   moisture: {
-    label: 'Volumetric Soil Moisture',
+    label: 'Volumetric soil moisture',
     unit: '% VWC',
     min: 5,
     max: 45,
@@ -313,9 +313,9 @@ const LAYER_CONFIG: Record<
 const ProbeTooltip: React.FC<{ probe: SoilProbeResult }> = ({ probe }) => (
   <div className="absolute top-3 start-3 bg-gray-900/90 border border-white/10 backdrop-blur-md p-3 rounded-xl shadow-xl text-xs text-white max-w-xs pointer-events-none animate-in fade-in duration-150">
     <div className="flex items-center justify-between gap-2 mb-1.5">
-      <span className="font-semibold text-gray-200">{probe.label}</span>
+      <span className="font-medium text-gray-200">{probe.label}</span>
       <span
-        className={`px-1.5 py-0.5 rounded text-xxs font-bold  ${
+        className={`px-1.5 py-0.5 rounded text-xxs font-medium  ${
           probe.status === 'optimal'
             ? 'bg-emerald-500/20 text-emerald-400'
             : probe.status === 'warning'
@@ -326,7 +326,7 @@ const ProbeTooltip: React.FC<{ probe: SoilProbeResult }> = ({ probe }) => (
         {probe.status}
       </span>
     </div>
-    <div className="text-lg font-bold font-mono text-emerald-400">
+    <div className="text-lg font-medium font-mono text-emerald-400">
       {probe.value} <span className="text-xs text-gray-400 font-normal">{probe.unit}</span>
     </div>
     <p className="text-xxs text-gray-300 mt-1 leading-snug">{probe.recommendation}</p>
@@ -503,7 +503,7 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
         {hasNoData ? (
           <div className="w-full h-[280px] flex flex-col items-center justify-center p-6 text-center bg-slate-900">
             <Layers className="w-10 h-10 text-white/20 mb-2" />
-            <p className="text-sm font-bold text-white">{t('ui_soil_nutrient_heatmap_canvas_no_live_soil_map_yet')}</p>
+            <p className="text-sm font-medium text-white">{t('ui_soil_nutrient_heatmap_canvas_no_live_soil_map_yet')}</p>
             <p className="text-xs text-white/50 mt-1 max-w-sm">{t('ui_soil_nutrient_heatmap_canvas_save_this_field_s_location_or_add_a')}</p>
           </div>
         ) : (

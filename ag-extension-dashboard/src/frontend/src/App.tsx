@@ -41,6 +41,7 @@ import { useAppMenuActions } from './hooks/useAppMenuActions';
 import { fetchUnreadCount } from '@/api/notificationService';
 import { ensurePersistentQueueStorage } from '@/api/syncQueueService';
 import { OfflineQueueBanner } from './components/common/OfflineQueueBanner';
+import { safeStorage } from '@/lib/safeStorage';
 
 // Lazy loaded components
 const LandingPage = lazy(() =>
@@ -162,7 +163,7 @@ function App() {
   // profile lives in localStorage.
   const handleLogout = async () => {
     await apiLogout();
-    localStorage.removeItem('user');
+    safeStorage.remove('user');
     setUser(null);
     window.location.href = '/login';
   };
@@ -267,9 +268,8 @@ function App() {
     farmerConversations,
     activeFarmerConvId,
     setActiveFarmerConvId,
-    farmerChatMessages,
-    farmerChatInput,
-    setFarmerChatInput,
+    farmerChatMessages, farmerHasEarlier, loadEarlierFarmerMessages,
+    farmerChatInput, setFarmerChatInput,
     handleFarmerChatSend,
     handleStartConversation,
     handleDeleteConversation,
@@ -444,7 +444,7 @@ function App() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
             <div className="bg-white dark:bg-gray-800 rounded-xl p-12 shadow-2xl text-center">
               <Loader2 className="w-16 h-16 text-primary-500 mx-auto mb-4 animate-spin" />
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-xl font-medium text-gray-900 dark:text-white">
                 {t('upload_processing')}
               </h3>
             </div>
@@ -454,7 +454,7 @@ function App() {
         {/* Accessible Skip to Main Content link */}
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-[9999] focus:px-4 focus:py-2.5 focus:bg-emerald-600 focus:text-white focus:font-semibold focus:text-sm focus:rounded-lg focus:shadow-2xl focus:ring-2 focus:ring-white focus:outline-none transition-all"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-[9999] focus:px-4 focus:py-2.5 focus:bg-emerald-600 focus:text-white focus:font-medium focus:text-sm focus:rounded-lg focus:shadow-2xl focus:ring-2 focus:ring-white focus:outline-none transition-all"
         >
           {t('skip_to_main_content') || 'Skip to main content'}
         </a>
@@ -500,8 +500,7 @@ function App() {
           />
 
           <main
-            id="main-content"
-            tabIndex={-1}
+            id="main-content" tabIndex={0} aria-label="Main content"
             className={`flex-1 overflow-y-auto overflow-x-hidden outline-none transition-all duration-300 ${sidebarOpen ? 'md:ms-64' : ''} relative pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-20`}
           >
             <ErrorBoundary componentName="MainContent">
@@ -559,8 +558,8 @@ function App() {
                     setActiveFarmerConvId={setActiveFarmerConvId}
                     loadFarmerMessages={loadFarmerMessages}
                     farmerChatMessages={farmerChatMessages}
-                    farmerChatInput={farmerChatInput}
-                    setFarmerChatInput={setFarmerChatInput}
+                    farmerHistory={{ hasEarlier: farmerHasEarlier, loadEarlier: loadEarlierFarmerMessages }}
+                    farmerChatInput={farmerChatInput} setFarmerChatInput={setFarmerChatInput}
                     handleFarmerChatSend={handleFarmerChatSend as (...args: unknown[]) => void}
                     loadFarmers={loadFarmers}
                     setShowFarmerModal={setShowFarmerModal}

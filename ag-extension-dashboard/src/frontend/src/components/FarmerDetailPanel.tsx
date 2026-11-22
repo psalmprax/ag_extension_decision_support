@@ -1,5 +1,6 @@
 import React from 'react';
 import { AdvisoryPreferencesSection } from '@/components/advisories/AdvisoryPreferencesSection';
+import { FarmerRecordingsSection } from '@/components/partners/FarmerRecordingsSection';
 import { Farmer, Visit } from '@/types/dashboard';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -9,12 +10,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FarmerDetailHeader } from './FarmerDetailHeader';
 import { FarmerYieldChart } from './FarmerYieldChart';
 import { FarmerVisitTimeline } from './FarmerVisitTimeline';
-import { X, TrendingUp, MessageSquare, Phone, Video, Clock, ChevronRight, Sprout } from 'lucide-react';
-import { Activity, Mail, History, FileText, Loader2, Link2, ListChecks } from 'lucide-react';
+import { X, TrendingUp, MessageSquare, Phone, Video, Clock, ChevronRight, Sprout, Activity, Mail, History, FileText, Loader2, Link2, ListChecks } from 'lucide-react';
 import { FarmerProgressLog } from './progress/FarmerProgressLog';
 
 type DetailTab = 'overview' | 'history' | 'progress' | 'insights';
-import toast from 'react-hot-toast';
 import { VideoCall } from './VideoCall';
 import { useLanguage } from '@/lib/LanguageContext';
 import { isActionEnter } from '@/lib/keyboard';
@@ -27,6 +26,7 @@ import { fetchPriorityScore, updateVisit } from '@/api/visitService';
 import { SatelliteInsights } from './SatelliteInsights';
 import { ConfirmModal } from './ConfirmModal';
 import { getLogContent, getLogTypeColor } from './farmerLogFormat';
+import { copyWithToast } from '@/lib/copyText';
 
 interface FarmerDetailPanelProps {
   isOpen: boolean;
@@ -49,7 +49,7 @@ const HistoryTabContent = ({
   <section className="space-y-6">
     <div className="flex items-center justify-between">
       <h3
-        className={`text-sm font-semibold flex items-center gap-2 text-gray-400`}
+        className={`text-sm font-medium flex items-center gap-2 text-gray-400`}
       >
         <History className={`w-4 h-4 text-primary-500`} />
         Recent Interactions
@@ -112,7 +112,7 @@ const CropsSection = ({
     className={`p-6 ${radiusClass} border shadow-sm bg-theme-bg-card dark:bg-gray-800/80 border-gray-100 dark:border-gray-700`}
   >
     <h3
-      className={`text-xs font-semibold mb-4 flex items-center gap-2 text-gray-400`}
+      className={`text-xs font-medium mb-4 flex items-center gap-2 text-gray-400`}
     >
       <Sprout className={`w-4 h-4 text-green-500`} />
       {t('table_crops')}
@@ -189,12 +189,12 @@ const VitalStatsSection = ({
     className={`p-6 ${radiusClass} border shadow-sm bg-theme-bg-card dark:bg-gray-800/80 border-gray-100 dark:border-gray-700`}
   >
     <h3
-      className={`text-xs font-semibold mb-4 flex items-center gap-2 text-gray-400`}
+      className={`text-xs font-medium mb-4 flex items-center gap-2 text-gray-400`}
     >
       <Activity className={`w-4 h-4 text-secondary-500`} />
       {t('farmer_vital_score')}
     </h3>
-    <div className={`text-3xl font-semibold tabular-nums leading-none text-gray-900 dark:text-white`}>
+    <div className={`text-3xl font-medium tabular-nums leading-none text-gray-900 dark:text-white`}>
       {farmer.vitalScore || 0}
       <span className="text-sm text-gray-400">/100</span>
     </div>
@@ -596,7 +596,6 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             className="fixed end-0 top-0 bottom-0 w-full max-w-xl z-[70] shadow-2xl overflow-hidden flex flex-col bg-slate-950/95 backdrop-blur-2xl border-s border-slate-800 text-slate-100"
             onClick={() => onFarmerClick?.(farmer)}
           >
-            {/* Header Section */}
             <FarmerDetailHeader
               farmer={farmer}
               editData={editData}
@@ -666,11 +665,11 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
               )}
             </div>
 
-            <div className="px-4 pb-2">
+            <div className="px-4 pb-2 space-y-4">
               <AdvisoryPreferencesSection farmerId={farmer.id} />
+              <FarmerRecordingsSection farmerId={farmer.id} farmerName={`${farmer.firstName} ${farmer.lastName}`} />
             </div>
 
-            {/* Footer Quick Action */}
             <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900/80 border-slate-800">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-9 h-9 rounded-[4px] flex items-center justify-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shrink-0">
@@ -680,7 +679,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                   <p className="text-[10px] font-mono font-medium text-slate-400">
                     {t('visit_next_scheduled') || 'Next scheduled'}
                   </p>
-                  <p className="text-xs font-bold text-white truncate">
+                  <p className="text-xs font-medium text-white truncate">
                     {(() => {
                       if (!nextScheduledVisit) return t('no_visit_scheduled') || 'None scheduled';
                       const raw = nextScheduledVisit.scheduledAt || nextScheduledVisit.scheduled_at;
@@ -744,10 +743,9 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             <button
               onClick={() => {
                 const inviteLink = `${window.location.origin}/tele-call/farmer-${farmer.id}`;
-                navigator.clipboard.writeText(inviteLink);
-                toast.success('Invite link copied — share it with the farmer to join this call.');
+                void copyWithToast(inviteLink, 'Invite link copied — share it with the farmer to join this call.');
               }}
-              className="absolute top-4 end-16 z-[110] px-3 py-2 bg-black/50 hover:bg-black/70 text-white text-xs font-bold rounded-xl backdrop-blur-md transition-all flex items-center gap-1.5"
+              className="absolute top-4 end-16 z-[110] px-3 py-2 bg-black/50 hover:bg-black/70 text-white text-xs font-medium rounded-xl backdrop-blur-md transition-all flex items-center gap-1.5"
             >
               <Link2 className="w-4 h-4" />
               {t('ui_farmer_detail_panel_invite')}

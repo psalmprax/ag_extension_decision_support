@@ -65,5 +65,5 @@ export const FarmerDashboard: React.FC = () => {
     );
   }
 
-  return <NormalDashboard stats={stats} statsLoading={statsLoading} />;
+  return <NormalDashboard stats={stats} statsLoading={statsLoading} farm={farmerStats ?? null} />;
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BaseModal } from './BaseModal';
+import { getApiErrorMessage } from '@/lib/apiError';
 import apiClient from '../api/client';
 import { useLanguage } from '@/lib/LanguageContext';
 
@@ -40,18 +41,10 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
       if (res.data.success) {
         setSessions(res.data.data.sessions || []);
       }
-    } catch {
-      // Fallback sample session for UI robustness
-      setSessions([
-        {
-          id: 'sess-current',
-          ipAddress: '192.168.1.10',
-          device: 'Chrome on Linux',
-          location: 'Nairobi, Kenya',
-          lastActiveAt: new Date().toISOString(),
-          isCurrent: true,
-        },
-      ]);
+    } catch (err: unknown) {
+      // Show the failure; never a made-up session in its place.
+      setSessions([]);
+      setStatusMessage({ type: 'error', text: getApiErrorMessage(err, 'Could not load your signed-in devices. Try again.') });
     } finally {
       setLoading(false);
     }
@@ -111,7 +104,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
         <div className="flex border-b border-gray-200 dark:border-gray-700">
           <button
             type="button"
-            className={`pb-2 px-4 text-sm font-semibold border-b-2 transition-colors ${
+            className={`pb-2 px-4 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'mfa'
                 ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -122,7 +115,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
           </button>
           <button
             type="button"
-            className={`pb-2 px-4 text-sm font-semibold border-b-2 transition-colors ${
+            className={`pb-2 px-4 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'sessions'
                 ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -150,7 +143,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
               <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white">
                   {t('ui_security_settings_modal_authenticator_app_totp')}
                 </h4>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -158,7 +151,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                 </p>
               </div>
               <span
-                className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
+                className={`px-2.5 py-1 text-xs font-medium rounded-full ${
                   mfaEnabled
                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
                     : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
@@ -182,7 +175,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
             {setupData && (
               <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-xl border border-emerald-200 dark:border-emerald-800 space-y-4">
                 <div className="text-center">
-                  <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 mb-2">
+                  <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300 mb-2">
                     {t('ui_security_settings_modal_enter_this_secret_key_in_your_authen')}
                   </p>
                   <code className="px-3 py-1.5 bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-300 font-mono text-sm rounded border ">
@@ -205,7 +198,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                     {t('ui_security_settings_modal_backup_recovery_codes_save_these_saf')}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
@@ -222,7 +215,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
 
                 <button
                   type="button"
-                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow"
+                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow"
                   onClick={handleConfirmMfa}
                   disabled={totpCode.length !== 6 || loading}
                 >
@@ -257,7 +250,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                         {s.device || 'Unknown Device'}
                       </span>
                       {s.isCurrent && (
-                        <span className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-full">
+                        <span className="px-2 py-0.5 text-[10px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-full">
                           {t('ui_security_settings_modal_current_device')}
                         </span>
                       )}

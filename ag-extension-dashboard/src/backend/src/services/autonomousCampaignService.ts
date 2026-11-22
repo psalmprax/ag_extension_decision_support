@@ -8,6 +8,7 @@ import { usageService } from './usageService';
 import { AIProviderFactory } from './aiProvider/aiProvider';
 import type { AutonomousCampaignRunRow, RegionalAgronomySkillRow } from '../types/rowTypes';
 import { demoSql } from '@/services/demoScope';
+import { farmerScopeSql, type ScopePrincipal } from '@/services/access/farmerScope';
 
 interface GoalCampaignInput {
     goalPrompt: string;
@@ -17,6 +18,8 @@ interface GoalCampaignInput {
     autoScheduleVisits?: boolean;
     tenantId?: string | null;
     userId?: string | null;
+    /** Who launched it: the campaign reaches only farmers this person may see. */
+    principal: ScopePrincipal;
 }
 
 interface CampaignStepTrace {
@@ -67,29 +70,37 @@ class AutonomousCampaignService {
         return { skillsContext: '', count: 0 };
     }
 
+    /**
+     * The farmers a campaign reaches: only those its launcher may see (an officer their
+     * own farmers, a manager their region), never demo farmers, and the region and crop
+     * matched exactly. A substring match sent "Central" advice to "North Central" and
+     * "pea" advice to chickpea and groundnut growers.
+     */
     private async queryTargetFarmers(
+        principal: ScopePrincipal,
         tenantId?: string | null,
         targetRegion?: string | null,
         targetCrop?: string | null
     ): Promise<any[]> {
-        // Campaigns never target demo farmers.
-        let farmerSql = `SELECT * FROM farmers WHERE ${demoSql('farmers')}`;
-        const farmerParams: any[] = [];
+        const scope = await farmerScopeSql(principal, 'f', 1);
+        // The shared rule also keeps demo farmers out.
+        let farmerSql = `SELECT f.* FROM farmers f WHERE ${scope.sql}`;
+        const farmerParams: any[] = [...scope.params];
 
         if (tenantId) {
             farmerParams.push(tenantId);
-            farmerSql += ` AND (tenant_id = $${farmerParams.length} OR tenant_id IS NULL)`;
+            farmerSql += ` AND (f.tenant_id = $${farmerParams.length} OR f.tenant_id IS NULL)`;
         }
         if (targetRegion && targetRegion !== 'all') {
-            farmerParams.push(`%${targetRegion}%`);
-            farmerSql += ` AND region ILIKE $${farmerParams.length}`;
+            farmerParams.push(targetRegion.trim());
+            farmerSql += ` AND lower(f.region) = lower($${farmerParams.length})`;
         }
         if (targetCrop && targetCrop !== 'all') {
-            farmerParams.push(`%${targetCrop}%`);
-            farmerSql += ` AND array_to_string(crops, ',') ILIKE $${farmerParams.length}`;
+            farmerParams.push(targetCrop.trim());
+            farmerSql += ` AND EXISTS (SELECT 1 FROM unnest(f.crops) crop WHERE lower(crop) = lower($${farmerParams.length}))`;
         }
 
-        farmerSql += ` ORDER BY vital_score ASC LIMIT 100`;
+        farmerSql += ` ORDER BY f.vital_score ASC NULLS LAST LIMIT 100`;
         const { rows } = await query<any>(farmerSql, farmerParams);
         return rows;
     }
@@ -125,7 +136,8 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
         userId?: string | null
     ): Promise<{ sms: number; whatsapp: number; telegram: number }> {
         const dispatched = { sms: 0, whatsapp: 0, telegram: 0 };
-        const farmerPhone = farmer.phone;
+        // A farmer who replied STOP gets no campaign messages on their phone.
+        const farmerPhone = farmer.sms_opt_out ? null : farmer.phone;
         const wantsSms = channel === 'all' || channel === 'sms';
         const wantsWhatsapp = channel === 'all' || channel === 'whatsapp';
         const wantsTelegram = channel === 'all' || channel === 'telegram';
@@ -246,7 +258,8 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
         const atRiskFarmers = farmers.filter(f => (f.vital_score || 80) < 65);
         for (const atRisk of atRiskFarmers) {
             try {
-                const officerId = userId || (await this.getDefaultOfficerId(tenantId));
+                // The visit is the farmer's own officer's to make, not the campaign launcher's.
+                const officerId = atRisk.assigned_officer_id || userId || (await this.getDefaultOfficerId(tenantId));
                 await query(
                     `INSERT INTO visits (
                         farmer_id, officer_id, scheduled_at, status, notes, created_at, updated_at
@@ -341,7 +354,7 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
         }
 
         // 3. Query Farmers
-        const farmers = await this.queryTargetFarmers(tenantId, targetRegion, targetCrop);
+        const farmers = await this.queryTargetFarmers(input.principal, tenantId, targetRegion, targetCrop);
         const affectedFarmersCount = farmers.length;
         addTrace(
             'Target Cohort Selection',

@@ -4,6 +4,7 @@ import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 import { persistentMemory } from '@/services/persistentMemory';
 import type { AuthenticatedRequestUser } from '@/types/dbRows';
+import { pageLimit } from '@/utils/pagination';
 
 const router = Router();
 
@@ -44,7 +45,7 @@ router.get('/', authorize(['admin', 'regional_manager', 'extension_officer', 'fa
 
     const category = typeof req.query.category === 'string' ? req.query.category : undefined;
     const queryStr = typeof req.query.query === 'string' ? req.query.query : '';
-    const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : 50;
+    const limit = pageLimit(req.query.limit, 50);
 
     const memories = await persistentMemory.recall({
       userId,

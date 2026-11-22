@@ -289,7 +289,8 @@ router.get('/farmer-stats', async (req: Request, res: Response) => {
 
         const farmerResult = await getFromDB(`
             SELECT crops, farm_size_hectares, vital_score, yield_history,
-                   soil_moisture, temperature, ph_level, ai_confidence
+                   soil_moisture, temperature, ph_level, ai_confidence,
+                   location_lat, location_lng, country
             FROM farmers
             WHERE user_id = $1
               ${tenantClause}
@@ -357,6 +358,11 @@ router.get('/farmer-stats', async (req: Request, res: Response) => {
                 alertsCount: parseInt(String(alertsCountResult[0]?.count || '0')),
                 aiTipsCount: parseInt(String(aiTipsCountResult[0]?.count || '0')),
                 officerName: officerResult[0]?.officer_name ?? null,
+                // The farm's own location and country, for its vegetation and crop benchmarks.
+                location: farmer.location_lat != null && farmer.location_lng != null
+                    ? { lat: Number(farmer.location_lat), lng: Number(farmer.location_lng) }
+                    : null,
+                country: farmer.country ?? null,
             }
         });
     } catch (error) {

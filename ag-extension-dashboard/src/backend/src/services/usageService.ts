@@ -1,15 +1,7 @@
-import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger';
 import { isSubscriptionActive } from './subscriptionUtils';
-import { config } from '@/config';
-
-let prisma: PrismaClient;
-function getPrisma() {
-    if (!prisma) {
-        prisma = new PrismaClient({ datasourceUrl: config.database.url });
-    }
-    return prisma;
-}
+// The one shared client: a second PrismaClient would open a second connection pool.
+import { getPrisma } from './prismaService';
 
 export type UsageType =
     | 'sms'

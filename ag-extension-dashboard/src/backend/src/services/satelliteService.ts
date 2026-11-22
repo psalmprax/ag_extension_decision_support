@@ -1,4 +1,5 @@
 import { logger } from '../utils/logger';
+import { outboundSignal } from '@/utils/outboundTimeout';
 
 export interface SpectralData {
     ndvi: number;
@@ -59,6 +60,7 @@ export class SatelliteService {
         `;
         const response = await fetch('https://services.sentinel-hub.com/api/v1/process', {
             method: 'POST',
+            signal: outboundSignal(),
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 input: {
@@ -78,7 +80,7 @@ export class SatelliteService {
     private static async fetchNASAGIBS(lat: number, lng: number): Promise<SpectralData[]> {
         const date = new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0];
         const url = `https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=MODIS_Terra_Vegetation_Indices&STYLES=&SRS=EPSG:4326&BBOX=${lat - 0.1},${lng - 0.1},${lat + 0.1},${lng + 0.1}&WIDTH=256&HEIGHT=256&TIME=${date}&INFO_FORMAT=application/json`;
-        const response = await fetch(url);
+        const response = await fetch(url, { signal: outboundSignal() });
         if (!response.ok) throw new Error(`NASA GIBS API error: ${response.status}`);
         const data = (await response.json()) as { features?: Array<{ properties?: { ndvi?: number } }> };
         const ndvi = data?.features?.[0]?.properties?.ndvi;
@@ -165,6 +167,7 @@ export class SatelliteService {
     private static async getSentinelHubToken(): Promise<string> {
         const response = await fetch('https://services.sentinel-hub.com/oauth/token', {
             method: 'POST',
+            signal: outboundSignal(),
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({ grant_type: 'client_credentials', client_id: this.sentinelHubClientId!, client_secret: this.sentinelHubClientSecret! }),
         });

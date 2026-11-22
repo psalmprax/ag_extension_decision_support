@@ -101,9 +101,11 @@ async function loadActivityStats(type: string, effectiveStartDate: string, effec
             SELECT COUNT(*) as total_conversations,
                    SUM(CASE WHEN satisfaction_score IS NOT NULL THEN 1 ELSE 0 END) as rated,
                    AVG(satisfaction_score) as avg_satisfaction
-            FROM conversations
-            WHERE created_at >= $1 AND created_at <= $2
-        `, [effectiveStartDate, effectiveEndDate]);
+            FROM chat_conversations
+            WHERE kind = 'farmer_thread'
+              AND created_at >= $1 AND created_at <= $2
+              ${officerId ? 'AND officer_id = $3' : ''}
+        `, [effectiveStartDate, effectiveEndDate, officerId].filter(Boolean));
 
         if (convResult.rows[0]) {
             reportData.conversations = mapConversationStatsRow(convResult.rows[0]);

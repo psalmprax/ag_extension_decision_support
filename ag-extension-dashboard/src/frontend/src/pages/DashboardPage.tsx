@@ -159,7 +159,7 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
     <div className={`${cardClass} p-4 sm:p-6`}>
       <div className="flex items-center gap-3 mb-4 sm:mb-6">
         <div className={`w-2 h-2 rounded-full ${health?.status === 'healthy' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-        <h3 className="text-xs sm:text-sm font-headline font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-xs sm:text-sm font-headline font-medium text-gray-900 dark:text-white">
           {t('dashboard_active_pulse', { defaultValue: 'System Health' })}
         </h3>
       </div>
@@ -203,7 +203,7 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
                   </p>
                   <p className="text-xxs text-slate-500">{health?.environment || ''}</p>
                 </div>
-                <span className={`text-xxs font-semibold  ${item.ok ? 'text-emerald-400' : 'text-amber-400'}`}>{formatLabel(item.status)}</span>
+                <span className={`text-xxs font-medium  ${item.ok ? 'text-emerald-400' : 'text-amber-400'}`}>{formatLabel(item.status)}</span>
               </div>
             ))}
           </>
@@ -371,7 +371,7 @@ const DashboardMapSection: React.FC<{
             <div className="flex items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <div className="w-2 h-2 bg-primary-400 rounded-full"></div>
-                <span className="text-xxs font-bold text-slate-200  ">
+                <span className="text-xxs font-medium text-slate-200  ">
                   {t('table_active')}
                 </span>
               </div>
@@ -434,7 +434,7 @@ const MapRetryOverlay: React.FC<{
     aria-live="polite"
   >
     <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
-    <span className="text-xxs font-bold text-amber-400  ">
+    <span className="text-xxs font-medium text-amber-400  ">
       {t('map_retrying') || 'Retrying'} ({attempts}/{maxAttempts})
     </span>
   </div>
@@ -472,7 +472,7 @@ const MapFallbackEmptyState: React.FC<{
       <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
         <AlertCircle className="w-8 h-8 text-amber-600 dark:text-amber-400" />
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
         {t('map_fallback_title') || 'Unable to load distribution'}
       </h3>
       <p className="text-xs text-gray-500 dark:text-gray-400 font-medium leading-relaxed mb-6">

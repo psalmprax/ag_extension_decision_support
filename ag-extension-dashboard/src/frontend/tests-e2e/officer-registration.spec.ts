@@ -19,10 +19,12 @@ interface FarmerRow {
 }
 
 async function fillRegistration(page: Page, first: string, last: string, village: string): Promise<void> {
-  await page.getByPlaceholder('e.g. Samuel').fill(first);
-  await page.getByPlaceholder('e.g. Kiprono').fill(last);
-  await page.getByPlaceholder('+254 712 345 678').fill(uniquePhone());
-  await page.getByPlaceholder('e.g. Nakuru, Rongai').fill(village);
+  await page.getByPlaceholder('First name').fill(first);
+  await page.getByPlaceholder('Last name').fill(last);
+  await page.getByPlaceholder('+ country code and number').fill(uniquePhone());
+  await page.getByPlaceholder('Village or ward').fill(village);
+  await page.getByRole('button', { name: /^Maize$/ }).click();
+  await page.getByPlaceholder('2.5').fill('2.5');
 }
 
 async function findFarmer(page: Page, last: string): Promise<FarmerRow | undefined> {
@@ -46,7 +48,7 @@ test.describe('farmer registration by field staff', () => {
     await expect(page.getByLabel('Assigned extension officer')).toHaveCount(0);
 
     await fillRegistration(page, 'Grace', last, 'Bahati');
-    await page.getByRole('button', { name: /Enroll Farmer Client/ }).click();
+    await page.getByRole('button', { name: /^Save farmer$/ }).click();
     await expect(page.getByText(/registered successfully/i)).toBeVisible();
 
     const farmer = await findFarmer(page, last);
@@ -90,7 +92,7 @@ test.describe('farmer registration by field staff', () => {
     await picker.selectOption({ label: `${SEEDED.officerNakuruName} — Rift Valley` });
 
     await fillRegistration(page, 'Kibet', last, 'Njoro');
-    await page.getByRole('button', { name: /Enroll Farmer Client/ }).click();
+    await page.getByRole('button', { name: /^Save farmer$/ }).click();
     await expect(page.getByText(/registered successfully/i)).toBeVisible();
 
     const farmer = await findFarmer(page, last);
@@ -118,6 +120,6 @@ test.describe('farmer registration by field staff', () => {
     await expect(page.getByRole('button', { name: 'Farmers', exact: true })).toHaveCount(0);
     await page.goto('/register-farmer');
     // The tab guard sends a farmer back to their own dashboard.
-    await expect(page.getByRole('button', { name: /Enroll Farmer Client/ })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Save farmer$/ })).toHaveCount(0);
   });
 });

@@ -33,15 +33,6 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
         className="relative card p-8 lg:p-10 group bg-slate-950/90 dark:bg-slate-950/95 backdrop-blur-2xl border border-emerald-500/30 shadow-sm dark:shadow-none overflow-hidden min-h-[440px] flex flex-col justify-between"
         style={{ borderRadius: 'var(--radius-card, 0.75rem)' }}
       >
-        {/* KnockKnock Ambient Mesh Gradient Orb */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <motion.div
-            animate={{ x: [0, 50, 0], y: [0, 30, 0], scale: [1, 1.12, 1] }}
-            transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute -top-1/4 -end-1/4 w-full h-full bg-emerald-500/15 rounded-full blur-[100px]"
-          />
-          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px]" />
-        </div>
 
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-6">
@@ -65,7 +56,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
           >
             {t('billing_current_plan') || 'Current plan'}
           </span>
-          <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900 dark:text-white leading-tight tracking-tight mb-4 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors duration-300">
+          <h2 className="text-2xl sm:text-3xl font-medium text-slate-900 dark:text-white leading-tight tracking-tight mb-4 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors duration-300">
             {subscription?.plan?.name ?? 'N/A'}
           </h2>
           <div className="flex items-center gap-2.5 text-slate-400 font-mono text-xs p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-800/80">
@@ -108,13 +99,12 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
       animate={{ opacity: 1, scale: 1 }}
       className={`relative p-8 lg:p-10 bg-slate-950/90 dark:bg-slate-950/95 backdrop-blur-2xl ${radiusClass} border border-emerald-500/25 shadow-sm dark:shadow-none overflow-hidden min-h-[440px] flex flex-col justify-between`}
     >
-      <div className="absolute top-0 end-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-[90px]" />
       <div className="relative z-10">
         <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 w-fit mb-4 text-emerald-700 dark:text-emerald-400">
           <TrendingUp className="w-6 h-6" />
         </div>
-        <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-white leading-tight tracking-tight mb-3">
-          {t('billing_promo_title') || 'Scale Your Agricultural Reach'}
+        <h3 className="text-xl sm:text-2xl font-medium text-slate-900 dark:text-white leading-tight tracking-tight mb-3">
+          {t('billing_promo_title') || 'Scale your agricultural reach'}
         </h3>
         <p className="text-slate-400 font-normal text-xs leading-relaxed">
           {t('billing_promo_desc') || 'Unlock automated agronomic triage, multi-channel SMS broadcasts, and satellite NDVI maps.'}
@@ -123,7 +113,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
       <div className="relative z-10 p-4 bg-white dark:bg-slate-900/80 rounded-xl border border-slate-800">
         <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-medium text-xs mb-2">
           <ShieldCheck className="w-3.5 h-3.5" />
-          <span>{t('billing_instant_activation') || 'Instant Cooperative Activation'}</span>
+          <span>{t('billing_instant_activation') || 'Instant cooperative activation'}</span>
         </div>
         <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
           <div className="w-full h-full bg-emerald-500/60 rounded-full" />

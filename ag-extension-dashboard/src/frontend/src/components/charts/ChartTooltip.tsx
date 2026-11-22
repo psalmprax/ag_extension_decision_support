@@ -75,7 +75,7 @@ export const ChartTooltip: React.FC<ChartTooltipProps> = ({
     >
       {label !== undefined && label !== null && label !== '' && (
         <p
-          className="mb-1.5 text-xxs font-bold  "
+          className="mb-1.5 text-xxs font-medium  "
           style={{ color: 'var(--color-on-surface-variant)' }}
         >
           {labelFormatter ? labelFormatter(label) : label}
@@ -105,7 +105,7 @@ export const ChartTooltip: React.FC<ChartTooltipProps> = ({
                 {name}
               </span>
               <span
-                className="text-xs font-bold tabular-nums"
+                className="text-xs font-medium tabular-nums"
                 style={{ color: 'var(--color-on-surface)' }}
               >
                 {value}

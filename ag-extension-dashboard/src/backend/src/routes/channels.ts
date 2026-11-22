@@ -231,6 +231,12 @@ async function buildDefaultChannelConfigs(tenantId: string): Promise<Record<stri
     };
 }
 
+/** A saved channel config with its credentials masked: the settings page shows that they are set, never what they are. */
+export function maskSecretFields(config: Record<string, unknown>): Record<string, unknown> {
+    return Object.fromEntries(Object.entries(config).map(([key, value]) =>
+        [key, /token|secret|password|apikey|api_key|authkey|sid$/i.test(key) && typeof value === 'string' ? maskSecret(value) : value]));
+}
+
 function applyChannelConfigOverrides(
     configsMap: Record<string, unknown>,
     rows: TenantChannelConfigRow[]
@@ -243,7 +249,7 @@ function applyChannelConfigOverrides(
         target.autoOnboarding = row.auto_onboarding;
         target.welcomeTemplate = row.welcome_template ?? '';
         if (row.config && typeof row.config === 'object') {
-            target.config = { ...target.config, ...(row.config as Record<string, unknown>) };
+            target.config = { ...target.config, ...maskSecretFields(row.config as Record<string, unknown>) };
         }
     }
 }
@@ -304,6 +310,23 @@ router.patch('/config', authorize(['admin', 'regional_manager']), async (req: Re
             return res.status(400).json({ success: false, error: 'Valid channel (sms, whatsapp, telegram) is required' });
         }
 
+        // The settings page sends back masked credentials (••••) for fields it did not
+        // change: those keep the saved value instead of overwriting it with the mask.
+        const saved = await query<{
+            config: Record<string, unknown> | null; provider: string | null; is_enabled: boolean | null;
+            auto_onboarding: boolean | null; welcome_template: string | null;
+        }>(
+            `SELECT config, provider, is_enabled, auto_onboarding, welcome_template
+               FROM tenant_channel_configs WHERE tenant_id = $1 AND channel = $2`, [tenantId, channel]);
+        const previous = saved.rows[0];
+        const changes = Object.fromEntries(Object.entries((inputConfig ?? {}) as Record<string, unknown>)
+            .filter(([, value]) => !(typeof value === 'string' && value.includes('••'))));
+        const config = { ...(previous?.config ?? {}), ...changes };
+        // A field the request leaves out keeps its saved value: changing a token must not
+        // switch the channel off or reset its welcome message.
+        const keep = <T,>(value: T | undefined, savedValue: T | null | undefined, fallback: T): T =>
+            value !== undefined ? value : (savedValue ?? fallback);
+
         const { rows } = await query<TenantChannelConfigRow>(
             `INSERT INTO tenant_channel_configs (tenant_id, channel, provider, is_enabled, config, auto_onboarding, welcome_template, updated_at)
              VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
@@ -318,16 +341,17 @@ router.patch('/config', authorize(['admin', 'regional_manager']), async (req: Re
             [
                 tenantId,
                 channel,
-                provider || 'default',
-                Boolean(isEnabled),
-                JSON.stringify(inputConfig || {}),
-                autoOnboarding !== undefined ? Boolean(autoOnboarding) : true,
-                welcomeTemplate || null,
+                keep<string>(provider || undefined, previous?.provider, 'default'),
+                keep<boolean>(isEnabled === undefined ? undefined : Boolean(isEnabled), previous?.is_enabled, false),
+                JSON.stringify(config),
+                keep<boolean>(autoOnboarding === undefined ? undefined : Boolean(autoOnboarding), previous?.auto_onboarding, true),
+                keep<string | null>(welcomeTemplate === undefined ? undefined : (welcomeTemplate || null), previous?.welcome_template, null),
             ]
         );
 
         logger.info(`Channel ${channel} updated for tenant ${tenantId}`);
-        return res.json({ success: true, data: rows[0], message: `${channel.toUpperCase()} configuration saved successfully` });
+        const updated = rows[0] ? { ...rows[0], config: maskSecretFields((rows[0].config ?? {}) as Record<string, unknown>) } : null;
+        return res.json({ success: true, data: updated, message: `${channel.toUpperCase()} configuration saved successfully` });
     } catch (error) {
         logger.error('Failed to update channel config:', error);
         return safeError(res, 500, 'Failed to update channel configuration');

@@ -1,12 +1,15 @@
 import { Router, Response } from 'express';
 import { logger } from '@/utils/logger';
-import { AuthRequest } from '@/middleware/authorize';
+import { authorize, AuthRequest } from '@/middleware/authorize';
 import { selfHealingService } from '@/services/selfHealing';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
 // Agent registry — system-defined agent metadata
+// Starting, stopping and inspecting the agent services is server administration.
+const systemAdmin = authorize(['admin']);
+
 const agentRegistry = [
     {
         id: 'agent-zero',
@@ -150,9 +153,9 @@ async function handleAgentControl(
  *     summary: List registered AI agents and their live status
  *     tags: [AI]
  */
-router.get('/agents', async (_req: AuthRequest, res: Response) => {
+router.get('/agents', systemAdmin, async (_req: AuthRequest, res: Response) => {
     try {
-        const agentsWithStatus = await Promise.all(agentRegistry.map(async (a) => {
+        const agentsWithStatus = await Promise.all(agentRegistry.map(async ({ url: _internalUrl, ...a }) => {
             const live = await getLiveStatus(a.id);
             return {
                 ...a,
@@ -175,7 +178,7 @@ router.get('/agents', async (_req: AuthRequest, res: Response) => {
  *     summary: Get current status of all AI agents
  *     tags: [AI]
  */
-router.get('/status', async (_req: AuthRequest, res: Response) => {
+router.get('/status', systemAdmin, async (_req: AuthRequest, res: Response) => {
     try {
         const agents = await Promise.all(agentRegistry.map(async (a) => {
             const live = await getLiveStatus(a.id);
@@ -201,7 +204,7 @@ router.get('/status', async (_req: AuthRequest, res: Response) => {
  *     summary: Start an agent execution
  *     tags: [AI]
  */
-router.post('/execute', async (req: AuthRequest, res: Response) => {
+router.post('/execute', systemAdmin, async (req: AuthRequest, res: Response) => {
     try {
         await handleAgentControl(req.body?.agent, 'execute', res, { mode: req.body?.mode });
     } catch (error) {
@@ -217,7 +220,7 @@ router.post('/execute', async (req: AuthRequest, res: Response) => {
  *     summary: Stop an agent execution
  *     tags: [AI]
  */
-router.post('/stop/:agentId', async (req: AuthRequest, res: Response) => {
+router.post('/stop/:agentId', systemAdmin, async (req: AuthRequest, res: Response) => {
     try {
         await handleAgentControl(req.params.agentId, 'stop', res);
     } catch (error) {

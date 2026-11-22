@@ -68,7 +68,7 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({ provenance, va
     return (
       <span
         title={provenance.note || meta.title}
-        className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-mono tracking-wide ${meta.chipClass}`}
+        className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-mono ${meta.chipClass}`}
         data-testid="provenance-badge"
       >
         <Icon className="h-3 w-3" aria-hidden="true" />
@@ -83,7 +83,7 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({ provenance, va
       data-testid="provenance-panel"
       role="note"
     >
-      <div className="flex items-center gap-1.5 font-semibold">
+      <div className="flex items-center gap-1.5 font-medium">
         <Icon className="h-3.5 w-3.5" aria-hidden="true" />
         <span>{meta.label}</span>
         <span className="font-normal opacity-70">— {meta.title.toLowerCase()}</span>

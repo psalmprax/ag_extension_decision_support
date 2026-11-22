@@ -20,8 +20,7 @@ const QuotaBar = ({
   limit,
   icon: Icon,
   color,
-  glowColor,
-}: QuotaBarProps & { glowColor: string }) => {
+}: QuotaBarProps) => {
   const { t } = useLanguage();
   const isUnlimited = limit === -1;
   const percentage = isUnlimited ? 0 : Math.min(Math.round((current / limit) * 100), 100);
@@ -37,11 +36,11 @@ const QuotaBar = ({
             <Icon className="w-3.5 h-3.5" />
           </div>
           <div>
-            <span className="text-xxs font-black text-slate-400 block leading-none mb-1">
+            <span className="text-xxs font-medium text-slate-400 block leading-none mb-1">
               {label}
             </span>
             <span
-              className={`text-xs font-mono font-bold ${isHigh ? 'text-rose-400' : 'text-white'}`}
+              className={`text-xs font-mono font-medium ${isHigh ? 'text-rose-400' : 'text-white'}`}
             >
               {current.toLocaleString()}{' '}
               <span className="text-slate-500 font-normal">
@@ -52,7 +51,7 @@ const QuotaBar = ({
         </div>
         <div className="text-end">
           <span
-            className={`text-xxs font-black font-mono ${isHigh ? 'text-rose-400 animate-pulse' : 'text-emerald-400'}`}
+            className={`text-xxs font-medium font-mono ${isHigh ? 'text-rose-400 animate-pulse' : 'text-emerald-400'}`}
           >
             {isUnlimited ? t('usage_unlimited') || 'UNLIMITED' : `${percentage}%`}
           </span>
@@ -63,18 +62,8 @@ const QuotaBar = ({
           initial={{ width: 0 }}
           animate={{ width: isUnlimited ? '100%' : `${percentage}%` }}
           transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
-          className={`absolute inset-y-0 start-0 rounded-full bg-gradient-to-r ${color} transition-all duration-300 ${isUnlimited ? 'opacity-30' : ''}`}
-          style={{
-            boxShadow: isUnlimited || percentage > 5 ? `0 0 15px ${glowColor}` : 'none',
-          }}
-        >
-          {/* Shimmer wave effect */}
-          <motion.div
-            animate={{ x: ['-100%', '100%'] }}
-            transition={{ duration: 2.5, repeat: Infinity, ease: 'linear' }}
-            className="absolute inset-0 opacity-40 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.6)_50%,transparent_100%)] skew-x-12"
-          />
-        </motion.div>
+          className={`absolute inset-y-0 start-0 rounded-full ${color} transition-all duration-300 ${isUnlimited ? 'opacity-30' : ''}`}
+        />
       </div>
     </div>
   );
@@ -111,11 +100,11 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
         className={`relative overflow-hidden ${compact ? '' : 'p-6 bg-slate-900/60 border border-white/10 rounded-xl shadow-xl backdrop-blur-xl'}`}
       >
         <div className="relative z-10 flex flex-col items-center text-center py-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-slate-500/20 border border-emerald-500/30 flex items-center justify-center mb-3 shadow-sm text-emerald-400">
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mb-3 shadow-sm text-emerald-400">
             <Activity className="w-6 h-6" />
           </div>
-          <h4 className="text-sm font-bold text-white mb-1">
-            {t('usage_init_title') || 'Realtime Quota Telemetry'}
+          <h4 className="text-sm font-medium text-white mb-1">
+            {t('usage_init_title') || 'Realtime quota telemetry'}
           </h4>
           <p className="text-xs text-white/60 max-w-xs leading-relaxed mb-4">
             {t('usage_init_desc') || 'Automatic telemetry tracking for SMS dispatch, AI queries, and telemetry synthesis.'}
@@ -134,19 +123,11 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
 
   const typeConfig: Record<
     string,
-    { icon: React.ComponentType<{ className?: string }>; color: string; glow: string }
+    { icon: React.ComponentType<{ className?: string }>; color: string }
   > = {
-    sms: { icon: Send, color: 'from-emerald-500 to-slate-400', glow: 'rgba(16,185,129,0.5)' },
-    ai_chat: {
-      icon: MessageSquare,
-      color: 'from-slate-500 to-slate-400',
-      glow: 'rgba(99,102,241,0.5)',
-    },
-    report: {
-      icon: FileText,
-      color: 'from-slate-500 to-slate-500',
-      glow: 'rgba(168,85,247,0.5)',
-    },
+    sms: { icon: Send, color: 'bg-emerald-500' },
+    ai_chat: { icon: MessageSquare, color: 'bg-slate-400' },
+    report: { icon: FileText, color: 'bg-slate-500' },
   };
 
   return (
@@ -156,15 +137,15 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
       {!compact && (
         <div className="flex items-center justify-between mb-6 relative z-10">
           <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-slate-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-inner">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-inner">
               <TrendingUp className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white tracking-tight">
-                {t('billing_quota_usage') || 'Quota & Seats'}
+              <h4 className="text-sm font-medium text-white tracking-tight">
+                {t('billing_quota_usage') || 'Quota & seats'}
               </h4>
               <p className="text-xs text-white/60">
-                {t('usage_realtime_telemetry') || 'Live Agronomy Quota'}
+                {t('usage_realtime_telemetry') || 'Live agronomy quota'}
               </p>
             </div>
           </div>
@@ -187,7 +168,6 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
               limit={item.limit}
               icon={config.icon}
               color={config.color}
-              glowColor={config.glow}
             />
           );
         })}

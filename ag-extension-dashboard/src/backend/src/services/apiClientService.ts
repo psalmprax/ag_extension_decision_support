@@ -182,13 +182,15 @@ class ApiClientService {
         return result.rows;
     }
 
-    async revokeKey(keyId: string) {
+    /** Revoke a key; `ownerUserId` (everyone but an administrator) limits it to their own clients' keys. */
+    async revokeKey(keyId: string, ownerUserId?: string) {
         await this.ensureTables();
         const result = await query(`
-            UPDATE api_keys SET status = 'revoked', updated_at = NOW()
-            WHERE id = $1
-            RETURNING id, client_id, name, key_prefix, status
-        `, [keyId]);
+            UPDATE api_keys k SET status = 'revoked', updated_at = NOW()
+            WHERE k.id = $1
+              AND ($2::uuid IS NULL OR EXISTS (SELECT 1 FROM api_clients c WHERE c.id = k.client_id AND c.owner_user_id = $2::uuid))
+            RETURNING k.id, k.client_id, k.name, k.key_prefix, k.status
+        `, [keyId, ownerUserId ?? null]);
         return result.rows[0] || null;
     }
 

@@ -90,7 +90,7 @@ export const VisitReportModal: React.FC<VisitReportModalProps> = ({ target, onCl
         className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-5 space-y-4"
       >
         <div className="flex items-start justify-between gap-3">
-          <h2 id="visit-report-title" className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 id="visit-report-title" className="text-base font-medium text-slate-900 dark:text-white flex items-center gap-2">
             <ClipboardCheck className="w-4 h-4 text-emerald-600" aria-hidden="true" />
             {t('ui_visit_report_modal_visit_report')} {target.farmerName}
           </h2>

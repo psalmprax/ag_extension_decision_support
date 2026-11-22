@@ -107,6 +107,17 @@ describe('POST /api/auth/register', () => {
         });
     });
 
+    it('answers only once the session is stored, so the first request with the token is accepted', async () => {
+        installDb([]);
+        const { createSession } = jest.requireMock('@/services/sessionService') as { createSession: jest.Mock };
+        let stored = false;
+        createSession.mockImplementationOnce(() => new Promise<void>(resolve => setTimeout(() => { stored = true; resolve(); }, 20)));
+
+        await request(app).post('/api/auth/register').send(officerSignup()).expect(201);
+
+        expect(stored).toBe(true);
+    });
+
     it('accepts the current phone field as well', async () => {
         installDb([{ id: 'rm-lilongwe', region: 'Lilongwe', country: 'Malawi' }]);
 

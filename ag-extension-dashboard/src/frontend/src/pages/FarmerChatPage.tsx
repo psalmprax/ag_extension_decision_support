@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Plus, Lock, MessageSquare, ArrowLeft, Trash2, Mic } from 'lucide-react';
-import { Conversation, ChatMessage } from '../types/dashboard';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useDeviceThermalMemoryBudget } from '@/hooks/useDeviceThermalMemoryBudget';
@@ -17,16 +16,10 @@ import { VoiceNoteTaker } from '@/components/audio/VoiceNoteTaker';
 import { fetchWeather } from '@/api/weatherService';
 import apiClient from '@/api/client';
 import { buildHazardDays, toPlotTelemetry, type PlotTelemetry, type WeatherForecastDay } from './farmerChatSafety';
+import { EarlierMessagesButton } from '@/components/chat/EarlierMessagesButton';
+import type { ThreadPageProps } from '@/components/chat/threadProps';
 
-interface FarmerChatPageProps {
-  farmerConversations: Conversation[];
-  activeFarmerConvId: string | null;
-  setActiveFarmerConvId: (id: string | null) => void;
-  loadFarmerMessages: (id: string) => void;
-  farmerChatMessages: ChatMessage[];
-  farmerChatInput: string;
-  setFarmerChatInput: (input: string) => void;
-  handleFarmerChatSend: (e: React.FormEvent) => void;
+interface FarmerChatPageProps extends ThreadPageProps {
   loadFarmers: () => void;
   setShowFarmerModal: (show: boolean) => void;
   onDeleteConversation?: (id: string) => void;
@@ -41,6 +34,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   setActiveFarmerConvId,
   loadFarmerMessages,
   farmerChatMessages,
+  farmerHistory,
   farmerChatInput,
   setFarmerChatInput,
   handleFarmerChatSend,
@@ -251,12 +245,12 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                     }}
                     className="flex-1 p-3 text-start flex items-center gap-3 min-w-0"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-bold shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-medium shrink-0">
                       {initial}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center">
-                        <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                        <span className="font-medium text-xs text-slate-900 dark:text-white truncate">
                           {displayName}
                         </span>
                         <UnreadCount conversationId={conv.id} className="ms-auto me-2" />
@@ -290,7 +284,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                         }
                       }}
                       className="opacity-0 group-hover:opacity-100 p-2 me-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-all border border-rose-500/20"
-                      title="Delete Conversation"
+                      title="Delete conversation"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -319,11 +313,11 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                   >
                     <ArrowLeft className="w-4 h-4" />
                   </button>
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-300 font-semibold shrink-0">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-300 font-medium shrink-0">
                     {(activeConv.farmerName || activeConv.title || 'F').trim().charAt(0).toUpperCase() || 'F'}
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                    <h4 className="font-medium text-xs sm:text-sm text-slate-900 dark:text-white truncate">
                       {activeConv.farmerName || activeConv.title || 'Smallholder Client'}
                     </h4>
                     <div className="flex items-center gap-2 text-xxs text-slate-500 dark:text-white/40">
@@ -343,8 +337,8 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                           onDeleteConversation(activeConv.id);
                         }
                       }}
-                      className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors border border-rose-500/20 flex items-center gap-1.5 text-xs"
-                      title="Delete Conversation"
+                      className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-300 hover:text-rose-800 dark:hover:text-rose-200 transition-colors border border-rose-500/20 flex items-center gap-1.5 text-xs"
+                      title="Delete conversation"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">{t('common_delete')}</span>
@@ -366,8 +360,9 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                     </div>
                   </div>
                 )}
+                <EarlierMessagesButton history={farmerHistory} />
                 {farmerChatMessages.map((msg, i) => (
-                  <FarmerChatMessage key={i} message={msg} />
+                  <FarmerChatMessage key={msg.id ?? i} message={msg} />
                 ))}
               </div>
 
@@ -424,7 +419,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
               <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2">
                 <MessageSquare className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              <h3 className="text-base font-medium text-slate-900 dark:text-white">
                 {t('chat_select_conversation') || 'Select a Farmer Conversation'}
               </h3>
               <p className="text-xs text-slate-600 dark:text-white/50 max-w-xs text-center">

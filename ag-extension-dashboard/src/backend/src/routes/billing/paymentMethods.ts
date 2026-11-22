@@ -14,7 +14,8 @@ const errorStatusMap: Record<string, number> = {
     'STRIPE_ERROR': 402,
     'PAYPAL_ERROR': 402,
     'ACTIVE_SUBSCRIPTION_EXISTS': 409,
-    'ALREADY_SUBSCRIBED': 400
+    'ALREADY_SUBSCRIBED': 400,
+    'PAYMENT_METHOD_NOT_FOUND': 404,
 };
 
 /**
@@ -104,13 +105,22 @@ router.post('/payment-methods', authorize(['admin', 'extension_officer', 'farmer
  */
 router.delete('/payment-methods/:id', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
-        const { id } = req.params;
-        const success = await paymentService.deletePaymentMethod(id);
-        if (success) {
-            res.json({ success: true, message: 'Payment method removed successfully' });
-        } else {
-            safeError(res, 500, 'Failed to remove payment method');
+        const user = await prisma.user.findUnique({ where: { id: req.user!.userId } });
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        const customerId = await paymentService.getOrCreateCustomer(user.id, user.email);
+        if (!customerId) {
+            return res.status(errorStatusMap.PAYMENT_GATEWAY_NOT_CONFIGURED).json({
+                success: false, errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED', message: 'Stripe configuration required',
+            });
         }
+        // The card must be one of this user's own: an id alone never detaches someone else's.
+        const result = await paymentService.deletePaymentMethod(req.params.id, customerId);
+        if (!result.success) {
+            return res.status(errorStatusMap[result.errorCode as string] || 400).json({
+                success: false, errorCode: result.errorCode, message: result.message,
+            });
+        }
+        res.json({ success: true, message: 'Payment method removed successfully' });
     } catch (error) {
         logger.error('Failed to delete payment method:', error);
         safeError(res, 500, 'Internal server error');

@@ -22,7 +22,7 @@ export const JourneyBreadcrumbs: React.FC<JourneyBreadcrumbsProps> = ({
 
   return (
     <div className={`flex items-center gap-1.5 overflow-x-auto py-1 text-[11px] font-mono no-scrollbar ${className}`}>
-      <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1 shrink-0">
+      <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1 shrink-0">
         <Clock className="w-3 h-3 text-slate-400" />
         {t('ui_journey_breadcrumbs_path')}
       </span>
@@ -36,7 +36,7 @@ export const JourneyBreadcrumbs: React.FC<JourneyBreadcrumbsProps> = ({
             <div
               className={`flex items-center gap-1 px-2 py-0.5 rounded-md shrink-0 transition-all ${
                 isActive
-                  ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold shadow-sm'
+                  ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-medium shadow-sm'
                   : 'bg-slate-800/60 border border-slate-700/40 text-slate-400'
               }`}
             >

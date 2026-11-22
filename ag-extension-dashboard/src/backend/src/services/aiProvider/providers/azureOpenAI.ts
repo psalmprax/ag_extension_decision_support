@@ -22,6 +22,7 @@ import { config } from '@/config';
 import { visionModelFor } from '../selectedModel';
 import { logger } from '@/utils/logger';
 import { EMBEDDING_DIMENSIONS } from '@/services/embeddingDimensions';
+import { AI_PROVIDER_TIMEOUT_MS, AI_PROVIDER_MAX_RETRIES } from '@/utils/outboundTimeout';
 
 export class AzureOpenAIProvider extends BaseAIProvider {
     readonly provider: AIProviderType = 'azure_openai';
@@ -67,6 +68,8 @@ export class AzureOpenAIProvider extends BaseAIProvider {
                 // /deployments/{chat}, sending embeddings to the chat model. The
                 // SDK routes each request by its `model` (= deployment name).
                 apiVersion: config.azureOpenAI.apiVersion,
+                timeout: AI_PROVIDER_TIMEOUT_MS,
+                maxRetries: AI_PROVIDER_MAX_RETRIES,
             });
             return this.client;
         } catch (error) {

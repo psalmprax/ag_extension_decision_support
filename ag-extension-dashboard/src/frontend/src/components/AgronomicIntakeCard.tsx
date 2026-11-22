@@ -52,7 +52,7 @@ const IRRIGATION_TYPES = [
 
 const PRODUCTION_GOALS = [
   { id: 'commercial', label: 'Commercial Yield' },
-  { id: 'smallholder', label: 'Smallholder Food Security' },
+  { id: 'smallholder', label: 'Smallholder food security' },
   { id: 'organic', label: 'Organic / Low-Input' },
 ];
 

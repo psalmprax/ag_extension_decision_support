@@ -52,6 +52,8 @@ jest.mock('../services/prismaService', () => ({
                     userId: 'farm-1'
                 }
             ])),
+            // The whole list's size, not this page's: 73 farmers, one shown.
+            count: jest.fn(() => Promise.resolve(73)),
             findUnique: jest.fn(() => Promise.resolve(
                 { 
                     id: '1', 
@@ -97,6 +99,7 @@ describe('Farmers API Integration Tests', () => {
         expect(response.status).toBe(200);
         expect(response.body.success).toBe(true);
         expect(Array.isArray(response.body.data.farmers)).toBe(true);
+        expect(response.body.data.total).toBe(73);
     });
 
     it('should allow farmer to get their own profile', async () => {

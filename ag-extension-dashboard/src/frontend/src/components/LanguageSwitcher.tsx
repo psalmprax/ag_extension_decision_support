@@ -44,7 +44,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         <button
           onClick={() => setOpen(o => !o)}
           className="flex items-center gap-1.5 h-10 px-2.5 rounded-md text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors"
-          aria-label={t('common_select_language')}
+          aria-label={`${current.code.toUpperCase()} · ${t('common_select_language')}`}
           aria-expanded={open}
         >
           <Globe className="w-4 h-4" aria-hidden="true" />

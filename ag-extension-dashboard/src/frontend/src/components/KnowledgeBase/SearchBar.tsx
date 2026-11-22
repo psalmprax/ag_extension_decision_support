@@ -96,7 +96,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   return (
     <div className="relative group">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 via-slate-500/20 to-slate-500/20 blur opacity-60 group-hover:opacity-100 transition-opacity rounded-xl"></div>
       <div className="relative w-full max-w-full bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-white/10 p-1.5 sm:p-2 shadow-sm dark:shadow-2xl focus-within:ring-2 focus-within:ring-emerald-500/40 focus-within:border-emerald-500/60 rounded-xl overflow-hidden backdrop-blur-xl">
         {/* Attachment Previews */}
         {attachments.length > 0 && (
@@ -111,7 +110,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                 ) : (
                   <FileIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400" />
                 )}
-                <span className="text-xxs font-bold text-emerald-700 dark:text-emerald-300 max-w-[100px] truncate">
+                <span className="text-xxs font-medium text-emerald-700 dark:text-emerald-300 max-w-[100px] truncate">
                   {att.name}
                 </span>
                 <button
@@ -156,12 +155,18 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           />
           <div className="flex items-center gap-1 sm:gap-2 pe-1 sm:pe-2 shrink-0">
             <label
-              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white cursor-pointer transition-all shrink-0 border border-transparent hover:border-slate-200 dark:hover:border-white/10"
+              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl focus-within:ring-2 focus-within:ring-emerald-500/40 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white cursor-pointer transition-all shrink-0 border border-transparent hover:border-slate-200 dark:hover:border-white/10"
               title={t('kb_attach', { defaultValue: 'Attach a leaf photo or a soil test' })}
-              aria-label={t('kb_attach', { defaultValue: 'Attach a leaf photo or a soil test' })}
             >
-              <Paperclip className="w-4 h-4" />
-              <input type="file" multiple className="hidden" onChange={handleFileUpload} />
+              <Paperclip className="w-4 h-4" aria-hidden="true" />
+              {/* Visually hidden but focusable, so the attach button works from the keyboard too. */}
+              <input
+                type="file"
+                multiple
+                className="sr-only"
+                aria-label={t('kb_attach', { defaultValue: 'Attach a leaf photo or a soil test' })}
+                onChange={handleFileUpload}
+              />
             </label>
             <button
               type="button"
@@ -196,7 +201,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
               type="button"
               disabled={isAsking || (!searchQuery.trim() && attachments.length === 0)}
               onClick={onSearch}
-              className="h-8 sm:h-9 px-3 sm:px-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-bold rounded-xl shadow-lg shadow-emerald-950/40 text-xs shrink-0 flex items-center justify-center gap-1.5 transition-all"
+              className="h-8 sm:h-9 px-3 sm:px-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-medium rounded-xl shadow-lg text-xs shrink-0 flex items-center justify-center gap-1.5 transition-all"
             >
               <span className="hidden sm:inline">{t('ui_search_bar_search_rag')}</span>
               <ArrowRight className="w-3.5 h-3.5" />

@@ -1,7 +1,4 @@
 import { detectVernacularKeywords, transcribeVoiceNote, synthesizeVoiceAdvisory } from '../services/voiceAudioService';
-import { generateIvrXml, processDtmfResponse, dispatchVoiceBroadcast } from '../services/ivrBroadcastService';
-import { calculateAgronomicRoi } from '../services/agronomicRoiService';
-import { calculateSocStock, auditSoilCarbonSequestration } from '../services/soilCarbonMrvService';
 import { evaluateWeatherHazards, runProactiveHazardScan } from '../services/weatherHazardDaemonService';
 import { query } from '../services/databaseService';
 
@@ -17,8 +14,8 @@ jest.mock('../utils/logger', () => ({
   },
 }));
 
-describe('Strategic Architecture Pillars (Voice, Economics, Carbon, Hazards)', () => {
-  describe('Pillar 3: Voice Audio & IVR Dispatch', () => {
+describe('Voice and weather hazard capabilities', () => {
+  describe('Voice audio', () => {
     it('detects Swahili agronomic terminology from voice transcripts', () => {
       const { keywords, detectedLanguage } = detectVernacularKeywords('Habari, nina shida ya viwavi kwenye mahindi yangu');
       expect(detectedLanguage).toBe('sw');
@@ -42,115 +39,9 @@ describe('Strategic Architecture Pillars (Voice, Economics, Carbon, Hazards)', (
       expect(typeof result.audioBase64).toBe('string');
     });
 
-    it('generates valid TwiML / Africa’s Talking XML prompt for IVR broadcasts', () => {
-      const xml = generateIvrXml({
-        alertTitle: 'Tahadhari ya Viwavi wa Jeshi & Wadudu <Hatari>',
-        advisorySwahili: 'Kagua mahindi yako mara moja "haraka".',
-      });
-      expect(xml).toContain('<Response>');
-      expect(xml).toContain('<Say voice="alice" language="sw-KE">');
-      expect(xml).toContain('<Gather numDigits="1"');
-      // Neutralizes XML injection
-      expect(xml).toContain('&amp;');
-      expect(xml).toContain('&lt;Hatari&gt;');
-      expect(xml).toContain('&quot;haraka&quot;');
-      expect(xml).not.toContain('<Hatari>');
-    });
-
-    it('processes DTMF response digits into structured workflows', () => {
-      const dtmf2 = processDtmfResponse('2');
-      expect(dtmf2.action).toBe('request_officer_visit');
-      expect(dtmf2.description).toContain('on-farm diagnostic visit');
-
-      const dtmf3 = processDtmfResponse('3');
-      expect(dtmf3.action).toBe('connect_agro_dealer');
-    });
-
-    it('refuses to report phantom IVR dispatches when no voice provider is configured', async () => {
-      const res = await dispatchVoiceBroadcast({
-        farmerPhones: ['+254711111111', '+254722222222'],
-        alertTitle: 'Frost Warning',
-        advisorySwahili: 'Maji majira ya jioni.',
-        advisoryEnglish: 'Irrigate in evening.',
-      });
-      // No Twilio credentials in the test env: zero calls were actually placed.
-      expect(res.dispatchedCount).toBe(0);
-      expect(res.provider).toBe('not_configured');
-      expect(res.batchId).toContain('ivr_batch_');
-      expect(res.provenance?.kind).toBe('unavailable');
-    });
   });
 
-  describe('Pillar 5: Agronomic ROI & Soil Carbon MRV Engine', () => {
-    it('computes yield differential, net profit gains, and benefit-cost ratio', () => {
-      const roi = calculateAgronomicRoi({
-        crop: 'Maize',
-        hectares: 2.5,
-        controlYieldTons: 2.2,
-        advisoryYieldTons: 4.8,
-      });
-
-      expect(roi.differential.yieldGainPct).toBeGreaterThan(100);
-      expect(roi.differential.netProfitGainKes).toBeGreaterThan(0);
-      expect(roi.differential.benefitCostRatio).toBeGreaterThan(1.0);
-      // Provenance must disclose the fixed illustrative input budgets
-      expect(roi.provenance.kind).toBe('deterministic_estimation');
-      expect(roi.provenance.assumptions.length).toBeGreaterThan(0);
-    });
-
-    it('refuses to invent default yields when the caller supplies none', () => {
-      expect(() => calculateAgronomicRoi({ crop: 'Maize' })).toThrow(/required and must be positive/);
-      expect(() => calculateAgronomicRoi({ crop: 'Maize', controlYieldTons: 2.4 })).toThrow(/required and must be positive/);
-    });
-
-    it('quantifies Soil Organic Carbon stock (tC/ha) via IPCC Tier 2 methodology', () => {
-      // 0-30cm, 1.3 g/cm³, 3.2% SOM, 0.05 coarse
-      const socStock = calculateSocStock({
-        sampleId: 'sample-001',
-        depthCm: 30,
-        bulkDensityGPerCm3: 1.3,
-        organicMatterPct: 3.2,
-        coarseFragmentFraction: 0.05,
-        testedAt: '2026-01-01',
-      });
-      // Expected ~ 68.7 t C/ha
-      expect(socStock).toBeGreaterThan(60);
-      expect(socStock).toBeLessThan(80);
-    });
-
-    it('audits multi-year soil carbon sequestration and carbon credit revenue', () => {
-      const baseline = {
-        sampleId: 'base',
-        depthCm: 30,
-        bulkDensityGPerCm3: 1.3,
-        organicMatterPct: 2.5,
-        coarseFragmentFraction: 0.05,
-        testedAt: '2024-01-01',
-      };
-      const current = {
-        sampleId: 'curr',
-        depthCm: 30,
-        bulkDensityGPerCm3: 1.28,
-        organicMatterPct: 3.4,
-        coarseFragmentFraction: 0.05,
-        testedAt: '2026-01-01',
-      };
-
-      const audit = auditSoilCarbonSequestration({
-        baselineSample: baseline,
-        currentSample: current,
-        hectares: 150,
-        carbonCreditPriceUsd: 25.0,
-      });
-
-      expect(audit.deltaSocTCPerHa).toBeGreaterThan(0);
-      expect(audit.totalCo2EquivalentSequesteredTons).toBeGreaterThan(0);
-      expect(audit.estimatedCarbonRevenueUsd).toBeGreaterThan(0);
-      expect(audit.complianceTier).toBe('IPCC Tier 2 (Soil-Specific MRV)');
-    });
-  });
-
-  describe('Pillar 6: Proactive Weather Hazard Engine', () => {
+  describe('Weather hazard evaluation', () => {
     it('detects severe frost hazard when night temperature drops below 3.5°C', () => {
       const forecast = [
         {

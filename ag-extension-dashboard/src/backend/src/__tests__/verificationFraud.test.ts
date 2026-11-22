@@ -1,4 +1,7 @@
-import { auditCropLossAnomaly, verifyParcelDwellTime } from '../services/verificationFraudService';
+const mockQuery = jest.fn();
+jest.mock('../services/databaseService', () => ({ query: (...args: unknown[]) => mockQuery(...args) }));
+
+import { auditCropLossAnomaly, boundingBox, checkFarmerSpatialConflict, verifyParcelDwellTime } from '../services/verificationFraudService';
 
 describe('auditCropLossAnomaly', () => {
   const baseParams = {
@@ -176,3 +179,44 @@ describe('verifyParcelDwellTime (AD-002 / CE-003)', () => {
     expect(res.details).toContain('Stationary armchair visit detected');
   });
 });
+
+describe('duplicate parcel check', () => {
+  const haversine = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+    const r = 6_371_000; const rad = Math.PI / 180;
+    const a = Math.sin(((lat2 - lat1) * rad) / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(((lng2 - lng1) * rad) / 2) ** 2;
+    return 2 * r * Math.asin(Math.sqrt(a));
+  };
+
+  it('keeps every point within the radius inside the box, at the equator, mid-latitudes and near a pole', () => {
+    for (const [lat, lng] of [[0.5, 33.1], [-13.98, 33.78], [59.9, 10.7], [78.2, 15.6]]) {
+      const box = boundingBox(lat, lng, 50);
+      for (let bearing = 0; bearing < 360; bearing += 15) {
+        const b = (bearing * Math.PI) / 180;
+        const pLat = lat + (49 * Math.cos(b)) / 111_320;
+        const pLng = lng + (49 * Math.sin(b)) / (111_320 * Math.cos((lat * Math.PI) / 180));
+        expect(haversine(lat, lng, pLat, pLng)).toBeLessThanOrEqual(50);
+        expect(pLat).toBeGreaterThanOrEqual(box.minLat);
+        expect(pLat).toBeLessThanOrEqual(box.maxLat);
+        expect(pLng).toBeGreaterThanOrEqual(box.minLng);
+        expect(pLng).toBeLessThanOrEqual(box.maxLng);
+      }
+    }
+  });
+
+  it('spans every longitude when the parcel sits on the 180° meridian', () => {
+    expect(boundingBox(-17.8, 179.9999, 50)).toMatchObject({ minLng: -180, maxLng: 180 });
+  });
+
+  it('reads only farmers inside the box, then checks the exact distance', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [
+      { id: 'near', first_name: 'Chikondi', last_name: 'Banda', village: 'Kasungu', location_lat: '-13.98010', location_lng: '33.78010' },
+      { id: 'corner', first_name: 'Tiyamike', last_name: 'Phiri', village: null, location_lat: '-13.98045', location_lng: '33.78045' },
+    ] });
+    const result = await checkFarmerSpatialConflict({ targetLat: -13.98, targetLng: 33.78, tenantId: 't1' });
+    const [sql, params] = mockQuery.mock.calls[0];
+    expect(sql).toContain('location_lat BETWEEN $1 AND $2 AND location_lng BETWEEN $3 AND $4');
+    expect(params).toHaveLength(5);
+    expect(result.conflictingFarmers.map(f => f.id)).toEqual(['near']);
+  });
+});
+

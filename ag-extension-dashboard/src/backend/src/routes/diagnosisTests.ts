@@ -51,7 +51,7 @@ router.post('/images', authorize(['admin', 'regional_manager', 'extension_office
 
 router.delete('/images/:id', reviewers, async (req: Request, res: Response) => {
     try {
-        const removed = await removeTestImage(req.params.id);
+        const removed = await removeTestImage(req.params.id, principalOf(req));
         return removed ? res.json({ success: true }) : res.status(404).json({ success: false, error: 'Photo not found' });
     } catch (error) { return fail(res, error, 'remove the photo'); }
 });

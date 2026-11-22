@@ -47,7 +47,7 @@ export function DiagnosisHistoryPanel() {
   return (
     <section className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-semibold text-white flex items-center gap-2">
+        <h2 className="text-xs font-medium text-white flex items-center gap-2">
           <History className="w-4 h-4 text-emerald-400" />
           {t('ui_diagnosis_history_panel_your_recent_diagnoses')}
         </h2>

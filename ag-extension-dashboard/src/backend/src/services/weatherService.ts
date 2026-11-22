@@ -3,6 +3,10 @@ import { logger } from '@/utils/logger';
 import { rateLimitedFetch } from './externalApiGuard';
 import { config } from '../config';
 
+// A forecast that takes longer than this is reported as unavailable rather than holding
+// the farmer's or officer's request open.
+const OPEN_METEO_TIMEOUT_MS = 8000;
+
 export interface WeatherData {
   temperature: number;
   temp: number;
@@ -141,6 +145,7 @@ export class WeatherService {
     return rateLimitedFetch<{ latitude: number; longitude: number }>('openMeteo', cacheKey, async () => {
       const response = await axios.get('https://geocoding-api.open-meteo.com/v1/search', {
         params: { name: cityName, count: 5, language: 'en', format: 'json' },
+        timeout: OPEN_METEO_TIMEOUT_MS,
       });
       if (!response.data?.results?.[0]) {
         throw new Error(`Location not found: ${locationHint}`);
@@ -196,6 +201,7 @@ export class WeatherService {
           timezone: 'auto',
           forecast_days: days,
         },
+        timeout: OPEN_METEO_TIMEOUT_MS,
       });
       return resp.data;
     });

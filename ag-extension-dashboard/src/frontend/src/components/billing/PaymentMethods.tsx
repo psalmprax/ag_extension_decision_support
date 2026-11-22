@@ -68,15 +68,15 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
     >
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6 relative z-10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-slate-500/20 border border-emerald-500/30 flex items-center justify-center shadow-sm text-emerald-700 dark:text-emerald-400">
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shadow-sm text-emerald-700 dark:text-emerald-400">
             <CardIcon className="w-6 h-6" />
           </div>
           <div>
             <h3
               id="payment-methods-title"
-              className="text-xl font-bold tracking-tight text-slate-900 dark:text-white"
+              className="text-xl font-medium tracking-tight text-slate-900 dark:text-white"
             >
-              {t('billing_payment_intelligence') || 'Payment Methods & Fast Checkout'}
+              {t('billing_payment_intelligence') || 'Payment methods & fast checkout'}
             </h3>
             <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
               {t('billing_stored_protocols') || 'Zero-Trust Mobile Money & Voucher Rails'}
@@ -92,7 +92,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
           className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg shadow-sm transition-all flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          <span>{t('billing_add_method') || 'Add Credit Card'}</span>
+          <span>{t('billing_add_method') || 'Add credit card'}</span>
         </button>
       </div>
 
@@ -109,7 +109,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                 <Smartphone className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
+                <p className="text-sm font-medium text-slate-900 dark:text-white tracking-tight">
                   {t('ui_payment_methods_m_pesa_airtel_money')}
                 </p>
                 <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 mt-0.5">
@@ -136,7 +136,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                   options={[
                     { value: 'mpesa', label: 'M-Pesa (Till / Paybill)' },
                     { value: 'airtel', label: 'Airtel Money' },
-                    { value: 'bank', label: 'Direct Bank Wire' },
+                    { value: 'bank', label: 'Direct bank wire' },
                   ]}
                   className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
                 />
@@ -209,7 +209,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                 <Ticket className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
+                <p className="text-sm font-medium text-slate-900 dark:text-white tracking-tight">
                   {t('billing_voucher') || 'AgriVoucher Token'}
                 </p>
                 <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xxs font-medium bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20 mt-0.5">
@@ -319,7 +319,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             <Globe className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
+            <h4 className="text-sm font-medium text-slate-900 dark:text-white tracking-tight">
               {t('billing_paypal_gateway') || 'PayPal International Billing'}
             </h4>
             <p className="text-xs text-slate-600 dark:text-white/60">

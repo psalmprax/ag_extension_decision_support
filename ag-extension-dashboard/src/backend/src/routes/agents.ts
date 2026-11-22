@@ -5,8 +5,11 @@ import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
+// The agent fleet, its queue (which holds other people's task payloads) and dispatching
+// work to it are server administration, as the Agents page is.
+router.use(authorize(['admin']));
 
-router.get('/status', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
+router.get('/status', async (req: Request, res: Response) => {
     try {
         const agents = agentOrchestrator.getAgentStatus();
         res.json({ success: true, data: agents });
@@ -16,7 +19,7 @@ router.get('/status', authorize(['extension_officer', 'admin', 'farmer']), async
     }
 });
 
-router.get('/queue', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
+router.get('/queue', async (req: Request, res: Response) => {
     try {
         const queue = agentOrchestrator.getQueueStatus();
         res.json({ success: true, data: queue });
@@ -26,7 +29,7 @@ router.get('/queue', authorize(['extension_officer', 'admin', 'farmer']), async 
     }
 });
 
-router.get('/handoffs', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
+router.get('/handoffs', async (req: Request, res: Response) => {
     try {
         const handoffs = agentOrchestrator.getHandoffLog();
         res.json({ success: true, data: handoffs });
@@ -36,7 +39,7 @@ router.get('/handoffs', authorize(['extension_officer', 'admin', 'farmer']), asy
     }
 });
 
-router.post('/dispatch', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
+router.post('/dispatch', async (req: Request, res: Response) => {
     try {
         const { type, payload, priority, agentId } = req.body;
         const task = await agentOrchestrator.dispatchTask({

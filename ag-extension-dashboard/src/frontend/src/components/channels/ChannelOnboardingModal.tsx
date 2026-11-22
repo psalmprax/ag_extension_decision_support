@@ -21,6 +21,7 @@ import { WhatsAppTab } from './WhatsAppTab';
 import { TelegramTab } from './TelegramTab';
 import { SimulatorTab } from './SimulatorTab';
 import { useLanguage } from '@/lib/LanguageContext';
+import { copyWithToast } from '@/lib/copyText';
 
 interface ChannelOnboardingModalProps {
   isOpen: boolean;
@@ -41,7 +42,7 @@ function advanceSimulator(step: number, userMsg: string): { nextStep: number; bo
     case 1:
       return { nextStep: 2, botText: `Thank you, ${userMsg}.\n\nWhat is your main crop? For example maize, coffee or cassava.`, nextDefaultInput: 'Maize and beans' };
     case 2:
-      return { nextStep: 3, botText: `Noted: ${userMsg}.\n\nWhich region or district is your farm in?`, nextDefaultInput: 'Nakuru' };
+      return { nextStep: 3, botText: `Noted: ${userMsg}.\n\nWhich region or district is your farm in?`, nextDefaultInput: '' };
     case 3:
       return { nextStep: 4, botText: `Noted: ${userMsg}.\n\nAbout how big is your farm? Reply with a number and ha or acres.`, nextDefaultInput: '3.5 ha' };
     case 4:
@@ -160,10 +161,9 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
     }
   }, [isOpen, loadConfigs]);
 
-  const copyToClipboard = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = async (text: string, key: string) => {
+    if (!(await copyWithToast(text, 'Copied.'))) return;
     setCopiedKey(key);
-    toast.success('Copied to clipboard!');
     setTimeout(() => setCopiedKey(null), 2500);
   };
 
@@ -254,7 +254,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
         setTelegramForm(prev => ({ ...prev, botUsername: res.bot?.username || prev.botUsername }));
         toast.success(`Verified! Connected to @${res.bot.username}`);
       } else {
-        toast.error(res.error || 'Invalid Bot Token');
+        toast.error(res.error || 'Invalid bot token');
       }
     } catch {
       toast.error('Failed to connect to Telegram API');
@@ -328,7 +328,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
                 <Zap className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                <h2 className="text-xl font-medium tracking-tight text-white flex items-center gap-2">
                   {t('ui_channel_onboarding_modal_client_farmer_channel_onboarding')}
                   <span className="text-xxs px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                     {t('ui_channel_onboarding_modal_live_hub')}
@@ -351,7 +351,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
           <div className="flex border-b border-slate-800 bg-slate-950/40 px-6 gap-2">
             <button
               onClick={() => setActiveTab('sms')}
-              className={`py-3.5 px-4 text-xs font-bold transition-all border-b-2 flex items-center gap-2 ${
+              className={`py-3.5 px-4 text-xs font-medium transition-all border-b-2 flex items-center gap-2 ${
                 activeTab === 'sms'
                   ? 'border-emerald-500 text-emerald-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -366,7 +366,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
 
             <button
               onClick={() => setActiveTab('whatsapp')}
-              className={`py-3.5 px-4 text-xs font-bold transition-all border-b-2 flex items-center gap-2 ${
+              className={`py-3.5 px-4 text-xs font-medium transition-all border-b-2 flex items-center gap-2 ${
                 activeTab === 'whatsapp'
                   ? 'border-emerald-500 text-emerald-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -381,7 +381,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
 
             <button
               onClick={() => setActiveTab('telegram')}
-              className={`py-3.5 px-4 text-xs font-bold transition-all border-b-2 flex items-center gap-2 ${
+              className={`py-3.5 px-4 text-xs font-medium transition-all border-b-2 flex items-center gap-2 ${
                 activeTab === 'telegram'
                   ? 'border-emerald-500 text-emerald-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -396,7 +396,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
 
             <button
               onClick={() => setActiveTab('onboarding')}
-              className={`py-3.5 px-4 text-xs font-bold transition-all border-b-2 flex items-center gap-2 ${
+              className={`py-3.5 px-4 text-xs font-medium transition-all border-b-2 flex items-center gap-2 ${
                 activeTab === 'onboarding'
                   ? 'border-emerald-500 text-emerald-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'

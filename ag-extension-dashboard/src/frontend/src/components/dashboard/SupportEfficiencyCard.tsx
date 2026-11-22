@@ -34,7 +34,7 @@ export const SupportEfficiencyCard: React.FC<{
 
   return (
     <div className={`${cardClass} p-4 sm:p-6 lg:p-8`}>
-      <h3 className="text-base sm:text-lg font-headline font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">
+      <h3 className="text-base sm:text-lg font-headline font-medium text-gray-900 dark:text-white mb-4 sm:mb-6">
         {t('analytics_support_efficiency')}
       </h3>
       {freePlan ? (
@@ -45,7 +45,7 @@ export const SupportEfficiencyCard: React.FC<{
             <div key={item.name} className="space-y-1.5 sm:space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">{item.name}</span>
-                <span className="text-xs font-semibold tabular-nums text-primary-700 dark:text-primary-400">
+                <span className="text-xs font-medium tabular-nums text-primary-700 dark:text-primary-400">
                   {item.value === null ? 'No data yet' : item.label(item.value)}
                 </span>
               </div>

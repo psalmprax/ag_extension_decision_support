@@ -33,7 +33,7 @@ export function farmerChatSender(role: ChatMessage['role']): SenderPresentation 
       align: 'start',
       bubbleClass:
         'ms-6 bg-sky-50 dark:bg-sky-950/40 text-slate-800 dark:text-white/90 rounded-ss-none border border-sky-200 dark:border-sky-400/20 border-s-2 border-s-sky-500',
-      metaClass: 'text-sky-800/80 dark:text-sky-200/70 border-sky-200/80 dark:border-sky-400/15',
+      metaClass: 'text-sky-800 dark:text-sky-200 border-sky-200/80 dark:border-sky-400/15',
     };
   }
   return {

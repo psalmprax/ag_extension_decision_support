@@ -61,7 +61,7 @@ export const SimulatorTab: React.FC<SimulatorTabProps> = ({
                     : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-es-none'
                 }`}
               >
-                <div className="text-xxs opacity-60 mb-0.5 font-bold flex items-center gap-1">
+                <div className="text-xxs opacity-60 mb-0.5 font-medium flex items-center gap-1">
                   {m.sender === 'farmer' ? (
                     <>
                       <span>{t('ui_simulator_tab_farmer_phone')}</span>
@@ -91,7 +91,7 @@ export const SimulatorTab: React.FC<SimulatorTabProps> = ({
           />
           <button
             onClick={handleSimulatorSend}
-            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all"
+            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium flex items-center gap-1.5 transition-all"
           >
             <Send className="w-3.5 h-3.5" />
             <span>{t('ui_simulator_tab_reply')}</span>

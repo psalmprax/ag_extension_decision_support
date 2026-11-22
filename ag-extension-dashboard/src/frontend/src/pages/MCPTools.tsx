@@ -161,13 +161,13 @@ function MCPTools() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className={`text-2xl font-bold tracking-tight text-slate-900 dark:text-white ${headingClass}`}>{t('ui_mcptools_system_tools')}</h1>
+          <h1 className={`text-2xl font-medium tracking-tight text-slate-900 dark:text-white ${headingClass}`}>{t('ui_mcptools_system_tools')}</h1>
           <p className="text-slate-600 dark:text-white/60 text-xs sm:text-sm mt-1">{t('mcp_tools_subtitle')}</p>
         </div>
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50 text-xs sm:text-sm font-bold rounded-xl transition-all shadow-md self-start sm:self-auto`}
+          className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50 text-xs sm:text-sm font-medium rounded-xl transition-all shadow-md self-start sm:self-auto`}
         >
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           <span>{t('ui_farmer_detail_panel_refresh')}</span>
@@ -226,7 +226,7 @@ function MCPTools() {
           />
         ) : (
           <div className="card p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
               {t('mcp_tools_tool_execution')}
             </h3>
             <div className="text-center py-12">

@@ -82,7 +82,7 @@ export const VegetationHealthCard: React.FC<VegetationHealthCardProps> = ({ card
       ) : (
         <>
           <div className="flex items-baseline gap-2 mb-4">
-            <span className={`text-2xl font-semibold font-mono tabular-nums ${veg.color}`}>
+            <span className={`text-2xl font-medium font-mono tabular-nums ${veg.color}`}>
               {latestNdvi!.toFixed(2)}
             </span>
             <span className="text-xs font-medium text-slate-400">{veg.label}</span>

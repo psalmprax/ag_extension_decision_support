@@ -3,9 +3,10 @@
 This document provides complete architectural specifications, data models, service interactions, and API contracts for the core platform expansion pillars and enterprise security features.
 
 > **Read the status notes.** Many sections below are *specifications*, not shipped
-> capabilities: their routes return 501 in production. Each section carries a status
-> note where that applies; unmarked sections describe production behaviour.
-> Source of truth for gating: `ag-extension-dashboard/src/backend/src/routes/pillars/index.ts`.
+> capabilities. On 2026-11-21 their prototype routes and services were removed (they
+> only ever answered 501 in a deployment); see `docs/PILLAR_SERVICES_DECISION.md`. The
+> pillar routes still served are weather hazard evaluation and speech, listed in
+> `ag-extension-dashboard/src/backend/src/routes/pillars/index.ts`.
 
 ---
 

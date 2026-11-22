@@ -6,6 +6,7 @@ import * as visitService from '@/api/visitService';
 import { randomId } from '@/lib/randomId';
 import { toast } from 'react-hot-toast';
 import { isDemoSession } from '@/demo/demoSession';
+import { safeStorage } from '@/lib/safeStorage';
 
 // Types
 export interface User {
@@ -83,39 +84,14 @@ export interface Notification {
 }
 
 // App Store
-if (typeof localStorage !== 'undefined') {
-  try {
-    localStorage.removeItem('ag-liquid-effect');
-  } catch {
-    // Ignore storage errors in restricted contexts
-  }
-}
+safeStorage.remove('ag-liquid-effect');
 
-const getInitialThemeName = (): ThemeName => {
-  if (typeof localStorage === 'undefined') return 'forest';
-  try {
-    return (localStorage.getItem('ag-theme-name') as ThemeName) || 'forest';
-  } catch {
-    return 'forest';
-  }
-};
+const getInitialThemeName = (): ThemeName => (safeStorage.get('ag-theme-name') as ThemeName) || 'forest';
 
-const getInitialDarkMode = (): boolean => {
-  if (typeof localStorage === 'undefined') return false;
-  try {
-    return localStorage.getItem('theme') === 'dark';
-  } catch {
-    return false;
-  }
-};
+const getInitialDarkMode = (): boolean => safeStorage.get('theme') === 'dark';
 
 const safeSetLocalStorage = (key: string, value: string): void => {
-  if (typeof localStorage === 'undefined') return;
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // Ignore storage write failures in restricted contexts
-  }
+  safeStorage.set(key, value);
 };
 
 export interface AppState {

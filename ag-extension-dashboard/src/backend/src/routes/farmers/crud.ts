@@ -12,7 +12,11 @@ import { farmerRecordFilter, validateRecordScope } from '@/services/demoRecordSc
 import { resolveCreationOfficer } from '@/services/farmerOfficerAssignment';
 import { toE164 } from '@/services/country/phone';
 import { farmerCountryFor } from '@/services/country/countryContext';
-import { requireFarmerAccess } from '@/services/access/farmerScope';
+import { requestCanSeeFarmer, requireFarmerAccess } from '@/services/access/farmerScope';
+import { pageLimit, pageOffset } from '@/utils/pagination';
+
+/** The most farmers one page returns; the app reads larger lists page by page. */
+const FARMER_PAGE_MAX = 500;
 
 const router = Router();
 
@@ -157,15 +161,20 @@ const role = String(_role);
             ];
         }
 
-        const farmers = await prisma.farmer.findMany({
-            where,
-            orderBy: [
-                { order: 'asc' },
-                { createdAt: 'desc' }
-            ],
-            take: parseInt(limit as string),
-            skip: parseInt(offset as string),
-        });
+        const [farmers, total] = await Promise.all([
+            prisma.farmer.findMany({
+                where,
+                orderBy: [
+                    { order: 'asc' },
+                    { createdAt: 'desc' },
+                    // A stable order, so consecutive pages never repeat or skip a farmer.
+                    { id: 'asc' },
+                ],
+                take: pageLimit(limit, 50, FARMER_PAGE_MAX),
+                skip: pageOffset(offset),
+            }),
+            prisma.farmer.count({ where }),
+        ]);
 
         const isMobile = mobile === 'true';
         const farmerData = farmers.map((f: Farmer) => {
@@ -206,7 +215,8 @@ const role = String(_role);
             success: true,
             data: {
                 farmers: farmerData,
-                total: farmers.length,
+                // Every farmer matching the filters, not just this page.
+                total,
             },
             aria: {
                 role: 'list',
@@ -246,9 +256,6 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     if (!isUuid(req.params.id)) return next();
     try {
         const { id } = req.params;
-        const { userId: _userId, role: _role } = req.user as Record<string, unknown>;
-const userId = String(_userId);
-const role = String(_role);
         const prisma = getPrisma();
 
         const farmerWhere: Record<string, unknown> = { id };
@@ -263,18 +270,9 @@ const role = String(_role);
             return res.status(404).json({ success: false, error: 'Farmer not found' });
         }
 
-        // Ownership/Visibility check
-        if (role === 'extension_officer' && farmer.assignedOfficerId !== userId) {
+        // The shared access rule (own farm, assigned farmers, a manager's region, admin).
+        if (!(await requestCanSeeFarmer(req, id))) {
             return res.status(403).json({ success: false, error: 'Access denied' });
-        }
-        if (role === 'farmer' && farmer.userId !== userId) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
-        if (role === 'regional_manager') {
-            const manager = await prisma.user.findUnique({ where: { id: userId }, select: { region: true } });
-            if (manager?.region && farmer.region !== manager.region) {
-                return res.status(403).json({ success: false, error: 'Access denied' });
-            }
         }
 
         res.json({

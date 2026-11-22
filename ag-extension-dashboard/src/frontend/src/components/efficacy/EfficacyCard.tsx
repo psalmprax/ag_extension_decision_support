@@ -49,13 +49,13 @@ function OutcomeModal({ item, onClose }: { item: { visitId: string; farmerName: 
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div className={`${cardClass} relative w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto p-5 space-y-4`}>
                 <div className="flex items-center justify-between">
-                    <h3 className="text-base font-bold">{t('ui_efficacy_card_record_advice_outcome')}</h3>
+                    <h3 className="text-base font-medium">{t('ui_efficacy_card_record_advice_outcome')}</h3>
                     <button onClick={onClose} aria-label="Close" className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {t('ui_efficacy_card_follow_up_for')} <span className="font-semibold">{item.farmerName || 'farmer'}</span>
+                    {t('ui_efficacy_card_follow_up_for')} <span className="font-medium">{item.farmerName || 'farmer'}</span>
                     {item.notes ? ` — ${item.notes.slice(0, 90)}` : ''}
                 </p>
 
@@ -70,7 +70,7 @@ function OutcomeModal({ item, onClose }: { item: { visitId: string; farmerName: 
                             key={v.key}
                             onClick={() => setVerdict(v.key)}
                             aria-pressed={verdict === v.key}
-                            className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${verdict === v.key ? `${v.tone} ring-2 ring-offset-1 ring-current` : 'border-gray-200 dark:border-gray-700 opacity-70 hover:opacity-100'}`}
+                            className={`px-3 py-2 rounded-xl text-xs font-medium border transition-colors ${verdict === v.key ? `${v.tone} ring-2 ring-offset-1 ring-current` : 'border-gray-200 dark:border-gray-700 opacity-70 hover:opacity-100'}`}
                         >
                             {v.label}
                         </button>
@@ -88,7 +88,7 @@ function OutcomeModal({ item, onClose }: { item: { visitId: string; farmerName: 
                 <button
                     disabled={!canSubmit || mutation.isPending}
                     onClick={() => mutation.mutate()}
-                    className="w-full py-2.5 rounded-xl bg-primary-600 text-white text-sm font-bold disabled:opacity-50"
+                    className="w-full py-2.5 rounded-xl bg-primary-600 text-white text-sm font-medium disabled:opacity-50"
                 >
                     {mutation.isPending ? 'Saving…' : 'Save Outcome'}
                 </button>
@@ -109,7 +109,7 @@ export function EfficacyCard() {
         <div className={`${cardClass} p-4 sm:p-5`}>
             <div className="flex items-center gap-2 mb-3">
                 <TrendingUp className="w-4 h-4 text-primary-500" />
-                <h3 className="text-sm font-black  ">{t('ui_efficacy_card_advice_efficacy')}</h3>
+                <h3 className="text-sm font-medium  ">{t('ui_efficacy_card_advice_efficacy')}</h3>
             </div>
 
             {summary.isLoading ? (
@@ -119,7 +119,7 @@ export function EfficacyCard() {
                     <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-8 h-8 text-green-500" />
                         <div>
-                            <p className="text-2xl font-black leading-none">{summary.data.overallSuccessRate}%</p>
+                            <p className="text-2xl font-medium leading-none">{summary.data.overallSuccessRate}%</p>
                             <p className="text-xxs text-gray-400">{t('ui_efficacy_card_success_rate')}</p>
                         </div>
                     </div>
@@ -133,7 +133,7 @@ export function EfficacyCard() {
                 <div className="border-t border-gray-100 dark:border-gray-800 pt-3 mt-3">
                     <div className="flex items-center gap-2 mb-2">
                         <ClipboardList className="w-3.5 h-3.5 text-amber-500" />
-                        <p className="text-xs font-bold">
+                        <p className="text-xs font-medium">
                             {followups.data!.length} {t('ui_efficacy_card_follow_up')}{followups.data!.length > 1 ? 's' : ''} {t('ui_efficacy_card_due')}
                         </p>
                     </div>
@@ -141,12 +141,12 @@ export function EfficacyCard() {
                         {followups.data!.slice(0, 5).map(f => (
                             <li key={f.visitId} className="flex items-center justify-between gap-2 text-xs">
                                 <span className="truncate">
-                                    <span className="font-semibold">{f.farmerName || 'Farmer'}</span>
+                                    <span className="font-medium">{f.farmerName || 'Farmer'}</span>
                                     <span className="text-gray-400"> {t('ui_efficacy_card_d_ago', { daysOverdue: f.daysOverdue })}</span>
                                 </span>
                                 <button
                                     onClick={() => setSelected({ visitId: f.visitId, farmerName: f.farmerName, notes: f.notes })}
-                                    className="shrink-0 px-2.5 py-1 rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 font-bold hover:bg-primary-500/20"
+                                    className="shrink-0 px-2.5 py-1 rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 font-medium hover:bg-primary-500/20"
                                 >
                                     {t('ui_efficacy_card_record')}
                                 </button>

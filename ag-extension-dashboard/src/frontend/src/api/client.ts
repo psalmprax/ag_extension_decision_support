@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { containsDemoId } from '@/demo/demoIds';
 import { RemoteWipeService } from '@/services/remoteWipeService';
+import { safeStorage } from '@/lib/safeStorage';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -123,7 +124,7 @@ export const getRetryDelay = (retryCount: number): number => {
 };
 
 function forceLogout(): void {
-  localStorage.removeItem('user');
+  safeStorage.remove('user');
   window.dispatchEvent(new Event('auth-unauthorized'));
   const publicRoutes = [
     '/',

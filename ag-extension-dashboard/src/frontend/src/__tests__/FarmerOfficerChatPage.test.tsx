@@ -31,6 +31,7 @@ function renderPage(overrides: Partial<ThreadPageProps> = {}) {
     setActiveFarmerConvId: vi.fn(),
     loadFarmerMessages: vi.fn(),
     farmerChatMessages: [],
+    farmerHistory: { hasEarlier: false, loadEarlier: vi.fn() },
     farmerChatInput: '',
     setFarmerChatInput: vi.fn(),
     handleFarmerChatSend: vi.fn(),
@@ -148,5 +149,16 @@ describe("the farmer's mobile tabs", () => {
     expect(screen.getByRole('button', { name: /My officer/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Farmers/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /AI scan/ })).not.toBeInTheDocument();
+  });
+
+  it('offers earlier messages when the thread has more than the latest page', async () => {
+    const loadEarlier = vi.fn().mockResolvedValue(undefined);
+    renderPage({
+      activeFarmerConvId: 'thread-1',
+      farmerHistory: { hasEarlier: true, loadEarlier },
+      farmerChatMessages: [{ id: 'm1', role: 'officer', content: 'Spray in the evening.', createdAt: '2026-11-01T10:00:00Z' }],
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Show earlier messages' }));
+    await waitFor(() => expect(loadEarlier).toHaveBeenCalledTimes(1));
   });
 });

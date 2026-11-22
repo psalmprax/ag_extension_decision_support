@@ -54,7 +54,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
           decoding="async"
         />
         {/* Soft, warm agrarian sunlit vignette overlays */}
-        <div className="absolute inset-0 bg-gradient-to-b from-stone-950/75 via-emerald-950/60 to-[#0d1a14]/95" />
+        <div data-scrim className="absolute inset-0 bg-gradient-to-b from-stone-950/75 via-emerald-950/60 to-[#0d1a14]/95" />
       </div>
 
       {/* Subtle organic contour pattern */}
@@ -194,7 +194,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <span>09:41</span>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  <span className="text-emerald-400 font-semibold">{t('ui_hero_illustrative_preview')}</span>
+                  <span className="text-emerald-400 font-medium">{t('ui_hero_illustrative_preview')}</span>
                 </div>
               </div>
 
@@ -205,14 +205,14 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                     <Leaf className="w-3.5 h-3.5 text-emerald-400" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white">{t('ui_diagnosis_page_gpexts_crop_doctor')}</div>
+                    <div className="text-xs font-medium text-white">{t('ui_diagnosis_page_gpexts_crop_doctor')}</div>
                     <div className="text-[9px] text-emerald-300/80 font-mono">{t('ui_hero_maize_zea_mays_field_plot_2')}</div>
                   </div>
                 </div>
 
                 <span className="p-1.5 rounded-lg border border-white/10 text-xs flex items-center gap-1 text-white/70">
                   <BookOpenCheck className="w-3.5 h-3.5" />
-                  <span className="text-[9px] font-semibold">{t('ui_hero_text_sample')}</span>
+                  <span className="text-[9px] font-medium">{t('ui_hero_text_sample')}</span>
                 </span>
               </div>
 
@@ -223,24 +223,24 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                   alt="Illustrative close-up of a maize leaf"
                   className="w-full h-full object-cover object-center filter saturate-110"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0d1a14] via-transparent to-black/30" />
+                <div data-scrim className="absolute inset-0 bg-gradient-to-t from-[#0d1a14] via-transparent to-black/30" />
 
                 {/* Animated laser scanning line */}
 
                 {/* Diagnostic Bounding Reticle in Plain Language */}
                 <div className="absolute top-8 start-10 sm:start-14 w-44 h-28 border-2 border-emerald-400/90 rounded-xl bg-emerald-500/10 flex flex-col justify-between p-2">
                   <div className="flex justify-between items-start">
-                    <span className="text-[9px] font-sans font-bold text-emerald-300 bg-[#0d1a14]/85 px-2 py-0.5 rounded border border-emerald-400/30 flex items-center gap-1">
+                    <span className="text-[9px] font-sans font-medium text-emerald-300 bg-[#0d1a14]/85 px-2 py-0.5 rounded border border-emerald-400/30 flex items-center gap-1">
                       <span>{t('ui_hero_affected_leaf_area')}</span>
                     </span>
                     <span />
                   </div>
                   <div className="bg-[#0d1a14]/90 backdrop-blur-md rounded-lg p-1.5 border border-emerald-400/40 text-start">
-                    <div className="text-[10px] font-bold text-white flex items-center gap-1">
+                    <div className="text-[10px] font-medium text-white flex items-center gap-1">
                       <span>{t('ui_hero_example_leaf_observation')}</span>
                       <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                     </div>
-                    <div className="text-[9px] text-emerald-400 font-semibold">{t('ui_hero_illustration_not_a_diagnosis')}</div>
+                    <div className="text-[9px] text-emerald-400 font-medium">{t('ui_hero_illustration_not_a_diagnosis')}</div>
                   </div>
                 </div>
 
@@ -255,19 +255,19 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 {/* Result header */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] font-bold text-emerald-400 block">
+                    <span className="text-[10px] font-medium text-emerald-400 block">
                       {t('ui_hero_example_next_step')}
                     </span>
-                    <h3 className="text-sm font-bold text-white">{t('ui_hero_unconfirmed_leaf_symptoms')}</h3>
+                    <h3 className="text-sm font-medium text-white">{t('ui_hero_unconfirmed_leaf_symptoms')}</h3>
                   </div>
-                  <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                  <span className="px-2 py-1 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
                     {t('ui_hero_expert_review_needed')}
                   </span>
                 </div>
 
                 {/* Remedy Tabs Switcher */}
-                <div role="group" aria-label="Example next steps" className="flex rounded-lg bg-black/40 p-0.5 border border-white/5 text-[11px] font-semibold">
+                <div role="group" aria-label="Example next steps" className="flex rounded-lg bg-black/40 p-0.5 border border-white/5 text-[11px] font-medium">
                   <button
                     type="button"
                     aria-pressed={activeRemedyTab === 'organic'}
@@ -321,7 +321,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                 <button
                   type="button"
                   onClick={() => navigate('/diagnosis')}
-                  className="w-full py-2.5 px-3 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-950/40 transition-all active:scale-95 group cursor-pointer"
+                  className="w-full py-2.5 px-3 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white font-medium text-xs flex items-center justify-center gap-1.5 shadow-md transition-all active:scale-95 group cursor-pointer"
                 >
                   <Camera className="w-3.5 h-3.5 text-emerald-200" />
                   <span>{t('ui_hero_diagnose_your_own_crop_free')}</span>
@@ -347,7 +347,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
               />
             </div>
             <div className="text-start min-w-0">
-              <div className="flex items-center gap-1 text-[11px] font-bold text-white">
+              <div className="flex items-center gap-1 text-[11px] font-medium text-white">
                 <span className="truncate">{t('ui_hero_amina_m')}</span>
               </div>
             </div>
@@ -356,7 +356,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
       </motion.div>
 
       {/* Bottom fade */}
-      <div className="absolute bottom-0 start-0 end-0 h-24 bg-gradient-to-t from-[#0d1a14] via-[#0d1a14]/60 to-transparent pointer-events-none z-20" />
+      <div data-scrim className="absolute bottom-0 start-0 end-0 h-24 bg-gradient-to-t from-[#0d1a14] via-[#0d1a14]/60 to-transparent pointer-events-none z-20" />
 
     </section>
   );

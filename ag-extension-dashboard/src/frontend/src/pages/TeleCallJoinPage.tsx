@@ -23,7 +23,7 @@ export function TeleCallJoinPage() {
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-xl p-6 text-center space-y-3">
           <AlertCircle className="w-10 h-10 text-amber-400 mx-auto" />
-          <h1 className="text-base font-bold text-white">{t('ui_tele_call_join_page_invalid_call_link')}</h1>
+          <h1 className="text-base font-medium text-white">{t('ui_tele_call_join_page_invalid_call_link')}</h1>
           <p className="text-xs text-slate-400">
             {t('ui_tele_call_join_page_this_tele_agronomy_link_is_malformed')}
           </p>
@@ -46,7 +46,7 @@ export function TeleCallJoinPage() {
             <Video className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="font-bold text-sm text-white">{t('ui_tele_call_join_page_tele_agronomy_consultation')}</h1>
+            <h1 className="font-medium text-sm text-white">{t('ui_tele_call_join_page_tele_agronomy_consultation')}</h1>
             <p className="text-xs text-slate-400">
               {t('ui_tele_call_join_page_joining_as_room', { firstName: user.firstName, lastName: user.lastName, roomId })}
             </p>

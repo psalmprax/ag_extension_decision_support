@@ -121,4 +121,25 @@ describe('ContextMenus Route — Mapper-before-response: mapApiClientRows + mapA
         expect(response.body.data.rate_limit_per_min).toBeUndefined();
         expect(response.body.data.created_by).toBeUndefined();
     });
+
+    it('PATCH /clients/:id refuses a column name built into the request instead of running it', async () => {
+        const response = await request(app)
+            .patch('/api/v1/context-menus/clients/client-1')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ "name = 'x', owner_user_id = (SELECT id FROM users LIMIT 1) --": 1 });
+
+        expect(response.status).toBe(400);
+        expect(mockQuery).not.toHaveBeenCalled();
+    });
+
+    it('PATCH /clients/:id updates only the named columns', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [{ id: 'client-1', name: 'Co-op app', status: 'active', monthly_quota: 5000 }], rowCount: 1 });
+        const response = await request(app)
+            .patch('/api/v1/context-menus/clients/client-1')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ monthly_quota: 5000 });
+
+        expect(response.status).toBe(200);
+        expect(mockQuery.mock.calls[0]).toEqual(['UPDATE api_clients SET monthly_quota = $1, updated_at = NOW() WHERE id = $2 RETURNING *', [5000, 'client-1']]);
+    });
 });

@@ -21,6 +21,7 @@ import {
     requestLoginCode,
 } from '@/services/phoneLoginService';
 import { finishSignIn } from './loginCompletion';
+import { clientIpOf } from '@/utils/clientIp';
 
 const router = Router();
 
@@ -29,8 +30,6 @@ const verifySchema = z.object({
     body: z.object({ phone: z.string().min(7).max(25), country: z.string().max(60).optional(), code: z.string().regex(/^\s*\d{6}\s*$/) }),
 });
 
-const clientIpOf = (req: Request) =>
-    req.ip || (typeof req.headers['x-forwarded-for'] === 'string' ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || null;
 
 router.post('/phone/request', validate(requestSchema), async (req: Request, res: Response) => {
     const phone = normalisePhone(req.body.phone, req.body.country);

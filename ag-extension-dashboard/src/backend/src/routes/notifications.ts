@@ -5,6 +5,8 @@ import { logger } from '../utils/logger';
 import { authorize } from '../middleware/authorize';
 import { subscribeUser, unsubscribeUser, sendPushNotification } from '../services/pushNotificationService';
 import { safeError } from '@/utils/safeResponse';
+import { z } from 'zod';
+import { validate } from '@/middleware/validate';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 
 const router = Router();
@@ -182,78 +184,74 @@ router.delete('/', async (req: AuthRequest, res: Response) => {
 });
 
 // Admin/Manager: Send notification to user
-router.post('/send', authorize(['admin', 'regional_manager']), async (req: AuthRequest, res: Response) => {
+const notificationBody = {
+    type: z.string().trim().min(1).max(50).optional(),
+    title: z.string().trim().min(1).max(255),
+    message: z.string().trim().min(1).max(5000),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+};
+const sendBody = z.object({ userId: z.string().uuid(), ...notificationBody });
+const broadcastBody = z.object({ role: z.enum(['admin', 'regional_manager', 'extension_officer', 'farmer']).optional(), ...notificationBody });
+
+/**
+ * Who a sender may notify, as SQL on users `u`: an administrator anyone; a regional
+ * manager the people in their own organisation and region.
+ */
+async function recipientScope(sender: { userId: string; role: string }, firstParam: number): Promise<{ sql: string; params: unknown[] }> {
+    if (sender.role === 'admin') return { sql: 'TRUE', params: [] };
+    const { rows } = await query<{ tenant_id: string | null; region: string | null }>(
+        'SELECT tenant_id, region FROM users WHERE id = $1', [sender.userId]);
+    const me = rows[0];
+    return {
+        sql: `u.tenant_id = $${firstParam} AND u.region = $${firstParam + 1}`,
+        params: [me?.tenant_id ?? null, me?.region ?? null],
+    };
+}
+
+// Admin/Manager: Send notification to one person they may reach
+router.post('/send', authorize(['admin', 'regional_manager']), validate({ body: sendBody }), async (req: AuthRequest, res: Response) => {
     try {
-        const { userId, type, title, message, metadata } = req.body;
-        const pool = getPool();
-
-        if (!pool) {
-            return res.status(503).json({ success: false, error: 'Database unavailable' });
-        }
-
-        // Resolve tenant + optional farmer record for phone-only targetability.
-        const targetRes = await query<{ tenant_id: string | null; farmer_id: string | null }>(
+        const { userId, type, title, message, metadata } = req.body as z.infer<typeof sendBody>;
+        const scope = await recipientScope(req.user!, 2);
+        const target = (await query<{ tenant_id: string | null; farmer_id: string | null }>(
             `SELECT u.tenant_id, f.id AS farmer_id
                FROM users u
                LEFT JOIN farmers f ON f.user_id = u.id
-              WHERE u.id = $1 LIMIT 1`,
-            [userId]
-        );
-        const target = targetRes.rows[0];
+              WHERE u.id = $1 AND ${scope.sql} LIMIT 1`,
+            [userId, ...scope.params]
+        )).rows[0];
+        if (!target) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
         const result = await query(`
             INSERT INTO notifications (user_id, type, title, message, metadata, channel, tenant_id, farmer_id)
             VALUES ($1, $2, $3, $4, $5, 'in_app', $6, $7)
             RETURNING id
-        `, [userId, type || 'info', title, message, JSON.stringify(metadata || {}), target?.tenant_id ?? null, target?.farmer_id ?? null]);
+        `, [userId, type || 'info', title, message, JSON.stringify(metadata || {}), target.tenant_id, target.farmer_id]);
 
-        res.status(201).json({
-            success: true,
-            data: { id: result.rows[0].id }
-        });
+        res.status(201).json({ success: true, data: { id: result.rows[0].id } });
     } catch (error) {
         logger.error('Send notification error:', error);
         safeError(res, 500, 'Failed to send notification');
     }
 });
 
-// Admin/Manager: Broadcast notification to all users
-router.post('/broadcast', authorize(['admin', 'regional_manager']), async (req: AuthRequest, res: Response) => {
+// Admin/Manager: Notify everyone they may reach, optionally one role only
+router.post('/broadcast', authorize(['admin', 'regional_manager']), validate({ body: broadcastBody }), async (req: AuthRequest, res: Response) => {
     try {
-        const { type, title, message, metadata, role } = req.body;
-        const pool = getPool();
+        const { type, title, message, metadata, role } = req.body as z.infer<typeof broadcastBody>;
+        const scope = await recipientScope(req.user!, 6);
+        const roleClause = role ? ` AND u.role = $${6 + scope.params.length}` : '';
+        const result = await query(`
+            INSERT INTO notifications (user_id, type, title, message, metadata, channel, tenant_id)
+            SELECT u.id, $1, $2, $3, $4, $5, u.tenant_id
+              FROM users u
+             WHERE u.is_active = true AND ${scope.sql}${roleClause}
+        `, [type || 'info', title, message, JSON.stringify(metadata || {}), 'in_app', ...scope.params, ...(role ? [role] : [])]);
 
-        if (!pool) {
-            return res.status(503).json({ success: false, error: 'Database unavailable' });
-        }
-
-        // Get user IDs (and their tenant for tenant stamping) based on role filter
-        let userQuery = 'SELECT id, tenant_id FROM users';
-        const params: unknown[] = [];
-
-        if (role) {
-            userQuery += ' WHERE role = $1';
-            params.push(role);
-        }
-
-        const usersResult = await query<{ id: string; tenant_id: string | null }>(userQuery, params);
-
-        if (usersResult.rows.length === 0) {
-            return res.json({ success: true, data: { sent: 0 } });
-        }
-
-        // Insert notifications for all users, stamped with each recipient's tenant.
-        for (const user of usersResult.rows) {
-            await query(`
-                INSERT INTO notifications (user_id, type, title, message, metadata, channel, tenant_id)
-                VALUES ($1, $2, $3, $4, $5, 'in_app', $6)
-            `, [user.id, type || 'info', title, message, JSON.stringify(metadata || {}), user.tenant_id]);
-        }
-
-        res.json({
-            success: true,
-            data: { sent: usersResult.rows.length }
-        });
-    } catch (_error) {
+        res.json({ success: true, data: { sent: result.rowCount ?? 0 } });
+    } catch (error) {
+        logger.error('Broadcast notification error:', error);
         safeError(res, 500, 'Failed to broadcast notification');
     }
 });

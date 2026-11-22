@@ -69,7 +69,7 @@ export const CyberDashboard: React.FC<CyberDashboardProps> = ({ farmerStats }) =
     <div className="space-y-8 animate-fade-in">
       <header className="flex justify-between items-end">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-medium text-white tracking-tight">
             {t('farmer_greeting').replace('{name}', user?.firstName || 'Farmer')}
           </h1>
           <p className="text-slate-400 mt-1 font-medium text-xs">
@@ -160,7 +160,7 @@ export const CyberDashboard: React.FC<CyberDashboardProps> = ({ farmerStats }) =
             <p className="text-xxs font-medium text-slate-400 leading-none mb-1">
               {stat.label}
             </p>
-            <p className="text-2xl font-semibold text-white font-mono tabular-nums tracking-tight">
+            <p className="text-2xl font-medium text-white font-mono tabular-nums tracking-tight">
               {stat.value}
             </p>
           </div>

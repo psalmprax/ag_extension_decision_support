@@ -65,7 +65,7 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
                     <Mail className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                    <h3 className="text-base font-medium text-gray-900 dark:text-white">
                       {t('ui_bulk_sms_modal_bulk_sms_composer')}
                     </h3>
                     <p className="text-xs font-medium text-primary-600 dark:text-primary-400 font-mono tabular-nums">

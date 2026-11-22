@@ -63,7 +63,7 @@ export function VideoAnalysisTab() {
 
   return (
     <div className="p-5 rounded-lg bg-slate-900/80 border border-slate-800 space-y-4 text-slate-200">
-      <h3 className="text-sm font-semibold">{t('ui_video_analysis_tab_video_observations')}</h3>
+      <h3 className="text-sm font-medium">{t('ui_video_analysis_tab_video_observations')}</h3>
       <p className="text-xs text-slate-300">
         {t('ui_video_analysis_tab_upload_an_mp4_webm_or_mov_video_up_t')}
       </p>

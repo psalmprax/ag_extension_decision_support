@@ -115,11 +115,11 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
       {/* Header with Language Selector & Status */}
       <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800/60">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+          <div className="w-7 h-7 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-medium">
             <Mic className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-none">
+            <h4 className="text-xs font-medium text-slate-900 dark:text-white leading-none">
               {t('ui_voice_note_taker_audio_note_taker')}
             </h4>
             <p className="text-3xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -157,7 +157,7 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
                     type="button"
                     onClick={() => handleLanguageChange(lang.code)}
                     className={`w-full text-start px-3 py-1.5 text-xs flex items-center justify-between hover:bg-emerald-500/10 dark:hover:bg-slate-700 transition-colors ${
-                      lang.code === currentLang ? 'font-bold text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'
+                      lang.code === currentLang ? 'font-medium text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'
                     }`}
                   >
                     <span className="flex items-center gap-2">
@@ -194,13 +194,13 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
           )}
 
           {isRecording && (
-            <span className="absolute -bottom-1 text-3xs font-bold bg-slate-900/90 text-rose-300 px-2 py-0.5 rounded-full border border-rose-500/30">
+            <span className="absolute -bottom-1 text-3xs font-medium bg-slate-900/90 text-rose-300 px-2 py-0.5 rounded-full border border-rose-500/30">
               {formatTime(recordingDuration)}
             </span>
           )}
         </button>
 
-        <p className="mt-3 text-xs font-semibold text-slate-800 dark:text-slate-100">
+        <p className="mt-3 text-xs font-medium text-slate-800 dark:text-slate-100">
           {isRecording
             ? `Listening in ${activeLangObj.name}...`
             : isTranscribing
@@ -260,7 +260,7 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
               <button
                 type="button"
                 onClick={handleSave}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition-all active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium shadow-sm transition-all active:scale-95"
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>{t('ui_voice_note_taker_save_voice_note')}</span>

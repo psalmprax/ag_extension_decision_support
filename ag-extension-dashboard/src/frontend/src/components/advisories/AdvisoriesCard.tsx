@@ -30,7 +30,7 @@ export function AdvisoriesCard() {
         <div className={`${cardClass} p-4 sm:p-5`}>
             <div className="flex items-center gap-2 mb-3">
                 <Radio className="w-4 h-4 text-primary-500" />
-                <h3 className="text-sm font-black  ">
+                <h3 className="text-sm font-medium  ">
                     {t('advisories_title', { defaultValue: 'Proactive Advisories' })}
                 </h3>
             </div>
@@ -49,7 +49,7 @@ export function AdvisoriesCard() {
                             <li key={`${d.ruleKey}-${d.district}-${d.dispatchedAt}-${i}`} className="flex gap-2.5">
                                 <Icon className={`w-4 h-4 shrink-0 mt-0.5 ${cls}`} />
                                 <div className="min-w-0">
-                                    <p className="text-xs font-bold">
+                                    <p className="text-xs font-medium">
                                         {ruleLabels[d.ruleKey] || d.ruleKey}
                                         <span className="text-gray-400 font-normal"> · {d.district} · {d.audienceCount} {t('advisory_farmers_count', { defaultValue: 'farmers' })}</span>
                                     </p>
