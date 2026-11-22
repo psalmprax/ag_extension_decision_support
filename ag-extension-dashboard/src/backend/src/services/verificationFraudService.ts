@@ -162,6 +162,26 @@ export async function verifyVisitGeofence(params: {
   };
 }
 
+const METRES_PER_DEGREE_LAT = 111_320;
+
+/** A latitude/longitude box that contains every point within `radiusMeters` of the centre. */
+export function boundingBox(lat: number, lng: number, radiusMeters: number) {
+  // A little wider than the radius, so rounding never drops a farmer the exact check would keep.
+  const margin = radiusMeters * 1.1;
+  const dLat = margin / METRES_PER_DEGREE_LAT;
+  // Near the poles a degree of longitude shrinks towards nothing: cap the box at the full circle.
+  const cosLat = Math.cos((lat * Math.PI) / 180);
+  const dLng = cosLat > 0.01 ? Math.min(180, margin / (METRES_PER_DEGREE_LAT * cosLat)) : 180;
+  const minLng = lng - dLng;
+  const maxLng = lng + dLng;
+  // A box across the 180° meridian (Fiji, Kiribati) would miss neighbours on the other side.
+  const crossesDateLine = minLng < -180 || maxLng > 180;
+  return {
+    minLat: lat - dLat, maxLat: lat + dLat,
+    minLng: crossesDateLine ? -180 : minLng, maxLng: crossesDateLine ? 180 : maxLng,
+  };
+}
+
 /**
  * 2. Spatial Duplicate & Ghost Farmer Conflict Check
  * Prevents double-dipping and duplicate ghost farmer registrations on the same land parcel.
@@ -181,12 +201,16 @@ export async function checkFarmerSpatialConflict(params: {
     proximityThresholdMeters = 50,
   } = params;
 
+  // Only farmers inside a box around the parcel are read (index on location_lat,
+  // location_lng); the exact distance is checked below. Reading every located farmer on
+  // each registration grows with the whole registry.
+  const box = boundingBox(targetLat, targetLng, proximityThresholdMeters);
+  const queryParams: unknown[] = [box.minLat, box.maxLat, box.minLng, box.maxLng];
   let queryText = `
     SELECT id, first_name, last_name, village, location_lat, location_lng
     FROM farmers
-    WHERE location_lat IS NOT NULL AND location_lng IS NOT NULL AND is_active = true
+    WHERE location_lat BETWEEN $1 AND $2 AND location_lng BETWEEN $3 AND $4 AND is_active = true
   `;
-  const queryParams: unknown[] = [];
 
   if (excludeFarmerId) {
     queryParams.push(excludeFarmerId);

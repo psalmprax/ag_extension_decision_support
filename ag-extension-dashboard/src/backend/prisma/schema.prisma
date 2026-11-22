@@ -289,6 +289,7 @@ model Farmer {
   @@index([region])
   @@index([userId])
   @@index([tenantId])
+  @@index([locationLat, locationLng])
   @@map("farmers")
    officerSmsRefs           OfficerSmsRef[]
 }
