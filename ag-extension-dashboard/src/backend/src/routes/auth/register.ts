@@ -158,7 +158,9 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
 
         // Record initial user session for active session visibility and revocation support
         const clientIp = clientIpOf(req);
-        createSession({
+        // Awaited: in production a token with no session row is refused, so the first request
+        // after registering must not race the insert.
+        await createSession({
             userId: newUser.id,
             token,
             ipAddress: clientIp,
@@ -250,7 +252,9 @@ router.post('/demo', async (req: Request, res: Response) => {
 
         const token = signSessionToken({ userId: user.id, email: user.email, role: user.role });
 
-        createSession({
+        // Awaited: in production a token with no session row is refused, so the first request
+        // after registering must not race the insert.
+        await createSession({
             userId: user.id,
             token,
             ipAddress: ip,
