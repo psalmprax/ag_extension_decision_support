@@ -194,7 +194,6 @@ const MediaAssetsSection = ({
           className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden"
         >
           <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-black flex items-center justify-center shadow-inner">
-            {' '}
             {vid.url && (vid.url.includes('youtube.com') || vid.url.includes('youtu.be')) ? (
               <iframe
                 src={getYoutubeEmbedUrl(vid.url)}
