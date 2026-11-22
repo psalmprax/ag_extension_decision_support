@@ -1,5 +1,7 @@
 import { query } from './databaseService';
 import { logger } from '@/utils/logger';
+import { farmerScopeSql, type ScopePrincipal } from '@/services/access/farmerScope';
+import { isUuid } from '@/utils/uuid';
 
 export interface SoilLabRowInput {
     farmerRef?: string;
@@ -70,17 +72,28 @@ export function parseSoilLabCsv(csv: string): SoilLabRowInput[] {
 export const soilLabService = {
     parseSoilLabCsv,
 
-    async importRows(rows: SoilLabRowInput[]): Promise<{ imported: number; unmatchedFarmers: string[] }> {
+    /**
+     * Store lab results for the farmers the importer may see. A row whose farmer reference
+     * (id or phone) matches none of them is reported and not stored: a result with no
+     * farmer helps nobody, and one on another region's farmer is not this person's to add.
+     */
+    async importRows(rows: SoilLabRowInput[], importer: ScopePrincipal): Promise<{ imported: number; unmatchedFarmers: string[] }> {
         let imported = 0;
         const unmatchedFarmers: string[] = [];
+        const scope = await farmerScopeSql(importer, 'f', 2);
 
         for (const row of rows) {
+            const ref = row.farmerRef!;
+            const byId = isUuid(ref);
             const { rows: farmer } = await query<{ id: string }>(
-                'SELECT id FROM farmers WHERE id::text = $1 OR phone = $1 LIMIT 1',
-                [row.farmerRef!]
+                `SELECT f.id FROM farmers f WHERE ${byId ? 'f.id = $1::uuid' : 'f.phone = $1'} AND ${scope.sql} LIMIT 1`,
+                [ref, ...scope.params]
             );
-            const farmerId = farmer.length > 0 ? farmer[0].id : null;
-            if (!farmerId) unmatchedFarmers.push(row.farmerRef!);
+            const farmerId = farmer[0]?.id;
+            if (!farmerId) {
+                unmatchedFarmers.push(ref);
+                continue;
+            }
 
             await query(
                 `INSERT INTO soil_lab_results

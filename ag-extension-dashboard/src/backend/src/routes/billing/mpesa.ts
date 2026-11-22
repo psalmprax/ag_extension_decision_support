@@ -9,6 +9,7 @@ import { transactionService } from '@/services/transactionService';
 import { writeAuditLog } from '@/middleware/auditMiddleware';
 import { safeError } from '@/utils/safeResponse';
 import { logger } from '@/utils/logger';
+import { safeEqual } from '@/utils/safeEqual';
 
 const router = Router();
 
@@ -127,7 +128,7 @@ router.get('/status/:checkoutRequestId', authorize(['admin', 'extension_officer'
 router.post('/callback/:secret', async (req: Request, res: Response) => {
     const expected = process.env.MPESA_CALLBACK_SECRET;
     const given = req.params.secret;
-    const ok = expected && given.length === expected.length && crypto.timingSafeEqual(Buffer.from(given), Buffer.from(expected));
+    const ok = Boolean(expected) && safeEqual(given, expected!);
     if (!ok) {
         logger.warn(`M-Pesa callback with invalid secret from ${req.ip}`);
         return res.status(404).end();

@@ -4,23 +4,14 @@ import { getPrisma } from '@/services/prismaService';
 import { bulkOperationsService } from '@/services/bulkOperationsService';
 import { safeError } from '@/utils/safeResponse';
 import { demoWhere } from '@/services/demoScope';
+import { requestCanSeeFarmer } from '@/services/access/farmerScope';
 
 const router = Router();
 
-async function verifyFarmersAccess(farmers: { assignedOfficerId: string | null; userId: string | null; region: string | null; id: string }[], role: string, userId: string, prisma: { user: { findUnique: (args: { where: { id: string }, select: { region: true } }) => Promise<{ region?: string | null } | null> } }): Promise<boolean> {
-    for (const farmer of farmers) {
-        if (role === 'extension_officer' && farmer.assignedOfficerId !== userId) {
-            return false;
-        }
-        if (role === 'farmer' && farmer.userId !== userId) {
-            return false;
-        }
-        if (role === 'regional_manager') {
-            const manager = await prisma.user.findUnique({ where: { id: userId }, select: { region: true } });
-            if (manager?.region && farmer.region !== manager.region) {
-                return false;
-            }
-        }
+/** Every farmer in the list must be one this person may see, by the shared access rule. */
+async function verifyFarmersAccess(req: Request, farmerIds: string[]): Promise<boolean> {
+    for (const farmerId of farmerIds) {
+        if (!(await requestCanSeeFarmer(req, farmerId))) return false;
     }
     return true;
 }
@@ -58,9 +49,6 @@ async function verifyFarmersAccess(farmers: { assignedOfficerId: string | null; 
 router.post('/reorder', async (req: Request, res: Response) => {
     try {
         const { items } = req.body;
-        const { userId: _userId, role: _role } = req.user as Record<string, unknown>;
-const userId = String(_userId);
-const role = String(_role);
         const prisma = getPrisma();
 
         if (!items || !Array.isArray(items)) {
@@ -98,7 +86,7 @@ const role = String(_role);
         }
 
         // Role-based access control
-        const hasAccess = await verifyFarmersAccess(farmers, role, userId, prisma);
+        const hasAccess = await verifyFarmersAccess(req, farmerIds);
         if (!hasAccess) {
             return res.status(403).json({
                 success: false,

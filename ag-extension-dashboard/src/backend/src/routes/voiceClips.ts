@@ -15,7 +15,7 @@ import { logger } from '@/utils/logger';
 import { readStoredUpload } from '@/services/uploadService';
 import { canSeeFarmer } from '@/services/access/farmerScope';
 import { getPilot } from '@/services/pilots/pilots';
-import { clipFile, deleteClip, isValidClipSignature, listClips, PROMPTS, saveClip, VoiceClipError } from '@/services/voice/voiceClips';
+import { clipFile, deleteClip, isValidClipSignature, listClips, mayChangeClip, PROMPTS, saveClip, VoiceClipError } from '@/services/voice/voiceClips';
 import { callFarmers, callingConfigured, DAILY_CALL_LIMIT } from '@/services/voice/advisoryCalls';
 
 const router = Router();
@@ -46,11 +46,12 @@ router.get('/:id/audio', async (req: Request, res: Response) => {
     }
 });
 
-router.get('/', staff, async (_req: Request, res: Response) => {
+router.get('/', staff, async (req: Request, res: Response) => {
     try {
         const clips = (await listClips()).map(clip => ({
             id: clip.id, key: clip.key, language: clip.language, title: clip.title, transcript: clip.transcript,
             url: `/api/v1/upload/file/${encodeURIComponent(clip.storage_key)}`, createdAt: clip.created_at,
+            canChange: mayChangeClip(clip, principalOf(req)),
         }));
         return res.json({ success: true, data: { clips, prompts: PROMPTS, callingConfigured: callingConfigured(), dailyCallLimit: DAILY_CALL_LIMIT } });
     } catch (error) { return fail(res, error, 'load recordings'); }
@@ -65,12 +66,12 @@ const clipSchema = z.object({
 });
 
 router.post('/', staff, validate({ body: clipSchema }), async (req: Request, res: Response) => {
-    try { return res.status(201).json({ success: true, data: await saveClip(principalOf(req).userId, req.body) }); } catch (error) { return fail(res, error, 'save the recording'); }
+    try { return res.status(201).json({ success: true, data: await saveClip(principalOf(req), req.body) }); } catch (error) { return fail(res, error, 'save the recording'); }
 });
 
 router.delete('/:id', staff, async (req: Request, res: Response) => {
     try {
-        return (await deleteClip(req.params.id)) ? res.json({ success: true }) : res.status(404).json({ success: false, error: 'Recording not found' });
+        return (await deleteClip(req.params.id, principalOf(req))) ? res.json({ success: true }) : res.status(404).json({ success: false, error: 'Recording not found' });
     } catch (error) { return fail(res, error, 'delete the recording'); }
 });
 

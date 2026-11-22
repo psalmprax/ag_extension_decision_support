@@ -10,7 +10,7 @@
  * - Sending posts it into the farmer's thread (and so to their SMS or WhatsApp), with
  *   the audio attached, and logs who sent it to whom.
  */
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHmac } from 'crypto';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { config } from '@/config';
@@ -20,6 +20,7 @@ import { postOfficerReply } from '@/services/chat/threadPost';
 import { linkAttachments } from '@/services/uploadAttachments';
 import { VectorService } from '@/services/vectorService';
 import { PartnerError, partnerScope, type Principal } from './partners';
+import { safeEqual } from '@/utils/safeEqual';
 
 export interface RecordingRow {
     id: string;
@@ -50,8 +51,7 @@ const STILL_LICENSED = '(r.licence_expires_at IS NULL OR r.licence_expires_at > 
 const signature = (id: string) => createHmac('sha256', config.jwt.secret).update(`partner-recording:${id}`).digest('hex').slice(0, 32);
 
 export function isValidRecordingSignature(id: string, sig: unknown): boolean {
-    if (typeof sig !== 'string' || sig.length !== 32) return false;
-    return timingSafeEqual(Buffer.from(sig), Buffer.from(signature(id)));
+    return safeEqual(sig, signature(id));
 }
 
 /** A link a phone can play without signing in (sent over SMS or WhatsApp). */

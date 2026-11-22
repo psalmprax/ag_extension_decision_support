@@ -13,7 +13,7 @@ import { weatherIndexService } from '@/services/weatherIndexService';
 import { misExportService, MisDataset, type MisScope } from '@/services/misExportService';
 import { resolvePrincipalRegion } from '@/services/messageAccessService';
 import { adviceEfficacyService } from '@/services/adviceEfficacyService';
-import { requireFarmerAccess } from '@/services/access/farmerScope';
+import { FARMER_OF, principalOf, requireFarmerAccess, requireRecordOfVisibleFarmer } from '@/services/access/farmerScope';
 
 const router = Router();
 type AuthedRequest = Request & { user?: { userId: string; role: string } };
@@ -64,7 +64,7 @@ router.get('/route-plan', async (req: AuthedRequest, res: Response) => {
 
 // ── Farm plans ───────────────────────────────────────────────────────────────
 
-router.post('/farm-plans/:cropCycleId/generate', async (req: AuthedRequest, res: Response) => {
+router.post('/farm-plans/:cropCycleId/generate', requireRecordOfVisibleFarmer('cropCycleId', FARMER_OF.cropCycle, 'Crop cycle not found'), async (req: AuthedRequest, res: Response) => {
     try {
         const result = await farmPlanService.generatePlan(req.params.cropCycleId);
         return res.json({ success: true, data: result });
@@ -77,7 +77,7 @@ router.post('/farm-plans/:cropCycleId/generate', async (req: AuthedRequest, res:
     }
 });
 
-router.get('/farm-plans/:cropCycleId', async (req: AuthedRequest, res: Response) => {
+router.get('/farm-plans/:cropCycleId', requireRecordOfVisibleFarmer('cropCycleId', FARMER_OF.cropCycle, 'Crop cycle not found'), async (req: AuthedRequest, res: Response) => {
     try {
         const milestones = await farmPlanService.getPlan(req.params.cropCycleId);
         return res.json({ success: true, data: milestones });
@@ -92,7 +92,7 @@ const milestoneStatusSchema = z.object({
     notes: z.string().max(1000).optional(),
 });
 
-router.patch('/farm-plans/milestones/:milestoneId', validate({ body: milestoneStatusSchema }), async (req: AuthedRequest, res: Response) => {
+router.patch('/farm-plans/milestones/:milestoneId', requireRecordOfVisibleFarmer('milestoneId', FARMER_OF.milestone, 'Milestone not found'), validate({ body: milestoneStatusSchema }), async (req: AuthedRequest, res: Response) => {
     try {
         await farmPlanService.setMilestoneStatus(req.params.milestoneId, req.body.status, req.body.notes);
         return res.json({ success: true });
@@ -123,7 +123,7 @@ const soilLabImportSchema = z.object({
 router.post('/soil-lab/import', validate({ body: soilLabImportSchema }), async (req: AuthedRequest, res: Response) => {
     try {
         const rows = soilLabService.parseSoilLabCsv(req.body.csv);
-        const result = await soilLabService.importRows(rows);
+        const result = await soilLabService.importRows(rows, principalOf(req)!);
         return res.json({ success: true, data: result });
     } catch (error) {
         logger.error('Soil lab import failed:', error);

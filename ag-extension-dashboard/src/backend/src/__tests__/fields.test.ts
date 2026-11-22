@@ -23,12 +23,22 @@ jest.mock('../services/databaseService', () => ({
             rowCount: 1 
         })
     })),
-    query: jest.fn(async (sql: string) => ({
-        rows: sql.includes('FROM user_sessions')
-            ? [{ is_revoked: false, is_active: true, expires_at: '2099-01-01T00:00:00Z' }]
-            : [{ count: 0 }],
-        rowCount: 1
-    }))
+    query: jest.fn(async (sql: string, params: unknown[] = []) => {
+        // The shared farmer access rule (canSeeFarmer): the fixture farmer is visible to
+        // themselves (farm-1), their officer (off-1) and an administrator (no scope value).
+        if (sql.includes('FROM farmers f WHERE f.id = $1')) {
+            const [farmerId, ...scope] = params;
+            const visible = farmerId === '11111111-1111-1111-1111-111111111111'
+                && (scope.length === 0 || scope.includes('farm-1') || scope.includes('off-1'));
+            return { rows: visible ? [{ visible: 1 }] : [], rowCount: visible ? 1 : 0 };
+        }
+        return {
+            rows: sql.includes('FROM user_sessions')
+                ? [{ is_revoked: false, is_active: true, expires_at: '2099-01-01T00:00:00Z' }]
+                : [{ count: 0 }],
+            rowCount: 1,
+        };
+    })
 }));
 
 jest.mock('../services/cacheService', () => ({
@@ -144,6 +154,7 @@ jest.mock('../services/prismaService', () => {
                             status: 'growing',
                             field: {
                                 id: '22222222-2222-2222-2222-222222222222',
+                                farmerId: '11111111-1111-1111-1111-111111111111',
                                 farmer: {
                                     userId: 'farm-1',
                                     assignedOfficerId: 'off-1',
@@ -333,7 +344,8 @@ describe('Fields & Crops API Integration Tests', () => {
             .delete('/api/v1/fields/22222222-2222-2222-2222-222222222222/cycles/cycle-1')
             .set('Authorization', `Bearer ${unauthorizedToken}`);
 
-        expect(response.status).toBe(403);
+        // 404, not 403: the answer does not confirm the cycle exists.
+        expect(response.status).toBe(404);
     });
 
     it('answers 404 for a crop cycle on a different field', async () => {
@@ -344,12 +356,31 @@ describe('Fields & Crops API Integration Tests', () => {
         expect(response.status).toBe(404);
     });
 
+    it("refuses a regional manager outside the farmer's region", async () => {
+        const managerToken = jwt.sign(
+            { userId: 'rm-elsewhere', role: 'regional_manager', email: 'rm@example.com' },
+            config.jwt.secret,
+            { expiresIn: '1h' }
+        );
+        const update = await request(app)
+            .patch('/api/v1/fields/22222222-2222-2222-2222-222222222222/cycles/cycle-1')
+            .set('Authorization', `Bearer ${managerToken}`)
+            .send({ status: 'harvested' });
+        const removal = await request(app)
+            .delete('/api/v1/fields/22222222-2222-2222-2222-222222222222')
+            .set('Authorization', `Bearer ${managerToken}`);
+
+        expect(update.status).toBe(404);
+        expect(removal.status).toBe(404);
+    });
+
     it('should reject unauthorized user from updating crop cycle', async () => {
         const response = await request(app)
             .patch('/api/v1/fields/22222222-2222-2222-2222-222222222222/cycles/cycle-1')
             .set('Authorization', `Bearer ${unauthorizedToken}`)
             .send({ status: 'harvested' });
 
-        expect(response.status).toBe(403);
+        // 404, not 403: the answer does not confirm the cycle exists.
+        expect(response.status).toBe(404);
     });
 });

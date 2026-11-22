@@ -12,7 +12,7 @@ import { farmerRecordFilter, validateRecordScope } from '@/services/demoRecordSc
 import { resolveCreationOfficer } from '@/services/farmerOfficerAssignment';
 import { toE164 } from '@/services/country/phone';
 import { farmerCountryFor } from '@/services/country/countryContext';
-import { requireFarmerAccess } from '@/services/access/farmerScope';
+import { requestCanSeeFarmer, requireFarmerAccess } from '@/services/access/farmerScope';
 
 const router = Router();
 
@@ -246,9 +246,6 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     if (!isUuid(req.params.id)) return next();
     try {
         const { id } = req.params;
-        const { userId: _userId, role: _role } = req.user as Record<string, unknown>;
-const userId = String(_userId);
-const role = String(_role);
         const prisma = getPrisma();
 
         const farmerWhere: Record<string, unknown> = { id };
@@ -263,18 +260,9 @@ const role = String(_role);
             return res.status(404).json({ success: false, error: 'Farmer not found' });
         }
 
-        // Ownership/Visibility check
-        if (role === 'extension_officer' && farmer.assignedOfficerId !== userId) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
-        if (role === 'farmer' && farmer.userId !== userId) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
-        if (role === 'regional_manager') {
-            const manager = await prisma.user.findUnique({ where: { id: userId }, select: { region: true } });
-            if (manager?.region && farmer.region !== manager.region) {
-                return res.status(403).json({ success: false, error: 'Access denied' });
-            }
+        // The shared access rule; 404 so the answer does not confirm the farmer exists.
+        if (!(await requestCanSeeFarmer(req, id))) {
+            return res.status(404).json({ success: false, error: 'Farmer not found' });
         }
 
         res.json({
