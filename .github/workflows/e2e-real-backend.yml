@@ -54,10 +54,13 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:7501/ag_extension
       REDIS_URL: redis://127.0.0.1:6379
       CI: 'true'
-      # As in production, the migrations own the schema. A dev-mode boot would run
-      # `prisma db push`, which drops the tables that exist only in migrations
-      # (tenant_channel_configs, autonomous_campaign_runs, regional_agronomy_skills).
+      # As in production, the migrations are applied before the backend starts.
       DB_SYNC_ON_BOOT: 'false'
+      # The route sweep and the user stories drive the same seeded accounts far faster
+      # than a person can (about 550 requests per role in the sweep alone), which
+      # exhausts the per-user limit of 1000 per 15 minutes partway through the run.
+      # Local runs use the same setting.
+      RATE_LIMIT_DISABLED: 'true'
 
     steps:
       - name: Checkout code
@@ -100,6 +103,7 @@ jobs:
         run: |
           grep -h -E -A14 '\[ERROR\]: Failed to (load|get|fetch|list)' logs/error.log 2>/dev/null \
             | grep -E '\[ERROR\]|^ *code:|^ *message:|^ *at ' | cut -c1-300 | head -60 || true
+          grep -h -i -E 'rate limit exceeded|Failed to persist' logs/combined.log 2>/dev/null | cut -c1-200 | sort | uniq -c | head -20 || true
 
       - name: Upload the Playwright report
         if: failure()
