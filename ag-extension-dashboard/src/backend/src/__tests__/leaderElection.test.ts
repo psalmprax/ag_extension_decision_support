@@ -174,4 +174,29 @@ describe('leaderElection', () => {
         const result = await runIfLeader('svc', () => { throw new Error('boom'); });
         expect(result).toBeNull();
     });
+
+    it('skips a tick while the previous run of the same task is still going', async () => {
+        const { client } = makeFakeRedis();
+        mockGetCache.mockReturnValue(client);
+
+        let finish!: () => void;
+        let runs = 0;
+        const slow = runIfLeader('sms-poller', () => { runs += 1; return new Promise<string>(resolve => { finish = () => resolve('sent'); }); });
+        await new Promise(resolve => setImmediate(resolve));
+        await expect(runIfLeader('sms-poller', () => { runs += 1; return 'again'; })).resolves.toBeNull();
+        finish();
+        await expect(slow).resolves.toBe('sent');
+        await expect(runIfLeader('sms-poller', () => { runs += 1; return 'next'; })).resolves.toBe('next');
+        expect(runs).toBe(2);
+    });
+
+    it('answers null instead of rejecting when Redis fails mid-command', async () => {
+        const { client } = makeFakeRedis();
+        client.set = async () => { throw new Error('Connection is closed'); };
+        mockGetCache.mockReturnValue(client);
+
+        let ran = false;
+        await expect(runIfLeader('self-healing', () => { ran = true; return 'ok'; })).resolves.toBeNull();
+        expect(ran).toBe(false);
+    });
 });
