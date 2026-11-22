@@ -7,7 +7,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 type Tab = 'tank' | 'blend' | 'density';
 
 const inputCls =
-    'w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent';
+    'w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-theme-bg-tertiary text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent';
 
 function NumField({ label, value, onChange, step = 'any', suffix }: { label: string; value: number | ''; onChange: (v: number | '') => void; step?: string; suffix?: string }) {
     return (

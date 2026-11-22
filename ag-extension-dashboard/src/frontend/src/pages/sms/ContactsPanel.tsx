@@ -34,7 +34,7 @@ export function SMSContactsPanel({
 
   return (
     <div
-      className="w-full lg:w-1/4 backdrop-blur-xl bg-white dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-white/10 flex flex-col shadow-sm dark:shadow-xl"
+      className="w-full lg:w-1/4 backdrop-blur-xl bg-white dark:bg-theme-bg-secondary/60 rounded-xl border border-slate-200 dark:border-white/10 flex flex-col shadow-sm dark:shadow-xl"
     >
       <div className="p-4 border-b border-slate-200 dark:border-white/5">
         <h2 className="text-base font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">

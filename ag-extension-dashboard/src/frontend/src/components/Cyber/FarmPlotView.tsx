@@ -66,7 +66,7 @@ const FarmPlotView: React.FC<FarmPlotViewProps> = ({ farmSize: givenSize = 0, cr
       label={lines.join('. ')}
       loadingText={t('farm_plot_loading', { defaultValue: 'Loading your plot…' })}
       fallback={<p className="text-sm text-slate-600 dark:text-white/70">{lines.join(' · ')}</p>}
-      className="w-full h-96 rounded-xl border border-slate-900/[0.08] dark:border-white/[0.08] bg-[#eef3f0] dark:bg-[#0d1a14]"
+      className="w-full h-96 rounded-xl border border-slate-900/[0.08] dark:border-white/[0.08] bg-[#eef3f0] dark:bg-theme-bg-primary"
     />
   );
 };

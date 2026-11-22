@@ -171,7 +171,7 @@ export function AdvisoryStudioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0d1a14] text-slate-800 dark:text-slate-100 flex flex-col rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-theme-bg-primary text-slate-800 dark:text-slate-100 flex flex-col rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] overflow-hidden">
       <header className="h-16 border-b border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] backdrop-blur-md px-6 flex items-center justify-between z-20 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-md bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] flex items-center justify-center text-slate-700 dark:text-slate-300">
@@ -298,7 +298,7 @@ export function AdvisoryStudioPage() {
           </div>
         </aside>
 
-        <main className="flex-1 bg-white dark:bg-[#0d1a14] p-6 overflow-y-auto flex flex-col items-center">
+        <main className="flex-1 bg-white dark:bg-theme-bg-primary p-6 overflow-y-auto flex flex-col items-center">
           <div className="w-full max-w-2xl">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">

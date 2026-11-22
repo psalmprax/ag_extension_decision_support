@@ -20,7 +20,7 @@ export function EmailWorkflowsCategoryFilter({
       <select
         value={selected}
         onChange={e => onChange(e.target.value)}
-        className={`px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
+        className={`px-3 py-2 border border-gray-300 dark:border-white/[0.12] ${radiusClass} bg-white dark:bg-theme-bg-tertiary text-gray-900 dark:text-white`}
       >
         <option value="all">{t('ui_category_filter_all_categories')}</option>
         {categories.map(category => (

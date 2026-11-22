@@ -28,7 +28,7 @@ export function SMSComposerHistoryTab({
         history.map(msg => (
           <div
             key={msg.id}
-            className={`p-4 bg-slate-50 dark:bg-slate-800/50 ${radiusClass} border border-slate-100 dark:border-slate-800 flex items-start justify-between`}
+            className={`p-4 bg-slate-50 dark:bg-theme-bg-tertiary/50 ${radiusClass} border border-slate-100 dark:border-white/[0.08] flex items-start justify-between`}
           >
             <div className="flex items-start gap-4">
               <div

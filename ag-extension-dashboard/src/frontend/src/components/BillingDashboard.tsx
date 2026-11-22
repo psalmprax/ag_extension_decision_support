@@ -50,7 +50,7 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
       {/* Admin Vault Settings */}
       <section
         aria-labelledby="admin-billing-title"
-        className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden"
+        className="backdrop-blur-xl bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden"
       >
         <div className="absolute top-0 end-0 p-6 opacity-5 pointer-events-none">
           <Settings className="w-32 h-32 text-slate-700 dark:text-slate-400" />
@@ -381,7 +381,7 @@ export const BillingDashboard: React.FC = () => {
       {/* ── Active Membership Pod Ribbon (Unit Test Target) ── */}
       <section
         aria-label="Subscription Overview"
-        className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden"
+        className="backdrop-blur-xl bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden"
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1: Current Plan */}
@@ -645,7 +645,7 @@ export const BillingDashboard: React.FC = () => {
           value={billing.rejectReason}
           onChange={e => billing.setRejectReason(e.target.value)}
           placeholder="Enter reason for rejection..."
-          className="w-full bg-white dark:bg-slate-900/80 border-slate-800 text-slate-900 dark:text-white rounded-xl text-xs"
+          className="w-full bg-white dark:bg-theme-bg-secondary/80 border-slate-800 text-slate-900 dark:text-white rounded-xl text-xs"
           rows={4}
         />
       </BaseModal>

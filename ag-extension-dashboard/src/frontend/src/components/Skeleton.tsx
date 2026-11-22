@@ -16,7 +16,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 }) => {
   return (
     <div
-      className={`relative overflow-hidden bg-gray-200 dark:bg-gray-700 ${className}`}
+      className={`relative overflow-hidden bg-gray-200 dark:bg-white/[0.08] ${className}`}
       style={{ width, height, borderRadius }}
     >
       <motion.div
@@ -35,7 +35,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 };
 
 export const CardSkeleton = () => (
-  <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+  <div className="bg-white dark:bg-theme-bg-tertiary p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/[0.12]">
     <Skeleton width="40%" height="1.25rem" className="mb-4" />
     <Skeleton width="80%" height="2.5rem" className="mb-2" />
     <Skeleton width="30%" height="1rem" />
@@ -47,7 +47,7 @@ export const TableSkeleton = ({ rows = 5 }) => (
     {Array.from({ length: rows }).map((_, i) => (
       <div
         key={i}
-        className="flex space-x-4 items-center p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-50 dark:border-gray-700"
+        className="flex space-x-4 items-center p-4 bg-white dark:bg-theme-bg-tertiary rounded-xl border border-gray-50 dark:border-white/[0.12]"
       >
         <Skeleton width="40px" height="40px" borderRadius="100%" />
         <div className="flex-1 space-y-2">
@@ -75,14 +75,14 @@ export const ListSkeleton = ({ items = 5 }) => (
 );
 
 export const ChartSkeleton = () => (
-  <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+  <div className="bg-white dark:bg-theme-bg-tertiary p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/[0.12]">
     <Skeleton width="30%" height="1.25rem" className="mb-4" />
     <Skeleton width="100%" height="300px" />
   </div>
 );
 
 export const MetricCardSkeleton = () => (
-  <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+  <div className="bg-white dark:bg-theme-bg-tertiary p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/[0.12]">
     <div className="flex items-center justify-between mb-4">
       <Skeleton width="40%" height="1rem" />
       <Skeleton width="40px" height="40px" borderRadius="0.75rem" />

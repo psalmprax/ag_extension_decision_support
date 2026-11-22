@@ -120,7 +120,7 @@ function Telemetry() {
           <select
             value={timeRange}
             onChange={e => setTimeRange(Number(e.target.value))}
-            className={`px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 ${radiusClass} text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-400`}
+            className={`px-3 py-2 bg-white dark:bg-theme-bg-secondary border border-slate-200 dark:border-white/10 ${radiusClass} text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-400`}
           >
             <option value={1}>{t('ui_telemetry_last_hour')}</option>
             <option value={24}>{t('ui_telemetry_last_24_hours')}</option>
@@ -148,7 +148,7 @@ function Telemetry() {
               icon={Activity}
               color="blue"
             />
-            <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+            <div className="mt-3 pt-2 border-t border-gray-100 dark:border-white/[0.08]">
               {isDemo ? (
                 <LiveSparklineCanvas
                   data={[12, 19, 15, 27, 24, 32, 28, 41, 38, (summary.totalRequests % 50) + 20]}
@@ -169,7 +169,7 @@ function Telemetry() {
               icon={Clock}
               color="green"
             />
-            <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+            <div className="mt-3 pt-2 border-t border-gray-100 dark:border-white/[0.08]">
               {isDemo ? (
                 <LiveSparklineCanvas
                   data={[
@@ -201,7 +201,7 @@ function Telemetry() {
               icon={AlertTriangle}
               color="red"
             />
-            <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+            <div className="mt-3 pt-2 border-t border-gray-100 dark:border-white/[0.08]">
               {isDemo ? (
                 <LiveSparklineCanvas
                   data={[4.2, 3.8, 5.1, 2.9, 3.2, 2.1, 1.8, 1.2, 0.9, summary.errorRate * 100]}
@@ -222,7 +222,7 @@ function Telemetry() {
               icon={DollarSign}
               color="purple"
             />
-            <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+            <div className="mt-3 pt-2 border-t border-gray-100 dark:border-white/[0.08]">
               {isDemo ? (
                 <LiveSparklineCanvas
                   data={[0.4, 0.8, 1.1, 1.7, 2.3, 3.1, 3.8, 4.4, 5.1, summary.totalCostUsd]}
@@ -312,7 +312,7 @@ function Telemetry() {
             <select
               value={filterStatus}
               onChange={e => setFilterStatus(e.target.value)}
-              className={`px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 ${radiusClass} text-sm`}
+              className={`px-3 py-2 bg-white dark:bg-theme-bg-tertiary border border-gray-200 dark:border-white/[0.12] ${radiusClass} text-sm`}
             >
               <option value="all">{t('ui_telemetry_all_status')}</option>
               <option value="success">{t('common_success')}</option>
@@ -328,7 +328,7 @@ function Telemetry() {
               key={event.id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className={`flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 ${radiusClass}`}
+              className={`flex items-center justify-between p-4 bg-gray-50 dark:bg-theme-bg-tertiary/50 ${radiusClass}`}
             >
               <div className="flex items-center gap-4">
                 <div

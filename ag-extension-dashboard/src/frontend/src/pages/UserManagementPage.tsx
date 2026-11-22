@@ -210,7 +210,7 @@ export function UserManagementPage() {
             <select aria-label={t('users_filter_role', 'Filter by role')}
               value={roleFilter}
               onChange={e => setRoleFilter(e.target.value)}
-              className="w-full appearance-none ps-3.5 pe-9 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-400 outline-none"
+              className="w-full appearance-none ps-3.5 pe-9 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-theme-bg-secondary text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-400 outline-none"
             >
               <option value="">{t('users_all_roles', 'All Roles ({count})', { count: usersList.length })}</option>
               {ROLES.map(r => (
@@ -233,7 +233,7 @@ export function UserManagementPage() {
         </div>
       ) : filteredUsers.length === 0 ? (
         /* Empty State with Seed Action */
-        <div className="backdrop-blur-xl bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-white/10 rounded-xl p-12 text-center space-y-4 shadow-sm">
+        <div className="backdrop-blur-xl bg-white/80 dark:bg-theme-bg-secondary/40 border border-slate-200 dark:border-white/10 rounded-xl p-12 text-center space-y-4 shadow-sm">
           <div className="w-16 h-16 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-lg">
             <Users className="w-8 h-8 opacity-70" />
           </div>
@@ -266,7 +266,7 @@ export function UserManagementPage() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-200 font-medium text-xs">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-theme-bg-tertiary border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-200 font-medium text-xs">
                       {(user.firstName?.[0] || '?').toUpperCase()}
                       {(user.lastName?.[0] || '').toUpperCase()}
                     </div>

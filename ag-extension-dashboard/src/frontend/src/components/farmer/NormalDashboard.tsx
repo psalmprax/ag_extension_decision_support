@@ -32,7 +32,7 @@ function trendTone(trend: unknown): string {
 const DATA_STATUS_COLORS: Record<MarketDataStatus, string> = {
   live: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
   estimated: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  unavailable: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+  unavailable: 'bg-gray-100 text-gray-500 dark:bg-theme-bg-tertiary dark:text-gray-400',
 };
 
 function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: boolean) {
@@ -64,7 +64,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
       ) : (
         <div className="space-y-4">
           {metrics.production != null && (
-            <div className="p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800">
+            <div className="p-4 bg-theme-bg-secondary/50 dark:bg-theme-bg-secondary/50 rounded-xl border border-gray-50 dark:border-white/[0.08]">
               <div className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-1">Global production</div>
               <div className="text-xl font-medium text-gray-900 dark:text-white">
                 {(Number(metrics.production) / 1_000_000).toFixed(1)}M {metrics.unit}
@@ -72,7 +72,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
             </div>
           )}
           {metrics.yield != null && (
-            <div className="p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800">
+            <div className="p-4 bg-theme-bg-secondary/50 dark:bg-theme-bg-secondary/50 rounded-xl border border-gray-50 dark:border-white/[0.08]">
               <div className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-1">Average yield</div>
               <div className="text-xl font-medium text-primary-600 dark:text-primary-400">
                 {Number(metrics.yield).toFixed(1)} {metrics.unit.replace('tonnes', 't/ha')}
@@ -80,7 +80,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
             </div>
           )}
           {metrics.exports != null && (
-            <div className="p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800">
+            <div className="p-4 bg-theme-bg-secondary/50 dark:bg-theme-bg-secondary/50 rounded-xl border border-gray-50 dark:border-white/[0.08]">
               <div className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-1">Global exports</div>
               <div className="text-xl font-medium text-emerald-600 dark:text-emerald-400">
                 {(Number(metrics.exports) / 1_000_000).toFixed(1)}M tonnes
@@ -131,8 +131,8 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
     return (
       <div className="space-y-6 animate-fade-in">
         <header>
-          <div className="h-9 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-2" />
-          <div className="h-5 w-48 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
+          <div className="h-9 w-64 bg-gray-200 dark:bg-white/[0.08] rounded-lg animate-pulse mb-2" />
+          <div className="h-5 w-48 bg-gray-100 dark:bg-theme-bg-tertiary rounded-lg animate-pulse" />
         </header>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -141,7 +141,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <ChartSkeleton />
-          <div className="bg-gray-200 dark:bg-gray-700 h-[300px] rounded-xl animate-pulse" />
+          <div className="bg-gray-200 dark:bg-white/[0.08] h-[300px] rounded-xl animate-pulse" />
         </div>
       </div>
     );

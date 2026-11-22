@@ -58,7 +58,7 @@ function SupportTicketForm({
         <button
           onClick={() => setShowTicketForm(false)}
           aria-label="Close support ticket form"
-          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          className="p-1 hover:bg-gray-100 dark:hover:bg-white/[0.08] rounded-lg"
         >
           <X className="w-4 h-4 text-gray-400" />
         </button>
@@ -80,7 +80,7 @@ function SupportTicketForm({
               value={ticketSubject}
               onChange={e => setTicketSubject(e.target.value)}
               placeholder="Brief description of your issue"
-              className="w-full mt-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-colors"
+              className="w-full mt-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-white/[0.12] bg-slate-50 dark:bg-theme-bg-tertiary text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-theme-bg-secondary outline-none transition-colors"
               required
             />
           </div>
@@ -91,7 +91,7 @@ function SupportTicketForm({
             <select
               value={ticketCategory}
               onChange={e => setTicketCategory(e.target.value)}
-              className="w-full mt-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-colors"
+              className="w-full mt-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-white/[0.12] bg-slate-50 dark:bg-theme-bg-tertiary text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-theme-bg-secondary outline-none transition-colors"
             >
               <option value="general">{t('ui_help_center_modal_general')}</option>
               <option value="feature-request">{t('help_feature_request')}</option>
@@ -111,7 +111,7 @@ function SupportTicketForm({
               onChange={e => setTicketDescription(e.target.value)}
               placeholder="Describe your issue in detail..."
               rows={4}
-              className="w-full mt-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-colors resize-none"
+              className="w-full mt-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-white/[0.12] bg-slate-50 dark:bg-theme-bg-tertiary text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-theme-bg-secondary outline-none transition-colors resize-none"
               required
             />
           </div>
@@ -200,7 +200,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
     {
       icon: Book,
       label: t('help_docs') || 'Documentation',
-      color: 'bg-slate-50 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300 border border-slate-200 dark:border-slate-800',
+      color: 'bg-slate-50 text-slate-700 dark:bg-theme-bg-secondary/30 dark:text-slate-300 border border-slate-200 dark:border-white/[0.08]',
       action: () => {
         onClose();
         setActiveTab('knowledge');
@@ -218,7 +218,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
     {
       icon: Mail,
       label: 'Submit Ticket',
-      color: 'bg-slate-50 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300 border border-slate-200 dark:border-slate-800',
+      color: 'bg-slate-50 text-slate-700 dark:bg-theme-bg-secondary/30 dark:text-slate-300 border border-slate-200 dark:border-white/[0.08]',
       action: () => {
         setTicketCategory('general');
         setShowTicketForm(true);
@@ -249,7 +249,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-4"
           >
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="bg-white dark:bg-theme-bg-secondary border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-hidden flex flex-col">
               {/* Header */}
               <div className="p-4 sm:p-6 bg-slate-800 border-b border-white/10 text-white">
                 <div className="flex items-center justify-between">
@@ -321,12 +321,12 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                         faqs.map((faq, i) => (
                           <div
                             key={faq.id || i}
-                            className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50/70 dark:bg-slate-800/40"
+                            className="border border-slate-200 dark:border-white/[0.08] rounded-xl overflow-hidden bg-slate-50/70 dark:bg-theme-bg-tertiary/40"
                           >
                             <button
                               type="button"
                               onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
-                              className="w-full p-4 flex items-center justify-between text-start hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-colors"
+                              className="w-full p-4 flex items-center justify-between text-start hover:bg-slate-100/80 dark:hover:bg-theme-bg-tertiary/80 transition-colors"
                             >
                               <span className="text-sm font-medium text-slate-900 dark:text-white pe-4">
                                 {faq.question}
@@ -339,7 +339,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                               <motion.div
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
-                                className="px-4 pb-4 pt-1 border-t border-slate-200/60 dark:border-slate-700/50"
+                                className="px-4 pb-4 pt-1 border-t border-slate-200/60 dark:border-white/[0.12]"
                               >
                                 <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
                                   {faq.answer}
@@ -360,12 +360,12 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                         {keyboardShortcuts.map(({ key, action }, i) => (
                           <div
                             key={i}
-                            className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl"
+                            className="flex items-center justify-between p-3 bg-slate-50 dark:bg-theme-bg-tertiary/50 border border-slate-200 dark:border-white/[0.12] rounded-xl"
                           >
                             <span className="text-sm text-slate-700 dark:text-slate-300">
                               {action}
                             </span>
-                            <kbd className="px-2 py-1 bg-slate-200 dark:bg-slate-700 text-xs font-mono rounded text-slate-800 dark:text-slate-200 font-medium">
+                            <kbd className="px-2 py-1 bg-slate-200 dark:bg-white/[0.08] text-xs font-mono rounded text-slate-800 dark:text-slate-200 font-medium">
                               {key}
                             </kbd>
                           </div>
@@ -378,7 +378,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
 
               {/* Footer */}
               {!showTicketForm && (
-                <div className="p-4 border-t border-slate-200 dark:border-slate-800 grid grid-cols-2 gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="p-4 border-t border-slate-200 dark:border-white/[0.08] grid grid-cols-2 gap-3 bg-slate-50/50 dark:bg-theme-bg-secondary/50">
                   <button
                     type="button"
                     onClick={() => {

@@ -94,7 +94,7 @@
   }
 
   .dark body {
-    @apply bg-[#0d1a14] text-[#e6eee9] overflow-x-hidden;
+    @apply bg-theme-bg-primary text-[#e6eee9] overflow-x-hidden;
   }
 
   /* Two weights carry the hierarchy (Unslop): 400 body, 500 headings. */

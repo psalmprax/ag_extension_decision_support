@@ -130,9 +130,9 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative flex flex-col w-full max-w-lg max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div className="relative flex flex-col w-full max-w-lg max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] bg-white dark:bg-theme-bg-tertiary rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between shrink-0 px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between shrink-0 px-6 py-4 border-b border-gray-100 dark:border-white/[0.12]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center">
               <MapPin className="w-5 h-5 text-primary-600 dark:text-primary-400" />
@@ -148,7 +148,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-white/[0.08] rounded-xl transition-colors"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -173,10 +173,10 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                     : t('visit_select_farmer_placeholder') || 'Search farmer...'
                 }
                 disabled={loadingFarmers}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.08] text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
               {formData.farmerSearch && !formData.farmerId && (
-                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-white/[0.08] border border-gray-200 dark:border-white/[0.12] rounded-xl shadow-lg max-h-48 overflow-y-auto">
                   {farmers
                     .filter(
                       f =>
@@ -200,7 +200,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                             farmerSearch: `${farmer.firstName} ${farmer.lastName}`,
                           })
                         }
-                        className="w-full px-4 py-2 text-start hover:bg-gray-100 dark:hover:bg-gray-600 text-sm"
+                        className="w-full px-4 py-2 text-start hover:bg-gray-100 dark:hover:bg-white/[0.12] text-sm"
                       >
                         <span className="font-medium text-gray-900 dark:text-white">
                           {farmer.firstName} {farmer.lastName}
@@ -257,7 +257,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                   className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                     formData.type === type.value
                       ? 'bg-primary-600 text-white shadow-lg'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      : 'bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
                   }`}
                 >
                   {type.label}
@@ -292,7 +292,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
               onChange={e => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
               placeholder={t('visit_notes_placeholder') || 'Add any notes about this visit...'}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.08] text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
             />
           </div>
 

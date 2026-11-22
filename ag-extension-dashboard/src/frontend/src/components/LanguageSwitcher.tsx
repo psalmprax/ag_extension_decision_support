@@ -80,7 +80,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         <button
           id="language-select"
           onClick={() => setOpen(o => !o)}
-          className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white min-w-[160px] justify-between"
+          className="flex items-center gap-2 bg-white dark:bg-theme-bg-tertiary border border-gray-200 dark:border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white min-w-[160px] justify-between"
           aria-haspopup="listbox"
           aria-expanded={open}
         >
@@ -122,7 +122,7 @@ const LanguageDropdown: React.FC<DropdownProps> = ({
   currentCode,
   onSelect,
 }) => (
-  <div className="absolute end-0 mt-2 w-64 bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+  <div className="absolute end-0 mt-2 w-64 bg-white dark:bg-theme-bg-secondary border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
     <div className="p-2 border-b border-gray-100 dark:border-white/10">
       <div className="relative">
         <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
@@ -132,7 +132,7 @@ const LanguageDropdown: React.FC<DropdownProps> = ({
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Search languages"
-          className="w-full ps-8 pe-2 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
+          className="w-full ps-8 pe-2 py-1.5 text-xs bg-gray-50 dark:bg-theme-bg-tertiary border border-gray-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
         />
       </div>
     </div>

@@ -30,7 +30,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
         aria-labelledby="subscription-status-title"
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative card p-8 lg:p-10 group bg-slate-950/90 dark:bg-slate-950/95 backdrop-blur-2xl border border-emerald-500/30 shadow-sm dark:shadow-none overflow-hidden min-h-[440px] flex flex-col justify-between"
+        className="relative card p-8 lg:p-10 group bg-slate-950/90 dark:bg-theme-bg-primary/95 backdrop-blur-2xl border border-emerald-500/30 shadow-sm dark:shadow-none overflow-hidden min-h-[440px] flex flex-col justify-between"
         style={{ borderRadius: 'var(--radius-card, 0.75rem)' }}
       >
 
@@ -59,7 +59,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
           <h2 className="text-2xl sm:text-3xl font-medium text-slate-900 dark:text-white leading-tight tracking-tight mb-4 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors duration-300">
             {subscription?.plan?.name ?? 'N/A'}
           </h2>
-          <div className="flex items-center gap-2.5 text-slate-400 font-mono text-xs p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-800/80">
+          <div className="flex items-center gap-2.5 text-slate-400 font-mono text-xs p-3 rounded-xl bg-white dark:bg-theme-bg-secondary/60 border border-slate-800/80">
             <Clock className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
             <span>
               {t('billing_renews_on') || 'Renews on'}{' '}
@@ -79,7 +79,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
               onPortal();
             }}
             disabled={actionLoading === 'portal'}
-            className={`w-full h-12 bg-white dark:bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-900 dark:text-white ${radiusClass} font-medium text-xs transition-all duration-200 flex items-center justify-center gap-2.5 shadow-sm active:scale-[0.98] disabled:opacity-50 group/btn`}
+            className={`w-full h-12 bg-white dark:bg-theme-bg-secondary hover:bg-slate-800 border border-slate-700/80 text-slate-900 dark:text-white ${radiusClass} font-medium text-xs transition-all duration-200 flex items-center justify-center gap-2.5 shadow-sm active:scale-[0.98] disabled:opacity-50 group/btn`}
           >
             {actionLoading === 'portal' ? (
               <div className="w-4 h-4 border-2 border-slate-300 dark:border-white/20 border-t-white rounded-full animate-spin" />
@@ -97,7 +97,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
     <motion.section
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`relative p-8 lg:p-10 bg-slate-950/90 dark:bg-slate-950/95 backdrop-blur-2xl ${radiusClass} border border-emerald-500/25 shadow-sm dark:shadow-none overflow-hidden min-h-[440px] flex flex-col justify-between`}
+      className={`relative p-8 lg:p-10 bg-slate-950/90 dark:bg-theme-bg-primary/95 backdrop-blur-2xl ${radiusClass} border border-emerald-500/25 shadow-sm dark:shadow-none overflow-hidden min-h-[440px] flex flex-col justify-between`}
     >
       <div className="relative z-10">
         <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 w-fit mb-4 text-emerald-700 dark:text-emerald-400">
@@ -110,7 +110,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
           {t('billing_promo_desc') || 'Unlock automated agronomic triage, multi-channel SMS broadcasts, and satellite NDVI maps.'}
         </p>
       </div>
-      <div className="relative z-10 p-4 bg-white dark:bg-slate-900/80 rounded-xl border border-slate-800">
+      <div className="relative z-10 p-4 bg-white dark:bg-theme-bg-secondary/80 rounded-xl border border-slate-800">
         <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-medium text-xs mb-2">
           <ShieldCheck className="w-3.5 h-3.5" />
           <span>{t('billing_instant_activation') || 'Instant cooperative activation'}</span>

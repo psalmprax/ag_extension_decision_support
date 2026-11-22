@@ -15,7 +15,7 @@ export function useThemeClasses() {
     // Quiet panels: a hairline border carries the edge, no blur, glow or lift.
     const panelClass =
       'bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08]';
-    const headerOpacity = 'bg-white/30 dark:bg-slate-950/30';
+    const headerOpacity = 'bg-white/30 dark:bg-theme-bg-primary/30';
     const btnClass =
       'rounded-md transition-colors';
     const headingClass = 'text-slate-900 dark:text-white font-medium';

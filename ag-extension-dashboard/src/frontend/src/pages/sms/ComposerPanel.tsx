@@ -57,7 +57,7 @@ export function SMSComposerPanel({
 
   return (
     <div
-      className="flex-1 backdrop-blur-xl bg-white dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-white/10 flex flex-col shadow-sm dark:shadow-xl"
+      className="flex-1 backdrop-blur-xl bg-white dark:bg-theme-bg-secondary/60 rounded-xl border border-slate-200 dark:border-white/10 flex flex-col shadow-sm dark:shadow-xl"
     >
       <div className="flex flex-wrap items-center justify-between p-4 border-b border-slate-200 dark:border-white/5 gap-3">
         <div className="flex bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 p-1 rounded-xl">

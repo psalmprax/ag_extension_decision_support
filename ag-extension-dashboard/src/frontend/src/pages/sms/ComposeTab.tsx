@@ -134,7 +134,7 @@ export function SMSComposerComposeTab({
           onClick={handleSend}
           className={`w-full py-4 ${radiusClass} font-medium flex items-center justify-center gap-3 shadow-lg active:scale-[0.98] transition-all ${
             isSending
-              ? 'bg-slate-200 dark:bg-slate-800'
+              ? 'bg-slate-200 dark:bg-theme-bg-tertiary'
               : 'bg-primary-600 hover:bg-primary-500 text-white'
           }`}
         >

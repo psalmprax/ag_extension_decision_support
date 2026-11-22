@@ -96,7 +96,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   return (
     <div className="relative group">
-      <div className="relative w-full max-w-full bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-white/10 p-1.5 sm:p-2 shadow-sm dark:shadow-2xl focus-within:ring-2 focus-within:ring-emerald-500/40 focus-within:border-emerald-500/60 rounded-xl overflow-hidden backdrop-blur-xl">
+      <div className="relative w-full max-w-full bg-white dark:bg-theme-bg-primary/80 border border-slate-200 dark:border-white/10 p-1.5 sm:p-2 shadow-sm dark:shadow-2xl focus-within:ring-2 focus-within:ring-emerald-500/40 focus-within:border-emerald-500/60 rounded-xl overflow-hidden backdrop-blur-xl">
         {/* Attachment Previews */}
         {attachments.length > 0 && (
           <div className="flex flex-wrap gap-2 px-3 py-2 sm:px-4 sm:py-2.5 border-b border-slate-200 dark:border-white/10">

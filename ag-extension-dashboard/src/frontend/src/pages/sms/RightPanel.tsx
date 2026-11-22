@@ -33,7 +33,7 @@ export function SMSRightPanel({
     <div className="w-full lg:w-1/4 space-y-4 overflow-y-auto pe-1">
       {/* DELIVERY & QUOTA CARD */}
       <div
-        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-5"
+        className="bg-white dark:bg-theme-bg-secondary border border-slate-200 dark:border-white/10 rounded-xl p-5 shadow-sm space-y-5"
       >
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
@@ -56,7 +56,7 @@ export function SMSRightPanel({
 
       {/* TEMPLATES CARD */}
       <div
-        className={`bg-white dark:bg-slate-900 ${radiusClass} border border-slate-200 dark:border-white/10 p-5 flex flex-col shadow-sm`}
+        className={`bg-white dark:bg-theme-bg-secondary ${radiusClass} border border-slate-200 dark:border-white/10 p-5 flex flex-col shadow-sm`}
       >
         <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
           <Plus className="w-4 h-4 text-slate-500" />

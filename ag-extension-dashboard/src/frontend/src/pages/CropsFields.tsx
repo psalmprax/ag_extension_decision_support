@@ -381,7 +381,7 @@ export function CropsFields() {
                   aria-label={t('crops_fields_choose_farmer', { defaultValue: 'Farmer' })}
                 >
                   {farmers.map(farmer => (
-                    <option key={farmer.id} value={farmer.id} className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
+                    <option key={farmer.id} value={farmer.id} className="bg-white dark:bg-theme-bg-primary text-slate-900 dark:text-white">
                       {farmer.firstName} {farmer.lastName} ({farmer.region || 'No Region'})
                     </option>
                   ))}

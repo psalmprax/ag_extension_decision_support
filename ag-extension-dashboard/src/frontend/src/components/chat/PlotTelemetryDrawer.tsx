@@ -29,7 +29,7 @@ export interface FarmerPlotSnapshot {
 
 type TelemetryReading = Pick<PlotTelemetry, 'ph' | 'soc' | 'moisture' | 'temp' | 'loading'>;
 
-const CARD = 'p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] space-y-1';
+const CARD = 'p-3.5 rounded-xl bg-slate-50 dark:bg-theme-bg-primary/80 border border-slate-200/80 dark:border-white/[0.06] space-y-1';
 const LABEL = 'text-[10px] font-mono text-slate-500 dark:text-white/40';
 const NOTE = 'text-[9px] text-slate-500 dark:text-white/40';
 

@@ -62,7 +62,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
       className={`relative h-full flex-shrink-0 transition-all duration-300 ease-in-out z-40 max-md:absolute max-md:inset-y-0 max-md:start-0 max-md:z-50 max-md:shadow-2xl ${isOpen ? 'w-80' : 'w-0'}`}
     >
       <aside
-        className={`h-full w-full bg-white dark:bg-gray-900 border-e border-gray-100 dark:border-gray-800 overflow-hidden`}
+        className={`h-full w-full bg-white dark:bg-theme-bg-secondary border-e border-gray-100 dark:border-white/[0.08] overflow-hidden`}
       >
         <div className="h-full flex flex-col p-4 w-80">
           {/* New Search Button */}
@@ -72,7 +72,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
             title={isDemo ? 'Not available in demo version' : 'Start a new expert query'}
             className={`flex items-center gap-2 w-full p-4 mb-8 text-white ${radiusClass} font-medium text-sm shadow-lg transition-all transform ${
               isDemo
-                ? 'bg-gray-400 dark:bg-gray-700 cursor-not-allowed opacity-70'
+                ? 'bg-gray-400 dark:bg-white/[0.08] cursor-not-allowed opacity-70'
                 : 'bg-primary-600 hover:bg-primary-700 active:scale-95'
             }`}
           >
@@ -103,11 +103,11 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
                     onClick={() => onSelect(h)}
-                    className={`w-full text-start p-4 ${radiusClass} hover:bg-gray-50 dark:hover:bg-gray-800 group transition-all border border-transparent hover:border-primary-500/10`}
+                    className={`w-full text-start p-4 ${radiusClass} hover:bg-gray-50 dark:hover:bg-theme-bg-tertiary group transition-all border border-transparent hover:border-primary-500/10`}
                   >
                     <div className="flex items-start gap-4">
                       <div
-                        className={`p-2 bg-gray-100 dark:bg-gray-800 rounded-xl group-hover:bg-primary-500/10 group-hover:text-primary-500 transition-colors`}
+                        className={`p-2 bg-gray-100 dark:bg-theme-bg-tertiary rounded-xl group-hover:bg-primary-500/10 group-hover:text-primary-500 transition-colors`}
                       >
                         <MessageSquare className="w-4 h-4" />
                       </div>
@@ -136,7 +136,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
           </div>
 
           {/* Sidebar Footer */}
-          <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800 flex items-center gap-4 px-2">
+          <div className="mt-auto pt-6 border-t border-gray-100 dark:border-white/[0.08] flex items-center gap-4 px-2">
             <div
               className={`w-10 h-10 bg-slate-500 ${radiusClass} flex items-center justify-center text-white font-medium`}
             >
@@ -170,7 +170,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
       {/* Toggle Tab */}
       <button
         onClick={onToggle}
-        className={`absolute top-1/2 -end-4 translate-y-[-50%] p-1 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg text-gray-400 hover:text-primary-500 transition-all z-50 group flex items-center justify-center ${!isOpen && 'translate-x-4'}`}
+        className={`absolute top-1/2 -end-4 translate-y-[-50%] p-1 bg-white dark:bg-theme-bg-secondary border border-gray-100 dark:border-white/[0.08] rounded-xl shadow-lg text-gray-400 hover:text-primary-500 transition-all z-50 group flex items-center justify-center ${!isOpen && 'translate-x-4'}`}
       >
         {isOpen ? (
           <ChevronLeft className="w-6 h-6 group-hover:scale-110 transition-transform" />

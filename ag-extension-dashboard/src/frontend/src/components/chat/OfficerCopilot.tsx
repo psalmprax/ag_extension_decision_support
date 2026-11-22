@@ -82,7 +82,7 @@ export const OfficerCopilot: React.FC<OfficerCopilotProps> = ({ conversationId, 
   };
 
   return (
-    <div className="px-4 py-2 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-200/80 dark:border-white/[0.04] space-y-2">
+    <div className="px-4 py-2 bg-slate-50 dark:bg-theme-bg-primary/60 border-t border-slate-200/80 dark:border-white/[0.04] space-y-2">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-xxs font-mono text-emerald-700 dark:text-emerald-400">
           <Bot className="w-3 h-3" aria-hidden="true" />
@@ -96,7 +96,7 @@ export const OfficerCopilot: React.FC<OfficerCopilotProps> = ({ conversationId, 
           type="button"
           onClick={() => void requestDraft()}
           disabled={draft.status === 'loading'}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xxs font-medium bg-white dark:bg-slate-900 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 disabled:opacity-50 shrink-0"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xxs font-medium bg-white dark:bg-theme-bg-secondary border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 disabled:opacity-50 shrink-0"
         >
           {draft.status === 'loading' ? (
             <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
@@ -111,7 +111,7 @@ export const OfficerCopilot: React.FC<OfficerCopilotProps> = ({ conversationId, 
         <div
           role="region"
           aria-label="AI draft reply"
-          className="rounded-lg border border-slate-200 dark:border-slate-400/20 bg-slate-50 dark:bg-slate-950/40 p-3 space-y-2"
+          className="rounded-lg border border-slate-200 dark:border-slate-400/20 bg-slate-50 dark:bg-theme-bg-primary/40 p-3 space-y-2"
         >
           <p className="text-xxs font-medium text-slate-800 dark:text-slate-200">
             {t('ui_officer_copilot_ai_draft_only_you_can_see_this_check')}
@@ -154,7 +154,7 @@ export const OfficerCopilot: React.FC<OfficerCopilotProps> = ({ conversationId, 
             key={idx}
             type="button"
             onClick={() => onUseText(suggestion)}
-            className="px-2.5 py-1 rounded-lg text-xxs font-sans bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] hover:border-emerald-500/40 text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white shrink-0 transition-colors text-start max-w-xs truncate"
+            className="px-2.5 py-1 rounded-lg text-xxs font-sans bg-white dark:bg-theme-bg-secondary border border-slate-200 dark:border-white/[0.08] hover:border-emerald-500/40 text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white shrink-0 transition-colors text-start max-w-xs truncate"
           >
             {suggestion}
           </button>

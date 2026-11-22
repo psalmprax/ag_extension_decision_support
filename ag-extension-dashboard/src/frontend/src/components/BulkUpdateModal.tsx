@@ -67,9 +67,9 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-lg bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden flex flex-col"
+            className="relative w-full max-w-lg bg-white dark:bg-theme-bg-tertiary rounded-xl shadow-2xl overflow-hidden flex flex-col"
           >
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-100 dark:border-white/[0.12]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
@@ -86,7 +86,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-white/[0.08] rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-400" />
                 </button>
@@ -94,7 +94,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
             </div>
 
             <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800 flex gap-3">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-theme-bg-secondary/20 border border-slate-100 dark:border-white/[0.08] flex gap-3">
                 <AlertCircle className="w-5 h-5 text-slate-600 dark:text-slate-400 shrink-0" />
                 <p className="text-xs text-slate-700 dark:text-slate-300">
                   {t('ui_bulk_update_modal_selected_fields_will_be_updated_for')} <strong>{t('ui_bulk_update_modal_all')}</strong> {selectedCount} {t('ui_bulk_update_modal_selected_farmers_leave_fields_empty')}
@@ -110,7 +110,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
                 <select
                   value={updates.region}
                   onChange={e => setUpdates(prev => ({ ...prev, region: e.target.value }))}
-                  className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white"
+                  className="w-full bg-gray-50 dark:bg-theme-bg-secondary/50 border border-gray-100 dark:border-white/[0.12] rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white"
                 >
                   <option value="">{t('ui_bulk_update_modal_keep_existing_region')}</option>
                   <option value="Central">{t('ui_bulk_update_modal_central')}</option>
@@ -134,7 +134,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
                   onChange={e =>
                     setUpdates(prev => ({ ...prev, languagePreference: e.target.value }))
                   }
-                  className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white"
+                  className="w-full bg-gray-50 dark:bg-theme-bg-secondary/50 border border-gray-100 dark:border-white/[0.12] rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white"
                 >
                   <option value="">{t('ui_bulk_update_modal_keep_existing_language')}</option>
                   <option value="en">{t('ui_bulk_update_modal_english')}</option>
@@ -155,11 +155,11 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
                     value={newCrop}
                     onChange={e => setNewCrop(e.target.value)}
                     placeholder="Add crop (e.g. Maize, Coffee)..."
-                    className="flex-1 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white"
+                    className="flex-1 bg-gray-50 dark:bg-theme-bg-secondary/50 border border-gray-100 dark:border-white/[0.12] rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white"
                   />
                   <button
                     type="submit"
-                    className="px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-medium hover:bg-gray-200 transition-all"
+                    className="px-4 bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-300 rounded-xl text-xs font-medium hover:bg-gray-200 transition-all"
                   >
                     {t('common_add')}
                   </button>
@@ -183,10 +183,10 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
               </div>
             </div>
 
-            <div className="p-6 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-700 flex gap-3">
+            <div className="p-6 bg-gray-50 dark:bg-theme-bg-tertiary/50 border-t border-gray-100 dark:border-white/[0.12] flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-xs rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="flex-1 px-4 py-2.5 bg-white dark:bg-theme-bg-tertiary text-gray-700 dark:text-gray-300 font-medium text-xs rounded-xl border border-gray-200 dark:border-white/[0.12] hover:bg-gray-50 dark:hover:bg-white/[0.08] transition-colors"
               >
                 {t('nav_cancel') || 'Cancel'}
               </button>

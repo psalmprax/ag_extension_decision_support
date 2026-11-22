@@ -75,7 +75,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
         ].map((stat, i) => (
           <div
             key={i}
-            className="card p-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 flex items-center gap-4 group hover:border-primary-500/50 transition-colors"
+            className="card p-6 bg-white dark:bg-theme-bg-tertiary border border-gray-100 dark:border-white/[0.12] flex items-center gap-4 group hover:border-primary-500/50 transition-colors"
           >
             <div
               className={`p-3 rounded-none ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform`}
@@ -96,7 +96,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Top Crops Bar Chart */}
-        <div className="card p-8 bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700/50 border flex flex-col">
+        <div className="card p-8 bg-white dark:bg-theme-bg-tertiary border-gray-100 dark:border-white/[0.12] border flex flex-col">
           <div className="flex items-center gap-2 mb-8">
             <TrendingUp className="w-5 h-5 text-green-500" />
             <h3 className="text-sm font-medium text-gray-400  ">
@@ -117,7 +117,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
         </div>
 
         {/* Categories Pie Chart */}
-        <div className="card p-8 bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700/50 border">
+        <div className="card p-8 bg-white dark:bg-theme-bg-tertiary border-gray-100 dark:border-white/[0.12] border">
           <div className="flex items-center gap-2 mb-8">
             <PieIcon className="w-5 h-5 text-blue-500" />
             <h3 className="text-sm font-medium text-gray-400  ">

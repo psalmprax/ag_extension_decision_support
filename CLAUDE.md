@@ -18,7 +18,7 @@ Use these exact commands for common development operations. Do not hallucinate o
 - **Frontend lint**: `npm run lint:frontend` (max 20 warnings)
 - **Backend lint**: `cd ag-extension-dashboard/src/backend && npm run lint`
 - **Component-size ratchet**: `npm run check:component-size`
-- **Design rules**: `npm run check:design-rules` (font weights, tracked caps, decorative gradients, glows, blobs, emoji; photo scrims carry `data-scrim`)
+- **Design rules**: `npm run check:design-rules` (font weights, tracked caps, decorative gradients, glows, blobs, emoji, and dark-mode backgrounds and lines that do not come from the theme (use `dark:bg-theme-bg-primary/secondary/tertiary` and `dark:border-white/[0.08]`); photo scrims carry `data-scrim`)
 - **SQL vs schema (backend)**: `cd ag-extension-dashboard/src/backend && DATABASE_URL=... npm run check:sql` (Postgres prepares every raw SQL statement against the migrated schema; runs in Real-backend E2E)
 - **Outbound timeouts (backend)**: `npm run check:outbound-timeouts` (every fetch, axios and web-push call carries a timeout or abort signal; use `src/utils/outboundTimeout.ts`)
 - **Explicit-any ratchet (backend)**: `npm run check:explicit-any` (counts `any` even behind `eslint-disable`; `--update` after reducing)

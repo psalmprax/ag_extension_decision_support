@@ -26,7 +26,7 @@ export function LayerSwitcher({ currentLayer, onLayerChange, t }: LayerSwitcherP
         ref={containerRef}
         role="radiogroup"
         aria-label={t('map_type') || 'Map type'}
-        className="leaflet-control !m-0 flex rounded-md bg-white/95 dark:bg-[#0d1a14]/95 border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm p-0.5"
+        className="leaflet-control !m-0 flex rounded-md bg-white/95 dark:bg-theme-bg-primary/95 border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm p-0.5"
       >
         {(Object.keys(TILE_LAYERS) as MapLayer[]).map(layer => (
           <button

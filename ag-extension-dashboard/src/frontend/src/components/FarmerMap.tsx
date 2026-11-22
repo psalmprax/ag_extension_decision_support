@@ -35,7 +35,7 @@ import { MapLegend } from './map/MapLegend';
 import { ExpandedMapModal } from './map/ExpandedMapModal';
 import { useUnits } from '@/hooks/useUnits';
 
-const MAP_CONTROL = 'h-9 min-w-9 px-2 rounded-md bg-white/95 dark:bg-[#0d1a14]/95 text-slate-700 dark:text-slate-200 border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm hover:bg-white dark:hover:bg-[#13251c] transition-colors flex items-center justify-center gap-1.5 text-sm';
+const MAP_CONTROL = 'h-9 min-w-9 px-2 rounded-md bg-white/95 dark:bg-theme-bg-primary/95 text-slate-700 dark:text-slate-200 border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm hover:bg-white dark:hover:bg-theme-bg-secondary transition-colors flex items-center justify-center gap-1.5 text-sm';
 
 export type { FarmerData };
 
@@ -249,14 +249,14 @@ export function FarmerMap({
             closeButton={false}
           >
             <div className="p-4 flex flex-col items-center text-center">
-              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-900/30 flex items-center justify-center text-slate-600 dark:text-slate-400 mb-2">
+              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-theme-bg-secondary/30 flex items-center justify-center text-slate-600 dark:text-slate-400 mb-2">
                 <Crosshair className="w-5 h-5" />
               </div>
               <h4 className="font-medium text-sm text-gray-900 dark:text-white">{t('ui_farmer_map_your_location')}</h4>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {t('ui_farmer_map_extension_officer_active_gps_node')}
               </p>
-              <span className="text-xxs text-slate-500 font-medium mt-2 px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-950/40">
+              <span className="text-xxs text-slate-500 font-medium mt-2 px-2 py-0.5 rounded-md bg-slate-50 dark:bg-theme-bg-primary/40">
                 {t('ui_farmer_map_lat')} {currentUserLocation[0].toFixed(4)}{t('ui_farmer_map_lng')} {currentUserLocation[1].toFixed(4)}
               </span>
             </div>
@@ -306,13 +306,13 @@ export function FarmerMap({
                   <p className="text-xs opacity-90">{farmer.region}</p>
                 </div>
 
-                <div className="p-4 space-y-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                <div className="p-4 space-y-3 bg-white dark:bg-theme-bg-secondary text-slate-800 dark:text-slate-200">
                   <div className="grid grid-cols-2 gap-2 text-xxs">
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-theme-bg-tertiary/60 border border-slate-100 dark:border-white/[0.08]">
                       <div className="text-slate-500">{t('ui_farmer_map_farm_area')}</div>
                       <div className="text-sm font-medium text-slate-800 dark:text-white mt-0.5">{units.area(farmer.size)}</div>
                     </div>
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-theme-bg-tertiary/60 border border-slate-100 dark:border-white/[0.08]">
                       <div className="text-slate-500 flex items-center gap-1">
                         {t('farmer_est_yield')}
                         <InfoPromptIcon
@@ -349,7 +349,7 @@ export function FarmerMap({
                           <button
                             type="button"
                             onClick={() => handleCall(farmer.phone, farmer.name)}
-                            className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-white rounded-xl text-xs font-medium transition-all bg-slate-400 dark:bg-slate-700 opacity-60 cursor-not-allowed"
+                            className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-white rounded-xl text-xs font-medium transition-all bg-slate-400 dark:bg-white/[0.08] opacity-60 cursor-not-allowed"
                             aria-label={`Call ${farmer.name}`}
                           >
                             <Phone className="w-3.5 h-3.5" />
@@ -362,7 +362,7 @@ export function FarmerMap({
                     {canChat ? (
                       <button
                         onClick={() => handleChatClick(farmer)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-medium transition-all bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-95"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-medium transition-all bg-slate-100 hover:bg-slate-200 dark:bg-theme-bg-tertiary dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-200 active:scale-95"
                         title={`Chat with ${farmer.name}`}
                         aria-label={`Chat with ${farmer.name}`}
                       >
@@ -380,7 +380,7 @@ export function FarmerMap({
                         <button
                           type="button"
                           onClick={() => handleChatClick(farmer)}
-                          className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-medium transition-all bg-slate-100 dark:bg-slate-800 text-slate-400 opacity-60 cursor-not-allowed"
+                          className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-medium transition-all bg-slate-100 dark:bg-theme-bg-tertiary text-slate-400 opacity-60 cursor-not-allowed"
                           aria-label={`Chat with ${farmer.name}`}
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
@@ -407,7 +407,7 @@ export function FarmerMap({
       className={`relative w-full rounded-lg overflow-hidden border ${
         themeName === 'cyber'
           ? 'border-gray-800 bg-gray-900/40'
-          : 'border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#0d1a14]'
+          : 'border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-theme-bg-primary'
       } ${className}`}
       style={{ height }}
     >
@@ -434,7 +434,7 @@ export function FarmerMap({
               placeholder="Filter by crop or region"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="h-9 px-3 text-sm rounded-md bg-white dark:bg-[#0d1a14] text-slate-900 dark:text-white border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 w-40 sm:w-56"
+              className="h-9 px-3 text-sm rounded-md bg-white dark:bg-theme-bg-primary text-slate-900 dark:text-white border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 w-40 sm:w-56"
             />
           </div>
         )}

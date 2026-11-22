@@ -19,7 +19,7 @@ export function EmailWorkflowsTabs({
     `flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
       selected
         ? 'bg-primary-600 text-white shadow-lg'
-        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-theme-bg-tertiary'
     }`;
   return (
     <div className="card p-1">

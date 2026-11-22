@@ -17,7 +17,7 @@ const selectVariants = cva(
       },
       design: {
         modern: 'rounded-xl bg-white/5 border',
-        classic: 'rounded-none border bg-white dark:bg-slate-800',
+        classic: 'rounded-none border bg-white dark:bg-theme-bg-tertiary',
       },
     },
     defaultVariants: {

@@ -46,9 +46,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-0 z-[90] flex items-center justify-center p-4"
           >
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg max-h-[calc(100dvh-2rem)] sm:max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="bg-white dark:bg-theme-bg-tertiary rounded-xl shadow-2xl w-full max-w-lg max-h-[calc(100dvh-2rem)] sm:max-h-[80vh] overflow-hidden flex flex-col">
               {/* Header */}
-              <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <div className="p-6 border-b border-gray-100 dark:border-white/[0.12] flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
                     <Monitor className="w-5 h-5 text-primary-600 dark:text-primary-400" />
@@ -59,7 +59,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/[0.08] transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
@@ -74,7 +74,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                     {t('settings_appearance') || 'Appearance'}
                   </h3>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/[0.04] rounded-xl">
                       <div className="flex items-center gap-3">
                         {darkMode ? (
                           <Moon className="w-4 h-4 text-gray-400" />
@@ -94,7 +94,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                         />
                       </button>
                     </div>
-                    <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                    <div className="p-3 bg-gray-50 dark:bg-white/[0.04] rounded-xl">
                       <div className="flex items-center gap-3 mb-3">
                         <Globe className="w-4 h-4 text-gray-400" />
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -103,7 +103,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                       </div>
                       <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
                     </div>
-                    <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                    <div className="p-3 bg-gray-50 dark:bg-white/[0.04] rounded-xl">
                       <div className="flex items-center gap-3 mb-3">
                         <Globe className="w-4 h-4 text-gray-400" />
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -137,7 +137,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                     <MessageSquare className="w-4 h-4 text-emerald-500" />
                     <span>{t('ui_settings_panel_communication_gateways_onboarding')}</span>
                   </h3>
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-3 border border-gray-100 dark:border-gray-700">
+                  <div className="p-4 bg-gray-50 dark:bg-white/[0.04] rounded-xl space-y-3 border border-gray-100 dark:border-white/[0.12]">
                     <div className="text-xs text-gray-600 dark:text-gray-300">
                       {t('ui_settings_panel_manage_sms_africa_s_talking_twilio_w')}
                     </div>
@@ -197,7 +197,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                         'All local cache, session storage, and service worker caches cleared'
                       );
                     }}
-                    className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-start hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="w-full p-3 bg-gray-50 dark:bg-white/[0.04] rounded-xl text-start hover:bg-gray-100 dark:hover:bg-white/[0.08] transition-colors"
                   >
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {t('settings_clear_cache') || 'Clear local cache'}
@@ -205,7 +205,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                   </button>
                   <button
                     onClick={() => void notifications.reset()}
-                    className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-start hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="w-full p-3 bg-gray-50 dark:bg-white/[0.04] rounded-xl text-start hover:bg-gray-100 dark:hover:bg-white/[0.08] transition-colors"
                   >
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {t('ui_settings_panel_reset_alert_settings')}

@@ -84,7 +84,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
                 : { opacity: 0, scale: 0.95, y: 15 }
             }
             transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-            className={`relative w-full ${maxWidth} max-h-[92dvh] sm:max-h-[85vh] bg-slate-950/95 dark:bg-slate-950/95 overflow-hidden flex flex-col backdrop-blur-2xl border border-white/[0.08] rounded-t-[24px] sm:rounded-xl shadow-2xl pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-0`}
+            className={`relative w-full ${maxWidth} max-h-[92dvh] sm:max-h-[85vh] bg-slate-950/95 dark:bg-theme-bg-primary/95 overflow-hidden flex flex-col backdrop-blur-2xl border border-white/[0.08] rounded-t-[24px] sm:rounded-xl shadow-2xl pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-0`}
             style={!isBase ? { borderRadius: 'var(--radius-card, 0.75rem)' } : undefined}
           >
             {/* Drag Handle on Mobile for Variant B */}

@@ -235,7 +235,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                   className={`group relative flex items-center w-full rounded-xl transition-all border ${
                     isSelected
                       ? 'bg-emerald-500/15 border-emerald-500/40 text-slate-900 dark:text-white shadow-sm'
-                      : 'bg-slate-50/60 dark:bg-slate-950/40 border-slate-200/70 dark:border-white/[0.04] hover:border-slate-300 dark:hover:border-white/[0.1] hover:bg-slate-100 dark:hover:bg-slate-950/80 text-slate-700 dark:text-white/70'
+                      : 'bg-slate-50/60 dark:bg-theme-bg-primary/40 border-slate-200/70 dark:border-white/[0.04] hover:border-slate-300 dark:hover:border-white/[0.1] hover:bg-slate-100 dark:hover:bg-theme-bg-primary/80 text-slate-700 dark:text-white/70'
                   }`}
                 >
                   <button
@@ -297,14 +297,14 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
         {/* Center Column: Active Chat Thread */}
         <div
-          className={`flex-1 flex flex-col backdrop-blur-xl bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-sm overflow-hidden ${
+          className={`flex-1 flex flex-col backdrop-blur-xl bg-white/95 dark:bg-theme-bg-secondary/70 border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-sm overflow-hidden ${
             activeFarmerConvId ? 'flex' : 'hidden md:flex'
           }`}
         >
           {activeFarmerConvId && activeConv ? (
             <>
               {/* Active Conversation Top Bar */}
-              <div className="p-3 sm:p-4 border-b border-slate-200/80 dark:border-white/[0.08] flex justify-between items-center gap-2 bg-slate-50/80 dark:bg-slate-950/40">
+              <div className="p-3 sm:p-4 border-b border-slate-200/80 dark:border-white/[0.08] flex justify-between items-center gap-2 bg-slate-50/80 dark:bg-theme-bg-primary/40">
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                   <button
                     onClick={() => setActiveFarmerConvId(null)}
@@ -355,7 +355,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 {typingUser && (
                   <div className="flex justify-start">
-                    <div className="px-3 py-1.5 rounded-full bg-slate-200/80 dark:bg-slate-800/80 border border-slate-300/60 dark:border-white/[0.06] text-xxs text-slate-600 dark:text-white/60">
+                    <div className="px-3 py-1.5 rounded-full bg-slate-200/80 dark:bg-theme-bg-tertiary/80 border border-slate-300/60 dark:border-white/[0.06] text-xxs text-slate-600 dark:text-white/60">
                       {t('ui_farmer_chat_page_typing')}
                     </div>
                   </div>
@@ -378,7 +378,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
               {/* Voice Note Composer for Extension Officer / Hands-free */}
               {showVoiceComposer && (
-                <div className="p-3 bg-white dark:bg-slate-900/95 border-t border-emerald-500/20 backdrop-blur-md">
+                <div className="p-3 bg-white dark:bg-theme-bg-secondary/95 border-t border-emerald-500/20 backdrop-blur-md">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xxs text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 font-medium">
                       <Mic className="w-3 h-3" />

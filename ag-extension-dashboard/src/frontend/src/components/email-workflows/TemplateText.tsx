@@ -10,7 +10,7 @@ export function TemplateText({ text }: { text: string }) {
     <>
       {parts.map((part, index) =>
         /^\{\{\s*\w+\s*\}\}$/.test(part) ? (
-          <code key={index} className="px-1 rounded-[2px] bg-gray-100 dark:bg-gray-800 text-[0.9em]">
+          <code key={index} className="px-1 rounded-[2px] bg-gray-100 dark:bg-theme-bg-tertiary text-[0.9em]">
             {part.replace(/[{}\s]/g, '')}
           </code>
         ) : (

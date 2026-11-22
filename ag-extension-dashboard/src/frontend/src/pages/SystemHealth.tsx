@@ -378,7 +378,7 @@ function ComponentHealthCard({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`backdrop-blur-xl bg-white/95 dark:bg-slate-900/60 border ${style.border} rounded-xl p-5 shadow-sm dark:shadow-lg space-y-4 hover:border-slate-300 dark:hover:border-white/20 transition-all duration-300 group`}
+      className={`backdrop-blur-xl bg-white/95 dark:bg-theme-bg-secondary/60 border ${style.border} rounded-xl p-5 shadow-sm dark:shadow-lg space-y-4 hover:border-slate-300 dark:hover:border-white/20 transition-all duration-300 group`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

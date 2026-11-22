@@ -31,8 +31,8 @@ export const VerifyEmail: React.FC = () => {
   }, [token]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 text-center space-y-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-theme-bg-secondary flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white dark:bg-theme-bg-tertiary rounded-lg shadow-2xl p-8 text-center space-y-4">
         {status === 'pending' && <Loader2 className="w-10 h-10 mx-auto animate-spin text-primary-600" />}
         {status === 'success' && <CheckCircle className="w-10 h-10 mx-auto text-green-600" />}
         {status === 'error' && <AlertCircle className="w-10 h-10 mx-auto text-red-600" />}

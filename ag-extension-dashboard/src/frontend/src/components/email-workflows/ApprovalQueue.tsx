@@ -67,7 +67,7 @@ export function EmailWorkflowsApprovalQueue({
                 </div>
               </div>
 
-              <div className={`bg-gray-50 dark:bg-gray-800/50 ${radiusClass} p-4 mb-4`}>
+              <div className={`bg-gray-50 dark:bg-theme-bg-tertiary/50 ${radiusClass} p-4 mb-4`}>
                 <p className="text-sm text-gray-900 dark:text-white">{previewText(approval.emailData.html)}</p>
               </div>
 

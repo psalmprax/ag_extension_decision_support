@@ -64,7 +64,7 @@ const HistoryTabContent = ({
         interactions.map((log, i: number) => (
           <div
             key={(log.id as string) || `${log.type}-${i}`}
-            className={`p-4 ${radiusClass} border bg-gray-50/50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-800`}
+            className={`p-4 ${radiusClass} border bg-gray-50/50 dark:bg-theme-bg-tertiary/30 border-gray-100 dark:border-white/[0.08]`}
           >
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center gap-2">
@@ -109,7 +109,7 @@ const CropsSection = ({
   t: (key: string) => string;
 }) => (
   <section
-    className={`p-6 ${radiusClass} border shadow-sm bg-theme-bg-card dark:bg-gray-800/80 border-gray-100 dark:border-gray-700`}
+    className={`p-6 ${radiusClass} border shadow-sm bg-theme-bg-card dark:bg-theme-bg-tertiary/80 border-gray-100 dark:border-white/[0.12]`}
   >
     <h3
       className={`text-xs font-medium mb-4 flex items-center gap-2 text-gray-400`}
@@ -186,7 +186,7 @@ const VitalStatsSection = ({
   t: (key: string) => string;
 }) => (
   <section
-    className={`p-6 ${radiusClass} border shadow-sm bg-theme-bg-card dark:bg-gray-800/80 border-gray-100 dark:border-gray-700`}
+    className={`p-6 ${radiusClass} border shadow-sm bg-theme-bg-card dark:bg-theme-bg-tertiary/80 border-gray-100 dark:border-white/[0.12]`}
   >
     <h3
       className={`text-xs font-medium mb-4 flex items-center gap-2 text-gray-400`}
@@ -198,7 +198,7 @@ const VitalStatsSection = ({
       {farmer.vitalScore || 0}
       <span className="text-sm text-gray-400">/100</span>
     </div>
-    <div className={`w-full h-1.5 rounded-full mt-3 overflow-hidden bg-gray-100 dark:bg-gray-700`}>
+    <div className={`w-full h-1.5 rounded-full mt-3 overflow-hidden bg-gray-100 dark:bg-white/[0.08]`}>
       <div
         className={`h-full rounded-full bg-secondary-500`}
         style={{ width: `${farmer.vitalScore || 0}%` }}

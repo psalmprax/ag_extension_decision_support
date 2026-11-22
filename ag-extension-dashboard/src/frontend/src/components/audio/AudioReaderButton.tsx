@@ -238,7 +238,7 @@ export const AudioReaderButton: React.FC<AudioReaderButtonProps> = ({
   const variantClasses = {
     ghost: isPlaying
       ? 'text-amber-500 hover:text-amber-600 bg-amber-500/10'
-      : 'text-slate-400 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-slate-800',
+      : 'text-slate-400 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-theme-bg-tertiary',
     subtle: isPlaying
       ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
       : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',

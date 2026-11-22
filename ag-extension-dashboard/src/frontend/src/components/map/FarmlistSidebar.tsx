@@ -39,15 +39,15 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
           : 'absolute inset-y-0 start-0 w-4/5 max-w-xs sm:relative sm:w-80 sm:inset-auto opacity-100 shadow-2xl sm:shadow-none'
       } ${
         themeName === 'cyber'
-          ? 'border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30'
-          : 'bg-white dark:bg-gray-900'
+          ? 'border-gray-100 dark:border-white/[0.08] bg-gray-50/30 dark:bg-theme-bg-tertiary/30'
+          : 'bg-white dark:bg-theme-bg-secondary'
       }`}
     >
       <div
         className={`p-4 border-b flex items-center justify-between ${
           themeName === 'cyber'
-            ? 'border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50'
-            : 'bg-gray-50 dark:bg-gray-800/50'
+            ? 'border-gray-100 dark:border-white/[0.08] bg-white/50 dark:bg-theme-bg-secondary/50'
+            : 'bg-gray-50 dark:bg-theme-bg-tertiary/50'
         }`}
       >
         <div className="text-xs-plus font-medium text-gray-400">
@@ -55,7 +55,7 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
         </div>
         <button
           onClick={() => setIsFarmlistCollapsed(true)}
-          className="p-1 rounded-lg text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          className="p-1 rounded-lg text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/[0.08] transition-colors"
           title="Collapse Farmlist"
           aria-label="Collapse Farmlist"
         >
@@ -80,8 +80,8 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
                 }}
                 className={`w-full text-start p-3 rounded-xl transition-all flex items-center gap-3 group ${
                   isSelected
-                    ? 'bg-white dark:bg-gray-800 shadow-md border border-gray-100 dark:border-gray-700'
-                    : 'hover:bg-white/60 dark:hover:bg-gray-800/60 border border-transparent hover:border-gray-100 dark:border-gray-700'
+                    ? 'bg-white dark:bg-theme-bg-tertiary shadow-md border border-gray-100 dark:border-white/[0.12]'
+                    : 'hover:bg-white/60 dark:hover:bg-theme-bg-tertiary/60 border border-transparent hover:border-gray-100 dark:border-white/[0.12]'
                 }`}
               >
                 <span
@@ -102,7 +102,7 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
           })
         ) : (
           <div className="p-8 text-center">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 bg-gray-100 dark:bg-gray-800">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 bg-gray-100 dark:bg-theme-bg-tertiary">
               <Search className="w-6 h-6 text-gray-300" />
             </div>
             <p className="text-sm text-gray-500">{t('ui_farmlist_sidebar_no_farmers_found_for', { searchQuery })}</p>

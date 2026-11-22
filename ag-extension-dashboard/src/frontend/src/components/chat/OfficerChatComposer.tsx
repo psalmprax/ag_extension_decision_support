@@ -33,7 +33,7 @@ export const OfficerChatComposer: React.FC<OfficerChatComposerProps> = ({
   return (
     <form
       onSubmit={onSubmit}
-      className="p-4 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-200/80 dark:border-white/[0.08]"
+      className="p-4 bg-slate-50/80 dark:bg-theme-bg-primary/80 border-t border-slate-200/80 dark:border-white/[0.08]"
     >
       <div className="relative flex items-center gap-3">
         <button
@@ -42,7 +42,7 @@ export const OfficerChatComposer: React.FC<OfficerChatComposerProps> = ({
           className={`p-3 rounded-xl border transition-all ${
             voiceOpen
               ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-500/40'
-              : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white border-slate-200 dark:border-white/[0.1] hover:border-slate-300 dark:hover:border-white/20'
+              : 'bg-white dark:bg-theme-bg-secondary text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white border-slate-200 dark:border-white/[0.1] hover:border-slate-300 dark:hover:border-white/20'
           }`}
           title="Dictate voice note (multilingual STT)"
           aria-label="Dictate voice note"
@@ -66,7 +66,7 @@ export const OfficerChatComposer: React.FC<OfficerChatComposerProps> = ({
           onChange={e => onType(e.target.value)}
           aria-label="Message to the farmer"
           placeholder={t('farmer_chat_placeholder') || 'Type agronomic guidance or broadcast prompt...'}
-          className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.1] rounded-xl px-4 py-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:ring-2 focus:ring-emerald-500/40 focus:outline-none transition-all"
+          className="flex-1 bg-white dark:bg-theme-bg-secondary border border-slate-200 dark:border-white/[0.1] rounded-xl px-4 py-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:ring-2 focus:ring-emerald-500/40 focus:outline-none transition-all"
         />
         <button
           type="submit"

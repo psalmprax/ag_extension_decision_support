@@ -89,7 +89,7 @@ export function StepCard({
       )}
 
       {isEditingCondition && (
-        <div className="mt-2.5 p-2 rounded-lg bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08] flex items-center gap-2">
+        <div className="mt-2.5 p-2 rounded-lg bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] flex items-center gap-2">
           <input
             type="text"
             value={condInput}
@@ -117,7 +117,7 @@ export function StepCard({
         </button>
       )}
 
-      <div className="mt-3 p-2.5 rounded-lg bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-slate-300">
+      <div className="mt-3 p-2.5 rounded-lg bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-slate-300">
         {step.type === 'crop_select' && (
           <div className="grid grid-cols-2 gap-2 text-[11px]">
             <div>

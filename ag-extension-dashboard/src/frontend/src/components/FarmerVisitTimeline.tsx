@@ -33,11 +33,11 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
             <div key={visit.id || i} className="relative ps-8 group">
               {i !== safeVisits.length - 1 && (
                 <div
-                  className={`absolute start-3 top-6 bottom-[-16px] w-0.5 transition-colors ${isCyber ? 'bg-primary-500/30' : 'bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-500'}`}
+                  className={`absolute start-3 top-6 bottom-[-16px] w-0.5 transition-colors ${isCyber ? 'bg-primary-500/30' : 'bg-gray-100 dark:bg-theme-bg-tertiary group-hover:bg-primary-500'}`}
                 />
               )}
               <div
-                className={`absolute start-0 top-1.5 w-6 h-6 rounded-full border-4 shadow-sm border-white dark:border-gray-900
+                className={`absolute start-0 top-1.5 w-6 h-6 rounded-full border-4 shadow-sm border-white dark:border-white/[0.08]
                              ${visit.status === 'completed' ? 'bg-primary-500' : 'bg-accent-500'}`}
               />
 
@@ -45,7 +45,7 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
                 className={`p-4 ${radiusClass} border transition-all cursor-pointer ${
                   isCyber
                     ? 'bg-primary-500/5 hover:border-primary-500/30'
-                    : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800'
+                    : 'bg-gray-50/50 dark:bg-theme-bg-tertiary/30 border-gray-100 dark:border-white/[0.12] hover:bg-white dark:hover:bg-theme-bg-tertiary'
                 }`}
               >
                 <div className="flex justify-between items-start mb-1">
@@ -86,7 +86,7 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
           ))
         ) : (
           <div
-            className={`p-8 text-center ${radiusClass} border border-dashed bg-gray-50/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700`}
+            className={`p-8 text-center ${radiusClass} border border-dashed bg-gray-50/50 dark:bg-theme-bg-tertiary/30 border-gray-200 dark:border-white/[0.12]`}
           >
             <Calendar className="w-8 h-8 mx-auto mb-2 text-gray-300" />
             <p className="text-xs font-medium text-gray-400">

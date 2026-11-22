@@ -230,7 +230,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-4"
           >
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[88vh] flex flex-col overflow-hidden">
+            <div className="bg-white dark:bg-theme-bg-secondary border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[88vh] flex flex-col overflow-hidden">
               {/* Header */}
               <div className="relative p-5 sm:p-6 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-900/[0.08] dark:border-white/[0.08] shrink-0">
                 <button
@@ -245,7 +245,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white dark:bg-white/[0.06] rounded-2xl flex items-center justify-center border border-slate-900/[0.08] dark:border-white/[0.08] shrink-0">
                       <SelectedIcon className="w-7 h-7 text-emerald-700 dark:text-emerald-400" strokeWidth={1.5} aria-hidden="true" />
                     </div>
-                    <span className="absolute -bottom-1 -end-1 p-1 bg-white dark:bg-slate-900 rounded-full border border-slate-900/[0.08] dark:border-white/[0.1]">
+                    <span className="absolute -bottom-1 -end-1 p-1 bg-white dark:bg-theme-bg-secondary rounded-full border border-slate-900/[0.08] dark:border-white/[0.1]">
                       <UserCheck className="w-3 h-3 text-emerald-600" />
                     </span>
                   </div>
@@ -307,7 +307,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                               className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 text-center transition-all ${
                                 isSelected
                                   ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 ring-2 ring-emerald-500/30'
-                                  : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-slate-50 dark:bg-slate-800/60'
+                                  : 'border-slate-200 dark:border-white/[0.12] hover:border-slate-300 dark:hover:border-white/[0.12] bg-slate-50 dark:bg-theme-bg-tertiary/60'
                               }`}
                             >
                               <preset.icon className="w-[18px] h-[18px] text-slate-700 dark:text-slate-200" strokeWidth={1.5} aria-hidden="true" />
@@ -334,7 +334,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           disabled={!isEditing}
                           value={formData.firstName}
                           onChange={e => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                          className="w-full mt-1 px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
+                          className="w-full mt-1 px-3.5 py-2.5 bg-slate-50 dark:bg-theme-bg-tertiary border border-slate-300 dark:border-white/[0.12] rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-theme-bg-secondary text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
                         />
                       </div>
 
@@ -347,7 +347,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           disabled={!isEditing}
                           value={formData.lastName}
                           onChange={e => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                          className="w-full mt-1 px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
+                          className="w-full mt-1 px-3.5 py-2.5 bg-slate-50 dark:bg-theme-bg-tertiary border border-slate-300 dark:border-white/[0.12] rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-theme-bg-secondary text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
                         />
                       </div>
 
@@ -362,7 +362,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             disabled={!isEditing}
                             value={formData.username}
                             onChange={e => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                            className="w-full ps-8 pe-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
+                            className="w-full ps-8 pe-3.5 py-2.5 bg-slate-50 dark:bg-theme-bg-tertiary border border-slate-300 dark:border-white/[0.12] rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-theme-bg-secondary text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
                           />
                         </div>
                       </div>
@@ -377,7 +377,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             disabled
                             value={formData.email}
                             onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                            className="w-full ps-3.5 pe-8 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
+                            className="w-full ps-3.5 pe-8 py-2.5 bg-slate-50 dark:bg-theme-bg-tertiary border border-slate-300 dark:border-white/[0.12] rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-theme-bg-secondary text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
                           />
                           <span className="absolute inset-y-0 end-0 pe-3 flex items-center text-emerald-500">
                             <Check className="w-4 h-4" />
@@ -395,7 +395,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             disabled={!isEditing}
                             value={formData.phone}
                             onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                            className="w-full ps-9 pe-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
+                            className="w-full ps-9 pe-3.5 py-2.5 bg-slate-50 dark:bg-theme-bg-tertiary border border-slate-300 dark:border-white/[0.12] rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-theme-bg-secondary text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
                           />
                           <span className="absolute inset-y-0 start-0 ps-3 flex items-center text-slate-400">
                             <Smartphone className="w-4 h-4" />
@@ -412,7 +412,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             type="text"
                             disabled
                             value={formData.region}
-                            className="w-full ps-9 pe-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
+                            className="w-full ps-9 pe-3.5 py-2.5 bg-slate-50 dark:bg-theme-bg-tertiary border border-slate-300 dark:border-white/[0.12] rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-theme-bg-secondary text-slate-900 dark:text-white outline-none transition-colors text-sm disabled:opacity-75 disabled:cursor-not-allowed"
                           />
                           <span className="absolute inset-y-0 start-0 ps-3 flex items-center text-slate-400">
                             <MapPin className="w-4 h-4" />
@@ -451,7 +451,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             className={`p-2.5 rounded-xl border text-xs font-medium flex items-center justify-between transition-all ${
                               language === item.code
                                 ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
-                                : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 bg-slate-50 dark:bg-slate-800/60'
+                                : 'border-slate-200 dark:border-white/[0.12] text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/[0.12] bg-slate-50 dark:bg-theme-bg-tertiary/60'
                             }`}
                           >
                             <span>{item.label}</span>
@@ -463,7 +463,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
                     {/* Measurement Units */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-theme-bg-tertiary/60 border border-slate-200 dark:border-white/[0.12] space-y-2">
                         <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block">
                           {t('ui_profile_modal_land_area_measurement')}
                         </label>
@@ -476,7 +476,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                               className={`flex-1 py-1.5 rounded-lg text-xs font-medium capitalize transition-all ${
                                 preferences.areaUnit === u
                                   ? 'bg-emerald-600 text-white shadow-sm'
-                                  : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600'
+                                  : 'bg-white dark:bg-white/[0.08] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/[0.12]'
                               }`}
                             >
                               {u}
@@ -485,7 +485,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         </div>
                       </div>
 
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-theme-bg-tertiary/60 border border-slate-200 dark:border-white/[0.12] space-y-2">
                         <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block">
                           {t('ui_profile_modal_temperature_scale')}
                         </label>
@@ -501,7 +501,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                               className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
                                 preferences.tempUnit === tItem.id
                                   ? 'bg-emerald-600 text-white shadow-sm'
-                                  : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600'
+                                  : 'bg-white dark:bg-white/[0.08] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/[0.12]'
                               }`}
                             >
                               {tItem.label}
@@ -519,7 +519,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 {activeTab === 'security' && (
                   <div className="space-y-6">
                     {/* Password Change Form */}
-                    <form onSubmit={handlePasswordChange} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+                    <form onSubmit={handlePasswordChange} className="p-4 rounded-xl bg-slate-50 dark:bg-theme-bg-tertiary/60 border border-slate-200 dark:border-white/[0.12] space-y-3">
                       <div className="flex items-center gap-2 mb-2">
                         <KeyRound className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                         <h4 className="text-xs font-medium text-slate-800 dark:text-slate-200">
@@ -561,7 +561,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     </form>
 
                     {/* Two-Factor Authentication */}
-                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-theme-bg-tertiary/60 border border-slate-200 dark:border-white/[0.12] flex items-center justify-between">
                       <div>
                         <div className="text-xs font-medium text-slate-800 dark:text-slate-200">
                           {t('ui_profile_modal_two_factor_authentication_2fa')}
@@ -586,20 +586,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         type="button"
                         onClick={() => void handleAccountExport()}
                         disabled={isExporting}
-                        className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-medium flex items-center gap-1.5 disabled:opacity-50"
+                        className="px-3 py-1.5 bg-white dark:bg-theme-bg-secondary border border-slate-300 dark:border-white/[0.12] text-slate-800 dark:text-slate-200 rounded-xl text-xs font-medium flex items-center gap-1.5 disabled:opacity-50"
                       >
                         <Download className="w-3.5 h-3.5" />
                         {isExporting ? 'Preparing export…' : 'Download my account data'}
                       </button>
 
                       {showDeleteConfirm ? (
-                        <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-rose-300 dark:border-rose-800 space-y-2">
+                        <div className="p-3 bg-white dark:bg-theme-bg-secondary rounded-xl border border-rose-300 dark:border-rose-800 space-y-2">
                           <p className="text-xs font-medium text-rose-600">{t('ui_profile_modal_are_you_sure_this_cannot_be_undone')}</p>
                           <div className="flex gap-2">
                             <button
                               type="button"
                               onClick={() => setShowDeleteConfirm(false)}
-                              className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-xs font-medium rounded-lg text-slate-700 dark:text-slate-300"
+                              className="px-3 py-1.5 bg-slate-100 dark:bg-theme-bg-tertiary text-xs font-medium rounded-lg text-slate-700 dark:text-slate-300"
                             >
                               {t('common_cancel')}
                             </button>
@@ -618,7 +618,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             placeholder="Type DELETE MY ACCOUNT"
                             value={deleteConfirmation}
                             onChange={e => setDeleteConfirmation(e.target.value)}
-                            className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-800 rounded-lg text-xs text-slate-900 dark:text-white"
+                            className="w-full px-3 py-2 bg-white dark:bg-theme-bg-secondary border border-rose-300 dark:border-rose-800 rounded-lg text-xs text-slate-900 dark:text-white"
                           />
                           <input
                             type="password"
@@ -626,7 +626,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             placeholder="Current password (if your account uses one)"
                             value={deletePassword}
                             onChange={e => setDeletePassword(e.target.value)}
-                            className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-800 rounded-lg text-xs text-slate-900 dark:text-white"
+                            className="w-full px-3 py-2 bg-white dark:bg-theme-bg-secondary border border-rose-300 dark:border-rose-800 rounded-lg text-xs text-slate-900 dark:text-white"
                           />
                         </div>
                       ) : (
@@ -645,7 +645,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               </div>
 
               {/* Bottom Actions */}
-              <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between shrink-0">
+              <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-theme-bg-secondary/80 flex items-center justify-between shrink-0">
                 <span className="text-[11px] text-slate-500 font-mono">
                   {t('ui_profile_modal_gpexts_id')} {user.id?.slice(0, 8) || 'active-session'}
                 </span>
@@ -656,7 +656,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       <button
                         type="button"
                         onClick={() => setIsEditing(false)}
-                        className="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+                        className="px-4 py-2 bg-slate-200 dark:bg-theme-bg-tertiary text-slate-700 dark:text-slate-300 font-medium text-xs rounded-xl hover:bg-slate-300 dark:hover:bg-white/[0.08] transition-colors"
                       >
                         {t('common_cancel')}
                       </button>

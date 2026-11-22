@@ -42,7 +42,28 @@ export interface ThemeColors {
     secondary: string;
     card: string;
   };
+  /**
+   * Dark mode's page, raised-panel and control backgrounds. Themes without one use the
+   * neutral navy below; forest and sage use the field greens of the header and sidebar,
+   * so every page sits on the same green rather than only the ones that hard-coded it.
+   */
+  darkBackground?: DarkBackground;
 }
+
+export interface DarkBackground {
+  /** The page and app shell. */
+  primary: string;
+  /** Cards and panels on the page. */
+  secondary: string;
+  /** Inputs, chips and the controls inside a panel. */
+  tertiary: string;
+}
+
+export const DEFAULT_DARK_BACKGROUND: DarkBackground = {
+  primary: '#0a0f1e',
+  secondary: '#111827',
+  tertiary: '#1f2937',
+};
 
 /** Steps present in every color scale (drives Tailwind + CSS var generation). */
 export const COLOR_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900] as const;
@@ -100,6 +121,11 @@ export const themes: Record<ThemeName, ThemeColors> = {
       primary: '#f6f8f7',
       secondary: '#eef2f0',
       card: '#ffffff',
+    },
+    darkBackground: {
+      primary: '#0d1a14',
+      secondary: '#13241b',
+      tertiary: '#1a2f24',
     },
   },
 
@@ -325,6 +351,11 @@ export const themes: Record<ThemeName, ThemeColors> = {
       primary: '#f6fcf5',
       secondary: '#eef7ed',
       card: '#ffffff',
+    },
+    darkBackground: {
+      primary: '#0e1a15',
+      secondary: '#15251d',
+      tertiary: '#1d3027',
     },
   },
 

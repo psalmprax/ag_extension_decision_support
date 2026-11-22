@@ -56,7 +56,7 @@ export function CountryTimeSection() {
         <Clock className="w-4 h-4" aria-hidden="true" />
         {t('settings_country_title', { defaultValue: 'Country and time zone' })}
       </h3>
-      <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-3">
+      <div className="p-3 bg-gray-50 dark:bg-white/[0.04] rounded-xl space-y-3">
         <label className="block text-sm">
           <span className="block mb-1 text-gray-700 dark:text-gray-300">{t('register_country_label', { defaultValue: 'Country' })}</span>
           <select

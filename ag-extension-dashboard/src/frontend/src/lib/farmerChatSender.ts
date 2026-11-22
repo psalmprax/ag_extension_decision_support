@@ -41,7 +41,7 @@ export function farmerChatSender(role: ChatMessage['role']): SenderPresentation 
     label: 'Farmer',
     align: 'start',
     bubbleClass:
-      'bg-white dark:bg-slate-900 text-slate-800 dark:text-white/90 rounded-ss-none border border-slate-200 dark:border-white/[0.08]',
+      'bg-white dark:bg-theme-bg-secondary text-slate-800 dark:text-white/90 rounded-ss-none border border-slate-200 dark:border-white/[0.08]',
     metaClass: 'text-slate-600 dark:text-white/50 border-slate-200/80 dark:border-white/[0.08]',
   };
 }

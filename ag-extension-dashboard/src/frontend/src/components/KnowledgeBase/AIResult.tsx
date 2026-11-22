@@ -190,7 +190,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
               value={activeLang}
               disabled={isTranslating}
               onChange={e => onSelectLanguage(e.target.value)}
-              className="appearance-none bg-slate-50 dark:bg-slate-950/90 hover:bg-slate-100 dark:hover:bg-slate-950 text-slate-900 dark:text-white text-xs font-mono font-medium py-1.5 ps-3 pe-8 rounded-xl border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              className="appearance-none bg-slate-50 dark:bg-theme-bg-primary/90 hover:bg-slate-100 dark:hover:bg-theme-bg-primary text-slate-900 dark:text-white text-xs font-mono font-medium py-1.5 ps-3 pe-8 rounded-xl border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"
             >
               <option value="" disabled>{t('ui_airesult_all_languages', { length: MULTILINGUAL_LANGUAGES.length })}</option>
               <optgroup label="African languages">
@@ -256,7 +256,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
         {/* ── Content View (Dual vs Single) ── */}
         {dualView && activeLang !== 'en' ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 space-y-3">
+            <div className="p-5 rounded-xl bg-slate-50 dark:bg-theme-bg-primary/60 border border-slate-200 dark:border-white/10 space-y-3">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-white/10 text-xs font-mono font-medium text-slate-500 dark:text-slate-400 ">
                 <span>{t('ui_airesult_english_primary_grounded_context')}</span>
               </div>
@@ -265,7 +265,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
               </div>
             </div>
 
-            <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-emerald-500/30 space-y-3">
+            <div className="p-5 rounded-xl bg-slate-50 dark:bg-theme-bg-primary/60 border border-emerald-500/30 space-y-3">
               <div className="flex items-center gap-2 pb-2 border-b border-emerald-500/20 text-xs font-mono font-medium text-emerald-700 dark:text-emerald-400 ">
                 <span>{t('ui_airesult_localized_farmer_advisory', { native: currentLangObj.native })}</span>
               </div>
@@ -298,7 +298,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
               {result.contextUsed.slice(0, 4).map((ctx, idx) => (
                 <div
                   key={idx}
-                  className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-white/5 text-xxs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2"
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-theme-bg-primary/60 border border-slate-200 dark:border-white/5 text-xxs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2"
                 >
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                   <span className="truncate max-w-[200px]">
@@ -351,7 +351,7 @@ const KnowledgeGraphView: React.FC<{
       </div>
 
       {selectedGraphNode && (
-        <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-emerald-500/30 flex items-start justify-between gap-4 animate-in fade-in">
+        <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-theme-bg-primary/80 border border-emerald-500/30 flex items-start justify-between gap-4 animate-in fade-in">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-slate-900 dark:text-white">{selectedGraphNode.label}</span>
@@ -404,7 +404,7 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
             {result.citations.map((cite, i) => (
               <div
                 key={i}
-                className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 hover:border-amber-500/40 dark:border-amber-500/20 dark:hover:border-amber-500/40 transition-all space-y-2"
+                className="p-4 rounded-xl bg-slate-50 dark:bg-theme-bg-primary/60 border border-slate-200 hover:border-amber-500/40 dark:border-amber-500/20 dark:hover:border-amber-500/40 transition-all space-y-2"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-slate-900 dark:text-white truncate max-w-[200px]">
@@ -448,7 +448,7 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
                 <Component
                   key={i}
                   {...linkProps}
-                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 hover:border-emerald-500/40 dark:border-white/5 dark:hover:border-emerald-500/40 transition-all text-start flex flex-col justify-between gap-2 group"
+                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-theme-bg-primary/60 border border-slate-200 hover:border-emerald-500/40 dark:border-white/5 dark:hover:border-emerald-500/40 transition-all text-start flex flex-col justify-between gap-2 group"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1">
@@ -569,7 +569,7 @@ const AIResultNav: React.FC<{
   sourceCount: number;
 }> = ({ viewMode, setViewMode, graphNodeCount, hasVisuals, sourceCount }) => (
   <div className="flex items-center justify-between gap-2 pt-4 overflow-x-auto custom-scrollbar">
-    <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-white/10">
+    <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-theme-bg-primary/60 rounded-xl border border-slate-200 dark:border-white/10">
       <button
         onClick={() => setViewMode('synthesis')}
         className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
@@ -592,7 +592,7 @@ const AIResultNav: React.FC<{
       >
         <Network className="w-3.5 h-3.5" />
         <span>Knowledge Graph</span>
-        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-200 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300">
+        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-200 dark:bg-theme-bg-secondary/60 text-slate-700 dark:text-slate-300">
           {graphNodeCount}
         </span>
       </button>
@@ -621,7 +621,7 @@ const AIResultNav: React.FC<{
       >
         <Layers className="w-3.5 h-3.5" />
         <span>Sources</span>
-        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-200 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300">
+        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-200 dark:bg-theme-bg-secondary/60 text-slate-700 dark:text-slate-300">
           {sourceCount}
         </span>
       </button>

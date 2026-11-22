@@ -58,7 +58,7 @@ export function EmailWorkflowsTemplateGrid({
                     {template.variables.slice(0, 3).map((variable, index) => (
                       <span
                         key={index}
-                        className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded"
+                        className="text-xs bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-300 px-2 py-1 rounded"
                       >
                         {variable}
                       </span>

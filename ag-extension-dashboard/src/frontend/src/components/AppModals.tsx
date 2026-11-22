@@ -174,7 +174,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className={`bg-white dark:bg-gray-800 p-8 sm:p-10 rounded-xl shadow-2xl max-w-md w-full text-center space-y-6`}
+              className={`bg-white dark:bg-theme-bg-tertiary p-8 sm:p-10 rounded-xl shadow-2xl max-w-md w-full text-center space-y-6`}
             >
               <div className="relative w-24 h-24 mx-auto">
                 <div className="absolute inset-0 border-4 border-primary-500/20 rounded-full"></div>
@@ -208,9 +208,9 @@ export const AppModals: React.FC<AppModalsProps> = props => {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-3xl w-full max-h-[calc(100dvh-2rem)] sm:max-h-[80vh] overflow-hidden flex flex-col"
+            className="bg-white dark:bg-theme-bg-tertiary rounded-xl shadow-2xl max-w-3xl w-full max-h-[calc(100dvh-2rem)] sm:max-h-[80vh] overflow-hidden flex flex-col"
           >
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <div className="p-6 border-b border-gray-100 dark:border-white/[0.12] flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-medium text-gray-900 dark:text-white">
                   {props.viewingReport.title}
@@ -225,7 +225,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                   props.setViewingReport(null);
                   props.setReportContent(null);
                 }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-white/[0.08] rounded-xl"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
@@ -260,7 +260,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                 </div>
               )}
             </div>
-            <div className="p-4 border-t border-gray-100 dark:border-gray-700 flex gap-3 justify-end">
+            <div className="p-4 border-t border-gray-100 dark:border-white/[0.12] flex gap-3 justify-end">
               <button
                 onClick={async () => {
                   try {
@@ -269,7 +269,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                     props.addNotification({ type: 'error', message: 'Download failed' });
                   }
                 }}
-                className={`px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 ${btnClass} text-sm font-medium transition-colors`}
+                className={`px-4 py-2 bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-300 ${btnClass} text-sm font-medium transition-colors`}
               >
                 {t('billing_download')}
               </button>
@@ -296,9 +296,9 @@ export const AppModals: React.FC<AppModalsProps> = props => {
               onClick={() => props.setShowFarmerModal(false)}
             />
             <div
-              className={`relative bg-white dark:bg-gray-800 ${radiusClass} shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden`}
+              className={`relative bg-white dark:bg-theme-bg-tertiary ${radiusClass} shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden`}
             >
-              <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+              <div className="p-4 border-b border-gray-100 dark:border-white/[0.12] flex justify-between items-center">
                 <div>
                   <h3 className="font-medium text-gray-900 dark:text-white">{t('chat_start_new')}</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -307,19 +307,19 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                 </div>
                 <button
                   onClick={() => props.setShowFarmerModal(false)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-white/[0.08] rounded-lg"
                 >
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
               </div>
-              <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+              <div className="p-4 border-b border-gray-100 dark:border-white/[0.12]">
                 <div className="relative">
                   <input
                     type="text"
                     placeholder={t('common_search_farmers')}
                     value={props.farmerSearchQuery}
                     onChange={e => props.setFarmerSearchQuery(e.target.value)}
-                    className={`w-full ps-4 pe-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 ${radiusClass} focus:ring-2 focus:ring-primary-500 dark:text-white`}
+                    className={`w-full ps-4 pe-4 py-3 bg-gray-50 dark:bg-white/[0.08] border border-gray-200 dark:border-white/[0.12] ${radiusClass} focus:ring-2 focus:ring-primary-500 dark:text-white`}
                   />
                 </div>
               </div>
@@ -364,7 +364,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                             props.activeTab === 'farmerchat' ? 'farmer' : 'ai'
                           )
                         }
-                        className="w-full p-3 rounded-xl text-start hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-3"
+                        className="w-full p-3 rounded-xl text-start hover:bg-gray-50 dark:hover:bg-white/[0.04] flex items-center gap-3"
                       >
                         <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 font-medium text-lg">
                           {farmer.firstName?.[0]}

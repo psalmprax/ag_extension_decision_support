@@ -36,9 +36,9 @@ export const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-theme-bg-secondary flex items-center justify-center p-4">
       <div
-        className={`w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-2xl overflow-hidden`}
+        className={`w-full max-w-md bg-white dark:bg-theme-bg-tertiary rounded-lg shadow-2xl overflow-hidden`}
       >
         <div className="p-8 bg-primary-700 text-white">
           <h1 className="text-2xl font-medium">{t('ui_forgot_password_reset_password')}</h1>
@@ -83,7 +83,7 @@ export const ForgotPassword: React.FC = () => {
                     onChange={e => setEmail(e.target.value)}
                     required
                     placeholder="you@example.com"
-                    className={`w-full ps-10 pe-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:text-white`}
+                    className={`w-full ps-10 pe-4 py-3 bg-gray-50 dark:bg-white/[0.08] border border-gray-200 dark:border-white/[0.12] rounded-lg focus:ring-2 focus:ring-primary-500 dark:text-white`}
                   />
                 </div>
               </div>

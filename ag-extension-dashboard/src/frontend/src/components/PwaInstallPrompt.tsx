@@ -111,7 +111,7 @@ export const PwaInstallPrompt: React.FC = () => {
         className="fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom))] start-3 end-auto max-w-[340px] sm:max-w-md md:bottom-6 md:start-6 md:end-auto z-40 pointer-events-auto"
       >
         <div
-          className={`p-4 bg-slate-900/95 dark:bg-slate-950/95 text-white border border-emerald-500/30 backdrop-blur-xl shadow-2xl ${radiusClass}`}
+          className={`p-4 bg-slate-900/95 dark:bg-theme-bg-primary/95 text-white border border-emerald-500/30 backdrop-blur-xl shadow-2xl ${radiusClass}`}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">

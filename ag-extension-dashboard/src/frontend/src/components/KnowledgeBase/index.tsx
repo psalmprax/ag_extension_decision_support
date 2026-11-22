@@ -415,7 +415,7 @@ export const KnowledgeBase: React.FC = () => {
                   <button
                     key={sc.id}
                     onClick={() => handleTriggerScenario(sc)}
-                    className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 dark:bg-slate-950/50 dark:hover:bg-emerald-500/10 border border-slate-200/80 hover:border-emerald-500/40 dark:border-white/5 dark:hover:border-emerald-500/30 text-start transition-all group flex flex-col justify-between"
+                    className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 dark:bg-theme-bg-primary/50 dark:hover:bg-emerald-500/10 border border-slate-200/80 hover:border-emerald-500/40 dark:border-white/5 dark:hover:border-emerald-500/30 text-start transition-all group flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
@@ -437,7 +437,7 @@ export const KnowledgeBase: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="backdrop-blur-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 rounded-xl p-4 text-center">
+            <div className="backdrop-blur-xl bg-slate-50 dark:bg-theme-bg-secondary/40 border border-slate-200 dark:border-white/5 rounded-xl p-4 text-center">
               <p className="text-xs text-slate-600 dark:text-white/60">{t('ui_index_demo_scenarios_are_available_in_the')}</p>
             </div>
           )}
@@ -582,7 +582,7 @@ export const KnowledgeBase: React.FC = () => {
                 />
               </motion.div>
             ) : (
-              <div className="backdrop-blur-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 rounded-xl p-12 text-center space-y-3">
+              <div className="backdrop-blur-xl bg-slate-50 dark:bg-theme-bg-secondary/40 border border-slate-200 dark:border-white/5 rounded-xl p-12 text-center space-y-3">
                 <Compass className="w-10 h-10 text-emerald-600/40 dark:text-emerald-400/40 mx-auto" />
                 <h4 className="text-base font-medium text-slate-900 dark:text-white">{t('ui_index_spatial_knowledge_engine_ready')}</h4>
                 <p className="text-xs text-slate-600 dark:text-white/50 max-w-md mx-auto">
@@ -636,7 +636,7 @@ export const KnowledgeBase: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-950/90 border border-slate-500/40 text-xs space-y-2 shadow-sm"
+                  className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-theme-bg-primary/90 border border-slate-500/40 text-xs space-y-2 shadow-sm"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -718,7 +718,7 @@ export const KnowledgeBase: React.FC = () => {
               {activeCanvasMode === 'soil_heatmap' && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs font-mono text-slate-600 dark:text-white/70">
-                    <span className="flex items-center gap-2">{t('ui_index_spatial_soil_chemistry_ph_heatmap_is')} {!isDemo && <span className="px-1.5 py-0.5 rounded text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-white/60 border border-slate-300 dark:border-white/10">{t('ui_index_live_requires_farmer')}</span>}</span>
+                    <span className="flex items-center gap-2">{t('ui_index_spatial_soil_chemistry_ph_heatmap_is')} {!isDemo && <span className="px-1.5 py-0.5 rounded text-[9px] bg-slate-200 dark:bg-white/[0.08] text-slate-600 dark:text-white/60 border border-slate-300 dark:border-white/10">{t('ui_index_live_requires_farmer')}</span>}</span>
                     <span className="text-amber-600 dark:text-amber-400">{isDemo ? 'Demo preview — click cells' : 'Select farmer in Soil Diagnostics for live tile'}</span>
                   </div>
                   {isDemo ? (
@@ -731,7 +731,7 @@ export const KnowledgeBase: React.FC = () => {
                       />
                     </div>
                   ) : (
-                    <div className="w-full h-[460px] min-h-[460px] rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-950/40 flex flex-col items-center justify-center p-8 text-center">
+                    <div className="w-full h-[460px] min-h-[460px] rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-theme-bg-primary/40 flex flex-col items-center justify-center p-8 text-center">
                       <Layers className="w-10 h-10 text-slate-400 dark:text-white/20 mb-2" />
                       <p className="text-sm font-medium text-slate-900 dark:text-white">{t('ui_index_live_soil_tile_per_farmer')}</p>
                       <p className="text-xs text-slate-600 dark:text-white/50 mt-1 max-w-md">{t('ui_index_this_demo_mesh_is_visible_only_in_th')} <span className="text-emerald-600 dark:text-emerald-300">{t('ui_index_disease_diagnosis_soil_diagnostics')}</span>{t('ui_index_select_a_farmer_and_the_heatmap_will')}</p>
@@ -976,7 +976,7 @@ export const KnowledgeBase: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div className="backdrop-blur-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 rounded-xl p-8 text-center">
+            <div className="backdrop-blur-xl bg-slate-50 dark:bg-theme-bg-secondary/40 border border-slate-200 dark:border-white/5 rounded-xl p-8 text-center">
               <BookOpen className="w-8 h-8 text-slate-400 dark:text-white/20 mx-auto mb-2" />
               <p className="text-sm font-medium text-slate-900 dark:text-white">{t('ui_index_document_library_demo_preview')}</p>
               <p className="text-xs text-slate-600 dark:text-white/50 mt-1 max-w-md mx-auto">{t('ui_index_the_4_curated_fao_isric_kalro_demo_d')}</p>
@@ -991,9 +991,9 @@ export const KnowledgeBase: React.FC = () => {
                   initial={{ opacity: 0, scale: 0.95, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl"
+                  className="bg-white dark:bg-theme-bg-secondary border border-slate-200 dark:border-white/15 rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl"
                 >
-                  <div className="p-6 border-b border-slate-200 dark:border-white/10 flex items-start justify-between gap-4 bg-slate-50 dark:bg-slate-950/60">
+                  <div className="p-6 border-b border-slate-200 dark:border-white/10 flex items-start justify-between gap-4 bg-slate-50 dark:bg-theme-bg-primary/60">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="px-2.5 py-0.5 rounded-md text-xxs font-mono font-medium bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20">
@@ -1023,7 +1023,7 @@ export const KnowledgeBase: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="p-4 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between">
+                  <div className="p-4 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-theme-bg-primary/60 flex items-center justify-between">
                     <button
                       onClick={() => {
                         handleTriggerScenario({

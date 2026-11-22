@@ -158,7 +158,7 @@ function Agents() {
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.1] text-slate-800 dark:text-white hover:border-slate-300 dark:hover:border-white/20 text-xs font-medium transition-colors disabled:opacity-50 shadow-sm ${btnClass}`}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-theme-bg-secondary border border-slate-200 dark:border-white/[0.1] text-slate-800 dark:text-white hover:border-slate-300 dark:hover:border-white/20 text-xs font-medium transition-colors disabled:opacity-50 shadow-sm ${btnClass}`}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-600 dark:text-emerald-400' : ''}`} />
             <span>{t('ui_farmer_detail_panel_refresh')}</span>
@@ -193,13 +193,13 @@ function Agents() {
                 key={agent.agentId}
                 whileHover={{ y: -3 }}
                 transition={{ duration: 0.2 }}
-                className="p-6 rounded-lg bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.1] hover:border-emerald-500/30 hover:bg-white dark:hover:bg-slate-900/90 hover: dark:shadow-none transition-all flex flex-col justify-between space-y-5"
+                className="p-6 rounded-lg bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.1] hover:border-emerald-500/30 hover:bg-white dark:hover:bg-theme-bg-secondary/90 hover: dark:shadow-none transition-all flex flex-col justify-between space-y-5"
               >
                 <div className="space-y-4">
                   {/* Top Status Strip */}
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-white/[0.08] text-emerald-600 dark:text-emerald-400">
+                      <div className="p-3 rounded-xl bg-slate-100 dark:bg-theme-bg-primary border border-slate-200 dark:border-white/[0.08] text-emerald-600 dark:text-emerald-400">
                         <Zap className="w-5 h-5" />
                       </div>
                       <div>
@@ -227,14 +227,14 @@ function Agents() {
                   </div>
 
                   {/* Load Progress Bar */}
-                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] space-y-2">
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-theme-bg-primary/80 border border-slate-200/80 dark:border-white/[0.06] space-y-2">
                     <div className="flex justify-between text-xs font-mono">
                       <span className="text-slate-600 dark:text-white/50">{t('ui_agents_concurrency_load')}</span>
                       <span className="text-emerald-600 dark:text-emerald-400 font-medium font-mono tabular-nums">
                         {agent.currentLoad} / {agent.maxConcurrentTasks} ({loadPercent}%)
                       </span>
                     </div>
-                    <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-slate-200 dark:bg-theme-bg-tertiary rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-emerald-600 dark:bg-emerald-500 h-full rounded-full transition-all duration-500"
                         style={{ width: `${loadPercent}%` }}
@@ -249,7 +249,7 @@ function Agents() {
                       {agent.capabilities.map(cap => (
                         <span
                           key={cap}
-                          className="px-2 py-0.5 rounded-lg text-xs font-mono bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-white/70 border border-slate-200 dark:border-white/[0.06]"
+                          className="px-2 py-0.5 rounded-lg text-xs font-mono bg-slate-100 dark:bg-theme-bg-primary text-slate-700 dark:text-white/70 border border-slate-200 dark:border-white/[0.06]"
                         >
                           {cap}
                         </span>
@@ -285,7 +285,7 @@ function Agents() {
       {/* Analytics & Handoff Logs Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Task Queue Distribution */}
-        <div className="p-6 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-4">
+        <div className="p-6 rounded-xl bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
               <Cpu className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -329,7 +329,7 @@ function Agents() {
             {handoffLog.map((handoff, index) => (
               <div
                 key={index}
-                className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-white/[0.06] flex items-center justify-between gap-3"
+                className="p-3 rounded-xl bg-slate-50 dark:bg-theme-bg-primary/80 border border-slate-200/80 dark:border-white/[0.06] flex items-center justify-between gap-3"
               >
                 <div className="space-y-0.5 min-w-0">
                   <div className="font-medium text-slate-800 dark:text-white/90 flex items-center gap-1.5 truncate">

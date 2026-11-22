@@ -74,14 +74,14 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
         className={`relative w-full max-w-7xl h-[96dvh] sm:h-full max-h-[96dvh] sm:max-h-[90vh] rounded-xl overflow-hidden flex flex-col shadow-2xl border ${
           themeName === 'cyber'
             ? 'bg-gray-900 border-gray-800'
-            : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800'
+            : 'bg-white dark:bg-theme-bg-secondary border-gray-100 dark:border-white/[0.08]'
         }`}
       >
         <div
           className={`px-4 sm:px-8 py-3 sm:py-5 border-b flex items-center justify-between gap-2 sm:gap-4 ${
             themeName === 'cyber'
               ? 'border-gray-800 bg-gray-900/50'
-              : 'border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50'
+              : 'border-gray-100 dark:border-white/[0.08] bg-white/50 dark:bg-theme-bg-secondary/50'
           }`}
         >
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
@@ -114,12 +114,12 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
                 placeholder={t('search_farmer_crop') || 'Search farmers, crops...'}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full ps-9 pe-4 py-2 text-xs rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-0 focus:ring-2 focus:ring-emerald-500"
+                className="w-full ps-9 pe-4 py-2 text-xs rounded-xl bg-gray-100 dark:bg-theme-bg-tertiary text-gray-900 dark:text-white border-0 focus:ring-2 focus:ring-emerald-500"
               />
             </div>
             <button
               onClick={() => setIsExpanded(false)}
-              className="p-2 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="p-2 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-theme-bg-tertiary text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <X className="w-4 sm:w-5 h-4 sm:h-5" />
             </button>
@@ -142,7 +142,7 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
           <div className="flex-1 h-full relative">{mapContent}</div>
         </div>
 
-        <div className="px-4 sm:px-8 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 backdrop-blur-sm bg-gray-50/80 dark:bg-gray-800/80 border-gray-100 dark:border-gray-800">
+        <div className="px-4 sm:px-8 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 backdrop-blur-sm bg-gray-50/80 dark:bg-theme-bg-tertiary/80 border-gray-100 dark:border-white/[0.08]">
           <div className="flex flex-wrap items-center gap-4 sm:gap-8">
             <div className="flex flex-col">
               <span className="text-xxs font-medium text-gray-400">
@@ -150,7 +150,7 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
               </span>
               <span className="text-lg sm:text-xl font-medium text-gray-800 dark:text-white">{farmers.length}</span>
             </div>
-            <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block" />
+            <div className="h-8 w-px bg-gray-200 dark:bg-white/[0.08] hidden sm:block" />
             <div className="flex flex-wrap items-center gap-3 sm:gap-6">
               {stats.topCrops.map(([crop], idx) => (
                 <div key={crop} className="flex items-center gap-1.5 sm:gap-2">

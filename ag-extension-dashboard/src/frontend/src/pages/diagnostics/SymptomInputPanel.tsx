@@ -56,7 +56,7 @@ export const SymptomInputPanel: React.FC<{
           value={cropType}
           onChange={e => setCropType(e.target.value)}
           placeholder={t('symptoms_crop_placeholder', { defaultValue: 'For example maize, tomato or coffee' })}
-          className="w-full px-3 py-2 bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-md text-xs text-slate-900 dark:text-white placeholder-slate-600 focus:border-emerald-500/60 transition-colors"
+          className="w-full px-3 py-2 bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-md text-xs text-slate-900 dark:text-white placeholder-slate-600 focus:border-emerald-500/60 transition-colors"
         />
       </div>
 
@@ -72,7 +72,7 @@ export const SymptomInputPanel: React.FC<{
             onChange={e => setCurrentSymptom(e.target.value)}
             onKeyDown={e => isActionEnter(e) && currentSymptom.trim() && onAddSymptom(currentSymptom.trim())}
             placeholder={t('symptoms_what_placeholder', { defaultValue: 'One sign at a time, then Add' })}
-            className="flex-1 px-3 py-2 bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-md text-xs text-slate-900 dark:text-white placeholder-slate-600 focus:border-emerald-500/60 transition-colors"
+            className="flex-1 px-3 py-2 bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-md text-xs text-slate-900 dark:text-white placeholder-slate-600 focus:border-emerald-500/60 transition-colors"
           />
           <button
             type="button"
@@ -102,7 +102,7 @@ export const SymptomInputPanel: React.FC<{
                 className={`text-xs px-2.5 py-1 rounded border transition-colors ${
                   isSelected
                     ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
-                    : 'bg-white dark:bg-[#0d1a14] text-slate-400 border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] hover:text-slate-800 dark:hover:text-slate-200'
+                    : 'bg-white dark:bg-theme-bg-primary text-slate-400 border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
                 {preset}
@@ -122,7 +122,7 @@ export const SymptomInputPanel: React.FC<{
             {symptoms.map(symptom => (
               <span
                 key={symptom}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-white dark:bg-[#0d1a14] border border-emerald-500/30 text-emerald-300 text-xs"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-white dark:bg-theme-bg-primary border border-emerald-500/30 text-emerald-300 text-xs"
               >
                 <span>{symptom}</span>
                 <button

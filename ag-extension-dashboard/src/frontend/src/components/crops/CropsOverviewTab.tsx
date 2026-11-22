@@ -84,7 +84,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-6 bg-slate-50 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-200 dark:border-white/5">
+                  <div className="grid grid-cols-2 gap-4 mb-6 bg-slate-50 dark:bg-theme-bg-primary/40 p-3 rounded-xl border border-slate-200 dark:border-white/5">
                     <div>
                       <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         {t('ui_crops_overview_tab_area_size')}
@@ -146,7 +146,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-slate-50 dark:bg-slate-900/30 border border-dashed border-slate-200 dark:border-white/10 p-4 rounded-xl text-center py-6">
+                      <div className="bg-slate-50 dark:bg-theme-bg-secondary/30 border border-dashed border-slate-200 dark:border-white/10 p-4 rounded-xl text-center py-6">
                         <Info className="w-5 h-5 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
                         <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-3">
                           {t('ui_crops_overview_tab_no_active_crop_growth_cycles')}

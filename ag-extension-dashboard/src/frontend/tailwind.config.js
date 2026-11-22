@@ -40,6 +40,7 @@ export default {
         'theme-bg': {
           primary: 'rgb(var(--color-bg-primary-rgb) / <alpha-value>)',
           secondary: 'rgb(var(--color-bg-secondary-rgb) / <alpha-value>)',
+          tertiary: 'rgb(var(--color-bg-tertiary-rgb) / <alpha-value>)',
           card: 'rgb(var(--color-bg-card-rgb) / <alpha-value>)',
         },
         ...surfaceVars,

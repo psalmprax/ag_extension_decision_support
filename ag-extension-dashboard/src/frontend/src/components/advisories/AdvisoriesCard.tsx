@@ -36,7 +36,7 @@ export function AdvisoriesCard() {
             </div>
 
             {isLoading ? (
-                <div className="h-20 animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" data-testid="advisories-skeleton" />
+                <div className="h-20 animate-pulse bg-gray-100 dark:bg-theme-bg-tertiary rounded-xl" data-testid="advisories-skeleton" />
             ) : !data || data.length === 0 ? (
                 <p className="text-xs text-gray-400">
                     {t('advisories_no_dispatched', { defaultValue: 'No advisories dispatched yet. The engine runs daily when farmers opt in.' })}

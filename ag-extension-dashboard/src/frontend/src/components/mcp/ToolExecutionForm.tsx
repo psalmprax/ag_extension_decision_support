@@ -39,7 +39,7 @@ export function MCPToolsToolExecutionForm({
             value={value}
             onChange={e => onArgsChange({ ...args, [propertyName]: e.target.value })}
             placeholder={schema.description || `Enter ${propertyName}`}
-            className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
+            className={`w-full px-3 py-2 border border-gray-300 dark:border-white/[0.12] ${radiusClass} bg-white dark:bg-theme-bg-tertiary text-gray-900 dark:text-white`}
           />
         );
       case 'number':
@@ -51,7 +51,7 @@ export function MCPToolsToolExecutionForm({
               onArgsChange({ ...args, [propertyName]: parseFloat(e.target.value) || 0 })
             }
             placeholder={schema.description || `Enter ${propertyName}`}
-            className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
+            className={`w-full px-3 py-2 border border-gray-300 dark:border-white/[0.12] ${radiusClass} bg-white dark:bg-theme-bg-tertiary text-gray-900 dark:text-white`}
           />
         );
       case 'boolean':
@@ -61,7 +61,7 @@ export function MCPToolsToolExecutionForm({
             onChange={e =>
               onArgsChange({ ...args, [propertyName]: e.target.value === SCHEMA_BOOLEAN_TRUE })
             }
-            className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
+            className={`w-full px-3 py-2 border border-gray-300 dark:border-white/[0.12] ${radiusClass} bg-white dark:bg-theme-bg-tertiary text-gray-900 dark:text-white`}
           >
             <option value="false">False</option>
             <option value="true">True</option>
@@ -81,7 +81,7 @@ export function MCPToolsToolExecutionForm({
             }}
             placeholder={schema.description || `Enter ${propertyName} (JSON)`}
             rows={3}
-            className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm resize-none`}
+            className={`w-full px-3 py-2 border border-gray-300 dark:border-white/[0.12] ${radiusClass} bg-white dark:bg-white/[0.08] text-gray-900 dark:text-white font-mono text-sm resize-none`}
           />
         );
     }
@@ -97,7 +97,7 @@ export function MCPToolsToolExecutionForm({
         {t('mcp_tools_tool_execution')}
       </h3>
       <div className="space-y-6">
-        <div className={`p-4 bg-gray-50 dark:bg-gray-800/50 ${radiusClass}`}>
+        <div className={`p-4 bg-gray-50 dark:bg-theme-bg-tertiary/50 ${radiusClass}`}>
           <h4 className="font-medium text-gray-900 dark:text-white mb-1">{tool.name}</h4>
           <p className="text-sm text-gray-600 dark:text-gray-400">{tool.description}</p>
         </div>
@@ -165,7 +165,7 @@ export function MCPToolsToolExecutionForm({
                 <div key={index} className="text-sm">
                   {item.type === 'text' && (
                     <pre
-                      className={`whitespace-pre-wrap font-mono text-gray-900 dark:text-white bg-white dark:bg-gray-800 p-2 border ${radiusClass}`}
+                      className={`whitespace-pre-wrap font-mono text-gray-900 dark:text-white bg-white dark:bg-theme-bg-tertiary p-2 border ${radiusClass}`}
                     >
                       {item.text}
                     </pre>
