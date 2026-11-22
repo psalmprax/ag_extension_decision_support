@@ -270,9 +270,9 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
             return res.status(404).json({ success: false, error: 'Farmer not found' });
         }
 
-        // The shared access rule; 404 so the answer does not confirm the farmer exists.
+        // The shared access rule (own farm, assigned farmers, a manager's region, admin).
         if (!(await requestCanSeeFarmer(req, id))) {
-            return res.status(404).json({ success: false, error: 'Farmer not found' });
+            return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
         res.json({
