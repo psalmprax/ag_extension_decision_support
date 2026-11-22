@@ -11,6 +11,7 @@ import { logger } from '@/utils/logger';
 import { AuthRequest } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
+import { pageLimit, pageOffset } from '@/utils/pagination';
 
 const router = Router();
 
@@ -45,7 +46,8 @@ router.get('/', async (req: AuthRequest, res: Response) => {
             return res.status(503).json({ success: false, error: 'Database connection unavailable' });
         }
 
-        let sql = 'SELECT * FROM reports WHERE 1=1';
+        // total_count: every matching report, not just this page.
+        let sql = 'SELECT *, COUNT(*) OVER()::int AS total_count FROM reports WHERE 1=1';
         const params: unknown[] = [];
         let paramIndex = 1;
         const scope = await getReportScope(req, paramIndex);
@@ -71,8 +73,8 @@ router.get('/', async (req: AuthRequest, res: Response) => {
             params.push(endDate);
         }
 
-        sql += ' ORDER BY created_at DESC LIMIT $' + paramIndex++ + ' OFFSET $' + paramIndex;
-        params.push(parseInt(limit as string), parseInt(offset as string));
+        sql += ' ORDER BY created_at DESC, id DESC LIMIT $' + paramIndex++ + ' OFFSET $' + paramIndex;
+        params.push(pageLimit(limit, 20), pageOffset(offset));
 
         const result = await query<ReportListRow>(sql, params);
         const reports = mapReportListRows(result.rows);
@@ -88,7 +90,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
                     status: r.status,
                     data: r.content,
                 })),
-                total: result.rowCount ?? result.rows.length,
+                total: (result.rows[0] as { total_count?: number } | undefined)?.total_count ?? 0,
             },
         });
     } catch (error) {
