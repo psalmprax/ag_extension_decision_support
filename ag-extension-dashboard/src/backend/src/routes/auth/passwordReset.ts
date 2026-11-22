@@ -46,13 +46,14 @@ router.post('/forgot-password', validate(forgotPasswordSchema), async (req: Requ
                 'UPDATE users SET reset_token = $1, reset_token_expires = $2 WHERE id = $3',
                 [hash, new Date(Date.now() + RESET_TTL_MS), user.id]
             );
-            const sent = await emailService.sendPasswordResetEmail(email, raw);
-            if (!sent) {
-                logger.error(`Password reset email could not be sent to user ${user.id} (SMTP unavailable)`);
-            }
-        } else {
-            // Constant-ish timing: hash something anyway.
-            hashToken(email);
+            // Sent after the answer: waiting on the mail server only for real accounts would
+            // let the response time tell anyone which addresses have one.
+            const userId = user.id;
+            setImmediate(() => {
+                emailService.sendPasswordResetEmail(email, raw)
+                    .then(sent => { if (!sent) logger.error(`Password reset email could not be sent to user ${userId} (SMTP unavailable)`); })
+                    .catch(error => logger.error(`Password reset email failed for user ${userId}:`, error));
+            });
         }
     } catch (error) {
         logger.error('forgot-password failed:', error);
@@ -82,13 +83,17 @@ router.post('/reset-password', validate(resetPasswordSchema), auditMiddleware('a
         }
 
         const passwordHash = await bcrypt.hash(password, 12);
-        await query(
+        // The token is spent by this update: a second request with the same link finds nothing.
+        const consumed = await query(
             `UPDATE users
                 SET password_hash = $1, reset_token = NULL, reset_token_expires = NULL,
                     failed_login_attempts = 0, lockout_until = NULL, updated_at = NOW()
-              WHERE id = $2`,
-            [passwordHash, user.id]
+              WHERE id = $2 AND reset_token = $3`,
+            [passwordHash, user.id, hashToken(token)]
         );
+        if ((consumed.rowCount ?? 0) === 0) {
+            return res.status(400).json({ success: false, error: 'Reset link is invalid or has expired', errorCode: 'RESET_TOKEN_INVALID' });
+        }
         // A password reset is the canonical "I lost control of my account" action.
         await revokeAllUserSessions(user.id).catch(err => logger.warn('Session revocation after reset failed:', err));
 

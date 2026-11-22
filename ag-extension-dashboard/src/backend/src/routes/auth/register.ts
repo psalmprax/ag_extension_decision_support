@@ -18,6 +18,7 @@ import { resolveRegionalManager } from '@/services/regionalManagerResolver';
 import { signSessionToken } from '@/utils/sessionToken';
 import { findCountry } from '@/shared-api/countries';
 import { toE164 } from '@/services/country/phone';
+import { clientIpOf } from '@/utils/clientIp';
 
 const router = Router();
 
@@ -156,7 +157,7 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
         const token = signSessionToken({ userId: newUser.id, email: newUser.email, role: newUser.role });
 
         // Record initial user session for active session visibility and revocation support
-        const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.ip || null;
+        const clientIp = clientIpOf(req);
         createSession({
             userId: newUser.id,
             token,
