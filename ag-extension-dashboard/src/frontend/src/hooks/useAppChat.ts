@@ -157,13 +157,12 @@ export const useAppChat = (language: string) => {
       // Staff: their own private AI chats. Farmers have none: their AI help is their thread.
       const res = await fetchConversations(isFarmerUser ? 'farmer_thread' : 'officer_ai');
       setConversations(res.data);
-      if (res.data.length > 0 && !activeConvId) {
-        setActiveConvId(res.data[0].id);
-      }
+      // Keep a conversation picked while the list was loading.
+      if (res.data.length > 0) setActiveConvId(current => current ?? res.data[0].id);
     } catch (error) {
       console.error('Failed to load conversations:', error);
     }
-  }, [activeConvId, isFarmerUser, freePlan]);
+  }, [isFarmerUser, freePlan]);
 
   // Guards against out-of-order responses: switching conversations quickly could
   // otherwise render the previous conversation's messages under the newly selected one.
@@ -244,16 +243,17 @@ export const useAppChat = (language: string) => {
       const res = await fetchConversations('farmer_thread');
       const list = res.data || [];
       setFarmerConversations(list);
-      if (list.length > 0 && !activeFarmerConvId) {
-        // Auto-selecting the newest conversation must also show its history;
-        // previously the thread stayed empty until it was clicked again.
+      // Read the selection from the ref: a list that arrives after the officer has picked a
+      // thread must not switch them to the newest one.
+      if (list.length > 0 && !activeFarmerConvIdRef.current) {
+        // Auto-selecting the newest conversation must also show its history.
         setActiveFarmerConvId(list[0].id);
         void loadFarmerMessages(list[0].id);
       }
     } catch (error) {
       console.error('Failed to load farmer conversations:', error);
     }
-  }, [activeFarmerConvId, setActiveFarmerConvId, loadFarmerMessages, freePlan]);
+  }, [setActiveFarmerConvId, loadFarmerMessages, freePlan]);
 
   const handleFarmerChatSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();

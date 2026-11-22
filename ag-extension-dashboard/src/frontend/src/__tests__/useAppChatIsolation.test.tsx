@@ -84,4 +84,26 @@ describe('Farmer conversation isolation', () => {
     expect(fetchMessages).toHaveBeenCalledWith('conv-john');
     expect(result.current.farmerChatMessages.map(m => m.content)).toEqual(['When should I apply the first top dressing?']);
   });
+
+  it('keeps the thread the officer picked when the list arrives afterwards', async () => {
+    let resolveList!: (value: { success: boolean; data: { id: string; farmerId: string }[] }) => void;
+    vi.mocked(fetchMessages).mockReset().mockResolvedValue({ success: true, data: [{ role: 'user', content: 'Rust-coloured spots on the leaves' }] });
+    vi.mocked(fetchConversations).mockReset().mockImplementationOnce(() => new Promise(resolve => { resolveList = resolve; }));
+    const { result } = renderHook(() => useAppChat('en'));
+
+    let listLoad!: Promise<void>;
+    act(() => { listLoad = result.current.loadFarmerConversations(); });
+    await act(async () => {
+      result.current.setActiveFarmerConvId('conv-chimwemwe');
+      await result.current.loadFarmerMessages('conv-chimwemwe');
+    });
+    await act(async () => {
+      resolveList({ success: true, data: [{ id: 'conv-newest', farmerId: 'f-other' }, { id: 'conv-chimwemwe', farmerId: 'f-chimwemwe' }] });
+      await listLoad;
+    });
+
+    expect(result.current.activeFarmerConvId).toBe('conv-chimwemwe');
+    expect(fetchMessages).not.toHaveBeenCalledWith('conv-newest');
+    expect(result.current.farmerChatMessages.map(m => m.content)).toEqual(['Rust-coloured spots on the leaves']);
+  });
 });
