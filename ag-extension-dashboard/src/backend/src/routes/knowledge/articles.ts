@@ -279,6 +279,19 @@ async function processUpdateArticle(req: Request, res: Response) {
         });
     }
 
+    // A partner's recording is published under its licence and credit: only an
+    // administrator may change the transcript or who it is credited to.
+    const role = (req.user as { role?: string } | undefined)?.role;
+    if (role !== 'admin') {
+        const { rows: fromPartner } = await query('SELECT 1 FROM partner_recordings WHERE knowledge_article_id = $1 LIMIT 1', [id]);
+        if (fromPartner.length > 0) {
+            return res.status(403).json({
+                success: false,
+                error: "This article is a partner's licensed recording. An administrator can correct it.",
+            });
+        }
+    }
+
     if (contentType && !['text', 'html'].includes(contentType)) {
         return res.status(400).json({
             success: false,

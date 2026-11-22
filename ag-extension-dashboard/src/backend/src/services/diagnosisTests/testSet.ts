@@ -50,8 +50,21 @@ export async function addTestImage(principal: ScopePrincipal, input: TestImageIn
     return { id: rows[0].id };
 }
 
-export async function removeTestImage(id: string): Promise<boolean> {
-    const { rowCount } = await query('DELETE FROM diagnosis_test_images WHERE id = $1', [id]);
+/**
+ * The test set is shared by every organisation on this server. An administrator removes
+ * any photo; a regional manager those labelled by themselves or by people in their region.
+ */
+export async function removeTestImage(id: string, by: { userId: string; role: string }): Promise<boolean> {
+    const { rowCount } = by.role === 'admin'
+        ? await query('DELETE FROM diagnosis_test_images WHERE id = $1', [id])
+        : await query(
+            `DELETE FROM diagnosis_test_images t
+              WHERE t.id = $1
+                AND (t.labelled_by = $2 OR EXISTS (
+                    SELECT 1 FROM users labeller JOIN users remover ON remover.id = $2
+                     WHERE labeller.id = t.labelled_by AND remover.region IS NOT NULL AND labeller.region = remover.region))`,
+            [id, by.userId],
+        );
     return (rowCount ?? 0) > 0;
 }
 

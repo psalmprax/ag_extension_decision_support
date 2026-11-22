@@ -111,17 +111,15 @@ describe('Email Template Update – PUT /api/v1/email/templates/:id', () => {
         expect(response.body.message).toBe('Template updated successfully');
     });
 
-    it('should allow extension_officer to update a template', async () => {
-        mockQuery.mockResolvedValueOnce({ rows: [{ id: templateId }], rowCount: 1 });
-
+    it('refuses an extension officer: the templates are every organisation\'s system emails', async () => {
+        mockQuery.mockClear();
         const response = await request(app)
             .put(`/api/v1/email/templates/${templateId}`)
             .set('Authorization', `Bearer ${officerToken}`)
             .send(updatePayload);
 
-        expect(response.status).toBe(200);
-        expect(response.body.success).toBe(true);
-        expect(response.body.message).toBe('Template updated successfully');
+        expect(response.status).toBe(403);
+        expect(mockQuery).not.toHaveBeenCalledWith(expect.stringContaining('UPDATE email_templates'), expect.anything());
     });
 
     it('should deny farmer role with 403', async () => {
