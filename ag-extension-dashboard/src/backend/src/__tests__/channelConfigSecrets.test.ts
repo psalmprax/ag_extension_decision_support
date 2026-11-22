@@ -33,4 +33,17 @@ describe('channel credentials', () => {
         expect(JSON.parse(String(mockQuery.mock.calls[1][1][4]))).toEqual({ botToken: '123456:REALTOKEN', botUsername: 'new' });
         expect(JSON.stringify(res.body)).not.toContain('REALTOKEN');
     });
+
+    it('keeps the saved switch, provider and welcome message when a request leaves them out', async () => {
+        const app = express();
+        app.use(express.json());
+        app.use(router);
+        mockQuery.mockReset();
+        mockQuery
+            .mockResolvedValueOnce({ rows: [{ config: { botToken: '123456:REALTOKEN' }, provider: 'telegram', is_enabled: true, auto_onboarding: false, welcome_template: 'Karibu' }] })
+            .mockImplementationOnce((_sql: string, params: unknown[]) => Promise.resolve({ rows: [{ channel: 'telegram', config: JSON.parse(String(params[4])) }] }));
+        await request(app).patch('/config').send({ channel: 'telegram', config: { botUsername: 'new' } });
+        const [, , provider, isEnabled, , autoOnboarding, welcome] = mockQuery.mock.calls[1][1];
+        expect([provider, isEnabled, autoOnboarding, welcome]).toEqual(['telegram', true, false, 'Karibu']);
+    });
 });

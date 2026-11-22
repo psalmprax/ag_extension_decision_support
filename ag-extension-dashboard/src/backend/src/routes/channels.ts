@@ -312,11 +312,20 @@ router.patch('/config', authorize(['admin', 'regional_manager']), async (req: Re
 
         // The settings page sends back masked credentials (••••) for fields it did not
         // change: those keep the saved value instead of overwriting it with the mask.
-        const saved = await query<{ config: Record<string, unknown> | null }>(
-            'SELECT config FROM tenant_channel_configs WHERE tenant_id = $1 AND channel = $2', [tenantId, channel]);
+        const saved = await query<{
+            config: Record<string, unknown> | null; provider: string | null; is_enabled: boolean | null;
+            auto_onboarding: boolean | null; welcome_template: string | null;
+        }>(
+            `SELECT config, provider, is_enabled, auto_onboarding, welcome_template
+               FROM tenant_channel_configs WHERE tenant_id = $1 AND channel = $2`, [tenantId, channel]);
+        const previous = saved.rows[0];
         const changes = Object.fromEntries(Object.entries((inputConfig ?? {}) as Record<string, unknown>)
             .filter(([, value]) => !(typeof value === 'string' && value.includes('••'))));
-        const config = { ...(saved.rows[0]?.config ?? {}), ...changes };
+        const config = { ...(previous?.config ?? {}), ...changes };
+        // A field the request leaves out keeps its saved value: changing a token must not
+        // switch the channel off or reset its welcome message.
+        const keep = <T,>(value: T | undefined, savedValue: T | null | undefined, fallback: T): T =>
+            value !== undefined ? value : (savedValue ?? fallback);
 
         const { rows } = await query<TenantChannelConfigRow>(
             `INSERT INTO tenant_channel_configs (tenant_id, channel, provider, is_enabled, config, auto_onboarding, welcome_template, updated_at)
@@ -332,11 +341,11 @@ router.patch('/config', authorize(['admin', 'regional_manager']), async (req: Re
             [
                 tenantId,
                 channel,
-                provider || 'default',
-                Boolean(isEnabled),
+                keep<string>(provider || undefined, previous?.provider, 'default'),
+                keep<boolean>(isEnabled === undefined ? undefined : Boolean(isEnabled), previous?.is_enabled, false),
                 JSON.stringify(config),
-                autoOnboarding !== undefined ? Boolean(autoOnboarding) : true,
-                welcomeTemplate || null,
+                keep<boolean>(autoOnboarding === undefined ? undefined : Boolean(autoOnboarding), previous?.auto_onboarding, true),
+                keep<string | null>(welcomeTemplate === undefined ? undefined : (welcomeTemplate || null), previous?.welcome_template, null),
             ]
         );
 
