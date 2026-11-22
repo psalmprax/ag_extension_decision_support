@@ -48,3 +48,12 @@ describe('PUT /knowledge/:id on a partner recording', () => {
     expect(mockUpdate).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('article source links', () => {
+  it('refuses a source link that is not a web address', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+    const res = await request(appAs('admin')).put(`/knowledge/${ARTICLE}`).send({ sourceUrl: 'javascript:alert(document.cookie)' });
+    expect(res.status).toBe(400);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+});

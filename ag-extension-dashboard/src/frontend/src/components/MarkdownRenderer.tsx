@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CheckCircle, AlertCircle, Info, ExternalLink } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
+import { safeHref } from '@/lib/safeHref';
 
 interface MarkdownRendererProps {
   content: string;
@@ -92,8 +93,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
 
           // Links - sanitized against javascript:, data:, and vbscript: XSS
           a: ({ href, children }) => {
-            const isSafe = href && !/^(?:javascript|data|vbscript):/i.test(href.trim()) && /^(?:https?:\/\/|mailto:|tel:|\/|#)/i.test(href.trim());
-            if (!isSafe) {
+            if (!safeHref(href)) {
               return <span className="text-gray-400 font-mono text-xs italic">{t('ui_markdown_renderer_blocked_link')}</span>;
             }
             return (

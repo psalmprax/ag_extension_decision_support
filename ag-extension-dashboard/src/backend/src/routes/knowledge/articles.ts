@@ -15,6 +15,7 @@ import { authorize, UserRole } from '@/middleware/authorize';
 import { VectorService } from '@/services/vectorService';
 import { safeError } from '@/utils/safeResponse';
 import { seedKnowledgeArticlesData } from '@/services/knowledge/seedArticles';
+import { isWebUrl } from '@/utils/webUrl';
 
 const router = Router();
 const knowledgeAdminRoles: UserRole[] = ['admin', 'regional_manager', 'extension_officer'];
@@ -215,6 +216,9 @@ router.post('/', authorize(knowledgeAdminRoles), async (req: Request, res: Respo
             title, content, contentType = 'text', summary, category,
             tags = [], crops = [], regions = [], source, sourceUrl
         } = req.body;
+        if (sourceUrl && !isWebUrl(sourceUrl)) {
+            return res.status(400).json({ success: false, error: 'sourceUrl must be an http or https address' });
+        }
         const prisma = getPrisma();
 
         if (!title || !content) {
@@ -260,12 +264,33 @@ router.post('/', authorize(knowledgeAdminRoles), async (req: Request, res: Respo
     }
 });
 
+/**
+ * A partner's recording is published under its licence and credit: only an administrator
+ * may change the transcript or who it is credited to.
+ */
+async function isPartnerArticleLockedFor(req: Request, articleId: string): Promise<boolean> {
+    if ((req.user as { role?: string } | undefined)?.role === 'admin') return false;
+    const { rows } = await query('SELECT 1 FROM partner_recordings WHERE knowledge_article_id = $1 LIMIT 1', [articleId]);
+    return rows.length > 0;
+}
+
+/** Only the fields the request names change. */
+function articleUpdateData(body: Record<string, unknown>, sanitizedContent: string | undefined): Record<string, unknown> {
+    const data: Record<string, unknown> = {};
+    for (const key of ['title', 'contentType', 'summary', 'category', 'tags', 'crops', 'regions', 'source', 'sourceUrl'] as const) {
+        if (body[key] !== undefined) data[key] = body[key];
+    }
+    if (body.content !== undefined) data.content = sanitizedContent;
+    data.updatedAt = new Date();
+    return data;
+}
+
 async function processUpdateArticle(req: Request, res: Response) {
     const { id } = req.params;
-    const {
-        title, content, contentType, summary, category,
-        tags, crops, regions, source, sourceUrl
-    } = req.body;
+    const { content, contentType, sourceUrl } = req.body;
+    if (sourceUrl && !isWebUrl(sourceUrl)) {
+        return res.status(400).json({ success: false, error: 'sourceUrl must be an http or https address' });
+    }
     const prisma = getPrisma();
 
     const existingArticle = await prisma.knowledgeArticle.findUnique({
@@ -279,17 +304,11 @@ async function processUpdateArticle(req: Request, res: Response) {
         });
     }
 
-    // A partner's recording is published under its licence and credit: only an
-    // administrator may change the transcript or who it is credited to.
-    const role = (req.user as { role?: string } | undefined)?.role;
-    if (role !== 'admin') {
-        const { rows: fromPartner } = await query('SELECT 1 FROM partner_recordings WHERE knowledge_article_id = $1 LIMIT 1', [id]);
-        if (fromPartner.length > 0) {
-            return res.status(403).json({
-                success: false,
-                error: "This article is a partner's licensed recording. An administrator can correct it.",
-            });
-        }
+    if (await isPartnerArticleLockedFor(req, id)) {
+        return res.status(403).json({
+            success: false,
+            error: "This article is a partner's licensed recording. An administrator can correct it.",
+        });
     }
 
     if (contentType && !['text', 'html'].includes(contentType)) {
@@ -301,18 +320,7 @@ async function processUpdateArticle(req: Request, res: Response) {
 
     const sanitizedContent = content === undefined ? undefined : sanitizeKnowledgeContent(content, contentType || existingArticle.contentType || 'text');
 
-    const updateData: Record<string, unknown> = {};
-    if (title !== undefined) updateData.title = title;
-    if (content !== undefined) updateData.content = sanitizedContent;
-    if (contentType !== undefined) updateData.contentType = contentType;
-    if (summary !== undefined) updateData.summary = summary;
-    if (category !== undefined) updateData.category = category;
-    if (tags !== undefined) updateData.tags = tags;
-    if (crops !== undefined) updateData.crops = crops;
-    if (regions !== undefined) updateData.regions = regions;
-    if (source !== undefined) updateData.source = source;
-    if (sourceUrl !== undefined) updateData.sourceUrl = sourceUrl;
-    updateData.updatedAt = new Date();
+    const updateData = articleUpdateData(req.body as Record<string, unknown>, sanitizedContent);
 
     const article = await prisma.knowledgeArticle.update({
         where: { id },

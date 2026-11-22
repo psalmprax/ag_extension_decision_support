@@ -3,6 +3,7 @@ import { Clock, Download, FileText, Receipt } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Badge } from '../ui/Badge';
 import { triggerHaptic } from '@/lib/haptics';
+import { safeHref } from '@/lib/safeHref';
 
 interface Invoice {
   id: string;
@@ -92,13 +93,13 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
                             : 'bg-amber-400'
                         }`}
                       />
-                      {invoice.status === 'paid' ? t('billing_status_paid') || 'PAID' : invoice.status}
+                      {invoice.status === 'paid' ? t('billing_status_paid') || 'Paid' : invoice.status}
                     </Badge>
                   </td>
                   <td className="px-6 py-4">
-                    {invoice.invoice_pdf ? (
+                    {safeHref(invoice.invoice_pdf) ? (
                       <a
-                        href={invoice.invoice_pdf}
+                        href={safeHref(invoice.invoice_pdf)}
                         target="_blank"
                         rel="noreferrer"
                         onClick={() => triggerHaptic('light')}

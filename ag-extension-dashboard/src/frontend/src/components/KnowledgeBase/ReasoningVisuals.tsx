@@ -33,6 +33,7 @@ import { EMPTY_VISUALS, type Chart, type KPI, type MediaAsset, type VisualsData 
 import { ChartTooltip } from '@/components/charts/ChartTooltip';
 import { CHART_PALETTE } from '@/components/charts/chartConfig';
 import { useLanguage } from '@/lib/LanguageContext';
+import { safeHref } from '@/lib/safeHref';
 
 interface ReasoningVisualsProps {
   visuals: VisualsData;
@@ -212,7 +213,7 @@ const MediaAssetsSection = ({
                   {t('ui_reasoning_visuals_external_video')}
                 </div>
                 <a
-                  href={vid.url}
+                  href={safeHref(vid.url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="absolute bottom-3 end-3 p-3 bg-primary-600 rounded-xl text-white shadow-xl transform active:scale-95 transition-all"

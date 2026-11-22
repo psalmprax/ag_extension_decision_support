@@ -171,7 +171,7 @@ export async function sendRecording(principal: Principal, id: string, farmerIds:
         if (!(await canSeeFarmer(principal, farmerId))) continue;
         const conversationId = await farmerThreadFor(farmerId);
         const message = await postOfficerReply(conversationId,
-            `Listen: ${recording.title} (${recording.speaker}, ${recording.partner_name}). ${recordingUrl(recording.id)}`);
+            `Listen: ${recording.title} (${recording.speaker}, ${recording.partner_name}). ${recordingUrl(recording.id)}`, principal.userId);
         if (!message) continue;
         await linkAttachments('chat', message.id, [uploads[0].upload_id]);
         await query(`INSERT INTO recording_deliveries (recording_id, farmer_id, channel, sent_by) VALUES ($1, $2, 'thread', $3)`,

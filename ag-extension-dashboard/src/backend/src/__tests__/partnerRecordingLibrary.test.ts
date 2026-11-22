@@ -62,7 +62,7 @@ describe('sending partner recordings', () => {
         const result = await sendRecording(officer, 'rec-1', ['farmer-mine', 'farmer-other']);
 
         expect(result).toEqual({ sent: 1, skipped: 1 });
-        expect(mockPost).toHaveBeenCalledWith('conversation-1', expect.stringContaining('Fall armyworm scouting (Dr. Wanjiru, Farm Radio Trust)'));
+        expect(mockPost).toHaveBeenCalledWith('conversation-1', expect.stringContaining('Fall armyworm scouting (Dr. Wanjiru, Farm Radio Trust)'), 'officer-1');
         expect(mockLink).toHaveBeenCalledWith('chat', 'message-1', ['upload-1']);
         const log = mockQuery.mock.calls.find(call => String(call[0]).includes('INSERT INTO recording_deliveries'));
         expect(log?.[1]).toEqual(['rec-1', 'farmer-mine', 'officer-1']);

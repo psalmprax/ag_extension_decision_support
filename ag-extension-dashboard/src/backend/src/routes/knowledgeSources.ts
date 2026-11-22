@@ -4,10 +4,14 @@ import { TropicalKnowledgeSourceService } from '@/services/data/tropicalKnowledg
 import { logger } from '@/utils/logger';
 import { authorize, UserRole } from '@/middleware/authorize';
 import { safeError, failRequest } from '@/utils/safeResponse';
+import { isWebUrl } from '@/utils/webUrl';
 
 const router = Router();
 
-const knowledgeAdminRoles: UserRole[] = ['admin', 'regional_manager', 'extension_officer'];
+// The source list is shown to everyone on the server as the knowledge base's references,
+// so only an administrator adds, changes or removes one.
+const knowledgeAdminRoles: UserRole[] = ['admin'];
+
 
 // All source routes require authentication
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
@@ -43,6 +47,7 @@ router.post('/', authorize(knowledgeAdminRoles), async (req: Request, res: Respo
         if (!id || !name || !provider || !type || !url || !syncMode) {
             return res.status(400).json({ success: false, error: 'id, name, provider, type, url, and syncMode are required' });
         }
+        if (!isWebUrl(url)) return res.status(400).json({ success: false, error: 'url must be an http or https address' });
 
         await query(`
             INSERT INTO tropical_knowledge_sources 
@@ -76,6 +81,7 @@ router.put('/:id', authorize(knowledgeAdminRoles), async (req: Request, res: Res
     try {
         const { id } = req.params;
         const { name, provider, type, license, url, syncMode, topics, crops, regions, description, priority, isActive } = req.body;
+        if (url !== undefined && !isWebUrl(url)) return res.status(400).json({ success: false, error: 'url must be an http or https address' });
 
         await query(`
             UPDATE tropical_knowledge_sources

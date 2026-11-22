@@ -45,7 +45,7 @@ async function reply(staff: SmsStaff, ref: number, text: string): Promise<string
     const farmer = await farmerForRef(staff, ref);
     if (!farmer) return `No farmer ${ref} in your list. Send INBOX or FIND <name> first.`;
     const conversationId = await threadForFarmer(farmer.id);
-    await postOfficerReply(conversationId, text);
+    await postOfficerReply(conversationId, text, staff.id);
     return `Sent to ${farmer.name}.`;
 }
 

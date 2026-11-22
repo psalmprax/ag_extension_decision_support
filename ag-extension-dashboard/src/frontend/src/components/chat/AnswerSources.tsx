@@ -2,6 +2,7 @@ import React from 'react';
 import { BookOpen, PenLine, AlertTriangle } from 'lucide-react';
 import type { AnswerSource, ChatMessageMetadata } from '@/types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
+import { safeHref } from '@/lib/safeHref';
 
 /** The sources an AI answer or draft rests on, numbered as in its [n] markers. */
 export const SourceList: React.FC<{ sources: AnswerSource[]; className?: string }> = ({ sources, className = '' }) => {
@@ -17,8 +18,8 @@ export const SourceList: React.FC<{ sources: AnswerSource[]; className?: string 
         {sources.map(source => (
           <li key={source.n} className="flex gap-1">
             <span className="font-mono">[{source.n}]</span>
-            {source.url ? (
-              <a href={source.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 break-words">
+            {safeHref(source.url) ? (
+              <a href={safeHref(source.url)} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 break-words">
                 {source.title}
               </a>
             ) : (

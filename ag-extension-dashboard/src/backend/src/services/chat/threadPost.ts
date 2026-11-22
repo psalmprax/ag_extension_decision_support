@@ -27,21 +27,44 @@ export function scheduleChannelDelivery(conversationId: string, messageId: strin
     });
 }
 
-/** Store an officer's reply in a thread, show it live and send it to the farmer's channel. */
-export async function postOfficerReply(conversationId: string, content: string): Promise<ChatMessageRow | null> {
+/**
+ * What follows every officer reply, however it was written (web chat, SMS command, a
+ * partner recording): show it live, send it to the farmer's channel and, in a running
+ * pilot, ask the farmer later whether they followed the advice.
+ */
+export function afterOfficerReply(conversationId: string, created: ChatMessageRow): void {
+    fanoutNewMessage(conversationId, created);
+    scheduleChannelDelivery(conversationId, created.id, created.content);
+    setImmediate(() => {
+        queueAdviceFollowUp(conversationId, created.id).catch(error => logger.warn('Could not queue a pilot follow-up:', error));
+    });
+}
+
+/** Who wrote a message, kept so only they (or an administrator) can edit or withdraw it. */
+export function senderMetadata(senderId: string | undefined, extra: Record<string, unknown> = {}): string | null {
+    const metadata = senderId ? { senderId, ...extra } : extra;
+    return Object.keys(metadata).length > 0 ? JSON.stringify(metadata) : null;
+}
+
+/**
+ * Whether this person wrote the message: by its recorded sender, or (for messages from
+ * before senders were recorded) by its side of the thread. An administrator may always.
+ */
+export function isMessageAuthor(message: ChatMessageRow, user: { userId: string; role: string }): boolean {
+  if (user.role === 'admin') return true;
+  const senderId = (message.metadata as { senderId?: unknown } | null)?.senderId;
+  if (typeof senderId === 'string') return senderId === user.userId;
+  return message.role === (user.role === 'farmer' ? 'user' : 'officer');
+}
+
+/** Store an officer's reply in a thread, then do what follows every reply. */
+export async function postOfficerReply(conversationId: string, content: string, senderId?: string): Promise<ChatMessageRow | null> {
     const { rows } = await query<ChatMessageRow>(
-        `INSERT INTO chat_messages (conversation_id, role, content) VALUES ($1, 'officer', $2) RETURNING *`,
-        [conversationId, content],
+        `INSERT INTO chat_messages (conversation_id, role, content, metadata) VALUES ($1, 'officer', $2, $3) RETURNING *`,
+        [conversationId, content, senderMetadata(senderId)],
     );
     await query('UPDATE chat_conversations SET started_at = NOW() WHERE id = $1', [conversationId]);
     const created = rows[0] ?? null;
-    if (created) {
-        fanoutNewMessage(conversationId, created);
-        scheduleChannelDelivery(conversationId, created.id, created.content);
-        // In a running pilot, the farmer is later asked whether they followed this advice.
-        setImmediate(() => {
-            queueAdviceFollowUp(conversationId, created.id).catch(error => logger.warn('Could not queue a pilot follow-up:', error));
-        });
-    }
+    if (created) afterOfficerReply(conversationId, created);
     return created;
 }
