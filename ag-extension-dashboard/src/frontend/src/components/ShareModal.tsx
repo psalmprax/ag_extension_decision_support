@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { createShare, ShareResponse } from '@/api/shareService';
 import { useLanguage } from '@/lib/LanguageContext';
+import { copyWithToast } from '@/lib/copyText';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -82,12 +83,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     }
   };
 
-  const copyToClipboard = () => {
-    if (shareData?.shareUrl) {
-      navigator.clipboard.writeText(shareData.shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+  const copyToClipboard = async () => {
+    if (!shareData?.shareUrl || !(await copyWithToast(shareData.shareUrl, 'Link copied.'))) return;
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   if (!isOpen) return null;

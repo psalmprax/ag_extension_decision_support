@@ -28,6 +28,7 @@ import {
   type DemoUser,
 } from './demoData';
 import { isDemoId, isDemoFarmerId, containsDemoId } from './demoIds';
+import { safeStorage } from '@/lib/safeStorage';
 
 export type { DemoFarmerExtended, DemoUser };
 
@@ -38,7 +39,7 @@ export function enterDemoMode(user: User): void {
   const store = useAppStore.getState();
   store.setUser(user);
   store.setIsDemo(true);
-  localStorage.setItem('user', JSON.stringify(user));
+  safeStorage.set('user', JSON.stringify(user));
   queryClient.clear();
 }
 

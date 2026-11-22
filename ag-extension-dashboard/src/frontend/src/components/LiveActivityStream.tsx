@@ -89,6 +89,7 @@ function getChannelBadge(channel: string) {
 }
 
 import { TriageFilterBar, type FilterSeverity } from './activity/TriageFilterBar';
+import { copyWithToast } from '@/lib/copyText';
 
 // ── Sub-components ──────────────────────────────────────────────────
 
@@ -274,8 +275,7 @@ const TeleCallModal: React.FC<{
 
   const copyInviteLink = () => {
     const inviteLink = `${window.location.origin}/tele-call/${roomId}`;
-    navigator.clipboard.writeText(inviteLink);
-    toast.success('Invite link copied — share it with the farmer to join this call.');
+    void copyWithToast(inviteLink, 'Invite link copied — share it with the farmer to join this call.');
   };
 
   return (

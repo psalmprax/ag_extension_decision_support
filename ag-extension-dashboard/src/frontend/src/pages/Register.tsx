@@ -14,6 +14,7 @@ import apiClient from '@/api/client';
 import { EncryptedStorageService } from '@/services/encryptedStorageService';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 import { AUTH_CARD } from '@/components/ui/controlStyles';
+import { safeStorage } from '@/lib/safeStorage';
 
 interface PublicConsultationSession {
   messages: Array<{ sender: 'user' | 'assistant'; text: string; language?: string; sourceBadge?: string }>;
@@ -145,7 +146,7 @@ export function Register() {
       const userData = data.data?.user || data.user;
 
       if (userData) {
-        localStorage.setItem('user', JSON.stringify(userData));
+        safeStorage.set('user', JSON.stringify(userData));
         setUser(userData as User);
       }
 

@@ -6,6 +6,7 @@ import { cn } from '@/lib/cn';
 import { dropdownVariants } from '@/lib/animations';
 import { useLanguage } from '@/lib/LanguageContext';
 import { AVATAR_PRESETS } from '@/components/profileDefaults';
+import { safeStorage } from '@/lib/safeStorage';
 
 interface ProfileMenuProps {
   isProfileMenuOpen: boolean;
@@ -31,7 +32,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
       try {
         // The account's avatar, else this browser's older copy.
         setAvatarId(storeUser?.profileSettings?.avatarId
-          || (storeUser?.id ? localStorage.getItem(`gpexts_user_avatar:${storeUser.id}`) || '' : ''));
+          || (storeUser?.id ? safeStorage.get(`gpexts_user_avatar:${storeUser.id}`) || '' : ''));
       } catch {
         setAvatarId('');
       }

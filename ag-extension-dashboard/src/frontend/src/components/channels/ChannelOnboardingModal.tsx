@@ -21,6 +21,7 @@ import { WhatsAppTab } from './WhatsAppTab';
 import { TelegramTab } from './TelegramTab';
 import { SimulatorTab } from './SimulatorTab';
 import { useLanguage } from '@/lib/LanguageContext';
+import { copyWithToast } from '@/lib/copyText';
 
 interface ChannelOnboardingModalProps {
   isOpen: boolean;
@@ -160,10 +161,9 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
     }
   }, [isOpen, loadConfigs]);
 
-  const copyToClipboard = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = async (text: string, key: string) => {
+    if (!(await copyWithToast(text, 'Copied.'))) return;
     setCopiedKey(key);
-    toast.success('Copied to clipboard!');
     setTimeout(() => setCopiedKey(null), 2500);
   };
 

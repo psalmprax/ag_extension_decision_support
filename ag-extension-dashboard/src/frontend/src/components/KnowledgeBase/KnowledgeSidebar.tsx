@@ -19,6 +19,7 @@ import { useDemoMode } from '@/demo';
 import { logout as apiLogout } from '@/api/authService';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useLanguage } from '@/lib/LanguageContext';
+import { safeStorage } from '@/lib/safeStorage';
 
 interface HistoryItem {
   id: string;
@@ -52,7 +53,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
 
   const handleLogout = async () => {
     await apiLogout();
-    localStorage.removeItem('user');
+    safeStorage.remove('user');
     window.location.href = '/login';
   };
 

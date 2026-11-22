@@ -2,6 +2,7 @@
  * Client-Side Encrypted Storage Service (AES-256-GCM / Web Crypto API)
  * Protects offline farmer PII, GPS coordinates, and cached records if a field smartphone is stolen.
  */
+import { safeStorage } from '@/lib/safeStorage';
 
 export class EncryptedStorageService {
   private static masterKey: CryptoKey | null = null;
@@ -13,11 +14,11 @@ export class EncryptedStorageService {
   static getOrCreateDeviceSalt(): string {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
-        let salt = window.localStorage.getItem('ag_ext_device_salt');
+        let salt = safeStorage.get('ag_ext_device_salt');
         if (!salt) {
           const randomBytes = crypto.getRandomValues(new Uint8Array(16));
           salt = Array.from(randomBytes).map((b) => b.toString(16).padStart(2, '0')).join('');
-          window.localStorage.setItem('ag_ext_device_salt', salt);
+          safeStorage.set('ag_ext_device_salt', salt);
         }
         return salt;
       }

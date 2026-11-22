@@ -14,7 +14,6 @@ import { X, TrendingUp, MessageSquare, Phone, Video, Clock, ChevronRight, Sprout
 import { FarmerProgressLog } from './progress/FarmerProgressLog';
 
 type DetailTab = 'overview' | 'history' | 'progress' | 'insights';
-import toast from 'react-hot-toast';
 import { VideoCall } from './VideoCall';
 import { useLanguage } from '@/lib/LanguageContext';
 import { isActionEnter } from '@/lib/keyboard';
@@ -27,6 +26,7 @@ import { fetchPriorityScore, updateVisit } from '@/api/visitService';
 import { SatelliteInsights } from './SatelliteInsights';
 import { ConfirmModal } from './ConfirmModal';
 import { getLogContent, getLogTypeColor } from './farmerLogFormat';
+import { copyWithToast } from '@/lib/copyText';
 
 interface FarmerDetailPanelProps {
   isOpen: boolean;
@@ -743,8 +743,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             <button
               onClick={() => {
                 const inviteLink = `${window.location.origin}/tele-call/farmer-${farmer.id}`;
-                navigator.clipboard.writeText(inviteLink);
-                toast.success('Invite link copied — share it with the farmer to join this call.');
+                void copyWithToast(inviteLink, 'Invite link copied — share it with the farmer to join this call.');
               }}
               className="absolute top-4 end-16 z-[110] px-3 py-2 bg-black/50 hover:bg-black/70 text-white text-xs font-medium rounded-xl backdrop-blur-md transition-all flex items-center gap-1.5"
             >

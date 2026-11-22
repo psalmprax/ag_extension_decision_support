@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Download, X, Smartphone, Share, PlusSquare, ShieldCheck, WifiOff } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useLanguage } from '@/lib/LanguageContext';
+import { safeStorage } from '@/lib/safeStorage';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -40,7 +41,7 @@ export const PwaInstallPrompt: React.FC = () => {
     if (isRunningStandalone) return;
 
     // Check if user dismissed prompt recently
-    const dismissedUntil = localStorage.getItem('pwa_prompt_dismissed_until');
+    const dismissedUntil = safeStorage.get('pwa_prompt_dismissed_until');
     if (dismissedUntil && new Date().getTime() < parseInt(dismissedUntil, 10)) {
       return;
     }
@@ -96,7 +97,7 @@ export const PwaInstallPrompt: React.FC = () => {
     setShowPrompt(false);
     // Dismiss for 7 days
     const sevenDaysFromNow = new Date().getTime() + 7 * 24 * 60 * 60 * 1000;
-    localStorage.setItem('pwa_prompt_dismissed_until', sevenDaysFromNow.toString());
+    safeStorage.set('pwa_prompt_dismissed_until', sevenDaysFromNow.toString());
   };
 
   if (isStandalone || !showPrompt || isChatOpen) return null;

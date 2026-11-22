@@ -1,6 +1,7 @@
 import apiClient from './client';
 import { resolveOfflineConflict, type FieldConflict } from '@/services/offlineConflictResolver';
 import { randomId } from '@/lib/randomId';
+import { safeStorage } from '@/lib/safeStorage';
 
 export type SyncState = 'pending' | 'failed' | 'conflict';
 
@@ -155,7 +156,7 @@ class SyncQueueService {
       }
     } catch { /* ignore */ }
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = safeStorage.get(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as Array<Partial<SyncQueueItem> & Pick<SyncQueueItem, 'id'>>;
         this.queue = parsed.map(item => ({ ...(item as SyncQueueItem), idempotencyKey: item.idempotencyKey || item.id, state: item.state || 'pending', retryCount: item.retryCount || 0 }));
@@ -180,7 +181,7 @@ class SyncQueueService {
   private persistNow(): void {
     let failure: unknown = null;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.queue));
+      safeStorage.set(STORAGE_KEY, JSON.stringify(this.queue));
     } catch (error) {
       failure = error;
     }

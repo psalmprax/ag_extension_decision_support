@@ -2,6 +2,7 @@
  * Parcel Geo Service — WGS-84 GPS Polygon Tracing, Geodesic Area Calculation & GeoJSON Export.
  * Computes exact field boundary acreage, perimeter, and centroid 100% offline.
  */
+import { safeStorage } from '@/lib/safeStorage';
 
 export interface GeoVertex {
   lat: number;
@@ -177,10 +178,10 @@ const OFFLINE_PARCELS_STORAGE_KEY = 'agri_offline_parcels_v1';
 
 export function saveParcelOffline(parcel: GeoJsonParcelFeature): void {
   try {
-    const raw = localStorage.getItem(OFFLINE_PARCELS_STORAGE_KEY);
+    const raw = safeStorage.get(OFFLINE_PARCELS_STORAGE_KEY);
     const parcels: GeoJsonParcelFeature[] = raw ? JSON.parse(raw) : [];
     parcels.push(parcel);
-    localStorage.setItem(OFFLINE_PARCELS_STORAGE_KEY, JSON.stringify(parcels));
+    safeStorage.set(OFFLINE_PARCELS_STORAGE_KEY, JSON.stringify(parcels));
   } catch (error) {
     console.error('Failed to save parcel offline:', error);
   }
@@ -188,7 +189,7 @@ export function saveParcelOffline(parcel: GeoJsonParcelFeature): void {
 
 export function getOfflineParcels(): GeoJsonParcelFeature[] {
   try {
-    const raw = localStorage.getItem(OFFLINE_PARCELS_STORAGE_KEY);
+    const raw = safeStorage.get(OFFLINE_PARCELS_STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];

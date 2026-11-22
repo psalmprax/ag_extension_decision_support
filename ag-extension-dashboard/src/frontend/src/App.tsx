@@ -41,6 +41,7 @@ import { useAppMenuActions } from './hooks/useAppMenuActions';
 import { fetchUnreadCount } from '@/api/notificationService';
 import { ensurePersistentQueueStorage } from '@/api/syncQueueService';
 import { OfflineQueueBanner } from './components/common/OfflineQueueBanner';
+import { safeStorage } from '@/lib/safeStorage';
 
 // Lazy loaded components
 const LandingPage = lazy(() =>
@@ -162,7 +163,7 @@ function App() {
   // profile lives in localStorage.
   const handleLogout = async () => {
     await apiLogout();
-    localStorage.removeItem('user');
+    safeStorage.remove('user');
     setUser(null);
     window.location.href = '/login';
   };

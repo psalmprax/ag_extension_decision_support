@@ -19,6 +19,7 @@ import {
   type ThemeColors,
   type ColorScale,
 } from './tokens';
+import { safeStorage } from '@/lib/safeStorage';
 
 export { themes, errorScale, semanticTokens, surfaceTokens, SURFACE_TOKEN_NAMES, colorToRgb };
 export { COLOR_STEPS, designTokens, kebabCase } from './tokens';
@@ -166,7 +167,7 @@ export function applyTheme(themeName: ThemeName): void {
 
 /** Initialize the theme from localStorage (or the forest default). */
 export function initializeTheme(): void {
-  const savedTheme = localStorage.getItem('ag-theme-name') as ThemeName | null;
+  const savedTheme = safeStorage.get('ag-theme-name') as ThemeName | null;
   const theme = savedTheme && themes[savedTheme] ? savedTheme : 'forest';
   applyTheme(theme);
 }

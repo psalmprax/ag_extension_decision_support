@@ -19,6 +19,7 @@ import { getApiErrorMessage } from '@/lib/apiError';
 import { useThreadHistory } from './useThreadHistory';
 import { queryClient } from '@/lib/queryClient';
 import { UNREAD_CHATS_KEY } from '@/hooks/useUnreadChats';
+import { safeStorage } from '@/lib/safeStorage';
 
 interface QueuedChatItem {
   conversationId: string | null;
@@ -50,22 +51,22 @@ async function sendQueuedChatItem(item: QueuedChatItem): Promise<boolean> {
 
 /** Drain one conversation's offline chat queue out of localStorage. */
 async function drainChatOfflineQueue(key: string): Promise<void> {
-  const items = JSON.parse(localStorage.getItem(key) || '[]') as QueuedChatItem[];
+  const items = safeStorage.json<QueuedChatItem[]>(key, []);
   for (const item of [...items]) {
     if (!(await sendQueuedChatItem(item))) return;
     items.shift();
-    localStorage.setItem(key, JSON.stringify(items));
+    safeStorage.set(key, JSON.stringify(items));
   }
-  if (items.length === 0) localStorage.removeItem(key);
+  if (items.length === 0) safeStorage.remove(key);
 }
 
 function enqueueOfflineMessage(
   queueKey: string,
   item: QueuedChatItem
 ): void {
-  const q = JSON.parse(localStorage.getItem(queueKey) || '[]') as QueuedChatItem[];
+  const q = safeStorage.json<QueuedChatItem[]>(queueKey, []);
   q.push(item);
-  localStorage.setItem(queueKey, JSON.stringify(q));
+  safeStorage.set(queueKey, JSON.stringify(q));
 }
 
 async function sendDemoFarmerResponse(
@@ -323,9 +324,9 @@ export const useAppChat = (language: string) => {
 
       // Single-flight across tabs. Both tabs share one localStorage queue, so without a
       // lock simultaneous drains would send every queued message twice.
-      const heldSince = Number(localStorage.getItem(DRAIN_LOCK_KEY) || 0);
+      const heldSince = Number(safeStorage.get(DRAIN_LOCK_KEY) || 0);
       if (heldSince && Date.now() - heldSince < DRAIN_LOCK_TTL_MS) return;
-      localStorage.setItem(DRAIN_LOCK_KEY, String(Date.now()));
+      safeStorage.set(DRAIN_LOCK_KEY, String(Date.now()));
 
       try {
         // Snapshot keys first: draining removes entries, which shifts the live
@@ -340,7 +341,7 @@ export const useAppChat = (language: string) => {
         }
         if (activeFarmerConvId) loadFarmerMessages(activeFarmerConvId);
       } finally {
-        localStorage.removeItem(DRAIN_LOCK_KEY);
+        safeStorage.remove(DRAIN_LOCK_KEY);
       }
     };
     window.addEventListener('online', drain);

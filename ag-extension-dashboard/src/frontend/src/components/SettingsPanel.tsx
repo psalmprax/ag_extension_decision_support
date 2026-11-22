@@ -15,6 +15,7 @@ import { ThemeSwitcher } from './ThemeSwitcher';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import toast from 'react-hot-toast';
 import { ChannelOnboardingModal } from './channels/ChannelOnboardingModal';
+import { safeStorage } from '@/lib/safeStorage';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -161,12 +162,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                       const preserveKeys = ['user', 'theme', 'ag-theme-name'];
                       const preserved: Record<string, string> = {};
                       preserveKeys.forEach(key => {
-                        const val = localStorage.getItem(key);
+                        const val = safeStorage.get(key);
                         if (val) preserved[key] = val;
                       });
                       localStorage.clear();
                       Object.entries(preserved).forEach(([key, val]) =>
-                        localStorage.setItem(key, val)
+                        safeStorage.set(key, val)
                       );
                       sessionStorage.clear();
                       try {

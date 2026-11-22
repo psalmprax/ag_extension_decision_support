@@ -31,6 +31,7 @@ import { MULTILINGUAL_LANGUAGES } from './languages';
 import { synthesizeSpeech } from '@/api/aiService';
 import { cleanTextForSpeech, stopAllAudioPlayback } from '@/components/audio/audioHelpers';
 import { useLanguage } from '@/lib/LanguageContext';
+import { copyWithToast } from '@/lib/copyText';
 
 interface ContextItem {
   content: string;
@@ -677,11 +678,10 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
     }
   };
 
-  const handleCopyAnswer = () => {
+  const handleCopyAnswer = async () => {
     const textToCopy = translations[activeLang] || result.answer;
-    navigator.clipboard.writeText(textToCopy);
+    if (!(await copyWithToast(textToCopy, 'Answer copied.'))) return;
     setCopied(true);
-    toast.success('Executive synthesis copied to clipboard!');
     setTimeout(() => setCopied(false), 2500);
   };
 

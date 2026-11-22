@@ -1,3 +1,4 @@
+import { safeStorage } from '@/lib/safeStorage';
 // Offline queue moved verbatim from components/Cyber/AlphaAI.tsx (pure move).
 
 const OFFLINE_QUEUE_KEY = 'alphaAiOfflineQueue';
@@ -5,11 +6,11 @@ const OFFLINE_QUEUE_KEY = 'alphaAiOfflineQueue';
 export const nowStamp = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 function readOfflineQueue(): string[] {
-  return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]') as string[];
+  return safeStorage.json<string[]>(OFFLINE_QUEUE_KEY, []);
 }
 
 function writeOfflineQueue(queue: string[]): void {
-  localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+  safeStorage.set(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
 }
 
 export function enqueueOfflineQuery(query: string): void {
@@ -45,5 +46,5 @@ export async function drainAlphaOfflineQueue(send: (query: string) => Promise<bo
     writeOfflineQueue(current);
     if (!navigator.onLine) return;
   }
-  if (readOfflineQueue().length === 0) localStorage.removeItem(OFFLINE_QUEUE_KEY);
+  if (readOfflineQueue().length === 0) safeStorage.remove(OFFLINE_QUEUE_KEY);
 }

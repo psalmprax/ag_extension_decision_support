@@ -26,7 +26,7 @@ import toast from 'react-hot-toast';
 import apiClient from '@/api/client';
 import { logout } from '@/api/authService';
 import { PasswordChangeInput } from '@/components/profile/PasswordChangeInput';
-import { AVATAR_PRESETS, DEFAULT_PREFERENCES, getSavedProfileData } from './profileDefaults';
+import { AVATAR_PRESETS, DEFAULT_PREFERENCES, getSavedProfileData, saveProfileLocally } from './profileDefaults';
 import { TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
 
 const PROFILE_TABS = [
@@ -35,6 +35,7 @@ const PROFILE_TABS = [
   { id: 'security', label: 'ui_profile_modal_security_account', icon: Lock },
 ] as const;
 import { saveBlob } from '@/lib/saveBlob';
+import { safeStorage } from '@/lib/safeStorage';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -113,16 +114,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         phone: formData.phone,
         profileSettings,
       });
-      let personalizationSaved = true;
-      try {
-        localStorage.setItem(`gpexts_user_avatar:${user?.id}`, formData.avatarId);
-        localStorage.setItem(`gpexts_user_handle:${user?.id}`, formData.username);
-        localStorage.setItem(`gpexts_user_phone:${user?.id}`, formData.phone);
-        localStorage.setItem(`gpexts_user_preferences:${user?.id}`, JSON.stringify(preferences));
-        window.dispatchEvent(new Event('gpexts:avatar-updated'));
-      } catch {
-        personalizationSaved = false;
-      }
+      const personalizationSaved = saveProfileLocally(user?.id, formData, preferences);
+      window.dispatchEvent(new Event('gpexts:avatar-updated'));
 
       if (user) {
         setUser({
@@ -169,7 +162,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       toast.success('Password updated. Please sign in again.');
       setPasswordState({ currentPassword: '', newPassword: '', confirmPassword: '' });
       await logout();
-      localStorage.removeItem('user');
+      safeStorage.remove('user');
       setUser(null);
       window.location.href = '/login';
     } catch {
@@ -192,7 +185,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       });
       toast.success('Account deleted. Your session has ended.');
       await logout();
-      localStorage.removeItem('user');
+      safeStorage.remove('user');
       setUser(null);
       window.location.href = '/login';
     } catch {
