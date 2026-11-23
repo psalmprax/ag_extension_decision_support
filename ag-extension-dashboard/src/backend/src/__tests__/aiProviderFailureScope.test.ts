@@ -78,6 +78,21 @@ describe('AI provider failure scope', () => {
     });
 });
 
+describe('empty transcripts', () => {
+    it('returns an empty transcript as it is, without trying other providers', async () => {
+        const speechToText = jest.fn<ReturnType<AICapability['speechToText']>, Parameters<AICapability['speechToText']>>()
+            .mockResolvedValue({ text: '', language: 'en' });
+        const getProvider = jest.spyOn(AIProviderFactory, 'getProvider')
+            .mockImplementation(async type => (type === 'openai' ? fakeProvider('openai', true, { speechToText }) : fakeProvider(type ?? 'aihubmix', false)));
+
+        const result = await AIRouter.routeRequest('speech', { audio: Buffer.from('silence'), options: { preferredProvider: 'openai' } });
+
+        expect(result).toMatchObject({ text: '' });
+        expect(speechToText).toHaveBeenCalledTimes(1);
+        getProvider.mockRestore();
+    });
+});
+
 describe('isEmptyAnswer', () => {
     it('counts blank text without tool calls, and a blank reasoning answer, as empty', async () => {
         const { isEmptyAnswer } = await import('@/services/aiProvider/aiProvider');

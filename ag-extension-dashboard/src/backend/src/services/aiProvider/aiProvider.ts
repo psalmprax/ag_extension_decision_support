@@ -207,8 +207,9 @@ export class AIProviderFactory {
             logger.info(`Using AI provider: ${providerType}`);
             const result = await operation(provider);
             // An empty answer is a failure, not a reply: the next provider gets the question
-            // rather than the farmer getting a blank message.
-            if (isEmptyAnswer(result)) throw new Error('empty reply');
+            // rather than the farmer getting a blank message. An empty transcript is a real
+            // result (a silent voice note), so speech is left alone.
+            if (context.failureScope !== 'speech' && isEmptyAnswer(result)) throw new Error('empty reply');
             this.healthCache.set(providerType, { isHealthy: true, expiresAt: Date.now() + 120_000 });
             this.operationFailures.delete(failureKey);
             await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'success', undefined, result);
