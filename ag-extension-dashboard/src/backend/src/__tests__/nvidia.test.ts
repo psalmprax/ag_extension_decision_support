@@ -56,4 +56,28 @@ describe('NVIDIAProvider (Reasoning & Tool-Calling)', () => {
       expect.any(Object)
     );
   });
+
+  it('asks once more with the full budget when a small one runs out before the answer', async () => {
+    const reply = (content: string | null, finish: string) => ({
+      data: { id: 'nv', model: 'nvidia/nemotron', choices: [{ message: { role: 'assistant', content }, finish_reason: finish }] },
+    });
+    mockedAxios.post.mockResolvedValueOnce(reply(null, 'length')).mockResolvedValueOnce(reply('pong', 'stop'));
+
+    const result = await new NVIDIAProvider().generateText('Reply with exactly one word: pong', { maxTokens: 256 });
+
+    expect(result.text).toBe('pong');
+    expect(mockedAxios.post).toHaveBeenCalledTimes(2);
+    expect((mockedAxios.post.mock.calls[0][1] as { max_tokens: number }).max_tokens).toBe(256);
+    expect((mockedAxios.post.mock.calls[1][1] as { max_tokens: number }).max_tokens).toBe(4096);
+  });
+
+  it('does not retry an empty reply that ended normally', async () => {
+    mockedAxios.post.mockResolvedValueOnce({
+      data: { id: 'nv', model: 'nvidia/nemotron', choices: [{ message: { role: 'assistant', content: '' }, finish_reason: 'stop' }] },
+    });
+    const result = await new NVIDIAProvider().generateText('ping', { maxTokens: 256 });
+    expect(result.text).toBe('');
+    expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+  });
 });
+

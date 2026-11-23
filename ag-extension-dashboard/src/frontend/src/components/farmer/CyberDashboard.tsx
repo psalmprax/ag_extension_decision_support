@@ -3,7 +3,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Zap, TrendingUp, LineChart, ShieldAlert } from 'lucide-react';
 import FarmPlotView from '../Cyber/FarmPlotView';
-import CropCycleGantt from '../Cyber/CropCycleGantt';
+import { FarmerYieldList } from './FarmerYieldList';
 import SystemOverview from '../Cyber/SystemOverview';
 
 interface CyberDashboardProps {
@@ -102,27 +102,13 @@ export const CyberDashboard: React.FC<CyberDashboardProps> = ({ farmerStats }) =
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 animate-slide-up" style={{ animationDelay: '100ms' }}>
-          <CropCycleGantt
-            items={
-              Array.isArray(farmerStats?.['yieldHistory'])
-                ? (farmerStats['yieldHistory'] as Array<{ crop?: string; yield?: number }>).map(
-                    (y, i) => ({
-                      id: String(i),
-                      label: `${y.crop || 'PHASE_' + (i + 1)}`,
-                      value: `${y.yield || 0} t/ha`,
-                      percent: Math.min((y.yield || 0) * 10, 100),
-                    })
-                  )
-                : []
-            }
-          />
+          <FarmerYieldList records={farmerStats?.['yieldHistory']} />
         </div>
         <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
           <SystemOverview
             healthScore={
-              farmerStats?.['vitalScore'] !== undefined
-                ? Number(((farmerStats['vitalScore'] as number) * 10).toFixed(1))
-                : undefined
+              // vital_score is already out of 100, the scale the grade reads.
+              typeof farmerStats?.['vitalScore'] === 'number' ? Math.round(farmerStats['vitalScore'] as number) : undefined
             }
             indicators={[
               {

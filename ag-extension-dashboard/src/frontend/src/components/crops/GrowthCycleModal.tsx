@@ -63,7 +63,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-medium text-slate-400 dark:text-theme-text-secondary mb-1">
                 {t('ui_growth_cycle_modal_crop_name_type')}
               </label>
               <input
@@ -76,7 +76,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-medium text-slate-400 dark:text-theme-text-secondary mb-1">
                 {t('ui_growth_cycle_modal_crop_variety')}
               </label>
               <input
@@ -90,7 +90,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-slate-400 dark:text-theme-text-secondary mb-1">
                   {t('ui_crop_cycles_table_planting_date')}
                 </label>
                 <input
@@ -103,7 +103,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-slate-400 dark:text-theme-text-secondary mb-1">
                   {t('ui_growth_cycle_modal_est_harvest_date')}
                 </label>
                 <input
@@ -118,7 +118,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-medium text-slate-400 dark:text-theme-text-secondary mb-1">
                 {t('ui_growth_cycle_modal_notes_recommendations')}
               </label>
               <textarea

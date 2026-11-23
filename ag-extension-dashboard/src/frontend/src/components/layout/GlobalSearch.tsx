@@ -170,7 +170,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
           type="text"
           aria-label={t('common_search_placeholder', { defaultValue: 'Search system or location' })}
           placeholder={t('common_search_placeholder', { defaultValue: 'Search system or location...' })}
-          className="bg-white dark:bg-theme-bg-secondary border border-slate-300 dark:border-white/[0.12] rounded-full ps-10 pe-4 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 dark:focus:border-primary-400 outline-none w-48 md:w-64 transition-all text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 shadow-sm"
+          className="bg-white dark:bg-theme-bg-secondary border border-slate-300 dark:border-white/[0.12] rounded-full ps-10 pe-4 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 dark:focus:border-primary-400 outline-none w-48 md:w-64 transition-all text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-theme-text-muted shadow-sm"
           value={searchQuery}
           onChange={e => {
             setSearchQuery(e.target.value);
@@ -187,18 +187,18 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
         {shouldShowResults && (
           <div className="absolute top-full mt-2 start-0 end-0 bg-white dark:bg-theme-bg-secondary border border-slate-300 dark:border-white/[0.12] rounded-xl shadow-2xl z-[100] max-h-80 overflow-y-auto">
             {isGlobalSearching ? (
-              <div role="status" aria-live="polite" className="p-4 text-center text-sm text-slate-600 dark:text-slate-300">
+              <div role="status" aria-live="polite" className="p-4 text-center text-sm text-slate-600 dark:text-theme-text-secondary">
                 <Loader2 className="w-4 h-4 animate-spin inline me-2" />
                 {t('common_searching', { defaultValue: 'Searching...' })}
               </div>
             ) : globalSearchResults.length === 0 ? (
-              <div role="status" className="p-4 text-center text-sm text-slate-600 dark:text-slate-300">
+              <div role="status" className="p-4 text-center text-sm text-slate-600 dark:text-theme-text-secondary">
                 {t('common_search_no_results', { defaultValue: 'No results found' })}
               </div>
             ) : (
               globalSearchResults.map(group => (
                 <div key={formatLabel(group.type)}>
-                  <div className="px-4 pt-3 pb-1 text-xxs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-theme-bg-tertiary/60">
+                  <div className="px-4 pt-3 pb-1 text-xxs font-medium text-slate-700 dark:text-theme-text-secondary bg-slate-100 dark:bg-theme-bg-tertiary/60">
                     {formatLabel(group.type)}
                   </div>
                   {group.items.map(item => (
@@ -208,11 +208,11 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
                       onClick={() => handleItemClick(group.type, item)}
                     >
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                        <p className="text-sm font-medium text-slate-900 dark:text-theme-text-primary truncate">
                           {item.label}
                         </p>
                         {item.sublabel && (
-                          <p className="text-xs text-slate-600 dark:text-slate-400 truncate">{item.sublabel}</p>
+                          <p className="text-xs text-slate-600 dark:text-theme-text-muted truncate">{item.sublabel}</p>
                         )}
                       </div>
                       <ChevronRight className="w-4 h-4 text-slate-400" />

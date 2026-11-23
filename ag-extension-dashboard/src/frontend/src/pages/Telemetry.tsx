@@ -1,39 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Activity, Clock, AlertTriangle, DollarSign, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
-import { useDemoMode } from '@/demo';
 import {
   fetchTelemetrySummary,
   fetchTelemetryEvents,
   TelemetrySummary,
   TelemetryEvent,
 } from '../api/telemetryService';
-import {
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  Cell,
-} from 'recharts';
-import { MetricCard } from '@/components/MetricCard';
-import { CH_COLORS } from '@/lib/colors';
-import { ChartTooltip } from '@/components/charts/ChartTooltip';
-import { chartGrid, chartTick } from '@/components/charts/chartConfig';
+
+
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
+import { TelemetryBreakdowns, TelemetryStatTiles } from './telemetry/TelemetryPanels';
 import { SoilNutrientHeatmapCanvas } from '@/components/canvas-ui/SoilNutrientHeatmapCanvas';
-import { LiveSparklineCanvas } from '@/components/canvas-ui/LiveSparklineCanvas';
 
 function Telemetry() {
   const { t } = useLanguage();
   const { headingClass, radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
-  const { isDemo } = useDemoMode();
 
   // State
   const [summary, setSummary] = useState<TelemetrySummary | null>(null);
@@ -87,17 +73,6 @@ function Telemetry() {
     event => filterStatus === 'all' || event.status === filterStatus
   );
 
-  const statusStats = {
-    success: events.filter(e => e.status === 'success').length,
-    error: events.filter(e => e.status === 'error').length,
-    pending: events.filter(e => e.status === 'pending').length,
-  };
-
-  const statusData = [
-    { name: t('telemetry_success'), value: statusStats.success, color: CH_COLORS.success },
-    { name: t('telemetry_error'), value: statusStats.error, color: CH_COLORS.error },
-    { name: t('telemetry_pending'), value: statusStats.pending, color: CH_COLORS.warning },
-  ];
 
   if (isLoading) {
     return (
@@ -138,105 +113,7 @@ function Telemetry() {
         </div>
       </div>
 
-      {/* Stats Cards with Live Sparklines */}
-      {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="card p-5 relative overflow-hidden flex flex-col justify-between">
-            <MetricCard
-              title={t('telemetry_total_requests')}
-              value={summary.totalRequests.toLocaleString()}
-              icon={Activity}
-              color="blue"
-            />
-            <div className="mt-3 pt-2 border-t border-gray-100 dark:border-white/[0.08]">
-              {isDemo ? (
-                <LiveSparklineCanvas
-                  data={[12, 19, 15, 27, 24, 32, 28, 41, 38, (summary.totalRequests % 50) + 20]}
-                  color="#0284c7"
-                  fillColor="rgba(2, 132, 199, 0.12)"
-                  height={28}
-                />
-              ) : (
-                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">{t('ui_telemetry_live_count_sparkline_history_availab')}</div>
-              )}
-            </div>
-          </div>
-
-          <div className="card p-5 relative overflow-hidden flex flex-col justify-between">
-            <MetricCard
-              title={t('telemetry_avg_response_time')}
-              value={`${summary.avgResponseTimeMs.toFixed(0)}ms`}
-              icon={Clock}
-              color="green"
-            />
-            <div className="mt-3 pt-2 border-t border-gray-100 dark:border-white/[0.08]">
-              {isDemo ? (
-                <LiveSparklineCanvas
-                  data={[
-                    340,
-                    290,
-                    310,
-                    280,
-                    260,
-                    240,
-                    250,
-                    230,
-                    210,
-                    summary.avgResponseTimeMs || 220,
-                  ]}
-                  color="#10b981"
-                  fillColor="rgba(16, 185, 129, 0.12)"
-                  height={28}
-                />
-              ) : (
-                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">{t('ui_telemetry_live_latency_history_in_demo')}</div>
-              )}
-            </div>
-          </div>
-
-          <div className="card p-5 relative overflow-hidden flex flex-col justify-between">
-            <MetricCard
-              title={t('telemetry_error_rate')}
-              value={`${(summary.errorRate * 100).toFixed(1)}%`}
-              icon={AlertTriangle}
-              color="red"
-            />
-            <div className="mt-3 pt-2 border-t border-gray-100 dark:border-white/[0.08]">
-              {isDemo ? (
-                <LiveSparklineCanvas
-                  data={[4.2, 3.8, 5.1, 2.9, 3.2, 2.1, 1.8, 1.2, 0.9, summary.errorRate * 100]}
-                  color="#ef4444"
-                  fillColor="rgba(239, 68, 68, 0.12)"
-                  height={28}
-                />
-              ) : (
-                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">{t('ui_telemetry_live_error_rate_history_in_demo')}</div>
-              )}
-            </div>
-          </div>
-
-          <div className="card p-5 relative overflow-hidden flex flex-col justify-between">
-            <MetricCard
-              title={t('telemetry_total_cost')}
-              value={`$${summary.totalCostUsd.toFixed(2)}`}
-              icon={DollarSign}
-              color="purple"
-            />
-            <div className="mt-3 pt-2 border-t border-gray-100 dark:border-white/[0.08]">
-              {isDemo ? (
-                <LiveSparklineCanvas
-                  data={[0.4, 0.8, 1.1, 1.7, 2.3, 3.1, 3.8, 4.4, 5.1, summary.totalCostUsd]}
-                  color="#a855f7"
-                  fillColor="rgba(168, 85, 247, 0.12)"
-                  height={28}
-                />
-              ) : (
-                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">{t('ui_telemetry_live_cost_history_in_demo')}</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {summary && <TelemetryStatTiles summary={summary} events={events} />}
 
       {/* Interactive Spatial Soil & Telemetry Canvas View */}
       <div className="card p-6">
@@ -248,7 +125,7 @@ function Telemetry() {
                 {t('ui_telemetry_soilgrids_v2_nasa_power')}
               </span>
             </h3>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-xs text-gray-600 dark:text-theme-text-muted mt-1">
               {t('ui_telemetry_hardware_accelerated_2d_idw_interpol')}
             </p>
           </div>
@@ -256,51 +133,7 @@ function Telemetry() {
         <SoilNutrientHeatmapCanvas initialLayer="ph" />
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Status Distribution */}
-        <div className="card p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            {t('telemetry_request_distribution')}
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={statusData}>
-              <CartesianGrid {...chartGrid} />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={chartTick} />
-              <YAxis axisLine={false} tickLine={false} tick={chartTick} />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                {statusData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Agent Usage */}
-        {summary?.agentUsage && (
-          <div className="card p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-              {t('telemetry_agent_usage')}
-            </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart
-                data={Object.entries(summary.agentUsage).map(([agent, count]) => ({
-                  name: agent,
-                  usage: count,
-                }))}
-              >
-                <CartesianGrid {...chartGrid} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={chartTick} />
-                <YAxis axisLine={false} tickLine={false} tick={chartTick} />
-                <Tooltip content={<ChartTooltip />} />
-                <Bar dataKey="usage" fill={CH_COLORS.purple} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </div>
+      <TelemetryBreakdowns summary={summary} events={events} />
 
       {/* Recent Events */}
       <div className="card p-6">
@@ -342,14 +175,14 @@ function Telemetry() {
                 />
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">{event.eventType}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-gray-600 dark:text-theme-text-muted">
                     {event.agentId && `Agent: ${event.agentId}`}
                     {event.toolName && ` • Tool: ${event.toolName}`}
                   </p>
                 </div>
               </div>
               <div className="text-end">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-600 dark:text-theme-text-muted">
                   {new Date(event.timestamp).toLocaleString()}
                 </p>
                 {event.durationMs && <p className="text-xs text-gray-500">{event.durationMs}ms</p>}

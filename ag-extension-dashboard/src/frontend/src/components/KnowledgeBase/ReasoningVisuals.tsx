@@ -1,27 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { CH_COLORS } from '@/lib/colors';
-import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   AlertCircle,
   CheckCircle2,
   AlertTriangle,
-  TrendingUp,
   Zap,
   Play,
   Image as ImageIcon,
@@ -29,9 +11,8 @@ import {
   X,
   Maximize2,
 } from 'lucide-react';
-import { EMPTY_VISUALS, type Chart, type KPI, type MediaAsset, type VisualsData } from './types';
-import { ChartTooltip } from '@/components/charts/ChartTooltip';
-import { CHART_PALETTE } from '@/components/charts/chartConfig';
+import { EMPTY_VISUALS, type KPI, type MediaAsset, type VisualsData } from './types';
+import { AnswerChart } from './AnswerChart';
 import { useLanguage } from '@/lib/LanguageContext';
 import { safeHref } from '@/lib/safeHref';
 
@@ -39,92 +20,6 @@ interface ReasoningVisualsProps {
   visuals: VisualsData;
   audio?: string; // Base64 or URL
 }
-
-const BarChartRenderer = ({ data }: { data: Array<Record<string, unknown>> }) => (
-  <BarChart data={data}>
-    <defs>
-      <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="var(--color-chart-blue)" stopOpacity={1} />
-        <stop offset="100%" stopColor="var(--color-primary-500)" stopOpacity={0.8} />
-      </linearGradient>
-    </defs>
-    <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-    <XAxis
-      dataKey="label"
-      axisLine={false}
-      tickLine={false}
-      tick={{ fontSize: 10, fontWeight: 900, fill: 'var(--color-primary-500)' }}
-    />
-    <YAxis
-      axisLine={false}
-      tickLine={false}
-      tick={{ fontSize: 10, fontWeight: 900, fill: 'var(--color-primary-500)' }}
-    />
-    <Tooltip cursor={{ fill: 'var(--color-outline)' }} content={<ChartTooltip />} />
-    <Bar dataKey="value" fill="url(#barGradient)" radius={[6, 6, 0, 0]} barSize={32} />
-  </BarChart>
-);
-
-const AreaChartRenderer = ({ data }: { data: Array<Record<string, unknown>> }) => (
-  <AreaChart data={data}>
-    <defs>
-      <linearGradient id="colorArea" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="5%" stopColor="var(--color-chart-blue)" stopOpacity={0.4} />
-        <stop offset="95%" stopColor="var(--color-chart-blue)" stopOpacity={0} />
-      </linearGradient>
-    </defs>
-    <XAxis dataKey="label" hide />
-    <YAxis hide />
-    <Tooltip content={<ChartTooltip />} />
-    <Area
-      type="monotone"
-      dataKey="value"
-      stroke={CH_COLORS.blue}
-      strokeWidth={4}
-      fillOpacity={1}
-      fill="url(#colorArea)"
-      animationDuration={2000}
-    />
-  </AreaChart>
-);
-
-const PieChartRenderer = ({ data }: { data: Array<Record<string, unknown>> }) => (
-  <PieChart>
-    <Pie
-      data={data}
-      cx="50%"
-      cy="50%"
-      innerRadius={70}
-      outerRadius={95}
-      paddingAngle={8}
-      dataKey="value"
-      stroke="none"
-    >
-      {data.map((_, index) => (
-        <Cell key={`cell-${index}`} fill={CHART_PALETTE[index % CHART_PALETTE.length]} />
-      ))}
-    </Pie>
-    <Tooltip content={<ChartTooltip />} />
-  </PieChart>
-);
-
-const LineChartRenderer = ({ data }: { data: Array<Record<string, unknown>> }) => (
-  <LineChart data={data}>
-    <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-    <XAxis dataKey="label" hide />
-    <YAxis hide />
-    <Tooltip content={<ChartTooltip />} />
-    <Line
-      type="monotone"
-      dataKey="value"
-      stroke={CH_COLORS.purple}
-      strokeWidth={5}
-      dot={{ r: 6, fill: CH_COLORS.purple, strokeWidth: 0 }}
-      activeDot={{ r: 10, stroke: 'white', strokeWidth: 3 }}
-      animationDuration={2500}
-    />
-  </LineChart>
-);
 
 const MediaAssetsSection = ({
   safeVisuals,
@@ -177,7 +72,7 @@ const MediaAssetsSection = ({
             </div>
           </div>
           {img.caption && (
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 px-2 flex items-center justify-between">
+            <p className="text-sm font-medium text-gray-600 dark:text-theme-text-muted px-2 flex items-center justify-between">
               <span>{img.caption}</span>
               <span className="text-xxs text-primary-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                 {t('ui_reasoning_visuals_click_to_enlarge')}
@@ -227,7 +122,7 @@ const MediaAssetsSection = ({
             </div>
           </div>
           {vid.caption && (
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 px-2">{vid.caption}</p>
+            <p className="text-sm font-medium text-gray-600 dark:text-theme-text-muted px-2">{vid.caption}</p>
           )}
         </motion.div>
       ))}
@@ -327,46 +222,6 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
     return url;
   };
 
-  const renderChart = (chart: Chart): React.ReactNode => {
-    const { type, data, title } = chart;
-    const chartData: Array<Record<string, unknown>> = data as unknown as Array<
-      Record<string, unknown>
-    >;
-
-    return (
-      <motion.div
-        whileHover={{ y: -5 }}
-        className="bg-white/40 dark:bg-theme-bg-secondary/30 p-8 rounded-xl border border-white/20 dark:border-white/5 shadow-[0_20px_50px_var(--color-outline)] backdrop-blur-3xl h-[350px] flex flex-col group transition-all"
-      >
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary-500/20 rounded-xl text-primary-500">
-              <TrendingUp className="w-5 h-5" />
-            </div>
-            <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400  ">
-              {title}
-            </h3>
-          </div>
-          <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
-        </div>
-
-        <div className="flex-1 w-full -ms-6">
-          <ResponsiveContainer width="100%" height="100%">
-            {type === 'bar' ? (
-              <BarChartRenderer data={chartData} />
-            ) : type === 'area' ? (
-              <AreaChartRenderer data={chartData} />
-            ) : type === 'pie' ? (
-              <PieChartRenderer data={chartData} />
-            ) : (
-              <LineChartRenderer data={chartData} />
-            )}
-          </ResponsiveContainer>
-        </div>
-      </motion.div>
-    );
-  };
-
   return (
     <div className="space-y-6 mt-8">
       {/* Audio Abstraction Layer */}
@@ -406,7 +261,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                   <AlertCircle className="w-5 h-5" />
                 )}
               </div>
-              <span className="text-xxs font-medium text-gray-400 dark:text-gray-500  ">
+              <span className="text-xxs font-medium text-gray-400 dark:text-theme-text-muted  ">
                 {kpi.label}
               </span>
               <span className="text-2xl font-medium text-gray-900 dark:text-white tracking-tight">
@@ -427,14 +282,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
       {safeVisuals.charts && safeVisuals.charts.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {safeVisuals.charts.map((chart, idx) => (
-            <motion.div
-              key={`chart-${idx}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-            >
-              {renderChart(chart)}
-            </motion.div>
+            <AnswerChart key={`chart-${idx}`} chart={chart} />
           ))}
         </div>
       )}

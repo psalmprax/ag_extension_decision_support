@@ -55,7 +55,7 @@ export function AdminDemoRecords() {
       </button>
       {open && (
         <div id="admin-demo-records" className="space-y-4">
-          <p className="text-sm text-slate-600 dark:text-slate-300">{t('users_demo_notice')}</p>
+          <p className="text-sm text-slate-600 dark:text-theme-text-secondary">{t('users_demo_notice')}</p>
           {users.isError || farmers.isError ? (
             <div role="alert" className="space-y-2">
               <p>{t('users_demo_load_error')}</p>
@@ -75,7 +75,7 @@ export function AdminDemoRecords() {
                     {users.data.map(record => (
                       <li key={record.id}>
                         {record.firstName} {record.lastName}
-                        <span className="block text-slate-600 dark:text-slate-300">{record.email}</span>
+                        <span className="block text-slate-600 dark:text-theme-text-secondary">{record.email}</span>
                       </li>
                     ))}
                   </ul>
@@ -88,7 +88,7 @@ export function AdminDemoRecords() {
                     {farmers.data.map(record => (
                       <li key={record.id}>
                         {record.firstName} {record.lastName}
-                        <span className="block text-slate-600 dark:text-slate-300">{record.region}</span>
+                        <span className="block text-slate-600 dark:text-theme-text-secondary">{record.region}</span>
                       </li>
                     ))}
                   </ul>

@@ -84,7 +84,7 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
 
             <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
               <div className="space-y-3">
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                <label className="text-xs font-medium text-gray-500 dark:text-theme-text-muted flex items-center gap-2">
                   <MessageSquare className="w-3.5 h-3.5" />
                   {t('ui_bulk_sms_modal_quick_templates')}
                 </label>
@@ -96,7 +96,7 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
                       onClick={() => setMessage(tpl.text)}
                       className="text-start p-3 rounded-xl border border-gray-100 dark:border-white/[0.12] hover:border-primary-500/50 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-all group"
                     >
-                      <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-primary-400">
+                      <p className="text-xs text-gray-600 dark:text-theme-text-secondary line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-primary-400">
                         {tpl.text}
                       </p>
                     </button>
@@ -106,7 +106,7 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  <label className="text-xs font-medium text-gray-500 dark:text-theme-text-muted">
                     {t('ui_bulk_sms_modal_custom_message')}
                   </label>
                   <span
@@ -135,7 +135,7 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
             <div className="p-6 bg-gray-50 dark:bg-theme-bg-tertiary/50 border-t border-gray-100 dark:border-white/[0.12] flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2.5 bg-white dark:bg-theme-bg-tertiary text-gray-700 dark:text-gray-300 font-medium text-xs rounded-xl border border-gray-200 dark:border-white/[0.12] hover:bg-gray-50 dark:hover:bg-white/[0.08] transition-colors"
+                className="flex-1 px-4 py-2.5 bg-white dark:bg-theme-bg-tertiary text-gray-700 dark:text-theme-text-secondary font-medium text-xs rounded-xl border border-gray-200 dark:border-white/[0.12] hover:bg-gray-50 dark:hover:bg-white/[0.08] transition-colors"
               >
                 {t('nav_cancel') || 'Cancel'}
               </button>

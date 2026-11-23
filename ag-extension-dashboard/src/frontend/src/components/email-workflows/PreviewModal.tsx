@@ -58,7 +58,7 @@ export function EmailWorkflowsPreviewModal({
     >
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-2">
             {t('email_workflows_subject')}
           </label>
           <div className="p-3 bg-gray-50 dark:bg-white/[0.08] rounded border font-medium">
@@ -67,7 +67,7 @@ export function EmailWorkflowsPreviewModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-2">
             {t('ui_edit_modal_body')}
           </label>
           <div className="p-4 bg-gray-50 dark:bg-white/[0.08] rounded border whitespace-pre-wrap font-mono text-sm">
@@ -75,7 +75,7 @@ export function EmailWorkflowsPreviewModal({
           </div>
         </div>
 
-        <div className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="text-xs text-gray-500 dark:text-theme-text-muted">
           <strong>{t('ui_preview_modal_note')}</strong> {t('ui_preview_modal_variables_in')} {'{{'}{t('ui_preview_modal_brackets')}{'}}'} {t('ui_preview_modal_have_been_replaced_with_sample_data')}
         </div>
       </div>

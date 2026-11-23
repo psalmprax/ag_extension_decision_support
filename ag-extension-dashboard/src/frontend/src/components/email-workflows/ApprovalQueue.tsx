@@ -53,15 +53,15 @@ export function EmailWorkflowsApprovalQueue({
                   <h3 className="font-medium text-gray-900 dark:text-white mb-1">
                     {approval.emailData.subject}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-gray-600 dark:text-theme-text-muted">
                     {t('email_workflows_to')} {approval.emailData.to.join(', ')}
                   </p>
                 </div>
                 <div className="text-end">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-gray-600 dark:text-theme-text-muted">
                     Requested by {approval.requestedBy}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-theme-text-muted mt-1">
                     {new Date(approval.createdAt).toLocaleString()}
                   </p>
                 </div>
@@ -104,7 +104,7 @@ export function EmailWorkflowsApprovalQueue({
         <div className="text-center py-12">
           <CheckCircle className="w-16 h-16 mx-auto text-green-500 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">All caught up!</h3>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-theme-text-muted">
             No pending email approvals at this time
           </p>
         </div>

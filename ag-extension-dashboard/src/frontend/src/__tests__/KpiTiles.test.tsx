@@ -50,7 +50,7 @@ describe('SupportEfficiencyCard', () => {
   it('does not draw 0% for metrics that were never measured', () => {
     render(
       <SupportEfficiencyCard
-        t={key => key}
+        t={(key, fallback) => fallback ?? key}
         cardClass=""
         performanceData={{ metrics: { resolutionRate: null, satisfactionScore: null } }}
       />,

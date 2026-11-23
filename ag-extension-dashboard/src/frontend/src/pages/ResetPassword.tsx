@@ -72,7 +72,7 @@ export const ResetPassword: React.FC = () => {
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
                 <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{message}</p>
+              <p className="text-sm text-gray-600 dark:text-theme-text-muted">{message}</p>
               <button type="button" onClick={() => navigate('/login')} className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors">
                 {t('ui_reset_password_sign_in')}
               </button>
@@ -80,7 +80,7 @@ export const ResetPassword: React.FC = () => {
           ) : (
             <>
               <label className="block">
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">{t('ui_reset_password_new_password')}</span>
+                <span className="text-xs font-medium text-gray-600 dark:text-theme-text-secondary">{t('ui_reset_password_new_password')}</span>
                 <div className="relative mt-1">
                   <Lock className="w-4 h-4 absolute start-3 top-3.5 text-gray-400" />
                   <input
@@ -97,7 +97,7 @@ export const ResetPassword: React.FC = () => {
                 )}
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">{t('ui_reset_password_confirm_password')}</span>
+                <span className="text-xs font-medium text-gray-600 dark:text-theme-text-secondary">{t('ui_reset_password_confirm_password')}</span>
                 <input
                   type="password"
                   value={confirm}

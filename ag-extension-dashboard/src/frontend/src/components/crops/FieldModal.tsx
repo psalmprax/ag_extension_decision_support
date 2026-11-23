@@ -81,7 +81,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
           <div className="grid grid-cols-2 gap-4">
             {inputs.map(input => (
               <div key={input.key} className={input.wide ? 'col-span-2' : ''}>
-                <label htmlFor={`field-${input.key}`} className="block text-sm text-slate-600 dark:text-slate-300 mb-1">
+                <label htmlFor={`field-${input.key}`} className="block text-sm text-slate-600 dark:text-theme-text-secondary mb-1">
                   {input.label}
                 </label>
                 <input

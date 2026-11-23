@@ -141,7 +141,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
               <h2 className="text-lg font-medium text-gray-900 dark:text-white">
                 {t('visit_create_title') || 'Schedule new visit'}
               </h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-gray-500 dark:text-theme-text-muted">
                 {t('visit_create_subtitle') || 'Book a visit with a farmer'}
               </p>
             </div>
@@ -158,7 +158,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
         <form onSubmit={handleSubmit} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
           {/* Farmer Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-2">
               <User className="w-4 h-4 inline me-1" />
               {t('visit_select_farmer') || 'Select farmer'} *
             </label>
@@ -205,7 +205,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                         <span className="font-medium text-gray-900 dark:text-white">
                           {farmer.firstName} {farmer.lastName}
                         </span>
-                        <span className="text-gray-500 dark:text-gray-400 ms-2">
+                        <span className="text-gray-500 dark:text-theme-text-muted ms-2">
                           — {farmer.region}
                         </span>
                       </button>
@@ -238,7 +238,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
 
           {/* Visit Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-2">
               <FileText className="w-4 h-4 inline me-1" />
               {t('visit_type_label') || 'Visit type'}
             </label>
@@ -257,7 +257,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                   className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                     formData.type === type.value
                       ? 'bg-primary-600 text-white shadow-lg'
-                      : 'bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
+                      : 'bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-theme-text-secondary hover:bg-gray-200 dark:hover:bg-white/[0.12]'
                   }`}
                 >
                   {type.label}
@@ -268,7 +268,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
 
           {/* Date & Time */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-2">
               <Calendar className="w-4 h-4 inline me-1" />
               {t('visit_date_time') || 'Date & time'} *
             </label>
@@ -283,7 +283,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-2">
               <FileText className="w-4 h-4 inline me-1" />
               {t('visit_notes') || 'Notes'} ({t('common_optional') || 'Optional'})
             </label>

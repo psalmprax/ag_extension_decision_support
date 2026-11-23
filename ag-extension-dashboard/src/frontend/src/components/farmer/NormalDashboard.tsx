@@ -26,13 +26,13 @@ function trendTone(trend: unknown): string {
   const value = String(trend ?? '').trim();
   if (value.startsWith('+')) return 'text-emerald-700 dark:text-emerald-400';
   if (value.startsWith('-') || value.startsWith('\u2212')) return 'text-rose-600 dark:text-rose-400';
-  return 'text-slate-500 dark:text-slate-400';
+  return 'text-slate-500 dark:text-theme-text-muted';
 }
 
 const DATA_STATUS_COLORS: Record<MarketDataStatus, string> = {
   live: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
   estimated: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  unavailable: 'bg-gray-100 text-gray-500 dark:bg-theme-bg-tertiary dark:text-gray-400',
+  unavailable: 'bg-gray-100 text-gray-500 dark:bg-theme-bg-tertiary dark:text-theme-text-muted',
 };
 
 function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: boolean) {
@@ -48,7 +48,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">
             Global benchmarks
           </h3>
-          <p className="text-xxs text-gray-400 dark:text-gray-500">Maize · USDA PSD data</p>
+          <p className="text-xxs text-gray-400 dark:text-theme-text-muted">Maize · USDA PSD data</p>
         </div>
       </div>
 
@@ -65,7 +65,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
         <div className="space-y-4">
           {metrics.production != null && (
             <div className="p-4 bg-theme-bg-secondary/50 dark:bg-theme-bg-secondary/50 rounded-xl border border-gray-50 dark:border-white/[0.08]">
-              <div className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-1">Global production</div>
+              <div className="text-xs text-gray-400 dark:text-theme-text-muted font-medium mb-1">Global production</div>
               <div className="text-xl font-medium text-gray-900 dark:text-white">
                 {(Number(metrics.production) / 1_000_000).toFixed(1)}M {metrics.unit}
               </div>
@@ -73,7 +73,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
           )}
           {metrics.yield != null && (
             <div className="p-4 bg-theme-bg-secondary/50 dark:bg-theme-bg-secondary/50 rounded-xl border border-gray-50 dark:border-white/[0.08]">
-              <div className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-1">Average yield</div>
+              <div className="text-xs text-gray-400 dark:text-theme-text-muted font-medium mb-1">Average yield</div>
               <div className="text-xl font-medium text-primary-600 dark:text-primary-400">
                 {Number(metrics.yield).toFixed(1)} {metrics.unit.replace('tonnes', 't/ha')}
               </div>
@@ -81,7 +81,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
           )}
           {metrics.exports != null && (
             <div className="p-4 bg-theme-bg-secondary/50 dark:bg-theme-bg-secondary/50 rounded-xl border border-gray-50 dark:border-white/[0.08]">
-              <div className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-1">Global exports</div>
+              <div className="text-xs text-gray-400 dark:text-theme-text-muted font-medium mb-1">Global exports</div>
               <div className="text-xl font-medium text-emerald-600 dark:text-emerald-400">
                 {(Number(metrics.exports) / 1_000_000).toFixed(1)}M tonnes
               </div>
@@ -153,7 +153,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
         <h1 className="text-2xl font-medium text-slate-900 dark:text-white">
           {t('farmer_greeting').replace('{name}', user?.firstName || 'Farmer')}
         </h1>
-        <p className="text-slate-600 dark:text-slate-400 mt-1">{t('farmer_overview')}</p>
+        <p className="text-slate-600 dark:text-theme-text-muted mt-1">{t('farmer_overview')}</p>
       </header>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -173,7 +173,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
               });
             }}
           >
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-theme-text-muted">
               <stat.icon className="w-4 h-4 shrink-0" aria-hidden="true" />
               <p className="text-sm">{stat.title}</p>
             </div>
@@ -203,7 +203,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
                   key={i}
                   className="flex items-center justify-between py-3 border-b last:border-b-0 border-slate-900/[0.06] dark:border-white/[0.06]"
                 >
-                  <span className="font-medium text-gray-700 dark:text-gray-300">{item.crop}</span>
+                  <span className="font-medium text-gray-700 dark:text-theme-text-secondary">{item.crop}</span>
                   <div className="text-end">
                     <p className="font-medium font-mono tabular-nums text-slate-900 dark:text-white">{item.price}</p>
                     <p

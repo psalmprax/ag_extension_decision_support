@@ -22,7 +22,7 @@ function QueueStatCard({
 }: QueueStatCardProps) {
   return (
     <div className="p-4 rounded-xl bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
-      <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-medium">
+      <div className="flex items-center gap-2 text-slate-500 dark:text-theme-text-muted text-xs font-medium">
         <Icon className={`w-3.5 h-3.5 ${iconClass}`} />
         <span>{label}</span>
       </div>
@@ -30,7 +30,7 @@ function QueueStatCard({
         className={`text-xl font-medium font-mono tabular-nums flex items-baseline gap-2 ${valueClass}`}
       >
         {value}
-        <span className="text-xs font-normal text-slate-500 dark:text-slate-400">{caption}</span>
+        <span className="text-xs font-normal text-slate-500 dark:text-theme-text-muted">{caption}</span>
       </div>
     </div>
   );
@@ -53,8 +53,8 @@ export function QueueStats({ status }: { status: QueueStatus }) {
         label="Active workers"
         value={status.active}
         caption="Running now"
-        iconClass="text-slate-500 dark:text-slate-400"
-        valueClass="text-slate-600 dark:text-slate-400"
+        iconClass="text-slate-500 dark:text-theme-text-muted"
+        valueClass="text-slate-600 dark:text-theme-text-muted"
       />
       <QueueStatCard
         icon={CheckCircle}

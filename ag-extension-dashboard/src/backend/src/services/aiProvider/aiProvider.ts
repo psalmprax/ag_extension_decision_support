@@ -40,6 +40,27 @@ export class AIUnavailableError extends Error {
 }
 
 // Factory for creating AI providers
+/**
+ * A text or reasoning result with nothing in it: no text and no tool calls. Other results
+ * (embeddings, speech, classifications) have neither field and are never "empty" here.
+ */
+export function isEmptyAnswer(result: unknown): boolean {
+    if (!result || typeof result !== 'object') return false;
+    const value = result as { text?: unknown; answer?: unknown; toolCalls?: unknown };
+    const hasToolCalls = Array.isArray(value.toolCalls) && value.toolCalls.length > 0;
+    if (Object.prototype.hasOwnProperty.call(value, 'text') && value.text === null) return !hasToolCalls;
+    if (typeof value.text === 'string') return !hasToolCalls && value.text.trim() === '';
+    if (typeof value.answer === 'string') return !hasToolCalls && value.answer.trim() === '';
+    return false;
+}
+
+/** Name the provider that answered, unless the result already says. */
+function tagProvider(result: unknown, providerType: AIProviderType): void {
+    if (!result || typeof result !== 'object') return;
+    const tagged = result as { provider?: string };
+    if (!tagged.provider) tagged.provider = providerType === 'aihubmix' ? 'AIMixHub' : providerType;
+}
+
 /** What the OmniRoute free-model fallback returns when every provider failed. */
 export interface OmniRouteFallbackResult {
     text: string;
@@ -119,7 +140,7 @@ export class AIProviderFactory {
         }
 
         const omniResult = await this.tryOmniRouteFallback(telemetryContext?.promptText);
-        if (omniResult) {
+        if (omniResult && !isEmptyAnswer(omniResult)) {
             return omniResult;
         }
 
@@ -186,13 +207,14 @@ export class AIProviderFactory {
 
             logger.info(`Using AI provider: ${providerType}`);
             const result = await operation(provider);
+            // An empty answer is a failure, not a reply: the next provider gets the question
+            // rather than the farmer getting a blank message. An empty transcript is a real
+            // result (a silent voice note), so speech is left alone.
+            if (context.failureScope !== 'speech' && isEmptyAnswer(result)) throw new Error('empty reply');
             this.healthCache.set(providerType, { isHealthy: true, expiresAt: Date.now() + 120_000 });
             this.operationFailures.delete(failureKey);
             await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'success', undefined, result);
-            if (result && typeof result === 'object') {
-                const tagged = result as { provider?: string };
-                if (!tagged.provider) tagged.provider = providerType === 'aihubmix' ? 'AIMixHub' : providerType;
-            }
+            tagProvider(result, providerType);
             return { success: true, result };
         } catch (error) {
             this.operationFailures.set(failureKey, Date.now() + 45_000);

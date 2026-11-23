@@ -7,9 +7,9 @@ export const buttonVariants = cva(
       variant: {
         primary: 'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 shadow-sm',
         secondary:
-          'bg-white text-slate-800 border border-slate-900/[0.12] hover:bg-slate-50 dark:bg-white/[0.04] dark:text-slate-100 dark:border-white/[0.12] dark:hover:bg-white/[0.08]',
+          'bg-white text-slate-800 border border-slate-900/[0.12] hover:bg-slate-50 dark:bg-white/[0.04] dark:text-theme-text-primary dark:border-white/[0.12] dark:hover:bg-white/[0.08]',
         ghost:
-          'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white',
+          'text-slate-600 dark:text-theme-text-secondary hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white',
         danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800',
       },
       size: {

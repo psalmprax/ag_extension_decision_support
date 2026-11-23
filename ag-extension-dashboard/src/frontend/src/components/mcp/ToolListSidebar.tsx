@@ -40,9 +40,9 @@ export function MCPToolsToolListSidebar({
                 <h4 className="font-medium text-gray-900 dark:text-white">{tool.name}</h4>
                 <Code className="w-5 h-5 text-gray-400" />
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{tool.description}</p>
+              <p className="text-sm text-gray-600 dark:text-theme-text-muted mb-3">{tool.description}</p>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-gray-500 dark:text-theme-text-muted">
                   {tool.inputSchema.properties
                     ? Object.keys(tool.inputSchema.properties).length
                     : 0}{' '}

@@ -36,19 +36,19 @@ export function MCPToolsHealthCard({
           <div className="text-2xl font-medium text-gray-900 dark:text-white">
             {health.toolsAvailable}
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">Tools Available</div>
+          <div className="text-sm text-gray-600 dark:text-theme-text-muted">Tools Available</div>
         </div>
         <div className="text-center">
           <div className="text-lg font-medium text-gray-900 dark:text-white">
             {health.protocol}
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">Protocol Version</div>
+          <div className="text-sm text-gray-600 dark:text-theme-text-muted">Protocol Version</div>
         </div>
         <div className="text-center">
           <div className="text-lg font-medium text-gray-900 dark:text-white">
             {health.version}
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">Server Version</div>
+          <div className="text-sm text-gray-600 dark:text-theme-text-muted">Server Version</div>
         </div>
       </div>
     </div>

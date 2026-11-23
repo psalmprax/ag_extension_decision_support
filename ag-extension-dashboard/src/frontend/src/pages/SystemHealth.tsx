@@ -68,7 +68,7 @@ function DnsSection({ dns }: { dns?: Record<string, Record<string, unknown>> }) 
   if (!dns) return null;
   return (
     <div className="mb-4">
-      <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1.5">
+      <h4 className="text-xs font-medium text-slate-600 dark:text-theme-text-muted mb-2 flex items-center gap-1.5">
         <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {t('ui_system_health_dns_resolution_edge_routing')}
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -102,7 +102,7 @@ function PortsSection({ ports }: { ports?: Array<Record<string, unknown>> }) {
   if (!ports) return null;
   return (
     <div className="mb-4">
-      <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1.5">
+      <h4 className="text-xs font-medium text-slate-600 dark:text-theme-text-muted mb-2 flex items-center gap-1.5">
         <Terminal className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {t('ui_system_health_port_connectivity_sockets')}
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
@@ -131,7 +131,7 @@ function TraefikSection({ traefik }: { traefik?: Record<string, unknown> }) {
   const frontendOk = traefik.frontend_via_traefik === 'reachable';
   return (
     <div className="mb-4">
-      <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1.5">
+      <h4 className="text-xs font-medium text-slate-600 dark:text-theme-text-muted mb-2 flex items-center gap-1.5">
         <Cpu className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {t('ui_system_health_reverse_proxy_ingress_traefik')}
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -175,7 +175,7 @@ function ContainerNetworkSection({
   if (!container_network) return null;
   return (
     <div className="mb-4">
-      <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1.5">
+      <h4 className="text-xs font-medium text-slate-600 dark:text-theme-text-muted mb-2 flex items-center gap-1.5">
         <Server className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {t('ui_system_health_container_mesh_topology')}
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
@@ -212,7 +212,7 @@ function SslSection({ ssl }: { ssl?: Record<string, unknown> }) {
   const errorText = String(ssl.error ?? 'Not available (HTTPS not configured)');
   return (
     <div className="mb-4">
-      <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1.5">
+      <h4 className="text-xs font-medium text-slate-600 dark:text-theme-text-muted mb-2 flex items-center gap-1.5">
         <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {t('ui_system_health_tls_ssl_certificate_status')}
       </h4>
       <div
@@ -251,7 +251,7 @@ function DeploymentSection({ deployment }: { deployment?: Record<string, unknown
   const acmeOk = Boolean(deployment.acme_email_configured);
   return (
     <div className="mb-4">
-      <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
+      <h4 className="text-xs font-medium text-slate-600 dark:text-theme-text-muted mb-2">
         {t('ui_system_health_deployment_runtime_specs')}
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -281,10 +281,10 @@ function RecommendationsSection({ recommendations }: { recommendations?: string[
   if (!recommendations || recommendations.length === 0) return null;
   return (
     <div className="mt-4 p-4 bg-slate-500/10 border border-slate-500/30 rounded-xl">
-      <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">{t('ui_system_health_automated_sre_recommendations')}</p>
+      <p className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary mb-2">{t('ui_system_health_automated_sre_recommendations')}</p>
       <ul className="list-disc list-inside space-y-1">
         {recommendations.map((rec, i) => (
-          <li key={i} className="text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap font-mono">
+          <li key={i} className="text-xs text-slate-800 dark:text-theme-text-primary whitespace-pre-wrap font-mono">
             {rec}
           </li>
         ))}
@@ -343,7 +343,7 @@ function getStatusStyle(status: string) {
       };
     default:
       return {
-        pill: 'bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-500/30',
+        pill: 'bg-slate-500/15 text-slate-700 dark:text-theme-text-secondary border-slate-500/30',
         dot: 'bg-slate-400',
         border: 'border-slate-500/30',
       };

@@ -5,10 +5,7 @@ import {
   RefreshCw,
   Send,
   Zap,
-  Cpu,
   Radio,
-  ArrowRight,
-  ShieldCheck,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
@@ -22,10 +19,8 @@ import {
   AgentStatus,
   QueueStatus,
 } from '../api/agentService';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import toast from 'react-hot-toast';
-import { CH_COLORS } from '@/lib/colors';
-import { ChartTooltip } from '@/components/charts/ChartTooltip';
+import { AgentActivityPanels } from './agents/AgentActivityPanels';
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 
 function Agents() {
@@ -119,14 +114,6 @@ function Agents() {
     );
   }
 
-  const queueData = queueStatus
-    ? [
-        { name: 'Queued', value: queueStatus.queued, color: CH_COLORS.warning },
-        { name: 'Active', value: queueStatus.active, color: CH_COLORS.blue },
-        { name: 'Completed', value: queueStatus.completed, color: CH_COLORS.success },
-        { name: 'Failed', value: queueStatus.failed, color: CH_COLORS.error },
-      ]
-    : [];
 
   return (
     <div className="space-y-8">
@@ -282,74 +269,7 @@ function Agents() {
         </div>
       </div>
 
-      {/* Analytics & Handoff Logs Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Task Queue Distribution */}
-        <div className="p-6 rounded-xl bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>{t('ui_agents_queue_status_telemetry')}</span>
-            </h3>
-            <span className="text-xs font-mono text-slate-500 dark:text-white/40">{t('ui_agents_real_time_density')}</span>
-          </div>
-
-          <ResponsiveContainer width="100%" height={240}>
-            <PieChart>
-              <Pie
-                data={queueData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                innerRadius={45}
-                paddingAngle={4}
-              >
-                {queueData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip content={<ChartTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Handoff Log Terminal */}
-        <div className="p-6 rounded-lg bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] space-y-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-              <span>{t('ui_agents_autonomous_handoff_stream')}</span>
-            </h3>
-            <span className="text-xxs font-mono text-emerald-600 dark:text-emerald-400">{t('ui_agents_0_errors')}</span>
-          </div>
-
-          <div className="space-y-2.5 max-h-60 overflow-y-auto font-mono text-xs pe-1">
-            {handoffLog.map((handoff, index) => (
-              <div
-                key={index}
-                className="p-3 rounded-xl bg-slate-50 dark:bg-theme-bg-primary/80 border border-slate-200/80 dark:border-white/[0.06] flex items-center justify-between gap-3"
-              >
-                <div className="space-y-0.5 min-w-0">
-                  <div className="font-medium text-slate-800 dark:text-white/90 flex items-center gap-1.5 truncate">
-                    <span className="text-emerald-600 dark:text-emerald-400">{handoff.from}</span>
-                    <ArrowRight className="w-3 h-3 text-slate-400 dark:text-white/40 shrink-0" />
-                    <span className="text-sky-600 dark:text-sky-400">{handoff.to}</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 dark:text-white/50 truncate">
-                    {t('ui_agents_task', { taskId: handoff.taskId, reason: handoff.reason })}
-                  </div>
-                </div>
-
-                <div className="text-[9px] text-slate-400 dark:text-white/30 shrink-0">
-                  {new Date(handoff.timestamp).toLocaleTimeString()}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <AgentActivityPanels queueStatus={queueStatus} handoffs={handoffLog} />
     </div>
   );
 }

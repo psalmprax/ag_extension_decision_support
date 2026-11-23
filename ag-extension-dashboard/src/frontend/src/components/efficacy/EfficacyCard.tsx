@@ -54,7 +54,7 @@ function OutcomeModal({ item, onClose }: { item: { visitId: string; farmerName: 
                         <X className="w-4 h-4" />
                     </button>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-500 dark:text-theme-text-muted">
                     {t('ui_efficacy_card_follow_up_for')} <span className="font-medium">{item.farmerName || 'farmer'}</span>
                     {item.notes ? ` — ${item.notes.slice(0, 90)}` : ''}
                 </p>
@@ -119,11 +119,12 @@ export function EfficacyCard() {
                     <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-8 h-8 text-green-500" />
                         <div>
-                            <p className="text-2xl font-medium leading-none">{summary.data.overallSuccessRate}%</p>
+                            {/* No tracked outcomes is "not measured yet", not a 0% success rate. */}
+                            <p className="text-2xl font-medium leading-none">{summary.data.totalOutcomes > 0 ? `${summary.data.overallSuccessRate}%` : '—'}</p>
                             <p className="text-xxs text-gray-400">{t('ui_efficacy_card_success_rate')}</p>
                         </div>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-theme-text-muted">
                         {t('ui_efficacy_card_of_tracked_outcomes_improved_or_reso', { successCount: summary.data.successCount, totalOutcomes: summary.data.totalOutcomes })}
                     </p>
                 </div>

@@ -23,7 +23,7 @@ export function ReportViewer({ report, content, isLoading, onClose, onDownload }
           <header className="flex items-start gap-3 p-5 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
             <div className="min-w-0 flex-1">
               <HeadlessDialog.Title className="text-lg font-medium text-slate-900 dark:text-white">{report.title}</HeadlessDialog.Title>
-              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-0.5 text-sm text-slate-500 dark:text-theme-text-muted">
                 {[report.generatedAt ? new Date(report.generatedAt).toLocaleString() : null, report.createdBy].filter(Boolean).join(' · ')}
               </p>
             </div>
@@ -47,9 +47,9 @@ export function ReportViewer({ report, content, isLoading, onClose, onDownload }
                 {t('reports_loading', { defaultValue: 'Loading report…' })}
               </p>
             ) : content ? (
-              <div className="whitespace-pre-line text-[15px] leading-relaxed text-slate-800 dark:text-slate-200 max-w-[70ch]">{content}</div>
+              <div className="whitespace-pre-line text-[15px] leading-relaxed text-slate-800 dark:text-theme-text-primary max-w-[70ch]">{content}</div>
             ) : (
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-slate-600 dark:text-theme-text-muted">
                 {t('reports_no_text', { defaultValue: 'This report has no text to show. The PDF may still hold it.' })}
               </p>
             )}

@@ -1,35 +1,19 @@
 import { hasAuthSession } from '@/hooks/useAppAuth';
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Loader2, TrendingUp, Truck, Database, Globe, History } from 'lucide-react';
+import { Loader2, TrendingUp, Truck, Database, Globe } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
   fetchMarketPricesWithMetadata,
-  fetchPriceHistory,
   fetchRetailPrices,
   type MarketPricesResponse,
   type MarketDataStatus,
-  type PriceHistorySeries,
 } from '@/api/priceService';
-import { ChartTooltip } from '@/components/charts/ChartTooltip';
-import { chartTick } from '@/components/charts/chartConfig';
-import { CH_COLORS } from '@/lib/colors';
+import { PriceBarChart } from '@/components/market/PriceBarChart';
+import { PriceHistoryChart } from '@/components/market/PriceHistoryChart';
+import { formatTrend, toPriceRows, type PriceChartRow } from '@/components/market/marketPriceModel';
 import { useLanguage } from '@/lib/LanguageContext';
-
-// ── Helpers ─────────────────────────────────────────────────────────
-
-function parseNumericPrice(priceStr: string): number {
-  // "KES 4,200" → 4200, "NGN 85,000" → 85000, "$1,234.50" → 1234.5
-  const cleaned = priceStr.replace(/[^\d.]/g, '');
-  return parseFloat(cleaned) || 0;
-}
-
-function parseTrendPct(trend: string): number {
-  // "+3.2%" → 3.2, "-1.5%" → -1.5, "Stable" → 0
-  const match = trend.match(/([+-]?\d+(?:\.\d+)?)/);
-  return match ? parseFloat(match[1]) : 0;
-}
+import { formatLabel } from '@/lib/formatLabel';
 
 const SOURCE_LABELS: Record<string, string> = {
   faostat_producer_prices: 'FAOSTAT Producer Prices',
@@ -54,53 +38,6 @@ const DATA_STATUS_STYLE: Record<MarketDataStatus, string> = {
   estimated: 'bg-amber-500/10 text-amber-800 dark:text-amber-400 border-amber-500/20',
   unavailable: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
 };
-
-// Distinct hue cycle for the multi-crop history line chart.
-const HISTORY_COLORS = [
-  CH_COLORS.blue,
-  CH_COLORS.purple,
-  CH_COLORS.cyber,
-  CH_COLORS.green,
-  CH_COLORS.warning,
-  CH_COLORS.success,
-  CH_COLORS.gray,
-];
-
-function formatAxisValue(v: number): string {
-  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `${(v / 1_000).toFixed(0)}K`;
-  return String(v);
-}
-
-// ── Chart data shape ─────────────────────────────────────────────────
-
-interface PriceChartRow {
-  crop: string;
-  price: number;
-  trendPct: number;
-  formattedPrice: string;
-  source: string;
-}
-
-interface HistoryChartModel {
-  series: PriceHistorySeries[];
-  merged: Array<Record<string, string | number>>;
-}
-
-function mergeHistorySeries(historyData?: PriceHistorySeries[]): HistoryChartModel {
-  const series = historyData || [];
-  const dateMap = new Map<string, Record<string, string | number>>();
-  for (const s of series) {
-    for (const pt of s.series) {
-      if (!dateMap.has(pt.date)) dateMap.set(pt.date, { date: pt.date });
-      dateMap.get(pt.date)![s.crop] = pt.price;
-    }
-  }
-  const merged = Array.from(dateMap.values()).sort((a, b) =>
-    String(a.date).localeCompare(String(b.date))
-  );
-  return { series, merged };
-}
 
 /**
  * Per-kg retail medians (FEWS NET / WFP) — own table, never the per-bag axis.
@@ -149,105 +86,14 @@ const PriceSummaryGrid: React.FC<{ rows: PriceChartRow[] }> = ({ rows }) => (
         </div>
         <div className="text-end shrink-0">
           <p className="text-sm font-medium font-mono tabular-nums text-slate-900 dark:text-white">{row.formattedPrice}</p>
-          <p className={`text-xxs font-medium font-mono tabular-nums ${row.trendPct >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
-            {row.trendPct >= 0 ? '+' : ''}{row.trendPct.toFixed(1)}%
+          <p className={`text-xxs font-medium font-mono tabular-nums ${row.trendPct > 0 ? 'text-emerald-700 dark:text-emerald-400' : row.trendPct < 0 ? 'text-rose-700 dark:text-rose-400' : 'text-slate-600 dark:text-theme-text-muted'}`}>
+            {formatTrend(row.trendPct)}
           </p>
         </div>
       </motion.div>
     ))}
   </div>
 );
-
-const PriceHistorySection: React.FC = () => {
-  const { t } = useLanguage();
-  const { data: historyData, isLoading } = useQuery<PriceHistorySeries[]>({
-    queryKey: ['analytics-price-history'],
-    queryFn: () => fetchPriceHistory(30),
-    enabled: hasAuthSession(),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const history = useMemo(() => mergeHistorySeries(historyData), [historyData]);
-  const hasHistory = history.merged.length >= 2;
-
-  return (
-    <div className="pt-2 border-t border-slate-200 dark:border-white/5">
-      <div className="flex items-center gap-2.5 mb-3">
-        <div className="w-7 h-7 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-700 dark:text-sky-400 shrink-0">
-          <History className="w-3.5 h-3.5" />
-        </div>
-        <div>
-          <h4 className="text-sm font-medium text-slate-900 dark:text-white">{t('ui_market_price_trend_card_30_day_price_history')}</h4>
-          <p className="text-xxs text-slate-500 dark:text-white/40">
-            {t('ui_market_price_trend_card_local_currency_snapshots_of_publishe')}
-          </p>
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 text-sky-700 dark:text-sky-400 animate-spin" />
-        </div>
-      ) : !hasHistory ? (
-        <div className="flex flex-col items-center justify-center py-10 text-center">
-          <History className="w-8 h-8 text-slate-300 dark:text-white/20 mb-2" />
-          <p className="text-xs font-medium text-slate-400">{t('ui_market_price_trend_card_history_building')}</p>
-          <p className="text-xxs text-slate-400 dark:text-white/30 mt-1">
-            {t('ui_market_price_trend_card_snapshots_appear_after_the_first_few')}
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="h-[260px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={history.merged} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
-                <XAxis
-                  dataKey="date"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ ...chartTick, fontSize: 9 }}
-                  minTickGap={24}
-                  tickFormatter={(d: string) => d.slice(5)}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={chartTick}
-                  tickFormatter={formatAxisValue}
-                />
-                <Tooltip content={<ChartTooltip />} labelFormatter={(d: string) => String(d)} />
-                {history.series.map((s, i) => (
-                  <Line
-                    key={s.crop}
-                    type="monotone"
-                    dataKey={s.crop}
-                    stroke={HISTORY_COLORS[i % HISTORY_COLORS.length]}
-                    strokeWidth={2}
-                    dot={false}
-                    connectNulls
-                  />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 mt-3">
-            {history.series.map((s, i) => (
-              <span key={s.crop} className="flex items-center gap-1.5 text-xxs text-slate-600 dark:text-white/60">
-                <span
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: HISTORY_COLORS[i % HISTORY_COLORS.length] }}
-                />
-                {s.crop}
-                <span className="text-slate-500 dark:text-white/40 font-mono text-xxs">{s.observedPeriod ? `· observed ${s.observedPeriod}` : '· period unknown'}</span>
-              </span>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
 
 // ── Component ────────────────────────────────────────────────────────
 
@@ -260,16 +106,7 @@ export const MarketPriceTrendCard: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const chartData: PriceChartRow[] = useMemo(() => {
-    if (!data?.data) return [];
-    return data.data.map(item => ({
-      crop: item.crop,
-      price: parseNumericPrice(item.price),
-      trendPct: parseTrendPct(item.trend),
-      formattedPrice: item.price,
-      source: item.source,
-    }));
-  }, [data]);
+  const chartData = useMemo(() => toPriceRows(data), [data]);
 
   // Per-kg retail medians (FEWS NET, monthly) for the viewer's country.
   // Separate unit from the per-bag bars above — own table, never the axis.
@@ -281,21 +118,11 @@ export const MarketPriceTrendCard: React.FC = () => {
     retry: 1,
   });
 
-  const retailRows: PriceChartRow[] = useMemo(() => {
-    if (!retailData?.data) return [];
-    return retailData.data.map(item => ({
-      crop: item.crop,
-      price: parseNumericPrice(item.price),
-      trendPct: parseTrendPct(item.trend),
-      formattedPrice: item.price,
-      source: item.source,
-    }));
-  }, [retailData]);
+  const retailRows = useMemo(() => toPriceRows(retailData), [retailData]);
 
   const metadata = data?.metadata;
   const sourceLabel = metadata?.source ? SOURCE_LABELS[metadata.source] || metadata.source : null;
   const SourceIcon = metadata?.source ? SOURCE_ICONS[metadata.source] || Globe : Globe;
-  const maxPrice = Math.max(1, ...chartData.map(d => d.price));
 
   return (
     <div className="backdrop-blur-xl bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-none space-y-6">
@@ -325,7 +152,7 @@ export const MarketPriceTrendCard: React.FC = () => {
           )}
           {metadata?.dataStatus && (
             <span className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${DATA_STATUS_STYLE[metadata.dataStatus]}`}>
-              {metadata.dataStatus}
+              {formatLabel(metadata.dataStatus)}
             </span>
           )}
           {metadata?.exchangeRateSource && (
@@ -355,40 +182,10 @@ export const MarketPriceTrendCard: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* ── Bar Chart ── */}
-          <div className="h-[340px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
-                <XAxis dataKey="crop" axisLine={false} tickLine={false} tick={chartTick} />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={chartTick}
-                  domain={[0, maxPrice * 1.15]}
-                  tickFormatter={formatAxisValue}
-                />
-                <Tooltip
-                  content={<ChartTooltip />}
-                  formatter={(value: number, name: string) => {
-                    const row = chartData.find(r => r.price === value);
-                    return row ? [row.formattedPrice, 'Price'] : [String(value), name];
-                  }}
-                />
-                <Bar dataKey="price" radius={[6, 6, 0, 0]} maxBarSize={72}>
-                  {chartData.map((entry, i) => (
-                    <Cell
-                      key={i}
-                      fill={entry.trendPct >= 0 ? CH_COLORS.green : entry.trendPct <= -5 ? CH_COLORS.error : CH_COLORS.warning}
-                      fillOpacity={0.85}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <PriceBarChart rows={chartData} sourceLabel={source => SOURCE_LABELS[source] || source} />
 
           {/* ── 30-Day History (aggregated Redis snapshots) ── */}
-          <PriceHistorySection />
+          <PriceHistoryChart />
 
           {/* ── Price summary table ── */}
           <PriceSummaryGrid rows={chartData} />

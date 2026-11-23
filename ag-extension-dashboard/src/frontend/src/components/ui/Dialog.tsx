@@ -80,7 +80,7 @@ export function DialogDescription({
   return (
     <HeadlessDialog.Description
       as="p"
-      className={cn('mt-2 text-sm text-slate-500 dark:text-slate-400', className)}
+      className={cn('mt-2 text-sm text-slate-500 dark:text-theme-text-muted', className)}
       {...props}
     />
   );

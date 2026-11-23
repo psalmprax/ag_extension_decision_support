@@ -26,3 +26,26 @@ describe('dark mode backgrounds', () => {
     expect(value(css, '--color-bg-tertiary')).toBe(value(css, '--color-bg-secondary'));
   });
 });
+
+describe('dark mode text', () => {
+  it('writes forest and sage copy in green-greys that keep AA contrast on their panels', () => {
+    for (const theme of ['forest', 'sage'] as const) {
+      const css = getDarkThemeCSS(theme);
+      expect(value(css, '--color-text-primary')).toBe('#e6eee9');
+      expect(value(css, '--color-text-secondary')).toBe('#c5d3cb');
+      expect(value(css, '--color-text-muted')).toBe('#8fa69a');
+      expect(value(css, '--color-text-muted-rgb')).toBe('143 166 154');
+    }
+  });
+
+  it('keeps slate text for themes on the neutral navy', () => {
+    const css = getDarkThemeCSS('oceanic');
+    expect(value(css, '--color-text-secondary')).toBe('#cbd5e1');
+    expect(value(css, '--color-text-muted')).toBe('#94a3b8');
+  });
+
+  it('defines the text steps in light mode too', () => {
+    expect(value(getThemeCSS('forest'), '--color-text-primary')).toBe('#1f2937');
+  });
+});
+

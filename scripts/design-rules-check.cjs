@@ -23,6 +23,9 @@ const RULES = [
   // Dark mode takes its backgrounds from the theme (bg-theme-bg-primary/secondary/tertiary)
   // and its lines from white hairlines, so every page sits on the theme's own dark colour.
   { name: 'dark background or line not from the theme', pattern: /dark:(?:[a-z-]+:)*(?:bg|border|divide)(?:-[trblxy])?-(?:slate|gray|zinc|neutral)-(?:[6-9]00|950)\b|dark:(?:[a-z-]+:)*bg-\[#/ },
+  // Light text on a dark page takes the theme's text steps (text-theme-text-primary/secondary/muted),
+  // so it sits in the page's hue; dark text on a light chip (600 and up) is left alone.
+  { name: 'dark-mode text not from the theme', pattern: /dark:(?:[a-z-]+:)*(?:text|placeholder)-(?:slate|gray|zinc|neutral)-(?:50|[1-5]00)\b/ },
 ];
 /** Agronomic visualisations and loading placeholders may use colour ramps. */
 const EXEMPT_PATHS = [/[\\/]canvas-ui[\\/]/, /[\\/]map[\\/]/, /[\\/]Skeleton\.tsx$/, /[\\/]__tests__[\\/]/, /\.test\.tsx?$/, /[\\/]a11y\.ts$/];
@@ -46,8 +49,27 @@ for (const file of files(ROOT)) {
   });
 }
 
+/**
+ * Charts (any file drawing with Recharts) sit in ChartFrame, which gives them a title, legend,
+ * empty state and table view, and take colours from the validated series palette.
+ */
+const CHART_RULES = [
+  { name: 'chart without ChartFrame', test: text => !/\bChartFrame\b/.test(text) },
+  { name: 'dashed chart line', test: text => /strokeDasharray/.test(text) },
+  { name: 'gradient chart fill', test: text => /<(linear|radial)Gradient\b/.test(text) },
+  { name: 'hard-coded chart colour (use seriesColor or STATUS_COLOR)', test: text => /\b(stroke|fill|stopColor)=["{]['"]?#[0-9a-fA-F]{3,8}/.test(text) },
+];
+for (const file of files(ROOT)) {
+  if (EXEMPT_PATHS.some(rule => rule.test(file))) continue;
+  const text = fs.readFileSync(file, 'utf8');
+  if (!/from 'recharts'/.test(text)) continue;
+  for (const rule of CHART_RULES) {
+    if (rule.test(text)) problems.push(`${path.relative(ROOT, file)}  ${rule.name}`);
+  }
+}
+
 if (problems.length > 0) {
   console.error(`${problems.length} design-rule breaks (see CLAUDE.md, Unslop):\n${problems.join('\n')}`);
   process.exit(1);
 }
-console.log('Design rules OK: no heavy weights, tracked caps, decorative gradients, glows, blobs, emoji or off-theme dark backgrounds.');
+console.log('Design rules OK: no heavy weights, tracked caps, decorative gradients, glows, blobs, emoji, off-theme dark backgrounds and text, or charts outside the chart kit.');

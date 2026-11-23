@@ -20,7 +20,7 @@ export function EmailWorkflowsHeader({
     <div className="flex items-center justify-between">
       <div>
         <h1 className={`text-2xl ${headingClass}`}>{t('ui_header_email_workflows')}</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">{subtitle}</p>
+        <p className="text-gray-600 dark:text-theme-text-muted mt-1">{subtitle}</p>
       </div>
       <button
         onClick={onRefresh}

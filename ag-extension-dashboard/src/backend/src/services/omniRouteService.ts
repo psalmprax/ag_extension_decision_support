@@ -326,6 +326,7 @@ export class OmniRouteService {
     try {
       const result = await this.tryCandidate(candidate, messages);
       if (result) {
+        if (result.text.trim() === '') throw new Error('empty reply');
         this.recordSuccess(key);
         return result;
       }

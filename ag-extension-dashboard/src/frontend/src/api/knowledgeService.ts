@@ -126,6 +126,16 @@ export const fetchKnowledgeHistory = async () => {
   return data;
 };
 
+/** `/knowledge/stats`: what people ask about. Postgres counts can arrive as strings. */
+export interface KnowledgeSearchStats {
+  crops?: Array<{ crop: string | null; count: string | number }>;
+  categories?: Array<{ category: string | null; count: string | number }>;
+  totalQueries?: number;
+  cachedQueries?: number;
+  totalArticles?: number;
+  embeddedArticles?: number;
+}
+
 export const fetchKnowledgeStats = async () => {
   const { data } = await apiClient.get('/knowledge/stats');
   return data;

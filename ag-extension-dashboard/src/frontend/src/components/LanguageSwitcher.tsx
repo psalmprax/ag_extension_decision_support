@@ -43,7 +43,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
       <div ref={ref} className={`relative ${className}`}>
         <button
           onClick={() => setOpen(o => !o)}
-          className="flex items-center gap-1.5 h-10 px-2.5 rounded-md text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors"
+          className="flex items-center gap-1.5 h-10 px-2.5 rounded-md text-sm text-slate-600 dark:text-theme-text-secondary hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors"
           aria-label={`${current.code.toUpperCase()} · ${t('common_select_language')}`}
           aria-expanded={open}
         >
@@ -72,7 +72,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
     <div className={`flex items-center gap-2 ${className}`}>
       <label
         htmlFor="language-select"
-        className="text-sm text-slate-500 dark:text-slate-400"
+        className="text-sm text-slate-500 dark:text-theme-text-muted"
       >
         {t('common_select_language')}:
       </label>
@@ -149,7 +149,7 @@ const LanguageDropdown: React.FC<DropdownProps> = ({
               className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${
                 lang.code === currentCode
                   ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                  : 'text-gray-700 dark:text-gray-200'
+                  : 'text-gray-700 dark:text-theme-text-primary'
               }`}
             >
               <span className="flex items-center gap-2">

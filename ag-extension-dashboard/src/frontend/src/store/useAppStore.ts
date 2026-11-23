@@ -62,6 +62,10 @@ export interface Farmer {
   longitude?: number;
   region?: string;
   assignedOfficerId?: string;
+  /** Out of 100. */
+  vitalScore?: number;
+  /** Recorded harvests, tonnes per hectare. */
+  yieldHistory?: { month: string; yield: number }[];
 }
 
 export interface Visit {

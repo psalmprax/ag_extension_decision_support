@@ -38,7 +38,7 @@ export function GovernmentExports({ onError }: { onError: (message: string) => v
       <h2 id="government-exports" className="text-base font-medium text-slate-900 dark:text-white">
         {t('reports_exports_title', { defaultValue: 'Exports for government systems' })}
       </h2>
-      <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+      <p className="mt-1 text-sm text-slate-600 dark:text-theme-text-muted max-w-2xl">
         {t('reports_exports_body', {
           defaultValue: 'CSV files in the layout national extension systems import. They hold only the farmers you can see, by reference number rather than name.',
         })}

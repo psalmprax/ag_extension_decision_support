@@ -58,7 +58,7 @@ export function SMSRightPanel({
       <div
         className={`bg-white dark:bg-theme-bg-secondary ${radiusClass} border border-slate-200 dark:border-white/10 p-5 flex flex-col shadow-sm`}
       >
-        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+        <h3 className="text-sm font-medium text-slate-700 dark:text-theme-text-secondary mb-4 flex items-center gap-2">
           <Plus className="w-4 h-4 text-slate-500" />
           {t('sms_template_title')}
         </h3>

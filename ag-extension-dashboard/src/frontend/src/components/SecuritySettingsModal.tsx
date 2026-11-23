@@ -146,7 +146,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                 <h4 className="text-sm font-medium text-gray-900 dark:text-white">
                   {t('ui_security_settings_modal_authenticator_app_totp')}
                 </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-gray-500 dark:text-theme-text-muted mt-1">
                   {t('ui_security_settings_modal_protect_your_extension_officer_accou')}
                 </p>
               </div>
@@ -154,7 +154,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                 className={`px-2.5 py-1 text-xs font-medium rounded-full ${
                   mfaEnabled
                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
-                    : 'bg-gray-100 text-gray-600 dark:bg-white/[0.08] dark:text-gray-300'
+                    : 'bg-gray-100 text-gray-600 dark:bg-white/[0.08] dark:text-theme-text-secondary'
                 }`}
               >
                 {mfaEnabled ? 'Enabled' : 'Disabled'}
@@ -184,7 +184,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-theme-text-secondary mb-1">
                     {t('ui_security_settings_modal_6_digit_verification_code')}
                   </label>
                   <input
@@ -198,14 +198,14 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                 </div>
 
                 <div>
-                  <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <p className="text-xs font-medium text-gray-700 dark:text-theme-text-secondary mb-1">
                     {t('ui_security_settings_modal_backup_recovery_codes_save_these_saf')}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     {setupData.backupCodes.map((code, idx) => (
                       <span
                         key={idx}
-                        className="px-2 py-1 bg-white dark:bg-theme-bg-tertiary border rounded text-xs font-mono text-center text-gray-600 dark:text-gray-300"
+                        className="px-2 py-1 bg-white dark:bg-theme-bg-tertiary border rounded text-xs font-mono text-center text-gray-600 dark:text-theme-text-secondary"
                       >
                         {code}
                       </span>

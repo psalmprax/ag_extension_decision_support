@@ -28,7 +28,7 @@ const TAB_BUTTON =
 const tabTone = (isActive: boolean) =>
   isActive
     ? 'text-emerald-800 dark:text-emerald-200 bg-slate-900/[0.06] dark:bg-white/[0.1]'
-    : 'text-slate-600 dark:text-slate-300 active:bg-slate-900/[0.05] dark:active:bg-white/[0.06]';
+    : 'text-slate-600 dark:text-theme-text-secondary active:bg-slate-900/[0.05] dark:active:bg-white/[0.06]';
 
 /** The scan tab: same row height as the others, with a filled icon well. */
 const SpecialCenterButton: React.FC<{

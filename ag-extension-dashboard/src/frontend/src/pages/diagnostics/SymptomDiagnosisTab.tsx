@@ -48,7 +48,7 @@ const SymptomResultCard: React.FC<{
       </span>
     </div>
 
-    <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{result.description}</p>
+    <p className="text-xs text-slate-700 dark:text-theme-text-secondary leading-relaxed">{result.description}</p>
 
     <div className="p-2 rounded bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-amber-800 dark:text-amber-300 flex items-start gap-1.5">
       <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />

@@ -5,7 +5,7 @@
  * Consumed by:
  *   - src/theme/index.ts         (runtime CSS variable emission, per-theme + dark mode)
  *   - tailwind.config.js          (Tailwind `colors` generation)
- *   - src/lib/colors.ts           (CH_COLORS re-export for imperative/JS styling)
+ *   - src/components/charts       (series colours via --color-series-*)
  *
  * Do NOT hardcode color values anywhere else. If a color is missing, add it here.
  */
@@ -48,6 +48,8 @@ export interface ThemeColors {
    * so every page sits on the same green rather than only the ones that hard-coded it.
    */
   darkBackground?: DarkBackground;
+  /** Dark mode's text steps. Themes without one use the slate steps below. */
+  darkText?: TextSteps;
 }
 
 export interface DarkBackground {
@@ -64,6 +66,51 @@ export const DEFAULT_DARK_BACKGROUND: DarkBackground = {
   secondary: '#111827',
   tertiary: '#1f2937',
 };
+
+/** Three text steps: headings and values, body copy, and captions or hints. */
+export interface TextSteps {
+  primary: string;
+  secondary: string;
+  muted: string;
+}
+
+/** Text steps in light mode, the same for every theme. */
+export const LIGHT_TEXT: TextSteps = {
+  primary: '#1f2937',
+  secondary: '#374151',
+  muted: '#4b5563',
+};
+
+/** Slate text for the navy dark background (Tailwind slate 200, 300, 400). */
+export const DEFAULT_DARK_TEXT: TextSteps = {
+  primary: '#e2e8f0',
+  secondary: '#cbd5e1',
+  muted: '#94a3b8',
+};
+
+/**
+ * Green-grey text for the field-green dark backgrounds, so copy sits in the same hue
+ * as the page. Muted keeps at least 5.3:1 on the lightest dark panel (WCAG AA).
+ */
+const FIELD_DARK_TEXT: TextSteps = {
+  primary: '#e6eee9',
+  secondary: '#c5d3cb',
+  muted: '#8fa69a',
+};
+
+/**
+ * Chart series colours, in a fixed order: a chart takes slot 1, then 2, and so on, and a
+ * category keeps its slot when others are filtered out. The order keeps neighbours apart for
+ * colour-blind readers (dataviz validator, adjacent pairs: colour-blind ΔE 16 light / 13 dark,
+ * normal vision ΔE 19, all slots in the lightness band). Slot 1 is the field green; dark steps
+ * are lighter for the dark panels. Six at most: past that, fold into "Other".
+ */
+export const SERIES_COLORS = {
+  light: ['#1f8053', '#2a78d6', '#eb6834', '#6250d6', '#eda100', '#e87ba4'],
+  dark: ['#4e9e73', '#3987e5', '#d95926', '#9085e9', '#c98500', '#d55181'],
+  otherLight: '#8a948f',
+  otherDark: '#7b8a82',
+} as const;
 
 /** Steps present in every color scale (drives Tailwind + CSS var generation). */
 export const COLOR_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900] as const;
@@ -127,6 +174,7 @@ export const themes: Record<ThemeName, ThemeColors> = {
       secondary: '#13241b',
       tertiary: '#1a2f24',
     },
+    darkText: FIELD_DARK_TEXT,
   },
 
   /** Warm amber/gold representing wheat fields and harvest. */
@@ -357,6 +405,7 @@ export const themes: Record<ThemeName, ThemeColors> = {
       secondary: '#15251d',
       tertiary: '#1d3027',
     },
+    darkText: FIELD_DARK_TEXT,
   },
 
   /** High-contrast dark theme with glassmorphism and neon cyan accents. */

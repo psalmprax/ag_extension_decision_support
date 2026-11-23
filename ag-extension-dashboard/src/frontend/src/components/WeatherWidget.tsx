@@ -41,13 +41,13 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location = '' }) =
 
   return (
     <div
-      className="flex items-center gap-2 h-9 px-3 rounded-md border border-slate-900/[0.08] dark:border-white/[0.08] text-sm text-slate-700 dark:text-slate-200 select-none"
+      className="flex items-center gap-2 h-9 px-3 rounded-md border border-slate-900/[0.08] dark:border-white/[0.08] text-sm text-slate-700 dark:text-theme-text-primary select-none"
       title={weather.condition}
     >
       <MapPin className="w-4 h-4 text-slate-400" aria-hidden="true" />
       <span>{location}</span>
       <span className="w-px h-4 bg-slate-900/[0.08] dark:bg-white/[0.1]" aria-hidden="true" />
-      <Icon className="w-4 h-4 text-slate-500 dark:text-slate-400" aria-hidden="true" />
+      <Icon className="w-4 h-4 text-slate-500 dark:text-theme-text-muted" aria-hidden="true" />
       <span className="font-mono tabular-nums">{units.temp(weather.temperature ?? weather.temp)}</span>
     </div>
   );

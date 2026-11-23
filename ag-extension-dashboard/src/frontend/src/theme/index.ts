@@ -10,6 +10,9 @@
 import {
   themes,
   DEFAULT_DARK_BACKGROUND,
+  DEFAULT_DARK_TEXT,
+  SERIES_COLORS,
+  LIGHT_TEXT,
   errorScale,
   semanticTokens,
   surfaceTokens,
@@ -19,6 +22,7 @@ import {
   type ThemeName,
   type ThemeColors,
   type ColorScale,
+  type TextSteps,
 } from './tokens';
 import { safeStorage } from '@/lib/safeStorage';
 
@@ -75,6 +79,20 @@ function pushSemanticVars(out: string[]): void {
   out.push(`--color-cyber-hover: ${cyber.hover};`);
 }
 
+/** Chart series colours (`var(--color-series-1)` … `-6`, `-other`) for one mode. */
+function pushSeriesVars(out: string[], colors: readonly string[], other: string): void {
+  colors.forEach((value, index) => out.push(`--color-series-${index + 1}: ${value};`));
+  out.push(`--color-series-other: ${other};`);
+}
+
+/** Text steps as hex + RGB triplets (`text-theme-text-primary/secondary/muted`). */
+function pushTextVars(out: string[], text: TextSteps): void {
+  Object.entries(text).forEach(([key, value]) => {
+    out.push(`--color-text-${key}: ${value};`);
+    out.push(`--color-text-${key}-rgb: ${colorToRgb(value)};`);
+  });
+}
+
 /** Surface/outline tokens as hex + RGB triplets (these flip between light/dark). */
 function pushSurfaceVars(out: string[], surface: typeof surfaceTokens.light): void {
   SURFACE_TOKEN_NAMES.forEach(({ key, cssVar }) => {
@@ -125,6 +143,8 @@ export function getThemeCSS(themeName: ThemeName): string {
   pushBackgroundVars(vars, theme.background);
   pushSemanticVars(vars);
   pushSurfaceVars(vars, surfaceTokens.light);
+  pushTextVars(vars, LIGHT_TEXT);
+  pushSeriesVars(vars, SERIES_COLORS.light, SERIES_COLORS.otherLight);
   return vars.join('\n');
 }
 
@@ -155,6 +175,8 @@ export function getDarkThemeCSS(themeName: ThemeName): string {
 
   // The surface follows the theme's panels, so a themed page has no navy surfaces in it.
   pushSurfaceVars(vars, theme.darkBackground ? { ...surfaceTokens.dark, surface: dark.secondary } : surfaceTokens.dark);
+  pushTextVars(vars, theme.darkText ?? DEFAULT_DARK_TEXT);
+  pushSeriesVars(vars, SERIES_COLORS.dark, SERIES_COLORS.otherDark);
   return vars.join('\n');
 }
 

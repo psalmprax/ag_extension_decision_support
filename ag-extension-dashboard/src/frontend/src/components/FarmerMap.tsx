@@ -35,7 +35,7 @@ import { MapLegend } from './map/MapLegend';
 import { ExpandedMapModal } from './map/ExpandedMapModal';
 import { useUnits } from '@/hooks/useUnits';
 
-const MAP_CONTROL = 'h-9 min-w-9 px-2 rounded-md bg-white/95 dark:bg-theme-bg-primary/95 text-slate-700 dark:text-slate-200 border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm hover:bg-white dark:hover:bg-theme-bg-secondary transition-colors flex items-center justify-center gap-1.5 text-sm';
+const MAP_CONTROL = 'h-9 min-w-9 px-2 rounded-md bg-white/95 dark:bg-theme-bg-primary/95 text-slate-700 dark:text-theme-text-primary border border-slate-900/[0.1] dark:border-white/[0.12] shadow-sm hover:bg-white dark:hover:bg-theme-bg-secondary transition-colors flex items-center justify-center gap-1.5 text-sm';
 
 export type { FarmerData };
 
@@ -249,11 +249,11 @@ export function FarmerMap({
             closeButton={false}
           >
             <div className="p-4 flex flex-col items-center text-center">
-              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-theme-bg-secondary/30 flex items-center justify-center text-slate-600 dark:text-slate-400 mb-2">
+              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-theme-bg-secondary/30 flex items-center justify-center text-slate-600 dark:text-theme-text-muted mb-2">
                 <Crosshair className="w-5 h-5" />
               </div>
               <h4 className="font-medium text-sm text-gray-900 dark:text-white">{t('ui_farmer_map_your_location')}</h4>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-gray-500 dark:text-theme-text-muted mt-1">
                 {t('ui_farmer_map_extension_officer_active_gps_node')}
               </p>
               <span className="text-xxs text-slate-500 font-medium mt-2 px-2 py-0.5 rounded-md bg-slate-50 dark:bg-theme-bg-primary/40">
@@ -306,7 +306,7 @@ export function FarmerMap({
                   <p className="text-xs opacity-90">{farmer.region}</p>
                 </div>
 
-                <div className="p-4 space-y-3 bg-white dark:bg-theme-bg-secondary text-slate-800 dark:text-slate-200">
+                <div className="p-4 space-y-3 bg-white dark:bg-theme-bg-secondary text-slate-800 dark:text-theme-text-primary">
                   <div className="grid grid-cols-2 gap-2 text-xxs">
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-theme-bg-tertiary/60 border border-slate-100 dark:border-white/[0.08]">
                       <div className="text-slate-500">{t('ui_farmer_map_farm_area')}</div>
@@ -362,7 +362,7 @@ export function FarmerMap({
                     {canChat ? (
                       <button
                         onClick={() => handleChatClick(farmer)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-medium transition-all bg-slate-100 hover:bg-slate-200 dark:bg-theme-bg-tertiary dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-200 active:scale-95"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-medium transition-all bg-slate-100 hover:bg-slate-200 dark:bg-theme-bg-tertiary dark:hover:bg-white/[0.08] text-slate-700 dark:text-theme-text-primary active:scale-95"
                         title={`Chat with ${farmer.name}`}
                         aria-label={`Chat with ${farmer.name}`}
                       >

@@ -18,7 +18,7 @@ export function LoadingHeaderSkeleton({ title, description }: LoadingHeaderSkele
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-medium text-gray-900 dark:text-white">{title}</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">{description}</p>
+          <p className="text-gray-600 dark:text-theme-text-muted mt-1">{description}</p>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

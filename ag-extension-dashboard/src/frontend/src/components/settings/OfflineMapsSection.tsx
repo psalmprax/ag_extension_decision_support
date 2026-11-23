@@ -81,7 +81,7 @@ export function OfflineMapsSection() {
                     ))}
                 </div>
             )}
-            {status && <p className="text-xs text-gray-500 dark:text-gray-400" role="status">{status}</p>}
+            {status && <p className="text-xs text-gray-500 dark:text-theme-text-muted" role="status">{status}</p>}
         </div>
     );
 }

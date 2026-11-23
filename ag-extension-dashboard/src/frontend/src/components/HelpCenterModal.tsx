@@ -72,7 +72,7 @@ function SupportTicketForm({
       ) : (
         <form onSubmit={handleTicketSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-slate-500 dark:text-slate-400  ">
+            <label className="text-xs font-medium text-slate-500 dark:text-theme-text-muted  ">
               {t('email_workflows_subject')}
             </label>
             <input
@@ -85,7 +85,7 @@ function SupportTicketForm({
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-slate-500 dark:text-slate-400  ">
+            <label className="text-xs font-medium text-slate-500 dark:text-theme-text-muted  ">
               {t('ui_help_center_modal_category')}
             </label>
             <select
@@ -103,7 +103,7 @@ function SupportTicketForm({
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium text-slate-500 dark:text-slate-400  ">
+            <label className="text-xs font-medium text-slate-500 dark:text-theme-text-muted  ">
               {t('ui_help_center_modal_description')}
             </label>
             <textarea
@@ -200,7 +200,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
     {
       icon: Book,
       label: t('help_docs') || 'Documentation',
-      color: 'bg-slate-50 text-slate-700 dark:bg-theme-bg-secondary/30 dark:text-slate-300 border border-slate-200 dark:border-white/[0.08]',
+      color: 'bg-slate-50 text-slate-700 dark:bg-theme-bg-secondary/30 dark:text-theme-text-secondary border border-slate-200 dark:border-white/[0.08]',
       action: () => {
         onClose();
         setActiveTab('knowledge');
@@ -218,7 +218,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
     {
       icon: Mail,
       label: 'Submit Ticket',
-      color: 'bg-slate-50 text-slate-700 dark:bg-theme-bg-secondary/30 dark:text-slate-300 border border-slate-200 dark:border-white/[0.08]',
+      color: 'bg-slate-50 text-slate-700 dark:bg-theme-bg-secondary/30 dark:text-theme-text-secondary border border-slate-200 dark:border-white/[0.08]',
       action: () => {
         setTicketCategory('general');
         setShowTicketForm(true);
@@ -308,7 +308,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
 
                     {/* FAQs */}
                     <div className="space-y-3">
-                      <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400  ">
+                      <h3 className="text-xs font-medium text-slate-500 dark:text-theme-text-muted  ">
                         {t('help_faq') || 'Frequently asked questions'}
                       </h3>
                       {faqsLoading ? (
@@ -316,7 +316,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                           <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
                         </div>
                       ) : faqs.length === 0 ? (
-                        <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">{t('ui_help_center_modal_no_faqs_available')}</p>
+                        <p className="text-sm text-slate-500 dark:text-theme-text-muted text-center py-4">{t('ui_help_center_modal_no_faqs_available')}</p>
                       ) : (
                         faqs.map((faq, i) => (
                           <div
@@ -332,7 +332,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                                 {faq.question}
                               </span>
                               <ChevronRight
-                                className={`w-4 h-4 text-slate-500 dark:text-slate-400 flex-shrink-0 transition-transform ${expandedFaq === i ? 'rotate-90' : ''}`}
+                                className={`w-4 h-4 text-slate-500 dark:text-theme-text-muted flex-shrink-0 transition-transform ${expandedFaq === i ? 'rotate-90' : ''}`}
                               />
                             </button>
                             {expandedFaq === i && (
@@ -341,7 +341,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                                 animate={{ height: 'auto', opacity: 1 }}
                                 className="px-4 pb-4 pt-1 border-t border-slate-200/60 dark:border-white/[0.12]"
                               >
-                                <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                                <p className="text-sm text-slate-700 dark:text-theme-text-primary leading-relaxed">
                                   {faq.answer}
                                 </p>
                               </motion.div>
@@ -353,7 +353,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
 
                     {/* Keyboard Shortcuts */}
                     <div className="space-y-3">
-                      <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400  ">
+                      <h3 className="text-xs font-medium text-slate-500 dark:text-theme-text-muted  ">
                         {t('help_shortcuts') || 'Keyboard shortcuts'}
                       </h3>
                       <div className="grid grid-cols-2 gap-2">
@@ -362,10 +362,10 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                             key={i}
                             className="flex items-center justify-between p-3 bg-slate-50 dark:bg-theme-bg-tertiary/50 border border-slate-200 dark:border-white/[0.12] rounded-xl"
                           >
-                            <span className="text-sm text-slate-700 dark:text-slate-300">
+                            <span className="text-sm text-slate-700 dark:text-theme-text-secondary">
                               {action}
                             </span>
-                            <kbd className="px-2 py-1 bg-slate-200 dark:bg-white/[0.08] text-xs font-mono rounded text-slate-800 dark:text-slate-200 font-medium">
+                            <kbd className="px-2 py-1 bg-slate-200 dark:bg-white/[0.08] text-xs font-mono rounded text-slate-800 dark:text-theme-text-primary font-medium">
                               {key}
                             </kbd>
                           </div>

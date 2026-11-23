@@ -51,7 +51,7 @@ export const ForgotPassword: React.FC = () => {
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
                 <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{message}</p>
+              <p className="text-sm text-gray-600 dark:text-theme-text-muted">{message}</p>
               <button
                 type="button"
                 onClick={() => navigate('/login')}
@@ -72,7 +72,7 @@ export const ForgotPassword: React.FC = () => {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-2">
                   {t('login_email')}
                 </label>
                 <div className="relative">
@@ -100,7 +100,7 @@ export const ForgotPassword: React.FC = () => {
               <button
                 type="button"
                 onClick={() => navigate('/login')}
-                className="w-full py-3 text-gray-500 dark:text-gray-400 font-medium text-sm hover:text-gray-700 dark:hover:text-gray-200 transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 text-gray-500 dark:text-theme-text-muted font-medium text-sm hover:text-gray-700 dark:hover:text-theme-text-primary transition-colors flex items-center justify-center gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
                 {t('ui_forgot_password_back_to_login')}

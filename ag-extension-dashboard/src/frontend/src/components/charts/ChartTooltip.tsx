@@ -1,6 +1,7 @@
 import React from 'react';
+import { formatNumber } from './chartFormat';
 
-type TooltipEntry = {
+export type TooltipEntry = {
   name?: string | number;
   value?: string | number;
   color?: string;
@@ -8,107 +9,48 @@ type TooltipEntry = {
   payload?: Record<string, unknown>;
 };
 
+/** Formats one value; gets the hovered row too, for values that come with their own text. */
+export type TooltipValueFormatter = (
+  value: number | string,
+  name: string,
+  row: Record<string, unknown> | undefined
+) => string;
+
 interface ChartTooltipProps {
   active?: boolean;
   payload?: TooltipEntry[];
   label?: string | number;
   labelFormatter?: (label: string | number) => React.ReactNode;
-  valueFormatter?: (value: string | number, name: string | number) => string;
+  valueFormatter?: TooltipValueFormatter;
 }
 
-function formatAgroMetricValue(
-  rawValue: string | number,
-  name: string | number,
-  customFormatter?: (value: string | number, name: string | number) => string
-): string {
-  if (customFormatter) {
-    return customFormatter(rawValue, name);
-  }
-  if (typeof rawValue !== 'number') {
-    return String(rawValue);
-  }
-  const lower = String(name).toLowerCase();
-  if (lower.includes('rain') || lower.includes('precip')) {
-    return `${rawValue.toFixed(1)} mm`;
-  }
-  if (lower.includes('land') || lower.includes('area') || lower.includes('ha')) {
-    return `${rawValue.toFixed(1)} ha`;
-  }
-  if (
-    lower.includes('rate') ||
-    lower.includes('satisfaction') ||
-    lower.includes('health') ||
-    lower.includes('percent')
-  ) {
-    return `${Number.isInteger(rawValue) ? rawValue : rawValue.toFixed(1)}%`;
-  }
-  if (lower === 'visits') {
-    return `${rawValue} visits`;
-  }
-  if (lower === 'queries') {
-    return `${rawValue} queries`;
-  }
-  return String(rawValue);
-}
+const defaultValue: TooltipValueFormatter = value => (typeof value === 'number' ? formatNumber(value) : String(value));
 
 /**
- * Theme-aware tooltip shared by all Recharts charts. Colors resolve through CSS
- * variables so the tooltip follows the active theme and dark mode automatically.
+ * Hover card shared by every chart: an opaque panel in both modes, the hovered label, then one
+ * line per series with its colour, name and value. Units come from the chart's `valueFormatter`.
  */
-export const ChartTooltip: React.FC<ChartTooltipProps> = ({
-  active,
-  payload,
-  label,
-  labelFormatter,
-  valueFormatter,
-}) => {
+export const ChartTooltip: React.FC<ChartTooltipProps> = ({ active, payload, label, labelFormatter, valueFormatter = defaultValue }) => {
   if (!active || !payload || payload.length === 0) return null;
+  const heading = label === undefined || label === null || label === '' ? null : labelFormatter ? labelFormatter(label) : label;
 
   return (
-    <div
-      className="min-w-[140px] rounded-xl px-3 py-2.5"
-      style={{
-        background: 'var(--color-bg-card)',
-        border: '1px solid var(--color-outline-variant)',
-        boxShadow: 'var(--shadow-premium)',
-      }}
-    >
-      {label !== undefined && label !== null && label !== '' && (
-        <p
-          className="mb-1.5 text-xxs font-medium  "
-          style={{ color: 'var(--color-on-surface-variant)' }}
-        >
-          {labelFormatter ? labelFormatter(label) : label}
-        </p>
+    <div className="min-w-[140px] rounded-md border border-slate-900/[0.1] dark:border-white/[0.12] bg-white dark:bg-theme-bg-tertiary px-3 py-2 shadow-sm">
+      {heading !== null && (
+        <p className="mb-1 text-xs font-medium text-slate-900 dark:text-theme-text-primary">{heading}</p>
       )}
       <div className="space-y-1">
         {payload.map((entry, index) => {
-          const color =
-            entry.color ??
-            (entry.payload?.fill as string | undefined) ??
-            (entry.payload?.color as string | undefined) ??
-            'var(--color-primary-500)';
-          const name = entry.name ?? entry.dataKey ?? '';
-          const rawValue = entry.value ?? '';
-          const value = formatAgroMetricValue(rawValue, name, valueFormatter);
-
+          const name = String(entry.name ?? entry.dataKey ?? '');
+          const color = entry.color ?? (entry.payload?.fill as string | undefined) ?? 'var(--color-series-1)';
           return (
-            <div
-              key={`${String(name)}-${index}`}
-              className="flex items-center justify-between gap-4"
-            >
-              <span
-                className="flex items-center gap-1.5 text-xs font-medium"
-                style={{ color: 'var(--color-on-surface-variant)' }}
-              >
-                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
+            <div key={`${name}-${index}`} className="flex items-center justify-between gap-4 text-xs">
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-theme-text-secondary">
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: color }} aria-hidden="true" />
                 {name}
               </span>
-              <span
-                className="text-xs font-medium tabular-nums"
-                style={{ color: 'var(--color-on-surface)' }}
-              >
-                {value}
+              <span className="font-medium tabular-nums text-slate-900 dark:text-theme-text-primary">
+                {valueFormatter(entry.value ?? '', name, entry.payload)}
               </span>
             </div>
           );

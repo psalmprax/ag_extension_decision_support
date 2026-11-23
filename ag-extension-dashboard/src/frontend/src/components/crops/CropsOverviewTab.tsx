@@ -86,34 +86,34 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
 
                   <div className="grid grid-cols-2 gap-4 mb-6 bg-slate-50 dark:bg-theme-bg-primary/40 p-3 rounded-xl border border-slate-200 dark:border-white/5">
                     <div>
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <span className="text-xs font-medium text-slate-500 dark:text-theme-text-muted">
                         {t('ui_crops_overview_tab_area_size')}
                       </span>
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5 tabular-nums">
+                      <p className="text-sm font-medium text-slate-800 dark:text-theme-text-primary mt-0.5 tabular-nums">
                         {units.area(field.areaHectares, 2)}
                       </p>
                     </div>
                     <div>
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <span className="text-xs font-medium text-slate-500 dark:text-theme-text-muted">
                         {t('ui_crops_overview_tab_soil_type')}
                       </span>
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5 capitalize">
+                      <p className="text-sm font-medium text-slate-800 dark:text-theme-text-primary mt-0.5 capitalize">
                         {field.soilType || 'Unspecified'}
                       </p>
                     </div>
                     <div>
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <span className="text-xs font-medium text-slate-500 dark:text-theme-text-muted">
                         {t('ui_crops_overview_tab_soil_ph')}
                       </span>
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5 tabular-nums">
+                      <p className="text-sm font-medium text-slate-800 dark:text-theme-text-primary mt-0.5 tabular-nums">
                         {field.soilPh ? `${Number(field.soilPh).toFixed(1)} pH` : 'Not Measured'}
                       </p>
                     </div>
                     <div>
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <span className="text-xs font-medium text-slate-500 dark:text-theme-text-muted">
                         {t('ui_crops_overview_tab_coordinates')}
                       </span>
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5 truncate font-mono text-xs tabular-nums">
+                      <p className="text-sm font-medium text-slate-800 dark:text-theme-text-primary mt-0.5 truncate font-mono text-xs tabular-nums">
                         {field.latitude && field.longitude
                           ? `${Number(field.latitude).toFixed(4)}, ${Number(field.longitude).toFixed(4)}`
                           : 'No GPS Set'}
@@ -130,15 +130,15 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                             <span className="text-xs font-medium text-primary-600 dark:text-primary-400">
                               {t('ui_crops_overview_tab_growing')}
                             </span>
-                            <span className="text-xxs font-medium text-slate-500 dark:text-slate-400">
+                            <span className="text-xxs font-medium text-slate-500 dark:text-theme-text-muted">
                               {t('ui_crops_overview_tab_planted')} {new Date(currentCycle.plantingDate!).toLocaleDateString()}
                             </span>
                           </div>
-                          <h4 className="text-sm font-medium text-slate-900 dark:text-slate-200 mt-1 truncate">
+                          <h4 className="text-sm font-medium text-slate-900 dark:text-theme-text-primary mt-1 truncate">
                             {currentCycle.cropName} ({currentCycle.variety || 'Standard'})
                           </h4>
                           {currentCycle.notes && (
-                            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 italic line-clamp-1">
+                            <p className="text-xs text-slate-600 dark:text-theme-text-muted mt-1 italic line-clamp-1">
                               "{currentCycle.notes}"
                             </p>
                           )}
@@ -147,8 +147,8 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                       </div>
                     ) : (
                       <div className="bg-slate-50 dark:bg-theme-bg-secondary/30 border border-dashed border-slate-200 dark:border-white/10 p-4 rounded-xl text-center py-6">
-                        <Info className="w-5 h-5 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
-                        <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-3">
+                        <Info className="w-5 h-5 text-slate-400 dark:text-theme-text-muted mx-auto mb-2" />
+                        <p className="text-xs text-slate-600 dark:text-theme-text-muted font-medium mb-3">
                           {t('ui_crops_overview_tab_no_active_crop_growth_cycles')}
                         </p>
                         <button

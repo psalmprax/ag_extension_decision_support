@@ -30,7 +30,10 @@ export interface DashboardGeographyEntry {
 
 export interface DashboardCropEntry {
   name: string;
+  /** Farmers growing the crop. */
   count: number;
+  /** Their share of farmers with crops, in percent. */
+  percentage: number;
 }
 
 export interface DashboardActivityEntry {

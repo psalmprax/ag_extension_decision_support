@@ -12,7 +12,7 @@ export function NotificationPreferencesSection({ prefs, saving, toggle }: Return
   ];
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
+      <h3 className="text-xs font-medium text-gray-500 dark:text-theme-text-muted flex items-center gap-2">
         <Bell className="w-4 h-4" />
         {t('settings_notifications') || 'Notifications'}
       </h3>
@@ -21,7 +21,7 @@ export function NotificationPreferencesSection({ prefs, saving, toggle }: Return
           <div key={key} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/[0.04] rounded-xl">
             <div className="flex items-center gap-3">
               <Bell className="w-4 h-4 text-gray-400" aria-hidden="true" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-theme-text-secondary">{label}</span>
             </div>
             <button
               type="button"

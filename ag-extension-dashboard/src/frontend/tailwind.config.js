@@ -43,6 +43,11 @@ export default {
           tertiary: 'rgb(var(--color-bg-tertiary-rgb) / <alpha-value>)',
           card: 'rgb(var(--color-bg-card-rgb) / <alpha-value>)',
         },
+        'theme-text': {
+          primary: 'rgb(var(--color-text-primary-rgb) / <alpha-value>)',
+          secondary: 'rgb(var(--color-text-secondary-rgb) / <alpha-value>)',
+          muted: 'rgb(var(--color-text-muted-rgb) / <alpha-value>)',
+        },
         ...surfaceVars,
         status: semanticTokens.status,
         chart: semanticTokens.chart,

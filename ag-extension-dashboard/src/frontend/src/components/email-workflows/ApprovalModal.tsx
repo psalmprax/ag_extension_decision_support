@@ -27,21 +27,21 @@ export function EmailWorkflowsApprovalModal({
     <Modal title={t('email_workflows_review_email')} onClose={onClose} size="sm">
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-1">
             {t('email_workflows_subject')}
           </label>
           <p className="text-gray-900 dark:text-white font-medium">{approval.emailData.subject}</p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-1">
             {t('email_workflows_recipients')}
           </label>
           <p className="text-gray-900 dark:text-white">{approval.emailData.to.join(', ')}</p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-1">
             {t('email_workflows_content')}
           </label>
           <div className="border border-gray-300 dark:border-white/[0.12] rounded-lg p-4 max-h-60 overflow-y-auto">
@@ -53,7 +53,7 @@ export function EmailWorkflowsApprovalModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-1">
             {t('email_workflows_review_comment')}
           </label>
           <textarea

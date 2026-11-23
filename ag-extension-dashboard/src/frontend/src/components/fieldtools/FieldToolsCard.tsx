@@ -98,7 +98,7 @@ export function FieldToolsCard() {
                         key={key}
                         onClick={() => setTab(key)}
                         aria-pressed={tab === key}
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium ${tab === key ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium ${tab === key ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-theme-text-primary'}`}
                     >
                         <Icon className="w-3.5 h-3.5" />
                         {label}
@@ -117,7 +117,7 @@ export function FieldToolsCard() {
                     {tankResult.ok && (
                         <div className="p-3 bg-primary-500/5 rounded-xl text-xs space-y-1">
                             <p><span className="font-medium">{tankResult.productPerTank}</span> {t('ui_field_tools_card_product_per')} {tank}{t('ui_field_tools_card_l_tank')} <span className="font-medium">{tankResult.herbicide.mlPerTank}ml</span>{t('ui_field_tools_card_tank')}</p>
-                            <p className="text-gray-500 dark:text-gray-400">{t('ui_field_tools_card_tanks_l_water_total_product_total', { tanksNeeded: tankResult.tanksNeeded, waterTotalL: tankResult.waterTotalL, productTotal: tankResult.productTotal })}</p>
+                            <p className="text-gray-500 dark:text-theme-text-muted">{t('ui_field_tools_card_tanks_l_water_total_product_total', { tanksNeeded: tankResult.tanksNeeded, waterTotalL: tankResult.waterTotalL, productTotal: tankResult.productTotal })}</p>
                         </div>
                     )}
                 </div>
@@ -151,7 +151,7 @@ export function FieldToolsCard() {
                     {densityResult.ok && (
                         <div className="p-3 bg-primary-500/5 rounded-xl text-xs space-y-1">
                             <p><span className="font-medium">{densityResult.plantsPerHa.toLocaleString()}</span> {t('ui_field_tools_card_plants_ha')}</p>
-                            <p className="text-gray-500 dark:text-gray-400">{densityResult.plantsTotal.toLocaleString()} {t('ui_field_tools_card_plants')}{densityResult.seedKgApprox} {t('ui_field_tools_card_kg_seed_15_oversow')}</p>
+                            <p className="text-gray-500 dark:text-theme-text-muted">{densityResult.plantsTotal.toLocaleString()} {t('ui_field_tools_card_plants')}{densityResult.seedKgApprox} {t('ui_field_tools_card_kg_seed_15_oversow')}</p>
                         </div>
                     )}
                 </div>

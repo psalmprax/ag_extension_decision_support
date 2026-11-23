@@ -52,13 +52,13 @@ export function CountryTimeSection() {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
+      <h3 className="text-xs font-medium text-gray-500 dark:text-theme-text-muted flex items-center gap-2">
         <Clock className="w-4 h-4" aria-hidden="true" />
         {t('settings_country_title', { defaultValue: 'Country and time zone' })}
       </h3>
       <div className="p-3 bg-gray-50 dark:bg-white/[0.04] rounded-xl space-y-3">
         <label className="block text-sm">
-          <span className="block mb-1 text-gray-700 dark:text-gray-300">{t('register_country_label', { defaultValue: 'Country' })}</span>
+          <span className="block mb-1 text-gray-700 dark:text-theme-text-secondary">{t('register_country_label', { defaultValue: 'Country' })}</span>
           <select
             className={SELECT}
             value={country}
@@ -78,7 +78,7 @@ export function CountryTimeSection() {
           </select>
         </label>
         <label className="block text-sm">
-          <span className="block mb-1 text-gray-700 dark:text-gray-300">{t('settings_time_zone', { defaultValue: 'Time zone' })}</span>
+          <span className="block mb-1 text-gray-700 dark:text-theme-text-secondary">{t('settings_time_zone', { defaultValue: 'Time zone' })}</span>
           <select className={SELECT} value={timeZone} onChange={event => setTimeZone(event.target.value)}>
             <option value="">
               {zones[0]

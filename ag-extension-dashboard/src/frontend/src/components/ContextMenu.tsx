@@ -170,7 +170,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       ${
                         item.action.includes('delete')
                           ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400'
+                          : 'text-gray-700 dark:text-theme-text-secondary hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400'
                       }`}
                   >
                     <Icon className="w-4 h-4 shrink-0" />

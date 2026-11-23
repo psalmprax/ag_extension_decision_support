@@ -34,7 +34,10 @@ describe('ChurnReasons', () => {
 
     await waitFor(() => expect(screen.getByText('Too expensive')).toBeInTheDocument());
     expect(screen.getByText('Missing features')).toBeInTheDocument();
-    expect(screen.getByText('3 · 60.0%')).toBeInTheDocument();
+    // Each row prints its count and its share of recorded reasons.
+    const tooExpensive = screen.getByText('Too expensive').closest('li')!;
+    expect(tooExpensive).toHaveTextContent('3');
+    expect(tooExpensive).toHaveTextContent('60.0%');
     expect(
       screen.getByText(/Based on 5 recorded reasons out of 8 cancellations in the last 30 days/)
     ).toBeInTheDocument();

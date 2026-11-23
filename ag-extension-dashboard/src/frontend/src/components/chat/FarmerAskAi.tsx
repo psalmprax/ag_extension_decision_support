@@ -64,7 +64,7 @@ export const FarmerAskAi: React.FC<FarmerAskAiProps> = ({ ensureConversation, in
         type="button"
         onClick={() => void ask()}
         disabled={busy}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-500/40 bg-slate-50 dark:bg-theme-bg-primary/40 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-theme-bg-secondary/40 disabled:opacity-50 shrink-0"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-500/40 bg-slate-50 dark:bg-theme-bg-primary/40 text-slate-800 dark:text-theme-text-primary hover:bg-slate-100 dark:hover:bg-theme-bg-secondary/40 disabled:opacity-50 shrink-0"
       >
         {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Bot className="w-3.5 h-3.5" aria-hidden="true" />}
         {t('ai_ask_button')}

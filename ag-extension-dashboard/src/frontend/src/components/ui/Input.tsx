@@ -27,7 +27,7 @@ export const InputLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <label
     ref={ref}
-    className={cn('block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5', className)}
+    className={cn('block text-sm font-medium text-slate-700 dark:text-theme-text-secondary mb-1.5', className)}
     {...props}
   />
 ));

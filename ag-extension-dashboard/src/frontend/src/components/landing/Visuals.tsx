@@ -1,58 +1,5 @@
 import React from 'react';
 
-interface SparklineProps {
-  data: number[];
-  color: string;
-  width?: number;
-  height?: number;
-}
-
-/**
- * Tiny inline SVG sparkline used in landing page stat cards.
- * Pure presentational — no external state.
- */
-export function Sparkline({ data, color, width = 80, height = 28 }: SparklineProps) {
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const range = max - min || 1;
-  const points = data
-    .map((v, i) => {
-      const x = (i / (data.length - 1)) * width;
-      const y = height - ((v - min) / range) * (height - 4) - 2;
-      return `${x},${y}`;
-    })
-    .join(' ');
-
-  return (
-    <svg width={width} height={height} className="overflow-visible" aria-hidden="true">
-      <defs>
-        <linearGradient
-          id={`spark-${color.replace(/[^a-zA-Z0-9]/g, '')}`}
-          x1="0"
-          y1="0"
-          x2="0"
-          y2="1"
-        >
-          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <polyline
-        points={points}
-        fill="none"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <polygon
-        points={`0,${height} ${points} ${width},${height}`}
-        fill={`url(#spark-${color.replace(/[^a-zA-Z0-9]/g, '')})`}
-      />
-    </svg>
-  );
-}
-
 interface TelemetryNode {
   x: number;
   y: number;

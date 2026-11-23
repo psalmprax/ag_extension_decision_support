@@ -90,7 +90,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">
             {t('ui_parcel_polygon_drawer_field_boundary_polygon_acreage_trace')}
           </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-xs text-gray-500 dark:text-theme-text-muted mt-0.5">
             {t('ui_parcel_polygon_drawer_walk_the_perimeter_of_the_field_to_m')}
           </p>
         </div>
@@ -121,7 +121,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
         </div>
         <div>
           <span className="text-xs text-gray-500 font-medium">{t('ui_parcel_polygon_drawer_boundary_vertices')}</span>
-          <p className="text-xl font-medium text-slate-600 dark:text-slate-400 mt-1">
+          <p className="text-xl font-medium text-slate-600 dark:text-theme-text-muted mt-1">
             {metrics.vertexCount}
           </p>
         </div>
@@ -130,7 +130,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
       {/* Form Controls */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-xs font-medium text-gray-700 dark:text-theme-text-secondary mb-1">
             {t('ui_parcel_polygon_drawer_parcel_plot_name')}
           </label>
           <input
@@ -141,7 +141,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-xs font-medium text-gray-700 dark:text-theme-text-secondary mb-1">
             {t('ui_parcel_polygon_drawer_primary_crop')}
           </label>
           <input
@@ -183,7 +183,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
           type="button"
           onClick={handleClear}
           disabled={vertices.length === 0}
-          className="py-3 px-4 border border-gray-300 hover:bg-gray-50 dark:border-white/[0.12] dark:hover:bg-white/[0.08] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition"
+          className="py-3 px-4 border border-gray-300 hover:bg-gray-50 dark:border-white/[0.12] dark:hover:bg-white/[0.08] text-gray-700 dark:text-theme-text-secondary text-sm font-medium rounded-xl transition"
         >
           {t('ui_parcel_polygon_drawer_clear_points')}
         </button>
