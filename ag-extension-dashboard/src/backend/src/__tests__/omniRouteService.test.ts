@@ -1,4 +1,5 @@
 import { OmniRouteService } from '../services/omniRouteService';
+import { OllamaProvider } from '../services/aiProvider/providers/ollama';
 import type { AICapability } from '../services/aiProvider/types';
 
 jest.mock('../services/aiProvider/providers/ollama', () => ({
@@ -35,12 +36,18 @@ describe('OmniRouteService (Ported from money_time_revenue)', () => {
       { providerName: 'ollama' as const, model: 'empty-model', score: 2, isFree: true },
       { providerName: 'ollama' as const, model: 'answer-model', score: 1, isFree: true },
     ];
-    const ollama = Reflect.get(OmniRouteService, 'ollama') as Pick<AICapability, 'generateText'>;
-    const generateText = jest.spyOn(ollama, 'generateText').mockImplementation(async (_messages, options) => ({
-      text: options?.model === 'answer-model' ? 'A useful answer.' : '  ',
-      model: options?.model,
-      finishReason: 'stop',
-    }));
+    const generateText = jest.fn<
+      ReturnType<AICapability['generateText']>,
+      Parameters<AICapability['generateText']>
+    >().mockImplementation(async (_messages, options) => ({
+        text: options?.model === 'answer-model' ? 'A useful answer.' : '  ',
+        model: options?.model ?? 'test-model',
+        finishReason: 'stop',
+      }));
+    jest.mocked(OllamaProvider).mockImplementation(() => ({
+      isConfigured: () => true,
+      generateText,
+    } as unknown as OllamaProvider));
     OmniRouteService.initializeDynamicSwitching(candidates);
 
     try {
@@ -52,7 +59,7 @@ describe('OmniRouteService (Ported from money_time_revenue)', () => {
       expect(result).toMatchObject({ text: 'A useful answer.', modelUsed: 'answer-model' });
       expect(generateText).toHaveBeenCalledTimes(3);
     } finally {
-      generateText.mockRestore();
+      generateText.mockReset();
     }
   });
 });
